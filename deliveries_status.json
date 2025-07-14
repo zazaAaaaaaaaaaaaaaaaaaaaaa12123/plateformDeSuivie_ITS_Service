@@ -1,0 +1,23 @@
+﻿StatusCode        : 200
+StatusDescription : OK
+Content           : {"success":true,"deliveries":[{"id":361,"employee_name":"Amine","delivery_date":null,"delivery_time"
+                    :null,"client_name":"Traore","client_phone":"0102030405","container_type_and_content":"Friperies","l
+                    ...
+RawContent        : HTTP/1.1 200 OK
+                    Access-Control-Allow-Origin: *
+                    Connection: keep-alive
+                    Keep-Alive: timeout=5
+                    Content-Length: 63746
+                    Content-Type: application/json; charset=utf-8
+                    Date: Tue, 08 Jul 2025 11:04:23 GM...
+Forms             : {}
+Headers           : {[Access-Control-Allow-Origin, *], [Connection, keep-alive], [Keep-Alive, timeout=5], 
+                    [Content-Length, 63746]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 63746
+
+
+

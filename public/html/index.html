@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portail Client - Société de Transit</title>
+    <!-- TAILWIND CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FONT AWESOME -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- STYLE PERSONNALISÉ -->
+    <link rel="stylesheet" href="/css/style.css" />
+    <style>
+      @keyframes fade-in-up {
+        0% {
+          opacity: 0;
+          transform: translateY(60px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 1.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+      }
+      @keyframes fade-in {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      .animate-fade-in {
+        animation: fade-in 1.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+      }
+      @keyframes gradient-text {
+        0% {
+          background-position: 0% 50%;
+        }
+        100% {
+          background-position: 100% 50%;
+        }
+      }
+      .animate-gradient-text {
+        background-size: 200% 200%;
+        animation: gradient-text 3s ease-in-out infinite alternate;
+      }
+      @keyframes float {
+        0% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+        100% {
+          transform: translateY(0);
+        }
+      }
+      .animate-float {
+        animation: float 3s ease-in-out infinite;
+      }
+      .bg-blur {
+        backdrop-filter: blur(4px);
+      }
+    </style>
+  </head>
+  <body
+    class="relative min-h-screen w-full overflow-hidden flex flex-col bg-white"
+  >
+    <!-- Animation de présentation ENTIÈRE PAGE -->
+    <section
+      class="absolute inset-0 z-30 flex items-center justify-center w-full h-full"
+    >
+      <!-- Dégradé dominant blanc, touches bleu et jaune -->
+      <div
+        class="absolute inset-0 bg-gradient-to-br from-white via-blue-100 to-yellow-100"
+      ></div>
+      <div class="absolute inset-0 pointer-events-none">
+        <!-- Cercles décoratifs bleu et jaune -->
+        <div
+          class="absolute top-[-100px] left-[-100px] w-[350px] h-[350px] rounded-full bg-blue-200 opacity-40 blur-2xl"
+        ></div>
+        <div
+          class="absolute bottom-[-120px] right-[-120px] w-[400px] h-[400px] rounded-full bg-yellow-200 opacity-40 blur-2xl"
+        ></div>
+        <div
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[200px] rounded-full bg-blue-50 opacity-30 blur-2xl"
+        ></div>
+      </div>
+      <div
+        class="relative z-10 flex flex-col items-center justify-center w-full h-full"
+      >
+        <!-- Illustration animée -->
+        <div class="mb-10 animate-float">
+          <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+            <circle cx="60" cy="60" r="55" fill="#facc15" fill-opacity="0.18" />
+            <circle cx="60" cy="60" r="40" fill="#2563eb" fill-opacity="0.10" />
+            <circle cx="60" cy="60" r="28" fill="#2563eb" fill-opacity="0.22" />
+            <circle cx="60" cy="60" r="18" fill="#facc15" fill-opacity="0.5" />
+            <circle cx="60" cy="60" r="8" fill="#2563eb" />
+          </svg>
+        </div>
+        <h1
+          class="text-5xl md:text-7xl font-extrabold animate-gradient-text bg-gradient-to-r from-blue-700 via-yellow-400 to-blue-400 bg-clip-text text-transparent drop-shadow-lg mb-6 animate-fade-in-up"
+        >
+          Bienvenue sur ITS Service
+        </h1>
+        <p
+          class="text-2xl md:text-3xl text-blue-900 mb-10 font-medium animate-fade-in"
+          style="animation-delay: 0.5s"
+        >
+          Gérez vos opérations en toute simplicité et sécurité.<br />
+          <span class="font-extrabold text-yellow-400 text-3xl"
+            >ITS Service</span
+          >
+          accompagne les entreprises au quotidien.
+        </p>
+        <div
+          class="flex flex-col md:flex-row justify-center gap-8 mt-4 animate-fade-in"
+          style="animation-delay: 1s"
+        >
+          <button
+            id="ctaLogin"
+            class="bg-blue-700 hover:bg-yellow-400 hover:text-blue-900 text-white font-bold py-4 px-12 rounded-2xl shadow-xl text-2xl transition duration-200"
+          >
+            Se connecter
+          </button>
+          <button
+            id="ctaSignup"
+            class="bg-yellow-400 hover:bg-blue-700 hover:text-white text-blue-900 font-bold py-4 px-12 rounded-2xl shadow-xl text-2xl transition duration-200"
+          >
+            S’inscrire
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- NAVBAR -->
+    <nav
+      class="relative z-40 w-full flex justify-between items-center px-8 py-4 bg-blue-900 shadow-lg"
+    >
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="text-2xl font-bold text-yellow-300 tracking-wide"
+          >ITS Service</span
+        >
+      </a>
+      <div class="flex gap-4">
+        <button
+          id="openSignupBtn"
+          class="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold py-2 px-6 rounded-lg shadow transition duration-200"
+        >
+          <i class="fa-solid fa-user-plus mr-2"></i>S’inscrire
+        </button>
+        <button
+          id="openLoginBtn"
+          class="bg-blue-700 hover:bg-yellow-400 hover:text-blue-900 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200"
+        >
+          <i class="fa-solid fa-right-to-bracket mr-2"></i>Se connecter
+        </button>
+        <button
+          id="logoutBtn"
+          class="hidden bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold py-2 px-6 rounded-lg shadow transition duration-200"
+        >
+          <i class="fa-solid fa-right-from-bracket mr-2"></i>Déconnexion
+        </button>
+      </div>
+    </nav>
+
+    <!-- LOGIN CARD (modale) -->
+    <div
+      id="loginModal"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden"
+    >
+      <div
+        class="w-full max-w-md bg-white/90 rounded-2xl shadow-2xl p-8 flex flex-col gap-6 relative"
+      >
+        <button
+          onclick="closeLoginModal()"
+          class="absolute top-3 right-4 text-blue-700 hover:text-yellow-500 text-xl"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="text-center">
+          <h2 class="text-3xl font-extrabold text-blue-900 mb-2">
+            Connexion Utilisateur
+          </h2>
+          <p class="text-blue-700">Accédez à votre espace personnel</p>
+        </div>
+        <form id="loginForm" autocomplete="off" class="flex flex-col gap-4">
+          <div>
+            <label
+              for="loginEmail"
+              class="block text-blue-900 font-semibold mb-1"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="loginEmail"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Votre email"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="loginPassword"
+              class="block text-blue-900 font-semibold mb-1"
+              >Mot de passe</label
+            >
+            <div class="relative">
+              <input
+                type="password"
+                id="loginPassword"
+                maxlength="15"
+                class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition pr-12"
+                placeholder="Mot de passe"
+                required
+              />
+              <button
+                type="button"
+                onclick="togglePw(this, 'loginPassword')"
+                class="absolute right-2 top-2 text-blue-700 hover:text-yellow-500"
+              >
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+            <div class="text-right mt-1">
+              <a
+                href="#"
+                id="forgotPwLink"
+                class="text-sm text-blue-700 hover:text-yellow-500 font-medium transition"
+                >Mot de passe oublié ?</a
+              >
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="bg-blue-700 hover:bg-yellow-400 hover:text-blue-900 text-white font-bold py-2 rounded-lg shadow transition duration-200"
+          >
+            Se connecter
+          </button>
+        </form>
+        <!-- Formulaire mot de passe oublié (masqué par défaut) -->
+        <form
+          id="forgotPwForm"
+          autocomplete="off"
+          class="flex flex-col gap-4 hidden"
+        >
+          <div>
+            <label
+              for="forgotPwEmail"
+              class="block text-blue-900 font-semibold mb-1"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="forgotPwEmail"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Votre email"
+              required
+            />
+          </div>
+          <div id="forgotPwMsg" class="text-sm mt-1"></div>
+          <button
+            type="submit"
+            class="bg-yellow-400 hover:bg-blue-700 hover:text-white text-blue-900 font-bold py-2 rounded-lg shadow transition duration-200"
+          >
+            Recevoir un lien/code de réinitialisation
+          </button>
+          <button
+            type="button"
+            id="backToLoginBtn"
+            class="text-blue-700 hover:text-yellow-500 text-sm mt-2"
+          >
+            Retour à la connexion
+          </button>
+        </form>
+        <!-- Formulaire de réinitialisation du mot de passe (étape 2) -->
+        <form
+          id="resetPwForm"
+          autocomplete="off"
+          class="flex flex-col gap-4 hidden"
+        >
+          <div>
+            <label
+              for="resetPwEmail"
+              class="block text-blue-900 font-semibold mb-1"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="resetPwEmail"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Votre email"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="resetPwCode"
+              class="block text-blue-900 font-semibold mb-1"
+              >Code reçu</label
+            >
+            <input
+              type="text"
+              id="resetPwCode"
+              maxlength="6"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Code à 6 chiffres"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="resetPwNew"
+              class="block text-blue-900 font-semibold mb-1"
+              >Nouveau mot de passe</label
+            >
+            <input
+              type="password"
+              id="resetPwNew"
+              maxlength="15"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Nouveau mot de passe"
+              required
+            />
+          </div>
+          <div id="resetPwMsg" class="text-sm mt-1"></div>
+          <button
+            type="submit"
+            class="bg-blue-700 hover:bg-yellow-400 hover:text-blue-900 text-white font-bold py-2 rounded-lg shadow transition duration-200"
+          >
+            Réinitialiser le mot de passe
+          </button>
+          <button
+            type="button"
+            id="backToForgotBtn"
+            class="text-blue-700 hover:text-yellow-500 text-sm mt-2"
+          >
+            Retour
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- SIGNUP CARD (modale) -->
+    <div
+      id="signupModal"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden"
+    >
+      <div
+        class="w-full max-w-md bg-white/90 rounded-2xl shadow-2xl p-8 flex flex-col gap-6 relative"
+      >
+        <button
+          onclick="closeSignupModal()"
+          class="absolute top-3 right-4 text-blue-700 hover:text-yellow-500 text-xl"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="text-center">
+          <h2 class="text-3xl font-extrabold text-blue-900 mb-2">
+            Créer un compte utilisateur
+          </h2>
+          <p class="text-blue-700">
+            Inscrivez-vous pour accéder à votre espace
+          </p>
+        </div>
+        <form id="signupForm" autocomplete="off" class="flex flex-col gap-4">
+          <div>
+            <label
+              for="signupName"
+              class="block text-blue-900 font-semibold mb-1"
+              >Nom complet</label
+            >
+            <input
+              type="text"
+              id="signupName"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Votre nom"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="signupEmail"
+              class="block text-blue-900 font-semibold mb-1"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="signupEmail"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Votre email"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="signupPassword"
+              class="block text-blue-900 font-semibold mb-1"
+              >Mot de passe</label
+            >
+            <div class="relative">
+              <input
+                type="password"
+                id="signupPassword"
+                maxlength="15"
+                class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition pr-12"
+                placeholder="Mot de passe"
+                required
+              />
+              <button
+                type="button"
+                onclick="togglePw(this, 'signupPassword')"
+                class="absolute right-2 top-2 text-blue-700 hover:text-yellow-500"
+              >
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="bg-yellow-400 hover:bg-blue-700 hover:text-white text-blue-900 font-bold py-2 rounded-lg shadow transition duration-200"
+          >
+            S’inscrire
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ALERTE PERSONNALISÉE -->
+    <div
+      id="customAlert"
+      class="fixed top-8 left-1/2 -translate-x-1/2 z-50 hidden bg-yellow-400 text-blue-900 font-bold px-6 py-3 rounded-lg shadow-lg border-2 border-blue-700"
+    >
+      <span id="customAlertMessage"></span>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="/js/script.js"></script>
+    <!-- Script d'authentification supprimé ici car déjà géré dans /js/script.js -->
+    <script>
+      // Ouvre/ferme les modales
+      document.getElementById("openLoginBtn").onclick = () => {
+        document.getElementById("loginModal").classList.remove("hidden");
+      };
+      document.getElementById("openSignupBtn").onclick = () => {
+        document.getElementById("signupModal").classList.remove("hidden");
+      };
+      function closeLoginModal() {
+        document.getElementById("loginModal").classList.add("hidden");
+      }
+      function closeSignupModal() {
+        document.getElementById("signupModal").classList.add("hidden");
+      }
+      // Fermer modale au clic sur fond noir
+      document.getElementById("loginModal").onclick = (e) => {
+        if (e.target.id === "loginModal") closeLoginModal();
+      };
+      document.getElementById("signupModal").onclick = (e) => {
+        if (e.target.id === "signupModal") closeSignupModal();
+      };
+      // Affichage/Masquage mot de passe
+      window.togglePw = function (btn, inputId) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+          input.type = "text";
+          btn.querySelector("i").classList.remove("fa-eye");
+          btn.querySelector("i").classList.add("fa-eye-slash");
+        } else {
+          input.type = "password";
+          btn.querySelector("i").classList.remove("fa-eye-slash");
+          btn.querySelector("i").classList.add("fa-eye");
+        }
+      };
+      // Animation : boutons de présentation
+      document.getElementById("ctaLogin").onclick = () => {
+        document.getElementById("openLoginBtn").click();
+      };
+      document.getElementById("ctaSignup").onclick = () => {
+        document.getElementById("openSignupBtn").click();
+      };
+    </script>
+  </body>
+</html>

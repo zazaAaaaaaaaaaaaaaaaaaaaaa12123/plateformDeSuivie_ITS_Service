@@ -1,0 +1,422 @@
+/* styleHistoriqueAgents.css */
+
+/* Overlay de la modale */
+/* La classe 'hidden' est ajoutée par JS pour masquer/afficher */
+.historique-modal-overlay {
+  position: fixed; /* Reste fixe par rapport au viewport */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Fond semi-transparent */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Assure que la modale est au-dessus de tout */
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Masquer la modale */
+.historique-modal-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none; /* Permet les clics à travers quand masqué */
+}
+
+/* Contenu de la modale */
+.historique-modal-content {
+  background-color: #fefefe;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4); /* Ombre plus prononcée */
+  width: 95%;
+  max-width: 1300px; /* Largeur maximale augmentée pour plus d'espace */
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden; /* Gère le débordement interne */
+  font-family: "Inter", sans-serif; /* Utilise la même police que le dashboard */
+  color: #333;
+}
+
+/* En-tête de la modale */
+.historique-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.historique-modal-header h2 {
+  margin: 0;
+  color: #2c3e50; /* Couleur plus foncée pour le titre */
+  font-size: 2em; /* Taille de police plus grande */
+  font-weight: 700;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2.5em; /* Grande taille pour une meilleure visibilité */
+  color: #aaa;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  line-height: 1; /* Assure un alignement correct */
+}
+
+.close-button:hover {
+  color: #e74c3c; /* Rouge pour l'action de fermeture */
+}
+
+/* Corps de la modale - Disposition principale */
+.historique-modal-body {
+  display: flex;
+  flex: 1; /* Permet au contenu de prendre l'espace disponible */
+  overflow: hidden; /* Important pour le défilement interne des sections */
+  gap: 30px; /* Espacement entre la sidebar et le contenu principal */
+}
+
+/* Sidebar des acteurs */
+.historique-sidebar {
+  width: 280px; /* Largeur de la sidebar */
+  padding-right: 25px;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.historique-sidebar h3 {
+  color: #555;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.4em;
+  font-weight: 600;
+}
+
+.actor-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1; /* Permet à la liste de prendre l'espace vertical */
+  overflow-y: auto; /* Défilement si trop d'acteurs */
+}
+
+.actor-list li {
+  padding: 15px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 1.15em;
+  font-weight: 500;
+  color: #555;
+}
+
+.actor-list li:hover {
+  background-color: #f0f8ff; /* Bleu très clair */
+  transform: translateX(5px); /* Petit effet de glissement */
+}
+
+.actor-list li.active {
+  background-color: #007bff; /* Bleu primaire */
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+.btn-archive {
+  display: block;
+  width: 100%;
+  padding: 14px 15px;
+  background-color: #6c757d; /* Gris foncé */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1em;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  margin-top: 25px;
+  font-weight: 600;
+}
+
+.btn-archive:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+}
+
+/* Contenu principal (historique et détails) */
+.historique-main-content {
+  flex: 1; /* Prend l'espace restant */
+  padding-left: 25px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Gère le débordement des sous-sections */
+  gap: 20px; /* Espacement entre l'historique/archives et les détails */
+}
+
+/* Affichage de l'historique et des archives */
+.historique-display,
+.archive-display {
+  flex: 3; /* Prend plus d'espace vertical que la section détails */
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Défilement pour les tableaux d'historique/archives */
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #ffffff;
+  box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.05);
+}
+
+#currentActorHistoryTitle,
+.archive-display h3 {
+  color: #2c3e50;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.6em;
+  font-weight: 700;
+}
+
+.history-table-container,
+.archive-table-container {
+  overflow-x: auto; /* Permet le défilement horizontal si le tableau est trop large */
+}
+
+.history-table,
+.archive-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.history-table th,
+.archive-table th {
+  background-color: #f8f9fa; /* Fond clair pour les en-têtes */
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 2px solid #dee2e6;
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.95em;
+}
+
+.history-table td,
+.archive-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: top;
+  font-size: 0.9em;
+  color: #495057;
+}
+
+.history-table tbody tr:hover,
+.archive-table tbody tr:hover {
+  background-color: #f2f7fc; /* Changement de couleur au survol */
+  cursor: pointer;
+}
+
+.history-table .operation-row.selected,
+.archive-table .operation-row.selected {
+  background-color: #e0f2f7; /* Couleur pour la ligne sélectionnée */
+}
+
+.history-table td:last-child,
+.archive-table td:last-child {
+  text-align: right; /* Alignement du bouton de suppression */
+}
+
+.delete-button {
+  background-color: #dc3545; /* Rouge pour supprimer */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+  transform: scale(1.05);
+}
+
+/* Affichage des détails */
+.detail-display {
+  flex: 1; /* Prend moins d'espace vertical, sous l'historique */
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #ffffff;
+  box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  min-height: 150px; /* Hauteur minimale pour les détails */
+}
+
+.detail-display h4 {
+  color: #2c3e50;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.operation-details-content p {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  color: #555;
+  font-size: 0.9em;
+}
+
+.operation-details-content strong {
+  color: #333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .historique-modal-body {
+    flex-direction: column;
+    overflow-y: auto; /* Permet le défilement de toute la modale sur petits écrans */
+  }
+
+  .historique-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+    padding-right: 0;
+    padding-bottom: 20px;
+  }
+
+  .historique-main-content {
+    padding-left: 0;
+    padding-top: 20px;
+  }
+
+  .actor-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .actor-list li {
+    flex: 1 1 auto;
+    max-width: 48%; /* Deux colonnes sur petits écrans */
+    text-align: center;
+  }
+
+  .btn-archive {
+    margin-top: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .historique-modal-content {
+    padding: 20px;
+    width: 98%;
+  }
+
+  .historique-modal-header h2 {
+    font-size: 1.5em;
+  }
+
+  .close-button {
+    font-size: 2em;
+  }
+
+  .actor-list li {
+    max-width: 100%; /* Une colonne sur très petits écrans */
+  }
+}
+
+/* ================= Responsive spécifique mobile pour la modal historique ================= */
+@media (max-width: 600px) {
+  .historique-modal-content {
+    padding: 10px 2vw;
+    width: 99vw;
+    min-width: unset;
+    max-width: 100vw;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .historique-sidebar {
+    width: 100% !important;
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+    padding-right: 0;
+    padding-bottom: 10px;
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+  .historique-sidebar h3 {
+    font-size: 1.1em;
+    margin-bottom: 8px;
+  }
+  .actor-list {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .actor-list li {
+    min-width: 110px;
+    max-width: 140px;
+    font-size: 0.98em;
+    padding: 10px 6px;
+    margin-bottom: 0;
+  }
+  .btn-archive {
+    font-size: 1em;
+    padding: 10px 8px;
+    margin-top: 10px;
+  }
+  .historique-main-content {
+    padding-left: 0;
+    gap: 10px;
+  }
+  .historique-display,
+  .archive-display {
+    padding: 8px 2px;
+    font-size: 0.97em;
+  }
+  .history-table th,
+  .history-table td,
+  .archive-table th,
+  .archive-table td {
+    padding: 7px 6px;
+    font-size: 0.92em;
+  }
+  .history-table th,
+  .archive-table th {
+    font-size: 1em;
+  }
+  .history-table-container,
+  .archive-table-container {
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+  }
+  .delete-button {
+    padding: 6px 8px;
+    font-size: 0.95em;
+  }
+  .historique-modal-header h2 {
+    font-size: 1.1em;
+    margin-bottom: 8px;
+  }
+  .close-button {
+    font-size: 1.5em;
+    top: 4px;
+    right: 6px;
+  }
+}

@@ -1,0 +1,1733 @@
+/* === EN-TÊTES COULEUR PERMANENTES TABLEAU DE SUIVI === */
+.header-agent-acconier {
+  background: #2563eb !important;
+  color: #fff !important;
+  font-weight: bold;
+  cursor: pointer;
+}
+.header-resp-acconier {
+  background: #fde047 !important;
+  color: #78350f !important;
+  font-weight: bold;
+  cursor: pointer;
+}
+.header-resp-livraison {
+  background: #22c55e !important;
+  color: #fff !important;
+  font-weight: bold;
+  cursor: pointer;
+}
+/* === COULEURS EN-TÊTES SPÉCIALES TABLEAU AGENT === */
+.th-agent-acconier {
+  background: #2563eb !important;
+  color: #fff !important;
+  font-weight: bold;
+}
+.th-resp-acconier {
+  background: #fde047 !important;
+  color: #78350f !important;
+  font-weight: bold;
+}
+.th-resp-livraison {
+  background: #22c55e !important;
+  color: #fff !important;
+  font-weight: bold;
+}
+/* styleDeSuivie.css & styledeTabBord.css (Fusionnés et ajustés pour les couleurs PDF) */
+
+/* Réduction générale */
+body {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: #f8f9fa;
+  color: #343a40;
+}
+
+/* Nouveau conteneur pour le titre et la recherche, à placer en HAUT de la page */
+.top-header-controls {
+  display: flex;
+  justify-content: space-between; /* Aligne le titre à gauche et la recherche à droite */
+  align-items: flex-end; /* Aligne les éléments par le bas pour un look plus propre */
+  padding: 1rem 1.5rem 0.5rem 1.5rem; /* Haut/Droite/Bas/Gauche pour un espacement harmonieux */
+  margin-top: 0.5rem; /* Petite marge en haut du tout */
+  flex-wrap: wrap; /* Permet le retour à la ligne sur petits écrans */
+  gap: 1rem; /* Espace entre le titre et la recherche si wrap */
+  /* background-color: #e0f8ff; /* Optionnel: pour voir la zone */
+  /* border-bottom: 1px solid #d0e8f0; /* Optionnel: pour délimiter la zone */
+}
+
+/* Section principale du tableau */
+.card-section {
+  background-color: #ffffff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: visible;
+}
+
+/* Titres */
+.section-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+  color: #004d99;
+}
+
+.section-subtitle {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 0.8rem;
+}
+
+/* Conteneur pour le titre et le sous-titre */
+.title-group {
+  display: flex;
+  flex-direction: column;
+  /* Pas besoin de margin-right: auto; ici, le parent gère la distribution */
+}
+
+/* Conteneur de la barre de recherche */
+.search-bar-wrapper-top {
+  /* Pas besoin de margin-left: auto; car le parent gère la distribution */
+  flex-shrink: 0; /* Empêche la barre de recherche de se réduire sur les petits écrans */
+  margin-bottom: 0.8rem; /* Alignement avec le bas du sous-titre */
+}
+
+/* Boutons */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.3rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.2s;
+}
+
+/* Tableau pro et attractif */
+.overflow-x-auto {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  border-radius: 0.6rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+  /* *** DÉGRADÉ REMPLACÉ PAR UNE COULEUR UNIE POUR LA COMPATIBILITÉ PDF *** */
+  background-color: #f8fafc; /* Utilise la première couleur du dégradé ou une couleur claire proche */
+  padding: 0.2rem;
+}
+
+table,
+th,
+td {
+  border: 1px solid #e2e8f0;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 1600px; /* Agrandir le tableau principal */
+}
+
+/* En-tête */
+thead {
+  /* *** DÉGRADÉ REMPLACÉ PAR UNE COULEUR UNIE POUR LA COMPATIBILITÉ PDF *** */
+  background-color: #eef2ff; /* Couleur de base du dégradé d'en-tête */
+  color: #3730a3;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+thead th {
+  border-bottom: 2px solid #cbd5e1;
+  padding: 0.3rem 0.5rem;
+  /* *** ASSURÉ COULEUR UNIE ET CONSISTANTE AVEC THEAD POUR LA COMPATIBILITÉ PDF *** */
+  background-color: #eef2ff; /* Assure la même couleur que le thead parent pour une meilleure fidélité PDF */
+  color: #3730a3;
+  font-weight: bold;
+}
+
+/* Cellules normales */
+td {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.7rem;
+  color: #000000;
+  background: #ffffff;
+  font-weight: bold;
+}
+
+/* Ligne alternée */
+tbody tr:nth-child(even) td {
+  background-color: #f9fafb;
+}
+
+/* Hover sur ligne */
+tbody tr:hover td {
+  background: #e0f2fe;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Première colonne (Date) en gras */
+tbody td:first-child {
+  font-weight: 500;
+}
+
+/* Message "chargement" ou "aucune livraison" */
+#deliveriesTableBody td[colspan="6"],
+#noDeliveriesMessage {
+  font-style: italic;
+  font-size: 0.75rem;
+  color: #6b7280;
+  padding: 0.8rem;
+  text-align: center;
+}
+
+/* Ajustement mobile/tablette */
+@media (max-width: 768px) {
+  th,
+  td {
+    padding: 0.4rem 0.6rem;
+  }
+  .top-header-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .search-bar-wrapper-top {
+    margin-left: 0;
+    width: 100%;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+  }
+  .search-wrapper {
+    width: 100%;
+  }
+  #searchInput {
+    max-width: 100%;
+  }
+}
+
+/* Responsive container */
+.table-responsive {
+  overflow-x: auto;
+  border-radius: 0.4rem;
+}
+
+/* Hauteur max et scroll vertical */
+#tableScrollContainer {
+  max-height: 450px;
+  overflow-y: auto;
+  display: block;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
+/* Styles pour les barres de défilement Webkit (Chrome, Safari, Edge) */
+#tableScrollContainer::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#tableScrollContainer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+#tableScrollContainer::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+#tableScrollContainer::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* En-tête sticky */
+#tableScrollContainer thead th {
+  position: sticky;
+  top: 0;
+  /* Cette couleur unie est maintenue car elle est déjà plus fiable */
+  background-color: #003366; /* Couleur de fond unie pour l'en-tête sticky */
+  color: #ffffff;
+  z-index: 102; /* Plus élevé que les cellules du corps */
+}
+
+/* Nouveau style pour wrapper recherche icône + input */
+.search-wrapper {
+  display: inline-flex;
+  align-items: center;
+  max-width: 300px; /* Réduction de la largeur maximale */
+  gap: 6px;
+}
+
+/* Icône de recherche à l’extérieur, à gauche */
+.search-icon {
+  font-size: 15px;
+  color: #999;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* Input prend tout l’espace restant */
+#searchInput {
+  width: 100%;
+  max-width: 180px; /* Réduction de la largeur maximale pour l'input */
+  height: 28px; /* Réduction de la hauteur */
+  padding: 0 8px;
+  font-size: 0.8rem; /* Légère réduction de la taille de police */
+  border: 1.5px solid #cbd5e1;
+  border-radius: 0.35rem;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Placeholder simple, sans padding-left */
+#searchInput::placeholder {
+  color: #999;
+  padding-left: 0;
+}
+
+/* Focus input */
+#searchInput:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 5px rgba(79, 70, 229, 0.4);
+}
+
+/* Bouton PDF déplacé à droite (maintenu ici pour le positionnement général si nécessaire) */
+.d-flex.justify-content-between {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* Pour forcer le bouton PDF à droite (maintenu pour cohérence) */
+#generatePdfBtn {
+  margin-left: auto;
+}
+
+/* Bouton PDF stylisé */
+.icon-btn-purple {
+  background-color: #4f46e5;
+  color: white;
+  border-color: #4f46e5;
+  font-weight: 600;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 0.25rem 0.8rem;
+  border-radius: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.icon-btn-purple:hover {
+  background-color: #4338ca;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.4);
+  color: white;
+}
+
+.icon-btn-purple:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.5);
+}
+
+/* Bouton orange dans le style du bouton PDF */
+.icon-btn-orange {
+  background-color: #f97316;
+  color: white;
+  border-color: #f97316;
+  font-weight: 600;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 0.25rem 0.8rem;
+  border-radius: 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.icon-btn-orange:hover {
+  background-color: #ea580c;
+  box-shadow: 0 3px 10px rgba(249, 115, 22, 0.4);
+  color: white;
+}
+
+.icon-btn-orange:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.5);
+}
+
+/* Styles pour le sélecteur de statut (pour qu'il ressemble au bouton PDF) */
+#statusFilterSelect {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.25rem 0.8rem;
+  border-radius: 0.3rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease,
+    border-color 0.3s ease;
+
+  background-color: #e98e0e;
+  color: white;
+  border: 1px solid #ffffff;
+
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 14px 10px;
+  padding-right: 2rem;
+}
+
+#statusFilterSelect:hover {
+  background-color: #cd570d;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.4);
+  color: white;
+  border-color: #4338ca;
+}
+
+#statusFilterSelect:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.5);
+}
+
+/* Styles pour les options à l'intérieur du sélecteur */
+#statusFilterSelect option {
+  background-color: white;
+  color: #333;
+}
+
+/* --- Nouveau style pour le bouton "Suivi Spécifique Employé" --- */
+.icon-btn-company-color {
+  background-color: #004d99;
+  color: white;
+  border-color: #004d99;
+  font-weight: 600;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  padding: 0.25rem 0.8rem;
+  border-radius: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.icon-btn-company-color:hover {
+  background-color: #003366;
+  box-shadow: 0 3px 10px rgba(0, 77, 153, 0.4);
+  color: white;
+}
+
+.icon-btn-company-color:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 77, 153, 0.5);
+}
+
+/* --- Styles pour le conteneur du bouton et de la popup --- */
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+  z-index: 1000;
+}
+
+/* --- Styles pour la petite boîte flottante (la "popup") --- */
+.employee-popup {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 10px;
+  z-index: 9999;
+
+  background-color: #ffffff;
+  padding: 0.7rem;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e5e5;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out,
+    visibility 0.2s ease-out;
+
+  /* AGGRANDIR LA LARGEUR DE LA POPUP EMPLOYEE */
+  width: 95%; /* Augmenté de 90% */
+  min-width: 280px; /* Augmenté de 240px */
+  max-width: 320px; /* Augmenté de 280px */
+  box-sizing: border-box;
+
+  height: auto;
+  overflow-x: hidden;
+}
+
+/* Header de la popup */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f2f2f2;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.popup-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+/* Bouton de fermeture de la popup */
+.close-popup-btn {
+  font-size: 1.3rem;
+  color: #a0a0a0;
+}
+
+/* Corps de la popup (contenant la liste des employés) */
+.popup-body {
+  max-height: 250px; /* Augmenté de 180px */
+}
+
+/* --- Styles pour la liste des employés dans la popup --- */
+.employee-list li {
+  padding: 0.5rem 0.7rem 0.5rem 2.8rem;
+  border-bottom: 1px solid #f9f9f9;
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+/* Génère et stylise le numéro de liste avec un pseudo-élément ::before */
+.employee-list li::before {
+  left: 0.5rem;
+  min-width: 20px;
+}
+
+/* Styles au survol (hover) pour les éléments de la liste des employés */
+.employee-list li:hover {
+  box-shadow: inset 3px 0 0 #007bff, 0 1px 5px rgba(0, 123, 255, 0.07);
+}
+
+/* Styles spécifiques pour le message "Aucun employé trouvé." */
+.employee-list li.no-employees-message {
+  padding: 10px 30px;
+  font-size: 0.8rem;
+}
+
+/* Conteneur du contenu de l'employé (nom) */
+.employee-item-content .name {
+  font-size: 0.95rem;
+}
+
+/* Styles pour la barre de recherche à l'intérieur de la popup */
+.popup-search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 0.7rem;
+  padding: 0 0.2rem;
+}
+
+.popup-search-icon {
+  font-size: 0.85rem;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.popup-search-input {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  border: 1px solid #d2dce8;
+  border-radius: 0.25rem;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.03);
+}
+
+.popup-search-input:focus {
+  outline: none;
+  border-color: #004d99;
+  box-shadow: 0 0 0 1px rgba(0, 77, 153, 0.1);
+}
+
+/* État visible de la popup */
+.employee-popup.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Header de la popup */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+
+.popup-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+/* Bouton de fermeture de la popup */
+.close-popup-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #999;
+  padding: 0 0.2rem;
+  line-height: 1;
+  transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.close-popup-btn:hover {
+  color: #e74c3c;
+  transform: rotate(90deg);
+}
+
+/* Corps de la popup (contenant la liste des employés) */
+.popup-body {
+  padding-top: 0;
+  max-height: 250px; /* Mis à jour pour correspondre à .employee-popup .popup-body */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* --- Styles pour la liste des employés dans la popup --- */
+.employee-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: list-item;
+}
+
+.employee-list li {
+  position: relative;
+  padding: 0.6rem 0.8rem 0.6rem 3rem;
+  border-bottom: 1px solid #f8f9fa;
+  cursor: pointer;
+  transition: background-color 0.25s ease-in-out, transform 0.2s ease-in-out,
+    color 0.25s ease-in-out, box-shadow 0.2s ease-in-out;
+  color: #495057;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  text-transform: capitalize;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  background-color: #ffffff;
+}
+
+/* Génère et stylise le numéro de liste avec un pseudo-élément ::before */
+.employee-list li::before {
+  content: counter(list-item) ". ";
+  counter-increment: list-item;
+  font-weight: bold;
+  color: #007bff;
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-shrink: 0;
+  min-width: 22px;
+  text-align: right;
+}
+
+/* Supprime la bordure inférieure du dernier élément */
+.employee-list li:last-child {
+  border-bottom: none;
+}
+
+/* Styles au survol (hover) pour les éléments de la liste des employés */
+.employee-list li:hover {
+  background-color: #e6f0ff;
+  color: #0056b3;
+  box-shadow: inset 4px 0 0 #007bff, 0 2px 7px rgba(0, 123, 255, 0.09);
+  transform: none;
+}
+
+/* Styles spécifiques pour le message "Aucun employé trouvé." */
+.employee-list li.no-employees-message {
+  content: none !important;
+  display: block;
+  list-style: none;
+  padding-left: 0;
+  padding: 15px 40px;
+  text-align: center;
+  color: #000000;
+  font-style: italic;
+  font-size: 0.9rem;
+  background-color: transparent;
+  box-shadow: none;
+  margin-bottom: 0;
+  border-bottom: none;
+  cursor: default;
+}
+
+/* Au survol du message "Aucun employé trouvé.", assurez-vous qu'aucun effet n'est appliqué */
+.employee-list li.no-employees-message:hover {
+  background-color: transparent;
+  color: #000000;
+  transform: none;
+  font-weight: normal;
+  box-shadow: none;
+}
+
+/* Conteneur du contenu de l'employé (nom) */
+.employee-item-content {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.employee-item-content .name {
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: #333;
+  margin-bottom: 0;
+}
+
+/* Styles pour la barre de recherche à l'intérieur de la popup */
+.popup-search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 0.9rem;
+  padding: 0 0.4rem;
+}
+
+.popup-search-icon {
+  font-size: 0.95rem;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.popup-search-input {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.35rem;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.popup-search-input:focus {
+  outline: none;
+  border-color: #004d99;
+  box-shadow: 0 0 0 2px rgba(0, 77, 153, 0.15);
+}
+
+/* Style pour l'icône de chargement */
+.loading-spinner {
+  margin-right: 4px;
+}
+
+/* Animation de rotation */
+.fa-spin {
+  -webkit-animation: fa-spin 1s infinite linear;
+  animation: fa-spin 1s infinite linear;
+}
+
+@-webkit-keyframes fa-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fa-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+/* Styles de base pour la popup de code (comme une modale) */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.popup-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.popup-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 7px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+  transform: translateY(-15px);
+  transition: transform 0.3s ease;
+}
+
+.popup-overlay.is-visible .popup-content {
+  transform: translateY(0);
+}
+
+.popup-content .close-btn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 22px;
+  cursor: pointer;
+  color: #888;
+}
+
+.popup-content .close-btn:hover {
+  color: #555;
+}
+
+.popup-content h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.3rem;
+  margin-bottom: 12px;
+}
+
+.popup-content p {
+  color: #666;
+  margin-bottom: 18px;
+}
+
+.popup-content input[type="password"] {
+  width: calc(100% - 16px);
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.popup-content button {
+  padding: 8px 18px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.popup-content button:hover {
+  background-color: #0056b3;
+}
+
+/* Styles pour l'alerte personnalisée */
+.custom-alert {
+  position: fixed;
+  top: 20px; /* Position en haut de l'écran */
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px); /* Initialement cachée au-dessus de l'écran */
+  opacity: 0;
+  visibility: hidden;
+  padding: 12px 20px; /* Réduit l'espace intérieur */
+  border-radius: 10px; /* Coins légèrement moins arrondis, ou gardez 12px si vous préférez */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Ombre maintenue */
+  z-index: 1000;
+  transition: transform 0.7s ease-out, opacity 0.7s ease-out,
+    visibility 0.7s ease-out; /* Assurez-vous que cette durée est 0.7s */
+
+  min-width: 200px; /* Largeur minimale légèrement réduite */
+  max-width: 90%;
+  text-align: left;
+  color: #ffffff;
+  font-family: "Segoe UI", "Roboto", sans-serif;
+  font-size: 0.95rem; /* Taille de police légèrement réduite */
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Réduit l'espacement entre l'icône et le texte */
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Retiré la propriété 'height' fixe pour qu'elle s'adapte au contenu */
+  height: auto; /* Changed from fixed height to auto */
+}
+
+/* Animation d'entrée */
+.custom-alert.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Masquer complètement après la transition */
+.custom-alert.hidden {
+  display: none;
+}
+
+/* Styles pour le message */
+#customAlertMessage {
+  flex-grow: 1;
+}
+
+/* Icônes (nécessite Font Awesome) */
+.custom-alert i {
+  font-size: 1.5rem; /* Taille des icônes légèrement réduite */
+  line-height: 1;
+}
+
+/* Bar de progression */
+.custom-alert::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px; /* Hauteur de la barre légèrement réduite */
+  background: rgba(255, 255, 255, 0.3);
+  animation: progress-bar var(--duration) linear forwards;
+  transform-origin: left;
+}
+
+/* Couleurs spécifiques et icônes (inchangées) */
+.custom-alert.success {
+  background-color: #065418;
+}
+.custom-alert.success::after {
+  background-color: #218838;
+}
+
+.custom-alert.error {
+  background-color: #680d16;
+}
+.custom-alert.error::after {
+  background-color: #c82333;
+}
+
+.custom-alert.warning {
+  background-color: #d3ac39;
+  color: #ffffff;
+}
+.custom-alert.warning::after {
+  background-color: #e0a800;
+}
+
+.custom-alert.info {
+  background-color: #05515d;
+}
+.custom-alert.info::after {
+  background-color: #138496;
+}
+
+/* Animation de la barre de progression (inchangée) */
+@keyframes progress-bar {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.sticky-col-checkbox {
+  /* Styles pour la colonne des checkboxes */
+  position: sticky;
+  left: 0;
+  background-color: white; /* Ou la couleur de votre en-tête/ligne */
+  z-index: 2; /* S'assure qu'elle est au-dessus des autres colonnes lors du scroll */
+  min-width: 30px; /* Assurez-vous qu'elle a une largeur minimale */
+  max-width: 30px;
+  padding-left: 5px; /* Petit padding pour centrer visuellement */
+  padding-right: 5px;
+  text-align: center;
+}
+
+.sticky-col-checkbox input[type="checkbox"] {
+  transform: scale(1.3); /* Agrandit légèrement les checkboxes */
+  margin: 0; /* Enlève les marges par défaut des navigateurs */
+}
+
+/* Optionnel: pour styliser le bouton Annuler */
+.btn-warning {
+  background-color: #ffc107; /* Jaune Bootstrap */
+  border-color: #ffc107;
+  color: #212529; /* Texte noir */
+}
+.btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+}
+
+/* --- Styles spécifiques pour la colonne "N° Conteneur" du tableau principal --- */
+.sticky-col-container {
+  left: 155px; /* Décalage après la colonne agent */
+  min-width: 150px; /* Légèrement augmenté */
+  max-width: 150px;
+  width: 150px;
+}
+
+/* --- Ajustements pour les `td` des colonnes figées afin de correspondre au `th` --- */
+#deliveriesTableBody .sticky-col {
+  background-color: #ffffff;
+  z-index: 9; /* Doit être moins que le thead sticky, mais plus que les autres td non-sticky */
+}
+
+/* Si les paddings de Bootstrap posent problème, vous pouvez les réinitialiser ou les ajuster ici pour les sticky-cols */
+.sticky-col.px-6,
+.sticky-col.py-3 {
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
+/* Ajustement des bordures pour les cellules éditables dans les colonnes figées */
+.sticky-col .editable-field {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* --- Styles pour la BOÎTE FLOTTANTE de suivi d'activité de l'agent --- */
+#agentActivityBox {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  width: 90%; /* Agrandir la largeur de la boîte flottante */
+  max-width: 1000px; /* Augmenter la largeur maximale */
+  height: 85%; /* Agrandir la hauteur de la boîte flottante */
+  max-height: 700px; /* Augmenter la hauteur maximale */
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out,
+    visibility 0.25s ease-out;
+}
+
+#agentActivityBox.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Tu pourrais aussi avoir besoin d'ajuster la table à l'intérieur */
+#agentActivityBox table {
+  width: 100%; /* S'assure que le tableau remplit la boîte */
+  border-collapse: collapse;
+}
+
+.agent-activity-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Styles améliorés pour le bouton de suppression/fermeture dans la boîte de suivi agent */
+.close-btn-floating {
+  /* Base Style */
+  background: linear-gradient(
+    to right,
+    #e74c3c,
+    #c0392b
+  ); /* Dégradé de rouge */
+  color: white;
+  border: none;
+  border-radius: 50%; /* Bouton rond */
+  width: 36px; /* Légèrement plus grand */
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.8rem; /* Taille de l'icône augmentée */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Ombre plus prononcée */
+  transition: all 0.3s ease; /* Transition plus douce pour toutes les propriétés */
+  flex-shrink: 0;
+  line-height: 1; /* Assure que l'icône est bien centrée */
+}
+
+/* Hover State */
+.close-btn-floating:hover {
+  background: linear-gradient(
+    to right,
+    #c0392b,
+    #a93226
+  ); /* Dégradé plus foncé au survol */
+  transform: scale(1.15) rotate(90deg); /* Agrandissement et rotation plus visibles */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4); /* Ombre plus intense */
+}
+
+/* Active State */
+.close-btn-floating:active {
+  transform: scale(0.9) rotate(90deg); /* Effet de "pression" */
+  background: linear-gradient(
+    to right,
+    #a93226,
+    #922b21
+  ); /* Dégradé encore plus foncé au clic */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Ombre réduite pour effet d'enfoncement */
+}
+
+/* Contenu de la boîte */
+.agent-activity-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  overflow-y: auto; /* Permet le défilement vertical si le contenu dépasse */
+  overflow-x: auto; /* Permet le défilement horizontal du tableau interne */
+}
+
+/* Tableau des livraisons journalières de l'agent */
+.agent-deliveries-table {
+  width: 100%; /* S'assure que le tableau remplit la boîte */
+  border-collapse: collapse;
+  margin-bottom: 15px;
+  min-width: 1100px; /* Augmenter la largeur minimale pour le tableau agent */
+}
+
+.agent-deliveries-table th,
+.agent-deliveries-table td {
+  border: 1px solid #e0e0e0;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 0.8rem;
+  white-space: nowrap; /* Empêche le texte de revenir à la ligne */
+  overflow: hidden; /* Cache le texte qui dépasse */
+  text-overflow: ellipsis; /* Ajoute des points de suspension si le texte est tronqué */
+}
+
+/* Largeurs équitables pour les colonnes du tableau agent */
+.agent-deliveries-table th:nth-child(1), /* Heure */
+.agent-deliveries-table td:nth-child(1) {
+  min-width: 80px;
+  width: 80px;
+  max-width: 80px;
+}
+.agent-deliveries-table th:nth-child(2), /* Client (Nom & Tél) */
+.agent-deliveries-table td:nth-child(2) {
+  min-width: 160px;
+  width: 160px;
+  max-width: 160px;
+}
+.agent-deliveries-table th:nth-child(3), /* Conteneur & Contenu */
+.agent-deliveries-table td:nth-child(3) {
+  min-width: 160px;
+  width: 160px;
+  max-width: 160px;
+}
+.agent-deliveries-table th:nth-child(4), /* N° Conteneur */
+.agent-deliveries-table td:nth-child(4) {
+  min-width: 120px;
+  width: 120px;
+  max-width: 120px;
+}
+.agent-deliveries-table th:nth-child(5), /* Type Pied */
+.agent-deliveries-table td:nth-child(5) {
+  min-width: 100px;
+  width: 100px;
+  max-width: 100px;
+}
+.agent-deliveries-table th:nth-child(6), /* N° Déclaration */
+.agent-deliveries-table td:nth-child(6) {
+  min-width: 120px;
+  width: 120px;
+  max-width: 120px;
+}
+.agent-deliveries-table th:nth-child(7), /* Lieu */
+.agent-deliveries-table td:nth-child(7) {
+  min-width: 100px;
+  width: 100px;
+  max-width: 100px;
+}
+.agent-deliveries-table th:nth-child(8), /* Moyen Transport */
+.agent-deliveries-table td:nth-child(8) {
+  min-width: 120px;
+  width: 120px;
+  max-width: 120px;
+}
+.agent-deliveries-table th:nth-child(9), /* Chauffeur & Tél. */
+.agent-deliveries-table td:nth-child(9) {
+  min-width: 150px;
+  width: 150px;
+  max-width: 150px;
+}
+.agent-deliveries-table th:nth-child(10), /* Immatriculation */
+.agent-deliveries-table td:nth-child(10) {
+  min-width: 120px;
+  width: 120px;
+  max-width: 120px;
+}
+.agent-deliveries-table th:nth-child(11), /* Statut */
+.agent-deliveries-table td:nth-child(11) {
+  min-width: 110px;
+  width: 110px;
+  max-width: 110px;
+}
+.agent-deliveries-table th:nth-child(12), /* Observation */
+.agent-deliveries-table td:nth-child(12) {
+  min-width: 200px; /* Plus grand pour les notes */
+  width: 200px;
+  max-width: 200px;
+}
+
+.agent-deliveries-table th {
+  background-color: #f2f2f2;
+  font-weight: 600;
+  color: #333;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.agent-deliveries-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.agent-deliveries-table tbody tr:hover {
+  background-color: #e6f0ff;
+}
+
+/* Styles pour le statut dans le tableau */
+.status-delivered {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-in-transit {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.icon-green {
+  color: #28a745;
+}
+.icon-orange {
+  color: #ffc107;
+}
+.icon-red {
+  color: #dc3545;
+}
+.icon-blue {
+  color: #007bff;
+}
+.icon-gray {
+  color: #6c757d;
+}
+
+/* Résumé des activités de l'agent */
+.agent-summary-section {
+  background-color: #e0f2fe;
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  margin-top: 15px;
+  border: 1px solid #93c5fd;
+}
+
+.agent-summary-section h4 {
+  margin-top: 0;
+  color: #2563eb;
+  font-size: 1rem;
+  border-bottom: 1px dashed #93c5fd;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+.agent-summary-section p {
+  margin-bottom: 6px;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.agent-summary-section span {
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.evaluate-agent-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 12px;
+  transition: background-color 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 123, 255, 0.15);
+}
+
+.evaluate-agent-btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.25);
+}
+
+/* Styles pour l'input textarea dans les cellules de tableau */
+.editable-textarea {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  resize: vertical;
+  min-height: 35px;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+/* Overlay léger pour la boîte flottante de l'agent */
+#agentActivityBox::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.25);
+  z-index: -1;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
+}
+
+#agentActivityBox.active::before {
+  opacity: 1;
+}
+
+/* Media Queries pour la responsivité de la boîte flottante */
+@media (max-width: 768px) {
+  #agentActivityBox {
+    width: 98%;
+    height: 95%;
+    max-width: unset;
+    max-height: unset;
+  }
+
+  .agent-activity-header {
+    font-size: 0.95rem;
+    padding: 8px 12px;
+  }
+
+  .agent-activity-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .close-btn-floating {
+    font-size: 1.4rem;
+  }
+
+  .agent-activity-content {
+    padding: 12px;
+  }
+
+  .agent-deliveries-table th,
+  .agent-deliveries-table td {
+    padding: 6px;
+    font-size: 0.75rem;
+  }
+
+  /* Rendre le tableau scrollable horizontalement sur les petits écrans */
+  .agent-activity-content .table-responsive {
+    overflow-x: auto;
+  }
+
+  /* Styles pour rendre le tableau plus lisible sur mobile (par exemple, empiler les en-têtes) */
+  .agent-deliveries-table,
+  .agent-deliveries-table tbody,
+  .agent-deliveries-table tr,
+  .agent-deliveries-table td {
+    display: block;
+  }
+
+  .agent-deliveries-table thead {
+    display: none;
+  }
+
+  .agent-deliveries-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 8px;
+    width: 42%;
+    padding-right: 8px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .agent-summary-section {
+    padding: 8px;
+  }
+}
+/**** DATE POUR LE SUIVI JOURNALIER COTE AGENT SPECIFIQUE ***/
+/* Styles pour les boutons de navigation des jours dans la boîte d'activité agent */
+.nav-day-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.25s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.nav-day-btn:hover {
+  background-color: #0056b3;
+  transform: scale(1.08);
+}
+
+.nav-day-btn:active {
+  transform: scale(0.96);
+}
+
+/* Assurez-vous que le header de la boîte agent est en flex pour aligner les éléments */
+.agent-activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background-color: #003366;
+  color: white;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.agent-activity-header h3 {
+  margin: 0 8px;
+  flex-grow: 1;
+  text-align: center;
+  font-size: 1.1em;
+}
+
+/* ANCIEN STYLE DU BOUTON CLOSE-BTN-FLOATING
+.close-btn-floating {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.6rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.close-btn-floating:hover {
+  color: #ff4d4d;
+}
+*/
+
+/***MARQUEE **/
+/* Pour le conteneur principal du défilement */
+/* --- Styles existants pour la bande défilante --- */
+/* --- Styles existants pour la bande défilante --- */
+.scrolling-message-container {
+  width: 100%;
+  overflow: hidden;
+  background-color: #f0f8ff;
+  border: 1px solid #cceeff;
+  padding: 0px 2px;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-size: 1em;
+  color: #333;
+  position: relative;
+  z-index: 1000;
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  /*transition: opacity 0.4s ease-out; /* Durée du fondu (0.4s est une bonne valeur de départ) */
+  opacity: 1; /* Par défaut, le contenu est visible */
+  font-weight: bold;
+}
+
+.scrolling-message-content {
+  display: inline-block; /* OU flex. inline-block est souvent plus fiable pour scrollWidth */
+  white-space: nowrap !important; /* TRÈS IMPORTANT : force le contenu sur une seule ligne */
+  white-space-collapse: stable !important; /* TRÈS IMPORTANT : Assure que les espaces sont traités comme attendu */
+  will-change: transform; /* Optimisation de performance pour l'animation */
+  /* ENLEVEZ TOUTE PROPRIÉTÉ width: 100%; ou max-width: 100%; ICI */
+}
+
+.scrolling-message-content span.message-item {
+  flex-shrink: 0; /* Empêche les messages de se réduire */
+  padding-right: 20px; /* IMPORTANT : Espace entre les messages, contribue au scrollWidth */
+  /* ... autres styles de texte ... */
+}
+
+.scrolling-message-content .message-prefix {
+  color: #4caf50;
+}
+#scrollingMessageContent {
+  /* TRÈS IMPORTANT : Doit être inline-block ou flex pour permettre le débordement horizontal */
+  display: inline-block !important; /* OU display: flex !important; */
+
+  /* TRÈS IMPORTANT : S'assure que le texte ne revient pas à la ligne */
+  white-space: nowrap !important;
+
+  /* S'assure que les espaces blancs sont traités normalement et contribuent à la largeur */
+  white-space-collapse: unset !important; /* OU initial ou normal. 'unset' est souvent le plus sûr pour annuler */
+
+  /* Optimisation de performance pour les animations de transformation */
+  will-change: transform, opacity;
+  transition: opacity 0.4s ease-in-out;
+  /* Assurez-vous qu'il n'y a PAS de width: 100%; ou max-width: 100%; */
+  /* Assurez-vous qu'il n'y a PAS de overflow: hidden; ici (seulement sur le conteneur parent) */
+}
+/* Style pour la vignette de signature */
+.signature-thumbnail {
+  transition: all 0.2s ease-in-out; /* Ajoute une transition douce */
+  border: 1px solid transparent; /* Bordure transparente par défaut */
+}
+
+/* Effet au survol */
+.signatureEIR:hover {
+  border-color: #0075fb; /* Change la couleur de la bordure au survol (bleu, par exemple) */
+  box-shadow: 0 0 8px rgba(239, 215, 2, 0.822); /* Ajoute une ombre bleue douce */
+  transform: scale(1.05); /* Légère augmentation de la taille */
+  cursor: pointer; /* Confirme visuellement que c'est cliquable */
+}
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Ajoutez ces styles (ou assurez-uois qu'ils sont présents dans votre CSS) */
+
+.agent-status-indicator {
+  /* Modifications pour la taille et le positionnement */
+  padding: 4px 10px; /* Diminuer le padding pour réduire la taille */
+  font-size: 0.7em; /* Réduire légèrement la taille de la police */
+  min-width: unset; /* Supprimer la largeur minimale si elle est trop contraignante */
+  width: fit-content; /* Adapter la largeur au contenu */
+  margin-left: auto; /* Pousser le bouton à l'extrême droite dans son conteneur flex */
+  /* Fin des modifications */
+
+  border-radius: 20px; /* Forme de pilule */
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  margin-right: 1rem; /* Conserver si vous voulez un espace avant la fin du conteneur */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease; /* Pour une transition douce */
+  font-weight: bold;
+}
+
+.status-active {
+  background-color: #28a745; /* Vert pour "Actif" */
+  border: 1px solid #218838;
+}
+
+.status-past-date {
+  background-color: #ffc107; /* Orange pour "Date Passée" */
+  color: #343a40; /* Texte plus sombre sur orange */
+  border: 1px solid #e0a800;
+  font-weight: bold;
+}
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Fond semi-transparent */
+  display: flex;
+  justify-content: center; /* Centre horizontalement */
+  align-items: center; /* Centre verticalement */
+  z-index: 9999; /* S'assure qu'il est au-dessus de tout le reste */
+}
+
+/* Styles pour la boîte de confirmation elle-même */
+.confirm-box {
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 400px;
+  width: 90%; /* Largeur responsive */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Espace entre les éléments */
+}
+
+.confirm-box p {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 15px; /* Ajoutez un peu d'espace sous le paragraphe */
+}
+
+.confirm-box button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+  margin: 0 5px; /* Espace entre les boutons */
+}
+
+/* Styles spécifiques pour les boutons Oui/Supprimer */
+.confirm-box button.btn-danger {
+  background-color: #dc3545; /* Rouge Bootstrap */
+  color: white;
+}
+.confirm-box button.btn-danger:hover {
+  background-color: #c82333; /* Rouge plus foncé au survol */
+}
+
+/* Styles spécifiques pour les boutons Non/Annuler */
+.confirm-box button.btn-secondary {
+  background-color: #082b9f; /* Gris Bootstrap */
+  color: white;
+}
+.confirm-box button.btn-secondary:hover {
+  background-color: #132aac; /* Gris plus foncé au survol */
+}
+
+/* Effet de flash coloré pour le surlignage interactif */
+.highlight-blue-flash {
+  background-color: #b6e0fe !important;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.85;
+}
+.highlight-yellow-flash {
+  background-color: #fff9c4 !important;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.85;
+}
+.highlight-green-flash {
+  background-color: #b9f6ca !important;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.85;
+}
+
+/*****tags*/
+/* === Styles pour Numéro TC(s) en tags et popup === */
+.tc-tag {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #1e40af;
+  border-radius: 12px;
+  padding: 2px 10px;
+  margin: 0 2px 2px 0;
+  font-size: 0.95em;
+  font-weight: 500;
+  border: 1px solid #b6c6e6;
+  box-shadow: 0 1px 2px rgba(30, 64, 175, 0.04);
+  transition: background 0.2s;
+}
+.tc-tag-more {
+  background: #c7d2fe;
+  color: #3730a3;
+  font-weight: bold;
+}
+.tc-tags-btn {
+  background: #f3f4f6;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 1em;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  transition: background 0.2s, border 0.2s;
+}
+.tc-tags-btn:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+.tc-chevron {
+  margin-left: 6px;
+  font-size: 0.9em;
+  color: #6366f1;
+}
+.tc-popup {
+  position: absolute;
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 8px 0;
+  z-index: 1002;
+  top: 110%;
+  left: 0;
+  display: block;
+}
+.tc-popup-item {
+  padding: 6px 18px;
+  font-size: 1em;
+  color: #1e293b;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tc-popup-item:hover {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.tc-multi-cell {
+  position: relative;
+  min-width: 120px;
+}

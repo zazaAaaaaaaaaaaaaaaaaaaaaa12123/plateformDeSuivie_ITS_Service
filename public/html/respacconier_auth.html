@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Authentification Responsable Acconier</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    />
+    <style>
+      body {
+        background: linear-gradient(135deg, #e0e7ff 0%, #fff 100%);
+        font-family: "Segoe UI", "Roboto", Arial, sans-serif;
+      }
+      .respacconier-container {
+        width: 100vw;
+        max-width: 430px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 2rem;
+        box-shadow: 0 8px 32px 0 rgba(37, 99, 235, 0.13);
+        border: 2px solid #2563eb;
+        padding: 2.7rem 1.5rem 2.2rem 1.5rem;
+        position: relative;
+        overflow: hidden;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        margin-top: 7vh;
+        margin-bottom: 7vh;
+      }
+      .respacconier-title {
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 1.25rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #2563eb 0%, #fbbf24 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .form-group {
+        margin-bottom: 1.3rem;
+        position: relative;
+      }
+      label {
+        font-weight: 700;
+        color: #2563eb;
+        margin-bottom: 0.2rem;
+        display: block;
+      }
+      input[type="text"],
+      input[type="password"],
+      input[type="email"] {
+        width: 100%;
+        padding: 11px 44px 11px 14px;
+        border: 2px solid #2563eb;
+        border-radius: 0.9rem;
+        font-size: 1.08rem;
+        background: #f0f6ff;
+        transition: border 0.2s, box-shadow 0.2s;
+        box-shadow: 0 1px 2px 0 #2563eb11;
+      }
+      input:focus {
+        border-color: #fbbf24;
+        box-shadow: 0 0 0 2px #fbbf2433;
+        background: #fff;
+      }
+      .btn {
+        width: 100%;
+        padding: 13px;
+        background: linear-gradient(90deg, #2563eb 0%, #fbbf24 100%);
+        color: #fff;
+        border: none;
+        border-radius: 0.9rem;
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px 0 #2563eb22;
+        margin-top: 10px;
+        transition: all 0.2s;
+      }
+      .btn:hover {
+        filter: brightness(1.08) saturate(1.2);
+        box-shadow: 0 4px 16px 0 #2563eb33;
+        transform: translateY(-2px);
+      }
+      .switch-link {
+        color: #2563eb;
+        cursor: pointer;
+        text-decoration: underline;
+        font-size: 1em;
+        display: block;
+        text-align: center;
+        margin-top: 14px;
+        font-weight: 600;
+      }
+      .error-msg {
+        color: #dc2626;
+        text-align: center;
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: none;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+      }
+      .success-msg {
+        color: #059669;
+        text-align: center;
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: none;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+      }
+      .toggle-password-fa {
+        position: absolute;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        font-size: 1.2em;
+        color: #fbbf24;
+        z-index: 2;
+      }
+      @media (max-width: 600px) {
+        .respacconier-container {
+          max-width: 98vw;
+          min-width: 0;
+          padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+          border-radius: 1rem;
+          margin-top: 2vw;
+        }
+        .respacconier-title {
+          font-size: 1.05rem;
+        }
+        .btn {
+          font-size: 1.05rem;
+          padding: 10px;
+        }
+        .form-group label {
+          font-size: 1em;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+          font-size: 1em;
+          padding: 9px 36px 9px 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="respacconier-container">
+      <div id="form-inscription-respacconier">
+        <div class="respacconier-title">Inscription Responsable Acconier</div>
+        <div class="error-msg" id="register-error-respacconier"></div>
+        <div class="success-msg" id="register-success-respacconier"></div>
+        <form id="registerFormRespAcconier">
+          <div class="form-group">
+            <label for="register-nom-respacconier">Nom complet</label>
+            <input
+              type="text"
+              id="register-nom-respacconier"
+              name="nom"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="register-email-respacconier">Email professionnel</label>
+            <input
+              type="email"
+              id="register-email-respacconier"
+              name="email"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <!-- Champ téléphone supprimé -->
+          </div>
+          <div class="form-group">
+            <label for="register-password-respacconier">Mot de passe</label>
+            <input
+              type="password"
+              id="register-password-respacconier"
+              name="password"
+              required
+            />
+            <span
+              class="toggle-password-fa"
+              onclick="togglePassword('register-password-respacconier', this)"
+              ><i class="fas fa-eye"></i
+            ></span>
+          </div>
+          <button type="submit" class="btn">S'inscrire</button>
+        </form>
+        <span class="switch-link" id="to-login-respacconier"
+          >Déjà inscrit ? Se connecter</span
+        >
+      </div>
+      <div id="form-connexion-respacconier" style="display: none">
+        <div class="respacconier-title">Connexion Responsable Acconier</div>
+        <div class="error-msg" id="login-error-respacconier"></div>
+        <form id="loginFormRespAcconier">
+          <div class="form-group">
+            <label for="login-email-respacconier">Email professionnel</label>
+            <input
+              type="email"
+              id="login-email-respacconier"
+              name="email"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="login-password-respacconier">Mot de passe</label>
+            <input
+              type="password"
+              id="login-password-respacconier"
+              name="password"
+              required
+            />
+            <span
+              class="toggle-password-fa"
+              onclick="togglePassword('login-password-respacconier', this)"
+              ><i class="fas fa-eye"></i
+            ></span>
+          </div>
+          <button type="submit" class="btn">Se connecter</button>
+        </form>
+        <span class="switch-link" id="to-register-respacconier"
+          >Créer un compte</span
+        >
+      </div>
+      <div id="form-code-entreprise" style="display: none">
+        <div class="respacconier-title">Validation du code d'entreprise</div>
+        <div class="error-msg" id="code-error-respacconier"></div>
+        <form id="codeEntrepriseFormRespAcconier">
+          <div class="form-group">
+            <label for="code-entreprise-respacconier">Code d'entreprise</label>
+            <input
+              type="text"
+              id="code-entreprise-respacconier"
+              name="codeEntreprise"
+              required
+            />
+          </div>
+          <button type="submit" class="btn">Valider</button>
+          <span class="switch-link" id="code-entreprise-oublie"
+            >Code entreprise oublié ?</span
+          >
+          <div
+            id="code-entreprise-oublie-form-container"
+            style="margin-top: 10px"
+          ></div>
+        </form>
+      </div>
+    </div>
+    <script>
+      function togglePassword(inputId, el) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+          input.type = "text";
+          el.querySelector("i").classList.remove("fa-eye");
+          el.querySelector("i").classList.add("fa-eye-slash");
+        } else {
+          input.type = "password";
+          el.querySelector("i").classList.remove("fa-eye-slash");
+          el.querySelector("i").classList.add("fa-eye");
+        }
+      }
+    </script>
+    <script src="../js/respacconier_auth.js"></script>
+    <script>
+      // Sauvegarde les infos acconier dans le localStorage après connexion réussie
+      function saveAcconierUserToLocalStorage(acconier) {
+        if (!acconier || !acconier.nom || !acconier.email) return;
+        localStorage.setItem("respacconierUser", JSON.stringify(acconier));
+      }
+
+      // Hook sur la soumission du formulaire de connexion
+      document.addEventListener("DOMContentLoaded", function () {
+        const loginForm = document.getElementById("loginFormRespAcconier");
+        if (loginForm) {
+          loginForm.addEventListener("submit", function (e) {
+            // On laisse le JS principal gérer la requête, mais on hook la sauvegarde après succès
+            // On attend un court délai pour laisser le JS principal traiter la connexion
+            setTimeout(function () {
+              // Récupère l'email saisi
+              const email = document
+                .getElementById("login-email-respacconier")
+                .value.trim();
+              // Récupère le nom depuis le backend ou le localStorage si déjà stocké (à adapter selon votre logique)
+              // Ici, on suppose que le nom est stocké dans localStorage.user après connexion, sinon il faut l'adapter
+              let nom = "";
+              // 1. Essaye de récupérer depuis localStorage.user (connexion classique)
+              try {
+                const user = JSON.parse(localStorage.getItem("user"));
+                if (user && user.nom && user.email === email) {
+                  nom = user.nom;
+                }
+              } catch (e) {}
+              // 2. Sinon, cherche dans la liste des utilisateurs acconier (stockée à l'inscription)
+              if (!nom) {
+                try {
+                  const users = JSON.parse(
+                    localStorage.getItem("users_acconier")
+                  );
+                  if (Array.isArray(users)) {
+                    const found = users.find((u) => u.email === email);
+                    if (found && found.nom) nom = found.nom;
+                  }
+                } catch (e) {}
+              }
+              // 3. Si trouvé, on sauvegarde
+              if (nom && email) {
+                saveAcconierUserToLocalStorage({ nom, email, avatar: "" });
+              }
+            }, 500); // délai pour laisser la connexion se faire
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

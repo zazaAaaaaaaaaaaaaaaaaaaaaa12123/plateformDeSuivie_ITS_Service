@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validation Livraison Conteneur - Employé</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../css/styleFormulaireEmploy.css" />
+    <style>
+      /* Styles pour les bordures d'erreur */
+      input.border-red-500,
+      select.border-red-500,
+      textarea.border-red-500 {
+        border-color: #ef4444 !important; /* Tailwind red-500 */
+      }
+      /* --- Ajout d'un style moderne, professionnel et séduisant --- */
+      body {
+        background: linear-gradient(135deg, #e0e7ff 0%, #f0fdfa 100%);
+      }
+      #appContainer {
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+        border-radius: 1.5rem;
+        border: 1px solid #e0e7ff;
+        background: rgba(255, 255, 255, 0.95);
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: "Segoe UI", "Roboto", Arial, sans-serif;
+        letter-spacing: 0.5px;
+      }
+      h1 {
+        background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 2.2rem;
+        margin-bottom: 1.5rem;
+      }
+      h2 {
+        color: #2563eb;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      h3 {
+        color: #0e7490;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+      }
+      label {
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 0.2rem;
+      }
+      input,
+      select,
+      textarea {
+        background: #f8fafc;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 0.6rem;
+        font-size: 1rem;
+        transition: border 0.2s, box-shadow 0.2s;
+        box-shadow: 0 1px 2px 0 rgba(16, 185, 129, 0.04);
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px #2563eb33;
+        background: #fff;
+      }
+      button[type="submit"] {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px 0 #2563eb22;
+        border: none;
+      }
+      button[type="submit"]:hover {
+        filter: brightness(1.08) saturate(1.2);
+        box-shadow: 0 4px 16px 0 #2563eb33;
+      }
+      #validateCodeBtn {
+        background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+        border: none;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px 0 #2563eb22;
+        transition: all 0.2s ease-in-out; /* Added transition */
+      }
+      #validateCodeBtn:hover {
+        filter: brightness(1.08) saturate(1.2);
+        box-shadow: 0 4px 16px 0 #2563eb33;
+        transform: translateY(-2px); /* Added transform */
+      }
+      #deliveryFormSection {
+        animation: fadeIn 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        background: #e0e7ff;
+        border-radius: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #a5b4fc;
+        border-radius: 8px;
+      }
+      /* Success & error messages */
+      #formSuccess {
+        background: #d1fae5;
+        color: #047857;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        box-shadow: 0 1px 4px 0 #04785722;
+      }
+      #formError {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        box-shadow: 0 1px 4px 0 #b91c1c22;
+      }
+      /* Responsive tweaks */
+      @media (max-width: 600px) {
+        #appContainer {
+          padding: 0.5rem;
+          border-radius: 0.7rem;
+        }
+        h1 {
+          font-size: 1.3rem;
+        }
+        h2 {
+          font-size: 1.1rem;
+        }
+        /* Avatar responsive */
+        #profileAvatarContainer {
+          min-width: 48px !important;
+          min-height: 48px !important;
+          margin-bottom: 8px !important;
+        }
+        #profileAvatarContainer > div {
+          min-width: 38px !important;
+          min-height: 38px !important;
+        }
+        #profileAvatarContainer img,
+        #profileAvatarContainer div[style*="border-radius:50%"] {
+          width: 38px !important;
+          height: 38px !important;
+          font-size: 1.15em !important;
+        }
+        #profileAvatarContainer .profile-avatar-name {
+          font-size: 0.98em !important;
+          margin-top: 3px !important;
+        }
+        #profileAvatarContainer .profile-avatar-email {
+          font-size: 0.91em !important;
+        }
+        #profileMenuDropdown {
+          top: 50px !important;
+          min-width: 140px !important;
+          padding: 12px 10px 10px 10px !important;
+        }
+        /* Bouton historique responsive */
+        #historySidebarBtn {
+          position: fixed !important;
+          top: 12px !important;
+          left: 12px !important;
+          width: 38px !important;
+          height: 38px !important;
+          font-size: 1.15em !important;
+          z-index: 3000 !important;
+          box-shadow: 0 2px 8px #2563eb22 !important;
+        }
+        /* Sidebar historique responsive */
+        #historySidebarFormulaire {
+          width: 98vw !important;
+          max-width: 370px !important;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-100 flex items-center justify-center min-h-screen p-2 sm:p-4"
+  >
+    <div
+      id="appContainer"
+      class="bg-white p-5 rounded-lg shadow-lg w-full max-w-lg flex flex-col h-auto max-h-[95vh] overflow-y-auto"
+    >
+      <h1 class="text-3xl font-bold text-center text-gray-800 mb-4"></h1>
+
+      <div id="codeEntrySection" class="flex-grow">
+        <label
+          for="companyCode"
+          class="block text-gray-700 text-sm font-bold mb-2"
+        >
+          Entrez le code d'entreprise
+        </label>
+        <input
+          type="password"
+          id="companyCode"
+          class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 pr-10"
+          placeholder="Code d'entreprise"
+        />
+        <span
+          class="toggle-password-fa"
+          style="
+            position: absolute;
+            right: 22px;
+            top: 44px;
+            cursor: pointer;
+            z-index: 10;
+          "
+          onclick="togglePassword('companyCode', this)"
+          ><i class="fas fa-eye"></i
+        ></span>
+        <script>
+          function togglePassword(inputId, el) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.type === "password") {
+              input.type = "text";
+              el.querySelector("i").classList.remove("fa-eye");
+              el.querySelector("i").classList.add("fa-eye-slash");
+            } else {
+              input.type = "password";
+              el.querySelector("i").classList.remove("fa-eye-slash");
+              el.querySelector("i").classList.add("fa-eye");
+            }
+          }
+        </script>
+        <div id="codeError" class="text-red-500 text-sm mt-2 hidden"></div>
+        <button
+          id="validateCodeBtn"
+          class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 w-full transition duration-200 transform hover:scale-105"
+        >
+          Valider le code
+        </button>
+        <div class="flex justify-end mt-2">
+          <button
+            type="button"
+            id="codeOublieBtn"
+            class="text-blue-600 hover:underline text-sm font-medium focus:outline-none"
+          >
+            Code oublié ?
+          </button>
+        </div>
+        <div id="demandeCodeForm" style="display: none; margin-top: 12px"></div>
+      </div>
+
+      <!-- Avatar au-dessus du formulaire de livraison -->
+      <div id="profileAvatarContainer" class="mb-4 flex justify-center items-center min-w-[80px] min-h-[80px]"></div>
+      <div id="deliveryFormSection" class="hidden flex-grow">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4 text-center">
+          Ordre de Livraison
+        </h2>
+        <!-- Bouton de déconnexion supprimé ici, le bouton flottant reste -->
+        <form
+          id="deliveryForm"
+          class="flex-grow flex flex-col justify-between"
+        >
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                <!-- Section Agent Visiteur -->
+                <fieldset
+                  class="col-span-1 md:col-span-2 border-2 border-blue-200 rounded-xl p-3 mb-2 bg-blue-50/40"
+                >
+                  <legend class="px-2 text-blue-700 font-semibold text-base">
+                    Agent Aconnier
+                  </legend>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                    <div class="col-span-1">
+                      <label
+                        for="employeeName"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Nom de l'agent Acconié :</label
+                      >
+                      <input
+                        type="text"
+                        id="employeeName"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Nom de l'agent acconier"
+                        required
+                      />
+                    </div>
+                  </div>
+                </fieldset>
+
+                <!-- Section Client -->
+                <fieldset
+                  class="col-span-1 md:col-span-2 border-2 border-blue-200 rounded-xl p-3 mb-2 bg-blue-50/40"
+                >
+                  <legend class="px-2 text-blue-700 font-semibold text-base">
+                    Informations sur le client
+                  </legend>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                    <div class="col-span-1">
+                      <label
+                        for="clientName"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Nom du client :</label
+                      >
+                      <input
+                        type="text"
+                        id="clientName"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Nom du client"
+                        required
+                      />
+                    </div>
+                    <div class="col-span-1">
+                      <label
+                        for="clientPhone"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Numéro de téléphone du client :</label
+                      >
+                      <input
+                        type="text"
+                        id="clientPhone"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Ex: 0700000000 ou +2250700000000"
+                        required
+                      />
+                    </div>
+                  </div>
+                </fieldset>
+
+                <!-- Section Conteneur -->
+                <fieldset
+                  class="col-span-1 md:col-span-2 border-2 border-blue-200 rounded-xl p-3 mb-2 bg-blue-50/40"
+                >
+                  <legend class="px-2 text-blue-700 font-semibold text-base">
+                    Informations sur le conteneur
+                  </legend>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                    <div class="col-span-1">
+                      <label
+                        for="containerNumber"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Numéro TC(s) :</label
+                      >
+                      <input
+                        type="text"
+                        id="containerNumber"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Ex: TCNU1234567"
+                        required
+                      />
+                      <!-- Zone dynamique pour le mapping TC/type de pied (remplie par JS) -->
+                      <div id="containerFootTypesDynamic" class="mt-2"></div>
+                      <small class="text-xs text-gray-500"
+                        >Un champ "Type de pied" apparaîtra pour chaque numéro
+                        TC saisi ci-dessus.</small
+                      >
+                      <!-- Fin zone dynamique -->
+                    </div>
+
+                    <!-- Numéro de BL -->
+                    <div class="col-span-1">
+                      <label
+                        for="blNumber"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Numéro de BL :</label
+                      >
+                      <input
+                        type="text"
+                        id="blNumber"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Numéro de BL"
+                      />
+                    </div>
+
+                    <!-- DÉPLACÉ : Compagnie maritime -->
+                    <div class="col-span-1">
+                      <label
+                        for="shippingCompany"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Compagnie maritime :</label
+                      >
+                      <input
+                        type="text"
+                        id="shippingCompany"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Compagnie maritime"
+                      />
+                    </div>
+
+                    <!-- Nom du navire -->
+                    <div class="col-span-1">
+                      <label
+                        for="shipName"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Nom du navire :</label
+                      >
+                      <input
+                        type="text"
+                        id="shipName"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Nom du navire"
+                      />
+                    </div>
+
+                    <div class="col-span-1">
+                      <label
+                        for="containerFootType"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        style="display: none"
+                        >Type de conteneur (pieds) :</label
+                      >
+                      <div id="containerFootTypesDynamic" class="mt-2"></div>
+                    </div>
+                    <div class="col-span-1 md:col-span-2">
+                      <label
+                        for="containerTypeAndContent"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Contenu :</label
+                      >
+                      <input
+                        type="text"
+                        id="containerTypeAndContent"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Ex: Conteneur sec 20' - Marchandises diverses"
+                        required
+                      />
+                    </div>
+                    <div class="col-span-1">
+                      <!-- Champ poids global supprimé : chaque TC a désormais son propre champ poids dans la zone dynamique -->
+
+                      <!-- Champ Mode de Transport déplacé ici (à la place de l'ancien champ Poids) -->
+                      <label
+                        for="transporterMode"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Mode de Transport :</label
+                      >
+                      <select
+                        id="transporterMode"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                      >
+                        <option value="">Sélectionnez un mode</option>
+                        <option value="REMORQUE">REMORQUE</option>
+                        <option value="AUTO-CHARGEUSE">AUTO-CHARGEUSE</option>
+                      </select>
+                    </div>
+
+                    <!-- DÉPLACÉ : Mode de Transport -->
+                    <!-- (déplacé à la place de l'ancien champ Poids) -->
+                    <!-- DÉPLACÉ : Nombre de conteneurs -->
+                    <div class="col-span-1">
+                      <label
+                        for="numberOfContainers"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Nombre de conteneurs :</label
+                      >
+                      <input
+                        type="number"
+                        id="numberOfContainers"
+                        min="1"
+                        value="1"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        required
+                      />
+                    </div>
+
+                    <div class="col-span-1 md:col-span-2">
+                      <label
+                        for="lieu"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Lieu de la livraison :</label
+                      >
+                      <input
+                        type="text"
+                        id="lieu"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Lieu exact de la livraison"
+                        required
+                      />
+                    </div>
+
+                    <div class="col-span-1 md:col-span-2 pt-4 pb-1">
+                      <h3 class="text-lg font-semibold text-blue-700 mb-1">
+                        Informations sur la déclaration & le dossier
+                      </h3>
+                    </div>
+                    <div class="col-span-1">
+                      <label
+                        for="declarationNumber"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >N° de déclaration :</label
+                      >
+                      <input
+                        type="text"
+                        id="declarationNumber"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Numéro de déclaration en douane"
+                        required
+                      />
+                    </div>
+                    <div class="col-span-1">
+                      <label
+                        for="dossierNumber"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Numéro de dossier :</label
+                      >
+                      <input
+                        type="text"
+                        id="dossierNumber"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        placeholder="Numéro de dossier"
+                      />
+                    </div>
+                    <div class="col-span-1">
+                      <label
+                        for="circuit"
+                        class="block text-gray-700 text-sm font-bold mb-1"
+                        >Circuit :</label
+                      >
+                      <select
+                        id="circuit"
+                        class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        required
+                      >
+                        <option value="">Sélectionnez un circuit</option>
+                        <option value="VAD">VAD</option>
+                        <option value="VAQ">VAQ</option>
+                        <option value="BAE">BAE</option>
+                        <option value="SCANNER">SCANNER</option>
+                      </select>
+                    </div>
+                    <!-- ANCIEN EMPLACEMENT : Mode de Transport -->
+                    <!-- ANCIEN EMPLACEMENT : Nombre de conteneurs -->
+                  </div>
+                </fieldset>
+
+                <div
+                  id="formError"
+                  class="text-red-500 text-sm mt-2 hidden col-span-1 md:col-span-2"
+                ></div>
+                <div
+                  id="formSuccess"
+                  class="text-green-500 text-sm mt-2 hidden col-span-1 md:col-span-2"
+                ></div>
+              </div>
+              <div class="flex flex-col space-y-3 mt-auto pt-3">
+                <button
+                  type="submit"
+                  data-status="pending_acconier"
+                  class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 w-full transition duration-200 transform hover:scale-105 flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-check mr-2"></i> Soumettre la Demande
+                </button>
+                <button
+                  type="submit"
+                  data-status="rejected_by_employee"
+                  class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 w-full transition duration-200 transform hover:scale-105 flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-xmark mr-2"></i> Rejeter la Demande
+                </button>
+                <button
+                  type="button"
+                  id="cancelSubmitBtn"
+                  class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-75 w-full transition duration-200 transform hover:scale-105 flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-arrow-left mr-2"></i> Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Bouton de déconnexion flottant en haut à droite -->
+
+    <script src="../js/scriptEmployerFormulaire.js"></script>
+    <!-- La gestion du bouton 'Code oublié ?' est assurée uniquement par scriptEmployerFormulaire.js -->
+    <!-- Le script de déconnexion est désormais géré dans scriptEmployerFormulaire.js -->
+  </body>
+</html>

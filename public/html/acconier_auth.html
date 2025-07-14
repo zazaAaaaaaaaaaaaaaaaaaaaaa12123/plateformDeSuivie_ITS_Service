@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Authentification Acconier</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    />
+    <style>
+      body {
+        background: linear-gradient(135deg, #e0e7ff 0%, #f0fdfa 100%);
+        font-family: "Segoe UI", "Roboto", Arial, sans-serif;
+      }
+      .auth-container {
+        width: 100vw;
+        max-width: 410px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.97);
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+        border: 1px solid #e0e7ff;
+        padding: 2.5rem 1.2rem 2rem 1.2rem;
+        position: relative;
+        overflow: hidden;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        margin-top: 7vh;
+        margin-bottom: 7vh;
+      }
+      @media (min-width: 700px) {
+        body {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .auth-container {
+          min-height: unset;
+          margin-top: 0;
+          margin-bottom: 0;
+          justify-content: center;
+        }
+      }
+      .auth-title {
+        text-align: center;
+        margin-bottom: 1.7rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .form-group {
+        margin-bottom: 1.2rem;
+        position: relative;
+      }
+      label {
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 0.2rem;
+        display: block;
+      }
+      input[type="text"],
+      input[type="password"],
+      input[type="email"] {
+        width: 100%;
+        padding: 10px 40px 10px 12px;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 0.7rem;
+        font-size: 1rem;
+        background: #f8fafc;
+        transition: border 0.2s, box-shadow 0.2s;
+        box-shadow: 0 1px 2px 0 rgba(16, 185, 129, 0.04);
+      }
+      input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px #2563eb33;
+        background: #fff;
+      }
+      .btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+        color: #fff;
+        border: none;
+        border-radius: 0.7rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px 0 #2563eb22;
+        margin-top: 8px;
+        transition: all 0.2s;
+      }
+      .btn:hover {
+        filter: brightness(1.08) saturate(1.2);
+        box-shadow: 0 4px 16px 0 #2563eb33;
+        transform: translateY(-2px);
+      }
+      .switch-link {
+        color: #2563eb;
+        cursor: pointer;
+        text-decoration: underline;
+        font-size: 1em;
+        display: block;
+        text-align: center;
+        margin-top: 14px;
+        font-weight: 500;
+      }
+      .error-msg {
+        color: #b91c1c;
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 10px;
+        background: none;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+      }
+      .success-msg {
+        color: #047857;
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 10px;
+        background: none;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+      }
+      .toggle-password-fa {
+        position: absolute;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        font-size: 1.2em;
+        color: #2563eb;
+        z-index: 2;
+      }
+      @media (max-width: 600px) {
+        .auth-container {
+          max-width: 98vw;
+          min-width: 0;
+          padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+          border-radius: 0.7rem;
+          margin-top: 2vw;
+        }
+        .auth-title {
+          font-size: 0.95rem;
+        }
+        .btn {
+          font-size: 1rem;
+          padding: 10px;
+        }
+        .form-group label {
+          font-size: 0.98em;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+          font-size: 0.98em;
+          padding: 9px 36px 9px 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="auth-container">
+      <div id="form-inscription">
+        <div class="auth-title">Inscription Agent Transit</div>
+        <div class="error-msg" id="register-error"></div>
+        <div class="success-msg" id="register-success"></div>
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="register-nom">Nom complet</label>
+            <input type="text" id="register-nom" name="nom" required />
+          </div>
+          <div class="form-group">
+            <label for="register-email">Email</label>
+            <input type="email" id="register-email" name="email" required />
+          </div>
+          <div class="form-group">
+            <!-- Champ téléphone supprimé -->
+          </div>
+          <div class="form-group">
+            <label for="register-password">Mot de passe</label>
+            <input
+              type="password"
+              id="register-password"
+              name="password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn">S'inscrire</button>
+        </form>
+        <span class="switch-link" id="to-login"
+          >Déjà inscrit ? Se connecter</span
+        >
+      </div>
+      <div id="form-connexion" style="display: none">
+        <div class="auth-title">Connexion Agent Transit</div>
+        <div class="error-msg" id="login-error"></div>
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" name="email" required />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Mot de passe</label>
+            <input
+              type="password"
+              id="login-password"
+              name="password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn">Se connecter</button>
+        </form>
+        <span class="switch-link" id="to-register">Créer un compte</span>
+        <span class="switch-link" id="to-forgot-password"
+          >Mot de passe oublié ?</span
+        >
+      </div>
+
+      <!-- Formulaire de récupération de mot de passe -->
+      <div id="form-forgot-password" style="display: none">
+        <div class="auth-title">Récupération du mot de passe</div>
+        <div class="error-msg" id="forgot-error"></div>
+        <div class="success-msg" id="forgot-success"></div>
+        <form id="forgotPasswordForm">
+          <div class="form-group">
+            <label for="forgot-email">Votre email</label>
+            <input type="email" id="forgot-email" name="email" required />
+          </div>
+          <button type="submit" class="btn">
+            Envoyer le lien de réinitialisation
+          </button>
+        </form>
+        <span class="switch-link" id="to-login-from-forgot"
+          >Retour à la connexion</span
+        >
+      </div>
+    </div>
+    <script src="../js/acconier_auth.js"></script>
+    <script>
+      // Hook sur la soumission du formulaire de connexion acconier
+      document.addEventListener("DOMContentLoaded", function () {
+        const loginForm = document.getElementById("loginForm");
+        if (loginForm) {
+          loginForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const email = document.getElementById("login-email").value.trim();
+            const password = document.getElementById("login-password").value;
+            // Envoi de la requête de connexion
+            try {
+              const res = await fetch("/acconier/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+              });
+              const data = await res.json();
+              if (data.success && data.nom && data.email) {
+                // Stocke dans localStorage pour l'avatar
+                localStorage.setItem(
+                  "acconier_user",
+                  JSON.stringify({
+                    nom: data.nom,
+                    email: data.email,
+                    avatar: "",
+                  })
+                );
+                // Redirige ou affiche un message de succès selon votre logique
+                // window.location.href = "/chemin/vers/le/formulaire.html";
+              }
+            } catch (err) {
+              // Optionnel : gestion d'erreur
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

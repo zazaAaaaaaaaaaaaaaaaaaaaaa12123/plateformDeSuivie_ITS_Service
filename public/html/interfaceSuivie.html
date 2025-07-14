@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Suivi ITS - Livraisons</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Les liens vers les fichiers CSS locaux sont conservés comme dans votre original.
+         Assurez-vous que ces fichiers sont accessibles depuis le chemin relatif. -->
+    <link rel="stylesheet" href="../css/styleDeSuivie.css" />
+    <link rel="stylesheet" href="../css/styledeTabBord.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+
+    <style>
+      /* Boutons de suppression historique (sidebar)
+   - .delete-history-btn.desktop-in : bouton dans la carte (desktop)
+   - .delete-history-btn.mobile-out : bouton sous la carte (mobile)
+   - .delete-history-btn-mobile-wrap : conteneur du bouton mobile
+*/
+      .delete-history-btn.desktop-in {
+        background: none;
+        border: none;
+        color: #dc2626;
+        font-size: 1.25em;
+        cursor: pointer;
+        padding: 0 6px 0 6px;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        transition: filter 0.18s;
+      }
+      .delete-history-btn.mobile-out {
+        background: #f1f5f9;
+        border: none;
+        color: #dc2626;
+        font-size: 1.1em;
+        cursor: pointer;
+        padding: 7px 16px;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px #2563eb11;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+      .delete-history-btn-mobile-wrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 13px;
+      }
+
+      /* Par défaut, bouton mobile caché, bouton desktop visible */
+      .delete-history-btn.desktop-in {
+        display: inline-flex;
+      }
+      .delete-history-btn.mobile-out,
+      .delete-history-btn-mobile-wrap {
+        display: none;
+      }
+
+      @media (max-width: 600px) {
+        .delete-history-btn.desktop-in {
+          display: none !important;
+        }
+        .delete-history-btn.mobile-out,
+        .delete-history-btn-mobile-wrap {
+          display: flex !important;
+        }
+      }
+
+      /* Styles pour l'alerte personnalisée (conservés de votre version originale) */
+      .custom-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #f8d7da; /* Default background for error */
+        color: #721c24; /* Default text color for error */
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-20px);
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out,
+          visibility 0.5s linear 0.5s;
+        z-index: 1000;
+        min-width: 250px;
+      }
+      .custom-alert.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out,
+          visibility 0.5s linear 0s;
+      }
+      .custom-alert.hide {
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+      }
+      .custom-alert.visually-hidden {
+        display: none;
+      }
+      .custom-alert i {
+        font-size: 20px;
+      }
+      /* Type colors for custom-alert */
+      .custom-alert.success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .custom-alert.error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .custom-alert.warning {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .custom-alert.info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+
+      /* Styles for confirmation overlay (conservés de votre version originale) */
+      .confirm-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+        z-index: 1000; /* Ensure it's on top of other content */
+      }
+      .confirm-box {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        max-width: 400px;
+        width: 90%; /* Responsive width */
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .confirm-box p {
+        font-size: 1.1rem;
+        color: #333;
+        margin-bottom: 15px;
+      }
+      .confirm-box button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s ease;
+        margin: 0 5px; /* Add some spacing between buttons */
+      }
+      .confirm-box button.btn-danger {
+        background-color: #dc3545;
+        color: white;
+      }
+      .confirm-box button.btn-danger:hover {
+        background-color: #c82333;
+      }
+      .confirm-box button.btn-secondary {
+        background-color: #6c757d;
+        color: white;
+      }
+      .confirm-box button.btn-secondary:hover {
+        background-color: #5a6268;
+      }
+
+      /* Styles pour la stabilité du tableau (conservés de votre version originale) */
+      .table {
+        width: 100%;
+        table-layout: auto; /* Permet aux colonnes de s'auto-ajuster au contenu */
+      }
+      .table th,
+      .table td {
+        vertical-align: top; /* Aligne le contenu en haut des cellules */
+        padding: 0.75rem; /* Padding standard de Bootstrap */
+        white-space: normal; /* Permet au texte de passer à la ligne */
+        word-break: break-word; /* Casse les mots longs pour éviter le débordement */
+      }
+      .sticky-col {
+        position: sticky;
+        z-index: 2; /* Plus haut que les cellules normales mais moins que les popups */
+        background-color: #f8f9fa; /* Couleur de fond pour les colonnes figées */
+      }
+      .sticky-col-index {
+        left: 0;
+        min-width: 50px; /* Largeur minimale pour la colonne N° */
+        max-width: 70px; /* Largeur maximale pour la colonne N° */
+      }
+      .sticky-col-agent {
+        /* Calcule le 'left' en fonction de la largeur de la colonne 'N°' */
+        left: 70px; /* Assumant 70px de largeur pour sticky-col-index */
+        min-width: 120px; /* Largeur minimale pour le nom de l'agent */
+        max-width: 180px; /* Largeur maximale pour le nom de l'agent */
+      }
+      .dropdown-cell-container .dropdown-toggle-button {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* NOUVEAUX STYLES POUR LES BANDEAUX COLORÉS */
+      .table thead tr:first-child th {
+        border-bottom: none; /* Supprime la bordure inférieure pour le bandeau */
+        border-top: none; /* Supprime la bordure supérieure */
+        padding-top: 8px;
+        padding-bottom: 8px;
+        color: white; /* Couleur de texte par défaut pour les bandeaux */
+        font-size: 1.1em;
+        text-transform: uppercase;
+        position: sticky; /* Rendre la ligne de bandeau figée */
+        top: 0; /* Coller en haut */
+        z-index: 11; /* Plus haut que les en-têtes de colonnes normales */
+        cursor: pointer; /* Indique que le bandeau est cliquable */
+      }
+      /* La première cellule du bandeau (pour N° et Date & Heure) reste neutre */
+      .table thead tr:first-child th:nth-child(1) {
+        background-color: #f8f9fa; /* Correspond à l'arrière-plan de l'en-tête normal */
+        color: #495057; /* Correspond à la couleur de texte de l'en-tête normal */
+        border-right: 1px solid #e9ecef; /* Conserver la bordure droite pour la séparation */
+        cursor: default; /* Pas de curseur pointeur pour la première colonne */
+      }
+      /* Styles spécifiques pour chaque bandeau */
+      .table thead tr:first-child th:nth-child(2) {
+        /* Agent Acconier (bleu) */
+        background-color: #007bff; /* Bleu */
+        border-right: none; /* Supprime la bordure droite pour fusionner avec le bandeau suivant */
+      }
+      .table thead tr:first-child th:nth-child(3) {
+        /* Responsable Acconier (jaune) */
+        background-color: #ffc107; /* Jaune */
+        border-right: none; /* Supprime la bordure droite pour fusionner avec le bandeau suivant */
+      }
+      .table thead tr:first-child th:nth-child(4) {
+        /* Responsable de livraison (vert) */
+        background-color: #28a745; /* Vert */
+        border-right: 1px solid #e9ecef; /* Assure une bordure droite */
+      }
+
+      /* Rendre la deuxième ligne d'en-tête (vos en-têtes de colonnes originaux) figée en dessous du bandeau */
+      .table thead tr:nth-child(2) th {
+        position: sticky;
+        top: 40px; /* Ajuster cette valeur en fonction de la hauteur réelle du bandeau (environ 40px) */
+        background-color: #f8f9fa; /* Assurez-vous que le fond correspond à votre design */
+        z-index: 10; /* Inférieur aux colonnes sticky-col pour qu'elles soient au-dessus */
+      }
+
+      /* S'assurer que les en-têtes des colonnes figées sont au-dessus de l'en-tête de table général */
+      .table thead tr:nth-child(2) .sticky-col {
+        z-index: 12; /* Plus haut que le bandeau et l'en-tête de table général */
+      }
+
+      /* Styles pour l'effet de mise en évidence */
+      .highlight-cell {
+        transition: background-color 0.3s ease-in-out; /* Transition douce pour l'effet de flash */
+      }
+      .highlight-blue-flash {
+        background-color: rgba(
+          0,
+          123,
+          255,
+          0.2
+        ) !important; /* Bleu avec opacité légère */
+      }
+      .highlight-yellow-flash {
+        background-color: rgba(
+          255,
+          193,
+          7,
+          0.2
+        ) !important; /* Jaune avec opacité légère */
+      }
+      .highlight-green-flash {
+        background-color: rgba(
+          40,
+          167,
+          69,
+          0.2
+        ) !important; /* Vert avec opacité légère */
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    <div class="container my-4">
+      <section class="card-section">
+        <div class="header-with-search">
+          <div>
+            <h1 class="section-title">Suivi des Livraisons de Conteneurs</h1>
+            <p class="section-subtitle">
+              Vue d'overview des validations effectuées par les employés.
+            </p>
+            <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée de votre version originale) -->
+            <div class="scrolling-message-bar" id="newAgentScrollingContainer">
+              <div
+                class="scrolling-message-content"
+                id="newAgentScrollingContent"
+              >
+                <!-- Le contenu des agents défilants sera injecté ici par JS -->
+              </div>
+            </div>
+          </div>
+
+          <div id="agentStatusIndicator" class="agent-status-indicator">
+            <span id="agentStatusText">Agents Actifs</span>
+          </div>
+
+          <div class="search-bar-wrapper-top">
+            <div class="search-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                type="search"
+                id="searchInput"
+                class="search-input"
+                placeholder="Rechercher une livraison..."
+                aria-label="Recherche"
+              />
+              <button id="searchButton" class="icon-btn-company-color">
+                <i
+                  class="fas fa-spinner fa-spin loading-spinner"
+                  style="display: none"
+                ></i>
+                Rechercher
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
+        >
+          <select id="statusFilterSelect" class="icon-btn icon-btn-purple">
+            <option value="">Sélectionner un statut</option>
+            <option value="livre">Livré</option>
+            <option value="rejet">Rejet</option>
+          </select>
+
+          <input
+            type="date"
+            id="mainTableDateFilter"
+            class="icon-btn icon-btn-company-color"
+            title="Filtrer par date"
+          />
+
+          <button id="activateEditBtn" class="icon-btn-company-color">
+            <i class="fas fa-edit"></i> Administrateur
+          </button>
+
+          <button id="toggleSelectionBtn" class="icon-btn-company-color">
+            <i class="fas fa-check-square"></i> Activer selection
+          </button>
+
+          <button
+            id="deleteSelectedDeliveriesBtn"
+            class="btn btn-danger icon-btn"
+            style="display: none"
+          >
+            <i class="fas fa-trash-alt"></i> Supprimer sélection
+          </button>
+
+          <!-- NOUVEAU BOUTON POUR LA GÉNÉRATION PDF -->
+          <button id="generatePdfBtn" class="btn btn-info icon-btn">
+            <i class="fas fa-file-pdf"></i> Générer PDF
+          </button>
+
+          <div class="dropdown-container">
+            <button
+              id="employeeTrackingBtn"
+              class="icon-btn icon-btn-company-color"
+              title="Accéder au suivi spécifique des employés"
+            >
+              <i class="fas fa-user-tie"></i> Suivi Spécifique Agent
+            </button>
+
+            <div id="employeePopup" class="employee-popup">
+              <div class="popup-header">
+                <h5 class="popup-title">
+                  Sélectionner un Agent <span id="employeeCountDisplay"></span>
+                </h5>
+                <button
+                  type="button"
+                  class="close-popup-btn"
+                  aria-label="Fermer"
+                >
+                  &times;
+                </button>
+              </div>
+
+              <div class="popup-search-wrapper">
+                <i class="fas fa-search popup-search-icon"></i>
+                <input
+                  type="text"
+                  id="employeeSearchInput"
+                  class="popup-search-input"
+                  placeholder="Rechercher un employé..."
+                />
+              </div>
+
+              <div class="popup-body">
+                <ul id="employeeList" class="employee-list"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tableScrollContainer" class="table-responsive overflow-x-auto">
+          <table
+            id="deliveriesTable"
+            class="table table-bordered table-hover align-middle"
+          >
+            <thead>
+              <!-- NOUVELLE LIGNE POUR LES BANDEAUX COLORÉS -->
+              <tr>
+                <th colspan="2" class="bg-transparent border-b-0"></th>
+                <!-- Pour N° et Date & Heure -->
+                <th
+                  colspan="16"
+                  id="agentAcconierHeader"
+                  class="header-agent-acconier"
+                >
+                  Agent Acconier
+                </th>
+                <th
+                  colspan="2"
+                  id="respAcconierHeader"
+                  class="header-resp-acconier"
+                >
+                  Responsable Acconier
+                </th>
+                <th
+                  colspan="13"
+                  id="respLivraisonHeader"
+                  class="header-resp-livraison"
+                >
+                  Responsable de livraison
+                </th>
+              </tr>
+              <!-- LIGNE D'EN-TÊTE ORIGINALE (avec colonnes figées) -->
+              <tr id="deliveriesTableHead">
+                <th class="sticky-col sticky-col-index" id="thNumero">
+                  N°
+                  <span id="checkboxHeaderPlaceholder"></span>
+                </th>
+                <th>Date & Heure</th>
+                <th class="sticky-col sticky-col-agent">Agent</th>
+                <th>Client (Nom)</th>
+                <th>Client (Tél)</th>
+                <th>Numéro TC(s)</th>
+                <th>Lieu</th>
+                <th>Type Conteneur(pied)</th>
+                <th>Contenu</th>
+                <th>N° Déclaration</th>
+                <th>N° BL</th>
+                <th>N° Dossier</th>
+                <th>Nombre de conteneurs</th>
+                <th>Compagnie Maritime</th>
+                <th>Poids</th>
+                <th>Nom du navire</th>
+                <th>Circuit</th>
+                <th>Mode de Transport</th>
+                <th>Statut de livraison (Resp. Aconiés)</th>
+                <th>Observations (Resp. Aconiés)</th>
+                <th>Nom agent visiteur</th>
+                <th>Transporteur</th>
+                <th>Inspecteur</th>
+                <th>Agent en Douanes</th>
+                <th>Chauffeur</th>
+                <th>Immatriculation</th>
+                <th>Tél. Chauffeur</th>
+                <th>Date Livraison</th>
+                <th>Heure Livraison</th>
+                <th>Statut</th>
+                <th>Observations</th>
+              </tr>
+            </thead>
+
+            <tbody id="deliveriesTableBody">
+              <!-- Les lignes seront générées dynamiquement par JS -->
+              <tr>
+                <td colspan="31" class="text-center text-muted">
+                  <i class="fas fa-spinner fa-spin me-2"></i> Chargement des
+                  livraisons...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <nav aria-label="Pagination livraisons" class="mt-3">
+          <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+
+        <div
+          id="noDeliveriesMessage"
+          class="text-center mt-3 text-muted d-none"
+        >
+          <i class="fas fa-box-open me-1"></i> Aucune livraison enregistrée pour
+          le moment.
+        </div>
+      </section>
+    </div>
+
+    <div id="codeEntryPopup" class="popup-overlay d-none">
+      <div class="popup-content">
+        <span class="close-btn">&times;</span>
+        <h2 id="popupTitle"></h2>
+        <p id="popupMessage"></p>
+        <input
+          type="password"
+          id="editCodeInput"
+          placeholder="Code secret"
+          autocomplete="off"
+        />
+        <button id="submitCodeBtn" class="btn-primary">Valider</button>
+        <p id="codeError" class="code-error-message d-none">
+          Code incorrect. Veuillez réessayer.
+        </p>
+        <p id="countdownMessage" class="countdown-message d-none"></p>
+      </div>
+    </div>
+
+    <!-- IMPORTANT: J'ai ajouté cet élément, il était référencé dans votre JS mais manquant dans le HTML -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+      <div class="loading-overlay-content">
+        <i class="fas fa-spinner fa-spin loading-spinner-large mb-3"></i>
+        <p class="loading-overlay-text">Génération du PDF en cours...</p>
+      </div>
+    </div>
+
+    <div id="customAlert" class="custom-alert">
+      <h3 id="customAlertTitle" class="custom-alert-title"></h3>
+      <p id="customAlertMessage" class="custom-alert-message"></p>
+    </div>
+
+    <!-- Agent Activity Box - Moved here for better DOM loading -->
+    <div id="agentActivityBox">
+      <div class="agent-activity-header">
+        <button id="prevDayBtn" class="nav-day-btn">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <h3 id="agentActivityHeaderTitle">
+          Suivi de l'agent: Nom de l'agent - Date
+        </h3>
+        <button id="nextDayBtn" class="nav-day-btn">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <button id="closeAgentActivityBoxBtn" class="close-btn-floating">
+          &times;
+        </button>
+      </div>
+
+      <div class="agent-activity-content">
+        <div id="agentSummarySection" class="agent-summary-section">
+          <!-- Summary content will be injected here by JS -->
+        </div>
+
+        <div class="flex justify-center my-4">
+          <button id="generateAgentPdfBtn" class="btn btn-info icon-btn">
+            <i class="fas fa-file-pdf"></i> Générer PDF Agent
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table
+            id="agentDailyDeliveriesTable"
+            class="agent-deliveries-table table table-bordered table-hover align-middle"
+          >
+            <thead>
+              <tr>
+                <th>Agent Aconnier</th>
+                <th>Client (Nom)</th>
+                <th>Client (Tél)</th>
+                <th>Numéro TC(s)</th>
+                <th>Lieu</th>
+                <th>Type Conteneur (pied)</th>
+                <th>Contenu</th>
+                <th>N° Déclaration</th>
+                <th>N° BL</th>
+                <th>N° Dossier</th>
+                <th>Nombre de conteneurs</th>
+                <th>Compagnie Maritime</th>
+                <th>Poids</th>
+                <th>Nom du navire</th>
+                <th>Circuit</th>
+                <th>Mode de Transport</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="agentDailyDeliveriesTableBody">
+              <!-- Les lignes seront générées dynamiquement par JS -->
+              <tr>
+                <td colspan="29" class="text-center text-muted">
+                  <i class="fas fa-spinner fa-spin me-2"></i> Chargement des
+                  livraisons de l'agent...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/scriptSuivie.js"></script>
+  </body>
+</html>

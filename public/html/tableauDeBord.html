@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Centre de Contact Clients</title>
+
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+    />
+
+    <link rel="stylesheet" href="/css/styledeTabBord.css" />
+    <link rel="stylesheet" href="/css/styleDeSuivie.css" />
+    <link rel="stylesheet" href="/css/styleHistoriqueAgents.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+      /* Styles généraux pour le corps */
+      html,
+      body {
+        overflow: hidden;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Inter", sans-serif;
+      }
+
+      body {
+        background: linear-gradient(145deg, #007bff, #0056b3);
+        color: #333;
+        min-height: 90vh;
+        padding: 20px;
+      }
+
+      .layout {
+        display: flex;
+        max-width: 100%;
+        margin: 0 auto;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        background: white;
+        transition: all 0.3s ease;
+        height: 100vh;
+      }
+
+      /* --- AMELIORATIONS POUR LA SIDEBAR - Version "Sublimée" --- */
+
+      /* SIDEBAR - Styles généraux */
+      .sidebar {
+        background: linear-gradient(180deg, #303d4c 0%, #212a33 100%);
+        color: #e0e6ec;
+        padding: 25px 20px;
+        width: 250px;
+        min-height: 100vh;
+        box-shadow: 8px 0 25px rgba(0, 0, 0, 0.3);
+        font-family: "Inter", sans-serif;
+        transition: width 0.4s ease-in-out, padding 0.4s ease-in-out,
+          background 0.4s ease-in-out, box-shadow 0.4s ease-in-out;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Titre du menu */
+      .sidebar h2 {
+        font-size: 1.8em;
+        margin-bottom: 35px;
+        font-weight: 700;
+        color: #a3daff;
+        border-bottom: 2px solid #63b3ed;
+        padding-bottom: 15px;
+        text-align: center;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Cache l'icône de bascule du H2 si tu ne l'utilises pas en mode déplié */
+      .sidebar h2 .toggle-icon {
+        display: none;
+      }
+
+      /* Liste menu */
+      .sidebar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .sidebar ul li {
+        margin-bottom: 12px;
+        width: 100%;
+      }
+
+      /* Liens du menu */
+      .sidebar ul li a {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 1.05rem;
+        padding: 12px 18px;
+        border-radius: 8px;
+        transition: background-color 0.25s ease, color 0.25s ease,
+          transform 0.25s ease, box-shadow 0.25s ease;
+        color: #e0e6ec;
+        position: relative;
+        overflow: hidden;
+        box-shadow: inset 0 0 0 0px rgba(99, 179, 237, 0.4);
+      }
+
+      /* Hover des liens - Effet de surbrillance plus doux et élégant */
+      .sidebar ul li a:hover {
+        background-color: #3f5166;
+        color: #a3daff;
+        transform: translateX(8px);
+        box-shadow: inset 0 0 0 2px #63b3ed, 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Icône des liens */
+      .sidebar ul li a .icon {
+        margin-right: 18px;
+        font-size: 1.3em;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        color: #a3daff;
+        border-radius: 0;
+        transition: color 0.25s ease, transform 0.25s ease;
+      }
+
+      /* Icône hover avec lien */
+      .sidebar ul li a:hover .icon {
+        color: #e0e6ec;
+        transform: scale(1.15) rotate(5deg);
+      }
+
+      /* Texte des liens */
+      .link-text {
+        opacity: 1;
+        transition: opacity 0.3s ease, width 0.3s ease;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      /* Style pour le calendrier - Visibilité par défaut */
+      .calendar-container {
+        margin-top: 40px;
+        padding: 0 10px;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+      }
+
+      .calendar-container label {
+        font-weight: 500;
+        color: #b0bec5;
+        display: block;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+      }
+
+      .calendar-container input[type="date"] {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+        border: 1px solid #4a5d6f;
+        background-color: #2a3540;
+        color: #e0e6ec;
+        border-radius: 6px;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23e0e6ec"><path d="M7 10l5 5 5-5z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 30px;
+      }
+
+      .calendar-container input[type="date"]:focus {
+        border-color: #63b3ed;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.4);
+      }
+
+      /* --- État COLLAPSED de la sidebar (quand le body a la classe 'sidebar-collapsed') --- */
+      body.sidebar-collapsed .sidebar {
+        width: 90px;
+        padding: 20px 0;
+        background: linear-gradient(180deg, #303d4c 0%, #212a33 100%);
+        box-shadow: 8px 0 25px rgba(0, 0, 0, 0.3);
+      }
+
+      body.sidebar-collapsed .sidebar h2 {
+        justify-content: center;
+        border-bottom: none;
+        padding-bottom: 0;
+        color: #a3daff;
+        font-size: 1.5em;
+      }
+
+      /* Texte "Menu" à masquer quand la sidebar est pliée */
+      body.sidebar-collapsed .sidebar h2 span.link-text {
+        opacity: 0;
+        visibility: hidden;
+        width: 0;
+        margin-right: 0;
+      }
+
+      /* Centrage des éléments de la liste UL en mode plié */
+      body.sidebar-collapsed .sidebar ul {
+        align-items: center;
+      }
+
+      /* Centrage des liens LI en mode plié */
+      body.sidebar-collapsed .sidebar ul li {
+        justify-content: center;
+        width: auto;
+      }
+
+      /* Texte des liens (masqué en mode plié) */
+      body.sidebar-collapsed .link-text {
+        opacity: 0;
+        visibility: hidden;
+        width: 0;
+        padding: 0;
+        margin: 0;
+      }
+
+      body.sidebar-collapsed .calendar-container label,
+      body.sidebar-collapsed .calendar-container input {
+        opacity: 0;
+        visibility: hidden;
+        width: 0;
+        padding: 0;
+        margin: 0;
+        height: 0;
+      }
+
+      /* Styles pour les bulles en mode plié */
+      body.sidebar-collapsed .sidebar ul li a .icon {
+        margin-right: 0;
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        background-color: #63b3ed;
+        color: white !important;
+        font-size: 1.6em;
+        box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4);
+        transform: scale(1);
+        transition: all 0.3s ease;
+      }
+
+      /* Ajustements pour l'icône au survol en mode plié */
+      body.sidebar-collapsed .sidebar ul li a:hover .icon {
+        background-color: #4299e1;
+        transform: translateY(-5px) scale(1.15);
+        box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.5);
+      }
+
+      body.sidebar-collapsed .sidebar ul li a {
+        justify-content: center;
+        padding: 10px 0;
+        align-items: center;
+        background-color: transparent !important;
+        color: white !important;
+        width: 100%;
+      }
+
+      /* Supprime le pseudo-élément au survol qui était caché précédemment */
+      body.sidebar-collapsed .sidebar ul li a:hover::before {
+        display: none !important;
+      }
+
+      /* Médias queries pour les petits écrans - S'assure que les icônes redeviennent normales */
+      @media (max-width: 768px) {
+        .sidebar ul li a .icon {
+          width: auto !important;
+          height: auto !important;
+          border-radius: 0 !important;
+          background-color: transparent !important;
+          box-shadow: none !important;
+          transform: none !important;
+          font-size: 1em !important;
+          margin-right: 14px !important;
+        }
+
+        .sidebar ul li a:hover .icon {
+          background-color: transparent !important;
+          transform: none !important;
+          box-shadow: none !important;
+        }
+        .sidebar ul li a {
+          padding: 10px 15px !important;
+          justify-content: flex-start !important;
+        }
+      }
+
+      /* --- Styles pour l'indicateur de connexion --- */
+      .connection-status {
+        margin-left: 10px;
+        font-size: 1.2em;
+        transition: color 0.3s ease, transform 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Couleur par défaut (connecté) */
+      .connection-status .fas {
+        color: #28a745; /* Vert pour connecté */
+      }
+
+      /* Style quand l'utilisateur est hors ligne */
+      .connection-status.offline .fas {
+        color: #dc3545; /* Rouge pour déconnecté */
+        transform: rotate(
+          45deg
+        ); /* Petite rotation pour indiquer le changement */
+      }
+
+      /* Ajustements pour le mode plié de la sidebar */
+      body.sidebar-collapsed .sidebar h2 .connection-status {
+        margin-left: 0;
+        font-size: 1.5em;
+      }
+
+      body.sidebar-collapsed .sidebar h2 {
+        justify-content: center;
+      }
+
+      /* --- Styles pour l'alerte de connexion/déconnexion --- */
+      .custom-alert {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 25px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .custom-alert.success {
+        background-color: #28a745;
+      }
+
+      .custom-alert.error {
+        background-color: #dc3545;
+      }
+
+      .custom-alert.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* --- Styles pour le contenu principal (welcome, buttons) --- */
+      .welcome-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 80vh;
+        text-align: center;
+        padding: 0 20px;
+        background: linear-gradient(to right, #ffffff, #f3f4f6);
+        animation: fadeIn 1.2s ease-in-out;
+      }
+
+      .welcome-container h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        font-family: "Inter", sans-serif;
+      }
+
+      .welcome-container p {
+        font-size: 1.2rem;
+        color: #4b5563;
+        margin-bottom: 2.5rem;
+        max-width: 600px;
+        line-height: 1.6;
+      }
+
+      .bottom-buttons {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 18px;
+        z-index: 10;
+        width: 100%;
+        padding: 0;
+      }
+
+      .bottom-buttons button {
+        background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+        color: #fff;
+        border: none;
+        padding: 7px 10px;
+        border-radius: 8px;
+        font-size: 0.92rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px #2563eb22, 0 1px 4px #0001;
+        transition: background 0.25s, transform 0.18s, box-shadow 0.25s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-family: "Inter", sans-serif;
+        letter-spacing: 0.2px;
+        outline: none;
+        min-width: 90px;
+        max-width: 160px;
+        height: 32px;
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .bottom-buttons button:hover,
+      .bottom-buttons button:focus {
+        background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 100%);
+        transform: translateY(-3px) scale(1.04);
+        box-shadow: 0 12px 32px #2563eb33, 0 4px 16px #0002;
+      }
+
+      .bottom-buttons i {
+        font-size: 1.05em;
+        margin-right: 4px;
+      }
+
+      @media (max-width: 700px) {
+        .bottom-buttons {
+          flex-direction: column;
+          gap: 10px;
+          bottom: 12px;
+        }
+        .bottom-buttons button {
+          width: 90vw;
+          max-width: 320px;
+          font-size: 0.98em;
+          padding: 10px 0;
+          height: 40px;
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .main-content {
+        flex-grow: 1;
+        padding: 30px;
+        background-color: #f7f9fc;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+        position: relative;
+        min-width: 0;
+        transition: margin-left 0.3s ease, width 0.3s ease;
+        box-sizing: border-box;
+      }
+      .dynamic-content-area,
+      #content {
+        flex-grow: 1;
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .green-dot-animated {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #28a745;
+        margin-left: 12px;
+        box-shadow: 0 0 0 0 #28a745;
+        animation: greenDotPulse 1s infinite cubic-bezier(0.66, 0, 0, 1);
+        vertical-align: middle;
+      }
+      #btnResumeJoursPrecedents {
+        font-size: 0.8rem;
+      }
+      @keyframes greenDotPulse {
+        0% {
+          box-shadow: 0 0 0 0 #28a74599;
+          opacity: 1;
+        }
+        70% {
+          box-shadow: 0 0 0 10px #28a74500;
+          opacity: 1;
+        }
+        100% {
+          box-shadow: 0 0 0 0 #28a74500;
+          opacity: 1;
+        }
+      }
+
+      /* === POPUP MODIFICATION CODE ENTREPRISE (ADMIN) === */
+      #popupEditCompanyCode {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(30, 41, 59, 0.55);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #popupEditCompanyCode .content {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 8px 40px #05966944;
+        padding: 38px 32px 28px 32px;
+        max-width: 420px;
+        width: 96vw;
+        max-height: 92vh;
+        overflow-y: auto;
+        position: relative;
+      }
+
+      #popupEditCompanyCode h2 {
+        font-size: 1.3em;
+        font-weight: 700;
+        color: #059669;
+        margin-bottom: 18px;
+      }
+
+      #popupEditCompanyCode label {
+        font-weight: 600;
+        color: #374151;
+      }
+
+      #popupEditCompanyCode input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1.1em;
+        margin-top: 6px;
+        margin-bottom: 14px;
+      }
+
+      #popupEditCompanyCode button {
+        width: 100%;
+        background: #059669;
+        color: #fff;
+        font-weight: 700;
+        padding: 10px 0;
+        border-radius: 8px;
+        font-size: 1.1em;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      #popupEditCompanyCode button:hover {
+        background: #047857;
+      }
+
+      #popupEditCompanyCode .close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        background: none;
+        border: none;
+        font-size: 1.5em;
+        color: #059669;
+        cursor: pointer;
+      }
+
+      #popupEditCompanyCode .message {
+        font-size: 0.98em;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      /* --- Fin styles popup admin --- */
+    </style>
+  </head>
+
+  <body class="sidebar-expanded">
+    <div class="layout">
+      <aside class="sidebar">
+        <h2 id="sidebarTitle" style="position: relative">
+          <span class="link-text">Menu</span>
+          <span class="connection-status" id="connectionStatusIcon">
+            <i class="fas fa-wifi"></i>
+          </span>
+        </h2>
+        <ul>
+          <li>
+            <a href="tableauDeBord.html" id="lienAccueil">
+              <span class="icon"><i class="fas fa-home"></i></span>
+              <span class="link-text">Accueil</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="#" id="lienSuivi">
+              <span class="icon"><i class="fas fa-chart-bar"></i></span>
+              <span class="link-text">Suivi des Livraisons de Conteneurs</span>
+            </a>
+          </li>
+          <li id="lienStatistiques">
+            <a href="#">
+              <span class="icon"><i class="fas fa-chart-pie"></i></span>
+              <span class="link-text">Statistiques</span>
+            </a>
+          </li>
+        </ul>
+        <div class="calendar-container">
+          <label for="date-selection">Sélectionner une date :</label>
+          <input type="date" id="date-selection" />
+        </div>
+        <!-- Avatar utilisateur moderne sous la date -->
+        <div
+          id="sidebarUserProfile"
+          style="
+            margin-top: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+          "
+        >
+          <div
+            id="userAvatarCircle"
+            style="
+              width: 56px;
+              height: 56px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #2563eb 60%, #06b6d4 100%);
+              color: #fff;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 2em;
+              font-weight: 700;
+              box-shadow: 0 2px 8px #2563eb22;
+              cursor: pointer;
+              transition: filter 0.18s;
+              position: relative;
+            "
+          >
+            <i class="fas fa-user"></i>
+          </div>
+          <div
+            id="userNameSidebar"
+            style="
+              font-size: 1.08em;
+              font-weight: 700;
+              color: #2563eb;
+              text-align: center;
+              max-width: 140px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            "
+          ></div>
+          <div
+            id="userProfilSidebar"
+            style="
+              font-size: 0.98em;
+              color: #374151;
+              text-align: center;
+              max-width: 140px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            "
+          ></div>
+          <button
+            id="logoutSidebarBtn"
+            style="
+              margin-top: 6px;
+              background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+              color: #fff;
+              border: none;
+              border-radius: 8px;
+              padding: 7px 18px;
+              font-size: 0.98em;
+              font-weight: 600;
+              box-shadow: 0 2px 8px #2563eb22;
+              cursor: pointer;
+              transition: filter 0.18s;
+            "
+          >
+            Se déconnecter
+          </button>
+          <!-- Bouton icône demande code entreprise -->
+          <div
+            style="
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              gap: 10px;
+              margin-top: 8px;
+            "
+          >
+            <button
+              id="demandeCodeEntrepriseBtn"
+              title="Demander le code entreprise"
+              style="
+                background: none;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+              "
+            >
+              <i
+                class="fas fa-key"
+                style="font-size: 1.3em; color: #2563eb"
+              ></i>
+              <span
+                id="badgeDemandesCodeEntreprise"
+                style="
+                  display: none;
+                  position: absolute;
+                  top: -4px;
+                  right: -8px;
+                  min-width: 14px;
+                  height: 14px;
+                  padding: 0 3px;
+                  background: #dc2626;
+                  color: #fff;
+                  font-size: 0.72em;
+                  font-weight: 700;
+                  border-radius: 8px;
+                  line-height: 14px;
+                  text-align: center;
+                  box-shadow: 0 2px 8px #dc262622;
+                  z-index: 2;
+                "
+              ></span>
+            </button>
+            <button
+              id="btnEditSidebar"
+              title="Modifier les paramètres"
+              style="
+                background: none;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+              "
+            >
+              <i
+                class="fas fa-pen"
+                style="font-size: 1.15em; color: #059669"
+              ></i>
+            </button>
+          </div>
+        </div>
+        <!-- Popup modification code entreprise -->
+        <div
+          id="popupEditCompanyCode"
+          style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 41, 59, 0.55);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <div
+            class="content"
+            style="
+              background: #fff;
+              border-radius: 18px;
+              box-shadow: 0 8px 40px #05966944;
+              padding: 38px 32px 28px 32px;
+              max-width: 420px;
+              width: 96vw;
+              max-height: 92vh;
+              overflow-y: auto;
+              position: relative;
+            "
+          >
+            <button
+              class="close"
+              id="closeEditCompanyCode"
+              style="
+                position: absolute;
+                top: 18px;
+                right: 18px;
+                background: none;
+                border: none;
+                font-size: 1.5em;
+                color: #059669;
+                cursor: pointer;
+              "
+            >
+              &times;
+            </button>
+            <h2
+              style="
+                font-size: 1.3em;
+                font-weight: 700;
+                color: #059669;
+                margin-bottom: 18px;
+              "
+            >
+              Modifier le code de l'entreprise
+            </h2>
+            <form id="formEditCompanyCode">
+              <label
+                for="newCompanyCode"
+                style="font-weight: 600; color: #374151"
+                >Nouveau code :</label
+              >
+              <input
+                type="text"
+                id="newCompanyCode"
+                name="newCompanyCode"
+                required
+                style="
+                  width: 100%;
+                  padding: 8px 12px;
+                  border: 1px solid #d1d5db;
+                  border-radius: 8px;
+                  font-size: 1.1em;
+                  margin-top: 6px;
+                  margin-bottom: 14px;
+                "
+              />
+              <button
+                type="submit"
+                style="
+                  width: 100%;
+                  background: #059669;
+                  color: #fff;
+                  font-weight: 700;
+                  padding: 10px 0;
+                  border-radius: 8px;
+                  font-size: 1.1em;
+                  border: none;
+                  cursor: pointer;
+                  transition: background 0.2s;
+                "
+              >
+                Enregistrer
+              </button>
+              <div
+                id="editCompanyCodeMsg"
+                class="message"
+                style="font-size: 0.98em; margin-top: 10px; text-align: center"
+              ></div>
+            </form>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <!-- Popup demande code entreprise -->
+        <div
+          id="popupDemandeCodeEntreprise"
+          style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 41, 59, 0.55);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <div
+            style="
+              background: #fff;
+              border-radius: 18px;
+              box-shadow: 0 8px 40px #2563eb44;
+              padding: 32px 28px 24px 28px;
+              max-width: 900px;
+              width: 98vw;
+              max-height: 96vh;
+              overflow-y: auto;
+              position: relative;
+              border: 3px solid #2563eb;
+              font-size: 1.08em;
+            "
+          >
+            <button
+              id="closeDemandeCodeEntreprise"
+              style="
+                position: absolute;
+                top: 18px;
+                right: 18px;
+                background: none;
+                border: none;
+                font-size: 1.5em;
+                color: #2563eb;
+                cursor: pointer;
+              "
+            >
+              &times;
+            </button>
+            <h2
+              style="
+                font-size: 1.15em;
+                font-weight: 700;
+                color: #2563eb;
+                margin-bottom: 18px;
+                text-align: center;
+              "
+            >
+              Demandes de code entreprise
+            </h2>
+            <div
+              id="tableDemandesCodeEntreprise"
+              style="
+                margin-bottom: 18px;
+                border: 1px dashed #2563eb;
+                min-height: 40px;
+                padding: 8px;
+                background: #f7faff;
+                text-align: center;
+              "
+            >
+              <!-- Les demandes seront affichées ici par JS -->
+            </div>
+            <div
+              id="demandeCodeEntrepriseMsg"
+              style="
+                margin-top: 10px;
+                font-size: 0.98em;
+                text-align: center;
+                color: #dc3545;
+              "
+            >
+              <!-- Les messages d'erreur ou d'information JS s'affichent ici -->
+            </div>
+          </div>
+        </div>
+        <!-- Section Statistiques (masquée par défaut) -->
+        <section
+          id="statistiquesSection"
+          class="dynamic-content-area"
+          style="display: none; min-height: 70vh"
+        >
+          <div style="width: 100%; max-width: 1200px; margin: 0 auto">
+            <h1
+              style="
+                font-size: 2.3em;
+                font-weight: 800;
+                color: #2563eb;
+                text-align: center;
+                margin-bottom: 32px;
+                letter-spacing: 1px;
+              "
+            >
+              Statistiques par Acteur
+            </h1>
+            <div
+              style="
+                display: flex;
+                gap: 32px;
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: stretch;
+              "
+            >
+              <div
+                class="stat-bloc"
+                style="
+                  flex: 1 1 320px;
+                  min-width: 280px;
+                  background: linear-gradient(
+                    135deg,
+                    #e3f0ff 60%,
+                    #f7faff 100%
+                  );
+                  border-radius: 18px;
+                  box-shadow: 0 4px 18px #2563eb18, 0 2px 8px #0001;
+                  padding: 32px 24px 24px 24px;
+                  margin-bottom: 18px;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                "
+              >
+                <div
+                  style="
+                    font-size: 1.4em;
+                    font-weight: 700;
+                    color: #2563eb;
+                    margin-bottom: 10px;
+                  "
+                >
+                  <i class="fas fa-user-tie"></i> Agent Acconier
+                </div>
+                <div
+                  id="statAgentAcconier"
+                  style="
+                    font-size: 2.2em;
+                    font-weight: 900;
+                    color: #1d3557;
+                    margin-bottom: 8px;
+                  "
+                >
+                  -
+                </div>
+                <div style="font-size: 1.05em; color: #374151">
+                  Livraisons traitées
+                </div>
+                <div
+                  id="stats-agentAcconier"
+                  style="width: 100%; margin-top: 12px"
+                ></div>
+              </div>
+              <div
+                class="stat-bloc"
+                style="
+                  flex: 1 1 320px;
+                  min-width: 280px;
+                  background: linear-gradient(
+                    135deg,
+                    #fff7e3 60%,
+                    #fffbe9 100%
+                  );
+                  border-radius: 18px;
+                  box-shadow: 0 4px 18px #f59e0b18, 0 2px 8px #0001;
+                  padding: 32px 24px 24px 24px;
+                  margin-bottom: 18px;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                "
+              >
+                <div
+                  style="
+                    font-size: 1.4em;
+                    font-weight: 700;
+                    color: #f59e0b;
+                    margin-bottom: 10px;
+                  "
+                >
+                  <i class="fas fa-user-shield"></i> Responsable Acconier
+                </div>
+                <div
+                  id="statRespAcconier"
+                  style="
+                    font-size: 2.2em;
+                    font-weight: 900;
+                    color: #b26a00;
+                    margin-bottom: 8px;
+                  "
+                >
+                  -
+                </div>
+                <div style="font-size: 1.05em; color: #7c5e2a">
+                  Validations réalisées
+                </div>
+                <div
+                  id="stats-responsableAcconier"
+                  style="width: 100%; margin-top: 12px"
+                ></div>
+              </div>
+              <div
+                class="stat-bloc"
+                style="
+                  flex: 1 1 320px;
+                  min-width: 280px;
+                  background: linear-gradient(
+                    135deg,
+                    #e3ffe3 60%,
+                    #f7fff7 100%
+                  );
+                  border-radius: 18px;
+                  box-shadow: 0 4px 18px #05966918, 0 2px 8px #0001;
+                  padding: 32px 24px 24px 24px;
+                  margin-bottom: 18px;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                "
+              >
+                <div
+                  style="
+                    font-size: 1.4em;
+                    font-weight: 700;
+                    color: #059669;
+                    margin-bottom: 10px;
+                  "
+                >
+                  <i class="fas fa-user-check"></i> Responsable Livraison
+                </div>
+                <div
+                  id="statRespLivraison"
+                  style="
+                    font-size: 2.2em;
+                    font-weight: 900;
+                    color: #059669;
+                    margin-bottom: 8px;
+                  "
+                >
+                  -
+                </div>
+                <div style="font-size: 1.05em; color: #27734d">
+                  Livraisons validées
+                </div>
+                <div
+                  id="stats-responsableLivraison"
+                  style="width: 100%; margin-top: 12px"
+                ></div>
+              </div>
+            </div>
+            <div id="statistiquesDetails" style="margin-top: 32px"></div>
+          </div>
+        </section>
+        <!-- Section demandes code entreprise oublié (admin) -->
+        <!-- Section demandes de code d'entreprise oublié supprimée (remplacée par le bouton sidebar) -->
+
+        <div id="welcomeSection" class="welcome-container">
+          <div
+            id="resumeHier"
+            style="width: 100%; max-width: 600px; margin: 0 auto"
+          ></div>
+        </div>
+
+        <div id="bottomButtons" class="bottom-buttons">
+          <button onclick="afficherSuivi()">
+            <span
+              style="
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                width: 100%;
+                justify-content: center;
+              "
+            >
+              <i class="fas fa-truck-loading"></i>
+              <span style="flex: 1; text-align: center">Suivi</span>
+            </span>
+          </button>
+          <!-- Boutons Jours précédents et Mois passé supprimés -->
+        </div>
+
+        <!-- Popup résumé du mois passé (structure cachée au départ, insérée dans le DOM) -->
+        <div
+          id="popupResumeMoisPasse"
+          style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 41, 59, 0.55);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <div
+            style="
+              background: #fff;
+              border-radius: 18px;
+              box-shadow: 0 8px 40px #2563eb44;
+              padding: 38px 32px 28px 32px;
+              max-width: 900px;
+              width: 96vw;
+              max-height: 92vh;
+              overflow-y: auto;
+              position: relative;
+            "
+          >
+            <button
+              id="closeResumeMoisPasse"
+              style="
+                position: absolute;
+                top: 18px;
+                right: 18px;
+                background: none;
+                border: none;
+                font-size: 1.5em;
+                color: #2563eb;
+                cursor: pointer;
+              "
+            >
+              &times;
+            </button>
+            <div
+              id="moisPasseSelector"
+              style="
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+                margin-bottom: 18px;
+              "
+            ></div>
+            <div id="resumeMoisPasseContent"></div>
+          </div>
+        </div>
+
+        <script>
+          document.addEventListener("DOMContentLoaded", function () {
+            // --- Gestion du popup de modification du code entreprise ---
+            const btnEditSidebar = document.getElementById("btnEditSidebar");
+            const popupEditCompanyCode = document.getElementById(
+              "popupEditCompanyCode"
+            );
+            const closeEditCompanyCode = document.getElementById(
+              "closeEditCompanyCode"
+            );
+            const formEditCompanyCode = document.getElementById(
+              "formEditCompanyCode"
+            );
+            const editCompanyCodeMsg =
+              document.getElementById("editCompanyCodeMsg");
+            if (btnEditSidebar && popupEditCompanyCode) {
+              btnEditSidebar.onclick = function () {
+                popupEditCompanyCode.style.display = "flex";
+                editCompanyCodeMsg.textContent = "";
+                document.getElementById("newCompanyCode").value = "";
+              };
+            }
+            if (closeEditCompanyCode && popupEditCompanyCode) {
+              closeEditCompanyCode.onclick = function () {
+                popupEditCompanyCode.style.display = "none";
+              };
+              popupEditCompanyCode.addEventListener("click", function (e) {
+                if (e.target === popupEditCompanyCode)
+                  popupEditCompanyCode.style.display = "none";
+              });
+            }
+            if (formEditCompanyCode) {
+              formEditCompanyCode.onsubmit = function (e) {
+                e.preventDefault();
+                const newCode = document
+                  .getElementById("newCompanyCode")
+                  .value.trim();
+                if (!newCode) {
+                  editCompanyCodeMsg.textContent = "Veuillez saisir un code.";
+                  return;
+                }
+                // Appel API pour modifier le code entreprise
+                fetch("/api/company-code", {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ code: newCode }),
+                })
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data.success) {
+                      editCompanyCodeMsg.style.color = "#059669";
+                      editCompanyCodeMsg.textContent =
+                        "Code modifié avec succès.";
+                      setTimeout(() => {
+                        popupEditCompanyCode.style.display = "none";
+                      }, 1200);
+                    } else {
+                      editCompanyCodeMsg.style.color = "#dc3545";
+                      editCompanyCodeMsg.textContent =
+                        data.message || "Erreur lors de la modification.";
+                    }
+                  })
+                  .catch(() => {
+                    editCompanyCodeMsg.style.color = "#dc3545";
+                    editCompanyCodeMsg.textContent = "Erreur réseau.";
+                  });
+              };
+            }
+            const btnResumeMoisPasse =
+              document.getElementById("btnResumeMoisPasse");
+            const popupMois = document.getElementById("popupResumeMoisPasse");
+            const closeBtnMois = document.getElementById(
+              "closeResumeMoisPasse"
+            );
+            if (btnResumeMoisPasse) {
+              btnResumeMoisPasse.onclick = function () {
+                fetch("http://localhost:3000/deliveries/status")
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (!data.success || !Array.isArray(data.deliveries)) {
+                      document.getElementById(
+                        "resumeMoisPasseContent"
+                      ).innerHTML =
+                        '<div style="color:#dc3545;text-align:center;">Erreur lors du chargement des données de livraisons.</div>';
+                      popupMois.style.display = "flex";
+                      return;
+                    }
+                    const moisFr = [
+                      "janvier",
+                      "février",
+                      "mars",
+                      "avril",
+                      "mai",
+                      "juin",
+                      "juillet",
+                      "août",
+                      "septembre",
+                      "octobre",
+                      "novembre",
+                      "décembre",
+                    ];
+                    // Regrouper les livraisons par mois/année
+                    const moisMap = {};
+                    data.deliveries.forEach((liv) => {
+                      if (!liv.created_at) return;
+                      const d = new Date(liv.created_at);
+                      const key = `${d.getFullYear()}-${String(
+                        d.getMonth() + 1
+                      ).padStart(2, "0")}`;
+                      if (!moisMap[key]) moisMap[key] = [];
+                      moisMap[key].push(liv);
+                    });
+                    // Trier les clés du plus récent au plus ancien
+                    const moisKeys = Object.keys(moisMap).sort((a, b) =>
+                      b.localeCompare(a)
+                    );
+                    // Par défaut, sélectionner le mois passé (le plus récent < mois courant)
+                    const now = new Date();
+                    const moisCourantKey = `${now.getFullYear()}-${String(
+                      now.getMonth() + 1
+                    ).padStart(2, "0")}`;
+                    let defaultKey = null;
+                    for (const k of moisKeys) {
+                      if (k < moisCourantKey) {
+                        defaultKey = k;
+                        break;
+                      }
+                    }
+                    if (!defaultKey && moisKeys.length > 0)
+                      defaultKey = moisKeys[0];
+                    // Nouvelle disposition : grille de cartes mois façon "jours précédents"
+                    const selector =
+                      document.getElementById("moisPasseSelector");
+                    selector.innerHTML = "";
+                    // Style pour la grille de cartes mois (ajouté dynamiquement si pas déjà)
+                    if (!document.getElementById("style-mois-cards-grid")) {
+                      const style = document.createElement("style");
+                      style.id = "style-mois-cards-grid";
+                      style.innerHTML = `
+                        #moisPasseSelector {
+                          display: grid !important;
+                          grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+                          gap: 18px;
+                          margin-bottom: 18px;
+                        }
+                        .mois-resume-card {
+                          background: linear-gradient(135deg,#f7faff 60%,#e3e9f7 100%);
+                          border-radius: 16px;
+                          box-shadow: 0 4px 18px #2563eb18,0 2px 8px #0001;
+                          padding: 18px 12px 12px 12px;
+                          min-width: 0;
+                          max-width: 100%;
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          cursor: pointer;
+                          transition: box-shadow 0.2s,transform 0.2s;
+                          border: none;
+                          position: relative;
+                        }
+                        .mois-resume-card.active, .mois-resume-card:focus {
+                          box-shadow: 0 8px 28px #2563eb22,0 4px 16px #0002;
+                          outline: 2px solid #2563eb;
+                        }
+                        .mois-resume-card .mois-label {
+                          font-size: 1.08em;
+                          font-weight: 700;
+                          margin-bottom: 8px;
+                          letter-spacing: 0.5px;
+                          text-align: center;
+                          color: #222e3a;
+                        }
+                        .mois-resume-card .mois-total {
+                          font-size: 2.1em;
+                          font-weight: 900;
+                          margin-bottom: 7px;
+                          letter-spacing: 1px;
+                          color: #2563eb;
+                        }
+                        .mois-resume-card .mois-badges {
+                          margin-bottom: 8px;
+                        }
+                        .mois-resume-card .card-badge {
+                          display: inline-block;
+                          background: #eaf1fb;
+                          color: #2563eb;
+                          border-radius: 7px;
+                          padding: 2px 8px;
+                          font-size: 0.98em;
+                          margin: 0 4px 4px 0;
+                          font-weight: 600;
+                        }
+                      `;
+                      document.head.appendChild(style);
+                    }
+                    // On n'affiche que les mois terminés (pas le mois courant)
+                    // Variables now et moisCourantKey déjà déclarées plus haut dans la fonction, on les réutilise ici
+                    // Générer les cartes pour chaque mois terminé
+                    // --- Génération des cartes mois + navigation Précédent/Suivant ---
+                    const moisTermines = moisKeys.filter(
+                      (key) => key < moisCourantKey
+                    );
+                    let selectedIndex = moisTermines.indexOf(defaultKey);
+                    // Générer les cartes
+                    moisTermines.forEach((key, idx) => {
+                      const [year, m] = key.split("-");
+                      const label = `${moisFr[parseInt(m, 10) - 1]} ${year}`;
+                      const totalLiv = moisMap[key].length;
+                      // Calculer les statuts pour badge
+                      const statuts = {};
+                      const traductionStatuts = {
+                        pending: "En attente",
+                        delivered: "Livrée",
+                        pending_acconier: "En attente acconier",
+                        Inconnu: "Inconnu",
+                      };
+                      moisMap[key].forEach((l) => {
+                        let s = l.status || "Inconnu";
+                        s = traductionStatuts[s] || s;
+                        statuts[s] = (statuts[s] || 0) + 1;
+                      });
+                      // Agents et clients
+                      const agents = Array.from(
+                        new Set(
+                          moisMap[key]
+                            .map((l) => l.employee_name)
+                            .filter(Boolean)
+                        )
+                      );
+                      const clients = Array.from(
+                        new Set(
+                          moisMap[key].map((l) => l.client_name).filter(Boolean)
+                        )
+                      );
+                      // Générer la carte
+                      const card = document.createElement("div");
+                      card.className = "mois-resume-card";
+                      card.tabIndex = 0;
+                      card.setAttribute("data-key", key);
+                      card.innerHTML = `
+  <div class=\"mois-label\">${label}</div>
+  <div class=\"mois-total\">${totalLiv}</div>
+  <div class=\"mois-badges\">
+    ${Object.entries(statuts)
+      .map(([s, n]) => `<span class='card-badge'>${n} ${s}</span>`)
+      .join(" ")}
+  </div>
+  <div style='font-size:0.98em;color:#374151;margin-bottom:2px;'><strong>Agents :</strong> ${
+    agents.length
+  }</div>
+  <div style='font-size:0.98em;color:#374151;'><strong>Clients :</strong> ${
+    clients.length
+  }</div>
+`;
+                      // (Suppression du bouton de suppression pour les cartes mois)
+                      card.onclick = () => {
+                        selectedIndex = idx;
+                        afficherResumeMois(key);
+                      };
+                      card.onkeydown = (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          selectedIndex = idx;
+                          afficherResumeMois(key);
+                        }
+                      };
+                      selector.appendChild(card);
+                    });
+                    // Ajout des boutons Précédent/Suivant
+                    if (moisTermines.length > 1) {
+                      const navDiv = document.createElement("div");
+                      navDiv.style.display = "flex";
+                      navDiv.style.justifyContent = "center";
+                      navDiv.style.gap = "18px";
+                      navDiv.style.margin = "18px 0 0 0";
+                      navDiv.innerHTML = `
+                        <button id='btnMoisPrecedent' style='padding:8px 22px;font-size:1em;font-weight:600;background:#f7faff;color:#2563eb;border:1px solid #2563eb33;border-radius:8px;cursor:pointer;transition:background 0.18s;'>⟵ Précédent</button>
+                        <button id='btnMoisSuivant' style='padding:8px 22px;font-size:1em;font-weight:600;background:#f7faff;color:#2563eb;border:1px solid #2563eb33;border-radius:8px;cursor:pointer;transition:background 0.18s;'>Suivant ⟶</button>
+                      `;
+                      selector.parentNode.insertBefore(
+                        navDiv,
+                        selector.nextSibling
+                      );
+                      // Gestion des clics
+                      setTimeout(() => {
+                        const btnPrec =
+                          document.getElementById("btnMoisPrecedent");
+                        const btnSuiv =
+                          document.getElementById("btnMoisSuivant");
+                        function majBtns() {
+                          btnPrec.disabled = selectedIndex <= 0;
+                          btnSuiv.disabled =
+                            selectedIndex >= moisTermines.length - 1;
+                        }
+                        btnPrec.onclick = () => {
+                          if (selectedIndex > 0) {
+                            selectedIndex--;
+                            const key = moisTermines[selectedIndex];
+                            afficherResumeMois(key);
+                            setActiveBtn(key);
+                            // Scroll automatique
+                            const cards =
+                              selector.querySelectorAll(".mois-resume-card");
+                            if (
+                              cards[selectedIndex] &&
+                              typeof cards[selectedIndex].scrollIntoView ===
+                                "function"
+                            ) {
+                              cards[selectedIndex].scrollIntoView({
+                                behavior: "smooth",
+                                block: "nearest",
+                                inline: "center",
+                              });
+                            }
+                          }
+                          majBtns();
+                        };
+                        btnSuiv.onclick = () => {
+                          if (selectedIndex < moisTermines.length - 1) {
+                            selectedIndex++;
+                            const key = moisTermines[selectedIndex];
+                            afficherResumeMois(key);
+                            setActiveBtn(key);
+                            // Scroll automatique
+                            const cards =
+                              selector.querySelectorAll(".mois-resume-card");
+                            if (
+                              cards[selectedIndex] &&
+                              typeof cards[selectedIndex].scrollIntoView ===
+                                "function"
+                            ) {
+                              cards[selectedIndex].scrollIntoView({
+                                behavior: "smooth",
+                                block: "nearest",
+                                inline: "center",
+                              });
+                            }
+                          }
+                          majBtns();
+                        };
+                        // Mise à jour de la carte active au clic sur une carte
+                        const cards =
+                          selector.querySelectorAll(".mois-resume-card");
+                        cards.forEach((c, i) => {
+                          c.addEventListener("click", () => {
+                            selectedIndex = i;
+                            setActiveBtn(moisTermines[selectedIndex]);
+                            majBtns();
+                          });
+                          c.addEventListener("keydown", (e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              selectedIndex = i;
+                              setActiveBtn(moisTermines[selectedIndex]);
+                              majBtns();
+                            }
+                          });
+                        });
+                        // Initialisation
+                        setActiveBtn(moisTermines[selectedIndex]);
+                        majBtns();
+                      }, 0);
+                    }
+                    // Style carte active
+                    function setActiveBtn(keyActif) {
+                      Array.from(selector.children).forEach((c) => {
+                        if (c.getAttribute("data-key") === keyActif) {
+                          c.classList.add("active");
+                          c.setAttribute("aria-current", "true");
+                        } else {
+                          c.classList.remove("active");
+                          c.removeAttribute("aria-current");
+                        }
+                      });
+                    }
+                    // Fonction d'affichage du résumé d'un mois
+                    function afficherResumeMois(key) {
+                      setActiveBtn(key);
+                      // Filtrer pour exclure 'Agent visiteur programmé'
+                      const livraisonsMois = (moisMap[key] || []).filter(
+                        (liv) =>
+                          liv.employee_name !== "Agent visiteur programmé"
+                      );
+                      const [year, m] = key.split("-");
+                      const moisLabel = `${
+                        moisFr[parseInt(m, 10) - 1]
+                      } ${year}`;
+                      const total = livraisonsMois.length;
+                      const agents = Array.from(
+                        new Set(
+                          livraisonsMois
+                            .map((l) => l.employee_name)
+                            .filter(Boolean)
+                        )
+                      );
+                      const clients = Array.from(
+                        new Set(
+                          livraisonsMois
+                            .map((l) => l.client_name)
+                            .filter(Boolean)
+                        )
+                      );
+                      const statuts = {};
+                      const traductionStatuts = {
+                        pending: "En attente",
+                        delivered: "Livrée",
+                        pending_acconier: "En attente acconier",
+                        Inconnu: "Inconnu",
+                      };
+                      livraisonsMois.forEach((l) => {
+                        let s = l.status || "Inconnu";
+                        s = traductionStatuts[s] || s;
+                        statuts[s] = (statuts[s] || 0) + 1;
+                      });
+                      const lieux = Array.from(
+                        new Set(
+                          livraisonsMois.map((l) => l.lieu).filter(Boolean)
+                        )
+                      );
+                      let recapHtml = `<div style='font-size:1.25em;font-weight:700;color:#2563eb;margin-bottom:10px;text-align:center;'>Résumé du mois de ${moisLabel}</div>`;
+                      recapHtml += `<div style='font-size:2em;font-weight:900;margin-bottom:7px;letter-spacing:1px;color:#2563eb;text-align:center;'>${total} livraisons</div>`;
+                      // Statuts : triés par nombre décroissant, un par ligne
+                      const statutsSorted = Object.entries(statuts).sort(
+                        (a, b) => b[1] - a[1]
+                      );
+                      recapHtml += `<div style='margin-bottom:8px;'><strong>Statuts :</strong><br>`;
+                      if (statutsSorted.length === 0) {
+                        recapHtml += "Aucun";
+                      } else {
+                        statutsSorted.forEach(([s, n]) => {
+                          let color = "#2563eb";
+                          if (
+                            s.toLowerCase().includes("rejet") ||
+                            s.toLowerCase().includes("reject")
+                          )
+                            color = "#dc3545";
+                          if (s.toLowerCase().includes("attente"))
+                            color = "#f59e0b";
+                          if (s.toLowerCase().includes("livr"))
+                            color = "#059669";
+                          if (s.toLowerCase().includes("eir"))
+                            color = "#a855f7";
+                          recapHtml += `<span class="card-badge" style="background:${color}22;color:${color};margin-right:8px;margin-bottom:3px;">${n} ${s}</span><br>`;
+                        });
+                      }
+                      recapHtml += `</div>`;
+                      // Agents : retour à la ligne tous les 5
+                      recapHtml += `<div style='margin-bottom:8px;'><strong>Agents :</strong><br>`;
+                      if (agents.length > 0) {
+                        for (let i = 0; i < agents.length; i += 5) {
+                          recapHtml +=
+                            agents.slice(i, i + 5).join(", ") + "<br>";
+                        }
+                      } else {
+                        recapHtml += "-";
+                      }
+                      recapHtml += `</div>`;
+                      // Clients : retour à la ligne tous les 5
+                      recapHtml += `<div style='margin-bottom:8px;'><strong>Clients :</strong><br>`;
+                      if (clients.length > 0) {
+                        for (let i = 0; i < clients.length; i += 5) {
+                          recapHtml +=
+                            clients.slice(i, i + 5).join(", ") + "<br>";
+                        }
+                      } else {
+                        recapHtml += "-";
+                      }
+                      recapHtml += `</div>`;
+                      // Lieux : retour à la ligne tous les 4
+                      recapHtml += `<div style='margin-bottom:8px;'><strong>Lieux :</strong><br>`;
+                      if (lieux.length > 0) {
+                        for (let i = 0; i < lieux.length; i += 4) {
+                          recapHtml +=
+                            lieux.slice(i, i + 4).join(", ") + "<br>";
+                        }
+                      } else {
+                        recapHtml += "-";
+                      }
+                      recapHtml += `</div>`;
+                      // Détails des livraisons : tableau
+                      if (livraisonsMois.length > 0) {
+                        recapHtml += `<div style='margin-top:12px;'><strong>Détails des livraisons :</strong><div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:6px;'>`;
+                        recapHtml += `<thead><tr style='background:#f7faff;'><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Client</th><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Agent</th><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Lieu</th><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Statut</th></tr></thead><tbody>`;
+                        livraisonsMois.forEach((liv) => {
+                          const statutFr =
+                            traductionStatuts[liv.status] || liv.status || "-";
+                          let color = "#2563eb";
+                          if (
+                            statutFr.toLowerCase().includes("rejet") ||
+                            statutFr.toLowerCase().includes("reject")
+                          )
+                            color = "#dc3545";
+                          if (statutFr.toLowerCase().includes("attente"))
+                            color = "#f59e0b";
+                          if (statutFr.toLowerCase().includes("livr"))
+                            color = "#059669";
+                          if (statutFr.toLowerCase().includes("eir"))
+                            color = "#a855f7";
+                          recapHtml += `<tr><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'>${
+                            liv.client_name ? `<b>${liv.client_name}</b>` : "-"
+                          }</td><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'>${
+                            liv.employee_name || "-"
+                          }</td><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'>${
+                            liv.lieu || "-"
+                          }</td><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'><span style='color:${color};font-weight:600;'>${statutFr}</span></td></tr>`;
+                        });
+                        recapHtml += `</tbody></table></div></div>`;
+                      }
+                      document.getElementById(
+                        "resumeMoisPasseContent"
+                      ).innerHTML = recapHtml;
+                    }
+                    // Afficher le résumé du mois par défaut
+                    if (defaultKey) afficherResumeMois(defaultKey);
+                    popupMois.style.display = "flex";
+                  })
+                  .catch(() => {
+                    document.getElementById(
+                      "resumeMoisPasseContent"
+                    ).innerHTML =
+                      '<div style="color:#dc3545;text-align:center;">Impossible de charger le résumé du mois passé.</div>';
+                    popupMois.style.display = "flex";
+                  });
+              };
+            }
+            if (closeBtnMois && popupMois) {
+              closeBtnMois.onclick = () => {
+                popupMois.style.display = "none";
+              };
+              popupMois.addEventListener("click", (e) => {
+                if (e.target === popupMois) popupMois.style.display = "none";
+              });
+            }
+          });
+        </script>
+
+        <div
+          id="suiviContainer"
+          class="dynamic-content-area"
+          style="display: none"
+        ></div>
+        <div
+          id="historiqueAgentsContainer"
+          class="dynamic-content-area"
+          style="display: none"
+        ></div>
+        <!-- Popup résumé jours précédents -->
+        <div
+          id="popupResumeJoursPrecedents"
+          style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 41, 59, 0.55);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <div
+            style="
+              background: #fff;
+              border-radius: 18px;
+              box-shadow: 0 8px 40px #2563eb44;
+              padding: 38px 32px 28px 32px;
+              max-width: 900px;
+              width: 96vw;
+              max-height: 92vh;
+              overflow-y: auto;
+              position: relative;
+            "
+          >
+            <button
+              id="closeResumeJoursPrecedents"
+              style="
+                position: absolute;
+                top: 18px;
+                right: 18px;
+                background: none;
+                border: none;
+                font-size: 1.5em;
+                color: #2563eb;
+                cursor: pointer;
+              "
+            >
+              &times;
+            </button>
+            <div
+              style="
+                font-size: 1.3em;
+                font-weight: 700;
+                color: #2563eb;
+                margin-bottom: 18px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+              "
+            >
+              <i class="fas fa-calendar-day"></i> Résumé des activité des agents
+              (jours précédents)
+            </div>
+            <div id="resumeJoursPrecedentsContent"></div>
+            <script>
+              // Filtrer l'affichage pour ne pas montrer "Agent visiteur programmé" dans le résumé des jours précédents
+              document.addEventListener("DOMContentLoaded", function () {
+                const resumeDiv = document.getElementById(
+                  "resumeJoursPrecedentsContent"
+                );
+                if (resumeDiv) {
+                  const observer = new MutationObserver(() => {
+                    // Supprime les lignes du tableau contenant "Agent visiteur programmé"
+                    resumeDiv.querySelectorAll("tr").forEach((tr) => {
+                      if (tr.textContent.includes("Agent visiteur programmé")) {
+                        tr.remove();
+                      }
+                    });
+                  });
+                  observer.observe(resumeDiv, {
+                    childList: true,
+                    subtree: true,
+                  });
+                }
+              });
+            </script>
+            <!-- Popup détail jour sélectionné -->
+            <div
+              id="popupDetailJourResume"
+              style="
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(30, 41, 59, 0.55);
+                z-index: 10000;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <div
+                id="popupDetailJourContent"
+                style="
+                  background: #fff;
+                  border-radius: 18px;
+                  box-shadow: 0 8px 40px #2563eb44;
+                  padding: 32px 28px 24px 28px;
+                  max-width: 420px;
+                  width: 92vw;
+                  max-height: 90vh;
+                  overflow-y: auto;
+                  position: relative;
+                "
+              >
+                <button
+                  id="closePopupDetailJour"
+                  style="
+                    position: absolute;
+                    top: 14px;
+                    right: 14px;
+                    background: none;
+                    border: none;
+                    font-size: 1.5em;
+                    color: #2563eb;
+                    cursor: pointer;
+                  "
+                >
+                  &times;
+                </button>
+                <div id="popupDetailJourInfos"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="../js/scriptTabBord.js"></script>
+    <script>
+      // --- Avatar utilisateur moderne dans la sidebar (en bas sous la date) ---
+      document.addEventListener("DOMContentLoaded", function () {
+        // SÉPARATION STRICTE : NE JAMAIS lire la clé respacconierUser ici !
+        // On utilise uniquement la clé 'user' pour le profil du dashboard
+        let user = window.currentUser ||
+          JSON.parse(localStorage.getItem("user")) || {
+            nom: "",
+            profil: "",
+            photo: "",
+            email: "",
+          };
+        const avatarCircle = document.getElementById("userAvatarCircle");
+        const userName = document.getElementById("userNameSidebar");
+        const userProfil = document.getElementById("userProfilSidebar");
+        // Ajout d'un affichage email sous le nom
+        if (avatarCircle && userName && userProfil) {
+          // Afficher initiales ou photo
+          if (user.photo) {
+            avatarCircle.innerHTML = `<img src="${user.photo}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+          } else if (user.nom && user.nom.length > 0) {
+            const initiales = user.nom
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .substring(0, 2)
+              .toUpperCase();
+            avatarCircle.innerHTML = initiales;
+          }
+          userName.textContent = user.nom || "";
+          userProfil.textContent = user.profil || "";
+          // Affichage email sous le nom
+          let emailDiv = document.getElementById("userEmailSidebar");
+          if (!emailDiv) {
+            emailDiv = document.createElement("div");
+            emailDiv.id = "userEmailSidebar";
+            emailDiv.style.fontSize = "0.97em";
+            emailDiv.style.color = "#374151";
+            emailDiv.style.textAlign = "center";
+            emailDiv.style.maxWidth = "140px";
+            emailDiv.style.overflow = "hidden";
+            emailDiv.style.textOverflow = "ellipsis";
+            emailDiv.style.whiteSpace = "nowrap";
+            userName.parentNode.insertBefore(emailDiv, userProfil);
+          }
+          emailDiv.textContent = user.email || "";
+        }
+        // Popup profil détaillé au clic sur l'avatar
+        let popup = null;
+        if (avatarCircle) {
+          avatarCircle.onclick = function (e) {
+            e.stopPropagation();
+            if (popup) {
+              popup.remove();
+              popup = null;
+              return;
+            }
+            popup = document.createElement("div");
+            popup.style.position = "fixed";
+            popup.style.bottom = "32px";
+            popup.style.left =
+              avatarCircle.getBoundingClientRect().left - 30 + "px";
+            popup.style.background = "#fff";
+            popup.style.boxShadow = "0 8px 32px #2563eb22";
+            popup.style.borderRadius = "1rem";
+            popup.style.padding = "22px 32px 18px 32px";
+            popup.style.zIndex = 10001;
+            popup.style.minWidth = "210px";
+            popup.style.fontFamily = "Inter,Segoe UI,sans-serif";
+            popup.innerHTML = `
+              <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#2563eb 60%,#06b6d4 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:2em;font-weight:700;box-shadow:0 2px 8px #2563eb22;">${
+                  user.photo
+                    ? `<img src='${user.photo}' alt='avatar' style='width:100%;height:100%;object-fit:cover;border-radius:50%;'>`
+                    : user.nom
+                    ? user.nom
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .substring(0, 2)
+                        .toUpperCase()
+                    : ""
+                }</div>
+                <div style="font-size:1.12em;font-weight:700;color:#2563eb;text-align:center;">${
+                  user.nom || ""
+                }</div>
+                <div style="font-size:1em;color:#374151;text-align:center;">${
+                  user.profil || ""
+                }</div>
+                <button id='logoutPopupBtn' style='margin-top:10px;background:linear-gradient(90deg,#2563eb 0%,#06b6d4 100%);color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:0.98em;font-weight:600;box-shadow:0 2px 8px #2563eb22;cursor:pointer;transition:filter 0.18s;'>Se déconnecter</button>
+              </div>
+            `;
+            document.body.appendChild(popup);
+            // Fermer au clic extérieur
+            setTimeout(() => {
+              document.addEventListener("click", closePopup, { once: true });
+            }, 10);
+            function closePopup(ev) {
+              if (popup && !popup.contains(ev.target)) {
+                popup.remove();
+                popup = null;
+              }
+            }
+            // Déconnexion depuis le popup
+            const logoutBtn = popup.querySelector("#logoutPopupBtn");
+            if (logoutBtn) {
+              logoutBtn.onclick = function () {
+                // À adapter selon votre logique de déconnexion
+                localStorage.removeItem("user");
+                window.location.href = "index.html";
+              };
+            }
+          };
+        }
+        // Déconnexion directe depuis le sidebar
+        const logoutSidebarBtn = document.getElementById("logoutSidebarBtn");
+        if (logoutSidebarBtn) {
+          logoutSidebarBtn.onclick = function () {
+            localStorage.removeItem("user");
+            window.location.href = "index.html";
+          };
+        }
+      });
+    </script>
+    <script>
+      // --- Avatar utilisateur dans la sidebar ---
+      document.addEventListener("DOMContentLoaded", function () {
+        // Simuler récupération du nom et profil utilisateur (à remplacer par vos données réelles)
+        let user = window.currentUser || {
+          nom: "Utilisateur",
+          profil: "Employé",
+        };
+        // Si vous avez une variable globale ou un stockage local, utilisez-la ici
+        // Exemple : user = JSON.parse(localStorage.getItem('user')) || user;
+        const avatar = document.getElementById("userAvatarSidebar");
+        const avatarCircle = document.getElementById("userAvatarCircle");
+        if (avatar && avatarCircle) {
+          // Afficher initiales ou icône
+          if (user.nom && user.nom.length > 0) {
+            const initiales = user.nom
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .substring(0, 2)
+              .toUpperCase();
+            avatarCircle.innerHTML = initiales;
+          }
+          // Affichage du popup profil
+          let popup = null;
+          avatar.onclick = function (e) {
+            e.stopPropagation();
+            if (popup) {
+              popup.remove();
+              popup = null;
+              return;
+            }
+            popup = document.createElement("div");
+            popup.style.position = "fixed";
+            popup.style.top = avatar.getBoundingClientRect().bottom + 8 + "px";
+            popup.style.left =
+              avatar.getBoundingClientRect().right - 180 + "px";
+            popup.style.background = "#fff";
+            popup.style.boxShadow = "0 8px 32px #2563eb22";
+            popup.style.borderRadius = "1rem";
+            popup.style.padding = "18px 28px 14px 28px";
+            popup.style.zIndex = 10001;
+            popup.style.minWidth = "180px";
+            popup.style.fontFamily = "Inter,Segoe UI,sans-serif";
+            popup.innerHTML = `
+              <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+                <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#2563eb 60%,#06b6d4 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5em;font-weight:700;box-shadow:0 2px 8px #2563eb22;">${
+                  user.nom
+                    ? user.nom
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .substring(0, 2)
+                        .toUpperCase()
+                    : ""
+                }</div>
+                <div style="font-size:1.08em;font-weight:700;color:#2563eb;text-align:center;">${
+                  user.nom || ""
+                }</div>
+                <div style="font-size:0.98em;color:#374151;text-align:center;">${
+                  user.profil || ""
+                }</div>
+              </div>
+            `;
+            document.body.appendChild(popup);
+            // Fermer au clic extérieur
+            setTimeout(() => {
+              document.addEventListener("click", closePopup, { once: true });
+            }, 10);
+            function closePopup(ev) {
+              if (popup && !popup.contains(ev.target)) {
+                popup.remove();
+                popup = null;
+              }
+            }
+          };
+        }
+      });
+    </script>
+    <script>
+      // --- Gestion du bouton demande code entreprise ---
+      document.addEventListener("DOMContentLoaded", function () {
+        const demandeBtn = document.getElementById("demandeCodeEntrepriseBtn");
+        const popup = document.getElementById("popupDemandeCodeEntreprise");
+        const closeBtn = document.getElementById("closeDemandeCodeEntreprise");
+        const envoyerBtn = document.getElementById("envoyerDemandeCodeBtn");
+        const msgDiv = document.getElementById("demandeCodeEntrepriseMsg");
+        if (demandeBtn && popup) {
+          demandeBtn.onclick = function () {
+            popup.style.display = "flex";
+            msgDiv.textContent = "";
+          };
+        }
+        if (closeBtn && popup) {
+          closeBtn.onclick = function () {
+            popup.style.display = "none";
+          };
+          popup.addEventListener("click", function (e) {
+            if (e.target === popup) popup.style.display = "none";
+          });
+        }
+        if (envoyerBtn) {
+          envoyerBtn.onclick = async function () {
+            const nom = document.getElementById("demandeCodeNom").value.trim();
+            const email = document
+              .getElementById("demandeCodeEmail")
+              .value.trim();
+            const message = document
+              .getElementById("demandeCodeMessage")
+              .value.trim();
+            msgDiv.textContent = "";
+            if (!nom || !email) {
+              msgDiv.textContent = "Veuillez renseigner votre nom et email.";
+              msgDiv.style.color = "#dc3545";
+              return;
+            }
+            envoyerBtn.disabled = true;
+            envoyerBtn.textContent = "Envoi...";
+            try {
+              // Appel backend à adapter selon ta route
+              const res = await fetch("/api/demande-code-entreprise", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nom, email, message }),
+              });
+              const data = await res.json();
+              if (res.ok && data.success) {
+                msgDiv.textContent =
+                  "Demande envoyée ! Vous recevrez le code par email.";
+                msgDiv.style.color = "#059669";
+                document.getElementById("demandeCodeNom").value = "";
+                document.getElementById("demandeCodeEmail").value = "";
+                document.getElementById("demandeCodeMessage").value = "";
+              } else {
+                msgDiv.textContent = data.message || "Erreur lors de l'envoi.";
+                msgDiv.style.color = "#dc3545";
+              }
+            } catch (err) {
+              msgDiv.textContent = "Erreur réseau ou serveur. Réessayez.";
+              msgDiv.style.color = "#dc3545";
+            }
+            envoyerBtn.disabled = false;
+            envoyerBtn.textContent = "Envoyer la demande";
+          };
+        }
+      });
+    </script>
+  </body>
+</html>

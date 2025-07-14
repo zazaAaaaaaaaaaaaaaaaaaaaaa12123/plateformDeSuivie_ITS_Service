@@ -1,0 +1,2037 @@
+/* === DASHBOARD TITRES & SECTIONS === */
+.recap-dashboard-title {
+  font-size: 2em;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 18px;
+  text-align: center;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 12px #2563eb22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.recap-dashboard-date {
+  font-size: 0.7em;
+  font-weight: 600;
+  color: #374151;
+  background: #eaf1fb;
+  padding: 6px 18px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #2563eb11;
+  letter-spacing: 0.5px;
+}
+.recap-dashboard-section-title {
+  margin-bottom: 6px;
+}
+.recap-dashboard-section-content {
+  margin-bottom: 8px;
+}
+.recap-dashboard-date-label {
+  font-size: 1em;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+.card-title-blue {
+  color: #2563eb;
+}
+.card-title-green {
+  color: #059669;
+}
+.card-title-yellow {
+  color: #f59e0b;
+}
+.card-title-purple {
+  color: #6366f1;
+}
+.card-title-red {
+  color: #ef4444;
+}
+.card-value-purple {
+  color: #6366f1;
+  font-size: 2.1em;
+}
+.recap-dashboard-btn {
+  margin-top: 10px;
+  padding: 10px 22px;
+  font-size: 1em;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #2563ef22;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.recap-dashboard-btn-purple {
+  background: #6366f1;
+  color: #fff;
+}
+.recap-dashboard-btn-red {
+  background: #ef4444;
+  color: #fff;
+  font-size: 1.08em;
+  font-weight: 700;
+}
+/* === POPUP DÉTAIL JOUR === */
+.recap-popup-detailjour-title {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.recap-popup-detailjour-total {
+  font-size: 2em;
+  font-weight: 900;
+  margin-bottom: 7px;
+  letter-spacing: 1px;
+  color: #2563eb;
+  text-align: center;
+}
+.recap-popup-detailjour-section {
+  margin-bottom: 8px;
+}
+.recap-popup-detailjour-section-title {
+  margin-bottom: 6px;
+}
+.recap-popup-detailjour-badge {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #2563eb;
+  font-size: 0.95em;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 2px 10px;
+  margin: 0 8px 3px 0;
+  box-shadow: 0 1px 4px #2563eb11;
+}
+.recap-popup-detailjour-table-container {
+  margin-top: 12px;
+  overflow-x: auto;
+}
+.recap-popup-detailjour-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.98em;
+  margin-top: 6px;
+}
+.recap-popup-detailjour-table th,
+.recap-popup-detailjour-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+}
+.recap-popup-detailjour-table thead tr {
+  background: #f7faff;
+}
+.recap-popup-detailjour-table tbody tr:nth-child(even) td {
+  background: #f7faff;
+}
+.recap-popup-detailjour-table tbody tr:hover td {
+  background: #eaf1fb;
+  color: #2563eb;
+}
+/* === POPUP RÉSUMÉ MOIS COURANT === */
+.recap-popup-recapmois-title {
+  font-size: 1.25em;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.recap-popup-recapmois-total {
+  font-size: 2em;
+  font-weight: 900;
+  margin-bottom: 7px;
+  letter-spacing: 1px;
+  color: #2563eb;
+  text-align: center;
+}
+.recap-popup-recapmois-section {
+  margin-bottom: 8px;
+}
+/* === GRILLE DES CARTES RÉSUMÉ === */
+.recap-popup-list {
+  margin: 6px 0 0 0;
+  padding-left: 18px;
+}
+.recap-popup-list-item {
+  font-size: 0.98em;
+  margin-bottom: 2px;
+}
+.recap-popup-status {
+  font-weight: 600;
+}
+.recap-status-blue {
+  color: #2563eb;
+}
+.recap-status-red {
+  color: #dc3545;
+}
+.recap-status-yellow {
+  color: #f59e0b;
+}
+.recap-status-green {
+  color: #059669;
+}
+.recap-status-purple {
+  color: #a855f7;
+}
+.recap-popup-table-container {
+  margin-top: 12px;
+  overflow-x: auto;
+}
+.recap-popup-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.98em;
+  margin-top: 6px;
+}
+.recap-popup-table-th {
+  padding: 4px 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.recap-popup-table-td {
+  padding: 3px 8px;
+  border-bottom: 1px solid #f1f1f1;
+}
+.recap-popup-table-row-bg {
+  background: #f7faff;
+}
+.recap-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  width: 100%;
+  margin-bottom: 18px;
+}
+/* === CARTE JOUR RÉSUMÉ & BADGES === */
+.resume-jour-card {
+  background: linear-gradient(135deg, #f7faff 60%, #e3e9f7 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 18px #2563eb18, 0 2px 8px #0001;
+  padding: 18px 12px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  position: relative;
+}
+.resume-jour-card-date {
+  font-size: 1.08em;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+  text-align: center;
+  color: #222e3a;
+}
+.resume-jour-card-total {
+  font-size: 2.1em;
+  font-weight: 900;
+  margin-bottom: 7px;
+  letter-spacing: 1px;
+  color: #2563eb;
+}
+.resume-jour-card-label {
+  font-size: 1em;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+.resume-jour-card-section-title {
+  margin-bottom: 6px;
+}
+.resume-jour-card-section-content {
+  margin-bottom: 8px;
+}
+.resume-jour-card-agents,
+.resume-jour-card-clients,
+.resume-jour-card-lieux {
+  margin-bottom: 0;
+}
+.card-badge {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #2563eb;
+  font-size: 0.95em;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 2px 10px;
+  margin: 0 2px 2px 0;
+  box-shadow: 0 1px 4px #2563eb11;
+}
+/* === POPUPS DASHBOARD CSP === */
+.recap-popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(30, 41, 59, 0.55);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+.recap-popup-overlay.active {
+  display: flex;
+}
+.recap-popup {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px #05966944, 0 2px 8px #0001;
+  padding: 38px 32px 28px 32px;
+  max-width: 700px;
+  width: 96vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.recap-popup .recap-popup-title {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: #059669;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.recap-popup .recap-popup-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: #059669;
+  cursor: pointer;
+}
+.recap-popup-content {
+  font-size: 1em;
+  color: #374151;
+}
+.recap-popup-table-container {
+  overflow-x: auto;
+}
+.recap-popup-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1em;
+  margin-top: 6px;
+}
+.recap-popup-table th,
+.recap-popup-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+}
+.recap-popup-table thead tr {
+  background: #f7faff;
+}
+.recap-popup-table tbody tr:nth-child(even) td {
+  background: #f7faff;
+}
+.recap-popup-table tbody tr:hover td {
+  background: #eaf1fb;
+  color: #2563eb;
+}
+/* Popup recap mois */
+.recap-popup-recapmois {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px #6366f144, 0 2px 8px #0001;
+  padding: 38px 32px 28px 32px;
+  max-width: 420px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.recap-popup-recapmois .recap-popup-close {
+  color: #6366f1;
+}
+.recap-popup-recapmois .recap-popup-title {
+  color: #6366f1;
+}
+.recap-popup-detailsstats {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px #2563eb44, 0 2px 8px #0001;
+  padding: 38px 32px 28px 32px;
+  max-width: 500px;
+  width: 96vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.recap-popup-detailsstats .recap-popup-close {
+  color: #2563eb;
+}
+.recap-popup-detailsstats .recap-popup-title {
+  color: #2563eb;
+}
+/* Overlay générique pour popups */
+.recap-popup-overlay {
+  transition: opacity 0.2s;
+}
+/* Liste agents visiteurs (ex tableauDeBord.html) */
+.recap-liste-agents-visiteurs {
+  margin-top: 8px;
+  width: 100%;
+  text-align: left;
+  font-size: 0.98em;
+  color: #374151;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+/* Carte récap mois (ex tableauDeBord.html) */
+.recap-mois-card {
+  border-top: 6px solid #6366f1;
+  box-shadow: 0 6px 32px #6366f133, 0 2px 8px #0001;
+  min-width: 0;
+  max-width: 100%;
+  overflow-y: auto;
+}
+.recap-agents-visiteurs-card {
+  border-top: 5px solid #059669;
+  box-shadow: 0 4px 18px #05966922, 0 2px 8px #0001;
+  background: linear-gradient(135deg, #f7fff7 60%, #e3f7e9 100%);
+}
+/* Badge date spécifique pour recap */
+.recap-badge-date {
+  font-size: 0.7em;
+  font-weight: 600;
+  color: #374151;
+  background: #eaf1fb;
+  padding: 6px 18px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #2563eb11;
+  letter-spacing: 0.5px;
+}
+/* Container flex pour les boutons de navigation mois */
+.recap-btn-nav-container {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 18px 0 0 0;
+}
+/* Cache les éléments dynamiques par défaut (remplace display:none inline) */
+.recap-hidden {
+  display: none !important;
+}
+/* === Migration CSP : Boutons de navigation mois et boutons popup === */
+.recap-btn-nav {
+  padding: 8px 22px;
+  font-size: 1em;
+  font-weight: 600;
+  background: #f7faff;
+  color: #2563eb;
+  border: 1px solid #2563eb33;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.18s;
+  margin: 0 4px;
+}
+.recap-btn-nav:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.recap-btn-popup {
+  margin-top: 10px;
+  padding: 10px 22px;
+  font-size: 1em;
+  font-weight: 600;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #6366f122;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.recap-btn-popup:hover {
+  background: #4f46e5;
+}
+/* === Migration CSP : Overlay et popup génériques === */
+.recap-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(30, 41, 59, 0.55);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+.recap-overlay.is-visible {
+  display: flex;
+}
+.recap-popup {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px #6366f144;
+  padding: 38px 32px 28px 32px;
+  max-width: 700px;
+  width: 96vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+}
+.recap-popup .recap-popup-title {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: #6366f1;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.recap-popup .recap-popup-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: #6366f1;
+  cursor: pointer;
+}
+.recap-popup .recap-popup-close:hover {
+  color: #4f46e5;
+}
+/* === Migration CSP : Tableaux scrollables === */
+.recap-table-scroll {
+  overflow-x: auto;
+}
+.recap-ul-details {
+  margin: 6px 0 0 0;
+  padding-left: 18px;
+}
+.recap-li-detail {
+  font-size: 0.98em;
+  margin-bottom: 2px;
+}
+.recap-mt {
+  margin-top: 12px;
+}
+/* === Migration CSP : Loaders et messages d'erreur === */
+.recap-loader {
+  text-align: center;
+  padding: 30px 0;
+  color: #2563eb;
+}
+.recap-error {
+  color: #dc3545;
+  text-align: center;
+}
+/* === Migration CSP : Grille pour les cartes résumé jours précédents === */
+.recap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+/* Marge spécifique pour label Statuts */
+.recap-label-mb {
+  margin-bottom: 6px;
+}
+/* === Migration CSP : Classes pour les récapitulatifs dynamiques (badges, tableaux, etc.) === */
+.recap-title {
+  font-size: 1.25em;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.recap-total {
+  font-size: 2em;
+  font-weight: 900;
+  margin-bottom: 7px;
+  letter-spacing: 1px;
+  color: #2563eb;
+  text-align: center;
+}
+.recap-section {
+  margin-bottom: 8px;
+}
+.recap-label {
+  font-size: 0.98em;
+  color: #374151;
+  margin-bottom: 2px;
+}
+.recap-badge {
+  display: inline-block;
+  border-radius: 7px;
+  padding: 2px 8px;
+  font-size: 0.98em;
+  margin: 0 4px 4px 0;
+  font-weight: 600;
+  background: #eaf1fb;
+  color: #2563eb;
+}
+.recap-badge.status-blue {
+  background: #2563eb22;
+  color: #2563eb;
+}
+.recap-badge.status-green {
+  background: #05966922;
+  color: #059669;
+}
+.recap-badge.status-yellow {
+  background: #f59e0b22;
+  color: #f59e0b;
+}
+.recap-badge.status-red {
+  background: #dc354522;
+  color: #dc3545;
+}
+.recap-badge.status-purple {
+  background: #a855f722;
+  color: #a855f7;
+}
+.recap-margin-b {
+  margin-bottom: 8px;
+}
+.recap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.98em;
+  margin-top: 6px;
+}
+.recap-th {
+  background: #f7faff;
+  padding: 4px 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.recap-td {
+  padding: 3px 8px;
+  border-bottom: 1px solid #f1f1f1;
+}
+.recap-status {
+  font-weight: 600;
+}
+.recap-status.blue {
+  color: #2563eb;
+}
+.recap-status.green {
+  color: #059669;
+}
+.recap-status.yellow {
+  color: #f59e0b;
+}
+.recap-status.red {
+  color: #dc3545;
+}
+.recap-status.purple {
+  color: #a855f7;
+}
+/* === Migration CSP : Classes pour popups, boutons, flex, etc. === */
+.btn-flex-center {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  justify-content: center;
+}
+.btn-flex-span {
+  flex: 1;
+  text-align: center;
+}
+.popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(30, 41, 59, 0.55);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+.popup-overlay.is-visible {
+  display: flex;
+}
+.popup-content {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px #2563eb44;
+  padding: 38px 32px 28px 32px;
+  max-width: 900px;
+  width: 96vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+}
+.popup-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: #2563eb;
+  cursor: pointer;
+}
+.popup-title {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.popup-selector-flex {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.hidden {
+  display: none !important;
+}
+/* --- Migration des styles en ligne depuis tableauDeBord.html --- */
+.statistiques-section {
+  display: none;
+  min-height: 70vh;
+}
+.statistiques-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.statistiques-title {
+  font-size: 2.3em;
+  font-weight: 800;
+  color: #2563eb;
+  text-align: center;
+  margin-bottom: 32px;
+  letter-spacing: 1px;
+}
+.statistiques-flex {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+}
+.stat-bloc-bg1 {
+  flex: 1 1 320px;
+  min-width: 280px;
+  background: linear-gradient(135deg, #e3f0ff 60%, #f7faff 100%);
+  border-radius: 18px;
+  box-shadow: 0 4px 18px #2563eb18, 0 2px 8px #0001;
+  padding: 32px 24px 24px 24px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.stat-bloc-bg2 {
+  flex: 1 1 320px;
+  min-width: 280px;
+  background: linear-gradient(135deg, #fff7e3 60%, #fffbe9 100%);
+  border-radius: 18px;
+  box-shadow: 0 4px 18px #f59e0b18, 0 2px 8px #0001;
+  padding: 32px 24px 24px 24px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.stat-bloc-bg3 {
+  flex: 1 1 320px;
+  min-width: 280px;
+  background: linear-gradient(135deg, #e3ffe3 60%, #f7fff7 100%);
+  border-radius: 18px;
+  box-shadow: 0 4px 18px #05966918, 0 2px 8px #0001;
+  padding: 32px 24px 24px 24px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.stat-bloc-title1 {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 10px;
+}
+.stat-bloc-title2 {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: #f59e0b;
+  margin-bottom: 10px;
+}
+.stat-bloc-title3 {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: #059669;
+  margin-bottom: 10px;
+}
+.stat-bloc-value1 {
+  font-size: 2.2em;
+  font-weight: 900;
+  color: #1d3557;
+  margin-bottom: 8px;
+}
+.stat-bloc-value2 {
+  font-size: 2.2em;
+  font-weight: 900;
+  color: #b26a00;
+  margin-bottom: 8px;
+}
+.stat-bloc-value3 {
+  font-size: 2.2em;
+  font-weight: 900;
+  color: #059669;
+  margin-bottom: 8px;
+}
+.stat-bloc-desc1 {
+  font-size: 1.05em;
+  color: #374151;
+}
+.stat-bloc-desc2 {
+  font-size: 1.05em;
+  color: #7c5e2a;
+}
+.stat-bloc-desc3 {
+  font-size: 1.05em;
+  color: #27734d;
+}
+.stat-bloc-table {
+  width: 100%;
+  margin-top: 12px;
+}
+.statistiques-details {
+  margin-top: 32px;
+}
+.resume-hier {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+/* styledeTabBord.css - Version corrigée avec centrage des bulles et couleur du menu */
+
+html,
+body {
+  /* MODIFIÉ: On garde overflow: hidden pour le corps principal pour éviter les scrollbars globales non désirées. */
+  /* Si des éléments comme des modals ou tooltips sortent de l'écran, cela pourrait poser problème. */
+  /* Dans ce cas, on pourrait passer à overflow-x: hidden; overflow-y: auto; sur le body. */
+  overflow: hidden;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background: linear-gradient(145deg, #007bff, #0056b3);
+  color: #333;
+  min-height: 90vh;
+  padding: 20px;
+}
+
+.layout {
+  display: flex;
+  /* MODIFIÉ: max-width à 100% pour que le layout s'adapte à la largeur disponible de la fenêtre. */
+  max-width: 100%;
+  margin: 0 auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  overflow: hidden; /* TRÈS IMPORTANT: Contient tous les éléments du layout */
+  background: white;
+  transition: all 0.3s ease;
+  height: 100vh; /* NOUVEAU: S'assure que le layout prend toute la hauteur de la vue. */
+}
+
+/* SIDEBAR */
+.sidebar {
+  background-color: #003366;
+  color: #fff;
+  padding: 30px 20px;
+  width: 250px;
+  min-height: 100vh;
+  box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.15),
+    -8px -8px 20px rgba(255, 255, 255, 0.7);
+  font-family: "Inter", sans-serif;
+  transition: width 0.3s ease, padding 0.3s ease, background-color 0.3s ease,
+    box-shadow 0.3s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar h2 {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 1.6rem;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar h2 .toggle-icon {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  margin-left: 0;
+  font-size: 1.2em;
+  transition: opacity 0.3s ease, visibility 0.3s ease, width 0.3s ease,
+    margin-left 0.3s ease;
+}
+
+/* Liste menu - par défaut (déplié), aligné à gauche */
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sidebar ul li {
+  margin-bottom: 18px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Liens - par default (déplié), aligné à gauche */
+.sidebar ul li a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  color: white;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  max-width: 100%;
+  justify-content: flex-start;
+}
+
+/* Pseudo-élément (désactivé) */
+.sidebar ul li a::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background-color: #007bff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+  z-index: -1;
+  opacity: 0;
+}
+
+/* Hover des liens (quand déplié) */
+.sidebar ul li a:hover {
+  color: #00ccff;
+}
+
+/* Icône - par défaut (déplié) */
+.sidebar ul li a .icon {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 14px;
+  border-radius: 50%;
+  background-color: #003366;
+  color: #fff;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: background-color 0.3s ease, margin-right 0.3s ease,
+    width 0.3s ease, height 0.3s ease, border-radius 0.3s ease,
+    box-shadow 0.3s ease, font-size 0.3s ease;
+}
+
+/* Icône hover avec lien (quand déplié) */
+.sidebar ul li a:hover .icon {
+  background-color: #0056b3;
+}
+
+/* Texte des liens */
+.link-text {
+  opacity: 1;
+  transition: opacity 0.3s ease, width 0.3s ease;
+  overflow: hidden;
+  white-space: normal;
+  flex-grow: 1;
+}
+
+/* Style pour le calendrier */
+.calendar-container {
+  margin-top: 30px;
+  padding: 0 10px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.calendar-container label {
+  font-weight: 600;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 6px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  width: auto;
+}
+
+.calendar-container input[type="date"] {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 1rem;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  transition: border-color 0.3s ease, opacity 0.3s ease, visibility 0.3s ease,
+    width 0.3s ease;
+  opacity: 1;
+  visibility: visible;
+}
+
+.calendar-container input[type="date"]:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.5);
+}
+
+/* MAIN CONTENT */
+.main-content {
+  flex-grow: 1;
+  padding: 30px; /* J'ai remis un padding pour que le contenu ne colle pas aux bords, ajustez si besoin */
+  background-color: #f7f9fc;
+  display: flex;
+  flex-direction: column; /* Essentiel pour que les enfants flex items gèrent l'espace verticalement */
+  overflow-y: auto; /* <--- C'EST LA MODIFICATION CLÉ ICI ! Permet le scroll vertical sur le main-content */
+  overflow-x: hidden;
+  position: relative;
+  min-width: 0;
+  transition: margin-left 0.3s ease, width 0.3s ease;
+  box-sizing: border-box;
+}
+
+.topbar h1 {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+}
+
+.card {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-section {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.history-section h2 {
+  margin-bottom: 15px;
+}
+
+.contact-log {
+  background: #eef1f5;
+  padding: 15px;
+  border-radius: 8px;
+  min-height: 100px;
+  margin-bottom: 15px;
+}
+
+.history-section button {
+  background-color: #28a745;
+  border: none;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.history-section button:hover {
+  background-color: #218838;
+}
+
+/* --- */
+/* État COLLAPSED de la sidebar (quand le body a la classe 'sidebar-collapsed') */
+body.sidebar-collapsed .sidebar {
+  width: 80px;
+  padding: 30px 0;
+  background-color: #ffffff;
+  box-shadow: none;
+}
+
+body.sidebar-collapsed .sidebar h2 {
+  justify-content: center;
+  border-bottom: none;
+  padding-bottom: 0;
+  color: white;
+}
+
+body.sidebar-collapsed .sidebar h2 .toggle-icon {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  margin-left: 0;
+}
+
+/* Texte "Menu" à masquer quand la sidebar est pliée */
+body.sidebar-collapsed .sidebar h2 span.link-text {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  margin-right: 0;
+}
+
+/* Centrage des éléments de la liste UL en mode plié */
+body.sidebar-collapsed .sidebar ul {
+  align-items: center;
+}
+
+/* Centrage des liens LI en mode plié */
+body.sidebar-collapsed .sidebar ul li {
+  justify-content: center;
+  width: auto;
+}
+
+/* Texte des liens (masqué en mode plié) */
+body.sidebar-collapsed .link-text {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  padding: 0;
+  margin: 0;
+}
+
+body.sidebar-collapsed .calendar-container label,
+body.sidebar-collapsed .calendar-container input {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* Styles pour les bulles en mode plié */
+body.sidebar-collapsed .sidebar ul li a .icon {
+  margin-right: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  box-shadow: none;
+  background-color: #ffffff;
+  color: #0056b3 !important;
+  font-size: 1.5em;
+  transition: all 0.3s ease;
+  transform: scale(1);
+}
+
+/* Effet "rond bleu" au survol des liens en mode (CACHÉ) */
+body.sidebar-collapsed .sidebar ul li a:hover::before {
+  display: none !important;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+/* Ajustements pour l'icône au survol en mode plié */
+body.sidebar-collapsed .sidebar ul li a:hover .icon {
+  background-color: transparent;
+  transform: translateY(-5px) scale(1.1);
+  box-shadow: none;
+}
+
+body.sidebar-collapsed .sidebar ul li a {
+  justify-content: center;
+  padding: 8px 0;
+  align-items: center;
+  background-color: transparent !important;
+  color: white !important;
+  width: 100%;
+}
+
+/* Conteneur boîte 3D */
+.sidebar-container {
+  border-radius: 20px;
+  background: linear-gradient(145deg, #f0f0f0, #ffffff);
+  box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.1),
+    -8px -8px 20px rgba(255, 255, 255, 0.7);
+  padding: 15px;
+  width: fit-content;
+  margin-bottom: 20px;
+}
+
+/* Groupe de boutons côte à côte */
+.btn-group {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+/* Style commun pour les boutons avec animation */
+.btn-actif {
+  padding: 10px 25px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+  flex: 1;
+  text-align: center;
+  user-select: none;
+}
+
+/* Hover: changement couleur + légère élévation */
+.btn-actif:hover {
+  background-color: #0056b3;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
+}
+
+/* Active (clic): léger "appui" */
+.btn-actif:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* APPEL FREQUENT */
+.dashboard-wrapper {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  margin-top: 30px;
+}
+
+/* Boîte 3D des boutons */
+.sidebar-buttons-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.btn-actif {
+  background: linear-gradient(145deg, #081adf);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+.btn-actif1 {
+  background: linear-gradient(145deg, #081adf);
+  border: none;
+  padding: 10px 58px;
+  border-radius: 10px;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+.btn-diagramme {
+  background: linear-gradient(145deg, #081adf);
+  border: none;
+  padding: 12px 58px;
+  border-radius: 10px;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+.btn-corbeille {
+  background: linear-gradient(145deg, #081adf);
+  border: none;
+  padding: 12px 66px;
+  border-radius: 10px;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.btn-corbeille:hover {
+  transform: scale(1.05);
+  background: #3005f188;
+}
+.btn-diagramme:hover {
+  transform: scale(1.05);
+  background: #3005f188;
+}
+.btn-actif:hover {
+  transform: scale(1.05);
+  background: #3005f188;
+}
+.btn-actif1:hover {
+  transform: scale(1.05);
+  background: #3005f188;
+}
+
+/* Boîte 3D des appels fréquents */
+.called-contacts-box {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
+  overflow-y: hidden;
+  height: 457px;
+  min-width: 250px;
+  max-width: 350px;
+  width: 300px;
+}
+
+.called-contacts-box h3 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.called-contacts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.called-contact-card {
+  background: linear-gradient(145deg, #ececec, #ffffff);
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 12px 15px;
+  transition: transform 0.2s ease;
+}
+
+.called-contact-card:hover {
+  transform: scale(1.03);
+}
+
+.called-contact-card .rank {
+  font-weight: bold;
+  font-size: 16px;
+  color: #444;
+}
+
+.called-contact-card .calls {
+  font-size: 14px;
+  color: #777;
+}
+.called-contacts-wrapper {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 5px 5px 5px 0;
+  margin-left: 300px;
+}
+.appelFreqH3 {
+  text-align: center;
+}
+.two-columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    padding: 20px;
+    background-color: #003366 !important;
+    box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.15),
+      -8px -8px 20px rgba(255, 255, 255, 0.7) !important;
+  }
+
+  .sidebar h2 .toggle-icon {
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+    margin-left: 0;
+  }
+
+  .sidebar h2 span.link-text {
+    opacity: 1;
+    visibility: visible;
+    width: auto;
+    margin-right: 0;
+  }
+
+  .link-text,
+  .calendar-container label,
+  .calendar-container input {
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: auto !important;
+    overflow: visible !important;
+    margin: revert !important;
+    padding: revert !important;
+    white-space: normal !important;
+  }
+
+  .sidebar ul li a .icon {
+    margin-right: 14px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 50% !important;
+    box-shadow: none !important;
+    transform: none !important;
+    font-size: 16px !important;
+  }
+
+  .sidebar ul li a::before {
+    display: none !important;
+  }
+
+  .sidebar ul li a {
+    justify-content: flex-start !important;
+    padding: 8px 12px !important;
+    align-items: center !important;
+    background-color: transparent !important;
+    color: white !important;
+    width: 100%;
+  }
+}
+.fenetre-message {
+  display: none;
+  position: fixed;
+  top: 20%;
+  left: 35%;
+  background-color: white;
+  padding: 20px;
+  border: 1px solid #ccc;
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+  z-index: 1050;
+}
+.message.received {
+  background-color: #e9ecef;
+  padding: 10px;
+  border-radius: 10px;
+  align-self: flex-start;
+}
+.message.sent {
+  background-color: #d1e7dd;
+  padding: 10px;
+  border-radius: 10px;
+  align-self: flex-end;
+}
+#messagerieContainer {
+  background-color: #ffffff;
+  min-width: 0;
+}
+#suiviContainer {
+  flex-grow: 1; /* Permet au conteneur du tableau de grandir et prendre l'espace disponible */
+  display: flex; /* Le met en flex pour que son propre contenu puisse grandir */
+  flex-direction: column;
+  overflow: hidden; /* IMPORTANT : Empêche #suiviContainer de créer sa propre barre de défilement, laissant #tableScrollContainer la gérer. */
+
+  background: linear-gradient(135deg, #ffffff, #ebebeb);
+  padding: 0;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  color: #2c3e50;
+  min-height: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+#suiviContainer * {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Alternativement, si le problème persiste avec le H1, vous pouvez cibler spécifiquement les titres */
+#suiviContainer h1,
+#suiviContainer h2,
+#suiviContainer p {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.dynamic-content-area,
+#content {
+  flex-grow: 1; /* Permet à cette zone de contenu de prendre tout l'espace disponible */
+  width: 100%;
+  padding: 10px; /* Padding autour du contenu INTERNE, y compris le tableau */
+  box-sizing: border-box;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-width: 0;
+  display: flex; /* IMPORTANT : Permet au tableau à l'intérieur de grandir */
+  flex-direction: column;
+  /* NOUVEAU: Empêche ce conteneur de scroller, laissant la main à #tableScrollContainer */
+  overflow: hidden;
+}
+.status-badge {
+  display: inline-block;
+  padding: 0.25em 0.6em;
+  font-weight: 600;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  min-width: 75px;
+  text-align: center;
+  color: white !important;
+}
+
+.status-badge.bg-green {
+  background-color: #22c55e !important;
+  color: white !important;
+}
+
+.status-badge.bg-red {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.status-badge.bg-yellow {
+  background-color: #eab308 !important;
+  color: black !important;
+}
+
+.status-badge.bg-blue {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.status-badge.bg-gray {
+  background-color: #9ca3af !important;
+  color: white !important;
+}
+
+/* --- Styles pour la Popup de Saisie du Code --- */
+
+/* L'arrière-plan semi-transparent qui couvre tout l'écran */
+.popup-overlay {
+  position: fixed; /* Reste en place même en scrollant */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Noir semi-transparent */
+  display: flex; /* Utilise Flexbox pour centrer facilement le contenu */
+  justify-content: center; /* Centre horizontalement */
+  align-items: center; /* Centre verticalement */
+  z-index: 1000; /* Assure que la popup est au-dessus de tout le reste */
+  opacity: 0; /* Commence invisible pour l'animation */
+  visibility: hidden; /* Cache la popup complètement pour l'accessibilité */
+  transition: opacity 0.3s ease, visibility 0.3s ease; /* Animation douce */
+}
+
+/* Rendre la popup visible */
+.popup-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Le contenu de la popup (la boîte blanche) */
+.popup-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Ombre douce */
+  position: relative;
+  max-width: 400px; /* Largeur maximale */
+  width: 90%; /* Pour être responsive sur petits écrans */
+  text-align: center;
+  transform: scale(0.9); /* Commence légèrement plus petit pour l'animation */
+  transition: transform 0.3s ease, opacity 0.3s ease; /* Animation douce */
+}
+
+/* Animation quand la popup est visible */
+.popup-overlay.is-visible .popup-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Bouton de fermeture (X) */
+.popup-content .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #888;
+  background: none; /* Supprime le fond par défaut des boutons */
+  border: none; /* Supprime la bordure */
+  padding: 0; /* Supprime le padding */
+  line-height: 1; /* Assure que le X est bien aligné */
+}
+.popup-content .close-btn:hover {
+  color: #555;
+}
+
+/* Titre de la popup */
+.popup-content h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+
+/* Paragraphe de description */
+.popup-content p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* Champ de saisie du code */
+#editCodeInput {
+  width: calc(
+    100% - 20px
+  ); /* Ajuste la largeur pour laisser de la place au padding */
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box; /* Inclut padding et border dans la largeur */
+  font-size: 1rem;
+  text-align: center; /* Centre le texte tapé */
+}
+
+/* Bouton Valider */
+#submitCodeBtn {
+  background-color: #007bff; /* Couleur Bootstrap primaire */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+#submitCodeBtn:hover {
+  background-color: #0056b3; /* Teinte plus foncée au survol */
+}
+
+/* Message d'erreur pour le code incorrect */
+#codeError {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* --- Styles pour les Champs Éditables dans le Tableau --- */
+
+.editable-field {
+  border: 1px solid #dcdcdc; /* Bordure légère */
+  padding: 5px 8px; /* Plus de padding pour une meilleure ergonomie */
+  width: 100%; /* S'étend à la largeur de la cellule */
+  box-sizing: border-box; /* Inclut padding et border dans la largeur */
+  background-color: #fcfcfc; /* Légèrement grisé */
+  border-radius: 4px;
+  font-size: 0.9rem; /* Légèrement plus petit que le texte normal */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.editable-field:focus {
+  border-color: #007bff; /* Bordure bleue au focus */
+  outline: none; /* Supprime l'outline par défaut du navigateur */
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Ombre bleue douce au focus */
+  background-color: #fff; /* Fond blanc au focus */
+}
+
+/* Styles spécifiques pour les sélecteurs (status) */
+.editable-field[data-field-name="status"] {
+  appearance: none; /* Supprime les styles par défaut du navigateur */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); /* Icône de flèche déroulante */
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  padding-right: 30px; /* Espace pour la flèche */
+}
+
+/* --- Styles pour le Bouton "Activer/Désactiver l'édition" --- */
+
+/* Style par défaut (Activer l'édition) */
+#activateEditBtn {
+  /* Utilise tes styles existants pour icon-btn-company-color */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Style quand l'édition est active (Désactiver l'édition) */
+#activateEditBtn.btn-secondary {
+  background-color: #6c757d; /* Gris pour indiquer un état "désactivé" ou secondaire */
+  color: white;
+  border-color: #6c757d;
+}
+
+#activateEditBtn.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+/* Ajustements pour les inputs de date/heure dans la même cellule */
+td > input[type="date"],
+td > input[type="time"] {
+  display: inline-block; /* Permet qu'ils soient côte à côte */
+  width: calc(
+    50% - 4px
+  ); /* Occupe la moitié de la largeur, avec un petit espace */
+  margin: 2px;
+  vertical-align: middle; /* Alignement vertical */
+}
+
+/* S'assurer que les images de signature ne sont pas trop grandes en mode édition */
+td img {
+  max-width: 80px;
+  max-height: 40px;
+  object-fit: contain;
+}
+
+/* Optionnel : Ajustement pour les cellules non éditables */
+/* Par exemple, un arrière-plan légèrement différent pour distinguer */
+td:not(:has(.editable-field)) {
+  background-color: #f5f5f5; /* Un gris très léger */
+}
+
+/* --- AMELIORATIONS POUR LA SIDEBAR - Version "Sublimée" --- */
+
+/* SIDEBAR - Styles généraux */
+.sidebar {
+  /* Dégradé doux et moderne pour le fond */
+  background: linear-gradient(
+    180deg,
+    #303d4c 0%,
+    #212a33 100%
+  ); /* Du gris-bleu foncé au presque noir */
+  color: #e0e6ec; /* Texte légèrement plus doux que le blanc pur */
+  padding: 25px 20px; /* Un peu plus d'espace */
+  width: 250px;
+  min-height: 100vh;
+  /* Ombre plus prononcée mais diffuse pour un effet de profondeur élégant */
+  box-shadow: 8px 0 25px rgba(0, 0, 0, 0.3);
+  font-family: "Inter", sans-serif;
+  transition: width 0.4s ease-in-out, padding 0.4s ease-in-out,
+    background 0.4s ease-in-out, box-shadow 0.4s ease-in-out; /* Transitions plus douces */
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden; /* Empêche le contenu de déborder pendant les transitions */
+}
+
+/* Titre du menu */
+.sidebar h2 {
+  font-size: 1.8em; /* Légèrement plus grand */
+  margin-bottom: 35px; /* Plus d'espace sous le titre */
+  font-weight: 700;
+  color: #a3daff; /* Un bleu ciel lumineux pour le titre */
+  border-bottom: 2px solid #63b3ed; /* Ligne de séparation plus douce */
+  padding-bottom: 15px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Ombre légère pour le texte du titre */
+}
+
+/* Cache l'icône de bascule du H2 si tu ne l'utilises pas en mode déplié */
+.sidebar h2 .toggle-icon {
+  display: none;
+}
+
+/* Liste menu */
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sidebar ul li {
+  margin-bottom: 12px; /* Espacement ajusté */
+  width: 100%;
+}
+
+/* Liens du menu */
+.sidebar ul li a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.05rem; /* Texte légèrement plus grand */
+  padding: 12px 18px; /* Padding généreux pour les clics */
+  border-radius: 8px; /* Bords bien arrondis */
+  transition: background-color 0.25s ease, color 0.25s ease,
+    transform 0.25s ease, box-shadow 0.25s ease; /* Transitions douces */
+  color: #e0e6ec; /* Couleur du texte par défaut */
+  position: relative;
+  overflow: hidden;
+  /* Effet de bordure animée (optionnel, mais très joli) */
+  box-shadow: inset 0 0 0 0px rgba(99, 179, 237, 0.4);
+}
+
+/* Hover des liens - Effet de surbrillance plus doux et élégant */
+.sidebar ul li a:hover {
+  background-color: #3f5166; /* Un gris-bleu plus clair au survol */
+  color: #a3daff; /* Texte bleu ciel au survol */
+  transform: translateX(8px); /* Déplacement plus prononcé */
+  box-shadow: inset 0 0 0 2px #63b3ed, 0 4px 15px rgba(0, 0, 0, 0.2); /* Bordure interne animée + ombre externe */
+}
+
+/* Icône des liens */
+.sidebar ul li a .icon {
+  margin-right: 18px; /* Plus d'espace entre l'icône et le texte */
+  font-size: 1.3em; /* Icônes plus grandes */
+  width: 30px; /* Assure un bon alignement */
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  color: #a3daff; /* Couleur bleu ciel pour les icônes par défaut */
+  border-radius: 0;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+/* Icône hover avec lien */
+.sidebar ul li a:hover .icon {
+  color: #e0e6ec; /* Les icônes deviennent blanches au survol */
+  transform: scale(1.15) rotate(5deg); /* Légère rotation et agrandissement */
+}
+
+/* Texte des liens */
+.link-text {
+  opacity: 1;
+  transition: opacity 0.3s ease, width 0.3s ease;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Style pour le calendrier - Visibilité par défaut */
+.calendar-container {
+  margin-top: 40px; /* Plus d'espace au-dessus du calendrier */
+  padding: 0 10px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.calendar-container label {
+  font-weight: 500;
+  color: #b0bec5; /* Couleur du texte du label plus douce */
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.calendar-container input[type="date"] {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  border: 1px solid #4a5d6f; /* Bordure discrète */
+  background-color: #2a3540; /* Fond du champ de date plus foncé */
+  color: #e0e6ec; /* Couleur du texte de la date */
+  border-radius: 6px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  /* Personnalisation de la flèche du date picker pour Chrome/Edge */
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23e0e6ec"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px; /* Espace pour l'icône personnalisée */
+}
+
+.calendar-container input[type="date"]:focus {
+  border-color: #63b3ed; /* Bordure bleue au focus */
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.4); /* Ombre douce et lumineuse */
+}
+
+/* --- État COLLAPSED de la sidebar (quand le body a la classe 'sidebar-collapsed') --- */
+body.sidebar-collapsed .sidebar {
+  width: 90px; /* Largeur légèrement augmentée pour les icônes */
+  padding: 20px 0;
+  background: linear-gradient(
+    180deg,
+    #303d4c 0%,
+    #212a33 100%
+  ); /* Garde le même dégradé */
+  box-shadow: 8px 0 25px rgba(0, 0, 0, 0.3);
+}
+
+body.sidebar-collapsed .sidebar h2 {
+  justify-content: center;
+  border-bottom: none;
+  padding-bottom: 0;
+  color: #a3daff; /* Couleur du titre en mode plié */
+  font-size: 1.5em; /* Taille du titre ajustée */
+}
+
+/* Texte "Menu" à masquer quand la sidebar est pliée */
+body.sidebar-collapsed .sidebar h2 span.link-text {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  margin-right: 0;
+}
+
+/* Centrage des éléments de la liste UL en mode plié */
+body.sidebar-collapsed .sidebar ul {
+  align-items: center;
+}
+
+/* Centrage des liens LI en mode plié */
+body.sidebar-collapsed .sidebar ul li {
+  justify-content: center;
+  width: auto;
+}
+
+/* Texte des liens (masqué en mode plié) */
+body.sidebar-collapsed .link-text {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  padding: 0;
+  margin: 0;
+}
+
+body.sidebar-collapsed .calendar-container label,
+body.sidebar-collapsed .calendar-container input {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  padding: 0;
+  margin: 0;
+  height: 0; /* Assure qu'ils ne prennent plus d'espace */
+}
+
+/* Styles pour les bulles en mode plié */
+body.sidebar-collapsed .sidebar ul li a .icon {
+  margin-right: 0;
+  width: 55px; /* Bulles légèrement plus grandes */
+  height: 55px;
+  border-radius: 50%;
+  background-color: #63b3ed; /* Couleur de la bulle en mode plié */
+  color: white !important; /* Icône blanche dans la bulle */
+  font-size: 1.6em; /* Icône plus grande dans la bulle */
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4); /* Ombre prononcée */
+  transform: scale(1);
+  transition: all 0.3s ease;
+}
+
+/* Ajustements pour l'icône au survol en mode plié */
+body.sidebar-collapsed .sidebar ul li a:hover .icon {
+  background-color: #4299e1; /* Bleu légèrement plus foncé au survol */
+  transform: translateY(-5px) scale(1.15); /* Effet de rebond plus marqué */
+  box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.5); /* Ombre plus intense */
+}
+
+body.sidebar-collapsed .sidebar ul li a {
+  justify-content: center;
+  padding: 10px 0; /* Plus de padding vertical en mode plié */
+  align-items: center;
+  background-color: transparent !important;
+  color: white !important;
+  width: 100%;
+}
+
+/* Supprime le pseudo-élément au survol qui était caché précédemment */
+body.sidebar-collapsed .sidebar ul li a:hover::before {
+  display: none !important;
+}
+
+/* Médias queries pour les petits écrans - S'assure que les icônes redeviennent normales */
+@media (max-width: 768px) {
+  .sidebar ul li a .icon {
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    font-size: 1em !important; /* Reviens à la taille normale */
+    margin-right: 14px !important; /* Réinitialise l'espace */
+  }
+
+  .sidebar ul li a:hover .icon {
+    background-color: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  /* Les liens retrouvent leur padding et leur alignement normaux */
+  .sidebar ul li a {
+    padding: 10px 15px !important;
+    justify-content: flex-start !important;
+  }
+}

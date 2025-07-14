@@ -1,0 +1,2879 @@
+const express = require("express");
+const fs = require("fs");
+const https = require("https");
+const path = require("path");
+const multer = require("multer");
+const { Pool } = require("pg");
+const app = express();
+
+const cors = require("cors");
+const WebSocket = require("ws");
+// const bcrypt = require("bcryptjs"); // SUPPRIMÉ doublon, voir plus bas
+const port = 443; // HTTPS par défaut
+
+// Middleware pour parser les requêtes JSON et URL-encodées
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
+
+// Sert le dossier 'public' en statique pour le frontend
+app.use(express.static(path.join(__dirname, "public")));
+
+// Configuration SSL (les fichiers doivent être présents dans le dossier du projet)
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, "privkey.pem")),
+  cert: fs.readFileSync(path.join(__dirname, "fullchain.pem")),
+};
+
+const server = https.createServer(sslOptions, app).listen(port, () => {
+  console.log(`Serveur HTTPS Express démarré sur le port ${port}`);
+});
+
+// --- WebSocket Server pour notifications temps réel ---
+const wss = new WebSocket.Server({ server });
+let wsClients = [];
+wss.on("connection", (ws) => {
+  wsClients.push(ws);
+  ws.on("close", () => {
+    wsClients = wsClients.filter((c) => c !== ws);
+  });
+});
+
+function broadcastNouvelleDemandeCodeEntreprise() {
+  wsClients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ type: "nouvelle-demande-code-entreprise" }));
+    }
+  });
+}
+
+require("dotenv").config();
+const nodemailer = require("nodemailer");
+const bcrypt = require("bcryptjs"); // Import unique ici
+const pool = new Pool({
+  user: "postgres",
+  host: "localhost",
+  database: "ITS_service",
+  password: "1103",
+  port: 5432,
+});
+// ===============================
+// ===============================
+// ROUTE : Notification dossier en retard (envoi email)
+// ===============================
+app.post("/notify-late-dossier", async (req, res) => {
+  const { dossierNumber, agentEmail, agentName } = req.body || {};
+  if (!dossierNumber || !agentEmail) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Données manquantes pour l'envoi du rappel (email ou numéro dossier).",
+    });
+  }
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: agentEmail,
+      subject: `Rappel de dossier en retard - Dossier N°${dossierNumber}`,
+      text: `Bonjour ${
+        agentName || ""
+      },\n\nLe dossier N°${dossierNumber} que vous avez traité a dépassé le délai de 2 jours.\nMerci de le régler rapidement pour éviter tout souci.`,
+      html: `<p>Bonjour <b>${
+        agentName || ""
+      }</b>,</p><p style='color:#b91c1c;font-weight:bold;'>Le dossier <b>N°${dossierNumber}</b> que vous avez traité a <span style='color:#dc2626;'>dépassé le délai de 2 jours</span>.</p><p>Merci de le régler rapidement pour éviter tout souci.</p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return res.json({ success: true, message: "Rappel envoyé par email." });
+  } catch (err) {
+    console.error("[NOTIFY LATE DOSSIER] Erreur envoi email:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erreur lors de l'envoi de l'email." });
+  }
+});
+// ===============================
+// TABLE company_code (stocke le code de l'entreprise)
+// ===============================
+const createCompanyCodeTable = `
+  CREATE TABLE IF NOT EXISTS company_code (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(100) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+async function ensureCompanyCodeTable() {
+  try {
+    await pool.query(createCompanyCodeTable);
+    // Si aucun code n'existe, insère la valeur par défaut (ex: ITS2010)
+    const res = await pool.query("SELECT * FROM company_code LIMIT 1");
+    if (res.rows.length === 0) {
+      await pool.query("INSERT INTO company_code (code) VALUES ($1)", [
+        "ITS2010",
+      ]);
+      console.log("Code entreprise initialisé à 'ITS2010'.");
+    }
+    console.log("Table 'company_code' vérifiée/créée.");
+  } catch (err) {
+    console.error("Erreur création table company_code:", err);
+  }
+}
+ensureCompanyCodeTable();
+
+// ===============================
+// ROUTE : Récupérer le code entreprise (GET)
+// ===============================
+app.get("/api/company-code", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT code FROM company_code ORDER BY updated_at DESC LIMIT 1"
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Code entreprise non trouvé." });
+    }
+    return res.json({ success: true, code: result.rows[0].code });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// ===============================
+// ROUTE : Modifier le code entreprise (PUT)
+// ===============================
+app.put("/api/company-code", async (req, res) => {
+  const { code } = req.body || {};
+  if (!code || typeof code !== "string" || code.trim().length < 3) {
+    return res.status(400).json({ success: false, message: "Code invalide." });
+  }
+  try {
+    const newCode = code.trim();
+    await pool.query(
+      "UPDATE company_code SET code = $1, updated_at = NOW() WHERE id = (SELECT id FROM company_code ORDER BY updated_at DESC LIMIT 1)",
+      [newCode]
+    );
+    // Notifier tous les clients WebSocket du changement de code
+    wsClients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(
+          JSON.stringify({ type: "company-code-updated", code: newCode })
+        );
+      }
+    });
+    return res.json({ success: true, message: "Code entreprise modifié." });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// ===============================
+// ROUTE : Envoi du code de l'entreprise par email à partir d'une demande (utilise la valeur dynamique)
+// ===============================
+app.post("/api/envoyer-code-securite", async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email requis." });
+  }
+  try {
+    // On cherche la demande la plus récente pour cet email qui n'est pas déjà envoyée
+    const demandeRes = await pool.query(
+      "SELECT * FROM demande_code_entreprise WHERE email = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1",
+      [email]
+    );
+    if (demandeRes.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucune demande trouvée pour cet email.",
+      });
+    }
+    // Récupère le code entreprise dynamique
+    const codeRes = await pool.query(
+      "SELECT code FROM company_code ORDER BY updated_at DESC LIMIT 1"
+    );
+    const codeEntreprise =
+      codeRes.rows.length > 0 ? codeRes.rows[0].code : "ITS2010";
+    const nom = demandeRes.rows[0].nom || "utilisateur";
+    // Envoi de l'email
+    const mailSent = await sendMail({
+      to: email,
+      subject: "Votre code d'entreprise - ITS Service",
+      text: `Bonjour ${nom},\n\nVoici votre code d'entreprise : ${codeEntreprise}\n\nMerci de l'utiliser pour accéder à la plateforme.`,
+      html: `<p>Bonjour <b>${nom}</b>,</p><p>Voici votre <b>code d'entreprise</b> : <span style='font-size:1.2em;font-weight:700;color:#2563eb;'>${codeEntreprise}</span></p><p>Merci de l'utiliser pour accéder à la plateforme.</p>`,
+    });
+    if (!mailSent) {
+      return res.status(500).json({
+        success: false,
+        message: "Erreur lors de l'envoi de l'email.",
+      });
+    }
+    // Met à jour le statut de la demande à 'envoye'
+    await pool.query(
+      "UPDATE demande_code_entreprise SET status = 'envoye' WHERE id = $1",
+      [demandeRes.rows[0].id]
+    );
+    return res.json({ success: true, message: "Code envoyé par email." });
+  } catch (err) {
+    console.error("[ENVOI CODE ENTREPRISE] Erreur:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+// ===============================
+// ===============================
+// TABLE DEMANDE CODE ENTREPRISE
+// ===============================
+const createDemandeCodeEntrepriseTable = `
+  CREATE TABLE IF NOT EXISTS demande_code_entreprise (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    message TEXT,
+    type VARCHAR(30) NOT NULL DEFAULT 'responsable',
+    status VARCHAR(30) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+async function ensureDemandeCodeEntrepriseTable() {
+  try {
+    await pool.query(createDemandeCodeEntrepriseTable);
+    console.log("Table 'demande_code_entreprise' vérifiée/créée.");
+  } catch (err) {
+    console.error("Erreur création table demande_code_entreprise:", err);
+  }
+}
+ensureDemandeCodeEntrepriseTable();
+
+// ===============================
+// ROUTE : Demande de code entreprise (Responsable ou Acconier)
+// ===============================
+app.post("/api/demande-code-entreprise", async (req, res) => {
+  const { nom, email, message, type } = req.body || {};
+  if (!nom || !email) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Nom et email requis." });
+  }
+  try {
+    await pool.query(
+      "INSERT INTO demande_code_entreprise (nom, email, message, type) VALUES ($1, $2, $3, $4)",
+      [nom, email, message || "", type || "responsable"]
+    );
+    // Notifier tous les admins via WebSocket
+    broadcastNouvelleDemandeCodeEntreprise();
+    // Optionnel : notifier l'admin par email
+    // await sendMail({ to: 'admin@its-service.com', subject: 'Nouvelle demande de code entreprise', text: `Demande de ${nom} (${email}) : ${message}` });
+    return res.json({ success: true, message: "Demande enregistrée !" });
+  } catch (err) {
+    console.error("Erreur enregistrement demande code entreprise:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// ===============================
+// ROUTE GET : Liste des demandes de code entreprise (pour affichage admin)
+// ===============================
+app.get("/api/demande-code-entreprise", async (req, res) => {
+  try {
+    // Ne retourne que les demandes non envoyées (status = 'pending')
+    const result = await pool.query(
+      "SELECT id, nom, email, message, type, status, created_at FROM demande_code_entreprise WHERE status = 'pending' ORDER BY created_at DESC"
+    );
+    // Retourne un objet {success, demandes: [...]}
+    return res.json({ success: true, demandes: result.rows });
+  } catch (err) {
+    console.error("Erreur récupération demandes code entreprise:", err);
+    return res.status(500).json({ success: false, demandes: [] });
+  }
+});
+// ROUTE : Demande de réinitialisation du mot de passe acconier
+// ===============================
+app.post("/acconier/forgot-password", async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email requis." });
+  }
+  try {
+    const userRes = await pool.query(
+      "SELECT * FROM acconier WHERE email = $1",
+      [email]
+    );
+    if (userRes.rows.length === 0) {
+      // Toujours répondre OK pour ne pas révéler si l'email existe
+      return res.json({
+        success: true,
+        message: "Si cet email existe, un lien a été envoyé.",
+      });
+    }
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 1000 * 60 * 30); // 30 min
+    await pool.query(
+      "UPDATE acconier SET reset_token = $1, reset_token_expires = $2 WHERE email = $3",
+      [token, expires, email]
+    );
+    const resetLink = `${req.protocol}://${req.get(
+      "host"
+    )}/acconier/reset-password/${token}`;
+    await sendMail({
+      to: email,
+      subject: "Réinitialisation de votre mot de passe Acconier",
+      text: `Cliquez sur ce lien pour réinitialiser votre mot de passe : ${resetLink}`,
+      html: `<p>Pour réinitialiser votre mot de passe, cliquez ici : <a href=\"${resetLink}\">Réinitialiser</a></p><p>Ce lien expire dans 30 minutes.</p>`,
+    });
+    return res.json({
+      success: true,
+      message: "Si cet email existe, un lien a été envoyé.",
+    });
+  } catch (err) {
+    console.error("[ACCONIER][FORGOT PASSWORD] Erreur:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// ===============================
+// ROUTE : Affichage et soumission du nouveau mot de passe (reset)
+// ===============================
+app.get("/acconier/reset-password/:token", async (req, res) => {
+  const { token } = req.params;
+  if (!token) return res.status(400).send("Lien invalide.");
+  try {
+    const userRes = await pool.query(
+      "SELECT * FROM acconier WHERE reset_token = $1 AND reset_token_expires > NOW()",
+      [token]
+    );
+    if (userRes.rows.length === 0) {
+      return res.status(400).send("Lien expiré ou invalide.");
+    }
+    // Affiche un mini-formulaire HTML (simple)
+    return res.send(`
+      <html><head><title>Réinitialisation du mot de passe</title></head><body style='font-family:sans-serif;max-width:400px;margin:40px auto;'>
+        <h2>Réinitialisation du mot de passe</h2>
+        <form method='POST'>
+          <input type='password' name='password' placeholder='Nouveau mot de passe' required style='width:100%;padding:8px;margin-bottom:10px;'/><br/>
+          <button type='submit' style='padding:8px 16px;'>Réinitialiser</button>
+        </form>
+      </body></html>
+    `);
+  } catch (err) {
+    return res.status(500).send("Erreur serveur.");
+  }
+});
+
+app.post(
+  "/acconier/reset-password/:token",
+  express.urlencoded({ extended: true }),
+  async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+    if (!token || !password) return res.status(400).send("Requête invalide.");
+    try {
+      const userRes = await pool.query(
+        "SELECT * FROM acconier WHERE reset_token = $1 AND reset_token_expires > NOW()",
+        [token]
+      );
+      if (userRes.rows.length === 0) {
+        return res.status(400).send("Lien expiré ou invalide.");
+      }
+      const hashedPw = await bcrypt.hash(password, 10);
+      await pool.query(
+        "UPDATE acconier SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE reset_token = $2",
+        [hashedPw, token]
+      );
+      return res.send(
+        "<p>Mot de passe réinitialisé avec succès. Vous pouvez fermer cette page et vous reconnecter.</p>"
+      );
+    } catch (err) {
+      return res.status(500).send("Erreur serveur.");
+    }
+  }
+);
+
+// ===============================
+// CONFIGURATION NODEMAILER (GMAIL)
+// ===============================
+// Remplacez par votre adresse Gmail et mot de passe d'application (jamais le mot de passe principal !)
+const GMAIL_USER = process.env.GMAIL_USER || "votre.email@gmail.com";
+const GMAIL_PASS = process.env.GMAIL_PASS || "votre_mot_de_passe_application";
+
+const mailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: GMAIL_USER,
+    pass: GMAIL_PASS,
+  },
+});
+
+// Fonction utilitaire pour envoyer un email
+async function sendMail({ to, subject, text, html }) {
+  try {
+    await mailTransporter.sendMail({
+      from: `ITS Service <${GMAIL_USER}>`,
+      to,
+      subject,
+      text,
+      html,
+    });
+    return true;
+  } catch (err) {
+    console.error("Erreur lors de l'envoi de l'email:", err);
+    return false;
+  }
+}
+
+// ===============================
+// CONFIGURATION DE LA BASE DE DONNÉES POSTGRESQL (PLACÉE AVANT TOUT USAGE DE pool)
+// ===============================
+
+// ===============================
+// TABLE ACCONIER (authentification acconier)
+// ===============================
+const createAcconierTable = `
+  CREATE TABLE IF NOT EXISTS acconier (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    password VARCHAR(255) NOT NULL,
+    reset_token VARCHAR(255),
+    reset_token_expires TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+// ===============================
+// TABLE RESPONSABLE ACCONIER (authentification RespAcconier)
+// ===============================
+const createRespAcconierTable = `
+  CREATE TABLE IF NOT EXISTS resp_acconier (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+async function ensureRespAcconierTable() {
+  try {
+    await pool.query(createRespAcconierTable);
+    console.log("Table 'resp_acconier' vérifiée/créée.");
+  } catch (err) {
+    console.error("Erreur création table resp_acconier:", err);
+  }
+}
+
+// On attend la connexion du pool avant de créer la table resp_acconier
+pool
+  .connect()
+  .then((client) => {
+    client.release();
+    return ensureRespAcconierTable();
+  })
+  .catch((err) => {
+    console.error(
+      "Erreur de connexion à la base PostgreSQL pour la table resp_acconier:",
+      err
+    );
+  });
+
+async function ensureAcconierTable() {
+  try {
+    await pool.query(createAcconierTable);
+    // Ajout des colonnes reset_token et reset_token_expires si elles n'existent pas déjà
+    await pool.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='acconier' AND column_name='reset_token') THEN
+          ALTER TABLE acconier ADD COLUMN reset_token VARCHAR(255);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='acconier' AND column_name='reset_token_expires') THEN
+          ALTER TABLE acconier ADD COLUMN reset_token_expires TIMESTAMP;
+        END IF;
+      END $$;
+    `);
+    console.log(
+      "Table 'acconier' vérifiée/créée et colonnes reset_token/expire ajoutées si besoin."
+    );
+  } catch (err) {
+    console.error("Erreur création table acconier:", err);
+  }
+}
+// On attend la connexion du pool avant de créer la table acconier
+pool
+  .connect()
+  .then((client) => {
+    client.release();
+    return ensureAcconierTable();
+  })
+  .catch((err) => {
+    console.error(
+      "Erreur de connexion à la base PostgreSQL pour la table acconier:",
+      err
+    );
+  });
+// ===============================
+// ROUTES AUTHENTIFICATION ACCONIER
+// ===============================
+
+// Inscription acconier
+app.post("/acconier/register", async (req, res) => {
+  let { nom, email, password } = req.body || {};
+  if (typeof email === "string") {
+    email = email.trim().toLowerCase();
+  }
+  if (!nom || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Tous les champs sont requis (nom, email, mot de passe).",
+    });
+  }
+  try {
+    // Vérifie si l'email existe déjà
+    const check = await pool.query("SELECT id FROM acconier WHERE email = $1", [
+      email,
+    ]);
+    if (check.rows.length > 0) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Cet email est déjà utilisé." });
+    }
+    const hashedPw = await bcrypt.hash(password, 10);
+    await pool.query(
+      "INSERT INTO acconier (nom, email, password) VALUES ($1, $2, $3)",
+      [nom, email, hashedPw]
+    );
+    return res
+      .status(201)
+      .json({ success: true, message: "Inscription réussie." });
+  } catch (err) {
+    console.error("[ACCONIER][REGISTER] Erreur:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'inscription.",
+    });
+  }
+});
+
+// Connexion acconier
+app.post("/acconier/login", async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Tous les champs sont requis." });
+  }
+  try {
+    const userRes = await pool.query(
+      "SELECT * FROM acconier WHERE email = $1",
+      [email]
+    );
+    if (userRes.rows.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Email ou mot de passe incorrect." });
+    }
+    const user = userRes.rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Email ou mot de passe incorrect." });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Connexion réussie.",
+      nom: user.nom,
+      email: user.email,
+    });
+  } catch (err) {
+    console.error("[ACCONIER][LOGIN] Erreur:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la connexion.",
+    });
+  }
+});
+
+// ===============================
+// ROUTES AUTHENTIFICATION RESPONSABLE ACCONIER (séparées)
+// ===============================
+
+// Inscription RespAcconier
+app.post("/api/respacconier/register", async (req, res) => {
+  let { nom, email, password, phone } = req.body || {};
+  if (typeof email === "string") {
+    email = email.trim().toLowerCase();
+  }
+  if (!nom || !email || !password || !phone) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Tous les champs sont requis (nom, email, mot de passe, téléphone).",
+    });
+  }
+  try {
+    // Vérifie si l'email existe déjà
+    const check = await pool.query(
+      "SELECT id FROM resp_acconier WHERE email = $1",
+      [email]
+    );
+    if (check.rows.length > 0) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Cet email est déjà utilisé." });
+    }
+    const hashedPw = await bcrypt.hash(password, 10);
+    await pool.query(
+      "INSERT INTO resp_acconier (nom, email, password) VALUES ($1, $2, $3)",
+      [nom, email, hashedPw]
+    );
+    return res
+      .status(201)
+      .json({ success: true, message: "Inscription réussie." });
+  } catch (err) {
+    console.error("[RESPACCONIER][REGISTER] Erreur:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'inscription.",
+    });
+  }
+});
+
+// Connexion RespAcconier
+app.post("/api/respacconier/login", async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Tous les champs sont requis." });
+  }
+  try {
+    const userRes = await pool.query(
+      "SELECT * FROM resp_acconier WHERE email = $1",
+      [email]
+    );
+    if (userRes.rows.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Email ou mot de passe incorrect." });
+    }
+    const user = userRes.rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Email ou mot de passe incorrect." });
+    }
+    // Renvoie nom et email pour affichage avatar (pas de liaison ailleurs)
+    res.json({ success: true, id: user.id, nom: user.nom, email: user.email });
+  } catch (err) {
+    console.error("[RESPACCONIER][LOGIN] Erreur:", err);
+    res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// Validation du code entreprise RespAcconier
+// Validation dynamique du code entreprise pour RespAcconier
+app.post("/api/respacconier/validate-code", async (req, res) => {
+  const { code, id } = req.body || {};
+  try {
+    const codeRes = await pool.query(
+      "SELECT code FROM company_code ORDER BY updated_at DESC LIMIT 1"
+    );
+    const codeEntreprise =
+      codeRes.rows.length > 0 ? codeRes.rows[0].code : "ITS2010";
+    if (code === codeEntreprise) {
+      res.json({ success: true });
+    } else {
+      res
+        .status(401)
+        .json({ success: false, message: "Code entreprise invalide." });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// Suppression d'un agent visiteur programmé (par nom OU nom+date, plus permissif)
+app.post("/agents-visiteurs/programmes/supprimer", async (req, res) => {
+  const { nom_agent_visiteur, date_livraison } = req.body || {};
+  if (!nom_agent_visiteur) {
+    return res.status(400).json({
+      success: false,
+      message: "Nom agent visiteur requis.",
+    });
+  }
+
+  let query, values;
+  if (date_livraison && date_livraison !== "-") {
+    const formattedDate = formatDateForDB(date_livraison);
+    if (formattedDate) {
+      query = `DELETE FROM livraison_conteneur WHERE nom_agent_visiteur = $1 AND delivery_date = $2 RETURNING id;`;
+      values = [nom_agent_visiteur, formattedDate];
+    } else {
+      // Si la date est fournie mais invalide, ignorer la date et supprimer par nom uniquement
+      query = `DELETE FROM livraison_conteneur WHERE nom_agent_visiteur = $1 RETURNING id;`;
+      values = [nom_agent_visiteur];
+    }
+  } else {
+    // Si pas de date, suppression par nom uniquement
+    query = `DELETE FROM livraison_conteneur WHERE nom_agent_visiteur = $1 RETURNING id;`;
+    values = [nom_agent_visiteur];
+  }
+  try {
+    const result = await pool.query(query, values);
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Aucun agent visiteur trouvé pour ce nom (et date si fournie).",
+      });
+    }
+    // Peut supprimer plusieurs lignes, retourner tous les IDs supprimés
+    res.json({ success: true, deletedIds: result.rows.map((r) => r.id) });
+  } catch (err) {
+    console.error(
+      "Erreur lors de la suppression de l'agent visiteur programmé:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la suppression.",
+    });
+  }
+});
+
+// Fonction pour obtenir le texte et l'icône du statut en français (utilisé principalement pour les messages WebSocket)
+function getFrenchStatusWithIcon(status) {
+  let text = "";
+  let iconClass = "";
+  let customColorClass = ""; // Utilisé pour les alertes frontend
+
+  switch (status) {
+    case "awaiting_payment_acconier":
+      text = "En attente de paiement";
+      iconClass = "fa-solid fa-clock";
+      customColorClass = "info";
+      break;
+    case "in_progress_payment_acconier":
+      text = "En cours de paiement";
+      iconClass = "fa-solid fa-credit-card";
+      customColorClass = "warning";
+      break;
+    case "pending_acconier":
+      text = "Mise en livraison (ancienne)";
+      iconClass = "fa-solid fa-hourglass-half";
+      customColorClass = "success";
+      break;
+    case "mise_en_livraison_acconier":
+      text = "Mise en livraison";
+      iconClass = "fa-solid fa-hourglass-half";
+      customColorClass = "success";
+      break;
+    case "payment_done_acconier":
+      text = "Paiement effectué";
+      iconClass = "fa-solid fa-check-circle";
+      customColorClass = "success";
+      break;
+    case "processed_acconier":
+      text = "Traité Acconier";
+      iconClass = "fa-solid fa-check-circle";
+      customColorClass = "success";
+      break;
+    case "rejected_acconier":
+      text = "Rejeté Acconier";
+      iconClass = "fa-solid fa-times-circle";
+      customColorClass = "error";
+      break;
+    case "rejected_by_employee":
+      text = "Rejeté par l'employé";
+      iconClass = "fa-solid fa-ban";
+      customColorClass = "error";
+      break;
+    case "delivered":
+      text = "Livré";
+      iconClass = "fa-solid fa-circle-check";
+      customColorClass = "success";
+      break;
+    default:
+      text = status;
+      iconClass = "fa-solid fa-question-circle";
+      customColorClass = "info";
+      break;
+  }
+  return { text, iconClass, customColorClass };
+}
+
+// Fonction de traduction complète des statuts anglais → français (pour tous les contextes)
+function translateStatusToFr(status) {
+  if (!status) return "-";
+  let s = String(status).toLowerCase().trim();
+  // Correction : remplacer toutes les variantes de "mise en livraison (ancienne)" par "mise en livraison"
+  if (
+    s === "mise en livraison (ancienne)" ||
+    s === "mise_en_livraison_ancienne" ||
+    s === "pending_acconier"
+  ) {
+    s = "mise en livraison";
+  }
+  switch (s) {
+    // Statuts livrés
+    case "delivered":
+    case "completed":
+    case "finished":
+    case "signed":
+    case "livré":
+    case "livree":
+    case "livreee":
+      return "Livré";
+    // Statuts attente paiement (NOUVEAU)
+    case "awaiting_payment_acconier":
+      return "En attente de paiement";
+    case "in_progress_payment_acconier":
+      return "En cours de paiement";
+    case "mise en livraison":
+    case "mise_en_livraison":
+      return "Mise en livraison";
+    case "payment_done_acconier":
+      return "Paiement effectué";
+    // Statuts attente (génériques)
+    case "pending":
+    case "awaiting_delivery_acconier":
+    case "waiting":
+    case "pending_validation":
+    case "pending_signature":
+    case "pending_payment":
+    case "en attente":
+    case "attente":
+      return "En attente";
+    // Statuts en cours
+    case "in_progress":
+    case "in_progress_acconier":
+    case "processing":
+    case "en cours":
+    case "encours":
+      return "En cours";
+    // Statuts rejetés
+    case "rejected":
+    case "rejected_acconier":
+    case "rejected_by_employee":
+    case "refused":
+    case "refused_signature":
+    case "rejeté":
+    case "rejetee":
+    case "refusé":
+    case "refuse":
+      return "Rejeté";
+    // Autres statuts
+    case "cancelled":
+    case "annulled":
+      return "Annulée";
+    case "validated":
+      return "Validée";
+    case "scheduled":
+      return "Planifiée";
+    case "shipped":
+      return "Expédiée";
+    case "returned":
+      return "Retournée";
+    case "draft":
+      return "Brouillon";
+    case "paid":
+      return "Payée";
+    case "unpaid":
+      return "Impayée";
+    case "partially_paid":
+      return "Partiellement payée";
+    case "closed":
+      return "Clôturée";
+    case "open":
+      return "Ouverte";
+    case "processed_acconier":
+      return "Traité Acconier";
+    default:
+      // Si déjà en français ou inconnu, retourne le statut tel quel
+      return status;
+  }
+}
+
+// Mapping simple pour le champ "delivery_status_acconier_fr" (pour le frontend, conservé pour compatibilité)
+function mapAcconierStatusToFr(status) {
+  return translateStatusToFr(status);
+}
+
+wss.on("connection", (ws) => {
+  ws.on("error", (error) => {
+    console.error("Erreur WebSocket côté serveur:", error);
+  });
+});
+
+app.set("wss", wss); // Permet d'accéder à wss depuis les routes Express
+
+const uploadDir = path.join(__dirname, "uploads");
+
+// Assurez-vous que le répertoire 'uploads' existe
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// Configuration de Multer
+const upload = multer({
+  storage: multer.memoryStorage(), // Stocke le fichier en mémoire (buffer)
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
+// Configuration de la base de données PostgreSQL
+// (Déjà déclarée en haut du fichier, ne pas redéclarer ici)
+
+// ===============================
+// ===============================
+// ROUTE MOT DE PASSE OUBLIÉ (génère un code de réinitialisation)
+// ===============================
+// ROUTE RÉINITIALISATION DU MOT DE PASSE (valide le code et change le mot de passe)
+// ===============================
+app.post("/api/reset-password", async (req, res) => {
+  let { email, code, newPassword } = req.body || {};
+  if (typeof email === "string") email = email.trim().toLowerCase();
+  if (!email || !code || !newPassword) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Tous les champs sont requis." });
+  }
+  // Vérifie le code
+  const entry = resetCodes[email];
+  if (!entry || entry.code !== code) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Code invalide ou expiré." });
+  }
+  if (Date.now() > entry.expires) {
+    delete resetCodes[email];
+    return res.status(400).json({
+      success: false,
+      message: "Code expiré. Veuillez refaire la demande.",
+    });
+  }
+  try {
+    // Hash le nouveau mot de passe
+    const hashedPw = await bcrypt.hash(newPassword, 10);
+    const result = await pool.query(
+      "UPDATE users SET password = $1 WHERE email = $2 RETURNING id",
+      [hashedPw, email]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Utilisateur introuvable." });
+    }
+    // Invalide le code après usage
+    delete resetCodes[email];
+    return res.json({
+      success: true,
+      message: "Mot de passe réinitialisé avec succès.",
+    });
+  } catch (err) {
+    console.error("Erreur reset-password:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+// ===============================
+const crypto = require("crypto");
+// Stockage temporaire des codes de réinitialisation (en mémoire, pour démo)
+const resetCodes = {};
+
+app.post("/api/forgot-password", async (req, res) => {
+  let { email } = req.body || {};
+  if (typeof email === "string") {
+    email = email.trim().toLowerCase();
+  }
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email requis." });
+  }
+  try {
+    const userRes = await pool.query("SELECT id FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucun compte trouvé avec cet email.",
+      });
+    }
+    // Génère un code à 6 chiffres
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // Stocke le code temporairement (clé = email)
+    resetCodes[email] = { code, expires: Date.now() + 15 * 60 * 1000 };
+
+    // Envoi du code par email via Gmail
+    const mailSent = await sendMail({
+      to: email,
+      subject: "Code de réinitialisation de mot de passe - ITS Service",
+      text: `Votre code de réinitialisation est : ${code}\nCe code est valable 15 minutes.\nSi vous n'êtes pas à l'origine de cette demande, ignorez ce message.`,
+      html: `<p>Bonjour,</p><p>Votre code de réinitialisation est : <b>${code}</b></p><p>Ce code est valable 15 minutes.<br>Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>`,
+    });
+    if (!mailSent) {
+      return res.status(500).json({
+        success: false,
+        message:
+          "Erreur lors de l'envoi de l'email. Veuillez réessayer plus tard.",
+      });
+    }
+    return res.json({
+      success: true,
+      message:
+        "Un code de réinitialisation a été envoyé à votre adresse email.",
+    });
+  } catch (err) {
+    console.error("Erreur forgot-password:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+// TABLE UTILISATEURS (authentification)
+// ===============================
+// (bcrypt déjà importé en haut du fichier)
+const createUsersTable = `
+  CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+async function ensureUsersTable() {
+  try {
+    await pool.query(createUsersTable);
+    console.log("Table 'users' vérifiée/créée.");
+  } catch (err) {
+    console.error("Erreur création table users:", err);
+  }
+}
+ensureUsersTable();
+
+// Définition de la table livraison_conteneur
+const creationTableLivraisonConteneur = `
+    CREATE TABLE IF NOT EXISTS livraison_conteneur (
+      id SERIAL PRIMARY KEY,
+      employee_name VARCHAR(100) NOT NULL,
+      delivery_date DATE NULL, 
+      delivery_time TIME NULL, 
+      client_name VARCHAR(100) NOT NULL,
+      client_phone VARCHAR(15) NOT NULL,
+      container_type_and_content TEXT NOT NULL,
+      lieu VARCHAR(255) NOT NULL,
+      
+      container_number VARCHAR(100) NOT NULL,
+      container_foot_type VARCHAR(10) NOT NULL,
+      declaration_number VARCHAR(100) NOT NULL,
+      number_of_containers INTEGER NOT NULL DEFAULT 1,
+      
+      bl_number VARCHAR(100) NULL,
+      dossier_number VARCHAR(100) NULL,
+      shipping_company VARCHAR(255) NULL,
+      transporter VARCHAR(255) NULL, 
+      
+      weight VARCHAR(50) NULL,
+      ship_name VARCHAR(255) NULL, 
+      circuit VARCHAR(100) NULL, 
+      number_of_packages INTEGER NULL, 
+      
+      transporter_mode VARCHAR(100) NULL, 
+      
+      -- NOUVELLES COLONNES AJOUTÉES
+      nom_agent_visiteur VARCHAR(255) NULL, 
+      inspecteur VARCHAR(255) NULL, 
+      agent_en_douanes VARCHAR(255) NULL,
+
+      driver_name VARCHAR(100) NULL,
+      driver_phone VARCHAR(15) NULL,
+      truck_registration VARCHAR(50) NULL, 
+
+      delivery_notes TEXT NULL,
+      status VARCHAR(50) NOT NULL,
+      is_eir_received BOOLEAN DEFAULT FALSE, 
+      
+      -- AJOUT DES COLONNES SPÉCIFIQUES À L'ACCONIER
+      delivery_status_acconier VARCHAR(50) NOT NULL DEFAULT 'pending_acconier',
+      observation_acconier TEXT NULL,
+
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+`;
+
+async function createTables() {
+  try {
+    await pool.query(creationTableLivraisonConteneur);
+    console.log("Table livraison_conteneur créée ou déjà existante.");
+
+    // Assurez-vous que delivery_date et delivery_time sont bien NULLABLE
+    const columnsToMakeNullable = ["delivery_date", "delivery_time"];
+
+    for (const colName of columnsToMakeNullable) {
+      await pool.query(`
+        DO $$ BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='livraison_conteneur' AND column_name='${colName}' AND is_nullable='NO') THEN
+            ALTER TABLE livraison_conteneur ALTER COLUMN ${colName} DROP NOT NULL;
+            RAISE NOTICE 'Colonne ''${colName}'' rendue NULLABLE.';
+          END IF;
+        END $$;
+      `);
+    }
+
+    // --- MIGRATION : Agrandir la colonne container_foot_type si trop petite ---
+    // Passe à TEXT si < VARCHAR(50)
+    try {
+      const res = await pool.query(`
+        SELECT character_maximum_length
+        FROM information_schema.columns
+        WHERE table_name = 'livraison_conteneur' AND column_name = 'container_foot_type';
+      `);
+      if (
+        res.rows.length > 0 &&
+        res.rows[0].character_maximum_length !== null &&
+        res.rows[0].character_maximum_length < 50
+      ) {
+        await pool.query(
+          `ALTER TABLE livraison_conteneur ALTER COLUMN container_foot_type TYPE TEXT;`
+        );
+        console.log(
+          "Colonne container_foot_type migrée en TEXT (longueur illimitée)"
+        );
+      }
+    } catch (err) {
+      console.warn(
+        "Migration auto de la colonne container_foot_type échouée :",
+        err
+      );
+    }
+
+    // Supprimer les colonnes d'URL de fichier si elles existent et ne sont plus utilisées
+    const columnsToDelete = ["eir_document_url", "client_signature_photo_url"];
+
+    for (const col of columnsToDelete) {
+      await pool.query(`
+            DO $$ BEGIN
+              IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='livraison_conteneur' AND column_name='${col}') THEN
+                ALTER TABLE livraison_conteneur DROP COLUMN ${col};
+                RAISE NOTICE 'Colonne ''${col}'' supprimée de la table livraison_conteneur.';
+              END IF;
+            END $$;
+        `);
+    }
+
+    // Ajouter de nouvelles colonnes si elles n'existent pas (assure la compatibilité)
+    const columnsToAdd = [
+      { name: "weight", type: "VARCHAR(50)", nullable: true },
+      { name: "ship_name", type: "VARCHAR(255)", nullable: true },
+      { name: "circuit", type: "VARCHAR(100)", nullable: true },
+      { name: "number_of_packages", type: "INTEGER", nullable: true },
+      { name: "declaration_circuit", type: "VARCHAR(100)", nullable: true }, // Not in HTML/JS, but good to have
+      { name: "transporter_mode", type: "VARCHAR(100)", nullable: true },
+      { name: "driver_name", type: "VARCHAR(100)", nullable: true },
+      { name: "driver_phone", type: "VARCHAR(15)", nullable: true },
+      { name: "truck_registration", type: "VARCHAR(50)", nullable: true },
+      { name: "transporter", type: "VARCHAR(255)", nullable: true },
+      // NOUVELLES COLONNES ICI
+      { name: "nom_agent_visiteur", type: "VARCHAR(255)", nullable: true },
+      { name: "inspecteur", type: "VARCHAR(255)", nullable: true },
+      { name: "agent_en_douanes", type: "VARCHAR(255)", nullable: true },
+      // AJOUT DES COLONNES SPÉCIFIQUES À L'ACCONIER
+      {
+        name: "delivery_status_acconier",
+        type: "VARCHAR(50)",
+        nullable: false,
+        defaultValue: "'pending_acconier'",
+      },
+      { name: "observation_acconier", type: "TEXT", nullable: true },
+      // NOUVEAU : Statut par conteneur (JSONB)
+      { name: "container_statuses", type: "JSONB", nullable: true },
+    ];
+
+    for (const col of columnsToAdd) {
+      await pool.query(`
+            DO $$ BEGIN
+              IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='livraison_conteneur' AND column_name='${
+                col.name
+              }') THEN
+                ALTER TABLE livraison_conteneur ADD COLUMN ${col.name} ${
+        col.type
+      } ${col.nullable ? "NULL" : "NOT NULL"} ${
+        col.defaultValue ? `DEFAULT ${col.defaultValue}` : ""
+      };
+                RAISE NOTICE 'Colonne ''${
+                  col.name
+                }'' ajoutée à la table livraison_conteneur.';
+              END IF;
+            END $$;
+        `);
+    }
+  } catch (err) {
+    console.error(
+      "Erreur lors de la création ou mise à jour des tables :",
+      err
+    );
+    process.exit(1);
+  }
+}
+createTables();
+
+// Helper function to validate and format time strings (HH:MM)
+function formatTimeForDB(timeString) {
+  if (!timeString) return null;
+  const match = timeString.match(/^(\d{1,2}):(\d{2})$/);
+  if (match) {
+    const hour = parseInt(match[1], 10);
+    const minute = parseInt(match[2], 10);
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      return `${String(hour).padStart(2, "0")}:${String(minute).padStart(
+        2,
+        "0"
+      )}`;
+    }
+  }
+  return null; // Return null for invalid or unparseable time strings
+}
+
+// Helper function to validate and format date strings (YYYY-MM-DD)
+function formatDateForDB(dateString) {
+  if (!dateString) return null;
+
+  // Try parsing as ISO format (YYYY-MM-DD) first, or any format new Date() can natively handle
+  let date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    return date.toISOString().split("T")[0];
+  }
+
+  // If native parsing failed, try common French formats (DD/MM/YYYY or DD-MM-YYYY)
+  const frenchDateMatch = dateString.match(
+    /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/
+  );
+  if (frenchDateMatch) {
+    const day = parseInt(frenchDateMatch[1], 10);
+    const month = parseInt(frenchDateMatch[2], 10); // Month is 1-indexed from user input
+    const year = parseInt(frenchDateMatch[3], 10);
+
+    // JavaScript Date constructor expects month as 0-indexed (0 for January)
+    date = new Date(year, month - 1, day);
+
+    // Validate if the date components actually correspond to the parsed date
+    // (e.g., new Date(2024, 1, 30) where Feb only has 29 days will result in March 1,
+    // so this check ensures it's a valid date within the given month)
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    ) {
+      return date.toISOString().split("T")[0];
+    }
+  }
+
+  console.warn(
+    `Backend: Could not parse date string "${dateString}". Returning null.`
+  );
+  return null; // Return null if all parsing attempts fail
+}
+
+// =========================================================================
+// --- ROUTES API pour les livraisons uniquement ---
+// =========================================================================
+
+// ===============================
+// ROUTE INSCRIPTION UTILISATEUR
+// ===============================
+app.post("/api/signup", async (req, res) => {
+  let { name, email, password } = req.body || {};
+  // Normalisation de l'email (trim + minuscule)
+  if (typeof email === "string") {
+    email = email.trim().toLowerCase();
+  }
+  // Log de debug pour voir ce que reçoit le backend
+  console.log("[INSCRIPTION] Données reçues:", {
+    name,
+    email,
+    password,
+    body: req.body,
+  });
+  if (!name || !email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Tous les champs sont requis." });
+  }
+  try {
+    // Vérifie si l'email existe déjà
+    const check = await pool.query(
+      "SELECT id, email FROM users WHERE email = $1",
+      [email]
+    );
+    console.log("[INSCRIPTION] Résultat vérification email:", check.rows);
+    if (check.rows.length > 0) {
+      // Même si l'email existe déjà, on répond comme si l'inscription était réussie
+      return res
+        .status(201)
+        .json({ success: true, message: "Inscription réussie." });
+    }
+    // Hash du mot de passe
+    const hashedPw = await bcrypt.hash(password, 10);
+    await pool.query(
+      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3)",
+      [name, email, hashedPw]
+    );
+
+    // Envoi d'un mail de bienvenue
+    await sendMail({
+      to: email,
+      subject: "Bienvenue sur ITS Service !",
+      text: `Bonjour ${name},\n\nVotre inscription sur ITS Service a bien été prise en compte.\n\nBienvenue !`,
+      html: `<p>Bonjour <b>${name}</b>,</p><p>Votre inscription sur <b>ITS Service</b> a bien été prise en compte.<br>Bienvenue !</p>`,
+    });
+
+    return res
+      .status(201)
+      .json({ success: true, message: "Inscription réussie." });
+  } catch (err) {
+    // Gestion explicite de la violation de contrainte d'unicité (email déjà utilisé)
+    if (err && err.code === "23505") {
+      // Même en cas de violation d'unicité, on répond comme si l'inscription était réussie
+      return res
+        .status(201)
+        .json({ success: true, message: "Inscription réussie." });
+    }
+    // Log détaillé de l'erreur pour debug
+    console.error("[INSCRIPTION][ERREUR] Erreur inattendue:", err);
+    return res.status(500).json({
+      success: false,
+      message: `Erreur serveur lors de l'inscription: ${
+        err && err.message ? err.message : ""
+      }`,
+    });
+  }
+});
+
+// ===============================
+// ROUTE CONNEXION UTILISATEUR
+// ===============================
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Tous les champs sont requis." });
+  }
+  try {
+    const userRes = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (userRes.rows.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Email ou mot de passe incorrect." });
+    }
+    const user = userRes.rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Email ou mot de passe incorrect." });
+    }
+    // Connexion réussie : renvoyer aussi le nom et l'email
+    return res.status(200).json({
+      success: true,
+      message: "Connexion réussie.",
+      name: user.name,
+      email: user.email,
+    });
+  } catch (err) {
+    console.error("Erreur connexion:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la connexion.",
+    });
+  }
+});
+
+// POST deliveries/validate
+app.post(
+  "/deliveries/validate",
+  upload.single("client_signature_photo"),
+  async (req, res) => {
+    console.log("------------------------------------------");
+    console.log("Requête POST /deliveries/validate reçue.");
+    console.log("req.body AVANT déstructuration:", req.body);
+    console.log("req.file (si upload.single est utilisé):", req.file);
+    console.log("------------------------------------------");
+
+    const {
+      employee_name,
+      client_name,
+      client_phone,
+      container_type_and_content,
+      status, // This 'status' is the initial status from the employee form
+      lieu,
+      container_number,
+      container_foot_type,
+      declaration_number,
+      number_of_containers,
+      bl_number,
+      dossier_number,
+      shipping_company,
+      transporter,
+      weight,
+      ship_name,
+      circuit,
+      number_of_packages,
+      transporter_mode,
+      driver_name,
+      driver_phone,
+      truck_registration,
+      delivery_notes,
+      // NOUVEAUX CHAMPS DÉSTRUCTURÉS
+      nom_agent_visiteur,
+      inspecteur,
+      agent_en_douanes,
+    } = req.body || {};
+
+    // Use helper functions to process date and time
+    const validated_delivery_date = formatDateForDB(req.body.delivery_date);
+    const validated_delivery_time = formatTimeForDB(req.body.delivery_time);
+
+    // --- NORMALISATION DU CHAMP container_number ---
+    let normalized_container_number = container_number;
+    if (Array.isArray(container_number)) {
+      // Si c'est un tableau (ex : envoyé par le formulaire en JSON), on join avec des virgules
+      normalized_container_number = container_number.filter(Boolean).join(",");
+    } else if (typeof container_number === "string") {
+      // Nettoyage des espaces et séparateurs multiples
+      normalized_container_number = container_number
+        .split(/[,;\s]+/)
+        .filter(Boolean)
+        .join(",");
+    } else {
+      normalized_container_number = "";
+    }
+
+    const is_eir_received = !!req.file;
+
+    // *** DÉBOGAGE : AFFICHER LES VALEURS DES CHAMPS OBLIGATOIRES REÇUES PAR LE BACKEND ***
+    console.log("Backend Validation Debug:");
+    console.log("   employee_name:", employee_name);
+    console.log("   client_name:", client_name);
+    console.log("   client_phone:", client_phone);
+    console.log("   container_type_and_content:", container_type_and_content);
+    console.log("   status (from employee form):", status);
+    console.log("   lieu:", lieu);
+    console.log(
+      "   container_number (normalized):",
+      normalized_container_number
+    );
+    console.log("   container_foot_type:", container_foot_type);
+    console.log("   declaration_number:", declaration_number);
+    console.log("   number_of_containers:", number_of_containers);
+    // *** FIN DÉBOGAGE ***
+
+    // Validation des champs obligatoires (MIS À JOUR)
+    if (
+      !employee_name ||
+      !client_name ||
+      !client_phone ||
+      !container_type_and_content ||
+      !status ||
+      !lieu ||
+      !normalized_container_number ||
+      !container_foot_type ||
+      !declaration_number ||
+      !number_of_containers
+    ) {
+      console.error("Validation failed: Missing required fields in backend.", {
+        employee_name,
+        delivery_date: validated_delivery_date, // Use validated value for log
+        delivery_time: validated_delivery_time, // Use validated value for log
+        client_name,
+        client_phone,
+        container_type_and_content,
+        status,
+        lieu,
+        container_number: normalized_container_number,
+        container_foot_type,
+        declaration_number,
+        number_of_containers,
+      });
+      return res.status(400).json({
+        success: false,
+        message:
+          "Tous les champs obligatoires (hors date et heure de livraison qui sont maintenant facultatives) sont requis.",
+      });
+    }
+
+    // Mise à jour : Autoriser tous les nouveaux statuts métier acconier, y compris "mise_en_livraison_acconier" et "processed_acconier"
+    const allowedStatuses = [
+      "awaiting_payment_acconier",
+      "in_progress_payment_acconier",
+      "pending_acconier",
+      "mise_en_livraison_acconier",
+      "payment_done_acconier",
+      "processed_acconier",
+      "rejected_acconier",
+      "rejected_by_employee",
+    ];
+    let usedStatus = status;
+    if (!allowedStatuses.includes(status)) {
+      // Si le statut n'est pas fourni ou invalide, on force la valeur par défaut
+      usedStatus = "awaiting_payment_acconier";
+    }
+
+    try {
+      // Gestion du tableau de statuts par conteneur (container_statuses)
+      let container_statuses = null;
+      if (req.body.container_statuses) {
+        if (typeof req.body.container_statuses === "string") {
+          try {
+            container_statuses = JSON.parse(req.body.container_statuses);
+          } catch (e) {
+            container_statuses = null;
+          }
+        } else {
+          container_statuses = req.body.container_statuses;
+        }
+        // Si c'est un tableau, on le convertit en mapping
+        if (Array.isArray(container_statuses)) {
+          const tcList = normalized_container_number
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const mapping = {};
+          tcList.forEach((tc, idx) => {
+            mapping[tc] = container_statuses[idx] || usedStatus;
+          });
+          container_statuses = mapping;
+        }
+      } else {
+        // Génère un mapping par défaut avec un statut NEUTRE ("En attente") sauf si le statut global est explicitement "Livré" ou "delivered"
+        const tcList = normalized_container_number
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (tcList.length > 0) {
+          const mapping = {};
+          // Statut neutre par défaut
+          let defaultStatus = "pending";
+          if (
+            [
+              "livré",
+              "livree",
+              "delivered",
+              "completed",
+              "finished",
+              "signed",
+            ].includes(String(usedStatus).toLowerCase())
+          ) {
+            defaultStatus = "delivered";
+          }
+          tcList.forEach((tc) => {
+            mapping[tc] = defaultStatus;
+          });
+          container_statuses = mapping;
+        }
+      }
+      const query = `
+          INSERT INTO livraison_conteneur (
+            employee_name, delivery_date, delivery_time, client_name, client_phone, 
+            container_type_and_content, lieu, status,
+            container_number, container_foot_type, declaration_number, number_of_containers,
+            bl_number, dossier_number, shipping_company, transporter, 
+            weight, ship_name, circuit, number_of_packages, transporter_mode,
+            nom_agent_visiteur, inspecteur, agent_en_douanes, -- NOUVEAUX CHAMPS DANS L'INSERT
+            driver_name, driver_phone, truck_registration,
+            delivery_notes, is_eir_received,
+            delivery_status_acconier, -- AJOUT DE LA COLONNE ICI
+            container_statuses -- NOUVEAU
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
+          RETURNING *;
+      `;
+      const values = [
+        employee_name,
+        validated_delivery_date, // Use validated value
+        validated_delivery_time, // Use validated value
+        client_name,
+        client_phone,
+        container_type_and_content,
+        lieu,
+        usedStatus, // Statut validé ou valeur par défaut
+        normalized_container_number,
+        container_foot_type,
+        declaration_number,
+        parseInt(number_of_containers, 10),
+        bl_number || null,
+        dossier_number || null,
+        shipping_company || null,
+        transporter || null,
+        weight || null,
+        ship_name || null,
+        circuit || null,
+        number_of_packages ? parseInt(number_of_packages, 10) : null,
+        transporter_mode || null,
+        nom_agent_visiteur || null, // NOUVELLE VALEUR
+        inspecteur || null, // NOUVELLE VALEUR
+        agent_en_douanes || null, // NOUVELLE VALEUR
+        driver_name || null,
+        driver_phone || null,
+        truck_registration || null,
+        delivery_notes || null,
+        is_eir_received,
+        usedStatus,
+        container_statuses ? JSON.stringify(container_statuses) : null,
+      ];
+      const result = await pool.query(query, values);
+      const newDelivery = result.rows[0];
+
+      const wss = req.app.get("wss");
+      // Utilisez le nouveau statut acconier pour l'alerte
+      const statusInfo = getFrenchStatusWithIcon(
+        newDelivery.delivery_status_acconier
+      );
+      const alertType = statusInfo.customColorClass;
+
+      const alertMessage = `L'agent acconié "${newDelivery.employee_name}" a établi un ordre de livraison.`;
+
+      // ENVOI EMAIL À TOUS LES RESPONSABLES ACCONIER
+      try {
+        const respRes = await pool.query(
+          "SELECT email, nom FROM resp_acconier"
+        );
+        if (respRes.rows.length > 0) {
+          const emailPromises = respRes.rows.map((resp) => {
+            return sendMail({
+              to: resp.email,
+              subject: "Nouvel ordre de livraison établi",
+              text: `Bonjour ${resp.nom},\n\nL'agent acconier '${newDelivery.employee_name}' a établi un ordre de livraison. Veuillez procéder à payer l'acconage.`,
+              html: `<p>Bonjour <b>${resp.nom}</b>,</p><p>L'agent acconier <b>${newDelivery.employee_name}</b> a établi un <b>ordre de livraison</b>.<br>Veuillez procéder à payer l'acconage.</p>`,
+            });
+          });
+          await Promise.all(emailPromises);
+          console.log("Emails envoyés à tous les responsables acconier.");
+        } else {
+          console.log(
+            "Aucun responsable acconier trouvé pour l'envoi d'email."
+          );
+        }
+      } catch (err) {
+        console.error(
+          "Erreur lors de l'envoi des emails aux responsables acconier:",
+          err
+        );
+      }
+
+      console.log(alertMessage);
+      const payload = JSON.stringify({
+        type: "new_delivery_notification", // CHANGÉ : Type de message pour correspondre au frontend
+        message: alertMessage,
+        employeeName: newDelivery.employee_name, // Ajout du nom de l'agent pour le frontend
+        deliveryData: newDelivery,
+        alertType: alertType,
+      });
+
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(payload);
+        }
+      });
+      console.log(`Message WebSocket envoyé: ${alertMessage}`);
+
+      // RETIRÉ : L'envoi de la liste des agents n'est plus déclenché ici
+      // await broadcastAgentList(wss);
+
+      res.status(201).json({
+        success: true,
+        message: "Statut de livraison enregistré avec succès !",
+        delivery: newDelivery,
+      });
+    } catch (err) {
+      console.error(
+        "Erreur lors de l'enregistrement du statut de livraison :",
+        err
+      );
+      res.status(500).json({
+        success: false,
+        message:
+          "Erreur serveur lors de l'enregistrement du statut de livraison.",
+      });
+    }
+  }
+);
+
+// GET delivery by container number, BL number, or dossier number
+app.get("/deliveries/search", async (req, res) => {
+  const { containerNumber, blNumber, dossierNumber } = req.query;
+
+  if (!containerNumber && !blNumber && !dossierNumber) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Au moins un critère de recherche (containerNumber, blNumber, ou dossierNumber) est requis.",
+    });
+  }
+
+  let query = `
+        SELECT 
+          id, employee_name, delivery_date, delivery_time, client_name, client_phone, 
+          container_type_and_content, lieu, status, created_at,
+          container_number, container_foot_type, declaration_number, number_of_containers,
+          bl_number, dossier_number, shipping_company, transporter, 
+          weight, ship_name, circuit, number_of_packages, transporter_mode,
+          nom_agent_visiteur, inspecteur, agent_en_douanes, -- NOUVELLES COLONNES DANS LE SELECT
+          driver_name, driver_phone, truck_registration,
+          delivery_notes, is_eir_received,
+          delivery_status_acconier, observation_acconier -- AJOUT DES COLONNES ICI
+        FROM livraison_conteneur
+        WHERE 1 = 1
+    `;
+  const values = [];
+  let paramIndex = 1;
+
+  if (containerNumber) {
+    query += ` AND container_number ILIKE $${paramIndex}`;
+    values.push(`%${containerNumber}%`);
+    paramIndex++;
+  }
+  if (blNumber) {
+    query += ` AND bl_number ILIKE $${paramIndex}`;
+    values.push(`%${blNumber}%`);
+    paramIndex++;
+  }
+  if (dossierNumber) {
+    query += ` AND dossier_number ILIKE $${paramIndex}`;
+    values.push(`%${dossierNumber}%`);
+    paramIndex++;
+  }
+
+  query += ` ORDER BY created_at DESC LIMIT 1;`; // Limite à la dernière entrée si plusieurs correspondent
+
+  try {
+    const result = await pool.query(query, values);
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Aucune livraison trouvée." });
+    }
+    // Ajout du champ traduit
+    const delivery = result.rows[0];
+    delivery.delivery_status_acconier_fr = mapAcconierStatusToFr(
+      delivery.delivery_status_acconier
+    );
+    // Champ status TOUJOURS en français côté frontend
+    delivery.status = translateStatusToFr(delivery.status);
+    res.status(200).json({ success: true, delivery });
+  } catch (err) {
+    console.error("Erreur lors de la recherche de livraison :", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la recherche de livraison.",
+    });
+  }
+});
+
+// PATCH GET /deliveries/status
+app.get("/deliveries/status", async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        lc.id, lc.employee_name, lc.delivery_date, lc.delivery_time, lc.client_name, lc.client_phone, 
+        lc.container_type_and_content, lc.lieu, lc.status, lc.created_at,
+        lc.container_number, lc.container_foot_type, lc.declaration_number, lc.number_of_containers,
+        lc.bl_number,
+        lc.dossier_number,
+        lc.shipping_company,
+        lc.transporter, 
+        lc.weight, lc.ship_name, lc.circuit, lc.number_of_packages, lc.transporter_mode,
+        lc.nom_agent_visiteur, lc.inspecteur, lc.agent_en_douanes, -- NOUVELLES COLONNES DANS LE SELECT
+        lc.driver_name, lc.driver_phone, lc.truck_registration,
+        lc.delivery_notes,
+        lc.is_eir_received,
+        lc.delivery_status_acconier, lc.observation_acconier,
+        lc.container_statuses, -- AJOUT DU CHAMP
+        ac.email AS agent_email
+      FROM livraison_conteneur lc
+      LEFT JOIN acconier ac ON lc.employee_name = ac.nom
+      ORDER BY lc.created_at DESC;
+    `;
+    const result = await pool.query(query);
+    const deliveries = result.rows.map((delivery) => {
+      function translateStatusCSV(csv) {
+        if (!csv || typeof csv !== "string") return "-";
+        return csv
+          .split(",")
+          .map((s) => translateStatusToFr(s.trim()))
+          .join(",");
+      }
+      // Parse container_statuses si présent
+      let container_statuses = null;
+      if (delivery.container_statuses) {
+        try {
+          container_statuses =
+            typeof delivery.container_statuses === "string"
+              ? JSON.parse(delivery.container_statuses)
+              : delivery.container_statuses;
+        } catch (e) {
+          container_statuses = null;
+        }
+      }
+      // Fallback dynamique si non présent
+      if (!container_statuses || Array.isArray(container_statuses)) {
+        const tcList = String(delivery.container_number || "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const mapping = {};
+        tcList.forEach((tc) => {
+          mapping[tc] = delivery.status || "-";
+        });
+        container_statuses = mapping;
+      }
+
+      // Ajout du mapping traduit en français pour chaque TC
+      let container_statuses_fr = {};
+      if (container_statuses && typeof container_statuses === "object") {
+        Object.entries(container_statuses).forEach(([tc, statut]) => {
+          container_statuses_fr[tc] = translateStatusToFr(statut);
+        });
+      }
+
+      // LOG DEBUG : Affichage du mapping info-bulle (français)
+      console.log(`[DEBUG][container_statuses] TC:`, container_statuses);
+      console.log(
+        `[DEBUG][container_statuses_fr] TC (FR):`,
+        container_statuses_fr
+      );
+
+      return {
+        ...delivery,
+        agent_email: delivery.agent_email || null,
+        status: delivery.status, // code technique CSV (ex: "delivered,pending_acconier")
+        status_fr: translateStatusCSV(delivery.status), // version traduite pour affichage
+        delivery_status_acconier_fr: mapAcconierStatusToFr(
+          delivery.delivery_status_acconier
+        ),
+        delivery_status_acconier_csv_fr: translateStatusCSV(
+          delivery.delivery_status_acconier
+        ),
+        container_statuses: container_statuses,
+        container_statuses_fr: container_statuses_fr,
+      };
+    });
+    res.status(200).json({ success: true, deliveries });
+  } catch (err) {
+    console.error(
+      "Erreur lors de la récupération des statuts de livraison :",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message:
+        "Erreur serveur lors de la récupération des statuts de livraison.",
+    });
+  }
+});
+
+// PUT deliveries/:id (Mise à jour générale)
+app.put("/deliveries/:id", async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  // --- VALIDATION STATUS ---
+  if (updates.hasOwnProperty("status")) {
+    let statusVal = updates.status;
+    // Si tableau vide
+    if (Array.isArray(statusVal) && statusVal.length === 0) {
+      console.error(
+        "[PUT /deliveries/:id] Refusé : champ status vide (tableau)",
+        updates
+      );
+      return res.status(400).json({
+        success: false,
+        message: "Champ 'status' vide ou mal formé (tableau).",
+      });
+    }
+    // Si string vide ou ne contenant que des virgules/blancs
+    if (typeof statusVal === "string") {
+      const cleaned = statusVal.replace(/[,\s]/g, "");
+      if (cleaned.length === 0) {
+        console.error(
+          "[PUT /deliveries/:id] Refusé : champ status vide (string)",
+          updates
+        );
+        return res.status(400).json({
+          success: false,
+          message: "Champ 'status' vide ou mal formé (string).",
+        });
+      }
+    }
+  }
+
+  // --- NEW LOGGING ---
+  console.log("PUT /deliveries/:id received.");
+  console.log("ID:", id);
+  console.log("Updates received:", updates);
+  // --- END NEW LOGGING ---
+
+  const allowedFields = [
+    "employee_name",
+    "delivery_date",
+    "delivery_time",
+    "client_name",
+    "client_phone",
+    "container_type_and_content",
+    "lieu",
+    "status",
+    "container_number",
+    "container_foot_type",
+    "declaration_number",
+    "number_of_containers",
+    "bl_number",
+    "dossier_number",
+    "shipping_company",
+    "transporter",
+    "weight",
+    "ship_name",
+    "circuit",
+    "number_of_packages",
+    "declaration_circuit",
+    "transporter_mode",
+    "driver_name",
+    "driver_phone",
+    "truck_registration",
+    "delivery_notes",
+    "is_eir_received",
+    // NOUVEAUX CHAMPS AUTORISÉS POUR LA MISE À JOUR
+    "nom_agent_visiteur",
+    "inspecteur",
+    "agent_en_douanes",
+    // Statuts spécifiques à l'acconier
+    "observation_acconier",
+    "delivery_status_acconier",
+    // AJOUT : autoriser la mise à jour du tableau de statuts par conteneur
+    "container_statuses",
+  ];
+
+  const updateFields = [];
+  const values = [id]; // Le premier paramètre est toujours l'ID pour la clause WHERE
+  let paramIndex = 2; // Commence à 2 car $1 est l'ID
+
+  // Correction : accepter une liste de statuts (tableau ou string CSV) pour le champ status
+  Object.keys(updates).forEach((key) => {
+    if (allowedFields.includes(key)) {
+      let value = updates[key];
+      // Si on met à jour le champ "status" et que la valeur est un tableau, convertir en string CSV
+      if (key === "status") {
+        if (Array.isArray(value)) {
+          value = value.join(",");
+        }
+        // Si c'est déjà une chaîne CSV, on laisse tel quel
+      }
+      // Pour delivery_status_acconier, même logique si besoin d'évolution future
+      if (key === "delivery_status_acconier") {
+        if (Array.isArray(value)) {
+          value = value.join(",");
+        }
+      }
+      // Pour container_statuses, on force le stockage en JSON stringifié
+      if (key === "container_statuses") {
+        value = JSON.stringify(value);
+      }
+      updateFields.push(`${key} = $${paramIndex}`);
+      // Gérer les conversions pour les nombres, dates et heures
+      if (key === "number_of_containers" || key === "number_of_packages") {
+        values.push(value !== "" ? parseInt(value, 10) : null);
+      } else if (key === "delivery_date") {
+        values.push(formatDateForDB(value));
+      } else if (key === "delivery_time") {
+        values.push(formatTimeForDB(value));
+      } else {
+        values.push(value === "" ? null : value);
+      }
+      paramIndex++;
+    }
+  });
+
+  // --- NEW LOGGING ---
+  console.log("updateFields after processing:", updateFields);
+  console.log("values after processing:", values);
+  // --- END NEW LOGGING ---
+
+  if (updateFields.length === 0) {
+    console.error(
+      "No valid fields provided for update. Updates object was:",
+      updates
+    ); // Added specific logging here
+    return res.status(400).json({
+      success: false,
+      message: "Aucun champ valide fourni pour la mise à jour.",
+    });
+  }
+
+  const setClauses = updateFields.join(", ");
+
+  try {
+    const query = `
+            UPDATE livraison_conteneur
+            SET ${setClauses}
+            WHERE id = $1
+            RETURNING *;
+        `;
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+
+    const updatedDelivery = result.rows[0];
+
+    const wss = req.app.get("wss");
+    // Utilisez le statut acconier pour l'alerte
+    const statusInfo = getFrenchStatusWithIcon(
+      updatedDelivery.delivery_status_acconier
+    );
+    const displayStatus = statusInfo.text;
+    const alertType = statusInfo.customColorClass;
+
+    let updateMessage;
+    // Vérification du statut EIR
+    if (updates.hasOwnProperty("is_eir_received")) {
+      // Si le champ EIR a été modifié
+      if (updatedDelivery.is_eir_received) {
+        updateMessage = `L'EIR pour le conteneur '${updatedDelivery.container_number}' a été marqué comme reçu par l'agent ${updatedDelivery.employee_name}.`;
+      } else {
+        updateMessage = `L'EIR pour le conteneur '${updatedDelivery.container_number}' a été marqué comme non reçu par l'agent ${updatedDelivery.employee_name}.`;
+      }
+    } else if (updates.hasOwnProperty("status") && updates.status) {
+      // Message personnalisé pour la mise à jour du statut de plusieurs conteneurs (tous les TC concernés)
+      let tcNumbers = [];
+      if (Array.isArray(updates.tcNumbers) && updates.tcNumbers.length > 0) {
+        tcNumbers = updates.tcNumbers;
+      } else if (updates.tcNumber) {
+        tcNumbers = [updates.tcNumber];
+      } else {
+        tcNumbers = String(updatedDelivery.container_number)
+          .split(/[,;\s]+/)
+          .filter(Boolean);
+      }
+      let statutLabel = "";
+      switch (updates.status) {
+        case "livre":
+        case "delivered":
+          statutLabel = "livré";
+          break;
+        case "rejet":
+        case "rejected":
+          statutLabel = "rejeté";
+          break;
+        case "en_attente":
+        case "pending":
+          statutLabel = "en attente";
+          break;
+        case "en_cours":
+        case "in_progress":
+          statutLabel = "en cours";
+          break;
+        default:
+          statutLabel = updates.status;
+      }
+      if (tcNumbers.length > 0) {
+        updateMessage = tcNumbers
+          .map(
+            (tc) =>
+              `Vous avez fourni un statut de "${statutLabel}" sur le conteneur "${tc}"`
+          )
+          .join("\n");
+      } else {
+        updateMessage = `Vous avez fourni un statut de "${statutLabel}" sur le conteneur."`;
+      }
+    } else {
+      // Message générique pour les autres mises à jour de champs
+      updateMessage = "Requête effectuer";
+      // Si le statut acconier a été explicitement changé
+      if (
+        updates.hasOwnProperty("delivery_status_acconier") &&
+        updates.delivery_status_acconier !== undefined &&
+        updates.delivery_status_acconier !==
+          updatedDelivery.delivery_status_acconier
+      ) {
+        const acconierStatusInfo = getFrenchStatusWithIcon(
+          updates.delivery_status_acconier
+        );
+        updateMessage = `Le statut acconier du conteneur '${updatedDelivery.container_number}' a été mis à jour à "${acconierStatusInfo.text}".`;
+      }
+    }
+
+    const payload = JSON.stringify({
+      type: "delivery_update_alert",
+      message: updateMessage,
+      deliveryData: updatedDelivery,
+      alertType: alertType,
+    });
+
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(payload);
+      }
+    });
+    console.log(`Message WebSocket envoyé: ${updateMessage}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Livraison mise à jour avec succès.",
+      delivery: updatedDelivery,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour de la livraison :", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la mise à jour de la livraison.",
+    });
+  }
+});
+
+// DELETE /deliveries/:id
+app.delete("/deliveries/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      "DELETE FROM livraison_conteneur WHERE id = $1 RETURNING id, employee_name, container_number;",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Livraison non trouvée pour suppression.",
+      });
+    }
+
+    const deletedDelivery = result.rows[0];
+
+    const wss = req.app.get("wss");
+    const alertMessage = `La livraison du conteneur '${deletedDelivery.container_number}' de l'agent '${deletedDelivery.employee_name}' a été supprimée.`;
+    const payload = JSON.stringify({
+      type: "delivery_deletion_alert",
+      message: alertMessage,
+      deliveryId: deletedDelivery.id,
+      alertType: "info",
+    });
+
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(payload);
+      }
+    });
+    console.log(
+      `Message WebSocket envoyé pour la suppression: ${alertMessage}`
+    );
+
+    // RETIRÉ : L'envoi de la liste des agents n'est plus déclenché ici
+    // await broadcastAgentList(wss);
+
+    res.status(200).json({
+      success: true,
+      message: "Livraison supprimée avec succès.",
+      deletedId: deletedDelivery.id,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la suppression de la livraison :", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la suppression de la livraison.",
+    });
+  }
+});
+
+// DELETE /agents/:employeeName
+app.delete("/agents/:employeeName", async (req, res) => {
+  const { employeeName } = req.params;
+  try {
+    const result = await pool.query(
+      "DELETE FROM livraison_conteneur WHERE employee_name = $1 RETURNING id;",
+      [employeeName]
+    );
+
+    const deletedCount = result.rowCount;
+    let message = "";
+    let alertType = "";
+
+    if (deletedCount === 0) {
+      message = `Aucune livraison trouvée pour l'agent '${employeeName}'. L'agent (ou ses livraisons) est peut-être déjà absent.`;
+      alertType = "info";
+    } else {
+      message = `Toutes les ${deletedCount} livraisons pour l'agent '${employeeName}' ont été supprimées.`;
+      alertType = "success";
+    }
+
+    const wss = req.app.get("wss");
+    const payload = JSON.stringify({
+      type: "agent_deletion_alert",
+      message: message,
+      employeeName: employeeName,
+      deletedCount: deletedCount,
+      alertType: alertType,
+    });
+
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(payload);
+      }
+    });
+    console.log(
+      `Message WebSocket envoyé pour la suppression de l'agent: ${message}`
+    );
+
+    // MAINTENU ICI : L'envoi de la liste des agents est pertinent après la suppression d'un agent
+    await broadcastAgentList(wss);
+
+    res.status(200).json({
+      success: true,
+      message: message,
+      deletedCount: deletedCount,
+    });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la suppression des livraisons de l'agent :",
+      error
+    );
+    res.status(500).json({
+      success: false,
+      message:
+        "Erreur serveur lors de la suppression des livraisons de l'agent.",
+    });
+  }
+});
+
+// ===============================
+// --- FONCTION UTILE AGENTS ---
+// ===============================
+async function getUniqueAgents() {
+  try {
+    // MODIFICATION ICI: Utilisation de GROUP BY au lieu de DISTINCT pour résoudre l'erreur SQL
+    const result = await pool.query(
+      `SELECT employee_name FROM livraison_conteneur WHERE employee_name IS NOT NULL AND employee_name <> '' GROUP BY employee_name ORDER BY LOWER(employee_name) ASC;`
+    );
+    return result.rows.map((row) => row.employee_name);
+  } catch (err) {
+    console.error("Erreur lors de la récupération des agents uniques:", err);
+    return [];
+  }
+}
+
+// ===============================
+// --- ENDPOINT GET /agents ---
+// ===============================
+app.get("/agents", async (req, res) => {
+  try {
+    const agents = await getUniqueAgents();
+    res.status(200).json({ success: true, agents });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération des agents.",
+    });
+  }
+});
+
+// ===============================
+// --- ENVOI WS LISTE AGENTS ---
+// ===============================
+async function broadcastAgentList(wss) {
+  const agents = await getUniqueAgents();
+  const payload = JSON.stringify({ type: "updateAgents", agents });
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(payload);
+    }
+  });
+}
+
+// --- Fonction de nettoyage des archives de plus de 3 ans ---
+async function cleanOldArchives() {
+  console.log("Démarrage du nettoyage des archives de plus de 3 ans...");
+  try {
+    // Calcule la date limite (3 ans avant la date actuelle)
+    const threeYearsAgo = new Date();
+    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+
+    const query = `
+      DELETE FROM livraison_conteneur
+      WHERE created_at < $1
+      RETURNING id;
+    `;
+    const result = await pool.query(query, [threeYearsAgo]);
+    console.log(`Nettoyage terminé : ${result.rowCount} archives supprimées.`);
+  } catch (error) {
+    console.error("Erreur lors du nettoyage des archives :", error);
+  }
+}
+
+// Planifier l'exécution du nettoyage des archives
+// Exécute une première fois au démarrage
+cleanOldArchives();
+// Puis toutes les 24 heures (86400000 ms)
+setInterval(cleanOldArchives, 86400000); // 24 heures * 60 minutes * 60 secondes * 1000 millisecondes
+
+// =========================================================================
+// --- ROUTES DE FICHIERS STATIQUES (à placer EN DERNIER) ---
+// =========================================================================
+
+// --- ROUTE GET /clients pour compatibilité frontend ---
+// Retourne la liste des clients distincts (nom, téléphone)
+// --- ROUTE STATISTIQUES PAR ACTEUR ---
+app.get("/statistiques/acteurs", async (req, res) => {
+  try {
+    // Récupérer la date passée en paramètre (format YYYY-MM-DD ou autre)
+    let { date } = req.query;
+    let query = `SELECT * FROM livraison_conteneur`;
+    let values = [];
+    // Si aucune date n'est fournie, utiliser la date du jour (timezone serveur)
+    let usedDate = date;
+    if (!usedDate) {
+      const today = new Date();
+      usedDate = today.toISOString().split("T")[0];
+    }
+    if (usedDate) {
+      const formattedDate = formatDateForDB(usedDate);
+      if (formattedDate) {
+        // Filtrage sur la date de création (created_at) uniquement (ignorer l'heure)
+        query += ` WHERE created_at::date = $1`;
+        values.push(formattedDate);
+      } else {
+        console.warn(
+          `Route /statistiques/acteurs : date reçue invalide ('${usedDate}'). Aucun résultat retourné.`
+        );
+        return res.json({
+          success: true,
+          agentAcconier: {
+            total: 0,
+            details: [],
+            message: "Aucune donnée pour la date choisie.",
+          },
+          responsableAcconier: {
+            total: 0,
+            details: [],
+            message: "Aucune donnée pour la date choisie.",
+          },
+          responsableLivraison: {
+            total: 0,
+            details: [],
+            message: "Aucune donnée pour la date choisie.",
+          },
+        });
+      }
+    }
+    const result = await pool.query(query, values);
+    const rows = result.rows || [];
+    const allRows = rows;
+
+    // Fonctions utilitaires pour filtrer par rôle
+    function isAgentAcconier(liv) {
+      return liv.employee_name && liv.delivery_status_acconier;
+    }
+    function isResponsableAcconier(liv) {
+      return liv.inspecteur || liv.agent_en_douanes;
+    }
+    function isResponsableLivraison(liv) {
+      return liv.nom_agent_visiteur;
+    }
+
+    // Colonnes attendues pour chaque rôle (adapter selon le frontend)
+    const columnsByRole = {
+      agentAcconier: [
+        { key: "employee_name", label: "Agent" },
+        { key: "client_name", label: "Client (Nom)" },
+        { key: "lieu", label: "Lieu" },
+        { key: "container_number", label: "Numéro TC(s)" },
+        { key: "delivery_status_acconier", label: "Statut" },
+        { key: "container_foot_type", label: "Type Conteneur(pied)" },
+        { key: "container_type_and_content", label: "Contenu" },
+        { key: "declaration_number", label: "N° Déclaration" },
+        { key: "bl_number", label: "N° BL" },
+        { key: "dossier_number", label: "N° Dossier" },
+        { key: "number_of_containers", label: "Nombre de conteneurs" },
+        { key: "shipping_company", label: "Compagnie Maritime" },
+        { key: "weight", label: "Poids" },
+        { key: "ship_name", label: "Nom du navire" },
+        { key: "circuit", label: "Circuit" },
+        { key: "transporter_mode", label: "Mode de Transport" },
+        { key: "created_at", label: "Créé le" },
+      ],
+      responsableAcconier: [
+        { key: "employee_name", label: "Agent" },
+        { key: "client_name", label: "Client (Nom)" },
+        { key: "lieu", label: "Lieu" },
+        { key: "container_number", label: "Numéro TC(s)" },
+        { key: "delivery_status_acconier", label: "Statut Acconier" },
+        { key: "container_foot_type", label: "Type Conteneur(pied)" },
+        { key: "container_type_and_content", label: "Contenu" },
+        { key: "declaration_number", label: "N° Déclaration" },
+        { key: "bl_number", label: "N° BL" },
+        { key: "dossier_number", label: "N° Dossier" },
+        { key: "number_of_containers", label: "Nombre de conteneurs" },
+        { key: "shipping_company", label: "Compagnie Maritime" },
+        { key: "weight", label: "Poids" },
+        { key: "ship_name", label: "Nom du navire" },
+        { key: "circuit", label: "Circuit" },
+        { key: "transporter_mode", label: "Mode de Transport" },
+        // Colonnes spécifiques responsable acconier
+        { key: "inspecteur", label: "Inspecteur" },
+        { key: "agent_en_douanes", label: "Agent en Douanes" },
+        { key: "delivery_date", label: "Date Livraison" },
+        { key: "status", label: "Statut de livraison (Resp. Aconiés)" },
+        { key: "observation_acconier", label: "Observations (Resp. Aconiés)" },
+        { key: "created_at", label: "Créé le" },
+      ],
+      // Pour Responsable Livraison, on affiche toutes les colonnes principales du tableau de suivi + colonnes spécifiques livraison
+      responsableLivraison: [
+        { key: "employee_name", label: "Agent" },
+        { key: "client_name", label: "Client (Nom)" },
+        { key: "lieu", label: "Lieu" },
+        { key: "container_number", label: "Numéro TC(s)" },
+        { key: "delivery_status_acconier", label: "Statut Acconier" },
+        { key: "container_foot_type", label: "Type Conteneur(pied)" },
+        { key: "container_type_and_content", label: "Contenu" },
+        { key: "declaration_number", label: "N° Déclaration" },
+        { key: "bl_number", label: "N° BL" },
+        { key: "dossier_number", label: "N° Dossier" },
+        { key: "number_of_containers", label: "Nombre de conteneurs" },
+        { key: "shipping_company", label: "Compagnie Maritime" },
+        { key: "weight", label: "Poids" },
+        { key: "ship_name", label: "Nom du navire" },
+        { key: "circuit", label: "Circuit" },
+        { key: "transporter_mode", label: "Mode de Transport" },
+        // Colonnes spécifiques livraison
+        { key: "nom_agent_visiteur", label: "Nom agent visiteur" },
+        { key: "transporter", label: "Transporteur" },
+        { key: "inspecteur", label: "Inspecteur" },
+        { key: "agent_en_douanes", label: "Agent en Douanes" },
+        { key: "driver_name", label: "Chauffeur" },
+        { key: "truck_registration", label: "Immatriculation" },
+        { key: "driver_phone", label: "Tél. Chauffeur" },
+        { key: "delivery_date", label: "Date Livraison" },
+        { key: "delivery_time", label: "Heure Livraison" },
+        { key: "status", label: "Statut Livraison" },
+        { key: "created_at", label: "Créé le" },
+      ],
+    };
+
+    // Génère le tableau details pour chaque rôle
+    function detailsFor(filtered, role) {
+      const cols = columnsByRole[role];
+      return filtered.map((liv) => {
+        const obj = {};
+        cols.forEach((col) => {
+          let val = liv[col.key];
+          // Correction : remplacement systématique de "Mise en livraison (ancienne)" par "Mise en livraison"
+          if (
+            typeof val === "string" &&
+            (val.toLowerCase() === "mise en livraison (ancienne)" ||
+              val.toLowerCase() === "mise_en_livraison_ancienne")
+          ) {
+            val = "Mise en livraison";
+          }
+          // Formatage spécial pour les dates
+          if (col.key === "delivery_date" && val) {
+            val = new Date(val).toLocaleDateString("fr-FR");
+          }
+          if (col.key === "created_at" && val) {
+            val = new Date(val).toLocaleString("fr-FR");
+          }
+          // Formatage spécial pour l'heure de livraison
+          if (col.key === "delivery_time" && val) {
+            // Si déjà au format HH:mm:ss ou HH:mm
+            if (typeof val === "string" && val.length >= 5) {
+              val = val.slice(0, 5);
+            } else {
+              try {
+                const d = new Date(`1970-01-01T${val}`);
+                val = d.toLocaleTimeString("fr-FR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+              } catch (e) {}
+            }
+          }
+          // Statut acconier en français pour toutes les vues (y compris responsableAcconier)
+          if (col.key === "delivery_status_acconier" && val) {
+            val = translateStatusToFr(val);
+          }
+          // Statut livraison en français (affiche uniquement la traduction si possible)
+          if (col.key === "status" && val) {
+            val = translateStatusToFr(val);
+          }
+          // Pour les champs numériques, afficher "-" si null ou vide
+          if (["number_of_containers", "weight"].includes(col.key)) {
+            val = val !== undefined && val !== null && val !== "" ? val : "-";
+          }
+          obj[col.label] = val || "-";
+        });
+        // Ajout systématique des champs acconier pour le rôle responsableAcconier
+        if (role === "responsableAcconier") {
+          // On injecte systématiquement les valeurs brutes, même si vides, pour garantir la transmission au frontend
+          obj["Statut de livraison (Resp. Aconiés)"] =
+            liv.delivery_status_acconier !== undefined
+              ? liv.delivery_status_acconier
+              : "";
+          obj["Observations (Resp. Aconiés)"] =
+            liv.observation_acconier !== undefined
+              ? liv.observation_acconier
+              : "";
+        }
+        // Ajout des statuts conteneurs pour Responsable Livraison uniquement
+        if (role === "responsableLivraison") {
+          obj["container_statuses"] = liv.container_statuses || null;
+          obj["container_statuses_fr"] = liv.container_statuses_fr || null;
+        }
+        return obj;
+      });
+    }
+
+    // Statistiques détaillées pour chaque acteur
+    function statsFor(filterFn, role) {
+      const filtered = allRows.filter(filterFn);
+      const statuts = {
+        livree: 0,
+        attente: 0,
+        rejetee: 0,
+        paiement: 0,
+        mise_en_livraison: 0,
+        autre: 0,
+      };
+      let lastActivity = null;
+      let lieux = {};
+      let totalDelai = 0,
+        nbDelai = 0;
+      filtered.forEach((liv) => {
+        // On prend le statut traduit pour le calcul
+        let s = translateStatusToFr(
+          liv.status || liv.delivery_status_acconier || ""
+        )
+          .toLowerCase()
+          .trim();
+        if (!s || s === "-" || s === "inconnu" || s === "unknown") {
+          // On ignore les statuts vides ou inconnus dans les stats
+          return;
+        }
+        if (s.includes("livr")) statuts.livree++;
+        else if (s.includes("paiement effectué")) statuts.paiement++;
+        else if (s.includes("mise en livraison")) statuts.mise_en_livraison++;
+        else if (s.includes("attente") || s.includes("pending"))
+          statuts.attente++;
+        else if (s.includes("rejet")) statuts.rejetee++;
+        else statuts.autre++;
+        if (liv.created_at) {
+          const d = new Date(liv.created_at);
+          if (!lastActivity || d > lastActivity) lastActivity = d;
+        }
+        if (liv.lieu) {
+          lieux[liv.lieu] = (lieux[liv.lieu] || 0) + 1;
+        }
+        if (liv.delivery_date && liv.created_at && s.includes("livr")) {
+          const t1 = new Date(liv.created_at);
+          const t2 = new Date(liv.delivery_date);
+          const diff = Math.abs(t2 - t1) / (1000 * 60 * 60);
+          totalDelai += diff;
+          nbDelai++;
+        }
+      });
+      const lieuxSorted = Object.entries(lieux).sort((a, b) => b[1] - a[1]);
+      return {
+        total: filtered.length,
+        lastActivity: lastActivity ? lastActivity.toISOString() : null,
+        livree: statuts.livree,
+        attente: statuts.attente,
+        rejetee: statuts.rejetee,
+        autre: statuts.autre,
+        lieux: lieuxSorted.slice(0, 3).map(([lieu, n]) => ({ lieu, n })),
+        tempsMoyenLivraison: nbDelai > 0 ? totalDelai / nbDelai : null,
+        details: detailsFor(filtered, role),
+      };
+    }
+
+    // Si aucune donnée trouvée, message spécial (optionnel)
+    if (allRows.length === 0) {
+      return res.json({
+        success: true,
+        agentAcconier: {
+          total: 0,
+          details: [],
+          message: "Aucune donnée pour la date choisie.",
+        },
+        responsableAcconier: {
+          total: 0,
+          details: [],
+          message: "Aucune donnée pour la date choisie.",
+        },
+        responsableLivraison: {
+          total: 0,
+          details: [],
+          message: "Aucune donnée pour la date choisie.",
+        },
+      });
+    }
+    res.json({
+      success: true,
+      agentAcconier: statsFor(isAgentAcconier, "agentAcconier"),
+      responsableAcconier: statsFor(
+        isResponsableAcconier,
+        "responsableAcconier"
+      ),
+      responsableLivraison: statsFor(
+        isResponsableLivraison,
+        "responsableLivraison"
+      ),
+    });
+  } catch (err) {
+    console.error("Erreur statistiques acteurs:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur statistiques acteurs.",
+    });
+  }
+});
+
+// Nouvelle route : Liste des agents visiteurs programmés (filtrable par date)
+app.get("/agents-visiteurs/programmes", async (req, res) => {
+  try {
+    let { date } = req.query;
+    let query = `SELECT id, nom_agent_visiteur, client_name, lieu, container_number, delivery_date, delivery_time, created_at, status FROM livraison_conteneur WHERE nom_agent_visiteur IS NOT NULL AND nom_agent_visiteur <> ''`;
+    let values = [];
+    if (date) {
+      // Filtrer sur la date de livraison si fournie
+      query += ` AND delivery_date = $1`;
+      values.push(date);
+    }
+    query += ` ORDER BY delivery_date DESC, delivery_time DESC, created_at DESC`;
+    const result = await pool.query(query, values);
+    // Ajout du champ status traduit pour chaque visiteur
+    const visites = result.rows.map((v) => ({
+      ...v,
+      status: translateStatusToFr(v.status),
+    }));
+    res.status(200).json({ success: true, visites });
+  } catch (err) {
+    console.error(
+      "Erreur lors de la récupération des agents visiteurs programmés :",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message:
+        "Erreur serveur lors de la récupération des agents visiteurs programmés.",
+    });
+  }
+});
+
+app.get("/clients", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT client_name, client_phone FROM livraison_conteneur WHERE client_name IS NOT NULL AND client_name <> ''`
+    );
+    res.status(200).json({ success: true, clients: result.rows });
+  } catch (err) {
+    console.error("Erreur lors de la récupération des clients :", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération des clients.",
+    });
+  }
+});
+
+app.use("/uploads", express.static(uploadDir));
+
+app.get("/interfaceFormulaireEmployer.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "interfaceFormulaireEmployer.html"));
+});
+
+app.use(express.static(path.join(__dirname)));
+
+app.use(express.static(path.join(__dirname, "public")));
+
+// ===============================
+// --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
+// ===============================
+
+// ===============================
+// --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
+// ===============================
+app.patch("/deliveries/:id/container-status", async (req, res) => {
+  const { id } = req.params;
+  const { containerNumber, status } = req.body || {};
+  if (!containerNumber || !status) {
+    return res.status(400).json({
+      success: false,
+      message: "Numéro de conteneur et statut requis.",
+    });
+  }
+  try {
+    // Récupère la livraison existante
+    const result = await pool.query(
+      "SELECT container_statuses, container_number FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+
+    // --- FONCTION DE NORMALISATION (plus robuste) ---
+    function normalizeContainerStatuses(raw, container_number_csv) {
+      // Si déjà un mapping objet (pas un Array), retourne une copie
+      if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        return { ...raw };
+      }
+      // Si tableau d'objets {tc, status} ou {numeroTC, statut}
+      if (
+        Array.isArray(raw) &&
+        raw.length > 0 &&
+        typeof raw[0] === "object" &&
+        raw[0] !== null &&
+        ("tc" in raw[0] || "numeroTC" in raw[0])
+      ) {
+        const mapping = {};
+        raw.forEach((item) => {
+          const tc = item.tc || item.numeroTC;
+          if (tc) mapping[tc] = item.status || item.statut || item.value || "-";
+        });
+        return mapping;
+      }
+      // Si tableau de strings (statuts), on mappe sur la liste des TC
+      if (
+        Array.isArray(raw) &&
+        raw.length > 0 &&
+        typeof raw[0] === "string" &&
+        container_number_csv
+      ) {
+        const tcList = String(container_number_csv)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const mapping = {};
+        tcList.forEach((tc, idx) => {
+          mapping[tc] = raw[idx] || "-";
+        });
+        return mapping;
+      }
+      // Si tableau vide ou non reconnu
+      if (Array.isArray(raw)) {
+        return {};
+      }
+      // Si string JSON
+      if (typeof raw === "string") {
+        try {
+          return normalizeContainerStatuses(
+            JSON.parse(raw),
+            container_number_csv
+          );
+        } catch (e) {
+          return {};
+        }
+      }
+      // Sinon, retourne objet vide
+      return {};
+    }
+
+    // --- NORMALISATION ---
+    let container_statuses = {};
+    if (result.rows[0].container_statuses) {
+      try {
+        const raw =
+          typeof result.rows[0].container_statuses === "string"
+            ? JSON.parse(result.rows[0].container_statuses)
+            : result.rows[0].container_statuses;
+        container_statuses = normalizeContainerStatuses(
+          raw,
+          result.rows[0].container_number
+        );
+      } catch (e) {
+        container_statuses = {};
+      }
+    } else {
+      container_statuses = normalizeContainerStatuses(
+        null,
+        result.rows[0].container_number
+      );
+    }
+    console.log(
+      `[PATCH][DEBUG] Avant update (normalisé) : container_statuses=`,
+      container_statuses
+    );
+    // Met à jour le statut du conteneur demandé
+    container_statuses[containerNumber] = status;
+    console.log(
+      `[PATCH][DEBUG] Après modification : container_statuses=`,
+      container_statuses
+    );
+    // Met à jour la base
+    const updateRes = await pool.query(
+      "UPDATE livraison_conteneur SET container_statuses = $1 WHERE id = $2 RETURNING *;",
+      [JSON.stringify(container_statuses), id]
+    );
+    if (updateRes.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Erreur lors de la mise à jour." });
+    }
+    // Relit la ligne complète pour vérification
+    const checkRes = await pool.query(
+      "SELECT id, container_statuses FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (checkRes.rows.length > 0) {
+      let persisted = checkRes.rows[0].container_statuses;
+      if (typeof persisted === "string") {
+        try {
+          persisted = JSON.parse(persisted);
+        } catch (e) {}
+      }
+      console.log(
+        `[PATCH][DEBUG] En base après update (id=${id}) :`,
+        persisted
+      );
+    }
+    // Envoi WebSocket (optionnel)
+    const wss = req.app.get("wss");
+    const updatedDelivery = updateRes.rows[0];
+    const alertMessage = `Statut du conteneur '${containerNumber}' mis à jour à '${status}'.`;
+    const payload = JSON.stringify({
+      type: "container_status_update",
+      message: alertMessage,
+      deliveryId: updatedDelivery.id,
+      containerNumber,
+      status,
+      alertType: "success",
+    });
+    wss.clients.forEach((client) => {
+      if (client.readyState === require("ws").OPEN) {
+        client.send(payload);
+      }
+    });
+    res.status(200).json({
+      success: true,
+      message: alertMessage,
+      delivery: updatedDelivery,
+    });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du statut du conteneur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la mise à jour du statut du conteneur.",
+    });
+  }
+});

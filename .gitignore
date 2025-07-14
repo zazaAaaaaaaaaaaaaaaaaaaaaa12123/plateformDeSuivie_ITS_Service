@@ -1,0 +1,26 @@
+# Fichiers sensibles à ne jamais publier
+.env
+*.env
+.env.*
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Autres fichiers temporaires
+*.tmp
+*.bak
+
+# Dossiers de build
+build/
+dist/
+
+# Fichiers d'uploads
+uploads/

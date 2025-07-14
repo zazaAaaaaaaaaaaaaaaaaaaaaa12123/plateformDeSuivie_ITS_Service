@@ -1,0 +1,784 @@
+body {
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  color: #333;
+}
+
+#messenger {
+  display: flex;
+  height: 100vh; /* Utilise toute la hauteur de la fenêtre */
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+#contacts {
+  width: 320px;
+  flex-shrink: 0; /* Empêche le rétrécissement */
+  display: flex;
+  flex-direction: column;
+}
+
+#chat {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#contacts header,
+#chat header {
+  flex-shrink: 0; /* Empêche le rétrécissement du header */
+}
+
+#messages {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+#input-area {
+  flex-shrink: 0; /* Empêche le rétrécissement de la zone de saisie */
+}
+
+/* Styles pour les contacts récents */
+.contact-list .contacts-title {
+  font-weight: bold;
+  padding: 10px 15px;
+  color: #555;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 10px;
+  background-color: #f0f0f0;
+}
+
+.contact {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact:hover {
+  background-color: #e9ecef;
+}
+
+.contact.active {
+  background-color: #e0e0e0;
+  border-left: 4px solid #007bff;
+  padding-left: 11px;
+}
+
+.contact .info {
+  flex-grow: 1;
+}
+
+.contact .name {
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.contact .last-message {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.contact .phone {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 2px;
+}
+
+.empty-contacts {
+  text-align: center;
+  color: #888;
+  padding: 20px;
+  font-style: italic;
+}
+
+/* Recent limit message */
+.recent-limit-message {
+  padding: 0 12px; /* Commencez avec 0 padding pour un effet de glissement */
+  background-color: #ffda6a; /* Jaune doux pour l'avertissement */
+  color: #333;
+  border-radius: 8px;
+  margin: 0 auto; /* Commencez avec 0 marge */
+  font-size: 0.9em;
+  text-align: center;
+  opacity: 0;
+  max-height: 0; /* Commence caché */
+  overflow: hidden;
+  transform: translateY(-10px); /* Commence légèrement au-dessus et invisible */
+  /* Transition unique pour toutes les propriétés afin d'assurer la fluidité */
+  transition: opacity 0.4s ease-out, max-height 0.4s ease-out,
+    padding 0.4s ease-out, margin 0.4s ease-out, transform 0.4s ease-out;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.recent-limit-message.active {
+  opacity: 1;
+  max-height: 50px; /* Hauteur maximale quand visible (ajustez si le texte est plus long) */
+  padding: 8px 12px; /* Restaurez le padding */
+  margin: 10px auto; /* Restaurez la marge */
+  transform: translateY(0); /* Glisse en position finale */
+}
+
+/* Message Bubbles */
+.message {
+  max-width: 70%;
+  padding: 10px 15px;
+  border-radius: 18px;
+  position: relative;
+  word-wrap: break-word;
+  font-size: 0.95em;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-out;
+}
+
+.message.sent {
+  align-self: flex-end;
+  background-color: #dcf8c6;
+  color: #222;
+  border-bottom-right-radius: 2px;
+}
+
+.message.received {
+  align-self: flex-start;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #e0e0e0;
+  border-bottom-left-radius: 2px;
+}
+
+.message .time {
+  font-size: 0.75em;
+  color: #888;
+  margin-top: 5px;
+  text-align: right;
+}
+
+.message .delete-icon {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+  color: #999;
+  font-size: 0.8em;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.message:hover .delete-icon {
+  opacity: 1;
+}
+
+/* Popup Styles */
+.popup {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  transform: scale(0.9);
+  opacity: 0;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.overlay.active .popup {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.popup h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.5em;
+  margin-bottom: 20px;
+}
+
+.popup-error-display {
+  color: #dc3545;
+  font-size: 0.9em;
+  margin-bottom: 15px;
+  height: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.popup-error-display.active {
+  opacity: 1;
+}
+
+/* Draggable header for popups */
+.popup-header-draggable {
+  cursor: grab;
+  padding: 10px 20px;
+  background-color: #f0f2f5;
+  border-bottom: 1px solid #e0e0e0;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  margin: -30px -30px 20px -30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-header-draggable h2 {
+  margin: 0;
+  font-size: 1.3em;
+  color: #333;
+}
+
+/* Repertoire Panel */
+#repertoirePanel {
+  position: fixed;
+  top: 0;
+  right: -400px; /* Start off-screen */
+  width: 380px;
+  height: 100%;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease-out;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 70px; /* Space for the floating selection panel */
+}
+
+#repertoirePanel.active {
+  right: 0;
+}
+
+#repertoirePanel .repertoire-title {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+#repertoirePanel .alphabet-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 10px 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+#repertoirePanel .alphabet-filter button {
+  background-color: #e9ecef;
+  border: 1px solid #ddd;
+  padding: 5px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  min-width: 30px;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+#repertoirePanel .alphabet-filter button:hover {
+  background-color: #dee2e6;
+}
+
+#repertoirePanel .alphabet-filter button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+#repertoirePanel .contact-items-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.contact-item:hover {
+  background-color: #f9f9f9;
+}
+
+.contact-item.selected {
+  background-color: #e6f7ff;
+  border-left: 5px solid #007bff;
+  padding-left: 10px;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.contact-item .selection-area {
+  min-width: 30px;
+  text-align: right;
+  padding-right: 10px;
+  font-weight: 600;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-item .selection-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: #007bff;
+  cursor: pointer;
+  margin: 0;
+}
+
+.contact-item .contact-item-content {
+  flex-grow: 1;
+  margin-left: 5px;
+}
+
+.contact-item .name {
+  font-weight: 600;
+  color: #333;
+}
+
+.contact-item .phone-number {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 2px;
+}
+
+.contact-item .actionsDiv {
+  display: flex;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.contact-item .actionsDiv button {
+  background: none;
+  border: none;
+  font-size: 1.1em;
+  cursor: pointer;
+  color: #888;
+  transition: color 0.2s ease, transform 0.1s ease;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.contact-item .actionsDiv button:hover {
+  color: #007bff;
+  background-color: #e9ecef;
+  transform: scale(1.1);
+}
+
+.contact-info-popup {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  z-index: 1001;
+  font-size: 0.9em;
+  color: #333;
+  min-width: 200px;
+  text-align: left;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.contact-info-popup.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.contact-info-popup .popup-content div {
+  margin-bottom: 8px;
+}
+
+.contact-info-popup .info-value {
+  font-weight: 600;
+  color: #007bff;
+  word-break: break-all;
+}
+
+/* Floating confirmation box */
+.floating-confirm-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.floating-confirm-box {
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  pointer-events: auto;
+}
+
+.floating-confirm-box.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.floating-confirm-box h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.3em;
+  margin-bottom: 15px;
+}
+
+.floating-confirm-box p {
+  margin-bottom: 20px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Sent Box */
+#sentBoxContainer {
+  position: fixed;
+  top: 0;
+  right: -100%; /* Start off-screen */
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease-out;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+
+#sentBoxContainer.active {
+  right: 0;
+}
+
+/* Specific styles for sent messages within the list */
+.sent-messages-contact-group {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.sent-messages-group-header {
+  background-color: #e9ecef;
+  padding: 10px 15px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sent-messages-group-header .contact-name {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delete-contact-sent-messages-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.85em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.delete-contact-sent-messages-btn:hover {
+  background-color: #c82333;
+}
+
+.messages-container {
+  padding: 10px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sent-message-item {
+  background-color: #dcf8c6;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.9em;
+  border-bottom-right-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.sent-message-item:hover {
+  background-color: #cce9b3;
+  transform: translateY(-1px);
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8em;
+  color: #777;
+  margin-bottom: 5px;
+}
+
+.message-body {
+  color: #333;
+}
+
+.no-messages {
+  text-align: center;
+  color: #888;
+  padding: 20px;
+  font-style: italic;
+}
+
+/* Floating selection actions panel */
+.selection-actions-panel {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background-color: #333;
+  border-radius: 10px;
+  padding: 10px 15px;
+  display: flex;
+  gap: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.selection-actions-panel.active {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.selection-actions-panel .action-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.95em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.selection-actions-panel .action-btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.selection-actions-panel .action-btn.delete-btn {
+  background-color: #dc3545;
+}
+
+.selection-actions-panel .action-btn.delete-btn:hover {
+  background-color: #c82333;
+}
+
+.selection-actions-panel .action-btn.cancel-btn {
+  background-color: #6c757d;
+}
+
+.selection-actions-panel .action-btn.cancel-btn:hover {
+  background-color: #5a6268;
+}
+
+.selected-recipients-preview {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  font-size: 0.9em;
+  color: #555;
+  max-height: 100px;
+  overflow-y: auto;
+  line-height: 1.4;
+  text-align: left;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #messenger {
+    flex-direction: column;
+  }
+
+  #contacts {
+    width: 100%;
+    height: 30vh;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  #chat {
+    height: 70vh;
+  }
+
+  #repertoirePanel,
+  #sentBoxContainer {
+    width: 100%;
+    height: 100%;
+    right: -100%;
+    box-shadow: none;
+  }
+
+  #repertoirePanel.active,
+  #sentBoxContainer.active {
+    right: 0;
+  }
+
+  .repertoire-header-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .selection-actions-panel {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .selection-actions-panel .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/******************/ /* animations-style.css */
+
+/* Blinking dot for new contacts */
+.blinking-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #ff4d4d; /* Rouge vif */
+  border-radius: 50%;
+  margin-left: 5px;
+  animation: blink-animation 1s infinite alternate; /* Animation de clignotement */
+}
+
+@keyframes blink-animation {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Contact entry/exit animations */
+.contact-entering {
+  animation: fadeInSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeInSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.contact-leaving {
+  animation: fadeOutSlideOut 0.3s ease-in forwards;
+}
+
+@keyframes fadeOutSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Message entry animation */
+.message-entering {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: messageFadeInUp 0.3s ease-out forwards;
+}
+
+@keyframes messageFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatingConfirmAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.floating-confirm-box.visible {
+  animation: floatingConfirmAppear 0.28s cubic-bezier(0.4, 1.4, 0.6, 1);
+}
