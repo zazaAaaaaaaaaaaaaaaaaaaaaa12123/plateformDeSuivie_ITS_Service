@@ -1,3 +1,9 @@
+// ===============================
+// ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
+// ===============================
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
@@ -171,12 +177,6 @@ app.put("/api/company-code", async (req, res) => {
     });
     return res.json({ success: true, message: "Code entreprise modifié." });
     // (La route / doit être définie à la racine du fichier, pas ici)
-    app.get("/", (req, res) => {
-      res.sendFile(path.join(__dirname, "public", "index.html"));
-    });
-    // ===============================
-    // ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
-    // ===============================
   } catch (err) {
     return res.status(500).json({ success: false, message: "Erreur serveur." });
   }
