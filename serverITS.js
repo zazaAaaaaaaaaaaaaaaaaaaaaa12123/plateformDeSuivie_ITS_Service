@@ -2880,6 +2880,26 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
 // ===============================
 // ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
 // ===============================
+
+// ===============================
+// HEADER CSP pour autoriser Google Translate et ressources externes nécessaires
+// ===============================
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com",
+      "img-src 'self' data: https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com",
+      "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
+      "frame-src 'self' https://translate.google.com https://www.google.com",
+      "connect-src 'self' https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com",
+    ].join("; ")
+  );
+  next();
+});
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
