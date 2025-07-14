@@ -1,9 +1,3 @@
-// ===============================
-// ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
-// ===============================
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
 const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
@@ -2887,5 +2881,5 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
 // ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
 // ===============================
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
