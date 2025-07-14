@@ -1,4 +1,3 @@
-const express = require("express");
 const fs = require("fs");
 const multer = require("multer");
 const { Pool } = require("pg");
@@ -160,6 +159,7 @@ app.put("/api/company-code", async (req, res) => {
       "UPDATE company_code SET code = $1, updated_at = NOW() WHERE id = (SELECT id FROM company_code ORDER BY updated_at DESC LIMIT 1)",
       [newCode]
     );
+
     // Notifier tous les clients WebSocket du changement de code
     wsClients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -169,6 +169,10 @@ app.put("/api/company-code", async (req, res) => {
       }
     });
     return res.json({ success: true, message: "Code entreprise modifié." });
+    // Route pour servir index.html à la racine (doit être placée APRÈS toutes les autres routes)
+    app.get("/", (req, res) => {
+      res.sendFile(path.join(__dirname, "public", "index.html"));
+    });
   } catch (err) {
     return res.status(500).json({ success: false, message: "Erreur serveur." });
   }
