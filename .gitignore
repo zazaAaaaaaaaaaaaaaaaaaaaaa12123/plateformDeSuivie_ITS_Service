@@ -24,3 +24,5 @@ dist/
 
 # Fichiers d'uploads
 uploads/
+privkey.pem
+fullchain.pem

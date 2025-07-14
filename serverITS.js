@@ -51,11 +51,11 @@ require("dotenv").config();
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs"); // Import unique ici
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "ITS_service",
-  password: "1103",
-  port: 5432,
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: process.env.PGPORT,
 });
 // ===============================
 // ===============================
