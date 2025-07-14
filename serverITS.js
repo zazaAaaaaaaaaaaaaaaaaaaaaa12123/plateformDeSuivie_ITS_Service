@@ -1,32 +1,27 @@
 const express = require("express");
 const fs = require("fs");
-const https = require("https");
-const path = require("path");
 const multer = require("multer");
 const { Pool } = require("pg");
 const app = express();
 
 const cors = require("cors");
+const path = require("path");
 const WebSocket = require("ws");
 // const bcrypt = require("bcryptjs"); // SUPPRIMÉ doublon, voir plus bas
-const port = 443; // HTTPS par défaut
+const port = 3000;
 
 // Middleware pour parser les requêtes JSON et URL-encodées
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
 
-// Sert le dossier 'public' en statique pour le frontend
-app.use(express.static(path.join(__dirname, "public")));
-
-// Configuration SSL (les fichiers doivent être présents dans le dossier du projet)
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, "privkey.pem")),
-  cert: fs.readFileSync(path.join(__dirname, "fullchain.pem")),
-};
-
-const server = https.createServer(sslOptions, app).listen(port, () => {
-  console.log(`Serveur HTTPS Express démarré sur le port ${port}`);
+// ===============================
+// === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
+// ===============================
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
 });
 
 // --- WebSocket Server pour notifications temps réel ---
@@ -55,7 +50,8 @@ const pool = new Pool({
   host: process.env.PGHOST,
   database: process.env.PGDATABASE,
   password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
+  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
+  ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
 });
 // ===============================
 // ===============================
@@ -322,6 +318,7 @@ app.post("/acconier/forgot-password", async (req, res) => {
       "UPDATE acconier SET reset_token = $1, reset_token_expires = $2 WHERE email = $3",
       [token, expires, email]
     );
+    al;
     const resetLink = `${req.protocol}://${req.get(
       "host"
     )}/acconier/reset-password/${token}`;
