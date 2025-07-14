@@ -1,3 +1,12 @@
+// Redirection automatique vers le tableau de bord après connexion réussie
+(function () {
+  if (window.location.pathname.endsWith("tableauDeBord.html")) {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      window.location.href = "index.html";
+    }
+  }
+})();
 // --- Affichage des demandes de code entreprise (popup admin) ---
 function ouvrirPopupDemandesCodeEntreprise() {
   let popup = document.getElementById("popupDemandeCodeEntreprise");
