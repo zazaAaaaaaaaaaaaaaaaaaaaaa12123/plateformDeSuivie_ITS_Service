@@ -169,10 +169,13 @@ app.put("/api/company-code", async (req, res) => {
       }
     });
     return res.json({ success: true, message: "Code entreprise modifié." });
-    // Route pour servir index.html à la racine (doit être placée APRÈS toutes les autres routes)
+    // (La route / doit être définie à la racine du fichier, pas ici)
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "index.html"));
     });
+    // ===============================
+    // ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
+    // ===============================
   } catch (err) {
     return res.status(500).json({ success: false, message: "Erreur serveur." });
   }
@@ -2877,4 +2880,11 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       message: "Erreur serveur lors de la mise à jour du statut du conteneur.",
     });
   }
+});
+
+// ===============================
+// ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
+// ===============================
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
