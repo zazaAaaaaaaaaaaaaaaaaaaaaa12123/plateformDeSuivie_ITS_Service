@@ -1857,6 +1857,27 @@ async function submitDeliveryForm(status) {
       if (window.loadDeliveries) {
         window.loadDeliveries();
       }
+
+      // --- NOTIFICATION TEMPS RÉEL TABLEAU DE SUIVI ---
+      try {
+        let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+        let wsHost = window.location.hostname;
+        let wsPort = window.location.port || "3000";
+        if (wsHost === "localhost" || wsHost === "127.0.0.1") {
+          wsPort = "3000";
+        }
+        let wsUrl = `${wsProtocol}://${wsHost}:${wsPort}`;
+        const ws = new WebSocket(wsUrl);
+        ws.onopen = function () {
+          ws.send(JSON.stringify({ type: "new_delivery_notification" }));
+          ws.close();
+        };
+      } catch (e) {
+        console.warn(
+          "[SYNC TEMPS RÉEL] Impossible d'envoyer la notification WebSocket :",
+          e
+        );
+      }
     } else {
       displayMessage(
         formErrorDisplay,
