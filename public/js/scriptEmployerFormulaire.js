@@ -1757,7 +1757,17 @@ async function submitDeliveryForm(status) {
   );
 
   try {
-    const response = await fetch("http://localhost:3000/deliveries/validate", {
+    // Choix dynamique de l'URL backend
+    let apiUrl = "";
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      apiUrl = "http://localhost:3000/deliveries/validate";
+    } else {
+      apiUrl = "https://ton-backend.onrender.com/deliveries/validate"; // Remplace par ton vrai sous-domaine Render si besoin
+    }
+    const response = await fetch(apiUrl, {
       method: "POST",
       body: formData,
     });
