@@ -577,14 +577,21 @@ app.post("/acconier/login", async (req, res) => {
       "SELECT * FROM acconier WHERE email = $1",
       [email]
     );
+    console.log("[ACCONIER][LOGIN] Recherche utilisateur:", userRes.rows);
     if (userRes.rows.length === 0) {
+      console.warn("[ACCONIER][LOGIN] Aucun utilisateur trouvé pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     const user = userRes.rows[0];
+    console.log("[ACCONIER][LOGIN] Utilisateur trouvé:", user);
+    console.log("[ACCONIER][LOGIN] Mot de passe reçu:", password);
+    console.log("[ACCONIER][LOGIN] Mot de passe hashé en base:", user.password);
     const match = await bcrypt.compare(password, user.password);
+    console.log("[ACCONIER][LOGIN] Résultat comparaison mot de passe:", match);
     if (!match) {
+      console.warn("[ACCONIER][LOGIN] Mot de passe incorrect pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
