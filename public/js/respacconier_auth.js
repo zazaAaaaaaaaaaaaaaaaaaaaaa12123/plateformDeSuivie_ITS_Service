@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
           localStorage.setItem(
             "respacconierUser",
             JSON.stringify({
-              nom: data.name || "",
+              name: data.name || "",
               email: data.email || "",
             })
           );
