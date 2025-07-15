@@ -207,11 +207,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const res = await fetch("/api/company-code");
         const data = await res.json();
         if (data.success && code === data.code) {
-          // Redirection et rechargement pour garantir l'affichage de l'avatar
-          window.location.href = "/html/interfaceRespAconier.html";
-          setTimeout(function () {
-            window.location.reload();
-          }, 300);
+          // Redirection absolue vers le dashboard après validation du code entreprise
+          window.location.href =
+            "https://plateformdesuivie-its-service.onrender.com/html/interfaceRespAconier.html";
         } else {
           errorDiv.textContent = "Code invalide ou non reconnu.";
         }
