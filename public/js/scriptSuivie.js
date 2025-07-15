@@ -13,6 +13,7 @@ function renderLateDossiersTable() {
   }
   let html = `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
   html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody>`;
+
   lateList.forEach((c) => {
     let agent = c.agentName ? c.agentName : "-";
     let dateLiv = c.deliveryDate || "-";
@@ -37,144 +38,18 @@ function renderLateDossiersTable() {
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
 }
-// === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
 
-function checkLateContainers() {
-  // === LOG DIAGNOSTIC : Affiche l'état de window.deliveries à chaque appel ===
+// Appel automatique de l'alerte toutes les 20 secondes
+setInterval(() => {
+  checkLateContainers();
   console.log(
-    "[SYNC DIAG] window.deliveries (avant recalcul lateContainers) :",
-    window.deliveries
+    "[ALERTE RETARD] Vérification automatique des conteneurs non livrés (toutes les 20 secondes)"
   );
-  // === LOG DIAGNOSTIC SYNCHRO ===
-  console.log("[SYNC DIAG][AVANT] window.deliveries :", window.deliveries);
-  console.log(
-    "[SYNC DIAG][AVANT] lateContainers (avant recalcul) :",
-    typeof lateContainers !== "undefined" ? lateContainers : "(non défini)"
-  );
-  // Si la popup de liste des dossiers en retard est ouverte, on la met à jour dynamiquement
-  const lateListModal = document.querySelector(".late-list-modal-popup");
-  if (lateListModal) {
-    if (!lateContainers || lateContainers.length === 0) {
-      // Si plus aucun dossier en retard, fermer la popup automatiquement
-      lateListModal.remove();
-      console.log(
-        "[SYNC DIAG][UI] Popup dossiers en retard fermée automatiquement (plus aucun dossier en retard)"
-      );
-    } else {
-      // On régénère le contenu du tableau à partir des lateContainers à jour
-      const tbody = lateListModal.querySelector("tbody");
-      if (tbody) {
-        tbody.innerHTML = lateContainers
-          .map((c, idx) => {
-            let agent = c.agentName ? c.agentName : "-";
-            let dateLiv = c.deliveryDate || "-";
-            let heureLiv = "-";
-            if (typeof dateLiv === "string" && dateLiv.includes(" ")) {
-              const parts = dateLiv.split(" ");
-              dateLiv = parts[0];
-              heureLiv = parts[1] || "-";
-            } else if (
-              dateLiv &&
-              typeof dateLiv === "object" &&
-              dateLiv instanceof Date
-            ) {
-              dateLiv = dateLiv.toLocaleDateString("fr-FR");
-            }
-            return `<tr>
-              <td style='padding:7px 10px;'>${c.numeroTC}</td>
-              <td style='padding:7px 10px;'>${agent}</td>
-              <td style='padding:7px 10px;'>${c.dateEnr || "-"}</td>
-              <td style='padding:7px 10px;'>${dateLiv}</td>
-              <td style='padding:7px 10px;'>${heureLiv}</td>
-              <td style='padding:7px 10px;'><a href='#' class='notifier-agent-link' data-agent='${
-                c.agentName || ""
-              }' data-email='${c.agentEmail || ""}' data-tc='${
-              c.numeroTC
-            }' style='color:#eab308;font-weight:700;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Notifier</a></td>
-              <td style='padding:7px 10px;'><a href='#' class='late-detail-link' data-idx='${idx}' style='color:#2563eb;font-weight:600;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Détail</a></td>
-            </tr>`;
-          })
-          .join("");
-      }
-    }
-  }
-  if (!window.deliveries) return;
-  const now = new Date();
-  lateContainers = [];
-  const lateDossiersSet = new Set();
-  window.deliveries.forEach((delivery) => {
-    if (!delivery.container_statuses || !delivery.container_statuses_fr) return;
-    let total = 0;
-    let delivered = 0;
-    let hasLate = false;
-    let oldestUnlivDate = null;
-    Object.entries(delivery.container_statuses).forEach(
-      ([numeroTC, statut]) => {
-        total++;
-        const statutFr = delivery.container_statuses_fr[numeroTC] || statut;
-        const isDelivered = statutFr.toLowerCase().includes("livr");
-        if (isDelivered) {
-          delivered++;
-        }
-        let dateEnr = null;
-        if (
-          delivery.containers_info &&
-          delivery.containers_info[numeroTC] &&
-          delivery.containers_info[numeroTC].created_at
-        ) {
-          dateEnr = new Date(delivery.containers_info[numeroTC].created_at);
-        } else if (delivery.created_at) {
-          dateEnr = new Date(delivery.created_at);
-        }
-        if (!dateEnr) return;
-        // Si ce conteneur n'est pas livré et dépasse 2 jours, il est en retard
-        if (!isDelivered && now - dateEnr > 2 * 24 * 60 * 60 * 1000) {
-          // 2 jours (48h)
-          hasLate = true;
-          if (!oldestUnlivDate || dateEnr < oldestUnlivDate)
-            oldestUnlivDate = dateEnr;
-          let deliveryDate =
-            delivery.delivery_date ||
-            (delivery.containers_info &&
-              delivery.containers_info[numeroTC] &&
-              delivery.containers_info[numeroTC].delivery_date) ||
-            "-";
-          lateContainers.push({
-            numeroTC,
-            dossier: delivery.dossier_number || delivery.id || "?",
-            dateEnr: dateEnr.toLocaleDateString("fr-FR"),
-            statut: statutFr,
-            agentName:
-              delivery.employee_name ||
-              delivery.agent_name ||
-              (delivery.agents &&
-              Array.isArray(delivery.agents) &&
-              delivery.agents.length > 0
-                ? delivery.agents.join(", ")
-                : null),
-            agentEmail: delivery.agent_email || null,
-            deliveryDate: deliveryDate,
-            clientName: delivery.client_name || delivery.client || "-",
-          });
-        }
-      }
-    );
-    // Un dossier est en retard si au moins un conteneur est en retard ET qu'il reste au moins un conteneur non livré
-    if (hasLate && delivered < total) {
-      lateDossiersSet.add(delivery.dossier_number || delivery.id || "?");
-    }
-  });
-  showLateContainersAlert(lateContainers, lateDossiersSet.size);
+}, 20000); // 20 000 ms = 20 secondes
 
-  // === LOG DIAGNOSTIC SYNCHRO ===
-  console.log(
-    "[SYNC DIAG][APRES] lateContainers (après recalcul) :",
-    lateContainers
-  );
+// Appel initial au chargement
+window.addEventListener("DOMContentLoaded", checkLateContainers);
 
-  // Met à jour dynamiquement le tableau principal des dossiers en retard
-  if (typeof renderLateDossiersTable === "function") renderLateDossiersTable();
-}
 // Appel initial pour afficher le tableau principal au chargement
 window.addEventListener("DOMContentLoaded", function () {
   if (typeof renderLateDossiersTable === "function") renderLateDossiersTable();
@@ -8478,3 +8353,38 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   window.refreshLateFoldersTable = refreshLateFoldersTable;
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA34 ***/
+// Correction non intrusive : Ajout d'une fonction checkLateContainers pour le tableau de suivi
+window.checkLateContainers = function () {
+  if (!window.deliveries || !Array.isArray(window.deliveries)) return;
+  // On considère en retard : statut non livré ET date livraison dépassée de 2 jours
+  const now = new Date();
+  const lateList = [];
+  window.deliveries.forEach((d) => {
+    // Statut livré ?
+    const status = (d.status || d.delivery_status_acconier || "").toLowerCase();
+    const isDelivered = status.includes("livr");
+    // Date livraison (peut être null)
+    let deliveryDate = d.delivery_date;
+    if (typeof deliveryDate === "string") deliveryDate = new Date(deliveryDate);
+    if (!isDelivered && deliveryDate && !isNaN(deliveryDate)) {
+      // Si la date de livraison + 2 jours < aujourd'hui
+      const datePlus2 = new Date(deliveryDate);
+      datePlus2.setDate(datePlus2.getDate() + 2);
+      if (now > datePlus2) {
+        lateList.push({
+          agentName: d.employee_name || "-",
+          numeroTC: d.container_number || "-",
+          dateEnr: d.created_at
+            ? new Date(d.created_at).toLocaleDateString("fr-FR")
+            : "-",
+          deliveryDate: deliveryDate.toLocaleDateString("fr-FR"),
+          heureLiv: d.delivery_time || "-",
+          agentEmail: d.agent_email || d.email || "",
+          dossier: d.dossier_number || d.dossier || "",
+        });
+      }
+    }
+  });
+  window.lateContainers = lateList;
+  if (typeof renderLateDossiersTable === "function") renderLateDossiersTable();
+};
