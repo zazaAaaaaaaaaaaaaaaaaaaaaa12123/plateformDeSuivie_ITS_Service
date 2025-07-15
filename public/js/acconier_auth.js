@@ -94,7 +94,7 @@ if (registerForm)
       return;
     }
     try {
-      const res = await fetch("/api/signup", {
+      const res = await fetch("/acconier/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nom, email, password }),
