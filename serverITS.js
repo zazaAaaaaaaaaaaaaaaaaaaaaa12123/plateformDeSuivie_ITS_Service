@@ -8,39 +8,7 @@ const cors = require("cors");
 const path = require("path");
 const WebSocket = require("ws");
 // const bcrypt = require("bcryptjs"); // SUPPRIMÉ doublon, voir plus bas
-
-// ===============================
-// === HTTPS (optionnel, pour Render ou prod) ===
-// ===============================
-
-// ===============================
-// HTTPS désactivé sur Render (ou si fichiers SSL absents)
-// Render gère déjà le HTTPS en proxy, inutile de le faire côté Node.js
-// ===============================
-let httpsServer = null;
-const isRender = process.env.RENDER || process.env.RENDER_EXTERNAL_URL;
-if (!isRender) {
-  try {
-    const keyPath = path.join(__dirname, "privkey.pem");
-    const certPath = path.join(__dirname, "fullchain.pem");
-    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-      const https = require("https");
-      const privateKey = fs.readFileSync(keyPath, "utf8");
-      const certificate = fs.readFileSync(certPath, "utf8");
-      httpsServer = https.createServer(
-        { key: privateKey, cert: certificate },
-        app
-      );
-      httpsServer.listen(3443, () => {
-        console.log("Serveur HTTPS Express démarré sur le port 3443 (0.0.0.0)");
-      });
-    } else {
-      console.log("Fichiers SSL non trouvés, HTTPS désactivé (mode dev/local)");
-    }
-  } catch (err) {
-    console.warn("Erreur lors de l'initialisation HTTPS :", err.message);
-  }
-}
+const port = 3000;
 
 // Middleware pour parser les requêtes JSON et URL-encodées
 app.use(express.json());
@@ -51,7 +19,7 @@ app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
 // ===============================
 // === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
 // ===============================
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
 });
