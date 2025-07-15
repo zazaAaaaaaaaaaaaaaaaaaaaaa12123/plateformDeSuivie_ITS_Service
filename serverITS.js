@@ -2917,3 +2917,8 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
+
+// Route explicite pour acconier_auth.html
+app.get("/html/acconier_auth.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "acconier_auth.html"));
+});
