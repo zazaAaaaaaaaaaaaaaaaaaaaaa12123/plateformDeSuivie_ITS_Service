@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       try {
-        const res = await fetch("/api/respacconier/login", {
+        const res = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
@@ -172,10 +172,8 @@ document.addEventListener("DOMContentLoaded", function () {
           localStorage.setItem(
             "respacconierUser",
             JSON.stringify({
-              id: data.id || "",
-              nom: data.nom || "",
+              nom: data.name || "",
               email: data.email || "",
-              entreprise: data.entreprise || "",
             })
           );
           // NE JAMAIS ÉCRIRE DANS LA CLÉ 'user' OU AUTRE !
