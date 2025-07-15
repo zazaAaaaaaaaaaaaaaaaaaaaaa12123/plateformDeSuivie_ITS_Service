@@ -144,40 +144,27 @@ if (loginForm)
     }
   };
 
-// Ajout de l'icône œil pour afficher/masquer le mot de passe (connexion et inscription)
-function addPasswordToggle(inputId, containerId) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  let container = input.parentElement;
-  if (containerId) {
-    container = document.getElementById(containerId) || container;
-  }
-  // Crée l'icône œil
-  const eyeBtn = document.createElement("span");
-  eyeBtn.style.position = "absolute";
-  eyeBtn.style.right = "12px";
-  eyeBtn.style.top = "50%";
-  eyeBtn.style.transform = "translateY(-50%)";
-  eyeBtn.style.cursor = "pointer";
-  eyeBtn.style.fontSize = "1.2em";
-  eyeBtn.style.color = "#888";
-  eyeBtn.innerHTML = '<i class="fas fa-eye"></i>';
-  eyeBtn.title = "Afficher/Masquer le mot de passe";
-  // Style parent pour position relative
-  container.style.position = "relative";
-  container.appendChild(eyeBtn);
-  let visible = false;
-  eyeBtn.onclick = function () {
-    visible = !visible;
-    input.type = visible ? "text" : "password";
-    eyeBtn.innerHTML = visible
-      ? '<i class="fas fa-eye-slash"></i>'
-      : '<i class="fas fa-eye"></i>';
-  };
-}
-
-// Appliquer sur les champs mot de passe (connexion et inscription)
+// Gestion de l'icône œil déjà présente dans le HTML pour afficher/masquer le mot de passe
 document.addEventListener("DOMContentLoaded", function () {
-  addPasswordToggle("login-password");
-  addPasswordToggle("register-password");
+  const toggles = document.querySelectorAll(".toggle-password-fa");
+  toggles.forEach(function (toggle) {
+    const inputId = toggle.getAttribute("data-target");
+    const input = document.getElementById(inputId);
+    let visible = false;
+    toggle.addEventListener("click", function () {
+      visible = !visible;
+      if (input) {
+        input.type = visible ? "text" : "password";
+        toggle.classList.toggle("fa-eye-slash", visible);
+        toggle.classList.toggle("fa-eye", !visible);
+        // Pour FontAwesome 6, il faut changer la classe de l'icône enfant
+        const icon =
+          toggle.tagName === "I" ? toggle : toggle.querySelector("i");
+        if (icon) {
+          icon.classList.toggle("fa-eye-slash", visible);
+          icon.classList.toggle("fa-eye", !visible);
+        }
+      }
+    });
+  });
 });
