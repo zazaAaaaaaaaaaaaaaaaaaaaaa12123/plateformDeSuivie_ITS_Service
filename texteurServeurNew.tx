@@ -1,5 +1,5 @@
-const express = require("express");
 const fs = require("fs");
+const express = require("express");
 const multer = require("multer");
 const { Pool } = require("pg");
 const app = express();
@@ -13,15 +13,391 @@ const port = 3000;
 // Middleware pour parser les requêtes JSON et URL-encodées
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
 
-const server = app.listen(port, () => {
-  console.log(`Serveur Express démarré sur le port ${port}`);
+// ===============================
+// === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
+// ===============================
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
 });
+
+// --- WebSocket Server pour notifications temps réel ---
+const wss = new WebSocket.Server({ server });
+let wsClients = [];
+wss.on("connection", (ws) => {
+  wsClients.push(ws);
+  ws.on("close", () => {
+    wsClients = wsClients.filter((c) => c !== ws);
+  });
+});
+
+function broadcastNouvelleDemandeCodeEntreprise() {
+  wsClients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ type: "nouvelle-demande-code-entreprise" }));
+    }
+  });
+}
 
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs"); // Import unique ici
+const pool = new Pool({
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
+  ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
+});
+// ===============================
+// ===============================
+// ROUTE : Notification dossier en retard (envoi email)
+// ===============================
+app.post("/notify-late-dossier", async (req, res) => {
+  const { dossierNumber, agentEmail, agentName } = req.body || {};
+  if (!dossierNumber || !agentEmail) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Données manquantes pour l'envoi du rappel (email ou numéro dossier).",
+    });
+  }
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: agentEmail,
+      subject: `Rappel de dossier en retard - Dossier N°${dossierNumber}`,
+      text: `Bonjour ${
+        agentName || ""
+      },\n\nLe dossier N°${dossierNumber} que vous avez traité a dépassé le délai de 2 jours.\nMerci de le régler rapidement pour éviter tout souci.`,
+      html: `<p>Bonjour <b>${
+        agentName || ""
+      }</b>,</p><p style='color:#b91c1c;font-weight:bold;'>Le dossier <b>N°${dossierNumber}</b> que vous avez traité a <span style='color:#dc2626;'>dépassé le délai de 2 jours</span>.</p><p>Merci de le régler rapidement pour éviter tout souci.</p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return res.json({ success: true, message: "Rappel envoyé par email." });
+  } catch (err) {
+    console.error("[NOTIFY LATE DOSSIER] Erreur envoi email:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erreur lors de l'envoi de l'email." });
+  }
+});
+// ===============================
+// TABLE company_code (stocke le code de l'entreprise)
+// ===============================
+const createCompanyCodeTable = `
+  CREATE TABLE IF NOT EXISTS company_code (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(100) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+async function ensureCompanyCodeTable() {
+  try {
+    await pool.query(createCompanyCodeTable);
+    // Si aucun code n'existe, insère la valeur par défaut (ex: ITS2010)
+    const res = await pool.query("SELECT * FROM company_code LIMIT 1");
+    if (res.rows.length === 0) {
+      await pool.query("INSERT INTO company_code (code) VALUES ($1)", [
+        "ITS2010",
+      ]);
+      console.log("Code entreprise initialisé à 'ITS2010'.");
+    }
+    console.log("Table 'company_code' vérifiée/créée.");
+  } catch (err) {
+    console.error("Erreur création table company_code:", err);
+  }
+}
+ensureCompanyCodeTable();
+
+// ===============================
+// ROUTE : Récupérer le code entreprise (GET)
+// ===============================
+app.get("/api/company-code", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT code FROM company_code ORDER BY updated_at DESC LIMIT 1"
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Code entreprise non trouvé." });
+    }
+    return res.json({ success: true, code: result.rows[0].code });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// ===============================
+// ROUTE : Modifier le code entreprise (PUT)
+// ===============================
+app.put("/api/company-code", async (req, res) => {
+  const { code } = req.body || {};
+  if (!code || typeof code !== "string" || code.trim().length < 3) {
+    return res.status(400).json({ success: false, message: "Code invalide." });
+  }
+  try {
+    const newCode = code.trim();
+    await pool.query(
+      "UPDATE company_code SET code = $1, updated_at = NOW() WHERE id = (SELECT id FROM company_code ORDER BY updated_at DESC LIMIT 1)",
+      [newCode]
+    );
+
+    // Notifier tous les clients WebSocket du changement de code
+    wsClients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(
+          JSON.stringify({ type: "company-code-updated", code: newCode })
+        );
+      }
+    });
+    return res.json({ success: true, message: "Code entreprise modifié." });
+    // (La route / doit être définie à la racine du fichier, pas ici)
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// ===============================
+// ROUTE : Envoi du code de l'entreprise par email à partir d'une demande (utilise la valeur dynamique)
+// ===============================
+app.post("/api/envoyer-code-securite", async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email requis." });
+  }
+  try {
+    // On cherche la demande la plus récente pour cet email qui n'est pas déjà envoyée
+    const demandeRes = await pool.query(
+      "SELECT * FROM demande_code_entreprise WHERE email = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1",
+      [email]
+    );
+    if (demandeRes.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucune demande trouvée pour cet email.",
+      });
+    }
+    // Récupère le code entreprise dynamique
+    const codeRes = await pool.query(
+      "SELECT code FROM company_code ORDER BY updated_at DESC LIMIT 1"
+    );
+    const codeEntreprise =
+      codeRes.rows.length > 0 ? codeRes.rows[0].code : "ITS2010";
+    const nom = demandeRes.rows[0].nom || "utilisateur";
+    // Envoi de l'email
+    const mailSent = await sendMail({
+      to: email,
+      subject: "Votre code d'entreprise - ITS Service",
+      text: `Bonjour ${nom},\n\nVoici votre code d'entreprise : ${codeEntreprise}\n\nMerci de l'utiliser pour accéder à la plateforme.`,
+      html: `<p>Bonjour <b>${nom}</b>,</p><p>Voici votre <b>code d'entreprise</b> : <span style='font-size:1.2em;font-weight:700;color:#2563eb;'>${codeEntreprise}</span></p><p>Merci de l'utiliser pour accéder à la plateforme.</p>`,
+    });
+    if (!mailSent) {
+      return res.status(500).json({
+        success: false,
+        message: "Erreur lors de l'envoi de l'email.",
+      });
+    }
+    // Met à jour le statut de la demande à 'envoye'
+    await pool.query(
+      "UPDATE demande_code_entreprise SET status = 'envoye' WHERE id = $1",
+      [demandeRes.rows[0].id]
+    );
+    return res.json({ success: true, message: "Code envoyé par email." });
+  } catch (err) {
+    console.error("[ENVOI CODE ENTREPRISE] Erreur:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+// ===============================
+// ===============================
+// TABLE DEMANDE CODE ENTREPRISE
+// ===============================
+const createDemandeCodeEntrepriseTable = `
+  CREATE TABLE IF NOT EXISTS demande_code_entreprise (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    message TEXT,
+    type VARCHAR(30) NOT NULL DEFAULT 'responsable',
+    status VARCHAR(30) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+async function ensureDemandeCodeEntrepriseTable() {
+  try {
+    await pool.query(createDemandeCodeEntrepriseTable);
+    console.log("Table 'demande_code_entreprise' vérifiée/créée.");
+  } catch (err) {
+    console.error("Erreur création table demande_code_entreprise:", err);
+  }
+}
+ensureDemandeCodeEntrepriseTable();
+
+// ===============================
+// ROUTE : Demande de code entreprise (Responsable ou Acconier)
+// ===============================
+app.post("/api/demande-code-entreprise", async (req, res) => {
+  const { nom, email, message, type } = req.body || {};
+  if (!nom || !email) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Nom et email requis." });
+  }
+  try {
+    await pool.query(
+      "INSERT INTO demande_code_entreprise (nom, email, message, type) VALUES ($1, $2, $3, $4)",
+      [nom, email, message || "", type || "responsable"]
+    );
+    // Notifier tous les admins via WebSocket
+    broadcastNouvelleDemandeCodeEntreprise();
+    // Optionnel : notifier l'admin par email
+    // await sendMail({ to: 'admin@its-service.com', subject: 'Nouvelle demande de code entreprise', text: `Demande de ${nom} (${email}) : ${message}` });
+    return res.json({ success: true, message: "Demande enregistrée !" });
+  } catch (err) {
+    console.error("Erreur enregistrement demande code entreprise:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// ===============================
+// ROUTE GET : Liste des demandes de code entreprise (pour affichage admin)
+// ===============================
+app.get("/api/demande-code-entreprise", async (req, res) => {
+  try {
+    // Ne retourne que les demandes non envoyées (status = 'pending')
+    const result = await pool.query(
+      "SELECT id, nom, email, message, type, status, created_at FROM demande_code_entreprise WHERE status = 'pending' ORDER BY created_at DESC"
+    );
+    // Retourne un objet {success, demandes: [...]}
+    return res.json({ success: true, demandes: result.rows });
+  } catch (err) {
+    console.error("Erreur récupération demandes code entreprise:", err);
+    return res.status(500).json({ success: false, demandes: [] });
+  }
+});
+// ROUTE : Demande de réinitialisation du mot de passe acconier
+// ===============================
+app.post("/acconier/forgot-password", async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email requis." });
+  }
+  try {
+    const userRes = await pool.query(
+      "SELECT * FROM acconier WHERE email = $1",
+      [email]
+    );
+    if (userRes.rows.length === 0) {
+      // Toujours répondre OK pour ne pas révéler si l'email existe
+      return res.json({
+        success: true,
+        message: "Si cet email existe, un lien a été envoyé.",
+      });
+    }
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 1000 * 60 * 30); // 30 min
+    await pool.query(
+      "UPDATE acconier SET reset_token = $1, reset_token_expires = $2 WHERE email = $3",
+      [token, expires, email]
+    );
+    al;
+    const resetLink = `${req.protocol}://${req.get(
+      "host"
+    )}/acconier/reset-password/${token}`;
+    await sendMail({
+      to: email,
+      subject: "Réinitialisation de votre mot de passe Acconier",
+      text: `Cliquez sur ce lien pour réinitialiser votre mot de passe : ${resetLink}`,
+      html: `<p>Pour réinitialiser votre mot de passe, cliquez ici : <a href=\"${resetLink}\">Réinitialiser</a></p><p>Ce lien expire dans 30 minutes.</p>`,
+    });
+    return res.json({
+      success: true,
+      message: "Si cet email existe, un lien a été envoyé.",
+    });
+  } catch (err) {
+    console.error("[ACCONIER][FORGOT PASSWORD] Erreur:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// ===============================
+// ROUTE : Affichage et soumission du nouveau mot de passe (reset)
+// ===============================
+app.get("/acconier/reset-password/:token", async (req, res) => {
+  const { token } = req.params;
+  if (!token) return res.status(400).send("Lien invalide.");
+  try {
+    const userRes = await pool.query(
+      "SELECT * FROM acconier WHERE reset_token = $1 AND reset_token_expires > NOW()",
+      [token]
+    );
+    if (userRes.rows.length === 0) {
+      return res.status(400).send("Lien expiré ou invalide.");
+    }
+    // Affiche un mini-formulaire HTML (simple)
+    return res.send(`
+      <html><head><title>Réinitialisation du mot de passe</title></head><body style='font-family:sans-serif;max-width:400px;margin:40px auto;'>
+        <h2>Réinitialisation du mot de passe</h2>
+        <form method='POST'>
+          <input type='password' name='password' placeholder='Nouveau mot de passe' required style='width:100%;padding:8px;margin-bottom:10px;'/><br/>
+          <button type='submit' style='padding:8px 16px;'>Réinitialiser</button>
+        </form>
+      </body></html>
+    `);
+  } catch (err) {
+    return res.status(500).send("Erreur serveur.");
+  }
+});
+
+app.post(
+  "/acconier/reset-password/:token",
+  express.urlencoded({ extended: true }),
+  async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+    if (!token || !password) return res.status(400).send("Requête invalide.");
+    try {
+      const userRes = await pool.query(
+        "SELECT * FROM acconier WHERE reset_token = $1 AND reset_token_expires > NOW()",
+        [token]
+      );
+      if (userRes.rows.length === 0) {
+        return res.status(400).send("Lien expiré ou invalide.");
+      }
+      const hashedPw = await bcrypt.hash(password, 10);
+      await pool.query(
+        "UPDATE acconier SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE reset_token = $2",
+        [hashedPw, token]
+      );
+      return res.send(
+        "<p>Mot de passe réinitialisé avec succès. Vous pouvez fermer cette page et vous reconnecter.</p>"
+      );
+    } catch (err) {
+      return res.status(500).send("Erreur serveur.");
+    }
+  }
+);
+
 // ===============================
 // CONFIGURATION NODEMAILER (GMAIL)
 // ===============================
@@ -57,13 +433,6 @@ async function sendMail({ to, subject, text, html }) {
 // ===============================
 // CONFIGURATION DE LA BASE DE DONNÉES POSTGRESQL (PLACÉE AVANT TOUT USAGE DE pool)
 // ===============================
-const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "ITS_service",
-  password: "1103",
-  port: 5432,
-});
 
 // ===============================
 // TABLE ACCONIER (authentification acconier)
@@ -73,15 +442,68 @@ const createAcconierTable = `
     id SERIAL PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    password VARCHAR(255) NOT NULL,
+    reset_token VARCHAR(255),
+    reset_token_expires TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+// ===============================
+// TABLE RESPONSABLE ACCONIER (authentification RespAcconier)
+// ===============================
+const createRespAcconierTable = `
+  CREATE TABLE IF NOT EXISTS resp_acconier (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(20),
     password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
   );
 `;
 
+async function ensureRespAcconierTable() {
+  try {
+    await pool.query(createRespAcconierTable);
+    console.log("Table 'resp_acconier' vérifiée/créée.");
+  } catch (err) {
+    console.error("Erreur création table resp_acconier:", err);
+  }
+}
+
+// On attend la connexion du pool avant de créer la table resp_acconier
+pool
+  .connect()
+  .then((client) => {
+    client.release();
+    return ensureRespAcconierTable();
+  })
+  .catch((err) => {
+    console.error(
+      "Erreur de connexion à la base PostgreSQL pour la table resp_acconier:",
+      err
+    );
+  });
+
 async function ensureAcconierTable() {
   try {
     await pool.query(createAcconierTable);
-    console.log("Table 'acconier' vérifiée/créée.");
+    // Ajout des colonnes reset_token et reset_token_expires si elles n'existent pas déjà
+    await pool.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='acconier' AND column_name='reset_token') THEN
+          ALTER TABLE acconier ADD COLUMN reset_token VARCHAR(255);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='acconier' AND column_name='reset_token_expires') THEN
+          ALTER TABLE acconier ADD COLUMN reset_token_expires TIMESTAMP;
+        END IF;
+      END $$;
+    `);
+    console.log(
+      "Table 'acconier' vérifiée/créée et colonnes reset_token/expire ajoutées si besoin."
+    );
   } catch (err) {
     console.error("Erreur création table acconier:", err);
   }
@@ -110,9 +532,10 @@ app.post("/acconier/register", async (req, res) => {
     email = email.trim().toLowerCase();
   }
   if (!nom || !email || !password) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Tous les champs sont requis." });
+    return res.status(400).json({
+      success: false,
+      message: "Tous les champs sont requis (nom, email, mot de passe).",
+    });
   }
   try {
     // Vérifie si l'email existe déjà
@@ -154,14 +577,21 @@ app.post("/acconier/login", async (req, res) => {
       "SELECT * FROM acconier WHERE email = $1",
       [email]
     );
+    console.log("[ACCONIER][LOGIN] Recherche utilisateur:", userRes.rows);
     if (userRes.rows.length === 0) {
+      console.warn("[ACCONIER][LOGIN] Aucun utilisateur trouvé pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     const user = userRes.rows[0];
+    console.log("[ACCONIER][LOGIN] Utilisateur trouvé:", user);
+    console.log("[ACCONIER][LOGIN] Mot de passe reçu:", password);
+    console.log("[ACCONIER][LOGIN] Mot de passe hashé en base:", user.password);
     const match = await bcrypt.compare(password, user.password);
+    console.log("[ACCONIER][LOGIN] Résultat comparaison mot de passe:", match);
     if (!match) {
+      console.warn("[ACCONIER][LOGIN] Mot de passe incorrect pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
@@ -178,6 +608,106 @@ app.post("/acconier/login", async (req, res) => {
       success: false,
       message: "Erreur serveur lors de la connexion.",
     });
+  }
+});
+
+// ===============================
+// ROUTES AUTHENTIFICATION RESPONSABLE ACCONIER (séparées)
+// ===============================
+
+// Inscription RespAcconier
+app.post("/api/respacconier/register", async (req, res) => {
+  let { nom, email, password, phone } = req.body || {};
+  if (typeof email === "string") {
+    email = email.trim().toLowerCase();
+  }
+  if (!nom || !email || !password || !phone) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Tous les champs sont requis (nom, email, mot de passe, téléphone).",
+    });
+  }
+  try {
+    // Vérifie si l'email existe déjà
+    const check = await pool.query(
+      "SELECT id FROM resp_acconier WHERE email = $1",
+      [email]
+    );
+    if (check.rows.length > 0) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Cet email est déjà utilisé." });
+    }
+    const hashedPw = await bcrypt.hash(password, 10);
+    await pool.query(
+      "INSERT INTO resp_acconier (nom, email, password) VALUES ($1, $2, $3)",
+      [nom, email, hashedPw]
+    );
+    return res
+      .status(201)
+      .json({ success: true, message: "Inscription réussie." });
+  } catch (err) {
+    console.error("[RESPACCONIER][REGISTER] Erreur:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'inscription.",
+    });
+  }
+});
+
+// Connexion RespAcconier
+app.post("/api/respacconier/login", async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Tous les champs sont requis." });
+  }
+  try {
+    const userRes = await pool.query(
+      "SELECT * FROM resp_acconier WHERE email = $1",
+      [email]
+    );
+    if (userRes.rows.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Email ou mot de passe incorrect." });
+    }
+    const user = userRes.rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Email ou mot de passe incorrect." });
+    }
+    // Renvoie nom et email pour affichage avatar (pas de liaison ailleurs)
+    res.json({ success: true, id: user.id, nom: user.nom, email: user.email });
+  } catch (err) {
+    console.error("[RESPACCONIER][LOGIN] Erreur:", err);
+    res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// Validation du code entreprise RespAcconier
+// Validation dynamique du code entreprise pour RespAcconier
+app.post("/api/respacconier/validate-code", async (req, res) => {
+  const { code, id } = req.body || {};
+  try {
+    const codeRes = await pool.query(
+      "SELECT code FROM company_code ORDER BY updated_at DESC LIMIT 1"
+    );
+    const codeEntreprise =
+      codeRes.rows.length > 0 ? codeRes.rows[0].code : "ITS2010";
+    if (code === codeEntreprise) {
+      res.json({ success: true });
+    } else {
+      res
+        .status(401)
+        .json({ success: false, message: "Code entreprise invalide." });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Erreur serveur." });
   }
 });
 
@@ -388,19 +918,7 @@ function mapAcconierStatusToFr(status) {
   return translateStatusToFr(status);
 }
 
-const wss = new WebSocket.Server({ server });
-
 wss.on("connection", (ws) => {
-  console.log("Nouveau client WebSocket connecté.");
-
-  ws.on("message", (message) => {
-    console.log(`Message reçu via WebSocket du client: ${message}`);
-  });
-
-  ws.on("close", () => {
-    console.log("Client WebSocket déconnecté.");
-  });
-
   ws.on("error", (error) => {
     console.error("Erreur WebSocket côté serveur:", error);
   });
@@ -781,7 +1299,8 @@ function formatDateForDB(dateString) {
 // ROUTE INSCRIPTION UTILISATEUR
 // ===============================
 app.post("/api/signup", async (req, res) => {
-  let { name, email, password } = req.body || {};
+  let { name, nom, email, password } = req.body || {};
+  if (!name && nom) name = nom;
   // Normalisation de l'email (trim + minuscule)
   if (typeof email === "string") {
     email = email.trim().toLowerCase();
@@ -853,7 +1372,13 @@ app.post("/api/signup", async (req, res) => {
 // ===============================
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body || {};
+  console.log("[LOGIN][API] Données reçues:", {
+    email,
+    password,
+    body: req.body,
+  });
   if (!email || !password) {
+    console.warn("[LOGIN][API] Champs manquants:", { email, password });
     return res
       .status(400)
       .json({ success: false, message: "Tous les champs sont requis." });
@@ -862,19 +1387,27 @@ app.post("/api/login", async (req, res) => {
     const userRes = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
+    console.log("[LOGIN][API] Résultat recherche utilisateur:", userRes.rows);
     if (userRes.rows.length === 0) {
+      console.warn(
+        "[LOGIN][API] Aucun utilisateur trouvé pour cet email:",
+        email
+      );
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     const user = userRes.rows[0];
     const match = await bcrypt.compare(password, user.password);
+    console.log("[LOGIN][API] Résultat comparaison mot de passe:", match);
     if (!match) {
+      console.warn("[LOGIN][API] Mot de passe incorrect pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     // Connexion réussie : renvoyer aussi le nom et l'email
+    console.log("[LOGIN][API] Connexion réussie pour:", email);
     return res.status(200).json({
       success: true,
       message: "Connexion réussie.",
@@ -882,7 +1415,7 @@ app.post("/api/login", async (req, res) => {
       email: user.email,
     });
   } catch (err) {
-    console.error("Erreur connexion:", err);
+    console.error("[LOGIN][API] Erreur serveur lors de la connexion:", err);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la connexion.",
@@ -1134,6 +1667,34 @@ app.post(
 
       const alertMessage = `L'agent acconié "${newDelivery.employee_name}" a établi un ordre de livraison.`;
 
+      // ENVOI EMAIL À TOUS LES RESPONSABLES ACCONIER
+      try {
+        const respRes = await pool.query(
+          "SELECT email, nom FROM resp_acconier"
+        );
+        if (respRes.rows.length > 0) {
+          const emailPromises = respRes.rows.map((resp) => {
+            return sendMail({
+              to: resp.email,
+              subject: "Nouvel ordre de livraison établi",
+              text: `Bonjour ${resp.nom},\n\nL'agent acconier '${newDelivery.employee_name}' a établi un ordre de livraison. Veuillez procéder à payer l'acconage.`,
+              html: `<p>Bonjour <b>${resp.nom}</b>,</p><p>L'agent acconier <b>${newDelivery.employee_name}</b> a établi un <b>ordre de livraison</b>.<br>Veuillez procéder à payer l'acconage.</p>`,
+            });
+          });
+          await Promise.all(emailPromises);
+          console.log("Emails envoyés à tous les responsables acconier.");
+        } else {
+          console.log(
+            "Aucun responsable acconier trouvé pour l'envoi d'email."
+          );
+        }
+      } catch (err) {
+        console.error(
+          "Erreur lors de l'envoi des emails aux responsables acconier:",
+          err
+        );
+      }
+
       console.log(alertMessage);
       const payload = JSON.stringify({
         type: "new_delivery_notification", // CHANGÉ : Type de message pour correspondre au frontend
@@ -1247,24 +1808,26 @@ app.get("/deliveries/search", async (req, res) => {
 app.get("/deliveries/status", async (req, res) => {
   try {
     const query = `
-            SELECT 
-              id, employee_name, delivery_date, delivery_time, client_name, client_phone, 
-              container_type_and_content, lieu, status, created_at,
-              container_number, container_foot_type, declaration_number, number_of_containers,
-              bl_number,
-              dossier_number,
-              shipping_company,
-              transporter, 
-              weight, ship_name, circuit, number_of_packages, transporter_mode,
-              nom_agent_visiteur, inspecteur, agent_en_douanes, -- NOUVELLES COLONNES DANS LE SELECT
-              driver_name, driver_phone, truck_registration,
-              delivery_notes,
-              is_eir_received,
-              delivery_status_acconier, observation_acconier,
-              container_statuses -- AJOUT DU CHAMP
-            FROM livraison_conteneur
-            ORDER BY created_at DESC;
-        `;
+      SELECT 
+        lc.id, lc.employee_name, lc.delivery_date, lc.delivery_time, lc.client_name, lc.client_phone, 
+        lc.container_type_and_content, lc.lieu, lc.status, lc.created_at,
+        lc.container_number, lc.container_foot_type, lc.declaration_number, lc.number_of_containers,
+        lc.bl_number,
+        lc.dossier_number,
+        lc.shipping_company,
+        lc.transporter, 
+        lc.weight, lc.ship_name, lc.circuit, lc.number_of_packages, lc.transporter_mode,
+        lc.nom_agent_visiteur, lc.inspecteur, lc.agent_en_douanes, -- NOUVELLES COLONNES DANS LE SELECT
+        lc.driver_name, lc.driver_phone, lc.truck_registration,
+        lc.delivery_notes,
+        lc.is_eir_received,
+        lc.delivery_status_acconier, lc.observation_acconier,
+        lc.container_statuses, -- AJOUT DU CHAMP
+        ac.email AS agent_email
+      FROM livraison_conteneur lc
+      LEFT JOIN acconier ac ON lc.employee_name = ac.nom
+      ORDER BY lc.created_at DESC;
+    `;
     const result = await pool.query(query);
     const deliveries = result.rows.map((delivery) => {
       function translateStatusCSV(csv) {
@@ -1316,6 +1879,7 @@ app.get("/deliveries/status", async (req, res) => {
 
       return {
         ...delivery,
+        agent_email: delivery.agent_email || null,
         status: delivery.status, // code technique CSV (ex: "delivered,pending_acconier")
         status_fr: translateStatusCSV(delivery.status), // version traduite pour affichage
         delivery_status_acconier_fr: mapAcconierStatusToFr(
@@ -2335,40 +2899,34 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
   }
 });
 
+// ===============================
+// ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
+// ===============================
 
+// ===============================
+// HEADER CSP pour autoriser Google Translate et ressources externes nécessaires
+// ===============================
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com https://cdn.tailwindcss.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com",
+      "img-src 'self' data: https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com",
+      "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+      "frame-src 'self' https://translate.google.com https://www.google.com",
+      "connect-src 'self' https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com",
+    ].join("; ")
+  );
+  next();
+});
 
-/**
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "index.html"));
+});
 
-OK nous y somme maintenant je veux mettre mon projet : 
-plateformeDeSuivie _ITS_Service  , d'abord je t'explique 
-on a trois type de partie , on a la partie 1 que j'ai appelleé 
-partie principale qui est index. html c'est par la qu'on passera 
-pour s'inscrire et se connecter afin d'avoir acces 
-au tableauDeBord.html il sera pour les Responable de
- livraison puis il ser sur uniquement leur ordi . Ensuite 
-  partie 2 , c'est pour l'interface de Acconier qui sera sur
-   le telephone mobile de chaque  Acconier . Avant d'entrer dans le 
-   formulaire  on accede a la page acconier_auth.html qui est de 
-   inscription et connexion apres avoir inscrre et connecté on 
-   pourra ensuite avoir avoir acces au code d'entreprise qui est
-    interfaceFormulaireEmployer.html , puis apres avoir inserer l
-    e code on se redirige maintenant vers le formulaire de l'ordre
-     de livraison  , enfin pour la 3 eme partie qui est le responsable 
-      Acconier qui aura pour interface adapte au telephone 
-      .Avant d'acceder a son tableau de bord on doit remplir un 
-      formulaire de inscription / connexion dans
-       http://localhost:3000/html/respacconier_auth.html , puis 
-       apres on est redirigé vers http://localhost:3000/html/respacconier_auth.html
-        pour entre le code d'entreprise , quand nous allons mettre le code si le code est valide 
-        il nous redirigera vers le  tableau de bord http://localhost:3000/html/interfaceRespAconier.html 
-         . Tel sont les 3 partie qui fonction differement .
-         pour mon backend j'ai le fonctionnement de ses Trois acteurs qui sont Resposable,  Aconnier , repsonsable de livraion
-          leur code sont inclut tout dans le backend , qui se nomme serverITS . NB : retien que les lien
-           je t ai founis  en html aussi il y'a des fichier 
-          en css et aussi en js pour eux donc il doivent etre inclut aussi c'est pour l'herbergement ok .
-           En gros on peut resumer comme DIRE 
-          : UNE INTERFACE SUR l'ordinteur servant
-           a faire un suivi et 2 interface pour realiser le travaille qui se refletera dans 
-l'interface de tableauDeBord.html de index.html . Tu me sus non ? 
-
-**/
+// Route explicite pour acconier_auth.html
+app.get("/html/acconier_auth.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "acconier_auth.html"));
+});
