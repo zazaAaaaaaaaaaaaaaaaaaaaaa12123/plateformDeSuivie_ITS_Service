@@ -128,8 +128,8 @@ function checkLateContainers() {
         }
         if (!dateEnr) return;
         // Si ce conteneur n'est pas livré et dépasse 2 jours, il est en retard
-        if (!isDelivered && now - dateEnr > 30 * 1000) {
-          // 30 secondes pour test
+        if (!isDelivered && now - dateEnr > 2 * 24 * 60 * 60 * 1000) {
+          // 2 jours (48h)
           hasLate = true;
           if (!oldestUnlivDate || dateEnr < oldestUnlivDate)
             oldestUnlivDate = dateEnr;
@@ -2330,200 +2330,28 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       "flex-col"
     );
     singleDeliveryView.classList.add("p-6");
-
     const card = document.createElement("div");
-    card.className = "delivery-card";
+    card.className =
+      "delivery-card bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200";
     card.dataset.deliveryId = delivery.id;
 
     const agentAcconierNameForHeader =
       delivery.employee_name || "Agent Acconier";
 
-    // Ajout du champ Dossier avec style très visible
+    // Bloc Dossier en haut, très visible
     const dossierBlock = document.createElement("div");
-    dossierBlock.innerHTML = `<span style="
-      background-color: #ffc107;
-      color: #222;
-      font-weight: bold;
-      font-size: 1.25em;
-      border-radius: 8px;
-      padding: 4px 12px;
-      display: inline-block;
-      margin-bottom: 6px;
-      border: 2px solid #ffe066;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-      text-shadow: 1px 1px 0 #fff, 0 0 4px #ffe066;
-    ">
-      Dossier : ${delivery.dossier ? delivery.dossier : "-"}
-    </span>`;
+    dossierBlock.className = "flex items-center gap-3 mb-4";
+    dossierBlock.innerHTML = `
+      <span class="inline-flex items-center px-4 py-2 bg-yellow-200 text-yellow-900 font-bold text-lg rounded-lg border-2 border-yellow-300 shadow-sm">
+        <i class="fas fa-folder-open mr-2"></i> Dossier : <span class="ml-2">${
+          delivery.dossier ? delivery.dossier : "-"
+        }</span>
+      </span>
+    `;
     card.appendChild(dossierBlock);
 
     // ...le reste du code pour afficher les autres champs (Client, etc.)
-
-    card.innerHTML = `
-            <div class="delivery-card-header">
-                <h2>${agentAcconierNameForHeader}</h2>
-            </div>
-            <div class="delivery-card-body">
-                <div class="delivery-info-group">
-                    <strong>Agent Acconier:</strong> <span>${
-                      delivery.employee_name || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Client:</strong> <span>${
-                      delivery.client_name || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Téléphone Client:</strong> <span>${
-                      delivery.client_phone || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Numéro TC(s):</strong> <span>${
-                      delivery.container_number || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>N° BL:</strong> <span>${
-                      delivery.bl_number || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Compagnie Maritime:</strong> <span>${
-                      delivery.shipping_company || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Nom du Navire:</strong> <span>${
-                      delivery.ship_name || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Type Conteneur (pieds):</strong> <span>${
-                      delivery.container_foot_type || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Contenu:</strong> <span>${
-                      delivery.container_type_and_content || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Poids (kg):</strong> <span>${
-                      delivery.weight || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Mode de Transport:</strong> <span>${
-                      delivery.transporter_mode || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Nombre de Conteneurs:</strong> <span>${
-                      delivery.number_of_containers || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Lieu de Livraison:</strong> <span>${
-                      delivery.lieu || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>N° Déclaration:</strong> <span>${
-                      delivery.declaration_number || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Numéro de Dossier:</strong> <span>${
-                      delivery.dossier_number || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Circuit:</strong> <span>${
-                      delivery.circuit || "-"
-                    }</span>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Date de soumission:</strong> <span>${
-                      delivery.created_at
-                        ? delivery.created_at.toLocaleString("fr-FR")
-                        : "-"
-                    }</span>
-                </div>
-            </div>
-            <div class="delivery-card-actions">
-                <div class="delivery-info-group">
-                    <strong>Observations (Acconier):</strong>
-                    <textarea class="observation-textarea" placeholder="Ajouter une observation..." data-original-observation="${
-                      delivery.observation_acconier || ""
-                    }">${delivery.observation_acconier || ""}</textarea>
-                </div>
-                <div class="delivery-info-group">
-                    <strong>Statut (Acconier):</strong>
-                    <select class="status-select" data-original-status="${
-                      delivery.delivery_status_acconier || "pending_acconier"
-                    }">
-                                ${(() => {
-                                  const currentStatusValue =
-                                    delivery.delivery_status_acconier ||
-                                    "pending_acconier";
-                                  const currentStatusInfo =
-                                    getStatusInfo(currentStatusValue); // Use the global getStatusInfo
-                                  let optionsHtml = "";
-
-                                  const isCurrentStatusSelectable =
-                                    ACCONIER_STATUS_OPTIONS_SELECTABLE.some(
-                                      (opt) => opt.value === currentStatusValue
-                                    );
-                                  if (!isCurrentStatusSelectable) {
-                                    optionsHtml += `
-                                            <option value="${currentStatusValue}" selected disabled>
-                                                ${currentStatusInfo.text} (Actuel)
-                                            </option>
-                                        `;
-                                  }
-
-                                  optionsHtml +=
-                                    ACCONIER_STATUS_OPTIONS_SELECTABLE.map(
-                                      (opt) => `
-                                            <option value="${opt.value}" ${
-                                        opt.value === currentStatusValue
-                                          ? "selected"
-                                          : ""
-                                      }>
-                                                ${opt.text}
-                                            </option>
-                                        `
-                                    ).join("");
-                                  return optionsHtml;
-                                })()}
-                    </select>
-                </div>
-                <button class="action-button send-btn">
-                    <i class="fas fa-paper-plane mr-2"></i> Valider
-                </button>
-                <button class="action-button reject-btn mt-3">
-                    <i class="fas fa-times-circle mr-2"></i> Refuser
-                </button>
-                <button class="action-button notify-btn mt-3" style="background-color:#ffc107;color:#222;font-weight:bold;">
-                    <i class="fas fa-bell mr-2"></i> Notifier (Rappel dossier en retard)
-                </button>
-            </div>
-            `;
-    singleDeliveryView.appendChild(card);
-
-    const validateButton = card.querySelector(".send-btn");
-    const rejectButton = card.querySelector(".reject-btn");
-    const notifyButton = card.querySelector(".notify-btn");
-    const observationTextarea = card.querySelector(".observation-textarea");
-    const statusSelect = card.querySelector(".status-select");
-
-    validateButton.addEventListener("click", async () => {
-      const newObservation = observationTextarea.value.trim();
-      const newStatus = statusSelect.value;
-      await updateAcconierDelivery(delivery.id, newObservation, newStatus);
-    });
+    // (Ancien code supprimé, tout est géré dans la nouvelle version ci-dessus)
 
     rejectButton.addEventListener("click", async () => {
       const newObservation = observationTextarea.value.trim();
@@ -3092,8 +2920,22 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
           );
           // Après succès, recharge les données pour être sûr d'être à jour
           await loadDeliveries();
-          // Mise à jour immédiate de l'alerte dossier en retard après validation
-          if (typeof checkLateContainers === "function") checkLateContainers();
+          // Ajout d'un délai pour garantir la synchro DOM avant recalcul de l'alerte
+          setTimeout(() => {
+            if (typeof checkLateContainers === "function") {
+              checkLateContainers();
+              // Si la popup de liste est ouverte et il n'y a plus de dossiers en retard, on la ferme
+              const lateListModal = document.querySelector(
+                ".late-list-modal-popup"
+              );
+              if (
+                lateListModal &&
+                (!window.lateContainers || window.lateContainers.length === 0)
+              ) {
+                lateListModal.remove();
+              }
+            }
+          }, 200);
           if (historySidebar && historySidebar.classList.contains("open")) {
             renderHistoryDeliveries(
               activeModalContentSource,
