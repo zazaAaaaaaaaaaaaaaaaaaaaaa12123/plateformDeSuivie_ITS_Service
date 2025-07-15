@@ -157,7 +157,15 @@ window.displayProfileAvatar = function () {
   if (logoutBtn) {
     logoutBtn.onclick = function () {
       localStorage.removeItem("acconier_user");
-      window.location.href = "http://localhost:3000/html/acconier_auth.html";
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      ) {
+        window.location.href = "http://localhost:3000/html/acconier_auth.html";
+      } else {
+        window.location.href =
+          "https://plateformdesuivie-its-service.onrender.com/html/acconier_auth.html";
+      }
     };
   }
 };
