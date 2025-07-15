@@ -17,12 +17,27 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
 
 // ===============================
-// === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
+// === DÉMARRAGE DU SERVEUR HTTPS POUR PROD ET HTTP POUR DEV ===
 // ===============================
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
-});
+let server;
+const useHttps =
+  process.env.USE_HTTPS === "true" || process.env.NODE_ENV === "production";
+if (useHttps) {
+  const https = require("https");
+  const fs = require("fs");
+  const options = {
+    key: fs.readFileSync(process.env.SSL_KEY_PATH || "privkey.pem"),
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH || "fullchain.pem"),
+  };
+  server = https.createServer(options, app).listen(PORT, "0.0.0.0", () => {
+    console.log(`Serveur HTTPS Express démarré sur le port ${PORT} (0.0.0.0)`);
+  });
+} else {
+  server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
+  });
+}
 
 // --- WebSocket Server pour notifications temps réel ---
 const wss = new WebSocket.Server({ server });
