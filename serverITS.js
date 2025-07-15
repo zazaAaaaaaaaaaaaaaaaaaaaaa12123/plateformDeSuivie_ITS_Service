@@ -1364,7 +1364,13 @@ app.post("/api/signup", async (req, res) => {
 // ===============================
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body || {};
+  console.log("[LOGIN][API] Données reçues:", {
+    email,
+    password,
+    body: req.body,
+  });
   if (!email || !password) {
+    console.warn("[LOGIN][API] Champs manquants:", { email, password });
     return res
       .status(400)
       .json({ success: false, message: "Tous les champs sont requis." });
@@ -1373,19 +1379,27 @@ app.post("/api/login", async (req, res) => {
     const userRes = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
+    console.log("[LOGIN][API] Résultat recherche utilisateur:", userRes.rows);
     if (userRes.rows.length === 0) {
+      console.warn(
+        "[LOGIN][API] Aucun utilisateur trouvé pour cet email:",
+        email
+      );
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     const user = userRes.rows[0];
     const match = await bcrypt.compare(password, user.password);
+    console.log("[LOGIN][API] Résultat comparaison mot de passe:", match);
     if (!match) {
+      console.warn("[LOGIN][API] Mot de passe incorrect pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     // Connexion réussie : renvoyer aussi le nom et l'email
+    console.log("[LOGIN][API] Connexion réussie pour:", email);
     return res.status(200).json({
       success: true,
       message: "Connexion réussie.",
@@ -1393,7 +1407,7 @@ app.post("/api/login", async (req, res) => {
       email: user.email,
     });
   } catch (err) {
-    console.error("Erreur connexion:", err);
+    console.error("[LOGIN][API] Erreur serveur lors de la connexion:", err);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la connexion.",

@@ -104,13 +104,12 @@ document.addEventListener("DOMContentLoaded", function () {
     .getElementById("registerFormRespAcconier")
     .addEventListener("submit", async function (e) {
       e.preventDefault();
-      const nom = document
+      const name = document
         .getElementById("register-nom-respacconier")
         .value.trim();
       const email = document
         .getElementById("register-email-respacconier")
         .value.trim();
-      // Le champ entreprise n’existe plus
       const password = document.getElementById(
         "register-password-respacconier"
       ).value;
@@ -120,15 +119,15 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       errorDiv.textContent = "";
       successDiv.textContent = "";
-      if (!nom || !email || !password) {
+      if (!name || !email || !password) {
         errorDiv.textContent = "Veuillez remplir tous les champs.";
         return;
       }
       try {
-        const res = await fetch("/api/respacconier/register", {
+        const res = await fetch("/api/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nom, email, password }),
+          body: JSON.stringify({ name, email, password }),
         });
         const data = await res.json();
         if (res.ok && data.success) {
