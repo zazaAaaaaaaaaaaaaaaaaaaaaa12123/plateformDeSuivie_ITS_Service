@@ -570,59 +570,99 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 (async () => {
-  // --- SYNCHRONISATION TEMPS RÉEL VIA WEBSOCKET ---
-  // Connexion WebSocket pour recevoir les notifications de mise à jour en temps réel
+  // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsHost = window.location.hostname;
   let wsPort = window.location.port || "3000";
-  // Si l'app est servie en local, forcer le port 3000 (backend)
   if (wsHost === "localhost" || wsHost === "127.0.0.1") {
     wsPort = "3000";
   }
   let wsUrl = `${wsProtocol}://${wsHost}:${wsPort}`;
-  let ws;
-  try {
-    ws = new WebSocket(wsUrl);
-  } catch (e) {
-    console.warn("Impossible d'ouvrir la connexion WebSocket :", e);
-  }
+  let ws = null;
+  let pollingInterval = null;
+  let lastDeliveriesCount = null;
 
-  if (ws) {
-    ws.onopen = () => {
-      console.log(
-        "[WebSocket] Connecté au serveur pour la synchro temps réel."
-      );
-    };
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        // Types de messages qui doivent déclencher un rafraîchissement de l'alerte uniquement
-        const typesToRefresh = [
-          "delivery_update_alert",
-          "container_status_update",
-          "delivery_deletion_alert",
-          "new_delivery_notification",
-        ];
-        if (data && data.type && typesToRefresh.includes(data.type)) {
-          // Recharge uniquement les livraisons et met à jour l'alerte sans rafraîchir le tableau principal
-          loadDeliveries().then(() => {
-            if (typeof checkLateContainers === "function")
-              checkLateContainers();
-            // NE PAS rappeler filterDeliveriesIntoCategories ni applyCombinedFilters ici
-          });
+  function startPollingDeliveries() {
+    if (pollingInterval) return;
+    pollingInterval = setInterval(() => {
+      loadDeliveries().then(() => {
+        if (typeof checkLateContainers === "function") checkLateContainers();
+        // Détection d'une nouvelle livraison (optionnel)
+        if (Array.isArray(window.deliveries)) {
+          if (
+            lastDeliveriesCount !== null &&
+            window.deliveries.length > lastDeliveriesCount
+          ) {
+            // Nouvelle livraison détectée
+            showCustomAlert(
+              "Nouvelle livraison reçue ! (mode fallback)",
+              "success",
+              2500
+            );
+          }
+          lastDeliveriesCount = window.deliveries.length;
         }
-      } catch (e) {
-        console.warn("[WebSocket] Message non JSON ou erreur :", event.data, e);
-      }
-    };
-    ws.onerror = (err) => {
-      console.error("[WebSocket] Erreur :", err);
-    };
-    ws.onclose = () => {
-      console.warn(
-        "[WebSocket] Déconnecté du serveur. La synchro temps réel ne fonctionnera plus."
-      );
-    };
+      });
+    }, 15000); // 15s
+    console.warn("[Polling] Fallback AJAX activé pour la synchro livraisons");
+  }
+  function stopPollingDeliveries() {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      pollingInterval = null;
+    }
+  }
+  function initWebSocketLivraisons() {
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onopen = function () {
+        console.debug("[WebSocket] Connecté pour synchro livraisons");
+        stopPollingDeliveries();
+      };
+      ws.onmessage = function (event) {
+        try {
+          const data = JSON.parse(event.data);
+          const typesToRefresh = [
+            "delivery_update_alert",
+            "container_status_update",
+            "delivery_deletion_alert",
+            "new_delivery_notification",
+          ];
+          if (data && data.type && typesToRefresh.includes(data.type)) {
+            loadDeliveries().then(() => {
+              if (typeof checkLateContainers === "function")
+                checkLateContainers();
+            });
+          }
+        } catch (e) {
+          console.warn(
+            "[WebSocket] Message non JSON ou erreur :",
+            event.data,
+            e
+          );
+        }
+      };
+      ws.onclose = function () {
+        console.warn("[WebSocket] Déconnecté. Fallback AJAX activé dans 2s...");
+        setTimeout(() => {
+          startPollingDeliveries();
+          // On retente le WebSocket après 30s
+          setTimeout(initWebSocketLivraisons, 30000);
+        }, 2000);
+      };
+      ws.onerror = function () {
+        ws.close();
+      };
+    } catch (e) {
+      console.error("[WebSocket] Erreur d'init :", e);
+      startPollingDeliveries();
+    }
+  }
+  // Lance d'abord le WebSocket, sinon fallback polling
+  if (window["WebSocket"]) {
+    initWebSocketLivraisons();
+  } else {
+    startPollingDeliveries();
   }
   // Inject CSS for pulsating dot animation and new dropdown styles
   // This style block is dynamically added to the document's head.
