@@ -186,21 +186,65 @@ document.addEventListener("DOMContentLoaded", function () {
   // Appel initial au chargement
   updateBadgeDemandesCodeEntreprise();
   // --- WebSocket temps réel pour demandes de code entreprise ---
-  let wsDemandeCodeEntreprise;
+
+  // --- Fallback WebSocket/Polling pour demandes de code entreprise ---
+  let wsDemandeCodeEntreprise = null;
+  let pollingInterval = null;
+  let lastNbDemandes = null;
+  function startPollingDemandesCodeEntreprise() {
+    if (pollingInterval) return;
+    pollingInterval = setInterval(() => {
+      fetch(`${window.API_BASE_URL}/api/demande-code-entreprise`)
+        .then((res) => res.json())
+        .then((data) => {
+          let demandes = [];
+          if (data && typeof data === "object") {
+            if (Array.isArray(data.demandes)) demandes = data.demandes;
+            else if (Array.isArray(data.results)) demandes = data.results;
+            else if (Array.isArray(data.data)) demandes = data.data;
+          } else if (Array.isArray(data)) {
+            demandes = data;
+          }
+          if (
+            lastNbDemandes !== null &&
+            Array.isArray(demandes) &&
+            demandes.length > lastNbDemandes
+          ) {
+            // Nouvelle demande détectée
+            ouvrirPopupDemandesCodeEntreprise();
+            updateBadgeDemandesCodeEntreprise();
+            showCustomAlert(
+              "Nouvelle demande de code entreprise reçue !",
+              "success",
+              2500
+            );
+          }
+          lastNbDemandes = Array.isArray(demandes) ? demandes.length : null;
+        });
+    }, 15000); // 15s
+    console.warn(
+      "[Polling] Fallback AJAX activé pour demandes code entreprise"
+    );
+  }
+  function stopPollingDemandesCodeEntreprise() {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      pollingInterval = null;
+    }
+  }
   function initWebSocketDemandeCodeEntreprise() {
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    // WebSocket auto selon env
     let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
     try {
       wsDemandeCodeEntreprise = new WebSocket(wsUrl);
       wsDemandeCodeEntreprise.onopen = function () {
         console.debug("[WebSocket] Connecté pour demandes code entreprise");
+        stopPollingDemandesCodeEntreprise();
       };
       wsDemandeCodeEntreprise.onmessage = function (event) {
         try {
           const data = JSON.parse(event.data);
           if (data.type === "nouvelle-demande-code-entreprise") {
-            // Ouvre la popup et recharge la liste
             const popup = document.getElementById("popupDemandeCodeEntreprise");
             if (popup && popup.style.display === "none") {
               popup.style.display = "flex";
@@ -218,17 +262,27 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       };
       wsDemandeCodeEntreprise.onclose = function () {
-        console.warn("[WebSocket] Déconnecté. Nouvelle tentative dans 3s...");
-        setTimeout(initWebSocketDemandeCodeEntreprise, 3000);
+        console.warn("[WebSocket] Déconnecté. Fallback AJAX activé dans 2s...");
+        setTimeout(() => {
+          startPollingDemandesCodeEntreprise();
+          // On retente le WebSocket après 30s
+          setTimeout(initWebSocketDemandeCodeEntreprise, 30000);
+        }, 2000);
       };
       wsDemandeCodeEntreprise.onerror = function () {
         wsDemandeCodeEntreprise.close();
       };
     } catch (e) {
       console.error("[WebSocket] Erreur d'init :", e);
+      startPollingDemandesCodeEntreprise();
     }
   }
-  initWebSocketDemandeCodeEntreprise();
+  // Lance d'abord le WebSocket, sinon fallback polling
+  if (window["WebSocket"]) {
+    initWebSocketDemandeCodeEntreprise();
+  } else {
+    startPollingDemandesCodeEntreprise();
+  }
   const btnDemandeCodeEntreprise = document.getElementById(
     "demandeCodeEntrepriseBtn"
   );
@@ -938,6 +992,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const historiqueAgentsContainer = document.getElementById(
     "historiqueAgentsContainer"
   );
+
   const statistiquesSection = document.getElementById("statistiquesSection");
   const lienStatistiques = document.getElementById("lienStatistiques");
 
