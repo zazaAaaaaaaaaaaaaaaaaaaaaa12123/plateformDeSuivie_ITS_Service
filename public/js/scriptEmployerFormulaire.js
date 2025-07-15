@@ -1765,14 +1765,24 @@ async function submitDeliveryForm(status) {
     ) {
       apiUrl = "http://localhost:3000/deliveries/validate";
     } else {
-      apiUrl = "https://ton-backend.onrender.com/deliveries/validate"; // Remplace par ton vrai sous-domaine Render si besoin
+      // Remplace ci-dessous par TON vrai sous-domaine Render !
+      apiUrl =
+        "https://plateformdesuivie-its-service.onrender.com/deliveries/validate";
     }
     const response = await fetch(apiUrl, {
       method: "POST",
       body: formData,
+      headers: {
+        Accept: "application/json",
+      },
     });
 
-    const data = await response.json();
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (e) {
+      data = { message: "Réponse serveur invalide ou vide." };
+    }
 
     if (response.ok) {
       const operationType =
@@ -1850,17 +1860,18 @@ async function submitDeliveryForm(status) {
     } else {
       displayMessage(
         formErrorDisplay,
-        data.message || "Erreur lors de l'enregistrement de l'opération.",
+        data.message ||
+          `Erreur lors de l'enregistrement de l'opération (code ${response.status}).`,
         "error"
       );
     }
   } catch (error) {
     console.error("Erreur lors de l'envoi des données de livraison :", error);
-    displayMessage(
-      formErrorDisplay,
-      "Erreur réseau ou serveur. Veuillez réessayer.",
-      "error"
-    );
+    let msg = "Erreur réseau ou serveur. Veuillez réessayer.";
+    if (error && error.message) {
+      msg += `\nDétail : ${error.message}`;
+    }
+    displayMessage(formErrorDisplay, msg, "error");
   } finally {
     if (deliveryForm) {
       deliveryForm
