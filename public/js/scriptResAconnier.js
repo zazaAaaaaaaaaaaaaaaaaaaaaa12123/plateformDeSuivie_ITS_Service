@@ -464,7 +464,9 @@ document.addEventListener("DOMContentLoaded", function () {
   async function loadDeliveries() {
     if (loadingOverlay) loadingOverlay.style.display = "flex";
     try {
-      const response = await fetch("http://localhost:3000/deliveries/status");
+      const response = await fetch(
+        "https://plateformdesuivie-its-service.onrender.com/deliveries/status"
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
