@@ -1292,7 +1292,8 @@ function formatDateForDB(dateString) {
 // ROUTE INSCRIPTION UTILISATEUR
 // ===============================
 app.post("/api/signup", async (req, res) => {
-  let { name, email, password } = req.body || {};
+  let { name, nom, email, password } = req.body || {};
+  if (!name && nom) name = nom;
   // Normalisation de l'email (trim + minuscule)
   if (typeof email === "string") {
     email = email.trim().toLowerCase();
