@@ -1,5 +1,20 @@
 // scriptResAconnier.js
 
+// Vérification stricte de session dès le chargement
+document.addEventListener("DOMContentLoaded", function () {
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem("respacconierUser"));
+  } catch (e) {
+    user = null;
+  }
+  if (!user || user.nom === "Responsable" || !user.email) {
+    // Redirige vers la page de login sur le même domaine
+    window.location.href = "/html/respacconier_auth.html";
+    return;
+  }
+});
+
 (async () => {
   // --- AVATAR RESPONSABLE ACCONIER ---
   document.addEventListener("DOMContentLoaded", function () {
