@@ -1406,16 +1406,19 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       // On lance la requête réseau en asynchrone, mais on ne recharge pas tout le tableau
-      fetch(`http://localhost:3000/deliveries/${deliveryId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          observation_acconier: observation,
-          delivery_status_acconier: status,
-        }),
-      })
+      fetch(
+        `https://plateformdesuivie-its-service.onrender.com/deliveries/${deliveryId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            observation_acconier: observation,
+            delivery_status_acconier: status,
+          }),
+        }
+      )
         .then(async (response) => {
           if (!response.ok) {
             const errorData = await response.json();
