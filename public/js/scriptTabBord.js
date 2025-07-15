@@ -1,3 +1,17 @@
+// --- Détection automatique de l'URL backend (API et WebSocket) ---
+// window.API_BASE_URL = base pour les fetch (http(s)://...)
+// window.WS_BASE_HOST = host:port pour WebSocket (sans ws://)
+(function setApiBaseUrl() {
+  const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (isLocal) {
+    window.API_BASE_URL = "http://localhost:3000";
+    window.WS_BASE_HOST = "localhost:3000";
+  } else {
+    // Render ou prod : même domaine que le frontend
+    window.API_BASE_URL = window.location.origin;
+    window.WS_BASE_HOST = window.location.host;
+  }
+})();
 // Redirection automatique vers le tableau de bord après connexion réussie
 (function () {
   if (window.location.pathname.endsWith("tableauDeBord.html")) {
@@ -18,7 +32,7 @@ function ouvrirPopupDemandesCodeEntreprise() {
     tableDiv.innerHTML =
       '<div style="text-align:center;padding:20px 0;color:#2563eb;"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
   if (msgDiv) msgDiv.textContent = "";
-  fetch("http://localhost:3000/api/demande-code-entreprise")
+  fetch(`${window.API_BASE_URL}/api/demande-code-entreprise`)
     .then((res) => res.json())
     .then((data) => {
       // --- Mise à jour du badge du nombre de demandes ---
@@ -95,7 +109,7 @@ function ouvrirPopupDemandesCodeEntreprise() {
           }
           btn.disabled = true;
           btn.textContent = "Envoi...";
-          fetch("http://localhost:3000/api/envoyer-code-securite", {
+          fetch(`${window.API_BASE_URL}/api/envoyer-code-securite`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
@@ -142,7 +156,7 @@ function ouvrirPopupDemandesCodeEntreprise() {
 document.addEventListener("DOMContentLoaded", function () {
   // --- Met à jour le badge du nombre de demandes (même si la popup n'est pas ouverte)
   function updateBadgeDemandesCodeEntreprise() {
-    fetch("http://localhost:3000/api/demande-code-entreprise")
+    fetch(`${window.API_BASE_URL}/api/demande-code-entreprise`)
       .then((res) => res.json())
       .then((data) => {
         let demandes = [];
@@ -175,8 +189,8 @@ document.addEventListener("DOMContentLoaded", function () {
   let wsDemandeCodeEntreprise;
   function initWebSocketDemandeCodeEntreprise() {
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    // Si dashboard en local, on force ws://localhost:3000
-    let wsUrl = `${wsProtocol}://localhost:3000`;
+    // WebSocket auto selon env
+    let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
     try {
       wsDemandeCodeEntreprise = new WebSocket(wsUrl);
       wsDemandeCodeEntreprise.onopen = function () {
@@ -1237,7 +1251,7 @@ window.AGENT_TABLE_COLUMNS = [
   resumeHierDiv.innerHTML =
     '<div style="text-align:center;padding:30px 0;color:#2563eb;"><i class="fas fa-spinner fa-spin"></i> Chargement du résumé de la veille...</div>';
 
-  fetch("http://localhost:3000/deliveries/status")
+  fetch(`${window.API_BASE_URL}/deliveries/status`)
     .then((res) => res.json())
     .then((data) => {
       if (!data.success || !Array.isArray(data.deliveries)) {
@@ -1536,7 +1550,7 @@ window.AGENT_TABLE_COLUMNS = [
       }
 
       function majCarteAgentVisiteurProgramme() {
-        fetch("http://localhost:3000/agents-visiteurs/programmes")
+        fetch(`${window.API_BASE_URL}/agents-visiteurs/programmes`)
           .then((res) => res.json())
           .then((data) => {
             const nbDiv = document.getElementById("nbAgentsVisiteurs");
@@ -3229,7 +3243,7 @@ function chargerStatistiquesActeurs() {
   // Fonction pour charger les stats selon la date
   function fetchStats(dateStr) {
     section.innerHTML = `<div style='text-align:center;padding:30px 0;color:#2563eb;'><i class='fas fa-spinner fa-spin'></i> Chargement des statistiques...</div>`;
-    let url = "http://localhost:3000/statistiques/acteurs";
+    let url = `${window.API_BASE_URL}/statistiques/acteurs`;
     if (dateStr) {
       url += `?date=${dateStr}`;
     }
