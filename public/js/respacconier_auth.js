@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const data = await res.json();
         if (data.success && code === data.code) {
           // Redirection et rechargement pour garantir l'affichage de l'avatar
-          window.location.href = "interfaceRespAconier.html";
+          window.location.href = "/html/interfaceRespAconier.html";
           setTimeout(function () {
             window.location.reload();
           }, 300);
