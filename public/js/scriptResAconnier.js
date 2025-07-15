@@ -104,8 +104,16 @@ document.addEventListener("DOMContentLoaded", function () {
         if (logoutBtn) {
           logoutBtn.addEventListener("click", () => {
             localStorage.removeItem("respacconierUser");
-            window.location.href =
-              "http://localhost:3000/html/respacconier_auth.html";
+            if (
+              window.location.hostname === "localhost" ||
+              window.location.hostname === "127.0.0.1"
+            ) {
+              window.location.href =
+                "http://localhost:3000/html/respacconier_auth.html";
+            } else {
+              window.location.href =
+                "https://plateformdesuivie-its-service.onrender.com/html/respacconier_auth.html";
+            }
           });
         }
       }
