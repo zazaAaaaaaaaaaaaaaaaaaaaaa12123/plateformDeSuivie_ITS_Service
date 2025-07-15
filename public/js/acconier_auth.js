@@ -155,9 +155,7 @@ document.addEventListener("DOMContentLoaded", function () {
       visible = !visible;
       if (input) {
         input.type = visible ? "text" : "password";
-        toggle.classList.toggle("fa-eye-slash", visible);
-        toggle.classList.toggle("fa-eye", !visible);
-        // Pour FontAwesome 6, il faut changer la classe de l'icône enfant
+        // Toujours cibler l'icône enfant (FontAwesome)
         const icon =
           toggle.tagName === "I" ? toggle : toggle.querySelector("i");
         if (icon) {
