@@ -571,13 +571,22 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 (async () => {
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
+  // Détection automatique du protocole, hôte, port et chemin pour WebSocket
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsHost = window.location.hostname;
-  let wsPort = window.location.port || "3000";
+  let wsPort = window.location.port;
+  let wsPath = "/";
+  // Si le backend WebSocket est sur le même domaine, on utilise le port courant ou 3000 en local
   if (wsHost === "localhost" || wsHost === "127.0.0.1") {
     wsPort = "3000";
+  } else if (!wsPort) {
+    wsPort = wsProtocol === "wss" ? "443" : "80";
   }
-  let wsUrl = `${wsProtocol}://${wsHost}:${wsPort}`;
+  // Si le backend WebSocket est sur un chemin spécifique, on peut le détecter ici
+  if (window.WS_PATH) {
+    wsPath = window.WS_PATH;
+  }
+  let wsUrl = `${wsProtocol}://${wsHost}:${wsPort}${wsPath}`;
   let ws = null;
   let pollingInterval = null;
   let lastDeliveriesCount = null;
