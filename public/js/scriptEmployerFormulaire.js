@@ -1260,15 +1260,13 @@ function init() {
         clearMessages(formSuccessDisplay);
 
         // --- Validation des champs obligatoires ---
-        // clientPhoneInput est maintenant facultatif, clientNameInput obligatoire
         const requiredInputs = [
           employeeNameInput,
           clientNameInput,
+          clientPhoneInput,
           containerTypeAndContentInput,
           lieuInput,
-          containerNumberInput, // Numéro TC(s) obligatoire
-          blNumberInput, // Numéro de BL obligatoire
-          dossierNumberInput, // Numéro de dossier obligatoire
+          containerNumberInput,
           // containerFootTypeSelect, // SUPPRIMÉ : ce champ n'existe plus, remplacé par la zone dynamique
           declarationNumberInput,
           numberOfContainersInput,
@@ -1298,7 +1296,7 @@ function init() {
         if (!allRequiredFilled) {
           displayMessage(
             formErrorDisplay,
-            "⚠️ Veuillez remplir tous les champs obligatoires (marqués avec *). Le nom du client, le numéro TC(s), le numéro de BL et le numéro de dossier sont obligatoires.",
+            "⚠️ Veuillez remplir tous les champs obligatoires (marqués avec *).",
             "error"
           );
           if (firstEmptyInput) {
@@ -1307,11 +1305,9 @@ function init() {
           return;
         }
 
-        // Vérification du numéro de téléphone client uniquement si renseigné
         const phoneRegex = /^\+?[0-9]{10,15}$/;
         if (
           clientPhoneInput &&
-          clientPhoneInput.value.trim() &&
           !phoneRegex.test(clientPhoneInput.value.trim())
         ) {
           displayMessage(
@@ -1688,6 +1684,7 @@ async function submitDeliveryForm(status) {
 
   const requiredInputs = [
     employeeName,
+    clientName,
     clientPhone,
     containerTypeAndContent,
     lieu,
