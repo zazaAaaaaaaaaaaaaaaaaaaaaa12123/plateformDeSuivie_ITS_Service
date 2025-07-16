@@ -6353,14 +6353,14 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       console.error("WebSocket error:", error);
       // Affichage professionnel de l'erreur WebSocket
       let errorMsg =
-        `<div style='display:flex;align-items:center;gap:14px;'>` +
-        `<svg width='28' height='28' viewBox='0 0 32 32' fill='none' style='background:linear-gradient(90deg,#f87171 60%,#facc15 100%);border-radius:8px;padding:2px;'><rect width='32' height='32' rx='8' fill='#fde047'/><path d='M16 10v6m0 4h.01' stroke='#ef4444' stroke-width='2' stroke-linecap='round'/></svg>` +
-        `<span style='font-size:1.08em;font-weight:700;color:#ef4444;'>Erreur WebSocket</span>` +
+        `<div style="display:flex;align-items:center;gap:14px;">` +
+        `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" style="background:linear-gradient(90deg,#f87171 60%,#facc15 100%);border-radius:8px;padding:2px;"><rect width="32" height="32" rx="8" fill="#fde047"/><path d="M16 10v6m0 4h.01" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>` +
+        `<span style="font-size:1.08em;font-weight:700;color:#ef4444;">Erreur WebSocket</span>` +
         `</div>`;
-      errorMsg += `<div style='margin-top:8px;font-size:0.98em;color:#334155;'>${
+      errorMsg += `<div style="margin-top:8px;font-size:0.98em;color:#334155;">${
         error && error.message ? error.message : "Erreur inconnue."
       }</div>`;
-      errorMsg += `<div style='margin-top:6px;font-size:0.93em;color:#64748b;'>La connexion en temps réel est perdue. Veuillez vérifier votre réseau ou contacter le support si le problème persiste.</div>`;
+      errorMsg += `<div style="margin-top:6px;font-size:0.93em;color:#64748b;">La connexion en temps réel est perdue. Veuillez vérifier votre réseau ou contacter le support si le problème persiste.</div>`;
       showCustomAlert(errorMsg, "error", 9000);
       socket.close();
     };
