@@ -1221,11 +1221,13 @@ function renderContainerFootTypes() {
     blocTC.style.gap = "2px";
     blocTC.style.marginBottom = "8px";
 
-    // Ligne principale : badge TC + select pied + input personnalisé
+    // Ligne principale : badge TC + label + select pied + input personnalisé
     let row = document.createElement("div");
     row.style.display = "flex";
     row.style.alignItems = "center";
     row.style.gap = "10px";
+    row.style.flexWrap = "wrap";
+
     // Badge TC
     let tcLabel = document.createElement("span");
     tcLabel.textContent = tc;
@@ -1236,6 +1238,16 @@ function renderContainerFootTypes() {
     tcLabel.style.borderRadius = "14px";
     tcLabel.style.fontWeight = "bold";
 
+    // Label explicite pour le type de pied
+    let piedLabel = document.createElement("span");
+    piedLabel.textContent = "Type Conteneur (pied) :";
+    piedLabel.style.color = "#2563eb";
+    piedLabel.style.fontWeight = "bold";
+    piedLabel.style.fontSize = "0.98em";
+    piedLabel.style.marginRight = "4px";
+    piedLabel.style.minWidth = "120px";
+    piedLabel.style.display = "block";
+
     // Select pour le type de pied
     let piedSelect = document.createElement("select");
     piedSelect.className = "tc-foot-select";
@@ -1244,6 +1256,7 @@ function renderContainerFootTypes() {
     piedSelect.style.border = "1px solid #b6c6e6";
     piedSelect.style.borderRadius = "8px";
     piedSelect.style.fontSize = "1em";
+    piedSelect.style.minWidth = "90px";
 
     piedOptions.forEach((opt) => {
       let option = document.createElement("option");
@@ -1263,6 +1276,7 @@ function renderContainerFootTypes() {
     piedInput.style.borderRadius = "8px";
     piedInput.style.fontSize = "1em";
     piedInput.style.display = "none";
+    piedInput.style.marginTop = "4px";
 
     // Initial value pied
     let currentValue = containerFootTypes[idx]
@@ -1297,6 +1311,7 @@ function renderContainerFootTypes() {
       containerFootTypes[idx] = { tc, pied: piedSelect.value };
 
     row.appendChild(tcLabel);
+    row.appendChild(piedLabel);
     row.appendChild(piedSelect);
     row.appendChild(piedInput);
     blocTC.appendChild(row);
