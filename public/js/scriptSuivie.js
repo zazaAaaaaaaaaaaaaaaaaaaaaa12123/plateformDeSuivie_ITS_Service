@@ -4597,12 +4597,15 @@ setTimeout(() => {
       renderAdminDeliveriesTable(filteredData);
       setTimeout(animateNewRows, 100); // Lance l'animation après le rendu
     }
-    // Initialisation de la liste des ids connus au premier chargement
-    document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => {
-        previousDeliveryIds = getCurrentDeliveryIds();
-      }, 500);
-    });
+    // Initialisation de la liste des ids connus au tout premier chargement UNIQUEMENT
+    if (!window.__previousDeliveryIdsInitialized) {
+      document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(() => {
+          previousDeliveryIds = getCurrentDeliveryIds();
+          window.__previousDeliveryIdsInitialized = true;
+        }, 500);
+      });
+    }
     // Note: hideSpinner() is called in loadDeliveries().finally, which is triggered by applyCombinedFilters.
     // This ensures the spinner is hidden after data is fully loaded and rendered.
     return filteredData;
