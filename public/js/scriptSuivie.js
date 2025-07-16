@@ -660,6 +660,13 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
             event.data,
             e
           );
+          // Ajout : flash automatique colonne Agent
+          if (typeof flashCells === "function") {
+            const COLS_AGENT = [
+              2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+            ];
+            flashCells(COLS_AGENT, "highlight-green-flash");
+          }
         }
       };
       ws.onclose = function () {
