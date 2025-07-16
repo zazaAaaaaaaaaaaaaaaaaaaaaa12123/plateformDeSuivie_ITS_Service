@@ -3163,8 +3163,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       const row = deliveriesTableBody.insertRow();
       row.id = `delivery-row-${delivery.id}`;
       row.dataset.deliveryId = delivery.id;
-      // Animation clignotement vert à chaque ajout
-      flashRowGreen(row);
+      // --- Création des cellules ---
 
       if (selectionMode) {
         const checkboxCell = row.insertCell();
@@ -4248,6 +4247,8 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       })();
 
       createCell(delivery.delivery_notes, "delivery_notes", "textarea", {}); // Observations
+      // --- Appliquer l'effet de clignotement vert APRÈS la création de toutes les cellules ---
+      setTimeout(() => flashRowGreen(row), 0);
     });
     // =====================
     // Effet de surlignage interactif par section (flash coloré)
