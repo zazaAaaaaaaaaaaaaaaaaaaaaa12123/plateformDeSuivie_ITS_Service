@@ -735,7 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Date</span><br><span style='font-weight:700;color:#2563eb;'>${
             order.date || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Agent</span><br><span style='font-weight:700'>${
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Agent</span><br><span style='font-weight:700;'>${
             d.employeeName || "-"
           }</span></div>
         </div>
@@ -744,10 +744,10 @@ document.addEventListener("DOMContentLoaded", () => {
         };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Client</span><br><span style='font-weight:700'>${
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Client</span><br><span style='font-weight:700;'>${
             d.clientName || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Téléphone</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Téléphone</span><br><span style='font-weight:700;'>${
             d.clientPhone || "-"
           }</span></div>
         </div>
@@ -756,12 +756,12 @@ document.addEventListener("DOMContentLoaded", () => {
         };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Conteneur(s)</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Conteneur(s)</span><br><span style='font-weight:700;'>${
             Array.isArray(d.containerNumbers)
               ? d.containerNumbers.join(", ")
               : d.containerNumbers || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Type(s) de pied</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Type(s) de pied</span><br><span style='font-weight:700;'>${
             d.containerFootType || "-"
           }</span></div>
         </div>
@@ -770,10 +770,10 @@ document.addEventListener("DOMContentLoaded", () => {
         };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Poids</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Poids</span><br><span style='font-weight:700;'>${
             d.weight || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Contenu</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Contenu</span><br><span style='font-weight:700;'>${
             d.containerTypeAndContent || "-"
           }</span></div>
         </div>
@@ -782,10 +782,10 @@ document.addEventListener("DOMContentLoaded", () => {
         };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Lieu</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Lieu</span><br><span style='font-weight:700;'>${
             d.lieu || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Déclaration</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Déclaration</span><br><span style='font-weight:700;'>${
             d.declarationNumber || "-"
           }</span></div>
         </div>
@@ -794,10 +794,10 @@ document.addEventListener("DOMContentLoaded", () => {
         };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Nombre de conteneurs</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Nombre de conteneurs</span><br><span style='font-weight:700;'>${
             d.numberOfContainers || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>BL</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>BL</span><br><span style='font-weight:700;'>${
             d.blNumber || "-"
           }</span></div>
         </div>
@@ -806,10 +806,10 @@ document.addEventListener("DOMContentLoaded", () => {
         };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Dossier</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Dossier</span><br><span style='font-weight:700;'>${
             d.dossierNumber || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Compagnie maritime</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Compagnie maritime</span><br><span style='font-weight:700;'>${
             d.shippingCompany || "-"
           }</span></div>
         </div>
@@ -818,19 +818,19 @@ document.addEventListener("DOMContentLoaded", () => {
         };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Navire</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Navire</span><br><span style='font-weight:700;'>${
             d.shipName || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Circuit</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Circuit</span><br><span style='font-weight:700;'>${
             d.circuit || "-"
           }</span></div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:${
           isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
+        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Mode de transport</span><br><span style='font-weight:700'>{
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Mode de transport</span><br><span style='font-weight:700;'>${
             d.transporterMode || "-"
           }</span></div>
         </div>
@@ -985,127 +985,6 @@ if (containerNumberInput) {
     containerNumberInput
   );
 
-  // === Correction : Création forcée du conteneur dynamique si absent ===
-  let dynamicContainer = document.getElementById("containerFootTypesDynamic");
-  if (!dynamicContainer) {
-    dynamicContainer = document.createElement("div");
-    dynamicContainer.id = "containerFootTypesDynamic";
-    dynamicContainer.style.marginTop = "8px";
-    dynamicContainer.style.display = "flex";
-    dynamicContainer.style.flexDirection = "column";
-    dynamicContainer.style.gap = "8px";
-    dynamicContainer.style.marginBottom = "10px";
-    containerTagsContainer.parentNode.insertBefore(
-      dynamicContainer,
-      containerTagsContainer.nextSibling
-    );
-  }
-
-  // === Ajout : Affichage dynamique du type de pied/poids dès la première saisie ===
-  containerTagsInput.addEventListener("input", function () {
-    let dynamicContainer = document.getElementById("containerFootTypesDynamic");
-    if (!dynamicContainer) return;
-    // Si l'utilisateur saisit un TC non encore validé
-    const value = containerTagsInput.value.trim();
-    // On affiche la zone si le champ n'est pas vide et que le TC n'est pas déjà dans la liste
-    if (value && !containerTags.includes(value)) {
-      dynamicContainer.innerHTML = "";
-      dynamicContainer.style.display = "flex";
-      dynamicContainer.style.flexDirection = "column";
-      dynamicContainer.style.gap = "8px";
-      dynamicContainer.style.marginBottom = "10px";
-      // Options de pied
-      const piedOptions = ["10", "20", "40", "45"];
-      let row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.gap = "10px";
-      // Badge TC
-      let tcLabel = document.createElement("span");
-      tcLabel.textContent = value;
-      tcLabel.className = "tc-foot-label";
-      tcLabel.style.background = "#e0e7ff";
-      tcLabel.style.color = "#1e40af";
-      tcLabel.style.padding = "3px 12px";
-      tcLabel.style.borderRadius = "14px";
-      tcLabel.style.fontWeight = "bold";
-      // Select pour le type de pied
-      let piedSelect = document.createElement("select");
-      piedSelect.className = "tc-foot-select";
-      piedSelect.style.flex = "1";
-      piedSelect.style.padding = "5px 10px";
-      piedSelect.style.border = "1px solid #b6c6e6";
-      piedSelect.style.borderRadius = "8px";
-      piedSelect.style.fontSize = "1em";
-      piedOptions.forEach((opt) => {
-        let option = document.createElement("option");
-        option.value = opt;
-        option.textContent = opt;
-        piedSelect.appendChild(option);
-      });
-      // Option personnalisée (input texte si "Autre...")
-      let piedInput = document.createElement("input");
-      piedInput.type = "text";
-      piedInput.placeholder = "Type personnalisé";
-      piedInput.className = "tc-foot-input";
-      piedInput.style.flex = "1";
-      piedInput.style.padding = "5px 10px";
-      piedInput.style.border = "1px solid #b6c6e6";
-      piedInput.style.borderRadius = "8px";
-      piedInput.style.fontSize = "1em";
-      piedInput.style.display = "none";
-      // Input pour le poids
-      let poidsInput = document.createElement("input");
-      poidsInput.type = "number";
-      poidsInput.placeholder = "Poids (kg)";
-      poidsInput.className = "tc-weight-input";
-      poidsInput.style.flex = "unset";
-      poidsInput.style.width = "98px";
-      poidsInput.style.padding = "4px 6px";
-      poidsInput.style.border = "2px solid #2563eb";
-      poidsInput.style.borderRadius = "8px";
-      poidsInput.style.fontSize = "1em";
-      poidsInput.style.background = "#fff";
-      poidsInput.style.color = "#1e293b";
-      poidsInput.style.fontWeight = "bold";
-      poidsInput.style.boxShadow = "0 1px 6px rgba(37,99,235,0.08)";
-      poidsInput.min = "0";
-      poidsInput.step = "any";
-      poidsInput.disabled = false;
-      poidsInput.tabIndex = 0;
-      poidsInput.style.cursor = "pointer";
-      poidsInput.addEventListener("focus", function () {
-        poidsInput.style.border = "2.5px solid #eab308";
-        poidsInput.style.background = "#fef9c3";
-      });
-      poidsInput.addEventListener("blur", function () {
-        poidsInput.style.border = "2px solid #2563eb";
-        poidsInput.style.background = "#fff";
-      });
-      piedSelect.addEventListener("change", () => {
-        if (piedSelect.value === "Autre...") {
-          piedInput.style.display = "block";
-          piedInput.focus();
-        } else {
-          piedInput.style.display = "none";
-        }
-      });
-      row.appendChild(tcLabel);
-      row.appendChild(piedSelect);
-      row.appendChild(piedInput);
-      row.appendChild(poidsInput);
-      dynamicContainer.appendChild(row);
-    } else if (!value) {
-      // Si le champ est vide, on réinitialise la zone dynamique si aucun TC validé
-      if (containerTags.length === 0) {
-        let dynamicContainer = document.getElementById(
-          "containerFootTypesDynamic"
-        );
-        if (dynamicContainer) dynamicContainer.innerHTML = "";
-      }
-    }
-  });
-
   // Fonction d'affichage des tags
   function renderContainerTags() {
     // Supprime tous les tags sauf l'input
@@ -1214,96 +1093,28 @@ function renderContainerFootTypes() {
   const piedOptions = ["10", "20", "40", "45"];
 
   containerTags.forEach((tc, idx) => {
-    // Carte principale pour chaque TC
-    let cardTC = document.createElement("div");
-    cardTC.style.display = "flex";
-    cardTC.style.flexDirection = "column";
-    cardTC.style.gap = "8px";
-    cardTC.style.marginBottom = "16px";
-    cardTC.style.background = "#fff";
-    cardTC.style.border = "1.5px solid #e0e7ff";
-    cardTC.style.borderRadius = "14px";
-    cardTC.style.boxShadow = "0 2px 12px #2563eb11";
-    cardTC.style.padding = "14px 16px";
-    cardTC.style.transition = "box-shadow .18s";
-    cardTC.onmouseover = function () {
-      cardTC.style.boxShadow = "0 4px 24px #2563eb22";
-    };
-    cardTC.onmouseout = function () {
-      cardTC.style.boxShadow = "0 2px 12px #2563eb11";
-    };
-    // Responsive mobile : rendu compact
-    if (window.matchMedia && window.matchMedia("(max-width: 600px)").matches) {
-      cardTC.style.width = "100%";
-      cardTC.style.padding = "7px 2vw";
-      cardTC.style.marginBottom = "10px";
-      cardTC.style.gap = "5px";
-    }
-
-    // Ligne principale : badge TC + label + select pied + input personnalisé
     let row = document.createElement("div");
     row.style.display = "flex";
-    row.style.alignItems = "flex-start";
+    row.style.alignItems = "center";
     row.style.gap = "10px";
-    row.style.flexWrap = "wrap";
-    if (window.matchMedia && window.matchMedia("(max-width: 600px)").matches) {
-      row.style.gap = "6px";
-    }
-
     // Badge TC
     let tcLabel = document.createElement("span");
     tcLabel.textContent = tc;
     tcLabel.className = "tc-foot-label";
     tcLabel.style.background = "#e0e7ff";
     tcLabel.style.color = "#1e40af";
-    tcLabel.style.padding =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "2px 7px"
-        : "3px 12px";
+    tcLabel.style.padding = "3px 12px";
     tcLabel.style.borderRadius = "14px";
     tcLabel.style.fontWeight = "bold";
-    tcLabel.style.fontSize =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "0.97em"
-        : "1em";
-
-    // Label explicite pour le type de pied
-    let piedLabel = document.createElement("span");
-    piedLabel.textContent = "Type Conteneur (pied) :";
-    piedLabel.style.color = "#2563eb";
-    piedLabel.style.fontWeight = "bold";
-    piedLabel.style.fontSize =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "0.95em"
-        : "0.98em";
-    piedLabel.style.marginRight =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "2px"
-        : "4px";
-    piedLabel.style.minWidth =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "90px"
-        : "120px";
-    piedLabel.style.display = "block";
 
     // Select pour le type de pied
     let piedSelect = document.createElement("select");
     piedSelect.className = "tc-foot-select";
     piedSelect.style.flex = "1";
-    piedSelect.style.padding =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "3px 7px"
-        : "5px 10px";
+    piedSelect.style.padding = "5px 10px";
     piedSelect.style.border = "1px solid #b6c6e6";
     piedSelect.style.borderRadius = "8px";
-    piedSelect.style.fontSize =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "0.97em"
-        : "1em";
-    piedSelect.style.minWidth =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "70px"
-        : "90px";
+    piedSelect.style.fontSize = "1em";
 
     piedOptions.forEach((opt) => {
       let option = document.createElement("option");
@@ -1318,112 +1129,23 @@ function renderContainerFootTypes() {
     piedInput.placeholder = "Type personnalisé";
     piedInput.className = "tc-foot-input";
     piedInput.style.flex = "1";
-    piedInput.style.padding =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "3px 7px"
-        : "5px 10px";
+    piedInput.style.padding = "5px 10px";
     piedInput.style.border = "1px solid #b6c6e6";
     piedInput.style.borderRadius = "8px";
-    piedInput.style.fontSize =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "0.97em"
-        : "1em";
+    piedInput.style.fontSize = "1em";
     piedInput.style.display = "none";
-    piedInput.style.marginTop =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "2px"
-        : "4px";
 
-    // Initial value pied
-    let currentValue = containerFootTypes[idx]
-      ? containerFootTypes[idx].pied
-      : "";
-    if (piedOptions.includes(currentValue)) {
-      piedSelect.value = currentValue;
-      piedInput.value = "";
-      piedInput.style.display = "none";
-    } else if (currentValue) {
-      piedSelect.value = "Autre...";
-      piedInput.value = currentValue;
-      piedInput.style.display = "block";
-    }
-
-    piedSelect.addEventListener("change", () => {
-      if (piedSelect.value === "Autre...") {
-        piedInput.style.display = "block";
-        piedInput.focus();
-        containerFootTypes[idx] = { tc, pied: piedInput.value };
-      } else {
-        piedInput.style.display = "none";
-        containerFootTypes[idx] = { tc, pied: piedSelect.value };
-      }
-    });
-    piedInput.addEventListener("input", () => {
-      containerFootTypes[idx] = { tc, pied: piedInput.value };
-    });
-
-    // Init valeur
-    if (!containerFootTypes[idx])
-      containerFootTypes[idx] = { tc, pied: piedSelect.value };
-
-    // Adaptation mobile : label et select sur deux lignes si écran étroit
-    if (window.matchMedia && window.matchMedia("(max-width: 600px)").matches) {
-      row.style.flexDirection = "column";
-      piedLabel.style.marginBottom = "1px";
-      piedLabel.style.marginRight = "0";
-      piedLabel.style.textAlign = "left";
-      piedSelect.style.width = "100%";
-      piedSelect.style.minWidth = "unset";
-      piedInput.style.width = "100%";
-    }
-
-    row.appendChild(tcLabel);
-    row.appendChild(piedLabel);
-    row.appendChild(piedSelect);
-    row.appendChild(piedInput);
-    cardTC.appendChild(row);
-
-    // Champ Poids séparé, en dessous
-    let poidsRow = document.createElement("div");
-    poidsRow.style.display = "flex";
-    poidsRow.style.alignItems = "center";
-    poidsRow.style.gap =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "6px"
-        : "10px";
-    poidsRow.style.marginTop =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "2px"
-        : "4px";
-
-    let poidsLabel = document.createElement("span");
-    poidsLabel.textContent = "Poids (kg) :";
-    poidsLabel.style.color = "#2563eb";
-    poidsLabel.style.fontWeight = "bold";
-    poidsLabel.style.fontSize =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "0.95em"
-        : "0.98em";
-
+    // Input pour le poids
     let poidsInput = document.createElement("input");
     poidsInput.type = "number";
     poidsInput.placeholder = "Poids (kg)";
     poidsInput.className = "tc-weight-input";
     poidsInput.style.flex = "unset";
-    poidsInput.style.width =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "70px"
-        : "98px";
-    poidsInput.style.padding =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "3px 5px"
-        : "4px 6px";
+    poidsInput.style.width = "98px";
+    poidsInput.style.padding = "4px 6px";
     poidsInput.style.border = "2px solid #2563eb";
     poidsInput.style.borderRadius = "8px";
-    poidsInput.style.fontSize =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
-        ? "0.97em"
-        : "1em";
+    poidsInput.style.fontSize = "1em";
     poidsInput.style.background = "#fff";
     poidsInput.style.color = "#1e293b";
     poidsInput.style.fontWeight = "bold";
@@ -1442,19 +1164,51 @@ function renderContainerFootTypes() {
       poidsInput.style.background = "#fff";
     });
 
+    // Initial value pied
+    let currentValue = containerFootTypes[idx]
+      ? containerFootTypes[idx].pied
+      : "";
+    if (piedOptions.includes(currentValue)) {
+      piedSelect.value = currentValue;
+      piedInput.value = "";
+      piedInput.style.display = "none";
+    } else if (currentValue) {
+      piedSelect.value = "Autre...";
+      piedInput.value = currentValue;
+      piedInput.style.display = "block";
+    }
+
     // Initial value poids
     poidsInput.value =
       containerWeights[idx] !== undefined ? containerWeights[idx] : "";
+
+    piedSelect.addEventListener("change", () => {
+      if (piedSelect.value === "Autre...") {
+        piedInput.style.display = "block";
+        piedInput.focus();
+        containerFootTypes[idx] = { tc, pied: piedInput.value };
+      } else {
+        piedInput.style.display = "none";
+        containerFootTypes[idx] = { tc, pied: piedSelect.value };
+      }
+    });
+    piedInput.addEventListener("input", () => {
+      containerFootTypes[idx] = { tc, pied: piedInput.value };
+    });
     poidsInput.addEventListener("input", () => {
       containerWeights[idx] = poidsInput.value;
     });
+
+    // Init valeur
+    if (!containerFootTypes[idx])
+      containerFootTypes[idx] = { tc, pied: piedSelect.value };
     if (containerWeights[idx] === undefined) containerWeights[idx] = "";
 
-    poidsRow.appendChild(poidsLabel);
-    poidsRow.appendChild(poidsInput);
-    cardTC.appendChild(poidsRow);
-
-    dynamicContainer.appendChild(cardTC);
+    row.appendChild(tcLabel);
+    row.appendChild(piedSelect);
+    row.appendChild(piedInput);
+    row.appendChild(poidsInput);
+    dynamicContainer.appendChild(row);
   });
 
   // Masquer le select d'origine
