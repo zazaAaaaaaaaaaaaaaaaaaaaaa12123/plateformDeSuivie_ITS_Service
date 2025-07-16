@@ -258,14 +258,7 @@ document.addEventListener("DOMContentLoaded", function () {
             );
           }
           // --- Ajout : gestion de la notification d'ordre de livraison ---
-          if (data.type === "new_delivery_notification") {
-            // Affiche une alerte personnalisée avec le nom de l'agent
-            let agent = data.employeeName || "Un agent";
-            let msg =
-              data.message ||
-              `L'agent ${agent} a établi un ordre de livraison.`;
-            showCustomAlert(msg, "info", 3500);
-          }
+          // (Suppression de l'alerte ici, elle est désormais gérée dans le tableau de suivi)
         } catch (e) {
           console.warn("[WebSocket] Message non JSON ou erreur :", event.data);
         }
