@@ -1266,7 +1266,9 @@ function init() {
           clientNameInput,
           containerTypeAndContentInput,
           lieuInput,
-          containerNumberInput,
+          containerNumberInput, // Numéro TC(s) obligatoire
+          blNumberInput, // Numéro de BL obligatoire
+          dossierNumberInput, // Numéro de dossier obligatoire
           // containerFootTypeSelect, // SUPPRIMÉ : ce champ n'existe plus, remplacé par la zone dynamique
           declarationNumberInput,
           numberOfContainersInput,
@@ -1296,7 +1298,7 @@ function init() {
         if (!allRequiredFilled) {
           displayMessage(
             formErrorDisplay,
-            "⚠️ Veuillez remplir tous les champs obligatoires (marqués avec *). Le nom du client est obligatoire.",
+            "⚠️ Veuillez remplir tous les champs obligatoires (marqués avec *). Le nom du client, le numéro TC(s), le numéro de BL et le numéro de dossier sont obligatoires.",
             "error"
           );
           if (firstEmptyInput) {
@@ -1702,6 +1704,49 @@ async function submitDeliveryForm(status) {
       "error"
     );
     return;
+  }
+
+  // Vérification spécifique des champs obligatoires BL, TC(s), dossier
+  if (!finalBlNumber) {
+    displayMessage(
+      formErrorDisplay,
+      "Le numéro de BL est obligatoire.",
+      "error"
+    );
+    if (blNumberInput)
+      blNumberInput.classList.add("border-red-500", "border-2");
+    if (blNumberInput) blNumberInput.focus();
+    return;
+  } else if (blNumberInput) {
+    blNumberInput.classList.remove("border-red-500", "border-2");
+  }
+
+  if (!containerNumbers || containerNumbers.length === 0) {
+    displayMessage(
+      formErrorDisplay,
+      "Le numéro TC(s) est obligatoire.",
+      "error"
+    );
+    if (containerTagsInput)
+      containerTagsInput.classList.add("border-red-500", "border-2");
+    if (containerTagsInput) containerTagsInput.focus();
+    return;
+  } else if (containerTagsInput) {
+    containerTagsInput.classList.remove("border-red-500", "border-2");
+  }
+
+  if (!finalDossierNumber) {
+    displayMessage(
+      formErrorDisplay,
+      "Le numéro de dossier est obligatoire.",
+      "error"
+    );
+    if (dossierNumberInput)
+      dossierNumberInput.classList.add("border-red-500", "border-2");
+    if (dossierNumberInput) dossierNumberInput.focus();
+    return;
+  } else if (dossierNumberInput) {
+    dossierNumberInput.classList.remove("border-red-500", "border-2");
   }
 
   const phoneRegex = /^\+?[0-9]{10,15}$/;
