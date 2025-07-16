@@ -570,6 +570,34 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 (async () => {
+  // Animation clignotement vert pour nouvelle ligne
+  const styleFlash = document.createElement("style");
+  styleFlash.textContent = `
+    @keyframes flash-green {
+      0%, 100% { background-color: #fff; }
+      10%, 90% { background-color: #a7f3d0; }
+      20%, 80% { background-color: #34d399; }
+      30%, 70% { background-color: #6ee7b7; }
+      40%, 60% { background-color: #34d399; }
+      50% { background-color: #22c55e; }
+    }
+    .flash-green-row td {
+      animation: flash-green 1s linear 0s 6;
+    }
+  `;
+  document.head.appendChild(styleFlash);
+
+  /**
+   * Fait clignoter une ligne du tableau en vert pendant 6 secondes.
+   * @param {HTMLTableRowElement} row - La ligne à faire clignoter.
+   */
+  function flashRowGreen(row) {
+    if (!row) return;
+    row.classList.add("flash-green-row");
+    setTimeout(() => {
+      row.classList.remove("flash-green-row");
+    }, 6000);
+  }
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsHost = window.location.hostname;
@@ -3135,6 +3163,8 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       const row = deliveriesTableBody.insertRow();
       row.id = `delivery-row-${delivery.id}`;
       row.dataset.deliveryId = delivery.id;
+      // Animation clignotement vert à chaque ajout
+      flashRowGreen(row);
 
       if (selectionMode) {
         const checkboxCell = row.insertCell();
@@ -4980,6 +5010,8 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       } else {
         agentDailyDeliveries.forEach((delivery, idx) => {
           const row = agentDailyDeliveriesTableBody.insertRow();
+          // Animation clignotement vert à chaque ajout dans le tableau agent
+          flashRowGreen(row);
           // Populate cells based on AGENT_TABLE_COLUMNS definition
           AGENT_TABLE_COLUMNS.forEach((col) => {
             const cell = row.insertCell();
