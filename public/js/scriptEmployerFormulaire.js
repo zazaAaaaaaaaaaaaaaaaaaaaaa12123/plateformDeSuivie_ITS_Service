@@ -1684,7 +1684,6 @@ async function submitDeliveryForm(status) {
 
   const requiredInputs = [
     employeeName,
-    clientName,
     clientPhone,
     containerTypeAndContent,
     lieu,
