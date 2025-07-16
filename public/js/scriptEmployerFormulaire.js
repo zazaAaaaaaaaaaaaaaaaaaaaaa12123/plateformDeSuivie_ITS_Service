@@ -1214,6 +1214,7 @@ function renderContainerFootTypes() {
   const piedOptions = ["10", "20", "40", "45"];
 
   containerTags.forEach((tc, idx) => {
+    // Ligne principale : badge TC + select pied + input personnalisé
     let row = document.createElement("div");
     row.style.display = "flex";
     row.style.alignItems = "center";
@@ -1256,7 +1257,56 @@ function renderContainerFootTypes() {
     piedInput.style.fontSize = "1em";
     piedInput.style.display = "none";
 
-    // Input pour le poids
+    // Initial value pied
+    let currentValue = containerFootTypes[idx]
+      ? containerFootTypes[idx].pied
+      : "";
+    if (piedOptions.includes(currentValue)) {
+      piedSelect.value = currentValue;
+      piedInput.value = "";
+      piedInput.style.display = "none";
+    } else if (currentValue) {
+      piedSelect.value = "Autre...";
+      piedInput.value = currentValue;
+      piedInput.style.display = "block";
+    }
+
+    piedSelect.addEventListener("change", () => {
+      if (piedSelect.value === "Autre...") {
+        piedInput.style.display = "block";
+        piedInput.focus();
+        containerFootTypes[idx] = { tc, pied: piedInput.value };
+      } else {
+        piedInput.style.display = "none";
+        containerFootTypes[idx] = { tc, pied: piedSelect.value };
+      }
+    });
+    piedInput.addEventListener("input", () => {
+      containerFootTypes[idx] = { tc, pied: piedInput.value };
+    });
+
+    // Init valeur
+    if (!containerFootTypes[idx])
+      containerFootTypes[idx] = { tc, pied: piedSelect.value };
+
+    row.appendChild(tcLabel);
+    row.appendChild(piedSelect);
+    row.appendChild(piedInput);
+    dynamicContainer.appendChild(row);
+
+    // Champ Poids séparé, en dessous
+    let poidsRow = document.createElement("div");
+    poidsRow.style.display = "flex";
+    poidsRow.style.alignItems = "center";
+    poidsRow.style.gap = "10px";
+    poidsRow.style.marginTop = "4px";
+
+    let poidsLabel = document.createElement("span");
+    poidsLabel.textContent = "Poids (kg) :";
+    poidsLabel.style.color = "#2563eb";
+    poidsLabel.style.fontWeight = "bold";
+    poidsLabel.style.fontSize = "0.98em";
+
     let poidsInput = document.createElement("input");
     poidsInput.type = "number";
     poidsInput.placeholder = "Poids (kg)";
@@ -1285,51 +1335,17 @@ function renderContainerFootTypes() {
       poidsInput.style.background = "#fff";
     });
 
-    // Initial value pied
-    let currentValue = containerFootTypes[idx]
-      ? containerFootTypes[idx].pied
-      : "";
-    if (piedOptions.includes(currentValue)) {
-      piedSelect.value = currentValue;
-      piedInput.value = "";
-      piedInput.style.display = "none";
-    } else if (currentValue) {
-      piedSelect.value = "Autre...";
-      piedInput.value = currentValue;
-      piedInput.style.display = "block";
-    }
-
     // Initial value poids
     poidsInput.value =
       containerWeights[idx] !== undefined ? containerWeights[idx] : "";
-
-    piedSelect.addEventListener("change", () => {
-      if (piedSelect.value === "Autre...") {
-        piedInput.style.display = "block";
-        piedInput.focus();
-        containerFootTypes[idx] = { tc, pied: piedInput.value };
-      } else {
-        piedInput.style.display = "none";
-        containerFootTypes[idx] = { tc, pied: piedSelect.value };
-      }
-    });
-    piedInput.addEventListener("input", () => {
-      containerFootTypes[idx] = { tc, pied: piedInput.value };
-    });
     poidsInput.addEventListener("input", () => {
       containerWeights[idx] = poidsInput.value;
     });
-
-    // Init valeur
-    if (!containerFootTypes[idx])
-      containerFootTypes[idx] = { tc, pied: piedSelect.value };
     if (containerWeights[idx] === undefined) containerWeights[idx] = "";
 
-    row.appendChild(tcLabel);
-    row.appendChild(piedSelect);
-    row.appendChild(piedInput);
-    row.appendChild(poidsInput);
-    dynamicContainer.appendChild(row);
+    poidsRow.appendChild(poidsLabel);
+    poidsRow.appendChild(poidsInput);
+    dynamicContainer.appendChild(poidsRow);
   });
 
   // Masquer le select d'origine
