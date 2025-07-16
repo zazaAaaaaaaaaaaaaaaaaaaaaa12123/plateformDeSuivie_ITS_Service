@@ -449,34 +449,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let html = '<div style="padding-bottom:10px;">';
     let globalIdx = 0;
     sortedDates.forEach((dateKey) => {
-      // Titre de date (sécurité sur le format)
-      let yyyy = "",
-        mm = "",
-        dd = "";
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
-        [yyyy, mm, dd] = dateKey.split("-");
-      }
-      let dateAffichee =
-        dd && mm && yyyy
-          ? `${dd}/${mm}/${yyyy}`
-          : dateKey !== "?"
-          ? dateKey
-          : "Date inconnue";
-      // Ajout du nom de l'utilisateur (Serge) à côté de la date, responsive
-      html += `<div class="history-date-user">
-        <span class="history-date">${dateAffichee}</span>
-        <span class="history-user">Serge</span>
-      </div>`;
       html += '<ul style="list-style:none;padding:0;margin:0;">';
       ordersByDate[dateKey].forEach((item, idx) => {
-        // Génère la carte de l'ordre
+        // Génère la carte de l'ordre sans date ni utilisateur
         let liHtml = `<li class="history-order-item" data-history-idx="${globalIdx}" style="background:linear-gradient(90deg,#f1f5f9 80%,#e0e7ff 100%);margin-bottom:7px;padding:18px 18px 16px 18px;border-radius:14px;box-shadow:0 2px 10px #2563eb13;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:box-shadow 0.18s;position:relative;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
-            <span style="background:#2563eb;color:#fff;border-radius:8px 18px 18px 8px;width:auto;min-width:70px;padding:4px 14px 4px 10px;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:1em;box-shadow:0 1px 4px #2563eb11;letter-spacing:0.5px;">${
-              item.date
-                ? item.date.slice(0, 10).split("-").reverse().join("/")
-                : "--/--/----"
-            }</span>
             <span style="color:#64748b;font-size:0.98em;font-weight:500;">${
               item.data && item.data.clientName
                 ? item.data.clientName
@@ -732,9 +709,6 @@ document.addEventListener("DOMContentLoaded", () => {
         };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Date</span><br><span style='font-weight:700;color:#2563eb;'>${
-            order.date || "-"
-          }</span></div>
           <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Agent</span><br><span style='font-weight:700;'>${
             d.employeeName || "-"
           }</span></div>
@@ -1298,11 +1272,9 @@ function init() {
           return;
         }
 
-        // Le numéro de téléphone du client est facultatif. S'il est renseigné, on vérifie le format, sinon on laisse passer.
         const phoneRegex = /^\+?[0-9]{10,15}$/;
         if (
           clientPhoneInput &&
-          clientPhoneInput.value.trim() !== "" &&
           !phoneRegex.test(clientPhoneInput.value.trim())
         ) {
           displayMessage(
@@ -1695,21 +1667,14 @@ async function submitDeliveryForm(status) {
     return;
   }
 
-  // Le numéro de téléphone du client est facultatif. S'il est renseigné, on vérifie le format, sinon on laisse passer.
   const phoneRegex = /^\+?[0-9]{10,15}$/;
-  if (clientPhone && clientPhone !== "" && !phoneRegex.test(clientPhone)) {
+  if (!phoneRegex.test(clientPhone)) {
     displayMessage(
       formErrorDisplay,
       "Veuillez entrer un numéro de téléphone client valide (ex: 0700000000 ou +2250700000000).",
       "error"
     );
-    if (clientPhoneInput) {
-      clientPhoneInput.classList.add("border-red-500", "border-2");
-      clientPhoneInput.focus();
-    }
     return;
-  } else if (clientPhoneInput) {
-    clientPhoneInput.classList.remove("border-red-500", "border-2");
   }
 
   const formData = new FormData();

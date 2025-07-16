@@ -8725,4 +8725,4 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en cas de pertubation 125 AAAA34 ***/
+/****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
