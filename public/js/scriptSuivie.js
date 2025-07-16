@@ -41,63 +41,6 @@
   `;
   document.head.appendChild(style);
 })();
-
-// --- DRAG & DROP pour les boutons d'action (ordre personnalisable) ---
-document.addEventListener("DOMContentLoaded", function () {
-  const containers = document.querySelectorAll(
-    ".boutons-container, .tableau-boutons, .table-buttons, .table-btns, .tableauPrincipalRetards .btn-container, .tableauPrincipalRetards .boutons-container, .bottom-buttons"
-  );
-  containers.forEach((container) => {
-    // Force display:flex pour éviter les problèmes de layout
-    container.style.display = "flex";
-    container.style.gap = "10px";
-    let draggedBtn = null;
-    let dragOverBtn = null;
-    container.querySelectorAll("button").forEach((btn) => {
-      btn.setAttribute("draggable", "true");
-      btn.style.cursor = "grab";
-      btn.addEventListener("dragstart", function (e) {
-        draggedBtn = btn;
-        btn.style.opacity = "0.5";
-        e.dataTransfer.effectAllowed = "move";
-        setTimeout(() => {
-          btn.style.visibility = "hidden";
-        }, 0);
-      });
-      btn.addEventListener("dragend", function () {
-        draggedBtn = null;
-        btn.style.opacity = "";
-        btn.style.visibility = "visible";
-        if (dragOverBtn) dragOverBtn.style.border = "";
-      });
-      btn.addEventListener("dragover", function (e) {
-        e.preventDefault();
-      });
-      btn.addEventListener("drop", function (e) {
-        e.preventDefault();
-        if (draggedBtn && draggedBtn !== btn) {
-          // Insère le bouton déplacé avant ou après selon la position
-          const rect = btn.getBoundingClientRect();
-          const isAfter = e.clientX > rect.left + rect.width / 2;
-          if (isAfter && btn.nextSibling) {
-            container.insertBefore(draggedBtn, btn.nextSibling);
-          } else {
-            container.insertBefore(draggedBtn, btn);
-          }
-        }
-        btn.style.border = "";
-      });
-      btn.addEventListener("dragenter", function (e) {
-        e.preventDefault();
-        dragOverBtn = btn;
-        btn.style.border = "2px dashed #2563eb";
-      });
-      btn.addEventListener("dragleave", function () {
-        btn.style.border = "";
-      });
-    });
-  });
-});
 function renderLateDossiersTable() {
   // Cherche le conteneur du tableau principal (à adapter selon ton HTML)
   const tableContainer = document.getElementById("tableauPrincipalRetards");
