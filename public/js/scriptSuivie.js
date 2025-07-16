@@ -6228,7 +6228,19 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     }
 
     console.log("Attempting to connect to WebSocket...");
-    socket = new WebSocket("ws://localhost:3000");
+    // Détection automatique de l'URL WebSocket selon l'environnement
+    let wsUrl;
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      wsUrl = "ws://localhost:3000";
+    } else {
+      // Utilise le protocole et l'hôte du site actuel, adapte pour ws/wss
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      wsUrl = protocol + "//" + window.location.host;
+    }
+    socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
       console.log("WebSocket connection established.");
