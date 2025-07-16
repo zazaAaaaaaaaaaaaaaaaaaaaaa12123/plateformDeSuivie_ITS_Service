@@ -6322,7 +6322,13 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     };
 
     socket.onclose = (event) => {
-      console.warn("WebSocket connection closed:", event.code, event.reason);
+      let reason = "Erreur de connexion WebSocket.";
+      if (event && typeof event.code !== "undefined") {
+        reason += ` (Code: ${event.code}`;
+        if (event.reason) reason += `, Motif: ${event.reason}`;
+        reason += ")";
+      }
+      showCustomAlert(reason + " Tentative de reconnexion...", "error", 7000);
       // Attempt to reconnect after a delay if the closure was not intentional
       if (event.code !== 1000) {
         // 1000 is normal closure
@@ -6334,10 +6340,12 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     socket.onerror = (error) => {
       console.error("WebSocket error:", error);
       showCustomAlert(
-        "Erreur de connexion WebSocket. Tentative de reconnexion...",
+        "Erreur WebSocket : " +
+          (error && error.message ? error.message : "Erreur inconnue."),
         "error",
-        5000
+        7000
       );
+      socket.close();
     };
   }
 
