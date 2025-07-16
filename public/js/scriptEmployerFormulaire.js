@@ -827,7 +827,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:${
           isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
+        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
         isMobile ? "10px 8px" : "12px 18px"
       };border-radius:12px;">
           <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Mode de transport</span><br><span style='font-weight:700'>{
@@ -985,11 +985,25 @@ if (containerNumberInput) {
     containerNumberInput
   );
 
+  // === Correction : Création forcée du conteneur dynamique si absent ===
+  let dynamicContainer = document.getElementById("containerFootTypesDynamic");
+  if (!dynamicContainer) {
+    dynamicContainer = document.createElement("div");
+    dynamicContainer.id = "containerFootTypesDynamic";
+    dynamicContainer.style.marginTop = "8px";
+    dynamicContainer.style.display = "flex";
+    dynamicContainer.style.flexDirection = "column";
+    dynamicContainer.style.gap = "8px";
+    dynamicContainer.style.marginBottom = "10px";
+    containerTagsContainer.parentNode.insertBefore(
+      dynamicContainer,
+      containerTagsContainer.nextSibling
+    );
+  }
+
   // === Ajout : Affichage dynamique du type de pied/poids dès la première saisie ===
   containerTagsInput.addEventListener("input", function () {
-    const dynamicContainer = document.getElementById(
-      "containerFootTypesDynamic"
-    );
+    let dynamicContainer = document.getElementById("containerFootTypesDynamic");
     if (!dynamicContainer) return;
     // Si l'utilisateur saisit un TC non encore validé
     const value = containerTagsInput.value.trim();
@@ -1084,7 +1098,7 @@ if (containerNumberInput) {
     } else if (!value) {
       // Si le champ est vide, on réinitialise la zone dynamique si aucun TC validé
       if (containerTags.length === 0) {
-        const dynamicContainer = document.getElementById(
+        let dynamicContainer = document.getElementById(
           "containerFootTypesDynamic"
         );
         if (dynamicContainer) dynamicContainer.innerHTML = "";
