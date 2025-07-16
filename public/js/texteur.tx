@@ -1,4 +1,46 @@
 // === Génération dynamique du tableau principal des dossiers en retard ===
+// === INJECTION DU STYLE RESPONSIVE POUR LES BOUTONS DU TABLEAU DE SUIVI ===
+(function injectResponsiveButtonStyle() {
+  if (document.getElementById("responsiveButtonStyle")) return;
+  const style = document.createElement("style");
+  style.id = "responsiveButtonStyle";
+  style.textContent = `
+    @media (max-width: 900px) {
+      .boutons-container, .tableau-boutons, .table-buttons, .table-btns, .tableauPrincipalRetards .btn-container, .tableauPrincipalRetards .boutons-container {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+        margin-bottom: 12px !important;
+      }
+      .boutons-container button, .tableau-boutons button, .table-buttons button, .table-btns button, .tableauPrincipalRetards .btn-container button, .tableauPrincipalRetards .boutons-container button {
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        font-size: 1em !important;
+      }
+    }
+
+    /* Forcer l'alignement à droite du bouton Suivi spécifique Agent sur tous les écrans */
+    .employee-tracking-btn-wrapper {
+      display: flex !important;
+      justify-content: flex-end !important;
+      align-items: center !important;
+      width: 100% !important;
+      margin-bottom: 0 !important;
+      margin-top: 0 !important;
+    }
+    #employeeTrackingBtn {
+      margin-left: auto !important;
+      margin-right: 0 !important;
+      display: inline-block !important;
+      float: none !important;
+      position: static !important;
+    }
+  `;
+  document.head.appendChild(style);
+})();
 function renderLateDossiersTable() {
   // Cherche le conteneur du tableau principal (à adapter selon ton HTML)
   const tableContainer = document.getElementById("tableauPrincipalRetards");
@@ -570,59 +612,129 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 (async () => {
-  // --- SYNCHRONISATION TEMPS RÉEL VIA WEBSOCKET ---
-  // Connexion WebSocket pour recevoir les notifications de mise à jour en temps réel
+  // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
+  // Détection automatique de l'environnement pour l'URL WebSocket
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsHost = window.location.hostname;
   let wsPort = window.location.port || "3000";
-  // Si l'app est servie en local, forcer le port 3000 (backend)
+  let wsUrl;
   if (wsHost === "localhost" || wsHost === "127.0.0.1") {
-    wsPort = "3000";
+    wsUrl = `${wsProtocol}://${wsHost}:3000`;
+  } else {
+    // Production : onrender.com ou autre domaine
+    wsUrl = `${wsProtocol}://plateformdesuivie-its-service.onrender.com`;
   }
-  let wsUrl = `${wsProtocol}://${wsHost}:${wsPort}`;
-  let ws;
-  try {
-    ws = new WebSocket(wsUrl);
-  } catch (e) {
-    console.warn("Impossible d'ouvrir la connexion WebSocket :", e);
-  }
+  let ws = null;
+  let pollingInterval = null;
+  let lastDeliveriesCount = null;
 
-  if (ws) {
-    ws.onopen = () => {
-      console.log(
-        "[WebSocket] Connecté au serveur pour la synchro temps réel."
-      );
-    };
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        // Types de messages qui doivent déclencher un rafraîchissement de l'alerte uniquement
-        const typesToRefresh = [
-          "delivery_update_alert",
-          "container_status_update",
-          "delivery_deletion_alert",
-          "new_delivery_notification",
-        ];
-        if (data && data.type && typesToRefresh.includes(data.type)) {
-          // Recharge uniquement les livraisons et met à jour l'alerte sans rafraîchir le tableau principal
-          loadDeliveries().then(() => {
-            if (typeof checkLateContainers === "function")
-              checkLateContainers();
-            // NE PAS rappeler filterDeliveriesIntoCategories ni applyCombinedFilters ici
-          });
+  function startPollingDeliveries() {
+    if (pollingInterval) return;
+    pollingInterval = setInterval(() => {
+      loadDeliveries().then(() => {
+        if (typeof checkLateContainers === "function") checkLateContainers();
+        // Détection d'une nouvelle livraison (optionnel)
+        if (Array.isArray(window.deliveries)) {
+          if (
+            lastDeliveriesCount !== null &&
+            window.deliveries.length > lastDeliveriesCount
+          ) {
+            // Nouvelle livraison détectée
+            showCustomAlert(
+              "Nouvelle livraison reçue ! (mode fallback)",
+              "success",
+              2500
+            );
+          }
+          lastDeliveriesCount = window.deliveries.length;
         }
-      } catch (e) {
-        console.warn("[WebSocket] Message non JSON ou erreur :", event.data, e);
-      }
-    };
-    ws.onerror = (err) => {
-      console.error("[WebSocket] Erreur :", err);
-    };
-    ws.onclose = () => {
-      console.warn(
-        "[WebSocket] Déconnecté du serveur. La synchro temps réel ne fonctionnera plus."
+      });
+    }, 15000); // 15s
+    console.warn("[Polling] Fallback AJAX activé pour la synchro livraisons");
+  }
+  function stopPollingDeliveries() {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      pollingInterval = null;
+    }
+  }
+  function initWebSocketLivraisons() {
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onopen = function () {
+        console.debug("[WebSocket] Connecté pour synchro livraisons");
+        stopPollingDeliveries();
+      };
+      ws.onmessage = function (event) {
+        try {
+          const data = JSON.parse(event.data);
+          const typesToRefresh = [
+            "delivery_update_alert",
+            "container_status_update",
+            "delivery_deletion_alert",
+            "new_delivery_notification",
+          ];
+          if (data && data.type && typesToRefresh.includes(data.type)) {
+            loadDeliveries().then(() => {
+              if (typeof checkLateContainers === "function")
+                checkLateContainers();
+            });
+          }
+        } catch (e) {
+          console.warn(
+            "[WebSocket] Message non JSON ou erreur :",
+            event.data,
+            e
+          );
+        }
+      };
+      ws.onclose = function (event) {
+        let reason = "Connexion WebSocket perdue.";
+        if (event && typeof event.code !== "undefined") {
+          reason += ` (Code: ${event.code}`;
+          if (event.reason) reason += `, Motif: ${event.reason}`;
+          reason += ")";
+        }
+        showCustomAlert(
+          reason +
+            "\nLa synchronisation temps réel est désactivée, passage en mode fallback.",
+          "error",
+          7000
+        );
+        console.warn(
+          "[WebSocket] Déconnecté. Fallback AJAX activé dans 2s...",
+          event
+        );
+        setTimeout(() => {
+          startPollingDeliveries();
+          // On retente le WebSocket après 30s
+          setTimeout(initWebSocketLivraisons, 30000);
+        }, 2000);
+      };
+      ws.onerror = function (event) {
+        showCustomAlert(
+          "Erreur WebSocket : " +
+            (event && event.message ? event.message : "Erreur inconnue."),
+          "error",
+          7000
+        );
+        ws.close();
+      };
+    } catch (e) {
+      console.error("[WebSocket] Erreur d'init :", e);
+      showCustomAlert(
+        "Erreur d'initialisation WebSocket : " + e.message,
+        "error",
+        7000
       );
-    };
+      startPollingDeliveries();
+    }
+  }
+  // Lance d'abord le WebSocket, sinon fallback polling
+  if (window["WebSocket"]) {
+    initWebSocketLivraisons();
+  } else {
+    startPollingDeliveries();
   }
   // Inject CSS for pulsating dot animation and new dropdown styles
   // This style block is dynamically added to the document's head.
@@ -823,8 +935,23 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     }
 
 
+
+    /* Bouton Suivie spécifique agent : alignement à droite (fix flexbox) */
+    .employee-tracking-btn-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        width: 100%;
+    }
+    #employeeTrackingBtn {
+        margin-left: auto;
+        margin-right: 0;
+        display: inline-block;
+        float: none;
+        position: static;
+    }
+
     /* Padding for the main content sections within the agent activity box */
-    /* This ensures content inside the box has proper spacing from the edges */
     #agentSummarySection,
     .agent-activity-table-wrapper, /* Assuming a wrapper for the table */
     .monthly-history-section {
@@ -2144,7 +2271,17 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       loadingOverlay.style.display = "flex";
     }
     try {
-      const response = await fetch("http://localhost:3000/deliveries/status");
+      // Détection automatique de l'URL API selon l'environnement
+      let apiUrl;
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      ) {
+        apiUrl = "http://localhost:3000/deliveries/status";
+      } else {
+        apiUrl = window.location.origin + "/deliveries/status";
+      }
+      const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -6158,7 +6295,19 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     }
 
     console.log("Attempting to connect to WebSocket...");
-    socket = new WebSocket("ws://localhost:3000");
+    // Détection automatique de l'URL WebSocket selon l'environnement
+    let wsUrl;
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      wsUrl = "ws://localhost:3000";
+    } else {
+      // Utilise le protocole et l'hôte du site actuel, adapte pour ws/wss
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      wsUrl = protocol + "//" + window.location.host;
+    }
+    socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
       console.log("WebSocket connection established.");
@@ -6252,7 +6401,13 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     };
 
     socket.onclose = (event) => {
-      console.warn("WebSocket connection closed:", event.code, event.reason);
+      let reason = "Erreur de connexion WebSocket.";
+      if (event && typeof event.code !== "undefined") {
+        reason += ` (Code: ${event.code}`;
+        if (event.reason) reason += `, Motif: ${event.reason}`;
+        reason += ")";
+      }
+      showCustomAlert(reason + " Tentative de reconnexion...", "error", 7000);
       // Attempt to reconnect after a delay if the closure was not intentional
       if (event.code !== 1000) {
         // 1000 is normal closure
@@ -6263,11 +6418,18 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
     socket.onerror = (error) => {
       console.error("WebSocket error:", error);
-      showCustomAlert(
-        "Erreur de connexion WebSocket. Tentative de reconnexion...",
-        "error",
-        5000
-      );
+      // Affichage professionnel de l'erreur WebSocket
+      let errorMsg =
+        `<div style="display:flex;align-items:center;gap:14px;">` +
+        `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" style="background:linear-gradient(90deg,#f87171 60%,#facc15 100%);border-radius:8px;padding:2px;"><rect width="32" height="32" rx="8" fill="#fde047"/><path d="M16 10v6m0 4h.01" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>` +
+        `<span style="font-size:1.08em;font-weight:700;color:#ef4444;">Erreur WebSocket</span>` +
+        `</div>`;
+      errorMsg += `<div style="margin-top:8px;font-size:0.98em;color:#334155;">${
+        error && error.message ? error.message : "Erreur inconnue."
+      }</div>`;
+      errorMsg += `<div style="margin-top:6px;font-size:0.93em;color:#64748b;">La connexion en temps réel est perdue. Veuillez vérifier votre réseau ou contacter le support si le problème persiste.</div>`;
+      showCustomAlert(errorMsg, "error", 9000);
+      socket.close();
     };
   }
 
@@ -6277,7 +6439,10 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // Exécute ces fonctions si les éléments DOM principaux sont présents
   if (deliveriesTableBody) {
-    // === AJOUT BOUTON VUE DOSSIERS CLIENTS ===
+    // === AJOUT BOUTON VUE DOSSIERS CLIENTS ENTRE ACTIVER SÉLECTION ET GÉNÉRER PDF ===
+    const toggleSelectionBtn = document.getElementById("toggleSelectionBtn");
+    const generatePdfBtn = document.getElementById("generatePdfBtn");
+
     const dossiersBtn = document.createElement("button");
     dossiersBtn.id = "viewClientFoldersBtn";
     dossiersBtn.textContent = "📁 Vue Dossiers Clients";
@@ -6302,21 +6467,22 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
       dossiersBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
     };
-    // Ajoute le bouton juste avant le tableau principal
-    if (deliveriesTable && deliveriesTable.parentNode) {
-      // On place le bouton dossiers juste après le bouton "activer la sélection" s'il existe
-      const selectionBtn = document.getElementById("toggleSelectionBtn");
-      if (selectionBtn && selectionBtn.parentNode) {
-        selectionBtn.parentNode.insertBefore(
-          dossiersBtn,
-          selectionBtn.nextSibling
-        );
-      } else {
-        deliveriesTable.parentNode.insertBefore(dossiersBtn, deliveriesTable);
-      }
-    }
-    // Ajoute l'eventListener ici (et uniquement ici)
     dossiersBtn.addEventListener("click", showClientFoldersModal);
+
+    // Insère le bouton entre Activer Sélection et Générer PDF
+    if (
+      toggleSelectionBtn &&
+      generatePdfBtn &&
+      toggleSelectionBtn.parentNode === generatePdfBtn.parentNode
+    ) {
+      toggleSelectionBtn.parentNode.insertBefore(dossiersBtn, generatePdfBtn);
+    } else if (generatePdfBtn && generatePdfBtn.parentNode) {
+      generatePdfBtn.parentNode.insertBefore(dossiersBtn, generatePdfBtn);
+    } else if (toggleSelectionBtn && toggleSelectionBtn.parentNode) {
+      toggleSelectionBtn.parentNode.appendChild(dossiersBtn);
+    } else if (deliveriesTable && deliveriesTable.parentNode) {
+      deliveriesTable.parentNode.insertBefore(dossiersBtn, deliveriesTable);
+    }
 
     // Crée un conteneur pour la vue dossiers (masqué par défaut)
     const clientFoldersContainer = document.createElement("div");
@@ -8476,5 +8642,67 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // Optionnel : expose la fonction pour l'appeler ailleurs si besoin
   window.refreshLateFoldersTable = refreshLateFoldersTable;
+
+  // ================== CLIGNOTEMENT VERT NOUVELLE LIGNE (FORCÉ) ==================
+  // Patch direct sur le tableau principal
+  let previousDeliveryIds = new Set();
+  function forceBlinkOnNewRows() {
+    if (!deliveriesTableBody) return;
+    const trs = deliveriesTableBody.querySelectorAll("tr");
+    const currentIds = new Set();
+    trs.forEach((tr) => {
+      // On récupère l'ID de livraison
+      let id = tr.getAttribute("data-delivery-id");
+      // Si pas d'ID, on utilise l'index
+      if (!id) id = tr.rowIndex;
+      currentIds.add(id);
+      if (!previousDeliveryIds.has(id)) {
+        tr.classList.add("row-green-blink");
+        tr.querySelectorAll("td").forEach((td) => {
+          td.style.transition = "background-color 0.3s";
+          td.style.backgroundColor = "#34d399";
+        });
+        setTimeout(() => {
+          tr.classList.remove("row-green-blink");
+          tr.querySelectorAll("td").forEach((td) => {
+            td.style.backgroundColor = "";
+          });
+        }, 5000);
+        console.log("[FORCE BLINK] Ligne clignotante:", tr);
+      }
+    });
+    previousDeliveryIds = currentIds;
+  }
+
+  // Ajoute le style CSS si absent
+  (function injectBlinkStyle() {
+    if (document.getElementById("rowGreenBlinkStyle")) return;
+    const style = document.createElement("style");
+    style.id = "rowGreenBlinkStyle";
+    style.textContent = `
+      @keyframes green-blink {
+        0% { background-color: #d1fae5; }
+        20% { background-color: #34d399; }
+        40% { background-color: #6ee7b7; }
+        60% { background-color: #34d399; }
+        80% { background-color: #d1fae5; }
+        100% { background-color: inherit; }
+      }
+      .row-green-blink td {
+        animation: green-blink 1s linear 0s 5;
+        background-color: #34d399 !important;
+      }
+    `;
+    document.head.appendChild(style);
+  })();
+
+  // Appelle le clignotement après chaque rendu du tableau principal
+  const originalApplyCombinedFilters =
+    window.applyCombinedFilters || applyCombinedFilters;
+  window.applyCombinedFilters = function (...args) {
+    originalApplyCombinedFilters.apply(this, args);
+    setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
+  };
+  // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA34 ***/

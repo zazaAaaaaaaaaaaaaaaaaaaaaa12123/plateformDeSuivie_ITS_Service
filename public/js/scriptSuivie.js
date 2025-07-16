@@ -41,6 +41,50 @@
   `;
   document.head.appendChild(style);
 })();
+
+// --- DRAG & DROP pour les boutons d'action (ordre personnalisable) ---
+document.addEventListener("DOMContentLoaded", function () {
+  const containers = document.querySelectorAll(
+    ".boutons-container, .tableau-boutons, .table-buttons, .table-btns, .tableauPrincipalRetards .btn-container, .tableauPrincipalRetards .boutons-container"
+  );
+  containers.forEach((container) => {
+    let draggedBtn = null;
+    // On rend chaque bouton draggable
+    container.querySelectorAll("button").forEach((btn) => {
+      btn.setAttribute("draggable", "true");
+      btn.style.cursor = "grab";
+      btn.addEventListener("dragstart", function (e) {
+        draggedBtn = btn;
+        btn.style.opacity = "0.5";
+        e.dataTransfer.effectAllowed = "move";
+      });
+      btn.addEventListener("dragend", function () {
+        draggedBtn = null;
+        btn.style.opacity = "";
+      });
+      btn.addEventListener("dragover", function (e) {
+        e.preventDefault();
+      });
+      btn.addEventListener("drop", function (e) {
+        e.preventDefault();
+        if (draggedBtn && draggedBtn !== btn) {
+          // Insère le bouton déplacé avant le bouton survolé
+          container.insertBefore(draggedBtn, btn);
+        }
+      });
+      btn.addEventListener("dragenter", function (e) {
+        e.preventDefault();
+        btn.style.border = "2px dashed #2563eb";
+      });
+      btn.addEventListener("dragleave", function () {
+        btn.style.border = "";
+      });
+      btn.addEventListener("drop", function () {
+        btn.style.border = "";
+      });
+    });
+  });
+});
 function renderLateDossiersTable() {
   // Cherche le conteneur du tableau principal (à adapter selon ton HTML)
   const tableContainer = document.getElementById("tableauPrincipalRetards");
