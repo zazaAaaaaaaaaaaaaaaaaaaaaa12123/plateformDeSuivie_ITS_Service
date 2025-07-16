@@ -8212,88 +8212,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // Event listener for "Suivi spécifique agent" button
   if (employeeTrackingBtn) {
-    employeeTrackingBtn.addEventListener("click", function () {
-      // Supprime toute ancienne pop-up si présente
-      const oldPopup = document.getElementById("employeeTrackingPopupOverlay");
-      if (oldPopup) oldPopup.remove();
-
-      // Crée l'overlay
-      const overlay = document.createElement("div");
-      overlay.id = "employeeTrackingPopupOverlay";
-      overlay.style.position = "fixed";
-      overlay.style.top = "0";
-      overlay.style.left = "0";
-      overlay.style.width = "100vw";
-      overlay.style.height = "100vh";
-      overlay.style.background = "rgba(30,41,59,0.45)";
-      overlay.style.zIndex = "9999";
-      overlay.style.display = "flex";
-      overlay.style.alignItems = "center";
-      overlay.style.justifyContent = "center";
-
-      // Crée la boîte centrale
-      const popupBox = document.createElement("div");
-      popupBox.style.background = "#fff";
-      popupBox.style.borderRadius = "16px";
-      popupBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-      popupBox.style.maxWidth = "900px";
-      popupBox.style.width = "98vw";
-      popupBox.style.maxHeight = "92vh";
-      popupBox.style.overflowY = "auto";
-      popupBox.style.padding = "0";
-      popupBox.style.position = "relative";
-      popupBox.style.display = "flex";
-      popupBox.style.flexDirection = "column";
-
-      // Bouton de fermeture
-      const closeBtn = document.createElement("button");
-      closeBtn.innerHTML = "&times;";
-      closeBtn.style.background = "none";
-      closeBtn.style.border = "none";
-      closeBtn.style.color = "#2563eb";
-      closeBtn.style.fontSize = "2.2rem";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.style.position = "absolute";
-      closeBtn.style.top = "18px";
-      closeBtn.style.right = "28px";
-      closeBtn.setAttribute("aria-label", "Fermer");
-      closeBtn.onclick = function () {
-        overlay.remove();
-        document.body.style.overflow = "";
-      };
-      popupBox.appendChild(closeBtn);
-
-      // Récupère le contenu actuel de la boîte agentActivityBox
-      if (agentActivityBox) {
-        // Clone le contenu sans les styles de position flottante
-        const contentClone = agentActivityBox.cloneNode(true);
-        contentClone.style.position = "static";
-        contentClone.style.left = "unset";
-        contentClone.style.top = "unset";
-        contentClone.style.transform = "none";
-        contentClone.style.boxShadow = "none";
-        contentClone.style.background = "none";
-        contentClone.style.borderRadius = "0";
-        // Optionnel : retire la classe "dragging" si présente
-        contentClone.classList.remove("dragging");
-        popupBox.appendChild(contentClone);
-      } else {
-        popupBox.innerHTML +=
-          '<div style="padding:2em;text-align:center;color:#888;">Aucune donnée agent à afficher.</div>';
-      }
-
-      overlay.appendChild(popupBox);
-      document.body.appendChild(overlay);
-      document.body.style.overflow = "hidden";
-
-      // Fermeture par clic sur le fond
-      overlay.onclick = function (e) {
-        if (e.target === overlay) {
-          overlay.remove();
-          document.body.style.overflow = "";
-        }
-      };
-    });
+    employeeTrackingBtn.addEventListener("click", toggleEmployeePopup);
   }
 
   // Event listener for closing employee popup button
@@ -8740,4 +8659,4 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en cas de pertubation 125 GGGGAAAA34 ***/
+/****** Script a ajouter en cas de pertubation 125 AAAA34 ***/
