@@ -216,4 +216,4 @@
 
 
 
-ok ensuite ici le dossier en retard apparait 30 seconde apres je veux qu'il apparait 2 jour apres tu comprend ? tu me suis ? Faisons vite car ont va herberger le site 
+Si tu ne peut pas le faire il faut me dire a meme et tmeps moi je sui fatiguer depuis ont est sur ce putain de cas on avance pas . voici ma preocupation quand on remplit le formulaie depuis interfaceFormulaireEmployer.html tout les donne partent dans ce tableau interfaceSuivie.html et ensuite je veux ces donne qui part dans ce tableau soit marquer par un clignotant vers sur eux commençant par l'entete du tableau N° jusqu'a entete orbservation . Un clignotant de 5 secondes une marque pour marquer que c'ets une nouvlle donnee puis il arret de clignoter apres 5 seconde et ainsi de suite pour les autre donne qui s'ajouterons . Pour faire ceci c'ets un probleme  ? 

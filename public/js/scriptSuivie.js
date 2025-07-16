@@ -8516,5 +8516,67 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // Optionnel : expose la fonction pour l'appeler ailleurs si besoin
   window.refreshLateFoldersTable = refreshLateFoldersTable;
+
+  // ================== CLIGNOTEMENT VERT NOUVELLE LIGNE (FORCÉ) ==================
+  // Patch direct sur le tableau principal
+  let previousDeliveryIds = new Set();
+  function forceBlinkOnNewRows() {
+    if (!deliveriesTableBody) return;
+    const trs = deliveriesTableBody.querySelectorAll("tr");
+    const currentIds = new Set();
+    trs.forEach((tr) => {
+      // On récupère l'ID de livraison
+      let id = tr.getAttribute("data-delivery-id");
+      // Si pas d'ID, on utilise l'index
+      if (!id) id = tr.rowIndex;
+      currentIds.add(id);
+      if (!previousDeliveryIds.has(id)) {
+        tr.classList.add("row-green-blink");
+        tr.querySelectorAll("td").forEach((td) => {
+          td.style.transition = "background-color 0.3s";
+          td.style.backgroundColor = "#34d399";
+        });
+        setTimeout(() => {
+          tr.classList.remove("row-green-blink");
+          tr.querySelectorAll("td").forEach((td) => {
+            td.style.backgroundColor = "";
+          });
+        }, 5000);
+        console.log("[FORCE BLINK] Ligne clignotante:", tr);
+      }
+    });
+    previousDeliveryIds = currentIds;
+  }
+
+  // Ajoute le style CSS si absent
+  (function injectBlinkStyle() {
+    if (document.getElementById("rowGreenBlinkStyle")) return;
+    const style = document.createElement("style");
+    style.id = "rowGreenBlinkStyle";
+    style.textContent = `
+      @keyframes green-blink {
+        0% { background-color: #d1fae5; }
+        20% { background-color: #34d399; }
+        40% { background-color: #6ee7b7; }
+        60% { background-color: #34d399; }
+        80% { background-color: #d1fae5; }
+        100% { background-color: inherit; }
+      }
+      .row-green-blink td {
+        animation: green-blink 1s linear 0s 5;
+        background-color: #34d399 !important;
+      }
+    `;
+    document.head.appendChild(style);
+  })();
+
+  // Appelle le clignotement après chaque rendu du tableau principal
+  const originalApplyCombinedFilters =
+    window.applyCombinedFilters || applyCombinedFilters;
+  window.applyCombinedFilters = function (...args) {
+    originalApplyCombinedFilters.apply(this, args);
+    setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
+  };
+  // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA34 ***/
