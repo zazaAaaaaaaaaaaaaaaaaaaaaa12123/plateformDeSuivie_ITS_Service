@@ -8213,10 +8213,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // Event listener for "Suivi spécifique agent" button
   if (employeeTrackingBtn) {
     employeeTrackingBtn.addEventListener("click", toggleEmployeePopup);
-    // Remet le bouton à droite
-    employeeTrackingBtn.style.float = "right";
-    employeeTrackingBtn.style.marginLeft = "auto";
-    employeeTrackingBtn.style.marginRight = "0";
   }
 
   // Event listener for closing employee popup button
