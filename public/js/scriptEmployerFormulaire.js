@@ -1706,49 +1706,6 @@ async function submitDeliveryForm(status) {
     return;
   }
 
-  // Vérification spécifique des champs obligatoires BL, TC(s), dossier
-  if (!finalBlNumber) {
-    displayMessage(
-      formErrorDisplay,
-      "Le numéro de BL est obligatoire.",
-      "error"
-    );
-    if (blNumberInput)
-      blNumberInput.classList.add("border-red-500", "border-2");
-    if (blNumberInput) blNumberInput.focus();
-    return;
-  } else if (blNumberInput) {
-    blNumberInput.classList.remove("border-red-500", "border-2");
-  }
-
-  if (!containerNumbers || containerNumbers.length === 0) {
-    displayMessage(
-      formErrorDisplay,
-      "Le numéro TC(s) est obligatoire.",
-      "error"
-    );
-    if (containerTagsInput)
-      containerTagsInput.classList.add("border-red-500", "border-2");
-    if (containerTagsInput) containerTagsInput.focus();
-    return;
-  } else if (containerTagsInput) {
-    containerTagsInput.classList.remove("border-red-500", "border-2");
-  }
-
-  if (!finalDossierNumber) {
-    displayMessage(
-      formErrorDisplay,
-      "Le numéro de dossier est obligatoire.",
-      "error"
-    );
-    if (dossierNumberInput)
-      dossierNumberInput.classList.add("border-red-500", "border-2");
-    if (dossierNumberInput) dossierNumberInput.focus();
-    return;
-  } else if (dossierNumberInput) {
-    dossierNumberInput.classList.remove("border-red-500", "border-2");
-  }
-
   const phoneRegex = /^\+?[0-9]{10,15}$/;
   if (!phoneRegex.test(clientPhone)) {
     displayMessage(
