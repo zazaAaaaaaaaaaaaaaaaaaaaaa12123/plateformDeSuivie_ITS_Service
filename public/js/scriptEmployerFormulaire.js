@@ -1260,9 +1260,9 @@ function init() {
         clearMessages(formSuccessDisplay);
 
         // --- Validation des champs obligatoires ---
+        // clientNameInput et weightInput sont facultatifs
         const requiredInputs = [
           employeeNameInput,
-          clientNameInput,
           clientPhoneInput,
           containerTypeAndContentInput,
           lieuInput,
