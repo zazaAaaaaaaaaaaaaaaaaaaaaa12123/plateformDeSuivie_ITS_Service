@@ -34,6 +34,22 @@
   font-weight: bold;
 }
 /* styleDeSuivie.css & styledeTabBord.css (Fusionnés et ajustés pour les couleurs PDF) */
+/* Effet colonne clignotante vert pour le tableau de suivi */
+.col-flash-green {
+  box-shadow: 0 0 0 4px #22c55e, 0 0 16px 4px #22c55e99;
+  animation: flash-green 0.7s linear infinite alternate;
+  border-radius: 7px;
+  z-index: 2;
+  position: relative;
+}
+@keyframes flash-green {
+  0% {
+    box-shadow: 0 0 0 4px #22c55e, 0 0 16px 4px #22c55e99;
+  }
+  100% {
+    box-shadow: 0 0 0 8px #22c55e, 0 0 32px 8px #22c55e55;
+  }
+}
 
 /* Réduction générale */
 body {
