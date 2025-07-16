@@ -569,24 +569,6 @@ setInterval(() => {
 // Appel initial au chargement
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
-// Ajout du style pour l'animation de clignotement vert
-const style = document.createElement("style");
-style.innerHTML = `
-@keyframes green-blink {
-  0% { background-color: #bbf7d0; }
-  20% { background-color: #22c55e; }
-  40% { background-color: #bbf7d0; }
-  60% { background-color: #22c55e; }
-  80% { background-color: #bbf7d0; }
-  100% { background-color: inherit; }
-}
-.row-green-blink {
-  animation: green-blink 1.2s linear 5;
-  transition: background-color 0.3s;
-}
-`;
-document.head.appendChild(style);
-
 (async () => {
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -8483,43 +8465,30 @@ document.head.appendChild(style);
     return Object.keys(lateAgents);
   }
 
-  // Mémorise les agents déjà affichés pour éviter le clignotement au chargement initial
-  let displayedLateAgents = null;
-
-  // Fonction pour faire clignoter une ligne (tr) en vert
-  function blinkRowGreen(tr) {
-    if (!tr) return;
-    tr.classList.add("row-green-blink");
-    setTimeout(() => {
-      tr.classList.remove("row-green-blink");
-    }, 6000);
-  }
-
   // Fonction pour rafraîchir le tableau des dossiers en retard
   function refreshLateFoldersTable() {
+    // Sélectionne le tableau (adapte l'ID ou la classe selon ton HTML)
     const lateTable = document.getElementById("lateFoldersTable");
     if (!lateTable) return;
+    // Vide le tableau
     lateTable.querySelector("tbody").innerHTML = "";
+    // Récalcule la liste des agents en retard
     const lateAgents = getLateAgentsFromDeliveries(deliveries);
+    // === LOG DIAGNOSTIC ===
     console.log(
       "[SYNC DIAG][AVANT] lateAgents (avant affichage) :",
       lateAgents
     );
-    // Si c'est le premier affichage, on mémorise la liste et on n'applique pas le clignotement
-    if (displayedLateAgents === null) {
-      displayedLateAgents = [...lateAgents];
-    }
+    // Pour chaque agent en retard, ajoute une ligne
     lateAgents.forEach((agent) => {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.textContent = agent;
       tr.appendChild(td);
+      // Ajoute d'autres colonnes si besoin (ex : nombre de dossiers, bouton action...)
       lateTable.querySelector("tbody").appendChild(tr);
-      // Animation clignotement vert UNIQUEMENT si l'agent n'était pas déjà affiché
-      if (displayedLateAgents && !displayedLateAgents.includes(agent)) {
-        blinkRowGreen(tr);
-      }
     });
+    // Si aucun agent en retard
     if (lateAgents.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
@@ -8528,8 +8497,6 @@ document.head.appendChild(style);
       tr.appendChild(td);
       lateTable.querySelector("tbody").appendChild(tr);
     }
-    // Met à jour la liste mémorisée pour les prochains refresh
-    displayedLateAgents = [...lateAgents];
   }
 
   // Ajoute l'eventListener sur le bouton "Rafraîchir la liste" (adapte l'ID selon ton HTML)
@@ -8549,35 +8516,5 @@ document.head.appendChild(style);
 
   // Optionnel : expose la fonction pour l'appeler ailleurs si besoin
   window.refreshLateFoldersTable = refreshLateFoldersTable;
-
-  // === BOUTON DE TEST POUR FORCER LE CLIGNOTEMENT VERT ===
-  // (à retirer en production)
-  const testBtn = document.createElement("button");
-  testBtn.textContent = "Test clignotement vert";
-  testBtn.style.position = "fixed";
-  testBtn.style.bottom = "20px";
-  testBtn.style.right = "20px";
-  testBtn.style.zIndex = 99999;
-  testBtn.style.background = "#22c55e";
-  testBtn.style.color = "#fff";
-  testBtn.style.fontWeight = "bold";
-  testBtn.style.border = "none";
-  testBtn.style.borderRadius = "8px";
-  testBtn.style.padding = "0.7em 1.7em";
-  testBtn.style.boxShadow = "0 2px 12px rgba(34,197,94,0.13)";
-  testBtn.style.cursor = "pointer";
-  document.body.appendChild(testBtn);
-  testBtn.addEventListener("click", () => {
-    // Ajoute un agent fictif dans la liste des agents en retard
-    if (!window.deliveries) window.deliveries = [];
-    const fakeAgentName = "Agent TEST " + Math.floor(Math.random() * 10000);
-    window.deliveries.push({
-      employee_name: fakeAgentName,
-      status: "En attente",
-      delivery_status_acconier: "",
-    });
-    // Force le refresh
-    refreshLateFoldersTable();
-  });
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA34 ***/
