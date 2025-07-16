@@ -1648,9 +1648,25 @@ async function submitDeliveryForm(status) {
   ];
 
   if (requiredInputs.some((input) => !input)) {
+    // Debug : Affiche les valeurs des champs obligatoires
+    console.warn("[DEBUG] Champs obligatoires lors de la soumission :");
+    console.warn("Nom client :", clientName);
+    console.warn(
+      "Numéro TC(s) :",
+      containerNumbers.length > 0 ? containerNumbers.join(",") : "VIDE"
+    );
+    console.warn(
+      "Numéro de BL :",
+      blNumberInput ? blNumberInput.value.trim() : "VIDE"
+    );
+    console.warn("N° de déclaration :", declarationNumber);
+    console.warn(
+      "Numéro de dossier :",
+      dossierNumberInput ? dossierNumberInput.value.trim() : "VIDE"
+    );
     displayMessage(
       formErrorDisplay,
-      "Veuillez remplir tous les champs obligatoires : Nom client, Numéro TC(s), Numéro de BL, N° de déclaration, Numéro de dossier.",
+      "⚠️ Veuillez remplir tous les champs obligatoires : Nom client, Numéro TC(s), Numéro de BL, N° de déclaration, Numéro de dossier.",
       "error"
     );
     return;
