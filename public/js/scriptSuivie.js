@@ -1754,6 +1754,25 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // FIX: Declare loadingOverlay here
   const loadingOverlay = document.getElementById("loadingOverlay");
 
+  // --- Correction alignement bouton Suivi spécifique Agent ---
+  window.addEventListener("DOMContentLoaded", function () {
+    var wrapper = document.querySelector(".employee-tracking-btn-wrapper");
+    var btn = document.getElementById("employeeTrackingBtn");
+    if (wrapper) {
+      wrapper.style.display = "flex";
+      wrapper.style.justifyContent = "flex-end";
+      wrapper.style.alignItems = "center";
+      wrapper.style.width = "100%";
+    }
+    if (btn) {
+      btn.style.marginLeft = "auto";
+      btn.style.marginRight = "0";
+      btn.style.display = "inline-block";
+      btn.style.float = "none";
+      btn.style.position = "static";
+    }
+  });
+
   // DOM element for the status filter
   const statusFilterSelect = document.getElementById("statusFilterSelect");
   const mainTableDateFilter = document.getElementById("mainTableDateFilter");
