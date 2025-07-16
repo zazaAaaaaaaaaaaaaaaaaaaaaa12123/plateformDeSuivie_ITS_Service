@@ -630,6 +630,13 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
           ];
           if (data && data.type && typesToRefresh.includes(data.type)) {
             loadDeliveries().then(() => {
+              // Rafraîchit toutes les vues et le tableau principal après chargement
+              if (typeof filterDeliveriesIntoCategories === "function")
+                filterDeliveriesIntoCategories();
+              if (typeof renderNewRequestsSummary === "function")
+                renderNewRequestsSummary();
+              if (typeof renderHistoryDeliveries === "function")
+                renderHistoryDeliveries("recent");
               if (typeof checkLateContainers === "function")
                 checkLateContainers();
             });
