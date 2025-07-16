@@ -1232,11 +1232,12 @@ function renderContainerFootTypes() {
     cardTC.onmouseout = function () {
       cardTC.style.boxShadow = "0 2px 12px #2563eb11";
     };
-    // Responsive mobile
+    // Responsive mobile : rendu compact
     if (window.matchMedia && window.matchMedia("(max-width: 600px)").matches) {
       cardTC.style.width = "100%";
-      cardTC.style.padding = "12px 4vw";
-      cardTC.style.marginBottom = "18px";
+      cardTC.style.padding = "7px 2vw";
+      cardTC.style.marginBottom = "10px";
+      cardTC.style.gap = "5px";
     }
 
     // Ligne principale : badge TC + label + select pied + input personnalisé
@@ -1245,6 +1246,9 @@ function renderContainerFootTypes() {
     row.style.alignItems = "flex-start";
     row.style.gap = "10px";
     row.style.flexWrap = "wrap";
+    if (window.matchMedia && window.matchMedia("(max-width: 600px)").matches) {
+      row.style.gap = "6px";
+    }
 
     // Badge TC
     let tcLabel = document.createElement("span");
@@ -1252,29 +1256,54 @@ function renderContainerFootTypes() {
     tcLabel.className = "tc-foot-label";
     tcLabel.style.background = "#e0e7ff";
     tcLabel.style.color = "#1e40af";
-    tcLabel.style.padding = "3px 12px";
+    tcLabel.style.padding =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "2px 7px"
+        : "3px 12px";
     tcLabel.style.borderRadius = "14px";
     tcLabel.style.fontWeight = "bold";
+    tcLabel.style.fontSize =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "0.97em"
+        : "1em";
 
     // Label explicite pour le type de pied
     let piedLabel = document.createElement("span");
     piedLabel.textContent = "Type Conteneur (pied) :";
     piedLabel.style.color = "#2563eb";
     piedLabel.style.fontWeight = "bold";
-    piedLabel.style.fontSize = "0.98em";
-    piedLabel.style.marginRight = "4px";
-    piedLabel.style.minWidth = "120px";
+    piedLabel.style.fontSize =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "0.95em"
+        : "0.98em";
+    piedLabel.style.marginRight =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "2px"
+        : "4px";
+    piedLabel.style.minWidth =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "90px"
+        : "120px";
     piedLabel.style.display = "block";
 
     // Select pour le type de pied
     let piedSelect = document.createElement("select");
     piedSelect.className = "tc-foot-select";
     piedSelect.style.flex = "1";
-    piedSelect.style.padding = "5px 10px";
+    piedSelect.style.padding =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "3px 7px"
+        : "5px 10px";
     piedSelect.style.border = "1px solid #b6c6e6";
     piedSelect.style.borderRadius = "8px";
-    piedSelect.style.fontSize = "1em";
-    piedSelect.style.minWidth = "90px";
+    piedSelect.style.fontSize =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "0.97em"
+        : "1em";
+    piedSelect.style.minWidth =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "70px"
+        : "90px";
 
     piedOptions.forEach((opt) => {
       let option = document.createElement("option");
@@ -1289,12 +1318,21 @@ function renderContainerFootTypes() {
     piedInput.placeholder = "Type personnalisé";
     piedInput.className = "tc-foot-input";
     piedInput.style.flex = "1";
-    piedInput.style.padding = "5px 10px";
+    piedInput.style.padding =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "3px 7px"
+        : "5px 10px";
     piedInput.style.border = "1px solid #b6c6e6";
     piedInput.style.borderRadius = "8px";
-    piedInput.style.fontSize = "1em";
+    piedInput.style.fontSize =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "0.97em"
+        : "1em";
     piedInput.style.display = "none";
-    piedInput.style.marginTop = "4px";
+    piedInput.style.marginTop =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "2px"
+        : "4px";
 
     // Initial value pied
     let currentValue = containerFootTypes[idx]
@@ -1331,7 +1369,7 @@ function renderContainerFootTypes() {
     // Adaptation mobile : label et select sur deux lignes si écran étroit
     if (window.matchMedia && window.matchMedia("(max-width: 600px)").matches) {
       row.style.flexDirection = "column";
-      piedLabel.style.marginBottom = "2px";
+      piedLabel.style.marginBottom = "1px";
       piedLabel.style.marginRight = "0";
       piedLabel.style.textAlign = "left";
       piedSelect.style.width = "100%";
@@ -1349,25 +1387,43 @@ function renderContainerFootTypes() {
     let poidsRow = document.createElement("div");
     poidsRow.style.display = "flex";
     poidsRow.style.alignItems = "center";
-    poidsRow.style.gap = "10px";
-    poidsRow.style.marginTop = "4px";
+    poidsRow.style.gap =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "6px"
+        : "10px";
+    poidsRow.style.marginTop =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "2px"
+        : "4px";
 
     let poidsLabel = document.createElement("span");
     poidsLabel.textContent = "Poids (kg) :";
     poidsLabel.style.color = "#2563eb";
     poidsLabel.style.fontWeight = "bold";
-    poidsLabel.style.fontSize = "0.98em";
+    poidsLabel.style.fontSize =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "0.95em"
+        : "0.98em";
 
     let poidsInput = document.createElement("input");
     poidsInput.type = "number";
     poidsInput.placeholder = "Poids (kg)";
     poidsInput.className = "tc-weight-input";
     poidsInput.style.flex = "unset";
-    poidsInput.style.width = "98px";
-    poidsInput.style.padding = "4px 6px";
+    poidsInput.style.width =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "70px"
+        : "98px";
+    poidsInput.style.padding =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "3px 5px"
+        : "4px 6px";
     poidsInput.style.border = "2px solid #2563eb";
     poidsInput.style.borderRadius = "8px";
-    poidsInput.style.fontSize = "1em";
+    poidsInput.style.fontSize =
+      window.matchMedia && window.matchMedia("(max-width: 600px)").matches
+        ? "0.97em"
+        : "1em";
     poidsInput.style.background = "#fff";
     poidsInput.style.color = "#1e293b";
     poidsInput.style.fontWeight = "bold";
