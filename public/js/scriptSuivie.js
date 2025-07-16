@@ -4247,8 +4247,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       })();
 
       createCell(delivery.delivery_notes, "delivery_notes", "textarea", {}); // Observations
-      // --- Appliquer l'effet de clignotement vert APRÈS la création de toutes les cellules ---
-      setTimeout(() => flashRowGreen(row), 0);
+      // --- Ne rien faire ici : le clignotement doit être déclenché UNIQUEMENT lors d'un ajout réel ---
     });
     // =====================
     // Effet de surlignage interactif par section (flash coloré)
