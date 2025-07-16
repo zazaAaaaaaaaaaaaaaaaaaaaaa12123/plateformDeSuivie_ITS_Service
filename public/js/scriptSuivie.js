@@ -571,13 +571,17 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 (async () => {
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
+  // Détection automatique de l'environnement pour l'URL WebSocket
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsHost = window.location.hostname;
   let wsPort = window.location.port || "3000";
+  let wsUrl;
   if (wsHost === "localhost" || wsHost === "127.0.0.1") {
-    wsPort = "3000";
+    wsUrl = `${wsProtocol}://${wsHost}:3000`;
+  } else {
+    // Production : onrender.com ou autre domaine
+    wsUrl = `${wsProtocol}://plateformdesuivie-its-service.onrender.com`;
   }
-  let wsUrl = `${wsProtocol}://${wsHost}:${wsPort}`;
   let ws = null;
   let pollingInterval = null;
   let lastDeliveriesCount = null;
