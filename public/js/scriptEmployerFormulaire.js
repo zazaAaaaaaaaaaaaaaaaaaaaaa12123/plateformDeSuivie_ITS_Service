@@ -157,15 +157,7 @@ window.displayProfileAvatar = function () {
   if (logoutBtn) {
     logoutBtn.onclick = function () {
       localStorage.removeItem("acconier_user");
-      if (
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1"
-      ) {
-        window.location.href = "http://localhost:3000/html/acconier_auth.html";
-      } else {
-        window.location.href =
-          "https://plateformdesuivie-its-service.onrender.com/html/acconier_auth.html";
-      }
+      window.location.href = "http://localhost:3000/html/acconier_auth.html";
     };
   }
 };
@@ -1260,15 +1252,13 @@ function init() {
         clearMessages(formSuccessDisplay);
 
         // --- Validation des champs obligatoires ---
-        // clientPhoneInput est maintenant facultatif, clientNameInput obligatoire
         const requiredInputs = [
           employeeNameInput,
           clientNameInput,
+          clientPhoneInput,
           containerTypeAndContentInput,
           lieuInput,
-          containerNumberInput, // Numéro TC(s) obligatoire
-          blNumberInput, // Numéro de BL obligatoire
-          dossierNumberInput, // Numéro de dossier obligatoire
+          containerNumberInput,
           // containerFootTypeSelect, // SUPPRIMÉ : ce champ n'existe plus, remplacé par la zone dynamique
           declarationNumberInput,
           numberOfContainersInput,
@@ -1298,7 +1288,7 @@ function init() {
         if (!allRequiredFilled) {
           displayMessage(
             formErrorDisplay,
-            "⚠️ Veuillez remplir tous les champs obligatoires (marqués avec *). Le nom du client, le numéro TC(s), le numéro de BL et le numéro de dossier sont obligatoires.",
+            "⚠️ Veuillez remplir tous les champs obligatoires (marqués avec *).",
             "error"
           );
           if (firstEmptyInput) {
@@ -1307,11 +1297,9 @@ function init() {
           return;
         }
 
-        // Vérification du numéro de téléphone client uniquement si renseigné
         const phoneRegex = /^\+?[0-9]{10,15}$/;
         if (
           clientPhoneInput &&
-          clientPhoneInput.value.trim() &&
           !phoneRegex.test(clientPhoneInput.value.trim())
         ) {
           displayMessage(
@@ -1688,6 +1676,7 @@ async function submitDeliveryForm(status) {
 
   const requiredInputs = [
     employeeName,
+    clientName,
     clientPhone,
     containerTypeAndContent,
     lieu,
@@ -1704,49 +1693,6 @@ async function submitDeliveryForm(status) {
       "error"
     );
     return;
-  }
-
-  // Vérification spécifique des champs obligatoires BL, TC(s), dossier
-  if (!finalBlNumber) {
-    displayMessage(
-      formErrorDisplay,
-      "Le numéro de BL est obligatoire.",
-      "error"
-    );
-    if (blNumberInput)
-      blNumberInput.classList.add("border-red-500", "border-2");
-    if (blNumberInput) blNumberInput.focus();
-    return;
-  } else if (blNumberInput) {
-    blNumberInput.classList.remove("border-red-500", "border-2");
-  }
-
-  if (!containerNumbers || containerNumbers.length === 0) {
-    displayMessage(
-      formErrorDisplay,
-      "Le numéro TC(s) est obligatoire.",
-      "error"
-    );
-    if (containerTagsInput)
-      containerTagsInput.classList.add("border-red-500", "border-2");
-    if (containerTagsInput) containerTagsInput.focus();
-    return;
-  } else if (containerTagsInput) {
-    containerTagsInput.classList.remove("border-red-500", "border-2");
-  }
-
-  if (!finalDossierNumber) {
-    displayMessage(
-      formErrorDisplay,
-      "Le numéro de dossier est obligatoire.",
-      "error"
-    );
-    if (dossierNumberInput)
-      dossierNumberInput.classList.add("border-red-500", "border-2");
-    if (dossierNumberInput) dossierNumberInput.focus();
-    return;
-  } else if (dossierNumberInput) {
-    dossierNumberInput.classList.remove("border-red-500", "border-2");
   }
 
   const phoneRegex = /^\+?[0-9]{10,15}$/;
@@ -1914,8 +1860,18 @@ async function submitDeliveryForm(status) {
 
       // --- NOTIFICATION TEMPS RÉEL TABLEAU DE SUIVI ---
       try {
-        // Suppression de l'envoi direct de la notification WebSocket.
-        // La notification temps réel sera envoyée par le backend après création de la livraison.
+        let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+        let wsHost = window.location.hostname;
+        let wsPort = window.location.port || "3000";
+        if (wsHost === "localhost" || wsHost === "127.0.0.1") {
+          wsPort = "3000";
+        }
+        let wsUrl = `${wsProtocol}://${wsHost}:${wsPort}`;
+        const ws = new WebSocket(wsUrl);
+        ws.onopen = function () {
+          ws.send(JSON.stringify({ type: "new_delivery_notification" }));
+          ws.close();
+        };
       } catch (e) {
         console.warn(
           "[SYNC TEMPS RÉEL] Impossible d'envoyer la notification WebSocket :",
