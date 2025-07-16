@@ -1,4 +1,29 @@
 // === Génération dynamique du tableau principal des dossiers en retard ===
+// === INJECTION DU STYLE RESPONSIVE POUR LES BOUTONS DU TABLEAU DE SUIVI ===
+(function injectResponsiveButtonStyle() {
+  if (document.getElementById("responsiveButtonStyle")) return;
+  const style = document.createElement("style");
+  style.id = "responsiveButtonStyle";
+  style.textContent = `
+    @media (max-width: 900px) {
+      .boutons-container, .tableau-boutons, .table-buttons, .table-btns, .tableauPrincipalRetards .btn-container, .tableauPrincipalRetards .boutons-container {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+        margin-bottom: 12px !important;
+      }
+      .boutons-container button, .tableau-boutons button, .table-buttons button, .table-btns button, .tableauPrincipalRetards .btn-container button, .tableauPrincipalRetards .boutons-container button {
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        font-size: 1em !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
 function renderLateDossiersTable() {
   // Cherche le conteneur du tableau principal (à adapter selon ton HTML)
   const tableContainer = document.getElementById("tableauPrincipalRetards");
