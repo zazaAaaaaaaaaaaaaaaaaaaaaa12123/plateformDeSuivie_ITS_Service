@@ -569,6 +569,24 @@ setInterval(() => {
 // Appel initial au chargement
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
+// Ajout du style pour l'animation de clignotement vert
+const style = document.createElement("style");
+style.innerHTML = `
+@keyframes green-blink {
+  0% { background-color: #bbf7d0; }
+  20% { background-color: #22c55e; }
+  40% { background-color: #bbf7d0; }
+  60% { background-color: #22c55e; }
+  80% { background-color: #bbf7d0; }
+  100% { background-color: inherit; }
+}
+.row-green-blink {
+  animation: green-blink 1.2s linear 5;
+  transition: background-color 0.3s;
+}
+`;
+document.head.appendChild(style);
+
 (async () => {
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -8465,30 +8483,43 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     return Object.keys(lateAgents);
   }
 
+  // Mémorise les agents déjà affichés pour éviter le clignotement au chargement initial
+  let displayedLateAgents = null;
+
+  // Fonction pour faire clignoter une ligne (tr) en vert
+  function blinkRowGreen(tr) {
+    if (!tr) return;
+    tr.classList.add("row-green-blink");
+    setTimeout(() => {
+      tr.classList.remove("row-green-blink");
+    }, 6000);
+  }
+
   // Fonction pour rafraîchir le tableau des dossiers en retard
   function refreshLateFoldersTable() {
-    // Sélectionne le tableau (adapte l'ID ou la classe selon ton HTML)
     const lateTable = document.getElementById("lateFoldersTable");
     if (!lateTable) return;
-    // Vide le tableau
     lateTable.querySelector("tbody").innerHTML = "";
-    // Récalcule la liste des agents en retard
     const lateAgents = getLateAgentsFromDeliveries(deliveries);
-    // === LOG DIAGNOSTIC ===
     console.log(
       "[SYNC DIAG][AVANT] lateAgents (avant affichage) :",
       lateAgents
     );
-    // Pour chaque agent en retard, ajoute une ligne
+    // Si c'est le premier affichage, on mémorise la liste et on n'applique pas le clignotement
+    if (displayedLateAgents === null) {
+      displayedLateAgents = [...lateAgents];
+    }
     lateAgents.forEach((agent) => {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.textContent = agent;
       tr.appendChild(td);
-      // Ajoute d'autres colonnes si besoin (ex : nombre de dossiers, bouton action...)
       lateTable.querySelector("tbody").appendChild(tr);
+      // Animation clignotement vert UNIQUEMENT si l'agent n'était pas déjà affiché
+      if (displayedLateAgents && !displayedLateAgents.includes(agent)) {
+        blinkRowGreen(tr);
+      }
     });
-    // Si aucun agent en retard
     if (lateAgents.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
@@ -8497,6 +8528,8 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       tr.appendChild(td);
       lateTable.querySelector("tbody").appendChild(tr);
     }
+    // Met à jour la liste mémorisée pour les prochains refresh
+    displayedLateAgents = [...lateAgents];
   }
 
   // Ajoute l'eventListener sur le bouton "Rafraîchir la liste" (adapte l'ID selon ton HTML)
