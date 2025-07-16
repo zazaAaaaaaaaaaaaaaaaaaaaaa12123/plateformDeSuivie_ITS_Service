@@ -571,17 +571,13 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 (async () => {
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
-  // Détection automatique de l'environnement pour l'URL WebSocket
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsHost = window.location.hostname;
   let wsPort = window.location.port || "3000";
-  let wsUrl;
   if (wsHost === "localhost" || wsHost === "127.0.0.1") {
-    wsUrl = `${wsProtocol}://${wsHost}:3000`;
-  } else {
-    // Production : onrender.com ou autre domaine
-    wsUrl = `${wsProtocol}://plateformdesuivie-its-service.onrender.com`;
+    wsPort = "3000";
   }
+  let wsUrl = `${wsProtocol}://${wsHost}:${wsPort}`;
   let ws = null;
   let pollingInterval = null;
   let lastDeliveriesCount = null;
@@ -646,45 +642,19 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
           );
         }
       };
-      ws.onclose = function (event) {
-        let reason = "Connexion WebSocket perdue.";
-        if (event && typeof event.code !== "undefined") {
-          reason += ` (Code: ${event.code}`;
-          if (event.reason) reason += `, Motif: ${event.reason}`;
-          reason += ")";
-        }
-        showCustomAlert(
-          reason +
-            "\nLa synchronisation temps réel est désactivée, passage en mode fallback.",
-          "error",
-          7000
-        );
-        console.warn(
-          "[WebSocket] Déconnecté. Fallback AJAX activé dans 2s...",
-          event
-        );
+      ws.onclose = function () {
+        console.warn("[WebSocket] Déconnecté. Fallback AJAX activé dans 2s...");
         setTimeout(() => {
           startPollingDeliveries();
           // On retente le WebSocket après 30s
           setTimeout(initWebSocketLivraisons, 30000);
         }, 2000);
       };
-      ws.onerror = function (event) {
-        showCustomAlert(
-          "Erreur WebSocket : " +
-            (event && event.message ? event.message : "Erreur inconnue."),
-          "error",
-          7000
-        );
+      ws.onerror = function () {
         ws.close();
       };
     } catch (e) {
       console.error("[WebSocket] Erreur d'init :", e);
-      showCustomAlert(
-        "Erreur d'initialisation WebSocket : " + e.message,
-        "error",
-        7000
-      );
       startPollingDeliveries();
     }
   }
@@ -893,23 +863,8 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     }
 
 
-
-    /* Bouton Suivie spécifique agent : alignement à droite (fix flexbox) */
-    .employee-tracking-btn-wrapper {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        width: 100%;
-    }
-    #employeeTrackingBtn {
-        margin-left: auto;
-        margin-right: 0;
-        display: inline-block;
-        float: none;
-        position: static;
-    }
-
     /* Padding for the main content sections within the agent activity box */
+    /* This ensures content inside the box has proper spacing from the edges */
     #agentSummarySection,
     .agent-activity-table-wrapper, /* Assuming a wrapper for the table */
     .monthly-history-section {
@@ -2229,17 +2184,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       loadingOverlay.style.display = "flex";
     }
     try {
-      // Détection automatique de l'URL API selon l'environnement
-      let apiUrl;
-      if (
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1"
-      ) {
-        apiUrl = "http://localhost:3000/deliveries/status";
-      } else {
-        apiUrl = window.location.origin + "/deliveries/status";
-      }
-      const response = await fetch(apiUrl);
+      const response = await fetch("http://localhost:3000/deliveries/status");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -6253,21 +6198,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     }
 
     console.log("Attempting to connect to WebSocket...");
-    // Détection automatique de l'URL WebSocket selon l'environnement
-    let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    let wsHost = window.location.hostname;
-    let wsPort = window.location.port;
-    let wsPath = "/ws";
-    if (wsHost === "localhost" || wsHost === "127.0.0.1") {
-      wsPort = wsPort || "3000";
-      wsPath = "";
-    } else {
-      wsPort = wsPort ? wsPort : "";
-    }
-    let wsUrl = wsPort
-      ? `${wsProtocol}://${wsHost}:${wsPort}${wsPath}`
-      : `${wsProtocol}://${wsHost}${wsPath}`;
-    socket = new WebSocket(wsUrl);
+    socket = new WebSocket("ws://localhost:3000");
 
     socket.onopen = () => {
       console.log("WebSocket connection established.");
@@ -6361,13 +6292,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     };
 
     socket.onclose = (event) => {
-      let reason = "Erreur de connexion WebSocket.";
-      if (event && typeof event.code !== "undefined") {
-        reason += ` (Code: ${event.code}`;
-        if (event.reason) reason += `, Motif: ${event.reason}`;
-        reason += ")";
-      }
-      showCustomAlert(reason + " Tentative de reconnexion...", "error", 7000);
+      console.warn("WebSocket connection closed:", event.code, event.reason);
       // Attempt to reconnect after a delay if the closure was not intentional
       if (event.code !== 1000) {
         // 1000 is normal closure
@@ -6378,18 +6303,11 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
     socket.onerror = (error) => {
       console.error("WebSocket error:", error);
-      // Affichage professionnel de l'erreur WebSocket
-      let errorMsg =
-        `<div style="display:flex;align-items:center;gap:14px;">` +
-        `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" style="background:linear-gradient(90deg,#f87171 60%,#facc15 100%);border-radius:8px;padding:2px;"><rect width="32" height="32" rx="8" fill="#fde047"/><path d="M16 10v6m0 4h.01" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>` +
-        `<span style="font-size:1.08em;font-weight:700;color:#ef4444;">Erreur WebSocket</span>` +
-        `</div>`;
-      errorMsg += `<div style="margin-top:8px;font-size:0.98em;color:#334155;">${
-        error && error.message ? error.message : "Erreur inconnue."
-      }</div>`;
-      errorMsg += `<div style="margin-top:6px;font-size:0.93em;color:#64748b;">La connexion en temps réel est perdue. Veuillez vérifier votre réseau ou contacter le support si le problème persiste.</div>`;
-      showCustomAlert(errorMsg, "error", 9000);
-      socket.close();
+      showCustomAlert(
+        "Erreur de connexion WebSocket. Tentative de reconnexion...",
+        "error",
+        5000
+      );
     };
   }
 
@@ -8598,67 +8516,5 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // Optionnel : expose la fonction pour l'appeler ailleurs si besoin
   window.refreshLateFoldersTable = refreshLateFoldersTable;
-
-  // ================== CLIGNOTEMENT VERT NOUVELLE LIGNE (FORCÉ) ==================
-  // Patch direct sur le tableau principal
-  let previousDeliveryIds = new Set();
-  function forceBlinkOnNewRows() {
-    if (!deliveriesTableBody) return;
-    const trs = deliveriesTableBody.querySelectorAll("tr");
-    const currentIds = new Set();
-    trs.forEach((tr) => {
-      // On récupère l'ID de livraison
-      let id = tr.getAttribute("data-delivery-id");
-      // Si pas d'ID, on utilise l'index
-      if (!id) id = tr.rowIndex;
-      currentIds.add(id);
-      if (!previousDeliveryIds.has(id)) {
-        tr.classList.add("row-green-blink");
-        tr.querySelectorAll("td").forEach((td) => {
-          td.style.transition = "background-color 0.3s";
-          td.style.backgroundColor = "#34d399";
-        });
-        setTimeout(() => {
-          tr.classList.remove("row-green-blink");
-          tr.querySelectorAll("td").forEach((td) => {
-            td.style.backgroundColor = "";
-          });
-        }, 5000);
-        console.log("[FORCE BLINK] Ligne clignotante:", tr);
-      }
-    });
-    previousDeliveryIds = currentIds;
-  }
-
-  // Ajoute le style CSS si absent
-  (function injectBlinkStyle() {
-    if (document.getElementById("rowGreenBlinkStyle")) return;
-    const style = document.createElement("style");
-    style.id = "rowGreenBlinkStyle";
-    style.textContent = `
-      @keyframes green-blink {
-        0% { background-color: #d1fae5; }
-        20% { background-color: #34d399; }
-        40% { background-color: #6ee7b7; }
-        60% { background-color: #34d399; }
-        80% { background-color: #d1fae5; }
-        100% { background-color: inherit; }
-      }
-      .row-green-blink td {
-        animation: green-blink 1s linear 0s 5;
-        background-color: #34d399 !important;
-      }
-    `;
-    document.head.appendChild(style);
-  })();
-
-  // Appelle le clignotement après chaque rendu du tableau principal
-  const originalApplyCombinedFilters =
-    window.applyCombinedFilters || applyCombinedFilters;
-  window.applyCombinedFilters = function (...args) {
-    originalApplyCombinedFilters.apply(this, args);
-    setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
-  };
-  // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA34 ***/
