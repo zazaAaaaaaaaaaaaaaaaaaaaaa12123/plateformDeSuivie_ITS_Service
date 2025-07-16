@@ -1214,6 +1214,13 @@ function renderContainerFootTypes() {
   const piedOptions = ["10", "20", "40", "45"];
 
   containerTags.forEach((tc, idx) => {
+    // Bloc principal vertical pour chaque TC
+    let blocTC = document.createElement("div");
+    blocTC.style.display = "flex";
+    blocTC.style.flexDirection = "column";
+    blocTC.style.gap = "2px";
+    blocTC.style.marginBottom = "8px";
+
     // Ligne principale : badge TC + select pied + input personnalisé
     let row = document.createElement("div");
     row.style.display = "flex";
@@ -1292,7 +1299,7 @@ function renderContainerFootTypes() {
     row.appendChild(tcLabel);
     row.appendChild(piedSelect);
     row.appendChild(piedInput);
-    dynamicContainer.appendChild(row);
+    blocTC.appendChild(row);
 
     // Champ Poids séparé, en dessous
     let poidsRow = document.createElement("div");
@@ -1345,7 +1352,9 @@ function renderContainerFootTypes() {
 
     poidsRow.appendChild(poidsLabel);
     poidsRow.appendChild(poidsInput);
-    dynamicContainer.appendChild(poidsRow);
+    blocTC.appendChild(poidsRow);
+
+    dynamicContainer.appendChild(blocTC);
   });
 
   // Masquer le select d'origine
