@@ -1656,14 +1656,10 @@ async function submitDeliveryForm(status) {
     return;
   }
 
-  const phoneRegex = /^\+?[0-9]{10,15}$/;
-  if (!phoneRegex.test(clientPhone)) {
-    displayMessage(
-      formErrorDisplay,
-      "Veuillez entrer un numéro de téléphone client valide (ex: 0700000000 ou +2250700000000).",
-      "error"
-    );
-    return;
+  // Le numéro de téléphone du client est totalement facultatif :
+  // Aucune validation, aucun message d’erreur, aucune bordure rouge, même si vide ou incorrect.
+  if (clientPhoneInput) {
+    clientPhoneInput.classList.remove("border-red-500", "border-2");
   }
 
   const formData = new FormData();
