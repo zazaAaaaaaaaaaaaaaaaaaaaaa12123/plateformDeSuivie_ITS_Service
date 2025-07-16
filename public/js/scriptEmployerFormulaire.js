@@ -1298,9 +1298,11 @@ function init() {
           return;
         }
 
+        // Le numéro de téléphone du client est facultatif. S'il est renseigné, on vérifie le format, sinon on laisse passer.
         const phoneRegex = /^\+?[0-9]{10,15}$/;
         if (
           clientPhoneInput &&
+          clientPhoneInput.value.trim() !== "" &&
           !phoneRegex.test(clientPhoneInput.value.trim())
         ) {
           displayMessage(
@@ -1693,14 +1695,21 @@ async function submitDeliveryForm(status) {
     return;
   }
 
+  // Le numéro de téléphone du client est facultatif. S'il est renseigné, on vérifie le format, sinon on laisse passer.
   const phoneRegex = /^\+?[0-9]{10,15}$/;
-  if (!phoneRegex.test(clientPhone)) {
+  if (clientPhone && clientPhone !== "" && !phoneRegex.test(clientPhone)) {
     displayMessage(
       formErrorDisplay,
       "Veuillez entrer un numéro de téléphone client valide (ex: 0700000000 ou +2250700000000).",
       "error"
     );
+    if (clientPhoneInput) {
+      clientPhoneInput.classList.add("border-red-500", "border-2");
+      clientPhoneInput.focus();
+    }
     return;
+  } else if (clientPhoneInput) {
+    clientPhoneInput.classList.remove("border-red-500", "border-2");
   }
 
   const formData = new FormData();
