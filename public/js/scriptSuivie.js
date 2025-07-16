@@ -6422,18 +6422,16 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
       dossiersBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
     };
-    // Ajoute le bouton juste avant le tableau principal
+    // Ajoute le bouton dans un conteneur aligné à droite
+    const btnContainer = document.createElement("div");
+    btnContainer.style.display = "flex";
+    btnContainer.style.justifyContent = "flex-end";
+    btnContainer.style.alignItems = "center";
+    btnContainer.style.width = "100%";
+    btnContainer.style.marginBottom = "8px";
+    btnContainer.appendChild(dossiersBtn);
     if (deliveriesTable && deliveriesTable.parentNode) {
-      // On place le bouton dossiers juste après le bouton "activer la sélection" s'il existe
-      const selectionBtn = document.getElementById("toggleSelectionBtn");
-      if (selectionBtn && selectionBtn.parentNode) {
-        selectionBtn.parentNode.insertBefore(
-          dossiersBtn,
-          selectionBtn.nextSibling
-        );
-      } else {
-        deliveriesTable.parentNode.insertBefore(dossiersBtn, deliveriesTable);
-      }
+      deliveriesTable.parentNode.insertBefore(btnContainer, deliveriesTable);
     }
     // Ajoute l'eventListener ici (et uniquement ici)
     dossiersBtn.addEventListener("click", showClientFoldersModal);
