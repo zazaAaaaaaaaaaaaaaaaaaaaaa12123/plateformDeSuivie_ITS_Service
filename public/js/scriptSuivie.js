@@ -642,13 +642,16 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
             });
             // Affiche une alerte en temps réel pour la création d'un nouvel ordre de livraison
             if (data.type === "new_delivery_notification") {
-              let agent = data.agentName || data.agent || "Un agent";
-              let msg = data.message || "Nouvel ordre de livraison créé.";
-              showCustomAlert(
-                `l'agent ${agent} a créé un nouvel ordre de livraison !`,
-                "info",
-                6000
-              );
+              console.log("[WebSocket][ALERT] Notification reçue :", data);
+              let agent =
+                data.agentName ||
+                data.agent ||
+                data.employee_name ||
+                "Un agent inconnu";
+              let msg =
+                data.message ||
+                `L'agent ${agent} a etablit un nouvel ordre de livraison !`;
+              showCustomAlert(msg, "info", 6000);
             }
           }
         } catch (e) {
