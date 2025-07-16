@@ -6254,17 +6254,19 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
     console.log("Attempting to connect to WebSocket...");
     // Détection automatique de l'URL WebSocket selon l'environnement
-    let wsUrl;
-    if (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-    ) {
-      wsUrl = "ws://localhost:3000";
+    let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+    let wsHost = window.location.hostname;
+    let wsPort = window.location.port;
+    let wsPath = "/ws";
+    if (wsHost === "localhost" || wsHost === "127.0.0.1") {
+      wsPort = wsPort || "3000";
+      wsPath = "";
     } else {
-      // Utilise le protocole et l'hôte du site actuel, adapte pour ws/wss
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      wsUrl = protocol + "//" + window.location.host;
+      wsPort = wsPort ? wsPort : "";
     }
+    let wsUrl = wsPort
+      ? `${wsProtocol}://${wsHost}:${wsPort}${wsPath}`
+      : `${wsProtocol}://${wsHost}${wsPath}`;
     socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
@@ -8213,10 +8215,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // Event listener for "Suivi spécifique agent" button
   if (employeeTrackingBtn) {
     employeeTrackingBtn.addEventListener("click", toggleEmployeePopup);
-    // Remet le bouton à droite
-    employeeTrackingBtn.style.float = "right";
-    employeeTrackingBtn.style.marginLeft = "auto";
-    employeeTrackingBtn.style.marginRight = "0";
   }
 
   // Event listener for closing employee popup button
