@@ -1260,17 +1260,16 @@ function init() {
         clearMessages(formSuccessDisplay);
 
         // --- Validation des champs obligatoires ---
+        // Champs obligatoires : nom client, Numéro TC(s), Numéro de BL, N° de déclaration, Numéro de dossier
         const requiredInputs = [
-          employeeNameInput,
-          clientNameInput,
-          clientPhoneInput,
-          containerTypeAndContentInput,
-          lieuInput,
-          containerNumberInput,
-          // containerFootTypeSelect, // SUPPRIMÉ : ce champ n'existe plus, remplacé par la zone dynamique
-          declarationNumberInput,
-          numberOfContainersInput,
+          clientNameInput, // nom client
+          containerNumberInput, // Numéro TC(s)
+          blNumberInput, // Numéro de BL
+          declarationNumberInput, // N° de déclaration
+          dossierNumberInput, // Numéro de dossier
         ].filter((input) => input !== null); // Filtrer les inputs non trouvés
+
+        // On peut garder les autres validations plus bas si besoin (ex : téléphone, etc.)
 
         let allRequiredFilled = true;
         let firstEmptyInput = null;
@@ -1280,13 +1279,7 @@ function init() {
         });
 
         for (const input of requiredInputs) {
-          if (input.type === "file") {
-            if (!input.files || input.files.length === 0) {
-              allRequiredFilled = false;
-              if (!firstEmptyInput) firstEmptyInput = input;
-              input.classList.add("border-red-500", "border-2");
-            }
-          } else if (!input.value.trim()) {
+          if (!input.value || !input.value.trim()) {
             allRequiredFilled = false;
             if (!firstEmptyInput) firstEmptyInput = input;
             input.classList.add("border-red-500", "border-2");
@@ -1296,7 +1289,7 @@ function init() {
         if (!allRequiredFilled) {
           displayMessage(
             formErrorDisplay,
-            "⚠️ Veuillez remplir tous les champs obligatoires (marqués avec *).",
+            "⚠️ Veuillez remplir tous les champs obligatoires : Nom client, Numéro TC(s), Numéro de BL, N° de déclaration, Numéro de dossier.",
             "error"
           );
           if (firstEmptyInput) {
@@ -1682,22 +1675,19 @@ async function submitDeliveryForm(status) {
   );
   // *** FIN des logs de débogage ***
 
+  // Champs obligatoires : nom client, Numéro TC(s), Numéro de BL, N° de déclaration, Numéro de dossier
   const requiredInputs = [
-    employeeName,
-    clientName,
-    clientPhone,
-    containerTypeAndContent,
-    lieu,
-    containerNumbers.length > 0 ? containerNumbers.join(",") : "",
-    containerFootType,
-    declarationNumber,
-    numberOfContainers,
+    clientName, // nom client
+    containerNumbers.length > 0 ? containerNumbers.join(",") : "", // Numéro TC(s)
+    blNumberInput ? blNumberInput.value.trim() : "", // Numéro de BL
+    declarationNumber, // N° de déclaration
+    dossierNumberInput ? dossierNumberInput.value.trim() : "", // Numéro de dossier
   ];
 
   if (requiredInputs.some((input) => !input)) {
     displayMessage(
       formErrorDisplay,
-      "Veuillez remplir tous les champs obligatoires.",
+      "Veuillez remplir tous les champs obligatoires : Nom client, Numéro TC(s), Numéro de BL, N° de déclaration, Numéro de dossier.",
       "error"
     );
     return;
