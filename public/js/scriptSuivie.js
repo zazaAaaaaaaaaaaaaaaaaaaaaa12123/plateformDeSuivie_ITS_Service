@@ -8549,5 +8549,35 @@ document.head.appendChild(style);
 
   // Optionnel : expose la fonction pour l'appeler ailleurs si besoin
   window.refreshLateFoldersTable = refreshLateFoldersTable;
+
+  // === BOUTON DE TEST POUR FORCER LE CLIGNOTEMENT VERT ===
+  // (à retirer en production)
+  const testBtn = document.createElement("button");
+  testBtn.textContent = "Test clignotement vert";
+  testBtn.style.position = "fixed";
+  testBtn.style.bottom = "20px";
+  testBtn.style.right = "20px";
+  testBtn.style.zIndex = 99999;
+  testBtn.style.background = "#22c55e";
+  testBtn.style.color = "#fff";
+  testBtn.style.fontWeight = "bold";
+  testBtn.style.border = "none";
+  testBtn.style.borderRadius = "8px";
+  testBtn.style.padding = "0.7em 1.7em";
+  testBtn.style.boxShadow = "0 2px 12px rgba(34,197,94,0.13)";
+  testBtn.style.cursor = "pointer";
+  document.body.appendChild(testBtn);
+  testBtn.addEventListener("click", () => {
+    // Ajoute un agent fictif dans la liste des agents en retard
+    if (!window.deliveries) window.deliveries = [];
+    const fakeAgentName = "Agent TEST " + Math.floor(Math.random() * 10000);
+    window.deliveries.push({
+      employee_name: fakeAgentName,
+      status: "En attente",
+      delivery_status_acconier: "",
+    });
+    // Force le refresh
+    refreshLateFoldersTable();
+  });
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA34 ***/
