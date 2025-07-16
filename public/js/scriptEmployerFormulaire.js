@@ -1214,12 +1214,30 @@ function renderContainerFootTypes() {
   const piedOptions = ["10", "20", "40", "45"];
 
   containerTags.forEach((tc, idx) => {
-    // Bloc principal vertical pour chaque TC
-    let blocTC = document.createElement("div");
-    blocTC.style.display = "flex";
-    blocTC.style.flexDirection = "column";
-    blocTC.style.gap = "2px";
-    blocTC.style.marginBottom = "8px";
+    // Carte principale pour chaque TC
+    let cardTC = document.createElement("div");
+    cardTC.style.display = "flex";
+    cardTC.style.flexDirection = "column";
+    cardTC.style.gap = "8px";
+    cardTC.style.marginBottom = "16px";
+    cardTC.style.background = "#fff";
+    cardTC.style.border = "1.5px solid #e0e7ff";
+    cardTC.style.borderRadius = "14px";
+    cardTC.style.boxShadow = "0 2px 12px #2563eb11";
+    cardTC.style.padding = "14px 16px";
+    cardTC.style.transition = "box-shadow .18s";
+    cardTC.onmouseover = function () {
+      cardTC.style.boxShadow = "0 4px 24px #2563eb22";
+    };
+    cardTC.onmouseout = function () {
+      cardTC.style.boxShadow = "0 2px 12px #2563eb11";
+    };
+    // Responsive mobile
+    if (window.matchMedia && window.matchMedia("(max-width: 600px)").matches) {
+      cardTC.style.width = "100%";
+      cardTC.style.padding = "12px 4vw";
+      cardTC.style.marginBottom = "18px";
+    }
 
     // Ligne principale : badge TC + label + select pied + input personnalisé
     let row = document.createElement("div");
@@ -1325,7 +1343,7 @@ function renderContainerFootTypes() {
     row.appendChild(piedLabel);
     row.appendChild(piedSelect);
     row.appendChild(piedInput);
-    blocTC.appendChild(row);
+    cardTC.appendChild(row);
 
     // Champ Poids séparé, en dessous
     let poidsRow = document.createElement("div");
@@ -1378,9 +1396,9 @@ function renderContainerFootTypes() {
 
     poidsRow.appendChild(poidsLabel);
     poidsRow.appendChild(poidsInput);
-    blocTC.appendChild(poidsRow);
+    cardTC.appendChild(poidsRow);
 
-    dynamicContainer.appendChild(blocTC);
+    dynamicContainer.appendChild(cardTC);
   });
 
   // Masquer le select d'origine
