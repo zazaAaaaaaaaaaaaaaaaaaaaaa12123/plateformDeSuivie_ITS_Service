@@ -21,6 +21,23 @@
         font-size: 1em !important;
       }
     }
+
+    /* Forcer l'alignement à droite du bouton Suivi spécifique Agent sur tous les écrans */
+    .employee-tracking-btn-wrapper {
+      display: flex !important;
+      justify-content: flex-end !important;
+      align-items: center !important;
+      width: 100% !important;
+      margin-bottom: 0 !important;
+      margin-top: 0 !important;
+    }
+    #employeeTrackingBtn {
+      margin-left: auto !important;
+      margin-right: 0 !important;
+      display: inline-block !important;
+      float: none !important;
+      position: static !important;
+    }
   `;
   document.head.appendChild(style);
 })();
