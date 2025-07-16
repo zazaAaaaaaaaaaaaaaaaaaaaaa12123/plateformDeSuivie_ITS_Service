@@ -1224,7 +1224,7 @@ function renderContainerFootTypes() {
     // Ligne principale : badge TC + label + select pied + input personnalisé
     let row = document.createElement("div");
     row.style.display = "flex";
-    row.style.alignItems = "center";
+    row.style.alignItems = "flex-start";
     row.style.gap = "10px";
     row.style.flexWrap = "wrap";
 
@@ -1309,6 +1309,17 @@ function renderContainerFootTypes() {
     // Init valeur
     if (!containerFootTypes[idx])
       containerFootTypes[idx] = { tc, pied: piedSelect.value };
+
+    // Adaptation mobile : label et select sur deux lignes si écran étroit
+    if (window.matchMedia && window.matchMedia("(max-width: 600px)").matches) {
+      row.style.flexDirection = "column";
+      piedLabel.style.marginBottom = "2px";
+      piedLabel.style.marginRight = "0";
+      piedLabel.style.textAlign = "left";
+      piedSelect.style.width = "100%";
+      piedSelect.style.minWidth = "unset";
+      piedInput.style.width = "100%";
+    }
 
     row.appendChild(tcLabel);
     row.appendChild(piedLabel);
