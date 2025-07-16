@@ -2214,7 +2214,17 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       loadingOverlay.style.display = "flex";
     }
     try {
-      const response = await fetch("http://localhost:3000/deliveries/status");
+      // Détection automatique de l'URL API selon l'environnement
+      let apiUrl;
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      ) {
+        apiUrl = "http://localhost:3000/deliveries/status";
+      } else {
+        apiUrl = window.location.origin + "/deliveries/status";
+      }
+      const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
