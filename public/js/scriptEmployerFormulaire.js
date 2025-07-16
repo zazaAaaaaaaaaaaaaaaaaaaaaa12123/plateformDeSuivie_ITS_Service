@@ -1260,10 +1260,10 @@ function init() {
         clearMessages(formSuccessDisplay);
 
         // --- Validation des champs obligatoires ---
-        // clientNameInput et weightInput sont facultatifs
+        // clientPhoneInput est maintenant facultatif, clientNameInput obligatoire
         const requiredInputs = [
           employeeNameInput,
-          clientPhoneInput,
+          clientNameInput,
           containerTypeAndContentInput,
           lieuInput,
           containerNumberInput,
@@ -1305,9 +1305,11 @@ function init() {
           return;
         }
 
+        // Vérification du numéro de téléphone client uniquement si renseigné
         const phoneRegex = /^\+?[0-9]{10,15}$/;
         if (
           clientPhoneInput &&
+          clientPhoneInput.value.trim() &&
           !phoneRegex.test(clientPhoneInput.value.trim())
         ) {
           displayMessage(
