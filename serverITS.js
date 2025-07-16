@@ -1506,14 +1506,14 @@ app.post(
     if (
       !employee_name ||
       !client_name ||
-      !client_phone ||
       !container_type_and_content ||
       !status ||
       !lieu ||
       !normalized_container_number ||
       !container_foot_type ||
       !declaration_number ||
-      !number_of_containers
+      !number_of_containers ||
+      !dossier_number
     ) {
       console.error("Validation failed: Missing required fields in backend.", {
         employee_name,
