@@ -6397,7 +6397,10 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // Exécute ces fonctions si les éléments DOM principaux sont présents
   if (deliveriesTableBody) {
-    // === AJOUT BOUTON VUE DOSSIERS CLIENTS ===
+    // === AJOUT BOUTON VUE DOSSIERS CLIENTS ENTRE ACTIVER SÉLECTION ET GÉNÉRER PDF ===
+    const toggleSelectionBtn = document.getElementById("toggleSelectionBtn");
+    const generatePdfBtn = document.getElementById("generatePdfBtn");
+
     const dossiersBtn = document.createElement("button");
     dossiersBtn.id = "viewClientFoldersBtn";
     dossiersBtn.textContent = "📁 Vue Dossiers Clients";
@@ -6422,19 +6425,22 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
       dossiersBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
     };
-    // Ajoute le bouton dans un conteneur aligné à droite
-    const btnContainer = document.createElement("div");
-    btnContainer.style.display = "flex";
-    btnContainer.style.justifyContent = "flex-end";
-    btnContainer.style.alignItems = "center";
-    btnContainer.style.width = "100%";
-    btnContainer.style.marginBottom = "8px";
-    btnContainer.appendChild(dossiersBtn);
-    if (deliveriesTable && deliveriesTable.parentNode) {
-      deliveriesTable.parentNode.insertBefore(btnContainer, deliveriesTable);
-    }
-    // Ajoute l'eventListener ici (et uniquement ici)
     dossiersBtn.addEventListener("click", showClientFoldersModal);
+
+    // Insère le bouton entre Activer Sélection et Générer PDF
+    if (
+      toggleSelectionBtn &&
+      generatePdfBtn &&
+      toggleSelectionBtn.parentNode === generatePdfBtn.parentNode
+    ) {
+      toggleSelectionBtn.parentNode.insertBefore(dossiersBtn, generatePdfBtn);
+    } else if (generatePdfBtn && generatePdfBtn.parentNode) {
+      generatePdfBtn.parentNode.insertBefore(dossiersBtn, generatePdfBtn);
+    } else if (toggleSelectionBtn && toggleSelectionBtn.parentNode) {
+      toggleSelectionBtn.parentNode.appendChild(dossiersBtn);
+    } else if (deliveriesTable && deliveriesTable.parentNode) {
+      deliveriesTable.parentNode.insertBefore(dossiersBtn, deliveriesTable);
+    }
 
     // Crée un conteneur pour la vue dossiers (masqué par défaut)
     const clientFoldersContainer = document.createElement("div");
