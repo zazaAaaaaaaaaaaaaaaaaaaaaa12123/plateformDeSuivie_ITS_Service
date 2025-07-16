@@ -1507,7 +1507,6 @@ app.post(
       !employee_name ||
       !client_name ||
       !container_type_and_content ||
-      !status ||
       !lieu ||
       !normalized_container_number ||
       !container_foot_type ||
