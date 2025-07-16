@@ -1272,20 +1272,9 @@ function init() {
           return;
         }
 
-        const phoneRegex = /^\+?[0-9]{10,15}$/;
-        if (
-          clientPhoneInput &&
-          !phoneRegex.test(clientPhoneInput.value.trim())
-        ) {
-          displayMessage(
-            formErrorDisplay,
-            "Veuillez entrer un numéro de téléphone client valide (ex: 0700000000 ou +2250700000000).",
-            "error"
-          );
-          clientPhoneInput.classList.add("border-red-500", "border-2");
-          clientPhoneInput.focus();
-          return;
-        } else if (clientPhoneInput) {
+        // Le numéro de téléphone du client est maintenant facultatif :
+        // On ne fait aucune validation, ni affichage d'erreur, même si le champ est vide ou incorrect.
+        if (clientPhoneInput) {
           clientPhoneInput.classList.remove("border-red-500", "border-2");
         }
 
