@@ -1296,7 +1296,7 @@ function init() {
         if (!allRequiredFilled) {
           displayMessage(
             formErrorDisplay,
-            "⚠️ Veuillez remplir tous les champs obligatoires (marqués avec *).",
+            "⚠️ Veuillez remplir tous les champs obligatoires (marqués avec *). Le nom du client est obligatoire.",
             "error"
           );
           if (firstEmptyInput) {
