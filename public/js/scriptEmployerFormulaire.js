@@ -1255,7 +1255,6 @@ function init() {
         const requiredInputs = [
           employeeNameInput,
           clientNameInput,
-          clientPhoneInput,
           containerTypeAndContentInput,
           lieuInput,
           containerNumberInput,
@@ -1297,20 +1296,8 @@ function init() {
           return;
         }
 
-        const phoneRegex = /^\+?[0-9]{10,15}$/;
-        if (
-          clientPhoneInput &&
-          !phoneRegex.test(clientPhoneInput.value.trim())
-        ) {
-          displayMessage(
-            formErrorDisplay,
-            "Veuillez entrer un numéro de téléphone client valide (ex: 0700000000 ou +2250700000000).",
-            "error"
-          );
-          clientPhoneInput.classList.add("border-red-500", "border-2");
-          clientPhoneInput.focus();
-          return;
-        } else if (clientPhoneInput) {
+        // Le numéro de téléphone client est totalement facultatif : aucune validation, aucune contrainte, aucune bordure rouge.
+        if (clientPhoneInput) {
           clientPhoneInput.classList.remove("border-red-500", "border-2");
         }
 
@@ -1584,7 +1571,6 @@ async function submitDeliveryForm(status) {
   if (
     !employeeNameInput ||
     !clientNameInput ||
-    !clientPhoneInput ||
     !containerTypeAndContentInput ||
     !lieuInput ||
     !containerNumberInput ||
@@ -1677,7 +1663,6 @@ async function submitDeliveryForm(status) {
   const requiredInputs = [
     employeeName,
     clientName,
-    clientPhone,
     containerTypeAndContent,
     lieu,
     containerNumbers.length > 0 ? containerNumbers.join(",") : "",
@@ -1695,14 +1680,9 @@ async function submitDeliveryForm(status) {
     return;
   }
 
-  const phoneRegex = /^\+?[0-9]{10,15}$/;
-  if (!phoneRegex.test(clientPhone)) {
-    displayMessage(
-      formErrorDisplay,
-      "Veuillez entrer un numéro de téléphone client valide (ex: 0700000000 ou +2250700000000).",
-      "error"
-    );
-    return;
+  // Le numéro de téléphone client est totalement facultatif : aucune validation, aucune contrainte, aucune bordure rouge.
+  if (clientPhoneInput) {
+    clientPhoneInput.classList.remove("border-red-500", "border-2");
   }
 
   const formData = new FormData();
