@@ -646,19 +646,45 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
           );
         }
       };
-      ws.onclose = function () {
-        console.warn("[WebSocket] Déconnecté. Fallback AJAX activé dans 2s...");
+      ws.onclose = function (event) {
+        let reason = "Connexion WebSocket perdue.";
+        if (event && typeof event.code !== "undefined") {
+          reason += ` (Code: ${event.code}`;
+          if (event.reason) reason += `, Motif: ${event.reason}`;
+          reason += ")";
+        }
+        showCustomAlert(
+          reason +
+            "\nLa synchronisation temps réel est désactivée, passage en mode fallback.",
+          "error",
+          7000
+        );
+        console.warn(
+          "[WebSocket] Déconnecté. Fallback AJAX activé dans 2s...",
+          event
+        );
         setTimeout(() => {
           startPollingDeliveries();
           // On retente le WebSocket après 30s
           setTimeout(initWebSocketLivraisons, 30000);
         }, 2000);
       };
-      ws.onerror = function () {
+      ws.onerror = function (event) {
+        showCustomAlert(
+          "Erreur WebSocket : " +
+            (event && event.message ? event.message : "Erreur inconnue."),
+          "error",
+          7000
+        );
         ws.close();
       };
     } catch (e) {
       console.error("[WebSocket] Erreur d'init :", e);
+      showCustomAlert(
+        "Erreur d'initialisation WebSocket : " + e.message,
+        "error",
+        7000
+      );
       startPollingDeliveries();
     }
   }
