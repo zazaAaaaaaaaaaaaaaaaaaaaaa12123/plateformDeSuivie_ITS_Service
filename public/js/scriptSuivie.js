@@ -569,70 +569,7 @@ setInterval(() => {
 // Appel initial au chargement
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
-// Ajout du style pour l'animation de clignotement vert
-const style = document.createElement("style");
-style.innerHTML = `
-@keyframes green-blink {
-  0% { background-color: #bbf7d0; }
-  20% { background-color: #4ade80; }
-  40% { background-color: #bbf7d0; }
-  60% { background-color: #4ade80; }
-  80% { background-color: #bbf7d0; }
-  100% { background-color: inherit; }
-}
-.row-green-blink {
-  animation: green-blink 1.2s linear 0s 5;
-}
-`;
-document.head.appendChild(style);
-
-// Log de diagnostic pour vérifier que la balise <style> de l'animation verte est bien présente avant l'affichage du tableau principal
-console.log("TEST LOG: début du setTimeout BLINK DIAG");
-setTimeout(() => {
-  const found = Array.from(document.head.querySelectorAll("style")).some((s) =>
-    s.innerHTML.includes("green-blink")
-  );
-  if (found) {
-    console.log(
-      "[BLINK DIAG] La CSS d'animation verte est bien présente dans <head> AVANT affichage du tableau."
-    );
-  } else {
-    console.warn(
-      "[BLINK DIAG] La CSS d'animation verte N'EST PAS présente dans <head> !"
-    );
-  }
-}, 0);
-
 (async () => {
-  // --- DÉTECTION ET ANIMATION DES NOUVELLES LIGNES ---
-  let previousDeliveryIds = new Set();
-  function getCurrentDeliveryIds() {
-    return new Set(
-      deliveries.map(
-        (d) =>
-          d.id ||
-          d._id ||
-          d.numero ||
-          d.dossier_number ||
-          d.container_number ||
-          JSON.stringify(d)
-      )
-    );
-  }
-  function animateNewRows() {
-    if (!deliveriesTableBody) return;
-    const currentIds = getCurrentDeliveryIds();
-    deliveriesTableBody.querySelectorAll("tr").forEach((tr) => {
-      const rowId = tr.dataset.deliveryId;
-      if (rowId && !previousDeliveryIds.has(rowId)) {
-        tr.classList.add("row-green-blink");
-        setTimeout(() => {
-          tr.classList.remove("row-green-blink");
-        }, 6000);
-      }
-    });
-    previousDeliveryIds = currentIds;
-  }
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsHost = window.location.hostname;
@@ -3170,13 +3107,7 @@ setTimeout(() => {
     deliveriesToRender.forEach((delivery, index) => {
       const row = deliveriesTableBody.insertRow();
       row.id = `delivery-row-${delivery.id}`;
-      row.dataset.deliveryId =
-        delivery.id ||
-        delivery._id ||
-        delivery.numero ||
-        delivery.dossier_number ||
-        delivery.container_number ||
-        JSON.stringify(delivery);
+      row.dataset.deliveryId = delivery.id;
 
       if (selectionMode) {
         const checkboxCell = row.insertCell();
@@ -4595,16 +4526,6 @@ setTimeout(() => {
 
     if (shouldRenderTable) {
       renderAdminDeliveriesTable(filteredData);
-      setTimeout(animateNewRows, 100); // Lance l'animation après le rendu
-    }
-    // Initialisation de la liste des ids connus au tout premier chargement UNIQUEMENT
-    if (!window.__previousDeliveryIdsInitialized) {
-      document.addEventListener("DOMContentLoaded", () => {
-        setTimeout(() => {
-          previousDeliveryIds = getCurrentDeliveryIds();
-          window.__previousDeliveryIdsInitialized = true;
-        }, 500);
-      });
     }
     // Note: hideSpinner() is called in loadDeliveries().finally, which is triggered by applyCombinedFilters.
     // This ensures the spinner is hidden after data is fully loaded and rendered.
