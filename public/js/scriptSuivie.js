@@ -921,17 +921,35 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
     /* Bouton Suivie spécifique agent : alignement à droite (fix flexbox) */
     .employee-tracking-btn-wrapper {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        width: 100%;
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+        /* Empêche les media queries ou autres styles de casser l'alignement */
     }
     #employeeTrackingBtn {
-        margin-left: auto;
-        margin-right: 0;
-        display: inline-block;
-        float: none;
-        position: static;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        display: inline-block !important;
+        float: none !important;
+        position: static !important;
+    }
+
+    /* Désactive tout alignement à gauche sur tablette/desktop si media queries présentes */
+    @media (max-width: 1200px), (max-width: 992px), (max-width: 768px) {
+      .employee-tracking-btn-wrapper {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+      }
+      #employeeTrackingBtn {
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        display: inline-block !important;
+        float: none !important;
+        position: static !important;
+      }
     }
 
     /* Padding for the main content sections within the agent activity box */
