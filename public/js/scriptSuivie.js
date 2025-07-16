@@ -569,34 +569,69 @@ setInterval(() => {
 // Appel initial au chargement
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
-(async () => {
-  // Animation clignotement vert pour nouvelle ligne
-  const styleFlash = document.createElement("style");
-  styleFlash.textContent = `
-    @keyframes flash-green {
-      0%, 100% { background-color: #fff; }
-      10%, 90% { background-color: #a7f3d0; }
-      20%, 80% { background-color: #34d399; }
-      30%, 70% { background-color: #6ee7b7; }
-      40%, 60% { background-color: #34d399; }
-      50% { background-color: #22c55e; }
-    }
-    .flash-green-row td {
-      animation: flash-green 1s linear 0s 6;
-    }
-  `;
-  document.head.appendChild(styleFlash);
+// Ajout du style pour l'animation de clignotement vert
+const style = document.createElement("style");
+style.innerHTML = `
+@keyframes green-blink {
+  0% { background-color: #bbf7d0; }
+  20% { background-color: #4ade80; }
+  40% { background-color: #bbf7d0; }
+  60% { background-color: #4ade80; }
+  80% { background-color: #bbf7d0; }
+  100% { background-color: inherit; }
+}
+.row-green-blink {
+  animation: green-blink 1.2s linear 0s 5;
+}
+`;
+document.head.appendChild(style);
 
-  /**
-   * Fait clignoter une ligne du tableau en vert pendant 6 secondes.
-   * @param {HTMLTableRowElement} row - La ligne à faire clignoter.
-   */
-  function flashRowGreen(row) {
-    if (!row) return;
-    row.classList.add("flash-green-row");
-    setTimeout(() => {
-      row.classList.remove("flash-green-row");
-    }, 6000);
+// Log de diagnostic pour vérifier que la balise <style> de l'animation verte est bien présente avant l'affichage du tableau principal
+console.log("TEST LOG: début du setTimeout BLINK DIAG");
+setTimeout(() => {
+  const found = Array.from(document.head.querySelectorAll("style")).some((s) =>
+    s.innerHTML.includes("green-blink")
+  );
+  if (found) {
+    console.log(
+      "[BLINK DIAG] La CSS d'animation verte est bien présente dans <head> AVANT affichage du tableau."
+    );
+  } else {
+    console.warn(
+      "[BLINK DIAG] La CSS d'animation verte N'EST PAS présente dans <head> !"
+    );
+  }
+}, 0);
+
+(async () => {
+  // --- DÉTECTION ET ANIMATION DES NOUVELLES LIGNES ---
+  let previousDeliveryIds = new Set();
+  function getCurrentDeliveryIds() {
+    return new Set(
+      deliveries.map(
+        (d) =>
+          d.id ||
+          d._id ||
+          d.numero ||
+          d.dossier_number ||
+          d.container_number ||
+          JSON.stringify(d)
+      )
+    );
+  }
+  function animateNewRows() {
+    if (!deliveriesTableBody) return;
+    const currentIds = getCurrentDeliveryIds();
+    deliveriesTableBody.querySelectorAll("tr").forEach((tr) => {
+      const rowId = tr.dataset.deliveryId;
+      if (rowId && !previousDeliveryIds.has(rowId)) {
+        tr.classList.add("row-green-blink");
+        setTimeout(() => {
+          tr.classList.remove("row-green-blink");
+        }, 6000);
+      }
+    });
+    previousDeliveryIds = currentIds;
   }
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -658,29 +693,9 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
           ];
           if (data && data.type && typesToRefresh.includes(data.type)) {
             loadDeliveries().then(() => {
-              // Rafraîchit toutes les vues et le tableau principal après chargement
-              if (typeof filterDeliveriesIntoCategories === "function")
-                filterDeliveriesIntoCategories();
-              if (typeof renderNewRequestsSummary === "function")
-                renderNewRequestsSummary();
-              if (typeof renderHistoryDeliveries === "function")
-                renderHistoryDeliveries("recent");
               if (typeof checkLateContainers === "function")
                 checkLateContainers();
             });
-            // Affiche une alerte en temps réel pour la création d'un nouvel ordre de livraison
-            if (data.type === "new_delivery_notification") {
-              console.log("[WebSocket][ALERT] Notification reçue :", data);
-              let agent =
-                data.agentName ||
-                data.agent ||
-                data.employee_name ||
-                "Un agent inconnu";
-              let msg =
-                data.message ||
-                `L'agent ${agent} a etablit un nouvel ordre de livraison !`;
-              showCustomAlert(msg, "info", 6000);
-            }
           }
         } catch (e) {
           console.warn(
@@ -688,13 +703,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
             event.data,
             e
           );
-          // Ajout : flash automatique colonne Agent
-          if (typeof flashCells === "function") {
-            const COLS_AGENT = [
-              2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
-            ];
-            flashCells(COLS_AGENT, "highlight-green-flash");
-          }
         }
       };
       ws.onclose = function () {
@@ -3162,8 +3170,13 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     deliveriesToRender.forEach((delivery, index) => {
       const row = deliveriesTableBody.insertRow();
       row.id = `delivery-row-${delivery.id}`;
-      row.dataset.deliveryId = delivery.id;
-      // --- Création des cellules ---
+      row.dataset.deliveryId =
+        delivery.id ||
+        delivery._id ||
+        delivery.numero ||
+        delivery.dossier_number ||
+        delivery.container_number ||
+        JSON.stringify(delivery);
 
       if (selectionMode) {
         const checkboxCell = row.insertCell();
@@ -4247,7 +4260,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       })();
 
       createCell(delivery.delivery_notes, "delivery_notes", "textarea", {}); // Observations
-      // --- Ne rien faire ici : le clignotement doit être déclenché UNIQUEMENT lors d'un ajout réel ---
     });
     // =====================
     // Effet de surlignage interactif par section (flash coloré)
@@ -4583,7 +4595,14 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
     if (shouldRenderTable) {
       renderAdminDeliveriesTable(filteredData);
+      setTimeout(animateNewRows, 100); // Lance l'animation après le rendu
     }
+    // Initialisation de la liste des ids connus au premier chargement
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => {
+        previousDeliveryIds = getCurrentDeliveryIds();
+      }, 500);
+    });
     // Note: hideSpinner() is called in loadDeliveries().finally, which is triggered by applyCombinedFilters.
     // This ensures the spinner is hidden after data is fully loaded and rendered.
     return filteredData;
@@ -5010,8 +5029,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       } else {
         agentDailyDeliveries.forEach((delivery, idx) => {
           const row = agentDailyDeliveriesTableBody.insertRow();
-          // Animation clignotement vert à chaque ajout dans le tableau agent
-          flashRowGreen(row);
           // Populate cells based on AGENT_TABLE_COLUMNS definition
           AGENT_TABLE_COLUMNS.forEach((col) => {
             const cell = row.insertCell();

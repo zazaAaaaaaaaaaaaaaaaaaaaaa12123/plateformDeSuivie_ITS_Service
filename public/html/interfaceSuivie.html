@@ -277,6 +277,31 @@
         z-index: 12; /* Plus haut que le bandeau et l'en-tête de table général */
       }
 
+      /* Animation clignotement vert pour nouvelle ligne */
+      @keyframes green-blink {
+        0% {
+          background-color: #bbf7d0;
+        }
+        20% {
+          background-color: #4ade80;
+        }
+        40% {
+          background-color: #bbf7d0;
+        }
+        60% {
+          background-color: #4ade80;
+        }
+        80% {
+          background-color: #bbf7d0;
+        }
+        100% {
+          background-color: inherit;
+        }
+      }
+      .row-blink-green {
+        animation: green-blink 1.2s linear 0s 5;
+      }
+
       /* Styles pour l'effet de mise en évidence */
       .highlight-cell {
         transition: background-color 0.3s ease-in-out; /* Transition douce pour l'effet de flash */
