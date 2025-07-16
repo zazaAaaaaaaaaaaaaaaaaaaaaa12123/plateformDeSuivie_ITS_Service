@@ -45,7 +45,7 @@
 // --- DRAG & DROP pour les boutons d'action (ordre personnalisable) ---
 document.addEventListener("DOMContentLoaded", function () {
   const containers = document.querySelectorAll(
-    ".boutons-container, .tableau-boutons, .table-buttons, .table-btns, .tableauPrincipalRetards .btn-container, .tableauPrincipalRetards .boutons-container"
+    ".boutons-container, .tableau-boutons, .table-buttons, .table-btns, .tableauPrincipalRetards .btn-container, .tableauPrincipalRetards .boutons-container, .bottom-buttons"
   );
   containers.forEach((container) => {
     let draggedBtn = null;
