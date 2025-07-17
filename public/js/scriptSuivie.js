@@ -8628,10 +8628,49 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     // Pour chaque agent en retard, ajoute une ligne
     lateAgents.forEach((agent) => {
       const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.textContent = agent;
-      tr.appendChild(td);
-      // Ajoute d'autres colonnes si besoin (ex : nombre de dossiers, bouton action...)
+      // Colonne Agent
+      const tdAgent = document.createElement("td");
+      tdAgent.textContent = agent;
+      tr.appendChild(tdAgent);
+
+      // Colonne Nombre de dossiers en retard
+      const nbLate = deliveries.filter(
+        (d) =>
+          (d.employee_name || "Agent inconnu") === agent &&
+          !(d.status || d.delivery_status_acconier || "")
+            .toString()
+            .toLowerCase()
+            .includes("livr")
+      ).length;
+      const tdNbLate = document.createElement("td");
+      tdNbLate.textContent = nbLate;
+      tr.appendChild(tdNbLate);
+
+      // Colonne Bouton Voir dossiers
+      const tdBtn = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.textContent = "Voir dossiers";
+      btn.className = "btn btn-warning btn-sm";
+      btn.style.margin = "0 6px";
+      btn.onclick = function () {
+        // Filtre les livraisons non livrées de cet agent
+        const filteredDeliveries = deliveries.filter(
+          (d) =>
+            (d.employee_name || "Agent inconnu") === agent &&
+            !(d.status || d.delivery_status_acconier || "")
+              .toString()
+              .toLowerCase()
+              .includes("livr")
+        );
+        if (typeof showClientFoldersModalWithData === "function") {
+          showClientFoldersModalWithData(filteredDeliveries, agent);
+        } else {
+          alert("Fonction showClientFoldersModalWithData non trouvée.");
+        }
+      };
+      tdBtn.appendChild(btn);
+      tr.appendChild(tdBtn);
+
       lateTable.querySelector("tbody").appendChild(tr);
     });
     // Si aucun agent en retard
