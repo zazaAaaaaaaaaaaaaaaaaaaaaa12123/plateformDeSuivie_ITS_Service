@@ -896,7 +896,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   init();
-  // Suppression de toute logique liée au code entreprise
+  // Ajout de l'œil dans le champ code entreprise si pas déjà présent
+  if (companyCodeInput) {
+    // Création du wrapper si pas déjà fait
+    let wrapper = companyCodeInput.parentElement;
+    if (!wrapper.classList.contains("input-eye-wrapper")) {
+      wrapper.classList.add("input-eye-wrapper");
+      wrapper.style.position = "relative";
+    }
+    // Supprimer les éventuels doublons d'icône œil
+    const existingEyes = wrapper.querySelectorAll(".toggle-eye");
+    if (existingEyes.length > 1) {
+      // On garde le premier, on retire les autres
+      for (let i = 1; i < existingEyes.length; i++) {
+        existingEyes[i].remove();
+      }
+    }
+    // Création ou récupération de l'icône œil
+    // ...suppression du bouton œil, car l'icône existe déjà dans le HTML...
+    // Permettre la validation du code entreprise avec la touche Entrée
+    companyCodeInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (typeof validateCompanyCode === "function") {
+          validateCompanyCode();
+        }
+      }
+    });
+  }
 });
 
 // Fonction utilitaire pour afficher un message dans un élément DOM.
