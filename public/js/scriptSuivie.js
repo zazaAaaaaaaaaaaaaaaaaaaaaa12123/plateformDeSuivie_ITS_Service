@@ -8625,36 +8625,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       "[SYNC DIAG][AVANT] lateAgents (avant affichage) :",
       lateAgents
     );
-    // Vérifie s'il y a des agents en retard depuis plus de 2 jours
-    let hasLateOver2Days = false;
-    deliveries.forEach((d) => {
-      const agent = d.employee_name || "Agent inconnu";
-      const status = d.status;
-      const acconierStatus = d.delivery_status_acconier;
-      const isDelivered = (status || acconierStatus || "")
-        .toString()
-        .toLowerCase()
-        .includes("livr");
-      if (!isDelivered && lateAgents.includes(agent)) {
-        const created = d.created_at ? new Date(d.created_at) : null;
-        if (created) {
-          const now = new Date();
-          const diffDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
-          if (diffDays >= 2) {
-            hasLateOver2Days = true;
-          }
-        }
-      }
-    });
-    if (hasLateOver2Days) {
-      if (typeof window.showCustomAlert === "function") {
-        window.showCustomAlert(
-          "Attention : Un ou plusieurs dossiers sont en retard de plus de 2 jours !",
-          "error",
-          5000
-        );
-      }
-    }
     // Pour chaque agent en retard, ajoute une ligne
     lateAgents.forEach((agent) => {
       const tr = document.createElement("tr");
