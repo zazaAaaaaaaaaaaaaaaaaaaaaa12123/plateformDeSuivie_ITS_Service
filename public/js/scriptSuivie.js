@@ -128,64 +128,30 @@ function checkLateContainers() {
   lateContainers = [];
   const lateDossiersSet = new Set();
   window.deliveries.forEach((delivery) => {
-    if (!delivery.container_statuses || !delivery.container_statuses_fr) return;
-    let total = 0;
-    let delivered = 0;
-    let hasLate = false;
-    let oldestUnlivDate = null;
-    Object.entries(delivery.container_statuses).forEach(
-      ([numeroTC, statut]) => {
-        total++;
-        const statutFr = delivery.container_statuses_fr[numeroTC] || statut;
-        const isDelivered = statutFr.toLowerCase().includes("livr");
-        if (isDelivered) {
-          delivered++;
-        }
-        let dateEnr = null;
-        if (
-          delivery.containers_info &&
-          delivery.containers_info[numeroTC] &&
-          delivery.containers_info[numeroTC].created_at
-        ) {
-          dateEnr = new Date(delivery.containers_info[numeroTC].created_at);
-        } else if (delivery.created_at) {
-          dateEnr = new Date(delivery.created_at);
-        }
-        if (!dateEnr) return;
-        // Si ce conteneur n'est pas livré et dépasse 2 jours, il est en retard
-        if (!isDelivered && now - dateEnr > 2 * 24 * 60 * 60 * 1000) {
-          // 2 jours (48h)
-          hasLate = true;
-          if (!oldestUnlivDate || dateEnr < oldestUnlivDate)
-            oldestUnlivDate = dateEnr;
-          let deliveryDate =
-            delivery.delivery_date ||
-            (delivery.containers_info &&
-              delivery.containers_info[numeroTC] &&
-              delivery.containers_info[numeroTC].delivery_date) ||
-            "-";
-          lateContainers.push({
-            numeroTC,
-            dossier: delivery.dossier_number || delivery.id || "?",
-            dateEnr: dateEnr.toLocaleDateString("fr-FR"),
-            statut: statutFr,
-            agentName:
-              delivery.employee_name ||
-              delivery.agent_name ||
-              (delivery.agents &&
-              Array.isArray(delivery.agents) &&
-              delivery.agents.length > 0
-                ? delivery.agents.join(", ")
-                : null),
-            agentEmail: delivery.agent_email || null,
-            deliveryDate: deliveryDate,
-            clientName: delivery.client_name || delivery.client || "-",
-          });
-        }
-      }
-    );
-    // Un dossier est en retard si au moins un conteneur est en retard ET qu'il reste au moins un conteneur non livré
-    if (hasLate && delivered < total) {
+    // Cas précis : on considère en retard si delivery_date est null ET created_at > 2 jours
+    if (!delivery.created_at) return;
+    const dateEnr = new Date(delivery.created_at);
+    const isLate =
+      (!delivery.delivery_date || delivery.delivery_date === null) &&
+      now - dateEnr > 2 * 24 * 60 * 60 * 1000;
+    if (isLate) {
+      lateContainers.push({
+        numeroTC: delivery.container_number || "-",
+        dossier: delivery.dossier_number || delivery.id || "?",
+        dateEnr: dateEnr.toLocaleDateString("fr-FR"),
+        statut: delivery.statut || "-",
+        agentName:
+          delivery.employee_name ||
+          delivery.agent_name ||
+          (delivery.agents &&
+          Array.isArray(delivery.agents) &&
+          delivery.agents.length > 0
+            ? delivery.agents.join(", ")
+            : null),
+        agentEmail: delivery.agent_email || null,
+        deliveryDate: delivery.delivery_date || "-",
+        clientName: delivery.client_name || delivery.client || "-",
+      });
       lateDossiersSet.add(delivery.dossier_number || delivery.id || "?");
     }
   });
