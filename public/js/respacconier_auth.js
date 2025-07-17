@@ -86,18 +86,6 @@ document.addEventListener("DOMContentLoaded", function () {
     "form-inscription-respacconier"
   );
   const formConnexion = document.getElementById("form-connexion-respacconier");
-  const formCodeEntreprise = document.getElementById("form-code-entreprise");
-
-  document.getElementById("to-login-respacconier").onclick = function () {
-    formInscription.style.display = "none";
-    formConnexion.style.display = "block";
-    formCodeEntreprise.style.display = "none";
-  };
-  document.getElementById("to-register-respacconier").onclick = function () {
-    formInscription.style.display = "block";
-    formConnexion.style.display = "none";
-    formCodeEntreprise.style.display = "none";
-  };
 
   // Soumission inscription
   document
@@ -171,15 +159,11 @@ document.addEventListener("DOMContentLoaded", function () {
           // Stocker dans une seule clé dédiée pour le responsable acconier
           localStorage.setItem(
             "respacconierUser",
-            JSON.stringify({
-              nom: data.name || "",
-              email: data.email || "",
-            })
+            JSON.stringify({ nom: data.name || "", email: data.email || "" })
           );
-          // NE JAMAIS ÉCRIRE DANS LA CLÉ 'user' OU AUTRE !
-          formInscription.style.display = "none";
-          formConnexion.style.display = "none";
-          formCodeEntreprise.style.display = "block";
+          // Redirection directe vers le tableau de bord acconier après connexion
+          window.location.href =
+            "https://plateformdesuivie-its-service.onrender.com/html/interfaceRespAconier.html";
         } else {
           errorDiv.textContent = data.message || "Erreur lors de la connexion.";
         }
@@ -188,62 +172,5 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-  // Soumission code entreprise (validation dynamique via API)
-  document
-    .getElementById("codeEntrepriseFormRespAcconier")
-    .addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const code = document
-        .getElementById("code-entreprise-respacconier")
-        .value.trim();
-      const errorDiv = document.getElementById("code-error-respacconier");
-      errorDiv.textContent = "";
-      if (!code) {
-        errorDiv.textContent = "Veuillez entrer le code d'entreprise.";
-        return;
-      }
-      // Validation dynamique via API
-      try {
-        const res = await fetch("/api/company-code");
-        const data = await res.json();
-        if (data.success && code === data.code) {
-          // Redirection absolue vers le dashboard après validation du code entreprise
-          window.location.href =
-            "https://plateformdesuivie-its-service.onrender.com/html/interfaceRespAconier.html";
-        } else {
-          errorDiv.textContent = "Code invalide ou non reconnu.";
-        }
-      } catch (err) {
-        errorDiv.textContent = "Erreur réseau ou serveur. Veuillez réessayer.";
-      }
-    });
-
-  // --- WebSocket pour synchronisation temps réel du code entreprise ---
-  let wsCodeEntreprise = null;
-  function setupCompanyCodeWebSocket() {
-    try {
-      wsCodeEntreprise = new WebSocket(
-        window.location.protocol === "https:"
-          ? "wss://"
-          : "ws://" + window.location.host
-      );
-      wsCodeEntreprise.onmessage = function (event) {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "company-code-updated") {
-            alert(
-              "Le code d'entreprise a été modifié par l'administrateur. Veuillez saisir le nouveau code."
-            );
-            const codeInput = document.getElementById(
-              "code-entreprise-respacconier"
-            );
-            if (codeInput) codeInput.value = "";
-            const codeForm = document.getElementById("form-code-entreprise");
-            if (codeForm) codeForm.style.display = "block";
-          }
-        } catch (e) {}
-      };
-    } catch (e) {}
-  }
-  setupCompanyCodeWebSocket();
+  // Suppression de toute la logique liée au code d'entreprise après connexion
 });
