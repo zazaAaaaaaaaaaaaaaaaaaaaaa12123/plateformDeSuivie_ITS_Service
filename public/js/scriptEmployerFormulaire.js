@@ -177,6 +177,16 @@ window.saveAcconierUserToLocalStorage = function (acconier) {
 document.addEventListener("DOMContentLoaded", () => {
   window.displayAgentHistory && window.displayAgentHistory("Agent Acconier");
   window.displayProfileAvatar && window.displayProfileAvatar();
+  // Affiche directement le formulaire d'ordre de livraison
+  const deliveryFormSection = document.getElementById("deliveryFormSection");
+  if (deliveryFormSection) {
+    deliveryFormSection.classList.remove("hidden");
+  }
+  // Masque la section code d'entreprise si elle existe
+  const codeEntrySection = document.getElementById("codeEntrySection");
+  if (codeEntrySection) {
+    codeEntrySection.classList.add("hidden");
+  }
 });
 
 // --- Insertion dynamique du conteneur avatar à côté du formulaire ---
