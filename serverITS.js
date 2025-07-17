@@ -1703,6 +1703,19 @@ app.post(
         alertType: alertType,
       });
 
+      // LOG DEBUG : Affiche le nombre de clients WebSocket connectés et leur état
+      const clientsArray = Array.from(wss.clients);
+      console.log(
+        `[DEBUG][WebSocket] Nombre de clients connectés : ${clientsArray.length}`
+      );
+      clientsArray.forEach((client, idx) => {
+        console.log(
+          `[DEBUG][WebSocket] Client #${idx + 1} readyState : ${
+            client.readyState
+          }`
+        );
+      });
+
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(payload);

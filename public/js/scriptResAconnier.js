@@ -144,7 +144,27 @@ document.addEventListener("DOMContentLoaded", function () {
   const historySidebar = document.getElementById("historySidebar");
   const closeHistoryBtn = document.getElementById("closeHistoryBtn");
   const historyContent = document.getElementById("historyContent");
+
   const historyOverlay = document.getElementById("historyOverlay");
+  if (removedFromList) {
+    // On retire la demande de currentPendingDeliveries
+    currentPendingDeliveries = currentPendingDeliveries.filter(
+      (d) => d.id !== delivery.id
+    );
+    renderNewRequestsSummary();
+    // Afficher le message par défaut dans la vue principale
+    singleDeliveryView.innerHTML = `
+              <i class="fas fa-hand-pointer text-5xl mb-4 text-gray-300"></i>
+              <p>Cliquez sur une demande ci-dessus pour la consulter en détail.</p>
+            `;
+    singleDeliveryView.classList.add(
+      "flex",
+      "items-center",
+      "justify-content-center",
+      "flex-col"
+    );
+    selectedDeliveryId = null;
+  }
   const noHistoryMessage = document.getElementById("noHistoryMessage");
   const historyModalTitle = document.getElementById("historyModalTitle"); // Title for the modal
   const historySearchInput = document.createElement("input"); // New search input for the modal
@@ -1578,7 +1598,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     socket.onmessage = async (event) => {
       console.log(
-        "Message WebSocket reçu (Tableau de Bord Acconier):",
+        "[DEBUG] Handler WebSocket exécuté ! Message reçu:",
         event.data
       );
       try {
@@ -1587,12 +1607,29 @@ document.addEventListener("DOMContentLoaded", function () {
         if (
           payload.type === "new_delivery_alert" ||
           payload.type === "delivery_update_alert" ||
-          payload.type === "new_delivery_notification" // Added this line
+          payload.type === "new_delivery_notification"
         ) {
           showCustomAlert(payload.message, payload.alertType || "info");
-          // A full reload and re-filter is the safest way to handle status changes and new entries
           await loadDeliveries();
-          // If history modal is open, ensure it refreshes with current view type and current search term
+          console.log(
+            "[DEBUG] allDeliveries après loadDeliveries:",
+            allDeliveries
+          );
+          filterDeliveriesIntoCategories();
+          renderNewRequestsSummary();
+          // Affiche le message par défaut si aucune demande n'est sélectionnée
+          if (!selectedDeliveryId || currentPendingDeliveries.length === 0) {
+            singleDeliveryView.innerHTML = `
+              <i class="fas fa-hand-pointer text-5xl mb-4 text-gray-300"></i>
+              <p>Cliquez sur une demande ci-dessus pour la consulter en détail.</p>
+            `;
+            singleDeliveryView.classList.add(
+              "flex",
+              "items-center",
+              "justify-content-center",
+              "flex-col"
+            );
+          }
           if (historySidebar.classList.contains("open")) {
             renderHistoryDeliveries(
               activeModalContentSource,
@@ -1601,10 +1638,27 @@ document.addEventListener("DOMContentLoaded", function () {
             );
           }
         }
-        // Handle deletion if needed: If a delivery is deleted from admin panel, remove it here
         if (payload.type === "delivery_deletion_alert") {
           showCustomAlert(payload.message, payload.alertType || "info");
-          await loadDeliveries(); // Reload to remove deleted items
+          await loadDeliveries();
+          console.log(
+            "[DEBUG] allDeliveries après loadDeliveries:",
+            allDeliveries
+          );
+          filterDeliveriesIntoCategories();
+          renderNewRequestsSummary();
+          if (!selectedDeliveryId || currentPendingDeliveries.length === 0) {
+            singleDeliveryView.innerHTML = `
+              <i class="fas fa-hand-pointer text-5xl mb-4 text-gray-300"></i>
+              <p>Cliquez sur une demande ci-dessus pour la consulter en détail.</p>
+            `;
+            singleDeliveryView.classList.add(
+              "flex",
+              "items-center",
+              "justify-content-center",
+              "flex-col"
+            );
+          }
           if (historySidebar.classList.contains("open")) {
             renderHistoryDeliveries(
               activeModalContentSource,
