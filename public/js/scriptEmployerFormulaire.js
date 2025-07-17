@@ -1,8 +1,5 @@
 // --- DÉCLARATION DES VARIABLES GLOBALES AVANT TOUTE FONCTION ---
-const companyCodeInput = document.getElementById("companyCode");
-const validateCodeBtn = document.getElementById("validateCodeBtn");
-const codeErrorDisplay = document.getElementById("codeError");
-const codeEntrySection = document.getElementById("codeEntrySection");
+// Toutes les variables liées au code d'entreprise ont été supprimées
 const deliveryFormSection = document.getElementById("deliveryFormSection");
 const deliveryForm = document.getElementById("deliveryForm");
 const employeeNameInput = document.getElementById("employeeName");
@@ -1248,12 +1245,6 @@ syncFootTypesWithTags();
  * Initialise les écouteurs d'événements au chargement de la page.
  */
 function init() {
-  if (validateCodeBtn) {
-    validateCodeBtn.addEventListener("click", validateCompanyCode);
-  } else {
-    console.warn("Élément #validateCodeBtn non trouvé.");
-  }
-
   if (deliveryForm) {
     // Attache les écouteurs d'événements aux boutons de soumission du formulaire
     deliveryForm.querySelectorAll('button[type="submit"]').forEach((button) => {
@@ -1371,153 +1362,13 @@ function init() {
     });
   }
 
-  // --- Gestion unique du bouton "Code entreprise oublié ?" ---
-  const codeOublieBtn = document.getElementById("codeOublieBtn");
-  const demandeCodeForm = document.getElementById("demandeCodeForm");
-  if (codeOublieBtn && demandeCodeForm) {
-    codeOublieBtn.onclick = function () {
-      // Injecte le formulaire dans le conteneur existant
-      demandeCodeForm.innerHTML = `
-        <input id='demandeCodeNom' type='text' placeholder='Votre nom' style='width:100%;margin-bottom:7px;padding:7px 10px;border-radius:7px;border:1px solid #2563eb;font-size:1em;'>
-        <input id='demandeCodeEmail' type='email' placeholder='Votre email' style='width:100%;margin-bottom:7px;padding:7px 10px;border-radius:7px;border:1px solid #2563eb;font-size:1em;'>
-        <textarea id='demandeCodeMessage' rows='2' placeholder='Message (optionnel)' style='width:100%;margin-bottom:7px;padding:7px 10px;border-radius:7px;border:1px solid #2563eb;font-size:1em;'></textarea>
-        <button id='envoyerDemandeCodeEntrepriseBtn' style='background:linear-gradient(90deg,#2563eb 0%,#06b6d4 100%);color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:0.98em;font-weight:600;box-shadow:0 2px 8px #2563eb22;cursor:pointer;'>Envoyer la demande</button>
-        <div id='demandeCodeEntrepriseMsg' style='margin-top:7px;font-size:0.98em;text-align:center;'></div>
-      `;
-      demandeCodeForm.style.display = "block";
-      codeOublieBtn.style.display = "none";
-      // Préremplir nom/email si dispo
-      const user =
-        window.currentUser || JSON.parse(localStorage.getItem("user")) || {};
-      document.getElementById("demandeCodeNom").value = user.nom || "";
-      document.getElementById("demandeCodeEmail").value = user.email || "";
-      // Gestion envoi demande
-      document.getElementById("envoyerDemandeCodeEntrepriseBtn").onclick =
-        async function () {
-          const nom = document.getElementById("demandeCodeNom").value.trim();
-          const email = document
-            .getElementById("demandeCodeEmail")
-            .value.trim();
-          const message = document
-            .getElementById("demandeCodeMessage")
-            .value.trim();
-          const msgDiv = document.getElementById("demandeCodeEntrepriseMsg");
-          msgDiv.textContent = "";
-          if (!nom || !email) {
-            msgDiv.textContent = "Veuillez renseigner votre nom et email.";
-            msgDiv.style.color = "#dc3545";
-            return;
-          }
-          document.getElementById(
-            "envoyerDemandeCodeEntrepriseBtn"
-          ).disabled = true;
-          try {
-            const res = await fetch("/api/demande-code-entreprise", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ nom, email, message }),
-            });
-            const data = await res.json();
-            if (res.ok && data.success) {
-              msgDiv.textContent =
-                "Demande envoyée ! Vous recevrez le code par email.";
-              msgDiv.style.color = "#059669";
-              // Réaffiche le bouton "Code entreprise oublié ?" et masque le formulaire
-              codeOublieBtn.style.display = "inline-block";
-              demandeCodeForm.style.display = "none";
-              // Déclenche un événement personnalisé pour informer le dashboard (ou autre JS)
-              const event = new CustomEvent("demandeCodeEntrepriseEnvoyee", {
-                detail: { nom, email, message },
-              });
-              window.dispatchEvent(event);
-            } else {
-              msgDiv.textContent = data.message || "Erreur lors de l'envoi.";
-              msgDiv.style.color = "#dc3545";
-              // Laisse le formulaire visible pour corriger
-            }
-          } catch (err) {
-            msgDiv.textContent = "Erreur réseau ou serveur. Réessayez.";
-            msgDiv.style.color = "#dc3545";
-            // Laisse le formulaire visible pour corriger
-          }
-          document.getElementById(
-            "envoyerDemandeCodeEntrepriseBtn"
-          ).disabled = false;
-        };
-    };
-  }
+  // Suppression de la gestion du bouton "Code entreprise oublié ?" et du formulaire associé
 }
 
 // Suppression de tout appel inutile à une API de validation côté serveur pour le code entreprise.
 // La validation se fait uniquement côté client avec COMPANY_CODE.
 
-/**
- * Valide le code d'entreprise saisi par l'employé.
- */
-function validateCompanyCode() {
-  if (
-    !companyCodeInput ||
-    !codeEntrySection ||
-    !deliveryFormSection ||
-    !codeErrorDisplay
-  ) {
-    console.error(
-      "Éléments DOM nécessaires pour la validation du code d'entreprise manquants."
-    );
-    return;
-  }
-  const code = companyCodeInput.value.trim();
-  // Validation dynamique via API
-  fetch("/api/company-code")
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success && code === data.code) {
-        codeEntrySection.classList.add("hidden");
-        deliveryFormSection.classList.remove("hidden");
-        clearMessages(codeErrorDisplay);
-      } else {
-        displayMessage(
-          codeErrorDisplay,
-          "Code incorrect. Veuillez réessayer.",
-          "error"
-        );
-      }
-    })
-    .catch(() => {
-      displayMessage(
-        codeErrorDisplay,
-        "Erreur réseau lors de la vérification du code.",
-        "error"
-      );
-    });
-  // --- WebSocket pour synchronisation temps réel du code entreprise ---
-  let wsCodeEntreprise = null;
-  function setupCompanyCodeWebSocket() {
-    try {
-      wsCodeEntreprise = new WebSocket(
-        window.location.protocol === "https:"
-          ? "wss://"
-          : "ws://" + window.location.host
-      );
-      wsCodeEntreprise.onmessage = function (event) {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "company-code-updated") {
-            // Affiche une notification et force la revalidation
-            alert(
-              "Le code d'entreprise a été modifié par l'administrateur. Veuillez saisir le nouveau code."
-            );
-            if (companyCodeInput) companyCodeInput.value = "";
-            if (codeEntrySection) codeEntrySection.classList.remove("hidden");
-            if (deliveryFormSection)
-              deliveryFormSection.classList.add("hidden");
-          }
-        } catch (e) {}
-      };
-    } catch (e) {}
-  }
-  document.addEventListener("DOMContentLoaded", setupCompanyCodeWebSocket);
-}
+// Suppression complète de la fonction validateCompanyCode et de toute la logique liée au code d'entreprise (WebSocket, DOM, API)
 
 /**
  * Démarre le décompte avant la soumission du formulaire.
