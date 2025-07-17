@@ -206,8 +206,6 @@
     >
       <h1 class="text-3xl font-bold text-center text-gray-800 mb-4"></h1>
 
-      <!-- Section de saisie du code d'entreprise supprimée : accès direct au formulaire d'ordre de livraison -->
-
       <!-- Avatar au-dessus du formulaire de livraison -->
       <div id="profileAvatarContainer" class="mb-4 flex justify-center items-center min-w-[80px] min-h-[80px]"></div>
       <div id="deliveryFormSection" class="hidden flex-grow">
@@ -530,20 +528,6 @@
     <!-- Bouton de déconnexion flottant en haut à droite -->
 
     <script src="../js/scriptEmployerFormulaire.js"></script>
-    <script>
-      // Affiche la section de connexion Agent Transit si l'URL contient ?mode=login ou #connexion-agent-transit
-      document.addEventListener("DOMContentLoaded", function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const hash = window.location.hash;
-        // Si mode=login ou ancre connexion-agent-transit, on force l'affichage du formulaire d'ordre de livraison
-        if (urlParams.get("mode") === "login" || hash === "#connexion-agent-transit") {
-          const deliveryFormSection = document.getElementById("deliveryFormSection");
-          if (deliveryFormSection) {
-            deliveryFormSection.classList.remove("hidden");
-          }
-        }
-      });
-    </script>
     <!-- La gestion du bouton 'Code oublié ?' est assurée uniquement par scriptEmployerFormulaire.js -->
     <!-- Le script de déconnexion est désormais géré dans scriptEmployerFormulaire.js -->
   </body>
