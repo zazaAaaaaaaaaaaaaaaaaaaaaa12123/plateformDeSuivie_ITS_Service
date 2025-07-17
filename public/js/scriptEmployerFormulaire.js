@@ -142,10 +142,8 @@ window.displayProfileAvatar = function () {
       e.stopPropagation();
       const wasClosed = profileMenu.style.display === "none";
       profileMenu.style.display = wasClosed ? "block" : "none";
-      if (wasClosed) {
-        // Attache l'écouteur à chaque ouverture du menu
-        bindLogoutBtn();
-      }
+      // Attache l'écouteur à chaque ouverture du menu (même si déjà ouvert)
+      setTimeout(bindLogoutBtn, 0);
     };
     // Ferme le menu si on clique ailleurs
     document.addEventListener("click", function hideMenu(e) {
@@ -158,11 +156,13 @@ window.displayProfileAvatar = function () {
   function bindLogoutBtn() {
     const logoutBtn = avatarContainer.querySelector("#logoutAcconierBtn");
     if (logoutBtn) {
-      logoutBtn.onclick = function () {
+      // Supprime tout ancien écouteur
+      logoutBtn.onclick = null;
+      logoutBtn.addEventListener("click", function () {
         localStorage.removeItem("acconier_user");
         window.location.href =
           "https://plateformdesuivie-its-service.onrender.com/html/interfaceFormulaireEmployer.html?mode=login#connexion-agent-transit";
-      };
+      });
     }
   }
   // Attache l'écouteur au chargement initial si le menu est déjà ouvert
