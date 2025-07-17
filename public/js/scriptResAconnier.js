@@ -1658,23 +1658,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // The select for status update on the delivery card is still functional.
 
     // Event listeners
-    if (refreshBtn) {
-      refreshBtn.addEventListener("click", function () {
-        // Masquer le détail affiché et remettre le message par défaut
-        selectedDeliveryId = null;
-        singleDeliveryView.innerHTML = `
-          <i class="fas fa-hand-pointer text-5xl mb-4 text-gray-300"></i>
-          <p>Cliquez sur une demande ci-dessus pour la consulter en détail.</p>
-        `;
-        singleDeliveryView.classList.add(
-          "flex",
-          "items-center",
-          "justify-content-center",
-          "flex-col"
-        );
-        // NE PAS recharger la liste, juste masquer le détail
-      });
-    }
+    if (refreshBtn) refreshBtn.addEventListener("click", loadDeliveries);
 
     // Removed searchInput and statusFilterSelect event listeners as they are no longer in the header.
 
