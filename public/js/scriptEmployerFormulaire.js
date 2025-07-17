@@ -136,26 +136,36 @@ window.displayProfileAvatar = function () {
   </div>`;
   // Gestion de l'ouverture/fermeture du menu profil
   const clickable = avatarContainer.querySelector("#profileAvatarClickable");
-  const menu = avatarContainer.querySelector("#profileMenuDropdown");
-  if (clickable && menu) {
+  const profileMenu = avatarContainer.querySelector("#profileMenuDropdown");
+  if (clickable && profileMenu) {
     clickable.onclick = function (e) {
       e.stopPropagation();
-      menu.style.display = menu.style.display === "none" ? "block" : "none";
+      profileMenu.style.display =
+        profileMenu.style.display === "none" ? "block" : "none";
     };
     // Ferme le menu si on clique ailleurs
     document.addEventListener("click", function hideMenu(e) {
       if (!avatarContainer.contains(e.target)) {
-        menu.style.display = "none";
+        profileMenu.style.display = "none";
       }
     });
   }
-  // Ajoute l'écouteur sur le bouton de déconnexion
-  const logoutBtn = avatarContainer.querySelector("#logoutAcconierBtn");
-  if (logoutBtn) {
-    logoutBtn.onclick = function () {
-      localStorage.removeItem("acconier_user");
-      window.location.href = "http://localhost:3000/html/acconier_auth.html";
-    };
+  // Ajoute l'écouteur sur le bouton de déconnexion (et le réactive à chaque affichage du menu)
+  function bindLogoutBtn() {
+    const logoutBtn = avatarContainer.querySelector("#logoutAcconierBtn");
+    if (logoutBtn) {
+      logoutBtn.onclick = function () {
+        localStorage.removeItem("acconier_user");
+        window.location.href =
+          "https://plateformdesuivie-its-service.onrender.com/html/interfaceFormulaireEmployer.html?mode=login#connexion-agent-transit";
+      };
+    }
+  }
+  bindLogoutBtn();
+  // Réactive le bouton à chaque ouverture du menu profil
+  if (profileMenu) {
+    profileMenu.addEventListener("transitionend", bindLogoutBtn);
+    profileMenu.addEventListener("click", bindLogoutBtn);
   }
 };
 
@@ -178,11 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const deliveryFormSection = document.getElementById("deliveryFormSection");
   if (deliveryFormSection) {
     deliveryFormSection.classList.remove("hidden");
-  }
-  // Masque la section code d'entreprise si elle existe
-  const codeEntrySection = document.getElementById("codeEntrySection");
-  if (codeEntrySection) {
-    codeEntrySection.classList.add("hidden");
   }
 });
 
@@ -896,34 +901,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   init();
-  // Ajout de l'œil dans le champ code entreprise si pas déjà présent
-  if (companyCodeInput) {
-    // Création du wrapper si pas déjà fait
-    let wrapper = companyCodeInput.parentElement;
-    if (!wrapper.classList.contains("input-eye-wrapper")) {
-      wrapper.classList.add("input-eye-wrapper");
-      wrapper.style.position = "relative";
-    }
-    // Supprimer les éventuels doublons d'icône œil
-    const existingEyes = wrapper.querySelectorAll(".toggle-eye");
-    if (existingEyes.length > 1) {
-      // On garde le premier, on retire les autres
-      for (let i = 1; i < existingEyes.length; i++) {
-        existingEyes[i].remove();
-      }
-    }
-    // Création ou récupération de l'icône œil
-    // ...suppression du bouton œil, car l'icône existe déjà dans le HTML...
-    // Permettre la validation du code entreprise avec la touche Entrée
-    companyCodeInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        if (typeof validateCompanyCode === "function") {
-          validateCompanyCode();
-        }
-      }
-    });
-  }
+  // Suppression de toute logique liée au code entreprise
 });
 
 // Fonction utilitaire pour afficher un message dans un élément DOM.
