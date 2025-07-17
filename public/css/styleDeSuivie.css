@@ -45,55 +45,6 @@ body {
   color: #343a40;
 }
 
-/* Styles pour l'alerte personnalisée */
-.custom-alert {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-100px);
-  opacity: 0;
-  visibility: hidden;
-  padding: 12px 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  transition: transform 0.7s ease-out, opacity 0.7s ease-out,
-    visibility 0.7s ease-out;
-  min-width: 200px;
-  max-width: 90%;
-  text-align: left;
-  color: #ffffff;
-  font-family: "Segoe UI", "Roboto", sans-serif;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  height: auto;
-}
-.custom-alert.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-.custom-alert.hidden {
-  display: none;
-}
-.custom-alert.success {
-  background-color: #065418;
-}
-.custom-alert.error {
-  background-color: #680d16;
-}
-.custom-alert.warning {
-  background-color: #d3ac39;
-  color: #ffffff;
-}
-.custom-alert.info {
-  background-color: #05515d;
-}
-
 /* Nouveau conteneur pour le titre et la recherche, à placer en HAUT de la page */
 .top-header-controls {
   display: flex;
