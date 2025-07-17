@@ -189,6 +189,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (deliveryFormSection) {
     deliveryFormSection.classList.remove("hidden");
   }
+  // Masque la section code d'entreprise si elle existe
+  const codeEntrySection = document.getElementById("codeEntrySection");
+  if (codeEntrySection) {
+    codeEntrySection.classList.add("hidden");
+  }
 });
 
 // --- Insertion dynamique du conteneur avatar à côté du formulaire ---
