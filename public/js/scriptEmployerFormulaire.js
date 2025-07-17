@@ -157,8 +157,7 @@ window.displayProfileAvatar = function () {
   if (logoutBtn) {
     logoutBtn.onclick = function () {
       localStorage.removeItem("acconier_user");
-      window.location.href =
-        "https://plateformdesuivie-its-service.onrender.com/html/acconier_auth.html";
+      window.location.href = "http://localhost:3000/html/acconier_auth.html";
     };
   }
 };
@@ -169,6 +168,9 @@ window.displayProfileAvatar = function () {
 window.saveAcconierUserToLocalStorage = function (acconier) {
   if (!acconier || !acconier.nom || !acconier.email) return;
   localStorage.setItem("acconier_user", JSON.stringify(acconier));
+  // Redirection directe vers l'ordre de livraison après connexion
+  window.location.href =
+    "https://plateformdesuivie-its-service.onrender.com/html/interfaceFormulaireEmployer.html";
 };
 
 // Initialisation de l'affichage historique et avatar au chargement

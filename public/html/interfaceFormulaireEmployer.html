@@ -206,64 +206,7 @@
     >
       <h1 class="text-3xl font-bold text-center text-gray-800 mb-4"></h1>
 
-      <div id="codeEntrySection" class="flex-grow">
-        <label
-          for="companyCode"
-          class="block text-gray-700 text-sm font-bold mb-2"
-        >
-          Entrez le code d'entreprise
-        </label>
-        <input
-          type="password"
-          id="companyCode"
-          class="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 pr-10"
-          placeholder="Code d'entreprise"
-        />
-        <span
-          class="toggle-password-fa"
-          style="
-            position: absolute;
-            right: 22px;
-            top: 44px;
-            cursor: pointer;
-            z-index: 10;
-          "
-          onclick="togglePassword('companyCode', this)"
-          ><i class="fas fa-eye"></i
-        ></span>
-        <script>
-          function togglePassword(inputId, el) {
-            const input = document.getElementById(inputId);
-            if (!input) return;
-            if (input.type === "password") {
-              input.type = "text";
-              el.querySelector("i").classList.remove("fa-eye");
-              el.querySelector("i").classList.add("fa-eye-slash");
-            } else {
-              input.type = "password";
-              el.querySelector("i").classList.remove("fa-eye-slash");
-              el.querySelector("i").classList.add("fa-eye");
-            }
-          }
-        </script>
-        <div id="codeError" class="text-red-500 text-sm mt-2 hidden"></div>
-        <button
-          id="validateCodeBtn"
-          class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 w-full transition duration-200 transform hover:scale-105"
-        >
-          Valider le code
-        </button>
-        <div class="flex justify-end mt-2">
-          <button
-            type="button"
-            id="codeOublieBtn"
-            class="text-blue-600 hover:underline text-sm font-medium focus:outline-none"
-          >
-            Code oublié ?
-          </button>
-        </div>
-        <div id="demandeCodeForm" style="display: none; margin-top: 12px"></div>
-      </div>
+      <!-- Section de saisie du code d'entreprise supprimée : accès direct au formulaire d'ordre de livraison -->
 
       <!-- Avatar au-dessus du formulaire de livraison -->
       <div id="profileAvatarContainer" class="mb-4 flex justify-center items-center min-w-[80px] min-h-[80px]"></div>

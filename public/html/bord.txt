@@ -1918,3 +1918,23 @@ Je veux que que les information dont le statut n'est pas encore
      alors il part dans l'historique , tu comprend 
      j'espert donc fixon snous sur ça et faison 
 le rapidement sans perturber les autre code et sans erreur .
+
+
+
+
+
+
+/*********
+Quand je clique sur une information dans la partie de Nouvelles
+ Demandes du Jour () et qu'il s'affiche si je veux l'enlever de
+  l'affichage afin  que la page devient comme ceci : Cliquez sur
+   une demande ci-dessus pour la consulter en détail . Actuellement 
+   c'ets par rafraichiseemnt de la page que je peut le faire partir 
+   alors que je voulais le fais par clique sur le bouton actualiser
+    tu commprend ? .  mais  gardant toujour l'information dans la
+     session" Nouvelles Demandes du Jour ()" , si je n'est
+      pas encore mis de statut pour valider pour qu'il quitte 
+      carrement la session Cliquez sur une demande ci-dessus pour
+       la consulter en détail. 
+
+*********/
