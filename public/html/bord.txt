@@ -1897,3 +1897,24 @@ async function submitDeliveryForm(status) {
 // au formulaire de validation de livraison et sont supposées être gérées
 // par d'autres scripts (par exemple, un script pour le panneau d'administration).
 // Ce script se concentre désormais uniquement sur le formulaire employé.
+
+
+
+
+
+---------------------------------------------------------------------
+Je veux que que les information dont le statut n'est pas encore
+ paiment effectuer ne soit pas stocker dans l'historique mais 
+ qu'il soit stocker dans une boite que tu va faire ou tu inclura 
+ tout les infomation ayant le statut comme 
+ "mise en livaison" , "en cour de paiment" et "en attente de paiement"
+  qui est par defaut 
+ . tu me comprend c'est a dire quand il sera comme statut paiement
+  effectuer (parle de l'information ) alors il quittera dans la boite ou
+   il etait quand il etait pas encore payer . .mais tant que c'ets pas "paiement effcetuer "
+    il reste stocker dans la boite tu me commprend . Donc en gros quand on fini de remplir le 
+    chmap observation si on a mis "mise en livraion" ou "en cour de paiment" alors il ne
+     partira pas dans dans l'historique , mais si il est devenu "paiment effcetuer " 
+     alors il part dans l'historique , tu comprend 
+     j'espert donc fixon snous sur ça et faison 
+le rapidement sans perturber les autre code et sans erreur .
