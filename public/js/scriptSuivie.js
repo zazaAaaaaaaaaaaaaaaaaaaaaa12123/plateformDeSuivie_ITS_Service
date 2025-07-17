@@ -8701,6 +8701,93 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // Optionnel : expose la fonction pour l'appeler ailleurs si besoin
   window.refreshLateFoldersTable = refreshLateFoldersTable;
+  // ================= BANDEAU D'ALERTE AGENTS EN RETARD =================
+  function showLateAgentsBanner() {
+    // Supprime l'ancien bandeau si présent
+    const oldBanner = document.getElementById("lateAgentsBanner");
+    if (oldBanner) oldBanner.remove();
+    const lateAgents = getLateAgentsFromDeliveries(deliveries);
+    if (lateAgents.length === 0) return; // Rien à afficher
+
+    // Création du bandeau
+    const banner = document.createElement("div");
+    banner.id = "lateAgentsBanner";
+    banner.style.position = "fixed";
+    banner.style.top = "0";
+    banner.style.left = "0";
+    banner.style.width = "100vw";
+    banner.style.zIndex = "99999";
+    banner.style.background = "linear-gradient(90deg,#facc15 60%,#fde047 100%)";
+    banner.style.color = "#78350f";
+    banner.style.fontWeight = "bold";
+    banner.style.fontSize = "1.15em";
+    banner.style.boxShadow = "0 2px 18px #fde04755";
+    banner.style.display = "flex";
+    banner.style.justifyContent = "space-between";
+    banner.style.alignItems = "center";
+    banner.style.padding = "14px 32px";
+    banner.style.letterSpacing = "0.5px";
+    banner.style.animation = "lateBannerBlink 1.2s linear infinite alternate";
+
+    banner.innerHTML = `<span>⚠️ ${lateAgents.length} agent${
+      lateAgents.length > 1 ? "s" : ""
+    } en retard de livraison !</span>`;
+    // Bouton pour afficher la liste
+    const btn = document.createElement("button");
+    btn.textContent = "Voir la liste";
+    btn.className = "btn btn-warning btn-sm";
+    btn.style.marginLeft = "18px";
+    btn.style.fontWeight = "bold";
+    btn.style.borderRadius = "7px";
+    btn.style.border = "none";
+    btn.style.padding = "7px 18px";
+    btn.style.background = "#facc15";
+    btn.style.color = "#78350f";
+    btn.onclick = function () {
+      // Fait défiler jusqu'au tableau ou affiche la modale
+      const lateTable = document.getElementById("lateFoldersTable");
+      if (lateTable) {
+        lateTable.scrollIntoView({ behavior: "smooth" });
+      } else if (typeof refreshLateFoldersTable === "function") {
+        refreshLateFoldersTable();
+      }
+    };
+    banner.appendChild(btn);
+
+    // Bouton de fermeture
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.style.background = "none";
+    closeBtn.style.border = "none";
+    closeBtn.style.color = "#78350f";
+    closeBtn.style.fontSize = "1.7em";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.style.marginLeft = "18px";
+    closeBtn.setAttribute("aria-label", "Fermer");
+    closeBtn.onclick = () => banner.remove();
+    banner.appendChild(closeBtn);
+
+    document.body.appendChild(banner);
+  }
+
+  // Animation CSS pour le bandeau
+  (function injectLateBannerStyle() {
+    if (document.getElementById("lateBannerBlinkStyle")) return;
+    const style = document.createElement("style");
+    style.id = "lateBannerBlinkStyle";
+    style.textContent = `@keyframes lateBannerBlink {0%{box-shadow:0 2px 18px #fde04755;}100%{box-shadow:0 2px 28px #facc15aa;}}
+      #lateAgentsBanner {transition:box-shadow 0.2s;}`;
+    document.head.appendChild(style);
+  })();
+
+  // Appel automatique après chaque chargement de livraisons
+  function refreshLateAgentsAlert() {
+    showLateAgentsBanner();
+  }
+  // Appel initial et après chaque refresh
+  refreshLateAgentsAlert();
+  // Optionnel : expose la fonction
+  window.refreshLateAgentsAlert = refreshLateAgentsAlert;
 
   // ================== CLIGNOTEMENT VERT NOUVELLE LIGNE (FORCÉ) ==================
   // Patch direct sur le tableau principal
