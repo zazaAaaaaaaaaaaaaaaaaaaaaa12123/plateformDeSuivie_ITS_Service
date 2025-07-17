@@ -594,6 +594,334 @@ setInterval(() => {
 // Appel initial au chargement
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
+// === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
+function checkLateContainers() {
+  if (!window.deliveries) return;
+  const now = new Date();
+  const lateContainers = [];
+  const lateDossiersSet = new Set();
+  window.deliveries.forEach((delivery) => {
+    if (!delivery.container_statuses || !delivery.container_statuses_fr) return;
+    let hasLate = false;
+    Object.entries(delivery.container_statuses).forEach(
+      ([numeroTC, statut]) => {
+        const statutFr = delivery.container_statuses_fr[numeroTC] || statut;
+        let dateEnr = null;
+        if (
+          delivery.containers_info &&
+          delivery.containers_info[numeroTC] &&
+          delivery.containers_info[numeroTC].created_at
+        ) {
+          dateEnr = new Date(delivery.containers_info[numeroTC].created_at);
+        } else if (delivery.created_at) {
+          dateEnr = new Date(delivery.created_at);
+        }
+        if (!dateEnr) return;
+        const isLate =
+          !statutFr.toLowerCase().includes("livr") &&
+          now - dateEnr > 2 * 24 * 60 * 60 * 1000;
+        if (isLate) {
+          hasLate = true;
+          let deliveryDate = null;
+          if (delivery.delivery_date) {
+            deliveryDate = delivery.delivery_date;
+          } else if (
+            delivery.containers_info &&
+            delivery.containers_info[numeroTC] &&
+            delivery.containers_info[numeroTC].delivery_date
+          ) {
+            deliveryDate = delivery.containers_info[numeroTC].delivery_date;
+          }
+          lateContainers.push({
+            numeroTC,
+            dossier: delivery.dossier_number || delivery.id || "?",
+            dateEnr: dateEnr.toLocaleDateString("fr-FR"),
+            statut: statutFr,
+            agentName:
+              delivery.employee_name ||
+              delivery.agent_name ||
+              (delivery.agents &&
+              Array.isArray(delivery.agents) &&
+              delivery.agents.length > 0
+                ? delivery.agents.join(", ")
+                : null),
+            deliveryDate: deliveryDate || "-",
+            clientName: delivery.client_name || delivery.client || "-",
+          });
+        }
+      }
+    );
+    if (hasLate) {
+      lateDossiersSet.add(delivery.dossier_number || delivery.id || "?");
+    }
+  });
+  showLateContainersAlert(lateContainers, lateDossiersSet.size);
+}
+
+// Affiche une alerte compacte pour les conteneurs en retard
+function showLateContainersAlert(lateContainers, lateDossiersCount) {
+  // Supprime toute ancienne alerte
+  let oldAlert = document.getElementById("lateContainersAlertBox");
+  if (oldAlert) oldAlert.remove();
+  if (!lateContainers || lateContainers.length === 0 || !lateDossiersCount)
+    return;
+
+  // Affichage compact et pro avec effet toast animé
+  const alertBox = document.createElement("div");
+  alertBox.id = "lateContainersAlertBox";
+  alertBox.innerHTML = `
+    <div style="display:flex;align-items:center;gap:13px;min-width:0;">
+      <span style="font-size:1.7em;color:#ef4444;flex-shrink:0;">&#9888;</span>
+      <div style="min-width:0;">
+        <div style="font-weight:700;font-size:1.05em;color:#ef4444;margin-bottom:2px;">Dossier en retard</div>
+        <div style="font-size:0.98em;color:#1e293b;line-height:1.5;">${lateDossiersCount} dossier(s) en retard (au moins un conteneur non livré après 2 jours).</div>
+        <button id="showLateListBtn" style="margin-top:8px;background:none;border:none;color:#2563eb;font-weight:600;cursor:pointer;font-size:1em;padding:0;text-decoration:underline;">Cliquez pour voir la liste</button>
+        <div style="margin-top:5px;color:#64748b;font-size:0.93em;">Merci de vérifier et relancer le suivi documentaire.</div>
+      </div>
+    </div>
+    <button id="closeLateContainersAlertBtn" style="position:absolute;top:7px;right:10px;background:none;border:none;font-size:1.3em;color:#64748b;cursor:pointer;">&times;</button>
+    <style>
+      @keyframes late-alert-slidein-right {
+        0% { opacity: 0; transform: translate(80vw, 0) scale(0.98); }
+        60% { opacity: 1; transform: translate(-10px, 0) scale(1.01); }
+        100% { opacity: 1; transform: translate(0, 0) scale(1); }
+      }
+    </style>
+  `;
+  alertBox.style.position = "fixed";
+  alertBox.style.top = "18px";
+  alertBox.style.right = "24px";
+  alertBox.style.left = "unset";
+  alertBox.style.transform = "none";
+  alertBox.style.background = "#fff";
+  alertBox.style.border = "2.5px solid #ef4444";
+  alertBox.style.borderRadius = "16px";
+  alertBox.style.boxShadow =
+    "0 8px 32px rgba(239,68,68,0.13), 0 2px 12px 0 rgba(37,99,235,0.09)";
+  alertBox.style.padding = "22px 32px 18px 32px";
+  alertBox.style.zIndex = 100000;
+  alertBox.style.minWidth = "320px";
+  alertBox.style.maxWidth = "600px";
+  alertBox.style.fontFamily = "'Inter',Segoe UI,sans-serif";
+  alertBox.style.fontSize = "1.13em";
+  alertBox.style.display = "flex";
+  alertBox.style.alignItems = "center";
+  alertBox.style.justifyContent = "center";
+  alertBox.style.gap = "18px";
+  alertBox.style.boxSizing = "border-box";
+  alertBox.style.overflowX = "visible";
+  alertBox.style.pointerEvents = "auto";
+  alertBox.style.overflow = "visible";
+  alertBox.style.animation =
+    "late-alert-slidein-right 0.55s cubic-bezier(.23,1.12,.32,1)";
+
+  document.body.appendChild(alertBox);
+  document.getElementById("closeLateContainersAlertBtn").onclick = () =>
+    alertBox.remove();
+  // Affichage de la liste détaillée au clic sur "Cliquez pour voir la liste"
+  const showLateListBtn = alertBox.querySelector("#showLateListBtn");
+  if (showLateListBtn) {
+    showLateListBtn.addEventListener("click", function () {
+      // Création d'une popup modale simple avec scroll horizontal
+      const modal = document.createElement("div");
+      modal.style.position = "fixed";
+      modal.style.top = "0";
+      modal.style.left = "0";
+      modal.style.width = "100vw";
+      modal.style.height = "100vh";
+      modal.style.background = "rgba(30,41,59,0.18)";
+      modal.style.zIndex = 100001;
+      modal.style.display = "flex";
+      modal.style.alignItems = "center";
+      modal.style.justifyContent = "center";
+      modal.innerHTML = `
+        <div style='background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(239,68,68,0.13),0 2px 12px 0 rgba(37,99,235,0.09);padding:32px 24px 24px 24px;min-width:340px;max-width:90vw;max-height:90vh;overflow:auto;position:relative;'>
+          <button id="closeLateListModalBtn" style="position:absolute;top:10px;right:16px;background:none;border:none;font-size:1.5em;color:#64748b;cursor:pointer;">&times;</button>
+          <div style="font-weight:700;font-size:1.15em;color:#ef4444;margin-bottom:10px;">Dossier en retard</div>
+          <div style="overflow-x:auto;max-width:80vw;">
+            <table style='border-collapse:collapse;width:100%;min-width:700px;'>
+              <thead>
+                <tr style='background:#f3f4f6;'>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>TC</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Agent</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Date enregistrement</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Date livraison</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Heure livraison</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Notifier</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Détail</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${lateContainers
+                  .map((c, idx) => {
+                    let agent = c.agentName ? c.agentName : "-";
+                    let dateLiv = c.deliveryDate || "-";
+                    let heureLiv = "-";
+                    if (typeof dateLiv === "string" && dateLiv.includes(" ")) {
+                      const parts = dateLiv.split(" ");
+                      dateLiv = parts[0];
+                      heureLiv = parts[1] || "-";
+                    } else if (
+                      dateLiv &&
+                      typeof dateLiv === "object" &&
+                      dateLiv instanceof Date
+                    ) {
+                      dateLiv = dateLiv.toLocaleDateString("fr-FR");
+                    }
+                    return `<tr>
+                      <td style='padding:7px 10px;'>${c.numeroTC}</td>
+                      <td style='padding:7px 10px;'>${agent}</td>
+                      <td style='padding:7px 10px;'>${c.dateEnr || "-"}</td>
+                      <td style='padding:7px 10px;'>${dateLiv}</td>
+                      <td style='padding:7px 10px;'>${heureLiv}</td>
+                      <td style='padding:7px 10px;'><a href='#' class='notifier-agent-link' data-agent='${
+                        c.agentName || ""
+                      }' data-tc='${
+                      c.numeroTC
+                    }' style='color:#eab308;font-weight:700;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Notifier</a></td>
+                      <td style='padding:7px 10px;'><a href='#' class='late-detail-link' data-idx='${idx}' style='color:#2563eb;font-weight:600;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Détail</a></td>
+                    </tr>`;
+                  })
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      // Fermeture de la popup
+      modal.querySelector("#closeLateListModalBtn").onclick = () =>
+        modal.remove();
+      // Listeners Notifier
+      modal.querySelectorAll(".notifier-agent-link").forEach((link) => {
+        link.addEventListener("click", function (e) {
+          e.preventDefault();
+          showCustomAlert(
+            "Fonction de notification à l'agent à implémenter.",
+            "info"
+          );
+        });
+      });
+      // Listeners Détail
+      modal.querySelectorAll(".late-detail-link").forEach((link) => {
+        link.addEventListener("click", function (e) {
+          e.preventDefault();
+          const idx = parseInt(link.getAttribute("data-idx"), 10);
+          const c = lateContainers[idx];
+          let agent = c.agentName ? c.agentName : "-";
+          let dossier = c.dossier || "-";
+          let client = c.clientName || c.client || "-";
+          // Affichage STRICTEMENT la date du suivi (champ deliveryDate), format JJ/MM/AAAA uniquement
+          let dateProgrammee = "Non renseignée";
+          if (typeof c.deliveryDate === "string" && c.deliveryDate !== "-") {
+            const d = c.deliveryDate.trim();
+            // Essaye de parser comme ISO (avec ou sans heure/T)
+            const parsed = Date.parse(d);
+            if (!isNaN(parsed)) {
+              const dateObj = new Date(parsed);
+              const day = String(dateObj.getDate()).padStart(2, "0");
+              const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+              const year = dateObj.getFullYear();
+              dateProgrammee = `${day}/${month}/${year}`;
+            } else if (d.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+              // Déjà au format JJ/MM/AAAA
+              dateProgrammee = d;
+            }
+          } else if (c.deliveryDate && c.deliveryDate !== "-") {
+            // Si c'est un objet Date ou autre, tentative de formatage
+            try {
+              const dateObj = new Date(c.deliveryDate);
+              if (!isNaN(dateObj.getTime())) {
+                const day = String(dateObj.getDate()).padStart(2, "0");
+                const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+                const year = dateObj.getFullYear();
+                dateProgrammee = `${day}/${month}/${year}`;
+              }
+            } catch {}
+          }
+          if (
+            !dateProgrammee ||
+            dateProgrammee === "-" ||
+            dateProgrammee === "Invalid Date"
+          ) {
+            dateProgrammee = "Non renseignée";
+          }
+          // Supprimer toute ancienne boîte flottante de détail
+          let oldDetailBox = document.getElementById("lateDetailFloatingBox");
+          if (oldDetailBox) oldDetailBox.remove();
+
+          // Créer la boîte flottante
+          const detailBox = document.createElement("div");
+          detailBox.id = "lateDetailFloatingBox";
+          detailBox.style.position = "fixed";
+          detailBox.style.top = "60px";
+          detailBox.style.right = "40px";
+          detailBox.style.zIndex = 100010;
+          detailBox.style.background = "#fff";
+          detailBox.style.border = "2.5px solid #ef4444";
+          detailBox.style.borderRadius = "16px";
+          detailBox.style.boxShadow =
+            "0 8px 32px rgba(239,68,68,0.13), 0 2px 12px 0 rgba(37,99,235,0.09)";
+          detailBox.style.padding = "28px 36px 22px 32px";
+          detailBox.style.minWidth = "320px";
+          detailBox.style.maxWidth = "420px";
+          detailBox.style.fontFamily = "'Inter',Segoe UI,sans-serif";
+          detailBox.style.fontSize = "1.08em";
+          detailBox.style.display = "flex";
+          detailBox.style.flexDirection = "column";
+          detailBox.style.gap = "12px";
+
+          detailBox.innerHTML = `
+            <button id=\"closeLateDetailFloatingBoxBtn\" style=\"position:absolute;top:10px;right:16px;background:none;border:none;font-size:1.5em;color:#64748b;cursor:pointer;\">&times;</button>
+            <div style=\"display:flex;align-items:center;gap:13px;margin-bottom:8px;\">
+              <span style=\"font-size:2em;color:#ef4444;flex-shrink:0;\">&#9888;</span>
+              <span style=\"font-size:1.18em;font-weight:700;color:#ef4444;\">Retard de livraison</span>
+            </div>
+            <div style=\"background:#f3f4f6;border-radius:10px;padding:18px 22px 14px 22px;box-shadow:0 2px 8px rgba(239,68,68,0.07);margin-bottom:2px;\">
+              <div style=\"margin-bottom:8px;\"><span style=\"color:#64748b;font-weight:600;\">N° de dossier :</span> <span style=\"color:#1e293b;font-weight:500;\">${dossier}</span></div>
+              <div style=\"margin-bottom:8px;\"><span style=\"color:#64748b;font-weight:600;\">Nom du client :</span> <span style=\"color:#1e293b;font-weight:500;\">${client}</span></div>
+              <div><span style=\"color:#64748b;font-weight:600;\">Date de livraison programmée non respectée :</span> <span style=\"color:#ef4444;font-weight:700;\">${dateProgrammee}</span></div>
+              <div style=\"margin-top:8px;color:#64748b;font-size:0.93em;\"><b>Debug deliveryDate brut :</b> <span style=\"color:#334155;\">${
+                typeof c.deliveryDate === "object"
+                  ? JSON.stringify(c.deliveryDate)
+                  : String(c.deliveryDate)
+              }</span></div>
+            </div>
+            <div style=\"margin-top:10px;color:#64748b;font-size:0.98em;\">Merci de relancer le suivi documentaire pour ce dossier.</div>
+          `;
+          document.body.appendChild(detailBox);
+          // Fermeture de la boîte flottante
+          document.getElementById("closeLateDetailFloatingBoxBtn").onclick =
+            () => detailBox.remove();
+          () => detailBox.remove();
+        });
+      });
+      // Fermer la popup si on clique en dehors du contenu
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) modal.remove();
+      });
+    });
+  }
+}
+function normalizeStatusString(str) {
+  if (!str || typeof str !== "string") return "";
+  return str
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+// === Appel automatique de l'alerte toutes les 20 secondes ===
+setInterval(() => {
+  checkLateContainers();
+  console.log(
+    "[ALERTE RETARD] Vérification automatique des conteneurs non livrés (toutes les 20 secondes)"
+  );
+}, 20000); // 20 000 ms = 20 secondes
+// Appel initial au chargement
+window.addEventListener("DOMContentLoaded", checkLateContainers);
+
 (async () => {
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   // Détection automatique de l'environnement pour l'URL WebSocket
@@ -8581,213 +8909,334 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   window.currentAgentActivityDate = currentAgentActivityDate;
   window.showAgentActivity = showAgentActivity;
 
-  // ================= AJOUT : Rafraîchissement dynamique du tableau dossiers en retard =================
-  // Fonction utilitaire pour détecter les agents en retard (à adapter selon ta logique métier)
-  function getLateAgentsFromDeliveries(deliveries) {
-    // On considère qu'un agent est en retard s'il a au moins un conteneur non livré
-    const lateAgents = {};
-    // === LOG DIAGNOSTIC (avant recalcul) ===
-    console.log("[SYNC DIAG][BEFORE] window.deliveries :", deliveries);
-    deliveries.forEach((d, idx) => {
-      const agent = d.employee_name || "Agent inconnu";
-      const status = d.status;
-      const acconierStatus = d.delivery_status_acconier;
-      const isDelivered = (status || acconierStatus || "")
-        .toString()
-        .toLowerCase()
-        .includes("livr");
-      // === LOG DÉTAILLÉ PAR LIVRAISON ===
-      console.log(
-        `[SYNC DIAG][LIVRAISON][#${idx}] Agent: ${agent} | status: '${status}' | acconier: '${acconierStatus}' | isDelivered:`,
-        isDelivered
+  // === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
+  function checkLateContainers() {
+    if (!window.deliveries) return;
+    const now = new Date();
+    const lateContainers = [];
+    const lateDossiersSet = new Set();
+    window.deliveries.forEach((delivery) => {
+      if (!delivery.container_statuses || !delivery.container_statuses_fr)
+        return;
+      let hasLate = false;
+      Object.entries(delivery.container_statuses).forEach(
+        ([numeroTC, statut]) => {
+          const statutFr = delivery.container_statuses_fr[numeroTC] || statut;
+          let dateEnr = null;
+          if (
+            delivery.containers_info &&
+            delivery.containers_info[numeroTC] &&
+            delivery.containers_info[numeroTC].created_at
+          ) {
+            dateEnr = new Date(delivery.containers_info[numeroTC].created_at);
+          } else if (delivery.created_at) {
+            dateEnr = new Date(delivery.created_at);
+          }
+          if (!dateEnr) return;
+          const isLate =
+            !statutFr.toLowerCase().includes("livr") &&
+            now - dateEnr > 2 * 24 * 60 * 60 * 1000;
+          if (isLate) {
+            hasLate = true;
+            let deliveryDate = null;
+            if (delivery.delivery_date) {
+              deliveryDate = delivery.delivery_date;
+            } else if (
+              delivery.containers_info &&
+              delivery.containers_info[numeroTC] &&
+              delivery.containers_info[numeroTC].delivery_date
+            ) {
+              deliveryDate = delivery.containers_info[numeroTC].delivery_date;
+            }
+            lateContainers.push({
+              numeroTC,
+              dossier: delivery.dossier_number || delivery.id || "?",
+              dateEnr: dateEnr.toLocaleDateString("fr-FR"),
+              statut: statutFr,
+              agentName:
+                delivery.employee_name ||
+                delivery.agent_name ||
+                (delivery.agents &&
+                Array.isArray(delivery.agents) &&
+                delivery.agents.length > 0
+                  ? delivery.agents.join(", ")
+                  : null),
+              deliveryDate: deliveryDate || "-",
+              clientName: delivery.client_name || delivery.client || "-",
+            });
+          }
+        }
       );
-      if (!isDelivered) {
-        if (!lateAgents[agent]) lateAgents[agent] = 0;
-        lateAgents[agent]++;
+      if (hasLate) {
+        lateDossiersSet.add(delivery.dossier_number || delivery.id || "?");
       }
     });
-    // === LOG DIAGNOSTIC (après recalcul) ===
-    console.log("[SYNC DIAG][AFTER] lateAgents (avant return) :", lateAgents);
-    return Object.keys(lateAgents);
+    showLateContainersAlert(lateContainers, lateDossiersSet.size);
   }
 
-  // Fonction pour rafraîchir le tableau des dossiers en retard
-  function refreshLateFoldersTable() {
-    // Sélectionne le tableau (adapte l'ID ou la classe selon ton HTML)
-    const lateTable = document.getElementById("lateFoldersTable");
-    if (!lateTable) return;
-    // Vide le tableau
-    lateTable.querySelector("tbody").innerHTML = "";
-    // Récalcule la liste des agents en retard
-    const lateAgents = getLateAgentsFromDeliveries(deliveries);
-    // === LOG DIAGNOSTIC ===
-    console.log(
-      "[SYNC DIAG][AVANT] lateAgents (avant affichage) :",
-      lateAgents
-    );
-    // Pour chaque agent en retard, ajoute une ligne
-    lateAgents.forEach((agent) => {
-      const tr = document.createElement("tr");
-      // Colonne Agent
-      const tdAgent = document.createElement("td");
-      tdAgent.textContent = agent;
-      tr.appendChild(tdAgent);
+  // Affiche une alerte compacte pour les conteneurs en retard
+  function showLateContainersAlert(lateContainers, lateDossiersCount) {
+    // Supprime toute ancienne alerte
+    let oldAlert = document.getElementById("lateContainersAlertBox");
+    if (oldAlert) oldAlert.remove();
+    if (!lateContainers || lateContainers.length === 0 || !lateDossiersCount)
+      return;
 
-      // Colonne Nombre de dossiers en retard
-      const nbLate = deliveries.filter(
-        (d) =>
-          (d.employee_name || "Agent inconnu") === agent &&
-          !(d.status || d.delivery_status_acconier || "")
-            .toString()
-            .toLowerCase()
-            .includes("livr")
-      ).length;
-      const tdNbLate = document.createElement("td");
-      tdNbLate.textContent = nbLate;
-      tr.appendChild(tdNbLate);
+    // Affichage compact et pro avec effet toast animé
+    const alertBox = document.createElement("div");
+    alertBox.id = "lateContainersAlertBox";
+    alertBox.innerHTML = `
+    <div style="display:flex;align-items:center;gap:13px;min-width:0;">
+      <span style="font-size:1.7em;color:#ef4444;flex-shrink:0;">&#9888;</span>
+      <div style="min-width:0;">
+        <div style="font-weight:700;font-size:1.05em;color:#ef4444;margin-bottom:2px;">Dossier en retard</div>
+        <div style="font-size:0.98em;color:#1e293b;line-height:1.5;">${lateDossiersCount} dossier(s) en retard (au moins un conteneur non livré après 2 jours).</div>
+        <button id="showLateListBtn" style="margin-top:8px;background:none;border:none;color:#2563eb;font-weight:600;cursor:pointer;font-size:1em;padding:0;text-decoration:underline;">Cliquez pour voir la liste</button>
+        <div style="margin-top:5px;color:#64748b;font-size:0.93em;">Merci de vérifier et relancer le suivi documentaire.</div>
+      </div>
+    </div>
+    <button id="closeLateContainersAlertBtn" style="position:absolute;top:7px;right:10px;background:none;border:none;font-size:1.3em;color:#64748b;cursor:pointer;">&times;</button>
+    <style>
+      @keyframes late-alert-slidein-right {
+        0% { opacity: 0; transform: translate(80vw, 0) scale(0.98); }
+        60% { opacity: 1; transform: translate(-10px, 0) scale(1.01); }
+        100% { opacity: 1; transform: translate(0, 0) scale(1); }
+      }
+    </style>
+  `;
+    alertBox.style.position = "fixed";
+    alertBox.style.top = "18px";
+    alertBox.style.right = "24px";
+    alertBox.style.left = "unset";
+    alertBox.style.transform = "none";
+    alertBox.style.background = "#fff";
+    alertBox.style.border = "2.5px solid #ef4444";
+    alertBox.style.borderRadius = "16px";
+    alertBox.style.boxShadow =
+      "0 8px 32px rgba(239,68,68,0.13), 0 2px 12px 0 rgba(37,99,235,0.09)";
+    alertBox.style.padding = "22px 32px 18px 32px";
+    alertBox.style.zIndex = 100000;
+    alertBox.style.minWidth = "320px";
+    alertBox.style.maxWidth = "600px";
+    alertBox.style.fontFamily = "'Inter',Segoe UI,sans-serif";
+    alertBox.style.fontSize = "1.13em";
+    alertBox.style.display = "flex";
+    alertBox.style.alignItems = "center";
+    alertBox.style.justifyContent = "center";
+    alertBox.style.gap = "18px";
+    alertBox.style.boxSizing = "border-box";
+    alertBox.style.overflowX = "visible";
+    alertBox.style.pointerEvents = "auto";
+    alertBox.style.overflow = "visible";
+    alertBox.style.animation =
+      "late-alert-slidein-right 0.55s cubic-bezier(.23,1.12,.32,1)";
 
-      // Colonne Bouton Voir dossiers
-      const tdBtn = document.createElement("td");
-      const btn = document.createElement("button");
-      btn.textContent = "Voir dossiers";
-      btn.className = "btn btn-warning btn-sm";
-      btn.style.margin = "0 6px";
-      btn.onclick = function () {
-        // Filtre les livraisons non livrées de cet agent
-        const filteredDeliveries = deliveries.filter(
-          (d) =>
-            (d.employee_name || "Agent inconnu") === agent &&
-            !(d.status || d.delivery_status_acconier || "")
-              .toString()
-              .toLowerCase()
-              .includes("livr")
-        );
-        if (typeof showClientFoldersModalWithData === "function") {
-          showClientFoldersModalWithData(filteredDeliveries, agent);
-        } else {
-          alert("Fonction showClientFoldersModalWithData non trouvée.");
-        }
-      };
-      tdBtn.appendChild(btn);
-      tr.appendChild(tdBtn);
+    document.body.appendChild(alertBox);
+    document.getElementById("closeLateContainersAlertBtn").onclick = () =>
+      alertBox.remove();
+    // Affichage de la liste détaillée au clic sur "Cliquez pour voir la liste"
+    const showLateListBtn = alertBox.querySelector("#showLateListBtn");
+    if (showLateListBtn) {
+      showLateListBtn.addEventListener("click", function () {
+        // Création d'une popup modale simple avec scroll horizontal
+        const modal = document.createElement("div");
+        modal.style.position = "fixed";
+        modal.style.top = "0";
+        modal.style.left = "0";
+        modal.style.width = "100vw";
+        modal.style.height = "100vh";
+        modal.style.background = "rgba(30,41,59,0.18)";
+        modal.style.zIndex = 100001;
+        modal.style.display = "flex";
+        modal.style.alignItems = "center";
+        modal.style.justifyContent = "center";
+        modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(239,68,68,0.13),0 2px 12px 0 rgba(37,99,235,0.09);padding:32px 24px 24px 24px;min-width:340px;max-width:90vw;max-height:90vh;overflow:auto;position:relative;">
+          <button id="closeLateListModalBtn" style="position:absolute;top:10px;right:16px;background:none;border:none;font-size:1.5em;color:#64748b;cursor:pointer;">&times;</button>
+          <div style="font-weight:700;font-size:1.15em;color:#ef4444;margin-bottom:10px;">Dossier en retard</div>
+          <div style="overflow-x:auto;max-width:80vw;">
+            <table style='border-collapse:collapse;width:100%;min-width:700px;'>
+              <thead>
+                <tr style='background:#f3f4f6;'>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>TC</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Agent</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Date enregistrement</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Date livraison</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Heure livraison</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Notifier</th>
+                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Détail</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${lateContainers
+                  .map((c, idx) => {
+                    let agent = c.agentName ? c.agentName : "-";
+                    let dateLiv = c.deliveryDate || "-";
+                    let heureLiv = "-";
+                    if (typeof dateLiv === "string" && dateLiv.includes(" ")) {
+                      const parts = dateLiv.split(" ");
+                      dateLiv = parts[0];
+                      heureLiv = parts[1] || "-";
+                    } else if (
+                      dateLiv &&
+                      typeof dateLiv === "object" &&
+                      dateLiv instanceof Date
+                    ) {
+                      dateLiv = dateLiv.toLocaleDateString("fr-FR");
+                    }
+                    return `<tr>
+                      <td style='padding:7px 10px;'>${c.numeroTC}</td>
+                      <td style='padding:7px 10px;'>${agent}</td>
+                      <td style='padding:7px 10px;'>${c.dateEnr || "-"}</td>
+                      <td style='padding:7px 10px;'>${dateLiv}</td>
+                      <td style='padding:7px 10px;'>${heureLiv}</td>
+                      <td style='padding:7px 10px;'><a href='#' class='notifier-agent-link' data-agent='${
+                        c.agentName || ""
+                      }' data-tc='${
+                      c.numeroTC
+                    }' style='color:#eab308;font-weight:700;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Notifier</a></td>
+                      <td style='padding:7px 10px;'><a href='#' class='late-detail-link' data-idx='${idx}' style='color:#2563eb;font-weight:600;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Détail</a></td>
+                    </tr>`;
+                  })
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+        document.body.appendChild(modal);
+        // Fermeture de la popup
+        modal.querySelector("#closeLateListModalBtn").onclick = () =>
+          modal.remove();
+        // Listeners Notifier
+        modal.querySelectorAll(".notifier-agent-link").forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            showCustomAlert(
+              "Fonction de notification à l'agent à implémenter.",
+              "info"
+            );
+          });
+        });
+        // Listeners Détail
+        modal.querySelectorAll(".late-detail-link").forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            const idx = parseInt(link.getAttribute("data-idx"), 10);
+            const c = lateContainers[idx];
+            let agent = c.agentName ? c.agentName : "-";
+            let dossier = c.dossier || "-";
+            let client = c.clientName || c.client || "-";
+            // Affichage STRICTEMENT la date du suivi (champ deliveryDate), format JJ/MM/AAAA uniquement
+            let dateProgrammee = "Non renseignée";
+            if (typeof c.deliveryDate === "string" && c.deliveryDate !== "-") {
+              const d = c.deliveryDate.trim();
+              // Essaye de parser comme ISO (avec ou sans heure/T)
+              const parsed = Date.parse(d);
+              if (!isNaN(parsed)) {
+                const dateObj = new Date(parsed);
+                const day = String(dateObj.getDate()).padStart(2, "0");
+                const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+                const year = dateObj.getFullYear();
+                dateProgrammee = `${day}/${month}/${year}`;
+              } else if (d.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                // Déjà au format JJ/MM/AAAA
+                dateProgrammee = d;
+              }
+            } else if (c.deliveryDate && c.deliveryDate !== "-") {
+              // Si c'est un objet Date ou autre, tentative de formatage
+              try {
+                const dateObj = new Date(c.deliveryDate);
+                if (!isNaN(dateObj.getTime())) {
+                  const day = String(dateObj.getDate()).padStart(2, "0");
+                  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+                  const year = dateObj.getFullYear();
+                  dateProgrammee = `${day}/${month}/${year}`;
+                }
+              } catch {}
+            }
+            if (
+              !dateProgrammee ||
+              dateProgrammee === "-" ||
+              dateProgrammee === "Invalid Date"
+            ) {
+              dateProgrammee = "Non renseignée";
+            }
+            // Supprimer toute ancienne boîte flottante de détail
+            let oldDetailBox = document.getElementById("lateDetailFloatingBox");
+            if (oldDetailBox) oldDetailBox.remove();
 
-      lateTable.querySelector("tbody").appendChild(tr);
-    });
-    // Si aucun agent en retard
-    if (lateAgents.length === 0) {
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 10;
-      td.textContent = "Aucun agent en retard.";
-      tr.appendChild(td);
-      lateTable.querySelector("tbody").appendChild(tr);
+            // Créer la boîte flottante
+            const detailBox = document.createElement("div");
+            detailBox.id = "lateDetailFloatingBox";
+            detailBox.style.position = "fixed";
+            detailBox.style.top = "60px";
+            detailBox.style.right = "40px";
+            detailBox.style.zIndex = 100010;
+            detailBox.style.background = "#fff";
+            detailBox.style.border = "2.5px solid #ef4444";
+            detailBox.style.borderRadius = "16px";
+            detailBox.style.boxShadow =
+              "0 8px 32px rgba(239,68,68,0.13), 0 2px 12px 0 rgba(37,99,235,0.09)";
+            detailBox.style.padding = "28px 36px 22px 32px";
+            detailBox.style.minWidth = "320px";
+            detailBox.style.maxWidth = "420px";
+            detailBox.style.fontFamily = "'Inter',Segoe UI,sans-serif";
+            detailBox.style.fontSize = "1.08em";
+            detailBox.style.display = "flex";
+            detailBox.style.flexDirection = "column";
+            detailBox.style.gap = "12px";
+
+            detailBox.innerHTML = `
+            <button id=\"closeLateDetailFloatingBoxBtn\" style=\"position:absolute;top:10px;right:16px;background:none;border:none;font-size:1.5em;color:#64748b;cursor:pointer;\">&times;</button>
+            <div style=\"display:flex;align-items:center;gap:13px;margin-bottom:8px;\">
+              <span style=\"font-size:2em;color:#ef4444;flex-shrink:0;\">&#9888;</span>
+              <span style=\"font-size:1.18em;font-weight:700;color:#ef4444;\">Retard de livraison</span>
+            </div>
+            <div style=\"background:#f3f4f6;border-radius:10px;padding:18px 22px 14px 22px;box-shadow:0 2px 8px rgba(239,68,68,0.07);margin-bottom:2px;\">
+              <div style=\"margin-bottom:8px;\"><span style=\"color:#64748b;font-weight:600;\">N° de dossier :</span> <span style=\"color:#1e293b;font-weight:500;\">${dossier}</span></div>
+              <div style=\"margin-bottom:8px;\"><span style=\"color:#64748b;font-weight:600;\">Nom du client :</span> <span style=\"color:#1e293b;font-weight:500;\">${client}</span></div>
+              <div><span style=\"color:#64748b;font-weight:600;\">Date de livraison programmée non respectée :</span> <span style=\"color:#ef4444;font-weight:700;\">${dateProgrammee}</span></div>
+              <div style=\"margin-top:8px;color:#64748b;font-size:0.93em;\"><b>Debug deliveryDate brut :</b> <span style=\"color:#334155;\">${
+                typeof c.deliveryDate === "object"
+                  ? JSON.stringify(c.deliveryDate)
+                  : String(c.deliveryDate)
+              }</span></div>
+            </div>
+            <div style=\"margin-top:10px;color:#64748b;font-size:0.98em;\">Merci de relancer le suivi documentaire pour ce dossier.</div>
+          `;
+            document.body.appendChild(detailBox);
+            // Fermeture de la boîte flottante
+            document.getElementById("closeLateDetailFloatingBoxBtn").onclick =
+              () => detailBox.remove();
+            () => detailBox.remove();
+          });
+        });
+        // Fermer la popup si on clique en dehors du contenu
+        modal.addEventListener("click", function (e) {
+          if (e.target === modal) modal.remove();
+        });
+      });
     }
   }
-
-  // Ajoute l'eventListener sur le bouton "Rafraîchir la liste" (adapte l'ID selon ton HTML)
-  const refreshLateListBtn = document.getElementById("refreshLateListBtn");
-  if (refreshLateListBtn) {
-    refreshLateListBtn.addEventListener("click", async function () {
-      console.log(
-        "[SYNC DIAG][BTN] Rafraîchir la liste : rechargement des données..."
-      );
-      await loadDeliveries();
-      console.log(
-        "[SYNC DIAG][BTN] Données rechargées, recalcul de la liste des agents en retard..."
-      );
-      refreshLateFoldersTable();
-    });
+  function normalizeStatusString(str) {
+    if (!str || typeof str !== "string") return "";
+    return str
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase()
+      .trim();
   }
 
-  // Optionnel : expose la fonction pour l'appeler ailleurs si besoin
-  window.refreshLateFoldersTable = refreshLateFoldersTable;
-  // ================= BANDEAU D'ALERTE AGENTS EN RETARD =================
-  function showLateAgentsBanner() {
-    // Supprime l'ancien bandeau si présent
-    const oldBanner = document.getElementById("lateAgentsBanner");
-    if (oldBanner) oldBanner.remove();
-    const lateAgents = getLateAgentsFromDeliveries(deliveries);
-    if (lateAgents.length === 0) return; // Rien à afficher
-
-    // Création du bandeau
-    const banner = document.createElement("div");
-    banner.id = "lateAgentsBanner";
-    banner.style.position = "fixed";
-    banner.style.top = "0";
-    banner.style.left = "0";
-    banner.style.width = "100vw";
-    banner.style.zIndex = "99999";
-    banner.style.background = "linear-gradient(90deg,#facc15 60%,#fde047 100%)";
-    banner.style.color = "#78350f";
-    banner.style.fontWeight = "bold";
-    banner.style.fontSize = "1.15em";
-    banner.style.boxShadow = "0 2px 18px #fde04755";
-    banner.style.display = "flex";
-    banner.style.justifyContent = "space-between";
-    banner.style.alignItems = "center";
-    banner.style.padding = "14px 32px";
-    banner.style.letterSpacing = "0.5px";
-    banner.style.animation = "lateBannerBlink 1.2s linear infinite alternate";
-
-    banner.innerHTML = `<span>⚠️ ${lateAgents.length} agent${
-      lateAgents.length > 1 ? "s" : ""
-    } en retard de livraison !</span>`;
-    // Bouton pour afficher la liste
-    const btn = document.createElement("button");
-    btn.textContent = "Voir la liste";
-    btn.className = "btn btn-warning btn-sm";
-    btn.style.marginLeft = "18px";
-    btn.style.fontWeight = "bold";
-    btn.style.borderRadius = "7px";
-    btn.style.border = "none";
-    btn.style.padding = "7px 18px";
-    btn.style.background = "#facc15";
-    btn.style.color = "#78350f";
-    btn.onclick = function () {
-      // Fait défiler jusqu'au tableau ou affiche la modale
-      const lateTable = document.getElementById("lateFoldersTable");
-      if (lateTable) {
-        lateTable.scrollIntoView({ behavior: "smooth" });
-      } else if (typeof refreshLateFoldersTable === "function") {
-        refreshLateFoldersTable();
-      }
-    };
-    banner.appendChild(btn);
-
-    // Bouton de fermeture
-    const closeBtn = document.createElement("button");
-    closeBtn.innerHTML = "&times;";
-    closeBtn.style.background = "none";
-    closeBtn.style.border = "none";
-    closeBtn.style.color = "#78350f";
-    closeBtn.style.fontSize = "1.7em";
-    closeBtn.style.cursor = "pointer";
-    closeBtn.style.marginLeft = "18px";
-    closeBtn.setAttribute("aria-label", "Fermer");
-    closeBtn.onclick = () => banner.remove();
-    banner.appendChild(closeBtn);
-
-    document.body.appendChild(banner);
-  }
-
-  // Animation CSS pour le bandeau
-  (function injectLateBannerStyle() {
-    if (document.getElementById("lateBannerBlinkStyle")) return;
-    const style = document.createElement("style");
-    style.id = "lateBannerBlinkStyle";
-    style.textContent = `@keyframes lateBannerBlink {0%{box-shadow:0 2px 18px #fde04755;}100%{box-shadow:0 2px 28px #facc15aa;}}
-      #lateAgentsBanner {transition:box-shadow 0.2s;}`;
-    document.head.appendChild(style);
-  })();
-
-  // Appel automatique après chaque chargement de livraisons
-  function refreshLateAgentsAlert() {
-    showLateAgentsBanner();
-  }
-  // Appel initial et après chaque refresh
-  refreshLateAgentsAlert();
-  // Optionnel : expose la fonction
-  window.refreshLateAgentsAlert = refreshLateAgentsAlert;
+  // === Appel automatique de l'alerte toutes les 20 secondes ===
+  setInterval(() => {
+    checkLateContainers();
+    console.log(
+      "[ALERTE RETARD] Vérification automatique des conteneurs non livrés (toutes les 20 secondes)"
+    );
+  }, 10000); // 20 000 ms = 20 secondes
+  // Appel initial au chargement
+  window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // ================== CLIGNOTEMENT VERT NOUVELLE LIGNE (FORCÉ) ==================
   // Patch direct sur le tableau principal
