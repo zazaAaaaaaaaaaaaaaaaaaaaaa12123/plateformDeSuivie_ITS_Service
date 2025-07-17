@@ -193,6 +193,16 @@ document.addEventListener("DOMContentLoaded", () => {
   if (codeEntrySection) {
     codeEntrySection.classList.add("hidden");
   }
+
+  // Remplir automatiquement le champ Nom de l'agent Acconier avec uniquement le nom
+  const employeeNameInput = document.getElementById("employeeName");
+  let acconier = JSON.parse(localStorage.getItem("acconier_user")) || {};
+  if (employeeNameInput && acconier.nom) {
+    employeeNameInput.value = acconier.nom;
+    employeeNameInput.readOnly = true;
+    employeeNameInput.style.background = "#f1f5f9";
+    employeeNameInput.style.cursor = "not-allowed";
+  }
 });
 
 // --- Insertion dynamique du conteneur avatar à côté du formulaire ---
