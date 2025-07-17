@@ -177,9 +177,9 @@ document.addEventListener("DOMContentLoaded", function () {
             })
           );
           // NE JAMAIS ÉCRIRE DANS LA CLÉ 'user' OU AUTRE !
-          formInscription.style.display = "none";
-          formConnexion.style.display = "none";
-          formCodeEntreprise.style.display = "block";
+          // Redirection directe vers le tableau de bord Acconier
+          window.location.href =
+            "https://plateformdesuivie-its-service.onrender.com/html/interfaceRespAconier.html";
         } else {
           errorDiv.textContent = data.message || "Erreur lors de la connexion.";
         }
