@@ -154,7 +154,8 @@ window.displayProfileAvatar = function () {
   if (logoutBtn) {
     logoutBtn.onclick = function () {
       localStorage.removeItem("acconier_user");
-      window.location.href = "http://localhost:3000/html/acconier_auth.html";
+      window.location.href =
+        "https://plateformdesuivie-its-service.onrender.com/html/acconier_auth.html?mode=login#connexion-agent-transit";
     };
   }
 };
