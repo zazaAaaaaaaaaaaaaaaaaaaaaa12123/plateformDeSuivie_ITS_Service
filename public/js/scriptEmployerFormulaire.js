@@ -185,16 +185,27 @@ window.saveAcconierUserToLocalStorage = function (acconier) {
 // Initialisation de l'affichage historique et avatar au chargement
 document.addEventListener("DOMContentLoaded", () => {
   window.displayAgentHistory && window.displayAgentHistory("Agent Acconier");
-  window.displayProfileAvatar && window.displayProfileAvatar();
-  // Affiche directement le formulaire d'ordre de livraison
-  const deliveryFormSection = document.getElementById("deliveryFormSection");
-  if (deliveryFormSection) {
-    deliveryFormSection.classList.remove("hidden");
-  }
-  // Masque la section code d'entreprise si elle existe
-  const codeEntrySection = document.getElementById("codeEntrySection");
-  if (codeEntrySection) {
-    codeEntrySection.classList.add("hidden");
+  // Si l'utilisateur est connecté, affiche l'avatar et le menu profil
+  if (localStorage.getItem("acconier_user")) {
+    window.displayProfileAvatar && window.displayProfileAvatar();
+    const deliveryFormSection = document.getElementById("deliveryFormSection");
+    if (deliveryFormSection) {
+      deliveryFormSection.classList.remove("hidden");
+    }
+    const codeEntrySection = document.getElementById("codeEntrySection");
+    if (codeEntrySection) {
+      codeEntrySection.classList.add("hidden");
+    }
+  } else {
+    // Si non connecté, masquer le formulaire et l'avatar
+    const deliveryFormSection = document.getElementById("deliveryFormSection");
+    if (deliveryFormSection) {
+      deliveryFormSection.classList.add("hidden");
+    }
+    const avatarContainer = document.getElementById("profileAvatarContainer");
+    if (avatarContainer) {
+      avatarContainer.innerHTML = "";
+    }
   }
 });
 
