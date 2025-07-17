@@ -9234,9 +9234,19 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     console.log(
       "[ALERTE RETARD] Vérification automatique des conteneurs non livrés (toutes les 20 secondes)"
     );
-  }, 10000); // 20 000 ms = 20 secondes
+  }, 20000); // 20 000 ms = 20 secondes
   // Appel initial au chargement
   window.addEventListener("DOMContentLoaded", checkLateContainers);
+
+  // Appel de l'alerte après chaque chargement de livraisons
+  if (typeof window.loadDeliveries === "function") {
+    const originalLoadDeliveries = window.loadDeliveries;
+    window.loadDeliveries = async function (...args) {
+      const result = await originalLoadDeliveries.apply(this, args);
+      checkLateContainers();
+      return result;
+    };
+  }
 
   // ================== CLIGNOTEMENT VERT NOUVELLE LIGNE (FORCÉ) ==================
   // Patch direct sur le tableau principal
