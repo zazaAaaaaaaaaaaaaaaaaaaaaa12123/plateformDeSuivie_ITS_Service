@@ -140,8 +140,12 @@ window.displayProfileAvatar = function () {
   if (clickable && profileMenu) {
     clickable.onclick = function (e) {
       e.stopPropagation();
-      profileMenu.style.display =
-        profileMenu.style.display === "none" ? "block" : "none";
+      const wasClosed = profileMenu.style.display === "none";
+      profileMenu.style.display = wasClosed ? "block" : "none";
+      if (wasClosed) {
+        // Attache l'écouteur à chaque ouverture du menu
+        bindLogoutBtn();
+      }
     };
     // Ferme le menu si on clique ailleurs
     document.addEventListener("click", function hideMenu(e) {
@@ -161,11 +165,9 @@ window.displayProfileAvatar = function () {
       };
     }
   }
-  bindLogoutBtn();
-  // Réactive le bouton à chaque ouverture du menu profil
-  if (profileMenu) {
-    profileMenu.addEventListener("transitionend", bindLogoutBtn);
-    profileMenu.addEventListener("click", bindLogoutBtn);
+  // Attache l'écouteur au chargement initial si le menu est déjà ouvert
+  if (profileMenu && profileMenu.style.display !== "none") {
+    bindLogoutBtn();
   }
 };
 
