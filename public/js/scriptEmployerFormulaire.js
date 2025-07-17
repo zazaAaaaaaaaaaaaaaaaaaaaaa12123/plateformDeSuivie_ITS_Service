@@ -189,18 +189,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (deliveryFormSection) {
     deliveryFormSection.classList.remove("hidden");
   }
-  // Masque la section code d'entreprise si elle existe
-  const codeEntrySection = document.getElementById("codeEntrySection");
-  if (codeEntrySection) {
-    codeEntrySection.classList.add("hidden");
-  }
 });
 
 // --- Insertion dynamique du conteneur avatar à côté du formulaire ---
 document.addEventListener("DOMContentLoaded", () => {
   // Cherche la section du formulaire de livraison
   const deliveryFormSection = document.getElementById("deliveryFormSection");
-  const codeEntrySection = document.getElementById("codeEntrySection");
+  // Suppression de toute logique liée à codeEntrySection
   // Fonction pour afficher/masquer l'icône historique selon la visibilité du formulaire
   function updateHistoryBtnVisibility() {
     let historyBtn = document.getElementById("historySidebarBtn");
@@ -894,12 +889,7 @@ document.addEventListener("DOMContentLoaded", () => {
       attributeFilter: ["class"],
     });
   }
-  if (codeEntrySection) {
-    observer.observe(codeEntrySection, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-  }
+  // Suppression de l'observation de codeEntrySection
   // Appel initial
   updateHistoryBtnVisibility();
 });
