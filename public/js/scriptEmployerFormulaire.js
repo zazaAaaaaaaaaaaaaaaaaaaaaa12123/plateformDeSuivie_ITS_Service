@@ -136,28 +136,36 @@ window.displayProfileAvatar = function () {
   </div>`;
   // Gestion de l'ouverture/fermeture du menu profil
   const clickable = avatarContainer.querySelector("#profileAvatarClickable");
-  const menu = avatarContainer.querySelector("#profileMenuDropdown");
-  if (clickable && menu) {
+  const profileMenu = avatarContainer.querySelector("#profileMenuDropdown");
+  if (clickable && profileMenu) {
     clickable.onclick = function (e) {
       e.stopPropagation();
-      menu.style.display = menu.style.display === "none" ? "block" : "none";
+      profileMenu.style.display =
+        profileMenu.style.display === "none" ? "block" : "none";
     };
     // Ferme le menu si on clique ailleurs
     document.addEventListener("click", function hideMenu(e) {
       if (!avatarContainer.contains(e.target)) {
-        menu.style.display = "none";
+        profileMenu.style.display = "none";
       }
     });
   }
-  // Ajoute l'écouteur sur le bouton de déconnexion
-  const logoutBtn = avatarContainer.querySelector("#logoutAcconierBtn");
-  if (logoutBtn) {
-    logoutBtn.onclick = function () {
-      localStorage.removeItem("acconier_user");
-      // Redirige vers la section "Déjà inscrit ? Se connecter" du formulaire Agent Transit
-      window.location.href =
-        "https://plateformdesuivie-its-service.onrender.com/html/interfaceFormulaireEmployer.html?mode=login#connexion-agent-transit";
-    };
+  // Ajoute l'écouteur sur le bouton de déconnexion (et le réactive à chaque affichage du menu)
+  function bindLogoutBtn() {
+    const logoutBtn = avatarContainer.querySelector("#logoutAcconierBtn");
+    if (logoutBtn) {
+      logoutBtn.onclick = function () {
+        localStorage.removeItem("acconier_user");
+        window.location.href =
+          "https://plateformdesuivie-its-service.onrender.com/html/interfaceFormulaireEmployer.html?mode=login#connexion-agent-transit";
+      };
+    }
+  }
+  bindLogoutBtn();
+  // Réactive le bouton à chaque ouverture du menu profil
+  if (profileMenu) {
+    profileMenu.addEventListener("transitionend", bindLogoutBtn);
+    profileMenu.addEventListener("click", bindLogoutBtn);
   }
 };
 
