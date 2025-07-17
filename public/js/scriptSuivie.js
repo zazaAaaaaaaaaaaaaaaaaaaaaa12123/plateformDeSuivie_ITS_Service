@@ -8911,7 +8911,12 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
   function checkLateContainers() {
-    if (!window.deliveries) return;
+    if (!window.deliveries) {
+      console.warn(
+        "[ALERTE RETARD] Aucun tableau de livraisons détecté (window.deliveries manquant)"
+      );
+      return;
+    }
     const now = new Date();
     const lateContainers = [];
     const lateDossiersSet = new Set();
@@ -8971,6 +8976,12 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         lateDossiersSet.add(delivery.dossier_number || delivery.id || "?");
       }
     });
+    console.log(
+      "[ALERTE RETARD] Dossiers en retard détectés :",
+      lateContainers,
+      "Nombre de dossiers:",
+      lateDossiersSet.size
+    );
     showLateContainersAlert(lateContainers, lateDossiersSet.size);
   }
 
@@ -9236,7 +9247,11 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     );
   }, 20000); // 20 000 ms = 20 secondes
   // Appel initial au chargement
-  window.addEventListener("DOMContentLoaded", checkLateContainers);
+  window.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      checkLateContainers();
+    }, 500);
+  });
 
   // Appel de l'alerte après chaque chargement de livraisons
   if (typeof window.loadDeliveries === "function") {
