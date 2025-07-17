@@ -154,7 +154,9 @@ window.displayProfileAvatar = function () {
   if (logoutBtn) {
     logoutBtn.onclick = function () {
       localStorage.removeItem("acconier_user");
-      window.location.href = "http://localhost:3000/html/acconier_auth.html";
+      // Redirige vers la section "Déjà inscrit ? Se connecter" du formulaire Agent Transit
+      window.location.href =
+        "https://plateformdesuivie-its-service.onrender.com/html/interfaceFormulaireEmployer.html?mode=login#connexion-agent-transit";
     };
   }
 };
