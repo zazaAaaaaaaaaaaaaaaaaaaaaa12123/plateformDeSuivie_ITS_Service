@@ -8753,4 +8753,96 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
+// ====== Boîte d'alerte universelle (pop-up) ======
+window.showCustomAlert = function (message, type = "info") {
+  // Supprime toute ancienne alerte
+  const oldAlert = document.getElementById("customAlertModal");
+  if (oldAlert) oldAlert.remove();
+  // Overlay
+  const overlay = document.createElement("div");
+  overlay.id = "customAlertModal";
+  overlay.style.position = "fixed";
+  overlay.style.top = 0;
+  overlay.style.left = 0;
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  overlay.style.background = "rgba(30,41,59,0.35)";
+  overlay.style.zIndex = 99999;
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  // Box
+  const box = document.createElement("div");
+  box.style.background = "#fff";
+  box.style.borderRadius = "14px";
+  box.style.boxShadow = "0 8px 32px #1e293b33";
+  box.style.maxWidth = "420px";
+  box.style.width = "90vw";
+  box.style.padding = "32px 28px 22px 28px";
+  box.style.position = "relative";
+  box.style.display = "flex";
+  box.style.flexDirection = "column";
+  box.style.alignItems = "center";
+  // Couleur selon type
+  let color = "#2563eb",
+    bg = "#eff6ff";
+  if (type === "warning") {
+    color = "#eab308";
+    bg = "#fef9c3";
+  }
+  if (type === "error") {
+    color = "#dc2626";
+    bg = "#fee2e2";
+  }
+  if (type === "success") {
+    color = "#059669";
+    bg = "#d1fae5";
+  }
+  // Titre
+  const title = document.createElement("div");
+  title.textContent =
+    type === "warning"
+      ? "⚠️ Attention"
+      : type === "error"
+      ? "❌ Erreur"
+      : type === "success"
+      ? "✅ Succès"
+      : "ℹ️ Info";
+  title.style.fontWeight = "bold";
+  title.style.fontSize = "1.25em";
+  title.style.color = color;
+  title.style.marginBottom = "12px";
+  box.appendChild(title);
+  // Message
+  const msg = document.createElement("div");
+  msg.textContent = message;
+  msg.style.fontSize = "1.08em";
+  msg.style.color = "#1e293b";
+  msg.style.background = bg;
+  msg.style.borderRadius = "8px";
+  msg.style.padding = "12px 10px";
+  msg.style.marginBottom = "18px";
+  msg.style.textAlign = "center";
+  box.appendChild(msg);
+  // Bouton fermer
+  const btn = document.createElement("button");
+  btn.textContent = "Fermer";
+  btn.style.background = color;
+  btn.style.color = "#fff";
+  btn.style.fontWeight = "bold";
+  btn.style.fontSize = "1em";
+  btn.style.border = "none";
+  btn.style.borderRadius = "8px";
+  btn.style.padding = "0.6em 1.5em";
+  btn.style.cursor = "pointer";
+  btn.style.marginTop = "8px";
+  btn.onclick = () => overlay.remove();
+  box.appendChild(btn);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  // Fermer par clic sur le fond
+  overlay.onclick = (e) => {
+    if (e.target === overlay) overlay.remove();
+  };
+};
+// ====== Fin boîte d'alerte universelle ======
