@@ -24,6 +24,51 @@
   `;
   document.head.appendChild(style);
 })();
+
+// === Désactive l'autocomplétion sur les champs de recherche et Responsable de livraison ===
+window.addEventListener("DOMContentLoaded", function () {
+  // Champ de recherche principal (adapte le sélecteur si besoin)
+  const searchInput = document.querySelector(
+    "input[type='search'], input[name='search'], #searchInput"
+  );
+  if (searchInput) {
+    searchInput.setAttribute("autocomplete", "off");
+    searchInput.setAttribute("autocorrect", "off");
+    searchInput.setAttribute("autocapitalize", "off");
+    searchInput.setAttribute("spellcheck", "false");
+  }
+  // Champ Responsable de livraison (adapte le sélecteur si besoin)
+  const respLivraisonInput = document.querySelector(
+    "input[name='responsable_livraison'], input.responsable-livraison, #responsableLivraison"
+  );
+  if (respLivraisonInput) {
+    respLivraisonInput.setAttribute("autocomplete", "off");
+    respLivraisonInput.setAttribute("autocorrect", "off");
+    respLivraisonInput.setAttribute("autocapitalize", "off");
+    respLivraisonInput.setAttribute("spellcheck", "false");
+    // Récupère la valeur depuis le backend (API)
+    fetch("/api/responsable-livraison")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.success && typeof data.value === "string") {
+          respLivraisonInput.value = data.value;
+        }
+      })
+      .catch(() => {});
+    // Sauvegarde à chaque modification (API)
+    let saveTimeout = null;
+    respLivraisonInput.addEventListener("input", function () {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        fetch("/api/responsable-livraison", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value: respLivraisonInput.value }),
+        });
+      }, 400); // anti-spam : 400ms après la dernière frappe
+    });
+  }
+});
 function renderLateDossiersTable() {
   // Cherche le conteneur du tableau principal (à adapter selon ton HTML)
   const tableContainer = document.getElementById("tableauPrincipalRetards");
@@ -1797,7 +1842,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // DOM element for the status filter
   const statusFilterSelect = document.getElementById("statusFilterSelect");
-  // const mainTableDateFilter = document.getElementById("mainTableDateFilter"); // Supprimé : filtre à deux dates
+  // (filtre à deux dates supprimé)
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
@@ -1881,7 +1926,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   console.log("Initializing admin dashboard...");
 
-  // SUPPRIMÉ : toute la logique de currentMainFilterDate et stockage local associé (filtre à deux dates)
+  // (filtre à deux dates supprimé)
 
   // DOM elements for the history sidebar (modal)
   const historySidebar = document.getElementById("historySidebar");
