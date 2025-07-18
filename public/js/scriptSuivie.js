@@ -1936,6 +1936,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   }
 
   // Fonction pour générer le tableau filtré dans une pop-up
+
   function showDateRangePopupTable(filteredDeliveries) {
     // Création de l'overlay
     let overlay = document.createElement("div");
@@ -1999,8 +2000,9 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     table.style.marginBottom = "18px";
     table.style.fontSize = "1em";
 
-    // En-têtes spécifiques
+    // En-têtes spécifiques avec N°
     const headers = [
+      "N°",
       "Agent",
       "Client (Nom)",
       "Client (Téléphone)",
@@ -2030,9 +2032,10 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
     // Corps du tableau
     let tbody = document.createElement("tbody");
-    filteredDeliveries.forEach((d) => {
+    filteredDeliveries.forEach((d, idx) => {
       let tr = document.createElement("tr");
       let values = [
+        (idx + 1).toString(),
         d.employee_name || "-",
         d.client_name || "-",
         d.client_phone || "-",
