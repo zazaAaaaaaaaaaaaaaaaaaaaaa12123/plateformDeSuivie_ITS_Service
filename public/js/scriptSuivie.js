@@ -8587,6 +8587,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     // Un agent est en retard s'il a au moins un conteneur non livré depuis 2 jours ou plus
     const lateAgents = {};
     const now = new Date();
+    console.log("[DIAG RETARD][DEBUG] Tableau deliveries reçu :", deliveries);
     deliveries.forEach((d, idx) => {
       const agent = d.employee_name || "Agent inconnu";
       const status = d.status;
@@ -8597,12 +8598,26 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         .includes("livr");
       let createdAt = d.created_at ? new Date(d.created_at) : null;
       let diffDays = null;
+      let createdAtRaw = d.created_at;
+      if (
+        createdAtRaw === undefined ||
+        createdAtRaw === null ||
+        createdAtRaw === ""
+      ) {
+        console.log(
+          `[DIAG RETARD][DEBUG] Livraison #${idx} | Agent: ${agent} | created_at ABSENT ou VIDE | Statut: ${status} | Acconier: ${acconierStatus}`
+        );
+      } else {
+        console.log(
+          `[DIAG RETARD][DEBUG] Livraison #${idx} | Agent: ${agent} | created_at: ${createdAtRaw} | Statut: ${status} | Acconier: ${acconierStatus}`
+        );
+      }
       if (createdAt) {
         const diffTime = now - createdAt;
         diffDays = diffTime / (1000 * 60 * 60 * 24);
       }
       console.log(
-        `[DIAG RETARD] Livraison #${idx} | Agent: ${agent} | Statut: ${status} | Acconier: ${acconierStatus} | created_at: ${d.created_at} | diffDays: ${diffDays} | isDelivered: ${isDelivered}`
+        `[DIAG RETARD] Livraison #${idx} | Agent: ${agent} | Statut: ${status} | Acconier: ${acconierStatus} | created_at: ${createdAtRaw} | diffDays: ${diffDays} | isDelivered: ${isDelivered}`
       );
       if (!isDelivered && createdAt && diffDays !== null) {
         if (diffDays >= 2) {
