@@ -111,15 +111,36 @@ function checkLateContainers() {
               <td style='padding:7px 10px;'>${c.dateEnr || "-"}</td>
               <td style='padding:7px 10px;'>${dateLiv}</td>
               <td style='padding:7px 10px;'>${heureLiv}</td>
-              <td style='padding:7px 10px;'><a href='#' class='notifier-agent-link' data-agent='${
+              <td style='padding:7px 10px;'><button class='notifier-btn' data-agent='${
                 c.agentName || ""
               }' data-email='${c.agentEmail || ""}' data-tc='${
               c.numeroTC
-            }' style='color:#eab308;font-weight:700;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Notifier</a></td>
+            }'>Notifier</button></td>
               <td style='padding:7px 10px;'><a href='#' class='late-detail-link' data-idx='${idx}' style='color:#2563eb;font-weight:600;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Détail</a></td>
             </tr>`;
           })
           .join("");
+        // Ajout du listener sur les boutons Notifier
+        tbody.querySelectorAll(".notifier-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const agent = this.getAttribute("data-agent");
+            const dossier = this.getAttribute("data-tc");
+            fetch("/notify-agent", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ agent, dossier }),
+            })
+              .then((res) => res.json())
+              .then((data) => {
+                alert(data.message || "Notification envoyée !");
+              })
+              .catch(() => {
+                alert("Erreur lors de l’envoi de la notification.");
+              });
+          });
+        });
       }
     }
   }
