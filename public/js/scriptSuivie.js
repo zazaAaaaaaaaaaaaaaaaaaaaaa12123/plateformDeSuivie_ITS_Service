@@ -8623,16 +8623,29 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         .toLowerCase()
         .includes("livr");
       if (!isDelivered && d.created_at) {
-        const deliveryDate = new Date(d.created_at);
-        const diffDays = (now - deliveryDate) / (1000 * 60 * 60 * 24);
-        if (diffDays > 2) {
+        // Conversion stricte de la date
+        let deliveryDate;
+        if (d.created_at instanceof Date) {
+          deliveryDate = d.created_at;
+        } else {
+          deliveryDate = new Date(d.created_at);
+        }
+        if (isNaN(deliveryDate.getTime())) {
+          // Date invalide, ignorer
+          return;
+        }
+        // Calcul de la différence en jours, arrondi à l'entier
+        const diffMs =
+          now.setHours(0, 0, 0, 0) - deliveryDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDays >= 2) {
           foundLate = true;
         }
       }
     });
     if (foundLate) {
       showCustomAlert(
-        "Attention : Il y a des livraisons non livrées depuis plus de 2 jours !",
+        "Attention : Il y a des livraisons non livrées depuis 2 jours ou plus !",
         "warning"
       );
     }
