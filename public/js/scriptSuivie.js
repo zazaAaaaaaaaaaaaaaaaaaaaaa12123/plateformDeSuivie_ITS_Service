@@ -9046,57 +9046,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     document.head.appendChild(style);
   })();
 
-  /********************************************************************
-   * Fonction utilitaire : Affiche les livraisons dans le tableau principal
-   * Utilisée pour le filtrage par plage de dates (dateRangeFilter)
-   ********************************************************************/
-  function renderDeliveriesTable(deliveriesArray) {
-    if (!window.deliveriesTableBody) return;
-    const tbody = window.deliveriesTableBody;
-    tbody.innerHTML = "";
-    if (!Array.isArray(deliveriesArray) || deliveriesArray.length === 0) {
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 20;
-      td.textContent = "Aucune livraison trouvée pour cette période.";
-      td.style.textAlign = "center";
-      tr.appendChild(td);
-      tbody.appendChild(tr);
-      return;
-    }
-    deliveriesArray.forEach((d, idx) => {
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-delivery-id", d.id || idx);
-      // Exemple d'affichage, à adapter selon vos colonnes !
-      const cols = [
-        d.employee_name || "-",
-        d.client_name || "-",
-        d.client_phone || "-",
-        d.container_number || "-",
-        d.lieu || "-",
-        d.container_foot_type || "-",
-        d.container_type_and_content || "-",
-        d.declaration_number || "-",
-        d.bl_number || "-",
-        d.dossier_number || d.dossier || "-",
-        d.number_of_containers || "-",
-        d.shipping_company || "-",
-        d.weight || "-",
-        d.ship_name || "-",
-        d.circuit || "-",
-        d.transporter_mode || "-",
-        d.statut || d.status || "-",
-        d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "-",
-      ];
-      cols.forEach((val) => {
-        const td = document.createElement("td");
-        td.textContent = val;
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-  }
-
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
