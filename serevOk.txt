@@ -1,5 +1,5 @@
-const express = require("express");
 const fs = require("fs");
+const express = require("express");
 const multer = require("multer");
 const { Pool } = require("pg");
 const app = express();
@@ -13,10 +13,15 @@ const port = 3000;
 // Middleware pour parser les requêtes JSON et URL-encodées
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
 
-const server = app.listen(port, () => {
-  console.log(`Serveur Express démarré sur le port ${port}`);
+// ===============================
+// === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
+// ===============================
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
 });
 
 // --- WebSocket Server pour notifications temps réel ---
@@ -41,11 +46,12 @@ require("dotenv").config();
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs"); // Import unique ici
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "ITS_service",
-  password: "1103",
-  port: 5432,
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
+  ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
 });
 // ===============================
 // ===============================
@@ -154,6 +160,7 @@ app.put("/api/company-code", async (req, res) => {
       "UPDATE company_code SET code = $1, updated_at = NOW() WHERE id = (SELECT id FROM company_code ORDER BY updated_at DESC LIMIT 1)",
       [newCode]
     );
+
     // Notifier tous les clients WebSocket du changement de code
     wsClients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -163,6 +170,7 @@ app.put("/api/company-code", async (req, res) => {
       }
     });
     return res.json({ success: true, message: "Code entreprise modifié." });
+    // (La route / doit être définie à la racine du fichier, pas ici)
   } catch (err) {
     return res.status(500).json({ success: false, message: "Erreur serveur." });
   }
@@ -312,6 +320,7 @@ app.post("/acconier/forgot-password", async (req, res) => {
       "UPDATE acconier SET reset_token = $1, reset_token_expires = $2 WHERE email = $3",
       [token, expires, email]
     );
+    al;
     const resetLink = `${req.protocol}://${req.get(
       "host"
     )}/acconier/reset-password/${token}`;
@@ -568,14 +577,21 @@ app.post("/acconier/login", async (req, res) => {
       "SELECT * FROM acconier WHERE email = $1",
       [email]
     );
+    console.log("[ACCONIER][LOGIN] Recherche utilisateur:", userRes.rows);
     if (userRes.rows.length === 0) {
+      console.warn("[ACCONIER][LOGIN] Aucun utilisateur trouvé pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     const user = userRes.rows[0];
+    console.log("[ACCONIER][LOGIN] Utilisateur trouvé:", user);
+    console.log("[ACCONIER][LOGIN] Mot de passe reçu:", password);
+    console.log("[ACCONIER][LOGIN] Mot de passe hashé en base:", user.password);
     const match = await bcrypt.compare(password, user.password);
+    console.log("[ACCONIER][LOGIN] Résultat comparaison mot de passe:", match);
     if (!match) {
+      console.warn("[ACCONIER][LOGIN] Mot de passe incorrect pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
@@ -665,13 +681,8 @@ app.post("/api/respacconier/login", async (req, res) => {
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
-    // Retourne aussi nom et email pour le frontend (avatar, etc.)
-    res.json({
-      success: true,
-      id: user.id,
-      nom: user.nom,
-      email: user.email,
-    });
+    // Renvoie nom et email pour affichage avatar (pas de liaison ailleurs)
+    res.json({ success: true, id: user.id, nom: user.nom, email: user.email });
   } catch (err) {
     console.error("[RESPACCONIER][LOGIN] Erreur:", err);
     res.status(500).json({ success: false, message: "Erreur serveur." });
@@ -1288,7 +1299,8 @@ function formatDateForDB(dateString) {
 // ROUTE INSCRIPTION UTILISATEUR
 // ===============================
 app.post("/api/signup", async (req, res) => {
-  let { name, email, password } = req.body || {};
+  let { name, nom, email, password } = req.body || {};
+  if (!name && nom) name = nom;
   // Normalisation de l'email (trim + minuscule)
   if (typeof email === "string") {
     email = email.trim().toLowerCase();
@@ -1360,7 +1372,13 @@ app.post("/api/signup", async (req, res) => {
 // ===============================
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body || {};
+  console.log("[LOGIN][API] Données reçues:", {
+    email,
+    password,
+    body: req.body,
+  });
   if (!email || !password) {
+    console.warn("[LOGIN][API] Champs manquants:", { email, password });
     return res
       .status(400)
       .json({ success: false, message: "Tous les champs sont requis." });
@@ -1369,19 +1387,27 @@ app.post("/api/login", async (req, res) => {
     const userRes = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
+    console.log("[LOGIN][API] Résultat recherche utilisateur:", userRes.rows);
     if (userRes.rows.length === 0) {
+      console.warn(
+        "[LOGIN][API] Aucun utilisateur trouvé pour cet email:",
+        email
+      );
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     const user = userRes.rows[0];
     const match = await bcrypt.compare(password, user.password);
+    console.log("[LOGIN][API] Résultat comparaison mot de passe:", match);
     if (!match) {
+      console.warn("[LOGIN][API] Mot de passe incorrect pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     // Connexion réussie : renvoyer aussi le nom et l'email
+    console.log("[LOGIN][API] Connexion réussie pour:", email);
     return res.status(200).json({
       success: true,
       message: "Connexion réussie.",
@@ -1389,7 +1415,7 @@ app.post("/api/login", async (req, res) => {
       email: user.email,
     });
   } catch (err) {
-    console.error("Erreur connexion:", err);
+    console.error("[LOGIN][API] Erreur serveur lors de la connexion:", err);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la connexion.",
@@ -1480,14 +1506,13 @@ app.post(
     if (
       !employee_name ||
       !client_name ||
-      !client_phone ||
       !container_type_and_content ||
-      !status ||
       !lieu ||
       !normalized_container_number ||
       !container_foot_type ||
       !declaration_number ||
-      !number_of_containers
+      !number_of_containers ||
+      !dossier_number
     ) {
       console.error("Validation failed: Missing required fields in backend.", {
         employee_name,
@@ -2871,4 +2896,43 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       message: "Erreur serveur lors de la mise à jour du statut du conteneur.",
     });
   }
+});
+
+// ===============================
+// ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
+// ===============================
+
+// ===============================
+// HEADER CSP pour autoriser Google Translate et ressources externes nécessaires
+// ===============================
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com https://cdn.tailwindcss.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com",
+      "img-src 'self' data: https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com",
+      "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+      "frame-src 'self' https://translate.google.com https://www.google.com",
+      "connect-src 'self' https://translate.googleapis.com https://translate.google.com https://www.gstatic.com https://www.google.com",
+    ].join("; ")
+  );
+  next();
+});
+
+// (Déplacé tout en bas du fichier)
+
+// Route explicite pour acconier_auth.html
+app.get("/html/acconier_auth.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "acconier_auth.html"));
+});
+
+// ===============================
+// ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
+// ===============================
+// Cette route doit être TOUT EN BAS, après toutes les routes API !
+// (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
