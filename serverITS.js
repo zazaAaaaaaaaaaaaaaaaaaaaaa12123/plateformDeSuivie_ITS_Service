@@ -15,13 +15,124 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
-
+require("dotenv").config();
+const nodemailer = require("nodemailer");
+const bcrypt = require("bcryptjs"); // Import unique ici
+const pool = new Pool({
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
+  ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
+});
 // ===============================
 // === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
 // ===============================
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
+});
+// ===============================
+// TABLE POUR STOCKER LA DERNIÈRE RECHERCHE (par utilisateur ou global)
+// ===============================
+const createSearchPreferencesTable = `
+  CREATE TABLE IF NOT EXISTS search_preferences (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NULL, -- optionnel, si tu veux lier à un utilisateur
+    search_value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+async function ensureSearchPreferencesTable() {
+  try {
+    await pool.query(createSearchPreferencesTable);
+    console.log("Table search_preferences OK");
+  } catch (err) {
+    console.error("Erreur création table search_preferences:", err);
+  }
+}
+ensureSearchPreferencesTable();
+
+// ===============================
+// ROUTE PATCH: Mise à jour de la dernière recherche (champ de recherche)
+// ===============================
+app.patch("/search-preference", async (req, res) => {
+  const { search_value, user_id } = req.body || {};
+  if (!search_value) {
+    return res.status(400).json({
+      success: false,
+      message: "search_value requis. (user_id optionnel)",
+    });
+  }
+  try {
+    // Si user_id fourni, update ou insert pour ce user, sinon global (id=1)
+    let result;
+    if (user_id) {
+      result = await pool.query(
+        `INSERT INTO search_preferences (user_id, search_value, updated_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (user_id) DO UPDATE SET search_value = $2, updated_at = NOW()
+         RETURNING *;`,
+        [user_id, search_value]
+      );
+    } else {
+      // Un seul enregistrement global (id=1)
+      const check = await pool.query(
+        `SELECT * FROM search_preferences WHERE id = 1`
+      );
+      if (check.rows.length > 0) {
+        result = await pool.query(
+          `UPDATE search_preferences SET search_value = $1, updated_at = NOW() WHERE id = 1 RETURNING *;`,
+          [search_value]
+        );
+      } else {
+        result = await pool.query(
+          `INSERT INTO search_preferences (id, search_value) VALUES (1, $1) RETURNING *;`,
+          [search_value]
+        );
+      }
+    }
+    res.json({ success: true, preference: result.rows[0] });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour de la recherche:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la mise à jour de la recherche.",
+    });
+  }
+});
+
+// ===============================
+// ROUTE GET: Récupérer la dernière recherche (champ de recherche)
+// ===============================
+app.get("/search-preference", async (req, res) => {
+  const { user_id } = req.query || {};
+  try {
+    let result;
+    if (user_id) {
+      result = await pool.query(
+        `SELECT * FROM search_preferences WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1;`,
+        [user_id]
+      );
+    } else {
+      result = await pool.query(
+        `SELECT * FROM search_preferences WHERE id = 1`
+      );
+    }
+    if (!result.rows.length) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Aucune recherche enregistrée." });
+    }
+    res.json({ success: true, preference: result.rows[0] });
+  } catch (err) {
+    console.error("Erreur lors de la récupération de la recherche:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération de la recherche.",
+    });
+  }
 });
 
 // ===============================
@@ -84,17 +195,6 @@ function broadcastNouvelleDemandeCodeEntreprise() {
   });
 }
 
-require("dotenv").config();
-const nodemailer = require("nodemailer");
-const bcrypt = require("bcryptjs"); // Import unique ici
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
-  ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
-});
 // ===============================
 // ===============================
 // ROUTE : Notification dossier en retard (envoi email)
