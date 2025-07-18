@@ -367,6 +367,24 @@
                 placeholder="Rechercher une livraison..."
                 aria-label="Recherche"
               />
+              <!-- Filtres par plage de dates -->
+              <input
+                type="date"
+                id="dateRangeStart"
+                class="icon-btn icon-btn-company-color ms-2"
+                title="Date de début"
+                style="min-width: 140px"
+                placeholder="Date de début"
+              />
+              <span class="mx-1">à</span>
+              <input
+                type="date"
+                id="dateRangeEnd"
+                class="icon-btn icon-btn-company-color"
+                title="Date de fin"
+                style="min-width: 140px"
+                placeholder="Date de fin"
+              />
               <button id="searchButton" class="icon-btn-company-color">
                 <i
                   class="fas fa-spinner fa-spin loading-spinner"
