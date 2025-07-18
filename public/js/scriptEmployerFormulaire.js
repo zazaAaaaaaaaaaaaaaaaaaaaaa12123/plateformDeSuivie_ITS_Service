@@ -972,7 +972,23 @@ if (containerNumberInput) {
   containerTagsInput.style.minWidth = "120px";
   containerTagsInput.style.background = "transparent";
 
+  // Création de l'icône Entrée verte
+  const enterIcon = document.createElement("button");
+  enterIcon.type = "button";
+  enterIcon.title = "Ajouter ce TC";
+  enterIcon.innerHTML =
+    '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="13" cy="13" r="13" fill="#22c55e"/><path d="M8 13h7.5m0 0l-3-3m3 3l-3 3" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  enterIcon.style.display = "none";
+  enterIcon.style.background = "none";
+  enterIcon.style.border = "none";
+  enterIcon.style.cursor = "pointer";
+  enterIcon.style.marginLeft = "4px";
+  enterIcon.style.padding = "0";
+  enterIcon.style.alignSelf = "center";
+
+  // Ajout input + icône dans le conteneur
   containerTagsContainer.appendChild(containerTagsInput);
+  containerTagsContainer.appendChild(enterIcon);
   // On insère le conteneur juste avant l'input caché
   containerNumberInput.parentNode.insertBefore(
     containerTagsContainer,
@@ -981,10 +997,11 @@ if (containerNumberInput) {
 
   // Fonction d'affichage des tags
   function renderContainerTags() {
-    // Supprime tous les tags sauf l'input
+    // Supprime tous les tags sauf l'input et l'icône
     while (
       containerTagsContainer.firstChild &&
-      containerTagsContainer.firstChild !== containerTagsInput
+      containerTagsContainer.firstChild !== containerTagsInput &&
+      containerTagsContainer.firstChild !== enterIcon
     ) {
       containerTagsContainer.removeChild(containerTagsContainer.firstChild);
     }
@@ -1020,6 +1037,12 @@ if (containerNumberInput) {
       tagEl.appendChild(removeBtn);
       containerTagsContainer.insertBefore(tagEl, containerTagsInput);
     });
+    // Affiche ou masque l'icône Entrée selon la saisie
+    if (containerTagsInput.value.trim()) {
+      enterIcon.style.display = "inline-block";
+    } else {
+      enterIcon.style.display = "none";
+    }
     // Rafraîchir la zone dynamique des types de pied à chaque modif de tags
     renderContainerFootTypes();
   }
@@ -1038,6 +1061,7 @@ if (containerNumberInput) {
         renderContainerTags();
       }
       containerTagsInput.value = "";
+      renderContainerTags();
     }
   });
   // Ajout par collage de plusieurs numéros séparés
@@ -1053,8 +1077,23 @@ if (containerNumberInput) {
       });
       renderContainerTags();
       containerTagsInput.value = "";
+      renderContainerTags();
     }
   });
+  // Clic sur l'icône Entrée verte
+  enterIcon.addEventListener("click", function () {
+    const value = containerTagsInput.value.trim();
+    if (value && !containerTags.includes(value)) {
+      containerTags.push(value);
+      renderContainerTags();
+    }
+    containerTagsInput.value = "";
+    renderContainerTags();
+    containerTagsInput.focus();
+  });
+  // Affiche l'icône dès qu'on tape
+  containerTagsInput.addEventListener("input", renderContainerTags);
+
   // Synchronise la valeur cachée pour compatibilité backend
   function syncHiddenInput() {
     containerNumberInput.value = containerTags.join(", ");
