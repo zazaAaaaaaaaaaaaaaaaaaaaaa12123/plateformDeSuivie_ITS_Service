@@ -24,6 +24,48 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
 });
 
+// ===============================
+// ROUTE PATCH: Mise à jour du responsable de livraison (nom_agent_visiteur)
+// ===============================
+app.patch("/deliveries/:id/nom-agent-visiteur", async (req, res) => {
+  const { id } = req.params;
+  const { nom_agent_visiteur } = req.body || {};
+  if (!nom_agent_visiteur || !id) {
+    return res.status(400).json({
+      success: false,
+      message: "ID et nom_agent_visiteur requis.",
+    });
+  }
+  try {
+    const result = await pool.query(
+      "UPDATE livraison_conteneur SET nom_agent_visiteur = $1 WHERE id = $2 RETURNING *;",
+      [nom_agent_visiteur, id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Livraison non trouvée.",
+      });
+    }
+    // Optionnel : broadcast WebSocket ici si besoin
+    res.json({
+      success: true,
+      message: "Responsable de livraison mis à jour.",
+      delivery: result.rows[0],
+    });
+  } catch (err) {
+    console.error(
+      "Erreur lors de la mise à jour du responsable de livraison:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message:
+        "Erreur serveur lors de la mise à jour du responsable de livraison.",
+    });
+  }
+});
+
 // --- WebSocket Server pour notifications temps réel ---
 const wss = new WebSocket.Server({ server });
 let wsClients = [];

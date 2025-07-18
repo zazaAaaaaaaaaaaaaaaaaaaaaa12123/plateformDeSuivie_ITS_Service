@@ -61,8 +61,77 @@ function renderLateDossiersTable() {
   });
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
+  // Patch pour désactiver l'autofill et activer la persistance sur les inputs "Responsable de livraison"
+  if (typeof patchResponsableLivraisonInputs === "function")
+    patchResponsableLivraisonInputs();
 }
 // === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
+
+// Désactive l'autofill/autocomplete sur le champ de recherche principal si présent
+if (typeof document !== "undefined") {
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.setAttribute("autocomplete", "off");
+    searchInput.setAttribute("autocorrect", "off");
+    searchInput.setAttribute("autocapitalize", "off");
+    searchInput.setAttribute("spellcheck", "false");
+  }
+}
+
+// Gestion de l'autocomplete et de la persistance pour "Responsable de livraison"
+function disableAutocompleteOnInputs() {
+  const respInputs = document.querySelectorAll(
+    'input[name="responsable_livraison"], input.responsable-livraison'
+  );
+  respInputs.forEach((input) => {
+    input.setAttribute("autocomplete", "off");
+    input.setAttribute("autocorrect", "off");
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("spellcheck", "false");
+  });
+}
+function saveResponsableLivraison(tc, value) {
+  if (!tc) return;
+  let data = {};
+  try {
+    data =
+      JSON.parse(localStorage.getItem("responsable_livraison_data") || "{}") ||
+      {};
+  } catch (e) {
+    data = {};
+  }
+  data[tc] = value;
+  localStorage.setItem("responsable_livraison_data", JSON.stringify(data));
+}
+function loadResponsableLivraison(tc) {
+  if (!tc) return "";
+  let data = {};
+  try {
+    data =
+      JSON.parse(localStorage.getItem("responsable_livraison_data") || "{}") ||
+      {};
+  } catch (e) {
+    data = {};
+  }
+  return data[tc] || "";
+}
+function patchResponsableLivraisonInputs() {
+  disableAutocompleteOnInputs();
+  const respInputs = document.querySelectorAll(
+    'input[name="responsable_livraison"], input.responsable-livraison'
+  );
+  respInputs.forEach((input) => {
+    const tc =
+      input.getAttribute("data-tc") || input.dataset.tc || input.id || null;
+    if (tc) {
+      const saved = loadResponsableLivraison(tc);
+      if (saved && input.value !== saved) input.value = saved;
+      input.addEventListener("input", function () {
+        saveResponsableLivraison(tc, input.value);
+      });
+    }
+  });
+}
 
 function checkLateContainers() {
   // === LOG DIAGNOSTIC : Affiche l'état de window.deliveries à chaque appel ===
