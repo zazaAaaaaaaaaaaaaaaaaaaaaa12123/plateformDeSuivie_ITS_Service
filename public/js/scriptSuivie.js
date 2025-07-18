@@ -8600,8 +8600,11 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         const diffTime = now - createdAt;
         const diffDays = diffTime / (1000 * 60 * 60 * 24);
         if (diffDays >= 2) {
-          if (!lateAgents[agent]) lateAgents[agent] = 0;
-          lateAgents[agent]++;
+          if (!lateAgents[agent]) {
+            lateAgents[agent] = 1;
+          } else {
+            lateAgents[agent]++;
+          }
         }
       }
     });
