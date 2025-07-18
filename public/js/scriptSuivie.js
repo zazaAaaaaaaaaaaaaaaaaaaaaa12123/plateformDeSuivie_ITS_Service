@@ -32,18 +32,24 @@ function renderLateDossiersTable() {
     window.lateContainers && Array.isArray(window.lateContainers)
       ? window.lateContainers
       : [];
-  if (!lateList.length) {
-    tableContainer.innerHTML = `<div style='color:#ef4444;text-align:center;font-size:1em;padding:10px 0;'>Aucun dossier en retard</div>`;
-    return;
-  }
-  let html = `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
-  html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody>`;
+  // Ajout des filtres de date
+  let filterHtml = `<div style='display:flex;gap:12px;align-items:center;margin-bottom:14px;'>
+    <label>Date début <input type='date' id='filterDateStart' style='padding:4px 8px;border-radius:6px;border:1px solid #2563eb;'></label>
+    <label>Date fin <input type='date' id='filterDateEnd' style='padding:4px 8px;border-radius:6px;border:1px solid #2563eb;'></label>
+    <button id='filterDateBtn' style='padding:6px 18px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-weight:600;cursor:pointer;'>Filtrer</button>
+  </div>`;
+  let html = filterHtml;
+  html += `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
+  html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody id='lateTableBody'>`;
+  // On affiche tout par défaut, le filtrage sera fait après
   lateList.forEach((c) => {
     let agent = c.agentName ? c.agentName : "-";
     let dateLiv = c.deliveryDate || "-";
     let heureLiv = "-";
+    let dateLivForFilter = "";
     if (typeof dateLiv === "string" && dateLiv.includes(" ")) {
       const parts = dateLiv.split(" ");
+      dateLivForFilter = parts[0];
       dateLiv = parts[0];
       heureLiv = parts[1] || "-";
     } else if (
@@ -51,9 +57,12 @@ function renderLateDossiersTable() {
       typeof dateLiv === "object" &&
       dateLiv instanceof Date
     ) {
+      dateLivForFilter = dateLiv.toISOString().slice(0, 10);
       dateLiv = dateLiv.toLocaleDateString("fr-FR");
+    } else {
+      dateLivForFilter = dateLiv;
     }
-    html += `<tr><td style='padding:6px 10px;'>${
+    html += `<tr data-date-liv='${dateLivForFilter}'><td style='padding:6px 10px;'>${
       c.numeroTC
     }</td><td style='padding:6px 10px;'>${agent}</td><td style='padding:6px 10px;'>${
       c.dateEnr || "-"
@@ -61,6 +70,37 @@ function renderLateDossiersTable() {
   });
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
+  // Ajout de l'écouteur sur le bouton Filtrer
+  const filterBtn = document.getElementById('filterDateBtn');
+  filterBtn.onclick = function() {
+    const start = document.getElementById('filterDateStart').value;
+    const end = document.getElementById('filterDateEnd').value;
+    const rows = document.querySelectorAll('#lateTableBody tr');
+    rows.forEach(row => {
+      const d = row.getAttribute('data-date-liv');
+      if (start && end) {
+        if (d >= start && d <= end) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      } else if (start) {
+        if (d >= start) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      } else if (end) {
+        if (d <= end) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      } else {
+        row.style.display = '';
+      }
+    });
+  };
 }
 // === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
 
