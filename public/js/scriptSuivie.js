@@ -1770,11 +1770,54 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   const generatePdfBtn = document.getElementById("generatePdfBtn"); // Global PDF button
   const searchInput = document.getElementById("searchInput");
   const searchButton = document.getElementById("searchButton");
-  // Removed loadingSpinner variable as it's no longer needed
-  // let loadingSpinner = searchButton ? searchButton.querySelector(".loading-spinner") : null;
+  // Ajout des champs de date pour le filtrage par plage
+  let dateRangeStartInput, dateRangeEndInput;
+  window.addEventListener("DOMContentLoaded", function () {
+    const searchBarContainer =
+      document.getElementById("searchBarContainer") ||
+      (searchInput && searchInput.parentElement);
+    if (searchBarContainer && !document.getElementById("dateRangeStartInput")) {
+      dateRangeStartInput = document.createElement("input");
+      dateRangeStartInput.type = "date";
+      dateRangeStartInput.id = "dateRangeStartInput";
+      dateRangeStartInput.style.marginRight = "8px";
+      dateRangeStartInput.style.fontSize = "1em";
+      dateRangeStartInput.style.padding = "4px 8px";
+      dateRangeStartInput.style.borderRadius = "6px";
+      dateRangeStartInput.style.border = "1px solid #ccc";
+      dateRangeStartInput.style.background = "#f9f9f9";
+      dateRangeStartInput.placeholder = "Date début";
 
-  // FIX: Declare loadingOverlay here
-  const loadingOverlay = document.getElementById("loadingOverlay");
+      dateRangeEndInput = document.createElement("input");
+      dateRangeEndInput.type = "date";
+      dateRangeEndInput.id = "dateRangeEndInput";
+      dateRangeEndInput.style.marginRight = "8px";
+      dateRangeEndInput.style.fontSize = "1em";
+      dateRangeEndInput.style.padding = "4px 8px";
+      dateRangeEndInput.style.borderRadius = "6px";
+      dateRangeEndInput.style.border = "1px solid #ccc";
+      dateRangeEndInput.style.background = "#f9f9f9";
+      dateRangeEndInput.placeholder = "Date fin";
+
+      searchBarContainer.insertBefore(dateRangeStartInput, searchInput);
+      searchBarContainer.insertBefore(dateRangeEndInput, searchInput);
+    } else {
+      dateRangeStartInput = document.getElementById("dateRangeStartInput");
+      dateRangeEndInput = document.getElementById("dateRangeEndInput");
+    }
+    // Ajout des listeners pour le filtrage
+    if (dateRangeStartInput && dateRangeEndInput) {
+      dateRangeStartInput.addEventListener(
+        "change",
+        refreshDeliveriesTableWithDateFilter
+      );
+      dateRangeEndInput.addEventListener(
+        "change",
+        refreshDeliveriesTableWithDateFilter
+      );
+    }
+  });
+  // ...existing code...
 
   // --- Correction alignement bouton Suivi spécifique Agent ---
   window.addEventListener("DOMContentLoaded", function () {
@@ -1798,6 +1841,68 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // DOM element for the status filter
   const statusFilterSelect = document.getElementById("statusFilterSelect");
   const mainTableDateFilter = document.getElementById("mainTableDateFilter");
+
+  // Fonction de filtrage par plage de dates
+  function filterDeliveriesByDateRange(deliveries, startDateStr, endDateStr) {
+    if (!startDateStr && !endDateStr) return deliveries;
+    let startDate = startDateStr ? new Date(startDateStr) : null;
+    let endDate = endDateStr ? new Date(endDateStr) : null;
+    return deliveries.filter((delivery) => {
+      let deliveryDateStr = delivery.delivery_date || delivery.created_at;
+      if (!deliveryDateStr) return false;
+      let deliveryDate = new Date(deliveryDateStr);
+      if (startDate && endDate) {
+        return deliveryDate >= startDate && deliveryDate <= endDate;
+      } else if (startDate) {
+        return (
+          deliveryDate.getFullYear() === startDate.getFullYear() &&
+          deliveryDate.getMonth() === startDate.getMonth() &&
+          deliveryDate.getDate() === startDate.getDate()
+        );
+      } else if (endDate) {
+        return (
+          deliveryDate.getFullYear() === endDate.getFullYear() &&
+          deliveryDate.getMonth() === endDate.getMonth() &&
+          deliveryDate.getDate() === endDate.getDate()
+        );
+      }
+      return true;
+    });
+  }
+
+  // Fonction pour rafraîchir le tableau avec le filtre de dates
+  function refreshDeliveriesTableWithDateFilter() {
+    let startDateStr = dateRangeStartInput ? dateRangeStartInput.value : "";
+    let endDateStr = dateRangeEndInput ? dateRangeEndInput.value : "";
+    let filtered = filterDeliveriesByDateRange(
+      window.deliveries || [],
+      startDateStr,
+      endDateStr
+    );
+    renderDeliveriesTable(filtered);
+  }
+
+  // Fonction d'affichage du tableau filtré
+  function renderDeliveriesTable(deliveriesList) {
+    const tableBody = document.getElementById("deliveriesTableBody");
+    if (!tableBody) return;
+    if (!deliveriesList || deliveriesList.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan='10' style='text-align:center;color:#ef4444;'>Aucune livraison trouvée pour la période sélectionnée</td></tr>`;
+      return;
+    }
+    let html = "";
+    deliveriesList.forEach((delivery) => {
+      html += `<tr>
+      <td>${delivery.dossier_number || delivery.id || "-"}</td>
+      <td>${delivery.delivery_date ? delivery.delivery_date : "-"}</td>
+      <td>${delivery.agent_name || delivery.employee_name || "-"}</td>
+      <td>${delivery.client_name || delivery.client || "-"}</td>
+      <td>${delivery.status || "-"}</td>
+      <!-- Ajoute ici les autres colonnes nécessaires -->
+    </tr>`;
+    });
+    tableBody.innerHTML = html;
+  }
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
