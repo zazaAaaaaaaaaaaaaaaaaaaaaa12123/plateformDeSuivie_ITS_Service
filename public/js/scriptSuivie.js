@@ -8198,7 +8198,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     );
   }
   await loadDeliveries(); // This now triggers applyCombinedFilters()
-
+  showLateDeliveryAlert();
   // Initialize WebSocket connection AFTER initial data load
   initializeWebSocket(); // <--- MOVED HERE
 
@@ -8584,11 +8584,10 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // ================= AJOUT : Rafraîchissement dynamique du tableau dossiers en retard =================
   // Fonction utilitaire pour détecter les agents en retard (à adapter selon ta logique métier)
   function getLateAgentsFromDeliveries(deliveries) {
-    // On considère qu'un agent est en retard s'il a au moins un conteneur non livré
+    // Un agent est en retard s'il a au moins un conteneur non livré depuis 2 jours ou plus
     const lateAgents = {};
-    // === LOG DIAGNOSTIC (avant recalcul) ===
-    console.log("[SYNC DIAG][BEFORE] window.deliveries :", deliveries);
-    deliveries.forEach((d, idx) => {
+    const now = new Date();
+    deliveries.forEach((d) => {
       const agent = d.employee_name || "Agent inconnu";
       const status = d.status;
       const acconierStatus = d.delivery_status_acconier;
@@ -8596,21 +8595,18 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         .toString()
         .toLowerCase()
         .includes("livr");
-      // === LOG DÉTAILLÉ PAR LIVRAISON ===
-      console.log(
-        `[SYNC DIAG][LIVRAISON][#${idx}] Agent: ${agent} | status: '${status}' | acconier: '${acconierStatus}' | isDelivered:`,
-        isDelivered
-      );
-      if (!isDelivered) {
-        if (!lateAgents[agent]) lateAgents[agent] = 0;
-        lateAgents[agent]++;
+      let createdAt = d.created_at ? new Date(d.created_at) : null;
+      if (!isDelivered && createdAt) {
+        const diffTime = now - createdAt;
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+        if (diffDays >= 2) {
+          if (!lateAgents[agent]) lateAgents[agent] = 0;
+          lateAgents[agent]++;
+        }
       }
     });
-    // === LOG DIAGNOSTIC (après recalcul) ===
-    console.log("[SYNC DIAG][AFTER] lateAgents (avant return) :", lateAgents);
     return Object.keys(lateAgents);
   }
-
   // Fonction pour rafraîchir le tableau des dossiers en retard
   function refreshLateFoldersTable() {
     // Sélectionne le tableau (adapte l'ID ou la classe selon ton HTML)
@@ -8644,7 +8640,17 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       lateTable.querySelector("tbody").appendChild(tr);
     }
   }
-
+  function showLateDeliveryAlert() {
+    const lateAgents = getLateAgentsFromDeliveries(deliveries);
+    if (lateAgents.length > 0) {
+      showCustomAlert(
+        `Attention : ${
+          lateAgents.length > 1 ? "Des agents ont" : "Un agent a"
+        } des dossiers non livrés depuis 2 jours ou plus !`,
+        "warning"
+      );
+    }
+  }
   // Ajoute l'eventListener sur le bouton "Rafraîchir la liste" (adapte l'ID selon ton HTML)
   const refreshLateListBtn = document.getElementById("refreshLateListBtn");
   if (refreshLateListBtn) {
