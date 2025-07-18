@@ -1773,39 +1773,9 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // Ajout des champs de date pour le filtrage par plage
   let dateRangeStartInput, dateRangeEndInput;
   window.addEventListener("DOMContentLoaded", function () {
-    const searchBarContainer =
-      document.getElementById("searchBarContainer") ||
-      (searchInput && searchInput.parentElement);
-    if (searchBarContainer && !document.getElementById("dateRangeStartInput")) {
-      dateRangeStartInput = document.createElement("input");
-      dateRangeStartInput.type = "date";
-      dateRangeStartInput.id = "dateRangeStartInput";
-      dateRangeStartInput.style.marginRight = "8px";
-      dateRangeStartInput.style.fontSize = "1em";
-      dateRangeStartInput.style.padding = "4px 8px";
-      dateRangeStartInput.style.borderRadius = "6px";
-      dateRangeStartInput.style.border = "1px solid #ccc";
-      dateRangeStartInput.style.background = "#f9f9f9";
-      dateRangeStartInput.placeholder = "Date début";
-
-      dateRangeEndInput = document.createElement("input");
-      dateRangeEndInput.type = "date";
-      dateRangeEndInput.id = "dateRangeEndInput";
-      dateRangeEndInput.style.marginRight = "8px";
-      dateRangeEndInput.style.fontSize = "1em";
-      dateRangeEndInput.style.padding = "4px 8px";
-      dateRangeEndInput.style.borderRadius = "6px";
-      dateRangeEndInput.style.border = "1px solid #ccc";
-      dateRangeEndInput.style.background = "#f9f9f9";
-      dateRangeEndInput.placeholder = "Date fin";
-
-      searchBarContainer.insertBefore(dateRangeStartInput, searchInput);
-      searchBarContainer.insertBefore(dateRangeEndInput, searchInput);
-    } else {
-      dateRangeStartInput = document.getElementById("dateRangeStartInput");
-      dateRangeEndInput = document.getElementById("dateRangeEndInput");
-    }
-    // Ajout des listeners pour le filtrage
+    // Les champs existent déjà dans le HTML, on les récupère simplement
+    dateRangeStartInput = document.getElementById("dateRangeStartInput");
+    dateRangeEndInput = document.getElementById("dateRangeEndInput");
     if (dateRangeStartInput && dateRangeEndInput) {
       dateRangeStartInput.addEventListener(
         "change",
