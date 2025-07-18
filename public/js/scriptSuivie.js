@@ -8633,14 +8633,21 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         <i class='fas fa-exclamation-triangle' style='color:#eab308;font-size:1.7em;'></i>
         <span style="font-size:1.18em;font-weight:700;">Attention : Agents en retard</span>
       </div>
-      <div style="margin-bottom:10px;">${lateAgents.length > 1 ? "Les agents suivants ont des dossiers non livrés :" : "L'agent suivant a des dossiers non livrés :"}</div>
+      <div style="margin-bottom:10px;">${
+        lateAgents.length > 1
+          ? "Les agents suivants ont des dossiers non livrés :"
+          : "L'agent suivant a des dossiers non livrés :"
+      }</div>
       <ul style="margin:0 0 12px 0;padding:0 0 0 18px;text-align:left;">
-        ${lateAgents.map(a => `<li style='margin-bottom:3px;'>${a}</li>`).join("")}
+        ${lateAgents
+          .map((a) => `<li style='margin-bottom:3px;'>${a}</li>`)
+          .join("")}
       </ul>
       <button id="closeLateAgentsPopupBtn" style="background:#eab308;color:#78350f;font-weight:700;padding:7px 22px;border:none;border-radius:7px;box-shadow:0 1px 6px #fde04755;cursor:pointer;font-size:1em;">Fermer</button>
     `;
     document.body.appendChild(popup);
-    document.getElementById("closeLateAgentsPopupBtn").onclick = () => popup.remove();
+    document.getElementById("closeLateAgentsPopupBtn").onclick = () =>
+      popup.remove();
   }
 
   // Appelle la popup à chaque chargement de données
@@ -8652,7 +8659,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // Appel initial après chargement des livraisons
   if (typeof loadDeliveries === "function") {
     const origLoadDeliveries = loadDeliveries;
-    window.loadDeliveries = async function(...args) {
+    window.loadDeliveries = async function (...args) {
       const result = await origLoadDeliveries.apply(this, args);
       checkAndShowLateAgentsAlert();
       return result;
