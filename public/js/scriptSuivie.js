@@ -61,77 +61,8 @@ function renderLateDossiersTable() {
   });
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
-  // Patch pour désactiver l'autofill et activer la persistance sur les inputs "Responsable de livraison"
-  if (typeof patchResponsableLivraisonInputs === "function")
-    patchResponsableLivraisonInputs();
 }
 // === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
-
-// Désactive l'autofill/autocomplete sur le champ de recherche principal si présent
-if (typeof document !== "undefined") {
-  const searchInput = document.getElementById("searchInput");
-  if (searchInput) {
-    searchInput.setAttribute("autocomplete", "off");
-    searchInput.setAttribute("autocorrect", "off");
-    searchInput.setAttribute("autocapitalize", "off");
-    searchInput.setAttribute("spellcheck", "false");
-  }
-}
-
-// Gestion de l'autocomplete et de la persistance pour "Responsable de livraison"
-function disableAutocompleteOnInputs() {
-  const respInputs = document.querySelectorAll(
-    'input[name="responsable_livraison"], input.responsable-livraison'
-  );
-  respInputs.forEach((input) => {
-    input.setAttribute("autocomplete", "off");
-    input.setAttribute("autocorrect", "off");
-    input.setAttribute("autocapitalize", "off");
-    input.setAttribute("spellcheck", "false");
-  });
-}
-function saveResponsableLivraison(tc, value) {
-  if (!tc) return;
-  let data = {};
-  try {
-    data =
-      JSON.parse(localStorage.getItem("responsable_livraison_data") || "{}") ||
-      {};
-  } catch (e) {
-    data = {};
-  }
-  data[tc] = value;
-  localStorage.setItem("responsable_livraison_data", JSON.stringify(data));
-}
-function loadResponsableLivraison(tc) {
-  if (!tc) return "";
-  let data = {};
-  try {
-    data =
-      JSON.parse(localStorage.getItem("responsable_livraison_data") || "{}") ||
-      {};
-  } catch (e) {
-    data = {};
-  }
-  return data[tc] || "";
-}
-function patchResponsableLivraisonInputs() {
-  disableAutocompleteOnInputs();
-  const respInputs = document.querySelectorAll(
-    'input[name="responsable_livraison"], input.responsable-livraison'
-  );
-  respInputs.forEach((input) => {
-    const tc =
-      input.getAttribute("data-tc") || input.dataset.tc || input.id || null;
-    if (tc) {
-      const saved = loadResponsableLivraison(tc);
-      if (saved && input.value !== saved) input.value = saved;
-      input.addEventListener("input", function () {
-        saveResponsableLivraison(tc, input.value);
-      });
-    }
-  });
-}
 
 function checkLateContainers() {
   // === LOG DIAGNOSTIC : Affiche l'état de window.deliveries à chaque appel ===
@@ -686,62 +617,6 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 (async () => {
-  // Fonction pour attacher la sauvegarde auto sur tous les inputs 'Responsable de livraison' (nom_agent_visiteur)
-  function attachNomAgentVisiteurAutoSave() {
-    // Sélectionne tous les inputs de la colonne (adapte le sélecteur si besoin)
-    const inputs = document.querySelectorAll(
-      'input[data-column-id="nom_agent_visiteur"]'
-    );
-    inputs.forEach((input) => {
-      // Récupère l'ID de la livraison (doit être sur la ligne ou dans un data-attribute)
-      const row = input.closest("tr");
-      const deliveryId = row ? row.getAttribute("data-delivery-id") : null;
-      if (!deliveryId) return;
-
-      // Remplit l'input avec la valeur reçue du backend (si elle n'est pas déjà présente)
-      // (Supposé déjà fait lors du rendu du tableau)
-
-      // Sauvegarde auto à chaque modification (blur ou input)
-      input.addEventListener("change", async (e) => {
-        const newValue = e.target.value.trim();
-        if (!newValue) return;
-        try {
-          const resp = await fetch(
-            `/deliveries/${deliveryId}/nom-agent-visiteur`,
-            {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ nom_agent_visiteur: newValue }),
-            }
-          );
-          const data = await resp.json();
-          if (!data.success) {
-            showCustomAlert(
-              "Erreur lors de la sauvegarde du responsable de livraison : " +
-                (data.message || ""),
-              "error"
-            );
-          }
-        } catch (err) {
-          showCustomAlert(
-            "Erreur réseau lors de la sauvegarde du responsable de livraison.",
-            "error"
-          );
-        }
-      });
-    });
-  }
-
-  // Appelle cette fonction après chaque rendu du tableau principal
-  const originalApplyCombinedFilters =
-    window.applyCombinedFilters || applyCombinedFilters;
-  window.applyCombinedFilters = function (...args) {
-    originalApplyCombinedFilters.apply(this, args);
-    setTimeout(() => {
-      attachNomAgentVisiteurAutoSave();
-    }, 50); // Laisse le DOM se mettre à jour
-    setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
-  };
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   // Détection automatique de l'environnement pour l'URL WebSocket
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -1922,7 +1797,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // DOM element for the status filter
   const statusFilterSelect = document.getElementById("statusFilterSelect");
-  const mainTableDateFilter = document.getElementById("mainTableDateFilter");
+  // const mainTableDateFilter = document.getElementById("mainTableDateFilter"); // Supprimé : filtre à deux dates
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
@@ -2006,37 +1881,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   console.log("Initializing admin dashboard...");
 
-  let currentMainFilterDate = (() => {
-    const storedDate = localStorage.getItem("mainTableFilterDate");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to start of today in local time
-
-    if (storedDate) {
-      const storedDateObj = new Date(storedDate);
-      storedDateObj.setHours(0, 0, 0, 0); // Normalize stored date to start of day in local time
-
-      if (storedDateObj.getTime() === today.getTime()) {
-        console.log("Using stored date (today):", storedDate);
-        return storedDateObj;
-      } else {
-        console.log(
-          "Stored date outdated, updating to today:",
-          today.toISOString().split("T")[0]
-        );
-      }
-    } else {
-      console.log(
-        "No date stored, initializing to today:",
-        today.toISOString().split("T")[0]
-      );
-    }
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    const formattedToday = `${year}-${month}-${day}`;
-    localStorage.setItem("mainTableFilterDate", formattedToday);
-    return today;
-  })();
+  // SUPPRIMÉ : toute la logique de currentMainFilterDate et stockage local associé (filtre à deux dates)
 
   // DOM elements for the history sidebar (modal)
   const historySidebar = document.getElementById("historySidebar");
@@ -4618,28 +4463,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   const updateAgentStatusIndicator = () => {
     if (!agentStatusIndicator) return;
-
-    // This indicator should always reflect "today" for the scrolling bar,
-    // not necessarily the main table filter.
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // If mainTableDateFilter is set to a past date, the indicator might show "Agents (Date Passée)"
-    // but the scrolling bar itself will still show "today's" agents.
-    const selectedDateStr = mainTableDateFilter.value;
-    if (selectedDateStr) {
-      const selectedDate = new Date(selectedDateStr);
-      selectedDate.setHours(0, 0, 0, 0);
-
-      if (selectedDate.getTime() < today.getTime()) {
-        agentStatusIndicator.classList.remove("status-active");
-        agentStatusIndicator.classList.add("status-past-date");
-        if (agentStatusText)
-          agentStatusText.textContent = "Agents (Date Passée)";
-        return;
-      }
-    }
-    // Default to active for today or future dates
     agentStatusIndicator.classList.remove("status-past-date");
     agentStatusIndicator.classList.add("status-active");
     if (agentStatusText)
@@ -4652,62 +4475,14 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
    * @returns {Array<string>} Sorted array of unique agent names.
    */
   function getAgentsForCurrentMainDate() {
-    // Get the ISO string for the date selected in the main filter, using UTC components for consistency
-    // This ensures that currentMainFilterDate (which is a Date object) is normalized to UTCYYYY-MM-DD
-    const selectedFilterDateISO = formatDateToISO(currentMainFilterDate);
-    console.log(
-      "getAgentsForCurrentMainDate: Selected filter date ISO (from filter):",
-      selectedFilterDateISO
-    );
-
-    // If the selected date is in the future, no agents should appear.
-    // We can check this by comparing the selectedFilterDateISO with today's ISO.
-    const todayISO = formatDateToISO(new Date());
-    if (selectedFilterDateISO > todayISO) {
-      console.log(
-        "Selected date is in the future. No agents will be displayed."
-      );
-      return [];
-    }
-
+    // Retourne tous les agents uniques présents dans les livraisons (filtre date désactivé)
     const agentsSet = new Set();
     deliveries.forEach((delivery) => {
-      let isAgentActiveOnFilterDate = false;
-
-      // Check if the delivery was created on the selected filter date (UTC comparison)
-      if (delivery.created_at) {
-        // Ensure delivery.created_at is treated as a Date object and then converted to UTCYYYY-MM-DD
-        const createdAtDate = new Date(delivery.created_at); // Ensure it's a Date object
-        const createdAtISO = formatDateToISO(createdAtDate); // Uses the now UTC-based formatDateToISO
-        if (createdAtISO === selectedFilterDateISO) {
-          isAgentActiveOnFilterDate = true;
-          // console.log(`Agent ${delivery.employee_name} active on ${selectedFilterDateISO} via created_at: ${createdAtISO}`);
-        }
-      }
-      // Also check if the delivery was *delivered* on the selected filter date (UTC comparison).
-      // An agent is considered "active" on a day if they performed any relevant operation.
-      if (!isAgentActiveOnFilterDate && delivery.delivery_date) {
-        // Ensure delivery.delivery_date is treated as a Date object and then converted to UTCYYYY-MM-DD
-        const deliveryDateObj = new Date(delivery.delivery_date); // Ensure it's a Date object
-        if (!isNaN(deliveryDateObj.getTime())) {
-          const deliveryDateISO = formatDateToISO(deliveryDateObj); // Uses the now UTC-based formatDateToISO
-          if (deliveryDateISO === selectedFilterDateISO) {
-            isAgentActiveOnFilterDate = true;
-            // console.log(`Agent ${delivery.employee_name} active on ${selectedFilterDateISO} via delivery_date: ${deliveryDateISO}`);
-          }
-        }
-      }
-
-      if (isAgentActiveOnFilterDate && delivery.employee_name) {
+      if (delivery.employee_name) {
         agentsSet.add(delivery.employee_name);
       }
     });
-    const sortedAgents = Array.from(agentsSet).sort();
-    console.log(
-      `getAgentsForCurrentMainDate: Active agents for ${selectedFilterDateISO}:`,
-      sortedAgents
-    );
-    return sortedAgents;
+    return Array.from(agentsSet).sort();
   }
   function populateStatusFilter() {
     if (!statusFilterSelect) {
@@ -4766,27 +4541,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         });
       }
     }
-    if (currentMainFilterDate) {
-      console.log(
-        "Applying date filter (based on created_at):", // Changed log for clarity
-        currentMainFilterDate.toLocaleDateString("fr-FR")
-      );
-      const filterDate = normalizeDateToMidnight(currentMainFilterDate);
-      const nextDay = new Date(filterDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-
-      filteredData = filteredData.filter((delivery) => {
-        let createdAtDate = null; // Only check created_at for the main filter
-        if (delivery.created_at) {
-          createdAtDate = new Date(delivery.created_at);
-        }
-        if (!createdAtDate || isNaN(createdAtDate.getTime())) return false;
-        createdAtDate = normalizeDateToMidnight(createdAtDate);
-        return createdAtDate >= filterDate && createdAtDate < nextDay;
-      });
-    } else {
-      console.log("No main filter date selected.");
-    }
+    // SUPPRIMÉ : filtre par date principale (filtre à deux dates)
 
     if (shouldRenderTable) {
       renderAdminDeliveriesTable(filteredData);
@@ -8326,156 +8081,20 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       });
   });
 
-  if (mainTableDateFilter) {
-    const year = currentMainFilterDate.getFullYear();
-    const month = String(currentMainFilterDate.getMonth() + 1).padStart(2, "0");
-    const day = String(currentMainFilterDate.getDate()).padStart(2, "0");
-
-    const formattedDateForInput = `${year}-${month}-${day}`;
-
-    console.log("Applying date to filter input:", formattedDateForInput);
-    mainTableDateFilter.value = formattedDateForInput;
-    updateAgentStatusIndicator();
-    mainTableDateFilter.addEventListener("change", () => {
-      updateAgentStatusIndicator();
-    });
-  } else {
-    console.error(
-      "Error: The element #mainTableDateFilter was not found in the DOM!"
-    );
-  }
+  // SUPPRIMÉ : initialisation et gestion de l'input mainTableDateFilter (fin de fichier)
   await loadDeliveries(); // This now triggers applyCombinedFilters()
 
   // Initialize WebSocket connection AFTER initial data load
   initializeWebSocket(); // <--- MOVED HERE
 
   if (searchInput) {
-    // Renforce la désactivation de l'autofill/autocomplete/autocorrect/autocapitalize/spellcheck
-    searchInput.setAttribute("autocomplete", "off");
-    searchInput.setAttribute("autocorrect", "off");
-    searchInput.setAttribute("autocapitalize", "off");
-    searchInput.setAttribute("spellcheck", "false");
-
-    // === AJOUT BOUTON FILTRAGE ENTRE DEUX DATES ===
-    // Création du bouton
-    const dateRangeBtn = document.createElement("button");
-    dateRangeBtn.id = "dateRangeFilterBtn";
-    dateRangeBtn.textContent = "Filtrage entre deux dates";
-    dateRangeBtn.className = "btn btn-secondary";
-    dateRangeBtn.style.marginLeft = "10px";
-    // Insertion à côté du champ de recherche
-    if (searchInput.parentNode) {
-      searchInput.parentNode.insertBefore(
-        dateRangeBtn,
-        searchInput.nextSibling
-      );
-    }
-
-    // Création du modal (masqué par défaut)
-    const dateRangeModal = document.createElement("div");
-    dateRangeModal.id = "dateRangeModal";
-    dateRangeModal.style.display = "none";
-    dateRangeModal.style.position = "fixed";
-    dateRangeModal.style.top = "0";
-    dateRangeModal.style.left = "0";
-    dateRangeModal.style.width = "100vw";
-    dateRangeModal.style.height = "100vh";
-    dateRangeModal.style.background = "rgba(30,41,59,0.45)";
-    dateRangeModal.style.zIndex = "9999";
-    dateRangeModal.style.alignItems = "center";
-    dateRangeModal.style.justifyContent = "center";
-    dateRangeModal.style.display = "flex";
-    dateRangeModal.innerHTML = `
-      <div style="background:#fff;padding:32px 28px 24px 28px;border-radius:16px;box-shadow:0 8px 32px #1e293b33;min-width:320px;max-width:95vw;display:flex;flex-direction:column;align-items:center;">
-        <h3 style="margin-bottom:18px;font-size:1.25em;color:#1e293b;">Filtrer les livraisons entre deux dates</h3>
-        <div style="display:flex;gap:18px;align-items:center;margin-bottom:18px;">
-          <label for="dateRangeStart" style="font-weight:600;">Du :</label>
-          <input type="date" id="dateRangeStart" style="padding:6px 12px;border-radius:6px;border:1.5px solid #2563eb;" />
-          <label for="dateRangeEnd" style="font-weight:600;">Au :</label>
-          <input type="date" id="dateRangeEnd" style="padding:6px 12px;border-radius:6px;border:1.5px solid #2563eb;" />
-        </div>
-        <div style="display:flex;gap:14px;">
-          <button id="applyDateRangeBtn" class="btn btn-primary">Appliquer</button>
-          <button id="cancelDateRangeBtn" class="btn btn-secondary">Annuler</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(dateRangeModal);
-
-    // Affichage du modal au clic sur le bouton
-    dateRangeBtn.addEventListener("click", () => {
-      dateRangeModal.style.display = "flex";
-    });
-    // Fermeture du modal
-    dateRangeModal.querySelector("#cancelDateRangeBtn").onclick = () => {
-      dateRangeModal.style.display = "none";
-    };
-    // Fermeture si clic sur le fond
-    dateRangeModal.onclick = (e) => {
-      if (e.target === dateRangeModal) dateRangeModal.style.display = "none";
-    };
-
-    // Logique de filtrage entre deux dates
-    let dateRangeFilter = null; // {start: Date, end: Date} ou null
-    function applyDateRangeFilter() {
-      const startInput = dateRangeModal.querySelector("#dateRangeStart");
-      const endInput = dateRangeModal.querySelector("#dateRangeEnd");
-      const start = startInput.value ? new Date(startInput.value) : null;
-      const end = endInput.value ? new Date(endInput.value) : null;
-      if (start && end && start <= end) {
-        // On stocke la plage
-        dateRangeFilter = { start, end };
-        dateRangeModal.style.display = "none";
-        filterDeliveriesByDateRange();
-      } else {
-        alert("Veuillez sélectionner une plage de dates valide.");
-      }
-    }
-    dateRangeModal.querySelector("#applyDateRangeBtn").onclick =
-      applyDateRangeFilter;
-
-    // Fonction de filtrage spécifique (n'affecte pas les autres filtres)
-    function filterDeliveriesByDateRange() {
-      if (!dateRangeFilter) return;
-      // On suppose que 'deliveries' contient toutes les livraisons chargées
-      const filtered = deliveries.filter((d) => {
-        if (!d.created_at) return false;
-        const dDate = new Date(d.created_at);
-        // On ignore l'heure, on compare que la date
-        dDate.setHours(0, 0, 0, 0);
-        const start = new Date(dateRangeFilter.start);
-        const end = new Date(dateRangeFilter.end);
-        start.setHours(0, 0, 0, 0);
-        end.setHours(0, 0, 0, 0);
-        return dDate >= start && dDate <= end;
-      });
-      // Affichage du résultat dans le tableau principal
-      renderDeliveriesTable(filtered);
-      // Ajout d'un message d'info
-      showCustomAlert(
-        `Filtrage entre ${dateRangeFilter.start.toLocaleDateString(
-          "fr-FR"
-        )} et ${dateRangeFilter.end.toLocaleDateString("fr-FR")} appliqué.`,
-        "info"
-      );
-    }
-
-    // Option pour réinitialiser le filtre (ex: bouton à ajouter si besoin)
-    window.clearDateRangeFilter = function () {
-      dateRangeFilter = null;
-      applyCombinedFilters(); // Retour au filtrage normal
-    };
-
-    // Ajout d'un bouton de réinitialisation si un filtre est actif
-    // (à placer où tu veux dans l'UI)
-    // ...
-
-    // Listeners classiques du champ de recherche
     searchInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
+        // The old filterDeliveriesByContainerNumber is replaced by applyCombinedFilters
         applyCombinedFilters();
       }
     });
+
     searchInput.addEventListener("search", () => {
       if (searchInput.value.trim() === "") {
         console.log("Search field cleared, resetting filter.");
@@ -8489,22 +8108,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     populateStatusFilter();
   }
 
-  if (mainTableDateFilter) {
-    mainTableDateFilter.addEventListener("change", (e) => {
-      currentMainFilterDate = normalizeDateToMidnight(new Date(e.target.value));
-      localStorage.setItem("mainTableFilterDate", e.target.value);
-      applyCombinedFilters();
-    });
-    mainTableDateFilter.addEventListener("input", () => {
-      if (!mainTableDateFilter.value) {
-        // If the date input is cleared, set currentMainFilterDate to today for the scrolling bar
-        // and clear the main table filter.
-        currentMainFilterDate = normalizeDateToMidnight(new Date()); // Default to today for scrolling bar
-        localStorage.removeItem("mainTableFilterDate");
-        applyCombinedFilters(); // This will render the main table for all dates if filter is empty
-      }
-    });
-  }
+  // SUPPRIMÉ : gestion des événements sur mainTableDateFilter (fin de fichier)
 
   if (searchButton) {
     searchButton.addEventListener("click", () => {
@@ -9046,6 +8650,13 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     document.head.appendChild(style);
   })();
 
+  // Appelle le clignotement après chaque rendu du tableau principal
+  const originalApplyCombinedFilters =
+    window.applyCombinedFilters || applyCombinedFilters;
+  window.applyCombinedFilters = function (...args) {
+    originalApplyCombinedFilters.apply(this, args);
+    setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
+  };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
