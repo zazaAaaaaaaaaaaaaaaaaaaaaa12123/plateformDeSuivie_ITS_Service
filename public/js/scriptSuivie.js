@@ -9046,10 +9046,71 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     document.head.appendChild(style);
   })();
 
-  /********************************************************************
-   * Fonction utilitaire : Affiche les livraisons dans le tableau principal
-   * Utilisée pour le filtrage par plage de dates (dateRangeFilter)
-   ********************************************************************/
+  // ==================== NOUVEL ORDRE DES COLONNES ====================
+  // Tableau d'ordre métier fourni par l'utilisateur
+  const DELIVERIES_TABLE_COLUMNS = [
+    { id: "employee_name", label: "Agent Acconier" },
+    { id: "acconier_responsable", label: "Responsable Acconier" },
+    { id: "delivery_responsable", label: "Responsable de livraison" },
+    { id: "num", label: "N°", isNum: true },
+    {
+      id: "created_at",
+      label: "Date & Heure",
+      format: (d) =>
+        d.created_at ? new Date(d.created_at).toLocaleString("fr-FR") : "-",
+    },
+    { id: "agent", label: "Agent" },
+    { id: "client_name", label: "Client (Nom)" },
+    { id: "client_phone", label: "Client (Tél)" },
+    { id: "container_number", label: "Numéro TC(s)" },
+    { id: "lieu", label: "Lieu" },
+    { id: "container_foot_type", label: "Type Conteneur(pied)" },
+    { id: "container_type_and_content", label: "Contenu" },
+    { id: "declaration_number", label: "N° Déclaration" },
+    { id: "bl_number", label: "N° BL" },
+    {
+      id: "dossier_number",
+      label: "N° Dossier",
+      format: (d) => d.dossier_number || d.dossier || "-",
+    },
+    { id: "number_of_containers", label: "Nombre de conteneurs" },
+    { id: "shipping_company", label: "Compagnie Maritime" },
+    { id: "weight", label: "Poids" },
+    { id: "ship_name", label: "Nom du navire" },
+    { id: "circuit", label: "Circuit" },
+    { id: "transporter_mode", label: "Mode de Transport" },
+    {
+      id: "delivery_status_acconier",
+      label: "Statut de livraison (Resp. Aconiés)",
+    },
+    { id: "acconier_observations", label: "Observations (Resp. Aconiés)" },
+    { id: "visitor_agent_name", label: "Nom agent visiteur" },
+    { id: "transporter", label: "Transporteur" },
+    { id: "inspector", label: "Inspecteur" },
+    { id: "customs_agent", label: "Agent en Douanes" },
+    { id: "driver_name", label: "Chauffeur" },
+    { id: "vehicle_registration", label: "Immatriculation" },
+    { id: "driver_phone", label: "Tél. Chauffeur" },
+    {
+      id: "delivery_date",
+      label: "Date Livraison",
+      format: (d) =>
+        d.delivery_date
+          ? new Date(d.delivery_date).toLocaleDateString("fr-FR")
+          : "-",
+    },
+    { id: "delivery_time", label: "Heure Livraison" },
+    {
+      id: "statut",
+      label: "Statut",
+      format: (d) => d.statut || d.status || "-",
+    },
+    { id: "observations", label: "Observations" },
+  ];
+
+  /**
+   * Affiche les livraisons dans le tableau principal, dans l'ordre métier défini
+   */
   function renderDeliveriesTable(deliveriesArray) {
     if (!window.deliveriesTableBody) return;
     const tbody = window.deliveriesTableBody;
@@ -9057,48 +9118,31 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     if (!Array.isArray(deliveriesArray) || deliveriesArray.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 20;
+      td.colSpan = DELIVERIES_TABLE_COLUMNS.length;
       td.textContent = "Aucune livraison trouvée pour cette période.";
       td.style.textAlign = "center";
       tr.appendChild(td);
       tbody.appendChild(tr);
       return;
     }
-  deliveriesArray.forEach((d, idx) => {
-    const tr = document.createElement("tr");
-    tr.setAttribute("data-delivery-id", d.id || idx);
-    // Ajout de la colonne N° (numérotation séquentielle pour le filtrage multi-date)
-    const tdNum = document.createElement("td");
-    tdNum.textContent = idx + 1;
-    tr.appendChild(tdNum);
-    // Les autres colonnes (sans la colonne N° d'origine)
-    const cols = [
-      d.employee_name || "-",
-      d.client_name || "-",
-      d.client_phone || "-",
-      d.container_number || "-",
-      d.lieu || "-",
-      d.container_foot_type || "-",
-      d.container_type_and_content || "-",
-      d.declaration_number || "-",
-      d.bl_number || "-",
-      d.dossier_number || d.dossier || "-",
-      d.number_of_containers || "-",
-      d.shipping_company || "-",
-      d.weight || "-",
-      d.ship_name || "-",
-      d.circuit || "-",
-      d.transporter_mode || "-",
-      d.statut || d.status || "-",
-      d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "-",
-    ];
-    cols.forEach((val) => {
-      const td = document.createElement("td");
-      td.textContent = val;
-      tr.appendChild(td);
+    deliveriesArray.forEach((d, idx) => {
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-delivery-id", d.id || idx);
+      DELIVERIES_TABLE_COLUMNS.forEach((col) => {
+        const td = document.createElement("td");
+        let value = "-";
+        if (col.isNum) {
+          value = idx + 1;
+        } else if (col.format) {
+          value = col.format(d);
+        } else if (col.id in d) {
+          value = d[col.id] || "-";
+        }
+        td.textContent = value;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
     });
-    tbody.appendChild(tr);
-  });
   }
 
   // ================== FIN CLIGNOTEMENT VERT ==================
