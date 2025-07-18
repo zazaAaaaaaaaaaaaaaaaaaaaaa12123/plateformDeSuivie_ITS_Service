@@ -8642,6 +8642,9 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   }
   function showLateDeliveryAlert() {
     const lateAgents = getLateAgentsFromDeliveries(deliveries);
+    console.log("[DIAG ALERT] showLateDeliveryAlert called");
+    console.log("[DIAG ALERT] deliveries:", deliveries);
+    console.log("[DIAG ALERT] lateAgents:", lateAgents);
     if (lateAgents.length > 0) {
       showCustomAlert(
         `Attention : ${
@@ -8649,6 +8652,8 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         } des dossiers non livrés depuis 2 jours ou plus !`,
         "warning"
       );
+    } else {
+      console.log("[DIAG ALERT] Aucun agent en retard détecté.");
     }
   }
   // Ajoute l'eventListener sur le bouton "Rafraîchir la liste" (adapte l'ID selon ton HTML)
