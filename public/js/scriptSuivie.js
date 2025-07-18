@@ -24,37 +24,6 @@
   `;
   document.head.appendChild(style);
 })();
-
-// === Désactive l'autocomplétion sur les champs de recherche et Responsable de livraison ===
-window.addEventListener("DOMContentLoaded", function () {
-  // Champ de recherche principal (adapte le sélecteur si besoin)
-  const searchInput = document.querySelector(
-    "input[type='search'], input[name='search'], #searchInput"
-  );
-  if (searchInput) {
-    searchInput.setAttribute("autocomplete", "off");
-    searchInput.setAttribute("autocorrect", "off");
-    searchInput.setAttribute("autocapitalize", "off");
-    searchInput.setAttribute("spellcheck", "false");
-  }
-  // Champ Responsable de livraison (adapte le sélecteur si besoin)
-  const respLivraisonInput = document.querySelector(
-    "input[name='responsable_livraison'], input.responsable-livraison, #responsableLivraison"
-  );
-  if (respLivraisonInput) {
-    respLivraisonInput.setAttribute("autocomplete", "off");
-    respLivraisonInput.setAttribute("autocorrect", "off");
-    respLivraisonInput.setAttribute("autocapitalize", "off");
-    respLivraisonInput.setAttribute("spellcheck", "false");
-    // Restaure la valeur sauvegardée si présente
-    const saved = localStorage.getItem("responsable_livraison");
-    if (saved) respLivraisonInput.value = saved;
-    // Sauvegarde à chaque modification
-    respLivraisonInput.addEventListener("input", function () {
-      localStorage.setItem("responsable_livraison", respLivraisonInput.value);
-    });
-  }
-});
 function renderLateDossiersTable() {
   // Cherche le conteneur du tableau principal (à adapter selon ton HTML)
   const tableContainer = document.getElementById("tableauPrincipalRetards");
@@ -1828,7 +1797,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   // DOM element for the status filter
   const statusFilterSelect = document.getElementById("statusFilterSelect");
-  // (filtre à deux dates supprimé)
+  const mainTableDateFilter = document.getElementById("mainTableDateFilter");
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
@@ -1912,7 +1881,37 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   console.log("Initializing admin dashboard...");
 
-  // (filtre à deux dates supprimé)
+  let currentMainFilterDate = (() => {
+    const storedDate = localStorage.getItem("mainTableFilterDate");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of today in local time
+
+    if (storedDate) {
+      const storedDateObj = new Date(storedDate);
+      storedDateObj.setHours(0, 0, 0, 0); // Normalize stored date to start of day in local time
+
+      if (storedDateObj.getTime() === today.getTime()) {
+        console.log("Using stored date (today):", storedDate);
+        return storedDateObj;
+      } else {
+        console.log(
+          "Stored date outdated, updating to today:",
+          today.toISOString().split("T")[0]
+        );
+      }
+    } else {
+      console.log(
+        "No date stored, initializing to today:",
+        today.toISOString().split("T")[0]
+      );
+    }
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const formattedToday = `${year}-${month}-${day}`;
+    localStorage.setItem("mainTableFilterDate", formattedToday);
+    return today;
+  })();
 
   // DOM elements for the history sidebar (modal)
   const historySidebar = document.getElementById("historySidebar");
@@ -4494,6 +4493,28 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
   const updateAgentStatusIndicator = () => {
     if (!agentStatusIndicator) return;
+
+    // This indicator should always reflect "today" for the scrolling bar,
+    // not necessarily the main table filter.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // If mainTableDateFilter is set to a past date, the indicator might show "Agents (Date Passée)"
+    // but the scrolling bar itself will still show "today's" agents.
+    const selectedDateStr = mainTableDateFilter.value;
+    if (selectedDateStr) {
+      const selectedDate = new Date(selectedDateStr);
+      selectedDate.setHours(0, 0, 0, 0);
+
+      if (selectedDate.getTime() < today.getTime()) {
+        agentStatusIndicator.classList.remove("status-active");
+        agentStatusIndicator.classList.add("status-past-date");
+        if (agentStatusText)
+          agentStatusText.textContent = "Agents (Date Passée)";
+        return;
+      }
+    }
+    // Default to active for today or future dates
     agentStatusIndicator.classList.remove("status-past-date");
     agentStatusIndicator.classList.add("status-active");
     if (agentStatusText)
@@ -4506,14 +4527,62 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
    * @returns {Array<string>} Sorted array of unique agent names.
    */
   function getAgentsForCurrentMainDate() {
-    // Retourne tous les agents uniques présents dans les livraisons (filtre date désactivé)
+    // Get the ISO string for the date selected in the main filter, using UTC components for consistency
+    // This ensures that currentMainFilterDate (which is a Date object) is normalized to UTCYYYY-MM-DD
+    const selectedFilterDateISO = formatDateToISO(currentMainFilterDate);
+    console.log(
+      "getAgentsForCurrentMainDate: Selected filter date ISO (from filter):",
+      selectedFilterDateISO
+    );
+
+    // If the selected date is in the future, no agents should appear.
+    // We can check this by comparing the selectedFilterDateISO with today's ISO.
+    const todayISO = formatDateToISO(new Date());
+    if (selectedFilterDateISO > todayISO) {
+      console.log(
+        "Selected date is in the future. No agents will be displayed."
+      );
+      return [];
+    }
+
     const agentsSet = new Set();
     deliveries.forEach((delivery) => {
-      if (delivery.employee_name) {
+      let isAgentActiveOnFilterDate = false;
+
+      // Check if the delivery was created on the selected filter date (UTC comparison)
+      if (delivery.created_at) {
+        // Ensure delivery.created_at is treated as a Date object and then converted to UTCYYYY-MM-DD
+        const createdAtDate = new Date(delivery.created_at); // Ensure it's a Date object
+        const createdAtISO = formatDateToISO(createdAtDate); // Uses the now UTC-based formatDateToISO
+        if (createdAtISO === selectedFilterDateISO) {
+          isAgentActiveOnFilterDate = true;
+          // console.log(`Agent ${delivery.employee_name} active on ${selectedFilterDateISO} via created_at: ${createdAtISO}`);
+        }
+      }
+      // Also check if the delivery was *delivered* on the selected filter date (UTC comparison).
+      // An agent is considered "active" on a day if they performed any relevant operation.
+      if (!isAgentActiveOnFilterDate && delivery.delivery_date) {
+        // Ensure delivery.delivery_date is treated as a Date object and then converted to UTCYYYY-MM-DD
+        const deliveryDateObj = new Date(delivery.delivery_date); // Ensure it's a Date object
+        if (!isNaN(deliveryDateObj.getTime())) {
+          const deliveryDateISO = formatDateToISO(deliveryDateObj); // Uses the now UTC-based formatDateToISO
+          if (deliveryDateISO === selectedFilterDateISO) {
+            isAgentActiveOnFilterDate = true;
+            // console.log(`Agent ${delivery.employee_name} active on ${selectedFilterDateISO} via delivery_date: ${deliveryDateISO}`);
+          }
+        }
+      }
+
+      if (isAgentActiveOnFilterDate && delivery.employee_name) {
         agentsSet.add(delivery.employee_name);
       }
     });
-    return Array.from(agentsSet).sort();
+    const sortedAgents = Array.from(agentsSet).sort();
+    console.log(
+      `getAgentsForCurrentMainDate: Active agents for ${selectedFilterDateISO}:`,
+      sortedAgents
+    );
+    return sortedAgents;
   }
   function populateStatusFilter() {
     if (!statusFilterSelect) {
@@ -4572,7 +4641,27 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         });
       }
     }
-    // SUPPRIMÉ : filtre par date principale (filtre à deux dates)
+    if (currentMainFilterDate) {
+      console.log(
+        "Applying date filter (based on created_at):", // Changed log for clarity
+        currentMainFilterDate.toLocaleDateString("fr-FR")
+      );
+      const filterDate = normalizeDateToMidnight(currentMainFilterDate);
+      const nextDay = new Date(filterDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      filteredData = filteredData.filter((delivery) => {
+        let createdAtDate = null; // Only check created_at for the main filter
+        if (delivery.created_at) {
+          createdAtDate = new Date(delivery.created_at);
+        }
+        if (!createdAtDate || isNaN(createdAtDate.getTime())) return false;
+        createdAtDate = normalizeDateToMidnight(createdAtDate);
+        return createdAtDate >= filterDate && createdAtDate < nextDay;
+      });
+    } else {
+      console.log("No main filter date selected.");
+    }
 
     if (shouldRenderTable) {
       renderAdminDeliveriesTable(filteredData);
@@ -8112,7 +8201,24 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       });
   });
 
-  // SUPPRIMÉ : initialisation et gestion de l'input mainTableDateFilter (fin de fichier)
+  if (mainTableDateFilter) {
+    const year = currentMainFilterDate.getFullYear();
+    const month = String(currentMainFilterDate.getMonth() + 1).padStart(2, "0");
+    const day = String(currentMainFilterDate.getDate()).padStart(2, "0");
+
+    const formattedDateForInput = `${year}-${month}-${day}`;
+
+    console.log("Applying date to filter input:", formattedDateForInput);
+    mainTableDateFilter.value = formattedDateForInput;
+    updateAgentStatusIndicator();
+    mainTableDateFilter.addEventListener("change", () => {
+      updateAgentStatusIndicator();
+    });
+  } else {
+    console.error(
+      "Error: The element #mainTableDateFilter was not found in the DOM!"
+    );
+  }
   await loadDeliveries(); // This now triggers applyCombinedFilters()
 
   // Initialize WebSocket connection AFTER initial data load
@@ -8139,7 +8245,22 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     populateStatusFilter();
   }
 
-  // SUPPRIMÉ : gestion des événements sur mainTableDateFilter (fin de fichier)
+  if (mainTableDateFilter) {
+    mainTableDateFilter.addEventListener("change", (e) => {
+      currentMainFilterDate = normalizeDateToMidnight(new Date(e.target.value));
+      localStorage.setItem("mainTableFilterDate", e.target.value);
+      applyCombinedFilters();
+    });
+    mainTableDateFilter.addEventListener("input", () => {
+      if (!mainTableDateFilter.value) {
+        // If the date input is cleared, set currentMainFilterDate to today for the scrolling bar
+        // and clear the main table filter.
+        currentMainFilterDate = normalizeDateToMidnight(new Date()); // Default to today for scrolling bar
+        localStorage.removeItem("mainTableFilterDate");
+        applyCombinedFilters(); // This will render the main table for all dates if filter is empty
+      }
+    });
+  }
 
   if (searchButton) {
     searchButton.addEventListener("click", () => {

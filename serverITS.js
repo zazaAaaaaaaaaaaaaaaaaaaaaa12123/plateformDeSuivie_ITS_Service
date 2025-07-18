@@ -19,96 +19,9 @@ app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
 // ===============================
 // === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
 // ===============================
-require("dotenv").config();
-const nodemailer = require("nodemailer");
-const bcrypt = require("bcryptjs"); // Import unique ici
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
-  ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
-});
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
-});
-
-// ===============================
-// TABLE responsable_livraison (stocke la valeur du champ Responsable de livraison)
-// ===============================
-const createResponsableLivraisonTable = `
-  CREATE TABLE IF NOT EXISTS responsable_livraison (
-    id SERIAL PRIMARY KEY,
-    value TEXT NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-  );
-`;
-
-async function ensureResponsableLivraisonTable() {
-  try {
-    await pool.query(createResponsableLivraisonTable);
-    // Si aucun enregistrement, insère une valeur vide par défaut
-    const res = await pool.query("SELECT * FROM responsable_livraison LIMIT 1");
-    if (res.rows.length === 0) {
-      await pool.query(
-        "INSERT INTO responsable_livraison (value) VALUES ($1)",
-        [""]
-      );
-      console.log("Champ responsable_livraison initialisé à vide.");
-    }
-    console.log("Table 'responsable_livraison' vérifiée/créée.");
-  } catch (err) {
-    console.error("Erreur création table responsable_livraison:", err);
-  }
-}
-ensureResponsableLivraisonTable();
-
-// ===============================
-// ROUTE : Récupérer la valeur du champ Responsable de livraison (GET)
-// ===============================
-app.get("/api/responsable-livraison", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT value FROM responsable_livraison ORDER BY updated_at DESC LIMIT 1"
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "Non trouvé." });
-    }
-    return res.json({ success: true, value: result.rows[0].value });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: "Erreur serveur." });
-  }
-});
-
-// ===============================
-// ROUTE : Mettre à jour la valeur du champ Responsable de livraison (POST)
-// ===============================
-app.post("/api/responsable-livraison", async (req, res) => {
-  const { value } = req.body || {};
-  if (typeof value !== "string") {
-    return res
-      .status(400)
-      .json({ success: false, message: "Valeur invalide." });
-  }
-  try {
-    // Met à jour le dernier enregistrement (ou insère si vide)
-    const result = await pool.query(
-      "UPDATE responsable_livraison SET value = $1, updated_at = NOW() WHERE id = (SELECT id FROM responsable_livraison ORDER BY updated_at DESC LIMIT 1) RETURNING id",
-      [value]
-    );
-    if (result.rowCount === 0) {
-      // Si aucun enregistrement, insère
-      await pool.query(
-        "INSERT INTO responsable_livraison (value) VALUES ($1)",
-        [value]
-      );
-    }
-    return res.json({ success: true, message: "Valeur mise à jour." });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: "Erreur serveur." });
-  }
 });
 
 // --- WebSocket Server pour notifications temps réel ---
@@ -129,6 +42,17 @@ function broadcastNouvelleDemandeCodeEntreprise() {
   });
 }
 
+require("dotenv").config();
+const nodemailer = require("nodemailer");
+const bcrypt = require("bcryptjs"); // Import unique ici
+const pool = new Pool({
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
+  ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
+});
 // ===============================
 // ===============================
 // ROUTE : Notification dossier en retard (envoi email)
