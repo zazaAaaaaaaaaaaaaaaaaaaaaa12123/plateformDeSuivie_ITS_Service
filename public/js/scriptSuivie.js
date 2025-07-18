@@ -8650,10 +8650,68 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     // Pour chaque agent en retard, ajoute une ligne
     lateAgents.forEach((agent) => {
       const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.textContent = agent;
-      tr.appendChild(td);
-      // Ajoute d'autres colonnes si besoin (ex : nombre de dossiers, bouton action...)
+      const tdAgent = document.createElement("td");
+      tdAgent.textContent = agent;
+      tr.appendChild(tdAgent);
+
+      // Recherche le premier dossier non livré pour cet agent
+      let dossier = null;
+      for (const d of deliveries) {
+        if (
+          (d.employee_name || "Agent inconnu") === agent &&
+          d.dossier_number
+        ) {
+          const status = d.status || d.delivery_status_acconier || "";
+          if (!status.toString().toLowerCase().includes("livr")) {
+            dossier = d.dossier_number;
+            break;
+          }
+        }
+      }
+
+      // Ajoute le numéro de dossier si trouvé
+      const tdDossier = document.createElement("td");
+      tdDossier.textContent = dossier || "-";
+      tr.appendChild(tdDossier);
+
+      // Ajoute le bouton Notifier
+      const tdAction = document.createElement("td");
+      const notifyBtn = document.createElement("button");
+      notifyBtn.textContent = "Notifier";
+      notifyBtn.className = "btn btn-warning btn-sm";
+      notifyBtn.style.marginLeft = "8px";
+      notifyBtn.onclick = async function () {
+        notifyBtn.disabled = true;
+        notifyBtn.textContent = "Envoi...";
+        try {
+          const response = await fetch("/notify-late-dossier", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent, dossier }),
+          });
+          const result = await response.json();
+          if (result.success) {
+            showCustomAlert("Notification envoyée à l'agent.", "success");
+            notifyBtn.textContent = "Envoyé";
+          } else {
+            showCustomAlert(
+              result.message || "Erreur lors de l'envoi.",
+              "error"
+            );
+            notifyBtn.textContent = "Erreur";
+          }
+        } catch (err) {
+          showCustomAlert("Erreur réseau ou serveur.", "error");
+          notifyBtn.textContent = "Erreur";
+        }
+        setTimeout(() => {
+          notifyBtn.disabled = false;
+          notifyBtn.textContent = "Notifier";
+        }, 3000);
+      };
+      tdAction.appendChild(notifyBtn);
+      tr.appendChild(tdAction);
+
       lateTable.querySelector("tbody").appendChild(tr);
     });
     // Si aucun agent en retard
