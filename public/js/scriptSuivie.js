@@ -686,6 +686,62 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 (async () => {
+  // Fonction pour attacher la sauvegarde auto sur tous les inputs 'Responsable de livraison' (nom_agent_visiteur)
+  function attachNomAgentVisiteurAutoSave() {
+    // Sélectionne tous les inputs de la colonne (adapte le sélecteur si besoin)
+    const inputs = document.querySelectorAll(
+      'input[data-column-id="nom_agent_visiteur"]'
+    );
+    inputs.forEach((input) => {
+      // Récupère l'ID de la livraison (doit être sur la ligne ou dans un data-attribute)
+      const row = input.closest("tr");
+      const deliveryId = row ? row.getAttribute("data-delivery-id") : null;
+      if (!deliveryId) return;
+
+      // Remplit l'input avec la valeur reçue du backend (si elle n'est pas déjà présente)
+      // (Supposé déjà fait lors du rendu du tableau)
+
+      // Sauvegarde auto à chaque modification (blur ou input)
+      input.addEventListener("change", async (e) => {
+        const newValue = e.target.value.trim();
+        if (!newValue) return;
+        try {
+          const resp = await fetch(
+            `/deliveries/${deliveryId}/nom-agent-visiteur`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nom_agent_visiteur: newValue }),
+            }
+          );
+          const data = await resp.json();
+          if (!data.success) {
+            showCustomAlert(
+              "Erreur lors de la sauvegarde du responsable de livraison : " +
+                (data.message || ""),
+              "error"
+            );
+          }
+        } catch (err) {
+          showCustomAlert(
+            "Erreur réseau lors de la sauvegarde du responsable de livraison.",
+            "error"
+          );
+        }
+      });
+    });
+  }
+
+  // Appelle cette fonction après chaque rendu du tableau principal
+  const originalApplyCombinedFilters =
+    window.applyCombinedFilters || applyCombinedFilters;
+  window.applyCombinedFilters = function (...args) {
+    originalApplyCombinedFilters.apply(this, args);
+    setTimeout(() => {
+      attachNomAgentVisiteurAutoSave();
+    }, 50); // Laisse le DOM se mettre à jour
+    setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
+  };
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   // Détection automatique de l'environnement pour l'URL WebSocket
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -8294,13 +8350,132 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   initializeWebSocket(); // <--- MOVED HERE
 
   if (searchInput) {
+    // Renforce la désactivation de l'autofill/autocomplete/autocorrect/autocapitalize/spellcheck
+    searchInput.setAttribute("autocomplete", "off");
+    searchInput.setAttribute("autocorrect", "off");
+    searchInput.setAttribute("autocapitalize", "off");
+    searchInput.setAttribute("spellcheck", "false");
+
+    // === AJOUT BOUTON FILTRAGE ENTRE DEUX DATES ===
+    // Création du bouton
+    const dateRangeBtn = document.createElement("button");
+    dateRangeBtn.id = "dateRangeFilterBtn";
+    dateRangeBtn.textContent = "Filtrage entre deux dates";
+    dateRangeBtn.className = "btn btn-secondary";
+    dateRangeBtn.style.marginLeft = "10px";
+    // Insertion à côté du champ de recherche
+    if (searchInput.parentNode) {
+      searchInput.parentNode.insertBefore(
+        dateRangeBtn,
+        searchInput.nextSibling
+      );
+    }
+
+    // Création du modal (masqué par défaut)
+    const dateRangeModal = document.createElement("div");
+    dateRangeModal.id = "dateRangeModal";
+    dateRangeModal.style.display = "none";
+    dateRangeModal.style.position = "fixed";
+    dateRangeModal.style.top = "0";
+    dateRangeModal.style.left = "0";
+    dateRangeModal.style.width = "100vw";
+    dateRangeModal.style.height = "100vh";
+    dateRangeModal.style.background = "rgba(30,41,59,0.45)";
+    dateRangeModal.style.zIndex = "9999";
+    dateRangeModal.style.alignItems = "center";
+    dateRangeModal.style.justifyContent = "center";
+    dateRangeModal.style.display = "flex";
+    dateRangeModal.innerHTML = `
+      <div style="background:#fff;padding:32px 28px 24px 28px;border-radius:16px;box-shadow:0 8px 32px #1e293b33;min-width:320px;max-width:95vw;display:flex;flex-direction:column;align-items:center;">
+        <h3 style="margin-bottom:18px;font-size:1.25em;color:#1e293b;">Filtrer les livraisons entre deux dates</h3>
+        <div style="display:flex;gap:18px;align-items:center;margin-bottom:18px;">
+          <label for="dateRangeStart" style="font-weight:600;">Du :</label>
+          <input type="date" id="dateRangeStart" style="padding:6px 12px;border-radius:6px;border:1.5px solid #2563eb;" />
+          <label for="dateRangeEnd" style="font-weight:600;">Au :</label>
+          <input type="date" id="dateRangeEnd" style="padding:6px 12px;border-radius:6px;border:1.5px solid #2563eb;" />
+        </div>
+        <div style="display:flex;gap:14px;">
+          <button id="applyDateRangeBtn" class="btn btn-primary">Appliquer</button>
+          <button id="cancelDateRangeBtn" class="btn btn-secondary">Annuler</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(dateRangeModal);
+
+    // Affichage du modal au clic sur le bouton
+    dateRangeBtn.addEventListener("click", () => {
+      dateRangeModal.style.display = "flex";
+    });
+    // Fermeture du modal
+    dateRangeModal.querySelector("#cancelDateRangeBtn").onclick = () => {
+      dateRangeModal.style.display = "none";
+    };
+    // Fermeture si clic sur le fond
+    dateRangeModal.onclick = (e) => {
+      if (e.target === dateRangeModal) dateRangeModal.style.display = "none";
+    };
+
+    // Logique de filtrage entre deux dates
+    let dateRangeFilter = null; // {start: Date, end: Date} ou null
+    function applyDateRangeFilter() {
+      const startInput = dateRangeModal.querySelector("#dateRangeStart");
+      const endInput = dateRangeModal.querySelector("#dateRangeEnd");
+      const start = startInput.value ? new Date(startInput.value) : null;
+      const end = endInput.value ? new Date(endInput.value) : null;
+      if (start && end && start <= end) {
+        // On stocke la plage
+        dateRangeFilter = { start, end };
+        dateRangeModal.style.display = "none";
+        filterDeliveriesByDateRange();
+      } else {
+        alert("Veuillez sélectionner une plage de dates valide.");
+      }
+    }
+    dateRangeModal.querySelector("#applyDateRangeBtn").onclick =
+      applyDateRangeFilter;
+
+    // Fonction de filtrage spécifique (n'affecte pas les autres filtres)
+    function filterDeliveriesByDateRange() {
+      if (!dateRangeFilter) return;
+      // On suppose que 'deliveries' contient toutes les livraisons chargées
+      const filtered = deliveries.filter((d) => {
+        if (!d.created_at) return false;
+        const dDate = new Date(d.created_at);
+        // On ignore l'heure, on compare que la date
+        dDate.setHours(0, 0, 0, 0);
+        const start = new Date(dateRangeFilter.start);
+        const end = new Date(dateRangeFilter.end);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(0, 0, 0, 0);
+        return dDate >= start && dDate <= end;
+      });
+      // Affichage du résultat dans le tableau principal
+      renderDeliveriesTable(filtered);
+      // Ajout d'un message d'info
+      showCustomAlert(
+        `Filtrage entre ${dateRangeFilter.start.toLocaleDateString(
+          "fr-FR"
+        )} et ${dateRangeFilter.end.toLocaleDateString("fr-FR")} appliqué.`,
+        "info"
+      );
+    }
+
+    // Option pour réinitialiser le filtre (ex: bouton à ajouter si besoin)
+    window.clearDateRangeFilter = function () {
+      dateRangeFilter = null;
+      applyCombinedFilters(); // Retour au filtrage normal
+    };
+
+    // Ajout d'un bouton de réinitialisation si un filtre est actif
+    // (à placer où tu veux dans l'UI)
+    // ...
+
+    // Listeners classiques du champ de recherche
     searchInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
-        // The old filterDeliveriesByContainerNumber is replaced by applyCombinedFilters
         applyCombinedFilters();
       }
     });
-
     searchInput.addEventListener("search", () => {
       if (searchInput.value.trim() === "") {
         console.log("Search field cleared, resetting filter.");
@@ -8871,13 +9046,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     document.head.appendChild(style);
   })();
 
-  // Appelle le clignotement après chaque rendu du tableau principal
-  const originalApplyCombinedFilters =
-    window.applyCombinedFilters || applyCombinedFilters;
-  window.applyCombinedFilters = function (...args) {
-    originalApplyCombinedFilters.apply(this, args);
-    setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
-  };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
