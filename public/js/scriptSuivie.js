@@ -173,8 +173,8 @@ function checkLateContainers() {
           dateEnr = new Date(delivery.created_at);
         }
         if (!dateEnr) return;
-        // Si ce conteneur n'est pas livré et dépasse 2 jours, il est en retard
-        if (!isDelivered && now - dateEnr > 30 * 1000) {
+        // Si ce conteneur n'est pas livré et dépasse 2 jours (48h), il est en retard
+        if (!isDelivered && now - dateEnr > 2 * 24 * 60 * 60 * 1000) {
           // 2 jours (48h)
           hasLate = true;
           if (!oldestUnlivDate || dateEnr < oldestUnlivDate)
@@ -8680,35 +8680,41 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       notifyBtn.textContent = "Notifier";
       notifyBtn.className = "btn btn-warning btn-sm";
       notifyBtn.style.marginLeft = "8px";
-      notifyBtn.onclick = async function () {
+      if (!dossier) {
         notifyBtn.disabled = true;
-        notifyBtn.textContent = "Envoi...";
-        try {
-          const response = await fetch("/notify-late-dossier", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent, dossier }),
-          });
-          const result = await response.json();
-          if (result.success) {
-            showCustomAlert("Notification envoyée à l'agent.", "success");
-            notifyBtn.textContent = "Envoyé";
-          } else {
-            showCustomAlert(
-              result.message || "Erreur lors de l'envoi.",
-              "error"
-            );
+        notifyBtn.title = "Aucun dossier à notifier pour cet agent";
+        notifyBtn.style.opacity = "0.6";
+      } else {
+        notifyBtn.onclick = async function () {
+          notifyBtn.disabled = true;
+          notifyBtn.textContent = "Envoi...";
+          try {
+            const response = await fetch("/notify-late-dossier", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ agent, dossier }),
+            });
+            const result = await response.json();
+            if (result.success) {
+              showCustomAlert("Notification envoyée à l'agent.", "success");
+              notifyBtn.textContent = "Envoyé";
+            } else {
+              showCustomAlert(
+                result.message || "Erreur lors de l'envoi.",
+                "error"
+              );
+              notifyBtn.textContent = "Erreur";
+            }
+          } catch (err) {
+            showCustomAlert("Erreur réseau ou serveur.", "error");
             notifyBtn.textContent = "Erreur";
           }
-        } catch (err) {
-          showCustomAlert("Erreur réseau ou serveur.", "error");
-          notifyBtn.textContent = "Erreur";
-        }
-        setTimeout(() => {
-          notifyBtn.disabled = false;
-          notifyBtn.textContent = "Notifier";
-        }, 3000);
-      };
+          setTimeout(() => {
+            notifyBtn.disabled = false;
+            notifyBtn.textContent = "Notifier";
+          }, 3000);
+        };
+      }
       tdAction.appendChild(notifyBtn);
       tr.appendChild(tdAction);
 

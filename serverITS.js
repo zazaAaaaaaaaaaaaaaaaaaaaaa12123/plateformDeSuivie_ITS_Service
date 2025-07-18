@@ -2929,9 +2929,16 @@ app.post("/notify-agent", async (req, res) => {
     }
     const agentEmail = result.rows[0].email;
 
-    // Prépare le message
-    const subject = `Notification dossier en retard`;
-    const text = `Bonjour ${agent},\n\nVous avez un dossier ${dossier} en retard. Veuillez revisualiser ce dossier plus vite.`;
+    // Prépare le message personnalisé (HTML)
+    const subject = `ITS service - Dossier en retard de paiement`;
+    const html = `
+      <div style="font-family:Arial,sans-serif;font-size:1.08em;color:#222;">
+        <div style="font-size:1.15em;font-weight:bold;margin-bottom:12px;">ITS service</div>
+        <div style="margin-bottom:18px;">Bonjour monsieur,</div>
+        <div style="margin-bottom:18px;">Le dossier <span style='color:#b91c1c;font-weight:bold;font-size:1.15em;'>"${dossier}"</span> est en retard de paiement.</div>
+        <div style="margin-bottom:18px;"><span style='color:#b91c1c;font-weight:bold;font-size:1.08em;'>Chercher à régler ce dossier plus tôt que prévu</span>, pour éviter certain soucis.</div>
+      </div>
+    `;
 
     // Configure le transporteur SMTP (à adapter selon ton serveur mail)
     const transporter = nodemailer.createTransport({
@@ -2948,7 +2955,7 @@ app.post("/notify-agent", async (req, res) => {
       from: "ton.email@gmail.com", // À remplacer
       to: agentEmail,
       subject,
-      text,
+      html,
     });
     res.json({ success: true, message: "Email envoyé à l'agent." });
   } catch (err) {
