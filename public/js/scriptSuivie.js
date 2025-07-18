@@ -33,7 +33,8 @@ function renderLateDossiersTable() {
   if (!filterBar) {
     filterBar = document.createElement("div");
     filterBar.id = "dateFilterBar";
-    filterBar.style = "display:flex;align-items:center;gap:12px;margin-bottom:18px;";
+    filterBar.style =
+      "display:flex;align-items:center;gap:12px;margin-bottom:18px;";
     filterBar.innerHTML = `
       <label for='dateFilterStart' style='font-weight:600;'>Du&nbsp;</label>
       <input type='date' id='dateFilterStart' style='padding:4px 8px;border-radius:6px;border:1px solid #ccc;'>
@@ -52,7 +53,10 @@ function renderLateDossiersTable() {
     dateRangeInfo = `<div style='font-weight:700;color:#2563eb;font-size:1.08em;margin-bottom:8px;'>Livraisons du <span style='color:#ef4444;'>${selectedStart}</span> au <span style='color:#ef4444;'>${selectedEnd}</span></div>`;
   }
   // Filtrage des éléments selon la plage de dates
-  let lateList = window.lateContainers && Array.isArray(window.lateContainers) ? window.lateContainers : [];
+  let lateList =
+    window.lateContainers && Array.isArray(window.lateContainers)
+      ? window.lateContainers
+      : [];
   if (selectedStart && selectedEnd) {
     const startDate = new Date(selectedStart);
     const endDate = new Date(selectedEnd);
@@ -63,10 +67,14 @@ function renderLateDossiersTable() {
     });
   }
   if (!lateList.length) {
-    tableContainer.innerHTML = dateRangeInfo + `<div style='color:#ef4444;text-align:center;font-size:1em;padding:10px 0;'>Aucun dossier en retard</div>`;
+    tableContainer.innerHTML =
+      dateRangeInfo +
+      `<div style='color:#ef4444;text-align:center;font-size:1em;padding:10px 0;'>Aucun dossier en retard</div>`;
     return;
   }
-  let html = dateRangeInfo + `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
+  let html =
+    dateRangeInfo +
+    `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
   html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody>`;
   lateList.forEach((c) => {
     let agent = c.agentName ? c.agentName : "-";
@@ -92,12 +100,12 @@ function renderLateDossiersTable() {
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
   // Ajout des listeners pour filtrer et réinitialiser
-  document.getElementById('applyDateFilterBtn').onclick = function() {
+  document.getElementById("applyDateFilterBtn").onclick = function () {
     renderLateDossiersTable();
   };
-  document.getElementById('resetDateFilterBtn').onclick = function() {
-    document.getElementById('dateFilterStart').value = '';
-    document.getElementById('dateFilterEnd').value = '';
+  document.getElementById("resetDateFilterBtn").onclick = function () {
+    document.getElementById("dateFilterStart").value = "";
+    document.getElementById("dateFilterEnd").value = "";
     renderLateDossiersTable();
   };
 }
@@ -262,6 +270,25 @@ function checkLateContainers() {
 }
 // Appel initial pour afficher le tableau principal au chargement
 window.addEventListener("DOMContentLoaded", function () {
+  // Ajout explicite des champs de filtre de date au-dessus du tableau principal
+  const tableContainer = document.getElementById("tableauPrincipalRetards");
+  if (tableContainer) {
+    let filterBar = document.getElementById("dateFilterBar");
+    if (!filterBar) {
+      filterBar = document.createElement("div");
+      filterBar.id = "dateFilterBar";
+      filterBar.style = "display:flex;align-items:center;gap:12px;margin-bottom:18px;justify-content:flex-start;";
+      filterBar.innerHTML = `
+        <label for='dateFilterStart' style='font-weight:600;'>Du&nbsp;</label>
+        <input type='date' id='dateFilterStart' style='padding:4px 8px;border-radius:6px;border:1px solid #2563eb;font-size:1em;'>
+        <label for='dateFilterEnd' style='font-weight:600;'>Au&nbsp;</label>
+        <input type='date' id='dateFilterEnd' style='padding:4px 8px;border-radius:6px;border:1px solid #2563eb;font-size:1em;'>
+        <button id='applyDateFilterBtn' style='background:#2563eb;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-weight:600;cursor:pointer;font-size:1em;'>Filtrer</button>
+        <button id='resetDateFilterBtn' style='background:#f3f4f6;color:#2563eb;border:1px solid #2563eb;border-radius:6px;padding:6px 16px;font-weight:600;cursor:pointer;font-size:1em;'>Réinitialiser</button>
+      `;
+      tableContainer.parentNode.insertBefore(filterBar, tableContainer);
+    }
+  }
   if (typeof renderLateDossiersTable === "function") renderLateDossiersTable();
 });
 
