@@ -483,10 +483,18 @@ document.addEventListener("DOMContentLoaded", () => {
           : dateKey !== "?"
           ? dateKey
           : "Date inconnue";
-      // Ajout du nom de l'utilisateur (Serge) à côté de la date, responsive
+      // Récupère le nom du client du premier ordre de la date
+      let clientName = "Client inconnu";
+      if (
+        ordersByDate[dateKey][0] &&
+        ordersByDate[dateKey][0].data &&
+        ordersByDate[dateKey][0].data.clientName
+      ) {
+        clientName = ordersByDate[dateKey][0].data.clientName;
+      }
       html += `<div class="history-date-user">
         <span class="history-date">${dateAffichee}</span>
-        <span class="history-user">Serge</span>
+        <span class="history-user">${clientName}</span>
       </div>`;
       html += '<ul style="list-style:none;padding:0;margin:0;">';
       ordersByDate[dateKey].forEach((item, idx) => {
