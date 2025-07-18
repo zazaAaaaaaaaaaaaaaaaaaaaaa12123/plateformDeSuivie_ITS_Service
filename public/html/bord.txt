@@ -1937,3 +1937,14 @@ Quand je clique sur une information dans la partie de "Nouvelles
       carrement la session Cliquez sur une demande ci-dessus pour
        la consulter en détail. 
 *********/
+
+
+
+
+
+
+
+
+
+
+Je veux tu fasse pour moi un Filtrage entre deux dates (ou « date range filter » en anglais) : par exemple on a à une date passé et que a une date presente si on prend la date du 17/07/2025 - 18/07/2025 . On doit avoir un filtre de la date du 16 au 17 mais qui seront touts regroupeé sur le tableau de suivi . Mais je te dis que tu l'inclura dans un cbouton au clique du bouton c'est la que le Filtrage entre deux dates (ou « date range filter » en anglais) apparait pour pourvoir faire notre filtrage , et ça n'a rien avoir avec le champs de date qui est a cote du bouton de tout les statut ce filtrage : "Filtrage entre deux dates (ou « date range filter » en anglais) " est particulier . Donc tu pourra mettre ce bouton qui ouvre Filtrage entre deux dates (ou « date range filter » en anglais) a cote du champs de recherche . MAIS SANS PERTUBER QUELQUE CHOSE . 
