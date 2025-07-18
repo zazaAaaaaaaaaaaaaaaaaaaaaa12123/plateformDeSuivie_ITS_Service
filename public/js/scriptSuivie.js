@@ -277,7 +277,8 @@ window.addEventListener("DOMContentLoaded", function () {
     if (!filterBar) {
       filterBar = document.createElement("div");
       filterBar.id = "dateFilterBar";
-      filterBar.style = "display:flex;align-items:center;gap:12px;margin-bottom:18px;justify-content:flex-start;";
+      filterBar.style =
+        "display:flex;align-items:center;gap:12px;margin-bottom:18px;justify-content:flex-start;";
       filterBar.innerHTML = `
         <label for='dateFilterStart' style='font-weight:600;'>Du&nbsp;</label>
         <input type='date' id='dateFilterStart' style='padding:4px 8px;border-radius:6px;border:1px solid #2563eb;font-size:1em;'>
@@ -8878,3 +8879,31 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
+
+// === Forçage de l'affichage des champs de filtre de date au-dessus du tableau principal ===
+(function forceDateFilterBar() {
+  function insertDateFilterBar() {
+    const tableContainer = document.getElementById("tableauPrincipalRetards");
+    if (tableContainer) {
+      let filterBar = document.getElementById("dateFilterBar");
+      if (!filterBar) {
+        filterBar = document.createElement("div");
+        filterBar.id = "dateFilterBar";
+        filterBar.style =
+          "display:flex;align-items:center;gap:12px;margin-bottom:18px;justify-content:flex-start;";
+        filterBar.innerHTML = `
+          <label for='dateFilterStart' style='font-weight:600;'>Du&nbsp;</label>
+          <input type='date' id='dateFilterStart' style='padding:4px 8px;border-radius:6px;border:1px solid #2563eb;font-size:1em;'>
+          <label for='dateFilterEnd' style='font-weight:600;'>Au&nbsp;</label>
+          <input type='date' id='dateFilterEnd' style='padding:4px 8px;border-radius:6px;border:1px solid #2563eb;font-size:1em;'>
+          <button id='applyDateFilterBtn' style='background:#2563eb;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-weight:600;cursor:pointer;font-size:1em;'>Filtrer</button>
+          <button id='resetDateFilterBtn' style='background:#f3f4f6;color:#2563eb;border:1px solid #2563eb;border-radius:6px;padding:6px 16px;font-weight:600;cursor:pointer;font-size:1em;'>Réinitialiser</button>
+        `;
+        tableContainer.parentNode.insertBefore(filterBar, tableContainer);
+      }
+    } else {
+      setTimeout(insertDateFilterBar, 500);
+    }
+  }
+  insertDateFilterBar();
+})();
