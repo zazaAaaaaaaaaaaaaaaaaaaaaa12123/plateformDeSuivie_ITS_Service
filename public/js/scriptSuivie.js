@@ -8450,8 +8450,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         return dDate >= start && dDate <= end;
       });
       // Affichage du résultat dans le tableau principal
-      renderDeliveriesTable(filtered);
-      // Ajout d'un message d'info
+      applyCombinedFilters(filtered); // Ajout d'un message d'info
       showCustomAlert(
         `Filtrage entre ${dateRangeFilter.start.toLocaleDateString(
           "fr-FR"
