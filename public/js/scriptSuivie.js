@@ -8584,7 +8584,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // ================= AJOUT : Rafraîchissement dynamique du tableau dossiers en retard =================
   // Fonction utilitaire pour détecter les agents en retard (à adapter selon ta logique métier)
   function getLateAgentsFromDeliveries(deliveries) {
-    // Un agent est en retard s'il a au moins un conteneur non livré depuis 2 jours ou plus
+    // Un agent est en retard s'il a au moins un conteneur non livré depuis 1 jour ou plus
     const lateAgents = {};
     const now = new Date();
     console.log("[DIAG RETARD][DEBUG] Tableau deliveries reçu :", deliveries);
@@ -8620,7 +8620,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         `[DIAG RETARD] Livraison #${idx} | Agent: ${agent} | Statut: ${status} | Acconier: ${acconierStatus} | created_at: ${createdAtRaw} | diffDays: ${diffDays} | isDelivered: ${isDelivered}`
       );
       if (!isDelivered && createdAt && diffDays !== null) {
-        if (diffDays >= 2) {
+        if (diffDays >= 1) {
           console.log(
             `[DIAG RETARD] => EN RETARD: Agent ${agent}, dossier créé il y a ${diffDays.toFixed(
               2
