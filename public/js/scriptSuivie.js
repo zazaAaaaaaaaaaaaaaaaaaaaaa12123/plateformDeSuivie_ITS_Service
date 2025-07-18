@@ -8611,46 +8611,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     return Object.keys(lateAgents);
   }
 
-  // ================= ALERTE GLOBALE : Livraisons en retard de plus de 2 jours =================
-  function checkGlobalLateDeliveriesAlert() {
-    const now = new Date();
-    let foundLate = false;
-    deliveries.forEach((d) => {
-      const status = d.status;
-      const acconierStatus = d.delivery_status_acconier;
-      const isDelivered = (status || acconierStatus || "")
-        .toString()
-        .toLowerCase()
-        .includes("livr");
-      if (!isDelivered && d.created_at) {
-        // Conversion stricte de la date
-        let deliveryDate;
-        if (d.created_at instanceof Date) {
-          deliveryDate = d.created_at;
-        } else {
-          deliveryDate = new Date(d.created_at);
-        }
-        if (isNaN(deliveryDate.getTime())) {
-          // Date invalide, ignorer
-          return;
-        }
-        // Calcul de la différence en jours, arrondi à l'entier
-        const diffMs =
-          now.setHours(0, 0, 0, 0) - deliveryDate.setHours(0, 0, 0, 0);
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (diffDays >= 2) {
-          foundLate = true;
-        }
-      }
-    });
-    if (foundLate) {
-      showCustomAlert(
-        "Attention : Il y a des livraisons non livrées depuis 2 jours ou plus !",
-        "warning"
-      );
-    }
-  }
-
   // Fonction pour rafraîchir le tableau des dossiers en retard
   function refreshLateFoldersTable() {
     // Sélectionne le tableau (adapte l'ID ou la classe selon ton HTML)
@@ -8697,21 +8657,11 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         "[SYNC DIAG][BTN] Données rechargées, recalcul de la liste des agents en retard..."
       );
       refreshLateFoldersTable();
-      checkGlobalLateDeliveriesAlert();
     });
   }
 
   // Optionnel : expose la fonction pour l'appeler ailleurs si besoin
   window.refreshLateFoldersTable = refreshLateFoldersTable;
-
-  // Appel automatique de l'alerte globale après chaque chargement des livraisons
-  if (typeof loadDeliveries === "function") {
-    const originalLoadDeliveries = loadDeliveries;
-    window.loadDeliveries = async function (...args) {
-      await originalLoadDeliveries.apply(this, args);
-      checkGlobalLateDeliveriesAlert();
-    };
-  }
 
   // ================== CLIGNOTEMENT VERT NOUVELLE LIGNE (FORCÉ) ==================
   // Patch direct sur le tableau principal
