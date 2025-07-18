@@ -46,26 +46,12 @@ window.addEventListener("DOMContentLoaded", function () {
     respLivraisonInput.setAttribute("autocorrect", "off");
     respLivraisonInput.setAttribute("autocapitalize", "off");
     respLivraisonInput.setAttribute("spellcheck", "false");
-    // Récupère la valeur depuis le backend (API)
-    fetch("/api/responsable-livraison")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.success && typeof data.value === "string") {
-          respLivraisonInput.value = data.value;
-        }
-      })
-      .catch(() => {});
-    // Sauvegarde à chaque modification (API)
-    let saveTimeout = null;
+    // Restaure la valeur sauvegardée si présente
+    const saved = localStorage.getItem("responsable_livraison");
+    if (saved) respLivraisonInput.value = saved;
+    // Sauvegarde à chaque modification
     respLivraisonInput.addEventListener("input", function () {
-      if (saveTimeout) clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(() => {
-        fetch("/api/responsable-livraison", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ value: respLivraisonInput.value }),
-        });
-      }, 400); // anti-spam : 400ms après la dernière frappe
+      localStorage.setItem("responsable_livraison", respLivraisonInput.value);
     });
   }
 });
