@@ -351,79 +351,30 @@
                 <!-- Le contenu des agents défilants sera injecté ici par JS -->
               </div>
             </div>
-
-            <!-- Déplacement du champ de recherche et des dates ici -->
-            <div class="search-bar-wrapper-top mt-3 mb-2">
-              <div
-                class="search-wrapper"
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 10px;
-                  flex-wrap: wrap;
-                "
-              >
-                <i class="fas fa-search search-icon"></i>
-                <input
-                  type="date"
-                  id="dateRangeStartInput"
-                  class="search-date-input"
-                  title="Date début"
-                  style="
-                    margin-right: 8px;
-                    font-size: 1em;
-                    padding: 4px 8px;
-                    border-radius: 6px;
-                    border: 1px solid #ccc;
-                    background: #f9f9f9;
-                  "
-                />
-                <input
-                  type="date"
-                  id="dateRangeEndInput"
-                  class="search-date-input"
-                  title="Date fin"
-                  style="
-                    margin-right: 8px;
-                    font-size: 1em;
-                    padding: 4px 8px;
-                    border-radius: 6px;
-                    border: 1px solid #ccc;
-                    background: #f9f9f9;
-                  "
-                />
-                <input
-                  type="search"
-                  id="searchInput"
-                  class="search-input"
-                  placeholder="Rechercher une livraison..."
-                  aria-label="Recherche"
-                  style="
-                    min-width: 220px;
-                    max-width: 350px;
-                    width: 100%;
-                    font-size: 1.08em;
-                    padding: 10px 14px;
-                    border-radius: 7px;
-                    border: 1.5px solid #2563eb;
-                    background: #fff;
-                    box-shadow: 0 1px 4px rgba(30, 41, 59, 0.04);
-                    margin-right: 8px;
-                  "
-                />
-                <button id="searchButton" class="icon-btn-company-color">
-                  <i
-                    class="fas fa-spinner fa-spin loading-spinner"
-                    style="display: none"
-                  ></i>
-                  Rechercher
-                </button>
-              </div>
-            </div>
           </div>
 
           <div id="agentStatusIndicator" class="agent-status-indicator">
             <span id="agentStatusText">Agents Actifs</span>
+          </div>
+
+          <div class="search-bar-wrapper-top">
+            <div class="search-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                type="search"
+                id="searchInput"
+                class="search-input"
+                placeholder="Rechercher une livraison..."
+                aria-label="Recherche"
+              />
+              <button id="searchButton" class="icon-btn-company-color">
+                <i
+                  class="fas fa-spinner fa-spin loading-spinner"
+                  style="display: none"
+                ></i>
+                Rechercher
+              </button>
+            </div>
           </div>
         </div>
 
