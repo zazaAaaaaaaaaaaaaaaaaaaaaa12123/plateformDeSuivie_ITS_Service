@@ -8582,11 +8582,13 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   window.showAgentActivity = showAgentActivity;
 
   // ================= AJOUT : Rafraîchissement dynamique du tableau dossiers en retard =================
-
-  // Nouvelle logique : alerte popup agents en retard
+  // Fonction utilitaire pour détecter les agents en retard (à adapter selon ta logique métier)
   function getLateAgentsFromDeliveries(deliveries) {
+    // On considère qu'un agent est en retard s'il a au moins un conteneur non livré
     const lateAgents = {};
-    deliveries.forEach((d) => {
+    // === LOG DIAGNOSTIC (avant recalcul) ===
+    console.log("[SYNC DIAG][BEFORE] window.deliveries :", deliveries);
+    deliveries.forEach((d, idx) => {
       const agent = d.employee_name || "Agent inconnu";
       const status = d.status;
       const acconierStatus = d.delivery_status_acconier;
@@ -8594,83 +8596,72 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         .toString()
         .toLowerCase()
         .includes("livr");
+      // === LOG DÉTAILLÉ PAR LIVRAISON ===
+      console.log(
+        `[SYNC DIAG][LIVRAISON][#${idx}] Agent: ${agent} | status: '${status}' | acconier: '${acconierStatus}' | isDelivered:`,
+        isDelivered
+      );
       if (!isDelivered) {
         if (!lateAgents[agent]) lateAgents[agent] = 0;
         lateAgents[agent]++;
       }
     });
+    // === LOG DIAGNOSTIC (après recalcul) ===
+    console.log("[SYNC DIAG][AFTER] lateAgents (avant return) :", lateAgents);
     return Object.keys(lateAgents);
   }
 
-  function showLateAgentsPopup(lateAgents) {
-    // Supprime toute ancienne popup
-    let old = document.getElementById("lateAgentsPopup");
-    if (old) old.remove();
-    if (!lateAgents || lateAgents.length === 0) return;
-    // Crée la popup
-    const popup = document.createElement("div");
-    popup.id = "lateAgentsPopup";
-    popup.style.position = "fixed";
-    popup.style.top = "32px";
-    popup.style.left = "50%";
-    popup.style.transform = "translateX(-50%)";
-    popup.style.background = "#fffbe6";
-    popup.style.color = "#a16207";
-    popup.style.border = "2px solid #eab308";
-    popup.style.borderRadius = "12px";
-    popup.style.boxShadow = "0 4px 24px #eab30833, 0 1px 8px #0001";
-    popup.style.padding = "22px 38px 18px 38px";
-    popup.style.zIndex = "2000";
-    popup.style.fontSize = "1.13em";
-    popup.style.fontWeight = "600";
-    popup.style.display = "flex";
-    popup.style.flexDirection = "column";
-    popup.style.alignItems = "center";
-    popup.style.minWidth = "320px";
-    popup.style.maxWidth = "90vw";
-    popup.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-        <i class='fas fa-exclamation-triangle' style='color:#eab308;font-size:1.7em;'></i>
-        <span style="font-size:1.18em;font-weight:700;">Attention : Agents en retard</span>
-      </div>
-      <div style="margin-bottom:10px;">${
-        lateAgents.length > 1
-          ? "Les agents suivants ont des dossiers non livrés :"
-          : "L'agent suivant a des dossiers non livrés :"
-      }</div>
-      <ul style="margin:0 0 12px 0;padding:0 0 0 18px;text-align:left;">
-        ${lateAgents
-          .map((a) => `<li style='margin-bottom:3px;'>${a}</li>`)
-          .join("")}
-      </ul>
-      <button id="closeLateAgentsPopupBtn" style="background:#eab308;color:#78350f;font-weight:700;padding:7px 22px;border:none;border-radius:7px;box-shadow:0 1px 6px #fde04755;cursor:pointer;font-size:1em;">Fermer</button>
-    `;
-    document.body.appendChild(popup);
-    document.getElementById("closeLateAgentsPopupBtn").onclick = () =>
-      popup.remove();
+  // Fonction pour rafraîchir le tableau des dossiers en retard
+  function refreshLateFoldersTable() {
+    // Sélectionne le tableau (adapte l'ID ou la classe selon ton HTML)
+    const lateTable = document.getElementById("lateFoldersTable");
+    if (!lateTable) return;
+    // Vide le tableau
+    lateTable.querySelector("tbody").innerHTML = "";
+    // Récalcule la liste des agents en retard
+    const lateAgents = getLateAgentsFromDeliveries(deliveries);
+    // === LOG DIAGNOSTIC ===
+    console.log(
+      "[SYNC DIAG][AVANT] lateAgents (avant affichage) :",
+      lateAgents
+    );
+    // Pour chaque agent en retard, ajoute une ligne
+    lateAgents.forEach((agent) => {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.textContent = agent;
+      tr.appendChild(td);
+      // Ajoute d'autres colonnes si besoin (ex : nombre de dossiers, bouton action...)
+      lateTable.querySelector("tbody").appendChild(tr);
+    });
+    // Si aucun agent en retard
+    if (lateAgents.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 10;
+      td.textContent = "Aucun agent en retard.";
+      tr.appendChild(td);
+      lateTable.querySelector("tbody").appendChild(tr);
+    }
   }
 
-  // Appelle la popup à chaque chargement de données
-  function checkAndShowLateAgentsAlert() {
-    const lateAgents = getLateAgentsFromDeliveries(window.deliveries || []);
-    showLateAgentsPopup(lateAgents);
+  // Ajoute l'eventListener sur le bouton "Rafraîchir la liste" (adapte l'ID selon ton HTML)
+  const refreshLateListBtn = document.getElementById("refreshLateListBtn");
+  if (refreshLateListBtn) {
+    refreshLateListBtn.addEventListener("click", async function () {
+      console.log(
+        "[SYNC DIAG][BTN] Rafraîchir la liste : rechargement des données..."
+      );
+      await loadDeliveries();
+      console.log(
+        "[SYNC DIAG][BTN] Données rechargées, recalcul de la liste des agents en retard..."
+      );
+      refreshLateFoldersTable();
+    });
   }
 
-  // Appel initial après chargement des livraisons
-  if (typeof loadDeliveries === "function") {
-    const origLoadDeliveries = loadDeliveries;
-    window.loadDeliveries = async function (...args) {
-      const result = await origLoadDeliveries.apply(this, args);
-      checkAndShowLateAgentsAlert();
-      return result;
-    };
-  } else {
-    // Si loadDeliveries n'est pas une fonction globale, on tente d'appeler après 2s
-    setTimeout(checkAndShowLateAgentsAlert, 2000);
-  }
-
-  // Expose la fonction si besoin
-  window.checkAndShowLateAgentsAlert = checkAndShowLateAgentsAlert;
+  // Optionnel : expose la fonction pour l'appeler ailleurs si besoin
+  window.refreshLateFoldersTable = refreshLateFoldersTable;
 
   // ================== CLIGNOTEMENT VERT NOUVELLE LIGNE (FORCÉ) ==================
   // Patch direct sur le tableau principal
