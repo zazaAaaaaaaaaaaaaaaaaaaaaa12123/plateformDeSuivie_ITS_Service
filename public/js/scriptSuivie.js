@@ -8587,7 +8587,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     // Un agent est en retard s'il a au moins un conteneur non livré depuis 2 jours ou plus
     const lateAgents = {};
     const now = new Date();
-    deliveries.forEach((d) => {
+    deliveries.forEach((d, idx) => {
       const agent = d.employee_name || "Agent inconnu";
       const status = d.status;
       const acconierStatus = d.delivery_status_acconier;
@@ -8596,10 +8596,21 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         .toLowerCase()
         .includes("livr");
       let createdAt = d.created_at ? new Date(d.created_at) : null;
-      if (!isDelivered && createdAt) {
+      let diffDays = null;
+      if (createdAt) {
         const diffTime = now - createdAt;
-        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+        diffDays = diffTime / (1000 * 60 * 60 * 24);
+      }
+      console.log(
+        `[DIAG RETARD] Livraison #${idx} | Agent: ${agent} | Statut: ${status} | Acconier: ${acconierStatus} | created_at: ${d.created_at} | diffDays: ${diffDays} | isDelivered: ${isDelivered}`
+      );
+      if (!isDelivered && createdAt && diffDays !== null) {
         if (diffDays >= 2) {
+          console.log(
+            `[DIAG RETARD] => EN RETARD: Agent ${agent}, dossier créé il y a ${diffDays.toFixed(
+              2
+            )} jours.`
+          );
           if (!lateAgents[agent]) {
             lateAgents[agent] = 1;
           } else {
