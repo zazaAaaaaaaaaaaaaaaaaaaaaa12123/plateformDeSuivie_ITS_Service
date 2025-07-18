@@ -153,7 +153,7 @@ function checkLateContainers() {
         }
         if (!dateEnr) return;
         // Si ce conteneur n'est pas livré et dépasse 2 jours, il est en retard
-        if (!isDelivered && now - dateEnr > 2 * 24 * 60 * 60 * 1000) {
+        if (!isDelivered && now - dateEnr > 30 * 1000) {
           // 2 jours (48h)
           hasLate = true;
           if (!oldestUnlivDate || dateEnr < oldestUnlivDate)
