@@ -9064,37 +9064,41 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       tbody.appendChild(tr);
       return;
     }
-    deliveriesArray.forEach((d, idx) => {
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-delivery-id", d.id || idx);
-      // Exemple d'affichage, à adapter selon vos colonnes !
-      const cols = [
-        d.employee_name || "-",
-        d.client_name || "-",
-        d.client_phone || "-",
-        d.container_number || "-",
-        d.lieu || "-",
-        d.container_foot_type || "-",
-        d.container_type_and_content || "-",
-        d.declaration_number || "-",
-        d.bl_number || "-",
-        d.dossier_number || d.dossier || "-",
-        d.number_of_containers || "-",
-        d.shipping_company || "-",
-        d.weight || "-",
-        d.ship_name || "-",
-        d.circuit || "-",
-        d.transporter_mode || "-",
-        d.statut || d.status || "-",
-        d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "-",
-      ];
-      cols.forEach((val) => {
-        const td = document.createElement("td");
-        td.textContent = val;
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
+  deliveriesArray.forEach((d, idx) => {
+    const tr = document.createElement("tr");
+    tr.setAttribute("data-delivery-id", d.id || idx);
+    // Ajout de la colonne N° (numérotation séquentielle pour le filtrage multi-date)
+    const tdNum = document.createElement("td");
+    tdNum.textContent = idx + 1;
+    tr.appendChild(tdNum);
+    // Les autres colonnes (sans la colonne N° d'origine)
+    const cols = [
+      d.employee_name || "-",
+      d.client_name || "-",
+      d.client_phone || "-",
+      d.container_number || "-",
+      d.lieu || "-",
+      d.container_foot_type || "-",
+      d.container_type_and_content || "-",
+      d.declaration_number || "-",
+      d.bl_number || "-",
+      d.dossier_number || d.dossier || "-",
+      d.number_of_containers || "-",
+      d.shipping_company || "-",
+      d.weight || "-",
+      d.ship_name || "-",
+      d.circuit || "-",
+      d.transporter_mode || "-",
+      d.statut || d.status || "-",
+      d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "-",
+    ];
+    cols.forEach((val) => {
+      const td = document.createElement("td");
+      td.textContent = val;
+      tr.appendChild(td);
     });
+    tbody.appendChild(tr);
+  });
   }
 
   // ================== FIN CLIGNOTEMENT VERT ==================
