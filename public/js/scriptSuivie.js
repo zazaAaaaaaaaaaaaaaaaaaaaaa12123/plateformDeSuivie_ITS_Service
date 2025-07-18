@@ -8198,7 +8198,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     );
   }
   await loadDeliveries(); // This now triggers applyCombinedFilters()
-  showLateDeliveryAlert();
+
   // Initialize WebSocket connection AFTER initial data load
   initializeWebSocket(); // <--- MOVED HERE
 
@@ -8584,10 +8584,10 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // ================= AJOUT : Rafraîchissement dynamique du tableau dossiers en retard =================
   // Fonction utilitaire pour détecter les agents en retard (à adapter selon ta logique métier)
   function getLateAgentsFromDeliveries(deliveries) {
-    // Un agent est en retard s'il a au moins un conteneur non livré depuis 1 jour ou plus
+    // On considère qu'un agent est en retard s'il a au moins un conteneur non livré
     const lateAgents = {};
-    const now = new Date();
-    console.log("[DIAG RETARD][DEBUG] Tableau deliveries reçu :", deliveries);
+    // === LOG DIAGNOSTIC (avant recalcul) ===
+    console.log("[SYNC DIAG][BEFORE] window.deliveries :", deliveries);
     deliveries.forEach((d, idx) => {
       const agent = d.employee_name || "Agent inconnu";
       const status = d.status;
@@ -8596,46 +8596,21 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         .toString()
         .toLowerCase()
         .includes("livr");
-      let createdAt = d.created_at ? new Date(d.created_at) : null;
-      let diffDays = null;
-      let createdAtRaw = d.created_at;
-      if (
-        createdAtRaw === undefined ||
-        createdAtRaw === null ||
-        createdAtRaw === ""
-      ) {
-        console.log(
-          `[DIAG RETARD][DEBUG] Livraison #${idx} | Agent: ${agent} | created_at ABSENT ou VIDE | Statut: ${status} | Acconier: ${acconierStatus}`
-        );
-      } else {
-        console.log(
-          `[DIAG RETARD][DEBUG] Livraison #${idx} | Agent: ${agent} | created_at: ${createdAtRaw} | Statut: ${status} | Acconier: ${acconierStatus}`
-        );
-      }
-      if (createdAt) {
-        const diffTime = now - createdAt;
-        diffDays = diffTime / (1000 * 60 * 60 * 24);
-      }
+      // === LOG DÉTAILLÉ PAR LIVRAISON ===
       console.log(
-        `[DIAG RETARD] Livraison #${idx} | Agent: ${agent} | Statut: ${status} | Acconier: ${acconierStatus} | created_at: ${createdAtRaw} | diffDays: ${diffDays} | isDelivered: ${isDelivered}`
+        `[SYNC DIAG][LIVRAISON][#${idx}] Agent: ${agent} | status: '${status}' | acconier: '${acconierStatus}' | isDelivered:`,
+        isDelivered
       );
-      if (!isDelivered && createdAt && diffDays !== null) {
-        if (diffDays >= 1) {
-          console.log(
-            `[DIAG RETARD] => EN RETARD: Agent ${agent}, dossier créé il y a ${diffDays.toFixed(
-              2
-            )} jours.`
-          );
-          if (!lateAgents[agent]) {
-            lateAgents[agent] = 1;
-          } else {
-            lateAgents[agent]++;
-          }
-        }
+      if (!isDelivered) {
+        if (!lateAgents[agent]) lateAgents[agent] = 0;
+        lateAgents[agent]++;
       }
     });
+    // === LOG DIAGNOSTIC (après recalcul) ===
+    console.log("[SYNC DIAG][AFTER] lateAgents (avant return) :", lateAgents);
     return Object.keys(lateAgents);
   }
+
   // Fonction pour rafraîchir le tableau des dossiers en retard
   function refreshLateFoldersTable() {
     // Sélectionne le tableau (adapte l'ID ou la classe selon ton HTML)
@@ -8669,60 +8644,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       lateTable.querySelector("tbody").appendChild(tr);
     }
   }
-  function showLateDeliveryAlert() {
-    // On veut afficher le nom des agents et le nombre de dossiers en retard
-    const lateAgentsObj = (() => {
-      // On recalcule le tableau complet pour avoir le nombre de dossiers
-      const lateAgents = {};
-      const now = new Date();
-      deliveries.forEach((d) => {
-        const agent = d.employee_name || "Agent inconnu";
-        const status = d.status;
-        const acconierStatus = d.delivery_status_acconier;
-        const isDelivered = (status || acconierStatus || "")
-          .toString()
-          .toLowerCase()
-          .includes("livr");
-        let createdAt = d.created_at ? new Date(d.created_at) : null;
-        let diffDays = null;
-        if (createdAt) {
-          const diffTime = now - createdAt;
-          diffDays = diffTime / (1000 * 60 * 60 * 24);
-        }
-        if (!isDelivered && createdAt && diffDays !== null && diffDays >= 1) {
-          if (!lateAgents[agent]) {
-            lateAgents[agent] = 1;
-          } else {
-            lateAgents[agent]++;
-          }
-        }
-      });
-      return lateAgents;
-    })();
-    const lateAgentNames = Object.keys(lateAgentsObj);
-    console.log("[DIAG ALERT] showLateDeliveryAlert called");
-    console.log("[DIAG ALERT] deliveries:", deliveries);
-    console.log("[DIAG ALERT] lateAgentsObj:", lateAgentsObj);
-    if (lateAgentNames.length > 0) {
-      // Construction du message détaillé
-      const details = lateAgentNames
-        .map(
-          (agent) =>
-            `${agent} (${lateAgentsObj[agent]} dossier${
-              lateAgentsObj[agent] > 1 ? "s" : ""
-            } en retard)`
-        )
-        .join(", ");
-      showCustomAlert(
-        `Attention : ${
-          lateAgentNames.length > 1 ? "Des agents ont" : "Un agent a"
-        } des dossiers non livrés depuis 1 jour ou plus !\nAgents concernés : ${details}`,
-        "warning"
-      );
-    } else {
-      console.log("[DIAG ALERT] Aucun agent en retard détecté.");
-    }
-  }
+
   // Ajoute l'eventListener sur le bouton "Rafraîchir la liste" (adapte l'ID selon ton HTML)
   const refreshLateListBtn = document.getElementById("refreshLateListBtn");
   if (refreshLateListBtn) {
