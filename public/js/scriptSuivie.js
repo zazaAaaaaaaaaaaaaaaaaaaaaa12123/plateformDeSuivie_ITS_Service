@@ -8670,15 +8670,53 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     }
   }
   function showLateDeliveryAlert() {
-    const lateAgents = getLateAgentsFromDeliveries(deliveries);
+    // On veut afficher le nom des agents et le nombre de dossiers en retard
+    const lateAgentsObj = (() => {
+      // On recalcule le tableau complet pour avoir le nombre de dossiers
+      const lateAgents = {};
+      const now = new Date();
+      deliveries.forEach((d) => {
+        const agent = d.employee_name || "Agent inconnu";
+        const status = d.status;
+        const acconierStatus = d.delivery_status_acconier;
+        const isDelivered = (status || acconierStatus || "")
+          .toString()
+          .toLowerCase()
+          .includes("livr");
+        let createdAt = d.created_at ? new Date(d.created_at) : null;
+        let diffDays = null;
+        if (createdAt) {
+          const diffTime = now - createdAt;
+          diffDays = diffTime / (1000 * 60 * 60 * 24);
+        }
+        if (!isDelivered && createdAt && diffDays !== null && diffDays >= 1) {
+          if (!lateAgents[agent]) {
+            lateAgents[agent] = 1;
+          } else {
+            lateAgents[agent]++;
+          }
+        }
+      });
+      return lateAgents;
+    })();
+    const lateAgentNames = Object.keys(lateAgentsObj);
     console.log("[DIAG ALERT] showLateDeliveryAlert called");
     console.log("[DIAG ALERT] deliveries:", deliveries);
-    console.log("[DIAG ALERT] lateAgents:", lateAgents);
-    if (lateAgents.length > 0) {
+    console.log("[DIAG ALERT] lateAgentsObj:", lateAgentsObj);
+    if (lateAgentNames.length > 0) {
+      // Construction du message détaillé
+      const details = lateAgentNames
+        .map(
+          (agent) =>
+            `${agent} (${lateAgentsObj[agent]} dossier${
+              lateAgentsObj[agent] > 1 ? "s" : ""
+            } en retard)`
+        )
+        .join(", ");
       showCustomAlert(
         `Attention : ${
-          lateAgents.length > 1 ? "Des agents ont" : "Un agent a"
-        } des dossiers non livrés depuis 2 jours ou plus !`,
+          lateAgentNames.length > 1 ? "Des agents ont" : "Un agent a"
+        } des dossiers non livrés depuis 1 jour ou plus !\nAgents concernés : ${details}`,
         "warning"
       );
     } else {
