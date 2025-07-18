@@ -1861,8 +1861,114 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   });
 
   // DOM element for the status filter
+
   const statusFilterSelect = document.getElementById("statusFilterSelect");
   const mainTableDateFilter = document.getElementById("mainTableDateFilter");
+
+  // === AJOUT : Inputs pour filtrage par plage de dates ===
+  // Création dynamique si non présents dans le HTML
+  let dateRangeContainer = document.getElementById("dateRangeFilterContainer");
+  if (!dateRangeContainer) {
+    dateRangeContainer = document.createElement("div");
+    dateRangeContainer.id = "dateRangeFilterContainer";
+    dateRangeContainer.style.display = "flex";
+    dateRangeContainer.style.gap = "10px";
+    dateRangeContainer.style.alignItems = "center";
+    dateRangeContainer.style.margin = "10px 0";
+    // Place le conteneur juste avant le tableau principal
+    if (deliveriesTable && deliveriesTable.parentNode) {
+      deliveriesTable.parentNode.insertBefore(
+        dateRangeContainer,
+        deliveriesTable
+      );
+    } else {
+      document.body.insertBefore(dateRangeContainer, document.body.firstChild);
+    }
+  }
+  // Input date début
+  let dateStartInput = document.getElementById("dateRangeStart");
+  if (!dateStartInput) {
+    dateStartInput = document.createElement("input");
+    dateStartInput.type = "date";
+    dateStartInput.id = "dateRangeStart";
+    dateStartInput.style.padding = "5px";
+    dateStartInput.style.borderRadius = "5px";
+    dateStartInput.style.border = "1px solid #ccc";
+    dateRangeContainer.appendChild(dateStartInput);
+  }
+  // Input date fin
+  let dateEndInput = document.getElementById("dateRangeEnd");
+  if (!dateEndInput) {
+    dateEndInput = document.createElement("input");
+    dateEndInput.type = "date";
+    dateEndInput.id = "dateRangeEnd";
+    dateEndInput.style.padding = "5px";
+    dateEndInput.style.borderRadius = "5px";
+    dateEndInput.style.border = "1px solid #ccc";
+    dateRangeContainer.appendChild(dateEndInput);
+  }
+  // Label
+  let dateRangeLabel = document.getElementById("dateRangeLabel");
+  if (!dateRangeLabel) {
+    dateRangeLabel = document.createElement("span");
+    dateRangeLabel.id = "dateRangeLabel";
+    dateRangeLabel.textContent = "Filtrer entre :";
+    dateRangeLabel.style.fontWeight = "bold";
+    dateRangeLabel.style.marginRight = "8px";
+    dateRangeContainer.insertBefore(dateRangeLabel, dateStartInput);
+  }
+
+  // Fonction utilitaire pour filtrer les livraisons selon la plage de dates
+  function filterDeliveriesByDateRange(deliveries, startDate, endDate) {
+    if (!startDate && !endDate) return deliveries;
+    return deliveries.filter((d) => {
+      if (!d.created_at) return false;
+      let dDate = d.created_at;
+      if (typeof dDate === "string") dDate = new Date(dDate);
+      dDate.setHours(0, 0, 0, 0);
+      let afterStart = true,
+        beforeEnd = true;
+      if (startDate) {
+        let s = new Date(startDate);
+        s.setHours(0, 0, 0, 0);
+        afterStart = dDate >= s;
+      }
+      if (endDate) {
+        let e = new Date(endDate);
+        e.setHours(0, 0, 0, 0);
+        beforeEnd = dDate <= e;
+      }
+      return afterStart && beforeEnd;
+    });
+  }
+
+  // Patch la fonction applyCombinedFilters pour intégrer le filtrage par plage de dates
+  // Utilise un nom unique pour éviter les conflits de redéclaration
+  const dateRangeFilter_applyCombinedFiltersOrig =
+    window.applyCombinedFilters || applyCombinedFilters;
+  window.applyCombinedFilters = function (...args) {
+    const start = dateStartInput.value;
+    const end = dateEndInput.value;
+    let filtered = deliveries;
+    if (start || end) {
+      filtered = filterDeliveriesByDateRange(filtered, start, end);
+    }
+    if (typeof dateRangeFilter_applyCombinedFiltersOrig === "function") {
+      try {
+        dateRangeFilter_applyCombinedFiltersOrig.apply(this, [
+          filtered,
+          ...args.slice(1),
+        ]);
+      } catch (e) {
+        dateRangeFilter_applyCombinedFiltersOrig.apply(this, args);
+      }
+    }
+    setTimeout(forceBlinkOnNewRows, 50);
+  };
+
+  // Rafraîchit le tableau à chaque changement de date
+  dateStartInput.addEventListener("change", window.applyCombinedFilters);
+  dateEndInput.addEventListener("change", window.applyCombinedFilters);
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
