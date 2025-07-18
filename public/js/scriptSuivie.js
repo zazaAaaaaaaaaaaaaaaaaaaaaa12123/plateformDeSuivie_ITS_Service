@@ -8753,6 +8753,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
+
 // ====== Boîte d'alerte universelle (pop-up) ======
 window.showCustomAlert = function (message, type = "info") {
   // Supprime toute ancienne alerte
@@ -8846,3 +8847,39 @@ window.showCustomAlert = function (message, type = "info") {
   };
 };
 // ====== Fin boîte d'alerte universelle ======
+
+// ====== Affichage automatique de l'alerte toutes les 3 secondes si retard ======
+setInterval(() => {
+  if (typeof deliveries !== "undefined" && Array.isArray(deliveries)) {
+    const now = new Date();
+    const lateAgents = [];
+    deliveries.forEach((d) => {
+      const agent = d.employee_name || "Agent inconnu";
+      const status = d.status;
+      const acconierStatus = d.delivery_status_acconier;
+      const isDelivered = (status || acconierStatus || "")
+        .toString()
+        .toLowerCase()
+        .includes("livr");
+      let createdAt = d.created_at ? new Date(d.created_at) : null;
+      if (
+        !isDelivered &&
+        createdAt &&
+        now - createdAt > 2 * 24 * 60 * 60 * 1000
+      ) {
+        lateAgents.push(agent);
+      }
+    });
+    const uniqueLateAgents = [...new Set(lateAgents)];
+    if (uniqueLateAgents.length > 0) {
+      // Vérifie si l'alerte n'est pas déjà affichée
+      if (!document.getElementById("customAlertModal")) {
+        showCustomAlert(
+          `Attention : ${uniqueLateAgents.length} agent(s) ont des dossiers en retard (> 2 jours) !`,
+          "warning"
+        );
+      }
+    }
+  }
+}, 3000);
+// ====== Fin affichage automatique ======
