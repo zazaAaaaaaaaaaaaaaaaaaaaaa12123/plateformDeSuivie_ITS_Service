@@ -47,11 +47,26 @@ function renderLateDossiersTable() {
     let dateLiv = c.deliveryDate || "-";
     let heureLiv = "-";
     let dateLivForFilter = "";
-    if (typeof dateLiv === "string" && dateLiv.includes(" ")) {
-      const parts = dateLiv.split(" ");
-      dateLivForFilter = parts[0];
-      dateLiv = parts[0];
-      heureLiv = parts[1] || "-";
+    // Gestion robuste de la date
+    if (typeof dateLiv === "string") {
+      if (dateLiv.includes(" ")) {
+        const parts = dateLiv.split(" ");
+        dateLivForFilter = parts[0];
+        // Format JJ/MM/AAAA
+        if (/^\d{4}-\d{2}-\d{2}$/.test(parts[0])) {
+          const [y, m, d] = parts[0].split("-");
+          dateLiv = `${d}/${m}/${y}`;
+        } else {
+          dateLiv = parts[0];
+        }
+        heureLiv = parts[1] || "-";
+      } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateLiv)) {
+        dateLivForFilter = dateLiv;
+        const [y, m, d] = dateLiv.split("-");
+        dateLiv = `${d}/${m}/${y}`;
+      } else {
+        dateLivForFilter = dateLiv;
+      }
     } else if (
       dateLiv &&
       typeof dateLiv === "object" &&
@@ -66,38 +81,40 @@ function renderLateDossiersTable() {
       c.numeroTC
     }</td><td style='padding:6px 10px;'>${agent}</td><td style='padding:6px 10px;'>${
       c.dateEnr || "-"
-    }</td><td style='padding:6px 10px;'>${dateLiv}</td><td style='padding:6px 10px;'>${heureLiv}</td></tr>`;
+    }</td><td style='padding:6px 10px;'>${
+      dateLiv || "-"
+    }</td><td style='padding:6px 10px;'>${heureLiv}</td></tr>`;
   });
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
   // Ajout de l'écouteur sur le bouton Filtrer
-  const filterBtn = document.getElementById('filterDateBtn');
-  filterBtn.onclick = function() {
-    const start = document.getElementById('filterDateStart').value;
-    const end = document.getElementById('filterDateEnd').value;
-    const rows = document.querySelectorAll('#lateTableBody tr');
-    rows.forEach(row => {
-      const d = row.getAttribute('data-date-liv');
+  const filterBtn = document.getElementById("filterDateBtn");
+  filterBtn.onclick = function () {
+    const start = document.getElementById("filterDateStart").value;
+    const end = document.getElementById("filterDateEnd").value;
+    const rows = document.querySelectorAll("#lateTableBody tr");
+    rows.forEach((row) => {
+      const d = row.getAttribute("data-date-liv");
       if (start && end) {
         if (d >= start && d <= end) {
-          row.style.display = '';
+          row.style.display = "";
         } else {
-          row.style.display = 'none';
+          row.style.display = "none";
         }
       } else if (start) {
         if (d >= start) {
-          row.style.display = '';
+          row.style.display = "";
         } else {
-          row.style.display = 'none';
+          row.style.display = "none";
         }
       } else if (end) {
         if (d <= end) {
-          row.style.display = '';
+          row.style.display = "";
         } else {
-          row.style.display = 'none';
+          row.style.display = "none";
         }
       } else {
-        row.style.display = '';
+        row.style.display = "";
       }
     });
   };
