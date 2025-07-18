@@ -2905,6 +2905,61 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
 // ===============================
 // HEADER CSP pour autoriser Google Translate et ressources externes nécessaires
 // ===============================
+// ROUTE NOTIFICATION AGENT ACCONIER (envoi email)
+// ===============================
+//const nodemailer = require("nodemailer");
+
+app.post("/notify-agent", async (req, res) => {
+  const { agent, dossier } = req.body || {};
+  if (!agent || !dossier) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Agent et dossier requis." });
+  }
+  try {
+    // Recherche l'email de l'agent dans la base acconier
+    const result = await pool.query(
+      "SELECT email FROM acconier WHERE nom = $1 LIMIT 1",
+      [agent]
+    );
+    if (!result.rows.length || !result.rows[0].email) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Email de l'agent non trouvé." });
+    }
+    const agentEmail = result.rows[0].email;
+
+    // Prépare le message
+    const subject = `Notification dossier en retard`;
+    const text = `Bonjour ${agent},\n\nVous avez un dossier ${dossier} en retard. Veuillez revisualiser ce dossier plus vite.`;
+
+    // Configure le transporteur SMTP (à adapter selon ton serveur mail)
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "ton.email@gmail.com", // À remplacer par ton email
+        pass: "ton_mot_de_passe", // À remplacer par ton mot de passe ou app password
+      },
+    });
+
+    await transporter.sendMail({
+      from: "ton.email@gmail.com", // À remplacer
+      to: agentEmail,
+      subject,
+      text,
+    });
+    res.json({ success: true, message: "Email envoyé à l'agent." });
+  } catch (err) {
+    console.error("Erreur lors de l'envoi de l'email agent:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'envoi de l'email.",
+    });
+  }
+});
+// ===============================
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
