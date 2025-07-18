@@ -358,7 +358,10 @@
           </div>
 
           <div class="search-bar-wrapper-top">
-            <div class="search-wrapper">
+            <div
+              class="search-wrapper d-flex flex-wrap align-items-center gap-2"
+              style="row-gap: 10px; column-gap: 12px"
+            >
               <i class="fas fa-search search-icon"></i>
               <input
                 type="search"
@@ -366,12 +369,19 @@
                 class="search-input"
                 placeholder="Rechercher une livraison..."
                 aria-label="Recherche"
+                style="min-width: 180px; max-width: 220px"
               />
-              <!-- Filtres par plage de dates -->
+              <input
+                type="date"
+                id="mainTableDateFilter"
+                class="icon-btn icon-btn-company-color"
+                title="Filtrer par date unique"
+                style="min-width: 140px"
+              />
               <input
                 type="date"
                 id="dateRangeStart"
-                class="icon-btn icon-btn-company-color ms-2"
+                class="icon-btn icon-btn-company-color"
                 title="Date de début"
                 style="min-width: 140px"
                 placeholder="Date de début"
