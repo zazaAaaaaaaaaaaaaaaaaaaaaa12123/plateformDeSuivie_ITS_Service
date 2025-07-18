@@ -24,24 +24,6 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
 });
 
-// --- WebSocket Server pour notifications temps réel ---
-const wss = new WebSocket.Server({ server });
-let wsClients = [];
-wss.on("connection", (ws) => {
-  wsClients.push(ws);
-  ws.on("close", () => {
-    wsClients = wsClients.filter((c) => c !== ws);
-  });
-});
-
-function broadcastNouvelleDemandeCodeEntreprise() {
-  wsClients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type: "nouvelle-demande-code-entreprise" }));
-    }
-  });
-}
-
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs"); // Import unique ici
@@ -53,6 +35,98 @@ const pool = new Pool({
   port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
   ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
 });
+// --- WebSocket Server pour notifications temps réel ---
+const wss = new WebSocket.Server({ server });
+let wsClients = [];
+wss.on("connection", (ws) => {
+  wsClients.push(ws);
+  ws.on("close", () => {
+    wsClients = wsClients.filter((c) => c !== ws);
+  });
+});
+
+// ===============================
+// TABLE POUR RESPONSABLE DE LIVRAISON PERSISTANT
+// ===============================
+const createDeliveryResponsibleTable = `
+  CREATE TABLE IF NOT EXISTS delivery_responsible (
+    id SERIAL PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+async function ensureDeliveryResponsibleTable() {
+  try {
+    await pool.query(createDeliveryResponsibleTable);
+    // Si aucune ligne, on en crée une par défaut
+    const { rows } = await pool.query(
+      "SELECT COUNT(*) FROM delivery_responsible;"
+    );
+    if (rows[0].count === "0") {
+      await pool.query(
+        "INSERT INTO delivery_responsible (value) VALUES ($1);",
+        [""]
+      );
+    }
+  } catch (err) {
+    console.error("Erreur création table delivery_responsible:", err);
+  }
+}
+ensureDeliveryResponsibleTable();
+
+// ===============================
+// ROUTE : GET valeur responsable de livraison persistée
+// ===============================
+app.get("/delivery-responsible", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT value FROM delivery_responsible ORDER BY updated_at DESC LIMIT 1;"
+    );
+    res.json({ success: true, value: rows[0] ? rows[0].value : "" });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: "Erreur serveur", error: err.message });
+  }
+});
+
+// ===============================
+// ROUTE : POST maj responsable de livraison persistée
+// ===============================
+app.post("/delivery-responsible", async (req, res) => {
+  const { value } = req.body || {};
+  if (typeof value !== "string") {
+    return res.status(400).json({ success: false, message: "Valeur invalide" });
+  }
+  try {
+    // On update la dernière ligne (ou insert si vide)
+    const { rowCount } = await pool.query(
+      "UPDATE delivery_responsible SET value = $1, updated_at = NOW() WHERE id = (SELECT id FROM delivery_responsible ORDER BY updated_at DESC LIMIT 1);",
+      [value]
+    );
+    if (rowCount === 0) {
+      await pool.query(
+        "INSERT INTO delivery_responsible (value) VALUES ($1);",
+        [value]
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: "Erreur serveur", error: err.message });
+  }
+});
+
+function broadcastNouvelleDemandeCodeEntreprise() {
+  wsClients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ type: "nouvelle-demande-code-entreprise" }));
+    }
+  });
+}
+
 // ===============================
 // ===============================
 // ROUTE : Notification dossier en retard (envoi email)

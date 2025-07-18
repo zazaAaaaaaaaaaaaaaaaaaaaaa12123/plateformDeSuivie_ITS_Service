@@ -617,6 +617,71 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 (async () => {
+  // === Désactivation de l'autocomplétion sur les champs sensibles ===
+  window.addEventListener("DOMContentLoaded", function () {
+    // Champ de recherche principal
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+      searchInput.setAttribute("autocomplete", "off");
+      searchInput.setAttribute("autocorrect", "off");
+      searchInput.setAttribute("autocapitalize", "off");
+      searchInput.setAttribute("spellcheck", "false");
+    }
+    // Champ Responsable de livraison (supposé avoir l'id 'deliveryResponsibleInput')
+    const deliveryResponsibleInput = document.getElementById(
+      "deliveryResponsibleInput"
+    );
+    if (deliveryResponsibleInput) {
+      deliveryResponsibleInput.setAttribute("autocomplete", "off");
+      deliveryResponsibleInput.setAttribute("autocorrect", "off");
+      deliveryResponsibleInput.setAttribute("autocapitalize", "off");
+      deliveryResponsibleInput.setAttribute("spellcheck", "false");
+
+      // Récupère la valeur depuis le backend (GET)
+      fetch("/delivery-responsible")
+        .then((response) => {
+          if (!response.ok)
+            throw new Error(
+              "Erreur lors de la récupération du responsable de livraison"
+            );
+          return response.json();
+        })
+        .then((data) => {
+          if (data && data.value) {
+            deliveryResponsibleInput.value = data.value;
+          }
+        })
+        .catch((err) => {
+          console.error(
+            "Erreur lors de la récupération du responsable de livraison:",
+            err
+          );
+        });
+
+      // Sauvegarde à chaque modification (POST)
+      deliveryResponsibleInput.addEventListener("input", function () {
+        fetch("/delivery-responsible", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ value: deliveryResponsibleInput.value }),
+        })
+          .then((response) => {
+            if (!response.ok)
+              throw new Error(
+                "Erreur lors de la sauvegarde du responsable de livraison"
+              );
+          })
+          .catch((err) => {
+            console.error(
+              "Erreur lors de la sauvegarde du responsable de livraison:",
+              err
+            );
+          });
+      });
+    }
+  });
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   // Détection automatique de l'environnement pour l'URL WebSocket
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -8237,6 +8302,35 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         console.log("Search field cleared, resetting filter.");
         applyCombinedFilters();
       }
+    });
+  }
+
+  // (Sécurité) Désactive l'autocomplétion sur le champ de recherche si jamais il est généré dynamiquement
+  if (searchInput) {
+    searchInput.setAttribute("autocomplete", "off");
+    searchInput.setAttribute("autocorrect", "off");
+    searchInput.setAttribute("autocapitalize", "off");
+    searchInput.setAttribute("spellcheck", "false");
+  }
+
+  // (Sécurité) Désactive l'autocomplétion sur le champ Responsable de livraison si jamais il est généré dynamiquement
+  const deliveryResponsibleInput = document.getElementById(
+    "deliveryResponsibleInput"
+  );
+  if (deliveryResponsibleInput) {
+    deliveryResponsibleInput.setAttribute("autocomplete", "off");
+    deliveryResponsibleInput.setAttribute("autocorrect", "off");
+    deliveryResponsibleInput.setAttribute("autocapitalize", "off");
+    deliveryResponsibleInput.setAttribute("spellcheck", "false");
+    // Restaure la valeur sauvegardée si présente
+    const savedValue = localStorage.getItem("deliveryResponsibleValue");
+    if (savedValue) deliveryResponsibleInput.value = savedValue;
+    // Sauvegarde à chaque modification
+    deliveryResponsibleInput.addEventListener("input", function () {
+      localStorage.setItem(
+        "deliveryResponsibleValue",
+        deliveryResponsibleInput.value
+      );
     });
   }
 
