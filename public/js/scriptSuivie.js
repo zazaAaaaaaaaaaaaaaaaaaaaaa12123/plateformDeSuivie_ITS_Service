@@ -8618,15 +8618,43 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     if (!lateTable) return;
     // Vide le tableau
     lateTable.querySelector("tbody").innerHTML = "";
-    // Récalcule la liste des agents en retard
-    const lateAgents = getLateAgentsFromDeliveries(deliveries);
+    // Récalcule la liste des agents en retard (plus de 2 jours)
+    const now = new Date();
+    const lateAgents = [];
+    deliveries.forEach((d) => {
+      const agent = d.employee_name || "Agent inconnu";
+      const status = d.status;
+      const acconierStatus = d.delivery_status_acconier;
+      const isDelivered = (status || acconierStatus || "")
+        .toString()
+        .toLowerCase()
+        .includes("livr");
+      // Vérifie la date de création
+      let createdAt = d.created_at ? new Date(d.created_at) : null;
+      if (
+        !isDelivered &&
+        createdAt &&
+        now - createdAt > 2 * 24 * 60 * 60 * 1000
+      ) {
+        lateAgents.push(agent);
+      }
+    });
+    // Retire les doublons
+    const uniqueLateAgents = [...new Set(lateAgents)];
     // === LOG DIAGNOSTIC ===
     console.log(
-      "[SYNC DIAG][AVANT] lateAgents (avant affichage) :",
-      lateAgents
+      "[SYNC DIAG][AVANT] lateAgents (plus de 2 jours, avant affichage) :",
+      uniqueLateAgents
     );
+    // Affiche une alerte globale si au moins un agent en retard
+    if (uniqueLateAgents.length > 0 && typeof showCustomAlert === "function") {
+      showCustomAlert(
+        `Attention : ${uniqueLateAgents.length} agent(s) ont des dossiers en retard (> 2 jours) !`,
+        "warning"
+      );
+    }
     // Pour chaque agent en retard, ajoute une ligne
-    lateAgents.forEach((agent) => {
+    uniqueLateAgents.forEach((agent) => {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.textContent = agent;
@@ -8635,7 +8663,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       lateTable.querySelector("tbody").appendChild(tr);
     });
     // Si aucun agent en retard
-    if (lateAgents.length === 0) {
+    if (uniqueLateAgents.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.colSpan = 10;
