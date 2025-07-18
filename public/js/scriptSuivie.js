@@ -1918,6 +1918,179 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     dateRangeContainer.insertBefore(dateRangeLabel, dateStartInput);
   }
 
+  // === BOUTON POUR AFFICHER LE RÉSULTAT DANS UNE POP-UP ===
+  let showDateRangeTableBtn = document.getElementById("showDateRangeTableBtn");
+  if (!showDateRangeTableBtn) {
+    showDateRangeTableBtn = document.createElement("button");
+    showDateRangeTableBtn.id = "showDateRangeTableBtn";
+    showDateRangeTableBtn.textContent = "Afficher le tableau filtré";
+    showDateRangeTableBtn.style.padding = "6px 18px";
+    showDateRangeTableBtn.style.borderRadius = "6px";
+    showDateRangeTableBtn.style.border = "1px solid #007bff";
+    showDateRangeTableBtn.style.background = "#007bff";
+    showDateRangeTableBtn.style.color = "#fff";
+    showDateRangeTableBtn.style.fontWeight = "bold";
+    showDateRangeTableBtn.style.cursor = "pointer";
+    showDateRangeTableBtn.style.marginLeft = "12px";
+    dateRangeContainer.appendChild(showDateRangeTableBtn);
+  }
+
+  // Fonction pour générer le tableau filtré dans une pop-up
+  function showDateRangePopupTable(filteredDeliveries) {
+    // Création de l'overlay
+    let overlay = document.createElement("div");
+    overlay.id = "dateRangePopupOverlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "rgba(30,41,59,0.45)";
+    overlay.style.zIndex = 99999;
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+
+    // Boîte centrale
+    let box = document.createElement("div");
+    box.style.background = "#fff";
+    box.style.borderRadius = "14px";
+    box.style.boxShadow = "0 8px 32px rgba(30,41,59,0.18)";
+    box.style.maxWidth = "1200px";
+    box.style.width = "98vw";
+    box.style.maxHeight = "90vh";
+    box.style.overflow = "auto";
+    box.style.padding = "32px 28px 24px 28px";
+    box.style.position = "relative";
+
+    // Bouton de fermeture
+    let closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.top = "18px";
+    closeBtn.style.right = "24px";
+    closeBtn.style.background = "none";
+    closeBtn.style.border = "none";
+    closeBtn.style.fontSize = "2.2rem";
+    closeBtn.style.color = "#007bff";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.onclick = () => {
+      overlay.remove();
+      // Retour automatique au tableau général
+      applyCombinedFilters();
+    };
+    box.appendChild(closeBtn);
+
+    // Titre
+    let title = document.createElement("h3");
+    title.textContent = `Livraisons du ${dateStartInput.value || "..."} au ${
+      dateEndInput.value || "..."
+    }`;
+    title.style.marginBottom = "18px";
+    title.style.fontWeight = "bold";
+    title.style.fontSize = "1.3em";
+    title.style.color = "#1e293b";
+    box.appendChild(title);
+
+    // Tableau filtré
+    let table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+    table.style.marginBottom = "18px";
+    table.style.fontSize = "1em";
+
+    // En-têtes spécifiques
+    const headers = [
+      "Agent",
+      "Client (Nom)",
+      "Client (Téléphone)",
+      "Numéro TC",
+      "Lieu",
+      "Type de conteneur (en pieds)",
+      "Numéro de déclaration",
+      "Numéro de BL",
+      "Dossier",
+      "Nombre de conteneurs",
+      "Compagnie maritime",
+    ];
+    let thead = document.createElement("thead");
+    let trh = document.createElement("tr");
+    headers.forEach((h) => {
+      let th = document.createElement("th");
+      th.textContent = h;
+      th.style.background = "#007bff";
+      th.style.color = "#fff";
+      th.style.padding = "10px 8px";
+      th.style.fontWeight = "bold";
+      th.style.border = "1px solid #e0e7ef";
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+
+    // Corps du tableau
+    let tbody = document.createElement("tbody");
+    filteredDeliveries.forEach((d) => {
+      let tr = document.createElement("tr");
+      let values = [
+        d.employee_name || "-",
+        d.client_name || "-",
+        d.client_phone || "-",
+        d.container_number || "-",
+        d.lieu || "-",
+        d.container_foot_type || "-",
+        d.declaration_number || "-",
+        d.bl_number || "-",
+        d.dossier_number || d.dossier || "-",
+        d.number_of_containers || "-",
+        d.shipping_company || "-",
+      ];
+      values.forEach((v) => {
+        let td = document.createElement("td");
+        td.textContent = v;
+        td.style.padding = "8px 7px";
+        td.style.border = "1px solid #e0e7ef";
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    box.appendChild(table);
+
+    // Message si aucun résultat
+    if (filteredDeliveries.length === 0) {
+      let msg = document.createElement("div");
+      msg.textContent = "Aucune livraison trouvée pour cette période.";
+      msg.style.color = "#dc3545";
+      msg.style.fontWeight = "bold";
+      msg.style.textAlign = "center";
+      msg.style.margin = "18px 0 8px 0";
+      box.appendChild(msg);
+    }
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    // Fermeture par clic sur le fond
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        applyCombinedFilters();
+      }
+    };
+  }
+
+  // Ajoute l'event sur le bouton
+  showDateRangeTableBtn.onclick = function () {
+    const start = dateStartInput.value;
+    const end = dateEndInput.value;
+    let filtered = deliveries;
+    if (start || end) {
+      filtered = filterDeliveriesByDateRange(filtered, start, end);
+    }
+    showDateRangePopupTable(filtered);
+  };
+
   // Fonction utilitaire pour filtrer les livraisons selon la plage de dates
   function filterDeliveriesByDateRange(deliveries, startDate, endDate) {
     if (!startDate && !endDate) return deliveries;
