@@ -374,6 +374,41 @@
                 ></i>
                 Rechercher
               </button>
+              <!-- BOUTON FILTRAGE ENTRE DEUX DATES -->
+              <button
+                id="openDateRangeFilterBtn"
+                class="icon-btn-company-color ms-2"
+                type="button"
+              >
+                <i class="fas fa-calendar-alt"></i> Filtrage entre deux dates
+              </button>
+            </div>
+          </div>
+          <!-- POPUP FILTRAGE ENTRE DEUX DATES -->
+          <div id="dateRangeFilterPopup" class="popup-overlay d-none">
+            <div class="popup-content" style="max-width: 350px">
+              <span class="close-btn" id="closeDateRangeFilterPopup"
+                >&times;</span
+              >
+              <h2>Filtrer par plage de dates</h2>
+              <div class="mb-3">
+                <label for="dateRangeStart" class="form-label"
+                  >Date de début :</label
+                >
+                <input type="date" id="dateRangeStart" class="form-control" />
+              </div>
+              <div class="mb-3">
+                <label for="dateRangeEnd" class="form-label"
+                  >Date de fin :</label
+                >
+                <input type="date" id="dateRangeEnd" class="form-control" />
+              </div>
+              <button
+                id="applyDateRangeFilterBtn"
+                class="btn btn-primary w-100"
+              >
+                Filtrer
+              </button>
             </div>
           </div>
         </div>
