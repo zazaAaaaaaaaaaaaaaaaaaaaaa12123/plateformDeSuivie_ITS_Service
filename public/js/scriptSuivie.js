@@ -9046,52 +9046,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     document.head.appendChild(style);
   })();
 
-  /********************************************************************
-   * Fonction utilitaire : Affiche les livraisons dans le tableau principal
-   * Utilisée pour le filtrage par plage de dates (dateRangeFilter)
-   ********************************************************************/
-  function renderDeliveriesTable(deliveriesArray) {
-    if (!window.deliveriesTableBody) return;
-    const tbody = window.deliveriesTableBody;
-    tbody.innerHTML = "";
-    if (!Array.isArray(deliveriesArray) || deliveriesArray.length === 0) {
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 20;
-      td.textContent = "Aucune livraison trouvée pour cette période.";
-      td.style.textAlign = "center";
-      tr.appendChild(td);
-      tbody.appendChild(tr);
-      return;
-    }
-    deliveriesArray.forEach((d, idx) => {
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-delivery-id", d.id || idx);
-      // Colonne N° (numérotation séquentielle)
-      const tdNum = document.createElement("td");
-      tdNum.textContent = idx + 1;
-      tr.appendChild(tdNum);
-      // Colonnes dans l'ordre défini par AGENT_TABLE_COLUMNS
-      AGENT_TABLE_COLUMNS.forEach((col) => {
-        const td = document.createElement("td");
-        let value = d[col.id];
-        // Cas spéciaux pour certains champs
-        if (col.id === "dossier_number") {
-          value = d.dossier_number || d.dossier || "-";
-        } else if (col.id === "statut") {
-          value = d.statut || d.status || "-";
-        } else if (col.id === "created_at") {
-          value = d.created_at
-            ? new Date(d.created_at).toLocaleDateString("fr-FR")
-            : "-";
-        }
-        td.textContent = value || "-";
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-  }
-
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
