@@ -492,10 +492,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ) {
         clientName = ordersByDate[dateKey][0].data.clientName;
       }
-      html += `<div class="history-date-user">
-        <span class="history-date">${dateAffichee}</span>
-        <span class="history-user">${clientName}</span>
-      </div>`;
+      // Suppression de la carte "Serge JJ/MM/AAAA" en haut de chaque date
       html += '<ul style="list-style:none;padding:0;margin:0;">';
       ordersByDate[dateKey].forEach((item, idx) => {
         // Génère la carte de l'ordre
