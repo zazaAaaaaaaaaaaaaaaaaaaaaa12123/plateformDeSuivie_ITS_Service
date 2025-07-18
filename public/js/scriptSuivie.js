@@ -3576,23 +3576,8 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     }
     deliveriesTableBody.innerHTML = "";
 
-    // Ajout de l'entête N° si elle n'existe pas déjà
-    const deliveriesTable = deliveriesTableBody.closest("table");
-    if (deliveriesTable) {
-      const thead = deliveriesTable.querySelector("thead");
-      if (thead) {
-        const headerRow = thead.rows[0];
-        if (headerRow && headerRow.cells[0].textContent.trim() !== "N°") {
-          const th = document.createElement("th");
-          th.textContent = "N°";
-          th.style.textAlign = "center";
-          headerRow.insertBefore(th, headerRow.cells[0]);
-        }
-      }
-    }
-
-    // Total columns: 29 original + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) + 1 (N°) = 32
-    const ACTUAL_COLUMN_COUNT = 32;
+    // Total columns: 29 original + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) = 31
+    const ACTUAL_COLUMN_COUNT = 31;
 
     if (deliveriesToRender.length === 0) {
       deliveriesTableBody.innerHTML = `
@@ -3606,12 +3591,6 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       const row = deliveriesTableBody.insertRow();
       row.id = `delivery-row-${delivery.id}`;
       row.dataset.deliveryId = delivery.id;
-
-      // Ajout de la cellule N° en tout début de ligne
-      const numeroCell = row.insertCell();
-      numeroCell.textContent = index + 1;
-      numeroCell.style.fontWeight = "bold";
-      numeroCell.style.textAlign = "center";
 
       if (selectionMode) {
         const checkboxCell = row.insertCell();
@@ -3630,6 +3609,8 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
           }
         });
         checkboxCell.appendChild(checkbox);
+      } else {
+        row.insertCell().textContent = index + 1; // N°
       }
       // Helper function to create interactive or display cells
       const createCell = (value, fieldName, type = "text", options = {}) => {
