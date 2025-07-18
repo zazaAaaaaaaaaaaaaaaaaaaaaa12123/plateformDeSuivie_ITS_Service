@@ -28,95 +28,77 @@ function renderLateDossiersTable() {
   // Cherche le conteneur du tableau principal (à adapter selon ton HTML)
   const tableContainer = document.getElementById("tableauPrincipalRetards");
   if (!tableContainer) return;
-  const lateList =
-    window.lateContainers && Array.isArray(window.lateContainers)
-      ? window.lateContainers
-      : [];
-  // Ajout des filtres de date
-  let filterHtml = `<div style='display:flex;gap:12px;align-items:center;margin-bottom:14px;'>
-    <label>Date début <input type='date' id='filterDateStart' style='padding:4px 8px;border-radius:6px;border:1px solid #2563eb;'></label>
-    <label>Date fin <input type='date' id='filterDateEnd' style='padding:4px 8px;border-radius:6px;border:1px solid #2563eb;'></label>
-    <button id='filterDateBtn' style='padding:6px 18px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-weight:600;cursor:pointer;'>Filtrer</button>
-  </div>`;
-  let html = filterHtml;
-  html += `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
-  html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody id='lateTableBody'>`;
-  // On affiche tout par défaut, le filtrage sera fait après
+  // Ajout des champs de filtre de date si pas déjà présents
+  let filterBar = document.getElementById("dateFilterBar");
+  if (!filterBar) {
+    filterBar = document.createElement("div");
+    filterBar.id = "dateFilterBar";
+    filterBar.style = "display:flex;align-items:center;gap:12px;margin-bottom:18px;";
+    filterBar.innerHTML = `
+      <label for='dateFilterStart' style='font-weight:600;'>Du&nbsp;</label>
+      <input type='date' id='dateFilterStart' style='padding:4px 8px;border-radius:6px;border:1px solid #ccc;'>
+      <label for='dateFilterEnd' style='font-weight:600;'>Au&nbsp;</label>
+      <input type='date' id='dateFilterEnd' style='padding:4px 8px;border-radius:6px;border:1px solid #ccc;'>
+      <button id='applyDateFilterBtn' style='background:#2563eb;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-weight:600;cursor:pointer;'>Filtrer</button>
+      <button id='resetDateFilterBtn' style='background:#f3f4f6;color:#2563eb;border:1px solid #2563eb;border-radius:6px;padding:6px 16px;font-weight:600;cursor:pointer;'>Réinitialiser</button>
+    `;
+    tableContainer.parentNode.insertBefore(filterBar, tableContainer);
+  }
+  // Affiche la plage de dates sélectionnée en haut du tableau
+  let selectedStart = document.getElementById("dateFilterStart").value;
+  let selectedEnd = document.getElementById("dateFilterEnd").value;
+  let dateRangeInfo = "";
+  if (selectedStart && selectedEnd) {
+    dateRangeInfo = `<div style='font-weight:700;color:#2563eb;font-size:1.08em;margin-bottom:8px;'>Livraisons du <span style='color:#ef4444;'>${selectedStart}</span> au <span style='color:#ef4444;'>${selectedEnd}</span></div>`;
+  }
+  // Filtrage des éléments selon la plage de dates
+  let lateList = window.lateContainers && Array.isArray(window.lateContainers) ? window.lateContainers : [];
+  if (selectedStart && selectedEnd) {
+    const startDate = new Date(selectedStart);
+    const endDate = new Date(selectedEnd);
+    lateList = lateList.filter((c) => {
+      if (!c.dateEnr) return false;
+      const enrDate = new Date(c.dateEnr.split("/").reverse().join("-")); // format fr-FR
+      return enrDate >= startDate && enrDate <= endDate;
+    });
+  }
+  if (!lateList.length) {
+    tableContainer.innerHTML = dateRangeInfo + `<div style='color:#ef4444;text-align:center;font-size:1em;padding:10px 0;'>Aucun dossier en retard</div>`;
+    return;
+  }
+  let html = dateRangeInfo + `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
+  html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody>`;
   lateList.forEach((c) => {
     let agent = c.agentName ? c.agentName : "-";
     let dateLiv = c.deliveryDate || "-";
     let heureLiv = "-";
-    let dateLivForFilter = "";
-    // Gestion robuste de la date
-    if (typeof dateLiv === "string") {
-      if (dateLiv.includes(" ")) {
-        const parts = dateLiv.split(" ");
-        dateLivForFilter = parts[0];
-        // Format JJ/MM/AAAA
-        if (/^\d{4}-\d{2}-\d{2}$/.test(parts[0])) {
-          const [y, m, d] = parts[0].split("-");
-          dateLiv = `${d}/${m}/${y}`;
-        } else {
-          dateLiv = parts[0];
-        }
-        heureLiv = parts[1] || "-";
-      } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateLiv)) {
-        dateLivForFilter = dateLiv;
-        const [y, m, d] = dateLiv.split("-");
-        dateLiv = `${d}/${m}/${y}`;
-      } else {
-        dateLivForFilter = dateLiv;
-      }
+    if (typeof dateLiv === "string" && dateLiv.includes(" ")) {
+      const parts = dateLiv.split(" ");
+      dateLiv = parts[0];
+      heureLiv = parts[1] || "-";
     } else if (
       dateLiv &&
       typeof dateLiv === "object" &&
       dateLiv instanceof Date
     ) {
-      dateLivForFilter = dateLiv.toISOString().slice(0, 10);
       dateLiv = dateLiv.toLocaleDateString("fr-FR");
-    } else {
-      dateLivForFilter = dateLiv;
     }
-    html += `<tr data-date-liv='${dateLivForFilter}'><td style='padding:6px 10px;'>${
+    html += `<tr><td style='padding:6px 10px;'>${
       c.numeroTC
     }</td><td style='padding:6px 10px;'>${agent}</td><td style='padding:6px 10px;'>${
       c.dateEnr || "-"
-    }</td><td style='padding:6px 10px;'>${
-      dateLiv || "-"
-    }</td><td style='padding:6px 10px;'>${heureLiv}</td></tr>`;
+    }</td><td style='padding:6px 10px;'>${dateLiv}</td><td style='padding:6px 10px;'>${heureLiv}</td></tr>`;
   });
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
-  // Ajout de l'écouteur sur le bouton Filtrer
-  const filterBtn = document.getElementById("filterDateBtn");
-  filterBtn.onclick = function () {
-    const start = document.getElementById("filterDateStart").value;
-    const end = document.getElementById("filterDateEnd").value;
-    const rows = document.querySelectorAll("#lateTableBody tr");
-    rows.forEach((row) => {
-      const d = row.getAttribute("data-date-liv");
-      if (start && end) {
-        if (d >= start && d <= end) {
-          row.style.display = "";
-        } else {
-          row.style.display = "none";
-        }
-      } else if (start) {
-        if (d >= start) {
-          row.style.display = "";
-        } else {
-          row.style.display = "none";
-        }
-      } else if (end) {
-        if (d <= end) {
-          row.style.display = "";
-        } else {
-          row.style.display = "none";
-        }
-      } else {
-        row.style.display = "";
-      }
-    });
+  // Ajout des listeners pour filtrer et réinitialiser
+  document.getElementById('applyDateFilterBtn').onclick = function() {
+    renderLateDossiersTable();
+  };
+  document.getElementById('resetDateFilterBtn').onclick = function() {
+    document.getElementById('dateFilterStart').value = '';
+    document.getElementById('dateFilterEnd').value = '';
+    renderLateDossiersTable();
   };
 }
 // === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
