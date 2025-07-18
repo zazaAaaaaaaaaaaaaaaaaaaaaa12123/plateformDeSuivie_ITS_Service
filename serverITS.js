@@ -1816,12 +1816,12 @@ app.get("/deliveries/status", async (req, res) => {
         lc.shipping_company,
         lc.transporter, 
         lc.weight, lc.ship_name, lc.circuit, lc.number_of_packages, lc.transporter_mode,
-        lc.nom_agent_visiteur, lc.inspecteur, lc.agent_en_douanes, -- NOUVELLES COLONNES DANS LE SELECT
+        lc.nom_agent_visiteur, lc.inspecteur, lc.agent_en_douanes,
         lc.driver_name, lc.driver_phone, lc.truck_registration,
         lc.delivery_notes,
         lc.is_eir_received,
         lc.delivery_status_acconier, lc.observation_acconier,
-        lc.container_statuses, -- AJOUT DU CHAMP
+        lc.container_statuses,
         ac.email AS agent_email
       FROM livraison_conteneur lc
       LEFT JOIN acconier ac ON lc.employee_name = ac.nom
@@ -1829,26 +1829,34 @@ app.get("/deliveries/status", async (req, res) => {
     `;
     const result = await pool.query(query);
     const deliveries = result.rows.map((delivery) => {
+      // Fonction utilitaire pour traduire le statut CSV ou tableau
       function translateStatusCSV(csv) {
-        if (!csv || typeof csv !== "string") return "-";
-        return csv
-          .split(",")
-          .map((s) => translateStatusToFr(s.trim()))
-          .join(",");
+        if (!csv) return "-";
+        if (typeof csv === "string") {
+          return csv
+            .split(",")
+            .map((s) => translateStatusToFr(s.trim()))
+            .join(",");
+        }
+        if (Array.isArray(csv)) {
+          return csv.map((s) => translateStatusToFr(s)).join(",");
+        }
+        return String(csv);
       }
       // Parse container_statuses si présent
-      let container_statuses = null;
-      if (delivery.container_statuses) {
-        try {
-          container_statuses =
-            typeof delivery.container_statuses === "string"
-              ? JSON.parse(delivery.container_statuses)
-              : delivery.container_statuses;
-        } catch (e) {
-          container_statuses = null;
+      let container_statuses = {};
+      try {
+        if (delivery.container_statuses) {
+          if (typeof delivery.container_statuses === "string") {
+            container_statuses = JSON.parse(delivery.container_statuses);
+          } else if (typeof delivery.container_statuses === "object") {
+            container_statuses = delivery.container_statuses;
+          }
         }
+      } catch (e) {
+        container_statuses = {};
       }
-      // Fallback dynamique si non présent
+      // Fallback dynamique si non présent ou mal formé
       if (!container_statuses || Array.isArray(container_statuses)) {
         const tcList = String(delivery.container_number || "")
           .split(",")
@@ -1860,7 +1868,6 @@ app.get("/deliveries/status", async (req, res) => {
         });
         container_statuses = mapping;
       }
-
       // Ajout du mapping traduit en français pour chaque TC
       let container_statuses_fr = {};
       if (container_statuses && typeof container_statuses === "object") {
@@ -1868,19 +1875,12 @@ app.get("/deliveries/status", async (req, res) => {
           container_statuses_fr[tc] = translateStatusToFr(statut);
         });
       }
-
-      // LOG DEBUG : Affichage du mapping info-bulle (français)
-      console.log(`[DEBUG][container_statuses] TC:`, container_statuses);
-      console.log(
-        `[DEBUG][container_statuses_fr] TC (FR):`,
-        container_statuses_fr
-      );
-
+      // Correction : toujours renvoyer les champs attendus, même si vides
       return {
         ...delivery,
         agent_email: delivery.agent_email || null,
-        status: delivery.status, // code technique CSV (ex: "delivered,pending_acconier")
-        status_fr: translateStatusCSV(delivery.status), // version traduite pour affichage
+        status: delivery.status,
+        status_fr: translateStatusCSV(delivery.status),
         delivery_status_acconier_fr: mapAcconierStatusToFr(
           delivery.delivery_status_acconier
         ),
