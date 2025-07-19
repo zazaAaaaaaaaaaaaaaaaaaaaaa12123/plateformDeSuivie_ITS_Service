@@ -258,7 +258,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery) => {
     const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col) => {
+    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
       if (col.id === "date_display") {
@@ -339,6 +339,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         td.textContent = value;
+        if (col.id === "observation") {
+          td.classList.add("observation-col");
+        }
       }
       tr.appendChild(td);
       // Fonction pour afficher le menu déroulant de statut conteneur (popup)
