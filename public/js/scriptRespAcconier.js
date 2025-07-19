@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   styleTC.textContent = `
-    /* Style badges/tags conteneur */
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -39,9 +38,6 @@ document.addEventListener("DOMContentLoaded", function () {
       font-weight: 500;
       white-space: nowrap;
       vertical-align: middle;
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     #deliveriesTableBody .tc-tags-btn {
       display: inline-flex;
@@ -54,9 +50,6 @@ document.addEventListener("DOMContentLoaded", function () {
       cursor: pointer;
       font-size: 0.95em;
       white-space: nowrap;
-      max-width: 180px;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     #deliveriesTableBody .tc-popup {
       position: absolute;
@@ -77,62 +70,41 @@ document.addEventListener("DOMContentLoaded", function () {
       font-size: 0.98em;
       color: #2563eb;
       border-bottom: 1px solid #f3f4f6;
-      max-width: 160px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Style général tableau : overflow auto, largeur fixe, sticky header, centrage, ellipses */
-    #deliveriesTableBody {
-      display: block;
-      max-width: 100vw;
-      overflow-x: auto;
-    }
-    #deliveriesTableBody th {
-      position: sticky;
-      top: 0;
-      background: #f3f4f6;
-      z-index: 2;
-      font-weight: bold;
-      font-size: 1em;
-      text-align: center;
-      padding: 10px 8px;
-      min-width: 100px;
-      max-width: 220px;
+    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
+    #deliveriesTable thead th:not([data-col-id='container_number']) {
+      max-width: 160px;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
+      font-size: 1em;
+      font-weight: bold;
+      background: #f1f5f9;
       border-bottom: 2px solid #2563eb;
     }
-    #deliveriesTableBody td {
-      min-width: 100px;
-      max-width: 220px;
-      padding: 8px 6px;
-      vertical-align: middle;
+    #deliveriesTable tbody td:not(:nth-child(5)) {
+      max-width: 160px;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
-      word-break: break-word;
-      text-align: center;
-      box-sizing: border-box;
+      vertical-align: middle;
     }
-    #deliveriesTableBody td.long-text {
-      white-space: normal;
-      word-break: break-word;
-      text-overflow: ellipsis;
-      max-width: 260px;
-      text-align: left;
-      padding: 8px 10px;
+    @media (max-width: 900px) {
+      #deliveriesTable thead th:not([data-col-id='container_number']),
+      #deliveriesTable tbody td:not(:nth-child(5)) {
+        max-width: 90px;
+        font-size: 0.95em;
+      }
     }
-    #deliveriesTableBody td.tc-multi-cell {
-      max-width: 220px;
-      text-align: left;
-    }
-    #deliveriesTableBody tr {
-      border-bottom: 1px solid #e5e7eb;
+    @media (max-width: 600px) {
+      #deliveriesTable thead th:not([data-col-id='container_number']),
+      #deliveriesTable tbody td:not(:nth-child(5)) {
+        max-width: 60px;
+        font-size: 0.92em;
+      }
     }
   `;
   document.head.appendChild(styleTC);
@@ -282,17 +254,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery) => {
     const tr = document.createElement("tr");
-    const longTextCols = [
-      "client_name",
-      "client_phone",
-      "lieu",
-      "container_type_and_content",
-      "declaration_number",
-      "bl_number",
-      "dossier_number",
-      "shipping_company",
-      "ship_name",
-    ];
     AGENT_TABLE_COLUMNS.forEach((col) => {
       const td = document.createElement("td");
       let value = "-";
@@ -374,9 +335,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         td.textContent = value;
-        if (longTextCols.includes(col.id)) {
-          td.classList.add("long-text");
-        }
       }
       tr.appendChild(td);
       // Fonction pour afficher le menu déroulant de statut conteneur (popup)
