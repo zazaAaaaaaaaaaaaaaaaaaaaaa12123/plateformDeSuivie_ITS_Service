@@ -52,12 +52,12 @@ document.addEventListener("DOMContentLoaded", function () {
   // Filtre les livraisons selon la date de livraison réelle (delivery_date)
   function filterDeliveriesByDate(dateStr) {
     return allDeliveries.filter((delivery) => {
-      // On attend un format YYYY-MM-DD côté backend
-      // Certains objets peuvent avoir la date au format JJ/MM/AAAA, on convertit
+      // On utilise delivery_date si disponible, sinon created_at
       let dDate =
+        delivery["delivery_date"] ||
+        delivery["created_at"] ||
         delivery["Date"] ||
-        delivery["Date Livraison"] ||
-        delivery["delivery_date"];
+        delivery["Date Livraison"];
       if (!dDate) return false;
       // Normalisation du format
       let normalized = "";
