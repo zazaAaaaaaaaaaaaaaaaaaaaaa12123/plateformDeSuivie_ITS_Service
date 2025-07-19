@@ -219,15 +219,21 @@ document.addEventListener("DOMContentLoaded", function () {
       document
         .querySelectorAll(".tc-dropdown-menu")
         .forEach((m) => (m.style.display = "none"));
-      openTcModal(tc, deliveryId);
+      // Ouvre la pop-up d'information détaillée
+      const delivery = window.lastDeliveries?.find((d) => d.id == deliveryId);
+      if (delivery) showContainerDetailPopup(delivery, tc);
       e.stopPropagation();
+      return;
     }
     // Clique sur un badge TC unique
     if (e.target.classList.contains("tc-btn")) {
       const tc = e.target.getAttribute("data-tc");
       const deliveryId = e.target.getAttribute("data-delivery-id");
-      openTcModal(tc, deliveryId);
+      // Ouvre la pop-up d'information détaillée
+      const delivery = window.lastDeliveries?.find((d) => d.id == deliveryId);
+      if (delivery) showContainerDetailPopup(delivery, tc);
       e.stopPropagation();
+      return;
     }
     // Clique ailleurs : ferme tous les menus déroulants TC
     if (
@@ -240,6 +246,65 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Ajout de la fonction pour afficher la pop-up d'information détaillée sur le TC
+  function showContainerDetailPopup(delivery, tc) {
+    // Crée la pop-up (ou modale) d'information
+    let popup = document.getElementById("tcInfoPopup");
+    if (!popup) {
+      popup = document.createElement("div");
+      popup.id = "tcInfoPopup";
+      popup.style.position = "fixed";
+      popup.style.top = "50%";
+      popup.style.left = "50%";
+      popup.style.transform = "translate(-50%, -50%)";
+      popup.style.background = "#fff";
+      popup.style.border = "2px solid #2563eb";
+      popup.style.borderRadius = "16px";
+      popup.style.boxShadow = "0 8px 32px rgba(0,0,0,0.18)";
+      popup.style.zIndex = "10001";
+      popup.style.minWidth = "320px";
+      popup.style.maxWidth = "90vw";
+      popup.style.padding = "32px 24px";
+      popup.innerHTML = "";
+      document.body.appendChild(popup);
+    }
+    // Remplir le contenu de la pop-up
+    popup.innerHTML = `
+      <h3 style='color:#2563eb; margin-bottom:18px;'>Détail du conteneur</h3>
+      <div style='font-size:1.1em; margin-bottom:12px;'>
+        <strong>Numéro TC :</strong> <span style='color:#2563eb;'>${tc}</span><br>
+        <strong>Statut :</strong> <span style='color:#334155;'>${
+          delivery.statut_dossier || "-"
+        }</span><br>
+        <strong>Client :</strong> ${delivery.nom_client || "-"}<br>
+        <strong>Type :</strong> ${delivery.type_conteneur || "-"}<br>
+        <strong>Lieu :</strong> ${delivery.lieu || "-"}<br>
+        <strong>Date :</strong> ${delivery.date || "-"}<br>
+        <strong>Compagnie maritime :</strong> ${
+          delivery.compagnie_maritime || "-"
+        }<br>
+        <strong>Poids :</strong> ${delivery.poids || "-"}<br>
+        <strong>Observations :</strong> ${delivery.observations || "-"}
+      </div>
+      <div style='text-align:center; margin-top:18px;'>
+        <button id='tcInfoCloseBtn' style='background:#2563eb; color:#fff; border:none; border-radius:8px; padding:8px 22px; font-size:1em; cursor:pointer;'>Fermer</button>
+      </div>
+    `;
+    popup.style.display = "block";
+    document.getElementById("tcInfoCloseBtn").onclick = function () {
+      popup.style.display = "none";
+    };
+    // Fermer la pop-up si clic en dehors
+    setTimeout(() => {
+      document.addEventListener("mousedown", function handler(e) {
+        if (!popup.contains(e.target)) {
+          popup.style.display = "none";
+          document.removeEventListener("mousedown", handler);
+        }
+      });
+    }, 100);
+  }
+
   // Fonction pour charger et afficher les données
   async function loadDeliveries(dateFilter = null) {
     const tableBody = document.getElementById("respAcconierTableBody");
@@ -251,6 +316,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (dateFilter) {
         data = data.filter((d) => d.date && d.date.startsWith(dateFilter));
       }
+      window.lastDeliveries = data;
       if (data.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-info">Aucune donnée pour cette date.</td></tr>`;
       } else {
