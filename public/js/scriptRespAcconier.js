@@ -108,14 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const row = document.createElement("tr");
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const cell = document.createElement("td");
-        if (col.id === "date_display") {
-          let dDate = delivery.created_at || delivery.delivery_date;
-          cell.textContent = dDate
-            ? new Date(dDate).toLocaleDateString("fr-FR")
-            : "-";
-        } else {
-          cell.textContent = delivery[col.id] || "-";
-        }
+        cell.textContent = delivery[col.label] || "-";
         row.appendChild(cell);
       });
       tableBody.appendChild(row);
@@ -125,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la date
   function updateTableForDate(dateStr) {
     const filtered = filterDeliveriesByDate(dateStr);
-    renderTable(filtered);
+    renderAgentTableRows(filtered, tableBody);
   }
 
   // Initialisation : charge toutes les livraisons puis affiche la date du jour
