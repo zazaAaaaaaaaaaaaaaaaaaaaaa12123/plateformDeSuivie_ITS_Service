@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tableau Responsable Livraison</title>
+    <style>
+      body {
+        font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        background: #f6f8fa;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 98vw;
+        margin: 32px auto;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 6px 32px #1e293b18;
+        padding: 36px 20px 28px 20px;
+      }
+      h2 {
+        color: #1d3557;
+        margin-bottom: 18px;
+        font-size: 1.45em;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+      }
+      .date-journalier {
+        font-size: 1.08em;
+        color: #64748b;
+        margin-bottom: 18px;
+      }
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        font-size: 0.97em;
+        table-layout: auto;
+        box-shadow: 0 2px 12px #1e293b0a;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      thead tr:first-child th {
+        background: #ffe066;
+        color: #a16207;
+        font-size: 1.15em;
+        font-weight: bold;
+        text-align: center;
+        letter-spacing: 1px;
+        border-bottom: 3px solid #facc15;
+        box-shadow: 0 2px 8px #facc1533;
+      }
+      thead tr:nth-child(2) th {
+        background: #2563eb;
+        color: #fff;
+        font-weight: 600;
+        font-size: 1em;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        border-right: 1px solid #e5e7eb;
+        border-bottom: 2px solid #e5e7eb;
+        padding: 8px 10px;
+      }
+      thead tr:nth-child(2) th:last-child {
+        border-right: none;
+      }
+      th,
+      td {
+        border: none;
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: middle;
+        word-break: break-word;
+        max-width: 180px;
+        font-size: 0.97em;
+      }
+      tbody tr {
+        transition: background 0.18s;
+      }
+      tbody tr:nth-child(even) td {
+        background: #f8fafc;
+      }
+      tbody tr:nth-child(odd) td {
+        background: #fff;
+      }
+      tbody tr:hover td {
+        background: #e9f0fb;
+        box-shadow: 0 2px 8px #2563eb22;
+      }
+      td {
+        border-bottom: 1px solid #e5e7eb;
+        border-right: 1px solid #e5e7eb;
+        border-radius: 0;
+        font-size: 0.97em;
+      }
+      td:last-child {
+        border-right: none;
+      }
+      th:first-child,
+      td:first-child {
+        border-left: none;
+      }
+      th,
+      td {
+        border-top: none;
+      }
+      th,
+      td {
+        min-width: 80px;
+      }
+      @media (max-width: 1200px) {
+        th,
+        td {
+          font-size: 0.93em;
+          max-width: 120px;
+        }
+      }
+      @media (max-width: 900px) {
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+        }
+        thead tr:first-child th {
+          position: static;
+        }
+        thead tr:nth-child(2) th {
+          position: sticky;
+          top: 0;
+          z-index: 2;
+          font-size: 0.95em;
+        }
+        td {
+          border: none;
+          border-bottom: 1px solid #e5e7eb;
+          position: relative;
+          padding-left: 48%;
+          min-height: 32px;
+        }
+        td:before {
+          position: absolute;
+          left: 10px;
+          top: 8px;
+          width: 45%;
+          white-space: nowrap;
+          font-weight: bold;
+          color: #2563eb;
+          content: attr(data-label);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container my-4">
+      <section class="card-section">
+        <h2 class="section-title">
+          Tableau Journalier - Responsable Livraison
+        </h2>
+        <div class="date-journalier mb-3">
+          Date du jour : <span id="dateDuJour"></span>
+        </div>
+        <div class="table-responsive overflow-x-auto">
+          <table
+            id="respLivTable"
+            class="table table-bordered table-hover align-middle"
+          >
+            <thead>
+              <tr>
+                <th
+                  colspan="24"
+                  style="
+                    background: #ffe066;
+                    color: #a16207;
+                    font-size: 1.15em;
+                    font-weight: bold;
+                    text-align: center;
+                    letter-spacing: 1px;
+                    border-bottom: 3px solid #facc15;
+                  "
+                >
+                  RESPONSABLE LIVRAISON
+                </th>
+              </tr>
+              <tr>
+                <th>DATE</th>
+                <th>AGENT ACCONIER</th>
+                <th>NOM CLIENT</th>
+                <th>CLIENT (Tel)</th>
+                <th>NUMÉRO TC(S)</th>
+                <th>LIEU</th>
+                <th>TYPE DE CONTENEURS</th>
+                <th>CONTENU</th>
+                <th>NUMÉRO DÉCLARATION</th>
+                <th>NUMÉRO DOSSIER</th>
+                <th>NBR CONTENEURS</th>
+                <th>COMPAGNIE MARITIME</th>
+                <th>CIRCUIT</th>
+                <th>MODE DE TRANSPORT</th>
+                <th>NOM Agent visiteurs</th>
+                <th>TRANSPORTEUR</th>
+                <th>INSPECTEUR</th>
+                <th>AGENT EN DOUANES</th>
+                <th>CHAUFFEUR</th>
+                <th>TEL CHAUFFEUR</th>
+                <th>DATE LIVRAISON</th>
+                <th>STATUT (du Respo.ACCONIER)</th>
+                <th>STATUT</th>
+                <th>OBSERVATIONS</th>
+              </tr>
+            </thead>
+            <tbody id="respLivTableBody">
+              <tr>
+                <td colspan="24" class="text-center text-muted">
+                  <i class="fas fa-spinner fa-spin me-2"></i> Chargement des
+                  dossiers...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <script>
+      // Affiche la date du jour automatiquement
+      const date = new Date();
+      const options = { year: "numeric", month: "long", day: "numeric" };
+      document.getElementById("dateDuJour").textContent =
+        date.toLocaleDateString("fr-FR", options);
+    </script>
+  </body>
+</html>
