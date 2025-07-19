@@ -1,3 +1,18 @@
+function normalizeDateToMidnight(date) {
+  if (!(date instanceof Date)) date = new Date(date);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function filterDeliveriesByDate(deliveries, selectedDate) {
+  const dateToCompare = normalizeDateToMidnight(selectedDate);
+  return deliveries.filter((d) => {
+    let dDate = d.created_at || d.delivery_date;
+    if (!dDate) return false;
+    dDate = normalizeDateToMidnight(new Date(dDate));
+    return dDate.getTime() === dateToCompare.getTime();
+  });
+}
 function injectLivTableCSS() {
   const styleTC = document.createElement("style");
   styleTC.textContent = `
@@ -220,3 +235,5 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+// Fin du script
