@@ -45,24 +45,59 @@ async function fetchDeliveries() {
 
 // Fonction pour générer le tableau HTML
 function renderDeliveriesTable(deliveries) {
+  const table = document.getElementById("deliveriesTable");
   const tbody = document.getElementById("deliveriesTableBody");
-  if (!tbody) return;
+  if (!table || !tbody) return;
+
+  // Génération dynamique du thead avec bandeaux colorés et sticky
+  table.tHead.innerHTML = `
+    <tr>
+      <th colspan="20" id="agentAcconierHeader" class="header-agent-acconier" style="background:#007bff;color:#fff;text-transform:uppercase;">Agent Acconier</th>
+      <th colspan="20" id="respAcconierHeader" class="header-resp-acconier" style="background:#ffc107;color:#222;text-transform:uppercase;">Responsable Acconier</th>
+      <th colspan="20" id="respLivraisonHeader" class="header-resp-livraison" style="background:#28a745;color:#fff;text-transform:uppercase;">Responsable de livraison</th>
+    </tr>
+    <tr id="deliveriesTableHead">
+      <th class="sticky-col sticky-col-index">N°</th>
+      <th>Date & Heure</th>
+      <th class="sticky-col sticky-col-agent">Agent</th>
+      <th>Client (Nom)</th>
+      <th>Client (Tél)</th>
+      <th>Numéro TC(s)</th>
+      <th>Lieu</th>
+      <th>Type Conteneur(pied)</th>
+      <th>Contenu</th>
+      <th>N° Déclaration</th>
+      <th>N° BL</th>
+      <th>N° Dossier</th>
+      <th>Nombre de conteneurs</th>
+      <th>Compagnie Maritime</th>
+      <th>Poids</th>
+      <th>Nom du navire</th>
+      <th>Circuit</th>
+      <th>Mode de Transport</th>
+      <th>Statut dossier</th>
+      <th>Observations</th>
+    </tr>
+  `;
 
   if (!deliveries || deliveries.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="${columns.length}" class="text-center text-muted">
+    tbody.innerHTML = `<tr><td colspan="20" class="text-center text-muted">
       <i class="fas fa-box-open me-1"></i> Aucune livraison enregistrée pour le moment.
     </td></tr>`;
     return;
   }
 
   let html = "";
-  deliveries.forEach((delivery) => {
+  deliveries.forEach((delivery, idx) => {
     html += "<tr>";
+    html += `<td class="sticky-col sticky-col-index">${idx + 1}</td>`;
     html += `<td>${formatDateHeure(
       delivery.delivery_date,
       delivery.delivery_time
     )}</td>`;
-    html += `<td>${delivery.employee_name || ""}</td>`;
+    html += `<td class="sticky-col sticky-col-agent">${
+      delivery.employee_name || ""
+    }</td>`;
     html += `<td>${delivery.client_name || ""}</td>`;
     html += `<td>${delivery.client_phone || ""}</td>`;
     html += `<td>${delivery.container_number || ""}</td>`;
@@ -101,10 +136,17 @@ function injectResponsiveStyle() {
     .table-responsive { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 8px; text-align: left; }
+    .sticky-col { position: sticky; background: #f8f9fa; z-index: 2; }
+    .sticky-col-index { left: 0; min-width: 50px; max-width: 70px; }
+    .sticky-col-agent { left: 70px; min-width: 120px; max-width: 180px; }
     @media (max-width: 900px) {
       th, td { font-size: 12px; padding: 4px; }
     }
+    .header-agent-acconier { background: #007bff !important; color: #fff !important; }
+    .header-resp-acconier { background: #ffc107 !important; color: #222 !important; }
+    .header-resp-livraison { background: #28a745 !important; color: #fff !important; }
     .error { color: red; padding: 10px; }
+    tr:hover td { background: #e3f2fd; }
   `;
   document.head.appendChild(style);
 }
