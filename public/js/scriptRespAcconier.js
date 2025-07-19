@@ -314,7 +314,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!res.ok) throw new Error("Erreur serveur");
       let data = await res.json();
       if (dateFilter) {
-        y;
+        // Correction : suppression de la ligne 'y;'
         data = data.filter((d) => d.date && d.date.startsWith(dateFilter));
       }
       window.lastDeliveries = data;
