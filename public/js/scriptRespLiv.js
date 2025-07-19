@@ -95,8 +95,10 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
       vertical-align: middle;
     }
-    /* Surlignage de toute la ligne au survol */
-    #deliveriesTableBody tr.highlight-row td {
+    /* Surlignage de toute la ligne au survol, toutes classes confondues */
+    #deliveriesTableBody tr.highlight-row td,
+    #deliveriesTableBody tr.highlight-row td.tc-multi-cell,
+    #deliveriesTableBody tr.highlight-row td.observation-col {
       background: #e0e7ff !important;
       color: #1e293b !important;
     }
