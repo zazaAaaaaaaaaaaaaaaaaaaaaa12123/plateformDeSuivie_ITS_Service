@@ -40,40 +40,88 @@ function renderLateDossiersTable() {
     <table style='width:100%;border-collapse:collapse;font-size:1em;margin-top:0;background:none;box-shadow:0 2px 8px rgba(0,0,0,0.07);border-radius:10px;overflow:hidden;'>
       <thead>
         <tr style='background:#fbeaea;'>
-          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:90px;text-align:center;'>TC</th>
-          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:120px;text-align:center;'>Agent</th>
-          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:140px;text-align:center;'>Date enregistrement</th>
-          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:140px;text-align:center;'>Date livraison</th>
-          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:120px;text-align:center;'>Heure livraison</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Date & Heure</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Responsable Acconier</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Client (Nom)</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Client (Tél)</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Numéro TC(s)</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Lieu</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Type Conteneur(pied)</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Contenu</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>N° Déclaration</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>N° BL</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>N° Dossier</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Nombre de conteneurs</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Compagnie Maritime</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Poids</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Nom du navire</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Circuit</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Mode de Transport</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Statut dossier</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;text-align:center;'>Observations</th>
         </tr>
       </thead>
       <tbody>
 `;
   lateList.forEach((c, idx) => {
-    let agent = c.agentName ? c.agentName : "-";
-    let dateLiv = c.deliveryDate || "-";
-    let heureLiv = "-";
-    if (typeof dateLiv === "string" && dateLiv.includes(" ")) {
-      const parts = dateLiv.split(" ");
-      dateLiv = parts[0];
-      heureLiv = parts[1] || "-";
-    } else if (
-      dateLiv &&
-      typeof dateLiv === "object" &&
-      dateLiv instanceof Date
-    ) {
-      dateLiv = dateLiv.toLocaleDateString("fr-FR");
-    }
     html += `<tr style='background:${idx % 2 === 0 ? "#fff" : "#f6f6f6"};'>
-      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;font-weight:600;'>${
-        c.numeroTC
-      }</td>
-      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${agent}</td>
       <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
         c.dateEnr || "-"
       }</td>
-      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${dateLiv}</td>
-      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${heureLiv}</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.agentName || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.clientName || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.clientPhone || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.numeroTC || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.lieu || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.typeConteneur || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.contenu || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.numDeclaration || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.numBL || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.dossier || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.nbConteneurs || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.compagnieMaritime || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.poids || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.nomNavire || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.circuit || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.modeTransport || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.statut || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.observations || "-"
+      }</td>
     </tr>`;
   });
   html += `</tbody></table></div>`;
