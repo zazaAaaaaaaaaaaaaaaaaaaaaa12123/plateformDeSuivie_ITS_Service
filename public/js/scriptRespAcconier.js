@@ -4946,7 +4946,9 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     // Removed showSpinner() call here as spinner is removed
     let filteredData = [...deliveries];
 
-    const searchTerm = searchInput.value.toLowerCase().trim();
+    const searchTerm = searchInput
+      ? searchInput.value.toLowerCase().trim()
+      : "";
     if (searchTerm !== "") {
       filteredData = filteredData.filter((delivery) => {
         // Check container_number, declaration_number, bl_number, dossier_number
@@ -4973,7 +4975,9 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
         );
       });
     }
-    const selectedStatusValue = statusFilterSelect.value;
+    const selectedStatusValue = statusFilterSelect
+      ? statusFilterSelect.value
+      : "";
     if (selectedStatusValue !== "") {
       const matchedOption = GLOBAL_STATUS_OPTIONS.find(
         (opt) => opt.value === selectedStatusValue
