@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   styleTC.textContent = `
+    /* Style badges/tags conteneur */
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -38,6 +39,9 @@ document.addEventListener("DOMContentLoaded", function () {
       font-weight: 500;
       white-space: nowrap;
       vertical-align: middle;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     #deliveriesTableBody .tc-tags-btn {
       display: inline-flex;
@@ -50,6 +54,9 @@ document.addEventListener("DOMContentLoaded", function () {
       cursor: pointer;
       font-size: 0.95em;
       white-space: nowrap;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     #deliveriesTableBody .tc-popup {
       position: absolute;
@@ -70,9 +77,62 @@ document.addEventListener("DOMContentLoaded", function () {
       font-size: 0.98em;
       color: #2563eb;
       border-bottom: 1px solid #f3f4f6;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
+    }
+    /* Style général tableau : overflow auto, largeur fixe, sticky header, centrage, ellipses */
+    #deliveriesTableBody {
+      display: block;
+      max-width: 100vw;
+      overflow-x: auto;
+    }
+    #deliveriesTableBody th {
+      position: sticky;
+      top: 0;
+      background: #f3f4f6;
+      z-index: 2;
+      font-weight: bold;
+      font-size: 1em;
+      text-align: center;
+      padding: 10px 8px;
+      min-width: 100px;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border-bottom: 2px solid #2563eb;
+    }
+    #deliveriesTableBody td {
+      min-width: 100px;
+      max-width: 220px;
+      padding: 8px 6px;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: break-word;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    #deliveriesTableBody td.long-text {
+      white-space: normal;
+      word-break: break-word;
+      text-overflow: ellipsis;
+      max-width: 260px;
+      text-align: left;
+      padding: 8px 10px;
+    }
+    #deliveriesTableBody td.tc-multi-cell {
+      max-width: 220px;
+      text-align: left;
+    }
+    #deliveriesTableBody tr {
+      border-bottom: 1px solid #e5e7eb;
     }
   `;
   document.head.appendChild(styleTC);
