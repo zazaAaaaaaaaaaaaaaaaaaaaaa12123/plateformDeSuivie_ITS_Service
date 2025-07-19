@@ -89,41 +89,50 @@
     </style>
   </head>
   <body>
-    <div class="container">
-      <h2>Tableau Journalier - Responsable Acconier</h2>
-      <div class="date-journalier">
-        Date du jour : <span id="dateDuJour"></span>
-      </div>
-      <div style="overflow-x: auto">
-        <table>
-          <thead>
-            <tr>
-              <th>DATE</th>
-              <th>AGENT ACCONIER</th>
-              <th>NOM CLIENT</th>
-              <th>NUMÉRO CLIENT</th>
-              <th>NUMÉRO TC(S)</th>
-              <th>LIEU</th>
-              <th>TYPE DE CONTENEUR</th>
-              <th>CONTENU</th>
-              <th>NUMÉRO DÉCLARATION</th>
-              <th>NUMÉRO BL</th>
-              <th>NUMÉRO DOSSIER</th>
-              <th>NBR CONTENEURS</th>
-              <th>COMPAGNIE MARITIME</th>
-              <th>POIDS</th>
-              <th>NOM DU NAVIRE</th>
-              <th>CIRCUIT</th>
-              <th>MODE DE TRANSPORT</th>
-              <th>STATUT DOSSIER</th>
-              <th>OBSERVATIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Les lignes seront insérées ici dynamiquement -->
-          </tbody>
-        </table>
-      </div>
+    <div class="container my-4">
+      <section class="card-section">
+        <h2 class="section-title">Tableau Journalier - Responsable Acconier</h2>
+        <div class="date-journalier mb-3">
+          Date du jour : <span id="dateDuJour"></span>
+        </div>
+        <div class="table-responsive overflow-x-auto">
+          <table
+            id="respAcconierTable"
+            class="table table-bordered table-hover align-middle"
+          >
+            <thead>
+              <tr>
+                <th>DATE</th>
+                <th>RESPONSABLE ACCONIER</th>
+                <th>NOM CLIENT</th>
+                <th>NUMÉRO CLIENT</th>
+                <th>NUMÉRO TC(S)</th>
+                <th>LIEU</th>
+                <th>TYPE DE CONTENEUR</th>
+                <th>CONTENU</th>
+                <th>NUMÉRO DÉCLARATION</th>
+                <th>NUMÉRO BL</th>
+                <th>NUMÉRO DOSSIER</th>
+                <th>NBR CONTENEURS</th>
+                <th>COMPAGNIE MARITIME</th>
+                <th>NOM DU NAVIRE</th>
+                <th>CIRCUIT</th>
+                <th>MODE DE TRANSPORT</th>
+                <th>STATUT DOSSIER</th>
+                <th>OBSERVATIONS</th>
+              </tr>
+            </thead>
+            <tbody id="respAcconierTableBody">
+              <tr>
+                <td colspan="18" class="text-center text-muted">
+                  <i class="fas fa-spinner fa-spin me-2"></i> Chargement des
+                  dossiers...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
     <script>
       // Affiche la date du jour automatiquement
