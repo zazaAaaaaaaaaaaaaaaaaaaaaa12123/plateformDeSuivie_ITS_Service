@@ -58,6 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 // Colonnes strictes pour Agent Acconier
 const AGENT_TABLE_COLUMNS = [
+  { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent" },
   { id: "client_name", label: "Client (Nom)" },
   { id: "client_phone", label: "Client (Tél)" },
@@ -84,7 +85,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     const tr = document.createElement("tr");
     AGENT_TABLE_COLUMNS.forEach((col) => {
       const td = document.createElement("td");
-      td.textContent = delivery[col.id] || "-";
+      if (col.id === "date_display") {
+        // Affiche la date au format JJ/MM/AAAA
+        let dDate = delivery.created_at || delivery.delivery_date;
+        td.textContent = dDate
+          ? new Date(dDate).toLocaleDateString("fr-FR")
+          : "-";
+      } else {
+        td.textContent = delivery[col.id] || "-";
+      }
       tr.appendChild(td);
     });
     tableBodyElement.appendChild(tr);
