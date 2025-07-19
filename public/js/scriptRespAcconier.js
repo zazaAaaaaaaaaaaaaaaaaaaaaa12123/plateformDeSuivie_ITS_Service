@@ -47,46 +47,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction pour générer une ligne HTML à partir d'un objet livraison
   function createRow(delivery) {
-    // Affichage de chaque TC comme badge individuel, menu déroulant uniquement sur '+N'
+    // Rendu TC(s) identique à scriptSuivie.js : badges horizontaux, bouton +N, menu déroulant, pop-up info TC
     let tcHtml = "";
+    let tcList = [];
     if (delivery.numero_tc) {
-      const tcList = String(delivery.numero_tc)
-        .split(",")
-        .map((tc) => tc.trim())
-        .filter(Boolean);
-      if (tcList.length > 2) {
-        // Affiche les deux premiers en badge, puis badge '+N' pour le reste
-        tcHtml = tcList
+      if (Array.isArray(delivery.numero_tc)) {
+        tcList = delivery.numero_tc.filter(Boolean);
+      } else if (typeof delivery.numero_tc === "string") {
+        tcList = delivery.numero_tc.split(/[,;\s]+/).filter(Boolean);
+      }
+    }
+    if (tcList.length > 1) {
+      tcHtml =
+        `<button type='button' class='tc-tags-btn' style='background:none;border:none;padding:0;cursor:pointer;'>` +
+        tcList
           .slice(0, 2)
           .map(
             (tc) =>
-              `<button class='tc-btn' data-tc='${tc}' data-delivery-id='${delivery.id}'>${tc}</button>`
+              `<span class='tc-tag' style='background:#2563eb;color:#fff;border-radius:6px;padding:2px 8px;margin-right:4px;font-weight:600;'>${tc}</span>`
           )
-          .join("");
-        tcHtml += `<button class='tc-dropdown-label tc-btn' data-delivery-id='${
-          delivery.id
-        }' data-tc-extra='${tcList
-          .slice(2)
-          .join(
-            ","
-          )}' style='background:#e0e7ff; color:#2563eb; border:1px solid #2563eb; margin-left:4px;'>+${
-          tcList.length - 2
-        }</button>`;
-        tcHtml += `<div class='tc-dropdown-menu' style='display:none; position:absolute; background:#fff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 16px #2563eb22; z-index:1000; min-width:140px; top:32px; left:0;'>${tcList
-          .slice(2)
-          .map(
-            (tc) =>
-              `<div class='tc-dropdown-item' data-tc='${tc}' data-delivery-id='${delivery.id}' style='padding:8px 16px; cursor:pointer;'>${tc}</div>`
-          )
-          .join("")}</div>`;
-      } else {
-        tcHtml = tcList
-          .map(
-            (tc) =>
-              `<button class='tc-btn' data-tc='${tc}' data-delivery-id='${delivery.id}'>${tc}</button>`
-          )
-          .join("");
-      }
+          .join("") +
+        (tcList.length > 2
+          ? `<span class='tc-tag tc-tag-more' style='background:#eab308;color:#78350f;border-radius:6px;padding:2px 8px;font-weight:600;'>+${
+              tcList.length - 2
+            }</span>`
+          : "") +
+        ` <i class='fas fa-chevron-down tc-chevron' style='color:#2563eb;'></i></button>`;
+    } else if (tcList.length === 1) {
+      tcHtml = `<span class='tc-tag' style='background:#2563eb;color:#fff;border-radius:6px;padding:2px 8px;font-weight:600;cursor:pointer;'>${tcList[0]}</span>`;
+    } else {
+      tcHtml = "-";
     }
     return `<tr>
       <td>${delivery.date || ""}</td>
@@ -198,51 +188,82 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   // Délégation d'événement pour les boutons TC
-  // Gestion centralisée des interactions TC (badges, menu déroulant, popup)
+  // Gestion des interactions TC (badges, bouton +N, popup info)
   document.addEventListener("click", function (e) {
-    // Ouvre le menu déroulant au clic sur le badge '+N'
-    if (e.target.classList.contains("tc-dropdown-label")) {
-      const cell = e.target.closest(".tc-cell");
-      if (cell) {
-        const menu = cell.querySelector(".tc-dropdown-menu");
-        document.querySelectorAll(".tc-dropdown-menu").forEach((m) => {
-          if (m !== menu) m.style.display = "none";
-        });
-        menu.style.display = menu.style.display === "block" ? "none" : "block";
-        e.stopPropagation();
-      }
-    }
-    // Clique sur un item du menu
-    if (e.target.classList.contains("tc-dropdown-item")) {
-      const tc = e.target.getAttribute("data-tc");
-      const deliveryId = e.target.getAttribute("data-delivery-id");
-      document
-        .querySelectorAll(".tc-dropdown-menu")
-        .forEach((m) => (m.style.display = "none"));
-      // Ouvre la pop-up d'information détaillée
-      const delivery = window.lastDeliveries?.find((d) => d.id == deliveryId);
-      if (delivery) showContainerDetailPopup(delivery, tc);
-      e.stopPropagation();
-      return;
-    }
-    // Clique sur un badge TC unique
-    if (e.target.classList.contains("tc-btn")) {
-      const tc = e.target.getAttribute("data-tc");
-      const deliveryId = e.target.getAttribute("data-delivery-id");
-      // Ouvre la pop-up d'information détaillée
-      const delivery = window.lastDeliveries?.find((d) => d.id == deliveryId);
-      if (delivery) showContainerDetailPopup(delivery, tc);
-      e.stopPropagation();
-      return;
-    }
-    // Clique ailleurs : ferme tous les menus déroulants TC
+    // Multi-TC : bouton popup liste
     if (
-      !e.target.classList.contains("tc-dropdown-label") &&
-      !e.target.classList.contains("tc-dropdown-item")
+      e.target.classList.contains("tc-tags-btn") ||
+      (e.target.parentNode &&
+        e.target.parentNode.classList &&
+        e.target.parentNode.classList.contains("tc-tags-btn"))
     ) {
-      document
-        .querySelectorAll(".tc-dropdown-menu")
-        .forEach((m) => (m.style.display = "none"));
+      const btn = e.target.classList.contains("tc-tags-btn")
+        ? e.target
+        : e.target.parentNode;
+      const tr = btn.closest("tr");
+      if (!tr) return;
+      const idx = tr.rowIndex - 1; // -1 si header
+      const delivery = window.lastDeliveries && window.lastDeliveries[idx];
+      if (!delivery) return;
+      let tcList = [];
+      if (Array.isArray(delivery.numero_tc)) {
+        tcList = delivery.numero_tc.filter(Boolean);
+      } else if (typeof delivery.numero_tc === "string") {
+        tcList = delivery.numero_tc.split(/[,;\s]+/).filter(Boolean);
+      }
+      // Crée le popup liste TC
+      const popup = document.createElement("div");
+      popup.className = "tc-popup";
+      popup.style.position = "fixed";
+      popup.style.background = "#fff";
+      popup.style.border = "1.5px solid #2563eb";
+      popup.style.borderRadius = "10px";
+      popup.style.boxShadow = "0 6px 32px #2563eb22, 0 2px 8px #0001";
+      popup.style.padding = "14px 18px 12px 18px";
+      popup.style.fontSize = "1em";
+      popup.style.color = "#222e3a";
+      popup.style.minWidth = "180px";
+      popup.style.zIndex = 99999;
+      popup.innerHTML = tcList
+        .map(
+          (tc) =>
+            `<div class='tc-popup-item' style='cursor:pointer;padding:6px 0;'>${tc}</div>`
+        )
+        .join("");
+      document.body.appendChild(popup);
+      // Positionne le popup sous le bouton
+      const rect = btn.getBoundingClientRect();
+      popup.style.left = rect.left + "px";
+      popup.style.top = rect.bottom + 8 + "px";
+      // Clic sur un TC : ouvre le détail
+      popup.querySelectorAll(".tc-popup-item").forEach((item) => {
+        item.onclick = function (ev) {
+          ev.stopPropagation();
+          popup.remove();
+          showContainerDetailPopup(delivery, item.textContent);
+        };
+      });
+      // Ferme si clic ailleurs
+      setTimeout(() => {
+        document.addEventListener("click", function hidePopup(ev) {
+          if (!popup.contains(ev.target)) {
+            popup.remove();
+            document.removeEventListener("click", hidePopup);
+          }
+        });
+      }, 10);
+    }
+    // Tag TC simple : ouvre le détail
+    if (
+      e.target.classList.contains("tc-tag") &&
+      !e.target.classList.contains("tc-tag-more")
+    ) {
+      const tr = e.target.closest("tr");
+      if (!tr) return;
+      const idx = tr.rowIndex - 1;
+      const delivery = window.lastDeliveries && window.lastDeliveries[idx];
+      if (!delivery) return;
+      showContainerDetailPopup(delivery, e.target.textContent);
     }
   });
 
