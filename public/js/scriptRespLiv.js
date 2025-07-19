@@ -27,6 +27,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   const newLocal = (styleTC.textContent = `
+    /* Survol : colore toute la ligne, toutes les colonnes */
+    #deliveriesTableBody tr.highlight-row td {
+      background: #e0e7ff !important;
+      transition: background 0.2s;
+    }
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
