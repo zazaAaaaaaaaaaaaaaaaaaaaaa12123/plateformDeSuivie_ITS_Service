@@ -22,10 +22,12 @@ document.addEventListener("DOMContentLoaded", function () {
   // Met à jour la date du jour affichée
   const date = new Date();
   const options = { year: "numeric", month: "long", day: "numeric" };
-  document.getElementById("dateDuJour").textContent = date.toLocaleDateString(
-    "fr-FR",
-    options
-  );
+  const dateDuJourElem = document.getElementById("dateDuJour");
+  if (dateDuJourElem) {
+    dateDuJourElem.textContent = date.toLocaleDateString("fr-FR", options);
+  } else {
+    console.warn("L'élément #dateDuJour est introuvable dans le DOM.");
+  }
 
   // Fonction pour générer une ligne HTML à partir d'un objet livraison
   function createRow(delivery) {
