@@ -9279,6 +9279,57 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     document.head.appendChild(style);
   })();
 
+  // ================== RENDU DU TABLEAU PRINCIPAL ==================
+  /**
+   * Rend le tableau principal des livraisons avec les colonnes dans l'ordre métier strict.
+   * @param {Array<Object>} deliveriesArray
+   */
+  function renderSimpleDeliveriesTable(deliveriesArray) {
+    if (!deliveriesTableBody) return;
+    deliveriesTableBody.innerHTML = "";
+    if (!Array.isArray(deliveriesArray) || deliveriesArray.length === 0) {
+      deliveriesTableBody.innerHTML = `<tr><td colspan='19' class='text-center text-muted'><i class='fas fa-box-open me-1'></i> Aucune livraison enregistrée pour le moment.</td></tr>`;
+      return;
+    }
+    deliveriesArray.forEach((delivery) => {
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-delivery-id", delivery.id || "");
+      // Colonnes dans l'ordre strict demandé
+      const columns = [
+        delivery.created_at
+          ? new Date(delivery.created_at).toLocaleDateString("fr-FR")
+          : "-", // DATE
+        delivery.employee_name || "-", // AGENT ACCONIER
+        delivery.client_name || "-", // nom CLIENT
+        delivery.client_phone || "-", // NUMERO CLIENT
+        delivery.container_number || "-", // NUMÉRO TC(S)
+        delivery.lieu || "-", // LIEU
+        delivery.container_foot_type || delivery.container_type || "-", // TYPE DE CONTENEURS
+        delivery.container_type_and_content || delivery.content || "-", // CONTENU
+        delivery.declaration_number || "-", // NUMÉRO DÉCLARATION
+        delivery.bl_number || delivery.bl || "-", // NUMÉRO BL
+        delivery.dossier_number || delivery.dossier || "-", // NUMÉRO DOSSIER
+        delivery.number_of_containers || delivery.nbr_conteneurs || "-", // NBR CONTENEURS
+        delivery.shipping_company || "-", // COMPAGNIE MARITIME
+        delivery.weight || "-", // POIDS
+        delivery.ship_name || "-", // NOM DU NAVIRE
+        delivery.circuit || "-", // CIRCUIT
+        delivery.transporter_mode || delivery.mode_transport || "-", // MODE DE TRANSPORT
+        delivery.statut ||
+          delivery.status ||
+          delivery.delivery_status_acconier ||
+          "-", // STATUT DOSSIER
+        delivery.observation_acconier || delivery.delivery_notes || "-", // OBSERVATIONS
+      ];
+      columns.forEach((val) => {
+        const td = document.createElement("td");
+        td.textContent = val;
+        tr.appendChild(td);
+      });
+      deliveriesTableBody.appendChild(tr);
+    });
+  }
+
   // Appelle le rendu simplifié et le clignotement après chaque filtrage du tableau principal
   const originalApplyCombinedFilters =
     window.applyCombinedFilters || applyCombinedFilters;
