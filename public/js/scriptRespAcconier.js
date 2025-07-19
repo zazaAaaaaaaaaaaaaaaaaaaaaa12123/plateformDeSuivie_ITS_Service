@@ -27,25 +27,55 @@ document.addEventListener("DOMContentLoaded", function () {
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
 
-  // Nouvelle fonction pour charger les livraisons du responsable acconier pour une date donnée
-  async function fetchDeliveriesByDate(date) {
+  // On charge toutes les livraisons une seule fois au chargement
+  let allDeliveries = [];
+
+  async function loadAllDeliveries() {
     try {
-      const response = await fetch(`/statistiques/acteurs?date=${date}`);
+      const response = await fetch("/statistiques/acteurs");
       const data = await response.json();
       if (
         data.success &&
         data.responsableAcconier &&
         Array.isArray(data.responsableAcconier.details)
       ) {
-        return data.responsableAcconier.details;
+        allDeliveries = data.responsableAcconier.details;
+      } else {
+        allDeliveries = [];
       }
     } catch (e) {
       console.error("Erreur lors du chargement des livraisons :", e);
+      allDeliveries = [];
     }
-    return [];
   }
 
-  // Fonction pour afficher les livraisons dans le tableau
+  // Filtre les livraisons selon la date de livraison réelle (delivery_date)
+  function filterDeliveriesByDate(dateStr) {
+    return allDeliveries.filter((delivery) => {
+      // On attend un format YYYY-MM-DD côté backend
+      // Certains objets peuvent avoir la date au format JJ/MM/AAAA, on convertit
+      let dDate =
+        delivery["Date"] ||
+        delivery["Date Livraison"] ||
+        delivery["delivery_date"];
+      if (!dDate) return false;
+      // Normalisation du format
+      let normalized = "";
+      if (dDate.includes("/")) {
+        // Format JJ/MM/AAAA
+        const [j, m, a] = dDate.split("/");
+        normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+      } else if (dDate.includes("-")) {
+        // Format YYYY-MM-DD
+        normalized = dDate;
+      } else {
+        normalized = dDate;
+      }
+      return normalized === dateStr;
+    });
+  }
+
+  // Affiche les livraisons filtrées dans le tableau
   function renderTable(deliveries) {
     tableBody.innerHTML = "";
     if (deliveries.length === 0) {
@@ -62,8 +92,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const row = document.createElement("tr");
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const cell = document.createElement("td");
-        // Les données du backend sont déjà formatées avec les bons labels
-        // On récupère la valeur par le label
         cell.textContent = delivery[col.label] || "-";
         row.appendChild(cell);
       });
@@ -72,16 +100,18 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Fonction principale pour charger et afficher selon la date
-  async function updateTableForDate(date) {
-    const deliveries = await fetchDeliveriesByDate(date);
-    renderTable(deliveries);
+  function updateTableForDate(dateStr) {
+    const filtered = filterDeliveriesByDate(dateStr);
+    renderTable(filtered);
   }
 
-  // Initialisation : charge la date du jour au démarrage
+  // Initialisation : charge toutes les livraisons puis affiche la date du jour
   const today = new Date().toISOString().split("T")[0];
   if (dateInput) {
     dateInput.value = today;
-    updateTableForDate(today);
+    loadAllDeliveries().then(() => {
+      updateTableForDate(today);
+    });
     dateInput.addEventListener("change", (e) => {
       updateTableForDate(e.target.value);
     });
