@@ -162,15 +162,130 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     const tr = document.createElement("tr");
     AGENT_TABLE_COLUMNS.forEach((col) => {
       const td = document.createElement("td");
-      if (col.id === "date_display") {
-        // Affiche la date au format JJ/MM/AAAA
-        let dDate = delivery.created_at || delivery.delivery_date;
-        td.textContent = dDate
-          ? new Date(dDate).toLocaleDateString("fr-FR")
-          : "-";
-      } else {
-        td.textContent = delivery[col.id] || "-";
+      let value = "-";
+      // Gestion des variations de nommage et formatage
+      switch (col.id) {
+        case "date_display": {
+          let dDate =
+            delivery.delivery_date ||
+            delivery.created_at ||
+            delivery.Date ||
+            delivery["Date Livraison"];
+          if (dDate) {
+            // Formatage robuste
+            let dateObj = new Date(dDate);
+            if (!isNaN(dateObj.getTime())) {
+              value = dateObj.toLocaleDateString("fr-FR");
+            } else if (typeof dDate === "string") {
+              value = dDate;
+            }
+          }
+          break;
+        }
+        case "employee_name":
+          value =
+            delivery.employee_name ||
+            delivery.agent ||
+            delivery["Agent"] ||
+            "-";
+          break;
+        case "client_name":
+          value =
+            delivery.client_name ||
+            delivery["Client (Nom)"] ||
+            delivery.client ||
+            "-";
+          break;
+        case "client_phone":
+          value =
+            delivery.client_phone ||
+            delivery["Client (Tél)"] ||
+            delivery.phone ||
+            "-";
+          break;
+        case "container_number":
+          value =
+            delivery.container_number ||
+            delivery["Numéro TC(s)"] ||
+            delivery.tc_number ||
+            "-";
+          break;
+        case "lieu":
+          value = delivery.lieu || delivery.location || delivery["Lieu"] || "-";
+          break;
+        case "container_foot_type":
+          value =
+            delivery.container_foot_type ||
+            delivery["Type Conteneur (pied)"] ||
+            delivery.foot_type ||
+            "-";
+          break;
+        case "container_type_and_content":
+          value =
+            delivery.container_type_and_content ||
+            delivery["Contenu"] ||
+            delivery.content ||
+            "-";
+          break;
+        case "declaration_number":
+          value =
+            delivery.declaration_number ||
+            delivery["N° Déclaration"] ||
+            delivery.declaration ||
+            "-";
+          break;
+        case "bl_number":
+          value = delivery.bl_number || delivery["N° BL"] || delivery.bl || "-";
+          break;
+        case "dossier_number":
+          value =
+            delivery.dossier_number ||
+            delivery["N° Dossier"] ||
+            delivery.dossier ||
+            "-";
+          break;
+        case "number_of_containers":
+          value =
+            delivery.number_of_containers ||
+            delivery["Nombre de conteneurs"] ||
+            delivery.nb_containers ||
+            "-";
+          break;
+        case "shipping_company":
+          value =
+            delivery.shipping_company ||
+            delivery["Compagnie Maritime"] ||
+            delivery.company ||
+            "-";
+          break;
+        case "weight":
+          value = delivery.weight || delivery["Poids"] || "-";
+          break;
+        case "ship_name":
+          value =
+            delivery.ship_name ||
+            delivery["Nom du navire"] ||
+            delivery.ship ||
+            "-";
+          break;
+        case "circuit":
+          value = delivery.circuit || delivery["Circuit"] || "-";
+          break;
+        case "transporter_mode":
+          value =
+            delivery.transporter_mode ||
+            delivery["Mode de Transport"] ||
+            delivery.mode ||
+            "-";
+          break;
+        case "statut":
+          value =
+            delivery.statut || delivery.status || delivery["Statut"] || "-";
+          break;
+        default:
+          value = delivery[col.id] || "-";
       }
+      td.textContent = value;
       tr.appendChild(td);
     });
     tableBodyElement.appendChild(tr);
