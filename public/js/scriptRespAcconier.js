@@ -437,10 +437,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         select.style.background = "#fff";
         select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
         const statusOptions = [
-          { value: "delivered", label: "Livré" },
-          { value: "rejected", label: "Rejeté" },
-          { value: "pending", label: "En attente" },
-          { value: "in_progress", label: "En cours" },
+          { value: "mise_en_livraison", label: "Mise en livraison" },
         ];
         let currentStatus =
           delivery.container_statuses &&
