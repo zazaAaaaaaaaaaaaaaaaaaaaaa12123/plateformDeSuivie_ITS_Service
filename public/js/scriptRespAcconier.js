@@ -32,14 +32,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function loadAllDeliveries() {
     try {
-      const response = await fetch("/statistiques/acteurs");
+      const response = await fetch("/deliveries/status");
       const data = await response.json();
-      if (
-        data.success &&
-        data.responsableAcconier &&
-        Array.isArray(data.responsableAcconier.details)
-      ) {
-        allDeliveries = data.responsableAcconier.details;
+      if (data.success && Array.isArray(data.deliveries)) {
+        allDeliveries = data.deliveries;
       } else {
         allDeliveries = [];
       }
@@ -108,7 +104,21 @@ document.addEventListener("DOMContentLoaded", function () {
       const row = document.createElement("tr");
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const cell = document.createElement("td");
-        cell.textContent = delivery[col.label] || "-";
+        let value = "-";
+        if (col.id === "date_display") {
+          let dDate = delivery.delivery_date || delivery.created_at;
+          if (dDate) {
+            let dateObj = new Date(dDate);
+            if (!isNaN(dateObj.getTime())) {
+              value = dateObj.toLocaleDateString("fr-FR");
+            } else if (typeof dDate === "string") {
+              value = dDate;
+            }
+          }
+        } else {
+          value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+        }
+        cell.textContent = value;
         row.appendChild(cell);
       });
       tableBody.appendChild(row);
