@@ -1,237 +1,7 @@
-// Fonction utilitaire pour normaliser la date à minuit
-function normalizeDateToMidnight(date) {
-  if (!(date instanceof Date)) date = new Date(date);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+// scriptRespLiv.js
+// Gère le filtrage par date, l'affichage dynamique et toutes les fonctionnalités avancées du tableau Livraison
 
-// Fonction principale pour afficher les livraisons filtrées par date
-function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
-  const dateToCompare = normalizeDateToMidnight(selectedDate);
-  // Filtre les livraisons par date (champ created_at ou delivery_date)
-  const filtered = deliveries.filter((d) => {
-    let dDate = d.created_at || d.delivery_date;
-    if (!dDate) return false;
-    dDate = normalizeDateToMidnight(new Date(dDate));
-    return dDate.getTime() === dateToCompare.getTime();
-  });
-  if (filtered.length === 0) {
-    tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
-    return;
-  }
-  renderAgentTableRows(filtered, tableBodyElement);
-}
-
-// Initialisation et gestion du filtre date
-document.addEventListener("DOMContentLoaded", function () {
-  // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
-  const styleTC = document.createElement("style");
-  const newLocal = (styleTC.textContent = `
-    #deliveriesTableBody .tc-tag {
-      display: inline-block;
-      margin-right: 4px;
-      padding: 2px 8px;
-      background: #2563eb;
-      color: #fff;
-      border-radius: 6px;
-      font-size: 0.95em;
-      font-weight: 500;
-      white-space: nowrap;
-      vertical-align: middle;
-    }
-    #deliveriesTableBody .tc-tags-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      background: #4c628dff;
-      border: 1px solid #2563eb;
-      border-radius: 8px;
-      padding: 2px 10px;
-      cursor: pointer;
-      font-size: 0.95em;
-      white-space: nowrap;
-    }
-    #deliveriesTableBody .tc-popup {
-      position: absolute;
-      background: #fff;
-      border: 1px solid #2563eb;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(30,41,59,0.13);
-      padding: 8px 0;
-      min-width: 120px;
-      z-index: 1002;
-      left: 0;
-      top: 100%;
-      white-space: nowrap;
-    }
-    #deliveriesTableBody .tc-popup-item {
-      padding: 6px 18px;
-      cursor: pointer;
-      font-size: 0.98em;
-      color: #2563eb;
-      border-bottom: 1px solid #f3f4f6;
-    }
-    #deliveriesTableBody .tc-popup-item:last-child {
-      border-bottom: none;
-    }
-    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
-    #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 1em;
-      font-weight: bold;
-      background: #0e274eff;
-      color: #fff;
-      border-bottom: 2px solid #2563eb;
-      text-align: center;
-      vertical-align: middle;
-    }
-    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      vertical-align: middle;
-    }
-    @media (max-width: 900px) {
-      #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 90px;
-        font-size: 0.95em;
-      }
-    }
-    @media (max-width: 600px) {
-      #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 60px;
-        font-size: 0.92em;
-      }
-    }
-  `);
-  document.head.appendChild(styleTC);
-  const tableBody = document.getElementById("deliveriesTableBody");
-  const dateInput = document.getElementById("mainTableDateFilter");
-
-  // On charge toutes les livraisons une seule fois au chargement
-  let allDeliveries = [];
-
-  async function loadAllDeliveries() {
-    try {
-      const response = await fetch("/deliveries/status");
-      const data = await response.json();
-      if (data.success && Array.isArray(data.deliveries)) {
-        allDeliveries = data.deliveries;
-      } else {
-        allDeliveries = [];
-      }
-    } catch (e) {
-      console.error("Erreur lors du chargement des livraisons :", e);
-      allDeliveries = [];
-    }
-  }
-
-  // Filtre les livraisons selon la date de livraison réelle (delivery_date)
-  function filterDeliveriesByDate(dateStr) {
-    return allDeliveries.filter((delivery) => {
-      // On utilise delivery_date si disponible, sinon created_at
-      let dDate =
-        delivery["delivery_date"] ||
-        delivery["created_at"] ||
-        delivery["Date"] ||
-        delivery["Date Livraison"];
-      if (!dDate) return false;
-      // Normalisation robuste du format
-      let normalized = "";
-      if (typeof dDate === "string") {
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
-          // Format JJ/MM/AAAA
-          const [j, m, a] = dDate.split("/");
-          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
-        } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
-          // Format YYYY-MM-DD
-          normalized = dDate;
-        } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
-          // Format JJ-MM-AAAA
-          const [j, m, a] = dDate.split("-");
-          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
-        } else {
-          // Autre format, on tente une conversion
-          const dateObj = new Date(dDate);
-          if (!isNaN(dateObj)) {
-            normalized = dateObj.toISOString().split("T")[0];
-          } else {
-            normalized = dDate;
-          }
-        }
-      } else if (dDate instanceof Date) {
-        normalized = dDate.toISOString().split("T")[0];
-      } else {
-        normalized = String(dDate);
-      }
-      return normalized === dateStr;
-    });
-  }
-
-  // Affiche les livraisons filtrées dans le tableau
-  function renderTable(deliveries) {
-    tableBody.innerHTML = "";
-    if (deliveries.length === 0) {
-      const row = document.createElement("tr");
-      const cell = document.createElement("td");
-      cell.colSpan = AGENT_TABLE_COLUMNS.length;
-      cell.textContent = "Aucune opération à cette date";
-      cell.className = "text-center text-muted";
-      row.appendChild(cell);
-      tableBody.appendChild(row);
-      return;
-    }
-    deliveries.forEach((delivery) => {
-      const row = document.createElement("tr");
-      AGENT_TABLE_COLUMNS.forEach((col) => {
-        const cell = document.createElement("td");
-        let value = "-";
-        if (col.id === "date_display") {
-          let dDate = delivery.delivery_date || delivery.created_at;
-          if (dDate) {
-            let dateObj = new Date(dDate);
-            if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toLocaleDateString("fr-FR");
-            } else if (typeof dDate === "string") {
-              value = dDate;
-            }
-          }
-        } else {
-          value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-        }
-        cell.textContent = value;
-        row.appendChild(cell);
-      });
-      tableBody.appendChild(row);
-    });
-  }
-
-  // Fonction principale pour charger et afficher selon la date
-  function updateTableForDate(dateStr) {
-    const filtered = filterDeliveriesByDate(dateStr);
-    renderAgentTableRows(filtered, tableBody);
-  }
-
-  // Initialisation : charge toutes les livraisons puis affiche la date du jour
-  const today = new Date().toISOString().split("T")[0];
-  if (dateInput) {
-    dateInput.value = today;
-    loadAllDeliveries().then(() => {
-      updateTableForDate(today);
-    });
-    dateInput.addEventListener("change", (e) => {
-      updateTableForDate(e.target.value);
-    });
-  }
-});
-// Colonnes strictes pour Agent Acconier
-const AGENT_TABLE_COLUMNS = [
+const LIV_TABLE_COLUMNS = [
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent" },
@@ -254,12 +24,37 @@ const AGENT_TABLE_COLUMNS = [
   { id: "observation", label: "Observation" },
 ];
 
-// Fonction pour générer les lignes du tableau Agent Acconier
-function renderAgentTableRows(deliveries, tableBodyElement) {
+function normalizeDateToMidnight(date) {
+  if (!(date instanceof Date)) date = new Date(date);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function filterDeliveriesByDate(deliveries, selectedDate) {
+  const dateToCompare = normalizeDateToMidnight(selectedDate);
+  return deliveries.filter((d) => {
+    let dDate = d.created_at || d.delivery_date;
+    if (!dDate) return false;
+    dDate = normalizeDateToMidnight(new Date(dDate));
+    return dDate.getTime() === dateToCompare.getTime();
+  });
+}
+
+function renderLivTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
+  if (deliveries.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = LIV_TABLE_COLUMNS.length;
+    cell.textContent = "Aucune opération à cette date.";
+    cell.className = "text-center text-muted";
+    row.appendChild(cell);
+    tableBodyElement.appendChild(row);
+    return;
+  }
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+    LIV_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
       if (col.id === "row_number") {
@@ -278,7 +73,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         td.textContent = value;
       } else if (col.id === "container_number") {
-        // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -293,10 +87,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           btn.innerHTML =
             tcList
               .slice(0, 2)
-              .map((tc) => `<span class="tc-tag">${tc}</span>`)
+              .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
               .join("") +
             (tcList.length > 2
-              ? ` <span class="tc-tag tc-tag-more">+${tcList.length - 2}</span>`
+              ? ` <span class=\"tc-tag tc-tag-more\">+${
+                  tcList.length - 2
+                }</span>`
               : "") +
             ' <i class="fas fa-chevron-down tc-chevron"></i>';
           const popup = document.createElement("div");
@@ -305,7 +101,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           popup.innerHTML = tcList
             .map(
               (tc) =>
-                `<div class="tc-popup-item" style='cursor:pointer;'>${tc}</div>`
+                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
             )
             .join("");
           btn.onclick = (e) => {
@@ -349,7 +145,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
       }
       tr.appendChild(td);
-      // Fonction pour afficher le menu déroulant de statut conteneur (popup)
       function showContainerDetailPopup(delivery, containerNumber) {
         const oldPopup = document.getElementById("containerDetailPopup");
         if (oldPopup) oldPopup.remove();
@@ -494,7 +289,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }`
               );
               overlay.remove();
-              // Rafraîchir les données si besoin
             } else {
               alert(
                 data.message ||
@@ -519,3 +313,145 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     tableBodyElement.appendChild(tr);
   });
 }
+
+function injectLivTableCSS() {
+  if (document.getElementById("liv-table-css")) return;
+  const styleTC = document.createElement("style");
+  styleTC.id = "liv-table-css";
+  styleTC.textContent = `
+    #respLivTable thead th:not([data-col-id='container_number']) {
+      max-width: 160px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 1em;
+      font-weight: bold;
+      background: #0e274eff;
+      color: #fff;
+      border-bottom: 2px solid #2563eb;
+      text-align: center;
+      vertical-align: middle;
+    }
+    #respLivTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
+      max-width: 160px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+    }
+    #respLivTableBody .tc-tag {
+      display: inline-block;
+      margin-right: 4px;
+      padding: 2px 8px;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.95em;
+      font-weight: 500;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    #respLivTableBody .tc-tags-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      background: #4c628dff;
+      border: 1px solid #2563eb;
+      border-radius: 8px;
+      padding: 2px 10px;
+      cursor: pointer;
+      font-size: 0.95em;
+      white-space: nowrap;
+    }
+    #respLivTableBody .tc-popup {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #2563eb;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(30,41,59,0.13);
+      padding: 8px 0;
+      min-width: 120px;
+      z-index: 1002;
+      left: 0;
+      top: 100%;
+      white-space: nowrap;
+    }
+    #respLivTableBody .tc-popup-item {
+      padding: 6px 18px;
+      cursor: pointer;
+      font-size: 0.98em;
+      color: #2563eb;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    #respLivTableBody .tc-popup-item:last-child {
+      border-bottom: none;
+    }
+    @media (max-width: 900px) {
+      #respLivTable thead th:not([data-col-id='container_number']),
+      #respLivTable tbody td:not(:nth-child(6)) {
+        max-width: 90px;
+        font-size: 0.95em;
+      }
+    }
+    @media (max-width: 600px) {
+      #respLivTable thead th:not([data-col-id='container_number']),
+      #respLivTable tbody td:not(:nth-child(6)) {
+        max-width: 60px;
+        font-size: 0.92em;
+      }
+    }
+  `;
+  document.head.appendChild(styleTC);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  injectLivTableCSS();
+  const dateContainer = document.querySelector(".date-journalier");
+  if (dateContainer) {
+    let dateInput = document.getElementById("filtreDateJourLiv");
+    if (!dateInput) {
+      dateInput = document.createElement("input");
+      dateInput.type = "date";
+      dateInput.id = "filtreDateJourLiv";
+      dateInput.style =
+        "margin-left:12px; padding:2px 8px; border-radius:6px; border:1px solid #cbd5e1; font-size:1em;";
+      dateInput.valueAsDate = new Date();
+      dateContainer.appendChild(dateInput);
+    }
+  }
+  const tableBody = document.getElementById("respLivTableBody");
+  const dateInput = document.getElementById("filtreDateJourLiv");
+
+  let allDeliveries = [];
+
+  async function loadAllDeliveries() {
+    try {
+      const response = await fetch("/deliveries/status");
+      const data = await response.json();
+      if (data.success && Array.isArray(data.deliveries)) {
+        allDeliveries = data.deliveries;
+      } else {
+        allDeliveries = [];
+      }
+    } catch (e) {
+      console.error("Erreur lors du chargement des livraisons :", e);
+      allDeliveries = [];
+    }
+  }
+
+  function updateTableForDate(dateStr) {
+    const filtered = filterDeliveriesByDate(allDeliveries, dateStr);
+    renderLivTableRows(filtered, tableBody);
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  if (dateInput) {
+    dateInput.value = today;
+    loadAllDeliveries().then(() => {
+      updateTableForDate(today);
+    });
+    dateInput.addEventListener("change", (e) => {
+      updateTableForDate(e.target.value);
+    });
+  }
+});
