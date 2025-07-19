@@ -165,9 +165,7 @@
         <h2 class="section-title">
           Tableau Journalier - Responsable Livraison
         </h2>
-        <div class="date-journalier mb-3">
-          Date du jour : <span id="dateDuJour"></span>
-        </div>
+        <div class="date-journalier mb-3"></div>
         <div class="table-responsive overflow-x-auto">
           <table
             id="respLivTable"
@@ -233,12 +231,6 @@
         </div>
       </section>
     </div>
-    <script>
-      // Affiche la date du jour automatiquement
-      const date = new Date();
-      const options = { year: "numeric", month: "long", day: "numeric" };
-      document.getElementById("dateDuJour").textContent =
-        date.toLocaleDateString("fr-FR", options);
-    </script>
+    <script src="../js/scriptRespLiv.js"></script>
   </body>
 </html>
