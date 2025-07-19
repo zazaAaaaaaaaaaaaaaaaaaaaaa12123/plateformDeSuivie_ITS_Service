@@ -135,8 +135,24 @@ function renderDeliveriesTable(deliveries) {
 // Fonction utilitaire pour afficher date + heure
 function formatDateHeure(date, heure) {
   if (!date && !heure) return "";
-  if (date && heure) return `${date} ${heure}`;
-  return date || heure || "";
+  let dateStr = "";
+  if (date) {
+    // Si la date est déjà au format Date, on la formate
+    if (date instanceof Date) {
+      dateStr = date.toLocaleDateString("fr-FR");
+    } else if (typeof date === "string") {
+      // Si la date est une chaîne, on tente de la parser
+      const d = new Date(date);
+      if (!isNaN(d.getTime())) {
+        dateStr = d.toLocaleDateString("fr-FR");
+      } else {
+        // Si la chaîne n'est pas une date valide, on l'affiche telle quelle
+        dateStr = date;
+      }
+    }
+  }
+  if (dateStr && heure) return `${dateStr} ${heure}`;
+  return dateStr || heure || "";
 }
 
 // Style responsive si besoin
