@@ -27,33 +27,64 @@ document.addEventListener("DOMContentLoaded", function () {
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
 
-  // Fonction pour charger les données réelles depuis le backend
-  async function loadDeliveries() {
+  // Nouvelle fonction pour charger les livraisons du responsable acconier pour une date donnée
+  async function fetchDeliveriesByDate(date) {
     try {
-      const response = await fetch("/api/deliveries"); // Adapte l'URL selon ton backend
-      if (!response.ok)
-        throw new Error("Erreur lors du chargement des livraisons");
+      const response = await fetch(`/statistiques/acteurs?date=${date}`);
       const data = await response.json();
-      window.deliveries = Array.isArray(data) ? data : [];
-      refreshTable();
-    } catch (err) {
-      tableBody.innerHTML = `<tr><td colspan='${AGENT_TABLE_COLUMNS.length}' class='text-center text-danger'>Erreur de chargement des livraisons</td></tr>`;
-      console.error(err);
+      if (
+        data.success &&
+        data.responsableAcconier &&
+        Array.isArray(data.responsableAcconier.details)
+      ) {
+        return data.responsableAcconier.details;
+      }
+    } catch (e) {
+      console.error("Erreur lors du chargement des livraisons :", e);
     }
+    return [];
   }
 
-  // Fonction pour rafraîchir l'affichage selon la date sélectionnée
-  function refreshTable() {
-    const selectedDate = dateInput.value
-      ? new Date(dateInput.value)
-      : new Date();
-    showDeliveriesByDate(window.deliveries, selectedDate, tableBody);
+  // Fonction pour afficher les livraisons dans le tableau
+  function renderTable(deliveries) {
+    tableBody.innerHTML = "";
+    if (deliveries.length === 0) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = AGENT_TABLE_COLUMNS.length;
+      cell.textContent = "Aucune opération à cette date";
+      cell.className = "text-center text-muted";
+      row.appendChild(cell);
+      tableBody.appendChild(row);
+      return;
+    }
+    deliveries.forEach((delivery) => {
+      const row = document.createElement("tr");
+      AGENT_TABLE_COLUMNS.forEach((col) => {
+        const cell = document.createElement("td");
+        // Les données du backend sont déjà formatées avec les bons labels
+        // On récupère la valeur par le label
+        cell.textContent = delivery[col.label] || "-";
+        row.appendChild(cell);
+      });
+      tableBody.appendChild(row);
+    });
   }
 
+  // Fonction principale pour charger et afficher selon la date
+  async function updateTableForDate(date) {
+    const deliveries = await fetchDeliveriesByDate(date);
+    renderTable(deliveries);
+  }
+
+  // Initialisation : charge la date du jour au démarrage
+  const today = new Date().toISOString().split("T")[0];
   if (dateInput) {
-    dateInput.addEventListener("change", refreshTable);
-    // Charge les données réelles à l'initialisation
-    loadDeliveries();
+    dateInput.value = today;
+    updateTableForDate(today);
+    dateInput.addEventListener("change", (e) => {
+      updateTableForDate(e.target.value);
+    });
   }
 });
 // Colonnes strictes pour Agent Acconier
