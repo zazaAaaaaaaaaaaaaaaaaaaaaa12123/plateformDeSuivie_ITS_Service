@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction pour générer une ligne HTML à partir d'un objet livraison
   function createRow(delivery) {
-    // Cellule TC : affiche les deux premiers conteneurs, puis '+N' si plus de deux
+    // Rendu dynamique du champ TC(s) : badges cliquables, menu déroulant si plusieurs, popup détail
     let tcHtml = "";
     if (delivery.numero_tc) {
       const tcList = String(delivery.numero_tc)
@@ -97,45 +97,6 @@ document.addEventListener("DOMContentLoaded", function () {
       <td>${delivery.statut_dossier || ""}</td>
       <td>${delivery.observations || ""}</td>
     </tr>`;
-    // Gestion du menu déroulant TC
-    document.addEventListener("click", function (e) {
-      // Ouvre le menu déroulant au clic sur la cellule ou le label
-      if (
-        e.target.classList.contains("tc-dropdown-label") ||
-        (e.target.classList.contains("tc-cell") &&
-          e.target.querySelector(".tc-dropdown"))
-      ) {
-        const parent = e.target.closest(".tc-dropdown");
-        if (parent) {
-          const menu = parent.querySelector(".tc-dropdown-menu");
-          document.querySelectorAll(".tc-dropdown-menu").forEach((m) => {
-            if (m !== menu) m.style.display = "none";
-          });
-          menu.style.display =
-            menu.style.display === "block" ? "none" : "block";
-          e.stopPropagation();
-        }
-      }
-      // Clique sur un item du menu
-      if (e.target.classList.contains("tc-dropdown-item")) {
-        const tc = e.target.getAttribute("data-tc");
-        const deliveryId = e.target.getAttribute("data-delivery-id");
-        document
-          .querySelectorAll(".tc-dropdown-menu")
-          .forEach((m) => (m.style.display = "none"));
-        openTcModal(tc, deliveryId);
-        e.stopPropagation();
-      }
-      // Clique ailleurs : ferme tous les menus
-      if (
-        !e.target.classList.contains("tc-dropdown-label") &&
-        !e.target.classList.contains("tc-dropdown-item")
-      ) {
-        document
-          .querySelectorAll(".tc-dropdown-menu")
-          .forEach((m) => (m.style.display = "none"));
-      }
-    });
   }
   // Ajout de la modale dans le DOM (invisible au départ)
   const modalHtml = `
@@ -225,11 +186,45 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   // Délégation d'événement pour les boutons TC
+  // Gestion centralisée des interactions TC (badges, menu déroulant, popup)
   document.addEventListener("click", function (e) {
+    // Ouvre le menu déroulant au clic sur le label
+    if (e.target.classList.contains("tc-dropdown-label")) {
+      const parent = e.target.closest(".tc-dropdown");
+      if (parent) {
+        const menu = parent.querySelector(".tc-dropdown-menu");
+        document.querySelectorAll(".tc-dropdown-menu").forEach((m) => {
+          if (m !== menu) m.style.display = "none";
+        });
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+        e.stopPropagation();
+      }
+    }
+    // Clique sur un item du menu
+    if (e.target.classList.contains("tc-dropdown-item")) {
+      const tc = e.target.getAttribute("data-tc");
+      const deliveryId = e.target.getAttribute("data-delivery-id");
+      document
+        .querySelectorAll(".tc-dropdown-menu")
+        .forEach((m) => (m.style.display = "none"));
+      openTcModal(tc, deliveryId);
+      e.stopPropagation();
+    }
+    // Clique sur un badge TC unique
     if (e.target.classList.contains("tc-btn")) {
       const tc = e.target.getAttribute("data-tc");
       const deliveryId = e.target.getAttribute("data-delivery-id");
       openTcModal(tc, deliveryId);
+      e.stopPropagation();
+    }
+    // Clique ailleurs : ferme tous les menus déroulants TC
+    if (
+      !e.target.classList.contains("tc-dropdown-label") &&
+      !e.target.classList.contains("tc-dropdown-item")
+    ) {
+      document
+        .querySelectorAll(".tc-dropdown-menu")
+        .forEach((m) => (m.style.display = "none"));
     }
   });
 
