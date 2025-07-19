@@ -49,6 +49,20 @@ function renderDeliveriesTable(deliveries) {
   const tbody = document.getElementById("deliveriesTableBody");
   if (!table || !tbody) return;
 
+  // Ajout de la date du jour au-dessus du tableau
+  let dateHeader = document.getElementById("dateHeaderAcconier");
+  if (!dateHeader) {
+    dateHeader = document.createElement("div");
+    dateHeader.id = "dateHeaderAcconier";
+    dateHeader.style =
+      "font-weight:bold;font-size:1.1em;margin-bottom:7px;color:#007bff;text-align:right;";
+    table.parentNode.insertBefore(dateHeader, table);
+  }
+  const today = new Date();
+  dateHeader.textContent = `Date du jour : ${today.toLocaleDateString(
+    "fr-FR"
+  )}`;
+
   // Génération dynamique du thead avec bandeaux colorés et sticky
   table.tHead.innerHTML = `
     <tr>
