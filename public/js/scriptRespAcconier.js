@@ -108,7 +108,14 @@ document.addEventListener("DOMContentLoaded", function () {
       const row = document.createElement("tr");
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const cell = document.createElement("td");
-        cell.textContent = delivery[col.label] || "-";
+        if (col.id === "date_display") {
+          let dDate = delivery.created_at || delivery.delivery_date;
+          cell.textContent = dDate
+            ? new Date(dDate).toLocaleDateString("fr-FR")
+            : "-";
+        } else {
+          cell.textContent = delivery[col.id] || "-";
+        }
         row.appendChild(cell);
       });
       tableBody.appendChild(row);
