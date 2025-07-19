@@ -267,6 +267,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
+    // Ajout du survol pour surligner toute la ligne
+    tr.addEventListener("mouseenter", function () {
+      tr.classList.add("highlight-row");
+    });
+    tr.addEventListener("mouseleave", function () {
+      tr.classList.remove("highlight-row");
+    });
     const td = document.createElement("td");
     let value = "-";
     // Colonnes éditables
