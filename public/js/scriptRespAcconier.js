@@ -55,9 +55,11 @@ document.addEventListener("DOMContentLoaded", function () {
         .map((tc) => tc.trim())
         .filter(Boolean);
       if (tcList.length > 1) {
-        tcHtml = `<div class='tc-dropdown' data-delivery-id='${delivery.id}'>
-          <button class='tc-dropdown-btn'>Voir les conteneurs ▼</button>
-          <div class='tc-dropdown-menu' style='display:none; position:absolute; background:#fff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 16px #2563eb22; z-index:1000; min-width:140px;'>
+        tcHtml = `<div class='tc-dropdown' data-delivery-id='${
+          delivery.id
+        }' style='position:relative;'>
+          <div class='tc-dropdown-label' style='cursor:pointer; color:#2563eb; padding:4px 10px; border-radius:8px; border:1px solid #cbd5e1; background:#f1f5f9;'>Voir les conteneurs ▼</div>
+          <div class='tc-dropdown-menu' style='display:none; position:absolute; background:#fff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 16px #2563eb22; z-index:1000; min-width:140px; top:32px; left:0;'>
             ${tcList
               .map(
                 (tc) =>
@@ -75,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
       <td>${delivery.agent_acconier || ""}</td>
       <td>${delivery.nom_client || ""}</td>
       <td>${delivery.numero_client || ""}</td>
-      <td style='position:relative;'>${tcHtml}</td>
+      <td class='tc-cell' style='position:relative;'>${tcHtml}</td>
       <td>${delivery.lieu || ""}</td>
       <td>${delivery.type_conteneur || ""}</td>
       <td>${delivery.contenu || ""}</td>
@@ -93,16 +95,22 @@ document.addEventListener("DOMContentLoaded", function () {
     </tr>`;
     // Gestion du menu déroulant TC
     document.addEventListener("click", function (e) {
-      // Ouvre le menu déroulant
-      if (e.target.classList.contains("tc-dropdown-btn")) {
+      // Ouvre le menu déroulant au clic sur la cellule ou le label
+      if (
+        e.target.classList.contains("tc-dropdown-label") ||
+        (e.target.classList.contains("tc-cell") &&
+          e.target.querySelector(".tc-dropdown"))
+      ) {
         const parent = e.target.closest(".tc-dropdown");
-        const menu = parent.querySelector(".tc-dropdown-menu");
-        // Ferme tous les autres menus
-        document.querySelectorAll(".tc-dropdown-menu").forEach((m) => {
-          if (m !== menu) m.style.display = "none";
-        });
-        menu.style.display = menu.style.display === "block" ? "none" : "block";
-        e.stopPropagation();
+        if (parent) {
+          const menu = parent.querySelector(".tc-dropdown-menu");
+          document.querySelectorAll(".tc-dropdown-menu").forEach((m) => {
+            if (m !== menu) m.style.display = "none";
+          });
+          menu.style.display =
+            menu.style.display === "block" ? "none" : "block";
+          e.stopPropagation();
+        }
       }
       // Clique sur un item du menu
       if (e.target.classList.contains("tc-dropdown-item")) {
@@ -116,7 +124,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       // Clique ailleurs : ferme tous les menus
       if (
-        !e.target.classList.contains("tc-dropdown-btn") &&
+        !e.target.classList.contains("tc-dropdown-label") &&
         !e.target.classList.contains("tc-dropdown-item")
       ) {
         document
