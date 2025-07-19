@@ -82,7 +82,8 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
       font-size: 1em;
       font-weight: bold;
-      background: #f1f5f9;
+      background: #0e274eff;
+      color: #fff;
       border-bottom: 2px solid #2563eb;
     }
     #deliveriesTable tbody td:not(:nth-child(5)) {
