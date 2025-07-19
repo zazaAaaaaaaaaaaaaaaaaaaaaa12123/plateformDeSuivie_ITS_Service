@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   styleTC.textContent = `
+    /* Style pour les badges/tags conteneur */
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -38,18 +39,24 @@ document.addEventListener("DOMContentLoaded", function () {
       font-weight: 500;
       white-space: nowrap;
       vertical-align: middle;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     #deliveriesTableBody .tc-tags-btn {
       display: inline-flex;
       align-items: center;
       gap: 2px;
-      background: #f3f4f6;
+      background: #4c628dff;
       border: 1px solid #2563eb;
       border-radius: 8px;
       padding: 2px 10px;
       cursor: pointer;
       font-size: 0.95em;
       white-space: nowrap;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     #deliveriesTableBody .tc-popup {
       position: absolute;
@@ -70,9 +77,49 @@ document.addEventListener("DOMContentLoaded", function () {
       font-size: 0.98em;
       color: #2563eb;
       border-bottom: 1px solid #f3f4f6;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
+    }
+    /* Style général pour le tableau : largeur max, ellipses, retour à la ligne contrôlé */
+    #deliveriesTableBody td, #deliveriesTableBody th {
+      max-width: 180px;
+      min-width: 80px;
+      padding: 8px 6px;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: break-word;
+    }
+    #deliveriesTableBody th {
+      background: #f3f4f6;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      font-weight: bold;
+      font-size: 1em;
+    }
+    #deliveriesTableBody tr {
+      border-bottom: 1px solid #e5e7eb;
+    }
+    /* Colonnes spécifiques plus larges si besoin */
+    #deliveriesTableBody td.tc-multi-cell {
+      max-width: 220px;
+    }
+    #deliveriesTableBody td {
+      box-sizing: border-box;
+    }
+    /* Pour les colonnes où le texte peut être très long, autoriser le retour à la ligne */
+    #deliveriesTableBody td.long-text {
+      white-space: normal;
+      word-break: break-word;
+      text-overflow: ellipsis;
+      max-width: 260px;
     }
   `;
   document.head.appendChild(styleTC);
