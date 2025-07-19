@@ -63,6 +63,22 @@ function renderDeliveriesTable(deliveries) {
     "fr-FR"
   )}`;
 
+  // Filtrage par date si le champ existe
+  let filteredDeliveries = deliveries;
+  const dateInput = document.getElementById("mainTableDateFilter");
+  if (dateInput && dateInput.value) {
+    const selectedDate = new Date(dateInput.value);
+    filteredDeliveries = deliveries.filter((delivery) => {
+      if (!delivery.created_at) return false;
+      const createdAt = new Date(delivery.created_at);
+      return (
+        createdAt.getFullYear() === selectedDate.getFullYear() &&
+        createdAt.getMonth() === selectedDate.getMonth() &&
+        createdAt.getDate() === selectedDate.getDate()
+      );
+    });
+  }
+
   // Génération dynamique du thead avec bandeaux colorés et sticky
   table.tHead.innerHTML = `
     <tr>
@@ -196,6 +212,13 @@ function injectResponsiveStyle() {
 document.addEventListener("DOMContentLoaded", () => {
   injectResponsiveStyle();
   fetchDeliveries();
+  // Ajout du listener sur le filtre de date
+  const dateInput = document.getElementById("mainTableDateFilter");
+  if (dateInput) {
+    dateInput.addEventListener("change", () => {
+      renderDeliveriesTable(window.deliveries || []);
+    });
+  }
   // Optionnel : rafraîchir toutes les X secondes
   // setInterval(fetchDeliveries, 60000);
 });
