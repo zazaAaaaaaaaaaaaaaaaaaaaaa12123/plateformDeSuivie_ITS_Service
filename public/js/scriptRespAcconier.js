@@ -1,10 +1,9 @@
 // Colonnes à afficher dans le tableau
 const columns = [
-  "N°",
-  "Date et heure",
-  "Agent",
+  "Date & Heure",
+  "Responsable Acconier",
   "Client (Nom)",
-  "Client (Tél.)",
+  "Client (Tél)",
   "Numéro TC(s)",
   "Lieu",
   "Type Conteneur(pied)",
@@ -17,7 +16,8 @@ const columns = [
   "Poids",
   "Nom du navire",
   "Circuit",
-  "Mode de transport",
+  "Mode de Transport",
+  "Statut dossier",
   "Observations",
 ];
 
@@ -39,19 +39,19 @@ async function fetchDeliveries() {
 
 // Fonction pour générer le tableau HTML
 function renderDeliveriesTable(deliveries) {
-  const container = document.getElementById("deliveries-table-container");
-  if (!container) return;
+  const tbody = document.getElementById("deliveriesTableBody");
+  if (!tbody) return;
 
-  let html =
-    '<div class="table-responsive"><table class="table table-striped table-bordered"><thead><tr>';
-  columns.forEach((col) => {
-    html += `<th>${col}</th>`;
-  });
-  html += "</tr></thead><tbody>";
+  if (!deliveries || deliveries.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${columns.length}" class="text-center text-muted">
+      <i class="fas fa-box-open me-1"></i> Aucune livraison enregistrée pour le moment.
+    </td></tr>`;
+    return;
+  }
 
-  deliveries.forEach((delivery, idx) => {
+  let html = "";
+  deliveries.forEach((delivery) => {
     html += "<tr>";
-    html += `<td>${idx + 1}</td>`; // N°
     html += `<td>${delivery.dateHeure || ""}</td>`;
     html += `<td>${delivery.agent || ""}</td>`;
     html += `<td>${delivery.clientNom || ""}</td>`;
@@ -69,11 +69,11 @@ function renderDeliveriesTable(deliveries) {
     html += `<td>${delivery.nomNavire || ""}</td>`;
     html += `<td>${delivery.circuit || ""}</td>`;
     html += `<td>${delivery.modeTransport || ""}</td>`;
+    html += `<td>${delivery.statutDossier || ""}</td>`;
     html += `<td>${delivery.observations || ""}</td>`;
     html += "</tr>";
   });
-  html += "</tbody></table></div>";
-  container.innerHTML = html;
+  tbody.innerHTML = html;
 }
 
 // Style responsive si besoin
