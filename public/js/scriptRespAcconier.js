@@ -27,25 +27,60 @@ document.addEventListener("DOMContentLoaded", function () {
     options
   );
 
-  // Logique de filtrage (exemple, à adapter selon vos données dynamiques)
-  const tableBody = document.getElementById("respAcconierTableBody");
-  const dateInput = document.getElementById("filtreDateJour");
+  // Fonction pour générer une ligne HTML à partir d'un objet livraison
+  function createRow(delivery) {
+    return `<tr>
+      <td>${delivery.date || ""}</td>
+      <td>${delivery.agent_acconier || ""}</td>
+      <td>${delivery.nom_client || ""}</td>
+      <td>${delivery.numero_client || ""}</td>
+      <td>${delivery.numero_tc || ""}</td>
+      <td>${delivery.lieu || ""}</td>
+      <td>${delivery.type_conteneur || ""}</td>
+      <td>${delivery.contenu || ""}</td>
+      <td>${delivery.numero_declaration || ""}</td>
+      <td>${delivery.numero_bl || ""}</td>
+      <td>${delivery.numero_dossier || ""}</td>
+      <td>${delivery.nbr_conteneurs || ""}</td>
+      <td>${delivery.compagnie_maritime || ""}</td>
+      <td>${delivery.poids || ""}</td>
+      <td>${delivery.nom_navire || ""}</td>
+      <td>${delivery.circuit || ""}</td>
+      <td>${delivery.mode_transport || ""}</td>
+      <td>${delivery.statut_dossier || ""}</td>
+      <td>${delivery.observations || ""}</td>
+    </tr>`;
+  }
 
-  if (dateInput && tableBody) {
+  // Fonction pour charger et afficher les données
+  async function loadDeliveries(dateFilter = null) {
+    const tableBody = document.getElementById("respAcconierTableBody");
+    tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-muted"><i class="fas fa-spinner fa-spin me-2"></i> Chargement...</td></tr>`;
+    try {
+      const res = await fetch("/api/deliveries");
+      if (!res.ok) throw new Error("Erreur serveur");
+      let data = await res.json();
+      if (dateFilter) {
+        data = data.filter((d) => d.date && d.date.startsWith(dateFilter));
+      }
+      if (data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-info">Aucune donnée pour cette date.</td></tr>`;
+      } else {
+        tableBody.innerHTML = data.map(createRow).join("");
+      }
+    } catch (e) {
+      tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-danger">Erreur de chargement des données</td></tr>`;
+    }
+  }
+
+  // Initialisation : charger toutes les données du jour
+  loadDeliveries(formatDate(new Date()));
+
+  // Filtrage par date
+  const dateInput = document.getElementById("filtreDateJour");
+  if (dateInput) {
     dateInput.addEventListener("change", function () {
-      const selectedDate = dateInput.value;
-      // Ici, vous devrez filtrer les lignes du tableau selon la date sélectionnée
-      // Exemple de logique :
-      // for (let row of tableBody.rows) {
-      //   const dateCell = row.cells[0];
-      //   if (dateCell && dateCell.textContent.startsWith(selectedDate)) {
-      //     row.style.display = '';
-      //   } else {
-      //     row.style.display = 'none';
-      //   }
-      // }
-      // Pour l'instant, on affiche un message de démo :
-      tableBody.innerHTML = `<tr><td colspan="19" class="text-center text-info">Filtrage pour la date : <b>${selectedDate}</b> (à connecter à vos données réelles)</td></tr>`;
+      loadDeliveries(dateInput.value);
     });
   }
 
