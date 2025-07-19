@@ -85,6 +85,8 @@ document.addEventListener("DOMContentLoaded", function () {
       background: #0e274eff;
       color: #fff;
       border-bottom: 2px solid #2563eb;
+      text-align: center;
+      vertical-align: middle;
     }
     #deliveriesTable tbody td:not(:nth-child(5)) {
       max-width: 160px;
