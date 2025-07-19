@@ -88,29 +88,43 @@ function renderDeliveriesTable(deliveries) {
   let html = "";
   deliveries.forEach((delivery, idx) => {
     html += "<tr>";
-    html += `<td class="sticky-col sticky-col-index">${idx + 1}</td>`;
-    html += `<td>${formatDateHeure(
+    // Colonnes à styler
+    const cellStyles =
+      "padding:10px 12px;border-radius:7px;font-size:1.08em;background:#fff;box-shadow:0 1px 4px rgba(30,41,59,0.04);";
+    html += `<td class="sticky-col sticky-col-index" style="${cellStyles}">${
+      idx + 1
+    }</td>`;
+    html += `<td style="${cellStyles}">${formatDateHeure(
       delivery.delivery_date,
       delivery.delivery_time
     )}</td>`;
-    html += `<td class="sticky-col sticky-col-agent">${
+    html += `<td class="sticky-col sticky-col-agent" style="${cellStyles}">${
       delivery.employee_name || ""
     }</td>`;
-    html += `<td>${delivery.client_name || ""}</td>`;
-    html += `<td>${delivery.client_phone || ""}</td>`;
-    html += `<td>${delivery.container_number || ""}</td>`;
-    html += `<td>${delivery.lieu || ""}</td>`;
-    html += `<td>${delivery.container_foot_type || ""}</td>`;
-    html += `<td>${delivery.container_type_and_content || ""}</td>`;
-    html += `<td>${delivery.declaration_number || ""}</td>`;
-    html += `<td>${delivery.bl_number || ""}</td>`;
-    html += `<td>${delivery.dossier_number || ""}</td>`;
-    html += `<td>${delivery.number_of_containers || ""}</td>`;
-    html += `<td>${delivery.shipping_company || ""}</td>`;
-    html += `<td>${delivery.weight || ""}</td>`;
-    html += `<td>${delivery.ship_name || ""}</td>`;
-    html += `<td>${delivery.circuit || ""}</td>`;
-    html += `<td>${delivery.transporter_mode || ""}</td>`;
+    html += `<td style="${cellStyles}">${delivery.client_name || ""}</td>`;
+    html += `<td style="${cellStyles}">${delivery.client_phone || ""}</td>`;
+    html += `<td style="${cellStyles}">${delivery.container_number || ""}</td>`;
+    html += `<td style="${cellStyles}">${delivery.lieu || ""}</td>`;
+    html += `<td style="${cellStyles}">${
+      delivery.container_foot_type || ""
+    }</td>`;
+    html += `<td style="${cellStyles}">${
+      delivery.container_type_and_content || ""
+    }</td>`;
+    html += `<td style="${cellStyles}">${
+      delivery.declaration_number || ""
+    }</td>`;
+    html += `<td style="${cellStyles}">${delivery.bl_number || ""}</td>`;
+    html += `<td style="${cellStyles}">${delivery.dossier_number || ""}</td>`;
+    html += `<td style="${cellStyles}">${
+      delivery.number_of_containers || ""
+    }</td>`;
+    html += `<td style="${cellStyles}">${delivery.shipping_company || ""}</td>`;
+    html += `<td style="${cellStyles}">${delivery.weight || ""}</td>`;
+    html += `<td style="${cellStyles}">${delivery.ship_name || ""}</td>`;
+    html += `<td style="${cellStyles}">${delivery.circuit || ""}</td>`;
+    html += `<td style="${cellStyles}">${delivery.transporter_mode || ""}</td>`;
+    // Colonnes non stylées
     html += `<td>${delivery.delivery_status_acconier || ""}</td>`;
     html += `<td>${delivery.observation_acconier || ""}</td>`;
     html += "</tr>";
