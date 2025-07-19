@@ -98,7 +98,8 @@ document.addEventListener("DOMContentLoaded", function () {
     /* Surlignage de toute la ligne au survol, toutes classes confondues */
     #deliveriesTableBody tr.highlight-row td,
     #deliveriesTableBody tr.highlight-row td.tc-multi-cell,
-    #deliveriesTableBody tr.highlight-row td.observation-col {
+    #deliveriesTableBody tr.highlight-row td.observation-col,
+    #deliveriesTableBody tr.highlight-row td.editable-col {
       background: #e0e7ff !important;
       color: #1e293b !important;
     }
@@ -306,6 +307,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.classList.add("row-number-col");
       } else if (editableCols.includes(col.id)) {
         td.innerHTML = `<input type="text" class="form-control" name="${col.id}" value="" placeholder="Saisir...">`;
+        td.classList.add("editable-col");
         if (col.id === "observation") td.classList.add("observation-col");
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
