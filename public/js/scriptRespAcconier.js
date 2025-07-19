@@ -58,28 +58,38 @@ function renderDeliveriesTable(deliveries) {
   let html = "";
   deliveries.forEach((delivery) => {
     html += "<tr>";
-    html += `<td>${delivery.dateHeure || ""}</td>`;
-    html += `<td>${delivery.agent || ""}</td>`;
-    html += `<td>${delivery.clientNom || ""}</td>`;
-    html += `<td>${delivery.clientTel || ""}</td>`;
-    html += `<td>${delivery.numeroTC || ""}</td>`;
+    html += `<td>${formatDateHeure(
+      delivery.delivery_date,
+      delivery.delivery_time
+    )}</td>`;
+    html += `<td>${delivery.employee_name || ""}</td>`;
+    html += `<td>${delivery.client_name || ""}</td>`;
+    html += `<td>${delivery.client_phone || ""}</td>`;
+    html += `<td>${delivery.container_number || ""}</td>`;
     html += `<td>${delivery.lieu || ""}</td>`;
-    html += `<td>${delivery.typeConteneur || ""}</td>`;
-    html += `<td>${delivery.contenu || ""}</td>`;
-    html += `<td>${delivery.numeroDeclaration || ""}</td>`;
-    html += `<td>${delivery.numeroBL || ""}</td>`;
-    html += `<td>${delivery.numeroDossier || ""}</td>`;
-    html += `<td>${delivery.nombreConteneurs || ""}</td>`;
-    html += `<td>${delivery.compagnieMaritime || ""}</td>`;
-    html += `<td>${delivery.poids || ""}</td>`;
-    html += `<td>${delivery.nomNavire || ""}</td>`;
+    html += `<td>${delivery.container_foot_type || ""}</td>`;
+    html += `<td>${delivery.container_type_and_content || ""}</td>`;
+    html += `<td>${delivery.declaration_number || ""}</td>`;
+    html += `<td>${delivery.bl_number || ""}</td>`;
+    html += `<td>${delivery.dossier_number || ""}</td>`;
+    html += `<td>${delivery.number_of_containers || ""}</td>`;
+    html += `<td>${delivery.shipping_company || ""}</td>`;
+    html += `<td>${delivery.weight || ""}</td>`;
+    html += `<td>${delivery.ship_name || ""}</td>`;
     html += `<td>${delivery.circuit || ""}</td>`;
-    html += `<td>${delivery.modeTransport || ""}</td>`;
-    html += `<td>${delivery.statutDossier || ""}</td>`;
-    html += `<td>${delivery.observations || ""}</td>`;
+    html += `<td>${delivery.transporter_mode || ""}</td>`;
+    html += `<td>${delivery.delivery_status_acconier || ""}</td>`;
+    html += `<td>${delivery.observation_acconier || ""}</td>`;
     html += "</tr>";
   });
   tbody.innerHTML = html;
+}
+
+// Fonction utilitaire pour afficher date + heure
+function formatDateHeure(date, heure) {
+  if (!date && !heure) return "";
+  if (date && heure) return `${date} ${heure}`;
+  return date || heure || "";
 }
 
 // Style responsive si besoin
