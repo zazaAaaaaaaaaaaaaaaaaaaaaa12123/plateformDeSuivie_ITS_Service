@@ -24,6 +24,45 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // Ajout du style CSS pour stabiliser les en-têtes et colonnes du tableau
+  const styleHeaders = document.createElement("style");
+  styleHeaders.textContent = `
+    #deliveriesTable th, #deliveriesTable td {
+      padding: 10px 8px;
+      font-size: 1em;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: middle;
+      background: #fff;
+    }
+    #deliveriesTable th {
+      background: #2563eb;
+      color: #fff;
+      font-weight: bold;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    #deliveriesTable th:nth-child(1), #deliveriesTable td:nth-child(1) { min-width: 110px; }
+    #deliveriesTable th:nth-child(2), #deliveriesTable td:nth-child(2) { min-width: 130px; }
+    #deliveriesTable th:nth-child(3), #deliveriesTable td:nth-child(3) { min-width: 120px; }
+    #deliveriesTable th:nth-child(4), #deliveriesTable td:nth-child(4) { min-width: 110px; }
+    #deliveriesTable th:nth-child(5), #deliveriesTable td:nth-child(5) { min-width: 120px; }
+    #deliveriesTable th:nth-child(6), #deliveriesTable td:nth-child(6) { min-width: 120px; }
+    #deliveriesTable th:nth-child(7), #deliveriesTable td:nth-child(7) { min-width: 120px; }
+    #deliveriesTable th:nth-child(8), #deliveriesTable td:nth-child(8) { min-width: 120px; }
+    #deliveriesTable th:nth-child(9), #deliveriesTable td:nth-child(9) { min-width: 120px; }
+    #deliveriesTable th:nth-child(10), #deliveriesTable td:nth-child(10) { min-width: 120px; }
+    #deliveriesTable th:nth-child(11), #deliveriesTable td:nth-child(11) { min-width: 120px; }
+    #deliveriesTable th:nth-child(12), #deliveriesTable td:nth-child(12) { min-width: 120px; }
+    #deliveriesTable th:nth-child(13), #deliveriesTable td:nth-child(13) { min-width: 120px; }
+    #deliveriesTable th:nth-child(14), #deliveriesTable td:nth-child(14) { min-width: 120px; }
+    #deliveriesTable th:nth-child(15), #deliveriesTable td:nth-child(15) { min-width: 120px; }
+    #deliveriesTable th:nth-child(16), #deliveriesTable td:nth-child(16) { min-width: 120px; }
+    #deliveriesTable th:nth-child(17), #deliveriesTable td:nth-child(17) { min-width: 120px; }
+    #deliveriesTable th:nth-child(18), #deliveriesTable td:nth-child(18) { min-width: 120px; }
+  `;
+  document.head.appendChild(styleHeaders);
   // Ajout du style CSS pour éviter la superposition des données dans les cellules du tableau
   const style = document.createElement("style");
   style.textContent = `
