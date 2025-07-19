@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
       display: inline-flex;
       align-items: center;
       gap: 2px;
-      background: #4c628dff;
+      background: #edc00aff;
       border: 1px solid #2563eb;
       border-radius: 8px;
       padding: 2px 10px;
