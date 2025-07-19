@@ -53,8 +53,6 @@ function renderDeliveriesTable(deliveries) {
   table.tHead.innerHTML = `
     <tr>
       <th colspan="20" id="agentAcconierHeader" class="header-agent-acconier" style="background:#007bff;color:#fff;text-transform:uppercase;">Agent Acconier</th>
-      <th colspan="20" id="respAcconierHeader" class="header-resp-acconier" style="background:#ffc107;color:#222;text-transform:uppercase;">Responsable Acconier</th>
-      <th colspan="20" id="respLivraisonHeader" class="header-resp-livraison" style="background:#28a745;color:#fff;text-transform:uppercase;">Responsable de livraison</th>
     </tr>
     <tr id="deliveriesTableHead">
       <th class="sticky-col sticky-col-index">N°</th>
@@ -143,8 +141,7 @@ function injectResponsiveStyle() {
       th, td { font-size: 12px; padding: 4px; }
     }
     .header-agent-acconier { background: #007bff !important; color: #fff !important; }
-    .header-resp-acconier { background: #ffc107 !important; color: #222 !important; }
-    .header-resp-livraison { background: #28a745 !important; color: #fff !important; }
+   
     .error { color: red; padding: 10px; }
     tr:hover td { background: #e3f2fd; }
   `;
