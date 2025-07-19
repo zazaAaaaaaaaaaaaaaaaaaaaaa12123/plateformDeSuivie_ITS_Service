@@ -47,26 +47,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction pour générer une ligne HTML à partir d'un objet livraison
   function createRow(delivery) {
-    // Rendre chaque numéro TC cliquable (bouton stylé)
+    // Cellule TC : menu déroulant si plusieurs, bouton si un seul
     let tcHtml = "";
     if (delivery.numero_tc) {
       const tcList = String(delivery.numero_tc)
         .split(",")
         .map((tc) => tc.trim())
         .filter(Boolean);
-      tcHtml = tcList
-        .map(
-          (tc) =>
-            `<button class="tc-btn" data-tc="${tc}" data-delivery-id="${delivery.id}">${tc}</button>`
-        )
-        .join(", ");
+      if (tcList.length > 1) {
+        tcHtml = `<div class='tc-dropdown' data-delivery-id='${delivery.id}'>
+          <button class='tc-dropdown-btn'>Voir les conteneurs ▼</button>
+          <div class='tc-dropdown-menu' style='display:none; position:absolute; background:#fff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 16px #2563eb22; z-index:1000; min-width:140px;'>
+            ${tcList
+              .map(
+                (tc) =>
+                  `<div class='tc-dropdown-item' data-tc='${tc}' data-delivery-id='${delivery.id}' style='padding:8px 16px; cursor:pointer;'>${tc}</div>`
+              )
+              .join("")}
+          </div>
+        </div>`;
+      } else {
+        tcHtml = `<button class='tc-btn' data-tc='${tcList[0]}' data-delivery-id='${delivery.id}'>${tcList[0]}</button>`;
+      }
     }
     return `<tr>
       <td>${delivery.date || ""}</td>
       <td>${delivery.agent_acconier || ""}</td>
       <td>${delivery.nom_client || ""}</td>
       <td>${delivery.numero_client || ""}</td>
-      <td>${tcHtml}</td>
+      <td style='position:relative;'>${tcHtml}</td>
       <td>${delivery.lieu || ""}</td>
       <td>${delivery.type_conteneur || ""}</td>
       <td>${delivery.contenu || ""}</td>
@@ -82,6 +91,39 @@ document.addEventListener("DOMContentLoaded", function () {
       <td>${delivery.statut_dossier || ""}</td>
       <td>${delivery.observations || ""}</td>
     </tr>`;
+    // Gestion du menu déroulant TC
+    document.addEventListener("click", function (e) {
+      // Ouvre le menu déroulant
+      if (e.target.classList.contains("tc-dropdown-btn")) {
+        const parent = e.target.closest(".tc-dropdown");
+        const menu = parent.querySelector(".tc-dropdown-menu");
+        // Ferme tous les autres menus
+        document.querySelectorAll(".tc-dropdown-menu").forEach((m) => {
+          if (m !== menu) m.style.display = "none";
+        });
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+        e.stopPropagation();
+      }
+      // Clique sur un item du menu
+      if (e.target.classList.contains("tc-dropdown-item")) {
+        const tc = e.target.getAttribute("data-tc");
+        const deliveryId = e.target.getAttribute("data-delivery-id");
+        document
+          .querySelectorAll(".tc-dropdown-menu")
+          .forEach((m) => (m.style.display = "none"));
+        openTcModal(tc, deliveryId);
+        e.stopPropagation();
+      }
+      // Clique ailleurs : ferme tous les menus
+      if (
+        !e.target.classList.contains("tc-dropdown-btn") &&
+        !e.target.classList.contains("tc-dropdown-item")
+      ) {
+        document
+          .querySelectorAll(".tc-dropdown-menu")
+          .forEach((m) => (m.style.display = "none"));
+      }
+    });
   }
   // Ajout de la modale dans le DOM (invisible au départ)
   const modalHtml = `
