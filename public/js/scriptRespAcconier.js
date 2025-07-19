@@ -59,17 +59,33 @@ document.addEventListener("DOMContentLoaded", function () {
         delivery["Date"] ||
         delivery["Date Livraison"];
       if (!dDate) return false;
-      // Normalisation du format
+      // Normalisation robuste du format
       let normalized = "";
-      if (dDate.includes("/")) {
-        // Format JJ/MM/AAAA
-        const [j, m, a] = dDate.split("/");
-        normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
-      } else if (dDate.includes("-")) {
-        // Format YYYY-MM-DD
-        normalized = dDate;
+      if (typeof dDate === "string") {
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
+          // Format JJ/MM/AAAA
+          const [j, m, a] = dDate.split("/");
+          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
+          // Format YYYY-MM-DD
+          normalized = dDate;
+        } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
+          // Format JJ-MM-AAAA
+          const [j, m, a] = dDate.split("-");
+          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+        } else {
+          // Autre format, on tente une conversion
+          const dateObj = new Date(dDate);
+          if (!isNaN(dateObj)) {
+            normalized = dateObj.toISOString().split("T")[0];
+          } else {
+            normalized = dDate;
+          }
+        }
+      } else if (dDate instanceof Date) {
+        normalized = dDate.toISOString().split("T")[0];
       } else {
-        normalized = dDate;
+        normalized = String(dDate);
       }
       return normalized === dateStr;
     });
