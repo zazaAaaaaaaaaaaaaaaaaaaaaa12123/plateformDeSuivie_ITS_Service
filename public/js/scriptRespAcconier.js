@@ -36,9 +36,20 @@ function renderLateDossiersTable() {
     tableContainer.innerHTML = `<div style='color:#ef4444;text-align:center;font-size:1em;padding:10px 0;'>Aucun dossier en retard</div>`;
     return;
   }
-  let html = `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
-  html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody>`;
-  lateList.forEach((c) => {
+  let html = `<div style='overflow-x:auto;'>
+    <table style='width:100%;border-collapse:collapse;font-size:1em;margin-top:0;background:none;box-shadow:0 2px 8px rgba(0,0,0,0.07);border-radius:10px;overflow:hidden;'>
+      <thead>
+        <tr style='background:#fbeaea;'>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:90px;text-align:center;'>TC</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:120px;text-align:center;'>Agent</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:140px;text-align:center;'>Date enregistrement</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:140px;text-align:center;'>Date livraison</th>
+          <th style='padding:10px 12px;border:1px solid #e5e7eb;min-width:120px;text-align:center;'>Heure livraison</th>
+        </tr>
+      </thead>
+      <tbody>
+`;
+  lateList.forEach((c, idx) => {
     let agent = c.agentName ? c.agentName : "-";
     let dateLiv = c.deliveryDate || "-";
     let heureLiv = "-";
@@ -53,11 +64,17 @@ function renderLateDossiersTable() {
     ) {
       dateLiv = dateLiv.toLocaleDateString("fr-FR");
     }
-    html += `<tr><td style='padding:6px 10px;'>${
-      c.numeroTC
-    }</td><td style='padding:6px 10px;'>${agent}</td><td style='padding:6px 10px;'>${
-      c.dateEnr || "-"
-    }</td><td style='padding:6px 10px;'>${dateLiv}</td><td style='padding:6px 10px;'>${heureLiv}</td></tr>`;
+    html += `<tr style='background:${idx % 2 === 0 ? "#fff" : "#f6f6f6"};'>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;font-weight:600;'>${
+        c.numeroTC
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${agent}</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${
+        c.dateEnr || "-"
+      }</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${dateLiv}</td>
+      <td style='padding:8px 12px;border:1px solid #e5e7eb;text-align:center;'>${heureLiv}</td>
+    </tr>`;
   });
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
