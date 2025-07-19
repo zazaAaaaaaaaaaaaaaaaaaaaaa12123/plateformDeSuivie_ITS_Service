@@ -28,12 +28,18 @@ async function fetchDeliveries() {
     if (!response.ok)
       throw new Error("Erreur lors de la récupération des données");
     const data = await response.json();
-    window.deliveries = data;
-    renderDeliveriesTable(data);
+    // Si la réponse est un objet avec deliveries, prendre le tableau
+    const deliveries = Array.isArray(data) ? data : data.deliveries || [];
+    window.deliveries = deliveries;
+    renderDeliveriesTable(deliveries);
   } catch (err) {
     console.error(err);
-    document.getElementById("deliveries-table-container").innerHTML =
-      '<div class="error">Impossible de charger les données</div>';
+    const tbody = document.getElementById("deliveriesTableBody");
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="${columns.length}" class="text-center text-danger">
+        <i class='fas fa-exclamation-triangle me-1'></i> Impossible de charger les données
+      </td></tr>`;
+    }
   }
 }
 
