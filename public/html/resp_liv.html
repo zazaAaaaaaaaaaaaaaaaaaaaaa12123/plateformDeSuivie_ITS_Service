@@ -394,52 +394,42 @@
             id="deliveriesTable"
             class="table table-bordered table-hover align-middle"
           >
-<thead>
+            <thead>
               <tr>
                 <th
-                  colspan="24"
-                  style="
-                    background: rgba(0, 123, 255, 0.2);
-                    color: #0a3d7c;
-                    font-size: 1.15em;
-                    font-weight: bold;
-                    text-align: center;
-                    letter-spacing: 1px;
-                    border-bottom: 3px solid #007bff;
-                  "
+                  colspan="31"
+                  id="agentAcconierHeader"
+                  class="header-agent-acconier"
                 >
-                  RESPONSABLE LIVRAISON
+                  Responsable Acconier
                 </th>
               </tr>
-              <tr>
+              <tr id="deliveriesTableHead">
                 <th>N°</th>
-                <th>DATE</th>
-                <th>AGENT ACCONIER</th>
-                <th>NOM CLIENT</th>
-                <th>CLIENT (Tel)</th>
-                <th>NUMÉRO TC(S)</th>
-                <th>LIEU</th>
-                <th>TYPE DE CONTENEURS</th>
-                <th>CONTENU</th>
-                <th>NUMÉRO DÉCLARATION</th>
-                <th>NUMÉRO DOSSIER</th>
-                <th>NBR CONTENEURS</th>
-                <th>COMPAGNIE MARITIME</th>
-                <th>CIRCUIT</th>
-                <th>MODE DE TRANSPORT</th>
-                <th>NOM Agent visiteurs</th>
-                <th>TRANSPORTEUR</th>
-                <th>INSPECTEUR</th>
-                <th>AGENT EN DOUANES</th>
-                <th>CHAUFFEUR</th>
-                <th>TEL CHAUFFEUR</th>
-                <th>DATE LIVRAISON</th>
-                <th>STATUT (du Respo.ACCONIER)</th>
-                <th>STATUT</th>
-                <th>OBSERVATIONS</th>
+                <th>Date</th>
+                <th>Agent</th>
+                <th>Client (Nom)</th>
+                <th>Client (Tél)</th>
+                <th>Numéro TC(s)</th>
+                <th>Lieu</th>
+                <th>Type Conteneur (pied)</th>
+                <th>Contenu</th>
+                <th>N° Déclaration</th>
+                <th>N° BL</th>
+                <th>N° Dossier</th>
+                <th>Nombre de conteneurs</th>
+                <th>Compagnie Maritime</th>
+                <th>Poids</th>
+                <th>Nom du navire</th>
+                <th>Circuit</th>
+                <th>Mode de Transport</th>
+                <th>Statut Dossier</th>
+                <th>Observation</th>
+                
               </tr>
             </thead>
-            <tbody id="respLivTableBody">
+
+            <tbody id="deliveriesTableBody">
               <!-- Les lignes seront générées dynamiquement par JS -->
               <tr>
                 <td colspan="31" class="text-center text-muted">
@@ -482,6 +472,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../js/scriptRespLiv.js"></script>
+    <script src="../js/scriptRespAcconier.js"></script>
   </body>
 </html>
