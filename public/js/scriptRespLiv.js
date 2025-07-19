@@ -274,8 +274,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     tr.addEventListener("mouseleave", function () {
       tr.classList.remove("highlight-row");
     });
-    const td = document.createElement("td");
-    let value = "-";
     // Colonnes éditables
     const editableCols = [
       "inspector",
@@ -287,95 +285,101 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       "statut",
       "observation",
     ];
-    if (col.id === "row_number") {
-      value = i + 1;
-      td.textContent = value;
-      td.classList.add("row-number-col");
-    } else if (editableCols.includes(col.id)) {
-      td.innerHTML = `<input type="text" class="form-control" name="${col.id}" value="" placeholder="Saisir...">`;
-      if (col.id === "observation") td.classList.add("observation-col");
-    } else if (col.id === "date_display") {
-      let dDate = delivery.delivery_date || delivery.created_at;
-      if (dDate) {
-        let dateObj = new Date(dDate);
-        if (!isNaN(dateObj.getTime())) {
-          value = dateObj.toLocaleDateString("fr-FR");
-        } else if (typeof dDate === "string") {
-          value = dDate;
+    AGENT_TABLE_COLUMNS.forEach((col) => {
+      const td = document.createElement("td");
+      let value = "-";
+      if (col.id === "row_number") {
+        value = i + 1;
+        td.textContent = value;
+        td.classList.add("row-number-col");
+      } else if (editableCols.includes(col.id)) {
+        td.innerHTML = `<input type="text" class="form-control" name="${col.id}" value="" placeholder="Saisir...">`;
+        if (col.id === "observation") td.classList.add("observation-col");
+      } else if (col.id === "date_display") {
+        let dDate = delivery.delivery_date || delivery.created_at;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            value = dDate;
+          }
+        }
+        td.textContent = value;
+      } else if (col.id === "container_number") {
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        if (tcList.length > 1) {
+          td.classList.add("tc-multi-cell");
+          const btn = document.createElement("button");
+          btn.className = "tc-tags-btn";
+          btn.type = "button";
+          btn.innerHTML =
+            tcList
+              .slice(0, 2)
+              .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
+              .join("") +
+            (tcList.length > 2
+              ? ` <span class=\"tc-tag tc-tag-more\">+${
+                  tcList.length - 2
+                }</span>`
+              : "") +
+            ' <i class="fas fa-chevron-down tc-chevron"></i>';
+          const popup = document.createElement("div");
+          popup.className = "tc-popup";
+          popup.style.display = "none";
+          popup.innerHTML = tcList
+            .map(
+              (tc) =>
+                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
+            )
+            .join("");
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            document.querySelectorAll(".tc-popup").forEach((p) => {
+              if (p !== popup) p.style.display = "none";
+            });
+            popup.style.display =
+              popup.style.display === "block" ? "none" : "block";
+          };
+          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
+            item.onclick = (ev) => {
+              ev.stopPropagation();
+              popup.style.display = "none";
+              showContainerDetailPopup(delivery, item.textContent);
+            };
+          });
+          document.addEventListener("click", function hidePopup(e) {
+            if (!td.contains(e.target)) popup.style.display = "none";
+          });
+          td.appendChild(btn);
+          td.appendChild(popup);
+        } else if (tcList.length === 1) {
+          const tag = document.createElement("span");
+          tag.className = "tc-tag";
+          tag.textContent = tcList[0];
+          tag.style.cursor = "pointer";
+          tag.onclick = (e) => {
+            e.stopPropagation();
+            showContainerDetailPopup(delivery, tcList[0]);
+          };
+          td.appendChild(tag);
+        } else {
+          td.textContent = "-";
+        }
+      } else {
+        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+        td.textContent = value;
+        if (col.id === "observation") {
+          td.classList.add("observation-col");
         }
       }
-      td.textContent = value;
-    } else if (col.id === "container_number") {
-      let tcList = [];
-      if (Array.isArray(delivery.container_number)) {
-        tcList = delivery.container_number.filter(Boolean);
-      } else if (typeof delivery.container_number === "string") {
-        tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-      }
-      if (tcList.length > 1) {
-        td.classList.add("tc-multi-cell");
-        const btn = document.createElement("button");
-        btn.className = "tc-tags-btn";
-        btn.type = "button";
-        btn.innerHTML =
-          tcList
-            .slice(0, 2)
-            .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
-            .join("") +
-          (tcList.length > 2
-            ? ` <span class=\"tc-tag tc-tag-more\">+${tcList.length - 2}</span>`
-            : "") +
-          ' <i class="fas fa-chevron-down tc-chevron"></i>';
-        const popup = document.createElement("div");
-        popup.className = "tc-popup";
-        popup.style.display = "none";
-        popup.innerHTML = tcList
-          .map(
-            (tc) =>
-              `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
-          )
-          .join("");
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          document.querySelectorAll(".tc-popup").forEach((p) => {
-            if (p !== popup) p.style.display = "none";
-          });
-          popup.style.display =
-            popup.style.display === "block" ? "none" : "block";
-        };
-        popup.querySelectorAll(".tc-popup-item").forEach((item) => {
-          item.onclick = (ev) => {
-            ev.stopPropagation();
-            popup.style.display = "none";
-            showContainerDetailPopup(delivery, item.textContent);
-          };
-        });
-        document.addEventListener("click", function hidePopup(e) {
-          if (!td.contains(e.target)) popup.style.display = "none";
-        });
-        td.appendChild(btn);
-        td.appendChild(popup);
-      } else if (tcList.length === 1) {
-        const tag = document.createElement("span");
-        tag.className = "tc-tag";
-        tag.textContent = tcList[0];
-        tag.style.cursor = "pointer";
-        tag.onclick = (e) => {
-          e.stopPropagation();
-          showContainerDetailPopup(delivery, tcList[0]);
-        };
-        td.appendChild(tag);
-      } else {
-        td.textContent = "-";
-      }
-    } else {
-      value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-      td.textContent = value;
-      if (col.id === "observation") {
-        td.classList.add("observation-col");
-      }
-    }
-    tr.appendChild(td);
+      tr.appendChild(td);
+    });
     // Fonction pour afficher le menu déroulant de statut conteneur (popup)
     function showContainerDetailPopup(delivery, containerNumber) {
       const oldPopup = document.getElementById("containerDetailPopup");
@@ -540,6 +544,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (e.target === overlay) overlay.remove();
       };
     }
+    tableBodyElement.appendChild(tr);
   });
-  tableBodyElement.appendChild(tr);
 }
