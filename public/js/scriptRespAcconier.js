@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
-    #deliveriesTable tbody td:not(:nth-child(5)) {
+    #deliveriesTable tbody td:not(.tc-multi-cell):not(:nth-child(6)) {
       max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
