@@ -47,33 +47,45 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction pour générer une ligne HTML à partir d'un objet livraison
   function createRow(delivery) {
-    // Rendu dynamique du champ TC(s) : badges cliquables, menu déroulant si plusieurs, popup détail
+    // Affichage de chaque TC comme badge individuel, menu déroulant uniquement sur '+N'
     let tcHtml = "";
     if (delivery.numero_tc) {
       const tcList = String(delivery.numero_tc)
         .split(",")
         .map((tc) => tc.trim())
         .filter(Boolean);
-      if (tcList.length > 1) {
-        let displayText = tcList.slice(0, 2).join(", ");
-        if (tcList.length > 2) {
-          displayText += ` +${tcList.length - 2}`;
-        }
-        tcHtml = `<div class='tc-dropdown' data-delivery-id='${
+      if (tcList.length > 2) {
+        // Affiche les deux premiers en badge, puis badge '+N' pour le reste
+        tcHtml = tcList
+          .slice(0, 2)
+          .map(
+            (tc) =>
+              `<button class='tc-btn' data-tc='${tc}' data-delivery-id='${delivery.id}'>${tc}</button>`
+          )
+          .join("");
+        tcHtml += `<button class='tc-dropdown-label tc-btn' data-delivery-id='${
           delivery.id
-        }' style='position:relative;'>
-          <div class='tc-dropdown-label' style='cursor:pointer; color:#2563eb; padding:4px 10px; border-radius:8px; border:1px solid #cbd5e1; background:#f1f5f9;'>${displayText}</div>
-          <div class='tc-dropdown-menu' style='display:none; position:absolute; background:#fff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 16px #2563eb22; z-index:1000; min-width:140px; top:32px; left:0;'>
-            ${tcList
-              .map(
-                (tc) =>
-                  `<div class='tc-dropdown-item' data-tc='${tc}' data-delivery-id='${delivery.id}' style='padding:8px 16px; cursor:pointer;'>${tc}</div>`
-              )
-              .join("")}
-          </div>
-        </div>`;
+        }' data-tc-extra='${tcList
+          .slice(2)
+          .join(
+            ","
+          )}' style='background:#e0e7ff; color:#2563eb; border:1px solid #2563eb; margin-left:4px;'>+${
+          tcList.length - 2
+        }</button>`;
+        tcHtml += `<div class='tc-dropdown-menu' style='display:none; position:absolute; background:#fff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 16px #2563eb22; z-index:1000; min-width:140px; top:32px; left:0;'>${tcList
+          .slice(2)
+          .map(
+            (tc) =>
+              `<div class='tc-dropdown-item' data-tc='${tc}' data-delivery-id='${delivery.id}' style='padding:8px 16px; cursor:pointer;'>${tc}</div>`
+          )
+          .join("")}</div>`;
       } else {
-        tcHtml = `<button class='tc-btn' data-tc='${tcList[0]}' data-delivery-id='${delivery.id}'>${tcList[0]}</button>`;
+        tcHtml = tcList
+          .map(
+            (tc) =>
+              `<button class='tc-btn' data-tc='${tc}' data-delivery-id='${delivery.id}'>${tc}</button>`
+          )
+          .join("");
       }
     }
     return `<tr>
@@ -188,11 +200,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // Délégation d'événement pour les boutons TC
   // Gestion centralisée des interactions TC (badges, menu déroulant, popup)
   document.addEventListener("click", function (e) {
-    // Ouvre le menu déroulant au clic sur le label
+    // Ouvre le menu déroulant au clic sur le badge '+N'
     if (e.target.classList.contains("tc-dropdown-label")) {
-      const parent = e.target.closest(".tc-dropdown");
-      if (parent) {
-        const menu = parent.querySelector(".tc-dropdown-menu");
+      const cell = e.target.closest(".tc-cell");
+      if (cell) {
+        const menu = cell.querySelector(".tc-dropdown-menu");
         document.querySelectorAll(".tc-dropdown-menu").forEach((m) => {
           if (m !== menu) m.style.display = "none";
         });
