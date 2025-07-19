@@ -24,6 +24,65 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // Ajout du style CSS pour éviter la superposition des données dans les cellules du tableau
+  const style = document.createElement("style");
+  style.textContent = `
+    #deliveriesTableBody td {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+      max-width: 220px;
+    }
+    #deliveriesTableBody .tc-tag {
+      display: inline-block;
+      margin-right: 4px;
+      padding: 2px 8px;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.95em;
+      font-weight: 500;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    #deliveriesTableBody .tc-tags-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      background: #f3f4f6;
+      border: 1px solid #2563eb;
+      border-radius: 8px;
+      padding: 2px 10px;
+      cursor: pointer;
+      font-size: 0.95em;
+      white-space: nowrap;
+    }
+    #deliveriesTableBody .tc-popup {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #2563eb;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(30,41,59,0.13);
+      padding: 8px 0;
+      min-width: 120px;
+      z-index: 1002;
+      left: 0;
+      top: 100%;
+      white-space: nowrap;
+    }
+    #deliveriesTableBody .tc-popup-item {
+      padding: 6px 18px;
+      cursor: pointer;
+      font-size: 0.98em;
+      color: #2563eb;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    #deliveriesTableBody .tc-popup-item:last-child {
+      border-bottom: none;
+    }
+  `;
+  document.head.appendChild(style);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
 
