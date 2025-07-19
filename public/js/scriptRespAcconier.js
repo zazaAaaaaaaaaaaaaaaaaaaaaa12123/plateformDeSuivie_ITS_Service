@@ -232,6 +232,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 // Colonnes strictes pour Agent Acconier
 const AGENT_TABLE_COLUMNS = [
+  { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent" },
   { id: "client_name", label: "Client (Nom)" },
@@ -256,12 +257,16 @@ const AGENT_TABLE_COLUMNS = [
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
-  deliveries.forEach((delivery) => {
+  deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
-      if (col.id === "date_display") {
+      if (col.id === "row_number") {
+        value = i + 1;
+        td.textContent = value;
+        td.classList.add("row-number-col");
+      } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
         if (dDate) {
           let dateObj = new Date(dDate);
