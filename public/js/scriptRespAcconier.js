@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction pour générer une ligne HTML à partir d'un objet livraison
   function createRow(delivery) {
-    // Cellule TC : menu déroulant si plusieurs, bouton si un seul
+    // Cellule TC : affiche les deux premiers conteneurs, puis '+N' si plus de deux
     let tcHtml = "";
     if (delivery.numero_tc) {
       const tcList = String(delivery.numero_tc)
@@ -55,10 +55,14 @@ document.addEventListener("DOMContentLoaded", function () {
         .map((tc) => tc.trim())
         .filter(Boolean);
       if (tcList.length > 1) {
+        let displayText = tcList.slice(0, 2).join(", ");
+        if (tcList.length > 2) {
+          displayText += ` +${tcList.length - 2}`;
+        }
         tcHtml = `<div class='tc-dropdown' data-delivery-id='${
           delivery.id
         }' style='position:relative;'>
-          <div class='tc-dropdown-label' style='cursor:pointer; color:#2563eb; padding:4px 10px; border-radius:8px; border:1px solid #cbd5e1; background:#f1f5f9;'>Voir les conteneurs ▼</div>
+          <div class='tc-dropdown-label' style='cursor:pointer; color:#2563eb; padding:4px 10px; border-radius:8px; border:1px solid #cbd5e1; background:#f1f5f9;'>${displayText}</div>
           <div class='tc-dropdown-menu' style='display:none; position:absolute; background:#fff; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 16px #2563eb22; z-index:1000; min-width:140px; top:32px; left:0;'>
             ${tcList
               .map(
