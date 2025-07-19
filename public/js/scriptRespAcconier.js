@@ -2,6 +2,22 @@
 // Gère le filtrage par date et la mise à jour automatique du champ date
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Ajout d'un gestionnaire pour l'en-tête cliquable NUMÉRO TC(S)
+  setTimeout(() => {
+    const thTC = document.querySelector("th.tc-header");
+    if (thTC) {
+      thTC.style.cursor = "pointer";
+      thTC.style.color = "#2563eb";
+      thTC.title = "Cliquez pour une info sur le changement de statut";
+      thTC.addEventListener("click", function () {
+        document.getElementById("tcModalNum").textContent = "";
+        document.getElementById("tcModalStatus").style.display = "none";
+        document.querySelector(".tc-modal-title").textContent =
+          "Sélectionnez un numéro TC dans le tableau pour changer son statut";
+        document.getElementById("tcModal").style.display = "flex";
+      });
+    }
+  }, 500);
   // Ajout du champ date en haut du tableau
   const dateContainer = document.querySelector(".date-journalier");
   if (dateContainer) {
@@ -116,6 +132,9 @@ document.addEventListener("DOMContentLoaded", function () {
     currentTC = tc;
     currentDeliveryId = deliveryId;
     document.getElementById("tcModalNum").textContent = tc;
+    document.getElementById("tcModalStatus").style.display = "inline-block";
+    document.querySelector(".tc-modal-title").textContent =
+      "Changer le statut du conteneur ";
     document.getElementById("tcModalStatus").value = "";
     document.getElementById("tcModal").style.display = "flex";
   }
