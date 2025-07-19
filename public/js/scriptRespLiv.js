@@ -125,7 +125,6 @@ function renderLivTableRows(deliveries, tableBodyElement) {
     const tr = document.createElement("tr");
     LIV_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
-      let value = "-";
       const editableCols = [
         "employee_name",
         "transporter",
@@ -137,9 +136,37 @@ function renderLivTableRows(deliveries, tableBodyElement) {
         "statut",
         "observation",
       ];
+      if (col.id === "row_number") {
+        td.textContent = i + 1;
+      } else if (editableCols.includes(col.id)) {
+        td.innerHTML = `<input type="text" class="form-control" name="${col.id}" value="" placeholder="Saisir...">`;
+      } else if (col.id === "date_display") {
+        // Affiche la date réelle si disponible
+        let dateValue = delivery.created_at || delivery.delivery_date || "";
+        td.textContent = dateValue
+          ? new Date(dateValue).toLocaleDateString()
+          : "-";
+      } else if (col.id === "container_number") {
+        // Affiche le(s) numéro(s) TC(s)
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        td.textContent = tcList.length ? tcList.join(", ") : "-";
+      } else {
+        td.textContent =
+          delivery[col.id] !== undefined &&
+          delivery[col.id] !== null &&
+          delivery[col.id] !== ""
+            ? delivery[col.id]
+            : "-";
+      }
+      tr.appendChild(td);
     });
+    tableBodyElement.appendChild(tr);
   });
-  document.head.appendChild(styleTC);
 }
 
 document.addEventListener("DOMContentLoaded", function () {
