@@ -250,6 +250,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
   { id: "statut", label: "Statut" },
+  { id: "observation", label: "Observation" },
 ];
 
 // Fonction pour générer les lignes du tableau Agent Acconier
