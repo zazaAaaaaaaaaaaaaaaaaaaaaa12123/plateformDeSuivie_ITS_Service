@@ -2,176 +2,399 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tableau Responsable Livraison</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Suivi ITS - Livraisons</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Les liens vers les fichiers CSS locaux sont conservés comme dans votre original.
+         Assurez-vous que ces fichiers sont accessibles depuis le chemin relatif. -->
+    <link rel="stylesheet" href="../css/styleDeSuivie.css" />
+    <link rel="stylesheet" href="../css/styledeTabBord.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+
     <style>
-      body {
-        font-family: "Inter", "Segoe UI", Arial, sans-serif;
-        background: #f6f8fa;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 98vw;
-        margin: 32px auto;
-        background: #fff;
-        border-radius: 18px;
-        box-shadow: 0 6px 32px #1e293b18;
-        padding: 36px 20px 28px 20px;
-      }
-      h2 {
-        color: #1d3557;
-        margin-bottom: 18px;
-        font-size: 1.45em;
-        letter-spacing: 0.5px;
-        font-weight: 700;
-      }
-      .date-journalier {
-        font-size: 1.08em;
-        color: #64748b;
-        margin-bottom: 18px;
-      }
-      .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        background: #fff;
-        font-size: 0.97em;
-        table-layout: auto;
-        box-shadow: 0 2px 12px #1e293b0a;
-        border-radius: 12px;
-        overflow: hidden;
-      }
-      thead tr:first-child th {
-        background: #ffe066;
-        color: #a16207;
-        font-size: 1.15em;
-        font-weight: bold;
-        text-align: center;
-        letter-spacing: 1px;
-        border-bottom: 3px solid #facc15;
-        box-shadow: 0 2px 8px #facc1533;
-      }
-      thead tr:nth-child(2) th {
-        background: #2563eb;
-        color: #fff;
-        font-weight: 600;
-        font-size: 1em;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-        border-right: 1px solid #e5e7eb;
-        border-bottom: 2px solid #e5e7eb;
-        padding: 8px 10px;
-      }
-      thead tr:nth-child(2) th:last-child {
-        border-right: none;
-      }
-      th,
-      td {
+      /* Boutons de suppression historique (sidebar)
+   - .delete-history-btn.desktop-in : bouton dans la carte (desktop)
+   - .delete-history-btn.mobile-out : bouton sous la carte (mobile)
+   - .delete-history-btn-mobile-wrap : conteneur du bouton mobile
+*/
+      .delete-history-btn.desktop-in {
+        background: none;
         border: none;
-        padding: 8px 10px;
-        text-align: left;
-        vertical-align: middle;
-        word-break: break-word;
-        max-width: 180px;
-        font-size: 0.97em;
+        color: #dc2626;
+        font-size: 1.25em;
+        cursor: pointer;
+        padding: 0 6px 0 6px;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        transition: filter 0.18s;
       }
-      tbody tr {
-        transition: background 0.18s;
+      .delete-history-btn.mobile-out {
+        background: #f1f5f9;
+        border: none;
+        color: #dc2626;
+        font-size: 1.1em;
+        cursor: pointer;
+        padding: 7px 16px;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px #2563eb11;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        margin-top: 2px;
       }
-      tbody tr:nth-child(even) td {
-        background: #f8fafc;
+      .delete-history-btn-mobile-wrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 13px;
       }
-      tbody tr:nth-child(odd) td {
-        background: #fff;
+
+      /* Par défaut, bouton mobile caché, bouton desktop visible */
+      .delete-history-btn.desktop-in {
+        display: inline-flex;
       }
-      tbody tr:hover td {
-        background: #e9f0fb;
-        box-shadow: 0 2px 8px #2563eb22;
+      .delete-history-btn.mobile-out,
+      .delete-history-btn-mobile-wrap {
+        display: none;
       }
-      td {
-        border-bottom: 1px solid #e5e7eb;
-        border-right: 1px solid #e5e7eb;
-        border-radius: 0;
-        font-size: 0.97em;
-      }
-      td:last-child {
-        border-right: none;
-      }
-      th:first-child,
-      td:first-child {
-        border-left: none;
-      }
-      th,
-      td {
-        border-top: none;
-      }
-      th,
-      td {
-        min-width: 80px;
-      }
-      @media (max-width: 1200px) {
-        th,
-        td {
-          font-size: 0.93em;
-          max-width: 120px;
+
+      @media (max-width: 600px) {
+        .delete-history-btn.desktop-in {
+          display: none !important;
+        }
+        .delete-history-btn.mobile-out,
+        .delete-history-btn-mobile-wrap {
+          display: flex !important;
         }
       }
-      @media (max-width: 900px) {
-        table,
-        thead,
-        tbody,
-        th,
-        td,
-        tr {
-          display: block;
+
+      /* Styles pour l'alerte personnalisée (conservés de votre version originale) */
+      .custom-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #f8d7da; /* Default background for error */
+        color: #721c24; /* Default text color for error */
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-20px);
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out,
+          visibility 0.5s linear 0.5s;
+        z-index: 1000;
+        min-width: 250px;
+      }
+      .custom-alert.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out,
+          visibility 0.5s linear 0s;
+      }
+      .custom-alert.hide {
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+      }
+      .custom-alert.visually-hidden {
+        display: none;
+      }
+      .custom-alert i {
+        font-size: 20px;
+      }
+      /* Type colors for custom-alert */
+      .custom-alert.success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .custom-alert.error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .custom-alert.warning {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .custom-alert.info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+
+      /* Styles for confirmation overlay (conservés de votre version originale) */
+      .confirm-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+        z-index: 1000; /* Ensure it's on top of other content */
+      }
+      .confirm-box {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        max-width: 400px;
+        width: 90%; /* Responsive width */
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .confirm-box p {
+        font-size: 1.1rem;
+        color: #333;
+        margin-bottom: 15px;
+      }
+      .confirm-box button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s ease;
+        margin: 0 5px; /* Add some spacing between buttons */
+      }
+      .confirm-box button.btn-danger {
+        background-color: #dc3545;
+        color: white;
+      }
+      .confirm-box button.btn-danger:hover {
+        background-color: #c82333;
+      }
+      .confirm-box button.btn-secondary {
+        background-color: #6c757d;
+        color: white;
+      }
+      .confirm-box button.btn-secondary:hover {
+        background-color: #5a6268;
+      }
+
+      /* Styles pour la stabilité du tableau (conservés de votre version originale) */
+      .table {
+        width: 100%;
+        table-layout: auto; /* Permet aux colonnes de s'auto-ajuster au contenu */
+      }
+      .table th,
+      .table td {
+        vertical-align: top; /* Aligne le contenu en haut des cellules */
+        padding: 0.75rem; /* Padding standard de Bootstrap */
+        white-space: normal; /* Permet au texte de passer à la ligne */
+        word-break: break-word; /* Casse les mots longs pour éviter le débordement */
+      }
+      .sticky-col {
+        position: sticky;
+        z-index: 2; /* Plus haut que les cellules normales mais moins que les popups */
+        background-color: #f8f9fa; /* Couleur de fond pour les colonnes figées */
+      }
+      .sticky-col-index {
+        left: 0;
+        min-width: 50px; /* Largeur minimale pour la colonne N° */
+        max-width: 70px; /* Largeur maximale pour la colonne N° */
+      }
+      .sticky-col-agent {
+        /* Calcule le 'left' en fonction de la largeur de la colonne 'N°' */
+        left: 70px; /* Assumant 70px de largeur pour sticky-col-index */
+        min-width: 120px; /* Largeur minimale pour le nom de l'agent */
+        max-width: 180px; /* Largeur maximale pour le nom de l'agent */
+      }
+      .dropdown-cell-container .dropdown-toggle-button {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* NOUVEAUX STYLES POUR LES BANDEAUX COLORÉS */
+      .table thead tr:first-child th {
+        border-bottom: none; /* Supprime la bordure inférieure pour le bandeau */
+        border-top: none; /* Supprime la bordure supérieure */
+        padding-top: 8px;
+        padding-bottom: 8px;
+        color: white; /* Couleur de texte par défaut pour les bandeaux */
+        font-size: 1.1em;
+        text-transform: uppercase;
+        position: sticky; /* Rendre la ligne de bandeau figée */
+        top: 0; /* Coller en haut */
+        z-index: 11; /* Plus haut que les en-têtes de colonnes normales */
+        cursor: pointer; /* Indique que le bandeau est cliquable */
+      }
+      /* La première cellule du bandeau (pour N° et Date & Heure) reste neutre */
+      .table thead tr:first-child th:nth-child(1) {
+        background-color: #f8f9fa; /* Correspond à l'arrière-plan de l'en-tête normal */
+        color: #495057; /* Correspond à la couleur de texte de l'en-tête normal */
+        border-right: 1px solid #e9ecef; /* Conserver la bordure droite pour la séparation */
+        cursor: default; /* Pas de curseur pointeur pour la première colonne */
+      }
+      /* Styles spécifiques pour chaque bandeau */
+      .table thead tr:first-child th:nth-child(2) {
+        /* Agent Acconier (bleu) */
+        background-color: #007bff; /* Bleu */
+        border-right: none; /* Supprime la bordure droite pour fusionner avec le bandeau suivant */
+      }
+      .table thead tr:first-child th:nth-child(3) {
+        /* Responsable Acconier (jaune) */
+        background-color: #ffc107; /* Jaune */
+        border-right: none; /* Supprime la bordure droite pour fusionner avec le bandeau suivant */
+      }
+      .table thead tr:first-child th:nth-child(4) {
+        /* Responsable de livraison (vert) */
+        background-color: #28a745; /* Vert */
+        border-right: 1px solid #e9ecef; /* Assure une bordure droite */
+      }
+
+      /* Rendre la deuxième ligne d'en-tête (vos en-têtes de colonnes originaux) figée en dessous du bandeau */
+      .table thead tr:nth-child(2) th {
+        position: sticky;
+        top: 40px; /* Ajuster cette valeur en fonction de la hauteur réelle du bandeau (environ 40px) */
+        background-color: #f8f9fa; /* Assurez-vous que le fond correspond à votre design */
+        z-index: 10; /* Inférieur aux colonnes sticky-col pour qu'elles soient au-dessus */
+      }
+
+      /* S'assurer que les en-têtes des colonnes figées sont au-dessus de l'en-tête de table général */
+      .table thead tr:nth-child(2) .sticky-col {
+        z-index: 12; /* Plus haut que le bandeau et l'en-tête de table général */
+      }
+
+      /* Animation clignotement vert pour nouvelle ligne */
+      @keyframes green-blink {
+        0% {
+          background-color: #bbf7d0;
         }
-        thead tr:first-child th {
-          position: static;
+        20% {
+          background-color: #4ade80;
         }
-        thead tr:nth-child(2) th {
-          position: sticky;
-          top: 0;
-          z-index: 2;
-          font-size: 0.95em;
+        40% {
+          background-color: #bbf7d0;
         }
-        td {
-          border: none;
-          border-bottom: 1px solid #e5e7eb;
-          position: relative;
-          padding-left: 48%;
-          min-height: 32px;
+        60% {
+          background-color: #4ade80;
         }
-        td:before {
-          position: absolute;
-          left: 10px;
-          top: 8px;
-          width: 45%;
-          white-space: nowrap;
-          font-weight: bold;
-          color: #2563eb;
-          content: attr(data-label);
+        80% {
+          background-color: #bbf7d0;
         }
+        100% {
+          background-color: inherit;
+        }
+      }
+      .row-blink-green {
+        animation: green-blink 1.2s linear 0s 5;
+      }
+
+      /* Styles pour l'effet de mise en évidence */
+      .highlight-cell {
+        transition: background-color 0.3s ease-in-out; /* Transition douce pour l'effet de flash */
+      }
+      .highlight-blue-flash {
+        background-color: rgba(
+          0,
+          123,
+          255,
+          0.2
+        ) !important; /* Bleu avec opacité légère */
+      }
+      .highlight-yellow-flash {
+        background-color: rgba(
+          255,
+          193,
+          7,
+          0.2
+        ) !important; /* Jaune avec opacité légère */
+      }
+      .highlight-green-flash {
+        background-color: rgba(
+          40,
+          167,
+          69,
+          0.2
+        ) !important; /* Vert avec opacité légère */
       }
     </style>
   </head>
-  <body>
+
+  <body class="bg-light">
     <div class="container my-4">
       <section class="card-section">
-        <h2 class="section-title">
-          Tableau Journalier - Responsable Livraison
-        </h2>
-        <div class="date-journalier mb-3"></div>
-        <div class="table-responsive overflow-x-auto">
+        <div class="header-with-search">
+          <div>
+            <h1 class="section-title">Suivi des Livraisons de Conteneurs</h1>
+            <p class="section-subtitle">
+              Vue d'overview des validations effectuées par les Agents.
+            </p>
+            <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée de votre version originale) -->
+            <div class="scrolling-message-bar" id="newAgentScrollingContainer">
+              <div
+                class="scrolling-message-content"
+                id="newAgentScrollingContent"
+              >
+                <!-- Le contenu des agents défilants sera injecté ici par JS -->
+              </div>
+            </div>
+          </div>
+
+          <div id="agentStatusIndicator" class="agent-status-indicator">
+            <span id="agentStatusText">Agents Actifs</span>
+          </div>
+
+          <div class="search-bar-wrapper-top">
+            <div class="search-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                type="search"
+                id="searchInput"
+                class="search-input"
+                placeholder="Rechercher une livraison..."
+                aria-label="Recherche"
+              />
+              <button id="searchButton" class="icon-btn-company-color">
+                <i
+                  class="fas fa-spinner fa-spin loading-spinner"
+                  style="display: none"
+                ></i>
+                Rechercher
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
+        >
+          <input
+            type="date"
+            id="mainTableDateFilter"
+            class="icon-btn icon-btn-company-color"
+            title="Filtrer par date"
+          />
+        </div>
+
+        <div id="tableScrollContainer" class="table-responsive overflow-x-auto">
           <table
-            id="respLivTable"
+            id="deliveriesTable"
             class="table table-bordered table-hover align-middle"
           >
-            <thead>
+<thead>
               <tr>
                 <th
                   colspan="24"
@@ -216,18 +439,49 @@
                 <th>OBSERVATIONS</th>
               </tr>
             </thead>
-            <tbody id="respLivTableBody">
+            <tbody id="deliveriesTableBody">
+              <!-- Les lignes seront générées dynamiquement par JS -->
               <tr>
-                <td colspan="24" class="text-center text-muted">
+                <td colspan="31" class="text-center text-muted">
                   <i class="fas fa-spinner fa-spin me-2"></i> Chargement des
-                  dossiers...
+                  livraisons...
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <nav aria-label="Pagination livraisons" class="mt-3">
+          <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+
+        <div
+          id="noDeliveriesMessage"
+          class="text-center mt-3 text-muted d-none"
+        >
+          <i class="fas fa-box-open me-1"></i> Aucune livraison enregistrée pour
+          le moment.
+        </div>
       </section>
     </div>
+        <p id="countdownMessage" class="countdown-message d-none"></p>
+      </div>
+    </div>
+
+    <!-- IMPORTANT: J'ai ajouté cet élément, il était référencé dans votre JS mais manquant dans le HTML -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+      <div class="loading-overlay-content">
+        <i class="fas fa-spinner fa-spin loading-spinner-large mb-3"></i>
+        <p class="loading-overlay-text">Chargement...</p>
+      </div>
+    </div>
+
+    <div id="customAlert" class="custom-alert">
+      <h3 id="customAlertTitle" class="custom-alert-title"></h3>
+      <p id="customAlertMessage" class="custom-alert-message"></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/scriptRespLiv.js"></script>
   </body>
 </html>
