@@ -102,6 +102,11 @@ document.addEventListener("DOMContentLoaded", function () {
       background: #e0e7ff !important;
       color: #1e293b !important;
     }
+    #deliveriesTableBody tr.highlight-row td input {
+      background: #e0e7ff !important;
+      color: #1e293b !important;
+      border-color: #2563eb !important;
+    }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
