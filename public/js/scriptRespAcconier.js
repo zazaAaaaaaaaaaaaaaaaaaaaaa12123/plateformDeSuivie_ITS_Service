@@ -1,3 +1,38 @@
+// === RENDU SIMPLIFIÉ DU TABLEAU PRINCIPAL ===
+function renderSimpleDeliveriesTable(deliveries) {
+  const deliveriesTableBody = document.getElementById("deliveriesTableBody");
+  if (!deliveriesTableBody) return;
+  deliveriesTableBody.innerHTML = "";
+  if (!Array.isArray(deliveries) || deliveries.length === 0) {
+    deliveriesTableBody.innerHTML = `<tr><td colspan='19' class='text-center text-muted'>Aucune livraison trouvée.</td></tr>`;
+    return;
+  }
+  deliveries.forEach((delivery, idx) => {
+    deliveriesTableBody.innerHTML += `<tr style='background:${
+      idx % 2 === 0 ? "#fff" : "#f6f6f6"
+    };'>
+      <td>${delivery.created_at || "-"}</td>
+      <td>${delivery.employee_name || "-"}</td>
+      <td>${delivery.client_name || "-"}</td>
+      <td>${delivery.client_phone || "-"}</td>
+      <td>${delivery.container_number || "-"}</td>
+      <td>${delivery.lieu || "-"}</td>
+      <td>${delivery.container_foot_type || "-"}</td>
+      <td>${delivery.container_type_and_content || "-"}</td>
+      <td>${delivery.declaration_number || "-"}</td>
+      <td>${delivery.bl_number || "-"}</td>
+      <td>${delivery.dossier_number || "-"}</td>
+      <td>${delivery.number_of_containers || "-"}</td>
+      <td>${delivery.shipping_company || "-"}</td>
+      <td>${delivery.weight || "-"}</td>
+      <td>${delivery.ship_name || "-"}</td>
+      <td>${delivery.circuit || "-"}</td>
+      <td>${delivery.transporter_mode || "-"}</td>
+      <td>${delivery.delivery_status_acconier || "-"}</td>
+      <td>${delivery.observation_acconier || "-"}</td>
+    </tr>`;
+  });
+}
 // === Génération dynamique du tableau principal des dossiers en retard ===
 // === INJECTION DU STYLE RESPONSIVE POUR LES BOUTONS DU TABLEAU DE SUIVI ===
 (function injectResponsiveButtonStyle() {
@@ -9244,11 +9279,15 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     document.head.appendChild(style);
   })();
 
-  // Appelle le clignotement après chaque rendu du tableau principal
+  // Appelle le rendu simplifié et le clignotement après chaque filtrage du tableau principal
   const originalApplyCombinedFilters =
     window.applyCombinedFilters || applyCombinedFilters;
   window.applyCombinedFilters = function (...args) {
     originalApplyCombinedFilters.apply(this, args);
+    // Récupère les données filtrées (deliveries)
+    if (typeof deliveries !== "undefined" && Array.isArray(deliveries)) {
+      renderSimpleDeliveriesTable(deliveries);
+    }
     setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
