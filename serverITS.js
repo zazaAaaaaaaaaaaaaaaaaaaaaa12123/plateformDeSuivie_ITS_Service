@@ -46,6 +46,28 @@ wss.on("connection", (ws) => {
 });
 
 // ===============================
+// ROUTE DE CORRECTION : Met à jour les anciennes livraisons sans delivery_date
+// ===============================
+app.post("/admin/fix-missing-delivery-dates", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE livraison_conteneur SET delivery_date = created_at::date WHERE delivery_date IS NULL OR delivery_date = '' RETURNING id, created_at, delivery_date`
+    );
+    res.json({
+      success: true,
+      message: `Correction effectuée : ${result.rowCount} lignes mises à jour.`,
+      updated: result.rows,
+    });
+  } catch (err) {
+    console.error("Erreur lors de la correction des delivery_date :", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la correction.",
+    });
+  }
+});
+
+// ===============================
 // ROUTE API POUR LE TABLEAU ACCONIER (GET /api/deliveries)
 // ===============================
 app.get("/api/deliveries", async (req, res) => {
@@ -1577,8 +1599,13 @@ app.post(
     } = req.body || {};
 
     // Use helper functions to process date and time
-    const validated_delivery_date = formatDateForDB(req.body.delivery_date);
+    let validated_delivery_date = formatDateForDB(req.body.delivery_date);
     const validated_delivery_time = formatTimeForDB(req.body.delivery_time);
+    // Si la date n'est pas fournie ou invalide, on force la date du jour (format YYYY-MM-DD)
+    if (!validated_delivery_date) {
+      const today = new Date();
+      validated_delivery_date = today.toISOString().split("T")[0];
+    }
 
     // --- NORMALISATION DU CHAMP container_number ---
     let normalized_container_number = container_number;
