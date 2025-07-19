@@ -6,8 +6,8 @@
     <title>Tableau Responsable Acconier</title>
     <style>
       body {
-        font-family: "Segoe UI", Arial, sans-serif;
-        background: #f8fafc;
+        font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        background: #f6f8fa;
         margin: 0;
         padding: 0;
       }
@@ -15,59 +15,109 @@
         max-width: 98vw;
         margin: 32px auto;
         background: #fff;
-        border-radius: 14px;
-        box-shadow: 0 4px 24px #1e293b0a;
-        padding: 32px 18px 24px 18px;
+        border-radius: 18px;
+        box-shadow: 0 6px 32px #1e293b18;
+        padding: 36px 20px 28px 20px;
       }
       h2 {
-        color: #2563eb;
+        color: #1d3557;
         margin-bottom: 18px;
-        font-size: 1.35em;
+        font-size: 1.45em;
         letter-spacing: 0.5px;
+        font-weight: 700;
       }
       .date-journalier {
         font-size: 1.08em;
         color: #64748b;
         margin-bottom: 18px;
       }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #fff;
-        font-size: 0.92em;
-        table-layout: auto;
-      }
-      th,
-      td {
-        border: 1px solid #e5e7eb;
-        padding: 5px 6px;
-        text-align: left;
-        vertical-align: middle;
-        word-break: break-word;
-        max-width: 180px;
-      }
-      th {
-        background: #2563eb;
-        color: #fff;
-        font-weight: 600;
-        font-size: 0.98em;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-      }
-      tr:nth-child(even) td {
-        background: #f1f5f9;
-      }
-      tr:hover td {
-        background: #e0e7ef;
-      }
       .table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        font-size: 0.97em;
+        table-layout: auto;
+        box-shadow: 0 2px 12px #1e293b0a;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      thead tr:first-child th {
+        background: #ffe066;
+        color: #a16207;
+        font-size: 1.15em;
+        font-weight: bold;
+        text-align: center;
+        letter-spacing: 1px;
+        border-bottom: 3px solid #facc15;
+        box-shadow: 0 2px 8px #facc1533;
+      }
+      thead tr:nth-child(2) th {
+        background: #2563eb;
+        color: #fff;
+        font-weight: 600;
+        font-size: 1em;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        border-right: 1px solid #e5e7eb;
+        border-bottom: 2px solid #e5e7eb;
+        padding: 8px 10px;
+      }
+      thead tr:nth-child(2) th:last-child {
+        border-right: none;
+      }
+      th,
+      td {
+        border: none;
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: middle;
+        word-break: break-word;
+        max-width: 180px;
+        font-size: 0.97em;
+      }
+      tbody tr {
+        transition: background 0.18s;
+      }
+      tbody tr:nth-child(even) td {
+        background: #f8fafc;
+      }
+      tbody tr:nth-child(odd) td {
+        background: #fff;
+      }
+      tbody tr:hover td {
+        background: #e9f0fb;
+        box-shadow: 0 2px 8px #2563eb22;
+      }
+      td {
+        border-bottom: 1px solid #e5e7eb;
+        border-right: 1px solid #e5e7eb;
+        border-radius: 0;
+        font-size: 0.97em;
+      }
+      td:last-child {
+        border-right: none;
+      }
+      th:first-child,
+      td:first-child {
+        border-left: none;
+      }
+      th,
+      td {
+        border-top: none;
+      }
+      th,
+      td {
+        min-width: 80px;
+      }
       @media (max-width: 1200px) {
         th,
         td {
-          font-size: 0.9em;
+          font-size: 0.93em;
           max-width: 120px;
         }
       }
@@ -80,7 +130,10 @@
         tr {
           display: block;
         }
-        th {
+        thead tr:first-child th {
+          position: static;
+        }
+        thead tr:nth-child(2) th {
           position: sticky;
           top: 0;
           z-index: 2;
