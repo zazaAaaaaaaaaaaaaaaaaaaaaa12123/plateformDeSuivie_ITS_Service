@@ -28,22 +28,22 @@ document.addEventListener("DOMContentLoaded", function () {
   const styleTableGlobal = document.createElement("style");
   styleTableGlobal.textContent = `
     #deliveriesTable {
-      max-width: 900px;
-      width: 98vw;
+      max-width: 700px;
+      width: 97vw;
       margin-left: auto;
       margin-right: auto;
-      font-size: 0.93em;
+      font-size: 0.88em;
     }
-    @media (max-width: 1000px) {
+    @media (max-width: 800px) {
       #deliveriesTable {
         max-width: 99vw;
-        font-size: 0.90em;
+        font-size: 0.85em;
       }
     }
-    @media (max-width: 700px) {
+    @media (max-width: 600px) {
       #deliveriesTable {
         max-width: 100vw;
-        font-size: 0.87em;
+        font-size: 0.80em;
       }
     }
   `;
