@@ -16,21 +16,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     return dDate.getTime() === dateToCompare.getTime();
   });
   if (filtered.length === 0) {
-    // Affiche une ligne structurée pour garder l'alignement des colonnes
-    const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-      const td = document.createElement("td");
-      if (idx === 0) {
-        td.textContent = "Aucune opération à cette date.";
-        td.className = "text-center text-muted";
-      } else {
-        td.textContent = "-";
-        td.className = "text-muted";
-      }
-      tr.appendChild(td);
-    });
-    tableBodyElement.innerHTML = "";
-    tableBodyElement.appendChild(tr);
+    tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
     return;
   }
   renderAgentTableRows(filtered, tableBodyElement);
@@ -95,16 +81,11 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
       font-size: 1em;
       max-width: 160px;
-      height: 36px !important;
-      min-height: 0 !important;
+      height: 38px;
+      min-height: 0;
       padding: 0 8px;
-      line-height: 36px !important;
-      vertical-align: middle !important;
-      background: #f8fafc;
-    }
-    #deliveriesTableBody tr:only-child {
-      height: 36px !important;
-      min-height: 0 !important;
+      line-height: 1.2;
+      vertical-align: middle;
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
