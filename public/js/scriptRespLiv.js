@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", function () {
     /* Quand il n'y a pas de données, réduire la taille de l'entête */
     #deliveriesTable:has(tbody tr:only-child td.text-center.text-muted) thead th {
       height: 28px !important;
-      font-size: 1em;
+      font-size: 0.93em;
       padding: 0 3px;
       max-width: 90px !important;
       white-space: nowrap;
@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
-    #deliveriesTable thead th {
+    #deliveriesTable thead th:not([data-col-id='container_number']) {
       max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
