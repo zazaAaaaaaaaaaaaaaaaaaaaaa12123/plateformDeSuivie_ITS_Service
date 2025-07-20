@@ -510,6 +510,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     }
     // Gestion dynamique du message d'accès
     let lastAccessState = null;
+    let confirmationShown = false;
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
@@ -737,11 +738,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
                   "green"
                 );
+                if (!confirmationShown) {
+                  confirmationShown = true;
+                  showAccessMessage(
+                    "✅ Les données obligatoires ont bien été insérées !",
+                    "green"
+                  );
+                }
               } else {
                 showAccessMessage(
                   "Vous n'avez plus accès à l'observation et au statut du conteneur.",
                   "red"
                 );
+                confirmationShown = false;
               }
             },
             true
