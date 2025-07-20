@@ -87,20 +87,24 @@ document.addEventListener("DOMContentLoaded", function () {
       border-bottom: 2px solid #2563eb;
       text-align: center;
       vertical-align: middle;
-      padding: 6px 8px;
-      line-height: 1.2;
+      padding: 2px 6px !important;
+      line-height: 1.1;
       letter-spacing: 0.01em;
+      min-height: 0;
+      height: 28px;
     }
     #deliveriesTable thead th[data-col-id='container_number'] {
       font-size: 0.98em;
       font-weight: 600;
-      padding: 6px 8px;
+      padding: 2px 6px !important;
       background: #0e274eff;
       color: #fff;
       border-bottom: 2px solid #2563eb;
       text-align: center;
       vertical-align: middle;
-      line-height: 1.2;
+      line-height: 1.1;
+      min-height: 0;
+      height: 28px;
     }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 160px;
@@ -125,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
         max-width: 60px;
         font-size: 0.92em;
         padding: 3px 3px;
-      }
+      } 
     }
   `;
   document.head.appendChild(styleTC);
