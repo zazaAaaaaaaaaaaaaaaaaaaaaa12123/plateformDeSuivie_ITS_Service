@@ -1,85 +1,3 @@
-// Nouveau modèle de tableau dynamique : entête + lignes
-function renderAgentTableFull(deliveries, tableContainerElement) {
-  // On vide le conteneur
-  tableContainerElement.innerHTML = "";
-  // Création du tableau
-  const table = document.createElement("table");
-  table.className = "table table-bordered table-striped";
-  table.style.width = "100%";
-  // Création de l'entête
-  const thead = document.createElement("thead");
-  const trHead = document.createElement("tr");
-  AGENT_TABLE_COLUMNS.forEach((col) => {
-    const th = document.createElement("th");
-    th.textContent = col.label;
-    th.setAttribute("data-col-id", col.id);
-    trHead.appendChild(th);
-  });
-  thead.appendChild(trHead);
-  table.appendChild(thead);
-  // Création du corps
-  const tbody = document.createElement("tbody");
-  if (!deliveries || deliveries.length === 0) {
-    const trEmpty = document.createElement("tr");
-    const tdEmpty = document.createElement("td");
-    tdEmpty.colSpan = AGENT_TABLE_COLUMNS.length;
-    tdEmpty.textContent = "Aucune opération à cette date.";
-    tdEmpty.className = "text-center text-muted";
-    trEmpty.appendChild(tdEmpty);
-    tbody.appendChild(trEmpty);
-  } else {
-    deliveries.forEach((delivery, i) => {
-      const tr = document.createElement("tr");
-      AGENT_TABLE_COLUMNS.forEach((col) => {
-        const td = document.createElement("td");
-        let value = "-";
-        if (col.id === "row_number") {
-          value = i + 1;
-        } else if (col.id === "date_display") {
-          let dDate = delivery.delivery_date || delivery.created_at;
-          if (dDate) {
-            let dateObj = new Date(dDate);
-            if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toLocaleDateString("fr-FR");
-            } else if (typeof dDate === "string") {
-              value = dDate;
-            }
-          }
-        } else if (col.id === "container_number") {
-          let tcList = [];
-          if (Array.isArray(delivery.container_number)) {
-            tcList = delivery.container_number.filter(Boolean);
-          } else if (typeof delivery.container_number === "string") {
-            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-          }
-          if (tcList.length > 1) {
-            td.classList.add("tc-multi-cell");
-            td.innerHTML = tcList
-              .map((tc) => `<span class='tc-tag'>${tc}</span>`)
-              .join(" ");
-          } else if (tcList.length === 1) {
-            td.innerHTML = `<span class='tc-tag'>${tcList[0]}</span>`;
-          } else {
-            value = "-";
-          }
-        } else {
-          value =
-            delivery[col.id] !== undefined &&
-            delivery[col.id] !== null &&
-            delivery[col.id] !== ""
-              ? delivery[col.id]
-              : "-";
-        }
-        if (col.id !== "container_number") td.textContent = value;
-        if (col.id === "observation") td.classList.add("observation-col");
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-  }
-  table.appendChild(tbody);
-  tableContainerElement.appendChild(table);
-}
 // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
@@ -193,8 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   `);
   document.head.appendChild(styleTC);
-  // Utiliser un conteneur dédié pour le tableau dynamique
-  const tableContainer = document.getElementById("deliveriesTableContainer");
+  const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
 
   // On charge toutes les livraisons une seule fois au chargement
@@ -298,7 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la date
   function updateTableForDate(dateStr) {
     const filtered = filterDeliveriesByDate(dateStr);
-    renderAgentTableFull(filtered, tableContainer);
+    renderAgentTableRows(filtered, tableBody);
   }
 
   // Initialisation : charge toutes les livraisons puis affiche la date du jour
