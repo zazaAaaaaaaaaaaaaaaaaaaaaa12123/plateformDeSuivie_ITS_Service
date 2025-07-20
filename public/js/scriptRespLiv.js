@@ -239,42 +239,48 @@ document.addEventListener("DOMContentLoaded", function () {
 // Colonnes strictes pour Agent Acconier
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
 function renderAgentTableFull(deliveries, tableBodyElement) {
-  // Génération de l'en-tête
   const table = tableBodyElement.closest("table");
-  if (table) {
-    let thead = table.querySelector("thead");
-    if (!thead) {
-      thead = document.createElement("thead");
-      table.insertBefore(thead, tableBodyElement);
-    }
-    thead.innerHTML = "";
-    const headerRow = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col) => {
-      const th = document.createElement("th");
-      th.textContent = col.label;
-      th.setAttribute("data-col-id", col.id);
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-  }
-  // Génération des lignes
   if (deliveries.length === 0) {
-    // Affiche une ligne structurée pour garder l'alignement des colonnes
-    const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-      const td = document.createElement("td");
-      if (idx === 0) {
-        td.textContent = "Aucune opération à cette date.";
-        td.className = "text-center text-muted";
-      } else {
-        td.textContent = "-";
-        td.className = "text-muted";
-      }
-      tr.appendChild(td);
-    });
+    // Masquer le tableau et afficher un message centré
+    if (table) table.style.display = "none";
+    // Chercher ou créer un message d'absence
+    let noDataMsg = document.getElementById("noDeliveriesMsg");
+    if (!noDataMsg) {
+      noDataMsg = document.createElement("div");
+      noDataMsg.id = "noDeliveriesMsg";
+      noDataMsg.style.textAlign = "center";
+      noDataMsg.style.padding = "48px 0 32px 0";
+      noDataMsg.style.fontSize = "1.25em";
+      noDataMsg.style.color = "#64748b";
+      noDataMsg.style.fontWeight = "500";
+      noDataMsg.textContent = "Aucune opération à cette date.";
+      tableBodyElement.parentNode.insertBefore(noDataMsg, tableBodyElement);
+    } else {
+      noDataMsg.style.display = "block";
+    }
     tableBodyElement.innerHTML = "";
-    tableBodyElement.appendChild(tr);
   } else {
+    // Afficher le tableau et masquer le message
+    if (table) table.style.display = "table";
+    const noDataMsg = document.getElementById("noDeliveriesMsg");
+    if (noDataMsg) noDataMsg.style.display = "none";
+    // Génération de l'en-tête
+    if (table) {
+      let thead = table.querySelector("thead");
+      if (!thead) {
+        thead = document.createElement("thead");
+        table.insertBefore(thead, tableBodyElement);
+      }
+      thead.innerHTML = "";
+      const headerRow = document.createElement("tr");
+      AGENT_TABLE_COLUMNS.forEach((col) => {
+        const th = document.createElement("th");
+        th.textContent = col.label;
+        th.setAttribute("data-col-id", col.id);
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+    }
     renderAgentTableRows(deliveries, tableBodyElement);
   }
 }
