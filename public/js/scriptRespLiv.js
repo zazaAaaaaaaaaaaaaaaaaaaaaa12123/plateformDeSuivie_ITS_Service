@@ -237,6 +237,29 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 // Colonnes strictes pour Agent Acconier
+// Fonction robuste pour générer le tableau complet (en-tête + lignes)
+function renderAgentTableFull(deliveries, tableBodyElement) {
+  // Génération de l'en-tête
+  const table = tableBodyElement.closest("table");
+  if (table) {
+    let thead = table.querySelector("thead");
+    if (!thead) {
+      thead = document.createElement("thead");
+      table.insertBefore(thead, tableBodyElement);
+    }
+    thead.innerHTML = "";
+    const headerRow = document.createElement("tr");
+    AGENT_TABLE_COLUMNS.forEach((col) => {
+      const th = document.createElement("th");
+      th.textContent = col.label;
+      th.setAttribute("data-col-id", col.id);
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+  }
+  // Génération des lignes
+  renderAgentTableRows(deliveries, tableBodyElement);
+}
 const AGENT_TABLE_COLUMNS = [
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
