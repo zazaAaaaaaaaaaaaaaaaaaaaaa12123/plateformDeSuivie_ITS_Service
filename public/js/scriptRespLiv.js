@@ -122,9 +122,17 @@ document.addEventListener("DOMContentLoaded", function () {
       min-height: 0 !important;
     }
     #deliveriesTable thead th {
-      height: 36px !important;
+      height: 32px !important;
       min-height: 0 !important;
       vertical-align: middle !important;
+      font-size: 0.98em;
+      padding: 0 6px;
+    }
+    /* Quand il n'y a pas de données, réduire la taille de l'entête */
+    #deliveriesTable:has(tbody tr:only-child td.text-center.text-muted) thead th {
+      height: 28px !important;
+      font-size: 0.93em;
+      padding: 0 3px;
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
