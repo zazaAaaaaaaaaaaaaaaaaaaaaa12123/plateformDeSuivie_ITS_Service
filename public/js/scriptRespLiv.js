@@ -99,8 +99,8 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTable thead th[data-col-id='container_number'],
     #deliveriesTable tbody td[data-col-id='container_number'],
     #deliveriesTable tbody td.tc-multi-cell {
-      min-width: 130px;
-      max-width: 240px;
+      min-width: 180px;
+      max-width: 320px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -126,8 +126,8 @@ document.addEventListener("DOMContentLoaded", function () {
       #deliveriesTable thead th[data-col-id='container_number'],
       #deliveriesTable tbody td[data-col-id='container_number'],
       #deliveriesTable tbody td.tc-multi-cell {
-        min-width: 90px;
-        max-width: 150px;
+        min-width: 120px;
+        max-width: 200px;
       }
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not([data-col-id='container_number']):not(.tc-multi-cell) {
@@ -139,8 +139,8 @@ document.addEventListener("DOMContentLoaded", function () {
       #deliveriesTable thead th[data-col-id='container_number'],
       #deliveriesTable tbody td[data-col-id='container_number'],
       #deliveriesTable tbody td.tc-multi-cell {
-        min-width: 60px;
-        max-width: 90px;
+        min-width: 80px;
+        max-width: 120px;
       }
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not([data-col-id='container_number']):not(.tc-multi-cell) {
