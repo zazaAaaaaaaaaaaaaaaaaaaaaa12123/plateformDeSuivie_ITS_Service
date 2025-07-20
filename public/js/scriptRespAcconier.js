@@ -26,7 +26,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  const newLocal = (styleTC.textContent = `
+  styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -74,12 +74,14 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
+    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) : retour à la ligne automatique, pas d'ellipsis */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      max-width: 120px;
+      min-width: 60px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      word-break: break-word;
       font-size: 1em;
       font-weight: bold;
       background: #0e274eff;
@@ -88,28 +90,59 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
+    #deliveriesTable thead th[data-col-id='container_number'] {
+      max-width: none !important;
+      min-width: 120px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      word-break: break-word;
+    }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      max-width: 120px;
+      min-width: 60px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      word-break: break-word;
       vertical-align: middle;
+    }
+    #deliveriesTable tbody td[data-col-id='container_number'],
+    #deliveriesTable tbody td.tc-multi-cell {
+      max-width: none !important;
+      min-width: 120px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      word-break: break-word;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 90px;
+        max-width: 80px;
+        min-width: 40px;
         font-size: 0.95em;
+      }
+      #deliveriesTable thead th[data-col-id='container_number'],
+      #deliveriesTable tbody td[data-col-id='container_number'],
+      #deliveriesTable tbody td.tc-multi-cell {
+        min-width: 60px;
       }
     }
     @media (max-width: 600px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 60px;
+        max-width: 48px;
+        min-width: 30px;
         font-size: 0.92em;
       }
+      #deliveriesTable thead th[data-col-id='container_number'],
+      #deliveriesTable tbody td[data-col-id='container_number'],
+      #deliveriesTable tbody td.tc-multi-cell {
+        min-width: 40px;
+      }
     }
-  `);
+  `;
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
@@ -266,27 +299,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         value = i + 1;
         td.textContent = value;
         td.classList.add("row-number-col");
-      } else if (col.id === "statut") {
-        // Afficher le modèle "x sur y livré" dans la cellule
-        let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+      } else if (col.id === "date_display") {
+        let dDate = delivery.delivery_date || delivery.created_at;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            value = dDate;
+          }
         }
-        let total = tcList.length;
-        let delivered = 0;
-        if (
-          delivery.container_statuses &&
-          typeof delivery.container_statuses === "object"
-        ) {
-          delivered = Object.values(delivery.container_statuses).filter(
-            (s) => s === "livre" || s === "livré"
-          ).length;
-        }
-        td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
-          total > 1 ? "s" : ""
-        }</button>`;
+        td.textContent = value;
       } else if (col.id === "container_number") {
         // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
         let tcList = [];
