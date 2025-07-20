@@ -26,7 +26,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  styleTC.textContent = `
+  const newLocal = (styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -95,32 +95,11 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
       vertical-align: middle;
     }
-    /* Limite stricte pour les entêtes et cellules vides même si pas de données */
-    #deliveriesTable thead th,
-    #deliveriesTable tbody td {
-      max-width: 160px;
-      min-width: 60px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    #deliveriesTable tbody td.text-center.text-muted,
-    #deliveriesTable tbody td.text-muted {
-      max-width: 160px;
-      min-width: 60px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 90px;
         font-size: 0.95em;
-      }
-      #deliveriesTable thead th,
-      #deliveriesTable tbody td {
-        max-width: 90px;
       }
     }
     @media (max-width: 600px) {
@@ -129,12 +108,8 @@ document.addEventListener("DOMContentLoaded", function () {
         max-width: 60px;
         font-size: 0.92em;
       }
-      #deliveriesTable thead th,
-      #deliveriesTable tbody td {
-        max-width: 60px;
-      }
     }
-  `;
+  `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
