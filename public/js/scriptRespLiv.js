@@ -87,23 +87,28 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
-    /* Adapter le texte à la largeur de la cellule, retour à la ligne automatique, pas d'ellipsis */
+    /* Centrer et aligner le texte dans toutes les cellules, retour à la ligne automatique */
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 160px;
       white-space: normal;
       overflow-wrap: break-word;
       word-break: break-word;
       vertical-align: middle;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
     }
-    /* Pour la colonne observation, même comportement, pas de limitation de hauteur ni de bande blanche */
+    /* Pour la colonne observation, même comportement, centré, pas de limitation de hauteur ni de bande blanche */
     #deliveriesTable tbody td.observation-col {
       max-width: 220px;
       white-space: pre-line;
       overflow-wrap: break-word;
       word-break: break-word;
-      vertical-align: top;
+      vertical-align: middle;
       background: none;
-      /* pas de display -webkit-box, pas de clamp, pas de max-height */
+      text-align: center;
+      justify-content: center;
+      align-items: center;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
