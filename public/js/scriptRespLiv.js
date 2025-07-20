@@ -16,34 +16,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     return dDate.getTime() === dateToCompare.getTime();
   });
   if (filtered.length === 0) {
-    // S'assurer que le thead est présent pour garder l'alignement
-    const table = tableBodyElement.closest("table");
-    if (table) {
-      let thead = table.querySelector("thead");
-      if (!thead) {
-        thead = document.createElement("thead");
-        table.insertBefore(thead, tableBodyElement);
-      }
-      if (!thead.innerHTML) {
-        const headerRow = document.createElement("tr");
-        AGENT_TABLE_COLUMNS.forEach((col) => {
-          const th = document.createElement("th");
-          th.textContent = col.label;
-          th.setAttribute("data-col-id", col.id);
-          headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-      }
-    }
-    // Affiche une seule cellule avec colspan pour garder l'alignement propre
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = AGENT_TABLE_COLUMNS.length;
-    td.textContent = "Aucune opération à cette date.";
-    td.className = "text-center text-muted";
-    tr.appendChild(td);
-    tableBodyElement.innerHTML = "";
-    tableBodyElement.appendChild(tr);
+    tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
     return;
   }
   renderAgentTableRows(filtered, tableBodyElement);
@@ -53,7 +26,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  styleTC.textContent = `
+  const newLocal = (styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -101,55 +74,19 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Style pour la cellule du message d'absence de données */
-    #deliveriesTableBody td.text-center.text-muted {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 1em;
-      max-width: 100vw;
-      height: 36px !important;
-      min-height: 0 !important;
-      padding: 0 8px;
-      line-height: 36px !important;
-      vertical-align: middle !important;
-      background: #f8fafc;
-      text-align: center;
-      display: table-cell;
-    }
-    #deliveriesTableBody tr:only-child {
-      height: 36px !important;
-      min-height: 0 !important;
-    }
-    #deliveriesTable thead th {
-      height: 32px !important;
-      min-height: 0 !important;
-      vertical-align: middle !important;
-      font-size: 0.98em;
-      padding: 0 6px;
+    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
+    #deliveriesTable thead th:not([data-col-id='container_number']) {
       max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      font-size: 1em;
       font-weight: bold;
       background: #0e274eff;
       color: #fff;
       border-bottom: 2px solid #2563eb;
       text-align: center;
       vertical-align: middle;
-    }
-    /* Quand il n'y a pas de données, réduire la taille de l'entête */
-    #deliveriesTable:has(tbody tr:only-child td.text-center.text-muted) thead th {
-      height: 28px !important;
-      font-size: 1em;
-      padding: 0 3px;
-      max-width: 90px !important;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 160px;
     }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 160px;
@@ -172,7 +109,7 @@ document.addEventListener("DOMContentLoaded", function () {
         font-size: 0.92em;
       }
     }
-  `;
+  `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
@@ -322,13 +259,19 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   }
   // Génération des lignes
   if (deliveries.length === 0) {
-    // Affiche une seule cellule avec colspan pour garder l'alignement propre
+    // Affiche une ligne structurée pour garder l'alignement des colonnes
     const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = AGENT_TABLE_COLUMNS.length;
-    td.textContent = "Aucune opération à cette date.";
-    td.className = "text-center text-muted";
-    tr.appendChild(td);
+    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      const td = document.createElement("td");
+      if (idx === 0) {
+        td.textContent = "Aucune opération à cette date.";
+        td.className = "text-center text-muted";
+      } else {
+        td.textContent = "-";
+        td.className = "text-muted";
+      }
+      tr.appendChild(td);
+    });
     tableBodyElement.innerHTML = "";
     tableBodyElement.appendChild(tr);
   } else {
@@ -369,17 +312,6 @@ const AGENT_TABLE_COLUMNS = [
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
-  if (!deliveries || deliveries.length === 0) {
-    // Affiche une seule cellule avec colspan pour garder l'alignement propre
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = AGENT_TABLE_COLUMNS.length;
-    td.textContent = "Aucune opération à cette date.";
-    td.className = "text-center text-muted";
-    tr.appendChild(td);
-    tableBodyElement.appendChild(tr);
-    return;
-  }
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
@@ -401,7 +333,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         td.textContent = value;
       } else if (col.id === "container_number") {
-        // ...existing code...
+        // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -416,12 +348,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           btn.innerHTML =
             tcList
               .slice(0, 2)
-              .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
+              .map((tc) => `<span class="tc-tag">${tc}</span>`)
               .join("") +
             (tcList.length > 2
-              ? ` <span class=\"tc-tag tc-tag-more\">+${
-                  tcList.length - 2
-                }</span>`
+              ? ` <span class="tc-tag tc-tag-more">+${tcList.length - 2}</span>`
               : "") +
             ' <i class="fas fa-chevron-down tc-chevron"></i>';
           const popup = document.createElement("div");
@@ -430,7 +360,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           popup.innerHTML = tcList
             .map(
               (tc) =>
-                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
+                `<div class="tc-popup-item" style='cursor:pointer;'>${tc}</div>`
             )
             .join("");
           btn.onclick = (e) => {
@@ -497,6 +427,172 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
       }
       tr.appendChild(td);
+      // Fonction pour afficher le menu déroulant de statut conteneur (popup)
+      function showContainerDetailPopup(delivery, containerNumber) {
+        const oldPopup = document.getElementById("containerDetailPopup");
+        if (oldPopup) oldPopup.remove();
+        const overlay = document.createElement("div");
+        overlay.id = "containerDetailPopup";
+        overlay.style.position = "fixed";
+        overlay.style.top = 0;
+        overlay.style.left = 0;
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.background = "rgba(30,41,59,0.45)";
+        overlay.style.zIndex = 9999;
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        const box = document.createElement("div");
+        box.style.background = "#fff";
+        box.style.borderRadius = "16px";
+        box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+        box.style.maxWidth = "420px";
+        box.style.width = "96vw";
+        box.style.maxHeight = "92vh";
+        box.style.overflowY = "auto";
+        box.style.padding = "0";
+        box.style.position = "relative";
+        box.style.display = "flex";
+        box.style.flexDirection = "column";
+        const header = document.createElement("div");
+        header.style.background = "#2563eb";
+        header.style.color = "#fff";
+        header.style.padding = "18px 28px 12px 28px";
+        header.style.fontWeight = "bold";
+        header.style.fontSize = "1.15rem";
+        header.style.display = "flex";
+        header.style.flexDirection = "column";
+        header.style.borderTopLeftRadius = "16px";
+        header.style.borderTopRightRadius = "16px";
+        header.innerHTML = `
+      <div style='margin-bottom:2px;'>
+        <span style='font-size:1.08em;'>${delivery.employee_name || "-"}</span>
+      </div>
+      <div style='font-size:0.98em;font-weight:400;'>
+        Client : <span style='color:#eab308;'>${
+          delivery.client_name || "-"
+        }</span><br>
+        Dossier : <span style='color:#eab308;'>${
+          delivery.dossier_number || "-"
+        }</span>  
+      </div>
+    `;
+        const closeBtn = document.createElement("button");
+        closeBtn.innerHTML = "&times;";
+        closeBtn.style.background = "none";
+        closeBtn.style.border = "none";
+        closeBtn.style.color = "#fff";
+        closeBtn.style.fontSize = "2.1rem";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.style.position = "absolute";
+        closeBtn.style.top = "10px";
+        closeBtn.style.right = "18px";
+        closeBtn.setAttribute("aria-label", "Fermer");
+        closeBtn.onclick = () => overlay.remove();
+        header.appendChild(closeBtn);
+        box.appendChild(header);
+        const content = document.createElement("div");
+        content.style.padding = "24px 24px 24px 24px";
+        content.style.background = "#f8fafc";
+        content.style.flex = "1 1 auto";
+        content.style.overflowY = "auto";
+        const tcNum = document.createElement("div");
+        tcNum.style.fontSize = "1.25em";
+        tcNum.style.fontWeight = "bold";
+        tcNum.style.marginBottom = "18px";
+        tcNum.style.textAlign = "center";
+        tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${containerNumber}</span>`;
+        content.appendChild(tcNum);
+        const label = document.createElement("label");
+        label.textContent = "Statut du conteneur :";
+        label.style.display = "block";
+        label.style.marginBottom = "8px";
+        label.style.fontWeight = "500";
+        content.appendChild(label);
+        const select = document.createElement("select");
+        select.style.width = "100%";
+        select.style.padding = "10px 12px";
+        select.style.border = "1.5px solid #2563eb";
+        select.style.borderRadius = "7px";
+        select.style.fontSize = "1.08em";
+        select.style.marginBottom = "18px";
+        select.style.background = "#fff";
+        select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
+        const statusOptions = [
+          { value: "mise_en_livraison", label: "Mise en livraison" },
+        ];
+        let currentStatus =
+          delivery.container_statuses &&
+          typeof delivery.container_statuses === "object" &&
+          !Array.isArray(delivery.container_statuses) &&
+          delivery.container_statuses[containerNumber]
+            ? delivery.container_statuses[containerNumber]
+            : delivery.status || "pending";
+        statusOptions.forEach((opt) => {
+          const option = document.createElement("option");
+          option.value = opt.value;
+          option.textContent = opt.label;
+          if (opt.value === currentStatus) option.selected = true;
+          select.appendChild(option);
+        });
+        content.appendChild(select);
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "Enregistrer le statut";
+        saveBtn.className = "btn btn-primary w-full mt-2";
+        saveBtn.style.background =
+          "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
+        saveBtn.style.color = "#fff";
+        saveBtn.style.fontWeight = "bold";
+        saveBtn.style.fontSize = "1em";
+        saveBtn.style.border = "none";
+        saveBtn.style.borderRadius = "8px";
+        saveBtn.style.padding = "0.7em 1.7em";
+        saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
+        saveBtn.onclick = async () => {
+          try {
+            const response = await fetch(
+              `/deliveries/${delivery.id}/container-status`,
+              {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  containerNumber: containerNumber,
+                  status: select.value,
+                }),
+              }
+            );
+            const data = await response.json();
+            if (response.ok && data.success) {
+              alert(
+                `Statut du conteneur mis à jour : ${
+                  select.options[select.selectedIndex].text
+                }`
+              );
+              overlay.remove();
+              // Rafraîchir les données si besoin
+            } else {
+              alert(
+                data.message ||
+                  "Erreur lors de la mise à jour du statut du conteneur."
+              );
+            }
+          } catch (err) {
+            alert(
+              "Erreur réseau lors de la mise à jour du statut du conteneur."
+            );
+          }
+        };
+        content.appendChild(saveBtn);
+        box.appendChild(content);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        overlay.onclick = (e) => {
+          if (e.target === overlay) overlay.remove();
+        };
+      }
     });
     tableBodyElement.appendChild(tr);
   });
