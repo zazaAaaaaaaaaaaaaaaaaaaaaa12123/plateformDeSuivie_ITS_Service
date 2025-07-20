@@ -213,20 +213,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Fonction principale pour charger et afficher selon la date
-  function updateTableForDate(dateStr) {
-    const filtered = filterDeliveriesByDate(dateStr);
-    renderAgentTableRows(filtered, tableBody);
-  }
-
   // Initialisation : charge toutes les livraisons puis affiche la date du jour
   const today = new Date().toISOString().split("T")[0];
   if (dateInput) {
     dateInput.value = today;
     loadAllDeliveries().then(() => {
-      updateTableForDate(today);
+      showDeliveriesByDate(allDeliveries, today, tableBody);
     });
     dateInput.addEventListener("change", (e) => {
-      updateTableForDate(e.target.value);
+      showDeliveriesByDate(allDeliveries, e.target.value, tableBody);
     });
   }
 });
