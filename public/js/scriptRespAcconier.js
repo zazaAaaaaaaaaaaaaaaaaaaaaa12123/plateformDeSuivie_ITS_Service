@@ -26,7 +26,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  const newLocal = (styleTC.textContent = `
+  styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -74,12 +74,14 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
+    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) : retour à la ligne automatique, pas d'ellipsis */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      max-width: 120px;
+      min-width: 60px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      word-break: break-word;
       font-size: 1em;
       font-weight: bold;
       background: #0e274eff;
@@ -88,28 +90,59 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
+    #deliveriesTable thead th[data-col-id='container_number'] {
+      max-width: none !important;
+      min-width: 120px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      word-break: break-word;
+    }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      max-width: 120px;
+      min-width: 60px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      word-break: break-word;
       vertical-align: middle;
+    }
+    #deliveriesTable tbody td[data-col-id='container_number'],
+    #deliveriesTable tbody td.tc-multi-cell {
+      max-width: none !important;
+      min-width: 120px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      word-break: break-word;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 90px;
+        max-width: 80px;
+        min-width: 40px;
         font-size: 0.95em;
+      }
+      #deliveriesTable thead th[data-col-id='container_number'],
+      #deliveriesTable tbody td[data-col-id='container_number'],
+      #deliveriesTable tbody td.tc-multi-cell {
+        min-width: 60px;
       }
     }
     @media (max-width: 600px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 60px;
+        max-width: 48px;
+        min-width: 30px;
         font-size: 0.92em;
       }
+      #deliveriesTable thead th[data-col-id='container_number'],
+      #deliveriesTable tbody td[data-col-id='container_number'],
+      #deliveriesTable tbody td.tc-multi-cell {
+        min-width: 40px;
+      }
     }
-  `);
+  `;
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
@@ -213,15 +246,20 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Fonction principale pour charger et afficher selon la date
+  function updateTableForDate(dateStr) {
+    const filtered = filterDeliveriesByDate(dateStr);
+    renderAgentTableRows(filtered, tableBody);
+  }
+
   // Initialisation : charge toutes les livraisons puis affiche la date du jour
   const today = new Date().toISOString().split("T")[0];
   if (dateInput) {
     dateInput.value = today;
     loadAllDeliveries().then(() => {
-      showDeliveriesByDate(allDeliveries, today, tableBody);
+      updateTableForDate(today);
     });
     dateInput.addEventListener("change", (e) => {
-      showDeliveriesByDate(allDeliveries, e.target.value, tableBody);
+      updateTableForDate(e.target.value);
     });
   }
 });
