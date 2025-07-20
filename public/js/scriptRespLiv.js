@@ -215,7 +215,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la date
   function updateTableForDate(dateStr) {
     const filtered = filterDeliveriesByDate(dateStr);
-    renderAgentTableRows(filtered, tableBody);
+    // Utilisation du nouveau modèle dynamique
+    const tableContainer = document.getElementById("deliveriesTableBody");
+    if (tableContainer) {
+      renderAgentTableFull(filtered, tableContainer);
+    } else {
+      console.error("L'élément #deliveriesTableBody n'existe pas dans le DOM.");
+    }
   }
 
   // Initialisation : charge toutes les livraisons puis affiche la date du jour
