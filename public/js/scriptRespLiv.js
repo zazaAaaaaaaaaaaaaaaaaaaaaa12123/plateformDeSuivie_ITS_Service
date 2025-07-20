@@ -74,13 +74,13 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Réduction de la largeur max des entêtes et cellules sauf Numéro TC(s) */
+    /* Largeur max réduite, retour à la ligne automatique, pas de text-overflow ni nowrap pour entêtes et cellules sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
       max-width: 90px;
       min-width: 60px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
       font-size: 0.95em;
       font-weight: bold;
       background: #0e274eff;
@@ -94,9 +94,9 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 90px;
       min-width: 60px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
       vertical-align: middle;
       padding-left: 4px;
       padding-right: 4px;
