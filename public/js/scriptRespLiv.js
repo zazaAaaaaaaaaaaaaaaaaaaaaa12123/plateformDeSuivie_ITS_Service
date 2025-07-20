@@ -89,6 +89,13 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
+    #deliveriesTable thead th[data-col-id='container_number'] {
+      max-width: none !important;
+      min-width: 120px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+    }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 90px;
       min-width: 60px;
@@ -97,12 +104,25 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
       vertical-align: middle;
     }
+    #deliveriesTable tbody td[data-col-id='container_number'],
+    #deliveriesTable tbody td.tc-multi-cell {
+      max-width: none !important;
+      min-width: 120px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+    }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 70px;
         min-width: 40px;
         font-size: 0.93em;
+      }
+      #deliveriesTable thead th[data-col-id='container_number'],
+      #deliveriesTable tbody td[data-col-id='container_number'],
+      #deliveriesTable tbody td.tc-multi-cell {
+        min-width: 80px;
       }
     }
     @media (max-width: 600px) {
@@ -111,6 +131,11 @@ document.addEventListener("DOMContentLoaded", function () {
         max-width: 48px;
         min-width: 30px;
         font-size: 0.90em;
+      }
+      #deliveriesTable thead th[data-col-id='container_number'],
+      #deliveriesTable tbody td[data-col-id='container_number'],
+      #deliveriesTable tbody td.tc-multi-cell {
+        min-width: 60px;
       }
     }
   `;
