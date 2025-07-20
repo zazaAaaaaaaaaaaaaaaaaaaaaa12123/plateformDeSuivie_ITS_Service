@@ -81,6 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
       white-space: normal;
       overflow: visible;
       text-overflow: initial;
+      word-break: break-word;
       font-size: 0.98em;
       font-weight: bold;
       background: #0e274eff;
@@ -95,6 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
       white-space: normal;
       overflow: visible;
       text-overflow: initial;
+      word-break: break-word;
     }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 90px;
@@ -102,6 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
       white-space: normal;
       overflow: visible;
       text-overflow: initial;
+      word-break: break-word;
       vertical-align: middle;
     }
     #deliveriesTable tbody td[data-col-id='container_number'],
@@ -111,6 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
       white-space: normal;
       overflow: visible;
       text-overflow: initial;
+      word-break: break-word;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
