@@ -16,7 +16,21 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     return dDate.getTime() === dateToCompare.getTime();
   });
   if (filtered.length === 0) {
-    tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
+    // Affiche une ligne structurée pour garder l'alignement des colonnes
+    const tr = document.createElement("tr");
+    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      const td = document.createElement("td");
+      if (idx === 0) {
+        td.textContent = "Aucune opération à cette date.";
+        td.className = "text-center text-muted";
+      } else {
+        td.textContent = "-";
+        td.className = "text-muted";
+      }
+      tr.appendChild(td);
+    });
+    tableBodyElement.innerHTML = "";
+    tableBodyElement.appendChild(tr);
     return;
   }
   renderAgentTableRows(filtered, tableBodyElement);
