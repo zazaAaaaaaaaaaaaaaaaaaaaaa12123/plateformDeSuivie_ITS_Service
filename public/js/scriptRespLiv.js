@@ -77,9 +77,9 @@ document.addEventListener("DOMContentLoaded", function () {
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
       max-width: 160px;
-      white-space: normal;
-      overflow-wrap: break-word;
-      word-break: break-word;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       font-size: 1em;
       font-weight: bold;
       background: #0e274eff;
@@ -90,22 +90,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 160px;
-      white-space: pre-line;
-      overflow-wrap: break-word;
-      word-break: break-word;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       vertical-align: middle;
-      overflow: visible;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
+      #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 90px;
         font-size: 0.95em;
       }
     }
     @media (max-width: 600px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
+      #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 60px;
         font-size: 0.92em;
       }
@@ -118,149 +117,124 @@ document.addEventListener("DOMContentLoaded", function () {
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
 
-  function createAgentTableCell(col, value, delivery, i) {
-    const td = document.createElement("td");
-    td.setAttribute("data-col-id", col.id);
-    // Ajout des attributs pour correspondre à scriptSuivie.js
-    td.setAttribute("data-field-name", col.id);
-    // Détection du type de donnée pour l'attribut data-type
-    let dataType = "text";
-    if (col.id === "row_number") dataType = "number";
-    else if (col.id === "date_display" || col.id === "delivery_date")
-      dataType = "date";
-    else if (col.id === "client_phone" || col.id === "driver_phone")
-      dataType = "tel";
-    else if (col.id === "number_of_containers") dataType = "number";
-    else if (col.id === "observation") dataType = "textarea";
-    td.setAttribute("data-type", dataType);
-    // Gestion du wrapping et du style pour éviter la superposition et l'ellipsis
-    td.style.whiteSpace = "pre-line";
-    td.style.overflowWrap = "break-word";
-    td.style.wordBreak = "break-word";
-    td.style.verticalAlign = "middle";
-    td.style.maxWidth = "160px";
-    td.style.minWidth = "60px";
-    td.style.overflow = "visible";
-    // Gestion du contenu et des attributs de valeur
-    let actualValue = "-";
-    let originalValue = "-";
-    if (col.id === "row_number") {
-      actualValue = i + 1;
-      originalValue = i + 1;
-      td.textContent = actualValue;
-      td.classList.add("row-number-col");
-    } else if (col.id === "date_display") {
-      let dDate = delivery.delivery_date || delivery.created_at;
-      if (dDate) {
-        let dateObj = new Date(dDate);
-        if (!isNaN(dateObj.getTime())) {
-          actualValue = dateObj.toLocaleDateString("fr-FR");
-          originalValue = dDate;
-        } else if (typeof dDate === "string") {
-          actualValue = dDate;
-          originalValue = dDate;
-        }
-      }
-      td.textContent = actualValue;
-    } else if (col.id === "container_number") {
-      let tcList = [];
-      if (Array.isArray(delivery.container_number)) {
-        tcList = delivery.container_number.filter(Boolean);
-      } else if (typeof delivery.container_number === "string") {
-        tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-      }
-      actualValue = Array.isArray(tcList) ? tcList.join(", ") : tcList;
-      originalValue = actualValue;
-      if (tcList.length > 1) {
-        td.classList.add("tc-multi-cell");
-        const btn = document.createElement("button");
-        btn.className = "tc-tags-btn";
-        btn.type = "button";
-        btn.innerHTML =
-          tcList
-            .slice(0, 2)
-            .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
-            .join("") +
-          (tcList.length > 2
-            ? ` <span class=\"tc-tag tc-tag-more\">+${tcList.length - 2}</span>`
-            : "") +
-          ' <i class="fas fa-chevron-down tc-chevron"></i>';
-        const popup = document.createElement("div");
-        popup.className = "tc-popup";
-        popup.style.display = "none";
-        popup.innerHTML = tcList
-          .map(
-            (tc) =>
-              `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
-          )
-          .join("");
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          document.querySelectorAll(".tc-popup").forEach((p) => {
-            if (p !== popup) p.style.display = "none";
-          });
-          popup.style.display =
-            popup.style.display === "block" ? "none" : "block";
-        };
-        popup.querySelectorAll(".tc-popup-item").forEach((item) => {
-          item.onclick = (ev) => {
-            ev.stopPropagation();
-            popup.style.display = "none";
-            showContainerDetailPopup(delivery, item.textContent);
-          };
-        });
-        document.addEventListener("click", function hidePopup(e) {
-          if (!td.contains(e.target)) popup.style.display = "none";
-        });
-        td.appendChild(btn);
-        td.appendChild(popup);
-      } else if (tcList.length === 1) {
-        const tag = document.createElement("span");
-        tag.className = "tc-tag";
-        tag.textContent = tcList[0];
-        tag.style.cursor = "pointer";
-        tag.onclick = (e) => {
-          e.stopPropagation();
-          showContainerDetailPopup(delivery, tcList[0]);
-        };
-        td.appendChild(tag);
+  async function loadAllDeliveries() {
+    try {
+      const response = await fetch("/deliveries/status");
+      const data = await response.json();
+      if (data.success && Array.isArray(data.deliveries)) {
+        allDeliveries = data.deliveries;
       } else {
-        td.textContent = "-";
+        allDeliveries = [];
       }
-    } else if (col.id === "delivery_date") {
-      let dDate = delivery.delivery_date;
-      if (dDate) {
-        let dateObj = new Date(dDate);
-        if (!isNaN(dateObj.getTime())) {
-          actualValue = dateObj.toLocaleDateString("fr-FR");
-          originalValue = dDate;
-        } else if (typeof dDate === "string") {
-          actualValue = dDate;
-          originalValue = dDate;
-        }
-      }
-      td.textContent = actualValue;
-      if (col.id === "observation") {
-        td.classList.add("observation-col");
-      }
-    } else {
-      actualValue =
-        delivery[col.id] !== undefined &&
-        delivery[col.id] !== null &&
-        delivery[col.id] !== ""
-          ? delivery[col.id]
-          : "-";
-      originalValue = actualValue;
-      td.textContent = actualValue;
-      if (col.id === "observation") {
-        td.classList.add("observation-col");
-      }
+    } catch (e) {
+      console.error("Erreur lors du chargement des livraisons :", e);
+      allDeliveries = [];
     }
-    td.setAttribute("data-actual-value", actualValue);
-    td.setAttribute("data-original-value", originalValue);
-    return td;
   }
-  updateTableForDate(e.target.value);
+
+  // Filtre les livraisons selon la date de livraison réelle (delivery_date)
+  function filterDeliveriesByDate(dateStr) {
+    return allDeliveries.filter((delivery) => {
+      // On utilise delivery_date si disponible, sinon created_at
+      let dDate =
+        delivery["delivery_date"] ||
+        delivery["created_at"] ||
+        delivery["Date"] ||
+        delivery["Date Livraison"];
+      if (!dDate) return false;
+      // Normalisation robuste du format
+      let normalized = "";
+      if (typeof dDate === "string") {
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
+          // Format JJ/MM/AAAA
+          const [j, m, a] = dDate.split("/");
+          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
+          // Format YYYY-MM-DD
+          normalized = dDate;
+        } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
+          // Format JJ-MM-AAAA
+          const [j, m, a] = dDate.split("-");
+          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+        } else {
+          // Autre format, on tente une conversion
+          const dateObj = new Date(dDate);
+          if (!isNaN(dateObj)) {
+            normalized = dateObj.toISOString().split("T")[0];
+          } else {
+            normalized = dDate;
+          }
+        }
+      } else if (dDate instanceof Date) {
+        normalized = dDate.toISOString().split("T")[0];
+      } else {
+        normalized = String(dDate);
+      }
+      return normalized === dateStr;
+    });
+  }
+
+  // Affiche les livraisons filtrées dans le tableau
+  function renderTable(deliveries) {
+    tableBody.innerHTML = "";
+    if (deliveries.length === 0) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = AGENT_TABLE_COLUMNS.length;
+      cell.textContent = "Aucune opération à cette date";
+      cell.className = "text-center text-muted";
+      row.appendChild(cell);
+      tableBody.appendChild(row);
+      return;
+    }
+    deliveries.forEach((delivery) => {
+      const row = document.createElement("tr");
+      AGENT_TABLE_COLUMNS.forEach((col) => {
+        const cell = document.createElement("td");
+        let value = "-";
+        if (col.id === "date_display") {
+          let dDate = delivery.delivery_date || delivery.created_at;
+          if (dDate) {
+            let dateObj = new Date(dDate);
+            if (!isNaN(dateObj.getTime())) {
+              value = dateObj.toLocaleDateString("fr-FR");
+            } else if (typeof dDate === "string") {
+              value = dDate;
+            }
+          }
+        } else {
+          value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+        }
+        cell.textContent = value;
+        row.appendChild(cell);
+      });
+      tableBody.appendChild(row);
+    });
+  }
+
+  // Fonction principale pour charger et afficher selon la date
+  function updateTableForDate(dateStr) {
+    const filtered = filterDeliveriesByDate(dateStr);
+    // Utilisation du nouveau modèle dynamique
+    const tableContainer = document.getElementById("deliveriesTableBody");
+    if (tableContainer) {
+      renderAgentTableFull(filtered, tableContainer);
+    } else {
+      console.error("L'élément #deliveriesTableBody n'existe pas dans le DOM.");
+    }
+  }
+
+  // Initialisation : charge toutes les livraisons puis affiche la date du jour
+  const today = new Date().toISOString().split("T")[0];
+  if (dateInput) {
+    dateInput.value = today;
+    loadAllDeliveries().then(() => {
+      updateTableForDate(today);
+    });
+    dateInput.addEventListener("change", (e) => {
+      updateTableForDate(e.target.value);
+    });
+  }
 });
 // Colonnes strictes pour Agent Acconier
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
