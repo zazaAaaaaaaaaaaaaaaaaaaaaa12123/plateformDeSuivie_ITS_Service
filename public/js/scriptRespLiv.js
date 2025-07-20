@@ -143,6 +143,10 @@ document.addEventListener("DOMContentLoaded", function () {
       height: 28px !important;
       font-size: 1em;
       padding: 0 3px;
+      max-width: 90px !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     #deliveriesTable thead th:not([data-col-id='container_number']) {
       max-width: 160px;
