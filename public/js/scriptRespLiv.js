@@ -502,3 +502,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     tableBodyElement.appendChild(tr);
   });
 }
+
+// Popup simple pour afficher les détails d'un conteneur
+function showContainerDetailPopup(delivery, containerNumber) {
+  alert(
+    "Détail du conteneur : " +
+      containerNumber +
+      "\n\nLivraison associée :\n" +
+      JSON.stringify(delivery, null, 2)
+  );
+}
