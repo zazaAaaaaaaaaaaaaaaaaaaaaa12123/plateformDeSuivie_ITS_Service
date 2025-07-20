@@ -139,6 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
+    #deliveriesTable thead th {
       max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
