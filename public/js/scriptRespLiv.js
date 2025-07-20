@@ -16,6 +16,25 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     return dDate.getTime() === dateToCompare.getTime();
   });
   if (filtered.length === 0) {
+    // S'assurer que le thead est présent pour garder l'alignement
+    const table = tableBodyElement.closest("table");
+    if (table) {
+      let thead = table.querySelector("thead");
+      if (!thead) {
+        thead = document.createElement("thead");
+        table.insertBefore(thead, tableBodyElement);
+      }
+      if (!thead.innerHTML) {
+        const headerRow = document.createElement("tr");
+        AGENT_TABLE_COLUMNS.forEach((col) => {
+          const th = document.createElement("th");
+          th.textContent = col.label;
+          th.setAttribute("data-col-id", col.id);
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+      }
+    }
     // Affiche une ligne structurée pour garder l'alignement des colonnes
     const tr = document.createElement("tr");
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
