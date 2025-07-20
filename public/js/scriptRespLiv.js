@@ -24,6 +24,30 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // Réduction de la largeur globale du tableau et centrage
+  const styleTableGlobal = document.createElement("style");
+  styleTableGlobal.textContent = `
+    #deliveriesTable {
+      max-width: 900px;
+      width: 98vw;
+      margin-left: auto;
+      margin-right: auto;
+      font-size: 0.93em;
+    }
+    @media (max-width: 1000px) {
+      #deliveriesTable {
+        max-width: 99vw;
+        font-size: 0.90em;
+      }
+    }
+    @media (max-width: 700px) {
+      #deliveriesTable {
+        max-width: 100vw;
+        font-size: 0.87em;
+      }
+    }
+  `;
+  document.head.appendChild(styleTableGlobal);
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   styleTC.textContent = `
