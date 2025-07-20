@@ -87,32 +87,60 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
-    /* Toutes les cellules du tableau (hors container_number multi-cell) : retour à la ligne automatique, centré */
+    /* Toutes les cellules du tableau (hors container_number multi-cell) : retour à la ligne automatique, aligné à gauche */
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 180px;
       white-space: normal;
       overflow: visible;
       text-overflow: unset;
       vertical-align: middle;
-      text-align: center;
+      text-align: left;
       font-weight: normal;
       font-size: 1em;
       padding: 6px 8px;
       word-break: break-word;
     }
-    /* Pour la colonne observation, même comportement, centré, retour à la ligne */
+    /* Largeur adaptée pour les colonnes importantes */
     #deliveriesTable tbody td.observation-col {
-      max-width: 220px;
+      min-width: 180px;
+      max-width: 320px;
       white-space: normal;
       overflow: visible;
       text-overflow: unset;
       vertical-align: middle;
       background: none;
-      text-align: center;
+      text-align: left;
       font-weight: normal;
       font-size: 1em;
       padding: 6px 8px;
       word-break: break-word;
+    }
+    #deliveriesTable tbody td:nth-child(1),
+    #deliveriesTable thead th:nth-child(1) {
+      min-width: 40px;
+      max-width: 60px;
+      text-align: center;
+    }
+    #deliveriesTable tbody td:nth-child(2),
+    #deliveriesTable thead th:nth-child(2) {
+      min-width: 90px;
+      max-width: 120px;
+    }
+    #deliveriesTable tbody td:nth-child(3),
+    #deliveriesTable thead th:nth-child(3) {
+      min-width: 120px;
+      max-width: 180px;
+    }
+    #deliveriesTable tbody td:nth-child(8),
+    #deliveriesTable thead th:nth-child(8),
+    #deliveriesTable tbody td:nth-child(9),
+    #deliveriesTable thead th:nth-child(9) {
+      min-width: 140px;
+      max-width: 220px;
+    }
+    #deliveriesTable tbody td:nth-child(10),
+    #deliveriesTable thead th:nth-child(10) {
+      min-width: 120px;
+      max-width: 180px;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
