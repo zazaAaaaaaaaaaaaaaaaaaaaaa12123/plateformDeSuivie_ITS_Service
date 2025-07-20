@@ -458,16 +458,21 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.title = "Cliquez pour modifier";
         td.onclick = function (e) {
           if (td.querySelector("input")) return;
+          // Toujours prendre la valeur affichée dans la cellule
+          let currentValue = td.textContent;
+          // Si la valeur affichée est "-", on met une chaîne vide
+          if (currentValue === "-") currentValue = "";
           const input = document.createElement("input");
           input.type = col.id === "delivery_date" ? "date" : "text";
-          input.value =
+          if (
             col.id === "delivery_date" &&
-            value !== "-" &&
-            value.match(/^\d{2}\/\d{2}\/\d{4}$/)
-              ? value.split("/").reverse().join("-")
-              : value !== "-"
-              ? value
-              : "";
+            currentValue &&
+            currentValue.match(/^\d{2}\/\d{2}\/\d{4}$/)
+          ) {
+            input.value = currentValue.split("/").reverse().join("-");
+          } else {
+            input.value = currentValue;
+          }
           input.style.width = "95%";
           input.style.fontSize = "inherit";
           input.style.fontWeight = "inherit";
@@ -498,7 +503,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (ev.key === "Enter") {
               input.blur();
             } else if (ev.key === "Escape") {
-              td.textContent = value;
+              td.textContent = currentValue || "-";
             }
           });
         };
