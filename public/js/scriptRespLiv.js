@@ -512,8 +512,32 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     let lastAccessState = null;
     let confirmationShown = false;
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      // Génère une clé unique pour chaque cellule éditable (par livraison et colonne)
+      function getCellStorageKey(delivery, colId) {
+        return `deliverycell_${
+          delivery.id || delivery.dossier_number || i
+        }_${colId}`;
+      }
       const td = document.createElement("td");
       let value = "-";
+      // Récupère la valeur sauvegardée si elle existe (pour les colonnes éditables)
+      let savedValue = null;
+      if (
+        [
+          "visitor_agent_name",
+          "transporter",
+          "inspector",
+          "customs_agent",
+          "driver",
+          "driver_phone",
+          "delivery_date",
+          "observation",
+        ].includes(col.id)
+      ) {
+        const storageKey = getCellStorageKey(delivery, col.id);
+        savedValue = localStorage.getItem(storageKey);
+      }
+
       if (col.id === "row_number") {
         value = i + 1;
         td.textContent = value;
@@ -606,16 +630,24 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           value = "-";
         }
-        // Cellule éditable
+        // Cellule éditable avec sauvegarde/restauration
         if (editableCols.includes(col.id)) {
           td.classList.add("editable-cell");
           td.style.cursor = "pointer";
-          td.textContent = value;
+          // Affiche la valeur sauvegardée si elle existe
+          let displayValue =
+            savedValue !== null && savedValue !== ""
+              ? new Date(savedValue).toLocaleDateString("fr-FR")
+              : value;
+          td.textContent = displayValue;
           td.onclick = function (e) {
             if (td.querySelector("input")) return;
             const input = document.createElement("input");
             input.type = "date";
-            input.value = dDate
+            // Si une valeur sauvegardée existe, la pré-remplir
+            input.value = savedValue
+              ? savedValue
+              : dDate
               ? new Date(dDate).toISOString().split("T")[0]
               : "";
             input.style.width = "100%";
@@ -623,19 +655,31 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             input.style.padding = "2px 4px";
             input.onkeydown = function (ev) {
               if (ev.key === "Enter") {
-                td.textContent = input.value
+                let newVal = input.value
                   ? new Date(input.value).toLocaleDateString("fr-FR")
                   : "-";
+                td.textContent = newVal;
                 td.title = input.value;
                 td.dataset.edited = "true";
+                // Sauvegarde dans localStorage
+                localStorage.setItem(
+                  getCellStorageKey(delivery, col.id),
+                  input.value
+                );
               }
             };
             input.onblur = function () {
-              td.textContent = input.value
+              let newVal = input.value
                 ? new Date(input.value).toLocaleDateString("fr-FR")
                 : "-";
+              td.textContent = newVal;
               td.title = input.value;
               td.dataset.edited = "true";
+              // Sauvegarde dans localStorage
+              localStorage.setItem(
+                getCellStorageKey(delivery, col.id),
+                input.value
+              );
             };
             td.textContent = "";
             td.appendChild(input);
@@ -648,7 +692,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.classList.add("observation-col");
         }
       } else if (editableCols.includes(col.id)) {
-        // Cellule éditable texte
+        // Cellule éditable texte avec sauvegarde/restauration
         td.classList.add("editable-cell");
         td.style.cursor = "pointer";
         value =
@@ -657,7 +701,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           delivery[col.id] !== ""
             ? delivery[col.id]
             : "-";
-        td.textContent = value;
+        // Affiche la valeur sauvegardée si elle existe
+        let displayValue =
+          savedValue !== null && savedValue !== "" ? savedValue : value;
+        td.textContent = displayValue;
         td.onclick = function (e) {
           if (td.querySelector("input") || td.querySelector("textarea")) return;
           // Blocage pour observation si champs obligatoires non remplis
@@ -673,9 +720,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             ? document.createElement("textarea")
             : document.createElement("input");
           if (!isLong) input.type = "text";
-          // Correction : toujours pré-remplir avec le texte affiché (sauf "-")
+          // Correction : toujours pré-remplir avec la valeur sauvegardée si elle existe
           let currentText =
-            td.textContent && td.textContent.trim() !== "-"
+            savedValue !== null && savedValue !== ""
+              ? savedValue
+              : td.textContent && td.textContent.trim() !== "-"
               ? td.textContent.trim()
               : "";
           input.value = currentText;
@@ -687,6 +736,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               td.textContent = input.value || "-";
               td.title = input.value;
               td.dataset.edited = "true";
+              // Sauvegarde dans localStorage
+              localStorage.setItem(
+                getCellStorageKey(delivery, col.id),
+                input.value
+              );
               setTimeout(() => {
                 if (isAllRequiredFilled()) {
                   showAccessMessage(
@@ -706,6 +760,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             td.textContent = input.value || "-";
             td.title = input.value;
             td.dataset.edited = "true";
+            // Sauvegarde dans localStorage
+            localStorage.setItem(
+              getCellStorageKey(delivery, col.id),
+              input.value
+            );
             setTimeout(() => {
               if (isAllRequiredFilled()) {
                 showAccessMessage(
