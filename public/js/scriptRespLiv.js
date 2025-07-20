@@ -101,6 +101,32 @@ document.addEventListener("DOMContentLoaded", function () {
       padding-left: 4px;
       padding-right: 4px;
     }
+    /* Styles spécifiques pour la colonne Numéro TC(s) pour ne jamais couper le contenu */
+    #deliveriesTable thead th[data-col-id='container_number'] {
+      max-width: none;
+      min-width: 120px;
+      white-space: nowrap;
+      overflow: visible;
+      font-size: 0.98em;
+      font-weight: bold;
+      background: #0e274eff;
+      color: #fff;
+      border-bottom: 2px solid #2563eb;
+      text-align: center;
+      vertical-align: middle;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+    #deliveriesTable tbody td.tc-multi-cell,
+    #deliveriesTable tbody td[data-col-id='container_number'] {
+      max-width: none;
+      min-width: 120px;
+      white-space: nowrap;
+      overflow: visible;
+      vertical-align: middle;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
