@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     /* Quand il n'y a pas de données, réduire la taille de l'entête */
     #deliveriesTable:has(tbody tr:only-child td.text-center.text-muted) thead th {
-      height: 28px !important;
+      height: 20px ;
       font-size: 0.93em;
       padding: 0 3px;
     }
