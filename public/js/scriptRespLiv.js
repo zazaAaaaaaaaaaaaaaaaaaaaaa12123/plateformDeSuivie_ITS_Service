@@ -127,16 +127,6 @@ document.addEventListener("DOMContentLoaded", function () {
       vertical-align: middle !important;
       font-size: 0.98em;
       padding: 0 6px;
-      max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-weight: bold;
-      background: #0e274eff;
-      color: #fff;
-      border-bottom: 2px solid #2563eb;
-      text-align: center;
-      vertical-align: middle;
     }
     /* Quand il n'y a pas de données, réduire la taille de l'entête */
     #deliveriesTable:has(tbody tr:only-child td.text-center.text-muted) thead th {
@@ -144,8 +134,18 @@ document.addEventListener("DOMContentLoaded", function () {
       font-size: 1em;
       padding: 0 3px;
     }
-    #deliveriesTable thead th:not([data-col-id='container_number']) {
+    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
       max-width: 160px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 1em;
+      font-weight: bold;
+      background: #0e274eff;
+      color: #fff;
+      border-bottom: 2px solid #2563eb;
+      text-align: center;
+      vertical-align: middle;
     }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 160px;
