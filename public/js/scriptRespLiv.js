@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 180px;
+      max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
       font-size: 1em;
@@ -87,27 +87,18 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
-    /* Colonnes importantes plus larges */
-    #deliveriesTable tbody td[data-col-id='date_display'],
-    #deliveriesTable tbody td[data-col-id='lieu'],
-    #deliveriesTable tbody td[data-col-id='container_type_and_content'],
-    #deliveriesTable tbody td[data-col-id='weight'],
-    #deliveriesTable tbody td[data-col-id='observation'] {
-      max-width: 220px;
-    }
-    /* Alignement à gauche, retour à la ligne automatique, meilleure lisibilité */
+    /* Centrer et aligner le texte dans toutes les cellules, retour à la ligne automatique */
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 180px;
+      max-width: 160px;
       white-space: normal;
       overflow-wrap: break-word;
       word-break: break-word;
       vertical-align: middle;
-      text-align: left;
-      font-weight: normal;
-      font-size: 1em;
-      padding: 6px 8px;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
     }
-    /* Pour la colonne observation, même comportement, aligné à gauche */
+    /* Pour la colonne observation, même comportement, centré, pas de limitation de hauteur ni de bande blanche */
     #deliveriesTable tbody td.observation-col {
       max-width: 220px;
       white-space: pre-line;
@@ -115,10 +106,9 @@ document.addEventListener("DOMContentLoaded", function () {
       word-break: break-word;
       vertical-align: middle;
       background: none;
-      text-align: left;
-      font-weight: normal;
-      font-size: 1em;
-      padding: 6px 8px;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
@@ -142,72 +132,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   `;
   document.head.appendChild(styleTC);
-
-  // Ajout d'une info-bulle personnalisée pour texte tronqué
-  function createCustomTooltip() {
-    let tooltip = document.getElementById("customTableTooltip");
-    if (!tooltip) {
-      tooltip = document.createElement("div");
-      tooltip.id = "customTableTooltip";
-      tooltip.style.position = "fixed";
-      tooltip.style.zIndex = "99999";
-      tooltip.style.background = "#222";
-      tooltip.style.color = "#fff";
-      tooltip.style.padding = "8px 14px";
-      tooltip.style.borderRadius = "8px";
-      tooltip.style.fontSize = "1em";
-      tooltip.style.maxWidth = "420px";
-      tooltip.style.boxShadow = "0 4px 24px rgba(30,41,59,0.18)";
-      tooltip.style.display = "none";
-      tooltip.style.pointerEvents = "none";
-      tooltip.style.wordBreak = "break-word";
-      document.body.appendChild(tooltip);
-    }
-    return tooltip;
-  }
-
-  function showTooltip(text, x, y) {
-    const tooltip = createCustomTooltip();
-    tooltip.textContent = text;
-    tooltip.style.display = "block";
-    // Positionnement intelligent (évite de sortir de l'écran)
-    const padding = 12;
-    let left = x + padding;
-    let top = y + padding;
-    if (left + tooltip.offsetWidth > window.innerWidth) {
-      left = window.innerWidth - tooltip.offsetWidth - padding;
-    }
-    if (top + tooltip.offsetHeight > window.innerHeight) {
-      top = y - tooltip.offsetHeight - padding;
-    }
-    tooltip.style.left = left + "px";
-    tooltip.style.top = top + "px";
-  }
-
-  function hideTooltip() {
-    const tooltip = document.getElementById("customTableTooltip");
-    if (tooltip) tooltip.style.display = "none";
-  }
-
-  // Appliquer le tooltip sur toutes les cellules du tableau (hors .tc-multi-cell)
-  document.addEventListener("mouseover", function (e) {
-    const td = e.target.closest(
-      "#deliveriesTable tbody td:not(.tc-multi-cell):not(.observation-col)"
-    );
-    if (td && td.offsetWidth < td.scrollWidth) {
-      showTooltip(td.textContent, e.clientX, e.clientY);
-    }
-  });
-  document.addEventListener("mousemove", function (e) {
-    const tooltip = document.getElementById("customTableTooltip");
-    if (tooltip && tooltip.style.display === "block") {
-      showTooltip(tooltip.textContent, e.clientX, e.clientY);
-    }
-  });
-  document.addEventListener("mouseout", function (e) {
-    const td = e.target.closest("#deliveriesTable tbody td");
-    if (td) hideTooltip();
-  });
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
 
