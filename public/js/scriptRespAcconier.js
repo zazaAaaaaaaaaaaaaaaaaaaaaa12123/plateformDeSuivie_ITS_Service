@@ -266,17 +266,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         value = i + 1;
         td.textContent = value;
         td.classList.add("row-number-col");
-      } else if (col.id === "date_display") {
-        let dDate = delivery.delivery_date || delivery.created_at;
-        if (dDate) {
-          let dateObj = new Date(dDate);
-          if (!isNaN(dateObj.getTime())) {
-            value = dateObj.toLocaleDateString("fr-FR");
-          } else if (typeof dDate === "string") {
-            value = dDate;
-          }
+      } else if (col.id === "statut") {
+        // Afficher le modèle "x sur y livré" dans la cellule
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
         }
-        td.textContent = value;
+        let total = tcList.length;
+        let delivered = 0;
+        if (
+          delivery.container_statuses &&
+          typeof delivery.container_statuses === "object"
+        ) {
+          delivered = Object.values(delivery.container_statuses).filter(
+            (s) => s === "livre" || s === "livré"
+          ).length;
+        }
+        td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+          total > 1 ? "s" : ""
+        }</button>`;
       } else if (col.id === "container_number") {
         // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
         let tcList = [];
