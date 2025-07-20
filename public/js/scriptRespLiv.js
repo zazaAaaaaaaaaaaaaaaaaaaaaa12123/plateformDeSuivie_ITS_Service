@@ -40,48 +40,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  styleTC.textContent = `
-    #deliveriesTable thead th {
-      background: #0e274e;
-      color: #fff;
-      font-size: 0.97em;
-      font-weight: 700;
-      padding: 7px 8px 7px 8px;
-      border-bottom: 2px solid #2563eb;
-      border-right: 1px solid #e5e7eb;
-      border-left: none;
-      border-top: none;
-      text-align: center;
-      vertical-align: middle;
-      white-space: nowrap;
-      height: 36px;
-      min-height: 32px;
-      max-height: 38px;
-      line-height: 1.1;
-      letter-spacing: 0.01em;
-    }
-    #deliveriesTable thead th:last-child {
-      border-right: none;
-    }
-    #deliveriesTable tbody td {
-      font-size: 0.97em;
-      padding: 7px 8px 7px 8px;
-      border-bottom: 1px solid #e5e7eb;
-      border-right: 1px solid #e5e7eb;
-      border-left: none;
-      border-top: none;
-      text-align: center;
-      vertical-align: middle;
-      white-space: nowrap;
-      height: 34px;
-      min-height: 30px;
-      max-height: 36px;
-      line-height: 1.1;
-      background: #fff;
-    }
-    #deliveriesTable tbody td:last-child {
-      border-right: none;
-    }
+  const newLocal = (styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -129,22 +88,43 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Responsive */
+    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
+    #deliveriesTable thead th:not([data-col-id='container_number']) {
+      max-width: 160px;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      font-size: 1em;
+      font-weight: bold;
+      background: #0e274eff;
+      color: #fff;
+      border-bottom: 2px solid #2563eb;
+      text-align: center;
+      vertical-align: middle;
+    }
+    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
+      max-width: 160px;
+      white-space: pre-line;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      vertical-align: middle;
+      overflow: visible;
+    }
     @media (max-width: 900px) {
-      #deliveriesTable thead th,
-      #deliveriesTable tbody td {
-        font-size: 0.93em;
-        padding: 5px 4px;
+      #deliveriesTable thead th:not([data-col-id='container_number']),
+      #deliveriesTable tbody td:not(:nth-child(5)) {
+        max-width: 90px;
+        font-size: 0.95em;
       }
     }
     @media (max-width: 600px) {
-      #deliveriesTable thead th,
-      #deliveriesTable tbody td {
-        font-size: 0.90em;
-        padding: 3px 2px;
+      #deliveriesTable thead th:not([data-col-id='container_number']),
+      #deliveriesTable tbody td:not(:nth-child(5)) {
+        max-width: 60px;
+        font-size: 0.92em;
       }
     }
-  `;
+  `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
