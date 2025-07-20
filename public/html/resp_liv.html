@@ -508,28 +508,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/scriptRespAcconier.js"></script>
-    <script>
-      // Surlignage de toutes les cellules de la ligne survolée (pas les entêtes)
-      document.addEventListener('DOMContentLoaded', function () {
-        function updateRowHighlight(tr, add) {
-          tr.querySelectorAll('td').forEach(td => {
-            if (add) td.classList.add('highlight-col');
-            else td.classList.remove('highlight-col');
-          });
-        }
-        function applyListeners() {
-          document.querySelectorAll('#deliveriesTableBody tr').forEach(tr => {
-            if (!tr._highlightListener) {
-              tr.addEventListener('mouseenter', () => updateRowHighlight(tr, true));
-              tr.addEventListener('mouseleave', () => updateRowHighlight(tr, false));
-              tr._highlightListener = true;
-            }
-          });
-        }
-        applyListeners();
-        const observer = new MutationObserver(applyListeners);
-        observer.observe(document.getElementById('deliveriesTableBody'), { childList: true, subtree: true });
-      });
-    </script>
+
   </body>
 </html>
