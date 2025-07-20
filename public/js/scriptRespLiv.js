@@ -87,27 +87,35 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
-    /* Toutes les cellules du tableau (hors container_number multi-cell) : une seule ligne, centré, ellipsis */
+    /* Colonnes importantes plus larges */
+    #deliveriesTable tbody td[data-col-id='date_display'],
+    #deliveriesTable tbody td[data-col-id='lieu'],
+    #deliveriesTable tbody td[data-col-id='container_type_and_content'],
+    #deliveriesTable tbody td[data-col-id='weight'],
+    #deliveriesTable tbody td[data-col-id='observation'] {
+      max-width: 220px;
+    }
+    /* Alignement à gauche, retour à la ligne automatique, meilleure lisibilité */
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 180px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
       vertical-align: middle;
-      text-align: center;
+      text-align: left;
       font-weight: normal;
       font-size: 1em;
       padding: 6px 8px;
     }
-    /* Pour la colonne observation, même comportement, centré, une seule ligne */
+    /* Pour la colonne observation, même comportement, aligné à gauche */
     #deliveriesTable tbody td.observation-col {
       max-width: 220px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: pre-line;
+      overflow-wrap: break-word;
+      word-break: break-word;
       vertical-align: middle;
       background: none;
-      text-align: center;
+      text-align: left;
       font-weight: normal;
       font-size: 1em;
       padding: 6px 8px;
@@ -120,7 +128,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       #deliveriesTable tbody td.observation-col {
         max-width: 120px;
-        
       }
     }
     @media (max-width: 600px) {
