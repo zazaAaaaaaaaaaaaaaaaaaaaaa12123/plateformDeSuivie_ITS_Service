@@ -485,7 +485,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             ? document.createElement("textarea")
             : document.createElement("input");
           if (!isLong) input.type = "text";
-          input.value = value !== "-" ? value : "";
+          // Correction : toujours pré-remplir avec le texte affiché (sauf "-")
+          let currentText =
+            td.textContent && td.textContent.trim() !== "-"
+              ? td.textContent.trim()
+              : "";
+          input.value = currentText;
           input.style.width = "100%";
           input.style.fontSize = "1em";
           input.style.padding = "2px 4px";
@@ -504,6 +509,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "";
           td.appendChild(input);
           input.focus();
+          // Pour textarea, placer le curseur à la fin
+          if (isLong) {
+            input.selectionStart = input.selectionEnd = input.value.length;
+          }
         };
         if (col.id === "observation") {
           td.classList.add("observation-col");
