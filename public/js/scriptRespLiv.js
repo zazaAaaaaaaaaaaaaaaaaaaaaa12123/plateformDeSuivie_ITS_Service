@@ -259,13 +259,19 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   }
   // Génération des lignes
   if (deliveries.length === 0) {
-    // Affiche une seule cellule centrée sur toute la largeur
+    // Affiche une ligne structurée pour garder l'alignement des colonnes
     const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = AGENT_TABLE_COLUMNS.length;
-    td.textContent = "Aucune opération à cette date.";
-    td.className = "text-center text-muted";
-    tr.appendChild(td);
+    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      const td = document.createElement("td");
+      if (idx === 0) {
+        td.textContent = "Aucune opération à cette date.";
+        td.className = "text-center text-muted";
+      } else {
+        td.textContent = "-";
+        td.className = "text-muted";
+      }
+      tr.appendChild(td);
+    });
     tableBodyElement.innerHTML = "";
     tableBodyElement.appendChild(tr);
   } else {
