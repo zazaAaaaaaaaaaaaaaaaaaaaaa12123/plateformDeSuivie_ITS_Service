@@ -8706,3 +8706,51 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA34 ***/
+<thead>
+              <tr>
+                <th
+                  colspan="24"
+                  style="
+                    background: rgba(0, 123, 255, 0.2);
+                    color: #0a3d7c;
+                    font-size: 1.15em;
+                    font-weight: bold;
+                    text-align: center;
+                    letter-spacing: 1px;
+                    border-bottom: 3px solid #007bff;
+                  "
+                >
+                  RESPONSABLE LIVRAISON
+                </th>
+              </tr>
+              <tr>
+                <th>N°</th>
+                <th>DATE</th>
+                <th>AGENT ACCONIER</th>
+                <th>NOM CLIENT</th>
+                <th>CLIENT (Tel)</th>
+                <th>NUMÉRO TC(S)</th>
+                <th>LIEU</th>
+                <th>TYPE DE CONTENEURS</th>
+                <th>CONTENU</th>
+                <th>NUMÉRO DÉCLARATION</th>
+                <th>NUMÉRO DOSSIER</th>
+                <th>NBR CONTENEURS</th>
+                <th>COMPAGNIE MARITIME</th>
+                <th>CIRCUIT</th>
+                <th>MODE DE TRANSPORT</th>
+                <th>NOM Agent visiteurs</th>
+                <th>TRANSPORTEUR</th>
+                <th>INSPECTEUR</th>
+                <th>AGENT EN DOUANES</th>
+                <th>CHAUFFEUR</th>
+                <th>TEL CHAUFFEUR</th>
+                <th>DATE LIVRAISON</th>
+                <th>STATUT (du Respo.ACCONIER)</th>
+                <th>STATUT</th>
+                <th>OBSERVATIONS</th>
+              </tr>
+            </thead>
+
+
+            ok ensuit quand je clique sur une cellule modifiable quand j'insere une donnne et que je valide la donne est afficher mais quand je reclique pour juste remodifier le texte le texte dans le champs disparait et je suis obliger le recopier tout le texte donc regle ça , je veux que si je modifie que le texte dans le champs disparaissent pas . on est claire 
