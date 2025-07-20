@@ -78,9 +78,9 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTable thead th:not([data-col-id='container_number']) {
       max-width: 90px;
       min-width: 60px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
       font-size: 0.98em;
       font-weight: bold;
       background: #0e274eff;
@@ -99,9 +99,9 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 90px;
       min-width: 60px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
       vertical-align: middle;
     }
     #deliveriesTable tbody td[data-col-id='container_number'],
