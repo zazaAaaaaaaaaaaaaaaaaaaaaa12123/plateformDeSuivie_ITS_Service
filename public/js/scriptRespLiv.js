@@ -258,7 +258,25 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     thead.appendChild(headerRow);
   }
   // Génération des lignes
-  renderAgentTableRows(deliveries, tableBodyElement);
+  if (deliveries.length === 0) {
+    // Affiche une ligne structurée pour garder l'alignement des colonnes
+    const tr = document.createElement("tr");
+    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      const td = document.createElement("td");
+      if (idx === 0) {
+        td.textContent = "Aucune opération à cette date.";
+        td.className = "text-center text-muted";
+      } else {
+        td.textContent = "-";
+        td.className = "text-muted";
+      }
+      tr.appendChild(td);
+    });
+    tableBodyElement.innerHTML = "";
+    tableBodyElement.appendChild(tr);
+  } else {
+    renderAgentTableRows(deliveries, tableBodyElement);
+  }
 }
 const AGENT_TABLE_COLUMNS = [
   { id: "row_number", label: "N°" },
