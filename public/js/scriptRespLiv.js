@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Réduction de la largeur max des entêtes et cellules sauf Numéro TC(s) */
+    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) : retour à la ligne automatique, pas d'ellipsis */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
       max-width: 90px;
       min-width: 60px;
@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
       #deliveriesTable thead th[data-col-id='container_number'],
       #deliveriesTable tbody td[data-col-id='container_number'],
       #deliveriesTable tbody td.tc-multi-cell {
-        min-width: 80px;
+        min-width: 60px;
       }
     }
     @media (max-width: 600px) {
@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
       #deliveriesTable thead th[data-col-id='container_number'],
       #deliveriesTable tbody td[data-col-id='container_number'],
       #deliveriesTable tbody td.tc-multi-cell {
-        min-width: 60px;
+        min-width: 40px;
       }
     }
   `;
