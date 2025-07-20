@@ -445,6 +445,33 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     "delivery_date",
     "observation",
   ];
+  // Message d'accès temporaire (vert ou rouge)
+  function showAccessMessage(msg, color) {
+    let msgDiv = document.getElementById("accessMsgTemp");
+    if (!msgDiv) {
+      msgDiv = document.createElement("div");
+      msgDiv.id = "accessMsgTemp";
+      msgDiv.style.position = "fixed";
+      msgDiv.style.top = "18px";
+      msgDiv.style.left = "50%";
+      msgDiv.style.transform = "translateX(-50%)";
+      msgDiv.style.zIndex = 99999;
+      msgDiv.style.padding = "12px 32px";
+      msgDiv.style.borderRadius = "10px";
+      msgDiv.style.fontWeight = "bold";
+      msgDiv.style.fontSize = "1.1em";
+      document.body.appendChild(msgDiv);
+    }
+    msgDiv.textContent = msg;
+    msgDiv.style.background = color === "green" ? "#22c55e" : "#ef4444";
+    msgDiv.style.color = "#fff";
+    msgDiv.style.boxShadow = "0 2px 12px rgba(30,41,59,0.13)";
+    msgDiv.style.display = "block";
+    clearTimeout(msgDiv._timeout);
+    msgDiv._timeout = setTimeout(function () {
+      msgDiv.style.display = "none";
+    }, 2000);
+  }
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
     // Champs obligatoires pour ce delivery
@@ -457,10 +484,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       "driver_phone",
       "delivery_date",
     ];
-    // Fonction pour vérifier dynamiquement si tous les champs sont remplis
+    // Fonction pour vérifier dynamiquement si tous les champs sont remplis (prend la valeur affichée dans la cellule)
     function isAllRequiredFilled() {
+      // Toujours prendre la valeur affichée dans la cellule (input, textarea ou textContent)
       return requiredFields.every((field) => {
-        const val = delivery[field];
+        const colIdx = AGENT_TABLE_COLUMNS.findIndex((c) => c.id === field);
+        if (colIdx === -1) return false;
+        const cell = tr.children[colIdx];
+        let val = undefined;
+        if (cell) {
+          const input = cell.querySelector("input,textarea");
+          if (input) {
+            val = input.value;
+          } else {
+            val = cell.textContent;
+          }
+        }
         return (
           val !== undefined &&
           val !== null &&
@@ -469,6 +508,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         );
       });
     }
+    // Gestion dynamique du message d'accès
+    let lastAccessState = null;
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
@@ -620,8 +661,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           if (td.querySelector("input") || td.querySelector("textarea")) return;
           // Blocage pour observation si champs obligatoires non remplis
           if (col.id === "observation" && !isAllRequiredFilled()) {
-            alert(
-              "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON."
+            showAccessMessage(
+              "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+              "red"
             );
             return;
           }
@@ -644,12 +686,38 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               td.textContent = input.value || "-";
               td.title = input.value;
               td.dataset.edited = "true";
+              setTimeout(() => {
+                if (isAllRequiredFilled()) {
+                  showAccessMessage(
+                    "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
+                    "green"
+                  );
+                } else {
+                  showAccessMessage(
+                    "Vous n'avez plus accès à l'observation et au statut du conteneur.",
+                    "red"
+                  );
+                }
+              }, 10);
             }
           };
           input.onblur = function () {
             td.textContent = input.value || "-";
             td.title = input.value;
             td.dataset.edited = "true";
+            setTimeout(() => {
+              if (isAllRequiredFilled()) {
+                showAccessMessage(
+                  "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
+                  "green"
+                );
+              } else {
+                showAccessMessage(
+                  "Vous n'avez plus accès à l'observation et au statut du conteneur.",
+                  "red"
+                );
+              }
+            }, 10);
           };
           td.textContent = "";
           td.appendChild(input);
@@ -659,6 +727,26 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             input.selectionStart = input.selectionEnd = input.value.length;
           }
         };
+        // Ajout : surveiller les modifications sur les champs obligatoires pour afficher le message d'accès
+        if (requiredFields.includes(col.id)) {
+          td.addEventListener(
+            "input",
+            function () {
+              if (isAllRequiredFilled()) {
+                showAccessMessage(
+                  "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
+                  "green"
+                );
+              } else {
+                showAccessMessage(
+                  "Vous n'avez plus accès à l'observation et au statut du conteneur.",
+                  "red"
+                );
+              }
+            },
+            true
+          );
+        }
         if (col.id === "observation") {
           td.classList.add("observation-col");
         }
@@ -700,14 +788,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       tr.appendChild(td);
       // ...existing code for showContainerDetailPopup...
       function showContainerDetailPopup(delivery, containerNumber) {
-        // Vérification dynamique des champs obligatoires
+        // Vérification dynamique des champs obligatoires (toujours valeur affichée)
         if (!isAllRequiredFilled()) {
-          alert(
-            "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON."
+          showAccessMessage(
+            "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+            "red"
           );
           return;
         }
-        // ...reste du code popup inchangé...
+        showAccessMessage(
+          "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
+          "green"
+        );
         const oldPopup = document.getElementById("containerDetailPopup");
         if (oldPopup) oldPopup.remove();
         const overlay = document.createElement("div");
