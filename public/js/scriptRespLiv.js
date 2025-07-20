@@ -761,9 +761,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         select.style.marginBottom = "18px";
         select.style.background = "#fff";
         select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
-        const statusOptions = [
-          { value: "mise_en_livraison", label: "Mise en livraison" },
-        ];
+        // Seul le statut 'livré' doit être proposé
+        const statusOptions = [{ value: "livre", label: "Livré" }];
         let currentStatus =
           delivery.container_statuses &&
           typeof delivery.container_statuses === "object" &&
