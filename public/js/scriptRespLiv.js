@@ -133,6 +133,10 @@ document.addEventListener("DOMContentLoaded", function () {
       height: 28px !important;
       font-size: 1em;
       padding: 0 3px;
+      max-width: 90px !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
       max-width: 160px;
