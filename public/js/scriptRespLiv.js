@@ -361,7 +361,21 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       const headerRow = document.createElement("tr");
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const th = document.createElement("th");
-        th.textContent = col.label;
+        // Si la colonne est "Statut (du Respo.ACCONIER)", on ajoute le modèle "x sur y livré"
+        if (col.id === "acconier_status") {
+          // Calcul du nombre livré (statut livré) et du total
+          let total = deliveries.length;
+          let livre = deliveries.filter((d) => {
+            // On considère livré si le statut contient "livré" (insensible à la casse)
+            let val = (d.acconier_status || d.statut || "")
+              .toString()
+              .toLowerCase();
+            return val.includes("livré");
+          }).length;
+          th.innerHTML = `${col.label} <span style='font-size:0.95em;color:#2563eb;font-weight:500;'>(<span id='statut-livre-count'>${livre}</span> sur <span id='statut-total-count'>${total}</span> Mis en Liv)</span>`;
+        } else {
+          th.textContent = col.label;
+        }
         th.setAttribute("data-col-id", col.id);
         headerRow.appendChild(th);
       });
