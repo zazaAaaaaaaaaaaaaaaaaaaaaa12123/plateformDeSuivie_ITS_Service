@@ -26,7 +26,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  const newLocal = (styleTC.textContent = `
+  styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -74,13 +74,14 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
+    /* Réduction de la largeur max des entêtes et cellules sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 160px;
+      max-width: 90px;
+      min-width: 60px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-size: 1em;
+      font-size: 0.98em;
       font-weight: bold;
       background: #0e274eff;
       color: #fff;
@@ -89,7 +90,8 @@ document.addEventListener("DOMContentLoaded", function () {
       vertical-align: middle;
     }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 160px;
+      max-width: 90px;
+      min-width: 60px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -98,18 +100,20 @@ document.addEventListener("DOMContentLoaded", function () {
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 90px;
-        font-size: 0.95em;
+        max-width: 70px;
+        min-width: 40px;
+        font-size: 0.93em;
       }
     }
     @media (max-width: 600px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 60px;
-        font-size: 0.92em;
+        max-width: 48px;
+        min-width: 30px;
+        font-size: 0.90em;
       }
     }
-  `);
+  `;
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
