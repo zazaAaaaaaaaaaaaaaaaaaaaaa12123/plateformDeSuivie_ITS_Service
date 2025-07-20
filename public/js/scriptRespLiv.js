@@ -284,10 +284,62 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
     thead.innerHTML = "";
     const headerRow = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col) => {
+    // Colonnes éditables
+    const editableIds = [
+      "visitor_agent_name",
+      "transporter",
+      "inspector",
+      "customs_agent",
+      "driver",
+      "driver_phone",
+      "delivery_date",
+      "acconier_status",
+      "statut",
+      "observation",
+    ];
+    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const th = document.createElement("th");
-      th.textContent = col.label;
       th.setAttribute("data-col-id", col.id);
+      if (editableIds.includes(col.id)) {
+        th.classList.add("editable-th");
+        th.style.cursor = "pointer";
+        th.title = "Cliquez pour modifier l'intitulé";
+        th.textContent = col.label;
+        th.onclick = function (e) {
+          if (th.querySelector("input")) return;
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = col.label;
+          input.style.width = "95%";
+          input.style.fontSize = "inherit";
+          input.style.fontWeight = "inherit";
+          input.style.textAlign = "center";
+          input.style.border = "1.5px solid #2563eb";
+          input.style.borderRadius = "6px";
+          input.style.padding = "2px 4px";
+          input.style.background = "#f8fafc";
+          th.textContent = "";
+          th.appendChild(input);
+          input.focus();
+          input.select();
+          // Sauvegarde au blur ou Entrée
+          function saveEdit() {
+            const newLabel = input.value.trim() || col.label;
+            col.label = newLabel;
+            th.textContent = newLabel;
+          }
+          input.addEventListener("blur", saveEdit);
+          input.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter") {
+              input.blur();
+            } else if (ev.key === "Escape") {
+              th.textContent = col.label;
+            }
+          });
+        };
+      } else {
+        th.textContent = col.label;
+      }
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
