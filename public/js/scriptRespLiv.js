@@ -81,11 +81,16 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
       font-size: 1em;
       max-width: 160px;
-      height: 38px;
-      min-height: 0;
+      height: 36px !important;
+      min-height: 0 !important;
       padding: 0 8px;
-      line-height: 1.2;
-      vertical-align: middle;
+      line-height: 36px !important;
+      vertical-align: middle !important;
+      background: #f8fafc;
+    }
+    #deliveriesTableBody tr:only-child {
+      height: 36px !important;
+      min-height: 0 !important;
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
