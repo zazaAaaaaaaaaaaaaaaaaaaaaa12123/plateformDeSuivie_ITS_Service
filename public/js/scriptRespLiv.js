@@ -16,21 +16,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     return dDate.getTime() === dateToCompare.getTime();
   });
   if (filtered.length === 0) {
-    // Affiche une ligne structurée pour garder l'alignement des colonnes
-    const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-      const td = document.createElement("td");
-      if (idx === 0) {
-        td.textContent = "Aucune opération à cette date.";
-        td.className = "text-center text-muted";
-      } else {
-        td.textContent = "-";
-        td.className = "text-muted";
-      }
-      tr.appendChild(td);
-    });
-    tableBodyElement.innerHTML = "";
-    tableBodyElement.appendChild(tr);
+    tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
     return;
   }
   renderAgentTableRows(filtered, tableBodyElement);
@@ -41,59 +27,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   const newLocal = (styleTC.textContent = `
-    #deliveriesTable {
-      border-collapse: separate;
-      border-spacing: 0;
-      width: 100%;
-      background: #fff;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 1.04em;
-      box-shadow: 0 2px 16px rgba(30,41,59,0.08);
-      border-radius: 12px 12px 0 0;
-      overflow: hidden;
-    }
-    #deliveriesTable thead th {
-      background: #2563eb;
-      color: #fff;
-      font-size: 1.08em;
-      font-weight: 700;
-      text-align: center;
-      padding: 12px 8px;
-      border-bottom: 3px solid #1e293b;
-      border-right: 1px solid #1e293b22;
-      vertical-align: middle;
-      white-space: normal;
-      min-width: 90px;
-      max-width: 200px;
-    }
-    #deliveriesTable thead th:last-child {
-      border-right: none;
-    }
-    #deliveriesTable tbody tr {
-      background: #fff;
-      transition: background 0.2s;
-    }
-    #deliveriesTable tbody tr:nth-child(even) {
-      background: #f3f6fa;
-    }
-    #deliveriesTable tbody tr:hover {
-      background: #e0e7ff;
-    }
-    #deliveriesTable td {
-      padding: 10px 8px;
-      border-bottom: 1.5px solid #e5e7eb;
-      border-right: 1px solid #e5e7eb;
-      text-align: center;
-      vertical-align: middle;
-      font-size: 1em;
-      max-width: 200px;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      background: none;
-    }
-    #deliveriesTable td:last-child {
-      border-right: none;
-    }
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -141,44 +74,39 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    .editable-cell input, .editable-cell textarea, .editable-cell select {
+    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
+    #deliveriesTable thead th:not([data-col-id='container_number']) {
+      max-width: 160px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       font-size: 1em;
-      padding: 2px 6px;
-      border-radius: 5px;
-      border: 1.2px solid #2563eb;
-      margin: 0;
-      background: #f8fafc;
-      width: 98%;
-      box-sizing: border-box;
-    }
-    .editable-cell {
-      background: #e0e7ff33;
-      transition: background 0.2s;
-    }
-    .row-number-col {
       font-weight: bold;
-      color: #2563eb;
-      background: #e0e7ff;
+      background: #0e274eff;
+      color: #fff;
+      border-bottom: 2px solid #2563eb;
+      text-align: center;
+      vertical-align: middle;
     }
-    .observation-col {
-      text-align: left;
-      font-style: italic;
-      color: #334155;
+    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
+      max-width: 160px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
     }
     @media (max-width: 900px) {
-      #deliveriesTable thead th,
-      #deliveriesTable td {
+      #deliveriesTable thead th:not([data-col-id='container_number']),
+      #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 90px;
         font-size: 0.95em;
-        padding: 7px 4px;
       }
     }
     @media (max-width: 600px) {
-      #deliveriesTable thead th,
-      #deliveriesTable td {
+      #deliveriesTable thead th:not([data-col-id='container_number']),
+      #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 60px;
         font-size: 0.92em;
-        padding: 5px 2px;
       }
     }
   `);
@@ -287,13 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la date
   function updateTableForDate(dateStr) {
     const filtered = filterDeliveriesByDate(dateStr);
-    // Utilisation du nouveau modèle dynamique
-    const tableContainer = document.getElementById("deliveriesTableBody");
-    if (tableContainer) {
-      renderAgentTableFull(filtered, tableContainer);
-    } else {
-      console.error("L'élément #deliveriesTableBody n'existe pas dans le DOM.");
-    }
+    renderAgentTableRows(filtered, tableBody);
   }
 
   // Initialisation : charge toutes les livraisons puis affiche la date du jour
@@ -309,76 +231,27 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 // Colonnes strictes pour Agent Acconier
-// Fonction robuste pour générer le tableau complet (en-tête + lignes)
-function renderAgentTableFull(deliveries, tableBodyElement) {
-  // Génération de l'en-tête
-  const table = tableBodyElement.closest("table");
-  if (table) {
-    let thead = table.querySelector("thead");
-    if (!thead) {
-      thead = document.createElement("thead");
-      table.insertBefore(thead, tableBodyElement);
-    }
-    thead.innerHTML = "";
-    const headerRow = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col) => {
-      const th = document.createElement("th");
-      th.textContent = col.label;
-      th.setAttribute("data-col-id", col.id);
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-  }
-  // Génération des lignes
-  if (deliveries.length === 0) {
-    // Affiche une ligne structurée pour garder l'alignement des colonnes
-    const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-      const td = document.createElement("td");
-      if (idx === 0) {
-        td.textContent = "Aucune opération à cette date.";
-        td.className = "text-center text-muted";
-      } else {
-        td.textContent = "-";
-        td.className = "text-muted";
-      }
-      tr.appendChild(td);
-    });
-    tableBodyElement.innerHTML = "";
-    tableBodyElement.appendChild(tr);
-  } else {
-    renderAgentTableRows(deliveries, tableBodyElement);
-  }
-}
 const AGENT_TABLE_COLUMNS = [
   { id: "row_number", label: "N°" },
-  { id: "date_display", label: "DATE" },
-  { id: "employee_name", label: "AGENT" },
-  { id: "client_name", label: "CLIENT (NOM)" },
-  { id: "client_phone", label: "CLIENT (TÉL)" },
-  { id: "container_number", label: "NUMÉRO TC(S)" },
-  { id: "lieu", label: "LIEU" },
-  { id: "container_foot_type", label: "TYPE CONTENEUR (PIED)" },
-  { id: "container_type_and_content", label: "CONTENU" },
-  { id: "declaration_number", label: "N° DÉCLARATION" },
+  { id: "date_display", label: "Date" },
+  { id: "employee_name", label: "Agent" },
+  { id: "client_name", label: "Client (Nom)" },
+  { id: "client_phone", label: "Client (Tél)" },
+  { id: "container_number", label: "Numéro TC(s)" },
+  { id: "lieu", label: "Lieu" },
+  { id: "container_foot_type", label: "Type Conteneur (pied)" },
+  { id: "container_type_and_content", label: "Contenu" },
+  { id: "declaration_number", label: "N° Déclaration" },
   { id: "bl_number", label: "N° BL" },
-  { id: "dossier_number", label: "N° DOSSIER" },
-  { id: "number_of_containers", label: "NOMBRE DE CONTENEURS" },
-  { id: "shipping_company", label: "COMPAGNIE MARITIME" },
-  { id: "weight", label: "POIDS" },
-  { id: "ship_name", label: "NOM DU NAVIRE" },
-  { id: "circuit", label: "CIRCUIT" },
-  { id: "transporter_mode", label: "MODE DE TRANSPORT" },
-  { id: "visitor_agent_name", label: "NOM AGENT VISITEURS" },
-  { id: "transporter", label: "TRANSPORTEUR" },
-  { id: "inspector", label: "INSPECTEUR" },
-  { id: "customs_agent", label: "AGENT EN DOUANES" },
-  { id: "driver", label: "CHAUFFEUR" },
-  { id: "driver_phone", label: "TEL CHAUFFEUR" },
-  { id: "delivery_date", label: "DATE LIVRAISON" },
-  { id: "acconier_status", label: "STATUT ACCONIER" },
-  { id: "statut", label: "STATUT" },
-  { id: "observation", label: "OBSERVATION" },
+  { id: "dossier_number", label: "N° Dossier" },
+  { id: "number_of_containers", label: "Nombre de conteneurs" },
+  { id: "shipping_company", label: "Compagnie Maritime" },
+  { id: "weight", label: "Poids" },
+  { id: "ship_name", label: "Nom du navire" },
+  { id: "circuit", label: "Circuit" },
+  { id: "transporter_mode", label: "Mode de Transport" },
+  { id: "statut", label: "Statut" },
+  { id: "observation", label: "Observation" },
 ];
 
 // Fonction pour générer les lignes du tableau Agent Acconier
@@ -468,31 +341,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.textContent = "-";
         }
-      } else if (col.id === "delivery_date") {
-        // Correction : n'affiche rien si la date n'est pas renseignée
-        let dDate = delivery.delivery_date;
-        if (dDate) {
-          let dateObj = new Date(dDate);
-          if (!isNaN(dateObj.getTime())) {
-            value = dateObj.toLocaleDateString("fr-FR");
-          } else if (typeof dDate === "string") {
-            value = dDate;
-          }
-        } else {
-          value = "-";
-        }
-        td.textContent = value;
-        if (col.id === "observation") {
-          td.classList.add("observation-col");
-        }
       } else {
-        // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
-        value =
-          delivery[col.id] !== undefined &&
-          delivery[col.id] !== null &&
-          delivery[col.id] !== ""
-            ? delivery[col.id]
-            : "-";
+        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         td.textContent = value;
         if (col.id === "observation") {
           td.classList.add("observation-col");
