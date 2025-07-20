@@ -133,10 +133,6 @@ document.addEventListener("DOMContentLoaded", function () {
       height: 28px !important;
       font-size: 0.93em;
       padding: 0 3px;
-      max-width: 90px !important;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
@@ -501,14 +497,4 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     });
     tableBodyElement.appendChild(tr);
   });
-}
-
-// Popup simple pour afficher les détails d'un conteneur
-function showContainerDetailPopup(delivery, containerNumber) {
-  alert(
-    "Détail du conteneur : " +
-      containerNumber +
-      "\n\nLivraison associée :\n" +
-      JSON.stringify(delivery, null, 2)
-  );
 }
