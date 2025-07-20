@@ -447,7 +447,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   ];
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    // Vérification des champs obligatoires pour ce delivery
+    // Champs obligatoires pour ce delivery
     const requiredFields = [
       "visitor_agent_name",
       "transporter",
@@ -457,15 +457,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       "driver_phone",
       "delivery_date",
     ];
-    const allRequiredFilled = requiredFields.every((field) => {
-      const val = delivery[field];
-      return (
-        val !== undefined &&
-        val !== null &&
-        String(val).trim() !== "" &&
-        val !== "-"
-      );
-    });
+    // Fonction pour vérifier dynamiquement si tous les champs sont remplis
+    function isAllRequiredFilled() {
+      return requiredFields.every((field) => {
+        const val = delivery[field];
+        return (
+          val !== undefined &&
+          val !== null &&
+          String(val).trim() !== "" &&
+          val !== "-"
+        );
+      });
+    }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
@@ -616,7 +619,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.onclick = function (e) {
           if (td.querySelector("input") || td.querySelector("textarea")) return;
           // Blocage pour observation si champs obligatoires non remplis
-          if (col.id === "observation" && !allRequiredFilled) {
+          if (col.id === "observation" && !isAllRequiredFilled()) {
             alert(
               "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON."
             );
@@ -697,26 +700,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       tr.appendChild(td);
       // ...existing code for showContainerDetailPopup...
       function showContainerDetailPopup(delivery, containerNumber) {
-        // Vérification des champs obligatoires pour ce delivery
-        const requiredFields = [
-          "visitor_agent_name",
-          "transporter",
-          "inspector",
-          "customs_agent",
-          "driver",
-          "driver_phone",
-          "delivery_date",
-        ];
-        const allRequiredFilled = requiredFields.every((field) => {
-          const val = delivery[field];
-          return (
-            val !== undefined &&
-            val !== null &&
-            String(val).trim() !== "" &&
-            val !== "-"
-          );
-        });
-        if (!allRequiredFilled) {
+        // Vérification dynamique des champs obligatoires
+        if (!isAllRequiredFilled()) {
           alert(
             "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON."
           );
