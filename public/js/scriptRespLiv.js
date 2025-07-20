@@ -215,7 +215,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la date
   function updateTableForDate(dateStr) {
     const filtered = filterDeliveriesByDate(dateStr);
-    renderAgentTableRows(filtered, tableBody);
+    // Utilisation du nouveau modèle dynamique
+    const tableContainer = document.getElementById("deliveriesTableBody");
+    if (tableContainer) {
+      renderAgentTableFull(filtered, tableContainer);
+    } else {
+      console.error("L'élément #deliveriesTableBody n'existe pas dans le DOM.");
+    }
   }
 
   // Initialisation : charge toutes les livraisons puis affiche la date du jour
@@ -231,27 +237,76 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 // Colonnes strictes pour Agent Acconier
+// Fonction robuste pour générer le tableau complet (en-tête + lignes)
+function renderAgentTableFull(deliveries, tableBodyElement) {
+  // Génération de l'en-tête
+  const table = tableBodyElement.closest("table");
+  if (table) {
+    let thead = table.querySelector("thead");
+    if (!thead) {
+      thead = document.createElement("thead");
+      table.insertBefore(thead, tableBodyElement);
+    }
+    thead.innerHTML = "";
+    const headerRow = document.createElement("tr");
+    AGENT_TABLE_COLUMNS.forEach((col) => {
+      const th = document.createElement("th");
+      th.textContent = col.label;
+      th.setAttribute("data-col-id", col.id);
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+  }
+  // Génération des lignes
+  if (deliveries.length === 0) {
+    // Affiche une ligne structurée pour garder l'alignement des colonnes
+    const tr = document.createElement("tr");
+    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      const td = document.createElement("td");
+      if (idx === 0) {
+        td.textContent = "Aucune opération à cette date.";
+        td.className = "text-center text-muted";
+      } else {
+        td.textContent = "-";
+        td.className = "text-muted";
+      }
+      tr.appendChild(td);
+    });
+    tableBodyElement.innerHTML = "";
+    tableBodyElement.appendChild(tr);
+  } else {
+    renderAgentTableRows(deliveries, tableBodyElement);
+  }
+}
 const AGENT_TABLE_COLUMNS = [
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
-  { id: "employee_name", label: "Agent" },
-  { id: "client_name", label: "Client (Nom)" },
-  { id: "client_phone", label: "Client (Tél)" },
+  { id: "employee_name", label: "Agent Acconier" },
+  { id: "client_name", label: "Nom Client" },
+  { id: "client_phone", label: "Numéro Client" },
   { id: "container_number", label: "Numéro TC(s)" },
   { id: "lieu", label: "Lieu" },
-  { id: "container_foot_type", label: "Type Conteneur (pied)" },
+  { id: "container_foot_type", label: "Type de Conteneur" },
   { id: "container_type_and_content", label: "Contenu" },
-  { id: "declaration_number", label: "N° Déclaration" },
-  { id: "bl_number", label: "N° BL" },
-  { id: "dossier_number", label: "N° Dossier" },
-  { id: "number_of_containers", label: "Nombre de conteneurs" },
+  { id: "declaration_number", label: "Numéro Déclaration" },
+  { id: "bl_number", label: "Numéro BL" },
+  { id: "dossier_number", label: "Numéro Dossier" },
+  { id: "number_of_containers", label: "Nombre de Conteneurs" },
   { id: "shipping_company", label: "Compagnie Maritime" },
   { id: "weight", label: "Poids" },
-  { id: "ship_name", label: "Nom du navire" },
+  { id: "ship_name", label: "Nom du Navire" },
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
+  { id: "visitor_agent_name", label: "NOM Agent visiteurs" },
+  { id: "transporter", label: "TRANSPORTEUR" },
+  { id: "inspector", label: "INSPECTEUR" },
+  { id: "customs_agent", label: "AGENT EN DOUANES" },
+  { id: "driver", label: "CHAUFFEUR" },
+  { id: "driver_phone", label: "TEL CHAUFFEUR" },
+  { id: "delivery_date", label: "DATE LIVRAISON" },
+  { id: "acconier_status", label: "STATUT (du Respo.ACCONIER)" },
   { id: "statut", label: "Statut" },
-  { id: "observation", label: "Observation" },
+  { id: "observation", label: "Observations" },
 ];
 
 // Fonction pour générer les lignes du tableau Agent Acconier
@@ -341,8 +396,31 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.textContent = "-";
         }
+      } else if (col.id === "delivery_date") {
+        // Correction : n'affiche rien si la date n'est pas renseignée
+        let dDate = delivery.delivery_date;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            value = dDate;
+          }
+        } else {
+          value = "-";
+        }
+        td.textContent = value;
+        if (col.id === "observation") {
+          td.classList.add("observation-col");
+        }
       } else {
-        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+        // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
+        value =
+          delivery[col.id] !== undefined &&
+          delivery[col.id] !== null &&
+          delivery[col.id] !== ""
+            ? delivery[col.id]
+            : "-";
         td.textContent = value;
         if (col.id === "observation") {
           td.classList.add("observation-col");
