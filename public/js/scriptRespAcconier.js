@@ -1,66 +1,3 @@
-// Ajout d'une info-bulle personnalisée pour texte tronqué (toutes cellules hors .tc-multi-cell)
-function createCustomTooltip() {
-  let tooltip = document.getElementById("customTableTooltip");
-  if (!tooltip) {
-    tooltip = document.createElement("div");
-    tooltip.id = "customTableTooltip";
-    tooltip.style.position = "fixed";
-    tooltip.style.zIndex = "99999";
-    tooltip.style.background = "#222";
-    tooltip.style.color = "#fff";
-    tooltip.style.padding = "8px 14px";
-    tooltip.style.borderRadius = "8px";
-    tooltip.style.fontSize = "1em";
-    tooltip.style.maxWidth = "420px";
-    tooltip.style.boxShadow = "0 4px 24px rgba(30,41,59,0.18)";
-    tooltip.style.display = "none";
-    tooltip.style.pointerEvents = "none";
-    tooltip.style.wordBreak = "break-word";
-    document.body.appendChild(tooltip);
-  }
-  return tooltip;
-}
-
-function showTooltip(text, x, y) {
-  const tooltip = createCustomTooltip();
-  tooltip.textContent = text;
-  tooltip.style.display = "block";
-  // Positionnement intelligent (évite de sortir de l'écran)
-  const padding = 12;
-  let left = x + padding;
-  let top = y + padding;
-  if (left + tooltip.offsetWidth > window.innerWidth) {
-    left = window.innerWidth - tooltip.offsetWidth - padding;
-  }
-  if (top + tooltip.offsetHeight > window.innerHeight) {
-    top = y - tooltip.offsetHeight - padding;
-  }
-  tooltip.style.left = left + "px";
-  tooltip.style.top = top + "px";
-}
-
-function hideTooltip() {
-  const tooltip = document.getElementById("customTableTooltip");
-  if (tooltip) tooltip.style.display = "none";
-}
-
-// Appliquer le tooltip sur toutes les cellules du tableau (hors .tc-multi-cell)
-document.addEventListener("mouseover", function (e) {
-  const td = e.target.closest("#deliveriesTable tbody td:not(.tc-multi-cell)");
-  if (td && td.offsetWidth < td.scrollWidth) {
-    showTooltip(td.textContent, e.clientX, e.clientY);
-  }
-});
-document.addEventListener("mousemove", function (e) {
-  const tooltip = document.getElementById("customTableTooltip");
-  if (tooltip && tooltip.style.display === "block") {
-    showTooltip(tooltip.textContent, e.clientX, e.clientY);
-  }
-});
-document.addEventListener("mouseout", function (e) {
-  const td = e.target.closest("#deliveriesTable tbody td");
-  if (td) hideTooltip();
-});
 // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
@@ -89,7 +26,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  styleTC.textContent = `
+  const newLocal = (styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -139,9 +76,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 180px;
+      max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
       font-size: 1em;
       font-weight: bold;
       background: #0e274eff;
@@ -150,39 +88,18 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
-    /* Toutes les cellules du tableau (hors container_number multi-cell) : une seule ligne, centré, ellipsis */
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 180px;
+      max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       vertical-align: middle;
-      text-align: center;
-      font-weight: normal;
-      font-size: 1em;
-      padding: 6px 8px;
-    }
-    /* Pour la colonne observation, même comportement, centré, une seule ligne */
-    #deliveriesTable tbody td.observation-col {
-      max-width: 220px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      vertical-align: middle;
-      background: none;
-      text-align: center;
-      font-weight: normal;
-      font-size: 1em;
-      padding: 6px 8px;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 90px;
         font-size: 0.95em;
-      }
-      #deliveriesTable tbody td.observation-col {
-        max-width: 120px;
       }
     }
     @media (max-width: 600px) {
@@ -191,11 +108,8 @@ document.addEventListener("DOMContentLoaded", function () {
         max-width: 60px;
         font-size: 0.92em;
       }
-      #deliveriesTable tbody td.observation-col {
-        max-width: 80px;
-      }
     }
-  `;
+  `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
@@ -301,13 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la date
   function updateTableForDate(dateStr) {
     const filtered = filterDeliveriesByDate(dateStr);
-    // Utilisation du nouveau modèle dynamique
-    const tableContainer = document.getElementById("deliveriesTableBody");
-    if (tableContainer) {
-      renderAgentTableFull(filtered, tableContainer);
-    } else {
-      console.error("L'élément #deliveriesTableBody n'existe pas dans le DOM.");
-    }
+    renderAgentTableRows(filtered, tableBody);
   }
 
   // Initialisation : charge toutes les livraisons puis affiche la date du jour
@@ -323,98 +231,32 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 // Colonnes strictes pour Agent Acconier
-// Fonction robuste pour générer le tableau complet (en-tête + lignes)
-function renderAgentTableFull(deliveries, tableBodyElement) {
-  const table = tableBodyElement.closest("table");
-  if (deliveries.length === 0) {
-    // Masquer le tableau et afficher un message centré
-    if (table) table.style.display = "none";
-    // Chercher ou créer un message d'absence
-    let noDataMsg = document.getElementById("noDeliveriesMsg");
-    if (!noDataMsg) {
-      noDataMsg = document.createElement("div");
-      noDataMsg.id = "noDeliveriesMsg";
-      noDataMsg.style.textAlign = "center";
-      noDataMsg.style.padding = "48px 0 32px 0";
-      noDataMsg.style.fontSize = "1.25em";
-      noDataMsg.style.color = "#64748b";
-      noDataMsg.style.fontWeight = "500";
-      noDataMsg.textContent = "Aucune opération à cette date.";
-      tableBodyElement.parentNode.insertBefore(noDataMsg, tableBodyElement);
-    } else {
-      noDataMsg.style.display = "block";
-    }
-    tableBodyElement.innerHTML = "";
-  } else {
-    // Afficher le tableau et masquer le message
-    if (table) table.style.display = "table";
-    const noDataMsg = document.getElementById("noDeliveriesMsg");
-    if (noDataMsg) noDataMsg.style.display = "none";
-    // Génération de l'en-tête
-    if (table) {
-      let thead = table.querySelector("thead");
-      if (!thead) {
-        thead = document.createElement("thead");
-        table.insertBefore(thead, tableBodyElement);
-      }
-      thead.innerHTML = "";
-      const headerRow = document.createElement("tr");
-      AGENT_TABLE_COLUMNS.forEach((col) => {
-        const th = document.createElement("th");
-        th.textContent = col.label;
-        th.setAttribute("data-col-id", col.id);
-        headerRow.appendChild(th);
-      });
-      thead.appendChild(headerRow);
-    }
-    renderAgentTableRows(deliveries, tableBodyElement);
-  }
-}
 const AGENT_TABLE_COLUMNS = [
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
-  { id: "employee_name", label: "Agent Acconier" },
-  { id: "client_name", label: "Nom Client" },
-  { id: "client_phone", label: "Numéro Client" },
+  { id: "employee_name", label: "Agent" },
+  { id: "client_name", label: "Client (Nom)" },
+  { id: "client_phone", label: "Client (Tél)" },
   { id: "container_number", label: "Numéro TC(s)" },
   { id: "lieu", label: "Lieu" },
-  { id: "container_foot_type", label: "Type de Conteneur" },
+  { id: "container_foot_type", label: "Type Conteneur (pied)" },
   { id: "container_type_and_content", label: "Contenu" },
-  { id: "declaration_number", label: "Numéro Déclaration" },
-  { id: "bl_number", label: "Numéro BL" },
-  { id: "dossier_number", label: "Numéro Dossier" },
-  { id: "number_of_containers", label: "Nombre de Conteneurs" },
+  { id: "declaration_number", label: "N° Déclaration" },
+  { id: "bl_number", label: "N° BL" },
+  { id: "dossier_number", label: "N° Dossier" },
+  { id: "number_of_containers", label: "Nombre de conteneurs" },
   { id: "shipping_company", label: "Compagnie Maritime" },
   { id: "weight", label: "Poids" },
-  { id: "ship_name", label: "Nom du Navire" },
+  { id: "ship_name", label: "Nom du navire" },
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
-  { id: "visitor_agent_name", label: "NOM Agent visiteurs" },
-  { id: "transporter", label: "TRANSPORTEUR" },
-  { id: "inspector", label: "INSPECTEUR" },
-  { id: "customs_agent", label: "AGENT EN DOUANES" },
-  { id: "driver", label: "CHAUFFEUR" },
-  { id: "driver_phone", label: "TEL CHAUFFEUR" },
-  { id: "delivery_date", label: "DATE LIVRAISON" },
-  { id: "acconier_status", label: "STATUT (du Respo.ACCONIER)" },
   { id: "statut", label: "Statut" },
-  { id: "observation", label: "Observations" },
+  { id: "observation", label: "Observation" },
 ];
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
-  // Colonnes éditables demandées
-  const editableCols = [
-    "visitor_agent_name",
-    "transporter",
-    "inspector",
-    "customs_agent",
-    "driver",
-    "driver_phone",
-    "delivery_date",
-    "observation",
-  ];
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
@@ -436,7 +278,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         td.textContent = value;
       } else if (col.id === "container_number") {
-        // ...existing code for container_number...
+        // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -499,125 +341,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.textContent = "-";
         }
-      } else if (col.id === "delivery_date") {
-        // Correction : n'affiche rien si la date n'est pas renseignée
-        let dDate = delivery.delivery_date;
-        if (dDate) {
-          let dateObj = new Date(dDate);
-          if (!isNaN(dateObj.getTime())) {
-            value = dateObj.toLocaleDateString("fr-FR");
-          } else if (typeof dDate === "string") {
-            value = dDate;
-          }
-        } else {
-          value = "-";
-        }
-        // Cellule éditable
-        if (editableCols.includes(col.id)) {
-          td.classList.add("editable-cell");
-          td.style.cursor = "pointer";
-          td.textContent = value;
-          td.onclick = function (e) {
-            if (td.querySelector("input")) return;
-            const input = document.createElement("input");
-            input.type = "date";
-            input.value = dDate
-              ? new Date(dDate).toISOString().split("T")[0]
-              : "";
-            input.style.width = "100%";
-            input.style.fontSize = "1em";
-            input.style.padding = "2px 4px";
-            input.onkeydown = function (ev) {
-              if (ev.key === "Enter") {
-                td.textContent = input.value
-                  ? new Date(input.value).toLocaleDateString("fr-FR")
-                  : "-";
-                td.title = input.value;
-                td.dataset.edited = "true";
-              }
-            };
-            input.onblur = function () {
-              td.textContent = input.value
-                ? new Date(input.value).toLocaleDateString("fr-FR")
-                : "-";
-              td.title = input.value;
-              td.dataset.edited = "true";
-            };
-            td.textContent = "";
-            td.appendChild(input);
-            input.focus();
-          };
-        } else {
-          td.textContent = value;
-        }
-        if (col.id === "observation") {
-          td.classList.add("observation-col");
-        }
-      } else if (editableCols.includes(col.id)) {
-        // Cellule éditable texte
-        td.classList.add("editable-cell");
-        td.style.cursor = "pointer";
-        value =
-          delivery[col.id] !== undefined &&
-          delivery[col.id] !== null &&
-          delivery[col.id] !== ""
-            ? delivery[col.id]
-            : "-";
-        td.textContent = value;
-        td.onclick = function (e) {
-          if (td.querySelector("input") || td.querySelector("textarea")) return;
-          let isLong = col.id === "observation";
-          let input = isLong
-            ? document.createElement("textarea")
-            : document.createElement("input");
-          if (!isLong) input.type = "text";
-          // Correction : toujours pré-remplir avec le texte affiché (sauf "-")
-          let currentText =
-            td.textContent && td.textContent.trim() !== "-"
-              ? td.textContent.trim()
-              : "";
-          input.value = currentText;
-          input.style.width = "100%";
-          input.style.fontSize = "1em";
-          input.style.padding = "2px 4px";
-          input.onkeydown = function (ev) {
-            if (ev.key === "Enter" && !isLong) {
-              td.textContent = input.value || "-";
-              td.title = input.value;
-              td.dataset.edited = "true";
-            }
-          };
-          input.onblur = function () {
-            td.textContent = input.value || "-";
-            td.title = input.value;
-            td.dataset.edited = "true";
-          };
-          td.textContent = "";
-          td.appendChild(input);
-          input.focus();
-          // Pour textarea, placer le curseur à la fin
-          if (isLong) {
-            input.selectionStart = input.selectionEnd = input.value.length;
-          }
-        };
-        if (col.id === "observation") {
-          td.classList.add("observation-col");
-        }
       } else {
-        // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
-        value =
-          delivery[col.id] !== undefined &&
-          delivery[col.id] !== null &&
-          delivery[col.id] !== ""
-            ? delivery[col.id]
-            : "-";
+        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         td.textContent = value;
         if (col.id === "observation") {
           td.classList.add("observation-col");
         }
       }
       tr.appendChild(td);
-      // ...existing code for showContainerDetailPopup...
+      // Fonction pour afficher le menu déroulant de statut conteneur (popup)
       function showContainerDetailPopup(delivery, containerNumber) {
         const oldPopup = document.getElementById("containerDetailPopup");
         if (oldPopup) oldPopup.remove();
