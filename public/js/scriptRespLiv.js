@@ -318,6 +318,17 @@ const AGENT_TABLE_COLUMNS = [
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
+  // Colonnes éditables demandées
+  const editableCols = [
+    "visitor_agent_name",
+    "transporter",
+    "inspector",
+    "customs_agent",
+    "driver",
+    "driver_phone",
+    "delivery_date",
+    "observation",
+  ];
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
@@ -339,7 +350,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         td.textContent = value;
       } else if (col.id === "container_number") {
-        // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
+        // ...existing code for container_number...
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -415,7 +426,85 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           value = "-";
         }
+        // Cellule éditable
+        if (editableCols.includes(col.id)) {
+          td.classList.add("editable-cell");
+          td.style.cursor = "pointer";
+          td.textContent = value;
+          td.onclick = function (e) {
+            if (td.querySelector("input")) return;
+            const input = document.createElement("input");
+            input.type = "date";
+            input.value = dDate
+              ? new Date(dDate).toISOString().split("T")[0]
+              : "";
+            input.style.width = "100%";
+            input.style.fontSize = "1em";
+            input.style.padding = "2px 4px";
+            input.onkeydown = function (ev) {
+              if (ev.key === "Enter") {
+                td.textContent = input.value
+                  ? new Date(input.value).toLocaleDateString("fr-FR")
+                  : "-";
+                td.title = input.value;
+                td.dataset.edited = "true";
+              }
+            };
+            input.onblur = function () {
+              td.textContent = input.value
+                ? new Date(input.value).toLocaleDateString("fr-FR")
+                : "-";
+              td.title = input.value;
+              td.dataset.edited = "true";
+            };
+            td.textContent = "";
+            td.appendChild(input);
+            input.focus();
+          };
+        } else {
+          td.textContent = value;
+        }
+        if (col.id === "observation") {
+          td.classList.add("observation-col");
+        }
+      } else if (editableCols.includes(col.id)) {
+        // Cellule éditable texte
+        td.classList.add("editable-cell");
+        td.style.cursor = "pointer";
+        value =
+          delivery[col.id] !== undefined &&
+          delivery[col.id] !== null &&
+          delivery[col.id] !== ""
+            ? delivery[col.id]
+            : "-";
         td.textContent = value;
+        td.onclick = function (e) {
+          if (td.querySelector("input") || td.querySelector("textarea")) return;
+          let isLong = col.id === "observation";
+          let input = isLong
+            ? document.createElement("textarea")
+            : document.createElement("input");
+          if (!isLong) input.type = "text";
+          input.value = value !== "-" ? value : "";
+          input.style.width = "100%";
+          input.style.fontSize = "1em";
+          input.style.padding = "2px 4px";
+          input.onkeydown = function (ev) {
+            if (ev.key === "Enter" && !isLong) {
+              td.textContent = input.value || "-";
+              td.title = input.value;
+              td.dataset.edited = "true";
+            }
+          };
+          input.onblur = function () {
+            td.textContent = input.value || "-";
+            td.title = input.value;
+            td.dataset.edited = "true";
+          };
+          td.textContent = "";
+          td.appendChild(input);
+          input.focus();
+        };
         if (col.id === "observation") {
           td.classList.add("observation-col");
         }
@@ -433,7 +522,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
       }
       tr.appendChild(td);
-      // Fonction pour afficher le menu déroulant de statut conteneur (popup)
+      // ...existing code for showContainerDetailPopup...
       function showContainerDetailPopup(delivery, containerNumber) {
         const oldPopup = document.getElementById("containerDetailPopup");
         if (oldPopup) oldPopup.remove();
