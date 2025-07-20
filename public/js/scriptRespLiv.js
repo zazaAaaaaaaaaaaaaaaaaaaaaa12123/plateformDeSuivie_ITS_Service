@@ -26,7 +26,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  const newLocal = (styleTC.textContent = `
+  styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -88,18 +88,35 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
-    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
+    /* Appliquer l'ellipsis à toutes les cellules sauf container_number et observation (qui peut être multiline) */
+    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']):not(.observation-col) {
       max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       vertical-align: middle;
     }
+    /* Pour la colonne observation, on autorise le retour à la ligne mais on limite la hauteur */
+    #deliveriesTable tbody td.observation-col {
+      max-width: 220px;
+      white-space: pre-line;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: top;
+      max-height: 3.6em;
+      line-height: 1.2em;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 90px;
         font-size: 0.95em;
+      }
+      #deliveriesTable tbody td.observation-col {
+        max-width: 120px;
       }
     }
     @media (max-width: 600px) {
@@ -108,8 +125,11 @@ document.addEventListener("DOMContentLoaded", function () {
         max-width: 60px;
         font-size: 0.92em;
       }
+      #deliveriesTable tbody td.observation-col {
+        max-width: 80px;
+      }
     }
-  `);
+  `;
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
