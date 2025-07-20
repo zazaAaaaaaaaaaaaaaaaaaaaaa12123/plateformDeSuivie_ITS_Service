@@ -79,7 +79,6 @@ document.addEventListener("DOMContentLoaded", function () {
       max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
       font-size: 1em;
       font-weight: bold;
       background: #0e274eff;
@@ -88,26 +87,23 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
-    /* Appliquer l'ellipsis à toutes les cellules sauf container_number et observation (qui peut être multiline) */
-    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']):not(.observation-col) {
+    /* Adapter le texte à la largeur de la cellule, retour à la ligne automatique, pas d'ellipsis */
+    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
       vertical-align: middle;
     }
-    /* Pour la colonne observation, on autorise le retour à la ligne mais on limite la hauteur */
+    /* Pour la colonne observation, même comportement, pas de limitation de hauteur ni de bande blanche */
     #deliveriesTable tbody td.observation-col {
       max-width: 220px;
       white-space: pre-line;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      overflow-wrap: break-word;
+      word-break: break-word;
       vertical-align: top;
-      max-height: 3.6em;
-      line-height: 1.2em;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
+      background: none;
+      /* pas de display -webkit-box, pas de clamp, pas de max-height */
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
