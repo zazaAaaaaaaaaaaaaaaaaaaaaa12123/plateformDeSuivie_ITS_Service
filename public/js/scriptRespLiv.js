@@ -130,12 +130,15 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     /* Quand il n'y a pas de données, réduire la taille de l'entête */
     #deliveriesTable:has(tbody tr:only-child td.text-center.text-muted) thead th {
-      height: 28px !important;
+      height: 12px !important;
+      min-height: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      padding-left: 3px !important;
+      padding-right: 3px !important;
       font-size: 1em;
-      padding: 0 3px;
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
-    #deliveriesTable thead th:not([data-col-id='container_number']) {
       max-width: 160px;
       white-space: nowrap;
       overflow: hidden;
