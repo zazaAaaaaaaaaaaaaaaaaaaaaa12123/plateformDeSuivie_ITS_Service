@@ -77,9 +77,9 @@ document.addEventListener("DOMContentLoaded", function () {
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
       max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
       font-size: 1em;
       font-weight: bold;
       background: #0e274eff;
@@ -90,21 +90,22 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: pre-line;
+      overflow-wrap: break-word;
+      word-break: break-word;
       vertical-align: middle;
+      overflow: visible;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
+      #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
         max-width: 90px;
         font-size: 0.95em;
       }
     }
     @media (max-width: 600px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
+      #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
         max-width: 60px;
         font-size: 0.92em;
       }
