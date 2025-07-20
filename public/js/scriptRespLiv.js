@@ -107,17 +107,24 @@ document.addEventListener("DOMContentLoaded", function () {
       overflow: hidden;
       text-overflow: ellipsis;
       font-size: 1em;
-      max-width: 160px;
+      max-width: 100vw;
       height: 36px !important;
       min-height: 0 !important;
       padding: 0 8px;
       line-height: 36px !important;
       vertical-align: middle !important;
       background: #f8fafc;
+      text-align: center;
+      display: table-cell;
     }
     #deliveriesTableBody tr:only-child {
       height: 36px !important;
       min-height: 0 !important;
+    }
+    #deliveriesTable thead th {
+      height: 36px !important;
+      min-height: 0 !important;
+      vertical-align: middle !important;
     }
     /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
     #deliveriesTable thead th:not([data-col-id='container_number']) {
