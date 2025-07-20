@@ -350,7 +350,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "-";
         }
       } else {
-        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+        // Pour toutes les colonnes, y compris celles demandées, on affiche "-" si la donnée est absente, vide ou nulle
+        value =
+          delivery[col.id] !== undefined &&
+          delivery[col.id] !== null &&
+          delivery[col.id] !== ""
+            ? delivery[col.id]
+            : "-";
         td.textContent = value;
         if (col.id === "observation") {
           td.classList.add("observation-col");
