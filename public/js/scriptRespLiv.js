@@ -41,6 +41,59 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   const newLocal = (styleTC.textContent = `
+    #deliveriesTable {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: #fff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 1.04em;
+      box-shadow: 0 2px 16px rgba(30,41,59,0.08);
+      border-radius: 12px 12px 0 0;
+      overflow: hidden;
+    }
+    #deliveriesTable thead th {
+      background: #2563eb;
+      color: #fff;
+      font-size: 1.08em;
+      font-weight: 700;
+      text-align: center;
+      padding: 12px 8px;
+      border-bottom: 3px solid #1e293b;
+      border-right: 1px solid #1e293b22;
+      vertical-align: middle;
+      white-space: normal;
+      min-width: 90px;
+      max-width: 200px;
+    }
+    #deliveriesTable thead th:last-child {
+      border-right: none;
+    }
+    #deliveriesTable tbody tr {
+      background: #fff;
+      transition: background 0.2s;
+    }
+    #deliveriesTable tbody tr:nth-child(even) {
+      background: #f3f6fa;
+    }
+    #deliveriesTable tbody tr:hover {
+      background: #e0e7ff;
+    }
+    #deliveriesTable td {
+      padding: 10px 8px;
+      border-bottom: 1.5px solid #e5e7eb;
+      border-right: 1px solid #e5e7eb;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 1em;
+      max-width: 200px;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      background: none;
+    }
+    #deliveriesTable td:last-child {
+      border-right: none;
+    }
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -88,40 +141,44 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
-    #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: normal;
-      overflow-wrap: break-word;
-      word-break: break-word;
+    .editable-cell input, .editable-cell textarea, .editable-cell select {
       font-size: 1em;
-      font-weight: bold;
-      background: #0e274eff;
-      color: #fff;
-      border-bottom: 2px solid #2563eb;
-      text-align: center;
-      vertical-align: middle;
+      padding: 2px 6px;
+      border-radius: 5px;
+      border: 1.2px solid #2563eb;
+      margin: 0;
+      background: #f8fafc;
+      width: 98%;
+      box-sizing: border-box;
     }
-    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: pre-line;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      vertical-align: middle;
-      overflow: visible;
+    .editable-cell {
+      background: #e0e7ff33;
+      transition: background 0.2s;
+    }
+    .row-number-col {
+      font-weight: bold;
+      color: #2563eb;
+      background: #e0e7ff;
+    }
+    .observation-col {
+      text-align: left;
+      font-style: italic;
+      color: #334155;
     }
     @media (max-width: 900px) {
-      #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
+      #deliveriesTable thead th,
+      #deliveriesTable td {
         max-width: 90px;
         font-size: 0.95em;
+        padding: 7px 4px;
       }
     }
     @media (max-width: 600px) {
-      #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
+      #deliveriesTable thead th,
+      #deliveriesTable td {
         max-width: 60px;
         font-size: 0.92em;
+        padding: 5px 2px;
       }
     }
   `);
