@@ -301,9 +301,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         "statut",
         "observation",
       ];
-      if (highlightCols.includes(col.id)) {
-        td.classList.add("highlight-col");
-      }
+      // Ne pas ajouter la classe highlight-col ici, le surlignage sera géré au survol par le script HTML
       if (col.id === "row_number") {
         value = i + 1;
         td.textContent = value;
