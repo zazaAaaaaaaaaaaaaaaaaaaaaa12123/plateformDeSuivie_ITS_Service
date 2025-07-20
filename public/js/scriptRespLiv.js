@@ -355,8 +355,25 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.textContent = "-";
         }
+      } else if (col.id === "delivery_date") {
+        // Correction : n'affiche rien si la date n'est pas renseignée
+        let dDate = delivery.delivery_date;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            value = dDate;
+          }
+        } else {
+          value = "-";
+        }
+        td.textContent = value;
+        if (col.id === "observation") {
+          td.classList.add("observation-col");
+        }
       } else {
-        // Pour toutes les colonnes, y compris celles demandées, on affiche "-" si la donnée est absente, vide ou nulle
+        // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
         value =
           delivery[col.id] !== undefined &&
           delivery[col.id] !== null &&

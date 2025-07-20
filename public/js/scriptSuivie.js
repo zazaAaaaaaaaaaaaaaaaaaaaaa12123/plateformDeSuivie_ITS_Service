@@ -4756,14 +4756,17 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       } else {
         cell.innerHTML = `<span>Non Reçu</span>`;
       }
-    } else if (fieldName === "delivery_date" && displayValue) {
-      // For delivery_date (text input), display as DD/MM/YYYY
-      // It might be a Date object from initial load or ISO-8601 string from update
-      const dateObj = new Date(displayValue); // Attempt to parse ISO-8601 string or Date object
-      if (!isNaN(dateObj.getTime())) {
-        cell.textContent = dateObj.toLocaleDateString("fr-FR");
+    } else if (fieldName === "delivery_date") {
+      // N'affiche rien si la date n'est pas renseignée ou vide
+      if (displayValue) {
+        const dateObj = new Date(displayValue);
+        if (!isNaN(dateObj.getTime())) {
+          cell.textContent = dateObj.toLocaleDateString("fr-FR");
+        } else {
+          cell.textContent = displayValue;
+        }
       } else {
-        cell.textContent = displayValue; // Fallback to raw string if parsing fails (e.g. malformed input)
+        cell.textContent = "-";
       }
     } else if (fieldName === "delivery_time" && displayValue) {
       // For delivery_time (text input), display directly (it should already be HH:MM or similar)
