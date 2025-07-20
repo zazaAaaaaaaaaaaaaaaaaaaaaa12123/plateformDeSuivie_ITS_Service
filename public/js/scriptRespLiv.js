@@ -35,19 +35,13 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
         thead.appendChild(headerRow);
       }
     }
-    // Affiche une ligne structurée pour garder l'alignement des colonnes
+    // Affiche une seule cellule avec colspan pour garder l'alignement propre
     const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-      const td = document.createElement("td");
-      if (idx === 0) {
-        td.textContent = "Aucune opération à cette date.";
-        td.className = "text-center text-muted";
-      } else {
-        td.textContent = "-";
-        td.className = "text-muted";
-      }
-      tr.appendChild(td);
-    });
+    const td = document.createElement("td");
+    td.colSpan = AGENT_TABLE_COLUMNS.length;
+    td.textContent = "Aucune opération à cette date.";
+    td.className = "text-center text-muted";
+    tr.appendChild(td);
     tableBodyElement.innerHTML = "";
     tableBodyElement.appendChild(tr);
     return;
@@ -310,19 +304,13 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   }
   // Génération des lignes
   if (deliveries.length === 0) {
-    // Affiche une ligne structurée pour garder l'alignement des colonnes
+    // Affiche une seule cellule avec colspan pour garder l'alignement propre
     const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-      const td = document.createElement("td");
-      if (idx === 0) {
-        td.textContent = "Aucune opération à cette date.";
-        td.className = "text-center text-muted";
-      } else {
-        td.textContent = "-";
-        td.className = "text-muted";
-      }
-      tr.appendChild(td);
-    });
+    const td = document.createElement("td");
+    td.colSpan = AGENT_TABLE_COLUMNS.length;
+    td.textContent = "Aucune opération à cette date.";
+    td.className = "text-center text-muted";
+    tr.appendChild(td);
     tableBodyElement.innerHTML = "";
     tableBodyElement.appendChild(tr);
   } else {
@@ -364,19 +352,13 @@ const AGENT_TABLE_COLUMNS = [
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   if (!deliveries || deliveries.length === 0) {
-    // Affiche une ligne structurée pour garder l'alignement des colonnes
+    // Affiche une seule cellule avec colspan pour garder l'alignement propre
     const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-      const td = document.createElement("td");
-      if (idx === 0) {
-        td.textContent = "Aucune opération à cette date.";
-        td.className = "text-center text-muted";
-      } else {
-        td.textContent = "-";
-        td.className = "text-muted";
-      }
-      tr.appendChild(td);
-    });
+    const td = document.createElement("td");
+    td.colSpan = AGENT_TABLE_COLUMNS.length;
+    td.textContent = "Aucune opération à cette date.";
+    td.className = "text-center text-muted";
+    tr.appendChild(td);
     tableBodyElement.appendChild(tr);
     return;
   }
