@@ -40,48 +40,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  styleTC.textContent = `
-    #deliveriesTable thead th {
-      background: #0e274e;
-      color: #fff;
-      font-size: 0.97em;
-      font-weight: 700;
-      padding: 7px 8px 7px 8px;
-      border-bottom: 2px solid #2563eb;
-      border-right: 1px solid #e5e7eb;
-      border-left: none;
-      border-top: none;
-      text-align: center;
-      vertical-align: middle;
-      white-space: nowrap;
-      height: 36px;
-      min-height: 32px;
-      max-height: 38px;
-      line-height: 1.1;
-      letter-spacing: 0.01em;
-    }
-    #deliveriesTable thead th:last-child {
-      border-right: none;
-    }
-    #deliveriesTable tbody td {
-      font-size: 0.97em;
-      padding: 7px 8px 7px 8px;
-      border-bottom: 1px solid #e5e7eb;
-      border-right: 1px solid #e5e7eb;
-      border-left: none;
-      border-top: none;
-      text-align: center;
-      vertical-align: middle;
-      white-space: nowrap;
-      height: 34px;
-      min-height: 30px;
-      max-height: 36px;
-      line-height: 1.1;
-      background: #fff;
-    }
-    #deliveriesTable tbody td:last-child {
-      border-right: none;
-    }
+  const newLocal = (styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -129,22 +88,43 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Responsive */
+    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
+    #deliveriesTable thead th:not([data-col-id='container_number']) {
+      max-width: 160px;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      font-size: 1em;
+      font-weight: bold;
+      background: #0e274eff;
+      color: #fff;
+      border-bottom: 2px solid #2563eb;
+      text-align: center;
+      vertical-align: middle;
+    }
+    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
+      max-width: 160px;
+      white-space: pre-line;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      vertical-align: middle;
+      overflow: visible;
+    }
     @media (max-width: 900px) {
-      #deliveriesTable thead th,
-      #deliveriesTable tbody td {
-        font-size: 0.93em;
-        padding: 5px 4px;
+      #deliveriesTable thead th:not([data-col-id='container_number']),
+      #deliveriesTable tbody td:not(:nth-child(5)) {
+        max-width: 90px;
+        font-size: 0.95em;
       }
     }
     @media (max-width: 600px) {
-      #deliveriesTable thead th,
-      #deliveriesTable tbody td {
-        font-size: 0.90em;
-        padding: 3px 2px;
+      #deliveriesTable thead th:not([data-col-id='container_number']),
+      #deliveriesTable tbody td:not(:nth-child(5)) {
+        max-width: 60px;
+        font-size: 0.92em;
       }
     }
-  `;
+  `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateInput = document.getElementById("mainTableDateFilter");
@@ -284,62 +264,10 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
     thead.innerHTML = "";
     const headerRow = document.createElement("tr");
-    // Colonnes éditables
-    const editableIds = [
-      "visitor_agent_name",
-      "transporter",
-      "inspector",
-      "customs_agent",
-      "driver",
-      "driver_phone",
-      "delivery_date",
-      "acconier_status",
-      "statut",
-      "observation",
-    ];
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+    AGENT_TABLE_COLUMNS.forEach((col) => {
       const th = document.createElement("th");
+      th.textContent = col.label;
       th.setAttribute("data-col-id", col.id);
-      if (editableIds.includes(col.id)) {
-        th.classList.add("editable-th");
-        th.style.cursor = "pointer";
-        th.title = "Cliquez pour modifier l'intitulé";
-        th.textContent = col.label;
-        th.onclick = function (e) {
-          if (th.querySelector("input")) return;
-          const input = document.createElement("input");
-          input.type = "text";
-          input.value = col.label;
-          input.style.width = "95%";
-          input.style.fontSize = "inherit";
-          input.style.fontWeight = "inherit";
-          input.style.textAlign = "center";
-          input.style.border = "1.5px solid #2563eb";
-          input.style.borderRadius = "6px";
-          input.style.padding = "2px 4px";
-          input.style.background = "#f8fafc";
-          th.textContent = "";
-          th.appendChild(input);
-          input.focus();
-          input.select();
-          // Sauvegarde au blur ou Entrée
-          function saveEdit() {
-            const newLabel = input.value.trim() || col.label;
-            col.label = newLabel;
-            th.textContent = newLabel;
-          }
-          input.addEventListener("blur", saveEdit);
-          input.addEventListener("keydown", function (ev) {
-            if (ev.key === "Enter") {
-              input.blur();
-            } else if (ev.key === "Escape") {
-              th.textContent = col.label;
-            }
-          });
-        };
-      } else {
-        th.textContent = col.label;
-      }
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
@@ -396,7 +324,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "observation", label: "OBSERVATION" },
 ];
 
-// Fonction pour générer les lignes du tableau Agent Acconier
+// Fonction pour générer les lignes du tableau Agent Acconiers
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
