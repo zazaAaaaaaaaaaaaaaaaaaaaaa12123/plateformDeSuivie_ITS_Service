@@ -611,6 +611,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           tag.style.cursor = "pointer";
           tag.onclick = (e) => {
             e.stopPropagation();
+            // Correction : vérifier les champs obligatoires AVANT d'ouvrir le popup
+            if (!isAllRequiredFilled()) {
+              showAccessMessage(
+                "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                "red"
+              );
+              return;
+            }
             showContainerDetailPopup(delivery, tcList[0]);
           };
           td.appendChild(tag);
