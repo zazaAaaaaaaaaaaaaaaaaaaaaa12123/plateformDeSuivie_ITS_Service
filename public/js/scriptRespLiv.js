@@ -324,7 +324,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "observation", label: "OBSERVATION" },
 ];
 
-// Fonction pour générer les lignes du tableau Agent Acconier
+// Fonction pour générer les lignes du tableau Agent Acconiers
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
