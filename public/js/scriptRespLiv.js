@@ -3,7 +3,7 @@ function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
   date.setHours(0, 0, 0, 0);
   return date;
-}
+// Fin du fichier : rien à ajouter ici
 
 // Fonction principale pour afficher les livraisons filtrées par date
 function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
@@ -171,152 +171,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Filtre les livraisons selon la date de livraison réelle (delivery_date)
-  function filterDeliveriesByDate(dateStr) {
-    return allDeliveries.filter((delivery) => {
-      // On utilise delivery_date si disponible, sinon created_at
-      let dDate =
-        delivery["delivery_date"] ||
-        delivery["created_at"] ||
-        delivery["Date"] ||
-        delivery["Date Livraison"];
-      if (!dDate) return false;
-      // Normalisation robuste du format
-      let normalized = "";
-      if (typeof dDate === "string") {
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
-          // Format JJ/MM/AAAA
-          const [j, m, a] = dDate.split("/");
-          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
-        } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
-          // Format YYYY-MM-DD
-          normalized = dDate;
-        } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
-          // Format JJ-MM-AAAA
-          const [j, m, a] = dDate.split("-");
-          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
-        } else {
-          // Autre format, on tente une conversion
-          const dateObj = new Date(dDate);
-          if (!isNaN(dateObj)) {
-            normalized = dateObj.toISOString().split("T")[0];
-          } else {
-            normalized = dDate;
-          }
-        }
-      } else if (dDate instanceof Date) {
-        normalized = dDate.toISOString().split("T")[0];
-      } else {
-        normalized = String(dDate);
-      }
-      return normalized === dateStr;
-    });
-  }
 
-  // Affiche les livraisons filtrées dans le tableau
-  function renderTable(deliveries) {
-    tableBody.innerHTML = "";
-    if (deliveries.length === 0) {
-      const row = document.createElement("tr");
-      const cell = document.createElement("td");
-      cell.colSpan = AGENT_TABLE_COLUMNS.length;
-      cell.textContent = "Aucune opération à cette date";
-      cell.className = "text-center text-muted";
-      row.appendChild(cell);
-      tableBody.appendChild(row);
-      return;
-    }
-    deliveries.forEach((delivery) => {
-      const row = document.createElement("tr");
-      AGENT_TABLE_COLUMNS.forEach((col) => {
-        const cell = document.createElement("td");
-        let value = "-";
-        if (col.id === "date_display") {
-          let dDate = delivery.delivery_date || delivery.created_at;
-          if (dDate) {
-            let dateObj = new Date(dDate);
-            if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toLocaleDateString("fr-FR");
-            } else if (typeof dDate === "string") {
-              value = dDate;
-            }
-          }
-        } else {
-          value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-        }
-        cell.textContent = value;
-        row.appendChild(cell);
-      });
-      tableBody.appendChild(row);
-    });
-  }
-
-  // Fonction principale pour charger et afficher selon la date
-  function updateTableForDate(dateStr) {
-    const filtered = filterDeliveriesByDate(dateStr);
-    // Utilisation du nouveau modèle dynamique
-    const tableContainer = document.getElementById("deliveriesTableBody");
-    if (tableContainer) {
-      renderAgentTableFull(filtered, tableContainer);
-    } else {
-      console.error("L'élément #deliveriesTableBody n'existe pas dans le DOM.");
-    }
-  }
-
-  // Initialisation : charge toutes les livraisons puis affiche la date du jour
-  const today = new Date().toISOString().split("T")[0];
-  if (dateInput) {
-    dateInput.value = today;
-    loadAllDeliveries().then(() => {
-      updateTableForDate(today);
-    });
-    dateInput.addEventListener("change", (e) => {
-      updateTableForDate(e.target.value);
-    });
-  }
-});
-// Colonnes strictes pour Agent Acconier
-// Fonction robuste pour générer le tableau complet (en-tête + lignes)
-function renderAgentTableFull(deliveries, tableBodyElement) {
-  // Génération de l'en-tête
-  const table = tableBodyElement.closest("table");
-  if (table) {
-    let thead = table.querySelector("thead");
-    if (!thead) {
-      thead = document.createElement("thead");
-      table.insertBefore(thead, tableBodyElement);
-    }
-    thead.innerHTML = "";
-    const headerRow = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col) => {
-      const th = document.createElement("th");
-      th.textContent = col.label;
-      th.setAttribute("data-col-id", col.id);
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-  }
-  // Génération des lignes
-  if (deliveries.length === 0) {
-    // Affiche une ligne structurée pour garder l'alignement des colonnes
-    const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-      const td = document.createElement("td");
-      if (idx === 0) {
-        td.textContent = "Aucune opération à cette date.";
-        td.className = "text-center text-muted";
-      } else {
-        td.textContent = "-";
-        td.className = "text-muted";
-      }
-      tr.appendChild(td);
-    });
-    tableBodyElement.innerHTML = "";
-    tableBodyElement.appendChild(tr);
-  } else {
-    renderAgentTableRows(deliveries, tableBodyElement);
-  }
-}
+// Déclaration du tableau des colonnes (à placer hors de toute fonction)
 const AGENT_TABLE_COLUMNS = [
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
@@ -347,6 +203,13 @@ const AGENT_TABLE_COLUMNS = [
   { id: "statut", label: "Statut" },
   { id: "observation", label: "Observations" },
 ];
+
+// Filtre les livraisons selon la date de livraison réelle (delivery_date)
+function filterDeliveriesByDate(dateStr) {
+  return allDeliveries.filter((delivery) => {
+    // On utilise delivery_date si disponible, sinon created_at
+    let dDate =
+      delivery["delivery_date"] ||
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
