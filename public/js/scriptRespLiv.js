@@ -270,38 +270,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
-      // Liste des colonnes à surligner (N° à TRANSPORTEUR + toutes les éditables)
-      const highlightCols = [
-        "row_number",
-        "date_display",
-        "employee_name",
-        "client_name",
-        "client_phone",
-        "container_number",
-        "lieu",
-        "container_foot_type",
-        "container_type_and_content",
-        "declaration_number",
-        "bl_number",
-        "dossier_number",
-        "number_of_containers",
-        "shipping_company",
-        "weight",
-        "ship_name",
-        "circuit",
-        "transporter_mode",
-        "visitor_agent_name",
-        "transporter",
-        "inspector",
-        "customs_agent",
-        "driver",
-        "driver_phone",
-        "delivery_date",
-        "acconier_status",
-        "statut",
-        "observation",
-      ];
-      // Ne pas ajouter la classe highlight-col ici, le surlignage sera géré au survol par le script HTML
       if (col.id === "row_number") {
         value = i + 1;
         td.textContent = value;
@@ -333,12 +301,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           btn.innerHTML =
             tcList
               .slice(0, 2)
-              .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
+              .map((tc) => `<span class="tc-tag">${tc}</span>`)
               .join("") +
             (tcList.length > 2
-              ? ` <span class=\"tc-tag tc-tag-more\">+${
-                  tcList.length - 2
-                }</span>`
+              ? ` <span class="tc-tag tc-tag-more">+${tcList.length - 2}</span>`
               : "") +
             ' <i class="fas fa-chevron-down tc-chevron"></i>';
           const popup = document.createElement("div");
@@ -347,7 +313,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           popup.innerHTML = tcList
             .map(
               (tc) =>
-                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
+                `<div class="tc-popup-item" style='cursor:pointer;'>${tc}</div>`
             )
             .join("");
           btn.onclick = (e) => {
