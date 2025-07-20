@@ -445,6 +445,32 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     "delivery_date",
     "observation",
   ];
+
+  // Champs obligatoires à sauvegarder/restaurer
+  const requiredFields = [
+    "visitor_agent_name",
+    "transporter",
+    "inspector",
+    "customs_agent",
+    "driver",
+    "driver_phone",
+    "delivery_date",
+  ];
+
+  // Fonction pour générer une clé unique pour chaque ligne (par id de livraison)
+  function getRowKey(delivery) {
+    return delivery.id ? String(delivery.id) : JSON.stringify(delivery);
+  }
+
+  // Charger les valeurs sauvegardées
+  let savedRows = {};
+  try {
+    savedRows = JSON.parse(
+      localStorage.getItem("agentTableRequiredFields") || "{}"
+    );
+  } catch (e) {
+    savedRows = {};
+  }
   // Message d'accès temporaire (vert ou rouge)
   function showAccessMessage(msg, color) {
     let msgDiv = document.getElementById("accessMsgTemp");
@@ -474,19 +500,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   }
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    // Champs obligatoires pour ce delivery
-    const requiredFields = [
-      "visitor_agent_name",
-      "transporter",
-      "inspector",
-      "customs_agent",
-      "driver",
-      "driver_phone",
-      "delivery_date",
-    ];
+    // Générer la clé unique pour cette ligne
+    const rowKey = getRowKey(delivery);
+
     // Fonction pour vérifier dynamiquement si tous les champs sont remplis (prend la valeur affichée dans la cellule)
     function isAllRequiredFilled() {
-      // Toujours prendre la valeur affichée dans la cellule (input, textarea ou textContent)
       return requiredFields.every((field) => {
         const colIdx = AGENT_TABLE_COLUMNS.findIndex((c) => c.id === field);
         if (colIdx === -1) return false;
@@ -508,9 +526,37 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         );
       });
     }
+
+    // Fonction pour sauvegarder les champs obligatoires de cette ligne
+    function saveRequiredFields() {
+      const data = {};
+      requiredFields.forEach((field) => {
+        const colIdx = AGENT_TABLE_COLUMNS.findIndex((c) => c.id === field);
+        if (colIdx !== -1) {
+          const cell = tr.children[colIdx];
+          let val = undefined;
+          if (cell) {
+            const input = cell.querySelector("input,textarea");
+            if (input) {
+              val = input.value;
+            } else {
+              val = cell.textContent;
+            }
+          }
+          data[field] = val;
+        }
+      });
+      savedRows[rowKey] = data;
+      localStorage.setItem(
+        "agentTableRequiredFields",
+        JSON.stringify(savedRows)
+      );
+    }
+
     // Gestion dynamique du message d'accès
     let lastAccessState = null;
     let confirmationShown = false;
+
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
@@ -651,12 +697,23 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // Cellule éditable texte
         td.classList.add("editable-cell");
         td.style.cursor = "pointer";
-        value =
-          delivery[col.id] !== undefined &&
-          delivery[col.id] !== null &&
-          delivery[col.id] !== ""
-            ? delivery[col.id]
-            : "-";
+        // Restauration automatique si sauvegardé
+        let restored = false;
+        if (
+          requiredFields.includes(col.id) &&
+          savedRows[rowKey] &&
+          savedRows[rowKey][col.id] !== undefined
+        ) {
+          value = savedRows[rowKey][col.id];
+          restored = true;
+        } else {
+          value =
+            delivery[col.id] !== undefined &&
+            delivery[col.id] !== null &&
+            delivery[col.id] !== ""
+              ? delivery[col.id]
+              : "-";
+        }
         td.textContent = value;
         td.onclick = function (e) {
           if (td.querySelector("input") || td.querySelector("textarea")) return;
@@ -687,6 +744,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               td.textContent = input.value || "-";
               td.title = input.value;
               td.dataset.edited = "true";
+              saveRequiredFields();
               setTimeout(() => {
                 if (isAllRequiredFilled()) {
                   showAccessMessage(
@@ -706,6 +764,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             td.textContent = input.value || "-";
             td.title = input.value;
             td.dataset.edited = "true";
+            saveRequiredFields();
             setTimeout(() => {
               if (isAllRequiredFilled()) {
                 showAccessMessage(
@@ -728,11 +787,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             input.selectionStart = input.selectionEnd = input.value.length;
           }
         };
-        // Ajout : surveiller les modifications sur les champs obligatoires pour afficher le message d'accès
+        // Ajout : surveiller les modifications sur les champs obligatoires pour afficher le message d'accès et sauvegarder
         if (requiredFields.includes(col.id)) {
           td.addEventListener(
             "input",
             function () {
+              saveRequiredFields();
               if (isAllRequiredFilled()) {
                 showAccessMessage(
                   "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
@@ -759,7 +819,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (col.id === "observation") {
           td.classList.add("observation-col");
         }
-      } else if (col.id === "statut") {
         // Affichage du modèle "x sur y livré" dans chaque cellule de la colonne Statut
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
