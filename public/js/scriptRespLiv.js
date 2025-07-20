@@ -95,9 +95,19 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
       vertical-align: middle;
     }
-    /* Limite stricte pour les entêtes et cellules vides même si pas de données */
-    #deliveriesTable thead th,
-    #deliveriesTable tbody td {
+    /* Largeur spéciale pour la colonne Numéro TC(s) */
+    #deliveriesTable thead th[data-col-id='container_number'],
+    #deliveriesTable tbody td[data-col-id='container_number'],
+    #deliveriesTable tbody td.tc-multi-cell {
+      min-width: 130px;
+      max-width: 240px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Limite stricte pour les autres entêtes et cellules vides même si pas de données */
+    #deliveriesTable thead th:not([data-col-id='container_number']),
+    #deliveriesTable tbody td:not([data-col-id='container_number']):not(.tc-multi-cell) {
       max-width: 160px;
       min-width: 60px;
       white-space: nowrap;
@@ -113,25 +123,29 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
     }
     @media (max-width: 900px) {
+      #deliveriesTable thead th[data-col-id='container_number'],
+      #deliveriesTable tbody td[data-col-id='container_number'],
+      #deliveriesTable tbody td.tc-multi-cell {
+        min-width: 90px;
+        max-width: 150px;
+      }
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
+      #deliveriesTable tbody td:not([data-col-id='container_number']):not(.tc-multi-cell) {
         max-width: 90px;
         font-size: 0.95em;
       }
-      #deliveriesTable thead th,
-      #deliveriesTable tbody td {
-        max-width: 90px;
-      }
     }
     @media (max-width: 600px) {
+      #deliveriesTable thead th[data-col-id='container_number'],
+      #deliveriesTable tbody td[data-col-id='container_number'],
+      #deliveriesTable tbody td.tc-multi-cell {
+        min-width: 60px;
+        max-width: 90px;
+      }
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
+      #deliveriesTable tbody td:not([data-col-id='container_number']):not(.tc-multi-cell) {
         max-width: 60px;
         font-size: 0.92em;
-      }
-      #deliveriesTable thead th,
-      #deliveriesTable tbody td {
-        max-width: 60px;
       }
     }
   `;
