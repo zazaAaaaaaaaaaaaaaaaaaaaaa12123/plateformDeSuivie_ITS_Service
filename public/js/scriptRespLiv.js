@@ -633,6 +633,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (col.id === "observation") {
           td.classList.add("observation-col");
         }
+      } else if (col.id === "statut") {
+        // Affichage du modèle "x sur y livré" dans chaque cellule de la colonne Statut
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        let total = tcList.length;
+        let delivered = 0;
+        if (
+          delivery.container_statuses &&
+          typeof delivery.container_statuses === "object"
+        ) {
+          delivered = tcList.filter((tc) => {
+            const s = delivery.container_statuses[tc];
+            return s === "livre" || s === "livré";
+          }).length;
+        }
+        td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+          total > 1 ? "s" : ""
+        }</button>`;
       } else {
         // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
         value =
