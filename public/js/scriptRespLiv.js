@@ -87,30 +87,32 @@ document.addEventListener("DOMContentLoaded", function () {
       text-align: center;
       vertical-align: middle;
     }
-    /* Toutes les cellules du tableau (hors container_number multi-cell) : une seule ligne, centré, ellipsis */
+    /* Toutes les cellules du tableau (hors container_number multi-cell) : retour à la ligne automatique, centré */
     #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
       max-width: 180px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
       vertical-align: middle;
       text-align: center;
       font-weight: normal;
       font-size: 1em;
       padding: 6px 8px;
+      word-break: break-word;
     }
-    /* Pour la colonne observation, même comportement, centré, une seule ligne */
+    /* Pour la colonne observation, même comportement, centré, retour à la ligne */
     #deliveriesTable tbody td.observation-col {
       max-width: 220px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
       vertical-align: middle;
       background: none;
       text-align: center;
       font-weight: normal;
       font-size: 1em;
       padding: 6px 8px;
+      word-break: break-word;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
@@ -120,6 +122,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       #deliveriesTable tbody td.observation-col {
         max-width: 120px;
+
       }
     }
     @media (max-width: 600px) {
