@@ -395,7 +395,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "-";
         }
       } else if (col.id === "statut" || col.id === "acconier_status") {
-        // Affichage du modèle "x sur y livré" dans chaque cellule de la colonne Statut et acconier_status
+        // Affichage du modèle "x sur y livré" + boîte flottante au survol
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -410,7 +410,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         ) {
           delivered = tcList.filter((tc) => {
             const s = delivery.container_statuses[tc];
-            // On considère 'Mise en livraison', 'livre' ou 'livré' comme livré
             return (
               s === "livre" ||
               s === "livré" ||
@@ -419,9 +418,53 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             );
           }).length;
         }
-        td.innerHTML = `<button class="statut-btn">${delivered} sur ${total} livré${
+        // Création du bouton et de la boîte flottante
+        const btn = document.createElement("button");
+        btn.className = "statut-btn";
+        btn.textContent = `${delivered} sur ${total} livré${
           total > 1 ? "s" : ""
-        }</button>`;
+        }`;
+        btn.style.position = "relative";
+        // Boîte flottante
+        const popup = document.createElement("div");
+        popup.className = "tc-status-popup";
+        popup.style.position = "absolute";
+        popup.style.left = "50%";
+        popup.style.transform = "translateX(-50%)";
+        popup.style.top = "110%";
+        popup.style.background = "#fff";
+        popup.style.border = "2px solid #2563eb";
+        popup.style.borderRadius = "12px";
+        popup.style.boxShadow = "0 4px 16px rgba(30,41,59,0.13)";
+        popup.style.padding = "10px 18px";
+        popup.style.minWidth = "180px";
+        popup.style.zIndex = "1003";
+        popup.style.display = "none";
+        popup.style.fontSize = "1em";
+        popup.innerHTML = tcList
+          .map((tc) => {
+            let s =
+              delivery.container_statuses && delivery.container_statuses[tc]
+                ? delivery.container_statuses[tc]
+                : "attente_paiement";
+            let statut =
+              s === "pending" || s === "attente_paiement"
+                ? "En attente de paiement"
+                : s === "mise_en_livraison" || s === "Mise en livraison"
+                ? "<span style='color:#2563eb;font-weight:600;'><i class='fas fa-truck' style='font-size:1em;color:#2563eb;'></i> Mise en livraison</span>"
+                : s;
+            return `<div style='display:flex;align-items:center;gap:8px;margin-bottom:4px;'><span style='background:#2563eb;color:#fff;padding:2px 8px;border-radius:10px;font-weight:600;'>${tc}</span> <span>${statut}</span></div>`;
+          })
+          .join("");
+        btn.onmouseenter = () => {
+          popup.style.display = "block";
+        };
+        btn.onmouseleave = () => {
+          popup.style.display = "none";
+        };
+        td.style.position = "relative";
+        td.appendChild(btn);
+        td.appendChild(popup);
       } else if (col.id === "container_status") {
         // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
         let tcList = [];
