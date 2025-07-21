@@ -429,20 +429,24 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             delivery.container_statuses && delivery.container_statuses[tc]
               ? delivery.container_statuses[tc]
               : "attente_paiement";
-          return s === "pending" ? "en attente de paiement" : s;
+          if (s === "pending" || s === "attente_paiement")
+            return "En attente de paiement";
+          if (s === "mise_en_livraison") return "Mise en livraison";
+          return s;
         });
         let allMiseEnLivraison = statuses.every(
-          (s) => s === "mise_en_livraison"
+          (s) => s === "Mise en livraison"
         );
         let allAttentePaiement = statuses.every(
-          (s) => s === "en attente de paiement"
+          (s) => s === "En attente de paiement"
         );
         if (allMiseEnLivraison) {
-          value = "mise en livraison";
+          value = "Mise en livraison";
         } else if (allAttentePaiement) {
-          value = "en attente de paiement";
+          value = "En attente de paiement";
         } else {
-          value = statuses.join(", ");
+          // Si mixte, affiche le statut unique si tous identiques, sinon concatène sans doublons
+          value = Array.from(new Set(statuses)).join(", ");
         }
         td.textContent = value;
       } else {
