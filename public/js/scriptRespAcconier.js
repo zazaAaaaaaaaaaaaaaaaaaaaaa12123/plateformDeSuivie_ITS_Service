@@ -575,8 +575,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 }
 
 // Fonction pour générer les en-têtes du tableau Agent Acconier
-function renderAgentTableHeaders(tableElement) {
+function renderAgentTableHeaders(tableElement, deliveries) {
   const thead = tableElement.querySelector("thead");
+  thead.innerHTML = "";
   const headerRow = document.createElement("tr");
   AGENT_TABLE_COLUMNS.forEach((col) => {
     const th = document.createElement("th");
@@ -613,4 +614,36 @@ function renderAgentTableHeaders(tableElement) {
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
+}
+
+// Fonction pour générer le tableau Agent Acconier complet
+function renderAgentTableFull(deliveries, tableBodyElement) {
+  const table = tableBodyElement.closest("table");
+  if (deliveries.length === 0) {
+    if (table) table.style.display = "none";
+    let noDataMsg = document.getElementById("noDeliveriesMsg");
+    if (!noDataMsg) {
+      noDataMsg = document.createElement("div");
+      noDataMsg.id = "noDeliveriesMsg";
+      noDataMsg.style.textAlign = "center";
+      noDataMsg.style.padding = "48px 0 32px 0";
+      noDataMsg.style.fontSize = "1.25em";
+      noDataMsg.style.color = "#64748b";
+      noDataMsg.style.fontWeight = "500";
+      noDataMsg.textContent = "Aucune opération à cette date.";
+      tableBodyElement.parentNode.insertBefore(noDataMsg, tableBodyElement);
+    } else {
+      noDataMsg.style.display = "block";
+    }
+    tableBodyElement.innerHTML = "";
+  } else {
+    if (table) table.style.display = "table";
+    const noDataMsg = document.getElementById("noDeliveriesMsg");
+    if (noDataMsg) noDataMsg.style.display = "none";
+    // Utiliser la nouvelle fonction d'en-tête
+    if (table) {
+      renderAgentTableHeaders(table, deliveries);
+    }
+    renderAgentTableRows(deliveries, tableBodyElement);
+  }
 }
