@@ -3211,6 +3211,66 @@ app.use((req, res, next) => {
 
 // (Déplacé tout en bas du fichier)
 
+// ===============================
+// PATCH: Mise à jour du statut BL (bl_statuses) pour une livraison
+// ===============================
+app.patch("/deliveries/:id/bl-status", async (req, res) => {
+  const { id } = req.params;
+  const { blNumber, status } = req.body || {};
+  if (!blNumber || !status) {
+    return res.status(400).json({
+      success: false,
+      message: "N° BL et statut requis.",
+    });
+  }
+  try {
+    // Récupère la livraison existante
+    const result = await pool.query(
+      "SELECT bl_statuses, bl_number FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+    // Normalisation
+    let bl_statuses = {};
+    if (result.rows[0].bl_statuses) {
+      try {
+        bl_statuses =
+          typeof result.rows[0].bl_statuses === "string"
+            ? JSON.parse(result.rows[0].bl_statuses)
+            : result.rows[0].bl_statuses;
+      } catch (e) {
+        bl_statuses = {};
+      }
+    }
+    bl_statuses[blNumber] = status;
+    // Mise à jour en base
+    const updateRes = await pool.query(
+      "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2 RETURNING *;",
+      [JSON.stringify(bl_statuses), id]
+    );
+    if (updateRes.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Erreur lors de la mise à jour." });
+    }
+    res.status(200).json({
+      success: true,
+      message: `Statut BL mis à jour pour le N° BL ${blNumber}.`,
+      delivery: updateRes.rows[0],
+    });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du statut BL:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la mise à jour du statut BL.",
+    });
+  }
+});
+
 // Route explicite pour acconier_auth.html
 app.get("/html/acconier_auth.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "acconier_auth.html"));
