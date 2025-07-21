@@ -33,29 +33,34 @@ document.addEventListener("DOMContentLoaded", function () {
       padding: 2px 8px;
       background: #2563eb;
       color: #fff;
-      border-radius: 6px;
-      font-size: 0.95em;
-      font-weight: 500;
+      border-radius: 12px;
+      font-size: 1em;
+      font-weight: 600;
       white-space: nowrap;
       vertical-align: middle;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.10);
+      border: none;
     }
     #deliveriesTableBody .tc-tags-btn {
       display: inline-flex;
       align-items: center;
       gap: 2px;
-      background: #4c628dff;
-      border: 1px solid #2563eb;
-      border-radius: 8px;
-      padding: 2px 10px;
+      background: #0e274e;
+      border: 2px solid #2563eb;
+      border-radius: 14px;
+      padding: 2px 14px;
       cursor: pointer;
-      font-size: 0.95em;
+      font-size: 1em;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.10);
       white-space: nowrap;
     }
     #deliveriesTableBody .tc-popup {
       position: absolute;
       background: #fff;
-      border: 1px solid #2563eb;
-      border-radius: 8px;
+      border: 2px solid #2563eb;
+      border-radius: 14px;
       box-shadow: 0 4px 16px rgba(30,41,59,0.13);
       padding: 8px 0;
       min-width: 120px;
@@ -65,11 +70,12 @@ document.addEventListener("DOMContentLoaded", function () {
       white-space: nowrap;
     }
     #deliveriesTableBody .tc-popup-item {
-      padding: 6px 18px;
+      padding: 8px 22px;
       cursor: pointer;
-      font-size: 0.98em;
+      font-size: 1.05em;
       color: #2563eb;
       border-bottom: 1px solid #f3f4f6;
+      font-weight: 600;
     }
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
@@ -82,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
       font-size: 1em;
       font-weight: bold;
-      background: #0e274eff;
+      background: #0e274e;
       color: #fff;
       border-bottom: 2px solid #2563eb;
       text-align: center;
@@ -95,11 +101,32 @@ document.addEventListener("DOMContentLoaded", function () {
       text-overflow: ellipsis;
       vertical-align: middle;
     }
+    /* Bouton Statut (en-tête et ligne) */
+    .statut-btn {
+      font-size: 1.08em !important;
+      font-weight: 700 !important;
+      padding: 2px 18px !important;
+      border-radius: 16px !important;
+      border: 2px solid #eab308 !important;
+      background: #fffbe6 !important;
+      color: #b45309 !important;
+      box-shadow: 0 2px 8px rgba(234,179,8,0.13) !important;
+      outline: none !important;
+      margin-top: 6px;
+      transition: box-shadow 0.2s;
+    }
+    .statut-btn:active {
+      box-shadow: 0 1px 4px rgba(234,179,8,0.18) !important;
+    }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 90px;
         font-size: 0.95em;
+      }
+      .statut-btn {
+        font-size: 0.98em !important;
+        padding: 2px 10px !important;
       }
     }
     @media (max-width: 600px) {
@@ -107,6 +134,10 @@ document.addEventListener("DOMContentLoaded", function () {
       #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 60px;
         font-size: 0.92em;
+      }
+      .statut-btn {
+        font-size: 0.92em !important;
+        padding: 2px 6px !important;
       }
     }
   `);
@@ -360,7 +391,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             return s === "livre" || s === "livré";
           }).length;
         }
-        td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+        td.innerHTML = `<button class="statut-btn">${delivered} sur ${total} livré${
           total > 1 ? "s" : ""
         }</button>`;
       } else {
@@ -604,7 +635,7 @@ function renderAgentTableHeaders(tableElement, deliveries) {
       });
       th.innerHTML = `<span style="font-weight:bold;">${
         col.label
-      }</span><br><button style="margin-top:6px;font-size:1.15em;font-weight:600;padding:2px 16px;border-radius:12px;border:2px solid #eab308;background:#fffbe6;color:#b45309;box-shadow:0 2px 8px rgba(234,179,8,0.08);">${delivered} sur ${total} livré${
+      }</span><br><button class="statut-btn">${delivered} sur ${total} livré${
         total > 1 ? "s" : ""
       }</button>`;
     } else {
