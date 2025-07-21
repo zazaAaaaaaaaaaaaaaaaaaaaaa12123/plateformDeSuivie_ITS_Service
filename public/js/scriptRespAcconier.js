@@ -652,6 +652,24 @@ function renderAgentTableHeaders(tableElement, deliveries) {
 // Fonction pour générer le tableau Agent Acconier complet
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
+  // Ajout des deux boutons en haut du tableau
+  let btnBar = document.getElementById("deliveriesBtnBar");
+  if (!btnBar) {
+    btnBar = document.createElement("div");
+    btnBar.id = "deliveriesBtnBar";
+    btnBar.style.display = "flex";
+    btnBar.style.justifyContent = "center";
+    btnBar.style.gap = "18px";
+    btnBar.style.margin = "18px 0 8px 0";
+    btnBar.innerHTML = `
+      <button id="btnMiseLivraison" class="statut-btn" style="min-width:160px;background:#e0f2fe;color:#2563eb;border:2px solid #2563eb;box-shadow:0 2px 8px rgba(37,99,235,0.10);font-weight:700;">Mise en livraison</button>
+      <button id="btnAttentePaiement" class="statut-btn" style="min-width:160px;background:#fffbe6;color:#b45309;border:2px solid #eab308;box-shadow:0 2px 8px rgba(234,179,8,0.13);font-weight:700;">En attente de paiement</button>
+    `;
+    // Ajout avant le tableau
+    if (table && table.parentNode) {
+      table.parentNode.insertBefore(btnBar, table);
+    }
+  }
   if (deliveries.length === 0) {
     if (table) table.style.display = "none";
     let noDataMsg = document.getElementById("noDeliveriesMsg");
