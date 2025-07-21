@@ -749,17 +749,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             );
             const data = await response.json();
             if (response.ok && data.success) {
-              alert(
-                `Statut du conteneur mis à jour : ${
-                  select.options[select.selectedIndex].text
-                }`
-              );
               // Met à jour le statut localement
               delivery.container_statuses[containerNumber] = statutToSend;
               overlay.remove();
-              // Rafraîchir le tableau pour afficher le nouveau statut
+              // Rafraîchir le tableau pour afficher le nouveau statut et décrémenter le bouton 'x sur y livré'
               if (typeof renderAgentTableFull === "function") {
-                // On utilise la date du filtre actuel
                 const dateInput = document.getElementById(
                   "mainTableDateFilter"
                 );
