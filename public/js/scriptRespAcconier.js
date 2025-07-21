@@ -309,6 +309,10 @@ const AGENT_TABLE_COLUMNS = [
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
+  // Utiliser window.allDeliveries si disponible et si deliveries === allDeliveries
+  if (window.allDeliveries && deliveries === allDeliveries) {
+    deliveries = window.allDeliveries;
+  }
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
