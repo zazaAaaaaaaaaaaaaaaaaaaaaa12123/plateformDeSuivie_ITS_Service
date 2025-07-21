@@ -343,9 +343,41 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-        td.textContent = value;
         if (col.id === "observation") {
           td.classList.add("observation-col");
+          td.style.cursor = "pointer";
+          td.textContent = value;
+          td.onclick = function (e) {
+            if (td.querySelector("textarea")) return;
+            let currentText =
+              td.textContent && td.textContent.trim() !== "-"
+                ? td.textContent.trim()
+                : "";
+            const textarea = document.createElement("textarea");
+            textarea.value = currentText;
+            textarea.style.width = "100%";
+            textarea.style.fontSize = "1em";
+            textarea.style.padding = "2px 4px";
+            textarea.onkeydown = function (ev) {
+              if (ev.key === "Enter") {
+                td.textContent = textarea.value || "-";
+                td.title = textarea.value;
+                td.dataset.edited = "true";
+              }
+            };
+            textarea.onblur = function () {
+              td.textContent = textarea.value || "-";
+              td.title = textarea.value;
+              td.dataset.edited = "true";
+            };
+            td.textContent = "";
+            td.appendChild(textarea);
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd =
+              textarea.value.length;
+          };
+        } else {
+          td.textContent = value;
         }
       }
       tr.appendChild(td);
