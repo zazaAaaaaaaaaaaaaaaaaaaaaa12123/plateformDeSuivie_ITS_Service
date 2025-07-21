@@ -593,26 +593,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             let statutToSend =
               select.value === "aucun" ? "aucun" : select.value;
             try {
-              // Ici, on peut faire une requête PATCH pour le statut BL si besoin
-              // Exemple :
-              // await fetch(`/deliveries/${delivery.id}/bl-status`, {
-              //   method: "PATCH",
-              //   headers: { "Content-Type": "application/json" },
-              //   body: JSON.stringify({ blNumber, status: statutToSend }),
-              // });
+              // Sauvegarde côté serveur du statut BL
+              await fetch(`/deliveries/${delivery.id}/bl-status`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ blNumber, status: statutToSend }),
+              });
               delivery.bl_statuses[blNumber] = statutToSend;
               overlay.remove();
               // Rafraîchir le tableau en direct (sans attendre changement de date)
               const tableBody = document.getElementById("deliveriesTableBody");
               if (tableBody) {
-                // On récupère la liste actuellement affichée
                 let trs = Array.from(tableBody.querySelectorAll("tr"));
                 let currentDeliveries = deliveries;
-                // Si la fonction a accès à la variable deliveries, on la réutilise
                 if (Array.isArray(currentDeliveries)) {
                   renderAgentTableRows(currentDeliveries, tableBody);
                 } else {
-                  // Sinon, on recharge la date courante
                   const dateInput = document.getElementById(
                     "mainTableDateFilter"
                   );
