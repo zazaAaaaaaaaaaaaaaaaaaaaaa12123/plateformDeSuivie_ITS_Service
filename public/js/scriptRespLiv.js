@@ -87,6 +87,45 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
+  let ws;
+  function setupWebSocket() {
+    // Utilise le même protocole que la page (ws ou wss)
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsUrl = proto + "://" + window.location.host;
+    ws = new WebSocket(wsUrl);
+    ws.onopen = function () {
+      //console.log("WebSocket connecté pour BL status update (liv)");
+    };
+    ws.onmessage = function (event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "bl_status_update") {
+          // Recharge la liste si un BL passe en 'mise_en_livraison'
+          if (data.status === "mise_en_livraison") {
+            // Recharge toutes les livraisons et met à jour le tableau
+            const dateInput = document.getElementById("mainTableDateFilter");
+            const dateStr = dateInput ? dateInput.value : null;
+            if (typeof loadAllDeliveries === "function" && dateStr) {
+              loadAllDeliveries().then(() => {
+                updateTableForDate(dateStr);
+              });
+            }
+          }
+        }
+      } catch (e) {
+        //console.error("Erreur WebSocket BL (liv):", e);
+      }
+    };
+    ws.onerror = function () {
+      //console.warn("WebSocket BL error (liv)");
+    };
+    ws.onclose = function () {
+      // Reconnexion auto après 2s
+      setTimeout(setupWebSocket, 2000);
+    };
+  }
+  setupWebSocket();
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   styleTC.textContent = `
