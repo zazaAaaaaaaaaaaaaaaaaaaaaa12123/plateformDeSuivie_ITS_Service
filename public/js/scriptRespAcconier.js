@@ -440,18 +440,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           if (s === "mise_en_livraison") return "Mise en livraison";
           return s;
         });
-        let allMiseEnLivraison = statuses.every(
-          (s) => s === "Mise en livraison"
-        );
-        let allAttentePaiement = statuses.every(
-          (s) => s === "En attente de paiement"
-        );
-        if (allMiseEnLivraison) {
+        let hasMiseEnLivraison = statuses.includes("Mise en livraison");
+        if (hasMiseEnLivraison) {
           value = "Mise en livraison";
-        } else if (allAttentePaiement) {
-          value = "En attente de paiement";
         } else {
-          value = "Mixte";
+          value = "En attente de paiement";
         }
         td.textContent = value;
       } else {
