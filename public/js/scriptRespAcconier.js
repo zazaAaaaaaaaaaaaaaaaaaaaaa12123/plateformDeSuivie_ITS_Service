@@ -394,7 +394,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "-";
         }
       } else if (col.id === "bl_number") {
-        // Rendu avancé pour N° BL : badge/tag et menu déroulant popup
+        // Rendu avancé pour N° BL : badge/tag  et menu déroulant popup
         let blList = [];
         if (Array.isArray(delivery.bl_number)) {
           blList = delivery.bl_number.filter(Boolean);
