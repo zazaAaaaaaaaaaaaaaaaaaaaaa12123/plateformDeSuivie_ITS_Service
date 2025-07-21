@@ -447,13 +447,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           (s) => s === "En attente de paiement"
         );
         if (allMiseEnLivraison) {
-          value = "Mise en livraison";
-        } else if (allAttentePaiement) {
-          value = "En attente de paiement";
+          td.innerHTML =
+            '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
         } else {
-          value = "Mixte";
+          td.textContent = "En attente de paiement";
         }
-        td.textContent = value;
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         if (col.id === "observation") {
