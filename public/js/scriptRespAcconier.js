@@ -528,7 +528,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.innerHTML =
             '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
         } else {
-          td.textContent = "En attente de paiement";
+          td.innerHTML =
+            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
         }
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
@@ -696,6 +697,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
         const statusOptions = [
           { value: "mise_en_livraison", label: "Mise en livraison" },
+          { value: "aucun", label: "Aucun" },
         ];
         let currentStatus =
           delivery.container_statuses &&
@@ -704,6 +706,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           delivery.container_statuses[containerNumber]
             ? delivery.container_statuses[containerNumber]
             : delivery.status || "pending";
+        // Si le statut est autre que "mise_en_livraison", on met "aucun"
+        if (currentStatus !== "mise_en_livraison") {
+          currentStatus = "aucun";
+        }
         statusOptions.forEach((opt) => {
           const option = document.createElement("option");
           option.value = opt.value;
@@ -725,6 +731,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         saveBtn.style.padding = "0.7em 1.7em";
         saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
         saveBtn.onclick = async () => {
+          let statutToSend =
+            select.value === "aucun" ? "en attente de paiement" : select.value;
           try {
             const response = await fetch(
               `/deliveries/${delivery.id}/container-status`,
@@ -735,7 +743,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 },
                 body: JSON.stringify({
                   containerNumber: containerNumber,
-                  status: select.value,
+                  status: statutToSend,
                 }),
               }
             );
@@ -747,7 +755,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }`
               );
               // Met à jour le statut localement
-              delivery.container_statuses[containerNumber] = select.value;
+              delivery.container_statuses[containerNumber] = statutToSend;
               overlay.remove();
               // Rafraîchir le tableau pour afficher le nouveau statut
               if (typeof renderAgentTableFull === "function") {
