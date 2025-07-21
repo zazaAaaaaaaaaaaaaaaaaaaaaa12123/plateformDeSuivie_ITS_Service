@@ -592,22 +592,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           saveBtn.onclick = async () => {
             let statutToSend =
               select.value === "aucun" ? "aucun" : select.value;
-            try {
-              delivery.bl_statuses[blNumber] = statutToSend;
-              overlay.remove();
-              // Rafraîchir le tableau (utiliser la fonction de date si possible)
-              const dateInput = document.getElementById("mainTableDateFilter");
-              const tableBody = document.getElementById("deliveriesTableBody");
-              if (dateInput && tableBody) {
-                // Appel direct pour forcer le refresh
-                // Utiliser la fonction complète pour garantir la cohérence d'affichage
-                renderAgentTableFull(
-                  filterDeliveriesByDate(dateInput.value),
-                  tableBody
-                );
-              }
-            } catch (err) {
-              alert("Erreur lors de la mise à jour du statut du BL.");
+            delivery.bl_statuses[blNumber] = statutToSend;
+            overlay.remove();
+            // Rafraîchir le tableau (utiliser la fonction de date si possible)
+            const dateInput = document.getElementById("mainTableDateFilter");
+            const tableBody = document.getElementById("deliveriesTableBody");
+            if (dateInput && tableBody) {
+              // Appel direct pour forcer le refresh
+              // Utiliser la fonction complète pour garantir la cohérence d'affichage
+              renderAgentTableFull(
+                filterDeliveriesByDate(dateInput.value),
+                tableBody
+              );
             }
           };
           content.appendChild(saveBtn);
