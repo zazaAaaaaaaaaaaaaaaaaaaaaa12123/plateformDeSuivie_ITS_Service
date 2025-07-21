@@ -600,7 +600,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               const tableBody = document.getElementById("deliveriesTableBody");
               if (dateInput && tableBody) {
                 // Appel direct pour forcer le refresh
-                renderAgentTableRows(
+                // Utiliser la fonction complète pour garantir la cohérence d'affichage
+                renderAgentTableFull(
                   filterDeliveriesByDate(dateInput.value),
                   tableBody
                 );
