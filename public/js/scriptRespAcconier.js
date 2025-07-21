@@ -617,7 +617,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 body: JSON.stringify({ blNumber, status: statutToSend }),
               });
               if (!res.ok) {
-                let msg = "Erreur lors de la mise à jour du statut du BL..";
+                let msg = "Erreur lors de la mise à jour du statut du BL.";
                 try {
                   const errData = await res.json();
                   if (errData && errData.error) msg += "\n" + errData.error;
