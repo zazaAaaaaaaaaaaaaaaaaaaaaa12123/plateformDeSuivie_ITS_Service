@@ -302,7 +302,6 @@ const AGENT_TABLE_COLUMNS = [
   { id: "ship_name", label: "Nom du navire" },
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
-  { id: "statut", label: "Statut" },
   { id: "container_status", label: "Statut conteneur" },
   { id: "observation", label: "Observation" },
 ];
@@ -394,145 +393,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.textContent = "-";
         }
-      } else if (col.id === "statut" || col.id === "acconier_status") {
-        // Affichage du modèle "x sur y livré" + boîte flottante overlay au survol
-        let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        let total = tcList.length;
-        let delivered = 0;
-        if (
-          delivery.container_statuses &&
-          typeof delivery.container_statuses === "object"
-        ) {
-          delivered = tcList.filter((tc) => {
-            const s = delivery.container_statuses[tc];
-            return (
-              s === "livre" ||
-              s === "livré" ||
-              s === "mise_en_livraison" ||
-              s === "Mise en livraison"
-            );
-          }).length;
-        }
-        // Création du bouton
-        const btn = document.createElement("button");
-        btn.className = "statut-btn";
-        btn.textContent = `${delivered} sur ${total} livré${
-          total > 1 ? "s" : ""
-        }`;
-        btn.style.position = "relative";
-        // Gestion de la boîte flottante overlay
-        btn.addEventListener("mouseenter", function (e) {
-          // Supprimer toute autre popup existante
-          document
-            .querySelectorAll(".tc-status-popup-overlay")
-            .forEach((el) => el.remove());
-          // Trouver le tableau principal
-          const table = document.getElementById("deliveriesTable");
-          // Créer l'overlay positionné au-dessus du tableau, centré horizontalement et avec un margin-top pour éviter l'entrecroisement
-          const overlay = document.createElement("div");
-          overlay.className = "tc-status-popup-overlay";
-          overlay.style.position = "absolute";
-          if (table) {
-            const tableRect = table.getBoundingClientRect();
-            const scrollTop =
-              window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft =
-              window.pageXOffset || document.documentElement.scrollLeft;
-            overlay.style.left = tableRect.left + scrollLeft + "px";
-            overlay.style.top = tableRect.top + scrollTop - 24 + "px";
-            overlay.style.width = tableRect.width + "px";
-            overlay.style.zIndex = "99999";
-            overlay.style.pointerEvents = "auto";
-          } else {
-            overlay.style.left = "0";
-            overlay.style.top = "0";
-            overlay.style.width = "100%";
-            overlay.style.zIndex = "99999";
-            overlay.style.pointerEvents = "auto";
-          }
-          // Boîte popup centrée sur le tableau, avec ombre plus prononcée et margin-top
-          const popup = document.createElement("div");
-          popup.className = "tc-status-popup";
-          popup.style.background = "#fff";
-          popup.style.border = "1.5px solid #eab308";
-          popup.style.borderRadius = "12px";
-          popup.style.boxShadow = "0 8px 32px rgba(234,179,8,0.18)";
-          popup.style.padding = "18px 24px";
-          popup.style.minWidth = "220px";
-          popup.style.maxWidth = "340px";
-          popup.style.fontSize = "0.97em";
-          popup.style.lineHeight = "1.32";
-          popup.style.color = "#0e274e";
-          popup.style.overflow = "visible";
-          popup.style.margin = "0 auto";
-          popup.style.display = "block";
-          popup.style.position = "relative";
-          popup.style.left = "50%";
-          popup.style.transform = "translateX(-50%)";
-          popup.innerHTML =
-            `<div style='font-weight:bold;font-size:1.08em;color:#b45309;margin-bottom:8px;text-align:left;'>Détail des conteneurs</div>` +
-            tcList
-              .map((tc) => {
-                let s =
-                  delivery.container_statuses && delivery.container_statuses[tc]
-                    ? delivery.container_statuses[tc]
-                    : "attente_paiement";
-                let statutHtml = "";
-                if (
-                  s === "pending" ||
-                  s === "attente_paiement" ||
-                  s === "en attente de paiement"
-                ) {
-                  statutHtml =
-                    "<span style='color:#b45309;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-clock' style='font-size:0.92em;color:#b45309;'></i> En attente</span>";
-                } else if (
-                  s === "mise_en_livraison" ||
-                  s === "Mise en livraison"
-                ) {
-                  statutHtml =
-                    "<span style='color:#2563eb;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-truck' style='font-size:0.92em;color:#2563eb;'></i> Mise en livraison</span>";
-                } else {
-                  statutHtml = `<span>${s}</span>`;
-                }
-                return `<div style='display:flex;align-items:center;gap:7px;margin-bottom:3px;'><span style='font-weight:700;color:#0e274e;'>${tc}</span> ${statutHtml}</div>`;
-              })
-              .join("");
-          overlay.appendChild(popup);
-          // Ajout dans le parent du tableau (pour position absolue)
-          if (table && table.parentElement) {
-            table.parentElement.appendChild(overlay);
-          } else {
-            document.body.appendChild(overlay);
-          }
-          // Correction du clignotement : timer global pour éviter la suppression trop rapide
-          let removeTimer = null;
-          function clearRemoveTimer() {
-            if (removeTimer) {
-              clearTimeout(removeTimer);
-              removeTimer = null;
-            }
-          }
-          function scheduleRemoveOverlay() {
-            clearRemoveTimer();
-            removeTimer = setTimeout(() => {
-              overlay.remove();
-            }, 220);
-          }
-          btn.addEventListener("mouseleave", scheduleRemoveOverlay);
-          btn.addEventListener("mouseenter", clearRemoveTimer);
-          overlay.addEventListener("mouseenter", clearRemoveTimer);
-          overlay.addEventListener("mouseleave", scheduleRemoveOverlay);
-          overlay.addEventListener("click", function () {
-            overlay.remove();
-            clearRemoveTimer();
-          });
-        });
-        td.appendChild(btn);
+        // ...existing code...
       } else if (col.id === "container_status") {
         // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
         let tcList = [];
@@ -829,37 +690,7 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   const headerRow = document.createElement("tr");
   AGENT_TABLE_COLUMNS.forEach((col) => {
     const th = document.createElement("th");
-    if (col.id === "statut" || col.id === "acconier_status") {
-      // Calcul du nombre de conteneurs livrés et total pour toutes les livraisons de la plateforme (total général)
-      let totalGeneral = 0;
-      let deliveredGeneral = 0;
-      if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
-        window.allDeliveries.forEach((delivery) => {
-          let tcList = [];
-          if (Array.isArray(delivery.container_number)) {
-            tcList = delivery.container_number.filter(Boolean);
-          } else if (typeof delivery.container_number === "string") {
-            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-          }
-          totalGeneral += tcList.length;
-          if (
-            delivery.container_statuses &&
-            typeof delivery.container_statuses === "object"
-          ) {
-            deliveredGeneral += Object.values(
-              delivery.container_statuses
-            ).filter((s) => s === "livre" || s === "livré").length;
-          }
-        });
-      }
-      th.innerHTML = `<span style="font-weight:bold;">${
-        col.label
-      }</span><br><button class="statut-btn">${deliveredGeneral} sur ${totalGeneral} livré${
-        totalGeneral > 1 ? "s" : ""
-      }</button>`;
-    } else {
-      th.textContent = col.label;
-    }
+    th.textContent = col.label;
     th.setAttribute("data-col-id", col.id);
     headerRow.appendChild(th);
   });
