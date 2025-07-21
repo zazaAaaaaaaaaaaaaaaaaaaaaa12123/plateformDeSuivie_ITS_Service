@@ -46,6 +46,49 @@ wss.on("connection", (ws) => {
 });
 
 // ===============================
+// ROUTE : PATCH statut BL (bl_statuses) pour une livraison
+// ===============================
+app.patch("/deliveries/:id/bl-status", async (req, res) => {
+  const { id } = req.params;
+  const { blNumber, status } = req.body || {};
+  if (!blNumber || typeof status !== "string") {
+    return res.status(400).json({
+      success: false,
+      message: "Paramètres manquants (blNumber, status)",
+    });
+  }
+  try {
+    // Récupère l'existant
+    const result = await pool.query(
+      "SELECT bl_statuses FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée" });
+    }
+    let bl_statuses = result.rows[0].bl_statuses || {};
+    if (typeof bl_statuses === "string") {
+      try {
+        bl_statuses = JSON.parse(bl_statuses);
+      } catch {
+        bl_statuses = {};
+      }
+    }
+    bl_statuses[blNumber] = status;
+    await pool.query(
+      "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2",
+      [JSON.stringify(bl_statuses), id]
+    );
+    res.json({ success: true, bl_statuses });
+  } catch (err) {
+    console.error("[PATCH /deliveries/:id/bl-status] Erreur:", err);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
+// ===============================
 // TABLE POUR RESPONSABLE DE LIVRAISON PERSISTANT
 // ===============================
 const createDeliveryResponsibleTable = `
