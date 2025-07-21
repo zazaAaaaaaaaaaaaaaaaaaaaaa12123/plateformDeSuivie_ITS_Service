@@ -629,8 +629,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   select.options[select.selectedIndex].text
                 }`
               );
+              // Met à jour le statut localement
+              delivery.container_statuses[containerNumber] = select.value;
               overlay.remove();
-              // Rafraîchir les données si besoin
+              // Rafraîchir le tableau pour afficher le nouveau statut
+              if (typeof renderAgentTableFull === "function") {
+                // On utilise la date du filtre actuel
+                const dateInput = document.getElementById(
+                  "mainTableDateFilter"
+                );
+                if (dateInput) {
+                  renderAgentTableFull(
+                    filterDeliveriesByDate(dateInput.value),
+                    document.getElementById("deliveriesTableBody")
+                  );
+                }
+              }
             } else {
               alert(
                 data.message ||
