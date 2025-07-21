@@ -459,7 +459,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.textContent = "-";
         }
-        // Fonction pour afficher le menu déroulant de BL (popup)
+        // Fonction pour afficher le menu déroulant de BL (popup) avec statut
         function showBLDetailPopup(delivery, blNumber) {
           const oldPopup = document.getElementById("blDetailPopup");
           if (oldPopup) oldPopup.remove();
@@ -498,20 +498,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           header.style.borderTopLeftRadius = "16px";
           header.style.borderTopRightRadius = "16px";
           header.innerHTML = `
-          <div style='margin-bottom:2px;'>
-            <span style='font-size:1.08em;'>${
-              delivery.employee_name || "-"
-            }</span>
-          </div>
-          <div style='font-size:0.98em;font-weight:400;'>
-            Client : <span style='color:#eab308;'>${
-              delivery.client_name || "-"
-            }</span><br>
-            Dossier : <span style='color:#eab308;'>${
-              delivery.dossier_number || "-"
-            }</span>  
-          </div>
-        `;
+            <div style='margin-bottom:2px;'>
+              <span style='font-size:1.08em;'>${
+                delivery.employee_name || "-"
+              }</span>
+            </div>
+            <div style='font-size:0.98em;font-weight:400;'>
+              Client : <span style='color:#eab308;'>${
+                delivery.client_name || "-"
+              }</span><br>
+              Dossier : <span style='color:#eab308;'>${
+                delivery.dossier_number || "-"
+              }</span>  
+            </div>
+          `;
           const closeBtn = document.createElement("button");
           closeBtn.innerHTML = "&times;";
           closeBtn.style.background = "none";
@@ -538,7 +538,87 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           blNum.style.textAlign = "center";
           blNum.innerHTML = `N° BL : <span style='color:#2563eb;'>${blNumber}</span>`;
           content.appendChild(blNum);
-          // Ajout d'autres infos si besoin (statut, etc.)
+          // Ajout du sélecteur de statut pour le BL
+          const label = document.createElement("label");
+          label.textContent = "Statut du BL :";
+          label.style.display = "block";
+          label.style.marginBottom = "8px";
+          label.style.fontWeight = "500";
+          content.appendChild(label);
+          const select = document.createElement("select");
+          select.style.width = "100%";
+          select.style.padding = "10px 12px";
+          select.style.border = "1.5px solid #2563eb";
+          select.style.borderRadius = "7px";
+          select.style.fontSize = "1.08em";
+          select.style.marginBottom = "18px";
+          select.style.background = "#fff";
+          select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
+          const statusOptions = [
+            { value: "mise_en_livraison", label: "Mise en livraison" },
+            { value: "aucun", label: "Aucun" },
+          ];
+          // On stocke le statut BL dans delivery.bl_statuses (objet clé BL)
+          if (
+            !delivery.bl_statuses ||
+            typeof delivery.bl_statuses !== "object"
+          ) {
+            delivery.bl_statuses = {};
+          }
+          let currentStatus = delivery.bl_statuses[blNumber] || "aucun";
+          if (currentStatus !== "mise_en_livraison") {
+            currentStatus = "aucun";
+          }
+          statusOptions.forEach((opt) => {
+            const option = document.createElement("option");
+            option.value = opt.value;
+            option.textContent = opt.label;
+            if (opt.value === currentStatus) option.selected = true;
+            select.appendChild(option);
+          });
+          content.appendChild(select);
+          const saveBtn = document.createElement("button");
+          saveBtn.textContent = "Enregistrer le statut";
+          saveBtn.className = "btn btn-primary w-full mt-2";
+          saveBtn.style.background =
+            "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
+          saveBtn.style.color = "#fff";
+          saveBtn.style.fontWeight = "bold";
+          saveBtn.style.fontSize = "1em";
+          saveBtn.style.border = "none";
+          saveBtn.style.borderRadius = "8px";
+          saveBtn.style.padding = "0.7em 1.7em";
+          saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
+          saveBtn.onclick = async () => {
+            let statutToSend =
+              select.value === "aucun" ? "aucun" : select.value;
+            try {
+              // Ici, on peut faire une requête PATCH pour le statut BL si besoin
+              // Exemple :
+              // await fetch(`/deliveries/${delivery.id}/bl-status`, {
+              //   method: "PATCH",
+              //   headers: { "Content-Type": "application/json" },
+              //   body: JSON.stringify({ blNumber, status: statutToSend }),
+              // });
+              delivery.bl_statuses[blNumber] = statutToSend;
+              overlay.remove();
+              // Rafraîchir le tableau si besoin
+              if (typeof renderAgentTableFull === "function") {
+                const dateInput = document.getElementById(
+                  "mainTableDateFilter"
+                );
+                if (dateInput) {
+                  renderAgentTableFull(
+                    filterDeliveriesByDate(dateInput.value),
+                    document.getElementById("deliveriesTableBody")
+                  );
+                }
+              }
+            } catch (err) {
+              alert("Erreur lors de la mise à jour du statut du BL.");
+            }
+          };
+          content.appendChild(saveBtn);
           box.appendChild(content);
           overlay.appendChild(box);
           document.body.appendChild(overlay);
