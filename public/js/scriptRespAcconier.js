@@ -628,35 +628,25 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         // ...existing code...
       } else if (col.id === "container_status") {
-        // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
-        let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        // Statut conteneur : dépend du statut des BL
+        let blList = [];
+        if (Array.isArray(delivery.bl_number)) {
+          blList = delivery.bl_number.filter(Boolean);
+        } else if (typeof delivery.bl_number === "string") {
+          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
         }
-        let statuses = tcList.map((tc) => {
-          let s =
-            delivery.container_statuses && delivery.container_statuses[tc]
-              ? delivery.container_statuses[tc]
-              : "attente_paiement";
-          if (s === "pending" || s === "attente_paiement")
-            return "En attente de paiement";
-          if (s === "mise_en_livraison") return "Mise en livraison";
-          return s;
-        });
-        let allMiseEnLivraison = statuses.every(
-          (s) => s === "Mise en livraison"
-        );
-        let allAttentePaiement = statuses.every(
-          (s) => s === "En attente de paiement"
-        );
-        if (allMiseEnLivraison) {
+        let hasMiseEnLivraison = false;
+        if (delivery.bl_statuses && typeof delivery.bl_statuses === "object") {
+          hasMiseEnLivraison = blList.some(
+            (bl) => delivery.bl_statuses[bl] === "mise_en_livraison"
+          );
+        }
+        if (hasMiseEnLivraison) {
           td.innerHTML =
             '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
         } else {
           td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de livraison</span>';
         }
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
