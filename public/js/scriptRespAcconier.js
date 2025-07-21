@@ -604,7 +604,7 @@ function renderAgentTableHeaders(tableElement, deliveries) {
       });
       th.innerHTML = `<span style="font-weight:bold;">${
         col.label
-      }</span><br><button style="margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} mise en livraison${
+      }</span><br><button style="margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
         total > 1 ? "s" : ""
       }</button>`;
     } else {
