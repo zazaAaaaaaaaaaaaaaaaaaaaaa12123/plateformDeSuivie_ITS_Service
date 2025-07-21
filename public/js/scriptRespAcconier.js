@@ -410,7 +410,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         ) {
           delivered = tcList.filter((tc) => {
             const s = delivery.container_statuses[tc];
-            return s === "livre" || s === "livré";
+            // On considère 'Mise en livraison', 'livre' ou 'livré' comme livré
+            return (
+              s === "livre" ||
+              s === "livré" ||
+              s === "mise_en_livraison" ||
+              s === "Mise en livraison"
+            );
           }).length;
         }
         td.innerHTML = `<button class="statut-btn">${delivered} sur ${total} livré${
