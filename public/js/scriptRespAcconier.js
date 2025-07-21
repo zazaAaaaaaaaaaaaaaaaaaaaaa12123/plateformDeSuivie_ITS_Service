@@ -425,12 +425,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           total > 1 ? "s" : ""
         }`;
         btn.style.position = "relative";
-        // Boîte flottante style info
+        // Boîte flottante style info, positionnée sous le bouton statut dossier
         const popup = document.createElement("div");
         popup.className = "tc-status-popup";
         popup.style.position = "absolute";
-        popup.style.left = "0";
-        popup.style.top = "110%";
+        popup.style.left = "50%";
+        popup.style.top = "calc(100% + 8px)";
+        popup.style.transform = "translateX(-50%)";
         popup.style.background = "#fff";
         popup.style.border = "2px solid #eab308";
         popup.style.borderRadius = "16px";
