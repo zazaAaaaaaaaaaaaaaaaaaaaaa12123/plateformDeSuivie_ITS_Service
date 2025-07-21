@@ -661,27 +661,33 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         // ...existing code...
       } else if (col.id === "container_status") {
-        // Afficher le statut du BL principal (premier BL de la liste)
-        let blList = [];
-        if (Array.isArray(delivery.bl_number)) {
-          blList = delivery.bl_number.filter(Boolean);
-        } else if (typeof delivery.bl_number === "string") {
-          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+        // Affichage synchronisé de tous les statuts des conteneurs
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
         }
-        let mainBL = blList.length > 0 ? blList[0] : null;
-        let status = "attente_paiement";
-        if (
-          delivery.bl_statuses &&
-          typeof delivery.bl_statuses === "object" &&
-          mainBL &&
-          delivery.bl_statuses[mainBL]
-        ) {
-          status = delivery.bl_statuses[mainBL];
-        }
-        if (status === "mise_en_livraison") {
-          td.innerHTML = `<span class='tc-tag' style='background:#e0f2fe;color:#2563eb;border:2px solid #2563eb;margin-right:4px;'><i class='fas fa-truck' style='font-size:1em;color:#2563eb;margin-right:3px;'></i> Mise en livraison</span>`;
+        if (tcList.length === 0) {
+          td.innerHTML = "-";
         } else {
-          td.innerHTML = `<span class='tc-tag' style='background:#fffbe6;color:#b45309;border:2px solid #eab308;margin-right:4px;'><i class='fas fa-clock' style='font-size:1em;color:#b45309;margin-right:3px;'></i> En attente de paiement</span>`;
+          td.innerHTML = tcList
+            .map((tc) => {
+              let status = "attente_paiement";
+              if (
+                delivery.container_statuses &&
+                typeof delivery.container_statuses === "object" &&
+                delivery.container_statuses[tc]
+              ) {
+                status = delivery.container_statuses[tc];
+              }
+              if (status === "mise_en_livraison") {
+                return `<span class='tc-tag' style='background:#e0f2fe;color:#2563eb;border:2px solid #2563eb;margin-right:4px;'><i class='fas fa-truck' style='font-size:1em;color:#2563eb;margin-right:3px;'></i> ${tc} : Mise en livraison</span>`;
+              } else {
+                return `<span class='tc-tag' style='background:#fffbe6;color:#b45309;border:2px solid #eab308;margin-right:4px;'><i class='fas fa-clock' style='font-size:1em;color:#b45309;margin-right:3px;'></i> ${tc} : En attente de paiement</span>`;
+              }
+            })
+            .join("");
         }
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
