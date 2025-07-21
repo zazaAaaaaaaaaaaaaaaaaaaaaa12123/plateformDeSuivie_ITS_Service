@@ -451,8 +451,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else if (allAttentePaiement) {
           value = "En attente de paiement";
         } else {
-          // Si mixte, affiche le statut unique si tous identiques, sinon concatène sans doublons
-          value = Array.from(new Set(statuses)).join(", ");
+          value = "Mixte";
         }
         td.textContent = value;
       } else {
