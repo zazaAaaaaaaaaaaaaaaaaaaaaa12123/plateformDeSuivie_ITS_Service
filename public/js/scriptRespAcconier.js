@@ -424,16 +424,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
         }
-        let statuses = tcList.map((tc) =>
-          delivery.container_statuses && delivery.container_statuses[tc]
-            ? delivery.container_statuses[tc]
-            : "attente_paiement"
-        );
+        let statuses = tcList.map((tc) => {
+          let s =
+            delivery.container_statuses && delivery.container_statuses[tc]
+              ? delivery.container_statuses[tc]
+              : "attente_paiement";
+          return s === "pending" ? "en attente de paiement" : s;
+        });
         let allMiseEnLivraison = statuses.every(
           (s) => s === "mise_en_livraison"
         );
         let allAttentePaiement = statuses.every(
-          (s) => s === "attente_paiement"
+          (s) => s === "en attente de paiement"
         );
         if (allMiseEnLivraison) {
           value = "mise en livraison";
