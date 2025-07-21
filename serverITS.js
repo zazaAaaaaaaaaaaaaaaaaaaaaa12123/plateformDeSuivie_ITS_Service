@@ -1397,19 +1397,6 @@ async function createTables() {
             END $$;
         `);
     }
-
-    // Ajout spécifique de la colonne bl_statuses (JSONB) si absente
-    await pool.query(`
-      DO $$ BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
-          WHERE table_name='livraison_conteneur' AND column_name='bl_statuses'
-        ) THEN
-          ALTER TABLE livraison_conteneur ADD COLUMN bl_statuses JSONB;
-          RAISE NOTICE 'Colonne bl_statuses ajoutée à la table livraison_conteneur.';
-        END IF;
-      END $$;
-    `);
   } catch (err) {
     console.error(
       "Erreur lors de la création ou mise à jour des tables :",
