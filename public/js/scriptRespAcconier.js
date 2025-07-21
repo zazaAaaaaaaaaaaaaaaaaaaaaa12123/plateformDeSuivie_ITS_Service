@@ -148,6 +148,53 @@ document.addEventListener("DOMContentLoaded", function () {
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
 
+  // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
+  let ws;
+  function setupWebSocket() {
+    // Utilise le même protocole que la page (ws ou wss)
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsUrl = proto + "://" + window.location.host;
+    ws = new WebSocket(wsUrl);
+    ws.onopen = function () {
+      //console.log("WebSocket connecté pour BL status update");
+    };
+    ws.onmessage = function (event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "bl_status_update") {
+          // Recherche la livraison concernée dans allDeliveries
+          const delivery = allDeliveries.find((d) => d.id == data.deliveryId);
+          if (delivery) {
+            // Met à jour le statut BL localement
+            if (
+              !delivery.bl_statuses ||
+              typeof delivery.bl_statuses !== "object"
+            ) {
+              delivery.bl_statuses = {};
+            }
+            delivery.bl_statuses[data.blNumber] = data.status;
+            // Met à jour l'affichage du tableau si la livraison est visible
+            const dateInput = document.getElementById("mainTableDateFilter");
+            const dateStr = dateInput ? dateInput.value : null;
+            if (dateStr) {
+              updateTableForDate(dateStr);
+            }
+          }
+        }
+      } catch (e) {
+        //console.error("Erreur WebSocket BL:", e);
+      }
+    };
+    ws.onerror = function () {
+      //console.warn("WebSocket BL error");
+    };
+    ws.onclose = function () {
+      // Reconnexion auto après 2s
+      setTimeout(setupWebSocket, 2000);
+    };
+  }
+  setupWebSocket();
+
   async function loadAllDeliveries() {
     try {
       const response = await fetch("/deliveries/status");

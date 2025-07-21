@@ -140,6 +140,24 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
     res.json({ success: true, bl_statuses });
   } catch (err) {
     console.error("[PATCH /deliveries/:id/bl-status] Erreur:", err);
+    // --- ENVOI WEBSOCKET POUR MISE À JOUR TEMPS RÉEL ---
+    const wss = req.app.get("wss");
+    const updatedDelivery = updateRes.rows[0];
+    const alertMessage = `Statut BL du N° BL '${blNumber}' mis à jour à '${status}'.`;
+    const payload = JSON.stringify({
+      type: "bl_status_update",
+      message: alertMessage,
+      deliveryId: updatedDelivery.id,
+      blNumber,
+      status,
+      bl_statuses: bl_statuses,
+      alertType: "success",
+    });
+    wss.clients.forEach((client) => {
+      if (client.readyState === require("ws").OPEN) {
+        client.send(payload);
+      }
+    });
     res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 });
