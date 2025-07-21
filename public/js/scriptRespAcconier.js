@@ -425,56 +425,57 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           total > 1 ? "s" : ""
         }`;
         btn.style.position = "relative";
-        // Boîte flottante
+        // Boîte flottante style info
         const popup = document.createElement("div");
         popup.className = "tc-status-popup";
-        popup.style.position = "fixed";
-        popup.style.left = "50%";
-        popup.style.top = "22%";
-        popup.style.transform = "translateX(-50%)";
+        popup.style.position = "absolute";
+        popup.style.left = "0";
+        popup.style.top = "110%";
         popup.style.background = "#fff";
-        popup.style.border = "2px solid #2563eb";
-        popup.style.borderRadius = "12px";
-        popup.style.boxShadow = "0 8px 32px rgba(30,41,59,0.18)";
-        popup.style.padding = "14px 22px";
-        popup.style.minWidth = "220px";
+        popup.style.border = "2px solid #eab308";
+        popup.style.borderRadius = "16px";
+        popup.style.boxShadow = "0 8px 32px rgba(234,179,8,0.18)";
+        popup.style.padding = "18px 24px";
+        popup.style.minWidth = "260px";
         popup.style.zIndex = "9999";
         popup.style.display = "none";
         popup.style.fontSize = "1.08em";
-        popup.innerHTML = tcList
-          .map((tc) => {
-            let s =
-              delivery.container_statuses && delivery.container_statuses[tc]
-                ? delivery.container_statuses[tc]
-                : "attente_paiement";
-            let statut =
-              s === "pending" || s === "attente_paiement"
-                ? "En attente de paiement"
-                : s === "mise_en_livraison" || s === "Mise en livraison"
-                ? "<span style='color:#2563eb;font-weight:600;'><i class='fas fa-truck' style='font-size:1em;color:#2563eb;'></i> Mise en livraison</span>"
-                : s;
-            return `<div style='display:flex;align-items:center;gap:8px;margin-bottom:4px;'><span style='background:#2563eb;color:#fff;padding:2px 8px;border-radius:10px;font-weight:600;'>${tc}</span> <span>${statut}</span></div>`;
-          })
-          .join("");
+        popup.innerHTML =
+          `<div style='font-weight:bold;font-size:1.13em;color:#b45309;margin-bottom:12px;'>Détail des conteneurs</div>` +
+          tcList
+            .map((tc) => {
+              let s =
+                delivery.container_statuses && delivery.container_statuses[tc]
+                  ? delivery.container_statuses[tc]
+                  : "attente_paiement";
+              let statut =
+                s === "pending" || s === "attente_paiement"
+                  ? "<span style='color:#b45309;font-weight:600;'>En attente de paiement</span>"
+                  : s === "mise_en_livraison" || s === "Mise en livraison"
+                  ? "<span style='color:#2563eb;font-weight:600;'><i class='fas fa-truck' style='font-size:1em;color:#2563eb;'></i> Mise en livraison</span>"
+                  : s;
+              return `<div style='display:flex;align-items:center;gap:10px;margin-bottom:7px;'><span style='font-weight:700;color:#0e274e;'>${tc}</span> <span style='color:#2563eb;'><i class='fas fa-info-circle' style='font-size:1em;'></i></span> ${statut}</div>`;
+            })
+            .join("");
         let popupTimeout;
-        btn.onmouseenter = () => {
+        btn.addEventListener("mouseenter", function () {
           clearTimeout(popupTimeout);
           popup.style.display = "block";
-        };
-        btn.onmouseleave = () => {
+        });
+        btn.addEventListener("mouseleave", function () {
           popupTimeout = setTimeout(() => {
             popup.style.display = "none";
           }, 180);
-        };
-        popup.onmouseenter = () => {
+        });
+        popup.addEventListener("mouseenter", function () {
           clearTimeout(popupTimeout);
           popup.style.display = "block";
-        };
-        popup.onmouseleave = () => {
+        });
+        popup.addEventListener("mouseleave", function () {
           popupTimeout = setTimeout(() => {
             popup.style.display = "none";
           }, 180);
-        };
+        });
         td.style.position = "relative";
         td.appendChild(btn);
         td.appendChild(popup);
