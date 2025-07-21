@@ -535,7 +535,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (col.id === "observation") {
           td.classList.add("observation-col");
           td.style.cursor = "pointer";
-          td.textContent = value;
+          // Récupération de la valeur locale si le serveur n'a pas encore la donnée
+          let localKey = `obs_${delivery.id}`;
+          let localObs = localStorage.getItem(localKey);
+          if (value === "-" && localObs) {
+            td.textContent = localObs;
+            td.title = localObs;
+          } else {
+            td.textContent = value;
+            td.title = value;
+            if (localObs && value && value !== "-" && value !== localObs) {
+              // Si le serveur a la vraie valeur, on supprime la locale
+              localStorage.removeItem(localKey);
+            }
+          }
           td.onclick = function (e) {
             if (td.querySelector("textarea")) return;
             let currentText =
@@ -552,6 +565,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               td.textContent = val || "-";
               td.title = val;
               td.dataset.edited = "true";
+              // Sauvegarde locale immédiate
+              if (val && val.trim() !== "") {
+                localStorage.setItem(localKey, val.trim());
+              } else {
+                localStorage.removeItem(localKey);
+              }
               // Sauvegarde côté serveur
               try {
                 await fetch(`/deliveries/${delivery.id}/observation`, {
