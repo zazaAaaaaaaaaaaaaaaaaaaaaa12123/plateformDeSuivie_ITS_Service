@@ -512,17 +512,30 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             textarea.style.width = "100%";
             textarea.style.fontSize = "1em";
             textarea.style.padding = "2px 4px";
+            // Fonction de sauvegarde
+            async function saveObservation(val) {
+              td.textContent = val || "-";
+              td.title = val;
+              td.dataset.edited = "true";
+              // Sauvegarde côté serveur
+              try {
+                await fetch(`/deliveries/${delivery.id}/observation`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ observation: val }),
+                });
+              } catch (err) {
+                // Optionnel : afficher une erreur ou un toast
+                console.error("Erreur sauvegarde observation", err);
+              }
+            }
             textarea.onkeydown = function (ev) {
               if (ev.key === "Enter") {
-                td.textContent = textarea.value || "-";
-                td.title = textarea.value;
-                td.dataset.edited = "true";
+                saveObservation(textarea.value);
               }
             };
             textarea.onblur = function () {
-              td.textContent = textarea.value || "-";
-              td.title = textarea.value;
-              td.dataset.edited = "true";
+              saveObservation(textarea.value);
             };
             td.textContent = "";
             td.appendChild(textarea);
