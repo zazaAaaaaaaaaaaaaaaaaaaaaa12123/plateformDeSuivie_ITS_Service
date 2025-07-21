@@ -655,30 +655,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
         }
-        let allAttentePaiement = true;
-        let hasMiseEnLivraison = false;
+        let status = "attente_paiement";
         if (
           delivery.container_statuses &&
           typeof delivery.container_statuses === "object"
         ) {
-          tcList.forEach((tc) => {
-            if (delivery.container_statuses[tc] === "mise_en_livraison") {
-              hasMiseEnLivraison = true;
-              allAttentePaiement = false;
-            } else if (delivery.container_statuses[tc] !== "attente_paiement") {
-              allAttentePaiement = false;
-            }
-          });
+          // On vérifie le statut du premier conteneur (tous sont identiques)
+          if (tcList.length > 0) {
+            status = delivery.container_statuses[tcList[0]];
+          }
         }
-        if (hasMiseEnLivraison) {
+        if (status === "mise_en_livraison") {
           td.innerHTML =
             '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-        } else if (allAttentePaiement) {
-          td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
         } else {
           td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#64748b;font-weight:600;"><i class="fas fa-question" style="font-size:1.1em;color:#64748b;"></i> Statut mixte</span>';
+            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
         }
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
