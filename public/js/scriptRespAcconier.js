@@ -597,13 +597,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             // Rafraîchir le tableau (utiliser la fonction de date si possible)
             const dateInput = document.getElementById("mainTableDateFilter");
             const tableBody = document.getElementById("deliveriesTableBody");
-            if (dateInput && tableBody) {
-              // Appel direct pour forcer le refresh
-              // Utiliser la fonction complète pour garantir la cohérence d'affichage
-              renderAgentTableFull(
-                filterDeliveriesByDate(dateInput.value),
-                tableBody
-              );
+            if (dateInput && tableBody && window.allDeliveries) {
+              // On utilise la source globale pour garantir la cohérence
+              const filtered = window.allDeliveries.filter((d) => {
+                let dDate = d.delivery_date || d.created_at;
+                if (!dDate) return false;
+                let dateObj = new Date(dDate);
+                dateObj.setHours(0, 0, 0, 0);
+                let inputDate = new Date(dateInput.value);
+                inputDate.setHours(0, 0, 0, 0);
+                return dateObj.getTime() === inputDate.getTime();
+              });
+              renderAgentTableFull(filtered, tableBody);
             }
           };
           content.appendChild(saveBtn);
