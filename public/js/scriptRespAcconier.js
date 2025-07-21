@@ -637,6 +637,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (dateInput && tableBody && window.allDeliveries) {
               // On utilise la source globale pour garantir la cohérence
               const filtered = window.allDeliveries.filter((d) => {
+                // Log de diagnostic : affichage des statuts conteneurs après modification
+                console.log(
+                  "Statuts conteneurs après modification:",
+                  window.allDeliveries[idx].container_statuses
+                );
                 let dDate = d.delivery_date || d.created_at;
                 if (!dDate) return false;
                 let dateObj = new Date(dDate);
