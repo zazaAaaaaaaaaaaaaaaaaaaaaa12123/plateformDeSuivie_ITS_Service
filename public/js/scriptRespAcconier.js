@@ -611,11 +611,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               select.value === "aucun" ? "aucun" : select.value;
             try {
               // Sauvegarde côté serveur du statut BL
-              await fetch(`/deliveries/${delivery.id}/bl-status`, {
+              const res = await fetch(`/deliveries/${delivery.id}/bl-status`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ blNumber, status: statutToSend }),
               });
+              if (!res.ok) {
+                let msg = "Erreur lors de la mise à jour du statut du BL.";
+                try {
+                  const errData = await res.json();
+                  if (errData && errData.error) msg += "\n" + errData.error;
+                } catch {}
+                alert(msg);
+                return;
+              }
               overlay.remove();
               // Après sauvegarde, recharge les livraisons depuis le backend pour garantir la persistance
               const dateInput = document.getElementById("mainTableDateFilter");
@@ -625,7 +634,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 updateTableForDate(dateStr);
               }
             } catch (err) {
-              alert("Erreur lors de la mise à jour du statut du BL.");
+              alert(
+                "Erreur lors de la mise à jour du statut du BL.\n" +
+                  (err && err.message ? err.message : "")
+              );
             }
           };
           content.appendChild(saveBtn);

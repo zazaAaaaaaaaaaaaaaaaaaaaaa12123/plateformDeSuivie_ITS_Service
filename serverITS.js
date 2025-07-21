@@ -15,8 +15,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
-
-// ===============================
 // === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
 // ===============================
 const PORT = process.env.PORT || 3000;
@@ -43,6 +41,64 @@ wss.on("connection", (ws) => {
   ws.on("close", () => {
     wsClients = wsClients.filter((c) => c !== ws);
   });
+});
+
+// ===============================
+// ===============================
+// PATCH: Mise à jour du statut d'un BL (champ bl_statuses)
+// ===============================
+app.patch("/deliveries/:id/bl-status", async (req, res) => {
+  const { id } = req.params;
+  const { blNumber, status } = req.body || {};
+  if (!blNumber || typeof status !== "string") {
+    return res.status(400).json({
+      success: false,
+      error: "blNumber et status sont requis.",
+    });
+  }
+  try {
+    // Récupère la livraison existante
+    const result = await pool.query(
+      "SELECT bl_statuses FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Livraison non trouvée." });
+    }
+    // Parse l'objet bl_statuses existant ou initialise
+    let bl_statuses = {};
+    if (result.rows[0].bl_statuses) {
+      try {
+        bl_statuses =
+          typeof result.rows[0].bl_statuses === "string"
+            ? JSON.parse(result.rows[0].bl_statuses)
+            : result.rows[0].bl_statuses;
+      } catch (e) {
+        bl_statuses = {};
+      }
+    }
+    // Met à jour le statut du BL demandé
+    bl_statuses[blNumber] = status;
+    // Sauvegarde dans la base
+    const updateRes = await pool.query(
+      "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2 RETURNING *;",
+      [JSON.stringify(bl_statuses), id]
+    );
+    if (updateRes.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Erreur lors de la mise à jour." });
+    }
+    res.status(200).json({ success: true, delivery: updateRes.rows[0] });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du statut BL:", err);
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur lors de la mise à jour du statut BL.",
+    });
+  }
 });
 
 // ===============================
