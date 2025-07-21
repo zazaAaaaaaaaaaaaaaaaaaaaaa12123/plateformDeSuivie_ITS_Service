@@ -495,7 +495,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   s === "Mise en livraison"
                 ) {
                   statutHtml =
-                    "<span style='color:#2563eb;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-truck' style='font-size:0.92em;color:#2563eb;'></i> mise_en_livraison</span>";
+                    "<span style='color:#2563eb;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-truck' style='font-size:0.92em;color:#2563eb;'></i> Mise en livraison</span>";
                 } else {
                   statutHtml = `<span>${s}</span>`;
                 }
