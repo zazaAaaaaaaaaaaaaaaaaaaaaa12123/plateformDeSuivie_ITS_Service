@@ -698,8 +698,60 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           saveBtn.onclick = async () => {
             let statutToSend =
               select.value === "aucun" ? "aucun" : select.value;
+            // 1. MAJ locale immédiate du statut BL
+            delivery.bl_statuses[blNumber] = statutToSend;
+            // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
+            // On retrouve la ligne du tableau correspondante
+            const tableBody = document.getElementById("deliveriesTableBody");
+            if (tableBody) {
+              // On cherche la ligne correspondant à ce delivery
+              for (let row of tableBody.rows) {
+                // On suppose que la colonne N° Dossier (dossier_number) est unique et sert d'identifiant visuel
+                let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
+                  (c) => c.id === "dossier_number"
+                );
+                if (
+                  dossierCellIdx !== -1 &&
+                  row.cells[dossierCellIdx] &&
+                  row.cells[dossierCellIdx].textContent ===
+                    String(delivery.dossier_number)
+                ) {
+                  // On a trouvé la bonne ligne
+                  let colIdx = AGENT_TABLE_COLUMNS.findIndex(
+                    (c) => c.id === "container_status"
+                  );
+                  if (colIdx !== -1 && row.cells[colIdx]) {
+                    // Recalcule le statut dossier
+                    let blList = [];
+                    if (Array.isArray(delivery.bl_number)) {
+                      blList = delivery.bl_number.filter(Boolean);
+                    } else if (typeof delivery.bl_number === "string") {
+                      blList = delivery.bl_number
+                        .split(/[,;\s]+/)
+                        .filter(Boolean);
+                    }
+                    let blStatuses = blList.map((bl) =>
+                      delivery.bl_statuses && delivery.bl_statuses[bl]
+                        ? delivery.bl_statuses[bl]
+                        : "aucun"
+                    );
+                    let allMiseEnLivraison =
+                      blStatuses.length > 0 &&
+                      blStatuses.every((s) => s === "mise_en_livraison");
+                    if (allMiseEnLivraison) {
+                      row.cells[colIdx].innerHTML =
+                        '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
+                    } else {
+                      row.cells[colIdx].innerHTML =
+                        '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+                    }
+                  }
+                  break;
+                }
+              }
+            }
+            // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
             try {
-              // Sauvegarde côté serveur du statut BL
               const res = await fetch(`/deliveries/${delivery.id}/bl-status`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -715,13 +767,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 return;
               }
               overlay.remove();
-              // Après sauvegarde, recharge les livraisons depuis le backend pour garantir la persistance
-              const dateInput = document.getElementById("mainTableDateFilter");
-              const dateStr = dateInput ? dateInput.value : null;
-              if (typeof loadAllDeliveries === "function" && dateStr) {
-                await loadAllDeliveries();
-                updateTableForDate(dateStr);
-              }
+              // Plus besoin de recharger toute la table ici
             } catch (err) {
               alert(
                 "Erreur lors de la mise à jour du statut du BL.\n" +
