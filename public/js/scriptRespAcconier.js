@@ -341,6 +341,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.textContent = "-";
         }
+      } else if (col.id === "statut" || col.id === "acconier_status") {
+        // Affichage du modèle "x sur y livré" dans chaque cellule de la colonne Statut et acconier_status
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        let total = tcList.length;
+        let delivered = 0;
+        if (
+          delivery.container_statuses &&
+          typeof delivery.container_statuses === "object"
+        ) {
+          delivered = tcList.filter((tc) => {
+            const s = delivery.container_statuses[tc];
+            return s === "livre" || s === "livré";
+          }).length;
+        }
+        td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+          total > 1 ? "s" : ""
+        }</button>`;
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         if (col.id === "observation") {
@@ -550,4 +572,45 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     });
     tableBodyElement.appendChild(tr);
   });
+}
+
+// Fonction pour générer les en-têtes du tableau Agent Acconier
+function renderAgentTableHeaders(tableElement) {
+  const thead = tableElement.querySelector("thead");
+  const headerRow = document.createElement("tr");
+  AGENT_TABLE_COLUMNS.forEach((col) => {
+    const th = document.createElement("th");
+    if (col.id === "statut" || col.id === "acconier_status") {
+      // Calcul du nombre de conteneurs livrés et total pour toutes les livraisons affichées
+      let total = 0;
+      let delivered = 0;
+      deliveries.forEach((delivery) => {
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        total += tcList.length;
+        if (
+          delivery.container_statuses &&
+          typeof delivery.container_statuses === "object"
+        ) {
+          delivered += Object.values(delivery.container_statuses).filter(
+            (s) => s === "livre" || s === "livré"
+          ).length;
+        }
+      });
+      th.innerHTML = `<span style="font-weight:bold;">${
+        col.label
+      }</span><br><button style="margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+        total > 1 ? "s" : ""
+      }</button>`;
+    } else {
+      th.textContent = col.label;
+    }
+    th.setAttribute("data-col-id", col.id);
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
 }
