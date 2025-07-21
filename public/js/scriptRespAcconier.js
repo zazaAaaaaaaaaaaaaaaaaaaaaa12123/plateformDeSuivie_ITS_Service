@@ -395,7 +395,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "-";
         }
       } else if (col.id === "statut" || col.id === "acconier_status") {
-        // Affichage du modèle "x sur y livré" + boîte flottante au survol
+        // Affichage du modèle "x sur y livré" + boîte flottante overlay au survol
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -418,88 +418,87 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             );
           }).length;
         }
-        // Création du bouton et de la boîte flottante
+        // Création du bouton
         const btn = document.createElement("button");
         btn.className = "statut-btn";
         btn.textContent = `${delivered} sur ${total} livré${
           total > 1 ? "s" : ""
         }`;
         btn.style.position = "relative";
-        // Boîte flottante style info, positionnée sous le bouton statut dossier
-        const popup = document.createElement("div");
-        popup.className = "tc-status-popup";
-        popup.style.position = "absolute";
-        popup.style.left = "0";
-        popup.style.top = "calc(100% + 8px)";
-        popup.style.background = "#fff";
-        popup.style.border = "1.5px solid #eab308";
-        popup.style.borderRadius = "12px";
-        popup.style.boxShadow = "0 4px 16px rgba(234,179,8,0.13)";
-        popup.style.padding = "10px 16px";
-        popup.style.minWidth = "220px";
-        popup.style.maxWidth = "260px";
-        popup.style.zIndex = "9999";
-        popup.style.display = "none";
-        popup.style.fontSize = "0.97em";
-        popup.style.lineHeight = "1.32";
-        popup.style.color = "#0e274e";
-        popup.style.overflow = "visible";
-        popup.innerHTML =
-          `<div style='font-weight:bold;font-size:1.08em;color:#b45309;margin-bottom:8px;text-align:left;'>Détail des conteneurs</div>` +
-          tcList
-            .map((tc) => {
-              let s =
-                delivery.container_statuses && delivery.container_statuses[tc]
-                  ? delivery.container_statuses[tc]
-                  : "attente_paiement";
-              let statutHtml = "";
-              if (
-                s === "pending" ||
-                s === "attente_paiement" ||
-                s === "en attente de paiement"
-              ) {
-                statutHtml =
-                  "<span style='color:#b45309;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-clock' style='font-size:0.92em;color:#b45309;'></i> En attente</span>";
-              } else if (
-                s === "mise_en_livraison" ||
-                s === "Mise en livraison"
-              ) {
-                statutHtml =
-                  "<span style='color:#2563eb;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-truck' style='font-size:0.92em;color:#2563eb;'></i> mise_en_livraison</span>";
-              } else {
-                statutHtml = `<span>${s}</span>`;
-              }
-              return `<div style='display:flex;align-items:center;gap:7px;margin-bottom:3px;'><span style='font-weight:700;color:#0e274e;'>${tc}</span> ${statutHtml}</div>`;
-            })
-            .join("");
-        // Correction : gestion robuste du survol pour la boîte flottante
-        let popupTimeout;
-        btn.addEventListener("mouseenter", function () {
-          clearTimeout(popupTimeout);
-          popup.style.display = "block";
+        // Gestion de la boîte flottante overlay
+        btn.addEventListener("mouseenter", function (e) {
+          // Supprimer toute autre popup existante
+          document
+            .querySelectorAll(".tc-status-popup-overlay")
+            .forEach((el) => el.remove());
+          // Créer l'overlay
+          const overlay = document.createElement("div");
+          overlay.className = "tc-status-popup-overlay";
+          overlay.style.position = "fixed";
+          overlay.style.top = "0";
+          overlay.style.left = "0";
+          overlay.style.width = "100vw";
+          overlay.style.height = "100vh";
+          overlay.style.zIndex = "99999";
+          overlay.style.display = "flex";
+          overlay.style.alignItems = "center";
+          overlay.style.justifyContent = "center";
+          // Boîte popup centrée
+          const popup = document.createElement("div");
+          popup.className = "tc-status-popup";
+          popup.style.background = "#fff";
+          popup.style.border = "1.5px solid #eab308";
+          popup.style.borderRadius = "12px";
+          popup.style.boxShadow = "0 4px 16px rgba(234,179,8,0.13)";
+          popup.style.padding = "18px 24px";
+          popup.style.minWidth = "220px";
+          popup.style.maxWidth = "340px";
+          popup.style.fontSize = "0.97em";
+          popup.style.lineHeight = "1.32";
+          popup.style.color = "#0e274e";
+          popup.style.overflow = "visible";
+          popup.innerHTML =
+            `<div style='font-weight:bold;font-size:1.08em;color:#b45309;margin-bottom:8px;text-align:left;'>Détail des conteneurs</div>` +
+            tcList
+              .map((tc) => {
+                let s =
+                  delivery.container_statuses && delivery.container_statuses[tc]
+                    ? delivery.container_statuses[tc]
+                    : "attente_paiement";
+                let statutHtml = "";
+                if (
+                  s === "pending" ||
+                  s === "attente_paiement" ||
+                  s === "en attente de paiement"
+                ) {
+                  statutHtml =
+                    "<span style='color:#b45309;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-clock' style='font-size:0.92em;color:#b45309;'></i> En attente</span>";
+                } else if (
+                  s === "mise_en_livraison" ||
+                  s === "Mise en livraison"
+                ) {
+                  statutHtml =
+                    "<span style='color:#2563eb;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-truck' style='font-size:0.92em;color:#2563eb;'></i> mise_en_livraison</span>";
+                } else {
+                  statutHtml = `<span>${s}</span>`;
+                }
+                return `<div style='display:flex;align-items:center;gap:7px;margin-bottom:3px;'><span style='font-weight:700;color:#0e274e;'>${tc}</span> ${statutHtml}</div>`;
+              })
+              .join("");
+          overlay.appendChild(popup);
+          document.body.appendChild(overlay);
+          // Fermer au mouseleave du bouton ou du popup ou au click sur overlay
+          function removeOverlay() {
+            overlay.remove();
+          }
+          btn.addEventListener("mouseleave", removeOverlay, { once: true });
+          overlay.addEventListener("mouseenter", function () {
+            btn.removeEventListener("mouseleave", removeOverlay);
+          });
+          overlay.addEventListener("mouseleave", removeOverlay);
+          overlay.addEventListener("click", removeOverlay);
         });
-        btn.addEventListener("mouseleave", function () {
-          popupTimeout = setTimeout(() => {
-            popup.style.display = "none";
-          }, 350); // délai augmenté pour laisser le temps de passer sur le popup
-        });
-        popup.addEventListener("mouseenter", function () {
-          clearTimeout(popupTimeout);
-          popup.style.display = "block";
-        });
-        popup.addEventListener("mouseleave", function () {
-          popupTimeout = setTimeout(() => {
-            popup.style.display = "none";
-          }, 350);
-        });
-        // Correction : le popup est enfant direct de la cellule td
-        btn.style.zIndex = "10001";
-        btn.style.position = "relative";
-        td.style.position = "relative";
-        td.style.overflow = "visible";
-        // ...le reste du code inchangé...
         td.appendChild(btn);
-        td.appendChild(popup);
       } else if (col.id === "container_status") {
         // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
         let tcList = [];
