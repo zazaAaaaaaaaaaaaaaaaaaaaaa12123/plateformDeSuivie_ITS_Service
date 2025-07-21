@@ -478,10 +478,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             popup.style.display = "none";
           }, 350);
         });
-        // Ajout : le popup est enfant du bouton pour garantir le stacking et le positionnement
+        // Correction : le popup est enfant direct de la cellule td
         btn.style.zIndex = "10001";
         btn.style.position = "relative";
-        // Correction visibilité : z-index très élevé, fond blanc, ombre forte
+        td.style.position = "relative";
+        td.style.overflow = "visible";
+        popup.style.position = "absolute";
+        popup.style.left = "50%";
+        popup.style.top = "calc(100% + 8px)";
+        popup.style.transform = "translateX(-50%)";
         popup.style.zIndex = "999999";
         popup.style.background = "#fff";
         popup.style.border = "2px solid #eab308";
@@ -490,11 +495,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         popup.style.padding = "18px 24px";
         popup.style.minWidth = "260px";
         popup.style.fontSize = "1.08em";
-        // S'assurer que le parent td ne masque pas le popup
-        td.style.position = "relative";
-        td.style.overflow = "visible";
-        btn.appendChild(popup);
         td.appendChild(btn);
+        td.appendChild(popup);
       } else if (col.id === "container_status") {
         // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
         let tcList = [];
