@@ -178,28 +178,34 @@ document.addEventListener("DOMContentLoaded", function () {
             if (tableBody) {
               const dateInput = document.getElementById("mainTableDateFilter");
               const dateStr = dateInput ? dateInput.value : null;
-              const filtered =
+              // On doit retrouver la livraison dans la liste filtrée (celle affichée)
+              let filtered =
                 typeof filterDeliveriesByDate === "function" && dateStr
                   ? filterDeliveriesByDate(dateStr)
                   : allDeliveries;
+              // Correction : on doit retrouver l'index dans la liste affichée (pas dans allDeliveries)
+              filtered = filtered || [];
+              // On doit aussi mettre à jour la référence dans filtered
               const idx = filtered.findIndex((d) => d.id == data.deliveryId);
               if (idx !== -1 && tableBody.rows[idx]) {
+                // On met à jour la référence du delivery dans filtered
+                filtered[idx].bl_statuses[data.blNumber] = data.status;
                 const tr = tableBody.rows[idx];
                 const colIdx = AGENT_TABLE_COLUMNS.findIndex(
                   (c) => c.id === "container_status"
                 );
                 if (colIdx !== -1 && tr.cells[colIdx]) {
                   let blList = [];
-                  if (Array.isArray(delivery.bl_number)) {
-                    blList = delivery.bl_number.filter(Boolean);
-                  } else if (typeof delivery.bl_number === "string") {
-                    blList = delivery.bl_number
+                  if (Array.isArray(filtered[idx].bl_number)) {
+                    blList = filtered[idx].bl_number.filter(Boolean);
+                  } else if (typeof filtered[idx].bl_number === "string") {
+                    blList = filtered[idx].bl_number
                       .split(/[,;\s]+/)
                       .filter(Boolean);
                   }
                   let blStatuses = blList.map((bl) =>
-                    delivery.bl_statuses && delivery.bl_statuses[bl]
-                      ? delivery.bl_statuses[bl]
+                    filtered[idx].bl_statuses && filtered[idx].bl_statuses[bl]
+                      ? filtered[idx].bl_statuses[bl]
                       : "aucun"
                   );
                   let allMiseEnLivraison =
