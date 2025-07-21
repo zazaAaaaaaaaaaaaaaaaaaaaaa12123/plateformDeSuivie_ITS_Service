@@ -431,19 +431,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           document
             .querySelectorAll(".tc-status-popup-overlay")
             .forEach((el) => el.remove());
-          // Créer l'overlay
+          // Trouver le tableau principal
+          const table = document.getElementById("deliveriesTable");
+          // Créer l'overlay positionné au-dessus du tableau
           const overlay = document.createElement("div");
           overlay.className = "tc-status-popup-overlay";
-          overlay.style.position = "fixed";
-          overlay.style.top = "0";
-          overlay.style.left = "0";
-          overlay.style.width = "100vw";
-          overlay.style.height = "100vh";
+          overlay.style.position = "absolute";
+          overlay.style.left = table ? table.offsetLeft + "px" : "0";
+          overlay.style.top = table ? table.offsetTop - 8 + "px" : "0";
+          overlay.style.width = table ? table.offsetWidth + "px" : "100%";
           overlay.style.zIndex = "99999";
-          overlay.style.display = "flex";
-          overlay.style.alignItems = "center";
-          overlay.style.justifyContent = "center";
-          // Boîte popup centrée
+          overlay.style.pointerEvents = "auto";
+          // Boîte popup alignée sur le tableau
           const popup = document.createElement("div");
           popup.className = "tc-status-popup";
           popup.style.background = "#fff";
@@ -457,6 +456,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           popup.style.lineHeight = "1.32";
           popup.style.color = "#0e274e";
           popup.style.overflow = "visible";
+          popup.style.margin = "0 auto";
+          popup.style.display = "block";
           popup.innerHTML =
             `<div style='font-weight:bold;font-size:1.08em;color:#b45309;margin-bottom:8px;text-align:left;'>Détail des conteneurs</div>` +
             tcList
@@ -486,7 +487,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               })
               .join("");
           overlay.appendChild(popup);
-          document.body.appendChild(overlay);
+          // Ajout dans le parent du tableau (pour position absolue)
+          if (table && table.parentElement) {
+            table.parentElement.appendChild(overlay);
+          } else {
+            document.body.appendChild(overlay);
+          }
           // Fermer au mouseleave du bouton ou du popup ou au click sur overlay
           function removeOverlay() {
             overlay.remove();
