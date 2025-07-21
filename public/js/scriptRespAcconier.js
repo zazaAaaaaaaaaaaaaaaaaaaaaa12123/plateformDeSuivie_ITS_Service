@@ -456,11 +456,24 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             return `<div style='display:flex;align-items:center;gap:8px;margin-bottom:4px;'><span style='background:#2563eb;color:#fff;padding:2px 8px;border-radius:10px;font-weight:600;'>${tc}</span> <span>${statut}</span></div>`;
           })
           .join("");
+        let popupTimeout;
         btn.onmouseenter = () => {
+          clearTimeout(popupTimeout);
           popup.style.display = "block";
         };
         btn.onmouseleave = () => {
-          popup.style.display = "none";
+          popupTimeout = setTimeout(() => {
+            popup.style.display = "none";
+          }, 180);
+        };
+        popup.onmouseenter = () => {
+          clearTimeout(popupTimeout);
+          popup.style.display = "block";
+        };
+        popup.onmouseleave = () => {
+          popupTimeout = setTimeout(() => {
+            popup.style.display = "none";
+          }, 180);
         };
         td.style.position = "relative";
         td.appendChild(btn);
