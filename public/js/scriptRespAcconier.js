@@ -449,13 +449,24 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 delivery.container_statuses && delivery.container_statuses[tc]
                   ? delivery.container_statuses[tc]
                   : "attente_paiement";
-              let statut =
-                s === "pending" || s === "attente_paiement"
-                  ? "<span style='color:#b45309;font-weight:600;'>En attente de paiement</span>"
-                  : s === "mise_en_livraison" || s === "Mise en livraison"
-                  ? "<span style='color:#2563eb;font-weight:600;'><i class='fas fa-truck' style='font-size:1em;color:#2563eb;'></i> Mise en livraison</span>"
-                  : s;
-              return `<div style='display:flex;align-items:center;gap:10px;margin-bottom:7px;'><span style='font-weight:700;color:#0e274e;'>${tc}</span> <span style='color:#2563eb;'><i class='fas fa-info-circle' style='font-size:1em;'></i></span> ${statut}</div>`;
+              let statutHtml = "";
+              if (
+                s === "pending" ||
+                s === "attente_paiement" ||
+                s === "en attente de paiement"
+              ) {
+                statutHtml =
+                  "<span style='color:#b45309;font-weight:600;display:inline-flex;align-items:center;gap:6px;'><i class='fas fa-clock' style='font-size:1em;color:#b45309;'></i> En attente de paiement</span>";
+              } else if (
+                s === "mise_en_livraison" ||
+                s === "Mise en livraison"
+              ) {
+                statutHtml =
+                  "<span style='color:#2563eb;font-weight:600;display:inline-flex;align-items:center;gap:6px;'><i class='fas fa-truck' style='font-size:1em;color:#2563eb;'></i> Mise en livraison</span>";
+              } else {
+                statutHtml = `<span>${s}</span>`;
+              }
+              return `<div style='display:flex;align-items:center;gap:10px;margin-bottom:7px;'><span style='font-weight:700;color:#0e274e;'>${tc}</span> <span style='color:#2563eb;'><i class='fas fa-info-circle' style='font-size:1em;'></i></span> ${statutHtml}</div>`;
             })
             .join("");
         // Correction : gestion robuste du survol pour la boîte flottante
