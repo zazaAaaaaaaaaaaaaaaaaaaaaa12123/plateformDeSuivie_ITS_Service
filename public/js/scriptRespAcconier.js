@@ -76,7 +76,8 @@ document.addEventListener("DOMContentLoaded", function () {
       color: #2563eb;
       border-bottom: 1px solid #f3f4f6;
       font-weight: 600;
-    }
+          { value: "mise_en_livraison", label: "Mise en livraison" },
+          { value: "aucun", label: "Aucun" },
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
@@ -116,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
       transition: box-shadow 0.2s;
     }
     .statut-btn:active {
-      box-shadow: 0 1px 4px rgba(234,179,8,0.18) !important;
+                  status: select.value === "aucun" ? "attente_paiement" : select.value,
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
@@ -124,11 +125,11 @@ document.addEventListener("DOMContentLoaded", function () {
         max-width: 90px;
         font-size: 0.95em;
       }
-      .statut-btn {
+                  select.value === "aucun" ? "Aucun (opération annulée)" : select.options[select.selectedIndex].text
         font-size: 0.98em !important;
         padding: 2px 10px !important;
       }
-    }
+              delivery.container_statuses[containerNumber] = select.value === "aucun" ? "attente_paiement" : select.value;
     @media (max-width: 600px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
