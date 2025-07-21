@@ -602,16 +602,29 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               // });
               delivery.bl_statuses[blNumber] = statutToSend;
               overlay.remove();
-              // Rafraîchir le tableau si besoin
-              if (typeof renderAgentTableFull === "function") {
-                const dateInput = document.getElementById(
-                  "mainTableDateFilter"
-                );
-                if (dateInput) {
-                  renderAgentTableFull(
-                    filterDeliveriesByDate(dateInput.value),
-                    document.getElementById("deliveriesTableBody")
+              // Rafraîchir le tableau en direct (sans attendre changement de date)
+              const tableBody = document.getElementById("deliveriesTableBody");
+              if (tableBody) {
+                // On récupère la liste actuellement affichée
+                let trs = Array.from(tableBody.querySelectorAll("tr"));
+                let currentDeliveries = deliveries;
+                // Si la fonction a accès à la variable deliveries, on la réutilise
+                if (Array.isArray(currentDeliveries)) {
+                  renderAgentTableRows(currentDeliveries, tableBody);
+                } else {
+                  // Sinon, on recharge la date courante
+                  const dateInput = document.getElementById(
+                    "mainTableDateFilter"
                   );
+                  if (
+                    dateInput &&
+                    typeof filterDeliveriesByDate === "function"
+                  ) {
+                    renderAgentTableRows(
+                      filterDeliveriesByDate(dateInput.value),
+                      tableBody
+                    );
+                  }
                 }
               }
             } catch (err) {
