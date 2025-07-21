@@ -153,7 +153,28 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
-        allDeliveries = data.deliveries;
+        // Ajout du statut par défaut 'en attente de paiement' pour chaque conteneur si absent
+        allDeliveries = data.deliveries.map((delivery) => {
+          // Initialisation des statuts conteneurs si absent
+          let tcList = [];
+          if (Array.isArray(delivery.container_number)) {
+            tcList = delivery.container_number.filter(Boolean);
+          } else if (typeof delivery.container_number === "string") {
+            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          if (
+            !delivery.container_statuses ||
+            typeof delivery.container_statuses !== "object"
+          ) {
+            delivery.container_statuses = {};
+          }
+          tcList.forEach((tc) => {
+            if (!delivery.container_statuses[tc]) {
+              delivery.container_statuses[tc] = "attente_paiement";
+            }
+          });
+          return delivery;
+        });
       } else {
         allDeliveries = [];
       }
@@ -395,6 +416,33 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.innerHTML = `<button class="statut-btn">${delivered} sur ${total} livré${
           total > 1 ? "s" : ""
         }</button>`;
+      } else if (col.id === "container_status") {
+        // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        let statuses = tcList.map((tc) =>
+          delivery.container_statuses && delivery.container_statuses[tc]
+            ? delivery.container_statuses[tc]
+            : "attente_paiement"
+        );
+        let allMiseEnLivraison = statuses.every(
+          (s) => s === "mise_en_livraison"
+        );
+        let allAttentePaiement = statuses.every(
+          (s) => s === "attente_paiement"
+        );
+        if (allMiseEnLivraison) {
+          value = "mise en livraison";
+        } else if (allAttentePaiement) {
+          value = "en attente de paiement";
+        } else {
+          value = statuses.join(", ");
+        }
+        td.textContent = value;
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         if (col.id === "observation") {
@@ -712,7 +760,24 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     btnBar.style.display =
       miseEnLivraisonCount > 0 || attentePaiementCount > 0 ? "flex" : "none";
   }
-  if (deliveries.length === 0) {
+  // Filtrer les livraisons à afficher dans le tableau principal :
+  // On ne montre que les livraisons où au moins un conteneur n'est pas en 'mise en livraison'
+  const deliveriesToShow = deliveries.filter((delivery) => {
+    let tcList = [];
+    if (Array.isArray(delivery.container_number)) {
+      tcList = delivery.container_number.filter(Boolean);
+    } else if (typeof delivery.container_number === "string") {
+      tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+    }
+    let statuses = tcList.map((tc) =>
+      delivery.container_statuses && delivery.container_statuses[tc]
+        ? delivery.container_statuses[tc]
+        : "attente_paiement"
+    );
+    // Si tous les conteneurs sont en 'mise en livraison', on ne l'affiche pas dans le tableau principal
+    return !statuses.every((s) => s === "mise_en_livraison");
+  });
+  if (deliveriesToShow.length === 0) {
     if (table) table.style.display = "none";
     let noDataMsg = document.getElementById("noDeliveriesMsg");
     if (!noDataMsg) {
@@ -735,8 +800,8 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     if (noDataMsg) noDataMsg.style.display = "none";
     // Utiliser la nouvelle fonction d'en-tête
     if (table) {
-      renderAgentTableHeaders(table, deliveries);
+      renderAgentTableHeaders(table, deliveriesToShow);
     }
-    renderAgentTableRows(deliveries, tableBodyElement);
+    renderAgentTableRows(deliveriesToShow, tableBodyElement);
   }
 }
