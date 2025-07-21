@@ -730,7 +730,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
       }
       tr.appendChild(td);
-      // Fonction pour afficher le menu déroulant de statut conteneur (popup)
+      // Fonction pour afficher le menu déroulant TC (popup) : uniquement infos TC
       function showContainerDetailPopup(delivery, containerNumber) {
         const oldPopup = document.getElementById("containerDetailPopup");
         if (oldPopup) oldPopup.remove();
@@ -769,18 +769,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         header.style.borderTopLeftRadius = "16px";
         header.style.borderTopRightRadius = "16px";
         header.innerHTML = `
-      <div style='margin-bottom:2px;'>
-        <span style='font-size:1.08em;'>${delivery.employee_name || "-"}</span>
-      </div>
-      <div style='font-size:0.98em;font-weight:400;'>
-        Client : <span style='color:#eab308;'>${
-          delivery.client_name || "-"
-        }</span><br>
-        Dossier : <span style='color:#eab308;'>${
-          delivery.dossier_number || "-"
-        }</span>  
-      </div>
-    `;
+          <div style='margin-bottom:2px;'>
+            <span style='font-size:1.08em;'>${
+              delivery.employee_name || "-"
+            }</span>
+          </div>
+          <div style='font-size:0.98em;font-weight:400;'>
+            Client : <span style='color:#eab308;'>${
+              delivery.client_name || "-"
+            }</span><br>
+            Dossier : <span style='color:#eab308;'>${
+              delivery.dossier_number || "-"
+            }</span>  
+          </div>
+        `;
         const closeBtn = document.createElement("button");
         closeBtn.innerHTML = "&times;";
         closeBtn.style.background = "none";
@@ -807,103 +809,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         tcNum.style.textAlign = "center";
         tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${containerNumber}</span>`;
         content.appendChild(tcNum);
-        const label = document.createElement("label");
-        label.textContent = "Statut du conteneur :";
-        label.style.display = "block";
-        label.style.marginBottom = "8px";
-        label.style.fontWeight = "500";
-        content.appendChild(label);
-        const select = document.createElement("select");
-        select.style.width = "100%";
-        select.style.padding = "10px 12px";
-        select.style.border = "1.5px solid #2563eb";
-        select.style.borderRadius = "7px";
-        select.style.fontSize = "1.08em";
-        select.style.marginBottom = "18px";
-        select.style.background = "#fff";
-        select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
-        const statusOptions = [
-          { value: "mise_en_livraison", label: "Mise en livraison" },
-          { value: "aucun", label: "Aucun" },
-        ];
-        let currentStatus =
-          delivery.container_statuses &&
-          typeof delivery.container_statuses === "object" &&
-          !Array.isArray(delivery.container_statuses) &&
-          delivery.container_statuses[containerNumber]
-            ? delivery.container_statuses[containerNumber]
-            : delivery.status || "pending";
-        // Si le statut est autre que "mise_en_livraison", on met "aucun"
-        if (currentStatus !== "mise_en_livraison") {
-          currentStatus = "aucun";
-        }
-        statusOptions.forEach((opt) => {
-          const option = document.createElement("option");
-          option.value = opt.value;
-          option.textContent = opt.label;
-          if (opt.value === currentStatus) option.selected = true;
-          select.appendChild(option);
-        });
-        content.appendChild(select);
-        const saveBtn = document.createElement("button");
-        saveBtn.textContent = "Enregistrer le statut";
-        saveBtn.className = "btn btn-primary w-full mt-2";
-        saveBtn.style.background =
-          "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
-        saveBtn.style.color = "#fff";
-        saveBtn.style.fontWeight = "bold";
-        saveBtn.style.fontSize = "1em";
-        saveBtn.style.border = "none";
-        saveBtn.style.borderRadius = "8px";
-        saveBtn.style.padding = "0.7em 1.7em";
-        saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
-        saveBtn.onclick = async () => {
-          let statutToSend =
-            select.value === "aucun" ? "en attente de paiement" : select.value;
-          try {
-            const response = await fetch(
-              `/deliveries/${delivery.id}/container-status`,
-              {
-                method: "PATCH",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  containerNumber: containerNumber,
-                  status: statutToSend,
-                }),
-              }
-            );
-            const data = await response.json();
-            if (response.ok && data.success) {
-              // Met à jour le statut localement
-              delivery.container_statuses[containerNumber] = statutToSend;
-              overlay.remove();
-              // Rafraîchir le tableau pour afficher le nouveau statut et décrémenter le bouton 'x sur y livré'
-              if (typeof renderAgentTableFull === "function") {
-                const dateInput = document.getElementById(
-                  "mainTableDateFilter"
-                );
-                if (dateInput) {
-                  renderAgentTableFull(
-                    filterDeliveriesByDate(dateInput.value),
-                    document.getElementById("deliveriesTableBody")
-                  );
-                }
-              }
-            } else {
-              alert(
-                data.message ||
-                  "Erreur lors de la mise à jour du statut du conteneur."
-              );
-            }
-          } catch (err) {
-            alert(
-              "Erreur réseau lors de la mise à jour du statut du conteneur."
-            );
-          }
-        };
-        content.appendChild(saveBtn);
         box.appendChild(content);
         overlay.appendChild(box);
         document.body.appendChild(overlay);
