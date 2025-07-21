@@ -433,16 +433,30 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             .forEach((el) => el.remove());
           // Trouver le tableau principal
           const table = document.getElementById("deliveriesTable");
-          // Créer l'overlay positionné au-dessus du tableau
+          // Créer l'overlay positionné au-dessus du tableau, centré horizontalement
           const overlay = document.createElement("div");
           overlay.className = "tc-status-popup-overlay";
           overlay.style.position = "absolute";
-          overlay.style.left = table ? table.offsetLeft + "px" : "0";
-          overlay.style.top = table ? table.offsetTop - 8 + "px" : "0";
-          overlay.style.width = table ? table.offsetWidth + "px" : "100%";
-          overlay.style.zIndex = "99999";
-          overlay.style.pointerEvents = "auto";
-          // Boîte popup alignée sur le tableau
+          if (table) {
+            // Centrage horizontal et position juste au-dessus du tableau
+            const tableRect = table.getBoundingClientRect();
+            const scrollTop =
+              window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft =
+              window.pageXOffset || document.documentElement.scrollLeft;
+            overlay.style.left = tableRect.left + scrollLeft + "px";
+            overlay.style.top = tableRect.top + scrollTop - 8 + "px";
+            overlay.style.width = tableRect.width + "px";
+            overlay.style.zIndex = "99999";
+            overlay.style.pointerEvents = "auto";
+          } else {
+            overlay.style.left = "0";
+            overlay.style.top = "0";
+            overlay.style.width = "100%";
+            overlay.style.zIndex = "99999";
+            overlay.style.pointerEvents = "auto";
+          }
+          // Boîte popup centrée sur le tableau
           const popup = document.createElement("div");
           popup.className = "tc-status-popup";
           popup.style.background = "#fff";
@@ -458,6 +472,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           popup.style.overflow = "visible";
           popup.style.margin = "0 auto";
           popup.style.display = "block";
+          popup.style.position = "relative";
+          popup.style.left = "50%";
+          popup.style.transform = "translateX(-50%)";
           popup.innerHTML =
             `<div style='font-weight:bold;font-size:1.08em;color:#b45309;margin-bottom:8px;text-align:left;'>Détail des conteneurs</div>` +
             tcList
