@@ -613,30 +613,32 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   AGENT_TABLE_COLUMNS.forEach((col) => {
     const th = document.createElement("th");
     if (col.id === "statut" || col.id === "acconier_status") {
-      // Calcul du nombre de conteneurs livrés et total pour toutes les livraisons affichées
-      let total = 0;
-      let delivered = 0;
-      deliveries.forEach((delivery) => {
-        let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        total += tcList.length;
-        if (
-          delivery.container_statuses &&
-          typeof delivery.container_statuses === "object"
-        ) {
-          delivered += Object.values(delivery.container_statuses).filter(
-            (s) => s === "livre" || s === "livré"
-          ).length;
-        }
-      });
+      // Calcul du nombre de conteneurs livrés et total pour toutes les livraisons de la plateforme (total général)
+      let totalGeneral = 0;
+      let deliveredGeneral = 0;
+      if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+        window.allDeliveries.forEach((delivery) => {
+          let tcList = [];
+          if (Array.isArray(delivery.container_number)) {
+            tcList = delivery.container_number.filter(Boolean);
+          } else if (typeof delivery.container_number === "string") {
+            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          totalGeneral += tcList.length;
+          if (
+            delivery.container_statuses &&
+            typeof delivery.container_statuses === "object"
+          ) {
+            deliveredGeneral += Object.values(
+              delivery.container_statuses
+            ).filter((s) => s === "livre" || s === "livré").length;
+          }
+        });
+      }
       th.innerHTML = `<span style="font-weight:bold;">${
         col.label
-      }</span><br><button class="statut-btn">${delivered} sur ${total} livré${
-        total > 1 ? "s" : ""
+      }</span><br><button class="statut-btn">${deliveredGeneral} sur ${totalGeneral} livré${
+        totalGeneral > 1 ? "s" : ""
       }</button>`;
     } else {
       th.textContent = col.label;
