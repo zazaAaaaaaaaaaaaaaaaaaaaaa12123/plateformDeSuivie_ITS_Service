@@ -616,29 +616,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ blNumber, status: statutToSend }),
               });
-              delivery.bl_statuses[blNumber] = statutToSend;
               overlay.remove();
-              // Rafraîchir le tableau en direct (sans attendre changement de date)
-              const tableBody = document.getElementById("deliveriesTableBody");
-              if (tableBody) {
-                let trs = Array.from(tableBody.querySelectorAll("tr"));
-                let currentDeliveries = deliveries;
-                if (Array.isArray(currentDeliveries)) {
-                  renderAgentTableRows(currentDeliveries, tableBody);
-                } else {
-                  const dateInput = document.getElementById(
-                    "mainTableDateFilter"
-                  );
-                  if (
-                    dateInput &&
-                    typeof filterDeliveriesByDate === "function"
-                  ) {
-                    renderAgentTableRows(
-                      filterDeliveriesByDate(dateInput.value),
-                      tableBody
-                    );
-                  }
-                }
+              // Après sauvegarde, recharge les livraisons depuis le backend pour garantir la persistance
+              const dateInput = document.getElementById("mainTableDateFilter");
+              const dateStr = dateInput ? dateInput.value : null;
+              if (typeof loadAllDeliveries === "function" && dateStr) {
+                await loadAllDeliveries();
+                updateTableForDate(dateStr);
               }
             } catch (err) {
               alert("Erreur lors de la mise à jour du statut du BL.");
