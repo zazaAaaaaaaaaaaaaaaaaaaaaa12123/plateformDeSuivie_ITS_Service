@@ -596,7 +596,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           saveBtn.onclick = async () => {
             let statutToSend =
               select.value === "aucun" ? "aucun" : select.value;
-
             // Mise à jour dans window.allDeliveries pour garantir le rafraîchissement
             if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
               let idx = window.allDeliveries.findIndex(
@@ -633,27 +632,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 });
               }
             }
-
             overlay.remove();
-            // Rafraîchir le tableau (utiliser la fonction de date si possible)
+            // Rafraîchir le tableau principal pour afficher le bon statut conteneur
             const dateInput = document.getElementById("mainTableDateFilter");
             const tableBody = document.getElementById("deliveriesTableBody");
             if (dateInput && tableBody && window.allDeliveries) {
-              // On utilise la source globale pour garantir la cohérence
+              // Filtrer les livraisons selon la date sélectionnée
+              let inputDate = new Date(dateInput.value);
+              inputDate.setHours(0, 0, 0, 0);
               const filtered = window.allDeliveries.filter((d) => {
-                // Log de diagnostic : affichage des statuts conteneurs après modification
-                console.log(
-                  "Statuts conteneurs après modification:",
-                  window.allDeliveries[idx].container_statuses
-                );
                 let dDate = d.delivery_date || d.created_at;
                 if (!dDate) return false;
                 let dateObj = new Date(dDate);
                 dateObj.setHours(0, 0, 0, 0);
-                let inputDate = new Date(dateInput.value);
-                inputDate.setHours(0, 0, 0, 0);
                 return dateObj.getTime() === inputDate.getTime();
               });
+              // Utiliser renderAgentTableFull pour synchroniser l'affichage
               renderAgentTableFull(filtered, tableBody);
             }
           };
