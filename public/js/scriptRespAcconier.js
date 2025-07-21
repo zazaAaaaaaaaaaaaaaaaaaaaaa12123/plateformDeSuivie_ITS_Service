@@ -366,7 +366,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "ship_name", label: "Nom du navire" },
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
-  { id: "container_status", label: "Statut conteneur" },
+  { id: "container_status", label: "Statut Dossier " },
   { id: "observation", label: "Observation" },
 ];
 
