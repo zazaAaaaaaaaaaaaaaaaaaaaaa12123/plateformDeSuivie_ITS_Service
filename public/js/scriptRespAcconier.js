@@ -648,17 +648,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         // ...existing code...
       } else if (col.id === "container_status") {
-        // Statut conteneur : dépend du statut des BL
-        let blList = [];
-        if (Array.isArray(delivery.bl_number)) {
-          blList = delivery.bl_number.filter(Boolean);
-        } else if (typeof delivery.bl_number === "string") {
-          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+        // Statut conteneur : dépend du statut réel des conteneurs
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
         }
         let hasMiseEnLivraison = false;
-        if (delivery.bl_statuses && typeof delivery.bl_statuses === "object") {
-          hasMiseEnLivraison = blList.some(
-            (bl) => delivery.bl_statuses[bl] === "mise_en_livraison"
+        if (
+          delivery.container_statuses &&
+          typeof delivery.container_statuses === "object"
+        ) {
+          hasMiseEnLivraison = tcList.some(
+            (tc) => delivery.container_statuses[tc] === "mise_en_livraison"
           );
         }
         if (hasMiseEnLivraison) {
