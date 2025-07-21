@@ -593,26 +593,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             let statutToSend =
               select.value === "aucun" ? "aucun" : select.value;
             try {
-              // Ici, on peut faire une requête PATCH pour le statut BL si besoin
-              // Exemple :
-              // await fetch(`/deliveries/${delivery.id}/bl-status`, {
-              //   method: "PATCH",
-              //   headers: { "Content-Type": "application/json" },
-              //   body: JSON.stringify({ blNumber, status: statutToSend }),
-              // });
               delivery.bl_statuses[blNumber] = statutToSend;
               overlay.remove();
-              // Rafraîchir le tableau si besoin
-              if (typeof renderAgentTableFull === "function") {
-                const dateInput = document.getElementById(
-                  "mainTableDateFilter"
+              // Rafraîchir le tableau (utiliser la fonction de date si possible)
+              const dateInput = document.getElementById("mainTableDateFilter");
+              const tableBody = document.getElementById("deliveriesTableBody");
+              if (dateInput && tableBody) {
+                // Appel direct pour forcer le refresh
+                renderAgentTableRows(
+                  filterDeliveriesByDate(dateInput.value),
+                  tableBody
                 );
-                if (dateInput) {
-                  renderAgentTableFull(
-                    filterDeliveriesByDate(dateInput.value),
-                    document.getElementById("deliveriesTableBody")
-                  );
-                }
               }
             } catch (err) {
               alert("Erreur lors de la mise à jour du statut du BL.");
