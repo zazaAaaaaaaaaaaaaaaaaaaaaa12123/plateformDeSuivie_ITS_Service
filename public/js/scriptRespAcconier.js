@@ -492,9 +492,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         popup.style.border = "2px solid #eab308";
         popup.style.borderRadius = "16px";
         popup.style.boxShadow = "0 12px 40px rgba(234,179,8,0.25)";
-        popup.style.padding = "18px 24px";
+        popup.style.padding = "22px 28px";
         popup.style.minWidth = "260px";
+        popup.style.minHeight = "80px";
         popup.style.fontSize = "1.08em";
+        popup.style.color = "#0e274e";
+        popup.style.overflow = "visible";
         td.appendChild(btn);
         td.appendChild(popup);
       } else if (col.id === "container_status") {
