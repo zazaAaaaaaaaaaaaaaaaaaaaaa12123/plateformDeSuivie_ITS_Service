@@ -153,8 +153,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
+        // Ajout du statut par défaut 'en attente de paiement' pour chaque conteneur si absent
         allDeliveries = data.deliveries.map((delivery) => {
-          // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
           // Initialisation des statuts conteneurs si absent
           let tcList = [];
           if (Array.isArray(delivery.container_number)) {
@@ -173,23 +173,6 @@ document.addEventListener("DOMContentLoaded", function () {
               delivery.container_statuses[tc] = "attente_paiement";
             }
           });
-          // S'assurer que bl_statuses est bien un objet (si string JSON, parser)
-          if (
-            delivery.bl_statuses &&
-            typeof delivery.bl_statuses === "string"
-          ) {
-            try {
-              delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
-            } catch {
-              delivery.bl_statuses = {};
-            }
-          }
-          if (
-            !delivery.bl_statuses ||
-            typeof delivery.bl_statuses !== "object"
-          ) {
-            delivery.bl_statuses = {};
-          }
           return delivery;
         });
       } else {
@@ -610,34 +593,42 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             let statutToSend =
               select.value === "aucun" ? "aucun" : select.value;
             try {
-              // Sauvegarde côté serveur du statut BL
-              const res = await fetch(`/deliveries/${delivery.id}/bl-status`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ blNumber, status: statutToSend }),
-              });
-              if (!res.ok) {
-                let msg = "Erreur lors de la mise à jour du statut du BL.";
-                try {
-                  const errData = await res.json();
-                  if (errData && errData.error) msg += "\n" + errData.error;
-                } catch {}
-                alert(msg);
-                return;
-              }
+              // Ici, on peut faire une requête PATCH pour le statut BL si besoin
+              // Exemple :
+              // await fetch(`/deliveries/${delivery.id}/bl-status`, {
+              //   method: "PATCH",
+              //   headers: { "Content-Type": "application/json" },
+              //   body: JSON.stringify({ blNumber, status: statutToSend }),
+              // });
+              delivery.bl_statuses[blNumber] = statutToSend;
               overlay.remove();
-              // Après sauvegarde, recharge les livraisons depuis le backend pour garantir la persistance
-              const dateInput = document.getElementById("mainTableDateFilter");
-              const dateStr = dateInput ? dateInput.value : null;
-              if (typeof loadAllDeliveries === "function" && dateStr) {
-                await loadAllDeliveries();
-                updateTableForDate(dateStr);
+              // Rafraîchir le tableau en direct (sans attendre changement de date)
+              const tableBody = document.getElementById("deliveriesTableBody");
+              if (tableBody) {
+                // On récupère la liste actuellement affichée
+                let trs = Array.from(tableBody.querySelectorAll("tr"));
+                let currentDeliveries = deliveries;
+                // Si la fonction a accès à la variable deliveries, on la réutilise
+                if (Array.isArray(currentDeliveries)) {
+                  renderAgentTableRows(currentDeliveries, tableBody);
+                } else {
+                  // Sinon, on recharge la date courante
+                  const dateInput = document.getElementById(
+                    "mainTableDateFilter"
+                  );
+                  if (
+                    dateInput &&
+                    typeof filterDeliveriesByDate === "function"
+                  ) {
+                    renderAgentTableRows(
+                      filterDeliveriesByDate(dateInput.value),
+                      tableBody
+                    );
+                  }
+                }
               }
             } catch (err) {
-              alert(
-                "Erreur lors de la mise à jour du statut du BL.\n" +
-                  (err && err.message ? err.message : "")
-              );
+              alert("Erreur lors de la mise à jour du statut du BL.");
             }
           };
           content.appendChild(saveBtn);
