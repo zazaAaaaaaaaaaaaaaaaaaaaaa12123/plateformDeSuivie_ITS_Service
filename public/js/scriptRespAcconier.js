@@ -393,6 +393,159 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.textContent = "-";
         }
+      } else if (col.id === "bl_number") {
+        // Rendu avancé pour N° BL : badge/tag et menu déroulant popup
+        let blList = [];
+        if (Array.isArray(delivery.bl_number)) {
+          blList = delivery.bl_number.filter(Boolean);
+        } else if (typeof delivery.bl_number === "string") {
+          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        if (blList.length > 1) {
+          td.classList.add("tc-multi-cell");
+          const btn = document.createElement("button");
+          btn.className = "tc-tags-btn";
+          btn.type = "button";
+          btn.innerHTML =
+            blList
+              .slice(0, 2)
+              .map((bl) => `<span class=\"tc-tag\">${bl}</span>`)
+              .join("") +
+            (blList.length > 2
+              ? ` <span class=\"tc-tag tc-tag-more\">+${
+                  blList.length - 2
+                }</span>`
+              : "") +
+            ' <i class="fas fa-chevron-down tc-chevron"></i>';
+          const popup = document.createElement("div");
+          popup.className = "tc-popup";
+          popup.style.display = "none";
+          popup.innerHTML = blList
+            .map(
+              (bl) =>
+                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${bl}</div>`
+            )
+            .join("");
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            document.querySelectorAll(".tc-popup").forEach((p) => {
+              if (p !== popup) p.style.display = "none";
+            });
+            popup.style.display =
+              popup.style.display === "block" ? "none" : "block";
+          };
+          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
+            item.onclick = (ev) => {
+              ev.stopPropagation();
+              popup.style.display = "none";
+              showBLDetailPopup(delivery, item.textContent);
+            };
+          });
+          document.addEventListener("click", function hidePopup(e) {
+            if (!td.contains(e.target)) popup.style.display = "none";
+          });
+          td.appendChild(btn);
+          td.appendChild(popup);
+        } else if (blList.length === 1) {
+          const tag = document.createElement("span");
+          tag.className = "tc-tag";
+          tag.textContent = blList[0];
+          tag.style.cursor = "pointer";
+          tag.onclick = (e) => {
+            e.stopPropagation();
+            showBLDetailPopup(delivery, blList[0]);
+          };
+          td.appendChild(tag);
+        } else {
+          td.textContent = "-";
+        }
+        // Fonction pour afficher le menu déroulant de BL (popup)
+        function showBLDetailPopup(delivery, blNumber) {
+          const oldPopup = document.getElementById("blDetailPopup");
+          if (oldPopup) oldPopup.remove();
+          const overlay = document.createElement("div");
+          overlay.id = "blDetailPopup";
+          overlay.style.position = "fixed";
+          overlay.style.top = 0;
+          overlay.style.left = 0;
+          overlay.style.width = "100vw";
+          overlay.style.height = "100vh";
+          overlay.style.background = "rgba(30,41,59,0.45)";
+          overlay.style.zIndex = 9999;
+          overlay.style.display = "flex";
+          overlay.style.alignItems = "center";
+          overlay.style.justifyContent = "center";
+          const box = document.createElement("div");
+          box.style.background = "#fff";
+          box.style.borderRadius = "16px";
+          box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+          box.style.maxWidth = "420px";
+          box.style.width = "96vw";
+          box.style.maxHeight = "92vh";
+          box.style.overflowY = "auto";
+          box.style.padding = "0";
+          box.style.position = "relative";
+          box.style.display = "flex";
+          box.style.flexDirection = "column";
+          const header = document.createElement("div");
+          header.style.background = "#2563eb";
+          header.style.color = "#fff";
+          header.style.padding = "18px 28px 12px 28px";
+          header.style.fontWeight = "bold";
+          header.style.fontSize = "1.15rem";
+          header.style.display = "flex";
+          header.style.flexDirection = "column";
+          header.style.borderTopLeftRadius = "16px";
+          header.style.borderTopRightRadius = "16px";
+          header.innerHTML = `
+          <div style='margin-bottom:2px;'>
+            <span style='font-size:1.08em;'>${
+              delivery.employee_name || "-"
+            }</span>
+          </div>
+          <div style='font-size:0.98em;font-weight:400;'>
+            Client : <span style='color:#eab308;'>${
+              delivery.client_name || "-"
+            }</span><br>
+            Dossier : <span style='color:#eab308;'>${
+              delivery.dossier_number || "-"
+            }</span>  
+          </div>
+        `;
+          const closeBtn = document.createElement("button");
+          closeBtn.innerHTML = "&times;";
+          closeBtn.style.background = "none";
+          closeBtn.style.border = "none";
+          closeBtn.style.color = "#fff";
+          closeBtn.style.fontSize = "2.1rem";
+          closeBtn.style.cursor = "pointer";
+          closeBtn.style.position = "absolute";
+          closeBtn.style.top = "10px";
+          closeBtn.style.right = "18px";
+          closeBtn.setAttribute("aria-label", "Fermer");
+          closeBtn.onclick = () => overlay.remove();
+          header.appendChild(closeBtn);
+          box.appendChild(header);
+          const content = document.createElement("div");
+          content.style.padding = "24px 24px 24px 24px";
+          content.style.background = "#f8fafc";
+          content.style.flex = "1 1 auto";
+          content.style.overflowY = "auto";
+          const blNum = document.createElement("div");
+          blNum.style.fontSize = "1.25em";
+          blNum.style.fontWeight = "bold";
+          blNum.style.marginBottom = "18px";
+          blNum.style.textAlign = "center";
+          blNum.innerHTML = `N° BL : <span style='color:#2563eb;'>${blNumber}</span>`;
+          content.appendChild(blNum);
+          // Ajout d'autres infos si besoin (statut, etc.)
+          box.appendChild(content);
+          overlay.appendChild(box);
+          document.body.appendChild(overlay);
+          overlay.onclick = (e) => {
+            if (e.target === overlay) overlay.remove();
+          };
+        }
         // ...existing code...
       } else if (col.id === "container_status") {
         // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
