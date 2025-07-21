@@ -282,6 +282,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
   { id: "statut", label: "Statut" },
+  { id: "container_status", label: "Statut conteneur" },
   { id: "observation", label: "Observation" },
 ];
 
