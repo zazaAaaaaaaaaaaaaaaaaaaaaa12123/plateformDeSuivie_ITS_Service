@@ -481,9 +481,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // Ajout : le popup est enfant du bouton pour garantir le stacking et le positionnement
         btn.style.zIndex = "10001";
         btn.style.position = "relative";
-        popup.style.zIndex = "10002";
-        btn.appendChild(popup);
+        // Correction visibilité : z-index très élevé, fond blanc, ombre forte
+        popup.style.zIndex = "999999";
+        popup.style.background = "#fff";
+        popup.style.border = "2px solid #eab308";
+        popup.style.borderRadius = "16px";
+        popup.style.boxShadow = "0 12px 40px rgba(234,179,8,0.25)";
+        popup.style.padding = "18px 24px";
+        popup.style.minWidth = "260px";
+        popup.style.fontSize = "1.08em";
+        // S'assurer que le parent td ne masque pas le popup
         td.style.position = "relative";
+        td.style.overflow = "visible";
+        btn.appendChild(popup);
         td.appendChild(btn);
       } else if (col.id === "container_status") {
         // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
