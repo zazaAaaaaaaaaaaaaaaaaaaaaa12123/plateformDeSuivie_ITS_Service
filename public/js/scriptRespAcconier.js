@@ -430,19 +430,23 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         popup.className = "tc-status-popup";
         popup.style.position = "absolute";
         popup.style.left = "50%";
-        popup.style.top = "calc(100% + 8px)";
+        popup.style.top = "calc(100% + 4px)";
         popup.style.transform = "translateX(-50%)";
         popup.style.background = "#fff";
-        popup.style.border = "2px solid #eab308";
-        popup.style.borderRadius = "16px";
-        popup.style.boxShadow = "0 8px 32px rgba(234,179,8,0.18)";
-        popup.style.padding = "18px 24px";
-        popup.style.minWidth = "260px";
+        popup.style.border = "1.5px solid #eab308";
+        popup.style.borderRadius = "10px";
+        popup.style.boxShadow = "0 4px 16px rgba(234,179,8,0.13)";
+        popup.style.padding = "8px 12px";
+        popup.style.minWidth = "150px";
+        popup.style.maxWidth = "220px";
         popup.style.zIndex = "9999";
         popup.style.display = "none";
-        popup.style.fontSize = "1.08em";
+        popup.style.fontSize = "0.97em";
+        popup.style.lineHeight = "1.32";
+        popup.style.color = "#0e274e";
+        popup.style.overflow = "visible";
         popup.innerHTML =
-          `<div style='font-weight:bold;font-size:1.13em;color:#b45309;margin-bottom:12px;'>Détail des conteneurs</div>` +
+          `<div style='font-weight:bold;font-size:1em;color:#b45309;margin-bottom:5px;text-align:center;'>Détail des conteneurs</div>` +
           tcList
             .map((tc) => {
               let s =
@@ -456,17 +460,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 s === "en attente de paiement"
               ) {
                 statutHtml =
-                  "<span style='color:#b45309;font-weight:600;display:inline-flex;align-items:center;gap:6px;'><i class='fas fa-clock' style='font-size:1em;color:#b45309;'></i> En attente de paiement</span>";
+                  "<span style='color:#b45309;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-clock' style='font-size:0.92em;color:#b45309;'></i> En attente de paiement</span>";
               } else if (
                 s === "mise_en_livraison" ||
                 s === "Mise en livraison"
               ) {
                 statutHtml =
-                  "<span style='color:#2563eb;font-weight:600;display:inline-flex;align-items:center;gap:6px;'><i class='fas fa-truck' style='font-size:1em;color:#2563eb;'></i> Mise en livraison</span>";
+                  "<span style='color:#2563eb;font-weight:600;display:inline-flex;align-items:center;gap:3px;'><i class='fas fa-truck' style='font-size:0.92em;color:#2563eb;'></i> Mise en livraison</span>";
               } else {
                 statutHtml = `<span>${s}</span>`;
               }
-              return `<div style='display:flex;align-items:center;gap:10px;margin-bottom:7px;'><span style='font-weight:700;color:#0e274e;'>${tc}</span> <span style='color:#2563eb;'><i class='fas fa-info-circle' style='font-size:1em;'></i></span> ${statutHtml}</div>`;
+              return `<div style='display:flex;align-items:center;gap:5px;margin-bottom:2px;'><span style='font-weight:700;color:#0e274e;'>${tc}</span> <span style='color:#2563eb;'><i class='fas fa-info-circle' style='font-size:0.90em;'></i></span> ${statutHtml}</div>`;
             })
             .join("");
         // Correction : gestion robuste du survol pour la boîte flottante
