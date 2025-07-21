@@ -628,29 +628,21 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         // ...existing code...
       } else if (col.id === "container_status") {
-        // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
-        let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
+        let blList = [];
+        if (Array.isArray(delivery.bl_number)) {
+          blList = delivery.bl_number.filter(Boolean);
+        } else if (typeof delivery.bl_number === "string") {
+          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
         }
-        let statuses = tcList.map((tc) => {
-          let s =
-            delivery.container_statuses && delivery.container_statuses[tc]
-              ? delivery.container_statuses[tc]
-              : "attente_paiement";
-          if (s === "pending" || s === "attente_paiement")
-            return "En attente de paiement";
-          if (s === "mise_en_livraison") return "Mise en livraison";
-          return s;
-        });
-        let allMiseEnLivraison = statuses.every(
-          (s) => s === "Mise en livraison"
+        let blStatuses = blList.map((bl) =>
+          delivery.bl_statuses && delivery.bl_statuses[bl]
+            ? delivery.bl_statuses[bl]
+            : "aucun"
         );
-        let allAttentePaiement = statuses.every(
-          (s) => s === "En attente de paiement"
-        );
+        let allMiseEnLivraison =
+          blStatuses.length > 0 &&
+          blStatuses.every((s) => s === "mise_en_livraison");
         if (allMiseEnLivraison) {
           td.innerHTML =
             '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
