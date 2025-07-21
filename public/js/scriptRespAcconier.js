@@ -433,19 +433,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             .forEach((el) => el.remove());
           // Trouver le tableau principal
           const table = document.getElementById("deliveriesTable");
-          // Créer l'overlay positionné au-dessus du tableau, centré horizontalement
+          // Créer l'overlay positionné au-dessus du tableau, centré horizontalement et avec un margin-top pour éviter l'entrecroisement
           const overlay = document.createElement("div");
           overlay.className = "tc-status-popup-overlay";
           overlay.style.position = "absolute";
           if (table) {
-            // Centrage horizontal et position juste au-dessus du tableau
             const tableRect = table.getBoundingClientRect();
             const scrollTop =
               window.pageYOffset || document.documentElement.scrollTop;
             const scrollLeft =
               window.pageXOffset || document.documentElement.scrollLeft;
             overlay.style.left = tableRect.left + scrollLeft + "px";
-            overlay.style.top = tableRect.top + scrollTop - 8 + "px";
+            overlay.style.top = tableRect.top + scrollTop - 24 + "px";
             overlay.style.width = tableRect.width + "px";
             overlay.style.zIndex = "99999";
             overlay.style.pointerEvents = "auto";
@@ -456,13 +455,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             overlay.style.zIndex = "99999";
             overlay.style.pointerEvents = "auto";
           }
-          // Boîte popup centrée sur le tableau
+          // Boîte popup centrée sur le tableau, avec ombre plus prononcée et margin-top
           const popup = document.createElement("div");
           popup.className = "tc-status-popup";
           popup.style.background = "#fff";
           popup.style.border = "1.5px solid #eab308";
           popup.style.borderRadius = "12px";
-          popup.style.boxShadow = "0 4px 16px rgba(234,179,8,0.13)";
+          popup.style.boxShadow = "0 8px 32px rgba(234,179,8,0.18)";
           popup.style.padding = "18px 24px";
           popup.style.minWidth = "220px";
           popup.style.maxWidth = "340px";
