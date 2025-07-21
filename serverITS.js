@@ -1295,7 +1295,7 @@ async function createTables() {
   try {
     await pool.query(creationTableLivraisonConteneur);
     console.log("Table livraison_conteneur créée ou déjà existante.");
-
+    //
     // Assurez-vous que delivery_date et delivery_time sont bien NULLABLE
     const columnsToMakeNullable = ["delivery_date", "delivery_time"];
 
