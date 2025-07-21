@@ -76,8 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
       color: #2563eb;
       border-bottom: 1px solid #f3f4f6;
       font-weight: 600;
-          { value: "mise_en_livraison", label: "Mise en livraison" },
-          { value: "aucun", label: "Aucun" },
+    }
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
@@ -117,7 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
       transition: box-shadow 0.2s;
     }
     .statut-btn:active {
-                  status: select.value === "aucun" ? "attente_paiement" : select.value,
+      box-shadow: 0 1px 4px rgba(234,179,8,0.18) !important;
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
@@ -125,11 +124,11 @@ document.addEventListener("DOMContentLoaded", function () {
         max-width: 90px;
         font-size: 0.95em;
       }
-                  select.value === "aucun" ? "Aucun (opération annulée)" : select.options[select.selectedIndex].text
+      .statut-btn {
         font-size: 0.98em !important;
         padding: 2px 10px !important;
       }
-              delivery.container_statuses[containerNumber] = select.value === "aucun" ? "attente_paiement" : select.value;
+    }
     @media (max-width: 600px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
       #deliveriesTable tbody td:not(:nth-child(5)) {
@@ -441,11 +440,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           if (s === "mise_en_livraison") return "Mise en livraison";
           return s;
         });
-        let hasMiseEnLivraison = statuses.includes("Mise en livraison");
-        if (hasMiseEnLivraison) {
+        let allMiseEnLivraison = statuses.every(
+          (s) => s === "Mise en livraison"
+        );
+        let allAttentePaiement = statuses.every(
+          (s) => s === "En attente de paiement"
+        );
+        if (allMiseEnLivraison) {
           value = "Mise en livraison";
-        } else {
+        } else if (allAttentePaiement) {
           value = "En attente de paiement";
+        } else {
+          value = "Mixte";
         }
         td.textContent = value;
       } else {
