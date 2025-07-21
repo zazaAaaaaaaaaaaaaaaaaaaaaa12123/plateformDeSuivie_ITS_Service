@@ -428,19 +428,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // Boîte flottante
         const popup = document.createElement("div");
         popup.className = "tc-status-popup";
-        popup.style.position = "absolute";
+        popup.style.position = "fixed";
         popup.style.left = "50%";
+        popup.style.top = "22%";
         popup.style.transform = "translateX(-50%)";
-        popup.style.top = "110%";
         popup.style.background = "#fff";
         popup.style.border = "2px solid #2563eb";
         popup.style.borderRadius = "12px";
-        popup.style.boxShadow = "0 4px 16px rgba(30,41,59,0.13)";
-        popup.style.padding = "10px 18px";
-        popup.style.minWidth = "180px";
-        popup.style.zIndex = "1003";
+        popup.style.boxShadow = "0 8px 32px rgba(30,41,59,0.18)";
+        popup.style.padding = "14px 22px";
+        popup.style.minWidth = "220px";
+        popup.style.zIndex = "9999";
         popup.style.display = "none";
-        popup.style.fontSize = "1em";
+        popup.style.fontSize = "1.08em";
         popup.innerHTML = tcList
           .map((tc) => {
             let s =
