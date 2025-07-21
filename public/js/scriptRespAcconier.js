@@ -509,28 +509,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           } else {
             document.body.appendChild(overlay);
           }
-          // Correction du clignotement : le popup reste affiché tant que la souris est sur le bouton ou le popup
-          let isOverBtn = true;
-          let isOverPopup = false;
-          function removeOverlay() {
-            if (!isOverBtn && !isOverPopup) overlay.remove();
+          // Correction du clignotement : timer global pour éviter la suppression trop rapide
+          let removeTimer = null;
+          function clearRemoveTimer() {
+            if (removeTimer) {
+              clearTimeout(removeTimer);
+              removeTimer = null;
+            }
           }
-          btn.addEventListener("mouseleave", function () {
-            isOverBtn = false;
-            setTimeout(removeOverlay, 120);
-          });
-          btn.addEventListener("mouseenter", function () {
-            isOverBtn = true;
-          });
-          overlay.addEventListener("mouseenter", function () {
-            isOverPopup = true;
-          });
-          overlay.addEventListener("mouseleave", function () {
-            isOverPopup = false;
-            setTimeout(removeOverlay, 120);
-          });
+          function scheduleRemoveOverlay() {
+            clearRemoveTimer();
+            removeTimer = setTimeout(() => {
+              overlay.remove();
+            }, 220);
+          }
+          btn.addEventListener("mouseleave", scheduleRemoveOverlay);
+          btn.addEventListener("mouseenter", clearRemoveTimer);
+          overlay.addEventListener("mouseenter", clearRemoveTimer);
+          overlay.addEventListener("mouseleave", scheduleRemoveOverlay);
           overlay.addEventListener("click", function () {
             overlay.remove();
+            clearRemoveTimer();
           });
         });
         td.appendChild(btn);
