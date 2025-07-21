@@ -458,6 +458,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               return `<div style='display:flex;align-items:center;gap:10px;margin-bottom:7px;'><span style='font-weight:700;color:#0e274e;'>${tc}</span> <span style='color:#2563eb;'><i class='fas fa-info-circle' style='font-size:1em;'></i></span> ${statut}</div>`;
             })
             .join("");
+        // Correction : gestion robuste du survol pour la boîte flottante
         let popupTimeout;
         btn.addEventListener("mouseenter", function () {
           clearTimeout(popupTimeout);
@@ -466,7 +467,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         btn.addEventListener("mouseleave", function () {
           popupTimeout = setTimeout(() => {
             popup.style.display = "none";
-          }, 180);
+          }, 350); // délai augmenté pour laisser le temps de passer sur le popup
         });
         popup.addEventListener("mouseenter", function () {
           clearTimeout(popupTimeout);
@@ -475,11 +476,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         popup.addEventListener("mouseleave", function () {
           popupTimeout = setTimeout(() => {
             popup.style.display = "none";
-          }, 180);
+          }, 350);
         });
+        // Ajout : le popup est enfant du bouton pour garantir le stacking et le positionnement
+        btn.style.zIndex = "10001";
+        btn.style.position = "relative";
+        popup.style.zIndex = "10002";
+        btn.appendChild(popup);
         td.style.position = "relative";
         td.appendChild(btn);
-        td.appendChild(popup);
       } else if (col.id === "container_status") {
         // Statut conteneur : si tous les conteneurs sont en 'mise en livraison', afficher ce statut, sinon 'en attente de paiement' ou mixte
         let tcList = [];
