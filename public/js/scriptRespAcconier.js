@@ -153,8 +153,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
-        // Ajout du statut par défaut 'en attente de paiement' pour chaque conteneur si absent
         allDeliveries = data.deliveries.map((delivery) => {
+          // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
           // Initialisation des statuts conteneurs si absent
           let tcList = [];
           if (Array.isArray(delivery.container_number)) {
@@ -173,6 +173,23 @@ document.addEventListener("DOMContentLoaded", function () {
               delivery.container_statuses[tc] = "attente_paiement";
             }
           });
+          // S'assurer que bl_statuses est bien un objet (si string JSON, parser)
+          if (
+            delivery.bl_statuses &&
+            typeof delivery.bl_statuses === "string"
+          ) {
+            try {
+              delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+            } catch {
+              delivery.bl_statuses = {};
+            }
+          }
+          if (
+            !delivery.bl_statuses ||
+            typeof delivery.bl_statuses !== "object"
+          ) {
+            delivery.bl_statuses = {};
+          }
           return delivery;
         });
       } else {
