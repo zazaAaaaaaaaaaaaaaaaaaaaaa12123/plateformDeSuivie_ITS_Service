@@ -173,11 +173,47 @@ document.addEventListener("DOMContentLoaded", function () {
               delivery.bl_statuses = {};
             }
             delivery.bl_statuses[data.blNumber] = data.status;
-            // Met à jour l'affichage du tableau si la livraison est visible
-            const dateInput = document.getElementById("mainTableDateFilter");
-            const dateStr = dateInput ? dateInput.value : null;
-            if (dateStr) {
-              updateTableForDate(dateStr);
+            // Mise à jour dynamique de la ligne du tableau (sans recharger toute la table)
+            const tableBody = document.getElementById("deliveriesTableBody");
+            if (tableBody) {
+              const dateInput = document.getElementById("mainTableDateFilter");
+              const dateStr = dateInput ? dateInput.value : null;
+              const filtered =
+                typeof filterDeliveriesByDate === "function" && dateStr
+                  ? filterDeliveriesByDate(dateStr)
+                  : allDeliveries;
+              const idx = filtered.findIndex((d) => d.id == data.deliveryId);
+              if (idx !== -1 && tableBody.rows[idx]) {
+                const tr = tableBody.rows[idx];
+                const colIdx = AGENT_TABLE_COLUMNS.findIndex(
+                  (c) => c.id === "container_status"
+                );
+                if (colIdx !== -1 && tr.cells[colIdx]) {
+                  let blList = [];
+                  if (Array.isArray(delivery.bl_number)) {
+                    blList = delivery.bl_number.filter(Boolean);
+                  } else if (typeof delivery.bl_number === "string") {
+                    blList = delivery.bl_number
+                      .split(/[,;\s]+/)
+                      .filter(Boolean);
+                  }
+                  let blStatuses = blList.map((bl) =>
+                    delivery.bl_statuses && delivery.bl_statuses[bl]
+                      ? delivery.bl_statuses[bl]
+                      : "aucun"
+                  );
+                  let allMiseEnLivraison =
+                    blStatuses.length > 0 &&
+                    blStatuses.every((s) => s === "mise_en_livraison");
+                  if (allMiseEnLivraison) {
+                    tr.cells[colIdx].innerHTML =
+                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
+                  } else {
+                    tr.cells[colIdx].innerHTML =
+                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+                  }
+                }
+              }
             }
           }
         }
