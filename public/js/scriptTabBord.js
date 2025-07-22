@@ -154,56 +154,6 @@ function ouvrirPopupDemandesCodeEntreprise() {
 
 // --- Attache le bouton sidebar pour ouvrir la popup demandes code entreprise ---
 document.addEventListener("DOMContentLoaded", function () {
-  // --- WebSocket temps réel pour les nouvelles livraisons (ordre de livraison créé) ---
-  let wsLivraison = null;
-  function initWebSocketLivraison() {
-    const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
-    try {
-      wsLivraison = new WebSocket(wsUrl);
-      wsLivraison.onopen = function () {
-        console.debug("[WebSocket] Connecté pour livraisons (tableauDeBord)");
-      };
-      wsLivraison.onmessage = function (event) {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "new_delivery_created") {
-            // Afficher une alerte et rafraîchir la liste des livraisons si besoin
-            showCustomAlert(
-              "Nouvel ordre de livraison reçu !",
-              "success",
-              3000
-            );
-            // Rafraîchir la vue si une fonction existe (à adapter selon votre logique)
-            if (typeof window.afficherSuivi === "function") {
-              // Si la section de suivi est visible, on la recharge
-              const suiviContainer = document.getElementById("suiviContainer");
-              if (suiviContainer && suiviContainer.style.display !== "none") {
-                window.afficherSuivi();
-              }
-            }
-            // Sinon, recharger la page ou la section concernée si besoin
-          }
-        } catch (e) {
-          console.warn("[WebSocket] Message non JSON ou erreur :", event.data);
-        }
-      };
-      wsLivraison.onclose = function () {
-        console.warn(
-          "[WebSocket] Livraison déconnecté. Reconnexion dans 10s..."
-        );
-        setTimeout(initWebSocketLivraison, 10000);
-      };
-      wsLivraison.onerror = function () {
-        wsLivraison.close();
-      };
-    } catch (e) {
-      console.error("[WebSocket] Erreur d'init livraison :", e);
-    }
-  }
-  if (window["WebSocket"]) {
-    initWebSocketLivraison();
-  }
   // --- Met à jour le badge du nombre de demandes (même si la popup n'est pas ouverte)
   function updateBadgeDemandesCodeEntreprise() {
     fetch(`${window.API_BASE_URL}/api/demande-code-entreprise`)

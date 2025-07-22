@@ -6769,7 +6769,11 @@ if (window["WebSocket"]) {
         // On affiche le message du backend si présent
         if (data.type === "new_delivery_notification") {
           // Message personnalisé pour la création d'une nouvelle livraison
-          message = "Le Responsable Acconier a envoyé une requête.";
+          const agent =
+            data.delivery && data.delivery.employee_name
+              ? data.delivery.employee_name
+              : "Un agent";
+          message = `L'agent <b>${agent}</b> a établi un ordre de livraison.`;
           type = "success";
         } else if (data.message) {
           message = data.message;
