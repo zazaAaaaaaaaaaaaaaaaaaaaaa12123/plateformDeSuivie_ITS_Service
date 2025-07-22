@@ -326,7 +326,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la date
   function updateTableForDate(dateStr) {
     const filtered = filterDeliveriesByDate(dateStr);
-    renderAgentTableRows(filtered, tableBody);
+    renderAgentTableFull(filtered, tableBody);
   }
 
   // Initialisation : charge toutes les livraisons puis affiche la date du jour
