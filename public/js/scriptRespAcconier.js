@@ -148,15 +148,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
 
-  // --- AJOUT : Connexion WebSocket pour maj temps réel BL et synchronisation automatique ---
+  // --- Connexion WebSocket pour maj temps réel BL et suppression instantanée ---
   let ws;
   function setupWebSocket() {
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = proto + "://" + window.location.host;
     ws = new WebSocket(wsUrl);
-    ws.onopen = function () {
-      //console.log("WebSocket connecté pour BL status update");
-    };
+    ws.onopen = function () {};
     ws.onmessage = function (event) {
       try {
         const data = JSON.parse(event.data);
@@ -164,26 +162,83 @@ document.addEventListener("DOMContentLoaded", function () {
           data.type === "bl_status_update" &&
           data.status === "mise_en_livraison"
         ) {
-          // Recharge toute la liste et met à jour le tableau (suppression automatique)
-          const dateInput = document.getElementById("mainTableDateFilter");
-          const dateStr = dateInput ? dateInput.value : null;
+          // Suppression instantanée de la ligne du tableau si tous les BL sont en 'mise_en_livraison'
+          const tableBody = document.getElementById("deliveriesTableBody");
+          if (!tableBody) return;
+          // On cherche la livraison concernée dans window.allDeliveries
+          const delivery = (window.allDeliveries || []).find(
+            (d) => d.id == data.deliveryId
+          );
+          if (!delivery) return;
+          // Mettre à jour le statut local du BL concerné
+          if (!delivery.bl_statuses) delivery.bl_statuses = {};
+          delivery.bl_statuses[data.blNumber] = data.status;
+          // Vérifier si tous les BL sont en 'mise_en_livraison'
+          let blList = [];
+          if (Array.isArray(delivery.bl_number)) {
+            blList = delivery.bl_number.filter(Boolean);
+          } else if (typeof delivery.bl_number === "string") {
+            blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          let blStatuses = blList.map((bl) =>
+            delivery.bl_statuses && delivery.bl_statuses[bl]
+              ? delivery.bl_statuses[bl]
+              : "aucun"
+          );
           if (
-            typeof loadAllDeliveries === "function" &&
-            typeof updateTableForDate === "function" &&
-            dateStr
+            blList.length > 0 &&
+            blStatuses.every((s) => s === "mise_en_livraison")
           ) {
-            loadAllDeliveries().then(() => {
-              updateTableForDate(dateStr);
-            });
+            // Supprimer la ligne du DOM
+            for (let row of tableBody.rows) {
+              let dossierCellIdx = window.AGENT_TABLE_COLUMNS.findIndex(
+                (c) => c.id === "dossier_number"
+              );
+              if (
+                dossierCellIdx !== -1 &&
+                row.cells[dossierCellIdx] &&
+                row.cells[dossierCellIdx].textContent ===
+                  String(delivery.dossier_number)
+              ) {
+                row.remove();
+                break;
+              }
+            }
+          } else {
+            // Sinon, mettre à jour le statut dossier dans la colonne sans reload
+            for (let row of tableBody.rows) {
+              let dossierCellIdx = window.AGENT_TABLE_COLUMNS.findIndex(
+                (c) => c.id === "dossier_number"
+              );
+              if (
+                dossierCellIdx !== -1 &&
+                row.cells[dossierCellIdx] &&
+                row.cells[dossierCellIdx].textContent ===
+                  String(delivery.dossier_number)
+              ) {
+                let colIdx = window.AGENT_TABLE_COLUMNS.findIndex(
+                  (c) => c.id === "container_status"
+                );
+                if (colIdx !== -1 && row.cells[colIdx]) {
+                  let allMiseEnLivraison =
+                    blStatuses.length > 0 &&
+                    blStatuses.every((s) => s === "mise_en_livraison");
+                  if (allMiseEnLivraison) {
+                    row.cells[colIdx].innerHTML =
+                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
+                  } else {
+                    row.cells[colIdx].innerHTML =
+                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+                  }
+                }
+                break;
+              }
+            }
           }
         }
-      } catch (e) {
-        //console.error("Erreur WebSocket BL:", e);
-      }
+      } catch (e) {}
     };
-    ws.onerror = function () {
-      //console.warn("WebSocket BL error");
-    };
+    ws.onerror = function () {};
     ws.onclose = function () {
       setTimeout(setupWebSocket, 2000);
     };
@@ -987,64 +1042,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
     btnBar.style.display = attentePaiementCount > 0 ? "flex" : "none";
   }
-  // Suppression instantanée de la ligne du tableau dès que tous les BL sont en 'mise_en_livraison'
-  document.addEventListener("DOMContentLoaded", function () {
-    if (typeof WebSocket !== "undefined") {
-      const proto = window.location.protocol === "https:" ? "wss" : "ws";
-      const wsUrl = proto + "://" + window.location.host;
-      const ws = new WebSocket(wsUrl);
-      ws.onmessage = function (event) {
-        try {
-          const data = JSON.parse(event.data);
-          if (
-            data.type === "bl_status_update" &&
-            data.status === "mise_en_livraison"
-          ) {
-            // Chercher la ligne à supprimer instantanément
-            const tableBody = document.getElementById("deliveriesTableBody");
-            if (!tableBody) return;
-            // On cherche la livraison concernée dans window.allDeliveries
-            const delivery = (window.allDeliveries || []).find(
-              (d) => d.id == data.deliveryId
-            );
-            if (!delivery) return;
-            // Vérifier si tous les BL sont en 'mise_en_livraison'
-            let blList = [];
-            if (Array.isArray(delivery.bl_number)) {
-              blList = delivery.bl_number.filter(Boolean);
-            } else if (typeof delivery.bl_number === "string") {
-              blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-            }
-            let blStatuses = blList.map((bl) =>
-              delivery.bl_statuses && delivery.bl_statuses[bl]
-                ? delivery.bl_statuses[bl]
-                : "aucun"
-            );
-            if (
-              blList.length > 0 &&
-              blStatuses.every((s) => s === "mise_en_livraison")
-            ) {
-              // Supprimer la ligne du DOM
-              for (let row of tableBody.rows) {
-                let dossierCellIdx = window.AGENT_TABLE_COLUMNS.findIndex(
-                  (c) => c.id === "dossier_number"
-                );
-                if (
-                  dossierCellIdx !== -1 &&
-                  row.cells[dossierCellIdx] &&
-                  row.cells[dossierCellIdx].textContent ===
-                    String(delivery.dossier_number)
-                ) {
-                  row.remove();
-                  break;
-                }
-              }
-            }
-          }
-        } catch (e) {}
-      };
-    }
-  });
+  // ...
   // Filtrer les livraisons à afficher dans le tableau principal :
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
