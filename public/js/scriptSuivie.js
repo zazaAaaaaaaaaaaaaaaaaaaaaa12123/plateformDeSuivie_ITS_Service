@@ -6761,8 +6761,13 @@ if (window["WebSocket"]) {
     };
 
     socket.onmessage = async (event) => {
+      console.log("[WS][FRONT] Message WebSocket brut reçu:", event.data);
       // --- Affichage d'un message lors des notifications WebSocket (modification, suppression, etc.) ---
       function showWebSocketNotification(data) {
+        console.log(
+          "[WS][FRONT] showWebSocketNotification appelée avec:",
+          data
+        );
         if (!data || !data.type) return;
         let message = "";
         let type = "info";
@@ -6803,6 +6808,7 @@ if (window["WebSocket"]) {
       }
       try {
         const message = JSON.parse(event.data);
+        console.log("[WS][FRONT] Message WebSocket parsé:", message);
         // Affiche une notification à chaque réception d'un message pertinent
         const typesToNotify = [
           "delivery_update_alert",
@@ -6845,7 +6851,7 @@ if (window["WebSocket"]) {
           }
         }
       } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
+        console.error("[WS][FRONT] Erreur parsing WebSocket message:", error);
       }
     };
 
