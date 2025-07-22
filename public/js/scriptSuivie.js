@@ -3013,7 +3013,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     if (loadingOverlay) loadingOverlay.style.display = "flex";
     try {
       const deletePromises = deliveryIds.map((id) =>
-        fetch(`http://localhost:3000/deliveries/${id}`, {
+        fetch(`/deliveries/${id}`, {
           method: "DELETE",
         }).then((response) => {
           if (!response.ok) {
@@ -3037,11 +3037,21 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       );
       console.log(`${deliveryIds.length} deliveries deleted successfully.`);
 
-      await loadDeliveries();
+      // Suppression instantanée dans le tableau principal (lateContainers)
+      if (window.lateContainers && Array.isArray(window.lateContainers)) {
+        window.lateContainers = window.lateContainers.filter(
+          (item) =>
+            !deliveryIds.includes(item.id) &&
+            !deliveryIds.includes(item.dossier)
+        );
+        if (typeof renderLateDossiersTable === "function")
+          renderLateDossiersTable();
+      }
+
       // Clear main view if the selected delivery was among the deleted ones
       if (selectedDeliveryId && deliveryIds.includes(selectedDeliveryId)) {
         singleDeliveryView.innerHTML = `
-                        <i class="fas fa-hand-pointer text-5xl mb-4 text-gray-300"></i>
+                        <i class=\"fas fa-hand-pointer text-5xl mb-4 text-gray-300\"></i>
                         <p>Cliquez sur une demande ci-dessus pour la consulter en détail.</p>
                     `;
         singleDeliveryView.classList.add(
