@@ -231,7 +231,8 @@ document.addEventListener("DOMContentLoaded", function () {
             showSuccessToast(
               "Requête effectuée et envoyée au responsable de livraison."
             );
-            // Toast notification (vert, pro)
+
+            // Toast notification (vert, pro, en haut)
             function showSuccessToast(message) {
               // Supprimer tout toast existant
               const oldToast = document.getElementById("custom-success-toast");
@@ -240,7 +241,7 @@ document.addEventListener("DOMContentLoaded", function () {
               toast.id = "custom-success-toast";
               toast.textContent = message;
               toast.style.position = "fixed";
-              toast.style.bottom = "32px";
+              toast.style.top = "32px";
               toast.style.left = "50%";
               toast.style.transform = "translateX(-50%)";
               toast.style.background =
