@@ -610,7 +610,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction principale pour charger et afficher selon la plage de dates
   function updateTableForDateRange(dateStartStr, dateEndStr) {
-    const filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
+    let filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
+    // Tri du plus ancien au plus récent (ordre croissant)
+    filtered.sort((a, b) => {
+      let dateA = new Date(
+        a.delivery_date || a.created_at || a.Date || a["Date Livraison"]
+      );
+      let dateB = new Date(
+        b.delivery_date || b.created_at || b.Date || b["Date Livraison"]
+      );
+      return dateA - dateB;
+    });
     renderAgentTableFull(filtered, tableBody);
   }
 
