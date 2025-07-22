@@ -8619,89 +8619,24 @@ if (window["WebSocket"]) {
       });
   });
 
-  // ====== AJOUT : Filtre par plage de dates (début/fin) ======
-  // Création des deux inputs date si pas déjà présents
-  let mainTableDateFilterStart = document.getElementById(
-    "mainTableDateFilterStart"
-  );
-  let mainTableDateFilterEnd = document.getElementById(
-    "mainTableDateFilterEnd"
-  );
-  const mainTableDateFilterOld = document.getElementById("mainTableDateFilter");
-  if (!mainTableDateFilterStart || !mainTableDateFilterEnd) {
-    if (mainTableDateFilterOld) {
-      // Remplace l'ancien input par deux nouveaux
-      const parent = mainTableDateFilterOld.parentNode;
-      mainTableDateFilterStart = document.createElement("input");
-      mainTableDateFilterStart.type = "date";
-      mainTableDateFilterStart.id = "mainTableDateFilterStart";
-      mainTableDateFilterStart.className = mainTableDateFilterOld.className;
-      mainTableDateFilterStart.style.marginRight = "8px";
-      mainTableDateFilterStart.style.width = "auto";
-      mainTableDateFilterStart.style.display = "inline-block";
-      mainTableDateFilterStart.placeholder = "Date début";
+  if (mainTableDateFilter) {
+    const year = currentMainFilterDate.getFullYear();
+    const month = String(currentMainFilterDate.getMonth() + 1).padStart(2, "0");
+    const day = String(currentMainFilterDate.getDate()).padStart(2, "0");
 
-      mainTableDateFilterEnd = document.createElement("input");
-      mainTableDateFilterEnd.type = "date";
-      mainTableDateFilterEnd.id = "mainTableDateFilterEnd";
-      mainTableDateFilterEnd.className = mainTableDateFilterOld.className;
-      mainTableDateFilterEnd.style.marginLeft = "8px";
-      mainTableDateFilterEnd.style.width = "auto";
-      mainTableDateFilterEnd.style.display = "inline-block";
-      mainTableDateFilterEnd.placeholder = "Date fin";
+    const formattedDateForInput = `${year}-${month}-${day}`;
 
-      parent.insertBefore(mainTableDateFilterStart, mainTableDateFilterOld);
-      parent.insertBefore(
-        mainTableDateFilterEnd,
-        mainTableDateFilterOld.nextSibling
-      );
-      mainTableDateFilterOld.style.display = "none";
-    }
+    console.log("Applying date to filter input:", formattedDateForInput);
+    mainTableDateFilter.value = formattedDateForInput;
+    updateAgentStatusIndicator();
+    mainTableDateFilter.addEventListener("change", () => {
+      updateAgentStatusIndicator();
+    });
+  } else {
+    console.error(
+      "Error: The element #mainTableDateFilter was not found in the DOM!"
+    );
   }
-
-  // Initialisation des valeurs par défaut (aujourd'hui)
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  const todayStr = `${yyyy}-${mm}-${dd}`;
-  if (mainTableDateFilterStart && !mainTableDateFilterStart.value)
-    mainTableDateFilterStart.value = todayStr;
-  if (mainTableDateFilterEnd && !mainTableDateFilterEnd.value)
-    mainTableDateFilterEnd.value = todayStr;
-
-  // Ajout des listeners pour filtrer à chaque changement
-  if (mainTableDateFilterStart) {
-    mainTableDateFilterStart.addEventListener("change", () => {
-      localStorage.setItem(
-        "mainTableFilterDateStart",
-        mainTableDateFilterStart.value
-      );
-      applyCombinedFilters();
-    });
-    mainTableDateFilterStart.addEventListener("input", () => {
-      if (!mainTableDateFilterStart.value) {
-        localStorage.removeItem("mainTableFilterDateStart");
-        applyCombinedFilters();
-      }
-    });
-  }
-  if (mainTableDateFilterEnd) {
-    mainTableDateFilterEnd.addEventListener("change", () => {
-      localStorage.setItem(
-        "mainTableFilterDateEnd",
-        mainTableDateFilterEnd.value
-      );
-      applyCombinedFilters();
-    });
-    mainTableDateFilterEnd.addEventListener("input", () => {
-      if (!mainTableDateFilterEnd.value) {
-        localStorage.removeItem("mainTableFilterDateEnd");
-        applyCombinedFilters();
-      }
-    });
-  }
-
   await loadDeliveries(); // This now triggers applyCombinedFilters()
 
   // Initialize WebSocket connection AFTER initial data load
@@ -8757,7 +8692,22 @@ if (window["WebSocket"]) {
     populateStatusFilter();
   }
 
-  // Suppression de l'ancien listener sur mainTableDateFilter (remplacé par deux inputs)
+  if (mainTableDateFilter) {
+    mainTableDateFilter.addEventListener("change", (e) => {
+      currentMainFilterDate = normalizeDateToMidnight(new Date(e.target.value));
+      localStorage.setItem("mainTableFilterDate", e.target.value);
+      applyCombinedFilters();
+    });
+    mainTableDateFilter.addEventListener("input", () => {
+      if (!mainTableDateFilter.value) {
+        // If the date input is cleared, set currentMainFilterDate to today for the scrolling bar
+        // and clear the main table filter.
+        currentMainFilterDate = normalizeDateToMidnight(new Date()); // Default to today for scrolling bar
+        localStorage.removeItem("mainTableFilterDate");
+        applyCombinedFilters(); // This will render the main table for all dates if filter is empty
+      }
+    });
+  }
 
   if (searchButton) {
     searchButton.addEventListener("click", () => {
@@ -9302,53 +9252,9 @@ if (window["WebSocket"]) {
   // Appelle le clignotement après chaque rendu du tableau principal
   const originalApplyCombinedFilters =
     window.applyCombinedFilters || applyCombinedFilters;
-  // Surcharge applyCombinedFilters pour intégrer le filtre par plage de dates
   window.applyCombinedFilters = function (...args) {
-    // Récupère les dates de filtre
-    let startDateStr = mainTableDateFilterStart
-      ? mainTableDateFilterStart.value
-      : null;
-    let endDateStr = mainTableDateFilterEnd
-      ? mainTableDateFilterEnd.value
-      : null;
-    let startDate = startDateStr ? new Date(startDateStr) : null;
-    let endDate = endDateStr ? new Date(endDateStr) : null;
-    if (endDate) endDate.setHours(23, 59, 59, 999); // Inclure toute la journée de fin
-
-    // Patch du filtre principal : on filtre deliveries selon la plage de dates
-    if (
-      typeof deliveries !== "undefined" &&
-      Array.isArray(deliveries) &&
-      (startDate || endDate)
-    ) {
-      window.filteredDeliveries = deliveries.filter((d) => {
-        if (!d.created_at) return false;
-        let dDate = new Date(d.created_at);
-        if (startDate && dDate < startDate) return false;
-        if (endDate && dDate > endDate) return false;
-        return true;
-      });
-    } else {
-      window.filteredDeliveries = deliveries;
-    }
-
-    // Appel du filtre combiné d'origine (qui va utiliser filteredDeliveries si défini)
     originalApplyCombinedFilters.apply(this, args);
-
-    // Après rendu, renumérote dynamiquement la colonne N°
-    setTimeout(() => {
-      if (deliveriesTableBody) {
-        let rows = deliveriesTableBody.querySelectorAll("tr");
-        let num = 1;
-        rows.forEach((tr) => {
-          let tdNum = tr.querySelector(
-            "td[data-column-id='numero'], td.numero, td:first-child"
-          );
-          if (tdNum) tdNum.textContent = num++;
-        });
-      }
-      forceBlinkOnNewRows();
-    }, 50);
+    setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
