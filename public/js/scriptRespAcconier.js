@@ -227,6 +227,8 @@ document.addEventListener("DOMContentLoaded", function () {
             if (typeof updateTableForDate === "function") {
               updateTableForDate(currentFilterDate);
             }
+            // Afficher une alerte de confirmation
+            alert("Requête effectuée et envoyée au responsable de livraison.");
           } else if (normalized === currentFilterDate) {
             // Sinon, mettre à jour le statut dossier dans la colonne sans reload
             const tableBody = document.getElementById("deliveriesTableBody");
