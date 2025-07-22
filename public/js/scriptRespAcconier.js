@@ -26,8 +26,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  // Corrected: Removed the misplaced JavaScript code from inside the CSS string.
-  styleTC.textContent = `
+  const newLocal = (styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -58,6 +57,74 @@ document.addEventListener("DOMContentLoaded", function () {
       white-space: nowrap;
     }
     #deliveriesTableBody .tc-popup {
+            // 2bis. Suppression instantanée de la ligne si tous les BL sont en 'mise_en_livraison'
+            let blList = [];
+            if (Array.isArray(delivery.bl_number)) {
+              blList = delivery.bl_number.filter(Boolean);
+            } else if (typeof delivery.bl_number === "string") {
+              blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+            }
+            let blStatuses = blList.map((bl) =>
+              delivery.bl_statuses && delivery.bl_statuses[bl]
+                ? delivery.bl_statuses[bl]
+                : "aucun"
+            );
+            let allMiseEnLivraison =
+              blStatuses.length > 0 &&
+              blStatuses.every((s) => s === "mise_en_livraison");
+            if (allMiseEnLivraison) {
+              // Supprimer la livraison de window.allDeliveries
+              window.allDeliveries = (window.allDeliveries || []).filter(
+                (d) => String(d.id) !== String(delivery.id)
+              );
+              // Synchroniser la variable locale si utilisée
+              if (typeof allDeliveries !== "undefined") {
+                allDeliveries = window.allDeliveries;
+              }
+              // Forcer le re-rendu du tableau avec la plage de dates courante
+              const dateStartInput = document.getElementById("mainTableDateStartFilter");
+              const dateEndInput = document.getElementById("mainTableDateEndFilter");
+              if (typeof updateTableForDateRange === "function") {
+                const startVal = dateStartInput ? dateStartInput.value : "";
+                const endVal = dateEndInput ? dateEndInput.value : "";
+                updateTableForDateRange(startVal, endVal);
+              }
+              // Afficher un toast de confirmation élégant
+              if (typeof showSuccessToast === "function") {
+                showSuccessToast("Requête effectuée et envoyée au responsable de livraison.");
+              } else {
+                // Fallback toast simple
+                const oldToast = document.getElementById("custom-success-toast");
+                if (oldToast) oldToast.remove();
+                const toast = document.createElement("div");
+                toast.id = "custom-success-toast";
+                toast.textContent = "Requête effectuée et envoyée au responsable de livraison.";
+                toast.style.position = "fixed";
+                toast.style.top = "32px";
+                toast.style.left = "50%";
+                toast.style.transform = "translateX(-50%)";
+                toast.style.background = "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
+                toast.style.color = "#fff";
+                toast.style.fontWeight = "bold";
+                toast.style.fontSize = "1.12em";
+                toast.style.padding = "18px 38px";
+                toast.style.borderRadius = "16px";
+                toast.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
+                toast.style.zIndex = 99999;
+                toast.style.opacity = "0";
+                toast.style.transition = "opacity 0.3s";
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                  toast.style.opacity = "1";
+                }, 10);
+                setTimeout(() => {
+                  toast.style.opacity = "0";
+                  setTimeout(() => toast.remove(), 400);
+                }, 2600);
+              }
+              overlay.remove();
+              return;
+            }
       position: absolute;
       background: #fff;
       border: 2px solid #2563eb;
@@ -141,7 +208,7 @@ document.addEventListener("DOMContentLoaded", function () {
         padding: 2px 6px !important;
       }
     }
-  `;
+  `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   // Ajout des deux champs de date (début et fin)
@@ -199,9 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = proto + "://" + window.location.host;
     ws = new WebSocket(wsUrl);
-    ws.onopen = function () {
-      console.log("[WebSocket] Connected.");
-    };
+    ws.onopen = function () {};
     ws.onmessage = function (event) {
       console.log("[DEBUG] ws.onmessage triggered", event.data);
 
@@ -437,13 +502,9 @@ document.addEventListener("DOMContentLoaded", function () {
           }
           const currentFilterDate = dateInput ? dateInput.value : null;
           if (normalized === currentFilterDate) {
-            // Note: updateTableForDate is not defined in the provided code.
-            // Assuming it should call updateTableForDateRange or renderAgentTableFull directly.
-            // For now, it's commented out to avoid errors if not defined elsewhere.
-            // if (typeof updateTableForDate === "function") {
-            //   updateTableForDate(currentFilterDate);
-            // }
-            updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+            if (typeof updateTableForDate === "function") {
+              updateTableForDate(currentFilterDate);
+            }
           }
           // Affiche une alerte avec le nom de l'agent
           const agentName = normalizedDelivery.employee_name || "-";
@@ -453,12 +514,8 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("WebSocket BL error:", e);
       }
     };
-    ws.onerror = function (error) {
-      console.error("[WebSocket] Error:", error);
-    };
-    ws.onclose = function (event) {
-      console.log("[WebSocket] Disconnected:", event.code, event.reason);
-      // Attempt to reconnect after a delay
+    ws.onerror = function () {};
+    ws.onclose = function () {
       setTimeout(setupWebSocket, 2000);
     };
   }
@@ -944,7 +1001,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               }</span><br>
               Dossier : <span style='color:#eab308;'>${
                 delivery.dossier_number || "-"
-              }</span>
+              }</span>  
             </div>
           `;
           const closeBtn = document.createElement("button");
@@ -1092,18 +1149,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   const errData = await res.json();
                   if (errData && errData.error) msg += "\n" + errData.error;
                 } catch {}
-                // Using a custom message box instead of alert()
-                showCustomMessageBox(msg, "Error");
+                alert(msg);
                 return;
               }
               overlay.remove();
               // Plus besoin de recharger toute la table ici
             } catch (err) {
-              // Using a custom message box instead of alert()
-              showCustomMessageBox(
+              alert(
                 "Erreur lors de la mise à jour du statut du BL.\n" +
-                  (err && err.message ? err.message : ""),
-                "Error"
+                  (err && err.message ? err.message : "")
               );
             }
           };
@@ -1261,7 +1315,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             }</span><br>
             Dossier : <span style='color:#eab308;'>${
               delivery.dossier_number || "-"
-            }</span>
+            }</span>  
           </div>
         `;
         const closeBtn = document.createElement("button");
@@ -1319,6 +1373,7 @@ function renderAgentTableHeaders(tableElement, deliveries) {
 // Fonction pour générer le tableau Agent Acconier complet
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
+  // ...
   // Filtrer les livraisons à afficher dans le tableau principal :
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
@@ -1367,59 +1422,4 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
     renderAgentTableRows(deliveriesToShow, tableBodyElement);
   }
-}
-
-// Custom message box function (replacement for alert())
-function showCustomMessageBox(message, type = "Info") {
-  const existingMessageBox = document.getElementById("customMessageBox");
-  if (existingMessageBox) {
-    existingMessageBox.remove();
-  }
-
-  const messageBox = document.createElement("div");
-  messageBox.id = "customMessageBox";
-  messageBox.style.position = "fixed";
-  messageBox.style.top = "50%";
-  messageBox.style.left = "50%";
-  messageBox.style.transform = "translate(-50%, -50%)";
-  messageBox.style.backgroundColor = "#fff";
-  messageBox.style.padding = "20px";
-  messageBox.style.borderRadius = "8px";
-  messageBox.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.2)";
-  messageBox.style.zIndex = "10000";
-  messageBox.style.maxWidth = "400px";
-  messageBox.style.width = "90%";
-  messageBox.style.textAlign = "center";
-  messageBox.style.fontFamily = "Arial, sans-serif";
-
-  const title = document.createElement("h3");
-  title.style.marginTop = "0";
-  title.style.marginBottom = "15px";
-  if (type === "Error") {
-    title.style.color = "#dc3545";
-    title.textContent = "Erreur !";
-  } else {
-    title.style.color = "#007bff";
-    title.textContent = "Information";
-  }
-  messageBox.appendChild(title);
-
-  const content = document.createElement("p");
-  content.textContent = message;
-  content.style.marginBottom = "20px";
-  messageBox.appendChild(content);
-
-  const closeButton = document.createElement("button");
-  closeButton.textContent = "OK";
-  closeButton.style.padding = "10px 20px";
-  closeButton.style.border = "none";
-  closeButton.style.borderRadius = "5px";
-  closeButton.style.backgroundColor = "#007bff";
-  closeButton.style.color = "#fff";
-  closeButton.style.cursor = "pointer";
-  closeButton.style.fontSize = "16px";
-  closeButton.onclick = () => messageBox.remove();
-  messageBox.appendChild(closeButton);
-
-  document.body.appendChild(messageBox);
 }
