@@ -8619,24 +8619,6 @@ if (window["WebSocket"]) {
       });
   });
 
-  if (mainTableDateFilter) {
-    const year = currentMainFilterDate.getFullYear();
-    const month = String(currentMainFilterDate.getMonth() + 1).padStart(2, "0");
-    const day = String(currentMainFilterDate.getDate()).padStart(2, "0");
-
-    const formattedDateForInput = `${year}-${month}-${day}`;
-
-    console.log("Applying date to filter input:", formattedDateForInput);
-    mainTableDateFilter.value = formattedDateForInput;
-    updateAgentStatusIndicator();
-    mainTableDateFilter.addEventListener("change", () => {
-      updateAgentStatusIndicator();
-    });
-  } else {
-    console.error(
-      "Error: The element #mainTableDateFilter was not found in the DOM!"
-    );
-  }
   await loadDeliveries(); // This now triggers applyCombinedFilters()
 
   // Initialize WebSocket connection AFTER initial data load
@@ -8690,23 +8672,6 @@ if (window["WebSocket"]) {
   if (statusFilterSelect) {
     statusFilterSelect.addEventListener("change", applyCombinedFilters);
     populateStatusFilter();
-  }
-
-  if (mainTableDateFilter) {
-    mainTableDateFilter.addEventListener("change", (e) => {
-      currentMainFilterDate = normalizeDateToMidnight(new Date(e.target.value));
-      localStorage.setItem("mainTableFilterDate", e.target.value);
-      applyCombinedFilters();
-    });
-    mainTableDateFilter.addEventListener("input", () => {
-      if (!mainTableDateFilter.value) {
-        // If the date input is cleared, set currentMainFilterDate to today for the scrolling bar
-        // and clear the main table filter.
-        currentMainFilterDate = normalizeDateToMidnight(new Date()); // Default to today for scrolling bar
-        localStorage.removeItem("mainTableFilterDate");
-        applyCombinedFilters(); // This will render the main table for all dates if filter is empty
-      }
-    });
   }
 
   if (searchButton) {
@@ -9044,10 +9009,10 @@ if (window["WebSocket"]) {
   window.uniqueEmployees = uniqueEmployees;
   window.loadDeliveries = loadDeliveries;
   window.showCustomAlert = showCustomAlert;
-  window.normalizeDateToMidnight = normalizeDateToMidnight;
+  // window.normalizeDateToMidnight = normalizeDateToMidnight;
   window.getStatusInfo = getStatusInfo;
   window.selectedAgentName = selectedAgentName;
-  window.currentAgentActivityDate = currentAgentActivityDate;
+  // window.currentAgentActivityDate = currentAgentActivityDate;
   window.showAgentActivity = showAgentActivity;
 
   // ================= AJOUT : Rafraîchissement dynamique du tableau dossiers en retard =================
