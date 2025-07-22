@@ -1248,6 +1248,24 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
           card.style.boxShadow = "0 2px 8px rgba(234,179,8,0.08)";
           card.style.border = "1.5px solid #eab308";
         };
+
+        // Détermination de la date de passage en attente de paiement
+        let attenteDate = null;
+        // On prend la date de livraison si dispo, sinon created_at
+        if (delivery.delivery_date) {
+          attenteDate = new Date(delivery.delivery_date);
+        } else if (delivery.created_at) {
+          attenteDate = new Date(delivery.created_at);
+        }
+        let attenteDateStr =
+          attenteDate && !isNaN(attenteDate)
+            ? attenteDate.toLocaleDateString("fr-FR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            : "-";
+
         card.innerHTML = `
           <div style='font-size:1.13em;font-weight:700;margin-bottom:4px;'>N° Dossier : <span style='color:#2563eb;'>${
             delivery.dossier_number || "-"
@@ -1255,6 +1273,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
           <div style='font-size:1em;'>Agent : <b style='color:#0e274e;'>${
             delivery.employee_name || "-"
           }</b></div>
+          <div style='font-size:0.98em;color:#64748b;margin-top:2px;'>En attente de paiement depuis le : <b>${attenteDateStr}</b></div>
         `;
         card.onclick = function (e) {
           e.stopPropagation();
