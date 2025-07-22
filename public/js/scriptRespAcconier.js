@@ -1084,7 +1084,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       }
     });
   }
-  // Ajout ou mise à jour des boutons en haut du tableau
+  // Ajout ou mise à jour des boutons en haut du tableau + champ de recherche
   let btnBar = document.getElementById("deliveriesBtnBar");
   if (!btnBar) {
     btnBar = document.createElement("div");
@@ -1093,6 +1093,32 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     btnBar.style.justifyContent = "center";
     btnBar.style.gap = "18px";
     btnBar.style.margin = "18px 0 8px 0";
+    // Champ de recherche numéro dossier
+    const searchDiv = document.createElement("div");
+    searchDiv.style.display = "flex";
+    searchDiv.style.alignItems = "center";
+    searchDiv.style.gap = "8px";
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.id = "searchDossierInput";
+    searchInput.placeholder = "Rechercher N° dossier...";
+    searchInput.style.padding = "7px 14px";
+    searchInput.style.border = "2px solid #2563eb";
+    searchInput.style.borderRadius = "12px";
+    searchInput.style.fontSize = "1em";
+    searchInput.style.minWidth = "180px";
+    searchInput.style.background = "#fff";
+    searchInput.style.outline = "none";
+    searchInput.style.boxShadow = "0 2px 8px rgba(37,99,235,0.08)";
+    searchInput.style.transition = "border 0.2s";
+    searchInput.addEventListener("focus", function () {
+      this.style.border = "2px solid #eab308";
+    });
+    searchInput.addEventListener("blur", function () {
+      this.style.border = "2px solid #2563eb";
+    });
+    searchDiv.appendChild(searchInput);
+    btnBar.appendChild(searchDiv);
     if (attentePaiementCount > 0) {
       btnBar.innerHTML += `<button id="btnAttentePaiement" class="statut-btn" style="min-width:160px;background:#fffbe6;color:#b45309;border:2px solid #eab308;box-shadow:0 2px 8px rgba(234,179,8,0.13);font-weight:700;">En attente de paiement <span style='font-weight:400;'>(${attentePaiementCount})</span></button>`;
     }
@@ -1101,11 +1127,58 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
   } else {
     btnBar.innerHTML = "";
+    // Champ de recherche numéro dossier
+    const searchDiv = document.createElement("div");
+    searchDiv.style.display = "flex";
+    searchDiv.style.alignItems = "center";
+    searchDiv.style.gap = "8px";
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.id = "searchDossierInput";
+    searchInput.placeholder = "Rechercher N° dossier...";
+    searchInput.style.padding = "7px 14px";
+    searchInput.style.border = "2px solid #2563eb";
+    searchInput.style.borderRadius = "12px";
+    searchInput.style.fontSize = "1em";
+    searchInput.style.minWidth = "180px";
+    searchInput.style.background = "#fff";
+    searchInput.style.outline = "none";
+    searchInput.style.boxShadow = "0 2px 8px rgba(37,99,235,0.08)";
+    searchInput.style.transition = "border 0.2s";
+    searchInput.addEventListener("focus", function () {
+      this.style.border = "2px solid #eab308";
+    });
+    searchInput.addEventListener("blur", function () {
+      this.style.border = "2px solid #2563eb";
+    });
+    searchDiv.appendChild(searchInput);
+    btnBar.appendChild(searchDiv);
     if (attentePaiementCount > 0) {
       btnBar.innerHTML += `<button id=\"btnAttentePaiement\" class=\"statut-btn\" style=\"min-width:160px;background:#fffbe6;color:#b45309;border:2px solid #eab308;box-shadow:0 2px 8px rgba(234,179,8,0.13);font-weight:700;\">En attente de paiement <span style='font-weight:400;'>(${attentePaiementCount})</span></button>`;
     }
     btnBar.style.display = attentePaiementCount > 0 ? "flex" : "none";
   }
+
+  // Handler de recherche par numéro de dossier
+  setTimeout(() => {
+    const searchInput = document.getElementById("searchDossierInput");
+    if (searchInput) {
+      searchInput.oninput = function () {
+        const value = this.value.trim().toLowerCase();
+        // On filtre les livraisons affichées selon le numéro de dossier
+        let filtered = deliveries;
+        if (value.length > 0) {
+          filtered = deliveries.filter((delivery) =>
+            String(delivery.dossier_number || "")
+              .toLowerCase()
+              .includes(value)
+          );
+        }
+        // On affiche le tableau filtré
+        renderAgentTableRows(filtered, tableBodyElement);
+      };
+    }
+  }, 0);
 
   // Ajout du handler pour le bouton "En attente de paiement"
   setTimeout(() => {
