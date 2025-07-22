@@ -1922,17 +1922,24 @@ app.post(
       }
 
       console.log(alertMessage);
-      const payload = JSON.stringify({
-        type: "new_delivery_notification", // CHANGÉ : Type de message pour correspondre au frontend
+
+      // Envoi pour compatibilité ancienne version (peut être supprimé plus tard)
+      const legacyPayload = JSON.stringify({
+        type: "new_delivery_notification",
         message: alertMessage,
-        employeeName: newDelivery.employee_name, // Ajout du nom de l'agent pour le frontend
+        employeeName: newDelivery.employee_name,
         deliveryData: newDelivery,
         alertType: alertType,
       });
-
+      // Nouveau format attendu par le frontend acconier
+      const newDeliveryPayload = JSON.stringify({
+        type: "new_delivery_created",
+        delivery: newDelivery,
+      });
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(payload);
+          client.send(legacyPayload);
+          client.send(newDeliveryPayload);
         }
       });
       console.log(`Message WebSocket envoyé: ${alertMessage}`);

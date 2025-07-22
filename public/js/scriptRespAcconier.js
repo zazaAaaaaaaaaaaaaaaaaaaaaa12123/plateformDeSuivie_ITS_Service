@@ -298,6 +298,47 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
         }
+        // Ajout : réception automatique d'un nouvel ordre de livraison
+        if (data.type === "new_delivery_created" && data.delivery) {
+          // Ajoute la nouvelle livraison à la liste globale
+          if (!window.allDeliveries) window.allDeliveries = [];
+          window.allDeliveries.unshift(data.delivery);
+          // Met à jour le tableau si la date correspond au filtre courant
+          const dateInput = document.getElementById("mainTableDateFilter");
+          let dDate = data.delivery.delivery_date || data.delivery.created_at;
+          let normalized = "";
+          if (typeof dDate === "string") {
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
+              const [j, m, a] = dDate.split("/");
+              normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
+              normalized = dDate;
+            } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
+              const [j, m, a] = dDate.split("-");
+              normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+            } else {
+              const dateObj = new Date(dDate);
+              if (!isNaN(dateObj)) {
+                normalized = dateObj.toISOString().split("T")[0];
+              } else {
+                normalized = dDate;
+              }
+            }
+          } else if (dDate instanceof Date) {
+            normalized = dDate.toISOString().split("T")[0];
+          } else {
+            normalized = String(dDate);
+          }
+          const currentFilterDate = dateInput ? dateInput.value : null;
+          if (normalized === currentFilterDate) {
+            if (typeof updateTableForDate === "function") {
+              updateTableForDate(currentFilterDate);
+            }
+          }
+          // Affiche une alerte avec le nom de l'agent
+          const agentName = data.delivery.employee_name || "-";
+          showNewDeliveryAlert(agentName);
+        }
       } catch (e) {
         console.error("WebSocket BL error:", e);
       }
@@ -308,6 +349,38 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
   setupWebSocket();
+
+  // Fonction d'alerte pour nouvel ordre de livraison
+  function showNewDeliveryAlert(agentName) {
+    // Supprimer toute alerte existante
+    const oldAlert = document.getElementById("custom-new-delivery-alert");
+    if (oldAlert) oldAlert.remove();
+    const alert = document.createElement("div");
+    alert.id = "custom-new-delivery-alert";
+    alert.textContent = `L'Agent "${agentName}" a établi un ordre de livraison.`;
+    alert.style.position = "fixed";
+    alert.style.top = "80px";
+    alert.style.left = "50%";
+    alert.style.transform = "translateX(-50%)";
+    alert.style.background = "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
+    alert.style.color = "#fff";
+    alert.style.fontWeight = "bold";
+    alert.style.fontSize = "1.12em";
+    alert.style.padding = "18px 38px";
+    alert.style.borderRadius = "16px";
+    alert.style.boxShadow = "0 6px 32px rgba(37,99,235,0.18)";
+    alert.style.zIndex = 99999;
+    alert.style.opacity = "0";
+    alert.style.transition = "opacity 0.3s";
+    document.body.appendChild(alert);
+    setTimeout(() => {
+      alert.style.opacity = "1";
+    }, 10);
+    setTimeout(() => {
+      alert.style.opacity = "0";
+      setTimeout(() => alert.remove(), 400);
+    }, 2600);
+  }
 
   async function loadAllDeliveries() {
     try {
