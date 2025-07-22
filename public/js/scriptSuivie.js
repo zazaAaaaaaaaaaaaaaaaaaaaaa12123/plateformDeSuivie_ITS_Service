@@ -630,7 +630,12 @@ function initWebSocketLivraison() {
       try {
         const data = JSON.parse(event.data);
         if (data.type === "new_delivery_created") {
-          showCustomAlert("Nouvel ordre de livraison reçu !", "success", 3000);
+          // Affiche le message personnalisé envoyé par le backend (ex: "L'agent X a établi un ordre de livraison.")
+          showCustomAlert(
+            data.message || "Nouvel ordre de livraison reçu !",
+            "success",
+            3000
+          );
           // Recharge les livraisons instantanément
           if (typeof loadDeliveries === "function") {
             loadDeliveries();
