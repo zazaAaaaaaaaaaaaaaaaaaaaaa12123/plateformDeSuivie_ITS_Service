@@ -945,31 +945,24 @@ function renderAgentTableHeaders(tableElement, deliveries) {
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
   // Calcul dynamique des statuts
-  let miseEnLivraisonCount = 0;
+  // On ne compte plus que les dossiers "En attente de paiement"
   let attentePaiementCount = 0;
   if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
     window.allDeliveries.forEach((delivery) => {
-      let tcList = [];
-      if (Array.isArray(delivery.container_number)) {
-        tcList = delivery.container_number.filter(Boolean);
-      } else if (typeof delivery.container_number === "string") {
-        tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+      let blList = [];
+      if (Array.isArray(delivery.bl_number)) {
+        blList = delivery.bl_number.filter(Boolean);
+      } else if (typeof delivery.bl_number === "string") {
+        blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
       }
-      tcList.forEach((tc) => {
-        let status = "attente_paiement";
-        if (
-          delivery.container_statuses &&
-          typeof delivery.container_statuses === "object" &&
-          delivery.container_statuses[tc]
-        ) {
-          status = delivery.container_statuses[tc];
-        }
-        if (status === "mise_en_livraison") {
-          miseEnLivraisonCount++;
-        } else {
-          attentePaiementCount++;
-        }
-      });
+      let blStatuses = blList.map((bl) =>
+        delivery.bl_statuses && delivery.bl_statuses[bl]
+          ? delivery.bl_statuses[bl]
+          : "aucun"
+      );
+      if (!blStatuses.every((s) => s === "mise_en_livraison")) {
+        attentePaiementCount++;
+      }
     });
   }
   // Ajout ou mise à jour des boutons en haut du tableau
@@ -981,28 +974,77 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     btnBar.style.justifyContent = "center";
     btnBar.style.gap = "18px";
     btnBar.style.margin = "18px 0 8px 0";
-    if (miseEnLivraisonCount > 0) {
-      btnBar.innerHTML += `<button id="btnMiseLivraison" class="statut-btn" style="min-width:160px;background:#e0f2fe;color:#2563eb;border:2px solid #2563eb;box-shadow:0 2px 8px rgba(37,99,235,0.10);font-weight:700;">Mise en livraison <span style='font-weight:400;'>(${miseEnLivraisonCount})</span></button>`;
-    }
     if (attentePaiementCount > 0) {
       btnBar.innerHTML += `<button id="btnAttentePaiement" class="statut-btn" style="min-width:160px;background:#fffbe6;color:#b45309;border:2px solid #eab308;box-shadow:0 2px 8px rgba(234,179,8,0.13);font-weight:700;">En attente de paiement <span style='font-weight:400;'>(${attentePaiementCount})</span></button>`;
     }
-    // Ajout avant le tableau
     if (table && table.parentNode) {
       table.parentNode.insertBefore(btnBar, table);
     }
   } else {
-    // Mise à jour dynamique si déjà présent
     btnBar.innerHTML = "";
-    if (miseEnLivraisonCount > 0) {
-      btnBar.innerHTML += `<button id=\"btnMiseLivraison\" class=\"statut-btn\" style=\"min-width:160px;background:#e0f2fe;color:#2563eb;border:2px solid #2563eb;box-shadow:0 2px 8px rgba(37,99,235,0.10);font-weight:700;\">Mise en livraison <span style='font-weight:400;'>(${miseEnLivraisonCount})</span></button>`;
-    }
     if (attentePaiementCount > 0) {
       btnBar.innerHTML += `<button id=\"btnAttentePaiement\" class=\"statut-btn\" style=\"min-width:160px;background:#fffbe6;color:#b45309;border:2px solid #eab308;box-shadow:0 2px 8px rgba(234,179,8,0.13);font-weight:700;\">En attente de paiement <span style='font-weight:400;'>(${attentePaiementCount})</span></button>`;
     }
-    btnBar.style.display =
-      miseEnLivraisonCount > 0 || attentePaiementCount > 0 ? "flex" : "none";
+    btnBar.style.display = attentePaiementCount > 0 ? "flex" : "none";
   }
+  // Suppression instantanée de la ligne du tableau dès que tous les BL sont en 'mise_en_livraison'
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof WebSocket !== "undefined") {
+      const proto = window.location.protocol === "https:" ? "wss" : "ws";
+      const wsUrl = proto + "://" + window.location.host;
+      const ws = new WebSocket(wsUrl);
+      ws.onmessage = function (event) {
+        try {
+          const data = JSON.parse(event.data);
+          if (
+            data.type === "bl_status_update" &&
+            data.status === "mise_en_livraison"
+          ) {
+            // Chercher la ligne à supprimer instantanément
+            const tableBody = document.getElementById("deliveriesTableBody");
+            if (!tableBody) return;
+            // On cherche la livraison concernée dans window.allDeliveries
+            const delivery = (window.allDeliveries || []).find(
+              (d) => d.id == data.deliveryId
+            );
+            if (!delivery) return;
+            // Vérifier si tous les BL sont en 'mise_en_livraison'
+            let blList = [];
+            if (Array.isArray(delivery.bl_number)) {
+              blList = delivery.bl_number.filter(Boolean);
+            } else if (typeof delivery.bl_number === "string") {
+              blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+            }
+            let blStatuses = blList.map((bl) =>
+              delivery.bl_statuses && delivery.bl_statuses[bl]
+                ? delivery.bl_statuses[bl]
+                : "aucun"
+            );
+            if (
+              blList.length > 0 &&
+              blStatuses.every((s) => s === "mise_en_livraison")
+            ) {
+              // Supprimer la ligne du DOM
+              for (let row of tableBody.rows) {
+                let dossierCellIdx = window.AGENT_TABLE_COLUMNS.findIndex(
+                  (c) => c.id === "dossier_number"
+                );
+                if (
+                  dossierCellIdx !== -1 &&
+                  row.cells[dossierCellIdx] &&
+                  row.cells[dossierCellIdx].textContent ===
+                    String(delivery.dossier_number)
+                ) {
+                  row.remove();
+                  break;
+                }
+              }
+            }
+          }
+        } catch (e) {}
+      };
+    }
+  });
   // Filtrer les livraisons à afficher dans le tableau principal :
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
