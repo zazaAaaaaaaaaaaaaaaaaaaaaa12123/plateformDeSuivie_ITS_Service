@@ -227,8 +227,42 @@ document.addEventListener("DOMContentLoaded", function () {
             if (typeof updateTableForDate === "function") {
               updateTableForDate(currentFilterDate);
             }
-            // Afficher une alerte de confirmation
-            alert("Requête effectuée et envoyée au responsable de livraison.");
+            // Afficher un toast de confirmation élégant
+            showSuccessToast(
+              "Requête effectuée et envoyée au responsable de livraison."
+            );
+            // Toast notification (vert, pro)
+            function showSuccessToast(message) {
+              // Supprimer tout toast existant
+              const oldToast = document.getElementById("custom-success-toast");
+              if (oldToast) oldToast.remove();
+              const toast = document.createElement("div");
+              toast.id = "custom-success-toast";
+              toast.textContent = message;
+              toast.style.position = "fixed";
+              toast.style.bottom = "32px";
+              toast.style.left = "50%";
+              toast.style.transform = "translateX(-50%)";
+              toast.style.background =
+                "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
+              toast.style.color = "#fff";
+              toast.style.fontWeight = "bold";
+              toast.style.fontSize = "1.12em";
+              toast.style.padding = "18px 38px";
+              toast.style.borderRadius = "16px";
+              toast.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
+              toast.style.zIndex = 99999;
+              toast.style.opacity = "0";
+              toast.style.transition = "opacity 0.3s";
+              document.body.appendChild(toast);
+              setTimeout(() => {
+                toast.style.opacity = "1";
+              }, 10);
+              setTimeout(() => {
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+              }, 2600);
+            }
           } else if (normalized === currentFilterDate) {
             // Sinon, mettre à jour le statut dossier dans la colonne sans reload
             const tableBody = document.getElementById("deliveriesTableBody");
