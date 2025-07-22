@@ -8625,14 +8625,6 @@ if (window["WebSocket"]) {
   );
   if (oldDateFilterZone) oldDateFilterZone.remove();
 
-  // Déclaration explicite des inputs de filtre date principal (pour éviter ReferenceError)
-  let mainTableDateFilterStart = document.getElementById(
-    "mainTableDateFilterStart"
-  );
-  let mainTableDateFilterEnd = document.getElementById(
-    "mainTableDateFilterEnd"
-  );
-
   // Initialisation des valeurs par défaut (aujourd'hui)
   const today = new Date();
   const yyyy = today.getFullYear();
