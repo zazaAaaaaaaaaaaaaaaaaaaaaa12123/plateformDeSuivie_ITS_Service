@@ -3,6 +3,22 @@ const express = require("express");
 const multer = require("multer");
 const { Pool } = require("pg");
 const app = express();
+// Redirection automatique vers le domaine -1cjx si on accède au domaine principal
+app.use((req, res, next) => {
+  if (
+    req.hostname &&
+    req.hostname.includes("plateformdesuivie-its-service.onrender.com") &&
+    !req.hostname.includes("plateformdesuivie-its-service-1cjx.onrender.com")
+  ) {
+    // Redirige vers le domaine -1cjx, en gardant le chemin et la query
+    return res.redirect(
+      301,
+      "https://plateformdesuivie-its-service-1cjx.onrender.com" +
+        req.originalUrl
+    );
+  }
+  next();
+});
 
 const cors = require("cors");
 const path = require("path");
