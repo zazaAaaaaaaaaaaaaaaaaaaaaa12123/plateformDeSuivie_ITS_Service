@@ -1764,10 +1764,14 @@ async function submitDeliveryForm(status) {
       }
       // --- FIN MISE À JOUR ---
       deliveryForm.reset();
-      // Après le reset, remettre le nom de l'agent connecté dans le champ
+      // Après le reset, remettre le nom de l'agent connecté dans le champ même s'il est disabled
       let acconier = JSON.parse(localStorage.getItem("acconier_user")) || {};
       if (employeeNameInput && acconier.nom) {
+        // On active temporairement le champ si désactivé
+        const wasDisabled = employeeNameInput.disabled;
+        if (wasDisabled) employeeNameInput.disabled = false;
         employeeNameInput.value = acconier.nom;
+        if (wasDisabled) employeeNameInput.disabled = true;
       }
       // Rafraîchit la liste des agents côté suivi après succès serveur
       if (window.loadDeliveries) {
