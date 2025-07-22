@@ -954,30 +954,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           saveBtn.onclick = async () => {
             let statutToSend =
               select.value === "aucun" ? "aucun" : select.value;
+            // Limite la longueur à 100 caractères pour éviter l'erreur SQL
+            statutToSend = statutToSend.substring(0, 100);
             // 1. MAJ locale immédiate du statut BL
             delivery.bl_statuses[blNumber] = statutToSend;
             // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
-            // On retrouve la ligne du tableau correspondante
             const tableBody = document.getElementById("deliveriesTableBody");
             if (tableBody) {
               // On cherche la ligne correspondant à ce delivery
+              let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
+                (c) => c.id === "dossier_number"
+              );
               for (let row of tableBody.rows) {
-                // On suppose que la colonne N° Dossier (dossier_number) est unique et sert d'identifiant visuel
-                let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
-                  (c) => c.id === "dossier_number"
-                );
                 if (
                   dossierCellIdx !== -1 &&
                   row.cells[dossierCellIdx] &&
                   row.cells[dossierCellIdx].textContent ===
                     String(delivery.dossier_number)
                 ) {
-                  // On a trouvé la bonne ligne
                   let colIdx = AGENT_TABLE_COLUMNS.findIndex(
                     (c) => c.id === "container_status"
                   );
                   if (colIdx !== -1 && row.cells[colIdx]) {
-                    // Recalcule le statut dossier
                     let blList = [];
                     if (Array.isArray(delivery.bl_number)) {
                       blList = delivery.bl_number.filter(Boolean);
@@ -1023,7 +1021,23 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 return;
               }
               overlay.remove();
-              // Plus besoin de recharger toute la table ici
+              // Rafraîchit le tableau pour faire disparaître le BL instantanément
+              const dateStartInput = document.getElementById(
+                "mainTableDateStartFilter"
+              );
+              const dateEndInput = document.getElementById(
+                "mainTableDateEndFilter"
+              );
+              if (
+                typeof updateTableForDateRange === "function" &&
+                dateStartInput &&
+                dateEndInput
+              ) {
+                updateTableForDateRange(
+                  dateStartInput.value,
+                  dateEndInput.value
+                );
+              }
             } catch (err) {
               alert(
                 "Erreur lors de la mise à jour du statut du BL.\n" +
