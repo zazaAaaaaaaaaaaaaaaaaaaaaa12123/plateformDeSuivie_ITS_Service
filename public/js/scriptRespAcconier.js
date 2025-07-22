@@ -226,8 +226,18 @@ document.addEventListener("DOMContentLoaded", function () {
           const delivery = (window.allDeliveries || []).find(
             (d) => String(d.id) === String(data.deliveryId)
           );
+          if (!delivery) {
+            console.error(
+              "[ERREUR] Livraison non trouvée dans window.allDeliveries pour deliveryId:",
+              data.deliveryId
+            );
+            console.error(
+              "[ERREUR] Liste des ids dans allDeliveries:",
+              (window.allDeliveries || []).map((d) => d.id)
+            );
+            return;
+          }
           console.log("[DEBUG] delivery trouvé:", delivery);
-          if (!delivery) return;
           // Mettre à jour le statut local du BL concerné
           if (!delivery.bl_statuses) delivery.bl_statuses = {};
           delivery.bl_statuses[data.blNumber] = data.status;
@@ -256,6 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
             window.allDeliveries = (window.allDeliveries || []).filter(
               (d) => String(d.id) !== String(delivery.id)
             );
+            // Toujours resynchroniser la variable globale
             allDeliveries = window.allDeliveries;
             console.log(
               "[DEBUG] Après suppression, window.allDeliveries:",
