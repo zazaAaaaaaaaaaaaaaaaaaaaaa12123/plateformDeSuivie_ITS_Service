@@ -57,74 +57,6 @@ document.addEventListener("DOMContentLoaded", function () {
       white-space: nowrap;
     }
     #deliveriesTableBody .tc-popup {
-            // 2bis. Suppression instantanée de la ligne si tous les BL sont en 'mise_en_livraison'
-            let blList = [];
-            if (Array.isArray(delivery.bl_number)) {
-              blList = delivery.bl_number.filter(Boolean);
-            } else if (typeof delivery.bl_number === "string") {
-              blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-            }
-            let blStatuses = blList.map((bl) =>
-              delivery.bl_statuses && delivery.bl_statuses[bl]
-                ? delivery.bl_statuses[bl]
-                : "aucun"
-            );
-            let allMiseEnLivraison =
-              blStatuses.length > 0 &&
-              blStatuses.every((s) => s === "mise_en_livraison");
-            if (allMiseEnLivraison) {
-              // Supprimer la livraison de window.allDeliveries
-              window.allDeliveries = (window.allDeliveries || []).filter(
-                (d) => String(d.id) !== String(delivery.id)
-              );
-              // Synchroniser la variable locale si utilisée
-              if (typeof allDeliveries !== "undefined") {
-                allDeliveries = window.allDeliveries;
-              }
-              // Forcer le re-rendu du tableau avec la plage de dates courante
-              const dateStartInput = document.getElementById("mainTableDateStartFilter");
-              const dateEndInput = document.getElementById("mainTableDateEndFilter");
-              if (typeof updateTableForDateRange === "function") {
-                const startVal = dateStartInput ? dateStartInput.value : "";
-                const endVal = dateEndInput ? dateEndInput.value : "";
-                updateTableForDateRange(startVal, endVal);
-              }
-              // Afficher un toast de confirmation élégant
-              if (typeof showSuccessToast === "function") {
-                showSuccessToast("Requête effectuée et envoyée au responsable de livraison.");
-              } else {
-                // Fallback toast simple
-                const oldToast = document.getElementById("custom-success-toast");
-                if (oldToast) oldToast.remove();
-                const toast = document.createElement("div");
-                toast.id = "custom-success-toast";
-                toast.textContent = "Requête effectuée et envoyée au responsable de livraison.";
-                toast.style.position = "fixed";
-                toast.style.top = "32px";
-                toast.style.left = "50%";
-                toast.style.transform = "translateX(-50%)";
-                toast.style.background = "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
-                toast.style.color = "#fff";
-                toast.style.fontWeight = "bold";
-                toast.style.fontSize = "1.12em";
-                toast.style.padding = "18px 38px";
-                toast.style.borderRadius = "16px";
-                toast.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
-                toast.style.zIndex = 99999;
-                toast.style.opacity = "0";
-                toast.style.transition = "opacity 0.3s";
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                  toast.style.opacity = "1";
-                }, 10);
-                setTimeout(() => {
-                  toast.style.opacity = "0";
-                  setTimeout(() => toast.remove(), 400);
-                }, 2600);
-              }
-              overlay.remove();
-              return;
-            }
       position: absolute;
       background: #fff;
       border: 2px solid #2563eb;
@@ -268,47 +200,52 @@ document.addEventListener("DOMContentLoaded", function () {
     ws = new WebSocket(wsUrl);
     ws.onopen = function () {};
     ws.onmessage = function (event) {
-      console.log("[DEBUG] ws.onmessage triggered", event.data);
-
       try {
         const data = JSON.parse(event.data);
-        console.log(
-          "[DEBUG] data.type:",
-          data.type,
-          "data.status:",
-          data.status
-        );
-
         if (
           data.type === "bl_status_update" &&
           data.status === "mise_en_livraison"
         ) {
           console.log("[WebSocket] bl_status_update reçu:", data);
           // On cherche la livraison concernée dans window.allDeliveries
-          console.log(
-            "[DEBUG] window.allDeliveries:",
-            window.allDeliveries,
-            "data.deliveryId:",
-            data.deliveryId
-          );
           const delivery = (window.allDeliveries || []).find(
             (d) => String(d.id) === String(data.deliveryId)
           );
-          if (!delivery) {
-            console.error(
-              "[ERREUR] Livraison non trouvée dans window.allDeliveries pour deliveryId:",
-              data.deliveryId
-            );
-            console.error(
-              "[ERREUR] Liste des ids dans allDeliveries:",
-              (window.allDeliveries || []).map((d) => d.id)
-            );
-            return;
-          }
-          console.log("[DEBUG] delivery trouvé:", delivery);
+          if (!delivery) return;
           // Mettre à jour le statut local du BL concerné
           if (!delivery.bl_statuses) delivery.bl_statuses = {};
           delivery.bl_statuses[data.blNumber] = data.status;
+          // Vérifier si la livraison est affichée (date du filtre)
+          const dateInput = document.getElementById("mainTableDateFilter");
+          let dDate =
+            delivery["delivery_date"] ||
+            delivery["created_at"] ||
+            delivery["Date"] ||
+            delivery["Date Livraison"];
+          let normalized = "";
+          if (typeof dDate === "string") {
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
+              const [j, m, a] = dDate.split("/");
+              normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
+              normalized = dDate;
+            } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
+              const [j, m, a] = dDate.split("-");
+              normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+            } else {
+              const dateObj = new Date(dDate);
+              if (!isNaN(dateObj)) {
+                normalized = dateObj.toISOString().split("T")[0];
+              } else {
+                normalized = dDate;
+              }
+            }
+          } else if (dDate instanceof Date) {
+            normalized = dDate.toISOString().split("T")[0];
+          } else {
+            normalized = String(dDate);
+          }
+          const currentFilterDate = dateInput ? dateInput.value : null;
           // Vérifier si tous les BL sont en 'mise_en_livraison'
           let blList = [];
           if (Array.isArray(delivery.bl_number)) {
@@ -323,40 +260,16 @@ document.addEventListener("DOMContentLoaded", function () {
           );
           if (
             blList.length > 0 &&
-            blStatuses.every((s) => s === "mise_en_livraison")
+            blStatuses.every((s) => s === "mise_en_livraison") &&
+            normalized === currentFilterDate
           ) {
-            // Supprimer la ligne du DOM ET forcer le re-rendu du tableau avec la plage de dates courante
-            // Toujours utiliser window.allDeliveries comme source unique
-            console.log(
-              "[DEBUG] Avant suppression, window.allDeliveries:",
-              window.allDeliveries
-            );
-            window.allDeliveries = (window.allDeliveries || []).filter(
+            // Supprimer la ligne du DOM ET forcer le re-rendu du tableau
+            window.allDeliveries = window.allDeliveries.filter(
               (d) => String(d.id) !== String(delivery.id)
             );
-            // Toujours resynchroniser la variable globale
-            allDeliveries = window.allDeliveries;
-            console.log(
-              "[DEBUG] Après suppression, window.allDeliveries:",
-              window.allDeliveries
-            );
-            // Récupérer les valeurs actuelles des inputs de plage de dates
-            const dateStartInput = document.getElementById(
-              "mainTableDateStartFilter"
-            );
-            const dateEndInput = document.getElementById(
-              "mainTableDateEndFilter"
-            );
-            // Toujours forcer le re-rendu du tableau principal après suppression
-            if (typeof updateTableForDateRange === "function") {
-              const startVal = dateStartInput ? dateStartInput.value : "";
-              const endVal = dateEndInput ? dateEndInput.value : "";
-              console.log(
-                "[DEBUG] Appel updateTableForDateRange avec",
-                startVal,
-                endVal
-              );
-              updateTableForDateRange(startVal, endVal);
+            // On relance le rendu du tableau pour la date courante
+            if (typeof updateTableForDate === "function") {
+              updateTableForDate(currentFilterDate);
             }
             // Afficher un toast de confirmation élégant
             showSuccessToast(
@@ -395,7 +308,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 setTimeout(() => toast.remove(), 400);
               }, 2600);
             }
-          } else {
+          } else if (normalized === currentFilterDate) {
             // Sinon, mettre à jour le statut dossier dans la colonne sans reload
             const tableBody = document.getElementById("deliveriesTableBody");
             if (!tableBody) return;
@@ -612,25 +525,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Filtre les livraisons selon une plage de dates (inclusif)
   function filterDeliveriesByDateRange(dateStartStr, dateEndStr) {
-    // Toujours utiliser window.allDeliveries comme source unique
-    const deliveriesSource = window.allDeliveries || [];
-    console.log(
-      "[DEBUG] filterDeliveriesByDateRange source:",
-      deliveriesSource
-    );
-    if (!dateStartStr && !dateEndStr) {
-      console.log(
-        "[DEBUG] Pas de filtre date, retourne toutes les livraisons:",
-        deliveriesSource
-      );
-      return deliveriesSource;
-    }
+    if (!dateStartStr && !dateEndStr) return allDeliveries;
     // Conversion en Date objets à minuit
     let start = dateStartStr ? new Date(dateStartStr) : null;
     let end = dateEndStr ? new Date(dateEndStr) : null;
     if (start) start.setHours(0, 0, 0, 0);
     if (end) end.setHours(23, 59, 59, 999);
-    return deliveriesSource.filter((delivery) => {
+    return allDeliveries.filter((delivery) => {
       let dDate =
         delivery["delivery_date"] ||
         delivery["created_at"] ||
@@ -710,10 +611,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la plage de dates
   function updateTableForDateRange(dateStartStr, dateEndStr) {
     let filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
-    console.log(
-      "[DEBUG] updateTableForDateRange - livraisons filtrées:",
-      filtered
-    );
     // Tri du plus ancien au plus récent (ordre croissant)
     filtered.sort((a, b) => {
       let dateA = new Date(
@@ -776,39 +673,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    // Détermination de la couleur de la bande selon l'ancienneté
-    let dDate = delivery.delivery_date || delivery.created_at;
-    let dateObj = dDate ? new Date(dDate) : null;
-    let now = new Date();
-    let color = "#2563eb"; // bleu par défaut (récent)
-    if (dateObj && !isNaN(dateObj.getTime())) {
-      let diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-      if (diffDays >= 30) {
-        color = "#a3a3a3"; // ancien : gris (1 mois et plus)
-      } else if (diffDays >= 7) {
-        color = "#eab308"; // assez ancien : jaune (1 semaine à moins d'1 mois)
-      } else if (diffDays >= 0) {
-        color = "#2563eb"; // récent : bleu (< 7 jours)
-      }
-    }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
       if (col.id === "row_number") {
         value = i + 1;
-        // Ajout de la bande colorée verticale à gauche du numéro
-        const band = document.createElement("span");
-        band.style.display = "inline-block";
-        band.style.width = "6px";
-        band.style.height = "28px";
-        band.style.background = color;
-        band.style.borderRadius = "4px";
-        band.style.marginRight = "8px";
-        band.style.verticalAlign = "middle";
-        td.appendChild(band);
-        const numSpan = document.createElement("span");
-        numSpan.textContent = value;
-        td.appendChild(numSpan);
+        td.textContent = value;
         td.classList.add("row-number-col");
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
@@ -1373,6 +1243,350 @@ function renderAgentTableHeaders(tableElement, deliveries) {
 // Fonction pour générer le tableau Agent Acconier complet
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
+  // Calcul dynamique des statuts
+  // On ne compte plus que les dossiers "En attente de paiement"
+  let attentePaiementCount = 0;
+  if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+    window.allDeliveries.forEach((delivery) => {
+      let blList = [];
+      if (Array.isArray(delivery.bl_number)) {
+        blList = delivery.bl_number.filter(Boolean);
+      } else if (typeof delivery.bl_number === "string") {
+        blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+      }
+      let blStatuses = blList.map((bl) =>
+        delivery.bl_statuses && delivery.bl_statuses[bl]
+          ? delivery.bl_statuses[bl]
+          : "aucun"
+      );
+      if (!blStatuses.every((s) => s === "mise_en_livraison")) {
+        attentePaiementCount++;
+      }
+    });
+  }
+  // Ajout ou mise à jour des boutons en haut du tableau (sans champ de recherche)
+  let btnBar = document.getElementById("deliveriesBtnBar");
+  if (!btnBar) {
+    btnBar = document.createElement("div");
+    btnBar.id = "deliveriesBtnBar";
+    btnBar.style.display = "flex";
+    btnBar.style.justifyContent = "center";
+    btnBar.style.gap = "18px";
+    btnBar.style.margin = "18px 0 8px 0";
+    if (attentePaiementCount > 0) {
+      btnBar.innerHTML += `<button id="btnAttentePaiement" class="statut-btn" style="min-width:160px;background:#fffbe6;color:#b45309;border:2px solid #eab308;box-shadow:0 2px 8px rgba(234,179,8,0.13);font-weight:700;">En attente de paiement <span style='font-weight:400;'>(${attentePaiementCount})</span></button>`;
+    }
+    if (table && table.parentNode) {
+      table.parentNode.insertBefore(btnBar, table);
+    }
+  } else {
+    btnBar.innerHTML = "";
+    if (attentePaiementCount > 0) {
+      btnBar.innerHTML += `<button id=\"btnAttentePaiement\" class=\"statut-btn\" style=\"min-width:160px;background:#fffbe6;color:#b45309;border:2px solid #eab308;box-shadow:0 2px 8px rgba(234,179,8,0.13);font-weight:700;\">En attente de paiement <span style='font-weight:400;'>(${attentePaiementCount})</span></button>`;
+    }
+    btnBar.style.display = attentePaiementCount > 0 ? "flex" : "none";
+  }
+
+  // (Champ de recherche N° dossier supprimé de la barre principale)
+
+  // Ajout du handler pour le bouton "En attente de paiement"
+  setTimeout(() => {
+    const btn = document.getElementById("btnAttentePaiement");
+    if (btn) {
+      btn.onclick = function () {
+        // Récupérer tous les dossiers en attente de paiement
+        const dossiers = (window.allDeliveries || []).filter((delivery) => {
+          let blList = [];
+          if (Array.isArray(delivery.bl_number)) {
+            blList = delivery.bl_number.filter(Boolean);
+          } else if (typeof delivery.bl_number === "string") {
+            blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          let blStatuses = blList.map((bl) =>
+            delivery.bl_statuses && delivery.bl_statuses[bl]
+              ? delivery.bl_statuses[bl]
+              : "aucun"
+          );
+          return blStatuses.some((s) => s !== "mise_en_livraison");
+        });
+        if (dossiers.length === 0) return;
+        // Afficher une popup avec la liste des dossiers et leurs infos
+        showAttentePaiementPopup(dossiers);
+      };
+    }
+  }, 0);
+
+  // Fonction pour afficher la popup détaillée des dossiers en attente de paiement
+  function showAttentePaiementPopup(dossiers) {
+    // Supprimer toute popup existante
+    const oldPopup = document.getElementById("attentePaiementPopup");
+    if (oldPopup) oldPopup.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "attentePaiementPopup";
+    overlay.style.position = "fixed";
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "rgba(30,41,59,0.45)";
+    overlay.style.zIndex = 99999;
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "flex-start";
+    overlay.style.justifyContent = "center";
+    const box = document.createElement("div");
+    box.style.background = "#fff";
+    box.style.borderRadius = "18px";
+    box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+    box.style.maxWidth = "700px";
+    box.style.width = "96vw";
+    box.style.marginTop = "60px";
+    box.style.maxHeight = "80vh";
+    box.style.overflowY = "auto";
+    box.style.padding = "0";
+    box.style.position = "relative";
+    box.style.display = "flex";
+    box.style.flexDirection = "column";
+    const header = document.createElement("div");
+    header.style.background = "#eab308";
+    header.style.color = "#0e274e";
+    header.style.padding = "18px 28px 12px 28px";
+    header.style.fontWeight = "bold";
+    header.style.fontSize = "1.18rem";
+    header.style.display = "flex";
+    header.style.flexDirection = "row";
+    header.style.alignItems = "center";
+    header.innerHTML = `<span style='font-size:1.15em;'><i class='fas fa-clock' style='margin-right:10px;'></i>Dossiers en attente de paiement</span>`;
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.style.background = "none";
+    closeBtn.style.border = "none";
+    closeBtn.style.color = "#0e274e";
+    closeBtn.style.fontSize = "2.1rem";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.top = "10px";
+    closeBtn.style.right = "18px";
+    closeBtn.setAttribute("aria-label", "Fermer");
+    closeBtn.onclick = () => overlay.remove();
+    header.appendChild(closeBtn);
+    box.appendChild(header);
+    // Ajout champ de recherche dans la popup
+    const searchDiv = document.createElement("div");
+    searchDiv.style.display = "flex";
+    searchDiv.style.justifyContent = "center";
+    searchDiv.style.alignItems = "center";
+    searchDiv.style.gap = "8px";
+    searchDiv.style.margin = "18px 0 10px 0";
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.placeholder = "Rechercher N° dossier...";
+    searchInput.style.padding = "7px 14px";
+    searchInput.style.border = "2px solid #2563eb";
+    searchInput.style.borderRadius = "12px";
+    searchInput.style.fontSize = "1em";
+    searchInput.style.minWidth = "180px";
+    searchInput.style.background = "#fff";
+    searchInput.style.outline = "none";
+    searchInput.style.boxShadow = "0 2px 8px rgba(37,99,235,0.08)";
+    searchInput.style.transition = "border 0.2s";
+    searchInput.addEventListener("focus", function () {
+      this.style.border = "2px solid #eab308";
+    });
+    searchInput.addEventListener("blur", function () {
+      this.style.border = "2px solid #2563eb";
+    });
+    searchDiv.appendChild(searchInput);
+
+    const content = document.createElement("div");
+    content.style.padding = "24px 24px 24px 24px";
+    content.style.background = "#f8fafc";
+    content.style.flex = "1 1 auto";
+    content.style.overflowY = "auto";
+
+    // Fonction pour afficher la liste filtrée sous forme de cartes simples
+    function renderDossierCards(list) {
+      content.innerHTML = "";
+      if (list.length === 0) {
+        content.innerHTML = `<div style='text-align:center;color:#64748b;font-size:1.1em;'>Aucun dossier en attente de paiement.</div>`;
+        return;
+      }
+      list.forEach((delivery) => {
+        const card = document.createElement("div");
+        card.style.marginBottom = "18px";
+        card.style.padding = "16px 22px";
+        card.style.background = "#fff";
+        card.style.borderRadius = "12px";
+        card.style.boxShadow = "0 2px 8px rgba(234,179,8,0.08)";
+        card.style.border = "1.5px solid #eab308";
+        card.style.cursor = "pointer";
+        card.style.transition = "box-shadow 0.18s, border 0.18s";
+        card.onmouseover = () => {
+          card.style.boxShadow = "0 4px 16px rgba(37,99,235,0.13)";
+          card.style.border = "2px solid #2563eb";
+        };
+        card.onmouseout = () => {
+          card.style.boxShadow = "0 2px 8px rgba(234,179,8,0.08)";
+          card.style.border = "1.5px solid #eab308";
+        };
+
+        // Détermination de la date de passage en attente de paiement
+        let attenteDate = null;
+        // On prend la date de livraison si dispo, sinon created_at
+        if (delivery.delivery_date) {
+          attenteDate = new Date(delivery.delivery_date);
+        } else if (delivery.created_at) {
+          attenteDate = new Date(delivery.created_at);
+        }
+        let attenteDateStr =
+          attenteDate && !isNaN(attenteDate)
+            ? attenteDate.toLocaleDateString("fr-FR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            : "-";
+
+        card.innerHTML = `
+          <div style='font-size:1.13em;font-weight:700;margin-bottom:4px;'>N° Dossier : <span style='color:#2563eb;'>${
+            delivery.dossier_number || "-"
+          }</span></div>
+          <div style='font-size:1em;'>Agent : <b style='color:#0e274e;'>${
+            delivery.employee_name || "-"
+          }</b></div>
+          <div style='font-size:0.98em;color:#64748b;margin-top:2px;'>En attente de paiement depuis le : <b>${attenteDateStr}</b></div>
+        `;
+        card.onclick = function (e) {
+          e.stopPropagation();
+          showDossierDetailPopup(delivery);
+        };
+        content.appendChild(card);
+      });
+    }
+
+    // Affichage initial
+    renderDossierCards(dossiers);
+
+    // Handler recherche
+    searchInput.oninput = function () {
+      const value = this.value.trim().toLowerCase();
+      let filtered = dossiers;
+      if (value.length > 0) {
+        filtered = dossiers.filter((delivery) =>
+          String(delivery.dossier_number || "")
+            .toLowerCase()
+            .includes(value)
+        );
+      }
+      renderDossierCards(filtered);
+    };
+
+    // Affichage des détails au clic sur une carte
+    function showDossierDetailPopup(delivery) {
+      // Supprimer tout popup détail existant
+      const oldDetail = document.getElementById("dossierDetailPopup");
+      if (oldDetail) oldDetail.remove();
+      const overlay = document.createElement("div");
+      overlay.id = "dossierDetailPopup";
+      overlay.style.position = "fixed";
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.width = "100vw";
+      overlay.style.height = "100vh";
+      overlay.style.background = "rgba(30,41,59,0.45)";
+      overlay.style.zIndex = 100000;
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "center";
+      overlay.style.justifyContent = "center";
+      const box = document.createElement("div");
+      box.style.background = "#fff";
+      box.style.borderRadius = "18px";
+      box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+      box.style.maxWidth = "520px";
+      box.style.width = "96vw";
+      box.style.maxHeight = "92vh";
+      box.style.overflowY = "auto";
+      box.style.padding = "0";
+      box.style.position = "relative";
+      box.style.display = "flex";
+      box.style.flexDirection = "column";
+      const header = document.createElement("div");
+      header.style.background = "#2563eb";
+      header.style.color = "#fff";
+      header.style.padding = "18px 28px 12px 28px";
+      header.style.fontWeight = "bold";
+      header.style.fontSize = "1.15rem";
+      header.style.display = "flex";
+      header.style.flexDirection = "column";
+      header.style.borderTopLeftRadius = "18px";
+      header.style.borderTopRightRadius = "18px";
+      header.innerHTML = `
+        <div style='margin-bottom:2px;'>N° Dossier : <span style='color:#eab308;'>${
+          delivery.dossier_number || "-"
+        }</span></div>
+        <div style='font-size:0.98em;font-weight:400;'>Agent : <span style='color:#fff;'>${
+          delivery.employee_name || "-"
+        }</span></div>
+      `;
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = "&times;";
+      closeBtn.style.background = "none";
+      closeBtn.style.border = "none";
+      closeBtn.style.color = "#fff";
+      closeBtn.style.fontSize = "2.1rem";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.style.position = "absolute";
+      closeBtn.style.top = "10px";
+      closeBtn.style.right = "18px";
+      closeBtn.setAttribute("aria-label", "Fermer");
+      closeBtn.onclick = () => overlay.remove();
+      header.appendChild(closeBtn);
+      box.appendChild(header);
+      const content = document.createElement("div");
+      content.style.padding = "24px 24px 24px 24px";
+      content.style.background = "#f8fafc";
+      content.style.flex = "1 1 auto";
+      content.style.overflowY = "auto";
+      content.innerHTML = `
+        <div style='margin-bottom:8px;'>Client : <b>${
+          delivery.client_name || "-"
+        }</b> | Tél : <b>${delivery.client_phone || "-"}</b></div>
+        <div style='margin-bottom:8px;'>Numéro BL : <b>${
+          delivery.bl_number || "-"
+        }</b></div>
+        <div style='margin-bottom:8px;'>Lieu : <b>${
+          delivery.lieu || "-"
+        }</b></div>
+        <div style='margin-bottom:8px;'>Date livraison : <b>${
+          delivery.delivery_date
+            ? new Date(delivery.delivery_date).toLocaleDateString("fr-FR")
+            : "-"
+        }</b></div>
+        <div style='margin-bottom:8px;'>Conteneur(s) : <b>${
+          delivery.container_number || "-"
+        }</b> | Type : <b>${delivery.container_foot_type || "-"}</b></div>
+        <div style='margin-bottom:8px;'>Compagnie maritime : <b>${
+          delivery.shipping_company || "-"
+        }</b></div>
+        <div style='margin-bottom:8px;'>Observation : <b>${
+          delivery.observation_acconier || "-"
+        }</b></div>
+      `;
+      box.appendChild(content);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+      };
+    }
+
+    box.appendChild(searchDiv);
+    box.appendChild(content);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => {
+      if (e.target === overlay) overlay.remove();
+    };
+  }
   // ...
   // Filtrer les livraisons à afficher dans le tableau principal :
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
@@ -1391,10 +1605,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas dans le tableau principal
     return !blStatuses.every((s) => s === "mise_en_livraison");
   });
-  console.log(
-    "[DEBUG] renderAgentTableFull - deliveriesToShow:",
-    deliveriesToShow
-  );
   if (deliveriesToShow.length === 0) {
     if (table) table.style.display = "none";
     let noDataMsg = document.getElementById("noDeliveriesMsg");
