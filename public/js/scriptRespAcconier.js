@@ -143,41 +143,50 @@ document.addEventListener("DOMContentLoaded", function () {
   `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
-  // Déplacement du champ de recherche à côté des deux champs de date (aligné horizontalement)
-  // On suppose que les deux champs de date ont les IDs 'mainTableDateStartFilter' et 'mainTableDateEndFilter' (si utilisés),
-  // mais dans le HTML fourni, seul 'mainTableDateFilter' existe. On va donc placer le champ de recherche à côté de ce champ.
-  const dateFilterInput = document.getElementById("mainTableDateFilter");
-  const searchInput = document.getElementById("searchInput");
-  const searchBtn = document.getElementById("searchButton");
-  const searchIcon = document.querySelector(".search-icon");
-  // On crée un conteneur flex pour aligner date + recherche
-  if (dateFilterInput && searchInput && searchBtn && searchIcon) {
-    // Crée un conteneur flex si pas déjà fait
-    let filterBar = dateFilterInput.parentElement;
-    if (!filterBar || !filterBar.classList.contains("d-flex")) {
-      // On crée un nouveau div flex
-      filterBar = document.createElement("div");
-      filterBar.className = "d-flex align-items-center gap-2 mb-3 flex-wrap";
-      dateFilterInput.parentNode.insertBefore(filterBar, dateFilterInput);
-      filterBar.appendChild(dateFilterInput);
+  // Ajout des deux champs de date (début et fin)
+  let dateStartInput = document.getElementById("mainTableDateStartFilter");
+  let dateEndInput = document.getElementById("mainTableDateEndFilter");
+  // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
+  const oldDateInput = document.getElementById("mainTableDateFilter");
+  if (!dateStartInput || !dateEndInput) {
+    // Création des deux inputs si besoin
+    const parent = oldDateInput ? oldDateInput.parentNode : document.body;
+    // Création du conteneur
+    const rangeDiv = document.createElement("div");
+    rangeDiv.style.display = "flex";
+    rangeDiv.style.gap = "12px";
+    rangeDiv.style.alignItems = "center";
+    rangeDiv.style.marginBottom = "12px";
+    // Date début
+    dateStartInput = document.createElement("input");
+    dateStartInput.type = "date";
+    dateStartInput.id = "mainTableDateStartFilter";
+    dateStartInput.style.padding = "6px 10px";
+    dateStartInput.style.borderRadius = "8px";
+    dateStartInput.style.border = "1.5px solid #2563eb";
+    // Date fin
+    dateEndInput = document.createElement("input");
+    dateEndInput.type = "date";
+    dateEndInput.id = "mainTableDateEndFilter";
+    dateEndInput.style.padding = "6px 10px";
+    dateEndInput.style.borderRadius = "8px";
+    dateEndInput.style.border = "1.5px solid #2563eb";
+    // Label
+    const label = document.createElement("span");
+    label.textContent = "Filtrer du ";
+    const label2 = document.createElement("span");
+    label2.textContent = " au ";
+    rangeDiv.appendChild(label);
+    rangeDiv.appendChild(dateStartInput);
+    rangeDiv.appendChild(label2);
+    rangeDiv.appendChild(dateEndInput);
+    // Ajout dans le DOM
+    if (oldDateInput) {
+      oldDateInput.style.display = "none";
+      parent.insertBefore(rangeDiv, oldDateInput);
+    } else {
+      document.body.insertBefore(rangeDiv, document.body.firstChild);
     }
-    // On supprime le champ de recherche de son ancien parent
-    if (searchInput.parentElement)
-      searchInput.parentElement.removeChild(searchInput);
-    if (searchBtn.parentElement) searchBtn.parentElement.removeChild(searchBtn);
-    if (searchIcon.parentElement)
-      searchIcon.parentElement.removeChild(searchIcon);
-    // Ajoute l'icône, l'input et le bouton à la suite du champ date
-    filterBar.appendChild(searchIcon);
-    filterBar.appendChild(searchInput);
-    filterBar.appendChild(searchBtn);
-    // Optionnel : ajuster les marges pour un alignement propre
-    searchIcon.style.marginLeft = "18px";
-    searchInput.style.marginLeft = "4px";
-    searchBtn.style.marginLeft = "4px";
-    // Pour éviter le double affichage de la barre de recherche en haut, on masque la search-bar-wrapper-top
-    const searchBarTop = document.querySelector(".search-bar-wrapper-top");
-    if (searchBarTop) searchBarTop.style.display = "none";
   }
 
   // On charge toutes les livraisons une seule fois au chargement
