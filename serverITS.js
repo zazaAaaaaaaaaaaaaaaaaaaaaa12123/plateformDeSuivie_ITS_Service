@@ -2407,17 +2407,14 @@ app.delete("/deliveries/:id", async (req, res) => {
       "DELETE FROM livraison_conteneur WHERE id = $1 RETURNING id, employee_name, container_number;",
       [id]
     );
-
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: "Livraison non trouvée pour suppression.",
       });
     }
-
     const deletedDelivery = result.rows[0];
-
-    const wss = req.app.get("wss");
+    // Utilise la référence globale wss (déjà déclarée en haut du fichier)
     const alertMessage = `La livraison du conteneur '${deletedDelivery.container_number}' de l'agent '${deletedDelivery.employee_name}' a été supprimée.`;
     const payload = JSON.stringify({
       type: "delivery_deletion_alert",
@@ -2425,19 +2422,14 @@ app.delete("/deliveries/:id", async (req, res) => {
       deliveryId: deletedDelivery.id,
       alertType: "info",
     });
-
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (client.readyState === require("ws").OPEN) {
         client.send(payload);
       }
     });
     console.log(
       `Message WebSocket envoyé pour la suppression: ${alertMessage}`
     );
-
-    // RETIRÉ : L'envoi de la liste des agents n'est plus déclenché ici
-    // await broadcastAgentList(wss);
-
     res.status(200).json({
       success: true,
       message: "Livraison supprimée avec succès.",

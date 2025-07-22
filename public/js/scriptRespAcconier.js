@@ -300,12 +300,52 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         // Ajout : réception automatique d'un nouvel ordre de livraison
         if (data.type === "new_delivery_created" && data.delivery) {
-          // Ajoute la nouvelle livraison à la liste globale
+          // Normalise la livraison reçue comme dans loadAllDeliveries
+          function normalizeDelivery(delivery) {
+            let tcList = [];
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
+            if (
+              !delivery.container_statuses ||
+              typeof delivery.container_statuses !== "object"
+            ) {
+              delivery.container_statuses = {};
+            }
+            tcList.forEach((tc) => {
+              if (!delivery.container_statuses[tc]) {
+                delivery.container_statuses[tc] = "attente_paiement";
+              }
+            });
+            if (
+              delivery.bl_statuses &&
+              typeof delivery.bl_statuses === "string"
+            ) {
+              try {
+                delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+              } catch {
+                delivery.bl_statuses = {};
+              }
+            }
+            if (
+              !delivery.bl_statuses ||
+              typeof delivery.bl_statuses !== "object"
+            ) {
+              delivery.bl_statuses = {};
+            }
+            return delivery;
+          }
+          const normalizedDelivery = normalizeDelivery(data.delivery);
           if (!window.allDeliveries) window.allDeliveries = [];
-          window.allDeliveries.unshift(data.delivery);
+          window.allDeliveries.unshift(normalizedDelivery);
           // Met à jour le tableau si la date correspond au filtre courant
           const dateInput = document.getElementById("mainTableDateFilter");
-          let dDate = data.delivery.delivery_date || data.delivery.created_at;
+          let dDate =
+            normalizedDelivery.delivery_date || normalizedDelivery.created_at;
           let normalized = "";
           if (typeof dDate === "string") {
             if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
@@ -336,7 +376,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
           // Affiche une alerte avec le nom de l'agent
-          const agentName = data.delivery.employee_name || "-";
+          const agentName = normalizedDelivery.employee_name || "-";
           showNewDeliveryAlert(agentName);
         }
       } catch (e) {
