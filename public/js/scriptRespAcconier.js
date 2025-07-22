@@ -1106,6 +1106,145 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
     btnBar.style.display = attentePaiementCount > 0 ? "flex" : "none";
   }
+
+  // Ajout du handler pour le bouton "En attente de paiement"
+  setTimeout(() => {
+    const btn = document.getElementById("btnAttentePaiement");
+    if (btn) {
+      btn.onclick = function () {
+        // Récupérer tous les dossiers en attente de paiement
+        const dossiers = (window.allDeliveries || []).filter((delivery) => {
+          let blList = [];
+          if (Array.isArray(delivery.bl_number)) {
+            blList = delivery.bl_number.filter(Boolean);
+          } else if (typeof delivery.bl_number === "string") {
+            blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          let blStatuses = blList.map((bl) =>
+            delivery.bl_statuses && delivery.bl_statuses[bl]
+              ? delivery.bl_statuses[bl]
+              : "aucun"
+          );
+          return blStatuses.some((s) => s !== "mise_en_livraison");
+        });
+        if (dossiers.length === 0) return;
+        // Afficher une popup avec la liste des dossiers et leurs infos
+        showAttentePaiementPopup(dossiers);
+      };
+    }
+  }, 0);
+
+  // Fonction pour afficher la popup détaillée des dossiers en attente de paiement
+  function showAttentePaiementPopup(dossiers) {
+    // Supprimer toute popup existante
+    const oldPopup = document.getElementById("attentePaiementPopup");
+    if (oldPopup) oldPopup.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "attentePaiementPopup";
+    overlay.style.position = "fixed";
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "rgba(30,41,59,0.45)";
+    overlay.style.zIndex = 99999;
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "flex-start";
+    overlay.style.justifyContent = "center";
+    const box = document.createElement("div");
+    box.style.background = "#fff";
+    box.style.borderRadius = "18px";
+    box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+    box.style.maxWidth = "700px";
+    box.style.width = "96vw";
+    box.style.marginTop = "60px";
+    box.style.maxHeight = "80vh";
+    box.style.overflowY = "auto";
+    box.style.padding = "0";
+    box.style.position = "relative";
+    box.style.display = "flex";
+    box.style.flexDirection = "column";
+    const header = document.createElement("div");
+    header.style.background = "#eab308";
+    header.style.color = "#0e274e";
+    header.style.padding = "18px 28px 12px 28px";
+    header.style.fontWeight = "bold";
+    header.style.fontSize = "1.18rem";
+    header.style.display = "flex";
+    header.style.flexDirection = "row";
+    header.style.alignItems = "center";
+    header.innerHTML = `<span style='font-size:1.15em;'><i class='fas fa-clock' style='margin-right:10px;'></i>Dossiers en attente de paiement</span>`;
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.style.background = "none";
+    closeBtn.style.border = "none";
+    closeBtn.style.color = "#0e274e";
+    closeBtn.style.fontSize = "2.1rem";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.top = "10px";
+    closeBtn.style.right = "18px";
+    closeBtn.setAttribute("aria-label", "Fermer");
+    closeBtn.onclick = () => overlay.remove();
+    header.appendChild(closeBtn);
+    box.appendChild(header);
+    const content = document.createElement("div");
+    content.style.padding = "24px 24px 24px 24px";
+    content.style.background = "#f8fafc";
+    content.style.flex = "1 1 auto";
+    content.style.overflowY = "auto";
+    if (dossiers.length === 0) {
+      content.innerHTML = `<div style='text-align:center;color:#64748b;font-size:1.1em;'>Aucun dossier en attente de paiement.</div>`;
+    } else {
+      dossiers.forEach((delivery) => {
+        const section = document.createElement("div");
+        section.style.marginBottom = "28px";
+        section.style.padding = "18px 22px";
+        section.style.background = "#fff";
+        section.style.borderRadius = "12px";
+        section.style.boxShadow = "0 2px 8px rgba(234,179,8,0.08)";
+        section.style.border = "1.5px solid #eab308";
+        section.innerHTML = `
+          <div style='font-size:1.08em;font-weight:700;margin-bottom:6px;'>N° Dossier : <span style='color:#2563eb;'>${
+            delivery.dossier_number || "-"
+          }</span></div>
+          <div style='margin-bottom:4px;'>Agent responsable : <b style='color:#0e274e;'>${
+            delivery.employee_name || "-"
+          }</b></div>
+          <div style='margin-bottom:4px;'>Client : <b>${
+            delivery.client_name || "-"
+          }</b> | Tél : <b>${delivery.client_phone || "-"}</b></div>
+          <div style='margin-bottom:4px;'>Numéro BL : <b>${
+            delivery.bl_number || "-"
+          }</b></div>
+          <div style='margin-bottom:4px;'>Lieu : <b>${
+            delivery.lieu || "-"
+          }</b></div>
+          <div style='margin-bottom:4px;'>Date livraison : <b>${
+            delivery.delivery_date
+              ? new Date(delivery.delivery_date).toLocaleDateString("fr-FR")
+              : "-"
+          }</b></div>
+          <div style='margin-bottom:4px;'>Conteneur(s) : <b>${
+            delivery.container_number || "-"
+          }</b> | Type : <b>${delivery.container_foot_type || "-"}</b></div>
+          <div style='margin-bottom:4px;'>Compagnie maritime : <b>${
+            delivery.shipping_company || "-"
+          }</b></div>
+          <div style='margin-bottom:4px;'>Observation : <b>${
+            delivery.observation_acconier || "-"
+          }</b></div>
+        `;
+        content.appendChild(section);
+      });
+    }
+    box.appendChild(content);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => {
+      if (e.target === overlay) overlay.remove();
+    };
+  }
   // ...
   // Filtrer les livraisons à afficher dans le tableau principal :
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
