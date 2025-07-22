@@ -233,11 +233,18 @@ document.addEventListener("DOMContentLoaded", function () {
           ) {
             // Supprimer la ligne du DOM ET forcer le re-rendu du tableau avec la plage de dates courante
             // Toujours utiliser window.allDeliveries comme source unique
+            console.log(
+              "[DEBUG] Avant suppression, window.allDeliveries:",
+              window.allDeliveries
+            );
             window.allDeliveries = (window.allDeliveries || []).filter(
               (d) => String(d.id) !== String(delivery.id)
             );
-            // Synchroniser allDeliveries (pour compatibilité)
             allDeliveries = window.allDeliveries;
+            console.log(
+              "[DEBUG] Après suppression, window.allDeliveries:",
+              window.allDeliveries
+            );
             // Récupérer les valeurs actuelles des inputs de plage de dates
             const dateStartInput = document.getElementById(
               "mainTableDateStartFilter"
@@ -247,9 +254,13 @@ document.addEventListener("DOMContentLoaded", function () {
             );
             // Toujours forcer le re-rendu du tableau principal après suppression
             if (typeof updateTableForDateRange === "function") {
-              // Toujours forcer le re-rendu du tableau principal, même si les inputs sont vides
               const startVal = dateStartInput ? dateStartInput.value : "";
               const endVal = dateEndInput ? dateEndInput.value : "";
+              console.log(
+                "[DEBUG] Appel updateTableForDateRange avec",
+                startVal,
+                endVal
+              );
               updateTableForDateRange(startVal, endVal);
             }
             // Afficher un toast de confirmation élégant
@@ -508,7 +519,17 @@ document.addEventListener("DOMContentLoaded", function () {
   function filterDeliveriesByDateRange(dateStartStr, dateEndStr) {
     // Toujours utiliser window.allDeliveries comme source unique
     const deliveriesSource = window.allDeliveries || [];
-    if (!dateStartStr && !dateEndStr) return deliveriesSource;
+    console.log(
+      "[DEBUG] filterDeliveriesByDateRange source:",
+      deliveriesSource
+    );
+    if (!dateStartStr && !dateEndStr) {
+      console.log(
+        "[DEBUG] Pas de filtre date, retourne toutes les livraisons:",
+        deliveriesSource
+      );
+      return deliveriesSource;
+    }
     // Conversion en Date objets à minuit
     let start = dateStartStr ? new Date(dateStartStr) : null;
     let end = dateEndStr ? new Date(dateEndStr) : null;
@@ -594,6 +615,10 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la plage de dates
   function updateTableForDateRange(dateStartStr, dateEndStr) {
     let filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
+    console.log(
+      "[DEBUG] updateTableForDateRange - livraisons filtrées:",
+      filtered
+    );
     // Tri du plus ancien au plus récent (ordre croissant)
     filtered.sort((a, b) => {
       let dateA = new Date(
@@ -1271,6 +1296,10 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas dans le tableau principal
     return !blStatuses.every((s) => s === "mise_en_livraison");
   });
+  console.log(
+    "[DEBUG] renderAgentTableFull - deliveriesToShow:",
+    deliveriesToShow
+  );
   if (deliveriesToShow.length === 0) {
     if (table) table.style.display = "none";
     let noDataMsg = document.getElementById("noDeliveriesMsg");
