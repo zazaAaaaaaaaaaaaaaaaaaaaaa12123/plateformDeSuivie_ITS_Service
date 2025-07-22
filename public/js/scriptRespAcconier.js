@@ -506,13 +506,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Filtre les livraisons selon une plage de dates (inclusif)
   function filterDeliveriesByDateRange(dateStartStr, dateEndStr) {
-    if (!dateStartStr && !dateEndStr) return allDeliveries;
+    // Toujours utiliser window.allDeliveries comme source unique
+    const deliveriesSource = window.allDeliveries || [];
+    if (!dateStartStr && !dateEndStr) return deliveriesSource;
     // Conversion en Date objets à minuit
     let start = dateStartStr ? new Date(dateStartStr) : null;
     let end = dateEndStr ? new Date(dateEndStr) : null;
     if (start) start.setHours(0, 0, 0, 0);
     if (end) end.setHours(23, 59, 59, 999);
-    return allDeliveries.filter((delivery) => {
+    return deliveriesSource.filter((delivery) => {
       let dDate =
         delivery["delivery_date"] ||
         delivery["created_at"] ||
