@@ -3370,6 +3370,23 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Erreur lors de la mise à jour." });
     }
+
+    // ENVOI WEBSOCKET TEMPS RÉEL POUR BL (pour suppression instantanée côté frontend)
+    const wss = req.app.get("wss");
+    if (wss && wss.clients) {
+      const payload = JSON.stringify({
+        type: "bl_status_update",
+        deliveryId: id,
+        blNumber: blNumber,
+        status: status,
+      });
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(payload);
+        }
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: `Statut BL mis à jour pour le N° BL ${blNumber}.`,
