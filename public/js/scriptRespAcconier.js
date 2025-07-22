@@ -162,17 +162,46 @@ document.addEventListener("DOMContentLoaded", function () {
           data.type === "bl_status_update" &&
           data.status === "mise_en_livraison"
         ) {
-          // Suppression instantanée de la ligne du tableau si tous les BL sont en 'mise_en_livraison'
-          const tableBody = document.getElementById("deliveriesTableBody");
-          if (!tableBody) return;
+          console.log("[WebSocket] bl_status_update reçu:", data);
           // On cherche la livraison concernée dans window.allDeliveries
           const delivery = (window.allDeliveries || []).find(
-            (d) => d.id == data.deliveryId
+            (d) => String(d.id) === String(data.deliveryId)
           );
           if (!delivery) return;
           // Mettre à jour le statut local du BL concerné
           if (!delivery.bl_statuses) delivery.bl_statuses = {};
           delivery.bl_statuses[data.blNumber] = data.status;
+          // Vérifier si la livraison est affichée (date du filtre)
+          const dateInput = document.getElementById("mainTableDateFilter");
+          let dDate =
+            delivery["delivery_date"] ||
+            delivery["created_at"] ||
+            delivery["Date"] ||
+            delivery["Date Livraison"];
+          let normalized = "";
+          if (typeof dDate === "string") {
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
+              const [j, m, a] = dDate.split("/");
+              normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
+              normalized = dDate;
+            } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
+              const [j, m, a] = dDate.split("-");
+              normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+            } else {
+              const dateObj = new Date(dDate);
+              if (!isNaN(dateObj)) {
+                normalized = dateObj.toISOString().split("T")[0];
+              } else {
+                normalized = dDate;
+              }
+            }
+          } else if (dDate instanceof Date) {
+            normalized = dDate.toISOString().split("T")[0];
+          } else {
+            normalized = String(dDate);
+          }
+          const currentFilterDate = dateInput ? dateInput.value : null;
           // Vérifier si tous les BL sont en 'mise_en_livraison'
           let blList = [];
           if (Array.isArray(delivery.bl_number)) {
@@ -187,25 +216,21 @@ document.addEventListener("DOMContentLoaded", function () {
           );
           if (
             blList.length > 0 &&
-            blStatuses.every((s) => s === "mise_en_livraison")
+            blStatuses.every((s) => s === "mise_en_livraison") &&
+            normalized === currentFilterDate
           ) {
-            // Supprimer la ligne du DOM
-            for (let row of tableBody.rows) {
-              let dossierCellIdx = window.AGENT_TABLE_COLUMNS.findIndex(
-                (c) => c.id === "dossier_number"
-              );
-              if (
-                dossierCellIdx !== -1 &&
-                row.cells[dossierCellIdx] &&
-                row.cells[dossierCellIdx].textContent ===
-                  String(delivery.dossier_number)
-              ) {
-                row.remove();
-                break;
-              }
+            // Supprimer la ligne du DOM ET forcer le re-rendu du tableau
+            window.allDeliveries = window.allDeliveries.filter(
+              (d) => String(d.id) !== String(delivery.id)
+            );
+            // On relance le rendu du tableau pour la date courante
+            if (typeof updateTableForDate === "function") {
+              updateTableForDate(currentFilterDate);
             }
-          } else {
+          } else if (normalized === currentFilterDate) {
             // Sinon, mettre à jour le statut dossier dans la colonne sans reload
+            const tableBody = document.getElementById("deliveriesTableBody");
+            if (!tableBody) return;
             for (let row of tableBody.rows) {
               let dossierCellIdx = window.AGENT_TABLE_COLUMNS.findIndex(
                 (c) => c.id === "dossier_number"
@@ -236,7 +261,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("WebSocket BL error:", e);
+      }
     };
     ws.onerror = function () {};
     ws.onclose = function () {
