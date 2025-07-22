@@ -1926,11 +1926,22 @@ app.post(
       // Envoi pour compatibilité ancienne version (peut être supprimé plus tard)
       // --- ENVOI WEBSOCKET EN TEMPS RÉEL POUR ACCONIER ---
       if (wss && wss.clients) {
-        const payload = JSON.stringify({
+        // Correction : log du payload et garantie du champ employee_name
+        const payloadObj = {
           type: "new_delivery_notification",
-          message: `Nouvelle livraison créée par ${newDelivery.employee_name}`,
-          delivery: newDelivery,
-        });
+          message: `L'agent ${
+            newDelivery.employee_name || "-"
+          } a établi un ordre de livraison.",`,
+          delivery: {
+            employee_name: newDelivery.employee_name || "",
+            client_name: newDelivery.client_name || "",
+            dossier_number: newDelivery.dossier_number || "",
+            created_at: newDelivery.created_at || new Date().toISOString(),
+            // Ajoutez d'autres champs utiles si besoin
+          },
+        };
+        console.log("[WebSocket][DEBUG] Payload envoyé :", payloadObj);
+        const payload = JSON.stringify(payloadObj);
         let clientCount = 0;
         wss.clients.forEach((client, idx) => {
           try {
