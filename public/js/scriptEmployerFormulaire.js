@@ -157,7 +157,7 @@ window.displayProfileAvatar = function () {
       logoutBtn.onclick = function () {
         localStorage.removeItem("acconier_user");
         window.location.href =
-          "https://plateformdesuivie-its-service.onrender.com/html/acconier_auth.html";
+          "https://plateformdesuivie-its-service-1cjx.onrender.com/html/acconier_auth.html";
       };
     }
   }
@@ -176,7 +176,7 @@ window.saveAcconierUserToLocalStorage = function (acconier) {
   localStorage.setItem("acconier_user", JSON.stringify(acconier));
   // Redirection directe vers l'ordre de livraison après connexion
   window.location.href =
-    "https://plateformdesuivie-its-service.onrender.com/html/interfaceFormulaireEmployer.html";
+    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/interfaceFormulaireEmployer.html";
 };
 
 // Initialisation de l'affichage historique et avatar au chargement
@@ -1329,6 +1329,7 @@ function init() {
           // containerFootTypeSelect, // SUPPRIMÉ : ce champ n'existe plus, remplacé par la zone dynamique
           declarationNumberInput,
           numberOfContainersInput,
+          dossierNumberInput, // Ajout du champ N° dossier comme obligatoire
         ].filter((input) => input !== null); // Filtrer les inputs non trouvés
 
         let allRequiredFilled = true;
@@ -1645,6 +1646,7 @@ async function submitDeliveryForm(status) {
   formData.append("delivery_status_acconier", deliveryStatusAcconier);
 
   // Assurez-vous d'appeler .value.trim() directement ici aussi pour les variables utilisées dans les append conditionnels
+
   const finalBlNumber = blNumberInput ? blNumberInput.value.trim() : "";
   const finalDossierNumber = dossierNumberInput
     ? dossierNumberInput.value.trim()
@@ -1653,8 +1655,9 @@ async function submitDeliveryForm(status) {
     ? shippingCompanyInput.value.trim()
     : "";
 
+  // Toujours envoyer dossier_number, même vide, pour éviter l'erreur backend
+  formData.append("dossier_number", finalDossierNumber);
   if (finalBlNumber) formData.append("bl_number", finalBlNumber);
-  if (finalDossierNumber) formData.append("dossier_number", finalDossierNumber);
   if (finalShippingCompany)
     formData.append("shipping_company", finalShippingCompany);
 
@@ -1675,7 +1678,7 @@ async function submitDeliveryForm(status) {
     } else {
       // Remplace ci-dessous par TON vrai sous-domaine Render !
       apiUrl =
-        "https://plateformdesuivie-its-service.onrender.com/deliveries/validate";
+        "https://plateformdesuivie-its-service-1cjx.onrender.com/deliveries/validate";
     }
     const response = await fetch(apiUrl, {
       method: "POST",
