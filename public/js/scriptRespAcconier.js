@@ -200,8 +200,17 @@ document.addEventListener("DOMContentLoaded", function () {
     ws = new WebSocket(wsUrl);
     ws.onopen = function () {};
     ws.onmessage = function (event) {
+      console.log("[DEBUG] ws.onmessage triggered", event.data);
+
       try {
         const data = JSON.parse(event.data);
+        console.log(
+          "[DEBUG] data.type:",
+          data.type,
+          "data.status:",
+          data.status
+        );
+
         if (
           data.type === "bl_status_update" &&
           data.status === "mise_en_livraison"
