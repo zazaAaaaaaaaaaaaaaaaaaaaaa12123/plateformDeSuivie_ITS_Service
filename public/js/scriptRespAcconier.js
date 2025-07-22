@@ -246,16 +246,11 @@ document.addEventListener("DOMContentLoaded", function () {
               "mainTableDateEndFilter"
             );
             // Toujours forcer le re-rendu du tableau principal après suppression
-            if (
-              typeof updateTableForDateRange === "function" &&
-              dateStartInput &&
-              dateEndInput
-            ) {
-              updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-            }
-            if (typeof updateTableForDate === "function") {
-              const dateInput = document.getElementById("mainTableDateFilter");
-              if (dateInput) updateTableForDate(dateInput.value);
+            if (typeof updateTableForDateRange === "function") {
+              // Toujours forcer le re-rendu du tableau principal, même si les inputs sont vides
+              const startVal = dateStartInput ? dateStartInput.value : "";
+              const endVal = dateEndInput ? dateEndInput.value : "";
+              updateTableForDateRange(startVal, endVal);
             }
             // Afficher un toast de confirmation élégant
             showSuccessToast(
