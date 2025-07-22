@@ -21,23 +21,6 @@
         font-size: 1em !important;
       }
     }
-
-    /* Forcer l'alignement à droite du bouton Suivi spécifique Agent sur tous les écrans */
-    .employee-tracking-btn-wrapper {
-      display: flex !important;
-      justify-content: flex-end !important;
-      align-items: center !important;
-      width: 100% !important;
-      margin-bottom: 0 !important;
-      margin-top: 0 !important;
-    }
-    #employeeTrackingBtn {
-      margin-left: auto !important;
-      margin-right: 0 !important;
-      display: inline-block !important;
-      float: none !important;
-      position: static !important;
-    }
   `;
   document.head.appendChild(style);
 })();
@@ -128,15 +111,36 @@ function checkLateContainers() {
               <td style='padding:7px 10px;'>${c.dateEnr || "-"}</td>
               <td style='padding:7px 10px;'>${dateLiv}</td>
               <td style='padding:7px 10px;'>${heureLiv}</td>
-              <td style='padding:7px 10px;'><a href='#' class='notifier-agent-link' data-agent='${
+              <td style='padding:7px 10px;'><button class='notifier-btn' data-agent='${
                 c.agentName || ""
               }' data-email='${c.agentEmail || ""}' data-tc='${
               c.numeroTC
-            }' style='color:#eab308;font-weight:700;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Notifier</a></td>
+            }'>Notifier</button></td>
               <td style='padding:7px 10px;'><a href='#' class='late-detail-link' data-idx='${idx}' style='color:#2563eb;font-weight:600;text-decoration:underline;cursor:pointer;font-size:0.97em;'>Détail</a></td>
             </tr>`;
           })
           .join("");
+        // Ajout du listener sur les boutons Notifier
+        tbody.querySelectorAll(".notifier-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const agent = this.getAttribute("data-agent");
+            const dossier = this.getAttribute("data-tc");
+            fetch("/notify-agent", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ agent, dossier }),
+            })
+              .then((res) => res.json())
+              .then((data) => {
+                alert(data.message || "Notification envoyée !");
+              })
+              .catch(() => {
+                alert("Erreur lors de l’envoi de la notification.");
+              });
+          });
+        });
       }
     }
   }
@@ -169,7 +173,7 @@ function checkLateContainers() {
           dateEnr = new Date(delivery.created_at);
         }
         if (!dateEnr) return;
-        // Si ce conteneur n'est pas livré et dépasse 2 jours, il est en retard
+        // Si ce conteneur n'est pas livré et dépasse 2 jours (48h), il est en retard
         if (!isDelivered && now - dateEnr > 2 * 24 * 60 * 60 * 1000) {
           // 2 jours (48h)
           hasLate = true;
@@ -331,6 +335,7 @@ function showLateContainersAlert(lateContainers, lateDossiersCount) {
               <thead>
                 <tr style='background:#f3f4f6;'>
                   <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>TC</th>
+
                   <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Agent</th>
                   <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Date enregistrement</th>
                   <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Date livraison</th>
@@ -611,7 +616,123 @@ setInterval(() => {
 // Appel initial au chargement
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
+// --- WebSocket temps réel pour les nouvelles livraisons (ordre de livraison créé) ---
+let wsLivraison = null;
+function initWebSocketLivraison() {
+  const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+  let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
+  try {
+    wsLivraison = new WebSocket(wsUrl);
+    wsLivraison.onopen = function () {
+      console.debug("[WebSocket] Connecté pour livraisons (scriptSuivie)");
+    };
+    wsLivraison.onmessage = function (event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "new_delivery_created") {
+          // Affiche le message personnalisé envoyé par le backend (ex: "L'agent X a établi un ordre de livraison.")
+          showCustomAlert(
+            data.message || "Nouvel ordre de livraison reçu !",
+            "success",
+            3000
+          );
+          // Recharge les livraisons instantanément
+          if (typeof loadDeliveries === "function") {
+            loadDeliveries();
+          }
+        }
+      } catch (e) {
+        console.warn("[WebSocket] Message non JSON ou erreur :", event.data);
+      }
+    };
+    wsLivraison.onclose = function () {
+      console.warn("[WebSocket] Livraison déconnecté. Reconnexion dans 10s...");
+      setTimeout(initWebSocketLivraison, 10000);
+    };
+    wsLivraison.onerror = function () {
+      wsLivraison.close();
+    };
+  } catch (e) {
+    console.error("[WebSocket] Erreur d'init livraison :", e);
+  }
+}
+if (window["WebSocket"]) {
+  // Détection automatique de l'URL WebSocket (comme dans scriptTabBord.js)
+  if (!window.WS_BASE_HOST) {
+    const isLocal = ["localhost", "127.0.0.1"].includes(
+      window.location.hostname
+    );
+    window.WS_BASE_HOST = isLocal ? "localhost:3000" : window.location.host;
+  }
+  initWebSocketLivraison();
+}
+
 (async () => {
+  // === Désactivation de l'autocomplétion sur les champs sensibles ===
+  window.addEventListener("DOMContentLoaded", function () {
+    // Champ de recherche principal
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+      searchInput.setAttribute("autocomplete", "off");
+      searchInput.setAttribute("autocorrect", "off");
+      searchInput.setAttribute("autocapitalize", "off");
+      searchInput.setAttribute("spellcheck", "false");
+    }
+    // Champ Responsable de livraison (supposé avoir l'id 'deliveryResponsibleInput')
+    const deliveryResponsibleInput = document.getElementById(
+      "deliveryResponsibleInput"
+    );
+    if (deliveryResponsibleInput) {
+      deliveryResponsibleInput.setAttribute("autocomplete", "off");
+      deliveryResponsibleInput.setAttribute("autocorrect", "off");
+      deliveryResponsibleInput.setAttribute("autocapitalize", "off");
+      deliveryResponsibleInput.setAttribute("spellcheck", "false");
+
+      // Récupère la valeur depuis le backend (GET)
+      fetch("/delivery-responsible")
+        .then((response) => {
+          if (!response.ok)
+            throw new Error(
+              "Erreur lors de la récupération du responsable de livraison"
+            );
+          return response.json();
+        })
+        .then((data) => {
+          if (data && data.value) {
+            deliveryResponsibleInput.value = data.value;
+          }
+        })
+        .catch((err) => {
+          console.error(
+            "Erreur lors de la récupération du responsable de livraison:",
+            err
+          );
+        });
+
+      // Sauvegarde à chaque modification (POST)
+      deliveryResponsibleInput.addEventListener("input", function () {
+        fetch("/delivery-responsible", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ value: deliveryResponsibleInput.value }),
+        })
+          .then((response) => {
+            if (!response.ok)
+              throw new Error(
+                "Erreur lors de la sauvegarde du responsable de livraison"
+              );
+          })
+          .catch((err) => {
+            console.error(
+              "Erreur lors de la sauvegarde du responsable de livraison:",
+              err
+            );
+          });
+      });
+    }
+  });
   // --- SYNCHRONISATION TEMPS RÉEL : WebSocket + Fallback AJAX Polling ---
   // Détection automatique de l'environnement pour l'URL WebSocket
   let wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -938,17 +1059,35 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
 
     /* Bouton Suivie spécifique agent : alignement à droite (fix flexbox) */
     .employee-tracking-btn-wrapper {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        width: 100%;
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+        /* Empêche les media queries ou autres styles de casser l'alignement */
     }
     #employeeTrackingBtn {
-        margin-left: auto;
-        margin-right: 0;
-        display: inline-block;
-        float: none;
-        position: static;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        display: inline-block !important;
+        float: none !important;
+        position: static !important;
+    }
+
+    /* Désactive tout alignement à gauche sur tablette/desktop si media queries présentes */
+    @media (max-width: 1200px), (max-width: 992px), (max-width: 768px) {
+      .employee-tracking-btn-wrapper {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+      }
+      #employeeTrackingBtn {
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        display: inline-block !important;
+        float: none !important;
+        position: static !important;
+      }
     }
 
     /* Padding for the main content sections within the agent activity box */
@@ -1753,9 +1892,307 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   // FIX: Declare loadingOverlay here
   const loadingOverlay = document.getElementById("loadingOverlay");
 
+  // --- Correction alignement bouton Suivi spécifique Agent ---
+  window.addEventListener("DOMContentLoaded", function () {
+    var wrapper = document.querySelector(".employee-tracking-btn-wrapper");
+    var btn = document.getElementById("employeeTrackingBtn");
+    if (wrapper) {
+      wrapper.style.display = "flex";
+      wrapper.style.justifyContent = "flex-end";
+      wrapper.style.alignItems = "center";
+      wrapper.style.width = "100%";
+    }
+    if (btn) {
+      btn.style.marginLeft = "auto";
+      btn.style.marginRight = "0";
+      btn.style.display = "inline-block";
+      btn.style.float = "none";
+      btn.style.position = "static";
+    }
+  });
+
   // DOM element for the status filter
+
   const statusFilterSelect = document.getElementById("statusFilterSelect");
   const mainTableDateFilter = document.getElementById("mainTableDateFilter");
+
+  // === AJOUT : Inputs pour filtrage par plage de dates ===
+  // Création dynamique si non présents dans le HTML
+  let dateRangeContainer = document.getElementById("dateRangeFilterContainer");
+  if (!dateRangeContainer) {
+    dateRangeContainer = document.createElement("div");
+    dateRangeContainer.id = "dateRangeFilterContainer";
+    dateRangeContainer.style.display = "flex";
+    dateRangeContainer.style.gap = "10px";
+    dateRangeContainer.style.alignItems = "center";
+    dateRangeContainer.style.margin = "10px 0";
+    // Place le conteneur juste avant le tableau principal
+    if (deliveriesTable && deliveriesTable.parentNode) {
+      deliveriesTable.parentNode.insertBefore(
+        dateRangeContainer,
+        deliveriesTable
+      );
+    } else {
+      document.body.insertBefore(dateRangeContainer, document.body.firstChild);
+    }
+  }
+  // Input date début
+  let dateStartInput = document.getElementById("dateRangeStart");
+  if (!dateStartInput) {
+    dateStartInput = document.createElement("input");
+    dateStartInput.type = "date";
+    dateStartInput.id = "dateRangeStart";
+    dateStartInput.style.padding = "5px";
+    dateStartInput.style.borderRadius = "5px";
+    dateStartInput.style.border = "1px solid #ccc";
+    dateRangeContainer.appendChild(dateStartInput);
+  }
+  // Input date fin
+  let dateEndInput = document.getElementById("dateRangeEnd");
+  if (!dateEndInput) {
+    dateEndInput = document.createElement("input");
+    dateEndInput.type = "date";
+    dateEndInput.id = "dateRangeEnd";
+    dateEndInput.style.padding = "5px";
+    dateEndInput.style.borderRadius = "5px";
+    dateEndInput.style.border = "1px solid #ccc";
+    dateRangeContainer.appendChild(dateEndInput);
+  }
+  // Label
+  let dateRangeLabel = document.getElementById("dateRangeLabel");
+  if (!dateRangeLabel) {
+    dateRangeLabel = document.createElement("span");
+    dateRangeLabel.id = "dateRangeLabel";
+    dateRangeLabel.textContent = "Filtrer entre :";
+    dateRangeLabel.style.fontWeight = "bold";
+    dateRangeLabel.style.marginRight = "8px";
+    dateRangeContainer.insertBefore(dateRangeLabel, dateStartInput);
+  }
+
+  // === BOUTON POUR AFFICHER LE RÉSULTAT DANS UNE POP-UP ===
+  let showDateRangeTableBtn = document.getElementById("showDateRangeTableBtn");
+  if (!showDateRangeTableBtn) {
+    showDateRangeTableBtn = document.createElement("button");
+    showDateRangeTableBtn.id = "showDateRangeTableBtn";
+    showDateRangeTableBtn.textContent = "Afficher le tableau filtré";
+    showDateRangeTableBtn.style.padding = "6px 18px";
+    showDateRangeTableBtn.style.borderRadius = "6px";
+    showDateRangeTableBtn.style.border = "1px solid #007bff";
+    showDateRangeTableBtn.style.background = "#007bff";
+    showDateRangeTableBtn.style.color = "#fff";
+    showDateRangeTableBtn.style.fontWeight = "bold";
+    showDateRangeTableBtn.style.cursor = "pointer";
+    showDateRangeTableBtn.style.marginLeft = "12px";
+    dateRangeContainer.appendChild(showDateRangeTableBtn);
+  }
+
+  // Fonction pour générer le tableau filtré dans une pop-up
+  function showDateRangePopupTable(filteredDeliveries) {
+    // Création de l'overlay
+    let overlay = document.createElement("div");
+    overlay.id = "dateRangePopupOverlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "rgba(30,41,59,0.45)";
+    overlay.style.zIndex = 99999;
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+
+    // Boîte centrale
+    let box = document.createElement("div");
+    box.style.background = "#fff";
+    box.style.borderRadius = "14px";
+    box.style.boxShadow = "0 8px 32px rgba(30,41,59,0.18)";
+    box.style.maxWidth = "1200px";
+    box.style.width = "98vw";
+    box.style.maxHeight = "90vh";
+    box.style.overflow = "auto";
+    box.style.padding = "32px 28px 24px 28px";
+    box.style.position = "relative";
+
+    // Bouton de fermeture
+    let closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.top = "18px";
+    closeBtn.style.right = "24px";
+    closeBtn.style.background = "none";
+    closeBtn.style.border = "none";
+    closeBtn.style.fontSize = "2.2rem";
+    closeBtn.style.color = "#007bff";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.onclick = () => {
+      overlay.remove();
+      // Retour automatique au tableau général
+      applyCombinedFilters();
+    };
+    box.appendChild(closeBtn);
+
+    // Titre
+    let title = document.createElement("h3");
+    title.textContent = `Livraisons du ${dateStartInput.value || "..."} au ${
+      dateEndInput.value || "..."
+    }`;
+    title.style.marginBottom = "18px";
+    title.style.fontWeight = "bold";
+    title.style.fontSize = "1.3em";
+    title.style.color = "#1e293b";
+    box.appendChild(title);
+
+    // Tableau filtré
+    let table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+    table.style.marginBottom = "18px";
+    table.style.fontSize = "1em";
+
+    // En-têtes spécifiques
+    const headers = [
+      "Agent",
+      "Client (Nom)",
+      "Client (Téléphone)",
+      "Numéro TC",
+      "Lieu",
+      "Type de conteneur (en pieds)",
+      "Numéro de déclaration",
+      "Numéro de BL",
+      "Dossier",
+      "Nombre de conteneurs",
+      "Compagnie maritime",
+    ];
+    let thead = document.createElement("thead");
+    let trh = document.createElement("tr");
+    headers.forEach((h) => {
+      let th = document.createElement("th");
+      th.textContent = h;
+      th.style.background = "#007bff";
+      th.style.color = "#fff";
+      th.style.padding = "10px 8px";
+      th.style.fontWeight = "bold";
+      th.style.border = "1px solid #e0e7ef";
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+
+    // Corps du tableau
+    let tbody = document.createElement("tbody");
+    filteredDeliveries.forEach((d) => {
+      let tr = document.createElement("tr");
+      let values = [
+        d.employee_name || "-",
+        d.client_name || "-",
+        d.client_phone || "-",
+        d.container_number || "-",
+        d.lieu || "-",
+        d.container_foot_type || "-",
+        d.declaration_number || "-",
+        d.bl_number || "-",
+        d.dossier_number || d.dossier || "-",
+        d.number_of_containers || "-",
+        d.shipping_company || "-",
+      ];
+      values.forEach((v) => {
+        let td = document.createElement("td");
+        td.textContent = v;
+        td.style.padding = "8px 7px";
+        td.style.border = "1px solid #e0e7ef";
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    box.appendChild(table);
+
+    // Message si aucun résultat
+    if (filteredDeliveries.length === 0) {
+      let msg = document.createElement("div");
+      msg.textContent = "Aucune livraison trouvée pour cette période.";
+      msg.style.color = "#dc3545";
+      msg.style.fontWeight = "bold";
+      msg.style.textAlign = "center";
+      msg.style.margin = "18px 0 8px 0";
+      box.appendChild(msg);
+    }
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    // Fermeture par clic sur le fond
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        applyCombinedFilters();
+      }
+    };
+  }
+
+  // Ajoute l'event sur le bouton
+  showDateRangeTableBtn.onclick = function () {
+    const start = dateStartInput.value;
+    const end = dateEndInput.value;
+    let filtered = deliveries;
+    if (start || end) {
+      filtered = filterDeliveriesByDateRange(filtered, start, end);
+    }
+    showDateRangePopupTable(filtered);
+  };
+
+  // Fonction utilitaire pour filtrer les livraisons selon la plage de dates
+  function filterDeliveriesByDateRange(deliveries, startDate, endDate) {
+    if (!startDate && !endDate) return deliveries;
+    return deliveries.filter((d) => {
+      if (!d.created_at) return false;
+      let dDate = d.created_at;
+      if (typeof dDate === "string") dDate = new Date(dDate);
+      dDate.setHours(0, 0, 0, 0);
+      let afterStart = true,
+        beforeEnd = true;
+      if (startDate) {
+        let s = new Date(startDate);
+        s.setHours(0, 0, 0, 0);
+        afterStart = dDate >= s;
+      }
+      if (endDate) {
+        let e = new Date(endDate);
+        e.setHours(0, 0, 0, 0);
+        beforeEnd = dDate <= e;
+      }
+      return afterStart && beforeEnd;
+    });
+  }
+
+  // Patch la fonction applyCombinedFilters pour intégrer le filtrage par plage de dates
+  // Utilise un nom unique pour éviter les conflits de redéclaration
+  const dateRangeFilter_applyCombinedFiltersOrig =
+    window.applyCombinedFilters || applyCombinedFilters;
+  window.applyCombinedFilters = function (...args) {
+    const start = dateStartInput.value;
+    const end = dateEndInput.value;
+    let filtered = deliveries;
+    if (start || end) {
+      filtered = filterDeliveriesByDateRange(filtered, start, end);
+    }
+    if (typeof dateRangeFilter_applyCombinedFiltersOrig === "function") {
+      try {
+        dateRangeFilter_applyCombinedFiltersOrig.apply(this, [
+          filtered,
+          ...args.slice(1),
+        ]);
+      } catch (e) {
+        dateRangeFilter_applyCombinedFiltersOrig.apply(this, args);
+      }
+    }
+    setTimeout(forceBlinkOnNewRows, 50);
+  };
+
+  // Rafraîchit le tableau à chaque changement de date
+  dateStartInput.addEventListener("change", window.applyCombinedFilters);
+  dateEndInput.addEventListener("change", window.applyCombinedFilters);
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
@@ -2627,7 +3064,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     if (loadingOverlay) loadingOverlay.style.display = "flex";
     try {
       const deletePromises = deliveryIds.map((id) =>
-        fetch(`http://localhost:3000/deliveries/${id}`, {
+        fetch(`/deliveries/${id}`, {
           method: "DELETE",
         }).then((response) => {
           if (!response.ok) {
@@ -2651,11 +3088,21 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       );
       console.log(`${deliveryIds.length} deliveries deleted successfully.`);
 
-      await loadDeliveries();
+      // Suppression instantanée dans le tableau principal (lateContainers)
+      if (window.lateContainers && Array.isArray(window.lateContainers)) {
+        window.lateContainers = window.lateContainers.filter(
+          (item) =>
+            !deliveryIds.includes(item.id) &&
+            !deliveryIds.includes(item.dossier)
+        );
+        if (typeof renderLateDossiersTable === "function")
+          renderLateDossiersTable();
+      }
+
       // Clear main view if the selected delivery was among the deleted ones
       if (selectedDeliveryId && deliveryIds.includes(selectedDeliveryId)) {
         singleDeliveryView.innerHTML = `
-                        <i class="fas fa-hand-pointer text-5xl mb-4 text-gray-300"></i>
+                        <i class=\"fas fa-hand-pointer text-5xl mb-4 text-gray-300\"></i>
                         <p>Cliquez sur une demande ci-dessus pour la consulter en détail.</p>
                     `;
         singleDeliveryView.classList.add(
@@ -4370,14 +4817,17 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       } else {
         cell.innerHTML = `<span>Non Reçu</span>`;
       }
-    } else if (fieldName === "delivery_date" && displayValue) {
-      // For delivery_date (text input), display as DD/MM/YYYY
-      // It might be a Date object from initial load or ISO-8601 string from update
-      const dateObj = new Date(displayValue); // Attempt to parse ISO-8601 string or Date object
-      if (!isNaN(dateObj.getTime())) {
-        cell.textContent = dateObj.toLocaleDateString("fr-FR");
+    } else if (fieldName === "delivery_date") {
+      // N'affiche rien si la date n'est pas renseignée ou vide
+      if (displayValue) {
+        const dateObj = new Date(displayValue);
+        if (!isNaN(dateObj.getTime())) {
+          cell.textContent = dateObj.toLocaleDateString("fr-FR");
+        } else {
+          cell.textContent = displayValue;
+        }
       } else {
-        cell.textContent = displayValue; // Fallback to raw string if parsing fails (e.g. malformed input)
+        cell.textContent = "-";
       }
     } else if (fieldName === "delivery_time" && displayValue) {
       // For delivery_time (text input), display directly (it should already be HH:MM or similar)
@@ -6316,15 +6766,24 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     };
 
     socket.onmessage = async (event) => {
+      console.log("[WS][FRONT] Message WebSocket brut reçu:", event.data);
       // --- Affichage d'un message lors des notifications WebSocket (modification, suppression, etc.) ---
       function showWebSocketNotification(data) {
+        console.log(
+          "[WS][FRONT] showWebSocketNotification appelée avec:",
+          data
+        );
         if (!data || !data.type) return;
         let message = "";
         let type = "info";
         // On affiche le message du backend si présent
         if (data.type === "new_delivery_notification") {
           // Message personnalisé pour la création d'une nouvelle livraison
-          message = "Le Responsable Acconier a envoyé une requête.";
+          const agent =
+            data.delivery && data.delivery.employee_name
+              ? data.delivery.employee_name
+              : "Un agent";
+          message = `L'agent <b>${agent}</b> a établi un ordre de livraison.`;
           type = "success";
         } else if (data.message) {
           message = data.message;
@@ -6354,6 +6813,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
       }
       try {
         const message = JSON.parse(event.data);
+        console.log("[WS][FRONT] Message WebSocket parsé:", message);
         // Affiche une notification à chaque réception d'un message pertinent
         const typesToNotify = [
           "delivery_update_alert",
@@ -6396,7 +6856,7 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
           }
         }
       } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
+        console.error("[WS][FRONT] Erreur parsing WebSocket message:", error);
       }
     };
 
@@ -8198,6 +8658,35 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     });
   }
 
+  // (Sécurité) Désactive l'autocomplétion sur le champ de recherche si jamais il est généré dynamiquement
+  if (searchInput) {
+    searchInput.setAttribute("autocomplete", "off");
+    searchInput.setAttribute("autocorrect", "off");
+    searchInput.setAttribute("autocapitalize", "off");
+    searchInput.setAttribute("spellcheck", "false");
+  }
+
+  // (Sécurité) Désactive l'autocomplétion sur le champ Responsable de livraison si jamais il est généré dynamiquement
+  const deliveryResponsibleInput = document.getElementById(
+    "deliveryResponsibleInput"
+  );
+  if (deliveryResponsibleInput) {
+    deliveryResponsibleInput.setAttribute("autocomplete", "off");
+    deliveryResponsibleInput.setAttribute("autocorrect", "off");
+    deliveryResponsibleInput.setAttribute("autocapitalize", "off");
+    deliveryResponsibleInput.setAttribute("spellcheck", "false");
+    // Restaure la valeur sauvegardée si présente
+    const savedValue = localStorage.getItem("deliveryResponsibleValue");
+    if (savedValue) deliveryResponsibleInput.value = savedValue;
+    // Sauvegarde à chaque modification
+    deliveryResponsibleInput.addEventListener("input", function () {
+      localStorage.setItem(
+        "deliveryResponsibleValue",
+        deliveryResponsibleInput.value
+      );
+    });
+  }
+
   if (statusFilterSelect) {
     statusFilterSelect.addEventListener("change", applyCombinedFilters);
     populateStatusFilter();
@@ -8608,10 +9097,74 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
     // Pour chaque agent en retard, ajoute une ligne
     lateAgents.forEach((agent) => {
       const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.textContent = agent;
-      tr.appendChild(td);
-      // Ajoute d'autres colonnes si besoin (ex : nombre de dossiers, bouton action...)
+      const tdAgent = document.createElement("td");
+      tdAgent.textContent = agent;
+      tr.appendChild(tdAgent);
+
+      // Recherche le premier dossier non livré pour cet agent
+      let dossier = null;
+      for (const d of deliveries) {
+        if (
+          (d.employee_name || "Agent inconnu") === agent &&
+          d.dossier_number
+        ) {
+          const status = d.status || d.delivery_status_acconier || "";
+          if (!status.toString().toLowerCase().includes("livr")) {
+            dossier = d.dossier_number;
+            break;
+          }
+        }
+      }
+
+      // Ajoute le numéro de dossier si trouvé
+      const tdDossier = document.createElement("td");
+      tdDossier.textContent = dossier || "-";
+      tr.appendChild(tdDossier);
+
+      // Ajoute le bouton Notifier
+      const tdAction = document.createElement("td");
+      const notifyBtn = document.createElement("button");
+      notifyBtn.textContent = "Notifier";
+      notifyBtn.className = "btn btn-warning btn-sm";
+      notifyBtn.style.marginLeft = "8px";
+      if (!dossier) {
+        notifyBtn.disabled = true;
+        notifyBtn.title = "Aucun dossier à notifier pour cet agent";
+        notifyBtn.style.opacity = "0.6";
+      } else {
+        notifyBtn.onclick = async function () {
+          notifyBtn.disabled = true;
+          notifyBtn.textContent = "Envoi...";
+          try {
+            const response = await fetch("/notify-late-dossier", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ agent, dossier }),
+            });
+            const result = await response.json();
+            if (result.success) {
+              showCustomAlert("Notification envoyée à l'agent.", "success");
+              notifyBtn.textContent = "Envoyé";
+            } else {
+              showCustomAlert(
+                result.message || "Erreur lors de l'envoi.",
+                "error"
+              );
+              notifyBtn.textContent = "Erreur";
+            }
+          } catch (err) {
+            showCustomAlert("Erreur réseau ou serveur.", "error");
+            notifyBtn.textContent = "Erreur";
+          }
+          setTimeout(() => {
+            notifyBtn.disabled = false;
+            notifyBtn.textContent = "Notifier";
+          }, 3000);
+        };
+      }
+      tdAction.appendChild(notifyBtn);
+      tr.appendChild(tdAction);
+
       lateTable.querySelector("tbody").appendChild(tr);
     });
     // Si aucun agent en retard
@@ -8705,52 +9258,4 @@ window.addEventListener("DOMContentLoaded", checkLateContainers);
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en cas de pertubation 125 AAAA34 ***/
-<thead>
-              <tr>
-                <th
-                  colspan="24"
-                  style="
-                    background: rgba(0, 123, 255, 0.2);
-                    color: #0a3d7c;
-                    font-size: 1.15em;
-                    font-weight: bold;
-                    text-align: center;
-                    letter-spacing: 1px;
-                    border-bottom: 3px solid #007bff;
-                  "
-                >
-                  RESPONSABLE LIVRAISON
-                </th>
-              </tr>
-              <tr>
-                <th>N°</th>
-                <th>DATE</th>
-                <th>AGENT ACCONIER</th>
-                <th>NOM CLIENT</th>
-                <th>CLIENT (Tel)</th>
-                <th>NUMÉRO TC(S)</th>
-                <th>LIEU</th>
-                <th>TYPE DE CONTENEURS</th>
-                <th>CONTENU</th>
-                <th>NUMÉRO DÉCLARATION</th>
-                <th>NUMÉRO DOSSIER</th>
-                <th>NBR CONTENEURS</th>
-                <th>COMPAGNIE MARITIME</th>
-                <th>CIRCUIT</th>
-                <th>MODE DE TRANSPORT</th>
-                <th>NOM Agent visiteurs</th>
-                <th>TRANSPORTEUR</th>
-                <th>INSPECTEUR</th>
-                <th>AGENT EN DOUANES</th>
-                <th>CHAUFFEUR</th>
-                <th>TEL CHAUFFEUR</th>
-                <th>DATE LIVRAISON</th>
-                <th>STATUT (du Respo.ACCONIER)</th>
-                <th>STATUT</th>
-                <th>OBSERVATIONS</th>
-              </tr>
-            </thead>
-
-
-            ok ensuit quand je clique sur une cellule modifiable quand j'insere une donnne et que je valide la donne est afficher mais quand je reclique pour juste remodifier le texte le texte dans le champs disparait et je suis obliger le recopier tout le texte donc regle ça , je veux que si je modifie que le texte dans le champs disparaissent pas . on est claire 
+/****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
