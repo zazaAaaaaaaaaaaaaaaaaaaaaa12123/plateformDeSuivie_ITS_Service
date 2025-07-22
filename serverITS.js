@@ -1130,6 +1130,10 @@ function mapAcconierStatusToFr(status) {
 }
 
 wss.on("connection", (ws) => {
+  console.log("[WebSocket][SERVER] Nouveau client connecté.");
+  ws.on("message", (msg) => {
+    console.log("[WebSocket][SERVER] Message reçu du client:", msg);
+  });
   ws.on("error", (error) => {
     console.error("Erreur WebSocket côté serveur:", error);
   });
