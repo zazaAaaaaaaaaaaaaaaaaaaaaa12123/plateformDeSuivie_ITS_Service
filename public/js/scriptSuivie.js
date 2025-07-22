@@ -8619,11 +8619,45 @@ if (window["WebSocket"]) {
       });
   });
 
-  // Suppression des anciens champs de filtre par date (zone "Filtrer entre :")
-  const oldDateFilterZone = document.querySelector(
-    "#oldDateFilterZone, .old-date-filter-zone"
+  // ====== AJOUT : Filtre par plage de dates (début/fin) ======
+  // Création des deux inputs date si pas déjà présents
+  let mainTableDateFilterStart = document.getElementById(
+    "mainTableDateFilterStart"
   );
-  if (oldDateFilterZone) oldDateFilterZone.remove();
+  let mainTableDateFilterEnd = document.getElementById(
+    "mainTableDateFilterEnd"
+  );
+  const mainTableDateFilterOld = document.getElementById("mainTableDateFilter");
+  if (!mainTableDateFilterStart || !mainTableDateFilterEnd) {
+    if (mainTableDateFilterOld) {
+      // Remplace l'ancien input par deux nouveaux
+      const parent = mainTableDateFilterOld.parentNode;
+      mainTableDateFilterStart = document.createElement("input");
+      mainTableDateFilterStart.type = "date";
+      mainTableDateFilterStart.id = "mainTableDateFilterStart";
+      mainTableDateFilterStart.className = mainTableDateFilterOld.className;
+      mainTableDateFilterStart.style.marginRight = "8px";
+      mainTableDateFilterStart.style.width = "auto";
+      mainTableDateFilterStart.style.display = "inline-block";
+      mainTableDateFilterStart.placeholder = "Date début";
+
+      mainTableDateFilterEnd = document.createElement("input");
+      mainTableDateFilterEnd.type = "date";
+      mainTableDateFilterEnd.id = "mainTableDateFilterEnd";
+      mainTableDateFilterEnd.className = mainTableDateFilterOld.className;
+      mainTableDateFilterEnd.style.marginLeft = "8px";
+      mainTableDateFilterEnd.style.width = "auto";
+      mainTableDateFilterEnd.style.display = "inline-block";
+      mainTableDateFilterEnd.placeholder = "Date fin";
+
+      parent.insertBefore(mainTableDateFilterStart, mainTableDateFilterOld);
+      parent.insertBefore(
+        mainTableDateFilterEnd,
+        mainTableDateFilterOld.nextSibling
+      );
+      mainTableDateFilterOld.style.display = "none";
+    }
+  }
 
   // Initialisation des valeurs par défaut (aujourd'hui)
   const today = new Date();
