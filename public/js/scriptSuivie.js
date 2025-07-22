@@ -8619,7 +8619,24 @@ if (window["WebSocket"]) {
       });
   });
 
-  // Suppression du double filtrage par date et du bouton associé
+  if (mainTableDateFilter) {
+    const year = currentMainFilterDate.getFullYear();
+    const month = String(currentMainFilterDate.getMonth() + 1).padStart(2, "0");
+    const day = String(currentMainFilterDate.getDate()).padStart(2, "0");
+
+    const formattedDateForInput = `${year}-${month}-${day}`;
+
+    console.log("Applying date to filter input:", formattedDateForInput);
+    mainTableDateFilter.value = formattedDateForInput;
+    updateAgentStatusIndicator();
+    mainTableDateFilter.addEventListener("change", () => {
+      updateAgentStatusIndicator();
+    });
+  } else {
+    console.error(
+      "Error: The element #mainTableDateFilter was not found in the DOM!"
+    );
+  }
   await loadDeliveries(); // This now triggers applyCombinedFilters()
 
   // Initialize WebSocket connection AFTER initial data load
@@ -8675,7 +8692,22 @@ if (window["WebSocket"]) {
     populateStatusFilter();
   }
 
-  // Suppression de la logique de double filtrage par date
+  if (mainTableDateFilter) {
+    mainTableDateFilter.addEventListener("change", (e) => {
+      currentMainFilterDate = normalizeDateToMidnight(new Date(e.target.value));
+      localStorage.setItem("mainTableFilterDate", e.target.value);
+      applyCombinedFilters();
+    });
+    mainTableDateFilter.addEventListener("input", () => {
+      if (!mainTableDateFilter.value) {
+        // If the date input is cleared, set currentMainFilterDate to today for the scrolling bar
+        // and clear the main table filter.
+        currentMainFilterDate = normalizeDateToMidnight(new Date()); // Default to today for scrolling bar
+        localStorage.removeItem("mainTableFilterDate");
+        applyCombinedFilters(); // This will render the main table for all dates if filter is empty
+      }
+    });
+  }
 
   if (searchButton) {
     searchButton.addEventListener("click", () => {
