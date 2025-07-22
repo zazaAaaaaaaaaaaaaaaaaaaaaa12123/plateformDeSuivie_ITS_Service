@@ -1930,20 +1930,50 @@ app.post(
           type: "new_delivery_created",
           delivery: newDelivery,
         });
-        wss.clients.forEach((client) => {
+        let clientCount = 0;
+        wss.clients.forEach((client, idx) => {
           try {
             if (client.readyState === require("ws").OPEN) {
               client.send(newDeliveryPayload);
+              // Ajout d'un log détaillé pour chaque client
+              let clientInfo = "";
+              if (client._socket && client._socket.remoteAddress) {
+                clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
+              }
+              console.log(
+                `[WebSocket] new_delivery_created envoyé au client #${
+                  idx + 1
+                }${clientInfo}`
+              );
+              clientCount++;
+            } else {
+              let clientInfo = "";
+              if (client._socket && client._socket.remoteAddress) {
+                clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
+              }
+              console.warn(
+                `[WebSocket] Client #${
+                  idx + 1
+                }${clientInfo} non ouvert (readyState=${
+                  client.readyState
+                }), message ignoré.`
+              );
             }
           } catch (e) {
+            let clientInfo = "";
+            if (client._socket && client._socket.remoteAddress) {
+              clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
+            }
             console.error(
-              "Erreur lors de l'envoi WebSocket new_delivery_created:",
+              `[WebSocket] Erreur lors de l'envoi à client #${
+                idx + 1
+              }${clientInfo} :`,
               e
             );
           }
         });
         console.log(
-          `[WebSocket] new_delivery_created envoyé à tous les clients.`
+          `[WebSocket] new_delivery_created envoyé à ${clientCount} client(s) sur ${wss.clients.size} connecté(s).`
         );
       }
 
