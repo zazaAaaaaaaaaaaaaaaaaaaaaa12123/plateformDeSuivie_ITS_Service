@@ -1084,7 +1084,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       }
     });
   }
-  // Ajout ou mise à jour des boutons en haut du tableau + champ de recherche
+  // Ajout ou mise à jour des boutons en haut du tableau (sans champ de recherche)
   let btnBar = document.getElementById("deliveriesBtnBar");
   if (!btnBar) {
     btnBar = document.createElement("div");
@@ -1093,32 +1093,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     btnBar.style.justifyContent = "center";
     btnBar.style.gap = "18px";
     btnBar.style.margin = "18px 0 8px 0";
-    // Champ de recherche numéro dossier
-    const searchDiv = document.createElement("div");
-    searchDiv.style.display = "flex";
-    searchDiv.style.alignItems = "center";
-    searchDiv.style.gap = "8px";
-    const searchInput = document.createElement("input");
-    searchInput.type = "text";
-    searchInput.id = "searchDossierInput";
-    searchInput.placeholder = "Rechercher N° dossier...";
-    searchInput.style.padding = "7px 14px";
-    searchInput.style.border = "2px solid #2563eb";
-    searchInput.style.borderRadius = "12px";
-    searchInput.style.fontSize = "1em";
-    searchInput.style.minWidth = "180px";
-    searchInput.style.background = "#fff";
-    searchInput.style.outline = "none";
-    searchInput.style.boxShadow = "0 2px 8px rgba(37,99,235,0.08)";
-    searchInput.style.transition = "border 0.2s";
-    searchInput.addEventListener("focus", function () {
-      this.style.border = "2px solid #eab308";
-    });
-    searchInput.addEventListener("blur", function () {
-      this.style.border = "2px solid #2563eb";
-    });
-    searchDiv.appendChild(searchInput);
-    btnBar.appendChild(searchDiv);
     if (attentePaiementCount > 0) {
       btnBar.innerHTML += `<button id="btnAttentePaiement" class="statut-btn" style="min-width:160px;background:#fffbe6;color:#b45309;border:2px solid #eab308;box-shadow:0 2px 8px rgba(234,179,8,0.13);font-weight:700;">En attente de paiement <span style='font-weight:400;'>(${attentePaiementCount})</span></button>`;
     }
@@ -1127,58 +1101,13 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
   } else {
     btnBar.innerHTML = "";
-    // Champ de recherche numéro dossier
-    const searchDiv = document.createElement("div");
-    searchDiv.style.display = "flex";
-    searchDiv.style.alignItems = "center";
-    searchDiv.style.gap = "8px";
-    const searchInput = document.createElement("input");
-    searchInput.type = "text";
-    searchInput.id = "searchDossierInput";
-    searchInput.placeholder = "Rechercher N° dossier...";
-    searchInput.style.padding = "7px 14px";
-    searchInput.style.border = "2px solid #2563eb";
-    searchInput.style.borderRadius = "12px";
-    searchInput.style.fontSize = "1em";
-    searchInput.style.minWidth = "180px";
-    searchInput.style.background = "#fff";
-    searchInput.style.outline = "none";
-    searchInput.style.boxShadow = "0 2px 8px rgba(37,99,235,0.08)";
-    searchInput.style.transition = "border 0.2s";
-    searchInput.addEventListener("focus", function () {
-      this.style.border = "2px solid #eab308";
-    });
-    searchInput.addEventListener("blur", function () {
-      this.style.border = "2px solid #2563eb";
-    });
-    searchDiv.appendChild(searchInput);
-    btnBar.appendChild(searchDiv);
     if (attentePaiementCount > 0) {
       btnBar.innerHTML += `<button id=\"btnAttentePaiement\" class=\"statut-btn\" style=\"min-width:160px;background:#fffbe6;color:#b45309;border:2px solid #eab308;box-shadow:0 2px 8px rgba(234,179,8,0.13);font-weight:700;\">En attente de paiement <span style='font-weight:400;'>(${attentePaiementCount})</span></button>`;
     }
     btnBar.style.display = attentePaiementCount > 0 ? "flex" : "none";
   }
 
-  // Handler de recherche par numéro de dossier
-  setTimeout(() => {
-    const searchInput = document.getElementById("searchDossierInput");
-    if (searchInput) {
-      searchInput.oninput = function () {
-        const value = this.value.trim().toLowerCase();
-        // On filtre les livraisons affichées selon le numéro de dossier
-        let filtered = deliveries;
-        if (value.length > 0) {
-          filtered = deliveries.filter((delivery) =>
-            String(delivery.dossier_number || "")
-              .toLowerCase()
-              .includes(value)
-          );
-        }
-        // On affiche le tableau filtré
-        renderAgentTableRows(filtered, tableBodyElement);
-      };
-    }
-  }, 0);
+  // (Champ de recherche N° dossier supprimé de la barre principale)
 
   // Ajout du handler pour le bouton "En attente de paiement"
   setTimeout(() => {
@@ -1294,58 +1223,49 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     content.style.flex = "1 1 auto";
     content.style.overflowY = "auto";
 
-    // Fonction pour afficher la liste filtrée
-    function renderDossiersList(list) {
+    // Fonction pour afficher la liste filtrée sous forme de cartes simples
+    function renderDossierCards(list) {
       content.innerHTML = "";
       if (list.length === 0) {
         content.innerHTML = `<div style='text-align:center;color:#64748b;font-size:1.1em;'>Aucun dossier en attente de paiement.</div>`;
         return;
       }
       list.forEach((delivery) => {
-        const section = document.createElement("div");
-        section.style.marginBottom = "28px";
-        section.style.padding = "18px 22px";
-        section.style.background = "#fff";
-        section.style.borderRadius = "12px";
-        section.style.boxShadow = "0 2px 8px rgba(234,179,8,0.08)";
-        section.style.border = "1.5px solid #eab308";
-        section.innerHTML = `
-          <div style='font-size:1.08em;font-weight:700;margin-bottom:6px;'>N° Dossier : <span style='color:#2563eb;'>${
+        const card = document.createElement("div");
+        card.style.marginBottom = "18px";
+        card.style.padding = "16px 22px";
+        card.style.background = "#fff";
+        card.style.borderRadius = "12px";
+        card.style.boxShadow = "0 2px 8px rgba(234,179,8,0.08)";
+        card.style.border = "1.5px solid #eab308";
+        card.style.cursor = "pointer";
+        card.style.transition = "box-shadow 0.18s, border 0.18s";
+        card.onmouseover = () => {
+          card.style.boxShadow = "0 4px 16px rgba(37,99,235,0.13)";
+          card.style.border = "2px solid #2563eb";
+        };
+        card.onmouseout = () => {
+          card.style.boxShadow = "0 2px 8px rgba(234,179,8,0.08)";
+          card.style.border = "1.5px solid #eab308";
+        };
+        card.innerHTML = `
+          <div style='font-size:1.13em;font-weight:700;margin-bottom:4px;'>N° Dossier : <span style='color:#2563eb;'>${
             delivery.dossier_number || "-"
           }</span></div>
-          <div style='margin-bottom:4px;'>Agent responsable : <b style='color:#0e274e;'>${
+          <div style='font-size:1em;'>Agent : <b style='color:#0e274e;'>${
             delivery.employee_name || "-"
           }</b></div>
-          <div style='margin-bottom:4px;'>Client : <b>${
-            delivery.client_name || "-"
-          }</b> | Tél : <b>${delivery.client_phone || "-"}</b></div>
-          <div style='margin-bottom:4px;'>Numéro BL : <b>${
-            delivery.bl_number || "-"
-          }</b></div>
-          <div style='margin-bottom:4px;'>Lieu : <b>${
-            delivery.lieu || "-"
-          }</b></div>
-          <div style='margin-bottom:4px;'>Date livraison : <b>${
-            delivery.delivery_date
-              ? new Date(delivery.delivery_date).toLocaleDateString("fr-FR")
-              : "-"
-          }</b></div>
-          <div style='margin-bottom:4px;'>Conteneur(s) : <b>${
-            delivery.container_number || "-"
-          }</b> | Type : <b>${delivery.container_foot_type || "-"}</b></div>
-          <div style='margin-bottom:4px;'>Compagnie maritime : <b>${
-            delivery.shipping_company || "-"
-          }</b></div>
-          <div style='margin-bottom:4px;'>Observation : <b>${
-            delivery.observation_acconier || "-"
-          }</b></div>
         `;
-        content.appendChild(section);
+        card.onclick = function (e) {
+          e.stopPropagation();
+          showDossierDetailPopup(delivery);
+        };
+        content.appendChild(card);
       });
     }
 
-    // Premier affichage
-    renderDossiersList(dossiers);
+    // Affichage initial
+    renderDossierCards(dossiers);
 
     // Handler recherche
     searchInput.oninput = function () {
@@ -1358,8 +1278,107 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
             .includes(value)
         );
       }
-      renderDossiersList(filtered);
+      renderDossierCards(filtered);
     };
+
+    // Affichage des détails au clic sur une carte
+    function showDossierDetailPopup(delivery) {
+      // Supprimer tout popup détail existant
+      const oldDetail = document.getElementById("dossierDetailPopup");
+      if (oldDetail) oldDetail.remove();
+      const overlay = document.createElement("div");
+      overlay.id = "dossierDetailPopup";
+      overlay.style.position = "fixed";
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.width = "100vw";
+      overlay.style.height = "100vh";
+      overlay.style.background = "rgba(30,41,59,0.45)";
+      overlay.style.zIndex = 100000;
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "center";
+      overlay.style.justifyContent = "center";
+      const box = document.createElement("div");
+      box.style.background = "#fff";
+      box.style.borderRadius = "18px";
+      box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+      box.style.maxWidth = "520px";
+      box.style.width = "96vw";
+      box.style.maxHeight = "92vh";
+      box.style.overflowY = "auto";
+      box.style.padding = "0";
+      box.style.position = "relative";
+      box.style.display = "flex";
+      box.style.flexDirection = "column";
+      const header = document.createElement("div");
+      header.style.background = "#2563eb";
+      header.style.color = "#fff";
+      header.style.padding = "18px 28px 12px 28px";
+      header.style.fontWeight = "bold";
+      header.style.fontSize = "1.15rem";
+      header.style.display = "flex";
+      header.style.flexDirection = "column";
+      header.style.borderTopLeftRadius = "18px";
+      header.style.borderTopRightRadius = "18px";
+      header.innerHTML = `
+        <div style='margin-bottom:2px;'>N° Dossier : <span style='color:#eab308;'>${
+          delivery.dossier_number || "-"
+        }</span></div>
+        <div style='font-size:0.98em;font-weight:400;'>Agent : <span style='color:#fff;'>${
+          delivery.employee_name || "-"
+        }</span></div>
+      `;
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = "&times;";
+      closeBtn.style.background = "none";
+      closeBtn.style.border = "none";
+      closeBtn.style.color = "#fff";
+      closeBtn.style.fontSize = "2.1rem";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.style.position = "absolute";
+      closeBtn.style.top = "10px";
+      closeBtn.style.right = "18px";
+      closeBtn.setAttribute("aria-label", "Fermer");
+      closeBtn.onclick = () => overlay.remove();
+      header.appendChild(closeBtn);
+      box.appendChild(header);
+      const content = document.createElement("div");
+      content.style.padding = "24px 24px 24px 24px";
+      content.style.background = "#f8fafc";
+      content.style.flex = "1 1 auto";
+      content.style.overflowY = "auto";
+      content.innerHTML = `
+        <div style='margin-bottom:8px;'>Client : <b>${
+          delivery.client_name || "-"
+        }</b> | Tél : <b>${delivery.client_phone || "-"}</b></div>
+        <div style='margin-bottom:8px;'>Numéro BL : <b>${
+          delivery.bl_number || "-"
+        }</b></div>
+        <div style='margin-bottom:8px;'>Lieu : <b>${
+          delivery.lieu || "-"
+        }</b></div>
+        <div style='margin-bottom:8px;'>Date livraison : <b>${
+          delivery.delivery_date
+            ? new Date(delivery.delivery_date).toLocaleDateString("fr-FR")
+            : "-"
+        }</b></div>
+        <div style='margin-bottom:8px;'>Conteneur(s) : <b>${
+          delivery.container_number || "-"
+        }</b> | Type : <b>${delivery.container_foot_type || "-"}</b></div>
+        <div style='margin-bottom:8px;'>Compagnie maritime : <b>${
+          delivery.shipping_company || "-"
+        }</b></div>
+        <div style='margin-bottom:8px;'>Observation : <b>${
+          delivery.observation_acconier || "-"
+        }</b></div>
+      `;
+      box.appendChild(content);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+      };
+    }
 
     box.appendChild(searchDiv);
     box.appendChild(content);
