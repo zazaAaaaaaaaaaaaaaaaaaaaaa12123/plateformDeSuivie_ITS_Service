@@ -143,7 +143,51 @@ document.addEventListener("DOMContentLoaded", function () {
   `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
-  const dateInput = document.getElementById("mainTableDateFilter");
+  // Ajout des deux champs de date (début et fin)
+  let dateStartInput = document.getElementById("mainTableDateStartFilter");
+  let dateEndInput = document.getElementById("mainTableDateEndFilter");
+  // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
+  const oldDateInput = document.getElementById("mainTableDateFilter");
+  if (!dateStartInput || !dateEndInput) {
+    // Création des deux inputs si besoin
+    const parent = oldDateInput ? oldDateInput.parentNode : document.body;
+    // Création du conteneur
+    const rangeDiv = document.createElement("div");
+    rangeDiv.style.display = "flex";
+    rangeDiv.style.gap = "12px";
+    rangeDiv.style.alignItems = "center";
+    rangeDiv.style.marginBottom = "12px";
+    // Date début
+    dateStartInput = document.createElement("input");
+    dateStartInput.type = "date";
+    dateStartInput.id = "mainTableDateStartFilter";
+    dateStartInput.style.padding = "6px 10px";
+    dateStartInput.style.borderRadius = "8px";
+    dateStartInput.style.border = "1.5px solid #2563eb";
+    // Date fin
+    dateEndInput = document.createElement("input");
+    dateEndInput.type = "date";
+    dateEndInput.id = "mainTableDateEndFilter";
+    dateEndInput.style.padding = "6px 10px";
+    dateEndInput.style.borderRadius = "8px";
+    dateEndInput.style.border = "1.5px solid #2563eb";
+    // Label
+    const label = document.createElement("span");
+    label.textContent = "Filtrer du ";
+    const label2 = document.createElement("span");
+    label2.textContent = " au ";
+    rangeDiv.appendChild(label);
+    rangeDiv.appendChild(dateStartInput);
+    rangeDiv.appendChild(label2);
+    rangeDiv.appendChild(dateEndInput);
+    // Ajout dans le DOM
+    if (oldDateInput) {
+      oldDateInput.style.display = "none";
+      parent.insertBefore(rangeDiv, oldDateInput);
+    } else {
+      document.body.insertBefore(rangeDiv, document.body.firstChild);
+    }
+  }
 
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
@@ -479,32 +523,32 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Filtre les livraisons selon la date de livraison réelle (delivery_date)
-  function filterDeliveriesByDate(dateStr) {
+  // Filtre les livraisons selon une plage de dates (inclusif)
+  function filterDeliveriesByDateRange(dateStartStr, dateEndStr) {
+    if (!dateStartStr && !dateEndStr) return allDeliveries;
+    // Conversion en Date objets à minuit
+    let start = dateStartStr ? new Date(dateStartStr) : null;
+    let end = dateEndStr ? new Date(dateEndStr) : null;
+    if (start) start.setHours(0, 0, 0, 0);
+    if (end) end.setHours(23, 59, 59, 999);
     return allDeliveries.filter((delivery) => {
-      // On utilise delivery_date si disponible, sinon created_at
       let dDate =
         delivery["delivery_date"] ||
         delivery["created_at"] ||
         delivery["Date"] ||
         delivery["Date Livraison"];
       if (!dDate) return false;
-      // Normalisation robuste du format
       let normalized = "";
       if (typeof dDate === "string") {
         if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
-          // Format JJ/MM/AAAA
           const [j, m, a] = dDate.split("/");
           normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
         } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
-          // Format YYYY-MM-DD
           normalized = dDate;
         } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
-          // Format JJ-MM-AAAA
           const [j, m, a] = dDate.split("-");
           normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
         } else {
-          // Autre format, on tente une conversion
           const dateObj = new Date(dDate);
           if (!isNaN(dateObj)) {
             normalized = dateObj.toISOString().split("T")[0];
@@ -517,7 +561,12 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         normalized = String(dDate);
       }
-      return normalized === dateStr;
+      // Comparaison dans la plage
+      let dateObj = new Date(normalized);
+      if (isNaN(dateObj)) return false;
+      if (start && dateObj < start) return false;
+      if (end && dateObj > end) return false;
+      return true;
     });
   }
 
@@ -559,21 +608,29 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Fonction principale pour charger et afficher selon la dates
-  function updateTableForDate(dateStr) {
-    const filtered = filterDeliveriesByDate(dateStr);
+  // Fonction principale pour charger et afficher selon la plage de dates
+  function updateTableForDateRange(dateStartStr, dateEndStr) {
+    const filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
     renderAgentTableFull(filtered, tableBody);
   }
 
-  // Initialisation : charge toutes les livraisons puis affiche la date du jour
-  const today = new Date().toISOString().split("T")[0];
-  if (dateInput) {
-    dateInput.value = today;
+  // Initialisation : charge toutes les livraisons puis affiche la plage de dates (par défaut : 7 jours avant aujourd'hui jusqu'à aujourd'hui)
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 7);
+  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+  if (dateStartInput && dateEndInput) {
+    dateStartInput.value = sevenDaysAgoStr;
+    dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
-      updateTableForDate(today);
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
-    dateInput.addEventListener("change", (e) => {
-      updateTableForDate(e.target.value);
+    dateStartInput.addEventListener("change", () => {
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+    });
+    dateEndInput.addEventListener("change", () => {
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
   }
 });
