@@ -673,12 +673,37 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
+    // Détermination de la couleur de la bande selon l'ancienneté
+    let dDate = delivery.delivery_date || delivery.created_at;
+    let dateObj = dDate ? new Date(dDate) : null;
+    let now = new Date();
+    let color = "#2563eb"; // bleu par défaut (récent)
+    if (dateObj && !isNaN(dateObj.getTime())) {
+      let diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+      if (diffDays >= 60) {
+        color = "#a3a3a3"; // très ancien : gris
+      } else if (diffDays >= 15) {
+        color = "#eab308"; // assez ancien : jaune
+      } // sinon récent : bleu
+    }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
       if (col.id === "row_number") {
         value = i + 1;
-        td.textContent = value;
+        // Ajout de la bande colorée verticale à gauche du numéro
+        const band = document.createElement("span");
+        band.style.display = "inline-block";
+        band.style.width = "6px";
+        band.style.height = "28px";
+        band.style.background = color;
+        band.style.borderRadius = "4px";
+        band.style.marginRight = "8px";
+        band.style.verticalAlign = "middle";
+        td.appendChild(band);
+        const numSpan = document.createElement("span");
+        numSpan.textContent = value;
+        td.appendChild(numSpan);
         td.classList.add("row-number-col");
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
