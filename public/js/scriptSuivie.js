@@ -9335,7 +9335,7 @@ if (window["WebSocket"]) {
     // Appel du filtre combiné d'origine (qui va utiliser filteredDeliveries si défini)
     originalApplyCombinedFilters.apply(this, args);
 
-    // Après rendu, renumérote dynamiquement la  colonne N°
+    // Après rendu, renumérote dynamiquement la colonne N°
     setTimeout(() => {
       if (deliveriesTableBody) {
         let rows = deliveriesTableBody.querySelectorAll("tr");
