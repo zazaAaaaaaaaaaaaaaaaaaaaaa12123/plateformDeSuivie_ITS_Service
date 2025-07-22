@@ -208,9 +208,16 @@ document.addEventListener("DOMContentLoaded", function () {
         ) {
           console.log("[WebSocket] bl_status_update reçu:", data);
           // On cherche la livraison concernée dans window.allDeliveries
+          console.log(
+            "[DEBUG] window.allDeliveries:",
+            window.allDeliveries,
+            "data.deliveryId:",
+            data.deliveryId
+          );
           const delivery = (window.allDeliveries || []).find(
             (d) => String(d.id) === String(data.deliveryId)
           );
+          console.log("[DEBUG] delivery trouvé:", delivery);
           if (!delivery) return;
           // Mettre à jour le statut local du BL concerné
           if (!delivery.bl_statuses) delivery.bl_statuses = {};
@@ -227,8 +234,6 @@ document.addEventListener("DOMContentLoaded", function () {
               ? delivery.bl_statuses[bl]
               : "aucun"
           );
-          console.log("[DEBUG] blList:", blList);
-          console.log("[DEBUG] blStatuses:", blStatuses);
           if (
             blList.length > 0 &&
             blStatuses.every((s) => s === "mise_en_livraison")
