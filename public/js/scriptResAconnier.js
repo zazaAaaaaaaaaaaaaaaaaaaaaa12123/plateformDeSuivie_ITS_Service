@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 "http://localhost:3000/html/respacconier_auth.html";
             } else {
               window.location.href =
-                "https://plateformdesuivie-its-service.onrender.com/html/respacconier_auth.html";
+                "https://plateformdesuivie-its-service-1cjx.onrender.com/html/respacconier_auth.html";
             }
           });
         }
@@ -473,7 +473,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (loadingOverlay) loadingOverlay.style.display = "flex";
     try {
       const response = await fetch(
-        "https://plateformdesuivie-its-service.onrender.com/deliveries/status"
+        "https://plateformdesuivie-its-service-1cjx.onrender.com/deliveries/status"
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1415,7 +1415,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       // On lance la requête réseau en asynchrone, mais on ne recharge pas tout le tableau
       fetch(
-        `https://plateformdesuivie-its-service.onrender.com/deliveries/${deliveryId}`,
+        `https://plateformdesuivie-its-service-1cjx.onrender.com/deliveries/${deliveryId}`,
         {
           method: "PUT",
           headers: {
