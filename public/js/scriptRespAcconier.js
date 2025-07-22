@@ -215,37 +215,6 @@ document.addEventListener("DOMContentLoaded", function () {
           // Mettre à jour le statut local du BL concerné
           if (!delivery.bl_statuses) delivery.bl_statuses = {};
           delivery.bl_statuses[data.blNumber] = data.status;
-          // Vérifier si la livraison est affichée (date du filtre)
-          const dateInput = document.getElementById("mainTableDateFilter");
-          let dDate =
-            delivery["delivery_date"] ||
-            delivery["created_at"] ||
-            delivery["Date"] ||
-            delivery["Date Livraison"];
-          let normalized = "";
-          if (typeof dDate === "string") {
-            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
-              const [j, m, a] = dDate.split("/");
-              normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
-            } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
-              normalized = dDate;
-            } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
-              const [j, m, a] = dDate.split("-");
-              normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
-            } else {
-              const dateObj = new Date(dDate);
-              if (!isNaN(dateObj)) {
-                normalized = dateObj.toISOString().split("T")[0];
-              } else {
-                normalized = dDate;
-              }
-            }
-          } else if (dDate instanceof Date) {
-            normalized = dDate.toISOString().split("T")[0];
-          } else {
-            normalized = String(dDate);
-          }
-          const currentFilterDate = dateInput ? dateInput.value : null;
           // Vérifier si tous les BL sont en 'mise_en_livraison'
           let blList = [];
           if (Array.isArray(delivery.bl_number)) {
@@ -260,16 +229,25 @@ document.addEventListener("DOMContentLoaded", function () {
           );
           if (
             blList.length > 0 &&
-            blStatuses.every((s) => s === "mise_en_livraison") &&
-            normalized === currentFilterDate
+            blStatuses.every((s) => s === "mise_en_livraison")
           ) {
-            // Supprimer la ligne du DOM ET forcer le re-rendu du tableau
+            // Supprimer la ligne du DOM ET forcer le re-rendu du tableau avec la plage de dates courante
             window.allDeliveries = window.allDeliveries.filter(
               (d) => String(d.id) !== String(delivery.id)
             );
-            // On relance le rendu du tableau pour la date courante
-            if (typeof updateTableForDate === "function") {
-              updateTableForDate(currentFilterDate);
+            // Récupérer les valeurs actuelles des inputs de plage de dates
+            const dateStartInput = document.getElementById(
+              "mainTableDateStartFilter"
+            );
+            const dateEndInput = document.getElementById(
+              "mainTableDateEndFilter"
+            );
+            if (
+              typeof updateTableForDateRange === "function" &&
+              dateStartInput &&
+              dateEndInput
+            ) {
+              updateTableForDateRange(dateStartInput.value, dateEndInput.value);
             }
             // Afficher un toast de confirmation élégant
             showSuccessToast(
@@ -308,7 +286,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 setTimeout(() => toast.remove(), 400);
               }, 2600);
             }
-          } else if (normalized === currentFilterDate) {
+          } else {
             // Sinon, mettre à jour le statut dossier dans la colonne sans reload
             const tableBody = document.getElementById("deliveriesTableBody");
             if (!tableBody) return;
