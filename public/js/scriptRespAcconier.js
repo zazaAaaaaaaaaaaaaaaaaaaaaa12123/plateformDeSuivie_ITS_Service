@@ -57,74 +57,6 @@ document.addEventListener("DOMContentLoaded", function () {
       white-space: nowrap;
     }
     #deliveriesTableBody .tc-popup {
-            // 2bis. Suppression instantanée de la ligne si tous les BL sont en 'mise_en_livraison'
-            let blList = [];
-            if (Array.isArray(delivery.bl_number)) {
-              blList = delivery.bl_number.filter(Boolean);
-            } else if (typeof delivery.bl_number === "string") {
-              blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-            }
-            let blStatuses = blList.map((bl) =>
-              delivery.bl_statuses && delivery.bl_statuses[bl]
-                ? delivery.bl_statuses[bl]
-                : "aucun"
-            );
-            let allMiseEnLivraison =
-              blStatuses.length > 0 &&
-              blStatuses.every((s) => s === "mise_en_livraison");
-            if (allMiseEnLivraison) {
-              // Supprimer la livraison de window.allDeliveries
-              window.allDeliveries = (window.allDeliveries || []).filter(
-                (d) => String(d.id) !== String(delivery.id)
-              );
-              // Synchroniser la variable locale si utilisée
-              if (typeof allDeliveries !== "undefined") {
-                allDeliveries = window.allDeliveries;
-              }
-              // Forcer le re-rendu du tableau avec la plage de dates courante
-              const dateStartInput = document.getElementById("mainTableDateStartFilter");
-              const dateEndInput = document.getElementById("mainTableDateEndFilter");
-              if (typeof updateTableForDateRange === "function") {
-                const startVal = dateStartInput ? dateStartInput.value : "";
-                const endVal = dateEndInput ? dateEndInput.value : "";
-                updateTableForDateRange(startVal, endVal);
-              }
-              // Afficher un toast de confirmation élégant
-              if (typeof showSuccessToast === "function") {
-                showSuccessToast("Requête effectuée et envoyée au responsable de livraison.");
-              } else {
-                // Fallback toast simple
-                const oldToast = document.getElementById("custom-success-toast");
-                if (oldToast) oldToast.remove();
-                const toast = document.createElement("div");
-                toast.id = "custom-success-toast";
-                toast.textContent = "Requête effectuée et envoyée au responsable de livraison.";
-                toast.style.position = "fixed";
-                toast.style.top = "32px";
-                toast.style.left = "50%";
-                toast.style.transform = "translateX(-50%)";
-                toast.style.background = "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
-                toast.style.color = "#fff";
-                toast.style.fontWeight = "bold";
-                toast.style.fontSize = "1.12em";
-                toast.style.padding = "18px 38px";
-                toast.style.borderRadius = "16px";
-                toast.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
-                toast.style.zIndex = 99999;
-                toast.style.opacity = "0";
-                toast.style.transition = "opacity 0.3s";
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                  toast.style.opacity = "1";
-                }, 10);
-                setTimeout(() => {
-                  toast.style.opacity = "0";
-                  setTimeout(() => toast.remove(), 400);
-                }, 2600);
-              }
-              overlay.remove();
-              return;
-            }
       position: absolute;
       background: #fff;
       border: 2px solid #2563eb;
@@ -1423,4 +1355,3 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     renderAgentTableRows(deliveriesToShow, tableBodyElement);
   }
 }
-/***minitaire media  */
