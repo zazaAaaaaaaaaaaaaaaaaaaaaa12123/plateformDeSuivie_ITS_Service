@@ -245,19 +245,17 @@ document.addEventListener("DOMContentLoaded", function () {
             const dateEndInput = document.getElementById(
               "mainTableDateEndFilter"
             );
+            // Toujours forcer le re-rendu du tableau principal après suppression
             if (
               typeof updateTableForDateRange === "function" &&
               dateStartInput &&
               dateEndInput
             ) {
-              // On force le re-rendu avec la plage de dates courante
               updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-            } else {
-              // Cas fallback : si on n'a pas de plage, on tente le filtre simple
+            }
+            if (typeof updateTableForDate === "function") {
               const dateInput = document.getElementById("mainTableDateFilter");
-              if (typeof updateTableForDate === "function" && dateInput) {
-                updateTableForDate(dateInput.value);
-              }
+              if (dateInput) updateTableForDate(dateInput.value);
             }
             // Afficher un toast de confirmation élégant
             showSuccessToast(
