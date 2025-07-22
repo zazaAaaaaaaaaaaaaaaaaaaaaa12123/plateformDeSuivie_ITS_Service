@@ -405,8 +405,16 @@ document.addEventListener("DOMContentLoaded", function () {
           const normalizedDelivery = normalizeDelivery(data.delivery);
           if (!window.allDeliveries) window.allDeliveries = [];
           window.allDeliveries.unshift(normalizedDelivery);
-          // Met à jour le tableau si la date correspond au filtre courant
-          const dateInput = document.getElementById("mainTableDateFilter");
+          // Met à jour le tableau si la livraison correspond à la plage de dates courante
+          const dateStartInput = document.getElementById(
+            "mainTableDateStartFilter"
+          );
+          const dateEndInput = document.getElementById(
+            "mainTableDateEndFilter"
+          );
+          const startVal = dateStartInput ? dateStartInput.value : "";
+          const endVal = dateEndInput ? dateEndInput.value : "";
+          // Vérifie si la nouvelle livraison est dans la plage de dates
           let dDate =
             normalizedDelivery.delivery_date || normalizedDelivery.created_at;
           let normalized = "";
@@ -432,11 +440,16 @@ document.addEventListener("DOMContentLoaded", function () {
           } else {
             normalized = String(dDate);
           }
-          const currentFilterDate = dateInput ? dateInput.value : null;
-          if (normalized === currentFilterDate) {
-            if (typeof updateTableForDate === "function") {
-              updateTableForDate(currentFilterDate);
-            }
+          // Si la date de la livraison est dans la plage, on met à jour le tableau
+          let isInRange = true;
+          if (startVal) {
+            isInRange = normalized >= startVal;
+          }
+          if (endVal && isInRange) {
+            isInRange = normalized <= endVal;
+          }
+          if (isInRange && typeof updateTableForDateRange === "function") {
+            updateTableForDateRange(startVal, endVal);
           }
           // Affiche une alerte avec le nom de l'agent
           const agentName = normalizedDelivery.employee_name || "-";
