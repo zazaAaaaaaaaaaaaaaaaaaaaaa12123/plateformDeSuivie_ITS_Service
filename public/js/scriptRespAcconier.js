@@ -227,6 +227,8 @@ document.addEventListener("DOMContentLoaded", function () {
               ? delivery.bl_statuses[bl]
               : "aucun"
           );
+          console.log("[DEBUG] blList:", blList);
+          console.log("[DEBUG] blStatuses:", blStatuses);
           if (
             blList.length > 0 &&
             blStatuses.every((s) => s === "mise_en_livraison")
