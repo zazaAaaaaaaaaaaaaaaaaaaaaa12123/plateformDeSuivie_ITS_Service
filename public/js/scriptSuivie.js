@@ -8619,45 +8619,11 @@ if (window["WebSocket"]) {
       });
   });
 
-  // ====== AJOUT : Filtre par plage de dates (début/fin) ======
-  // Création des deux inputs date si pas déjà présents
-  let mainTableDateFilterStart = document.getElementById(
-    "mainTableDateFilterStart"
+  // Suppression des anciens champs de filtre par date (zone "Filtrer entre :")
+  const oldDateFilterZone = document.querySelector(
+    "#oldDateFilterZone, .old-date-filter-zone"
   );
-  let mainTableDateFilterEnd = document.getElementById(
-    "mainTableDateFilterEnd"
-  );
-  const mainTableDateFilterOld = document.getElementById("mainTableDateFilter");
-  if (!mainTableDateFilterStart || !mainTableDateFilterEnd) {
-    if (mainTableDateFilterOld) {
-      // Remplace l'ancien input par deux nouveaux
-      const parent = mainTableDateFilterOld.parentNode;
-      mainTableDateFilterStart = document.createElement("input");
-      mainTableDateFilterStart.type = "date";
-      mainTableDateFilterStart.id = "mainTableDateFilterStart";
-      mainTableDateFilterStart.className = mainTableDateFilterOld.className;
-      mainTableDateFilterStart.style.marginRight = "8px";
-      mainTableDateFilterStart.style.width = "auto";
-      mainTableDateFilterStart.style.display = "inline-block";
-      mainTableDateFilterStart.placeholder = "Date début";
-
-      mainTableDateFilterEnd = document.createElement("input");
-      mainTableDateFilterEnd.type = "date";
-      mainTableDateFilterEnd.id = "mainTableDateFilterEnd";
-      mainTableDateFilterEnd.className = mainTableDateFilterOld.className;
-      mainTableDateFilterEnd.style.marginLeft = "8px";
-      mainTableDateFilterEnd.style.width = "auto";
-      mainTableDateFilterEnd.style.display = "inline-block";
-      mainTableDateFilterEnd.placeholder = "Date fin";
-
-      parent.insertBefore(mainTableDateFilterStart, mainTableDateFilterOld);
-      parent.insertBefore(
-        mainTableDateFilterEnd,
-        mainTableDateFilterOld.nextSibling
-      );
-      mainTableDateFilterOld.style.display = "none";
-    }
-  }
+  if (oldDateFilterZone) oldDateFilterZone.remove();
 
   // Initialisation des valeurs par défaut (aujourd'hui)
   const today = new Date();
@@ -9315,27 +9281,37 @@ if (window["WebSocket"]) {
     let endDate = endDateStr ? new Date(endDateStr) : null;
     if (endDate) endDate.setHours(23, 59, 59, 999); // Inclure toute la journée de fin
 
-    // Patch du filtre principal : on filtre deliveries selon la plage de dates
-    if (
-      typeof deliveries !== "undefined" &&
-      Array.isArray(deliveries) &&
-      (startDate || endDate)
-    ) {
-      window.filteredDeliveries = deliveries.filter((d) => {
-        if (!d.created_at) return false;
-        let dDate = new Date(d.created_at);
-        if (startDate && dDate < startDate) return false;
-        if (endDate && dDate > endDate) return false;
-        return true;
-      });
-    } else {
-      window.filteredDeliveries = deliveries;
-    }
+    // Harmonisation : le filtrage par plage de dates doit s'appliquer sur la source utilisée pour le rendu du tableau, comme dans scriptRespAcconier.js
+    // On surcharge temporairement la méthode de récupération des données pour le tableau principal
+    let originalGetDeliveries = window.getDeliveriesForMainTable;
+    window.getDeliveriesForMainTable = function () {
+      let source =
+        typeof deliveries !== "undefined" && Array.isArray(deliveries)
+          ? deliveries
+          : [];
+      if (startDate || endDate) {
+        return source.filter((d) => {
+          if (!d.created_at) return false;
+          let dDate = new Date(d.created_at);
+          if (startDate && dDate < startDate) return false;
+          if (endDate && dDate > endDate) return false;
+          return true;
+        });
+      }
+      return source;
+    };
 
-    // Appel du filtre combiné d'origine (qui va utiliser filteredDeliveries si défini)
+    // Appel du filtre combiné d'origine
     originalApplyCombinedFilters.apply(this, args);
 
-    // Après rendu, renumérote dynamiquement la  colonne N°
+    // Restaure la fonction d'origine pour ne pas impacter d'autres usages
+    if (originalGetDeliveries) {
+      window.getDeliveriesForMainTable = originalGetDeliveries;
+    } else {
+      delete window.getDeliveriesForMainTable;
+    }
+
+    // Après rendu, renumérote dynamiquement la colonne N° sur les lignes visibles
     setTimeout(() => {
       if (deliveriesTableBody) {
         let rows = deliveriesTableBody.querySelectorAll("tr");
