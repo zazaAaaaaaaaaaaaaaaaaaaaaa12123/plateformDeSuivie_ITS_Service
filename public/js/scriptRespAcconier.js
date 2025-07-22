@@ -235,6 +235,11 @@ document.addEventListener("DOMContentLoaded", function () {
             window.allDeliveries = window.allDeliveries.filter(
               (d) => String(d.id) !== String(delivery.id)
             );
+            if (Array.isArray(allDeliveries)) {
+              allDeliveries = allDeliveries.filter(
+                (d) => String(d.id) !== String(delivery.id)
+              );
+            }
             // Récupérer les valeurs actuelles des inputs de plage de dates
             const dateStartInput = document.getElementById(
               "mainTableDateStartFilter"
