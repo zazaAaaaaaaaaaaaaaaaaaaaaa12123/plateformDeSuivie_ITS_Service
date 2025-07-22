@@ -323,7 +323,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Fonction principale pour charger et afficher selon la date
+  // Fonction principale pour charger et afficher selon la dates
   function updateTableForDate(dateStr) {
     const filtered = filterDeliveriesByDate(dateStr);
     renderAgentTableFull(filtered, tableBody);
