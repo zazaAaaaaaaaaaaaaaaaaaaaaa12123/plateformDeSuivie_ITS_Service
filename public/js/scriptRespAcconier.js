@@ -1004,21 +1004,21 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       miseEnLivraisonCount > 0 || attentePaiementCount > 0 ? "flex" : "none";
   }
   // Filtrer les livraisons à afficher dans le tableau principal :
-  // On ne montre que les livraisons où au moins un conteneur n'est pas en 'mise en livraison'
+  // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
-    let tcList = [];
-    if (Array.isArray(delivery.container_number)) {
-      tcList = delivery.container_number.filter(Boolean);
-    } else if (typeof delivery.container_number === "string") {
-      tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+    let blList = [];
+    if (Array.isArray(delivery.bl_number)) {
+      blList = delivery.bl_number.filter(Boolean);
+    } else if (typeof delivery.bl_number === "string") {
+      blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
     }
-    let statuses = tcList.map((tc) =>
-      delivery.container_statuses && delivery.container_statuses[tc]
-        ? delivery.container_statuses[tc]
-        : "attente_paiement"
+    let blStatuses = blList.map((bl) =>
+      delivery.bl_statuses && delivery.bl_statuses[bl]
+        ? delivery.bl_statuses[bl]
+        : "aucun"
     );
-    // Si tous les conteneurs sont en 'mise en livraison', on ne l'affiche pas dans le tableau principal
-    return !statuses.every((s) => s === "mise_en_livraison");
+    // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas dans le tableau principal
+    return !blStatuses.every((s) => s === "mise_en_livraison");
   });
   if (deliveriesToShow.length === 0) {
     if (table) table.style.display = "none";
