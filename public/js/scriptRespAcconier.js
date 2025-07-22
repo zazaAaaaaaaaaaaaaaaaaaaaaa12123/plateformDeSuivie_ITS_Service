@@ -143,13 +143,9 @@ document.addEventListener("DOMContentLoaded", function () {
   `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
-  // Ajout des deux champs de date (début et fin) ET du champ de recherche à côté
+  // Ajout des deux champs de date (début et fin)
   let dateStartInput = document.getElementById("mainTableDateStartFilter");
   let dateEndInput = document.getElementById("mainTableDateEndFilter");
-  // Recherche les éléments du champ de recherche existant (input, bouton, icône)
-  const searchInput = document.getElementById("mainTableSearchInput");
-  const searchBtn = document.getElementById("mainTableSearchBtn");
-  const searchIcon = document.getElementById("mainTableSearchIcon");
   // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
   const oldDateInput = document.getElementById("mainTableDateFilter");
   if (!dateStartInput || !dateEndInput) {
@@ -184,12 +180,26 @@ document.addEventListener("DOMContentLoaded", function () {
     rangeDiv.appendChild(dateStartInput);
     rangeDiv.appendChild(label2);
     rangeDiv.appendChild(dateEndInput);
-    // Ajout du champ de recherche, bouton et icône à côté
+
+    // Ajout du champ de recherche, bouton et icône à côté des dates
+    // On suppose que le champ de recherche a l'id 'mainTableSearchInput', le bouton 'mainTableSearchBtn' et l'icône 'mainTableSearchIcon'
+    const searchInput = document.getElementById("mainTableSearchInput");
+    const searchBtn = document.getElementById("mainTableSearchBtn");
+    const searchIcon = document.getElementById("mainTableSearchIcon");
+    // On les déplace dans le rangeDiv, à la suite des dates
     if (searchInput) {
+      searchInput.style.marginLeft = "18px";
       rangeDiv.appendChild(searchInput);
-      if (searchIcon) rangeDiv.appendChild(searchIcon);
-      if (searchBtn) rangeDiv.appendChild(searchBtn);
     }
+    if (searchIcon) {
+      searchIcon.style.marginLeft = "4px";
+      rangeDiv.appendChild(searchIcon);
+    }
+    if (searchBtn) {
+      searchBtn.style.marginLeft = "4px";
+      rangeDiv.appendChild(searchBtn);
+    }
+
     // Ajout dans le DOM
     if (oldDateInput) {
       oldDateInput.style.display = "none";
@@ -198,12 +208,22 @@ document.addEventListener("DOMContentLoaded", function () {
       document.body.insertBefore(rangeDiv, document.body.firstChild);
     }
   } else {
-    // Si les champs existent déjà, on déplace le champ de recherche à côté
+    // Si les champs existent déjà, on déplace aussi le champ de recherche à côté
     const rangeDiv = dateStartInput.parentNode;
+    const searchInput = document.getElementById("mainTableSearchInput");
+    const searchBtn = document.getElementById("mainTableSearchBtn");
+    const searchIcon = document.getElementById("mainTableSearchIcon");
     if (searchInput && rangeDiv && !rangeDiv.contains(searchInput)) {
+      searchInput.style.marginLeft = "18px";
       rangeDiv.appendChild(searchInput);
-      if (searchIcon) rangeDiv.appendChild(searchIcon);
-      if (searchBtn) rangeDiv.appendChild(searchBtn);
+    }
+    if (searchIcon && rangeDiv && !rangeDiv.contains(searchIcon)) {
+      searchIcon.style.marginLeft = "4px";
+      rangeDiv.appendChild(searchIcon);
+    }
+    if (searchBtn && rangeDiv && !rangeDiv.contains(searchBtn)) {
+      searchBtn.style.marginLeft = "4px";
+      rangeDiv.appendChild(searchBtn);
     }
   }
 
