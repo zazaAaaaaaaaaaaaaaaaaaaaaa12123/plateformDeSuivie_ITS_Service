@@ -1926,22 +1926,22 @@ app.post(
       // Envoi pour compatibilité ancienne version (peut être supprimé plus tard)
       // --- ENVOI WEBSOCKET EN TEMPS RÉEL POUR ACCONIER ---
       if (wss && wss.clients) {
-        const newDeliveryPayload = JSON.stringify({
-          type: "new_delivery_created",
+        const payload = JSON.stringify({
+          type: "new_delivery_notification",
+          message: `Nouvelle livraison créée par ${newDelivery.employee_name}`,
           delivery: newDelivery,
         });
         let clientCount = 0;
         wss.clients.forEach((client, idx) => {
           try {
             if (client.readyState === require("ws").OPEN) {
-              client.send(newDeliveryPayload);
-              // Ajout d'un log détaillé pour chaque client
+              client.send(payload);
               let clientInfo = "";
               if (client._socket && client._socket.remoteAddress) {
                 clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
               }
               console.log(
-                `[WebSocket] new_delivery_created envoyé au client #${
+                `[WebSocket] new_delivery_notification envoyé au client #${
                   idx + 1
                 }${clientInfo}`
               );
@@ -1973,7 +1973,7 @@ app.post(
           }
         });
         console.log(
-          `[WebSocket] new_delivery_created envoyé à ${clientCount} client(s) sur ${wss.clients.size} connecté(s).`
+          `[WebSocket] new_delivery_notification envoyé à ${clientCount} client(s) sur ${wss.clients.size} connecté(s).`
         );
       }
 
