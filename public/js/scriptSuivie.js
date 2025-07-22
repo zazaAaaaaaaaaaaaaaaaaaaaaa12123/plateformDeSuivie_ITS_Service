@@ -9315,37 +9315,27 @@ if (window["WebSocket"]) {
     let endDate = endDateStr ? new Date(endDateStr) : null;
     if (endDate) endDate.setHours(23, 59, 59, 999); // Inclure toute la journée de fin
 
-    // Harmonisation : le filtrage par plage de dates doit s'appliquer sur la source utilisée pour le rendu du tableau, comme dans scriptRespAcconier.js
-    // On surcharge temporairement la méthode de récupération des données pour le tableau principal
-    let originalGetDeliveries = window.getDeliveriesForMainTable;
-    window.getDeliveriesForMainTable = function () {
-      let source =
-        typeof deliveries !== "undefined" && Array.isArray(deliveries)
-          ? deliveries
-          : [];
-      if (startDate || endDate) {
-        return source.filter((d) => {
-          if (!d.created_at) return false;
-          let dDate = new Date(d.created_at);
-          if (startDate && dDate < startDate) return false;
-          if (endDate && dDate > endDate) return false;
-          return true;
-        });
-      }
-      return source;
-    };
-
-    // Appel du filtre combiné d'origine
-    originalApplyCombinedFilters.apply(this, args);
-
-    // Restaure la fonction d'origine pour ne pas impacter d'autres usages
-    if (originalGetDeliveries) {
-      window.getDeliveriesForMainTable = originalGetDeliveries;
+    // Patch du filtre principal : on filtre deliveries selon la plage de dates
+    if (
+      typeof deliveries !== "undefined" &&
+      Array.isArray(deliveries) &&
+      (startDate || endDate)
+    ) {
+      window.filteredDeliveries = deliveries.filter((d) => {
+        if (!d.created_at) return false;
+        let dDate = new Date(d.created_at);
+        if (startDate && dDate < startDate) return false;
+        if (endDate && dDate > endDate) return false;
+        return true;
+      });
     } else {
-      delete window.getDeliveriesForMainTable;
+      window.filteredDeliveries = deliveries;
     }
 
-    // Après rendu, renumérote dynamiquement la colonne N° sur les lignes visibles
+    // Appel du filtre combiné d'origine (qui va utiliser filteredDeliveries si défini)
+    originalApplyCombinedFilters.apply(this, args);
+
+    // Après rendu, renumérote dynamiquement la  colonne N°
     setTimeout(() => {
       if (deliveriesTableBody) {
         let rows = deliveriesTableBody.querySelectorAll("tr");
