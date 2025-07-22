@@ -680,11 +680,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     let color = "#2563eb"; // bleu par défaut (récent)
     if (dateObj && !isNaN(dateObj.getTime())) {
       let diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-      if (diffDays >= 60) {
-        color = "#a3a3a3"; // très ancien : gris
-      } else if (diffDays >= 15) {
-        color = "#eab308"; // assez ancien : jaune
-      } // sinon récent : bleu
+      if (diffDays >= 30) {
+        color = "#a3a3a3"; // ancien : gris (1 mois et plus)
+      } else if (diffDays >= 7) {
+        color = "#eab308"; // assez ancien : jaune (1 semaine à moins d'1 mois)
+      } else if (diffDays >= 0) {
+        color = "#2563eb"; // récent : bleu (< 7 jours)
+      }
     }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
