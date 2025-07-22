@@ -234,12 +234,16 @@ document.addEventListener("DOMContentLoaded", function () {
           }
           return delivery;
         });
+        // Synchronisation avec la variable globale utilisée dans renderAgentTableFull
+        window.allDeliveries = allDeliveries;
       } else {
         allDeliveries = [];
+        window.allDeliveries = [];
       }
     } catch (e) {
       console.error("Erreur lors du chargement des livraisons :", e);
       allDeliveries = [];
+      window.allDeliveries = [];
     }
   }
 
