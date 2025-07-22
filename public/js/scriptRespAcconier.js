@@ -252,7 +252,14 @@ document.addEventListener("DOMContentLoaded", function () {
               dateStartInput &&
               dateEndInput
             ) {
+              // On force le re-rendu avec la plage de dates courante
               updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+            } else {
+              // Cas fallback : si on n'a pas de plage, on tente le filtre simple
+              const dateInput = document.getElementById("mainTableDateFilter");
+              if (typeof updateTableForDate === "function" && dateInput) {
+                updateTableForDate(dateInput.value);
+              }
             }
             // Afficher un toast de confirmation élégant
             showSuccessToast(
