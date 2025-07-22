@@ -148,10 +148,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
 
-  // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
+  // --- AJOUT : Connexion WebSocket pour maj temps réel BL et synchronisation automatique ---
   let ws;
   function setupWebSocket() {
-    // Utilise le même protocole que la page (ws ou wss)
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = proto + "://" + window.location.host;
     ws = new WebSocket(wsUrl);
@@ -161,66 +160,21 @@ document.addEventListener("DOMContentLoaded", function () {
     ws.onmessage = function (event) {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === "bl_status_update") {
-          // Recherche la livraison concernée dans allDeliveries
-          const delivery = allDeliveries.find((d) => d.id == data.deliveryId);
-          if (delivery) {
-            // Met à jour le statut BL localement
-            if (
-              !delivery.bl_statuses ||
-              typeof delivery.bl_statuses !== "object"
-            ) {
-              delivery.bl_statuses = {};
-            }
-            delivery.bl_statuses[data.blNumber] = data.status;
-            // Mise à jour dynamique de la ligne du tableau (sans recharger toute la table)
-            const tableBody = document.getElementById("deliveriesTableBody");
-            if (tableBody) {
-              const dateInput = document.getElementById("mainTableDateFilter");
-              const dateStr = dateInput ? dateInput.value : null;
-              // On doit retrouver la livraison dans la liste filtrée (celle affichée)
-              let filtered =
-                typeof filterDeliveriesByDate === "function" && dateStr
-                  ? filterDeliveriesByDate(dateStr)
-                  : allDeliveries;
-              // Correction : on doit retrouver l'index dans la liste affichée (pas dans allDeliveries)
-              filtered = filtered || [];
-              // On doit aussi mettre à jour la référence dans filtered
-              const idx = filtered.findIndex((d) => d.id == data.deliveryId);
-              if (idx !== -1 && tableBody.rows[idx]) {
-                // On met à jour la référence du delivery dans filtered
-                filtered[idx].bl_statuses[data.blNumber] = data.status;
-                const tr = tableBody.rows[idx];
-                const colIdx = AGENT_TABLE_COLUMNS.findIndex(
-                  (c) => c.id === "container_status"
-                );
-                if (colIdx !== -1 && tr.cells[colIdx]) {
-                  let blList = [];
-                  if (Array.isArray(filtered[idx].bl_number)) {
-                    blList = filtered[idx].bl_number.filter(Boolean);
-                  } else if (typeof filtered[idx].bl_number === "string") {
-                    blList = filtered[idx].bl_number
-                      .split(/[,;\s]+/)
-                      .filter(Boolean);
-                  }
-                  let blStatuses = blList.map((bl) =>
-                    filtered[idx].bl_statuses && filtered[idx].bl_statuses[bl]
-                      ? filtered[idx].bl_statuses[bl]
-                      : "aucun"
-                  );
-                  let allMiseEnLivraison =
-                    blStatuses.length > 0 &&
-                    blStatuses.every((s) => s === "mise_en_livraison");
-                  if (allMiseEnLivraison) {
-                    tr.cells[colIdx].innerHTML =
-                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-                  } else {
-                    tr.cells[colIdx].innerHTML =
-                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
-                  }
-                }
-              }
-            }
+        if (
+          data.type === "bl_status_update" &&
+          data.status === "mise_en_livraison"
+        ) {
+          // Recharge toute la liste et met à jour le tableau (suppression automatique)
+          const dateInput = document.getElementById("mainTableDateFilter");
+          const dateStr = dateInput ? dateInput.value : null;
+          if (
+            typeof loadAllDeliveries === "function" &&
+            typeof updateTableForDate === "function" &&
+            dateStr
+          ) {
+            loadAllDeliveries().then(() => {
+              updateTableForDate(dateStr);
+            });
           }
         }
       } catch (e) {
@@ -231,7 +185,6 @@ document.addEventListener("DOMContentLoaded", function () {
       //console.warn("WebSocket BL error");
     };
     ws.onclose = function () {
-      // Reconnexion auto après 2s
       setTimeout(setupWebSocket, 2000);
     };
   }

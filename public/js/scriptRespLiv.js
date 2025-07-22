@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   styleTC.textContent = `
-    #deliveriesTableBody .tc-tag {
+    #deliveriesTableBody .tc-tag {      
       display: inline-block;
       margin-right: 4px;
       padding: 2px 8px;
