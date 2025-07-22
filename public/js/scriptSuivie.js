@@ -616,6 +616,52 @@ setInterval(() => {
 // Appel initial au chargement
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
+// --- WebSocket temps réel pour les nouvelles livraisons (ordre de livraison créé) ---
+let wsLivraison = null;
+function initWebSocketLivraison() {
+  const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+  let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
+  try {
+    wsLivraison = new WebSocket(wsUrl);
+    wsLivraison.onopen = function () {
+      console.debug("[WebSocket] Connecté pour livraisons (scriptSuivie)");
+    };
+    wsLivraison.onmessage = function (event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "new_delivery_created") {
+          showCustomAlert("Nouvel ordre de livraison reçu !", "success", 3000);
+          // Recharge les livraisons instantanément
+          if (typeof loadDeliveries === "function") {
+            loadDeliveries();
+          }
+        }
+      } catch (e) {
+        console.warn("[WebSocket] Message non JSON ou erreur :", event.data);
+      }
+    };
+    wsLivraison.onclose = function () {
+      console.warn("[WebSocket] Livraison déconnecté. Reconnexion dans 10s...");
+      setTimeout(initWebSocketLivraison, 10000);
+    };
+    wsLivraison.onerror = function () {
+      wsLivraison.close();
+    };
+  } catch (e) {
+    console.error("[WebSocket] Erreur d'init livraison :", e);
+  }
+}
+if (window["WebSocket"]) {
+  // Détection automatique de l'URL WebSocket (comme dans scriptTabBord.js)
+  if (!window.WS_BASE_HOST) {
+    const isLocal = ["localhost", "127.0.0.1"].includes(
+      window.location.hostname
+    );
+    window.WS_BASE_HOST = isLocal ? "localhost:3000" : window.location.host;
+  }
+  initWebSocketLivraison();
+}
+
 (async () => {
   // === Désactivation de l'autocomplétion sur les champs sensibles ===
   window.addEventListener("DOMContentLoaded", function () {
