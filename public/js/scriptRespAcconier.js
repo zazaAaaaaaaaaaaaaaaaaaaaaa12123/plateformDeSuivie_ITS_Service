@@ -1261,15 +1261,47 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     closeBtn.onclick = () => overlay.remove();
     header.appendChild(closeBtn);
     box.appendChild(header);
+    // Ajout champ de recherche dans la popup
+    const searchDiv = document.createElement("div");
+    searchDiv.style.display = "flex";
+    searchDiv.style.justifyContent = "center";
+    searchDiv.style.alignItems = "center";
+    searchDiv.style.gap = "8px";
+    searchDiv.style.margin = "18px 0 10px 0";
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.placeholder = "Rechercher N° dossier...";
+    searchInput.style.padding = "7px 14px";
+    searchInput.style.border = "2px solid #2563eb";
+    searchInput.style.borderRadius = "12px";
+    searchInput.style.fontSize = "1em";
+    searchInput.style.minWidth = "180px";
+    searchInput.style.background = "#fff";
+    searchInput.style.outline = "none";
+    searchInput.style.boxShadow = "0 2px 8px rgba(37,99,235,0.08)";
+    searchInput.style.transition = "border 0.2s";
+    searchInput.addEventListener("focus", function () {
+      this.style.border = "2px solid #eab308";
+    });
+    searchInput.addEventListener("blur", function () {
+      this.style.border = "2px solid #2563eb";
+    });
+    searchDiv.appendChild(searchInput);
+
     const content = document.createElement("div");
     content.style.padding = "24px 24px 24px 24px";
     content.style.background = "#f8fafc";
     content.style.flex = "1 1 auto";
     content.style.overflowY = "auto";
-    if (dossiers.length === 0) {
-      content.innerHTML = `<div style='text-align:center;color:#64748b;font-size:1.1em;'>Aucun dossier en attente de paiement.</div>`;
-    } else {
-      dossiers.forEach((delivery) => {
+
+    // Fonction pour afficher la liste filtrée
+    function renderDossiersList(list) {
+      content.innerHTML = "";
+      if (list.length === 0) {
+        content.innerHTML = `<div style='text-align:center;color:#64748b;font-size:1.1em;'>Aucun dossier en attente de paiement.</div>`;
+        return;
+      }
+      list.forEach((delivery) => {
         const section = document.createElement("div");
         section.style.marginBottom = "28px";
         section.style.padding = "18px 22px";
@@ -1311,6 +1343,25 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         content.appendChild(section);
       });
     }
+
+    // Premier affichage
+    renderDossiersList(dossiers);
+
+    // Handler recherche
+    searchInput.oninput = function () {
+      const value = this.value.trim().toLowerCase();
+      let filtered = dossiers;
+      if (value.length > 0) {
+        filtered = dossiers.filter((delivery) =>
+          String(delivery.dossier_number || "")
+            .toLowerCase()
+            .includes(value)
+        );
+      }
+      renderDossiersList(filtered);
+    };
+
+    box.appendChild(searchDiv);
     box.appendChild(content);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
