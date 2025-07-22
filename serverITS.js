@@ -1130,10 +1130,6 @@ function mapAcconierStatusToFr(status) {
 }
 
 wss.on("connection", (ws) => {
-  console.log("[WebSocket][SERVER] Nouveau client connecté.");
-  ws.on("message", (msg) => {
-    console.log("[WebSocket][SERVER] Message reçu du client:", msg);
-  });
   ws.on("error", (error) => {
     console.error("Erreur WebSocket côté serveur:", error);
   });
@@ -1888,20 +1884,6 @@ app.post(
       const result = await pool.query(query, values);
       const newDelivery = result.rows[0];
 
-      // Envoi WebSocket temps réel pour notification création livraison (pour tableau de bord)
-      if (wss && wss.clients) {
-        const agentName = newDelivery.employee_name || "-";
-        const payload = JSON.stringify({
-          type: "new_delivery_created",
-          message: `L'agent ${agentName} a établi un ordre de livraison.`,
-          delivery: newDelivery,
-        });
-        wss.clients.forEach((client) => {
-          if (client.readyState === require("ws").OPEN) {
-            client.send(payload);
-          }
-        });
-      }
       const wss = req.app.get("wss");
       // Utilisez le nouveau statut acconier pour l'alerte
       const statusInfo = getFrenchStatusWithIcon(
