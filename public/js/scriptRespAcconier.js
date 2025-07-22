@@ -232,14 +232,12 @@ document.addEventListener("DOMContentLoaded", function () {
             blStatuses.every((s) => s === "mise_en_livraison")
           ) {
             // Supprimer la ligne du DOM ET forcer le re-rendu du tableau avec la plage de dates courante
-            window.allDeliveries = window.allDeliveries.filter(
+            // Toujours utiliser window.allDeliveries comme source unique
+            window.allDeliveries = (window.allDeliveries || []).filter(
               (d) => String(d.id) !== String(delivery.id)
             );
-            if (Array.isArray(allDeliveries)) {
-              allDeliveries = allDeliveries.filter(
-                (d) => String(d.id) !== String(delivery.id)
-              );
-            }
+            // Synchroniser allDeliveries (pour compatibilité)
+            allDeliveries = window.allDeliveries;
             // Récupérer les valeurs actuelles des inputs de plage de dates
             const dateStartInput = document.getElementById(
               "mainTableDateStartFilter"
