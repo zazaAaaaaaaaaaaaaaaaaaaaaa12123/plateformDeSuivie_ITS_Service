@@ -1773,7 +1773,7 @@ async function submitDeliveryForm(status) {
         employeeNameInput.value = acconier.nom;
         if (wasDisabled) employeeNameInput.disabled = true;
       }
-      // Rafraîchit la liste des agents côté suivi après succès serveur
+      // Rafraîchit la liste des agents côtés suivi après succès serveur
       if (window.loadDeliveries) {
         window.loadDeliveries();
       }
