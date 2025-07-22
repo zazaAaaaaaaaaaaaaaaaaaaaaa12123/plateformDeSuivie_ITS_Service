@@ -1924,25 +1924,28 @@ app.post(
       console.log(alertMessage);
 
       // Envoi pour compatibilité ancienne version (peut être supprimé plus tard)
-      const legacyPayload = JSON.stringify({
-        type: "new_delivery_notification",
-        message: alertMessage,
-        employeeName: newDelivery.employee_name,
-        deliveryData: newDelivery,
-        alertType: alertType,
-      });
-      // Nouveau format attendu par le frontend acconier
-      const newDeliveryPayload = JSON.stringify({
-        type: "new_delivery_created",
-        delivery: newDelivery,
-      });
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(legacyPayload);
-          client.send(newDeliveryPayload);
-        }
-      });
-      console.log(`Message WebSocket envoyé: ${alertMessage}`);
+      // --- ENVOI WEBSOCKET EN TEMPS RÉEL POUR ACCONIER ---
+      if (wss && wss.clients) {
+        const newDeliveryPayload = JSON.stringify({
+          type: "new_delivery_created",
+          delivery: newDelivery,
+        });
+        wss.clients.forEach((client) => {
+          try {
+            if (client.readyState === require("ws").OPEN) {
+              client.send(newDeliveryPayload);
+            }
+          } catch (e) {
+            console.error(
+              "Erreur lors de l'envoi WebSocket new_delivery_created:",
+              e
+            );
+          }
+        });
+        console.log(
+          `[WebSocket] new_delivery_created envoyé à tous les clients.`
+        );
+      }
 
       // RETIRÉ : L'envoi de la liste des agents n'est plus déclenché ici
       // await broadcastAgentList(wss);
