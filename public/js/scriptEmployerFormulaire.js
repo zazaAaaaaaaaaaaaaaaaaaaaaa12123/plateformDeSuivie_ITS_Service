@@ -1764,6 +1764,11 @@ async function submitDeliveryForm(status) {
       }
       // --- FIN MISE À JOUR ---
       deliveryForm.reset();
+      // Après le reset, remettre le nom de l'agent connecté dans le champ
+      let acconier = JSON.parse(localStorage.getItem("acconier_user")) || {};
+      if (employeeNameInput && acconier.nom) {
+        employeeNameInput.value = acconier.nom;
+      }
       // Rafraîchit la liste des agents côté suivi après succès serveur
       if (window.loadDeliveries) {
         window.loadDeliveries();
