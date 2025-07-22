@@ -467,7 +467,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- Data Loading and Filtering ---
 
   /**
-   * Fetches all deliveries from the backend and filters them for current pending and history.
+   * Fetches all deliveries from the backend and  filters them for current pending and history.
    */
   async function loadDeliveries() {
     if (loadingOverlay) loadingOverlay.style.display = "flex";
