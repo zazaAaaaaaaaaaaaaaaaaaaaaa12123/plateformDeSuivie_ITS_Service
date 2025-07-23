@@ -143,6 +143,79 @@
       .form-group.password-group {
         position: relative;
       }
+
+      /* Responsive : Tablette */
+      @media (max-width: 900px) {
+        .container {
+          max-width: 95vw;
+          padding: 2rem 1.2rem 1.2rem 1.2rem;
+        }
+        .tabs {
+          margin-bottom: 1.2rem;
+        }
+        .tab {
+          font-size: 1rem;
+          padding: 0.6rem 0;
+        }
+        label {
+          font-size: 0.98rem;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+          font-size: 0.98rem;
+          padding: 0.6rem 0.8rem;
+        }
+        .btn {
+          font-size: 1rem;
+          padding: 0.7rem 0;
+        }
+      }
+
+      /* Responsive : Mobile */
+      @media (max-width: 600px) {
+        body {
+          align-items: flex-start;
+          padding-top: 2.5vw;
+        }
+        .container {
+          max-width: 99vw;
+          min-width: 0;
+          padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+          border-radius: 10px;
+          box-shadow: 0 4px 18px rgba(30, 60, 114, 0.13);
+        }
+        .tabs {
+          margin-bottom: 0.7rem;
+        }
+        .tab {
+          font-size: 0.97rem;
+          padding: 0.5rem 0;
+        }
+        form {
+          gap: 0.7rem;
+        }
+        .form-group {
+          gap: 0.15rem;
+        }
+        label {
+          font-size: 0.95rem;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+          font-size: 0.95rem;
+          padding: 0.5rem 0.6rem;
+        }
+        .btn {
+          font-size: 0.98rem;
+          padding: 0.6rem 0;
+        }
+        .show-password {
+          right: 0.7rem;
+          font-size: 1rem;
+        }
+      }
     </style>
   </head>
   <body>
