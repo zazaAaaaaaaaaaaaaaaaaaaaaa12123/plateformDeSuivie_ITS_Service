@@ -620,12 +620,39 @@
           const emailEl = document.getElementById('profileEmail');
           if (nameEl) nameEl.textContent = userName;
           if (emailEl) emailEl.textContent = userEmail;
-          // Avatar avec initiales
+          // Avatar avec initiales (overlay sur l'icône FontAwesome)
           const avatarEl = document.getElementById('profileAvatar');
           if (avatarEl) {
             let initials = userName.split(' ').map(w => w[0]).join('').toUpperCase();
             if (initials.length > 2) initials = initials.slice(0,2);
-            avatarEl.innerHTML = `<span style='font-size:1.5em;font-weight:700;color:#2563eb;'>${initials}</span>`;
+            // Cherche l'icône FontAwesome déjà présente
+            let icon = avatarEl.querySelector('i.fas.fa-user');
+            if (!icon) {
+              icon = document.createElement('i');
+              icon.className = 'fas fa-user';
+              icon.style.fontSize = '2.1em';
+              icon.style.color = '#2563eb';
+              avatarEl.appendChild(icon);
+            }
+            // Ajoute les initiales en overlay (position absolue)
+            let initialsSpan = avatarEl.querySelector('.avatar-initials');
+            if (!initialsSpan) {
+              initialsSpan = document.createElement('span');
+              initialsSpan.className = 'avatar-initials';
+              initialsSpan.style.position = 'absolute';
+              initialsSpan.style.right = '8px';
+              initialsSpan.style.bottom = '8px';
+              initialsSpan.style.fontSize = '1.1em';
+              initialsSpan.style.fontWeight = '700';
+              initialsSpan.style.color = '#2563eb';
+              initialsSpan.style.background = '#fff';
+              initialsSpan.style.borderRadius = '50%';
+              initialsSpan.style.padding = '2px 7px';
+              initialsSpan.style.boxShadow = '0 1px 4px #2563eb22';
+              avatarEl.appendChild(initialsSpan);
+            }
+            initialsSpan.textContent = initials;
+            avatarEl.style.position = 'relative';
           }
         }
       });
