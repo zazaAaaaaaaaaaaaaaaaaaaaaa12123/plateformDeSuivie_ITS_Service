@@ -580,13 +580,25 @@
               photoInput.onchange = function(e) {
                 const file = e.target.files[0];
                 if (file && file.type.startsWith('image/')) {
+                  // Limite de taille (1,5 Mo)
+                  const maxSize = 1.5 * 1024 * 1024; // 1,5 Mo
+                  if (file.size > maxSize) {
+                    hidePhoto();
+                    showProfilePhotoError('Fichier trop volumineux (max 1,5 Mo).');
+                    return;
+                  }
                   const reader = new FileReader();
                   reader.onload = function(evt) {
                     // Teste si l'image est bien affichable
                     const testImg = new window.Image();
                     testImg.onload = function() {
-                      showPhoto(evt.target.result);
-                      localStorage.setItem('profilePhotoDataUrl', evt.target.result);
+                      try {
+                        localStorage.setItem('profilePhotoDataUrl', evt.target.result);
+                        showPhoto(evt.target.result);
+                      } catch (err) {
+                        hidePhoto();
+                        showProfilePhotoError('Stockage insuffisant pour cette image.');
+                      }
                     };
                     testImg.onerror = function() {
                       hidePhoto();
@@ -602,7 +614,9 @@
               };
               removePhotoBtn.onclick = function(e) {
                 e.stopPropagation();
-                localStorage.removeItem('profilePhotoDataUrl');
+                try {
+                  localStorage.removeItem('profilePhotoDataUrl');
+                } catch (err) {}
                 hidePhoto();
               };
               // Message d'erreur pour la photo de profil
