@@ -143,6 +143,9 @@ document.addEventListener("DOMContentLoaded", function () {
   `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
+  // Correction : déclaration des filtres date
+  const dateStartInput = document.getElementById("mainTableDateStartFilter");
+  const dateEndInput = document.getElementById("mainTableDateEndFilter");
   // ...existing code pour les filtres date...
   // Filtrage par recherche sur N° Dossier et N° BL
   const searchInput = document.getElementById("searchInput");
