@@ -243,17 +243,7 @@
         loginForm.classList.add("active");
         signupForm.classList.remove("active");
       };
-      // Password toggle
-      function togglePassword(inputId, el) {
-        const input = document.getElementById(inputId);
-        if (input.type === "password") {
-          input.type = "text";
-          el.innerHTML = '<i class="fa fa-eye-slash"></i>';
-        } else {
-          input.type = "password";
-          el.innerHTML = '<i class="fa fa-eye"></i>';
-        }
-      }
+      // La fonction togglePassword est maintenant dans le JS externe et accessible globalement
     </script>
   </body>
 </html>

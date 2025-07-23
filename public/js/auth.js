@@ -11,6 +11,18 @@ function showMessage(el, msg, isSuccess = false) {
   el.classList.toggle("success", isSuccess);
 }
 
+// Fonction globale pour afficher/masquer le mot de passe
+window.togglePassword = function (inputId, el) {
+  const input = document.getElementById(inputId);
+  if (input.type === "password") {
+    input.type = "text";
+    el.innerHTML = '<i class="fa fa-eye-slash"></i>';
+  } else {
+    input.type = "password";
+    el.innerHTML = '<i class="fa fa-eye"></i>';
+  }
+};
+
 // Inscription
 if (signupForm) {
   signupForm.addEventListener("submit", async (e) => {
