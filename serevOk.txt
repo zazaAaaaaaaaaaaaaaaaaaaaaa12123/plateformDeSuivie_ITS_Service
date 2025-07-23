@@ -3,6 +3,22 @@ const express = require("express");
 const multer = require("multer");
 const { Pool } = require("pg");
 const app = express();
+// Redirection automatique vers le domaine -1cjx si on accède au domaine principal
+app.use((req, res, next) => {
+  if (
+    req.hostname &&
+    req.hostname.includes("plateformdesuivie-its-service.onrender.com") &&
+    !req.hostname.includes("plateformdesuivie-its-service-1cjx.onrender.com")
+  ) {
+    // Redirige vers le domaine -1cjx, en gardant le chemin et la query
+    return res.redirect(
+      301,
+      "https://plateformdesuivie-its-service-1cjx.onrender.com" +
+        req.originalUrl
+    );
+  }
+  next();
+});
 
 const cors = require("cors");
 const path = require("path");
@@ -15,32 +31,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
-
-// ===============================
 // === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
 // ===============================
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
 });
-
-// --- WebSocket Server pour notifications temps réel ---
-const wss = new WebSocket.Server({ server });
-let wsClients = [];
-wss.on("connection", (ws) => {
-  wsClients.push(ws);
-  ws.on("close", () => {
-    wsClients = wsClients.filter((c) => c !== ws);
-  });
-});
-
-function broadcastNouvelleDemandeCodeEntreprise() {
-  wsClients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type: "nouvelle-demande-code-entreprise" }));
-    }
-  });
-}
 
 require("dotenv").config();
 const nodemailer = require("nodemailer");
@@ -53,6 +49,237 @@ const pool = new Pool({
   port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
   ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
 });
+// --- WebSocket Server pour notifications temps réel ---
+const wss = new WebSocket.Server({ server });
+let wsClients = [];
+wss.on("connection", (ws) => {
+  wsClients.push(ws);
+  ws.on("close", () => {
+    wsClients = wsClients.filter((c) => c !== ws);
+  });
+});
+
+// ===============================
+// ===============================
+// PATCH: Mise à jour du statut d'un BL (champ bl_statuses)
+// ===============================
+app.patch("/deliveries/:id/bl-status", async (req, res) => {
+  const { id } = req.params;
+  const { blNumber, status } = req.body || {};
+  if (!blNumber || typeof status !== "string") {
+    return res.status(400).json({
+      success: false,
+      error: "blNumber et status sont requis.",
+    });
+  }
+  try {
+    // Récupère la livraison existante
+    const result = await pool.query(
+      "SELECT bl_statuses FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Livraison non trouvée." });
+    }
+    // Parse l'objet bl_statuses existant ou initialise
+    let bl_statuses = {};
+    if (result.rows[0].bl_statuses) {
+      try {
+        bl_statuses =
+          typeof result.rows[0].bl_statuses === "string"
+            ? JSON.parse(result.rows[0].bl_statuses)
+            : result.rows[0].bl_statuses;
+      } catch (e) {
+        bl_statuses = {};
+      }
+    }
+    // Met à jour le statut du BL demandé
+    bl_statuses[blNumber] = status;
+    // Sauvegarde dans la base
+    const updateRes = await pool.query(
+      "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2 RETURNING *;",
+      [JSON.stringify(bl_statuses), id]
+    );
+    if (updateRes.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Erreur lors de la mise à jour." });
+    }
+    // --- ENVOI WEBSOCKET POUR MISE À JOUR TEMPS RÉEL ---
+    const wss = req.app.get("wss");
+    const updatedDelivery = updateRes.rows[0];
+    const alertMessage = `Statut BL du N° BL '${blNumber}' mis à jour à '${status}'.`;
+    const payload = JSON.stringify({
+      type: "bl_status_update",
+      message: alertMessage,
+      deliveryId: updatedDelivery.id,
+      blNumber,
+      status,
+      bl_statuses: bl_statuses,
+      alertType: "success",
+    });
+    if (wss && wss.clients) {
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(payload);
+        }
+      });
+    }
+    res.status(200).json({ success: true, delivery: updateRes.rows[0] });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du statut BL:", err);
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur lors de la mise à jour du statut BL.",
+    });
+  }
+});
+
+// ===============================
+// ROUTE : PATCH statut BL (bl_statuses) pour une livraison
+// ===============================
+app.patch("/deliveries/:id/bl-status", async (req, res) => {
+  const { id } = req.params;
+  const { blNumber, status } = req.body || {};
+  if (!blNumber || typeof status !== "string") {
+    return res.status(400).json({
+      success: false,
+      message: "Paramètres manquants (blNumber, status)",
+    });
+  }
+  try {
+    // Récupère l'existant
+    const result = await pool.query(
+      "SELECT bl_statuses FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée" });
+    }
+    let bl_statuses = result.rows[0].bl_statuses || {};
+    if (typeof bl_statuses === "string") {
+      try {
+        bl_statuses = JSON.parse(bl_statuses);
+      } catch {
+        bl_statuses = {};
+      }
+    }
+    bl_statuses[blNumber] = status;
+    await pool.query(
+      "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2",
+      [JSON.stringify(bl_statuses), id]
+    );
+    res.json({ success: true, bl_statuses });
+  } catch (err) {
+    console.error("[PATCH /deliveries/:id/bl-status] Erreur:", err);
+    // --- ENVOI WEBSOCKET POUR MISE À JOUR TEMPS RÉEL ---
+    const wss = req.app.get("wss");
+    const updatedDelivery = updateRes.rows[0];
+    const alertMessage = `Statut BL du N° BL '${blNumber}' mis à jour à '${status}'.`;
+    const payload = JSON.stringify({
+      type: "bl_status_update",
+      message: alertMessage,
+      deliveryId: updatedDelivery.id,
+      blNumber,
+      status,
+      bl_statuses: bl_statuses,
+      alertType: "success",
+    });
+    wss.clients.forEach((client) => {
+      if (client.readyState === require("ws").OPEN) {
+        client.send(payload);
+      }
+    });
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
+// ===============================
+// TABLE POUR RESPONSABLE DE LIVRAISON PERSISTANT
+// ===============================
+const createDeliveryResponsibleTable = `
+  CREATE TABLE IF NOT EXISTS delivery_responsible (
+    id SERIAL PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+async function ensureDeliveryResponsibleTable() {
+  try {
+    await pool.query(createDeliveryResponsibleTable);
+    // Si aucune ligne, on en crée une par défaut
+    const { rows } = await pool.query(
+      "SELECT COUNT(*) FROM delivery_responsible;"
+    );
+    if (rows[0].count === "0") {
+      await pool.query(
+        "INSERT INTO delivery_responsible (value) VALUES ($1);",
+        [""]
+      );
+    }
+  } catch (err) {
+    console.error("Erreur création table delivery_responsible:", err);
+  }
+}
+ensureDeliveryResponsibleTable();
+
+// ===============================
+// ROUTE : GET valeur responsable de livraison persistée
+// ===============================
+app.get("/delivery-responsible", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT value FROM delivery_responsible ORDER BY updated_at DESC LIMIT 1;"
+    );
+    res.json({ success: true, value: rows[0] ? rows[0].value : "" });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: "Erreur serveur", error: err.message });
+  }
+});
+
+// ===============================
+// ROUTE : POST maj responsable de livraison persistée
+// ===============================
+app.post("/delivery-responsible", async (req, res) => {
+  const { value } = req.body || {};
+  if (typeof value !== "string") {
+    return res.status(400).json({ success: false, message: "Valeur invalide" });
+  }
+  try {
+    // On update la dernière ligne (ou insert si vide)
+    const { rowCount } = await pool.query(
+      "UPDATE delivery_responsible SET value = $1, updated_at = NOW() WHERE id = (SELECT id FROM delivery_responsible ORDER BY updated_at DESC LIMIT 1);",
+      [value]
+    );
+    if (rowCount === 0) {
+      await pool.query(
+        "INSERT INTO delivery_responsible (value) VALUES ($1);",
+        [value]
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: "Erreur serveur", error: err.message });
+  }
+});
+
+function broadcastNouvelleDemandeCodeEntreprise() {
+  wsClients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ type: "nouvelle-demande-code-entreprise" }));
+    }
+  });
+}
+
 // ===============================
 // ===============================
 // ROUTE : Notification dossier en retard (envoi email)
@@ -1122,7 +1349,7 @@ async function createTables() {
   try {
     await pool.query(creationTableLivraisonConteneur);
     console.log("Table livraison_conteneur créée ou déjà existante.");
-
+    //
     // Assurez-vous que delivery_date et delivery_time sont bien NULLABLE
     const columnsToMakeNullable = ["delivery_date", "delivery_time"];
 
@@ -1204,6 +1431,8 @@ async function createTables() {
       { name: "observation_acconier", type: "TEXT", nullable: true },
       // NOUVEAU : Statut par conteneur (JSONB)
       { name: "container_statuses", type: "JSONB", nullable: true },
+      // NOUVEAU : Statut par BL (JSONB)
+      { name: "bl_statuses", type: "JSONB", nullable: true },
     ];
 
     for (const col of columnsToAdd) {
@@ -1294,6 +1523,20 @@ function formatDateForDB(dateString) {
 // =========================================================================
 // --- ROUTES API pour les livraisons uniquement ---
 // =========================================================================
+
+// ROUTE : Liste des livraisons avec statuts (inclut bl_statuses)
+app.get("/deliveries/status", async (req, res) => {
+  try {
+    // On sélectionne explicitement bl_statuses (et container_statuses)
+    const result = await pool.query(
+      `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses FROM livraison_conteneur ORDER BY created_at DESC`
+    );
+    res.json({ success: true, deliveries: result.rows });
+  } catch (err) {
+    console.error("[GET /deliveries/status] Erreur:", err);
+    res.status(500).json({ success: false, deliveries: [] });
+  }
+});
 
 // ===============================
 // ROUTE INSCRIPTION UTILISATEUR
@@ -1695,20 +1938,62 @@ app.post(
       }
 
       console.log(alertMessage);
-      const payload = JSON.stringify({
-        type: "new_delivery_notification", // CHANGÉ : Type de message pour correspondre au frontend
-        message: alertMessage,
-        employeeName: newDelivery.employee_name, // Ajout du nom de l'agent pour le frontend
-        deliveryData: newDelivery,
-        alertType: alertType,
-      });
 
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(payload);
-        }
-      });
-      console.log(`Message WebSocket envoyé: ${alertMessage}`);
+      // Envoi pour compatibilité ancienne version (peut être supprimé plus tard)
+      // --- ENVOI WEBSOCKET EN TEMPS RÉEL POUR ACCONIER ---
+      if (wss && wss.clients) {
+        // Correction : type et payload complet pour compatibilité frontend
+        const payloadObj = {
+          type: "new_delivery_created",
+          delivery: newDelivery, // On envoie tout l'objet newDelivery (tous les champs)
+        };
+        console.log("[WebSocket][DEBUG] Payload envoyé :", payloadObj);
+        const payload = JSON.stringify(payloadObj);
+        let clientCount = 0;
+        wss.clients.forEach((client, idx) => {
+          try {
+            if (client.readyState === require("ws").OPEN) {
+              client.send(payload);
+              let clientInfo = "";
+              if (client._socket && client._socket.remoteAddress) {
+                clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
+              }
+              console.log(
+                `[WebSocket] new_delivery_notification envoyé au client #${
+                  idx + 1
+                }${clientInfo}`
+              );
+              clientCount++;
+            } else {
+              let clientInfo = "";
+              if (client._socket && client._socket.remoteAddress) {
+                clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
+              }
+              console.warn(
+                `[WebSocket] Client #${
+                  idx + 1
+                }${clientInfo} non ouvert (readyState=${
+                  client.readyState
+                }), message ignoré.`
+              );
+            }
+          } catch (e) {
+            let clientInfo = "";
+            if (client._socket && client._socket.remoteAddress) {
+              clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
+            }
+            console.error(
+              `[WebSocket] Erreur lors de l'envoi à client #${
+                idx + 1
+              }${clientInfo} :`,
+              e
+            );
+          }
+        });
+        console.log(
+          `[WebSocket] new_delivery_notification envoyé à ${clientCount} client(s) sur ${wss.clients.size} connecté(s).`
+        );
+      }
 
       // RETIRÉ : L'envoi de la liste des agents n'est plus déclenché ici
       // await broadcastAgentList(wss);
@@ -1816,12 +2101,12 @@ app.get("/deliveries/status", async (req, res) => {
         lc.shipping_company,
         lc.transporter, 
         lc.weight, lc.ship_name, lc.circuit, lc.number_of_packages, lc.transporter_mode,
-        lc.nom_agent_visiteur, lc.inspecteur, lc.agent_en_douanes, -- NOUVELLES COLONNES DANS LE SELECT
+        lc.nom_agent_visiteur, lc.inspecteur, lc.agent_en_douanes,
         lc.driver_name, lc.driver_phone, lc.truck_registration,
         lc.delivery_notes,
         lc.is_eir_received,
         lc.delivery_status_acconier, lc.observation_acconier,
-        lc.container_statuses, -- AJOUT DU CHAMP
+        lc.container_statuses,
         ac.email AS agent_email
       FROM livraison_conteneur lc
       LEFT JOIN acconier ac ON lc.employee_name = ac.nom
@@ -1829,26 +2114,34 @@ app.get("/deliveries/status", async (req, res) => {
     `;
     const result = await pool.query(query);
     const deliveries = result.rows.map((delivery) => {
+      // Fonction utilitaire pour traduire le statut CSV ou tableau
       function translateStatusCSV(csv) {
-        if (!csv || typeof csv !== "string") return "-";
-        return csv
-          .split(",")
-          .map((s) => translateStatusToFr(s.trim()))
-          .join(",");
+        if (!csv) return "-";
+        if (typeof csv === "string") {
+          return csv
+            .split(",")
+            .map((s) => translateStatusToFr(s.trim()))
+            .join(",");
+        }
+        if (Array.isArray(csv)) {
+          return csv.map((s) => translateStatusToFr(s)).join(",");
+        }
+        return String(csv);
       }
       // Parse container_statuses si présent
-      let container_statuses = null;
-      if (delivery.container_statuses) {
-        try {
-          container_statuses =
-            typeof delivery.container_statuses === "string"
-              ? JSON.parse(delivery.container_statuses)
-              : delivery.container_statuses;
-        } catch (e) {
-          container_statuses = null;
+      let container_statuses = {};
+      try {
+        if (delivery.container_statuses) {
+          if (typeof delivery.container_statuses === "string") {
+            container_statuses = JSON.parse(delivery.container_statuses);
+          } else if (typeof delivery.container_statuses === "object") {
+            container_statuses = delivery.container_statuses;
+          }
         }
+      } catch (e) {
+        container_statuses = {};
       }
-      // Fallback dynamique si non présent
+      // Fallback dynamique si non présent ou mal formé
       if (!container_statuses || Array.isArray(container_statuses)) {
         const tcList = String(delivery.container_number || "")
           .split(",")
@@ -1860,7 +2153,6 @@ app.get("/deliveries/status", async (req, res) => {
         });
         container_statuses = mapping;
       }
-
       // Ajout du mapping traduit en français pour chaque TC
       let container_statuses_fr = {};
       if (container_statuses && typeof container_statuses === "object") {
@@ -1868,19 +2160,12 @@ app.get("/deliveries/status", async (req, res) => {
           container_statuses_fr[tc] = translateStatusToFr(statut);
         });
       }
-
-      // LOG DEBUG : Affichage du mapping info-bulle (français)
-      console.log(`[DEBUG][container_statuses] TC:`, container_statuses);
-      console.log(
-        `[DEBUG][container_statuses_fr] TC (FR):`,
-        container_statuses_fr
-      );
-
+      // Correction : toujours renvoyer les champs attendus, même si vides
       return {
         ...delivery,
         agent_email: delivery.agent_email || null,
-        status: delivery.status, // code technique CSV (ex: "delivered,pending_acconier")
-        status_fr: translateStatusCSV(delivery.status), // version traduite pour affichage
+        status: delivery.status,
+        status_fr: translateStatusCSV(delivery.status),
         delivery_status_acconier_fr: mapAcconierStatusToFr(
           delivery.delivery_status_acconier
         ),
@@ -2173,17 +2458,14 @@ app.delete("/deliveries/:id", async (req, res) => {
       "DELETE FROM livraison_conteneur WHERE id = $1 RETURNING id, employee_name, container_number;",
       [id]
     );
-
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: "Livraison non trouvée pour suppression.",
       });
     }
-
     const deletedDelivery = result.rows[0];
-
-    const wss = req.app.get("wss");
+    // Utilise la référence globale wss (déjà déclarée en haut du fichier)
     const alertMessage = `La livraison du conteneur '${deletedDelivery.container_number}' de l'agent '${deletedDelivery.employee_name}' a été supprimée.`;
     const payload = JSON.stringify({
       type: "delivery_deletion_alert",
@@ -2191,19 +2473,14 @@ app.delete("/deliveries/:id", async (req, res) => {
       deliveryId: deletedDelivery.id,
       alertType: "info",
     });
-
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (client.readyState === require("ws").OPEN) {
         client.send(payload);
       }
     });
     console.log(
       `Message WebSocket envoyé pour la suppression: ${alertMessage}`
     );
-
-    // RETIRÉ : L'envoi de la liste des agents n'est plus déclenché ici
-    // await broadcastAgentList(wss);
-
     res.status(200).json({
       success: true,
       message: "Livraison supprimée avec succès.",
@@ -2905,6 +3182,121 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
 // ===============================
 // HEADER CSP pour autoriser Google Translate et ressources externes nécessaires
 // ===============================
+// ROUTE NOTIFICATION AGENT ACCONIER (envoi email)
+// ===============================
+//const nodemailer = require("nodemailer");
+
+app.post("/notify-agent", async (req, res) => {
+  const { agent, dossier } = req.body || {};
+  if (!agent || !dossier) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Agent et dossier requis." });
+  }
+  try {
+    // Recherche l'email de l'agent dans la base acconier
+    const result = await pool.query(
+      "SELECT email FROM acconier WHERE nom = $1 LIMIT 1",
+      [agent]
+    );
+    if (!result.rows.length || !result.rows[0].email) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Email de l'agent non trouvé." });
+    }
+    const agentEmail = result.rows[0].email;
+
+    // Prépare le message personnalisé (HTML)
+    const subject = `ITS service - Dossier en retard de paiement`;
+    const html = `
+      <div style="font-family:Arial,sans-serif;font-size:1.08em;color:#222;">
+        <div style="font-size:1.15em;font-weight:bold;margin-bottom:12px;">ITS service</div>
+        <div style="margin-bottom:18px;">Bonjour monsieur,</div>
+        <div style="margin-bottom:18px;">Le dossier <span style='color:#b91c1c;font-weight:bold;font-size:1.15em;'>"${dossier}"</span> est en retard de paiement.</div>
+        <div style="margin-bottom:18px;"><span style='color:#b91c1c;font-weight:bold;font-size:1.08em;'>Chercher à régler ce dossier plus tôt que prévu</span>, pour éviter certain soucis.</div>
+      </div>
+    `;
+
+    // Configure le transporteur SMTP (à adapter selon ton serveur mail)
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "ton.email@gmail.com", // À remplacer par ton email
+        pass: "ton_mot_de_passe", // À remplacer par ton mot de passe ou app password
+      },
+    });
+
+    await transporter.sendMail({
+      from: "ton.email@gmail.com", // À remplacer
+      to: agentEmail,
+      subject,
+      html,
+    });
+    res.json({ success: true, message: "Email envoyé à l'agent." });
+  } catch (err) {
+    console.error("Erreur lors de l'envoi de l'email agent:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'envoi de l'email.",
+    });
+  }
+});
+// ===============================
+// ROUTE NOTIFICATION DOSSIER EN RETARD (copie de /notify-agent)
+// ===============================
+app.post("/notify-late-dossier", async (req, res) => {
+  const { agent, dossier } = req.body || {};
+  if (!agent || !dossier) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Agent et dossier requis." });
+  }
+  try {
+    // Recherche l'email de l'agent dans la base acconier
+    const result = await pool.query(
+      "SELECT email FROM acconier WHERE nom = $1 LIMIT 1",
+      [agent]
+    );
+    if (!result.rows.length || !result.rows[0].email) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Email de l'agent non trouvé." });
+    }
+    const agentEmail = result.rows[0].email;
+
+    // Prépare le message
+    const subject = `Notification dossier en retard`;
+    const text = `Bonjour ${agent},\n\nVous avez un dossier ${dossier} en retard. Veuillez revisualiser ce dossier plus vite.`;
+
+    // Configure le transporteur SMTP (à adapter selon ton serveur mail)
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "ton.email@gmail.com", // À remplacer par ton email
+        pass: "ton_mot_de_passe", // À remplacer par ton mot de passe ou app password
+      },
+    });
+
+    await transporter.sendMail({
+      from: "ton.email@gmail.com", // À remplacer
+      to: agentEmail,
+      subject,
+      text,
+    });
+    res.json({ success: true, message: "Email envoyé à l'agent." });
+  } catch (err) {
+    console.error("Erreur lors de l'envoi de l'email agent:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'envoi de l'email.",
+    });
+  }
+});
+// ===============================
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -2922,6 +3314,83 @@ app.use((req, res, next) => {
 });
 
 // (Déplacé tout en bas du fichier)
+
+// ===============================
+// PATCH: Mise à jour du statut BL (bl_statuses) pour une livraison
+// ===============================
+app.patch("/deliveries/:id/bl-status", async (req, res) => {
+  const { id } = req.params;
+  const { blNumber, status } = req.body || {};
+  if (!blNumber || !status) {
+    return res.status(400).json({
+      success: false,
+      message: "N° BL et statut requis.",
+    });
+  }
+  try {
+    // Récupère la livraison existante
+    const result = await pool.query(
+      "SELECT bl_statuses, bl_number FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+    // Normalisation
+    let bl_statuses = {};
+    if (result.rows[0].bl_statuses) {
+      try {
+        bl_statuses =
+          typeof result.rows[0].bl_statuses === "string"
+            ? JSON.parse(result.rows[0].bl_statuses)
+            : result.rows[0].bl_statuses;
+      } catch (e) {
+        bl_statuses = {};
+      }
+    }
+    bl_statuses[blNumber] = status;
+    // Mise à jour en base
+    const updateRes = await pool.query(
+      "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2 RETURNING *;",
+      [JSON.stringify(bl_statuses), id]
+    );
+    if (updateRes.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Erreur lors de la mise à jour." });
+    }
+
+    // ENVOI WEBSOCKET TEMPS RÉEL POUR BL (pour suppression instantanée côté frontend)
+    const wss = req.app.get("wss");
+    if (wss && wss.clients) {
+      const payload = JSON.stringify({
+        type: "bl_status_update",
+        deliveryId: id,
+        blNumber: blNumber,
+        status: status,
+      });
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(payload);
+        }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Statut BL mis à jour pour le N° BL ${blNumber}.`,
+      delivery: updateRes.rows[0],
+    });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du statut BL:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la mise à jour du statut BL.",
+    });
+  }
+});
 
 // Route explicite pour acconier_auth.html
 app.get("/html/acconier_auth.html", (req, res) => {

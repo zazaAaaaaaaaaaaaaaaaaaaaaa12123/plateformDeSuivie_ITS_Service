@@ -31,6 +31,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
+
+// ===============================
+// CONFIGURATION DES FICHIERS STATIQUES (HTML, CSS, JS, images...)
+// Sert tous les fichiers statiques du dossier public (y compris /html, /css, /js...)
+app.use(express.static(path.join(__dirname, "public")));
+
 // === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
 // ===============================
 const PORT = process.env.PORT || 3000;
@@ -2993,13 +2999,14 @@ app.get("/clients", async (req, res) => {
 
 app.use("/uploads", express.static(uploadDir));
 
+// (Gardez la route spécifique si besoin)
 app.get("/interfaceFormulaireEmployer.html", (req, res) => {
   res.sendFile(path.join(__dirname, "interfaceFormulaireEmployer.html"));
 });
 
-app.use(express.static(path.join(__dirname)));
-
-app.use(express.static(path.join(__dirname, "public")));
+// Les deux lignes suivantes sont supprimées car déjà géré plus haut :
+// app.use(express.static(path.join(__dirname)));
+// app.use(express.static(path.join(__dirname, "public")));
 
 // ===============================
 // --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
