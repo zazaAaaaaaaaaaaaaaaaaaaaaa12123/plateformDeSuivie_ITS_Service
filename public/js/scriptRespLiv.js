@@ -67,62 +67,7 @@ function showTooltip(text, x, y) {
   }
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    // Ajout colonne avatar + badge numéro
-    const tdAvatar = document.createElement("td");
-    tdAvatar.style.textAlign = "center";
-    tdAvatar.style.verticalAlign = "middle";
-    tdAvatar.style.padding = "8px 6px";
-    tdAvatar.style.background = "#fff";
-    tdAvatar.style.border = "none";
-    // Initiales de l'agent ou client
-    let initials = "";
-    if (delivery.employee_name) {
-      initials = delivery.employee_name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase();
-    } else if (delivery.client_name) {
-      initials = delivery.client_name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase();
-    } else {
-      initials = "?";
-    }
-    // Avatar rond
-    const avatar = document.createElement("div");
-    avatar.textContent = initials;
-    avatar.style.width = "38px";
-    avatar.style.height = "38px";
-    avatar.style.background = "#2563eb";
-    avatar.style.color = "#fff";
-    avatar.style.borderRadius = "50%";
-    avatar.style.display = "inline-flex";
-    avatar.style.alignItems = "center";
-    avatar.style.justifyContent = "center";
-    avatar.style.fontWeight = "bold";
-    avatar.style.fontSize = "1.15em";
-    avatar.style.marginRight = "8px";
-    avatar.style.boxShadow = "0 2px 8px rgba(30,41,59,0.10)";
-    // Badge numéro
-    const badge = document.createElement("span");
-    badge.textContent = i + 1;
-    badge.style.background = "#3b82f6";
-    badge.style.color = "#fff";
-    badge.style.borderRadius = "50%";
-    badge.style.display = "inline-block";
-    badge.style.width = "22px";
-    badge.style.height = "22px";
-    badge.style.lineHeight = "22px";
-    badge.style.fontSize = "1em";
-    badge.style.fontWeight = "600";
-    badge.style.boxShadow = "0 1px 4px rgba(30,41,59,0.10)";
-    badge.style.marginLeft = "2px";
-    tdAvatar.appendChild(avatar);
-    tdAvatar.appendChild(badge);
-    tr.appendChild(tdAvatar);
+    // Rien ici, on gère tout dans la colonne 'N°'
     // Champs obligatoires pour ce delivery
     const requiredFields = [
       "visitor_agent_name",
@@ -183,8 +128,66 @@ function showTooltip(text, x, y) {
       }
       // Décale l'affichage d'une colonne à droite (l'avatar est déjà ajouté)
       if (col.id === "row_number") {
-        // Ne rien faire, déjà affiché dans le badge
-        return;
+        // Avatar + badge dans la même cellule
+        td.style.textAlign = "center";
+        td.style.verticalAlign = "middle";
+        td.style.padding = "8px 6px";
+        td.style.background = "#fff";
+        td.style.border = "none";
+        // Initiales de l'agent ou client
+        let initials = "";
+        if (delivery.employee_name) {
+          initials = delivery.employee_name
+            .split(" ")
+            .map((w) => w[0])
+            .join("")
+            .toUpperCase();
+        } else if (delivery.client_name) {
+          initials = delivery.client_name
+            .split(" ")
+            .map((w) => w[0])
+            .join("")
+            .toUpperCase();
+        } else {
+          initials = "?";
+        }
+        // Avatar rond
+        const avatar = document.createElement("div");
+        avatar.textContent = initials;
+        avatar.style.width = "38px";
+        avatar.style.height = "38px";
+        avatar.style.background = "#2563eb";
+        avatar.style.color = "#fff";
+        avatar.style.borderRadius = "50%";
+        avatar.style.display = "inline-flex";
+        avatar.style.alignItems = "center";
+        avatar.style.justifyContent = "center";
+        avatar.style.fontWeight = "bold";
+        avatar.style.fontSize = "1.15em";
+        avatar.style.marginRight = "8px";
+        avatar.style.boxShadow = "0 2px 8px rgba(30,41,59,0.10)";
+        // Badge numéro
+        const badge = document.createElement("span");
+        badge.textContent = i + 1;
+        badge.style.background = "#3b82f6";
+        badge.style.color = "#fff";
+        badge.style.borderRadius = "50%";
+        badge.style.display = "inline-block";
+        badge.style.width = "22px";
+        badge.style.height = "22px";
+        badge.style.lineHeight = "22px";
+        badge.style.fontSize = "1em";
+        badge.style.fontWeight = "600";
+        badge.style.boxShadow = "0 1px 4px rgba(30,41,59,0.10)";
+        badge.style.marginLeft = "2px";
+        // Conteneur flex pour aligner avatar et badge
+        const flexContainer = document.createElement("div");
+        flexContainer.style.display = "flex";
+        flexContainer.style.alignItems = "center";
+        flexContainer.style.justifyContent = "center";
+        flexContainer.appendChild(avatar);
+        flexContainer.appendChild(badge);
+        td.appendChild(flexContainer);
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
         if (dDate) {
