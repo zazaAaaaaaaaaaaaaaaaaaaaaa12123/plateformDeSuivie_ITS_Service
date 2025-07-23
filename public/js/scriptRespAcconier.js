@@ -1479,7 +1479,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
 //originale
 
 // Gestion du bouton de déconnexion et de la photo de profil dans le menu profil/avatar
-document.addEventListener("DOMContentLoaded", function () {
+/*document.addEventListener("DOMContentLoaded", function () {
   // --- Avatar photo ou initiales ---
   function renderProfileAvatar() {
     // On suppose que l'avatar a l'id 'profileAvatar' et le menu le conteneur 'profileMenu'
@@ -1535,4 +1535,4 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initialisation avatar et upload
   renderProfileAvatar();
   setupProfilePhotoUpload();
-});
+});*/
