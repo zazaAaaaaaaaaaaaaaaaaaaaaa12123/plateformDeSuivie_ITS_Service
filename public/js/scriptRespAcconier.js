@@ -1124,10 +1124,172 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               select.value === "aucun" ? "aucun" : select.value;
             // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
             if (statutToSend === "mise_en_livraison") {
-              const confirmMsg =
-                "⚠️ Attention : Vous êtes sur le point de valider la mise en livraison pour ce BL. Cette opération est définitive et ne pourra pas être annulée. Voulez-vous vraiment continuer ?";
-              if (!window.confirm(confirmMsg)) {
-                return;
+              // Popup de confirmation personnalisée
+              const confirmOverlay = document.createElement("div");
+              confirmOverlay.style.position = "fixed";
+              confirmOverlay.style.top = 0;
+              confirmOverlay.style.left = 0;
+              confirmOverlay.style.width = "100vw";
+              confirmOverlay.style.height = "100vh";
+              confirmOverlay.style.background = "rgba(30,41,59,0.45)";
+              confirmOverlay.style.zIndex = 99999;
+              confirmOverlay.style.display = "flex";
+              confirmOverlay.style.alignItems = "center";
+              confirmOverlay.style.justifyContent = "center";
+              const confirmBox = document.createElement("div");
+              confirmBox.style.background = "#fff";
+              confirmBox.style.borderRadius = "18px";
+              confirmBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+              confirmBox.style.maxWidth = "420px";
+              confirmBox.style.width = "96vw";
+              confirmBox.style.padding = "0";
+              confirmBox.style.position = "relative";
+              confirmBox.style.display = "flex";
+              confirmBox.style.flexDirection = "column";
+              // Header
+              const confirmHeader = document.createElement("div");
+              confirmHeader.style.background =
+                "linear-gradient(90deg,#eab308 0%,#2563eb 100%)";
+              confirmHeader.style.color = "#fff";
+              confirmHeader.style.padding = "22px 32px 12px 32px";
+              confirmHeader.style.fontWeight = "bold";
+              confirmHeader.style.fontSize = "1.18rem";
+              confirmHeader.style.borderTopLeftRadius = "18px";
+              confirmHeader.style.borderTopRightRadius = "18px";
+              confirmHeader.innerHTML = `<span style='font-size:1.25em;'>⚠️ Confirmation requise</span>`;
+              confirmBox.appendChild(confirmHeader);
+              // Message
+              const confirmMsgDiv = document.createElement("div");
+              confirmMsgDiv.style.padding = "24px 24px 18px 24px";
+              confirmMsgDiv.style.background = "#f8fafc";
+              confirmMsgDiv.style.fontSize = "1.08em";
+              confirmMsgDiv.style.color = "#1e293b";
+              confirmMsgDiv.style.textAlign = "center";
+              confirmMsgDiv.innerHTML =
+                "<b>Vous êtes sur le point de valider la mise en livraison pour ce BL.</b><br><br>Cette opération est <span style='color:#eab308;font-weight:600;'>définitive</span> et ne pourra pas être annulée.<br><br>Voulez-vous vraiment continuer ?";
+              confirmBox.appendChild(confirmMsgDiv);
+              // Boutons
+              const btnsDiv = document.createElement("div");
+              btnsDiv.style.display = "flex";
+              btnsDiv.style.justifyContent = "center";
+              btnsDiv.style.gap = "18px";
+              btnsDiv.style.padding = "0 0 22px 0";
+              // Bouton Annuler
+              const cancelBtn = document.createElement("button");
+              cancelBtn.textContent = "Annuler";
+              cancelBtn.style.background = "#fff";
+              cancelBtn.style.color = "#2563eb";
+              cancelBtn.style.fontWeight = "bold";
+              cancelBtn.style.fontSize = "1em";
+              cancelBtn.style.border = "2px solid #2563eb";
+              cancelBtn.style.borderRadius = "8px";
+              cancelBtn.style.padding = "0.7em 1.7em";
+              cancelBtn.style.cursor = "pointer";
+              cancelBtn.onclick = () => confirmOverlay.remove();
+              // Bouton Confirmer
+              const okBtn = document.createElement("button");
+              okBtn.textContent = "Confirmer";
+              okBtn.style.background =
+                "linear-gradient(90deg,#2563eb 0%,#eab308 100%)";
+              okBtn.style.color = "#fff";
+              okBtn.style.fontWeight = "bold";
+              okBtn.style.fontSize = "1em";
+              okBtn.style.border = "none";
+              okBtn.style.borderRadius = "8px";
+              okBtn.style.padding = "0.7em 1.7em";
+              okBtn.style.cursor = "pointer";
+              okBtn.onclick = () => {
+                confirmOverlay.remove();
+                // On continue la procédure
+                finishBLStatusChange();
+              };
+              btnsDiv.appendChild(cancelBtn);
+              btnsDiv.appendChild(okBtn);
+              confirmBox.appendChild(btnsDiv);
+              confirmOverlay.appendChild(confirmBox);
+              document.body.appendChild(confirmOverlay);
+              confirmOverlay.onclick = (e) => {
+                if (e.target === confirmOverlay) confirmOverlay.remove();
+              };
+              // On stoppe ici, finishBLStatusChange sera appelé si l'utilisateur confirme
+              return;
+              // Fonction pour continuer la procédure après confirmation
+              function finishBLStatusChange() {
+                // 1. MAJ locale immédiate du statut BL
+                delivery.bl_statuses[blNumber] = statutToSend;
+                // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
+                const tableBody = document.getElementById(
+                  "deliveriesTableBody"
+                );
+                if (tableBody) {
+                  for (let row of tableBody.rows) {
+                    let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
+                      (c) => c.id === "dossier_number"
+                    );
+                    if (
+                      dossierCellIdx !== -1 &&
+                      row.cells[dossierCellIdx] &&
+                      row.cells[dossierCellIdx].textContent ===
+                        String(delivery.dossier_number)
+                    ) {
+                      let colIdx = AGENT_TABLE_COLUMNS.findIndex(
+                        (c) => c.id === "container_status"
+                      );
+                      if (colIdx !== -1 && row.cells[colIdx]) {
+                        let blList = [];
+                        if (Array.isArray(delivery.bl_number)) {
+                          blList = delivery.bl_number.filter(Boolean);
+                        } else if (typeof delivery.bl_number === "string") {
+                          blList = delivery.bl_number
+                            .split(/[,;\s]+/)
+                            .filter(Boolean);
+                        }
+                        let blStatuses = blList.map((bl) =>
+                          delivery.bl_statuses && delivery.bl_statuses[bl]
+                            ? delivery.bl_statuses[bl]
+                            : "aucun"
+                        );
+                        let allMiseEnLivraison =
+                          blStatuses.length > 0 &&
+                          blStatuses.every((s) => s === "mise_en_livraison");
+                        if (allMiseEnLivraison) {
+                          row.cells[colIdx].innerHTML =
+                            '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
+                        } else {
+                          row.cells[colIdx].innerHTML =
+                            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+                        }
+                      }
+                      break;
+                    }
+                  }
+                }
+                // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
+                try {
+                  fetch(`/deliveries/${delivery.id}/bl-status`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ blNumber, status: statutToSend }),
+                  }).then(async (res) => {
+                    if (!res.ok) {
+                      let msg =
+                        "Erreur lors de la mise à jour du statut du BL.";
+                      try {
+                        const errData = await res.json();
+                        if (errData && errData.error)
+                          msg += "\n" + errData.error;
+                      } catch {}
+                      alert(msg);
+                      return;
+                    }
+                    overlay.remove();
+                  });
+                } catch (err) {
+                  alert(
+                    "Erreur lors de la mise à jour du statut du BL.\n" +
+                      (err && err.message ? err.message : "")
+                  );
+                }
               }
             }
             // 1. MAJ locale immédiate du statut BL
