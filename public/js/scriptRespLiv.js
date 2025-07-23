@@ -486,7 +486,6 @@ const AGENT_TABLE_COLUMNS = [
   { id: "driver", label: "CHAUFFEUR" },
   { id: "driver_phone", label: "TEL CHAUFFEUR" },
   { id: "delivery_date", label: "DATE LIVRAISON" },
-  { id: "acconier_status", label: "STATUT (du Respo.ACCONIER)" },
   { id: "statut", label: "Statut" },
   { id: "observation", label: "Observations" },
 ];
