@@ -195,7 +195,7 @@
       /* Styles pour la stabilité du tableau (conservés de votre version originale) */
       .table {
         width: 100%;
-        table-layout: auto; /* Permet aux colonnes de s'auto-ajuster au contenu */
+        table-layout: fixed; /* Fixe la largeur des colonnes pour éviter la coupure */
         border-radius: 14px;
         overflow: hidden;
         box-shadow: 0 4px 18px 0 rgba(30,41,59,0.10);
@@ -204,11 +204,21 @@
       .table th,
       .table td {
         vertical-align: top; /* Aligne le contenu en haut des cellules */
-        padding: 0.85rem 0.7rem; /* Padding un peu plus aéré */
-        white-space: normal; /* Permet au texte de passer à la ligne */
-        word-break: break-word; /* Casse les mots longs pour éviter le débordement */
+        padding: 1.05rem 1.1rem; /* Padding plus large */
+        white-space: nowrap; /* Empêche la coupure du texte */
+        word-break: normal;
         border-bottom: 1.5px solid #e5e7eb;
-        font-size: 1.01em;
+        font-size: 1.07em;
+        min-width: 120px;
+        max-width: 350px;
+        overflow-x: auto;
+        text-overflow: ellipsis;
+      }
+      .table th {
+        background: #f3f4f6;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        min-width: 130px;
       }
       .table th {
         background: #f3f4f6;
@@ -258,16 +268,17 @@
       .table thead tr:first-child th {
         border-bottom: none; /* Supprime la bordure inférieure pour le bandeau */
         border-top: none; /* Supprime la bordure supérieure */
-        padding-top: 10px;
-        padding-bottom: 10px;
+        padding-top: 12px;
+        padding-bottom: 12px;
         color: white; /* Couleur de texte par défaut pour les bandeaux */
-        font-size: 1.13em;
+        font-size: 1.15em;
         text-transform: uppercase;
         position: sticky; /* Rendre la ligne de bandeau figée */
         top: 0; /* Coller en haut */
         z-index: 11; /* Plus haut que les en-têtes de colonnes normales */
         cursor: pointer; /* Indique que le bandeau est cliquable */
         border-radius: 0;
+        min-width: 130px;
       }
       /* La première cellule du bandeau (pour N° et Date & Heure) reste neutre */
       .table thead tr:first-child th:nth-child(1) {
