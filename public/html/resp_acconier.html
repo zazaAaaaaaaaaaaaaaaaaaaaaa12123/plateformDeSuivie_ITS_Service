@@ -21,179 +21,248 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
-  /* --- BEAUTÉ AVANCÉE DU TABLEAU --- */
-  #deliveriesTable {
-    background: linear-gradient(120deg, #f8fafc 60%, #e0e7ef 100%);
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 8px 32px rgba(30,41,59,0.13), 0 1.5px 0 #2563eb22;
-    margin-bottom: 0;
-  }
-  #deliveriesTable thead th {
-    background: linear-gradient(90deg, #2563eb 0%, #1e293b 100%);
-    color: #fff;
-    font-size: 1.08em;
-    font-weight: 700;
-    border: none;
-    letter-spacing: 0.03em;
-    text-shadow: 0 2px 8px #1e293b22;
-    padding-top: 18px;
-    padding-bottom: 18px;
-    border-bottom: 3px solid #2563eb;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  #deliveriesTable tbody tr {
-    background: #fff;
-    transition: box-shadow 0.18s, background 0.18s;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px #2563eb0a;
-  }
-  #deliveriesTable tbody tr:hover {
-    background: linear-gradient(90deg, #e0e7ef 0%, #f1f5f9 100%);
-    box-shadow: 0 6px 24px #2563eb22;
-    transform: scale(1.012);
-    z-index: 2;
-  }
-  #deliveriesTable tbody td {
-    font-size: 1.04em;
-    color: #1e293b;
-    border: none;
-    padding: 14px 10px;
-    background: transparent;
-    vertical-align: middle;
-    transition: background 0.18s, color 0.18s;
-  }
-  #deliveriesTable tbody td.observation-col {
-    background: #f1f5f9;
-    border-left: 3px solid #2563eb33;
-    font-style: italic;
-    color: #64748b;
-  }
-  #deliveriesTable tbody td.row-number-col {
-    background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
-    color: #fff;
-    font-weight: bold;
-    border-radius: 8px 0 0 8px;
-    box-shadow: 0 2px 8px #2563eb22;
-    font-size: 1.08em;
-    border-right: 2px solid #e0e7ef;
-  }
-  #deliveriesTable tbody tr:nth-child(even) td:not(.row-number-col) {
-    background: #f8fafc;
-  }
-  #deliveriesTable tbody tr:nth-child(odd) td:not(.row-number-col) {
-    background: #fff;
-  }
-  #deliveriesTable tbody td .tc-tag {
-    background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
-    color: #fff;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 1em;
-    padding: 2px 10px;
-    margin-right: 4px;
-    box-shadow: 0 2px 8px #2563eb22;
-    border: none;
-    transition: background 0.18s;
-  }
-  #deliveriesTable tbody td .tc-tag:hover {
-    background: linear-gradient(90deg, #1e293b 0%, #2563eb 100%);
-    color: #fff;
-  }
-  #deliveriesTable tbody td .tc-tags-btn {
-    background: linear-gradient(90deg, #0e274e 0%, #2563eb 100%);
-    color: #fff;
-    border: 2px solid #2563eb;
-    border-radius: 14px;
-    padding: 2px 14px;
-    font-weight: 600;
-    font-size: 1em;
-    box-shadow: 0 2px 8px #2563eb22;
-    transition: background 0.18s;
-  }
-  #deliveriesTable tbody td .tc-tags-btn:hover {
-    background: linear-gradient(90deg, #2563eb 0%, #0e274e 100%);
-    color: #fff;
-  }
-  #deliveriesTable tbody td .tc-popup {
-    background: #fff;
-    border: 2px solid #2563eb;
-    border-radius: 14px;
-    box-shadow: 0 4px 16px #1e293b22;
-    padding: 8px 0;
-    min-width: 120px;
-    z-index: 1002;
-    left: 0;
-    top: 100%;
-    white-space: nowrap;
-  }
-  #deliveriesTable tbody td .tc-popup-item {
-    padding: 8px 22px;
-    cursor: pointer;
-    font-size: 1.05em;
-    color: #2563eb;
-    border-bottom: 1px solid #f3f4f6;
-    font-weight: 600;
-    transition: background 0.18s, color 0.18s;
-  }
-  #deliveriesTable tbody td .tc-popup-item:hover {
-    background: #2563eb;
-    color: #fff;
-  }
-  #deliveriesTable tbody td .tc-popup-item:last-child {
-    border-bottom: none;
-  }
-  #deliveriesTable tbody td .statut-btn {
-    background: linear-gradient(90deg, #fffbe6 0%, #fde68a 100%);
-    color: #b45309;
-    border: 2px solid #eab308;
-    border-radius: 16px;
-    font-weight: 700;
-    font-size: 1.08em;
-    box-shadow: 0 2px 8px #eab30822;
-    outline: none;
-    margin-top: 6px;
-    transition: box-shadow 0.2s, background 0.18s;
-  }
-  #deliveriesTable tbody td .statut-btn:active {
-    box-shadow: 0 1px 4px #eab30833;
-  }
-  #deliveriesTable thead th, #deliveriesTable tbody td {
-    border-right: 1.5px solid #e0e7ef;
-  }
-  #deliveriesTable thead th:last-child, #deliveriesTable tbody td:last-child {
-    border-right: none;
-  }
-  #deliveriesTable {
-    border-collapse: separate;
-    border-spacing: 0;
-  }
-  /* Responsive */
-  @media (max-width: 900px) {
-    #deliveriesTable thead th, #deliveriesTable tbody td {
-      font-size: 0.95em;
-      padding: 10px 6px;
-    }
-    #deliveriesTable tbody td.row-number-col {
-      font-size: 1em;
-    }
-  }
-  @media (max-width: 600px) {
-    #deliveriesTable thead th, #deliveriesTable tbody td {
-      font-size: 0.92em;
-      padding: 7px 3px;
-    }
-    #deliveriesTable tbody td.row-number-col {
-      font-size: 0.95em;
-    }
-  }
-      /* Boutons de suppression historique (sidebar)
-   - .delete-history-btn.desktop-in : bouton dans la carte (desktop)
-   - .delete-history-btn.mobile-out : bouton sous la carte (mobile)
-   - .delete-history-btn-mobile-wrap : conteneur du bouton mobile
-*/
+      /* --- MODERNISATION DU STYLE --- */
+      body {
+        background: linear-gradient(135deg, #e0e7ef 0%, #f8fafc 100%);
+        min-height: 100vh;
+      }
+
+      .card-section {
+        background: rgba(255,255,255,0.85);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+        border-radius: 24px;
+        padding: 32px 28px 28px 28px;
+        margin-top: 24px;
+        backdrop-filter: blur(4px);
+        border: 1.5px solid #e5e7eb;
+      }
+
+      .section-title {
+        font-size: 2.1em;
+        font-weight: 800;
+        color: #1e293b;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+      }
+      .section-subtitle {
+        color: #64748b;
+        font-size: 1.08em;
+        font-weight: 500;
+      }
+
+      /* --- TABLEAU --- */
+      .table-responsive {
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 4px 24px 0 rgba(30,41,59,0.10);
+        background: rgba(255,255,255,0.97);
+      }
+      .table {
+        margin-bottom: 0;
+        border-radius: 18px;
+        overflow: hidden;
+        background: transparent;
+        box-shadow: none;
+      }
+      .table thead tr:first-child th {
+        background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+        color: #fff;
+        font-size: 1.18em;
+        font-weight: 700;
+        border: none;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #2563eb33;
+        border-radius: 0;
+        padding-top: 18px;
+        padding-bottom: 18px;
+      }
+      .table thead tr:nth-child(2) th {
+        background: #f1f5f9;
+        color: #0e274e;
+        font-size: 1.05em;
+        font-weight: 700;
+        border-bottom: 2.5px solid #2563eb44;
+        border-top: none;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        letter-spacing: 0.2px;
+      }
+      .table tbody tr {
+        background: rgba(255,255,255,0.92);
+        transition: box-shadow 0.18s, background 0.18s;
+      }
+      .table tbody tr:hover {
+        background: linear-gradient(90deg, #e0f2fe 0%, #f0fdfa 100%);
+        box-shadow: 0 2px 12px #38bdf822;
+      }
+      .table td, .table th {
+        border: none;
+        vertical-align: middle;
+        padding: 0.85rem 0.7rem;
+        font-size: 1.01em;
+        word-break: break-word;
+      }
+      .table td {
+        color: #334155;
+        font-weight: 500;
+        background: transparent;
+        border-bottom: 1.5px solid #e5e7eb;
+      }
+      .table tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      /* --- COLONNES IMPORTANTES --- */
+      .table td:nth-child(19), .table th:nth-child(19) {
+        white-space: nowrap;
+        max-width: 220px;
+        min-width: 120px;
+        background: linear-gradient(90deg, #fef9c3 0%, #fef08a 100%);
+        color: #b45309;
+        font-weight: 700;
+        border-radius: 8px;
+        box-shadow: 0 1px 6px #fde68a33;
+        text-align: center;
+        font-size: 1.04em;
+      }
+      .table td:nth-child(18), .table th:nth-child(18) {
+        background: linear-gradient(90deg, #bbf7d0 0%, #6ee7b7 100%);
+        color: #166534;
+        font-weight: 600;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .table td:nth-child(3), .table th:nth-child(3) {
+        background: linear-gradient(90deg, #dbeafe 0%, #60a5fa 100%);
+        color: #1e40af;
+        font-weight: 600;
+        border-radius: 8px;
+      }
+
+      /* --- EFFET GLASSMORPHISM SUR LES CELLULES --- */
+      .table td, .table th {
+        backdrop-filter: blur(2px);
+      }
+
+      /* --- EFFET DE SÉLECTION --- */
+      .table tbody tr.selected, .table tbody tr.selected:hover {
+        background: linear-gradient(90deg, #a5b4fc 0%, #f0abfc 100%) !important;
+        color: #fff !important;
+        box-shadow: 0 2px 16px #a5b4fc44;
+      }
+
+      /* --- SCROLLBAR MODERNE --- */
+      ::-webkit-scrollbar {
+        height: 10px;
+        width: 10px;
+        background: #e0e7ef;
+        border-radius: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2563eb55;
+        border-radius: 8px;
+      }
+
+      /* --- BOUTONS --- */
+      .btn, .icon-btn-company-color {
+        border-radius: 8px !important;
+        font-weight: 600;
+        box-shadow: 0 2px 8px #2563eb11;
+        transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+      }
+      .btn-outline-danger {
+        border: 2px solid #dc2626 !important;
+        color: #dc2626 !important;
+        background: #fff !important;
+      }
+      .btn-outline-danger:hover {
+        background: #dc2626 !important;
+        color: #fff !important;
+      }
+
+      /* --- BARRE DE RECHERCHE --- */
+      .search-bar-wrapper-top {
+        background: #f1f5f9;
+        border-radius: 12px;
+        box-shadow: 0 1px 8px #2563eb11;
+        padding: 6px 12px;
+      }
+      .search-input {
+        border: none;
+        background: transparent;
+        font-size: 1.08em;
+        color: #1e293b;
+        outline: none;
+        width: 80%;
+      }
+      .search-input:focus {
+        background: #e0e7ef;
+        border-radius: 8px;
+      }
+      .search-icon {
+        color: #2563eb;
+        font-size: 1.2em;
+        margin-right: 8px;
+      }
+
+      /* --- PAGINATION --- */
+      .pagination .page-link {
+        border-radius: 8px !important;
+        color: #2563eb;
+        font-weight: 600;
+        border: none;
+        margin: 0 2px;
+        background: #f1f5f9;
+        transition: background 0.18s, color 0.18s;
+      }
+      .pagination .page-link.active, .pagination .page-link:hover {
+        background: #2563eb;
+        color: #fff;
+      }
+
+      /* --- AVATAR --- */
+      .profile-avatar-wrapper #profileAvatar {
+        box-shadow: 0 2px 12px #2563eb22;
+        border: 2.5px solid #2563eb33;
+        background: linear-gradient(135deg, #e0e7ef 0%, #f1f5f9 100%);
+      }
+
+      /* --- MESSAGES ET OVERLAYS --- */
+      .custom-alert {
+        border-radius: 12px;
+        box-shadow: 0 4px 24px #dc262622;
+        font-size: 1.08em;
+      }
+      .loading-overlay-content {
+        background: rgba(255,255,255,0.95);
+        border-radius: 18px;
+        box-shadow: 0 4px 24px #2563eb22;
+        padding: 32px 40px;
+      }
+
+      /* --- RESPONSIVE --- */
+      @media (max-width: 900px) {
+        .card-section {
+          padding: 18px 6px 12px 6px;
+        }
+        .table-responsive {
+          border-radius: 10px;
+        }
+        .table thead tr:first-child th, .table thead tr:nth-child(2) th {
+          font-size: 0.98em;
+        }
+      }
+      @media (max-width: 600px) {
+        .table thead tr:first-child th, .table thead tr:nth-child(2) th {
+          font-size: 0.93em;
+          padding: 8px 2px;
+        }
+        .table td {
+          font-size: 0.97em;
+        }
+      }
+
+      /* --- FIN MODERNISATION --- */
       .delete-history-btn.desktop-in {
         background: none;
         border: none;
@@ -230,6 +299,7 @@
         margin-bottom: 13px;
       }
 
+
       /* Par défaut, bouton mobile caché, bouton desktop visible */
       .delete-history-btn.desktop-in {
         display: inline-flex;
@@ -238,7 +308,6 @@
       .delete-history-btn-mobile-wrap {
         display: none;
       }
-
       @media (max-width: 600px) {
         .delete-history-btn.desktop-in {
           display: none !important;
