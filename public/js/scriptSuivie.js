@@ -240,14 +240,14 @@ function showLateContainersAlert(lateContainers, lateDossiersCount) {
   alertBox.innerHTML = `
     <div style="display:flex;align-items:center;gap:13px;min-width:0;">
       <span style="font-size:1.7em;color:#ef4444;flex-shrink:0;">&#9888;</span>
-      <div style="min-width:0;">
+      <div style="min-width:0;"> 
         <div style="font-weight:700;font-size:1.05em;color:#ef4444;margin-bottom:2px;">Dossier en retard</div>
         <div style="font-size:0.98em;color:#1e293b;line-height:1.5;">${lateDossiersCount} dossier(s) en retard (au moins un conteneur non livré après 2 jours).</div>
         <button id="showLateListBtn" style="margin-top:8px;background:none;border:none;color:#2563eb;font-weight:600;cursor:pointer;font-size:1em;padding:0;text-decoration:underline;">Cliquez pour voir la liste</button>
         <button id="refreshLateAlertBtn" style="margin-top:8px;margin-left:12px;background:#f1f5f9;border:1.5px solid #2563eb;color:#2563eb;font-weight:600;cursor:pointer;font-size:0.97em;padding:4px 14px;border-radius:7px;">Rafraîchir</button>
         <div style="margin-top:5px;color:#64748b;font-size:0.93em;">Merci de vérifier et relancer le suivi documentaire.</div>
       </div>
-    </div>
+    </div>  
     <button id="closeLateContainersAlertBtn" style="position:absolute;top:7px;right:10px;background:none;border:none;font-size:1.3em;color:#64748b;cursor:pointer;">&times;</button>
     <style>
       @keyframes late-alert-slidein-right {

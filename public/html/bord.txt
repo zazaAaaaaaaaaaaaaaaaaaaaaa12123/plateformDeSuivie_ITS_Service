@@ -460,6 +460,37 @@
           0.2
         ) !important; /* Vert avec opacité légère */
       }
+
+      /* Responsive élargissement de la carte et du tableau */
+      @media (min-width: 1200px) {
+        .card-section {
+          width: 98vw !important;
+          max-width: 1600px !important;
+          margin: 32px auto 0 auto !important;
+          padding: 0 2vw !important;
+        }
+        #tableScrollContainer, #deliveriesTable {
+          max-width: 1500px !important;
+        }
+      }
+      @media (max-width: 1200px) {
+        .card-section {
+          max-width: 99vw !important;
+          padding: 0 1vw !important;
+        }
+        #tableScrollContainer, #deliveriesTable {
+          max-width: 99vw !important;
+        }
+      }
+      @media (max-width: 900px) {
+        .card-section {
+          max-width: 100vw !important;
+          padding: 0 0.5vw !important;
+        }
+        #tableScrollContainer, #deliveriesTable {
+          max-width: 100vw !important;
+        }
+      }
     </style>
   </head>
 
