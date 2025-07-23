@@ -559,12 +559,12 @@
               // Gestion d'erreur d'affichage d'image
               photoPreview.onerror = function() {
                 hidePhoto();
-                showProfilePhotoError('Format d\'image non supporté ou fichier corrompu.');
+                // Ne rien afficher pour éviter le clignotement
               };
               if (mainAvatarPhoto) {
                 mainAvatarPhoto.onerror = function() {
                   updateMainAvatar(null);
-                  showProfilePhotoError('Impossible d\'afficher la photo de profil.');
+                  // Ne rien afficher pour éviter le clignotement
                 };
               }
               if (savedPhoto) {
@@ -586,7 +586,7 @@
                     hidePhoto();
                     showProfilePhotoError('Fichier trop volumineux (max 1,5 Mo).');
                     return;
-                  }
+                  } 
                   const reader = new FileReader();
                   reader.onload = function(evt) {
                     // Teste si l'image est bien affichable
@@ -602,7 +602,7 @@
                     };
                     testImg.onerror = function() {
                       hidePhoto();
-                      showProfilePhotoError('Format d\'image non supporté ou fichier corrompu.');
+                      // Ne rien afficher pour éviter le clignotement
                     };
                     testImg.src = evt.target.result;
                   };
