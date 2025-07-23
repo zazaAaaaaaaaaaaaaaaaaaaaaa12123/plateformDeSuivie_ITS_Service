@@ -1477,3 +1477,20 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   }
 }
 //originale
+
+// Gestion du bouton de déconnexion dans le menu profil/avatar
+document.addEventListener("DOMContentLoaded", function () {
+  // On suppose que le bouton a l'id 'logoutBtn' dans le menu profil
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      // Nettoyer toutes les infos utilisateur du localStorage
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
+      // Rediriger vers la page de connexion (onglet connexion actif)
+      window.location.href =
+        "https://plateformdesuivie-its-service-1cjx.onrender.com/html/auth.html#login";
+    });
+  }
+});
