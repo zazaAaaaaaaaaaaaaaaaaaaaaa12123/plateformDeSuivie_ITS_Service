@@ -336,24 +336,22 @@
   <body class="bg-light">
     <div class="container my-4">
       <section class="card-section">
-        <!-- EN-TÊTE MODERNE AVEC AVATAR ET TITRE -->
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4" style="background:#fff;border-radius:18px;padding:24px 32px 18px 32px;box-shadow:0 4px 24px rgba(30,41,59,0.07);">
-          <div class="d-flex align-items-center gap-3 flex-shrink-0">
+        <!-- EN-TÊTE MODERNE AVEC AVATAR À DROITE -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4" style="background:#fff;border-radius:18px;padding:24px 32px 18px 32px;box-shadow:0 4px 24px rgba(30,41,59,0.07);position:relative;">
+          <div>
+            <h1 class="mb-1" style="font-size:1.7em;font-weight:700;color:#0e274e;letter-spacing:-1px;">Tableau - Responsable Acconier</h1>
+            <div style="font-size:1.13em;color:#64748b;font-weight:500;">Paiement de l'acconage des conteneurs</div>
+            <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
+            <div class="scrolling-message-bar" id="newAgentScrollingContainer" style="margin-top:10px;max-width:350px;width:100%;">
+              <div class="scrolling-message-content" id="newAgentScrollingContent"></div>
+            </div>
+          </div>
+          <div class="d-flex flex-column align-items-end flex-shrink-0" style="min-width:80px;position:relative;">
             <div id="profileAvatar" style="width:60px;height:60px;border-radius:50%;background:#e0e7ef;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #2563eb22;cursor:pointer;">
               <i class="fas fa-user" style="font-size:2.1em;color:#2563eb;"></i>
             </div>
-            <div>
-              <h1 class="mb-1" style="font-size:1.7em;font-weight:700;color:#0e274e;letter-spacing:-1px;">Tableau - Responsable Acconier</h1>
-              <div style="font-size:1.13em;color:#64748b;font-weight:500;">Paiement de l'acconage des conteneurs</div>
-            </div>
-          </div>
-          <div class="d-flex flex-column align-items-end flex-grow-1" style="min-width:220px;">
-            <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
-            <div class="scrolling-message-bar" id="newAgentScrollingContainer" style="margin-bottom:8px;max-width:350px;width:100%;">
-              <div class="scrolling-message-content" id="newAgentScrollingContent"></div>
-            </div>
             <!-- Dropdown profil -->
-            <div id="profileDropdown" style="display:none;position:absolute;top:76px;right:32px;min-width:220px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(30,41,59,0.18);padding:18px 20px;z-index:1001;">
+            <div id="profileDropdown" style="display:none;position:absolute;top:76px;right:0;min-width:220px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(30,41,59,0.18);padding:18px 20px;z-index:1001;">
               <div id="profileName" style="font-weight:600;font-size:1.08em;color:#0e274e;">Nom de l'utilisateur</div>
               <div id="profileEmail" style="font-size:0.98em;color:#64748b;">email@exemple.com</div>
               <hr style="margin:12px 0 10px 0;border:0;border-top:1.5px solid #e5e7eb;"/>
