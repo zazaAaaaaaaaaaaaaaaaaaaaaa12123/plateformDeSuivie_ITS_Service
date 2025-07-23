@@ -654,6 +654,22 @@
             initialsSpan.textContent = initials;
             avatarEl.style.position = 'relative';
           }
+        } else {
+          // Affichage d'une alerte si les infos ne sont pas trouvées
+          const alertDiv = document.createElement('div');
+          alertDiv.style.position = 'fixed';
+          alertDiv.style.top = '20px';
+          alertDiv.style.right = '20px';
+          alertDiv.style.background = '#f8d7da';
+          alertDiv.style.color = '#721c24';
+          alertDiv.style.padding = '14px 22px';
+          alertDiv.style.borderRadius = '8px';
+          alertDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)';
+          alertDiv.style.zIndex = '2000';
+          alertDiv.textContent = "Erreur : Impossible de récupérer le nom ou l'email depuis le localStorage. Veuillez vous reconnecter.";
+          document.body.appendChild(alertDiv);
+          // Affiche aussi dans la console pour debug
+          console.error('userName:', userName, 'userEmail:', userEmail);
         }
       });
     </script>
