@@ -26,7 +26,40 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
-  const newLocal = (styleTC.textContent = `
+  styleTC.textContent = `
+    /* Tableau responsive et extensible */
+    #deliveriesTable {
+      width: 100vw !important;
+      max-width: 98vw !important;
+      min-width: 900px;
+      margin: 0 auto;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #fff;
+      box-shadow: 0 8px 32px rgba(37,99,235,0.10);
+      border-radius: 18px;
+      overflow-x: auto;
+      table-layout: auto;
+    }
+    #deliveriesTable thead th {
+      padding: 18px 12px;
+      font-size: 1.08em;
+      font-weight: bold;
+      background: #0e274e;
+      color: #fff;
+      border-bottom: 2px solid #2563eb;
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    #deliveriesTable tbody td {
+      padding: 14px 10px;
+      font-size: 1.05em;
+      vertical-align: middle;
+      white-space: nowrap;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f8fafc;
+    }
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -80,27 +113,6 @@ document.addEventListener("DOMContentLoaded", function () {
     #deliveriesTableBody .tc-popup-item:last-child {
       border-bottom: none;
     }
-    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
-    #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 1em;
-      font-weight: bold;
-      background: #0e274e;
-      color: #fff;
-      border-bottom: 2px solid #2563eb;
-      text-align: center;
-      vertical-align: middle;
-    }
-    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 160px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      vertical-align: middle;
-    }
     /* Bouton Statut (en-tête et ligne) */
     .statut-btn {
       font-size: 1.08em !important;
@@ -119,10 +131,14 @@ document.addEventListener("DOMContentLoaded", function () {
       box-shadow: 0 1px 4px rgba(234,179,8,0.18) !important;
     }
     @media (max-width: 900px) {
-      #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 90px;
+      #deliveriesTable {
+        min-width: 600px;
+        max-width: 99vw !important;
+      }
+      #deliveriesTable thead th,
+      #deliveriesTable tbody td {
         font-size: 0.95em;
+        padding: 8px 4px;
       }
       .statut-btn {
         font-size: 0.98em !important;
@@ -130,17 +146,21 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
     @media (max-width: 600px) {
-      #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 60px;
+      #deliveriesTable {
+        min-width: 320px;
+        max-width: 100vw !important;
+      }
+      #deliveriesTable thead th,
+      #deliveriesTable tbody td {
         font-size: 0.92em;
+        padding: 6px 2px;
       }
       .statut-btn {
         font-size: 0.92em !important;
         padding: 2px 6px !important;
       }
     }
-  `);
+  `;
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
   // Ajout des deux champs de date (début et fin)
