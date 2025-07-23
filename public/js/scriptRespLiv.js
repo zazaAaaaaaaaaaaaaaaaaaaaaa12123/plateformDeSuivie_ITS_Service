@@ -68,6 +68,23 @@ function normalizeDateToMidnight(date) {
   return date;
 }
 
+// Fonction principale pour afficher les livraisons filtrées par date
+function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
+  const dateToCompare = normalizeDateToMidnight(selectedDate);
+  // Filtre les livraisons par date (champ created_at ou delivery_date)
+  const filtered = deliveries.filter((d) => {
+    let dDate = d.created_at || d.delivery_date;
+    if (!dDate) return false;
+    dDate = normalizeDateToMidnight(new Date(dDate));
+    return dDate.getTime() === dateToCompare.getTime();
+  });
+  if (filtered.length === 0) {
+    tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
+    return;
+  }
+  renderAgentTableRows(filtered, tableBodyElement);
+}
+
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
   // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
@@ -219,53 +236,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   `;
   document.head.appendChild(styleTC);
-
-  // Ajout des deux champs de date (début et fin)
   const tableBody = document.getElementById("deliveriesTableBody");
-  let dateStartInput = document.getElementById("mainTableDateStart");
-  let dateEndInput = document.getElementById("mainTableDateEnd");
-
-  // Si les champs n'existent pas, on les crée et on les insère avant le tableau
-  if (!dateStartInput || !dateEndInput) {
-    const filterContainer = document.createElement("div");
-    filterContainer.id = "dateFilterContainer";
-    filterContainer.style.display = "flex";
-    filterContainer.style.gap = "16px";
-    filterContainer.style.alignItems = "center";
-    filterContainer.style.marginBottom = "18px";
-    filterContainer.style.justifyContent = "center";
-    dateStartInput = document.createElement("input");
-    dateStartInput.type = "date";
-    dateStartInput.id = "mainTableDateStart";
-    dateStartInput.style.fontSize = "1em";
-    dateStartInput.style.padding = "4px 10px";
-    dateEndInput = document.createElement("input");
-    dateEndInput.type = "date";
-    dateEndInput.id = "mainTableDateEnd";
-    dateEndInput.style.fontSize = "1em";
-    dateEndInput.style.padding = "4px 10px";
-    const labelStart = document.createElement("label");
-    labelStart.textContent = "Date de début : ";
-    labelStart.htmlFor = "mainTableDateStart";
-    labelStart.style.fontWeight = "bold";
-    labelStart.style.fontSize = "1em";
-    const labelEnd = document.createElement("label");
-    labelEnd.textContent = "Date de fin : ";
-    labelEnd.htmlFor = "mainTableDateEnd";
-    labelEnd.style.fontWeight = "bold";
-    labelEnd.style.fontSize = "1em";
-    filterContainer.appendChild(labelStart);
-    filterContainer.appendChild(dateStartInput);
-    filterContainer.appendChild(labelEnd);
-    filterContainer.appendChild(dateEndInput);
-    // Insérer le filtre avant le tableau
-    const mainTable = document.getElementById("deliveriesTable");
-    if (mainTable && mainTable.parentNode) {
-      mainTable.parentNode.insertBefore(filterContainer, mainTable);
-    } else {
-      document.body.insertBefore(filterContainer, document.body.firstChild);
-    }
-  }
+  const dateInput = document.getElementById("mainTableDateFilter");
 
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
@@ -275,10 +247,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
-        // Correction : resp_liv.html doit afficher uniquement les livraisons dont le statut est "Mise en livraison"
+        // On ne garde que les livraisons dont TOUS les BL sont en 'mise_en_livraison'
         allDeliveries = data.deliveries.filter((delivery) => {
-          // On vérifie le statut général ou le statut des BL
-          // Si tous les BL sont en "mise_en_livraison" OU le statut principal est "mise_en_livraison"
           let blList = [];
           if (Array.isArray(delivery.bl_number)) {
             blList = delivery.bl_number.filter(Boolean);
@@ -290,11 +260,9 @@ document.addEventListener("DOMContentLoaded", function () {
               ? delivery.bl_statuses[bl]
               : "aucun"
           );
-          // Critère : au moins un BL en "mise_en_livraison" ou statut principal
-          const statutPrincipal = delivery.status || delivery.statut || "";
           return (
-            blStatuses.some((s) => s === "mise_en_livraison") ||
-            statutPrincipal === "mise_en_livraison"
+            blStatuses.length > 0 &&
+            blStatuses.every((s) => s === "mise_en_livraison")
           );
         });
       } else {
@@ -306,12 +274,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Filtre les livraisons selon la plage de dates
-  function filterDeliveriesByDateRange(dateStartStr, dateEndStr) {
-    // dateStartStr et dateEndStr sont au format YYYY-MM-DD
-    const start = dateStartStr ? new Date(dateStartStr) : null;
-    const end = dateEndStr ? new Date(dateEndStr) : null;
+  // Filtre les livraisons selon la date de livraison réelle (delivery_date)
+  function filterDeliveriesByDate(dateStr) {
     return allDeliveries.filter((delivery) => {
+      // On utilise delivery_date si disponible, sinon created_at
       let dDate =
         delivery["delivery_date"] ||
         delivery["created_at"] ||
@@ -346,18 +312,52 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         normalized = String(dDate);
       }
-      // Comparaison dans la plage
-      if (!normalized.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
-      const d = new Date(normalized);
-      if (start && d < start) return false;
-      if (end && d > end) return false;
-      return true;
+      return normalized === dateStr;
     });
   }
 
-  // Fonction principale pour charger et afficher selon la plage de dates
-  function updateTableForDateRange(dateStartStr, dateEndStr) {
-    const filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
+  // Affiche les livraisons filtrées dans le tableau
+  function renderTable(deliveries) {
+    tableBody.innerHTML = "";
+    if (deliveries.length === 0) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = AGENT_TABLE_COLUMNS.length;
+      cell.textContent = "Aucune opération à cette date";
+      cell.className = "text-center text-muted";
+      row.appendChild(cell);
+      tableBody.appendChild(row);
+      return;
+    }
+    deliveries.forEach((delivery) => {
+      const row = document.createElement("tr");
+      AGENT_TABLE_COLUMNS.forEach((col) => {
+        const cell = document.createElement("td");
+        let value = "-";
+        if (col.id === "date_display") {
+          let dDate = delivery.delivery_date || delivery.created_at;
+          if (dDate) {
+            let dateObj = new Date(dDate);
+            if (!isNaN(dateObj.getTime())) {
+              value = dateObj.toLocaleDateString("fr-FR");
+            } else if (typeof dDate === "string") {
+              value = dDate;
+            }
+          }
+        } else {
+          value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+        }
+        cell.textContent = value;
+        row.appendChild(cell);
+      });
+      tableBody.appendChild(row);
+    });
+  }
+
+  // Fonction principale pour charger et afficher selon la date
+  function updateTableForDate(dateStr) {
+    const filtered = filterDeliveriesByDate(dateStr);
+    // Utilisation du nouveau modèle dynamique
     const tableContainer = document.getElementById("deliveriesTableBody");
     if (tableContainer) {
       renderAgentTableFull(filtered, tableContainer);
@@ -366,23 +366,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Initialisation : charge toutes les livraisons puis affiche la plage par défaut (depuis une date antérieure jusqu'à aujourd'hui)
+  // Initialisation : charge toutes les livraisons puis affiche la date du jour
   const today = new Date().toISOString().split("T")[0];
-  const defaultStart = new Date();
-  defaultStart.setDate(defaultStart.getDate() - 7); // Par défaut, 7 jours avant aujourd'hui
-  const defaultStartStr = defaultStart.toISOString().split("T")[0];
-  dateStartInput.value = defaultStartStr;
-  dateEndInput.value = today;
-  loadAllDeliveries().then(() => {
-    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-  });
-  dateStartInput.addEventListener("change", () => {
-    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-  });
-  dateEndInput.addEventListener("change", () => {
-    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-  });
+  if (dateInput) {
+    dateInput.value = today;
+    loadAllDeliveries().then(() => {
+      updateTableForDate(today);
+    });
+    dateInput.addEventListener("change", (e) => {
+      updateTableForDate(e.target.value);
+    });
+  }
 });
+// Colonnes strictes pour Agent Acconier
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
@@ -486,9 +482,11 @@ const AGENT_TABLE_COLUMNS = [
   { id: "driver", label: "CHAUFFEUR" },
   { id: "driver_phone", label: "TEL CHAUFFEUR" },
   { id: "delivery_date", label: "DATE LIVRAISON" },
+  { id: "acconier_status", label: "STATUT (du Respo.ACCONIER)" },
   { id: "statut", label: "Statut" },
   { id: "observation", label: "Observations" },
 ];
+
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
@@ -597,7 +595,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       }
 
       if (col.id === "row_number") {
-        // Recompte dynamique selon le filtrage
         value = i + 1;
         td.textContent = value;
         td.classList.add("row-number-col");
