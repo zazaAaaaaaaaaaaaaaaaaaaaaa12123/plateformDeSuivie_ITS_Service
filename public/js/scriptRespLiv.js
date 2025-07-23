@@ -68,23 +68,6 @@ function normalizeDateToMidnight(date) {
   return date;
 }
 
-// Fonction principale pour afficher les livraisons filtrées par date
-function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
-  const dateToCompare = normalizeDateToMidnight(selectedDate);
-  // Filtre les livraisons par date (champ created_at ou delivery_date)
-  const filtered = deliveries.filter((d) => {
-    let dDate = d.created_at || d.delivery_date;
-    if (!dDate) return false;
-    dDate = normalizeDateToMidnight(new Date(dDate));
-    return dDate.getTime() === dateToCompare.getTime();
-  });
-  if (filtered.length === 0) {
-    tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
-    return;
-  }
-  renderAgentTableRows(filtered, tableBodyElement);
-}
-
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
   // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
