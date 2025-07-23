@@ -302,19 +302,12 @@ h1 {
 }
 
 /* Individual Delivery Card (for the main display and expanded history view) */
-
 .delivery-card {
-  background-color: #fff;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
-  padding: 22px 18px;
-  transition: box-shadow 0.18s, transform 0.18s;
-  font-size: 0.97em;
-}
-
-.delivery-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.13);
-  transform: translateY(-3px) scale(1.01);
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  /* Padding augmenté pour plus d'espace */
+  padding: 29px; /* Augmenté de 20px à 25px */
 }
 
 .delivery-card-header {
@@ -376,32 +369,19 @@ h1 {
 }
 
 .delivery-info-group {
-  margin-bottom: 0;
-  background: #f7fafc;
-  border-radius: 8px;
-  padding: 8px 12px 6px 12px;
-  border: 1px solid #f1f1f1;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-  margin-top: 4px;
-  margin-bottom: 4px;
-  transition: background 0.18s;
-}
-
-.delivery-info-group:not(:last-child) {
-  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 0; /* Supprimer la marge du bas car le gap gère l'espacement */
 }
 
 .delivery-info-group strong {
-  color: #2b4360;
+  color: #4a5568;
   display: block;
-  margin-bottom: 1px;
-  font-size: 0.93em;
-  font-weight: 600;
+  margin-bottom: 2px;
+  font-size: 0.95em; /* Augmenté de 0.875em à 0.95em */
 }
 
 .delivery-info-group span {
-  color: #4a5568;
-  font-size: 0.98em;
+  color: #66757f;
+  font-size: 1em; /* Augmenté de 0.925em à 1em */
 }
 
 .delivery-card-actions {
@@ -451,28 +431,27 @@ h1 {
 
 .action-button {
   width: 100%;
-  padding: 11px 0;
+  padding: 12px 15px;
   border: none;
-  border-radius: 7px;
+  border-radius: 8px;
   font-size: 1em;
-  font-weight: 600;
+  font-weight: bold;
   cursor: pointer;
-  transition: background 0.18s, transform 0.13s, box-shadow 0.18s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.09);
+  transition: background-color 0.3s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
   margin-top: 8px;
-  letter-spacing: 0.01em;
 }
 
 .action-button.send-btn {
-  background: linear-gradient(90deg, #38b2ac 0%, #4299e1 100%);
-  color: #fff;
-  border: none;
+  background-color: #28a745;
+  color: white;
 }
 
 .action-button.send-btn:hover {
-  background: linear-gradient(90deg, #4299e1 0%, #38b2ac 100%);
-  transform: translateY(-1px) scale(1.01);
-  box-shadow: 0 6px 16px rgba(66, 153, 225, 0.13);
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 .action-button.send-btn:active {
@@ -481,15 +460,14 @@ h1 {
 }
 
 .action-button.reject-btn {
-  background: linear-gradient(90deg, #f56565 0%, #ed8936 100%);
-  color: #fff;
-  border: none;
+  background-color: #dc3545;
+  color: white;
 }
 
 .action-button.reject-btn:hover {
-  background: linear-gradient(90deg, #ed8936 0%, #f56565 100%);
-  transform: translateY(-1px) scale(1.01);
-  box-shadow: 0 6px 16px rgba(237, 137, 54, 0.13);
+  background-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 .action-button.reject-btn:active {
