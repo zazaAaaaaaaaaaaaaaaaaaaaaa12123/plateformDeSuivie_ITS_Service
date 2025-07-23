@@ -1,5 +1,51 @@
 // auth.js - Gestion de l'inscription et de la connexion pour ITS Service
 
+// --- Améliorations responsive/mobile/tablette/ordi ---
+document.addEventListener("DOMContentLoaded", function () {
+  // Focus automatique sur le premier champ visible selon l'onglet
+  function focusFirstInput() {
+    if (window.innerWidth <= 900) {
+      // Sur mobile/tablette, scroll en haut et focus sur le champ actif
+      setTimeout(() => {
+        const activeForm = document.querySelector("form.active");
+        if (activeForm) {
+          const firstInput = activeForm.querySelector(
+            "input[type='text'],input[type='email'],input[type='password']"
+          );
+          if (firstInput) {
+            firstInput.focus();
+            // Scroll pour éviter que le clavier masque le champ
+            firstInput.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }
+      }, 200);
+    }
+  }
+  // Focus au chargement
+  focusFirstInput();
+  // Focus lors du changement d'onglet
+  const tabSignup = document.getElementById("tab-signup");
+  const tabLogin = document.getElementById("tab-login");
+  if (tabSignup) tabSignup.addEventListener("click", focusFirstInput);
+  if (tabLogin) tabLogin.addEventListener("click", focusFirstInput);
+
+  // Sur mobile/tablette, améliore le feedback lors de la soumission
+  function addMobileFeedback(form, messageEl) {
+    if (!form) return;
+    form.addEventListener("submit", function () {
+      if (window.innerWidth <= 900) {
+        setTimeout(() => {
+          if (messageEl && messageEl.textContent) {
+            messageEl.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 350);
+      }
+    });
+  }
+  addMobileFeedback(signupForm, signupMessage);
+  addMobileFeedback(loginForm, loginMessage);
+});
+
 const signupForm = document.getElementById("signup-form");
 const loginForm = document.getElementById("login-form");
 const signupMessage = document.getElementById("signup-message");
