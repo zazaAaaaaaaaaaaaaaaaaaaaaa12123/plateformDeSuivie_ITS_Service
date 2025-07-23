@@ -52,40 +52,45 @@
 
       /* --- TABLEAU --- */
       .table-responsive {
-        border-radius: 18px;
-        overflow: hidden;
+        border-radius: 14px;
+        overflow: auto;
         box-shadow: 0 4px 24px 0 rgba(30,41,59,0.10);
         background: rgba(255,255,255,0.97);
       }
       .table {
         margin-bottom: 0;
-        border-radius: 18px;
+        border-radius: 14px;
         overflow: hidden;
         background: transparent;
         box-shadow: none;
+        table-layout: fixed;
+        width: 100%;
       }
       .table thead tr:first-child th {
         background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
         color: #fff;
-        font-size: 1.18em;
+        font-size: 1.05em;
         font-weight: 700;
         border: none;
         letter-spacing: 1px;
         text-shadow: 0 2px 8px #2563eb33;
         border-radius: 0;
-        padding-top: 18px;
-        padding-bottom: 18px;
+        padding-top: 10px;
+        padding-bottom: 10px;
       }
       .table thead tr:nth-child(2) th {
         background: #f1f5f9;
         color: #0e274e;
-        font-size: 1.05em;
+        font-size: 0.98em;
         font-weight: 700;
         border-bottom: 2.5px solid #2563eb44;
         border-top: none;
-        padding-top: 12px;
-        padding-bottom: 12px;
+        padding-top: 7px;
+        padding-bottom: 7px;
         letter-spacing: 0.2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .table tbody tr {
         background: rgba(255,255,255,0.92);
@@ -98,15 +103,19 @@
       .table td, .table th {
         border: none;
         vertical-align: middle;
-        padding: 0.85rem 0.7rem;
-        font-size: 1.01em;
+        padding: 0.45rem 0.4rem;
+        font-size: 0.97em;
         word-break: break-word;
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .table td {
         color: #334155;
         font-weight: 500;
         background: transparent;
         border-bottom: 1.5px solid #e5e7eb;
+        max-width: 180px;
       }
       .table tbody tr:last-child td {
         border-bottom: none;
@@ -114,29 +123,95 @@
 
       /* --- COLONNES IMPORTANTES --- */
       .table td:nth-child(19), .table th:nth-child(19) {
-        white-space: nowrap;
-        max-width: 220px;
-        min-width: 120px;
+        white-space: normal;
+        max-width: 140px;
+        min-width: 90px;
         background: linear-gradient(90deg, #fef9c3 0%, #fef08a 100%);
         color: #b45309;
         font-weight: 700;
-        border-radius: 8px;
+        border-radius: 7px;
         box-shadow: 0 1px 6px #fde68a33;
         text-align: center;
-        font-size: 1.04em;
+        font-size: 0.97em;
+        overflow-wrap: break-word;
       }
       .table td:nth-child(18), .table th:nth-child(18) {
         background: linear-gradient(90deg, #bbf7d0 0%, #6ee7b7 100%);
         color: #166534;
         font-weight: 600;
-        border-radius: 8px;
+        border-radius: 7px;
         text-align: center;
+        max-width: 110px;
+        min-width: 70px;
+        overflow-wrap: break-word;
       }
       .table td:nth-child(3), .table th:nth-child(3) {
         background: linear-gradient(90deg, #dbeafe 0%, #60a5fa 100%);
         color: #1e40af;
         font-weight: 600;
-        border-radius: 8px;
+        border-radius: 7px;
+        max-width: 120px;
+        min-width: 70px;
+        overflow-wrap: break-word;
+      }
+      .table td:nth-child(6), .table th:nth-child(6) {
+        /* Numéro TC(s) */
+        white-space: normal;
+        max-width: 220px;
+        min-width: 90px;
+        overflow-wrap: break-word;
+        text-align: left;
+      }
+      /* --- DROPDOWN CONTENEUR --- */
+      .dropdown-cell-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+        justify-content: flex-start;
+        min-width: 0;
+        max-width: 210px;
+      }
+      .dropdown-toggle-button {
+        background: #0e274e;
+        color: #fff;
+        border-radius: 16px;
+        padding: 2px 10px;
+        font-size: 0.93em;
+        font-weight: 700;
+        border: none;
+        margin-right: 2px;
+        margin-bottom: 2px;
+        box-shadow: 0 1px 4px #2563eb22;
+        white-space: nowrap;
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .dropdown-cell-container .dropdown-toggle-button:last-child {
+        margin-right: 0;
+      }
+      .dropdown-menu {
+        min-width: 120px;
+        max-width: 220px;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px #2563eb22;
+        font-size: 0.97em;
+        padding: 8px 0;
+        background: #fff;
+        z-index: 1002;
+        overflow-wrap: break-word;
+        word-break: break-all;
+      }
+      .dropdown-menu .dropdown-item {
+        white-space: normal;
+        padding: 6px 16px;
+        font-size: 0.97em;
+        color: #1e293b;
+      }
+      .dropdown-menu .dropdown-item:hover {
+        background: #e0e7ef;
+        color: #2563eb;
       }
 
       /* --- EFFET GLASSMORPHISM SUR LES CELLULES --- */
@@ -243,22 +318,30 @@
       /* --- RESPONSIVE --- */
       @media (max-width: 900px) {
         .card-section {
-          padding: 18px 6px 12px 6px;
+          padding: 10px 2px 8px 2px;
         }
         .table-responsive {
-          border-radius: 10px;
+          border-radius: 8px;
         }
         .table thead tr:first-child th, .table thead tr:nth-child(2) th {
-          font-size: 0.98em;
+          font-size: 0.93em;
+        }
+        .table td, .table th {
+          font-size: 0.93em;
+          padding: 0.28rem 0.2rem;
         }
       }
       @media (max-width: 600px) {
         .table thead tr:first-child th, .table thead tr:nth-child(2) th {
-          font-size: 0.93em;
-          padding: 8px 2px;
+          font-size: 0.89em;
+          padding: 5px 1px;
         }
         .table td {
-          font-size: 0.97em;
+          font-size: 0.91em;
+          padding: 0.18rem 0.1rem;
+        }
+        .dropdown-cell-container {
+          max-width: 120px;
         }
       }
 
