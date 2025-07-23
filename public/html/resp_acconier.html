@@ -21,6 +21,174 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
+  /* --- BEAUTÉ AVANCÉE DU TABLEAU --- */
+  #deliveriesTable {
+    background: linear-gradient(120deg, #f8fafc 60%, #e0e7ef 100%);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(30,41,59,0.13), 0 1.5px 0 #2563eb22;
+    margin-bottom: 0;
+  }
+  #deliveriesTable thead th {
+    background: linear-gradient(90deg, #2563eb 0%, #1e293b 100%);
+    color: #fff;
+    font-size: 1.08em;
+    font-weight: 700;
+    border: none;
+    letter-spacing: 0.03em;
+    text-shadow: 0 2px 8px #1e293b22;
+    padding-top: 18px;
+    padding-bottom: 18px;
+    border-bottom: 3px solid #2563eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  #deliveriesTable tbody tr {
+    background: #fff;
+    transition: box-shadow 0.18s, background 0.18s;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px #2563eb0a;
+  }
+  #deliveriesTable tbody tr:hover {
+    background: linear-gradient(90deg, #e0e7ef 0%, #f1f5f9 100%);
+    box-shadow: 0 6px 24px #2563eb22;
+    transform: scale(1.012);
+    z-index: 2;
+  }
+  #deliveriesTable tbody td {
+    font-size: 1.04em;
+    color: #1e293b;
+    border: none;
+    padding: 14px 10px;
+    background: transparent;
+    vertical-align: middle;
+    transition: background 0.18s, color 0.18s;
+  }
+  #deliveriesTable tbody td.observation-col {
+    background: #f1f5f9;
+    border-left: 3px solid #2563eb33;
+    font-style: italic;
+    color: #64748b;
+  }
+  #deliveriesTable tbody td.row-number-col {
+    background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+    color: #fff;
+    font-weight: bold;
+    border-radius: 8px 0 0 8px;
+    box-shadow: 0 2px 8px #2563eb22;
+    font-size: 1.08em;
+    border-right: 2px solid #e0e7ef;
+  }
+  #deliveriesTable tbody tr:nth-child(even) td:not(.row-number-col) {
+    background: #f8fafc;
+  }
+  #deliveriesTable tbody tr:nth-child(odd) td:not(.row-number-col) {
+    background: #fff;
+  }
+  #deliveriesTable tbody td .tc-tag {
+    background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+    color: #fff;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1em;
+    padding: 2px 10px;
+    margin-right: 4px;
+    box-shadow: 0 2px 8px #2563eb22;
+    border: none;
+    transition: background 0.18s;
+  }
+  #deliveriesTable tbody td .tc-tag:hover {
+    background: linear-gradient(90deg, #1e293b 0%, #2563eb 100%);
+    color: #fff;
+  }
+  #deliveriesTable tbody td .tc-tags-btn {
+    background: linear-gradient(90deg, #0e274e 0%, #2563eb 100%);
+    color: #fff;
+    border: 2px solid #2563eb;
+    border-radius: 14px;
+    padding: 2px 14px;
+    font-weight: 600;
+    font-size: 1em;
+    box-shadow: 0 2px 8px #2563eb22;
+    transition: background 0.18s;
+  }
+  #deliveriesTable tbody td .tc-tags-btn:hover {
+    background: linear-gradient(90deg, #2563eb 0%, #0e274e 100%);
+    color: #fff;
+  }
+  #deliveriesTable tbody td .tc-popup {
+    background: #fff;
+    border: 2px solid #2563eb;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px #1e293b22;
+    padding: 8px 0;
+    min-width: 120px;
+    z-index: 1002;
+    left: 0;
+    top: 100%;
+    white-space: nowrap;
+  }
+  #deliveriesTable tbody td .tc-popup-item {
+    padding: 8px 22px;
+    cursor: pointer;
+    font-size: 1.05em;
+    color: #2563eb;
+    border-bottom: 1px solid #f3f4f6;
+    font-weight: 600;
+    transition: background 0.18s, color 0.18s;
+  }
+  #deliveriesTable tbody td .tc-popup-item:hover {
+    background: #2563eb;
+    color: #fff;
+  }
+  #deliveriesTable tbody td .tc-popup-item:last-child {
+    border-bottom: none;
+  }
+  #deliveriesTable tbody td .statut-btn {
+    background: linear-gradient(90deg, #fffbe6 0%, #fde68a 100%);
+    color: #b45309;
+    border: 2px solid #eab308;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 1.08em;
+    box-shadow: 0 2px 8px #eab30822;
+    outline: none;
+    margin-top: 6px;
+    transition: box-shadow 0.2s, background 0.18s;
+  }
+  #deliveriesTable tbody td .statut-btn:active {
+    box-shadow: 0 1px 4px #eab30833;
+  }
+  #deliveriesTable thead th, #deliveriesTable tbody td {
+    border-right: 1.5px solid #e0e7ef;
+  }
+  #deliveriesTable thead th:last-child, #deliveriesTable tbody td:last-child {
+    border-right: none;
+  }
+  #deliveriesTable {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  /* Responsive */
+  @media (max-width: 900px) {
+    #deliveriesTable thead th, #deliveriesTable tbody td {
+      font-size: 0.95em;
+      padding: 10px 6px;
+    }
+    #deliveriesTable tbody td.row-number-col {
+      font-size: 1em;
+    }
+  }
+  @media (max-width: 600px) {
+    #deliveriesTable thead th, #deliveriesTable tbody td {
+      font-size: 0.92em;
+      padding: 7px 3px;
+    }
+    #deliveriesTable tbody td.row-number-col {
+      font-size: 0.95em;
+    }
+  }
       /* Boutons de suppression historique (sidebar)
    - .delete-history-btn.desktop-in : bouton dans la carte (desktop)
    - .delete-history-btn.mobile-out : bouton sous la carte (mobile)
