@@ -1478,9 +1478,65 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
 }
 //originale
 
-// Gestion du bouton de déconnexion dans le menu profil/avatar
+// Gestion du bouton de déconnexion et de la photo de profil dans le menu profil/avatar
 document.addEventListener("DOMContentLoaded", function () {
-  // On suppose que le bouton a l'id 'logoutBtn' dans le menu profil
+  // --- Avatar photo ou initiales ---
+  function renderProfileAvatar() {
+    // On suppose que l'avatar a l'id 'profileAvatar' et le menu le conteneur 'profileMenu'
+    const avatar = document.getElementById("profileAvatar");
+    if (!avatar) return;
+    // Nettoyage
+    avatar.innerHTML = "";
+    let photo = localStorage.getItem("userPhoto");
+    let name = localStorage.getItem("userName") || "-";
+    if (photo) {
+      // Affiche la photo
+      const img = document.createElement("img");
+      img.src = photo;
+      img.alt = "Photo de profil";
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "cover";
+      img.style.borderRadius = "50%";
+      avatar.appendChild(img);
+    } else {
+      // Affiche les initiales
+      const initials = name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+      avatar.textContent = initials;
+    }
+  }
+
+  // --- Upload photo de profil ---
+  function setupProfilePhotoUpload() {
+    // On suppose qu'il y a un input type="file" avec id 'profilePhotoInput'
+    const input = document.getElementById("profilePhotoInput");
+    if (!input) return;
+    input.addEventListener("change", function (e) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        alert("Veuillez sélectionner une image.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        localStorage.setItem("userPhoto", evt.target.result);
+        renderProfileAvatar();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Initialisation avatar et upload
+  renderProfileAvatar();
+  setupProfilePhotoUpload();
+
+  // --- Déconnexion ---
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", function (e) {
@@ -1488,6 +1544,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Nettoyer toutes les infos utilisateur du localStorage
       localStorage.removeItem("userName");
       localStorage.removeItem("userEmail");
+      localStorage.removeItem("userPhoto");
       // Rediriger vers la page de connexion (onglet connexion actif)
       window.location.href =
         "https://plateformdesuivie-its-service-1cjx.onrender.com/html/auth.html#login";

@@ -1,3 +1,13 @@
+</body>
+<!-- Ajout minimal pour l’avatar et l’upload photo dans le menu profil -->
+<div id="profileMenu" style="position:fixed;top:18px;right:18px;z-index:10000;display:flex;align-items:center;gap:12px;">
+  <div id="profileAvatar" style="width:48px;height:48px;background:#2563eb;color:#fff;font-weight:bold;font-size:1.25em;display:flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,0.13);cursor:pointer;"></div>
+  <label for="profilePhotoInput" style="cursor:pointer;margin:0;">
+    <i class="fa fa-camera" style="font-size:1.25em;color:#2563eb;"></i>
+    <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;" />
+  </label>
+  <button id="logoutBtn" style="background:#e11d48;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(225,29,72,0.13);">Déconnexion</button>
+</div>
 <!DOCTYPE html>
 <html lang="fr">
   <head>
