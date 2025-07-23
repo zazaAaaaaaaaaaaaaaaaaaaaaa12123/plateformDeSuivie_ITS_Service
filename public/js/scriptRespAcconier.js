@@ -143,50 +143,56 @@ document.addEventListener("DOMContentLoaded", function () {
   `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
-  // Ajout des deux champs de date (début et fin)
-  let dateStartInput = document.getElementById("mainTableDateStartFilter");
-  let dateEndInput = document.getElementById("mainTableDateEndFilter");
-  // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
-  const oldDateInput = document.getElementById("mainTableDateFilter");
-  if (!dateStartInput || !dateEndInput) {
-    // Création des deux inputs si besoin
-    const parent = oldDateInput ? oldDateInput.parentNode : document.body;
-    // Création du conteneur
-    const rangeDiv = document.createElement("div");
-    rangeDiv.style.display = "flex";
-    rangeDiv.style.gap = "12px";
-    rangeDiv.style.alignItems = "center";
-    rangeDiv.style.marginBottom = "12px";
-    // Date début
-    dateStartInput = document.createElement("input");
-    dateStartInput.type = "date";
-    dateStartInput.id = "mainTableDateStartFilter";
-    dateStartInput.style.padding = "6px 10px";
-    dateStartInput.style.borderRadius = "8px";
-    dateStartInput.style.border = "1.5px solid #2563eb";
-    // Date fin
-    dateEndInput = document.createElement("input");
-    dateEndInput.type = "date";
-    dateEndInput.id = "mainTableDateEndFilter";
-    dateEndInput.style.padding = "6px 10px";
-    dateEndInput.style.borderRadius = "8px";
-    dateEndInput.style.border = "1.5px solid #2563eb";
-    // Label
-    const label = document.createElement("span");
-    label.textContent = "Filtrer du ";
-    const label2 = document.createElement("span");
-    label2.textContent = " au ";
-    rangeDiv.appendChild(label);
-    rangeDiv.appendChild(dateStartInput);
-    rangeDiv.appendChild(label2);
-    rangeDiv.appendChild(dateEndInput);
-    // Ajout dans le DOM
-    if (oldDateInput) {
-      oldDateInput.style.display = "none";
-      parent.insertBefore(rangeDiv, oldDateInput);
-    } else {
-      document.body.insertBefore(rangeDiv, document.body.firstChild);
+  // ...existing code pour les filtres date...
+  // Filtrage par recherche sur N° Dossier et N° BL
+  const searchInput = document.getElementById("searchInput");
+  const searchButton = document.getElementById("searchButton");
+  function filterDeliveriesBySearch(query, deliveries) {
+    if (!query || !query.trim()) return deliveries;
+    const q = query.trim().toLowerCase();
+    return deliveries.filter((delivery) => {
+      // N° Dossier
+      let dossier = delivery.dossier_number
+        ? String(delivery.dossier_number).toLowerCase()
+        : "";
+      // N° BL (peut être tableau ou string)
+      let bls = [];
+      if (Array.isArray(delivery.bl_number)) {
+        bls = delivery.bl_number.map((b) => String(b).toLowerCase());
+      } else if (typeof delivery.bl_number === "string") {
+        bls = delivery.bl_number.split(/[,;\s]+/).map((b) => b.toLowerCase());
+      }
+      return dossier.includes(q) || bls.some((b) => b.includes(q));
+    });
+  }
+  function updateTableWithSearch() {
+    let filtered = filterDeliveriesByDateRange(
+      dateStartInput.value,
+      dateEndInput.value
+    );
+    if (searchInput && searchInput.value) {
+      filtered = filterDeliveriesBySearch(searchInput.value, filtered);
     }
+    // Tri du plus ancien au plus récent (ordre croissant)
+    filtered.sort((a, b) => {
+      let dateA = new Date(
+        a.delivery_date || a.created_at || a.Date || a["Date Livraison"]
+      );
+      let dateB = new Date(
+        b.delivery_date || b.created_at || b.Date || b["Date Livraison"]
+      );
+      return dateA - dateB;
+    });
+    renderAgentTableFull(filtered, tableBody);
+  }
+  if (searchInput) {
+    searchInput.addEventListener("input", updateTableWithSearch);
+  }
+  if (searchButton) {
+    searchButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      updateTableWithSearch();
+    });
   }
 
   // On charge toutes les livraisons une seule fois au chargement
@@ -682,14 +688,10 @@ document.addEventListener("DOMContentLoaded", function () {
     dateStartInput.value = sevenDaysAgoStr;
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      updateTableWithSearch();
     });
-    dateStartInput.addEventListener("change", () => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-    });
-    dateEndInput.addEventListener("change", () => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-    });
+    dateStartInput.addEventListener("change", updateTableWithSearch);
+    dateEndInput.addEventListener("change", updateTableWithSearch);
   }
 });
 // Colonnes strictes pour Agent Acconier
@@ -1079,15 +1081,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           saveBtn.onclick = async () => {
             let statutToSend =
               select.value === "aucun" ? "aucun" : select.value;
+            // Confirmation avant "mise en livraison"
+            if (statutToSend === "mise_en_livraison") {
+              const confirmMsg =
+                "Êtes-vous sûr de vouloir mettre ce BL en livraison ? Cette action est irréversible.";
+              if (!window.confirm(confirmMsg)) {
+                return;
+              }
+            }
             // 1. MAJ locale immédiate du statut BL
             delivery.bl_statuses[blNumber] = statutToSend;
             // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
-            // On retrouve la ligne du tableau correspondante
             const tableBody = document.getElementById("deliveriesTableBody");
             if (tableBody) {
-              // On cherche la ligne correspondant à ce delivery
               for (let row of tableBody.rows) {
-                // On suppose que la colonne N° Dossier (dossier_number) est unique et sert d'identifiant visuel
                 let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
                   (c) => c.id === "dossier_number"
                 );
@@ -1097,7 +1104,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   row.cells[dossierCellIdx].textContent ===
                     String(delivery.dossier_number)
                 ) {
-                  // On a trouvé la bonne ligne
                   let colIdx = AGENT_TABLE_COLUMNS.findIndex(
                     (c) => c.id === "container_status"
                   );
@@ -1148,7 +1154,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 return;
               }
               overlay.remove();
-              // Plus besoin de recharger toute la table ici
             } catch (err) {
               alert(
                 "Erreur lors de la mise à jour du statut du BL.\n" +
