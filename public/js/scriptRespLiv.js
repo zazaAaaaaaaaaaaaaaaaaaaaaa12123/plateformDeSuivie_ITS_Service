@@ -25,7 +25,7 @@ function showTooltip(text, x, y) {
   const tooltip = createCustomTooltip();
   tooltip.textContent = text;
   tooltip.style.display = "block";
-  // Positionnement intelligent (évite d e sortir de l'écran)
+  // Positionnement intelligent (évite de sortir de l'écran)
   const padding = 12;
   let left = x + padding;
   let top = y + padding;
