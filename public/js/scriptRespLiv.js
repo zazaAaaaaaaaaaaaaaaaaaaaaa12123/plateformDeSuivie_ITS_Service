@@ -559,21 +559,46 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   }
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    // ...existing code...
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-      // ...existing code...
       const td = document.createElement("td");
       let value = "-";
-      // ...existing code...
       if (col.id === "row_number") {
         value = i + 1;
         td.textContent = value;
         td.classList.add("row-number-col");
+      } else if (col.id === "date_display") {
+        value =
+          delivery["delivery_date"] ||
+          delivery["created_at"] ||
+          delivery["Date"] ||
+          delivery["Date Livraison"] ||
+          "-";
+        td.textContent = value;
+      } else if (col.id === "container_number") {
+        // Affichage spécial pour les numéros TC(s)
+        let tcList = [];
+        if (Array.isArray(delivery["container_number"])) {
+          tcList = delivery["container_number"].filter(Boolean);
+        } else if (typeof delivery["container_number"] === "string") {
+          tcList = delivery["container_number"]
+            .split(/[,;\s]+/)
+            .filter(Boolean);
+        }
+        td.textContent = tcList.length ? tcList.join(", ") : "-";
+      } else if (col.id === "statut") {
+        // Statut global (affiché dans l'en-tête, ici on laisse vide)
+        td.textContent = "";
+      } else {
+        // Mapping direct pour les autres colonnes
+        value =
+          delivery[col.id] !== undefined &&
+          delivery[col.id] !== null &&
+          delivery[col.id] !== ""
+            ? delivery[col.id]
+            : "-";
+        td.textContent = value;
       }
-      // ...existing code pour toutes les autres colonnes...
-      // ...
       tr.appendChild(td);
-      // ...existing code pour showContainerDetailPopup...
     });
     tableBodyElement.appendChild(tr);
   });
