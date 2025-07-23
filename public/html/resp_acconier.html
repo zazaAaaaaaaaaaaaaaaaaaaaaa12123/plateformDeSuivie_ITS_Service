@@ -21,389 +21,275 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
-      /* --- MODERNISATION DU STYLE --- */
+      /* --- MODERNISATION DU TABLEAU ET DE LA PAGE --- */
       body {
-        background: linear-gradient(135deg, #e0e7ef 0%, #f8fafc 100%);
-        min-height: 100vh;
+        background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
+        font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
       }
-
+      .container {
+        max-width: 1200px;
+        margin: 32px auto;
+      }
       .card-section {
-        background: rgba(255,255,255,0.85);
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
-        border-radius: 24px;
-        padding: 32px 28px 28px 28px;
-        margin-top: 24px;
-        backdrop-filter: blur(4px);
-        border: 1.5px solid #e5e7eb;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 6px 32px 0 rgba(60, 72, 88, 0.10);
+        padding: 32px 24px 24px 24px;
+        margin-bottom: 32px;
       }
-
       .section-title {
-        font-size: 2.1em;
-        font-weight: 800;
+        font-size: 2.1rem;
+        font-weight: 700;
         color: #1e293b;
+        margin-bottom: 0.2em;
         letter-spacing: 0.5px;
-        margin-bottom: 2px;
       }
       .section-subtitle {
         color: #64748b;
-        font-size: 1.08em;
-        font-weight: 500;
+        font-size: 1.1rem;
+        margin-bottom: 18px;
       }
-
       /* --- TABLEAU --- */
       .table-responsive {
+        background: #f9fafb;
         border-radius: 14px;
-        overflow: auto;
-        box-shadow: 0 4px 24px 0 rgba(30,41,59,0.10);
-        background: rgba(255,255,255,0.97);
+        box-shadow: 0 2px 12px 0 rgba(60, 72, 88, 0.07);
+        padding: 18px 8px 8px 8px;
+        margin-bottom: 0;
       }
       .table {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 6px 0 rgba(60, 72, 88, 0.06);
         margin-bottom: 0;
-        border-radius: 14px;
-        overflow: hidden;
-        background: transparent;
-        box-shadow: none;
-        table-layout: fixed;
-        width: 100%;
       }
-      .table thead tr:first-child th {
-        background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
-        color: #fff;
-        font-size: 1.05em;
-        font-weight: 700;
-        border: none;
-        letter-spacing: 1px;
-        text-shadow: 0 2px 8px #2563eb33;
-        border-radius: 0;
-        padding-top: 10px;
-        padding-bottom: 10px;
+      .table th, .table td {
+        vertical-align: middle;
+        padding: 0.7rem 0.6rem;
+        border-color: #e2e8f0;
+        font-size: 1.01em;
+        background: none;
       }
-      .table thead tr:nth-child(2) th {
+      .table thead th {
         background: #f1f5f9;
-        color: #0e274e;
-        font-size: 0.98em;
+        color: #334155;
         font-weight: 700;
-        border-bottom: 2.5px solid #2563eb44;
-        border-top: none;
-        padding-top: 7px;
-        padding-bottom: 7px;
-        letter-spacing: 0.2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        letter-spacing: 0.03em;
+        border-bottom: 2px solid #e2e8f0;
       }
       .table tbody tr {
-        background: rgba(255,255,255,0.92);
         transition: box-shadow 0.18s, background 0.18s;
       }
       .table tbody tr:hover {
-        background: linear-gradient(90deg, #e0f2fe 0%, #f0fdfa 100%);
-        box-shadow: 0 2px 12px #38bdf822;
-      }
-      .table td, .table th {
-        border: none;
-        vertical-align: middle;
-        padding: 0.45rem 0.4rem;
-        font-size: 0.97em;
-        word-break: break-word;
-        white-space: normal;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        background: #e0f2fe !important;
+        box-shadow: 0 2px 12px 0 rgba(56, 189, 248, 0.10);
       }
       .table td {
-        color: #334155;
-        font-weight: 500;
-        background: transparent;
-        border-bottom: 1.5px solid #e5e7eb;
+        color: #475569;
+      }
+      .table th {
+        font-size: 1.08em;
+      }
+      /* --- EN-TÊTES BANDEAUX --- */
+      .table thead tr:first-child th {
+        border-bottom: none;
+        border-top: none;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        color: #fff;
+        font-size: 1.18em;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, #007bff 0%, #ffc107 50%, #28a745 100%);
+        letter-spacing: 1.5px;
+        box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.08);
+      }
+      .table thead tr:first-child th:nth-child(1) {
+        background: #f8f9fa;
+        color: #495057;
+        border-right: 1px solid #e9ecef;
+      }
+      .table thead tr:first-child th:nth-child(2) {
+        background: #007bff;
+      }
+      .table thead tr:first-child th:nth-child(3) {
+        background: #ffc107;
+        color: #856404;
+      }
+      .table thead tr:first-child th:nth-child(4) {
+        background: #28a745;
+      }
+      .table thead tr:nth-child(2) th {
+        position: sticky;
+        top: 48px;
+        background: #f1f5f9;
+        z-index: 10;
+        font-size: 1.01em;
+      }
+      /* --- COLONNES STICKY --- */
+      .sticky-col {
+        position: sticky;
+        z-index: 2;
+        background: #f8f9fa;
+      }
+      .sticky-col-index {
+        left: 0;
+        min-width: 50px;
+        max-width: 70px;
+      }
+      .sticky-col-agent {
+        left: 70px;
+        min-width: 120px;
         max-width: 180px;
       }
-      .table tbody tr:last-child td {
-        border-bottom: none;
-      }
-
-      /* --- COLONNES IMPORTANTES --- */
-      .table td:nth-child(19), .table th:nth-child(19) {
-        background: #fff;
-        color: #b45309;
-        font-weight: 700;
-        border-radius: 0;
-        text-align: center;
-        font-size: 0.97em;
-        max-width: 160px;
-        min-width: 90px;
-        overflow-wrap: break-word;
-        white-space: normal;
-        word-break: break-word;
-      }
-      .table td:nth-child(18), .table th:nth-child(18) {
-        background: #fff;
-        color: #166534;
+      /* --- STATUT EN BADGE --- */
+      .badge-statut {
+        display: inline-block;
+        padding: 0.38em 1.1em;
+        font-size: 0.98em;
         font-weight: 600;
-        border-radius: 0;
-        text-align: center;
-        max-width: 110px;
-        min-width: 70px;
-        overflow-wrap: break-word;
-        white-space: normal;
-        word-break: break-word;
-      }
-      .table td:nth-child(3), .table th:nth-child(3) {
-        background: linear-gradient(90deg, #dbeafe 0%, #60a5fa 100%);
-        color: #1e40af;
-        font-weight: 600;
-        border-radius: 7px;
-        max-width: 120px;
-        min-width: 70px;
-        overflow-wrap: break-word;
-      }
-      .table td:nth-child(6), .table th:nth-child(6) {
-        /* Numéro TC(s) */
-        white-space: normal;
-        max-width: 220px;
-        min-width: 90px;
-        overflow-wrap: break-word;
-        text-align: left;
-      }
-      /* --- DROPDOWN CONTENEUR --- */
-      .dropdown-cell-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        align-items: center;
-        justify-content: flex-start;
-        min-width: 0;
-        max-width: 210px;
-      }
-      .dropdown-toggle-button {
-        background: #0e274e;
-        color: #fff;
         border-radius: 16px;
-        padding: 2px 10px;
-        font-size: 0.93em;
-        font-weight: 700;
-        border: none;
-        margin-right: 2px;
-        margin-bottom: 2px;
-        box-shadow: 0 1px 4px #2563eb22;
+        background: #e2e8f0;
+        color: #334155;
         white-space: nowrap;
-        max-width: 110px;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        box-shadow: 0 1px 4px 0 rgba(60, 72, 88, 0.07);
+        letter-spacing: 0.02em;
+        min-width: 110px;
+        text-align: center;
       }
-      .dropdown-cell-container .dropdown-toggle-button:last-child {
-        margin-right: 0;
-      }
-      .dropdown-menu {
-        min-width: 120px;
-        max-width: 220px;
-        border-radius: 10px;
-        box-shadow: 0 4px 16px #2563eb22;
-        font-size: 0.97em;
-        padding: 8px 0;
+      .badge-statut.valide { background: #d1fae5; color: #065f46; }
+      .badge-statut.en-cours { background: #fef9c3; color: #b45309; }
+      .badge-statut.refuse { background: #fee2e2; color: #991b1b; }
+      .badge-statut.attente { background: #e0e7ef; color: #334155; }
+      /* --- PAGINATION --- */
+      .pagination {
         background: #fff;
-        z-index: 1002;
-        overflow-wrap: break-word;
-        word-break: break-all;
+        border-radius: 10px;
+        box-shadow: 0 1px 6px 0 rgba(60, 72, 88, 0.06);
+        padding: 8px 12px;
       }
-      .dropdown-menu .dropdown-item {
-        white-space: normal;
-        padding: 6px 16px;
-        font-size: 0.97em;
-        color: #1e293b;
+      .pagination .page-link {
+        color: #007bff;
+        border-radius: 6px;
+        margin: 0 2px;
+        border: none;
+        font-weight: 500;
+        transition: background 0.15s;
       }
-      .dropdown-menu .dropdown-item:hover {
-        background: #e0e7ef;
-        color: #2563eb;
+      .pagination .page-link:hover, .pagination .page-link.active {
+        background: #e0f2fe;
+        color: #0c4a6e;
       }
-
-      /* --- EFFET GLASSMORPHISM SUR LES CELLULES --- */
-      .table td, .table th {
-        backdrop-filter: blur(2px);
-      }
-
-      /* --- EFFET DE SÉLECTION --- */
-      .table tbody tr.selected, .table tbody tr.selected:hover {
-        background: linear-gradient(90deg, #a5b4fc 0%, #f0abfc 100%) !important;
-        color: #fff !important;
-        box-shadow: 0 2px 16px #a5b4fc44;
-      }
-
-      /* --- SCROLLBAR MODERNE --- */
-      ::-webkit-scrollbar {
-        height: 10px;
-        width: 10px;
-        background: #e0e7ef;
-        border-radius: 8px;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #2563eb55;
-        border-radius: 8px;
-      }
-
-      /* --- BOUTONS --- */
-      .btn, .icon-btn-company-color {
-        border-radius: 8px !important;
-        font-weight: 600;
-        box-shadow: 0 2px 8px #2563eb11;
-        transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-      }
-      .btn-outline-danger {
-        border: 2px solid #dc2626 !important;
-        color: #dc2626 !important;
-        background: #fff !important;
-      }
-      .btn-outline-danger:hover {
-        background: #dc2626 !important;
-        color: #fff !important;
-      }
-
       /* --- BARRE DE RECHERCHE --- */
       .search-bar-wrapper-top {
         background: #f1f5f9;
-        border-radius: 12px;
-        box-shadow: 0 1px 8px #2563eb11;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px 0 rgba(60, 72, 88, 0.06);
         padding: 6px 12px;
+      }
+      .search-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
       .search-input {
         border: none;
         background: transparent;
-        font-size: 1.08em;
-        color: #1e293b;
         outline: none;
-        width: 80%;
+        font-size: 1.05em;
+        color: #334155;
+        flex: 1;
+        padding: 6px 0;
       }
-      .search-input:focus {
-        background: #e0e7ef;
-        border-radius: 8px;
+      .search-input::placeholder {
+        color: #94a3b8;
+        opacity: 1;
       }
-      .search-icon {
-        color: #2563eb;
-        font-size: 1.2em;
-        margin-right: 8px;
-      }
-
-      /* --- PAGINATION --- */
-      .pagination .page-link {
-        border-radius: 8px !important;
-        color: #2563eb;
-        font-weight: 600;
-        border: none;
-        margin: 0 2px;
-        background: #f1f5f9;
-        transition: background 0.18s, color 0.18s;
-      }
-      .pagination .page-link.active, .pagination .page-link:hover {
-        background: #2563eb;
+      .icon-btn-company-color {
+        background: #007bff;
         color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 7px 18px;
+        font-weight: 600;
+        font-size: 1em;
+        transition: background 0.18s;
       }
-
-      /* --- AVATAR --- */
-      .profile-avatar-wrapper #profileAvatar {
-        box-shadow: 0 2px 12px #2563eb22;
-        border: 2.5px solid #2563eb33;
-        background: linear-gradient(135deg, #e0e7ef 0%, #f1f5f9 100%);
+      .icon-btn-company-color:hover {
+        background: #0056b3;
       }
-
-      /* --- MESSAGES ET OVERLAYS --- */
-      .custom-alert {
+      /* --- MESSAGE AUCUNE LIVRAISON --- */
+      #noDeliveriesMessage {
+        background: #f1f5f9;
+        border-radius: 10px;
+        padding: 18px 0;
+        color: #64748b;
+        font-size: 1.1em;
+        margin-top: 18px;
+      }
+      /* --- OVERLAY DE CHARGEMENT --- */
+      .loading-overlay {
+        background: rgba(255,255,255,0.85);
         border-radius: 12px;
-        box-shadow: 0 4px 24px #dc262622;
-        font-size: 1.08em;
+        box-shadow: 0 2px 12px 0 rgba(60, 72, 88, 0.10);
       }
-      .loading-overlay-content {
-        background: rgba(255,255,255,0.95);
-        border-radius: 18px;
-        box-shadow: 0 4px 24px #2563eb22;
-        padding: 32px 40px;
+      .loading-spinner-large {
+        font-size: 2.5em;
+        color: #007bff;
       }
-
       /* --- RESPONSIVE --- */
       @media (max-width: 900px) {
+        .container {
+          padding: 0 4px;
+        }
         .card-section {
-          padding: 10px 2px 8px 2px;
+          padding: 18px 4px 12px 4px;
+        }
+        .table th, .table td {
+          font-size: 0.97em;
+          padding: 0.5rem 0.3rem;
+        }
+      }
+      @media (max-width: 600px) {
+        .section-title {
+          font-size: 1.3rem;
         }
         .table-responsive {
-          border-radius: 8px;
+          padding: 4px 0;
         }
-        .table thead tr:first-child th, .table thead tr:nth-child(2) th {
+        .table th, .table td {
           font-size: 0.93em;
+          padding: 0.38rem 0.15rem;
         }
-        .table td, .table th {
-          font-size: 0.93em;
-          padding: 0.28rem 0.2rem;
-        }
-      }
-      @media (max-width: 600px) {
-        .table thead tr:first-child th, .table thead tr:nth-child(2) th {
-          font-size: 0.89em;
-          padding: 5px 1px;
-        }
-        .table td {
-          font-size: 0.91em;
-          padding: 0.18rem 0.1rem;
-        }
-        .dropdown-cell-container {
-          max-width: 120px;
+        .card-section {
+          padding: 8px 2px 6px 2px;
         }
       }
-
-      /* --- FIN MODERNISATION --- */
-      .delete-history-btn.desktop-in {
-        background: none;
-        border: none;
-        color: #dc2626;
-        font-size: 1.25em;
-        cursor: pointer;
-        padding: 0 6px 0 6px;
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 2;
-        display: inline-flex;
-        align-items: center;
-        transition: filter 0.18s;
+      /* --- ANIMATIONS ET HIGHLIGHT --- */
+      .row-blink-green {
+        animation: green-blink 1.2s linear 0s 5;
       }
-      .delete-history-btn.mobile-out {
-        background: #f1f5f9;
-        border: none;
-        color: #dc2626;
-        font-size: 1.1em;
-        cursor: pointer;
-        padding: 7px 16px;
-        border-radius: 8px;
-        box-shadow: 0 1px 4px #2563eb11;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 600;
-        margin-top: 2px;
+      @keyframes green-blink {
+        0% { background-color: #bbf7d0; }
+        20% { background-color: #4ade80; }
+        40% { background-color: #bbf7d0; }
+        60% { background-color: #4ade80; }
+        80% { background-color: #bbf7d0; }
+        100% { background-color: inherit; }
       }
-      .delete-history-btn-mobile-wrap {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 13px;
+      .highlight-cell {
+        transition: background-color 0.3s ease-in-out;
       }
-
-
-      /* Par défaut, bouton mobile caché, bouton desktop visible */
-      .delete-history-btn.desktop-in {
-        display: inline-flex;
+      .highlight-blue-flash {
+        background-color: rgba(0,123,255,0.13) !important;
       }
-      .delete-history-btn.mobile-out,
-      .delete-history-btn-mobile-wrap {
-        display: none;
+      .highlight-yellow-flash {
+        background-color: rgba(255,193,7,0.13) !important;
       }
-      @media (max-width: 600px) {
-        .delete-history-btn.desktop-in {
-          display: none !important;
-        }
-        .delete-history-btn.mobile-out,
-        .delete-history-btn-mobile-wrap {
-          display: flex !important;
-        }
+      .highlight-green-flash {
+        background-color: rgba(40,167,69,0.13) !important;
       }
-
-      /* Styles pour l'alerte personnalisée (conservés de votre version originale) */
+      /* --- ALERTES --- */
       .custom-alert {
         position: fixed;
         top: 20px;
@@ -659,54 +545,20 @@
     <div class="container my-4">
       <section class="card-section">
         <div class="header-with-search">
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="width:100%;">
-            <div style="flex:1 1 auto;min-width:0;">
-              <h1 class="section-title mb-0">Tableau - Reponsable Acconier</h1>
-              <p class="section-subtitle mb-0">
-                Paiement de l'acconage des conteneurs 
-              </p>
-              <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée de votre version originale) -->
-              <div class="scrolling-message-bar" id="newAgentScrollingContainer">
-                <div
-                  class="scrolling-message-content"
-                  id="newAgentScrollingContent"
-                >
-                  <!-- Le contenu des agents défilants sera injecté ici par JS -->
-                </div>
+          <div>
+            <h1 class="section-title">Tableau - Reponsable Acconier</h1>
+            <p class="section-subtitle">
+              Paiement de l'acconage des conteneurs 
+            </p>
+            <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée de votre version originale) -->
+            <div class="scrolling-message-bar" id="newAgentScrollingContainer">
+              <div
+                class="scrolling-message-content"
+                id="newAgentScrollingContent"
+              >
+                <!-- Le contenu des agents défilants sera injecté ici par JS -->
               </div>
             </div>
-            <div class="profile-avatar-wrapper" style="position:relative;display:flex;align-items:center;justify-content:flex-end;min-width:60px;">
-              <div id="profileAvatar" style="width:48px;height:48px;border-radius:50%;background:#e0e7ef;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #2563eb22;transition:box-shadow 0.2s;">
-                <i class="fas fa-user" style="font-size:1.7em;color:#2563eb;"></i>
-              </div>
-              <div id="profileDropdown" style="display:none;position:absolute;top:56px;right:0;min-width:220px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(30,41,59,0.18);padding:18px 20px;z-index:1001;">
-                <div id="profileName" style="font-weight:600;font-size:1.08em;color:#0e274e;">Nom de l'utilisateur</div>
-                <div id="profileEmail" style="font-size:0.98em;color:#64748b;">email@exemple.com</div>
-                <hr style="margin:12px 0 10px 0;border:0;border-top:1.5px solid #e5e7eb;"/>
-                <button id="logoutBtn" class="btn btn-outline-danger w-100" style="font-size:0.98em;">Se déconnecter</button>
-              </div>
-            </div>
-            <script>
-              // Affichage du menu profil au clic sur l'avatar
-              window.addEventListener('DOMContentLoaded', function() {
-                const avatar = document.getElementById('profileAvatar');
-                const dropdown = document.getElementById('profileDropdown');
-                if (avatar && dropdown) {
-                  avatar.onclick = function(e) {
-                    e.stopPropagation();
-                    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-                  };
-                  document.addEventListener('click', function(e) {
-                    if (!dropdown.contains(e.target) && e.target !== avatar) {
-                      dropdown.style.display = 'none';
-                    }
-                  });
-                }
-                // Pour intégration future : remplacer ces valeurs dynamiquement après connexion
-                // document.getElementById('profileName').textContent = 'Nom Prénom';
-                // document.getElementById('profileEmail').textContent = 'email@exemple.com';
-              });
-            </script>
           </div>
 
 
@@ -825,6 +677,32 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Script pour styliser les statuts en badges colorés (si pas déjà fait côté JS)
+      document.addEventListener('DOMContentLoaded', function () {
+        const tableBody = document.getElementById('deliveriesTableBody');
+        if (!tableBody) return;
+        function styliseStatutBadges() {
+          const statutCells = tableBody.querySelectorAll('td:nth-child(19)');
+          statutCells.forEach(cell => {
+            if (cell.classList.contains('badge-statut')) return;
+            let val = cell.textContent.trim().toLowerCase();
+            let badgeClass = 'badge-statut';
+            if (val.includes('valid')) badgeClass += ' valide';
+            else if (val.includes('cours')) badgeClass += ' en-cours';
+            else if (val.includes('refus')) badgeClass += ' refuse';
+            else if (val.includes('attente')) badgeClass += ' attente';
+            cell.className = badgeClass;
+          });
+        }
+        // Premier passage
+        styliseStatutBadges();
+        // Si le tableau est mis à jour dynamiquement, observer les changements
+        const observer = new MutationObserver(styliseStatutBadges);
+        observer.observe(tableBody, { childList: true, subtree: true });
+      });
+    </script>
     <script src="../js/scriptRespAcconier.js"></script>
   </body>
 </html>
+
