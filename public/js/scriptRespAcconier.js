@@ -675,16 +675,20 @@ document.addEventListener("DOMContentLoaded", function () {
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const cell = document.createElement("td");
         let value = "-";
-        if (col.id === "date_display") {
-          let dDate = delivery.delivery_date || delivery.created_at;
-          if (dDate) {
-            let dateObj = new Date(dDate);
-            if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toLocaleDateString("fr-FR");
-            } else if (typeof dDate === "string") {
-              value = dDate;
+        if (col.id === "select_row") {
+          // Ajout de la case à cocher pour la sélection
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.className = "select-row-checkbox";
+          checkbox.dataset.deliveryId = delivery.id;
+          checkbox.style.cursor = "pointer";
+          checkbox.onclick = function () {
+            if (typeof updateDeleteButtonVisibility === "function") {
+              updateDeleteButtonVisibility();
             }
-          }
+          };
+          td.appendChild(checkbox);
+          td.style.textAlign = "center";
         } else {
           value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         }
