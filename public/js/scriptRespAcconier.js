@@ -143,15 +143,11 @@ document.addEventListener("DOMContentLoaded", function () {
   `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
-  // Ajout des deux champs de date (début et fin) et déplacement du champ de recherche à côté
+  // Ajout des deux champs de date (début et fin)
   let dateStartInput = document.getElementById("mainTableDateStartFilter");
   let dateEndInput = document.getElementById("mainTableDateEndFilter");
+  // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
   const oldDateInput = document.getElementById("mainTableDateFilter");
-  // Sélection du champ de recherche, bouton et icône existants
-  const searchInput = document.getElementById("mainTableSearchInput");
-  const searchBtn = document.getElementById("mainTableSearchBtn");
-  const searchIcon = document.getElementById("mainTableSearchIcon");
-
   if (!dateStartInput || !dateEndInput) {
     // Création des deux inputs si besoin
     const parent = oldDateInput ? oldDateInput.parentNode : document.body;
@@ -184,42 +180,12 @@ document.addEventListener("DOMContentLoaded", function () {
     rangeDiv.appendChild(dateStartInput);
     rangeDiv.appendChild(label2);
     rangeDiv.appendChild(dateEndInput);
-    // Ajout du champ de recherche, bouton et icône à côté des dates
-    if (searchInput && searchBtn) {
-      // On crée un conteneur pour le champ de recherche et le bouton (et icône si présente)
-      const searchDiv = document.createElement("div");
-      searchDiv.style.display = "flex";
-      searchDiv.style.alignItems = "center";
-      searchDiv.style.gap = "6px";
-      if (searchIcon) {
-        searchDiv.appendChild(searchIcon);
-      }
-      searchDiv.appendChild(searchInput);
-      searchDiv.appendChild(searchBtn);
-      rangeDiv.appendChild(searchDiv);
-    }
     // Ajout dans le DOM
     if (oldDateInput) {
       oldDateInput.style.display = "none";
       parent.insertBefore(rangeDiv, oldDateInput);
     } else {
       document.body.insertBefore(rangeDiv, document.body.firstChild);
-    }
-  } else {
-    // Si les champs existent déjà, on déplace le champ de recherche à côté
-    const rangeDiv = dateStartInput.parentNode;
-    if (searchInput && searchBtn && rangeDiv) {
-      // On crée un conteneur pour le champ de recherche et le bouton (et icône si présente)
-      const searchDiv = document.createElement("div");
-      searchDiv.style.display = "flex";
-      searchDiv.style.alignItems = "center";
-      searchDiv.style.gap = "6px";
-      if (searchIcon) {
-        searchDiv.appendChild(searchIcon);
-      }
-      searchDiv.appendChild(searchInput);
-      searchDiv.appendChild(searchBtn);
-      rangeDiv.appendChild(searchDiv);
     }
   }
 
