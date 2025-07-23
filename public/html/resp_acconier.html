@@ -322,67 +322,17 @@
         background-color: #5a6268;
       }
 
-      /* Nouveau style moderne et sobre pour le tableau principal */
+      /* Styles pour la stabilité du tableau (conservés de votre version originale) */
       .table {
         width: 100%;
-        table-layout: auto;
-        border-collapse: separate;
-        border-spacing: 0;
-        background: #fff;
-        box-shadow: 0 2px 12px rgba(30,41,59,0.07);
-        border-radius: 16px;
-        overflow: hidden;
+        table-layout: auto; /* Permet aux colonnes de s'auto-ajuster au contenu */
       }
-      .table th {
-        background: #f6f8fa;
-        color: #1e293b;
-        font-weight: 700;
-        font-size: 1.05em;
-        border-bottom: 2px solid #e5e7eb;
-        padding: 0.85rem 0.7rem;
-        letter-spacing: 0.5px;
-        white-space: normal;
-        word-break: break-word;
-      }
+      .table th,
       .table td {
-        background: #fff;
-        color: #222;
-        font-size: 1em;
-        border-bottom: 1px solid #f1f5f9;
-        padding: 0.75rem 0.7rem;
-        white-space: normal;
-        word-break: break-word;
-        transition: background 0.18s;
-      }
-      .table tbody tr:hover td {
-        background: #f3f6fc;
-      }
-      .table thead tr:first-child th {
-        background: #eaf0fa !important;
-        color: #2563eb !important;
-        font-size: 1.13em !important;
-        border-bottom: 2px solid #e5e7eb !important;
-        letter-spacing: 1px;
-      }
-      .table thead tr:nth-child(2) th {
-        background: #f6f8fa !important;
-        color: #1e293b !important;
-        font-size: 1.05em !important;
-        border-bottom: 2px solid #e5e7eb !important;
-      }
-      .table th, .table td {
-        vertical-align: top;
-        white-space: normal;
-        word-break: break-word;
-      }
-      .table th:first-child, .table td:first-child {
-        border-left: none;
-      }
-      .table th:last-child, .table td:last-child {
-        border-right: none;
-      }
-      .table tr:last-child td {
-        border-bottom: none;
+        vertical-align: top; /* Aligne le contenu en haut des cellules */
+        padding: 0.75rem; /* Padding standard de Bootstrap */
+        white-space: normal; /* Permet au texte de passer à la ligne */
+        word-break: break-word; /* Casse les mots longs pour éviter le débordement */
       }
       .sticky-col {
         position: sticky;
