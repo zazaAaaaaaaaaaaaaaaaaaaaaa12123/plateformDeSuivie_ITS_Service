@@ -676,7 +676,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const cell = document.createElement("td");
         let value = "-";
         if (col.id === "select_row") {
-          // Ajout de la case à cocher pour la sélection zh
+          // Ajout de la case à cocher pour la sélection
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
           checkbox.className = "select-row-checkbox";
@@ -687,12 +687,12 @@ document.addEventListener("DOMContentLoaded", function () {
               updateDeleteButtonVisibility();
             }
           };
-          td.appendChild(checkbox);
-          td.style.textAlign = "center";
+          cell.appendChild(checkbox);
+          cell.style.textAlign = "center";
         } else {
           value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+          cell.textContent = value;
         }
-        cell.textContent = value;
         row.appendChild(cell);
       });
       tableBody.appendChild(row);
@@ -1010,27 +1010,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           overlay.style.display = "flex";
           overlay.style.alignItems = "center";
           overlay.style.justifyContent = "center";
-          const box = document.createElement("div");
-          box.style.background = "#fff";
-          box.style.borderRadius = "16px";
-          box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-          box.style.maxWidth = "420px";
-          box.style.width = "96vw";
-          box.style.maxHeight = "92vh";
-          box.style.overflowY = "auto";
-          box.style.padding = "0";
-          box.style.position = "relative";
-          box.style.display = "flex";
-          box.style.flexDirection = "column";
-          const header = document.createElement("div");
-          header.style.background = "#2563eb";
-          header.style.color = "#fff";
-          header.style.padding = "18px 28px 12px 28px";
-          header.style.fontWeight = "bold";
-          header.style.fontSize = "1.15rem";
-          header.style.display = "flex";
-          header.style.flexDirection = "column";
-          header.style.borderTopLeftRadius = "16px";
+          const cell = document.createElement("td");
+          let value = "-";
+          if (col.id === "select_row") {
+            // Ajout de la case à cocher pour la sélection
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.className = "select-row-checkbox";
+            checkbox.dataset.deliveryId = delivery.id;
+            checkbox.style.cursor = "pointer";
+            checkbox.onclick = function () {
+              if (typeof updateDeleteButtonVisibility === "function") {
+                updateDeleteButtonVisibility();
+              }
+            };
+            cell.appendChild(checkbox);
+            cell.style.textAlign = "center";
+          } else {
+            value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+            cell.textContent = value;
+          }
+          row.appendChild(cell);
           header.style.borderTopRightRadius = "16px";
           header.innerHTML = `
             <div style='margin-bottom:2px;'>
