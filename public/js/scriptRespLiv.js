@@ -25,7 +25,7 @@ function showTooltip(text, x, y) {
   const tooltip = createCustomTooltip();
   tooltip.textContent = text;
   tooltip.style.display = "block";
-  // Positionnement intelligent (évite de sortir de l'écran)
+  // Positionnement intelligent (évite de sortir  de l'écran)
   const padding = 12;
   let left = x + padding;
   let top = y + padding;
@@ -306,7 +306,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Filtre les livraisons selon la plage de date
+  // Filtre les livraisons selon la plage de dates
   function filterDeliveriesByDateRange(dateStartStr, dateEndStr) {
     // dateStartStr et dateEndStr sont au format YYYY-MM-DD
     const start = dateStartStr ? new Date(dateStartStr) : null;
