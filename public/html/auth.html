@@ -320,13 +320,31 @@
         </div>
         <button type="submit" class="btn">Se connecter</button>
         <div class="message" id="login-message"></div>
-      </form>
-        <div style="text-align:right; margin-top:0.3rem;">
-          <a href="#" id="forgot-link" style="color:#2a5298; font-size:0.97rem; text-decoration:underline; cursor:pointer;">Mot de passe oublié ?</a>
+        <div style="text-align: right; margin-top: 0.3rem">
+          <a
+            href="#"
+            id="forgot-link"
+            style="
+              color: #2a5298;
+              font-size: 0.97rem;
+              text-decoration: underline;
+              cursor: pointer;
+            "
+            >Mot de passe oublié ?</a
+          >
         </div>
       </form>
 
-      <form id="forgot-form" style="display:none; flex-direction:column; gap:1.1rem; animation:fadeIn 0.5s; margin-top:0.5rem;">
+      <form
+        id="forgot-form"
+        style="
+          display: none;
+          flex-direction: column;
+          gap: 1.1rem;
+          animation: fadeIn 0.5s;
+          margin-top: 0.5rem;
+        "
+      >
         <div class="form-group">
           <label for="forgot-email"><i class="fa fa-envelope"></i> Email</label>
           <input
@@ -337,10 +355,22 @@
             required
           />
         </div>
-        <button type="submit" class="btn">Recevoir le code de confirmation</button>
+        <button type="submit" class="btn">
+          Recevoir le code de confirmation
+        </button>
         <div class="message" id="forgot-message"></div>
-        <div style="text-align:right; margin-top:0.3rem;">
-          <a href="#" id="back-login" style="color:#2a5298; font-size:0.97rem; text-decoration:underline; cursor:pointer;">Retour à la connexion</a>
+        <div style="text-align: right; margin-top: 0.3rem">
+          <a
+            href="#"
+            id="back-login"
+            style="
+              color: #2a5298;
+              font-size: 0.97rem;
+              text-decoration: underline;
+              cursor: pointer;
+            "
+            >Retour à la connexion</a
+          >
         </div>
       </form>
     </div>
@@ -360,19 +390,19 @@
         document.getElementById("signup-form").classList.remove("active");
       };
       // Mot de passe oublié : affichage du formulaire
-      document.getElementById("forgot-link").onclick = function(e) {
+      document.getElementById("forgot-link").onclick = function (e) {
         e.preventDefault();
         document.getElementById("login-form").classList.remove("active");
         document.getElementById("forgot-form").style.display = "flex";
       };
-      document.getElementById("back-login").onclick = function(e) {
+      document.getElementById("back-login").onclick = function (e) {
         e.preventDefault();
         document.getElementById("forgot-form").style.display = "none";
         document.getElementById("login-form").classList.add("active");
       };
 
       // Soumission du formulaire mot de passe oublié
-      document.getElementById("forgot-form").onsubmit = function(e) {
+      document.getElementById("forgot-form").onsubmit = function (e) {
         e.preventDefault();
         var email = document.getElementById("forgot-email").value;
         // Ici, la logique d'envoi du code doit être gérée côté serveur
