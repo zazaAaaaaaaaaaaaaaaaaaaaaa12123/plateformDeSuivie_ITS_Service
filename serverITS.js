@@ -1659,8 +1659,7 @@ app.post("/api/login", async (req, res) => {
     console.log("[LOGIN][API] Connexion réussie pour:", email);
     return res.status(200).json({
       success: true,
-      message: "Connexion réussie.",
-      name: user.name,
+      nom: user.name, // renvoie le nom sous la clé 'nom' pour compatibilité frontend
       email: user.email,
     });
   } catch (err) {
