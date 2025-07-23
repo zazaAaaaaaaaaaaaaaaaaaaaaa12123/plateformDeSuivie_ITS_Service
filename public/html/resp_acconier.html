@@ -192,86 +192,61 @@
         background-color: #5a6268;
       }
 
-      /* Style tableau amélioré, simple et moderne */
+      /* Styles pour la stabilité du tableau (conservés de votre version originale) */
       .table {
         width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        background: #fff;
-        box-shadow: 0 2px 8px #2563eb11;
-        border-radius: 10px;
+        table-layout: auto; /* Permet aux colonnes de s'auto-ajuster au contenu */
+        border-radius: 14px;
         overflow: hidden;
+        box-shadow: 0 4px 18px 0 rgba(30,41,59,0.10);
+        background: #fff;
       }
-      .table th, .table td {
-        vertical-align: middle;
-        padding: 0.35rem 0.45rem;
-        white-space: normal;
-        word-break: break-word;
-        border: none;
-        font-size: 0.92em;
-        min-width: 80px;
-        max-width: 180px;
+      .table th,
+      .table td {
+        vertical-align: top; /* Aligne le contenu en haut des cellules */
+        padding: 0.85rem 0.7rem; /* Padding un peu plus aéré */
+        white-space: normal; /* Permet au texte de passer à la ligne */
+        word-break: break-word; /* Casse les mots longs pour éviter le débordement */
+        border-bottom: 1.5px solid #e5e7eb;
+        font-size: 1.01em;
       }
-      .table thead th {
-        background: #f4f6fa;
-        color: #1e293b;
+      .table th {
+        background: #f3f4f6;
         font-weight: 600;
-        font-size: 0.97em;
-        border-bottom: 2px solid #e5e7eb;
-        min-width: 80px;
-        max-width: 180px;
+        letter-spacing: 0.01em;
+      }
+      .table tbody tr:last-child td {
+        border-bottom: none;
       }
       .table tbody tr {
-        border-bottom: 1px solid #f1f5f9;
         transition: background 0.18s;
       }
       .table tbody tr:hover {
-        background: #f1f5f9;
+        background: #f1f5fa;
+        box-shadow: 0 2px 8px #2563eb11;
       }
-      .table tbody td {
-        font-size: 0.92em;
-        color: #334155;
-        min-width: 80px;
-        max-width: 180px;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      .table-bordered {
+        border: none;
       }
-      .table th:first-child, .table td:first-child {
-        background: #f8fafc;
-        font-weight: 600;
-        color: #2563eb;
-        min-width: 40px;
-        max-width: 60px;
-      }
-      /* Ajustement spécifique pour la colonne Statut Dossier */
-      #deliveriesTableHead th:nth-child(19),
-      #deliveriesTableBody td:nth-child(19) {
-        min-width: 110px;
-        max-width: 140px;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
-      .table th, .table td {
-        border-right: 1px solid #f1f5f9;
-      }
-      .table th:last-child, .table td:last-child {
-        border-right: none;
+      .table thead th {
+        border-top: none;
+        border-bottom: 2.5px solid #d1d5db;
       }
       .sticky-col {
         position: sticky;
-        z-index: 2;
-        background-color: #f8fafc;
+        z-index: 2; /* Plus haut que les cellules normales mais moins que les popups */
+        background-color: #f8f9fa; /* Couleur de fond pour les colonnes figées */
       }
       .sticky-col-index {
         left: 0;
-        min-width: 50px;
-        max-width: 70px;
+        min-width: 50px; /* Largeur minimale pour la colonne N° */
+        max-width: 70px; /* Largeur maximale pour la colonne N° */
       }
       .sticky-col-agent {
-        left: 70px;
-        min-width: 120px;
-        max-width: 180px;
+        /* Calcule le 'left' en fonction de la largeur de la colonne 'N°' */
+        left: 70px; /* Assumant 70px de largeur pour sticky-col-index */
+        min-width: 120px; /* Largeur minimale pour le nom de l'agent */
+        max-width: 180px; /* Largeur maximale pour le nom de l'agent */
       }
       .dropdown-cell-container .dropdown-toggle-button {
         white-space: nowrap;
@@ -283,15 +258,16 @@
       .table thead tr:first-child th {
         border-bottom: none; /* Supprime la bordure inférieure pour le bandeau */
         border-top: none; /* Supprime la bordure supérieure */
-        padding-top: 8px;
-        padding-bottom: 8px;
+        padding-top: 10px;
+        padding-bottom: 10px;
         color: white; /* Couleur de texte par défaut pour les bandeaux */
-        font-size: 1.1em;
+        font-size: 1.13em;
         text-transform: uppercase;
         position: sticky; /* Rendre la ligne de bandeau figée */
         top: 0; /* Coller en haut */
         z-index: 11; /* Plus haut que les en-têtes de colonnes normales */
         cursor: pointer; /* Indique que le bandeau est cliquable */
+        border-radius: 0;
       }
       /* La première cellule du bandeau (pour N° et Date & Heure) reste neutre */
       .table thead tr:first-child th:nth-child(1) {
