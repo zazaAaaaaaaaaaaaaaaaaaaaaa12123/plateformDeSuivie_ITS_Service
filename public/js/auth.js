@@ -154,3 +154,40 @@ if (loginForm) {
     }
   });
 }
+
+// Mot de passe oublié
+const forgotForm = document.getElementById("forgot-form");
+const forgotMessage = document.getElementById("forgot-message");
+if (forgotForm) {
+  forgotForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    showMessage(forgotMessage, "");
+    const email = forgotForm["forgot-email"].value.trim();
+    if (!email) {
+      showMessage(forgotMessage, "Veuillez entrer votre email.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showMessage(
+          forgotMessage,
+          "Un code de confirmation a été envoyé à votre adresse email.<br>Veuillez consulter votre boîte mail pour récupérer votre mot de passe.",
+          true
+        );
+      } else {
+        showMessage(
+          forgotMessage,
+          data.message || "Erreur lors de l'envoi du code."
+        );
+      }
+    } catch (err) {
+      showMessage(forgotMessage, "Erreur réseau ou serveur.");
+    }
+  });
+}
