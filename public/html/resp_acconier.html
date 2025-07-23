@@ -478,7 +478,8 @@
           </div>
           <div class="d-flex flex-column align-items-end flex-shrink-0" style="min-width:60px;position:relative;">
             <div id="profileAvatar" style="width:60px;height:60px;border-radius:50%;background:#e0e7ef;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #2563eb22;cursor:pointer;">
-              <i class="fas fa-user" style="font-size:2.1em;color:#2563eb;"></i>
+              <i class="fas fa-user" id="mainAvatarIcon" style="font-size:2.1em;color:#2563eb;"></i>
+              <img id="mainAvatarPhoto" src="" alt="Photo de profil" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;border-radius:50%;z-index:1;" />
             </div>
             <!-- Dropdown profil -->
             <div id="profileDropdown" style="display:none;position:absolute;top:76px;right:0;min-width:220px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(30,41,59,0.18);padding:18px 20px;z-index:1001;">
@@ -510,6 +511,8 @@
             const photoPreview = document.getElementById('profilePhotoPreview');
             const cameraIcon = document.getElementById('cameraIcon');
             const removePhotoBtn = document.getElementById('removePhotoBtn');
+            const mainAvatarPhoto = document.getElementById('mainAvatarPhoto');
+            const mainAvatarIcon = document.getElementById('mainAvatarIcon');
             // Affichage du menu profil
             if (avatar && dropdown) {
               avatar.onclick = function(e) {
@@ -523,6 +526,19 @@
               });
             }
             // Gestion photo de profil
+            function updateMainAvatar(photoUrl) {
+              if (mainAvatarPhoto && mainAvatarIcon) {
+                if (photoUrl) {
+                  mainAvatarPhoto.src = photoUrl;
+                  mainAvatarPhoto.style.display = 'block';
+                  mainAvatarIcon.style.display = 'none';
+                } else {
+                  mainAvatarPhoto.src = '';
+                  mainAvatarPhoto.style.display = 'none';
+                  mainAvatarIcon.style.display = 'block';
+                }
+              }
+            }
             if (photoCircle && photoInput && photoPreview && cameraIcon && removePhotoBtn) {
               // Affiche la photo si déjà stockée
               const savedPhoto = localStorage.getItem('profilePhotoDataUrl');
@@ -531,6 +547,9 @@
                 photoPreview.style.display = 'block';
                 cameraIcon.style.display = 'none';
                 removePhotoBtn.style.display = 'flex';
+                updateMainAvatar(savedPhoto);
+              } else {
+                updateMainAvatar(null);
               }
               photoCircle.onclick = function(e) {
                 e.stopPropagation();
@@ -546,6 +565,7 @@
                     cameraIcon.style.display = 'none';
                     removePhotoBtn.style.display = 'flex';
                     localStorage.setItem('profilePhotoDataUrl', evt.target.result);
+                    updateMainAvatar(evt.target.result);
                   };
                   reader.readAsDataURL(file);
                 }
@@ -557,6 +577,7 @@
                 photoPreview.style.display = 'none';
                 cameraIcon.style.display = 'block';
                 removePhotoBtn.style.display = 'none';
+                updateMainAvatar(null);
               };
             }
             if (logoutBtn) {
