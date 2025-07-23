@@ -236,8 +236,53 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   `;
   document.head.appendChild(styleTC);
+
+  // Ajout des deux champs de date (début et fin)
   const tableBody = document.getElementById("deliveriesTableBody");
-  const dateInput = document.getElementById("mainTableDateFilter");
+  let dateStartInput = document.getElementById("mainTableDateStart");
+  let dateEndInput = document.getElementById("mainTableDateEnd");
+
+  // Si les champs n'existent pas, on les crée et on les insère avant le tableau
+  if (!dateStartInput || !dateEndInput) {
+    const filterContainer = document.createElement("div");
+    filterContainer.id = "dateFilterContainer";
+    filterContainer.style.display = "flex";
+    filterContainer.style.gap = "16px";
+    filterContainer.style.alignItems = "center";
+    filterContainer.style.marginBottom = "18px";
+    filterContainer.style.justifyContent = "center";
+    dateStartInput = document.createElement("input");
+    dateStartInput.type = "date";
+    dateStartInput.id = "mainTableDateStart";
+    dateStartInput.style.fontSize = "1em";
+    dateStartInput.style.padding = "4px 10px";
+    dateEndInput = document.createElement("input");
+    dateEndInput.type = "date";
+    dateEndInput.id = "mainTableDateEnd";
+    dateEndInput.style.fontSize = "1em";
+    dateEndInput.style.padding = "4px 10px";
+    const labelStart = document.createElement("label");
+    labelStart.textContent = "Date de début : ";
+    labelStart.htmlFor = "mainTableDateStart";
+    labelStart.style.fontWeight = "bold";
+    labelStart.style.fontSize = "1em";
+    const labelEnd = document.createElement("label");
+    labelEnd.textContent = "Date de fin : ";
+    labelEnd.htmlFor = "mainTableDateEnd";
+    labelEnd.style.fontWeight = "bold";
+    labelEnd.style.fontSize = "1em";
+    filterContainer.appendChild(labelStart);
+    filterContainer.appendChild(dateStartInput);
+    filterContainer.appendChild(labelEnd);
+    filterContainer.appendChild(dateEndInput);
+    // Insérer le filtre avant le tableau
+    const mainTable = document.getElementById("deliveriesTable");
+    if (mainTable && mainTable.parentNode) {
+      mainTable.parentNode.insertBefore(filterContainer, mainTable);
+    } else {
+      document.body.insertBefore(filterContainer, document.body.firstChild);
+    }
+  }
 
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
@@ -274,10 +319,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Filtre les livraisons selon la date de livraison réelle (delivery_date)
-  function filterDeliveriesByDate(dateStr) {
+  // Filtre les livraisons selon la plage de dates
+  function filterDeliveriesByDateRange(dateStartStr, dateEndStr) {
+    // dateStartStr et dateEndStr sont au format YYYY-MM-DD
+    const start = dateStartStr ? new Date(dateStartStr) : null;
+    const end = dateEndStr ? new Date(dateEndStr) : null;
     return allDeliveries.filter((delivery) => {
-      // On utilise delivery_date si disponible, sinon created_at
       let dDate =
         delivery["delivery_date"] ||
         delivery["created_at"] ||
@@ -312,52 +359,18 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         normalized = String(dDate);
       }
-      return normalized === dateStr;
+      // Comparaison dans la plage
+      if (!normalized.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
+      const d = new Date(normalized);
+      if (start && d < start) return false;
+      if (end && d > end) return false;
+      return true;
     });
   }
 
-  // Affiche les livraisons filtrées dans le tableau
-  function renderTable(deliveries) {
-    tableBody.innerHTML = "";
-    if (deliveries.length === 0) {
-      const row = document.createElement("tr");
-      const cell = document.createElement("td");
-      cell.colSpan = AGENT_TABLE_COLUMNS.length;
-      cell.textContent = "Aucune opération à cette date";
-      cell.className = "text-center text-muted";
-      row.appendChild(cell);
-      tableBody.appendChild(row);
-      return;
-    }
-    deliveries.forEach((delivery) => {
-      const row = document.createElement("tr");
-      AGENT_TABLE_COLUMNS.forEach((col) => {
-        const cell = document.createElement("td");
-        let value = "-";
-        if (col.id === "date_display") {
-          let dDate = delivery.delivery_date || delivery.created_at;
-          if (dDate) {
-            let dateObj = new Date(dDate);
-            if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toLocaleDateString("fr-FR");
-            } else if (typeof dDate === "string") {
-              value = dDate;
-            }
-          }
-        } else {
-          value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-        }
-        cell.textContent = value;
-        row.appendChild(cell);
-      });
-      tableBody.appendChild(row);
-    });
-  }
-
-  // Fonction principale pour charger et afficher selon la date
-  function updateTableForDate(dateStr) {
-    const filtered = filterDeliveriesByDate(dateStr);
-    // Utilisation du nouveau modèle dynamique
+  // Fonction principale pour charger et afficher selon la plage de dates
+  function updateTableForDateRange(dateStartStr, dateEndStr) {
+    const filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
     const tableContainer = document.getElementById("deliveriesTableBody");
     if (tableContainer) {
       renderAgentTableFull(filtered, tableContainer);
@@ -366,19 +379,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Initialisation : charge toutes les livraisons puis affiche la date du jour
+  // Initialisation : charge toutes les livraisons puis affiche la plage par défaut (depuis une date antérieure jusqu'à aujourd'hui)
   const today = new Date().toISOString().split("T")[0];
-  if (dateInput) {
-    dateInput.value = today;
-    loadAllDeliveries().then(() => {
-      updateTableForDate(today);
-    });
-    dateInput.addEventListener("change", (e) => {
-      updateTableForDate(e.target.value);
-    });
-  }
+  const defaultStart = new Date();
+  defaultStart.setDate(defaultStart.getDate() - 7); // Par défaut, 7 jours avant aujourd'hui
+  const defaultStartStr = defaultStart.toISOString().split("T")[0];
+  dateStartInput.value = defaultStartStr;
+  dateEndInput.value = today;
+  loadAllDeliveries().then(() => {
+    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+  });
+  dateStartInput.addEventListener("change", () => {
+    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+  });
+  dateEndInput.addEventListener("change", () => {
+    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+  });
 });
-// Colonnes strictes pour Agent Acconier
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
@@ -595,6 +612,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       }
 
       if (col.id === "row_number") {
+        // Recompte dynamique selon le filtrage
         value = i + 1;
         td.textContent = value;
         td.classList.add("row-number-col");
