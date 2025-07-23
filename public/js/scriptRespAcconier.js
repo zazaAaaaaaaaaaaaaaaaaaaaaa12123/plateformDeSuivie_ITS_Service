@@ -711,9 +711,12 @@ document.addEventListener("DOMContentLoaded", function () {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
     // Ajout listener sur le champ de recherche N° Dossier / N° BL
-    dossierBlSearchInput.addEventListener("input", () => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-    });
+    const searchInput = document.getElementById("mainTableDossierBlSearch");
+    if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      });
+    }
   }
 });
 // Colonnes strictes pour Agent Acconier
