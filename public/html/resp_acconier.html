@@ -661,11 +661,11 @@
           </div>
         </div>
 
-        <div id="tableScrollContainer" class="table-responsive overflow-x-auto" style="border-radius:12px;">
+        <div id="tableScrollContainer" class="table-responsive overflow-x-auto" style="border-radius:18px;box-shadow:0 8px 32px rgba(37,99,235,0.10);background:#fff;max-width:98vw;margin:0 auto;">
           <table
             id="deliveriesTable"
             class="table table-bordered table-hover align-middle"
-            style="min-width:900px;"
+            style="width:100vw;max-width:98vw;min-width:900px;border-radius:18px;table-layout:auto;"
           >
             <thead>
               <tr>
@@ -673,40 +673,40 @@
                   colspan="31"
                   id="agentAcconierHeader"
                   class="header-agent-acconier"
+                  style="font-size:1.25em;font-weight:700;background:linear-gradient(90deg,#2563eb 0%,#1e293b 100%);color:#fff;border-radius:18px 18px 0 0;letter-spacing:1px;"
                 >
                   Responsable Acconier
                 </th>
               </tr>
               <tr id="deliveriesTableHead">
-                <th>N°</th>
-                <th>Date</th>
-                <th>Agent</th>
-                <th>Client (Nom)</th>
-                <th>Client (Tél)</th>
-                <th>Numéro TC(s)</th>
-                <th>Lieu</th>
-                <th>Type Conteneur (pied)</th>
-                <th>Contenu</th>
-                <th>N° Déclaration</th>
-                <th>N° BL</th>
-                <th>N° Dossier</th>
-                <th>Nombre de conteneurs</th>
-                <th>Compagnie Maritime</th>
-                <th>Poids</th>
-                <th>Nom du navire</th>
-                <th>Circuit</th>
-                <th>Mode de Transport</th>
-                <th>Statut Dossier</th>
-                <th>Observation</th>
+                <th style="min-width:50px;">N°</th>
+                <th style="min-width:90px;">Date</th>
+                <th style="min-width:120px;">Agent</th>
+                <th style="min-width:120px;">Client (Nom)</th>
+                <th style="min-width:110px;">Client (Tél)</th>
+                <th style="min-width:120px;">Numéro TC(s)</th>
+                <th style="min-width:100px;">Lieu</th>
+                <th style="min-width:110px;">Type Conteneur (pied)</th>
+                <th style="min-width:110px;">Contenu</th>
+                <th style="min-width:110px;">N° Déclaration</th>
+                <th style="min-width:110px;">N° BL</th>
+                <th style="min-width:110px;">N° Dossier</th>
+                <th style="min-width:110px;">Nombre de conteneurs</th>
+                <th style="min-width:120px;">Compagnie Maritime</th>
+                <th style="min-width:90px;">Poids</th>
+                <th style="min-width:110px;">Nom du navire</th>
+                <th style="min-width:90px;">Circuit</th>
+                <th style="min-width:110px;">Mode de Transport</th>
+                <th style="min-width:120px;">Statut Dossier</th>
+                <th style="min-width:120px;">Observation</th>
               </tr>
             </thead>
 
             <tbody id="deliveriesTableBody">
               <!-- Les lignes seront générées dynamiquement par JS -->
               <tr>
-                <td colspan="31" class="text-center text-muted">
-                  <i class="fas fa-spinner fa-spin me-2"></i> Chargement des
-                  livraisons...
+                <td colspan="31" class="text-center text-muted" style="font-size:1.08em;padding:32px 0;">
+                  <i class="fas fa-spinner fa-spin me-2"></i> Chargement des livraisons...
                 </td>
               </tr>
             </tbody>
