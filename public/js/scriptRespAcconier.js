@@ -779,44 +779,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         color = "#2563eb"; // récent : bleu (< 7 jours)
       }
     }
-    // Ajout de l'icône de suppression (masquée par défaut)
-    const deleteIcon = document.createElement("span");
-    deleteIcon.innerHTML = '<i class="fas fa-trash-alt"></i>';
-    deleteIcon.title = "Supprimer cette livraison";
-    deleteIcon.style.position = "absolute";
-    deleteIcon.style.right = "12px";
-    deleteIcon.style.top = "50%";
-    deleteIcon.style.transform = "translateY(-50%)";
-    deleteIcon.style.color = "#ef4444";
-    deleteIcon.style.background = "#fff";
-    deleteIcon.style.borderRadius = "50%";
-    deleteIcon.style.padding = "6px";
-    deleteIcon.style.fontSize = "1.25em";
-    deleteIcon.style.boxShadow = "0 2px 8px rgba(239,68,68,0.10)";
-    deleteIcon.style.cursor = "pointer";
-    deleteIcon.style.display = "none";
-    deleteIcon.style.zIndex = 2;
-    // Action suppression (à compléter selon besoin)
-    deleteIcon.onclick = (e) => {
-      e.stopPropagation();
-      // Confirmation simple avant suppression
-      if (window.confirm("Voulez-vous vraiment supprimer cette livraison ?")) {
-        // À compléter : requête serveur ou suppression locale
-        // Par exemple :
-        // fetch(`/deliveries/${delivery.id}`, { method: "DELETE" })
-        //   .then(() => tr.remove());
-        tr.remove();
-      }
-    };
-    tr.style.position = "relative";
-    tr.appendChild(deleteIcon);
-    // Affichage/masquage au survol
-    tr.addEventListener("mouseenter", () => {
-      deleteIcon.style.display = "inline-block";
-    });
-    tr.addEventListener("mouseleave", () => {
-      deleteIcon.style.display = "none";
-    });
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
