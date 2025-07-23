@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inscription & Connexion - ITS Service</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      body {
+        background: linear-gradient(120deg, #1e3c72, #2a5298);
+        font-family: "Montserrat", sans-serif;
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .container {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(30, 60, 114, 0.18);
+        padding: 2.5rem 2rem 2rem 2rem;
+        width: 100%;
+        max-width: 410px;
+        position: relative;
+        overflow: hidden;
+        transition: box-shadow 0.3s;
+      }
+      .container:hover {
+        box-shadow: 0 12px 40px rgba(30, 60, 114, 0.28);
+      }
+      .tabs {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+      }
+      .tab {
+        flex: 1;
+        text-align: center;
+        padding: 0.7rem 0;
+        cursor: pointer;
+        font-weight: 700;
+        color: #1e3c72;
+        border-bottom: 2px solid transparent;
+        transition: border 0.2s, color 0.2s;
+        letter-spacing: 1px;
+      }
+      .tab.active {
+        color: #2a5298;
+        border-bottom: 2.5px solid #2a5298;
+        background: linear-gradient(90deg, #e3ecfa 60%, #f7faff 100%);
+        border-radius: 8px 8px 0 0;
+      }
+      form {
+        display: none;
+        flex-direction: column;
+        gap: 1.1rem;
+        animation: fadeIn 0.5s;
+      }
+      form.active {
+        display: flex;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+      label {
+        font-size: 1rem;
+        color: #1e3c72;
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+      }
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        padding: 0.7rem 1rem;
+        border: 1.5px solid #dbeafe;
+        border-radius: 7px;
+        font-size: 1rem;
+        background: #f7faff;
+        transition: border 0.2s;
+        outline: none;
+      }
+      input:focus {
+        border: 1.5px solid #2a5298;
+        background: #e3ecfa;
+      }
+      .btn {
+        background: linear-gradient(90deg, #1e3c72 60%, #2a5298 100%);
+        color: #fff;
+        border: none;
+        border-radius: 7px;
+        padding: 0.8rem 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 0.5rem;
+        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
+        transition: background 0.2s, box-shadow 0.2s;
+      }
+      .btn:hover {
+        background: linear-gradient(90deg, #2a5298 60%, #1e3c72 100%);
+        box-shadow: 0 4px 16px rgba(30, 60, 114, 0.18);
+      }
+      .message {
+        margin-top: 0.5rem;
+        font-size: 0.98rem;
+        text-align: center;
+        color: #e74c3c;
+        min-height: 1.2em;
+        font-weight: 600;
+      }
+      .success {
+        color: #27ae60;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .show-password {
+        position: absolute;
+        right: 1.2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #b0b8c1;
+        font-size: 1.1rem;
+      }
+      .form-group.password-group {
+        position: relative;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="tabs">
+        <div class="tab active" id="tab-signup">Inscription</div>
+        <div class="tab" id="tab-login">Connexion</div>
+      </div>
+      <form id="signup-form" class="active" autocomplete="off">
+        <div class="form-group">
+          <label for="signup-nom"><i class="fa fa-user"></i> Nom complet</label>
+          <input
+            type="text"
+            id="signup-nom"
+            name="nom"
+            placeholder="Votre nom complet"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="signup-email"><i class="fa fa-envelope"></i> Email</label>
+          <input
+            type="email"
+            id="signup-email"
+            name="email"
+            placeholder="Votre email"
+            required
+          />
+        </div>
+        <div class="form-group password-group">
+          <label for="signup-password"
+            ><i class="fa fa-lock"></i> Mot de passe</label
+          >
+          <input
+            type="password"
+            id="signup-password"
+            name="password"
+            placeholder="Mot de passe"
+            required
+          />
+          <span
+            class="show-password"
+            onclick="togglePassword('signup-password', this)"
+            ><i class="fa fa-eye"></i
+          ></span>
+        </div>
+        <button type="submit" class="btn">S'inscrire</button>
+        <div class="message" id="signup-message"></div>
+      </form>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email"><i class="fa fa-envelope"></i> Email</label>
+          <input
+            type="email"
+            id="login-email"
+            name="email"
+            placeholder="Votre email"
+            required
+          />
+        </div>
+        <div class="form-group password-group">
+          <label for="login-password"
+            ><i class="fa fa-lock"></i> Mot de passe</label
+          >
+          <input
+            type="password"
+            id="login-password"
+            name="password"
+            placeholder="Mot de passe"
+            required
+          />
+          <span
+            class="show-password"
+            onclick="togglePassword('login-password', this)"
+            ><i class="fa fa-eye"></i
+          ></span>
+        </div>
+        <button type="submit" class="btn">Se connecter</button>
+        <div class="message" id="login-message"></div>
+      </form>
+    </div>
+    <script src="/js/auth.js"></script>
+    <script>
+      // Tab switching
+      const tabSignup = document.getElementById("tab-signup");
+      const tabLogin = document.getElementById("tab-login");
+      const signupForm = document.getElementById("signup-form");
+      const loginForm = document.getElementById("login-form");
+      tabSignup.onclick = () => {
+        tabSignup.classList.add("active");
+        tabLogin.classList.remove("active");
+        signupForm.classList.add("active");
+        loginForm.classList.remove("active");
+      };
+      tabLogin.onclick = () => {
+        tabLogin.classList.add("active");
+        tabSignup.classList.remove("active");
+        loginForm.classList.add("active");
+        signupForm.classList.remove("active");
+      };
+      // Password toggle
+      function togglePassword(inputId, el) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+          input.type = "text";
+          el.innerHTML = '<i class="fa fa-eye-slash"></i>';
+        } else {
+          input.type = "password";
+          el.innerHTML = '<i class="fa fa-eye"></i>';
+        }
+      }
+    </script>
+  </body>
+</html>
