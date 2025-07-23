@@ -195,35 +195,28 @@
       /* Styles pour la stabilité du tableau (conservés de votre version originale) */
       .table {
         width: 100%;
-        table-layout: fixed; /* Fixe la largeur des colonnes pour éviter la coupure */
-        border-radius: 14px;
+        table-layout: auto;
+        border-radius: 10px;
         overflow: hidden;
-        box-shadow: 0 4px 18px 0 rgba(30,41,59,0.10);
+        box-shadow: 0 2px 10px 0 rgba(30,41,59,0.07);
         background: #fff;
       }
       .table th,
       .table td {
-        vertical-align: top; /* Aligne le contenu en haut des cellules */
-        padding: 1.05rem 1.1rem; /* Padding plus large */
-        white-space: nowrap; /* Empêche la coupure du texte */
-        word-break: normal;
-        border-bottom: 1.5px solid #e5e7eb;
-        font-size: 1.07em;
-        min-width: 120px;
-        max-width: 350px;
-        overflow-x: auto;
-        text-overflow: ellipsis;
+        vertical-align: top;
+        padding: 0.7rem 0.6rem;
+        white-space: normal;
+        word-break: break-word;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 1em;
+        transition: background 0.18s;
       }
       .table th {
-        background: #f3f4f6;
+        background: #f6f8fa;
         font-weight: 600;
+        color: #1e293b;
         letter-spacing: 0.01em;
-        min-width: 130px;
-      }
-      .table th {
-        background: #f3f4f6;
-        font-weight: 600;
-        letter-spacing: 0.01em;
+        border-bottom: 2px solid #d1d5db;
       }
       .table tbody tr:last-child td {
         border-bottom: none;
@@ -232,15 +225,7 @@
         transition: background 0.18s;
       }
       .table tbody tr:hover {
-        background: #f1f5fa;
-        box-shadow: 0 2px 8px #2563eb11;
-      }
-      .table-bordered {
-        border: none;
-      }
-      .table thead th {
-        border-top: none;
-        border-bottom: 2.5px solid #d1d5db;
+        background: #f3f6fd;
       }
       .sticky-col {
         position: sticky;
@@ -266,19 +251,19 @@
 
       /* NOUVEAUX STYLES POUR LES BANDEAUX COLORÉS */
       .table thead tr:first-child th {
-        border-bottom: none; /* Supprime la bordure inférieure pour le bandeau */
-        border-top: none; /* Supprime la bordure supérieure */
-        padding-top: 12px;
-        padding-bottom: 12px;
-        color: white; /* Couleur de texte par défaut pour les bandeaux */
-        font-size: 1.15em;
+        border-bottom: none;
+        border-top: none;
+        padding-top: 9px;
+        padding-bottom: 9px;
+        color: white;
+        font-size: 1.09em;
         text-transform: uppercase;
-        position: sticky; /* Rendre la ligne de bandeau figée */
-        top: 0; /* Coller en haut */
-        z-index: 11; /* Plus haut que les en-têtes de colonnes normales */
-        cursor: pointer; /* Indique que le bandeau est cliquable */
-        border-radius: 0;
-        min-width: 130px;
+        position: sticky;
+        top: 0;
+        z-index: 11;
+        cursor: pointer;
+        background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
+        box-shadow: 0 2px 6px #2563eb11;
       }
       /* La première cellule du bandeau (pour N° et Date & Heure) reste neutre */
       .table thead tr:first-child th:nth-child(1) {
