@@ -1561,16 +1561,43 @@ document.addEventListener("DOMContentLoaded", function () {
       profilePopup.style.flexDirection = "column";
       profilePopup.style.alignItems = "center";
       profilePopup.style.minWidth = "180px";
-      // Icône appareil photo pour upload
+      // Bloc nom, email et icône appareil photo
+      const infoRow = document.createElement("div");
+      infoRow.style.display = "flex";
+      infoRow.style.alignItems = "center";
+      infoRow.style.gap = "10px";
+      infoRow.style.marginBottom = "10px";
+
+      // Partie texte (nom/email)
+      const infoCol = document.createElement("div");
+      infoCol.style.display = "flex";
+      infoCol.style.flexDirection = "column";
+      infoCol.style.alignItems = "flex-start";
+      infoCol.style.justifyContent = "center";
+      infoCol.style.gap = "2px";
+      // Nom
+      const nameDiv = document.createElement("div");
+      nameDiv.textContent = localStorage.getItem("userName") || "-";
+      nameDiv.style.fontWeight = "bold";
+      nameDiv.style.fontSize = "1.08em";
+      infoCol.appendChild(nameDiv);
+      // Email
+      const emailDiv = document.createElement("div");
+      emailDiv.textContent = localStorage.getItem("userEmail") || "-";
+      emailDiv.style.fontSize = "0.98em";
+      emailDiv.style.color = "#64748b";
+      infoCol.appendChild(emailDiv);
+
+      // Icône appareil photo pour upload (à droite du nom/email)
       const cameraBtn = document.createElement("button");
       cameraBtn.type = "button";
       cameraBtn.title = "Changer la photo de profil";
       cameraBtn.style.background = "none";
       cameraBtn.style.border = "none";
       cameraBtn.style.cursor = "pointer";
-      cameraBtn.style.marginBottom = "12px";
-      cameraBtn.style.fontSize = "1.7em";
+      cameraBtn.style.fontSize = "1.5em";
       cameraBtn.style.color = "#2563eb";
+      cameraBtn.style.marginLeft = "8px";
       cameraBtn.innerHTML = '<i class="fa fa-camera"></i>';
       // Input file caché
       const input = document.createElement("input");
@@ -1595,21 +1622,32 @@ document.addEventListener("DOMContentLoaded", function () {
         };
         reader.readAsDataURL(file);
       });
-      profilePopup.appendChild(cameraBtn);
-      profilePopup.appendChild(input);
-      // Bouton déconnexion
+
+      infoRow.appendChild(infoCol);
+      infoRow.appendChild(cameraBtn);
+      infoRow.appendChild(input);
+      profilePopup.appendChild(infoRow);
+      // Bouton déconnexion en dessous
       const logoutBtn = document.createElement("button");
-      logoutBtn.textContent = "Déconnexion";
-      logoutBtn.style.background = "#e11d48";
-      logoutBtn.style.color = "#fff";
-      logoutBtn.style.border = "none";
-      logoutBtn.style.borderRadius = "7px";
-      logoutBtn.style.padding = "8px 16px";
+      logoutBtn.textContent = "Se déconnecter";
+      logoutBtn.style.background = "#fff";
+      logoutBtn.style.color = "#e11d48";
+      logoutBtn.style.border = "1.5px solid #e11d48";
+      logoutBtn.style.borderRadius = "8px";
+      logoutBtn.style.padding = "12px 0";
       logoutBtn.style.fontWeight = "600";
       logoutBtn.style.cursor = "pointer";
-      logoutBtn.style.boxShadow = "0 2px 8px rgba(225,29,72,0.13)";
-      logoutBtn.style.fontSize = "1em";
-      logoutBtn.style.marginTop = "6px";
+      logoutBtn.style.fontSize = "1.08em";
+      logoutBtn.style.width = "100%";
+      logoutBtn.style.marginTop = "8px";
+      logoutBtn.onmouseenter = function () {
+        logoutBtn.style.background = "#e11d48";
+        logoutBtn.style.color = "#fff";
+      };
+      logoutBtn.onmouseleave = function () {
+        logoutBtn.style.background = "#fff";
+        logoutBtn.style.color = "#e11d48";
+      };
       logoutBtn.onclick = function () {
         localStorage.removeItem("userName");
         localStorage.removeItem("userEmail");
