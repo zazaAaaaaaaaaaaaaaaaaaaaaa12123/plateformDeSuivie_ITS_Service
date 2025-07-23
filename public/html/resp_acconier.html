@@ -336,88 +336,64 @@
   <body class="bg-light">
     <div class="container my-4">
       <section class="card-section">
-        <div class="header-with-search">
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="width:100%;">
-            <div style="flex:1 1 auto;min-width:0;">
-              <h1 class="section-title mb-0">Tableau - Reponsable Acconier</h1>
-              <p class="section-subtitle mb-0">
-                Paiement de l'acconage des conteneurs 
-              </p>
-              <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée de votre version originale) -->
-              <div class="scrolling-message-bar" id="newAgentScrollingContainer">
-                <div
-                  class="scrolling-message-content"
-                  id="newAgentScrollingContent"
-                >
-                  <!-- Le contenu des agents défilants sera injecté ici par JS -->
-                </div>
-              </div>
+        <!-- EN-TÊTE MODERNE AVEC AVATAR ET TITRE -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4" style="background:#fff;border-radius:18px;padding:24px 32px 18px 32px;box-shadow:0 4px 24px rgba(30,41,59,0.07);">
+          <div class="d-flex align-items-center gap-3 flex-shrink-0">
+            <div id="profileAvatar" style="width:60px;height:60px;border-radius:50%;background:#e0e7ef;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #2563eb22;cursor:pointer;">
+              <i class="fas fa-user" style="font-size:2.1em;color:#2563eb;"></i>
             </div>
-            <div class="profile-avatar-wrapper" style="position:relative;display:flex;align-items:center;justify-content:flex-end;min-width:60px;">
-              <div id="profileAvatar" style="width:48px;height:48px;border-radius:50%;background:#e0e7ef;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #2563eb22;transition:box-shadow 0.2s;">
-                <i class="fas fa-user" style="font-size:1.7em;color:#2563eb;"></i>
-              </div>
-              <div id="profileDropdown" style="display:none;position:absolute;top:56px;right:0;min-width:220px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(30,41,59,0.18);padding:18px 20px;z-index:1001;">
-                <div id="profileName" style="font-weight:600;font-size:1.08em;color:#0e274e;">Nom de l'utilisateur</div>
-                <div id="profileEmail" style="font-size:0.98em;color:#64748b;">email@exemple.com</div>
-                <hr style="margin:12px 0 10px 0;border:0;border-top:1.5px solid #e5e7eb;"/>
-                <button id="logoutBtn" class="btn btn-outline-danger w-100" style="font-size:0.98em;">Se déconnecter</button>
-              </div>
+            <div>
+              <h1 class="mb-1" style="font-size:1.7em;font-weight:700;color:#0e274e;letter-spacing:-1px;">Tableau - Responsable Acconier</h1>
+              <div style="font-size:1.13em;color:#64748b;font-weight:500;">Paiement de l'acconage des conteneurs</div>
             </div>
-            <script>
-              // Affichage du menu profil au clic sur l'avatar
-              window.addEventListener('DOMContentLoaded', function() {
-                const avatar = document.getElementById('profileAvatar');
-                const dropdown = document.getElementById('profileDropdown');
-                if (avatar && dropdown) {
-                  avatar.onclick = function(e) {
-                    e.stopPropagation();
-                    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-                  };
-                  document.addEventListener('click', function(e) {
-                    if (!dropdown.contains(e.target) && e.target !== avatar) {
-                      dropdown.style.display = 'none';
-                    }
-                  });
-                }
-                // Pour intégration future : remplacer ces valeurs dynamiquement après connexion
-                // document.getElementById('profileName').textContent = 'Nom Prénom';
-                // document.getElementById('profileEmail').textContent = 'email@exemple.com';
-              });
-            </script>
           </div>
-
-
-        </div>
-
-        <div
-          class="d-flex justify-content-center align-items-center mb-3 flex-wrap gap-2"
-        >
-          <input
-            type="date"
-            id="mainTableDateFilter"
-            class="icon-btn icon-btn-company-color"
-            title="Filtrer par date"
-          />
-          <span style="display:inline-block;width:1.5px;height:32px;background:#d1d5db;margin:0 18px;vertical-align:middle;border-radius:2px;"></span>
-          <div class="search-bar-wrapper-top" style="min-width:260px;max-width:400px;flex:1 1 260px;">
-            <div class="search-wrapper">
-              <i class="fas fa-search search-icon"></i>
-              <input
-                type="search"
-                id="searchInput"
-                class="search-input"
-                placeholder="Rechercher une livraison..."
-                aria-label="Recherche"
-              />
-              <button id="searchButton" class="icon-btn-company-color">
-                <i
-                  class="fas fa-spinner fa-spin loading-spinner"
-                  style="display: none"
-                ></i>
-                Rechercher
-              </button>
+          <div class="d-flex flex-column align-items-end flex-grow-1" style="min-width:220px;">
+            <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
+            <div class="scrolling-message-bar" id="newAgentScrollingContainer" style="margin-bottom:8px;max-width:350px;width:100%;">
+              <div class="scrolling-message-content" id="newAgentScrollingContent"></div>
             </div>
+            <!-- Dropdown profil -->
+            <div id="profileDropdown" style="display:none;position:absolute;top:76px;right:32px;min-width:220px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(30,41,59,0.18);padding:18px 20px;z-index:1001;">
+              <div id="profileName" style="font-weight:600;font-size:1.08em;color:#0e274e;">Nom de l'utilisateur</div>
+              <div id="profileEmail" style="font-size:0.98em;color:#64748b;">email@exemple.com</div>
+              <hr style="margin:12px 0 10px 0;border:0;border-top:1.5px solid #e5e7eb;"/>
+              <button id="logoutBtn" class="btn btn-outline-danger w-100" style="font-size:0.98em;">Se déconnecter</button>
+            </div>
+          </div>
+        </div>
+        <script>
+          // Affichage du menu profil au clic sur l'avatar
+          window.addEventListener('DOMContentLoaded', function() {
+            const avatar = document.getElementById('profileAvatar');
+            const dropdown = document.getElementById('profileDropdown');
+            if (avatar && dropdown) {
+              avatar.onclick = function(e) {
+                e.stopPropagation();
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+              };
+              document.addEventListener('click', function(e) {
+                if (!dropdown.contains(e.target) && e.target !== avatar) {
+                  dropdown.style.display = 'none';
+                }
+              });
+            }
+            // Pour intégration future : remplacer ces valeurs dynamiquement après connexion
+            // document.getElementById('profileName').textContent = 'Nom Prénom';
+            // document.getElementById('profileEmail').textContent = 'email@exemple.com';
+          });
+        </script>
+
+        <div class="d-flex justify-content-center align-items-center mb-3 flex-wrap gap-2" style="background:#f8fafc;border-radius:12px;padding:18px 18px 10px 18px;box-shadow:0 2px 8px #2563eb11;">
+          <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1 1 220px;min-width:220px;">
+            <span style="font-weight:600;color:#0e274e;font-size:1.08em;">Filtrer du</span>
+            <input type="date" id="mainTableDateStartFilter" style="padding:6px 14px;border-radius:8px;border:1.5px solid #2563eb;font-size:1em;min-width:120px;" />
+            <span style="font-weight:600;color:#0e274e;font-size:1.08em;">au</span>
+            <input type="date" id="mainTableDateEndFilter" style="padding:6px 14px;border-radius:8px;border:1.5px solid #2563eb;font-size:1em;min-width:120px;" />
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1 1 260px;min-width:220px;max-width:400px;">
+            <i class="fas fa-search search-icon" style="color:#2563eb;font-size:1.15em;"></i>
+            <input type="search" id="searchInput" class="search-input" placeholder="Rechercher une livraison." aria-label="Recherche" style="flex:1 1 120px;min-width:120px;padding:6px 12px;border-radius:8px;border:1.5px solid #2563eb;font-size:1em;" />
+            <button id="searchButton" class="btn btn-primary" style="font-weight:600;font-size:1em;padding:6px 22px;border-radius:8px;background:#2563eb;">Rechercher</button>
           </div>
         </div>
 
