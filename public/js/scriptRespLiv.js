@@ -306,7 +306,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Filtre les livraisons selon la plage de dates
+  // Filtre les livraisons selon la plage de date
   function filterDeliveriesByDateRange(dateStartStr, dateEndStr) {
     // dateStartStr et dateEndStr sont au format YYYY-MM-DD
     const start = dateStartStr ? new Date(dateStartStr) : null;
