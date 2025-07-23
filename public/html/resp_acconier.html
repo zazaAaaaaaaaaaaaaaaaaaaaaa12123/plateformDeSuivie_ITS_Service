@@ -337,20 +337,52 @@
     <div class="container my-4">
       <section class="card-section">
         <div class="header-with-search">
-          <div>
-            <h1 class="section-title">Tableau - Reponsable Acconier</h1>
-            <p class="section-subtitle">
-              Paiement de l'acconage des conteneurs 
-            </p>
-            <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée de votre version originale) -->
-            <div class="scrolling-message-bar" id="newAgentScrollingContainer">
-              <div
-                class="scrolling-message-content"
-                id="newAgentScrollingContent"
-              >
-                <!-- Le contenu des agents défilants sera injecté ici par JS -->
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" style="width:100%;">
+            <div>
+              <h1 class="section-title mb-0">Tableau - Reponsable Acconier</h1>
+              <p class="section-subtitle mb-0">
+                Paiement de l'acconage des conteneurs 
+              </p>
+              <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée de votre version originale) -->
+              <div class="scrolling-message-bar" id="newAgentScrollingContainer">
+                <div
+                  class="scrolling-message-content"
+                  id="newAgentScrollingContent"
+                >
+                  <!-- Le contenu des agents défilants sera injecté ici par JS -->
+                </div>
               </div>
             </div>
+            <div class="profile-avatar-wrapper" style="position:relative;display:flex;align-items:center;gap:10px;">
+              <div id="profileAvatar" style="width:48px;height:48px;border-radius:50%;background:#e0e7ef;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #2563eb22;transition:box-shadow 0.2s;">
+                <i class="fas fa-user" style="font-size:1.7em;color:#2563eb;"></i>
+              </div>
+              <div id="profileDropdown" style="display:none;position:absolute;top:56px;right:0;min-width:220px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(30,41,59,0.18);padding:18px 20px;z-index:1001;">
+                <div id="profileName" style="font-weight:600;font-size:1.08em;color:#0e274e;">Nom de l'utilisateur</div>
+                <div id="profileEmail" style="font-size:0.98em;color:#64748b;">email@exemple.com</div>
+                <hr style="margin:12px 0 10px 0;border:0;border-top:1.5px solid #e5e7eb;"/>
+                <button id="logoutBtn" class="btn btn-outline-danger w-100" style="font-size:0.98em;">Se déconnecter</button>
+              </div>
+            </div>
+            <script>
+              // Affichage du menu profil au clic sur l'avatar
+              const avatar = document.getElementById('profileAvatar');
+              const dropdown = document.getElementById('profileDropdown');
+              if (avatar && dropdown) {
+                avatar.onclick = function(e) {
+                  e.stopPropagation();
+                  dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                };
+                document.addEventListener('click', function(e) {
+                  if (!dropdown.contains(e.target) && e.target !== avatar) {
+                    dropdown.style.display = 'none';
+                  }
+                });
+              }
+              // Pour intégration future : remplacer ces valeurs dynamiquement après connexion
+              // document.getElementById('profileName').textContent = 'Nom Prénom';
+              // document.getElementById('profileEmail').textContent = 'email@exemple.com';
+            </script>
           </div>
 
 
