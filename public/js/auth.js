@@ -26,8 +26,17 @@ document.addEventListener("DOMContentLoaded", function () {
   // Focus lors du changement d'onglet
   const tabSignup = document.getElementById("tab-signup");
   const tabLogin = document.getElementById("tab-login");
-  if (tabSignup) tabSignup.addEventListener("click", focusFirstInput);
-  if (tabLogin) tabLogin.addEventListener("click", focusFirstInput);
+  const forgotForm = document.getElementById("forgot-form");
+  if (tabSignup)
+    tabSignup.addEventListener("click", function () {
+      if (forgotForm) forgotForm.style.display = "none";
+      focusFirstInput();
+    });
+  if (tabLogin)
+    tabLogin.addEventListener("click", function () {
+      if (forgotForm) forgotForm.style.display = "none";
+      focusFirstInput();
+    });
 
   // Sur mobile/tablette, améliore le feedback lors de la soumission
   function addMobileFeedback(form, messageEl) {
