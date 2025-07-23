@@ -1125,7 +1125,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
             if (statutToSend === "mise_en_livraison") {
               const confirmMsg =
-                "Êtes-vous sûr de vouloir mettre ce BL en 'Mise en livraison' ? Cette action est irréversible.";
+                "⚠️ Attention : Vous êtes sur le point de valider la mise en livraison pour ce BL. Cette opération est définitive et ne pourra pas être annulée. Voulez-vous vraiment continuer ?";
               if (!window.confirm(confirmMsg)) {
                 return;
               }
