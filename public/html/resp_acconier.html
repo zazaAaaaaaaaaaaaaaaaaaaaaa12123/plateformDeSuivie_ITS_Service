@@ -83,7 +83,8 @@
 
       /* Responsive header, avatar, dropdown, filtres et tableau */
       @media (max-width: 900px) {
-        .card-section > .d-flex.align-items-center.justify-content-between.flex-wrap {
+        .card-section
+          > .d-flex.align-items-center.justify-content-between.flex-wrap {
           flex-direction: column;
           align-items: stretch !important;
           padding: 18px 8px 12px 8px !important;
@@ -97,7 +98,8 @@
         }
       }
       @media (max-width: 600px) {
-        .card-section > .d-flex.align-items-center.justify-content-between.flex-wrap {
+        .card-section
+          > .d-flex.align-items-center.justify-content-between.flex-wrap {
           flex-direction: column;
           align-items: stretch !important;
           padding: 10px 2vw 8px 2vw !important;
@@ -130,7 +132,9 @@
           align-items: stretch !important;
           gap: 6px !important;
         }
-        #searchInput, #mainTableDateStartFilter, #mainTableDateEndFilter {
+        #searchInput,
+        #mainTableDateStartFilter,
+        #mainTableDateEndFilter {
           font-size: 0.98em !important;
           min-width: 80px !important;
           padding: 5px 8px !important;
@@ -148,7 +152,8 @@
         -webkit-overflow-scrolling: touch;
       }
       @media (max-width: 900px) {
-        .table th, .table td {
+        .table th,
+        .table td {
           padding: 0.45rem !important;
           font-size: 0.98em !important;
         }
@@ -157,7 +162,8 @@
         }
       }
       @media (max-width: 600px) {
-        .table th, .table td {
+        .table th,
+        .table td {
           padding: 0.32rem 0.3rem !important;
           font-size: 0.93em !important;
           min-width: 90px;
@@ -463,65 +469,257 @@
     </style>
   </head>
 
-  <body style="background:#1666e7 !important;">
-    <div class="container-fluid p-0 m-0" style="background:#1c6ae7 !important;min-width:100vw;max-width:100vw;">
-      <section class="card-section" style="width:100%;max-width:1200px;margin:0 auto;">
+  <body style="background: #1666e7 !important; min-height: 100vh">
+    <div
+      class="container-fluid p-0 m-0 d-flex flex-column justify-content-center align-items-center"
+      style="
+        background: #1666e7 !important;
+        min-width: 100vw;
+        min-height: 100vh;
+      "
+    >
+      <section
+        class="card-section"
+        style="
+          width: 100%;
+          max-width: 1200px;
+          margin: 40px auto 40px auto;
+          box-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
+          background: #fff;
+          border-radius: 24px;
+        "
+      >
         <!-- EN-TÊTE MODERNE AVEC AVATAR À DROITE -->
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4" style="background:#fff;border-radius:18px;padding:24px 32px 18px 32px;box-shadow:0 4px 24px rgba(30,41,59,0.07);position:relative;">
-          <div style="min-width:0;flex:1 1 0;">
-            <h1 class="mb-1" style="font-size:1.7em;font-weight:700;color:#0e274e;letter-spacing:-1px;">Tableau - Responsable Acconier</h1>
-            <div style="font-size:1.13em;color:#64748b;font-weight:500;">Paiement de l'acconage des conteneurs</div>
+        <div
+          class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
+          style="
+            background: #fff;
+            border-radius: 18px;
+            padding: 24px 32px 18px 32px;
+            box-shadow: 0 4px 24px rgba(30, 41, 59, 0.07);
+            position: relative;
+          "
+        >
+          <div style="min-width: 0; flex: 1 1 0">
+            <h1
+              class="mb-1"
+              style="
+                font-size: 1.7em;
+                font-weight: 700;
+                color: #0e274e;
+                letter-spacing: -1px;
+              "
+            >
+              Tableau - Responsable Acconier
+            </h1>
+            <div style="font-size: 1.13em; color: #64748b; font-weight: 500">
+              Paiement de l'acconage des conteneurs
+            </div>
             <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
-            <div class="scrolling-message-bar" id="newAgentScrollingContainer" style="margin-top:10px;max-width:350px;width:100%;overflow-x:auto;">
-              <div class="scrolling-message-content" id="newAgentScrollingContent"></div>
+            <div
+              class="scrolling-message-bar"
+              id="newAgentScrollingContainer"
+              style="
+                margin-top: 10px;
+                max-width: 350px;
+                width: 100%;
+                overflow-x: auto;
+              "
+            >
+              <div
+                class="scrolling-message-content"
+                id="newAgentScrollingContent"
+              ></div>
             </div>
           </div>
-          <div class="d-flex flex-column align-items-end flex-shrink-0" style="min-width:60px;position:relative;">
-            <div id="profileAvatar" style="width:60px;height:60px;border-radius:50%;background:#e0e7ef;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #2563eb22;cursor:pointer;">
-              <i class="fas fa-user" id="mainAvatarIcon" style="font-size:2.1em;color:#2563eb;"></i>
-              <img id="mainAvatarPhoto" src="" alt="Photo de profil" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;border-radius:50%;z-index:1;" />
+          <div
+            class="d-flex flex-column align-items-end flex-shrink-0"
+            style="min-width: 60px; position: relative"
+          >
+            <div
+              id="profileAvatar"
+              style="
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: #e0e7ef;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 8px #2563eb22;
+                cursor: pointer;
+              "
+            >
+              <i
+                class="fas fa-user"
+                id="mainAvatarIcon"
+                style="font-size: 2.1em; color: #2563eb"
+              ></i>
+              <img
+                id="mainAvatarPhoto"
+                src=""
+                alt="Photo de profil"
+                style="
+                  display: none;
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  border-radius: 50%;
+                  z-index: 1;
+                "
+              />
             </div>
             <!-- Dropdown profil -->
-            <div id="profileDropdown" style="display:none;position:absolute;top:76px;right:0;min-width:220px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(30,41,59,0.18);padding:18px 20px;z-index:1001;">
-              <div style="display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative;">
-                <span id="profilePhotoCircle" style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#2563eb 60%,#1e293b 100%);box-shadow:0 2px 8px #2563eb22;overflow:hidden;cursor:pointer;position:relative;">
-                  <i class="fas fa-camera" id="cameraIcon" style="font-size:1.5em;color:#fff;z-index:2;"></i>
-                  <img id="profilePhotoPreview" src="" alt="Photo de profil" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;z-index:1;" />
-                  <button id="removePhotoBtn" title="Supprimer la photo" style="display:none;position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;background:#fff;border:none;box-shadow:0 1px 4px #2563eb22;z-index:3;align-items:center;justify-content:center;padding:0;cursor:pointer;">
-                    <i class="fas fa-times" style="color:#2563eb;font-size:1em;"></i>
+            <div
+              id="profileDropdown"
+              style="
+                display: none;
+                position: absolute;
+                top: 76px;
+                right: 0;
+                min-width: 220px;
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(30, 41, 59, 0.18);
+                padding: 18px 20px;
+                z-index: 1001;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  margin-bottom: 10px;
+                  position: relative;
+                "
+              >
+                <span
+                  id="profilePhotoCircle"
+                  style="
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 50%;
+                    background: linear-gradient(
+                      135deg,
+                      #2563eb 60%,
+                      #1e293b 100%
+                    );
+                    box-shadow: 0 2px 8px #2563eb22;
+                    overflow: hidden;
+                    cursor: pointer;
+                    position: relative;
+                  "
+                >
+                  <i
+                    class="fas fa-camera"
+                    id="cameraIcon"
+                    style="font-size: 1.5em; color: #fff; z-index: 2"
+                  ></i>
+                  <img
+                    id="profilePhotoPreview"
+                    src=""
+                    alt="Photo de profil"
+                    style="
+                      display: none;
+                      width: 100%;
+                      height: 100%;
+                      object-fit: cover;
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      z-index: 1;
+                    "
+                  />
+                  <button
+                    id="removePhotoBtn"
+                    title="Supprimer la photo"
+                    style="
+                      display: none;
+                      position: absolute;
+                      top: 2px;
+                      right: 2px;
+                      width: 22px;
+                      height: 22px;
+                      border-radius: 50%;
+                      background: #fff;
+                      border: none;
+                      box-shadow: 0 1px 4px #2563eb22;
+                      z-index: 3;
+                      align-items: center;
+                      justify-content: center;
+                      padding: 0;
+                      cursor: pointer;
+                    "
+                  >
+                    <i
+                      class="fas fa-times"
+                      style="color: #2563eb; font-size: 1em"
+                    ></i>
                   </button>
                 </span>
-                <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;" />
+                <input
+                  type="file"
+                  id="profilePhotoInput"
+                  accept="image/*"
+                  style="display: none"
+                />
               </div>
-              <div id="profileName" style="font-weight:600;font-size:1.08em;color:#0e274e;">Nom de l'utilisateur</div>
-              <div id="profileEmail" style="font-size:0.98em;color:#64748b;">email@exemple.com</div>
-              <hr style="margin:12px 0 10px 0;border:0;border-top:1.5px solid #e5e7eb;"/>
-              <button id="logoutBtn" class="btn btn-outline-danger w-100" style="font-size:0.98em;">Se déconnecter</button>
+              <div
+                id="profileName"
+                style="font-weight: 600; font-size: 1.08em; color: #0e274e"
+              >
+                Nom de l'utilisateur
+              </div>
+              <div id="profileEmail" style="font-size: 0.98em; color: #64748b">
+                email@exemple.com
+              </div>
+              <hr
+                style="
+                  margin: 12px 0 10px 0;
+                  border: 0;
+                  border-top: 1.5px solid #e5e7eb;
+                "
+              />
+              <button
+                id="logoutBtn"
+                class="btn btn-outline-danger w-100"
+                style="font-size: 0.98em"
+              >
+                Se déconnecter
+              </button>
             </div>
           </div>
         </div>
-        <script>  
+        <script>
           // Affichage du menu profil au clic sur l'avatar et gestion photo profil
-          window.addEventListener('DOMContentLoaded', function() {
-            const avatar = document.getElementById('profileAvatar');
-            const dropdown = document.getElementById('profileDropdown');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const photoCircle = document.getElementById('profilePhotoCircle');
-            const photoInput = document.getElementById('profilePhotoInput');
-            const photoPreview = document.getElementById('profilePhotoPreview');
-            const cameraIcon = document.getElementById('cameraIcon');
-            const removePhotoBtn = document.getElementById('removePhotoBtn');
-            const mainAvatarPhoto = document.getElementById('mainAvatarPhoto');
-            const mainAvatarIcon = document.getElementById('mainAvatarIcon');
+          window.addEventListener("DOMContentLoaded", function () {
+            const avatar = document.getElementById("profileAvatar");
+            const dropdown = document.getElementById("profileDropdown");
+            const logoutBtn = document.getElementById("logoutBtn");
+            const photoCircle = document.getElementById("profilePhotoCircle");
+            const photoInput = document.getElementById("profilePhotoInput");
+            const photoPreview = document.getElementById("profilePhotoPreview");
+            const cameraIcon = document.getElementById("cameraIcon");
+            const removePhotoBtn = document.getElementById("removePhotoBtn");
+            const mainAvatarPhoto = document.getElementById("mainAvatarPhoto");
+            const mainAvatarIcon = document.getElementById("mainAvatarIcon");
             // Affichage du menu profil
             if (avatar && dropdown) {
-              avatar.onclick = function(e) {
+              avatar.onclick = function (e) {
                 e.stopPropagation();
-                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                dropdown.style.display =
+                  dropdown.style.display === "block" ? "none" : "block";
               };
-              document.addEventListener('click', function(e) {
+              document.addEventListener("click", function (e) {
                 if (!dropdown.contains(e.target) && e.target !== avatar) {
-                  dropdown.style.display = 'none';
+                  dropdown.style.display = "none";
                 }
               });
             }
@@ -530,39 +728,45 @@
               if (mainAvatarPhoto && mainAvatarIcon) {
                 if (photoUrl) {
                   mainAvatarPhoto.src = photoUrl;
-                  mainAvatarPhoto.style.display = 'block';
-                  mainAvatarIcon.style.display = 'none';
+                  mainAvatarPhoto.style.display = "block";
+                  mainAvatarIcon.style.display = "none";
                 } else {
-                  mainAvatarPhoto.src = '';
-                  mainAvatarPhoto.style.display = 'none';
-                  mainAvatarIcon.style.display = 'block';
+                  mainAvatarPhoto.src = "";
+                  mainAvatarPhoto.style.display = "none";
+                  mainAvatarIcon.style.display = "block";
                 }
               }
             }
-            if (photoCircle && photoInput && photoPreview && cameraIcon && removePhotoBtn) {
+            if (
+              photoCircle &&
+              photoInput &&
+              photoPreview &&
+              cameraIcon &&
+              removePhotoBtn
+            ) {
               // Affiche la photo si déjà stockée
-              const savedPhoto = localStorage.getItem('profilePhotoDataUrl');
+              const savedPhoto = localStorage.getItem("profilePhotoDataUrl");
               const showPhoto = (dataUrl) => {
                 photoPreview.src = dataUrl;
-                photoPreview.style.display = 'block';
-                cameraIcon.style.display = 'none';
-                removePhotoBtn.style.display = 'flex';
+                photoPreview.style.display = "block";
+                cameraIcon.style.display = "none";
+                removePhotoBtn.style.display = "flex";
                 updateMainAvatar(dataUrl);
               };
               const hidePhoto = () => {
-                photoPreview.src = '';
-                photoPreview.style.display = 'none';
-                cameraIcon.style.display = 'block';
-                removePhotoBtn.style.display = 'none';
+                photoPreview.src = "";
+                photoPreview.style.display = "none";
+                cameraIcon.style.display = "block";
+                removePhotoBtn.style.display = "none";
                 updateMainAvatar(null);
               };
               // Gestion d'erreur d'affichage d'image
-              photoPreview.onerror = function() {
+              photoPreview.onerror = function () {
                 hidePhoto();
                 // Ne rien afficher pour éviter le clignotement
               };
               if (mainAvatarPhoto) {
-                mainAvatarPhoto.onerror = function() {
+                mainAvatarPhoto.onerror = function () {
                   updateMainAvatar(null);
                   // Ne rien afficher pour éviter le clignotement
                 };
@@ -572,35 +776,42 @@
               } else {
                 hidePhoto();
               }
-              photoCircle.onclick = function(e) {
+              photoCircle.onclick = function (e) {
                 e.stopPropagation();
-                photoInput.value = '';
+                photoInput.value = "";
                 photoInput.click();
               };
-              photoInput.onchange = function(e) {
+              photoInput.onchange = function (e) {
                 const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
+                if (file && file.type.startsWith("image/")) {
                   // Limite de taille (1,5 Mo)
                   const maxSize = 1.5 * 1024 * 1024; // 1,5 Mo
                   if (file.size > maxSize) {
                     hidePhoto();
-                    showProfilePhotoError('Fichier trop volumineux (max 1,5 Mo).');
+                    showProfilePhotoError(
+                      "Fichier trop volumineux (max 1,5 Mo)."
+                    );
                     return;
-                  } 
+                  }
                   const reader = new FileReader();
-                  reader.onload = function(evt) {
+                  reader.onload = function (evt) {
                     // Teste si l'image est bien affichable
                     const testImg = new window.Image();
-                    testImg.onload = function() {
+                    testImg.onload = function () {
                       try {
-                        localStorage.setItem('profilePhotoDataUrl', evt.target.result);
+                        localStorage.setItem(
+                          "profilePhotoDataUrl",
+                          evt.target.result
+                        );
                         showPhoto(evt.target.result);
                       } catch (err) {
                         hidePhoto();
-                        showProfilePhotoError('Stockage insuffisant pour cette image.');
+                        showProfilePhotoError(
+                          "Stockage insuffisant pour cette image."
+                        );
                       }
                     };
-                    testImg.onerror = function() {
+                    testImg.onerror = function () {
                       hidePhoto();
                       // Ne rien afficher pour éviter le clignotement
                     };
@@ -609,36 +820,41 @@
                   reader.readAsDataURL(file);
                 } else {
                   hidePhoto();
-                  showProfilePhotoError('Veuillez sélectionner un fichier image valide.');
+                  showProfilePhotoError(
+                    "Veuillez sélectionner un fichier image valide."
+                  );
                 }
               };
-              removePhotoBtn.onclick = function(e) {
+              removePhotoBtn.onclick = function (e) {
                 e.stopPropagation();
                 try {
-                  localStorage.removeItem('profilePhotoDataUrl');
+                  localStorage.removeItem("profilePhotoDataUrl");
                 } catch (err) {}
                 hidePhoto();
               };
               // Message d'erreur pour la photo de profil
               function showProfilePhotoError(msg) {
-                let err = document.getElementById('profilePhotoErrorMsg');
+                let err = document.getElementById("profilePhotoErrorMsg");
                 if (!err) {
-                  err = document.createElement('div');
-                  err.id = 'profilePhotoErrorMsg';
-                  err.style.color = '#dc3545';
-                  err.style.fontSize = '0.93em';
-                  err.style.marginTop = '6px';
-                  err.style.textAlign = 'center';
+                  err = document.createElement("div");
+                  err.id = "profilePhotoErrorMsg";
+                  err.style.color = "#dc3545";
+                  err.style.fontSize = "0.93em";
+                  err.style.marginTop = "6px";
+                  err.style.textAlign = "center";
                   photoCircle.parentNode.appendChild(err);
                 }
                 err.textContent = msg;
-                setTimeout(() => { if (err) err.textContent = ''; }, 3500);
+                setTimeout(() => {
+                  if (err) err.textContent = "";
+                }, 3500);
               }
             }
             if (logoutBtn) {
-              logoutBtn.onclick = function(e) {
+              logoutBtn.onclick = function (e) {
                 e.preventDefault();
-                window.location.href = 'https://plateformdesuivie-its-service-1cjx.onrender.com/html/auth.html#login';
+                window.location.href =
+                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/auth.html#login";
               };
             }
             // Pour intégration future : remplacer ces valeurs dynamiquement après connexion
@@ -647,25 +863,112 @@
           });
         </script>
 
-        <div class="d-flex justify-content-center align-items-center mb-3 flex-wrap gap-2" style="background:#f8fafc;border-radius:12px;padding:18px 18px 10px 18px;box-shadow:0 2px 8px #2563eb11;">
-          <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1 1 220px;min-width:120px;">
-            <span style="font-weight:600;color:#0e274e;font-size:1.08em;">Filtrer du</span>
-            <input type="date" id="mainTableDateStartFilter" style="padding:6px 14px;border-radius:8px;border:1.5px solid #2563eb;font-size:1em;min-width:80px;max-width:100%;" />
-            <span style="font-weight:600;color:#0e274e;font-size:1.08em;">au</span>
-            <input type="date" id="mainTableDateEndFilter" style="padding:6px 14px;border-radius:8px;border:1.5px solid #2563eb;font-size:1em;min-width:80px;max-width:100%;" />
+        <div
+          class="d-flex justify-content-center align-items-center mb-3 flex-wrap gap-2"
+          style="
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 18px 18px 10px 18px;
+            box-shadow: 0 2px 8px #2563eb11;
+          "
+        >
+          <div
+            class="d-flex align-items-center gap-2 flex-wrap"
+            style="flex: 1 1 220px; min-width: 120px"
+          >
+            <span style="font-weight: 600; color: #0e274e; font-size: 1.08em"
+              >Filtrer du</span
+            >
+            <input
+              type="date"
+              id="mainTableDateStartFilter"
+              style="
+                padding: 6px 14px;
+                border-radius: 8px;
+                border: 1.5px solid #2563eb;
+                font-size: 1em;
+                min-width: 80px;
+                max-width: 100%;
+              "
+            />
+            <span style="font-weight: 600; color: #0e274e; font-size: 1.08em"
+              >au</span
+            >
+            <input
+              type="date"
+              id="mainTableDateEndFilter"
+              style="
+                padding: 6px 14px;
+                border-radius: 8px;
+                border: 1.5px solid #2563eb;
+                font-size: 1em;
+                min-width: 80px;
+                max-width: 100%;
+              "
+            />
           </div>
-          <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1 1 260px;min-width:120px;max-width:100vw;">
-            <i class="fas fa-search search-icon" style="color:#2563eb;font-size:1.15em;"></i>
-            <input type="search" id="searchInput" class="search-input" placeholder="Rechercher une livraison." aria-label="Recherche" style="flex:1 1 80px;min-width:80px;max-width:100%;padding:6px 12px;border-radius:8px;border:1.5px solid #2563eb;font-size:1em;" />
-            <button id="searchButton" class="btn btn-primary" style="font-weight:600;font-size:1em;padding:6px 22px;border-radius:8px;background:#2563eb;">Rechercher</button>
+          <div
+            class="d-flex align-items-center gap-2 flex-wrap"
+            style="flex: 1 1 260px; min-width: 120px; max-width: 100vw"
+          >
+            <i
+              class="fas fa-search search-icon"
+              style="color: #2563eb; font-size: 1.15em"
+            ></i>
+            <input
+              type="search"
+              id="searchInput"
+              class="search-input"
+              placeholder="Rechercher une livraison."
+              aria-label="Recherche"
+              style="
+                flex: 1 1 80px;
+                min-width: 80px;
+                max-width: 100%;
+                padding: 6px 12px;
+                border-radius: 8px;
+                border: 1.5px solid #2563eb;
+                font-size: 1em;
+              "
+            />
+            <button
+              id="searchButton"
+              class="btn btn-primary"
+              style="
+                font-weight: 600;
+                font-size: 1em;
+                padding: 6px 22px;
+                border-radius: 8px;
+                background: #2563eb;
+              "
+            >
+              Rechercher
+            </button>
           </div>
         </div>
 
-        <div id="tableScrollContainer" class="table-responsive overflow-x-auto" style="border-radius:18px;box-shadow:0 8px 32px rgba(37,99,235,0.10);background:#fff;width:100%;max-width:1200px;margin:0 auto;">
+        <div
+          id="tableScrollContainer"
+          class="table-responsive overflow-x-auto"
+          style="
+            border-radius: 18px;
+            background: #fff;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+          "
+        >
           <table
             id="deliveriesTable"
             class="table table-bordered table-hover align-middle"
-            style="width:100%;max-width:1200px;min-width:900px;border-radius:18px;table-layout:auto;margin:0 auto;"
+            style="
+              width: 100%;
+              max-width: 1200px;
+              min-width: 900px;
+              border-radius: 18px;
+              table-layout: auto;
+              margin: 0 auto;
+            "
           >
             <thead>
               <tr>
@@ -673,40 +976,56 @@
                   colspan="31"
                   id="agentAcconierHeader"
                   class="header-agent-acconier"
-                  style="font-size:1.25em;font-weight:700;background:linear-gradient(90deg,#2563eb 0%,#1e293b 100%);color:#fff;border-radius:18px 18px 0 0;letter-spacing:1px;"
+                  style="
+                    font-size: 1.25em;
+                    font-weight: 700;
+                    background: linear-gradient(
+                      90deg,
+                      #2563eb 0%,
+                      #1e293b 100%
+                    );
+                    color: #fff;
+                    border-radius: 18px 18px 0 0;
+                    letter-spacing: 1px;
+                  "
                 >
                   Responsable Acconier
                 </th>
               </tr>
               <tr id="deliveriesTableHead">
-                <th style="min-width:50px;">N°</th>
-                <th style="min-width:90px;">Date</th>
-                <th style="min-width:120px;">Agent</th>
-                <th style="min-width:120px;">Client (Nom)</th>
-                <th style="min-width:110px;">Client (Tél)</th>
-                <th style="min-width:120px;">Numéro TC(s)</th>
-                <th style="min-width:100px;">Lieu</th>
-                <th style="min-width:110px;">Type Conteneur (pied)</th>
-                <th style="min-width:110px;">Contenu</th>
-                <th style="min-width:110px;">N° Déclaration</th>
-                <th style="min-width:110px;">N° BL</th>
-                <th style="min-width:110px;">N° Dossier</th>
-                <th style="min-width:110px;">Nombre de conteneurs</th>
-                <th style="min-width:120px;">Compagnie Maritime</th>
-                <th style="min-width:90px;">Poids</th>
-                <th style="min-width:110px;">Nom du navire</th>
-                <th style="min-width:90px;">Circuit</th>
-                <th style="min-width:110px;">Mode de Transport</th>
-                <th style="min-width:120px;">Statut Dossier</th>
-                <th style="min-width:120px;">Observation</th>
+                <th style="min-width: 50px">N°</th>
+                <th style="min-width: 90px">Date</th>
+                <th style="min-width: 120px">Agent</th>
+                <th style="min-width: 120px">Client (Nom)</th>
+                <th style="min-width: 110px">Client (Tél)</th>
+                <th style="min-width: 120px">Numéro TC(s)</th>
+                <th style="min-width: 100px">Lieu</th>
+                <th style="min-width: 110px">Type Conteneur (pied)</th>
+                <th style="min-width: 110px">Contenu</th>
+                <th style="min-width: 110px">N° Déclaration</th>
+                <th style="min-width: 110px">N° BL</th>
+                <th style="min-width: 110px">N° Dossier</th>
+                <th style="min-width: 110px">Nombre de conteneurs</th>
+                <th style="min-width: 120px">Compagnie Maritime</th>
+                <th style="min-width: 90px">Poids</th>
+                <th style="min-width: 110px">Nom du navire</th>
+                <th style="min-width: 90px">Circuit</th>
+                <th style="min-width: 110px">Mode de Transport</th>
+                <th style="min-width: 120px">Statut Dossier</th>
+                <th style="min-width: 120px">Observation</th>
               </tr>
             </thead>
 
             <tbody id="deliveriesTableBody">
               <!-- Les lignes seront générées dynamiquement par JS -->
               <tr>
-                <td colspan="31" class="text-center text-muted" style="font-size:1.08em;padding:32px 0;">
-                  <i class="fas fa-spinner fa-spin me-2"></i> Chargement des livraisons...
+                <td
+                  colspan="31"
+                  class="text-center text-muted"
+                  style="font-size: 1.08em; padding: 32px 0"
+                >
+                  <i class="fas fa-spinner fa-spin me-2"></i> Chargement des
+                  livraisons...
                 </td>
               </tr>
             </tbody>
@@ -717,7 +1036,7 @@
           <ul class="pagination justify-content-center" id="pagination"></ul>
         </nav>
 
-        <div  
+        <div
           id="noDeliveriesMessage"
           class="text-center mt-3 text-muted d-none"
         >
@@ -725,9 +1044,7 @@
           le moment.
         </div>
       </section>
-    </div>
-        <p id="countdownMessage" class="countdown-message d-none"></p>
-      </div>
+      <p id="countdownMessage" class="countdown-message d-none"></p>
     </div>
 
     <!-- IMPORTANT: J'ai ajouté cet élément, il était référencé dans votre JS mais manquant dans le HTML -->
@@ -747,48 +1064,52 @@
     <script src="../js/scriptRespAcconier.js"></script>
     <script>
       // Injection du nom et email dans l'avatar et le dropdown profil après connexion
-      document.addEventListener('DOMContentLoaded', function() {
-        const userName = localStorage.getItem('userName');
-        const userEmail = localStorage.getItem('userEmail');
+      document.addEventListener("DOMContentLoaded", function () {
+        const userName = localStorage.getItem("userName");
+        const userEmail = localStorage.getItem("userEmail");
         if (userName && userEmail) {
           // Affiche le nom et l'email dans le dropdown profil
-          const nameEl = document.getElementById('profileName');
-          const emailEl = document.getElementById('profileEmail');
+          const nameEl = document.getElementById("profileName");
+          const emailEl = document.getElementById("profileEmail");
           if (nameEl) nameEl.textContent = userName;
           if (emailEl) emailEl.textContent = userEmail;
           // Avatar avec initiales (overlay sur l'icône FontAwesome)
-          const avatarEl = document.getElementById('profileAvatar');
+          const avatarEl = document.getElementById("profileAvatar");
           if (avatarEl) {
-            let initials = userName.split(' ').map(w => w[0]).join('').toUpperCase();
-            if (initials.length > 2) initials = initials.slice(0,2);
+            let initials = userName
+              .split(" ")
+              .map((w) => w[0])
+              .join("")
+              .toUpperCase();
+            if (initials.length > 2) initials = initials.slice(0, 2);
             // Cherche l'icône FontAwesome déjà présente
-            let icon = avatarEl.querySelector('i.fas.fa-user');
+            let icon = avatarEl.querySelector("i.fas.fa-user");
             if (!icon) {
-              icon = document.createElement('i');
-              icon.className = 'fas fa-user';
-              icon.style.fontSize = '2.1em';
-              icon.style.color = '#2563eb';
+              icon = document.createElement("i");
+              icon.className = "fas fa-user";
+              icon.style.fontSize = "2.1em";
+              icon.style.color = "#2563eb";
               avatarEl.appendChild(icon);
             }
             // Ajoute les initiales en overlay (position absolue)
-            let initialsSpan = avatarEl.querySelector('.avatar-initials');
+            let initialsSpan = avatarEl.querySelector(".avatar-initials");
             if (!initialsSpan) {
-              initialsSpan = document.createElement('span');
-              initialsSpan.className = 'avatar-initials';
-              initialsSpan.style.position = 'absolute';
-              initialsSpan.style.right = '8px';
-              initialsSpan.style.bottom = '8px';
-              initialsSpan.style.fontSize = '1.1em';
-              initialsSpan.style.fontWeight = '700';
-              initialsSpan.style.color = '#2563eb';
-              initialsSpan.style.background = '#fff';
-              initialsSpan.style.borderRadius = '50%';
-              initialsSpan.style.padding = '2px 7px';
-              initialsSpan.style.boxShadow = '0 1px 4px #2563eb22';
+              initialsSpan = document.createElement("span");
+              initialsSpan.className = "avatar-initials";
+              initialsSpan.style.position = "absolute";
+              initialsSpan.style.right = "8px";
+              initialsSpan.style.bottom = "8px";
+              initialsSpan.style.fontSize = "1.1em";
+              initialsSpan.style.fontWeight = "700";
+              initialsSpan.style.color = "#2563eb";
+              initialsSpan.style.background = "#fff";
+              initialsSpan.style.borderRadius = "50%";
+              initialsSpan.style.padding = "2px 7px";
+              initialsSpan.style.boxShadow = "0 1px 4px #2563eb22";
               avatarEl.appendChild(initialsSpan);
             }
             initialsSpan.textContent = initials;
-            avatarEl.style.position = 'relative';
+            avatarEl.style.position = "relative";
           }
         }
       });
