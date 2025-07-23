@@ -1140,7 +1140,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-        // Ajout du tooltip si texte tronqué ("...")
+        // Ajout du tooltip custom si texte tronqué
         if (col.id === "observation") {
           td.classList.add("observation-col");
           td.style.cursor = "pointer";
@@ -1151,10 +1151,57 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             displayValue = localObs;
           }
           td.textContent = displayValue;
-          td.title = displayValue;
           if (localObs && value && value !== "-" && value !== localObs) {
             localStorage.removeItem(localKey);
           }
+          // Tooltip custom au survol si texte tronqué
+          td.addEventListener("mouseenter", function (e) {
+            setTimeout(() => {
+              if (
+                td.offsetWidth < td.scrollWidth &&
+                td.textContent.trim() !== "-" &&
+                td.textContent.length > 0
+              ) {
+                let tooltip = document.createElement("div");
+                tooltip.className = "custom-tooltip-floating";
+                tooltip.textContent = td.textContent;
+                document.body.appendChild(tooltip);
+                // Positionnement près de la cellule
+                const rect = td.getBoundingClientRect();
+                tooltip.style.position = "fixed";
+                tooltip.style.left = rect.left + window.scrollX + 10 + "px";
+                tooltip.style.top = rect.top + window.scrollY - 8 + "px";
+                tooltip.style.background = "#fff";
+                tooltip.style.color = "#1e293b";
+                tooltip.style.padding = "8px 16px";
+                tooltip.style.borderRadius = "10px";
+                tooltip.style.boxShadow = "0 4px 18px rgba(30,41,59,0.13)";
+                tooltip.style.fontSize = "1em";
+                tooltip.style.fontWeight = "500";
+                tooltip.style.zIndex = 99999;
+                tooltip.style.maxWidth = "420px";
+                tooltip.style.wordBreak = "break-word";
+                tooltip.style.pointerEvents = "none";
+                tooltip.style.opacity = "0";
+                tooltip.style.transition = "opacity 0.18s";
+                setTimeout(() => {
+                  tooltip.style.opacity = "1";
+                }, 10);
+                td._customTooltip = tooltip;
+              }
+            }, 0);
+          });
+          td.addEventListener("mouseleave", function () {
+            if (td._customTooltip) {
+              td._customTooltip.style.opacity = "0";
+              setTimeout(() => {
+                if (td._customTooltip && td._customTooltip.parentNode) {
+                  td._customTooltip.parentNode.removeChild(td._customTooltip);
+                  td._customTooltip = null;
+                }
+              }, 120);
+            }
+          });
           td.onclick = function (e) {
             if (td.querySelector("textarea")) return;
             let currentText =
@@ -1168,7 +1215,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             textarea.style.padding = "2px 4px";
             async function saveObservation(val) {
               td.textContent = val || "-";
-              td.title = val;
               td.dataset.edited = "true";
               if (val && val.trim() !== "") {
                 localStorage.setItem(localKey, val.trim());
@@ -1201,16 +1247,53 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           };
         } else {
           td.textContent = value;
-          // Ajout du tooltip si texte tronqué ("...")
-          setTimeout(() => {
-            if (
-              td.offsetWidth < td.scrollWidth &&
-              td.textContent.trim() !== "-" &&
-              td.textContent.includes("...") === false
-            ) {
-              td.title = td.textContent;
+          // Tooltip custom au survol si texte tronqué
+          td.addEventListener("mouseenter", function (e) {
+            setTimeout(() => {
+              if (
+                td.offsetWidth < td.scrollWidth &&
+                td.textContent.trim() !== "-" &&
+                td.textContent.length > 0
+              ) {
+                let tooltip = document.createElement("div");
+                tooltip.className = "custom-tooltip-floating";
+                tooltip.textContent = td.textContent;
+                document.body.appendChild(tooltip);
+                const rect = td.getBoundingClientRect();
+                tooltip.style.position = "fixed";
+                tooltip.style.left = rect.left + window.scrollX + 10 + "px";
+                tooltip.style.top = rect.top + window.scrollY - 8 + "px";
+                tooltip.style.background = "#fff";
+                tooltip.style.color = "#1e293b";
+                tooltip.style.padding = "8px 16px";
+                tooltip.style.borderRadius = "10px";
+                tooltip.style.boxShadow = "0 4px 18px rgba(30,41,59,0.13)";
+                tooltip.style.fontSize = "1em";
+                tooltip.style.fontWeight = "500";
+                tooltip.style.zIndex = 99999;
+                tooltip.style.maxWidth = "420px";
+                tooltip.style.wordBreak = "break-word";
+                tooltip.style.pointerEvents = "none";
+                tooltip.style.opacity = "0";
+                tooltip.style.transition = "opacity 0.18s";
+                setTimeout(() => {
+                  tooltip.style.opacity = "1";
+                }, 10);
+                td._customTooltip = tooltip;
+              }
+            }, 0);
+          });
+          td.addEventListener("mouseleave", function () {
+            if (td._customTooltip) {
+              td._customTooltip.style.opacity = "0";
+              setTimeout(() => {
+                if (td._customTooltip && td._customTooltip.parentNode) {
+                  td._customTooltip.parentNode.removeChild(td._customTooltip);
+                  td._customTooltip = null;
+                }
+              }, 120);
             }
-          }, 0);
+          });
         }
       }
       tr.appendChild(td);
