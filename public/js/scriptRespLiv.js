@@ -123,6 +123,21 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   setupWebSocket();
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
+  // Ajout d'un affichage debug pour le nombre de livraisons
+  let debugDiv = document.getElementById("deliveriesDebugInfo");
+  if (!debugDiv) {
+    debugDiv = document.createElement("div");
+    debugDiv.id = "deliveriesDebugInfo";
+    debugDiv.style.fontSize = "1em";
+    debugDiv.style.color = "#eab308";
+    debugDiv.style.fontWeight = "bold";
+    debugDiv.style.marginBottom = "8px";
+    debugDiv.style.textAlign = "left";
+    const tableBody = document.getElementById("deliveriesTableBody");
+    if (tableBody && tableBody.parentNode) {
+      tableBody.parentNode.insertBefore(debugDiv, tableBody);
+    }
+  }
   const styleTC = document.createElement("style");
   styleTC.textContent = `
     #deliveriesTableBody .tc-tag {      
@@ -299,9 +314,16 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         allDeliveries = [];
       }
+      // Affichage debug : nombre de livraisons chargées
+      if (debugDiv) {
+        debugDiv.textContent = `Livraisons chargées : ${allDeliveries.length}`;
+      }
     } catch (e) {
       console.error("Erreur lors du chargement des livraisons :", e);
       allDeliveries = [];
+      if (debugDiv) {
+        debugDiv.textContent = `Erreur lors du chargement des livraisons.`;
+      }
     }
   }
 
@@ -354,6 +376,10 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fonction principale pour charger et afficher selon la plage de dates
   function updateTableForDateRange(dateStartStr, dateEndStr) {
     let filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
+    // Affichage debug : nombre de livraisons filtrées
+    if (debugDiv) {
+      debugDiv.textContent = `Livraisons chargées : ${allDeliveries.length} | Livraisons filtrées : ${filtered.length}`;
+    }
     const tableContainer = document.getElementById("deliveriesTableBody");
     if (tableContainer) {
       renderAgentTableFull(filtered, tableContainer);
