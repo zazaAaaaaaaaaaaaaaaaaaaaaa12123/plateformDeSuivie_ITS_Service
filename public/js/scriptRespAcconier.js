@@ -798,7 +798,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           "0 2px 12px rgba(37,99,235,0.13), 0 1.5px 8px rgba(30,41,59,0.10)";
         avatar.style.position = "relative";
         avatar.style.margin = "0 auto";
-        // Initiales de l'agent ou numéro
+        // Initiales de l'agent ou numéro (s)
         let initials = "-";
         if (
           delivery.employee_name &&
