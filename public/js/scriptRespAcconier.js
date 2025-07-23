@@ -143,9 +143,13 @@ document.addEventListener("DOMContentLoaded", function () {
   `);
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
-  // Ajout des deux champs de date (début et fin)
+  // Ajout des deux champs de date (début et fin) et déplacement du champ de recherche avec bouton et icône
   let dateStartInput = document.getElementById("mainTableDateStartFilter");
   let dateEndInput = document.getElementById("mainTableDateEndFilter");
+  // Sélection du champ de recherche, bouton et icône déjà présents dans le DOM
+  const searchInput = document.getElementById("mainTableSearchInput");
+  const searchBtn = document.getElementById("mainTableSearchBtn");
+  const searchIcon = document.getElementById("mainTableSearchIcon");
   // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
   const oldDateInput = document.getElementById("mainTableDateFilter");
   if (!dateStartInput || !dateEndInput) {
@@ -180,12 +184,34 @@ document.addEventListener("DOMContentLoaded", function () {
     rangeDiv.appendChild(dateStartInput);
     rangeDiv.appendChild(label2);
     rangeDiv.appendChild(dateEndInput);
+    // Ajout du champ de recherche, bouton et icône à côté des dates
+    if (searchInput) {
+      rangeDiv.appendChild(searchInput);
+      if (searchIcon) {
+        rangeDiv.appendChild(searchIcon);
+      }
+      if (searchBtn) {
+        rangeDiv.appendChild(searchBtn);
+      }
+    }
     // Ajout dans le DOM
     if (oldDateInput) {
       oldDateInput.style.display = "none";
       parent.insertBefore(rangeDiv, oldDateInput);
     } else {
       document.body.insertBefore(rangeDiv, document.body.firstChild);
+    }
+  } else {
+    // Si les inputs existent déjà, on déplace le champ de recherche, bouton et icône à côté
+    const rangeDiv = dateStartInput.parentNode;
+    if (searchInput && rangeDiv && !rangeDiv.contains(searchInput)) {
+      rangeDiv.appendChild(searchInput);
+    }
+    if (searchIcon && rangeDiv && !rangeDiv.contains(searchIcon)) {
+      rangeDiv.appendChild(searchIcon);
+    }
+    if (searchBtn && rangeDiv && !rangeDiv.contains(searchBtn)) {
+      rangeDiv.appendChild(searchBtn);
     }
   }
 
