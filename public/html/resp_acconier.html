@@ -109,11 +109,12 @@
         padding: 0 6px 0 6px;
         position: absolute;
         top: 10px;
-        right: 10px;
-        z-index: 2;
-        display: inline-flex;
-        align-items: center;
-        transition: filter 0.18s;
+          border-radius: 16px;
+          box-shadow: 0 4px 24px 0 rgba(30,41,59,0.10);
+          background: #fff;
+          padding: 10px 2px 8px 2px;
+          margin-bottom: 14px;
+          max-width: 98vw;
       }
       .delete-history-btn.mobile-out {
         background: #f1f5f9;
@@ -121,29 +122,60 @@
         color: #dc2626;
         font-size: 1.1em;
         cursor: pointer;
-        padding: 7px 16px;
-        border-radius: 8px;
-        box-shadow: 0 1px 4px #2563eb11;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 600;
-        margin-top: 2px;
       }
-      .delete-history-btn-mobile-wrap {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 13px;
+        .table th, .table td {
+          border: none;
+          border-bottom: 1.2px solid #e9ecef;
+          padding: 0.48rem 0.45rem;
+          font-size: 0.95em;
+          max-width: 220px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          gap: 6px;
+        }
+        /* Appliquer la couleur d'entête (bleu) à la colonne Numéro TC(s) */
+        .table thead tr#deliveriesTableHead th:nth-child(6) {
+          background: #007bff;
+          color: #fff;
+          border-right: 1px solid #e9ecef;
+        }
+        /* Correction du style pour la colonne Statut Dossier */
+        .table tbody td.statut-dossier-cell {
+          white-space: normal !important;
+          overflow: visible !important;
+          text-overflow: unset !important;
+          font-size: 0.97em;
+          padding: 0.48rem 0.45rem;
+          min-width: 140px;
+          max-width: 220px;
+          word-break: break-word;
+          vertical-align: middle;
+          font-weight: 600;
+        }
+      
+          .table th, .table td {
+            font-size: 0.89em;
+            padding: 0.38rem 0.18rem;
+            max-width: 120px;
+          }
+          .table-responsive {
+            padding: 2px 0 0 0;
       }
 
       /* Par défaut, bouton mobile caché, bouton desktop visible */
-      .delete-history-btn.desktop-in {
-        display: inline-flex;
-      }
-      .delete-history-btn.mobile-out,
-      .delete-history-btn-mobile-wrap {
-        display: none;
-      }
+          .table-responsive {
+            padding: 1px 0 0 0;
+          }
+          .table th, .table td {
+            font-size: 0.85em;
+            padding: 0.28rem 0.08rem;
+            max-width: 80px;
+          }
+          .table tbody td.statut-dossier-cell {
+            min-width: 80px;
+            max-width: 120px;
+          }
 
       @media (max-width: 600px) {
         .delete-history-btn.desktop-in {
