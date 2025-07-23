@@ -542,17 +542,39 @@
             if (photoCircle && photoInput && photoPreview && cameraIcon && removePhotoBtn) {
               // Affiche la photo si déjà stockée
               const savedPhoto = localStorage.getItem('profilePhotoDataUrl');
-              if (savedPhoto) {
-                photoPreview.src = savedPhoto;
+              const showPhoto = (dataUrl) => {
+                photoPreview.src = dataUrl;
                 photoPreview.style.display = 'block';
                 cameraIcon.style.display = 'none';
                 removePhotoBtn.style.display = 'flex';
-                updateMainAvatar(savedPhoto);
-              } else {
+                updateMainAvatar(dataUrl);
+              };
+              const hidePhoto = () => {
+                photoPreview.src = '';
+                photoPreview.style.display = 'none';
+                cameraIcon.style.display = 'block';
+                removePhotoBtn.style.display = 'none';
                 updateMainAvatar(null);
+              };
+              // Gestion d'erreur d'affichage d'image
+              photoPreview.onerror = function() {
+                hidePhoto();
+                showProfilePhotoError('Format d\'image non supporté ou fichier corrompu.');
+              };
+              if (mainAvatarPhoto) {
+                mainAvatarPhoto.onerror = function() {
+                  updateMainAvatar(null);
+                  showProfilePhotoError('Impossible d\'afficher la photo de profil.');
+                };
+              }
+              if (savedPhoto) {
+                showPhoto(savedPhoto);
+              } else {
+                hidePhoto();
               }
               photoCircle.onclick = function(e) {
                 e.stopPropagation();
+                photoInput.value = '';
                 photoInput.click();
               };
               photoInput.onchange = function(e) {
@@ -560,25 +582,44 @@
                 if (file && file.type.startsWith('image/')) {
                   const reader = new FileReader();
                   reader.onload = function(evt) {
-                    photoPreview.src = evt.target.result;
-                    photoPreview.style.display = 'block';
-                    cameraIcon.style.display = 'none';
-                    removePhotoBtn.style.display = 'flex';
-                    localStorage.setItem('profilePhotoDataUrl', evt.target.result);
-                    updateMainAvatar(evt.target.result);
+                    // Teste si l'image est bien affichable
+                    const testImg = new window.Image();
+                    testImg.onload = function() {
+                      showPhoto(evt.target.result);
+                      localStorage.setItem('profilePhotoDataUrl', evt.target.result);
+                    };
+                    testImg.onerror = function() {
+                      hidePhoto();
+                      showProfilePhotoError('Format d\'image non supporté ou fichier corrompu.');
+                    };
+                    testImg.src = evt.target.result;
                   };
                   reader.readAsDataURL(file);
+                } else {
+                  hidePhoto();
+                  showProfilePhotoError('Veuillez sélectionner un fichier image valide.');
                 }
               };
               removePhotoBtn.onclick = function(e) {
                 e.stopPropagation();
                 localStorage.removeItem('profilePhotoDataUrl');
-                photoPreview.src = '';
-                photoPreview.style.display = 'none';
-                cameraIcon.style.display = 'block';
-                removePhotoBtn.style.display = 'none';
-                updateMainAvatar(null);
+                hidePhoto();
               };
+              // Message d'erreur pour la photo de profil
+              function showProfilePhotoError(msg) {
+                let err = document.getElementById('profilePhotoErrorMsg');
+                if (!err) {
+                  err = document.createElement('div');
+                  err.id = 'profilePhotoErrorMsg';
+                  err.style.color = '#dc3545';
+                  err.style.fontSize = '0.93em';
+                  err.style.marginTop = '6px';
+                  err.style.textAlign = 'center';
+                  photoCircle.parentNode.appendChild(err);
+                }
+                err.textContent = msg;
+                setTimeout(() => { if (err) err.textContent = ''; }, 3500);
+              }
             }
             if (logoutBtn) {
               logoutBtn.onclick = function(e) {
