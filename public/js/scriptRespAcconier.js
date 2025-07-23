@@ -741,14 +741,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       let value = "-";
       if (col.id === "row_number") {
         value = i + 1;
-        // Ajout de la bande colorée verticale à gauche du numéro
+        // Ajout de la bande colorée verticale à gauche du numéro, responsive
         const band = document.createElement("span");
         band.style.display = "inline-block";
-        band.style.width = "6px";
-        band.style.height = "28px";
+        band.style.width = window.innerWidth <= 600 ? "4px" : "6px";
+        band.style.height = window.innerWidth <= 600 ? "18px" : "28px";
         band.style.background = color;
         band.style.borderRadius = "4px";
-        band.style.marginRight = "8px";
+        band.style.marginRight = window.innerWidth <= 600 ? "4px" : "8px";
         band.style.verticalAlign = "middle";
         td.appendChild(band);
         const numSpan = document.createElement("span");
@@ -782,19 +782,24 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           btn.innerHTML =
             tcList
               .slice(0, 2)
-              .map((tc) => `<span class="tc-tag">${tc}</span>`)
+              .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
               .join("") +
             (tcList.length > 2
-              ? ` <span class="tc-tag tc-tag-more">+${tcList.length - 2}</span>`
+              ? ` <span class=\"tc-tag tc-tag-more\">+${
+                  tcList.length - 2
+                }</span>`
               : "") +
             ' <i class="fas fa-chevron-down tc-chevron"></i>';
           const popup = document.createElement("div");
           popup.className = "tc-popup";
           popup.style.display = "none";
+          // Responsive popup width
+          popup.style.minWidth = window.innerWidth <= 600 ? "90px" : "120px";
+          popup.style.fontSize = window.innerWidth <= 600 ? "0.97em" : "1.05em";
           popup.innerHTML = tcList
             .map(
               (tc) =>
-                `<div class="tc-popup-item" style='cursor:pointer;'>${tc}</div>`
+                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
             )
             .join("");
           btn.onclick = (e) => {
@@ -812,6 +817,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               showContainerDetailPopup(delivery, item.textContent);
             };
           });
+          // Fermer le popup au toucher/clic hors du bouton sur mobile
           document.addEventListener("click", function hidePopup(e) {
             if (!td.contains(e.target)) popup.style.display = "none";
           });
@@ -1297,7 +1303,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
       }
       tr.appendChild(td);
-      // Fonction pour afficher le menu déroulant TC (popup) : uniquement infos TC
+      // Fonction pour afficher le menu déroulant TC (popup) : uniquement infos TC, responsive
       function showContainerDetailPopup(delivery, containerNumber) {
         const oldPopup = document.getElementById("containerDetailPopup");
         if (oldPopup) oldPopup.remove();
@@ -1315,11 +1321,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         overlay.style.justifyContent = "center";
         const box = document.createElement("div");
         box.style.background = "#fff";
-        box.style.borderRadius = "16px";
+        box.style.borderRadius = window.innerWidth <= 600 ? "10px" : "16px";
         box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-        box.style.maxWidth = "420px";
-        box.style.width = "96vw";
-        box.style.maxHeight = "92vh";
+        box.style.maxWidth = window.innerWidth <= 600 ? "98vw" : "420px";
+        box.style.width = window.innerWidth <= 600 ? "98vw" : "96vw";
+        box.style.maxHeight = window.innerWidth <= 600 ? "96vh" : "92vh";
         box.style.overflowY = "auto";
         box.style.padding = "0";
         box.style.position = "relative";
@@ -1328,13 +1334,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         const header = document.createElement("div");
         header.style.background = "#2563eb";
         header.style.color = "#fff";
-        header.style.padding = "18px 28px 12px 28px";
+        header.style.padding =
+          window.innerWidth <= 600
+            ? "12px 12px 8px 12px"
+            : "18px 28px 12px 28px";
         header.style.fontWeight = "bold";
-        header.style.fontSize = "1.15rem";
+        header.style.fontSize =
+          window.innerWidth <= 600 ? "1.01rem" : "1.15rem";
         header.style.display = "flex";
         header.style.flexDirection = "column";
-        header.style.borderTopLeftRadius = "16px";
-        header.style.borderTopRightRadius = "16px";
+        header.style.borderTopLeftRadius =
+          window.innerWidth <= 600 ? "10px" : "16px";
+        header.style.borderTopRightRadius =
+          window.innerWidth <= 600 ? "10px" : "16px";
         header.innerHTML = `
           <div style='margin-bottom:2px;'>
             <span style='font-size:1.08em;'>${
@@ -1355,24 +1367,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         closeBtn.style.background = "none";
         closeBtn.style.border = "none";
         closeBtn.style.color = "#fff";
-        closeBtn.style.fontSize = "2.1rem";
+        closeBtn.style.fontSize =
+          window.innerWidth <= 600 ? "1.5rem" : "2.1rem";
         closeBtn.style.cursor = "pointer";
         closeBtn.style.position = "absolute";
-        closeBtn.style.top = "10px";
-        closeBtn.style.right = "18px";
+        closeBtn.style.top = window.innerWidth <= 600 ? "4px" : "10px";
+        closeBtn.style.right = window.innerWidth <= 600 ? "8px" : "18px";
         closeBtn.setAttribute("aria-label", "Fermer");
         closeBtn.onclick = () => overlay.remove();
         header.appendChild(closeBtn);
         box.appendChild(header);
         const content = document.createElement("div");
-        content.style.padding = "24px 24px 24px 24px";
+        content.style.padding =
+          window.innerWidth <= 600
+            ? "14px 10px 14px 10px"
+            : "24px 24px 24px 24px";
         content.style.background = "#f8fafc";
         content.style.flex = "1 1 auto";
         content.style.overflowY = "auto";
         const tcNum = document.createElement("div");
-        tcNum.style.fontSize = "1.25em";
+        tcNum.style.fontSize = window.innerWidth <= 600 ? "1.08em" : "1.25em";
         tcNum.style.fontWeight = "bold";
-        tcNum.style.marginBottom = "18px";
+        tcNum.style.marginBottom = window.innerWidth <= 600 ? "10px" : "18px";
         tcNum.style.textAlign = "center";
         tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${containerNumber}</span>`;
         content.appendChild(tcNum);
@@ -1382,6 +1398,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         overlay.onclick = (e) => {
           if (e.target === overlay) overlay.remove();
         };
+        // Scroll popup sur mobile si besoin
+        if (window.innerWidth <= 600) {
+          box.style.overflowY = "auto";
+          content.style.maxHeight = "60vh";
+        }
       }
     });
     tableBodyElement.appendChild(tr);
