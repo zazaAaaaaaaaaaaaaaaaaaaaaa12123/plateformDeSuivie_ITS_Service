@@ -1536,18 +1536,102 @@ document.addEventListener("DOMContentLoaded", function () {
   renderProfileAvatar();
   setupProfilePhotoUpload();
 
-  // --- Déconnexion ---
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      // Nettoyer toutes les infos utilisateur du localStorage
-      localStorage.removeItem("userName");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("userPhoto");
-      // Rediriger vers la page de connexion (onglet connexion actif)
-      window.location.href =
-        "https://plateformdesuivie-its-service-1cjx.onrender.com/html/auth.html#login";
+  // --- Popup profil flottant (déconnexion + upload photo) ---
+  const avatar = document.getElementById("profileAvatar");
+  let profilePopup = null;
+  if (avatar) {
+    avatar.style.cursor = "pointer";
+    avatar.addEventListener("click", function (e) {
+      e.stopPropagation();
+      // Fermer l’ancienne popup si déjà ouverte
+      if (profilePopup) profilePopup.remove();
+      // Création de la popup flottante
+      profilePopup = document.createElement("div");
+      profilePopup.style.position = "fixed";
+      profilePopup.style.top =
+        avatar.getBoundingClientRect().bottom + 8 + window.scrollY + "px";
+      profilePopup.style.left =
+        avatar.getBoundingClientRect().left + window.scrollX + "px";
+      profilePopup.style.background = "#fff";
+      profilePopup.style.borderRadius = "14px";
+      profilePopup.style.boxShadow = "0 8px 32px rgba(30,60,114,0.18)";
+      profilePopup.style.padding = "18px 24px 14px 24px";
+      profilePopup.style.zIndex = 10001;
+      profilePopup.style.display = "flex";
+      profilePopup.style.flexDirection = "column";
+      profilePopup.style.alignItems = "center";
+      profilePopup.style.minWidth = "180px";
+      // Icône appareil photo pour upload
+      const cameraBtn = document.createElement("button");
+      cameraBtn.type = "button";
+      cameraBtn.title = "Changer la photo de profil";
+      cameraBtn.style.background = "none";
+      cameraBtn.style.border = "none";
+      cameraBtn.style.cursor = "pointer";
+      cameraBtn.style.marginBottom = "12px";
+      cameraBtn.style.fontSize = "1.7em";
+      cameraBtn.style.color = "#2563eb";
+      cameraBtn.innerHTML = '<i class="fa fa-camera"></i>';
+      // Input file caché
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.style.display = "none";
+      cameraBtn.onclick = function () {
+        input.click();
+      };
+      input.addEventListener("change", function () {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+          alert("Veuillez sélectionner une image.");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          localStorage.setItem("userPhoto", evt.target.result);
+          renderProfileAvatar();
+          if (profilePopup) profilePopup.remove();
+        };
+        reader.readAsDataURL(file);
+      });
+      profilePopup.appendChild(cameraBtn);
+      profilePopup.appendChild(input);
+      // Bouton déconnexion
+      const logoutBtn = document.createElement("button");
+      logoutBtn.textContent = "Déconnexion";
+      logoutBtn.style.background = "#e11d48";
+      logoutBtn.style.color = "#fff";
+      logoutBtn.style.border = "none";
+      logoutBtn.style.borderRadius = "7px";
+      logoutBtn.style.padding = "8px 16px";
+      logoutBtn.style.fontWeight = "600";
+      logoutBtn.style.cursor = "pointer";
+      logoutBtn.style.boxShadow = "0 2px 8px rgba(225,29,72,0.13)";
+      logoutBtn.style.fontSize = "1em";
+      logoutBtn.style.marginTop = "6px";
+      logoutBtn.onclick = function () {
+        localStorage.removeItem("userName");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userPhoto");
+        window.location.href =
+          "https://plateformdesuivie-its-service-1cjx.onrender.com/html/auth.html#login";
+      };
+      profilePopup.appendChild(logoutBtn);
+      document.body.appendChild(profilePopup);
+      // Fermer la popup si clic ailleurs
+      setTimeout(() => {
+        document.addEventListener("click", closeProfilePopup, { once: true });
+      }, 10);
+      function closeProfilePopup(ev) {
+        if (
+          profilePopup &&
+          !profilePopup.contains(ev.target) &&
+          ev.target !== avatar
+        ) {
+          profilePopup.remove();
+        }
+      }
     });
   }
 });
