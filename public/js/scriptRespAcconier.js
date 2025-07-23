@@ -741,19 +741,63 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       let value = "-";
       if (col.id === "row_number") {
         value = i + 1;
-        // Ajout de la bande colorée verticale à gauche du numéro, responsive
-        const band = document.createElement("span");
-        band.style.display = "inline-block";
-        band.style.width = window.innerWidth <= 600 ? "4px" : "6px";
-        band.style.height = window.innerWidth <= 600 ? "18px" : "28px";
-        band.style.background = color;
-        band.style.borderRadius = "4px";
-        band.style.marginRight = window.innerWidth <= 600 ? "4px" : "8px";
-        band.style.verticalAlign = "middle";
-        td.appendChild(band);
-        const numSpan = document.createElement("span");
-        numSpan.textContent = value;
-        td.appendChild(numSpan);
+        // Avatar stylisé moderne avec initiales
+        const avatar = document.createElement("div");
+        avatar.style.display = "flex";
+        avatar.style.alignItems = "center";
+        avatar.style.justifyContent = "center";
+        avatar.style.width = window.innerWidth <= 600 ? "32px" : "44px";
+        avatar.style.height = window.innerWidth <= 600 ? "32px" : "44px";
+        avatar.style.borderRadius = "50%";
+        avatar.style.background =
+          "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
+        avatar.style.boxShadow =
+          "0 2px 12px rgba(37,99,235,0.13), 0 1.5px 8px rgba(30,41,59,0.10)";
+        avatar.style.position = "relative";
+        avatar.style.margin = "0 auto";
+        // Initiales de l'agent ou numéro
+        let initials = "-";
+        if (
+          delivery.employee_name &&
+          typeof delivery.employee_name === "string"
+        ) {
+          const parts = delivery.employee_name.trim().split(/\s+/);
+          if (parts.length === 1) {
+            initials = parts[0].charAt(0).toUpperCase();
+          } else if (parts.length > 1) {
+            initials =
+              parts[0].charAt(0).toUpperCase() +
+              parts[1].charAt(0).toUpperCase();
+          }
+        } else {
+          initials = value;
+        }
+        const initialsSpan = document.createElement("span");
+        initialsSpan.textContent = initials;
+        initialsSpan.style.color = "#fff";
+        initialsSpan.style.fontWeight = "bold";
+        initialsSpan.style.fontSize =
+          window.innerWidth <= 600 ? "1.1em" : "1.25em";
+        initialsSpan.style.letterSpacing = "0.5px";
+        avatar.appendChild(initialsSpan);
+        // Effet de halo
+        avatar.style.boxShadow += ", 0 0 0 6px #e0e7ef33";
+        // Badge numéro (optionnel, petit rond blanc en bas à droite)
+        const badge = document.createElement("span");
+        badge.textContent = value;
+        badge.style.position = "absolute";
+        badge.style.bottom = "-6px";
+        badge.style.right = "-6px";
+        badge.style.background = "#fff";
+        badge.style.color = "#2563eb";
+        badge.style.fontWeight = "bold";
+        badge.style.fontSize = window.innerWidth <= 600 ? "0.85em" : "1em";
+        badge.style.borderRadius = "50%";
+        badge.style.padding = window.innerWidth <= 600 ? "2px 6px" : "3px 8px";
+        badge.style.boxShadow = "0 1px 4px rgba(30,41,59,0.13)";
+        badge.style.border = "2px solid #f1f5f9";
+        avatar.appendChild(badge);
+        td.appendChild(avatar);
         td.classList.add("row-number-col");
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
@@ -1477,62 +1521,3 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   }
 }
 //originale
-
-// Gestion du bouton de déconnexion et de la photo de profil dans le menu profil/avatar
-/*document.addEventListener("DOMContentLoaded", function () {
-  // --- Avatar photo ou initiales ---
-  function renderProfileAvatar() {
-    // On suppose que l'avatar a l'id 'profileAvatar' et le menu le conteneur 'profileMenu'
-    const avatar = document.getElementById("profileAvatar");
-    if (!avatar) return;
-    // Nettoyage
-    avatar.innerHTML = "";
-    let photo = localStorage.getItem("userPhoto");
-    let name = localStorage.getItem("userName") || "-";
-    if (photo) {
-      // Affiche la photo
-      const img = document.createElement("img");
-      img.src = photo;
-      img.alt = "Photo de profil";
-      img.style.width = "100%";
-      img.style.height = "100%";
-      img.style.objectFit = "cover";
-      img.style.borderRadius = "50%";
-      avatar.appendChild(img);
-    } else {
-      // Affiche les initiales
-      const initials = name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-      avatar.textContent = initials;
-    }
-  }
-
-  // --- Upload photo de profil ---
-  function setupProfilePhotoUpload() {
-    // On suppose qu'il y a un input type="file" avec id 'profilePhotoInput'
-    const input = document.getElementById("profilePhotoInput");
-    if (!input) return;
-    input.addEventListener("change", function (e) {
-      const file = input.files && input.files[0];
-      if (!file) return;
-      if (!file.type.startsWith("image/")) {
-        alert("Veuillez sélectionner une image.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function (evt) {
-        localStorage.setItem("userPhoto", evt.target.result);
-        renderProfileAvatar();
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  // Initialisation avatar et upload
-  renderProfileAvatar();
-  setupProfilePhotoUpload();
-});*/
