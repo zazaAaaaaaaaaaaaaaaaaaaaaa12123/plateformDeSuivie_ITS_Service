@@ -737,6 +737,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 // Colonnes strictes pour Agent Acconier
 const AGENT_TABLE_COLUMNS = [
+  { id: "select_row", label: "" }, // Colonne de sélection
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent" },
@@ -1658,6 +1659,70 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     });
     tableBodyElement.appendChild(tr);
   });
+  // Ajout du bouton de suppression si besoin
+  addDeleteButtonIfNeeded(tableBodyElement);
+  // Fin de la fonction renderAgentTableRows
+
+  // Fonction utilitaire pour afficher/masquer le bouton de suppression
+  function updateDeleteButtonVisibility() {
+    const checked = document.querySelectorAll(".select-row-checkbox:checked");
+    const btn = document.getElementById("deleteRowsBtn");
+    if (btn) btn.style.display = checked.length > 0 ? "inline-block" : "none";
+  }
+
+  function addDeleteButtonIfNeeded(tableBodyElement) {
+    let btn = document.getElementById("deleteRowsBtn");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = "deleteRowsBtn";
+      btn.textContent = "Supprimer la sélection";
+      btn.style.position = "fixed";
+      btn.style.bottom = "32px";
+      btn.style.left = "50%";
+      btn.style.transform = "translateX(-50%)";
+      btn.style.background = "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+      btn.style.color = "#fff";
+      btn.style.fontWeight = "bold";
+      btn.style.fontSize = "1.08em";
+      btn.style.padding = "14px 38px";
+      btn.style.borderRadius = "16px";
+      btn.style.boxShadow = "0 6px 32px rgba(239,68,68,0.18)";
+      btn.style.zIndex = 99999;
+      btn.style.display = "none";
+      btn.onclick = function () {
+        // Confirmation avant suppression
+        if (
+          !confirm("Voulez-vous vraiment supprimer les lignes sélectionnées ?")
+        )
+          return;
+        const checked = document.querySelectorAll(
+          ".select-row-checkbox:checked"
+        );
+        const idsToDelete = Array.from(checked).map(
+          (cb) => cb.dataset.deliveryId
+        );
+        // Suppression dans la source de données globale
+        window.allDeliveries = (window.allDeliveries || []).filter(
+          (d) => !idsToDelete.includes(String(d.id))
+        );
+        // Mise à jour du tableau
+        if (typeof updateTableForDateRange === "function") {
+          const dateStartInput = document.getElementById(
+            "mainTableDateStartFilter"
+          );
+          const dateEndInput = document.getElementById(
+            "mainTableDateEndFilter"
+          );
+          const startVal = dateStartInput ? dateStartInput.value : "";
+          const endVal = dateEndInput ? dateEndInput.value : "";
+          updateTableForDateRange(startVal, endVal);
+        }
+        btn.style.display = "none";
+      };
+      document.body.appendChild(btn);
+    }
+    updateDeleteButtonVisibility();
+  }
 }
 
 // Fonction pour générer les en-têtes du tableau Agent Acconier
@@ -1667,7 +1732,24 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   const headerRow = document.createElement("tr");
   AGENT_TABLE_COLUMNS.forEach((col) => {
     const th = document.createElement("th");
-    th.textContent = col.label;
+    if (col.id === "select_row") {
+      // Ajout d'une checkbox globale pour sélectionner tout
+      const selectAll = document.createElement("input");
+      selectAll.type = "checkbox";
+      selectAll.id = "selectAllRows";
+      selectAll.style.cursor = "pointer";
+      selectAll.onclick = function () {
+        const checkboxes = document.querySelectorAll(".select-row-checkbox");
+        checkboxes.forEach((cb) => {
+          cb.checked = selectAll.checked;
+        });
+        if (typeof updateDeleteButtonVisibility === "function")
+          updateDeleteButtonVisibility();
+      };
+      th.appendChild(selectAll);
+    } else {
+      th.textContent = col.label;
+    }
     th.setAttribute("data-col-id", col.id);
     headerRow.appendChild(th);
   });
