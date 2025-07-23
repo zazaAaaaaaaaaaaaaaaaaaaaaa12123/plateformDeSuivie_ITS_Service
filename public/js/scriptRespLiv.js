@@ -292,8 +292,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
-        // On ne garde que les livraisons dont TOUS les BL sont en 'mise_en_livraison'
+        // Correction : resp_liv.html doit afficher uniquement les livraisons dont le statut est "Mise en livraison"
         allDeliveries = data.deliveries.filter((delivery) => {
+          // On vérifie le statut général ou le statut des BL
+          // Si tous les BL sont en "mise_en_livraison" OU le statut principal est "mise_en_livraison"
           let blList = [];
           if (Array.isArray(delivery.bl_number)) {
             blList = delivery.bl_number.filter(Boolean);
@@ -305,9 +307,11 @@ document.addEventListener("DOMContentLoaded", function () {
               ? delivery.bl_statuses[bl]
               : "aucun"
           );
+          // Critère : au moins un BL en "mise_en_livraison" ou statut principal
+          const statutPrincipal = delivery.status || delivery.statut || "";
           return (
-            blStatuses.length > 0 &&
-            blStatuses.every((s) => s === "mise_en_livraison")
+            blStatuses.some((s) => s === "mise_en_livraison") ||
+            statutPrincipal === "mise_en_livraison"
           );
         });
       } else {
