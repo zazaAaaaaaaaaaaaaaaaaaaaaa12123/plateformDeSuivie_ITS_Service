@@ -146,6 +146,30 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout des deux champs de date (début et fin)
   let dateStartInput = document.getElementById("mainTableDateStartFilter");
   let dateEndInput = document.getElementById("mainTableDateEndFilter");
+  // Ajout du champ de recherche N° Dossier / N° BL
+  let dossierBlSearchInput = document.getElementById(
+    "mainTableDossierBlSearch"
+  );
+  if (!dossierBlSearchInput) {
+    dossierBlSearchInput = document.createElement("input");
+    dossierBlSearchInput.type = "text";
+    dossierBlSearchInput.id = "mainTableDossierBlSearch";
+    dossierBlSearchInput.placeholder = "Rechercher N° Dossier ou N° BL...";
+    dossierBlSearchInput.style.padding = "6px 10px";
+    dossierBlSearchInput.style.borderRadius = "8px";
+    dossierBlSearchInput.style.border = "1.5px solid #2563eb";
+    dossierBlSearchInput.style.marginLeft = "12px";
+    dossierBlSearchInput.style.minWidth = "220px";
+    // Ajout dans le DOM à côté des filtres date
+    if (dateEndInput && dateEndInput.parentNode) {
+      dateEndInput.parentNode.appendChild(dossierBlSearchInput);
+    } else {
+      document.body.insertBefore(
+        dossierBlSearchInput,
+        document.body.firstChild
+      );
+    }
+  }
   // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
   const oldDateInput = document.getElementById("mainTableDateFilter");
   if (!dateStartInput || !dateEndInput) {
@@ -659,14 +683,18 @@ document.addEventListener("DOMContentLoaded", function () {
       "[DEBUG] updateTableForDateRange - livraisons filtrées:",
       filtered
     );
-    // Filtre sur N° Dossier et N° BL uniquement via le champ de recherche existant
-    const searchInput = document.getElementById("mainTableDossierBlSearch");
-    const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    // Filtre supplémentaire sur N° Dossier / N° BL si champ rempli
+    const dossierBlSearchInput = document.getElementById(
+      "mainTableDossierBlSearch"
+    );
+    const searchVal = dossierBlSearchInput
+      ? dossierBlSearchInput.value.trim().toLowerCase()
+      : "";
     if (searchVal) {
       filtered = filtered.filter((delivery) => {
-        // Filtre sur N° Dossier
+        // N° Dossier
         let dossier = String(delivery.dossier_number || "").toLowerCase();
-        // Filtre sur N° BL (array ou string)
+        // N° BL (peut être array ou string)
         let bls = [];
         if (Array.isArray(delivery.bl_number)) {
           bls = delivery.bl_number.map((b) => String(b).toLowerCase());
@@ -711,12 +739,9 @@ document.addEventListener("DOMContentLoaded", function () {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
     // Ajout listener sur le champ de recherche N° Dossier / N° BL
-    const searchInput = document.getElementById("mainTableDossierBlSearch");
-    if (searchInput) {
-      searchInput.addEventListener("input", () => {
-        updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-      });
-    }
+    dossierBlSearchInput.addEventListener("input", () => {
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+    });
   }
 });
 // Colonnes strictes pour Agent Acconier
