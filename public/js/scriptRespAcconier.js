@@ -676,7 +676,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const cell = document.createElement("td");
         let value = "-";
         if (col.id === "select_row") {
-          // Ajout de la case à cocher pour la sélection
+          // Ajout de la case à cocher pour la sélection zh
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
           checkbox.className = "select-row-checkbox";
