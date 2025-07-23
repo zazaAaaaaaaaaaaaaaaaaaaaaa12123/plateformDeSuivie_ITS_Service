@@ -146,6 +146,30 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout des deux champs de date (début et fin)
   let dateStartInput = document.getElementById("mainTableDateStartFilter");
   let dateEndInput = document.getElementById("mainTableDateEndFilter");
+  // Ajout du champ de recherche N° Dossier / N° BL
+  let dossierBlSearchInput = document.getElementById(
+    "mainTableDossierBlSearch"
+  );
+  if (!dossierBlSearchInput) {
+    dossierBlSearchInput = document.createElement("input");
+    dossierBlSearchInput.type = "text";
+    dossierBlSearchInput.id = "mainTableDossierBlSearch";
+    dossierBlSearchInput.placeholder = "Rechercher N° Dossier ou N° BL...";
+    dossierBlSearchInput.style.padding = "6px 10px";
+    dossierBlSearchInput.style.borderRadius = "8px";
+    dossierBlSearchInput.style.border = "1.5px solid #2563eb";
+    dossierBlSearchInput.style.marginLeft = "12px";
+    dossierBlSearchInput.style.minWidth = "220px";
+    // Ajout dans le DOM à côté des filtres date
+    if (dateEndInput && dateEndInput.parentNode) {
+      dateEndInput.parentNode.appendChild(dossierBlSearchInput);
+    } else {
+      document.body.insertBefore(
+        dossierBlSearchInput,
+        document.body.firstChild
+      );
+    }
+  }
   // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
   const oldDateInput = document.getElementById("mainTableDateFilter");
   if (!dateStartInput || !dateEndInput) {
@@ -659,6 +683,30 @@ document.addEventListener("DOMContentLoaded", function () {
       "[DEBUG] updateTableForDateRange - livraisons filtrées:",
       filtered
     );
+    // Filtre supplémentaire sur N° Dossier / N° BL si champ rempli
+    const dossierBlSearchInput = document.getElementById(
+      "mainTableDossierBlSearch"
+    );
+    const searchVal = dossierBlSearchInput
+      ? dossierBlSearchInput.value.trim().toLowerCase()
+      : "";
+    if (searchVal) {
+      filtered = filtered.filter((delivery) => {
+        // N° Dossier
+        let dossier = String(delivery.dossier_number || "").toLowerCase();
+        // N° BL (peut être array ou string)
+        let bls = [];
+        if (Array.isArray(delivery.bl_number)) {
+          bls = delivery.bl_number.map((b) => String(b).toLowerCase());
+        } else if (typeof delivery.bl_number === "string") {
+          bls = delivery.bl_number.split(/[,;\s]+/).map((b) => b.toLowerCase());
+        }
+        return (
+          dossier.includes(searchVal) ||
+          bls.some((bl) => bl.includes(searchVal))
+        );
+      });
+    }
     // Tri du plus ancien au plus récent (ordre croissant)
     filtered.sort((a, b) => {
       let dateA = new Date(
@@ -688,6 +736,10 @@ document.addEventListener("DOMContentLoaded", function () {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
     dateEndInput.addEventListener("change", () => {
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+    });
+    // Ajout listener sur le champ de recherche N° Dossier / N° BL
+    dossierBlSearchInput.addEventListener("input", () => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
   }
