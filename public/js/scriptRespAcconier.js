@@ -675,24 +675,20 @@ document.addEventListener("DOMContentLoaded", function () {
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const cell = document.createElement("td");
         let value = "-";
-        if (col.id === "select_row") {
-          // Ajout de la case à cocher pour la sélection
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.className = "select-row-checkbox";
-          checkbox.dataset.deliveryId = delivery.id;
-          checkbox.style.cursor = "pointer";
-          checkbox.onclick = function () {
-            if (typeof updateDeleteButtonVisibility === "function") {
-              updateDeleteButtonVisibility();
+        if (col.id === "date_display") {
+          let dDate = delivery.delivery_date || delivery.created_at;
+          if (dDate) {
+            let dateObj = new Date(dDate);
+            if (!isNaN(dateObj.getTime())) {
+              value = dateObj.toLocaleDateString("fr-FR");
+            } else if (typeof dDate === "string") {
+              value = dDate;
             }
-          };
-          cell.appendChild(checkbox);
-          cell.style.textAlign = "center";
+          }
         } else {
           value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-          cell.textContent = value;
         }
+        cell.textContent = value;
         row.appendChild(cell);
       });
       tableBody.appendChild(row);
@@ -741,7 +737,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 // Colonnes strictes pour Agent Acconier
 const AGENT_TABLE_COLUMNS = [
-  { id: "select_row", label: "" }, // Colonne de sélection
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent" },
@@ -803,7 +798,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           "0 2px 12px rgba(37,99,235,0.13), 0 1.5px 8px rgba(30,41,59,0.10)";
         avatar.style.position = "relative";
         avatar.style.margin = "0 auto";
-        // Initiales de l'agent ou numéro (s)
+        // Initiales de l'agent ou numéro
         let initials = "-";
         if (
           delivery.employee_name &&
@@ -1010,27 +1005,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           overlay.style.display = "flex";
           overlay.style.alignItems = "center";
           overlay.style.justifyContent = "center";
-          const cell = document.createElement("td");
-          let value = "-";
-          if (col.id === "select_row") {
-            // Ajout de la case à cocher pour la sélection
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.className = "select-row-checkbox";
-            checkbox.dataset.deliveryId = delivery.id;
-            checkbox.style.cursor = "pointer";
-            checkbox.onclick = function () {
-              if (typeof updateDeleteButtonVisibility === "function") {
-                updateDeleteButtonVisibility();
-              }
-            };
-            cell.appendChild(checkbox);
-            cell.style.textAlign = "center";
-          } else {
-            value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-            cell.textContent = value;
-          }
-          row.appendChild(cell);
+          const box = document.createElement("div");
+          box.style.background = "#fff";
+          box.style.borderRadius = "16px";
+          box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+          box.style.maxWidth = "420px";
+          box.style.width = "96vw";
+          box.style.maxHeight = "92vh";
+          box.style.overflowY = "auto";
+          box.style.padding = "0";
+          box.style.position = "relative";
+          box.style.display = "flex";
+          box.style.flexDirection = "column";
+          const header = document.createElement("div");
+          header.style.background = "#2563eb";
+          header.style.color = "#fff";
+          header.style.padding = "18px 28px 12px 28px";
+          header.style.fontWeight = "bold";
+          header.style.fontSize = "1.15rem";
+          header.style.display = "flex";
+          header.style.flexDirection = "column";
+          header.style.borderTopLeftRadius = "16px";
           header.style.borderTopRightRadius = "16px";
           header.innerHTML = `
             <div style='margin-bottom:2px;'>
@@ -1663,70 +1658,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     });
     tableBodyElement.appendChild(tr);
   });
-  // Ajout du bouton de suppression si besoin
-  addDeleteButtonIfNeeded(tableBodyElement);
-  // Fin de la fonction renderAgentTableRows
-
-  // Fonction utilitaire pour afficher/masquer le bouton de suppression
-  function updateDeleteButtonVisibility() {
-    const checked = document.querySelectorAll(".select-row-checkbox:checked");
-    const btn = document.getElementById("deleteRowsBtn");
-    if (btn) btn.style.display = checked.length > 0 ? "inline-block" : "none";
-  }
-
-  function addDeleteButtonIfNeeded(tableBodyElement) {
-    let btn = document.getElementById("deleteRowsBtn");
-    if (!btn) {
-      btn = document.createElement("button");
-      btn.id = "deleteRowsBtn";
-      btn.textContent = "Supprimer la sélection";
-      btn.style.position = "fixed";
-      btn.style.bottom = "32px";
-      btn.style.left = "50%";
-      btn.style.transform = "translateX(-50%)";
-      btn.style.background = "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
-      btn.style.color = "#fff";
-      btn.style.fontWeight = "bold";
-      btn.style.fontSize = "1.08em";
-      btn.style.padding = "14px 38px";
-      btn.style.borderRadius = "16px";
-      btn.style.boxShadow = "0 6px 32px rgba(239,68,68,0.18)";
-      btn.style.zIndex = 99999;
-      btn.style.display = "none";
-      btn.onclick = function () {
-        // Confirmation avant suppression
-        if (
-          !confirm("Voulez-vous vraiment supprimer les lignes sélectionnées ?")
-        )
-          return;
-        const checked = document.querySelectorAll(
-          ".select-row-checkbox:checked"
-        );
-        const idsToDelete = Array.from(checked).map(
-          (cb) => cb.dataset.deliveryId
-        );
-        // Suppression dans la source de données globale
-        window.allDeliveries = (window.allDeliveries || []).filter(
-          (d) => !idsToDelete.includes(String(d.id))
-        );
-        // Mise à jour du tableau
-        if (typeof updateTableForDateRange === "function") {
-          const dateStartInput = document.getElementById(
-            "mainTableDateStartFilter"
-          );
-          const dateEndInput = document.getElementById(
-            "mainTableDateEndFilter"
-          );
-          const startVal = dateStartInput ? dateStartInput.value : "";
-          const endVal = dateEndInput ? dateEndInput.value : "";
-          updateTableForDateRange(startVal, endVal);
-        }
-        btn.style.display = "none";
-      };
-      document.body.appendChild(btn);
-    }
-    updateDeleteButtonVisibility();
-  }
 }
 
 // Fonction pour générer les en-têtes du tableau Agent Acconier
@@ -1736,24 +1667,7 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   const headerRow = document.createElement("tr");
   AGENT_TABLE_COLUMNS.forEach((col) => {
     const th = document.createElement("th");
-    if (col.id === "select_row") {
-      // Ajout d'une checkbox globale pour sélectionner tout
-      const selectAll = document.createElement("input");
-      selectAll.type = "checkbox";
-      selectAll.id = "selectAllRows";
-      selectAll.style.cursor = "pointer";
-      selectAll.onclick = function () {
-        const checkboxes = document.querySelectorAll(".select-row-checkbox");
-        checkboxes.forEach((cb) => {
-          cb.checked = selectAll.checked;
-        });
-        if (typeof updateDeleteButtonVisibility === "function")
-          updateDeleteButtonVisibility();
-      };
-      th.appendChild(selectAll);
-    } else {
-      th.textContent = col.label;
-    }
+    th.textContent = col.label;
     th.setAttribute("data-col-id", col.id);
     headerRow.appendChild(th);
   });
