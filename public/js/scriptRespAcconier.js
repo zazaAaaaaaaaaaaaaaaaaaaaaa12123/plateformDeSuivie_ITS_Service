@@ -147,8 +147,8 @@ document.addEventListener("DOMContentLoaded", function () {
   let dateStartInput = document.getElementById("mainTableDateStartFilter");
   let dateEndInput = document.getElementById("mainTableDateEndFilter");
   // Ajout du filtre de recherche N° Dossier / N° BL
-  let searchInput = document.getElementById("mainTableSearchFilter");
-  let searchBtn = document.getElementById("mainTableSearchBtn");
+  let searchInput = document.getElementById("searchInput");
+  let searchBtn = document.getElementById("searchButton");
   if (searchInput && searchBtn) {
     searchBtn.addEventListener("click", function () {
       let query = searchInput.value.trim().toLowerCase();
