@@ -226,24 +226,20 @@
     </div>
     <script src="/js/auth.js"></script>
     <script>
-      // Tab switching
-      const tabSignup = document.getElementById("tab-signup");
-      const tabLogin = document.getElementById("tab-login");
-      const signupForm = document.getElementById("signup-form");
-      const loginForm = document.getElementById("login-form");
-      tabSignup.onclick = () => {
-        tabSignup.classList.add("active");
-        tabLogin.classList.remove("active");
-        signupForm.classList.add("active");
-        loginForm.classList.remove("active");
+      // Tab switching (évite la redéclaration des variables déjà utilisées dans le JS externe)
+      document.getElementById("tab-signup").onclick = function () {
+        this.classList.add("active");
+        document.getElementById("tab-login").classList.remove("active");
+        document.getElementById("signup-form").classList.add("active");
+        document.getElementById("login-form").classList.remove("active");
       };
-      tabLogin.onclick = () => {
-        tabLogin.classList.add("active");
-        tabSignup.classList.remove("active");
-        loginForm.classList.add("active");
-        signupForm.classList.remove("active");
+      document.getElementById("tab-login").onclick = function () {
+        this.classList.add("active");
+        document.getElementById("tab-signup").classList.remove("active");
+        document.getElementById("login-form").classList.add("active");
+        document.getElementById("signup-form").classList.remove("active");
       };
-      // La fonction togglePassword est maintenant dans le JS externe et accessible globalement
+      // La fonction togglePassword est dans le JS externe
     </script>
   </body>
 </html>
