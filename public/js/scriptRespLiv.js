@@ -28,244 +28,286 @@ function showTooltip(text, x, y) {
   // Positionnement intelligent (évite de sortir de l'écran)
   const padding = 12;
   let left = x + padding;
-  let top = y + padding;
-  if (left + tooltip.offsetWidth > window.innerWidth) {
-    left = window.innerWidth - tooltip.offsetWidth - padding;
+  tableBodyElement.innerHTML = "";
+  const editableCols = [
+    "visitor_agent_name",
+    "transporter",
+    "inspector",
+    "customs_agent",
+    "driver",
+    "driver_phone",
+    "delivery_date",
+    "observation",
+  ];
+  function showAccessMessage(msg, color) {
+    let msgDiv = document.getElementById("accessMsgTemp");
+    if (!msgDiv) {
+      msgDiv = document.createElement("div");
+      msgDiv.id = "accessMsgTemp";
+      msgDiv.style.position = "fixed";
+      msgDiv.style.top = "18px";
+      msgDiv.style.left = "50%";
+      msgDiv.style.transform = "translateX(-50%)";
+      msgDiv.style.zIndex = 99999;
+      msgDiv.style.padding = "12px 32px";
+      msgDiv.style.borderRadius = "10px";
+      msgDiv.style.fontWeight = "bold";
+      msgDiv.style.fontSize = "1.1em";
+      document.body.appendChild(msgDiv);
+    }
+    msgDiv.textContent = msg;
+    msgDiv.style.background = color === "green" ? "#22c55e" : "#ef4444";
+    msgDiv.style.color = "#fff";
+    msgDiv.style.boxShadow = "0 2px 12px rgba(30,41,59,0.13)";
+    msgDiv.style.display = "block";
+    clearTimeout(msgDiv._timeout);
+    msgDiv._timeout = setTimeout(function () {
+      msgDiv.style.display = "none";
+    }, 2000);
   }
-  if (top + tooltip.offsetHeight > window.innerHeight) {
-    top = y - tooltip.offsetHeight - padding;
-  }
-  tooltip.style.left = left + "px";
-  tooltip.style.top = top + "px";
-}
-
-function hideTooltip() {
-  const tooltip = document.getElementById("customTableTooltip");
-  if (tooltip) tooltip.style.display = "none";
-}
-
-// Appliquer le tooltip sur toutes les cellules du tableau (hors .tc-multi-cell)
-document.addEventListener("mouseover", function (e) {
-  const td = e.target.closest("#deliveriesTable tbody td:not(.tc-multi-cell)");
-  if (td && td.offsetWidth < td.scrollWidth) {
-    showTooltip(td.textContent, e.clientX, e.clientY);
-  }
-});
-document.addEventListener("mousemove", function (e) {
-  const tooltip = document.getElementById("customTableTooltip");
-  if (tooltip && tooltip.style.display === "block") {
-    showTooltip(tooltip.textContent, e.clientX, e.clientY);
-  }
-});
-document.addEventListener("mouseout", function (e) {
-  const td = e.target.closest("#deliveriesTable tbody td");
-  if (td) hideTooltip();
-});
-// Fonction utilitaire pour normaliser la date à minuit
-function normalizeDateToMidnight(date) {
-  if (!(date instanceof Date)) date = new Date(date);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
-
-// Initialisation et gestion du filtre date
-document.addEventListener("DOMContentLoaded", function () {
-  // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
-  let ws;
-  function setupWebSocket() {
-    // Utilise le même protocole que la page (ws ou wss)
-    const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = proto + "://" + window.location.host;
-    ws = new WebSocket(wsUrl);
-    ws.onopen = function () {
-      //console.log("WebSocket connecté pour BL status update (liv)");
-    };
-    ws.onmessage = function (event) {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "bl_status_update") {
-          // Recharge la liste si un BL passe en 'mise_en_livraison'
-          if (data.status === "mise_en_livraison") {
-            // Recharge toutes les livraisons et met à jour le tableau
-            const dateInput = document.getElementById("mainTableDateFilter");
-            const dateStr = dateInput ? dateInput.value : null;
-            if (typeof loadAllDeliveries === "function" && dateStr) {
-              loadAllDeliveries().then(() => {
-                updateTableForDate(dateStr);
-              });
-            }
+  deliveries.forEach((delivery, i) => {
+    const tr = document.createElement("tr");
+    // Ajout colonne avatar + badge numéro
+    const tdAvatar = document.createElement("td");
+    tdAvatar.style.textAlign = "center";
+    tdAvatar.style.verticalAlign = "middle";
+    tdAvatar.style.padding = "8px 6px";
+    tdAvatar.style.background = "#fff";
+    tdAvatar.style.border = "none";
+    // Initiales de l'agent ou client
+    let initials = "";
+    if (delivery.employee_name) {
+      initials = delivery.employee_name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase();
+    } else if (delivery.client_name) {
+      initials = delivery.client_name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase();
+    } else {
+      initials = "?";
+    }
+    // Avatar rond
+    const avatar = document.createElement("div");
+    avatar.textContent = initials;
+    avatar.style.width = "38px";
+    avatar.style.height = "38px";
+    avatar.style.background = "#2563eb";
+    avatar.style.color = "#fff";
+    avatar.style.borderRadius = "50%";
+    avatar.style.display = "inline-flex";
+    avatar.style.alignItems = "center";
+    avatar.style.justifyContent = "center";
+    avatar.style.fontWeight = "bold";
+    avatar.style.fontSize = "1.15em";
+    avatar.style.marginRight = "8px";
+    avatar.style.boxShadow = "0 2px 8px rgba(30,41,59,0.10)";
+    // Badge numéro
+    const badge = document.createElement("span");
+    badge.textContent = i + 1;
+    badge.style.background = "#3b82f6";
+    badge.style.color = "#fff";
+    badge.style.borderRadius = "50%";
+    badge.style.display = "inline-block";
+    badge.style.width = "22px";
+    badge.style.height = "22px";
+    badge.style.lineHeight = "22px";
+    badge.style.fontSize = "1em";
+    badge.style.fontWeight = "600";
+    badge.style.boxShadow = "0 1px 4px rgba(30,41,59,0.10)";
+    badge.style.marginLeft = "2px";
+    tdAvatar.appendChild(avatar);
+    tdAvatar.appendChild(badge);
+    tr.appendChild(tdAvatar);
+    // Champs obligatoires pour ce delivery
+    const requiredFields = [
+      "visitor_agent_name",
+      "transporter",
+      "inspector",
+      "customs_agent",
+      "driver",
+      "driver_phone",
+      "delivery_date",
+    ];
+    function isAllRequiredFilled() {
+      return requiredFields.every((field) => {
+        const colIdx = AGENT_TABLE_COLUMNS.findIndex((c) => c.id === field);
+        if (colIdx === -1) return false;
+        const cell = tr.children[colIdx + 1]; // +1 à cause de l'avatar
+        let val = undefined;
+        if (cell) {
+          const input = cell.querySelector("input,textarea");
+          if (input) {
+            val = input.value;
+          } else {
+            val = cell.textContent;
           }
         }
-      } catch (e) {
-        //console.error("Erreur WebSocket BL (liv):", e);
+        return (
+          val !== undefined &&
+          val !== null &&
+          String(val).trim() !== "" &&
+          val !== "-"
+        );
+      });
+    }
+    let lastAccessState = null;
+    let confirmationShown = false;
+    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      function getCellStorageKey(delivery, colId) {
+        return `deliverycell_${
+          delivery.id || delivery.dossier_number || i
+        }_${colId}`;
       }
-    };
-    ws.onerror = function () {
-      //console.warn("WebSocket BL error (liv)");
-    };
-    ws.onclose = function () {
-      // Reconnexion auto après 2s
-      setTimeout(setupWebSocket, 2000);
-    };
-  }
-  setupWebSocket();
-  // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
-  const styleTC = document.createElement("style");
-  styleTC.textContent = `
-    #deliveriesTableBody .tc-tag {      
-      display: inline-block;
-      margin-right: 4px;
-      padding: 2px 8px;
-      background: #2563eb;
-      color: #fff;
-      border-radius: 6px;
-      font-size: 0.95em;
-      font-weight: 500;
-      white-space: nowrap;
-      vertical-align: middle;
-    }
-    #deliveriesTableBody .tc-tags-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      background: #4c628dff;
-      border: 1px solid #2563eb;
-      border-radius: 8px;
-      padding: 2px 10px;
-      cursor: pointer;
-      font-size: 0.95em;
-      white-space: nowrap;
-    }
-    #deliveriesTableBody .tc-popup {
-      position: absolute;
-      background: #fff;
-      border: 1px solid #2563eb;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(30,41,59,0.13);
-      padding: 8px 0;
-      min-width: 120px;
-      z-index: 1002;
-      left: 0;
-      top: 100%;
-      white-space: nowrap;
-    }
-    #deliveriesTableBody .tc-popup-item {
-      padding: 6px 18px;
-      cursor: pointer;
-      font-size: 0.98em;
-      color: #2563eb;
-      border-bottom: 1px solid #f3f4f6;
-    }
-    #deliveriesTableBody .tc-popup-item:last-child {
-      border-bottom: none;
-    }
-    /* Styles pour les entêtes et colonnes sauf Numéro TC(s) */
-    #deliveriesTable thead th:not([data-col-id='container_number']) {
-      max-width: 180px;
-      white-space: nowrap;
-      overflow: hidden;
-      font-size: 1em;
-      font-weight: bold;
-      background: #0e274eff;
-      color: #fff;
-      border-bottom: 2px solid #2563eb;
-      text-align: center;
-      vertical-align: middle;
-    }
-    /* Toutes les cellules du tableau (hors container_number multi-cell) : une seule ligne, centré, ellipsis */
-    #deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='container_number']) {
-      max-width: 180px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      vertical-align: middle;
-      text-align: center;
-      font-weight: normal;
-      font-size: 1em;
-      padding: 6px 8px;
-    }
-    /* Pour la colonne observation, même comportement, centré, une seule ligne */
-    #deliveriesTable tbody td.observation-col {
-      max-width: 220px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      vertical-align: middle;
-      background: none;
-      text-align: center;
-      font-weight: normal;
-      font-size: 1em;
-      padding: 6px 8px;
-    }
-    @media (max-width: 900px) {
-      #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 90px;
-        font-size: 0.95em;
+      const td = document.createElement("td");
+      let value = "-";
+      let savedValue = null;
+      if (
+        [
+          "visitor_agent_name",
+          "transporter",
+          "inspector",
+          "customs_agent",
+          "driver",
+          "driver_phone",
+          "delivery_date",
+          "observation",
+        ].includes(col.id)
+      ) {
+        const storageKey = getCellStorageKey(delivery, col.id);
+        savedValue = localStorage.getItem(storageKey);
       }
-      #deliveriesTable tbody td.observation-col {
-        max-width: 120px;
+      // Décale l'affichage d'une colonne à droite (l'avatar est déjà ajouté)
+      if (col.id === "row_number") {
+        // Ne rien faire, déjà affiché dans le badge
+        return;
+      } else if (col.id === "date_display") {
+        let dDate = delivery.delivery_date || delivery.created_at;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            value = dDate;
+          }
+        }
+        td.textContent = value;
+      } else if (col.id === "container_number") {
+        // ...existing code for container_number...
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        if (tcList.length > 1) {
+          td.classList.add("tc-multi-cell");
+          const btn = document.createElement("button");
+          btn.className = "tc-tags-btn";
+          btn.type = "button";
+          btn.innerHTML =
+            tcList
+              .slice(0, 2)
+              .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
+              .join("") +
+            (tcList.length > 2
+              ? ` <span class=\"tc-tag tc-tag-more\">+${
+                  tcList.length - 2
+                }</span>`
+              : "") +
+            ' <i class="fas fa-chevron-down tc-chevron"></i>';
+          const popup = document.createElement("div");
+          popup.className = "tc-popup";
+          popup.style.display = "none";
+          popup.innerHTML = tcList
+            .map(
+              (tc) =>
+                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
+            )
+            .join("");
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            document.querySelectorAll(".tc-popup").forEach((p) => {
+              if (p !== popup) p.style.display = "none";
+            });
+            popup.style.display =
+              popup.style.display === "block" ? "none" : "block";
+          };
+          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
+            item.onclick = (ev) => {
+              ev.stopPropagation();
+              popup.style.display = "none";
+              showContainerDetailPopup(delivery, item.textContent);
+            };
+          });
+          document.addEventListener("click", function hidePopup(e) {
+            if (!td.contains(e.target)) popup.style.display = "none";
+          });
+          td.appendChild(btn);
+          td.appendChild(popup);
+        } else if (tcList.length === 1) {
+          const tag = document.createElement("span");
+          tag.className = "tc-tag";
+          tag.textContent = tcList[0];
+          tag.style.cursor = "pointer";
+          tag.onclick = (e) => {
+            e.stopPropagation();
+            if (!isAllRequiredFilled()) {
+              // Rien à faire, accès refusé
+              return;
+            }
+            showContainerDetailPopup(delivery, tcList[0]);
+          };
+          td.appendChild(tag);
+        } else {
+          td.textContent = "-";
+        }
+      } else if (col.id === "delivery_date") {
+        let dDate = delivery.delivery_date;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            // Format inconnu, afficher tel quel
+            value = dDate;
+          }
+        } else {
+          value = "-";
+        }
+        if (editableCols.includes(col.id)) {
+          td.classList.add("editable-cell");
+          td.style.cursor = "pointer";
+          let displayValue =
+            savedValue !== null && savedValue !== ""
+              ? new Date(savedValue).toLocaleDateString("fr-FR")
+              : value;
+          td.textContent = displayValue;
+          td.onclick = function (e) {
+            // Action d'édition à définir si besoin
+          };
+        } else {
+          // Rien à faire
+        }
+        if (col.id === "observation") {
+          // Rien à faire
+        }
+      } else if (editableCols.includes(col.id)) {
+        // Cellule éditable, logique à ajouter si besoin
+      } else {
+        // Autres colonnes
       }
-    }
-    @media (max-width: 600px) {
-      #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
-        max-width: 60px;
-        font-size: 0.92em;
+      tr.appendChild(td);
+      function showContainerDetailPopup(delivery, containerNumber) {
+        // Fonction popup détail conteneur
       }
-      #deliveriesTable tbody td.observation-col {
-        max-width: 80px;
-      }
-    }
-  `;
-  document.head.appendChild(styleTC);
-
-  // Ajout des deux champs de date (début et fin)
-  const tableBody = document.getElementById("deliveriesTableBody");
-  let dateStartInput = document.getElementById("mainTableDateStart");
-  let dateEndInput = document.getElementById("mainTableDateEnd");
-
-  // Si les champs n'existent pas, on les crée et on les insère avant le tableau
-  if (!dateStartInput || !dateEndInput) {
-    const filterContainer = document.createElement("div");
-    filterContainer.id = "dateFilterContainer";
-    filterContainer.style.display = "flex";
-    filterContainer.style.gap = "16px";
-    filterContainer.style.alignItems = "center";
-    filterContainer.style.marginBottom = "18px";
-    filterContainer.style.justifyContent = "center";
-    dateStartInput = document.createElement("input");
-    dateStartInput.type = "date";
-    dateStartInput.id = "mainTableDateStart";
-    dateStartInput.style.fontSize = "1em";
-    dateStartInput.style.padding = "4px 10px";
-    dateEndInput = document.createElement("input");
-    dateEndInput.type = "date";
-    dateEndInput.id = "mainTableDateEnd";
-    dateEndInput.style.fontSize = "1em";
-    dateEndInput.style.padding = "4px 10px";
-    const labelStart = document.createElement("label");
-    labelStart.textContent = "Date de début : ";
-    labelStart.htmlFor = "mainTableDateStart";
-    labelStart.style.fontWeight = "bold";
-    labelStart.style.fontSize = "1em";
-    const labelEnd = document.createElement("label");
-    labelEnd.textContent = "Date de fin : ";
-    labelEnd.htmlFor = "mainTableDateEnd";
-    labelEnd.style.fontWeight = "bold";
-    labelEnd.style.fontSize = "1em";
-    filterContainer.appendChild(labelStart);
-    filterContainer.appendChild(dateStartInput);
-    filterContainer.appendChild(labelEnd);
-    filterContainer.appendChild(dateEndInput);
-    // Insérer le filtre avant le tableau
-    const mainTable = document.getElementById("deliveriesTable");
-    if (mainTable && mainTable.parentNode) {
-      mainTable.parentNode.insertBefore(filterContainer, mainTable);
-    } else {
-      document.body.insertBefore(filterContainer, document.body.firstChild);
-    }
-  }
+    });
+    tableBodyElement.appendChild(tr);
+  });
 
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
@@ -306,83 +348,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Filtre les livraisons selon la plage de date
+  // Filtre les livraisons selon la plage de dates
   function filterDeliveriesByDateRange(dateStartStr, dateEndStr) {
-    // dateStartStr et dateEndStr sont au format YYYY-MM-DD
-    const start = dateStartStr ? new Date(dateStartStr) : null;
-    const end = dateEndStr ? new Date(dateEndStr) : null;
-    return allDeliveries.filter((delivery) => {
-      let dDate =
-        delivery["delivery_date"] ||
-        delivery["created_at"] ||
-        delivery["Date"] ||
-        delivery["Date Livraison"];
-      if (!dDate) return false;
-      // Normalisation robuste du format
-      let normalized = "";
-      if (typeof dDate === "string") {
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
-          // Format JJ/MM/AAAA
-          const [j, m, a] = dDate.split("/");
-          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
-        } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
-          // Format YYYY-MM-DD
-          normalized = dDate;
-        } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
-          // Format JJ-MM-AAAA
-          const [j, m, a] = dDate.split("-");
-          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
-        } else {
-          // Autre format, on tente une conversion
-          const dateObj = new Date(dDate);
-          if (!isNaN(dateObj)) {
-            normalized = dateObj.toISOString().split("T")[0];
-          } else {
-            normalized = dDate;
-          }
-        }
-      } else if (dDate instanceof Date) {
-        normalized = dDate.toISOString().split("T")[0];
-      } else {
-        normalized = String(dDate);
-      }
-      // Comparaison dans la plage
-      if (!normalized.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
-      const d = new Date(normalized);
-      if (start && d < start) return false;
-      if (end && d > end) return false;
-      return true;
-    });
+    // ...existing code...
   }
 
   // Fonction principale pour charger et afficher selon la plage de dates
   function updateTableForDateRange(dateStartStr, dateEndStr) {
-    const filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
-    const tableContainer = document.getElementById("deliveriesTableBody");
-    if (tableContainer) {
-      renderAgentTableFull(filtered, tableContainer);
-    } else {
-      console.error("L'élément #deliveriesTableBody n'existe pas dans le DOM.");
-    }
+    // ...existing code...
   }
 
   // Initialisation : charge toutes les livraisons puis affiche la plage par défaut (depuis une date antérieure jusqu'à aujourd'hui)
-  const today = new Date().toISOString().split("T")[0];
-  const defaultStart = new Date();
-  defaultStart.setDate(defaultStart.getDate() - 7); // Par défaut, 7 jours avant aujourd'hui
-  const defaultStartStr = defaultStart.toISOString().split("T")[0];
-  dateStartInput.value = defaultStartStr;
-  dateEndInput.value = today;
-  loadAllDeliveries().then(() => {
-    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-  });
-  dateStartInput.addEventListener("change", () => {
-    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-  });
-  dateEndInput.addEventListener("change", () => {
-    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-  });
-});
+  // ...existing code...
+}
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
