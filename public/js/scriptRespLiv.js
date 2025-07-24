@@ -509,6 +509,34 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
         }
         td.textContent = value;
+      } else if (col.id === "container_number") {
+        // Affichage des numéros TC(s) sous forme de tags cliquables avec icône
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        td.innerHTML = tcList
+          .map(
+            (tc) => `
+          <span class="tc-tag" style="margin-bottom:4px;cursor:pointer;position:relative;">
+            <span style="padding-right:8px;">${tc}</span>
+            <i class="fas fa-edit" style="color:#2563eb;font-size:1em;cursor:pointer;position:absolute;right:2px;top:2px;" data-tc="${tc}"></i>
+          </span>
+        `
+          )
+          .join("<br>");
+        // Ajout du handler pour chaque icône
+        setTimeout(() => {
+          td.querySelectorAll(".fa-edit").forEach((icon) => {
+            icon.onclick = function (e) {
+              e.stopPropagation();
+              const tcNum = this.getAttribute("data-tc");
+              showTcStatusPopup(tcNum, delivery);
+            };
+          });
+        }, 0);
       } else if (col.id === "status") {
         // Statut sous forme de badge "X sur Y livrés"
         let tcList = [];
@@ -530,6 +558,87 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         td.textContent = value;
+      }
+      // Fonction pour afficher la popup de modification du statut TC
+      function showTcStatusPopup(tcNum, delivery) {
+        // Supprimer toute popup existante
+        let oldPopup = document.getElementById("tcStatusPopup");
+        if (oldPopup) oldPopup.remove();
+        // Création de la popup
+        const popup = document.createElement("div");
+        popup.id = "tcStatusPopup";
+        popup.style.position = "fixed";
+        popup.style.top = "50%";
+        popup.style.left = "50%";
+        popup.style.transform = "translate(-50%, -50%)";
+        popup.style.background = "#fff";
+        popup.style.borderRadius = "18px";
+        popup.style.boxShadow = "0 8px 32px rgba(37,99,235,0.18)";
+        popup.style.zIndex = "99999";
+        popup.style.padding = "0";
+        popup.style.minWidth = "340px";
+        popup.style.maxWidth = "98vw";
+        popup.innerHTML = `
+    <div style="background:linear-gradient(90deg,#2563eb 0%,#1e293b 100%);border-radius:18px 18px 0 0;padding:18px 24px 10px 24px;position:relative;">
+      <span style="font-size:1.25em;font-weight:700;color:#fff;">${
+        delivery.employee_name || ""
+      }</span><br>
+      <span style="font-size:1.08em;color:#fff;">Client : <span style="color:#facc15;font-weight:700;">${
+        delivery.client_name || ""
+      }</span></span><br>
+      <span style="font-size:1.08em;color:#fff;">Dossier : <span style="color:#38bdf8;font-weight:700;">${
+        delivery.dossier_number || ""
+      }</span></span>
+      <button id="closeTcPopupBtn" style="position:absolute;top:12px;right:18px;background:none;border:none;font-size:1.5em;color:#fff;cursor:pointer;"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="padding:18px 24px 24px 24px;">
+      <div style="font-size:1.12em;font-weight:700;color:#2563eb;margin-bottom:10px;">Numéro du conteneur : <span style="background:#2563eb;color:#fff;padding:2px 10px;border-radius:8px;">${tcNum}</span></div>
+      <div style="margin-bottom:18px;">
+        <label for="tcStatusSelect" style="font-size:1.08em;font-weight:600;color:#0e274e;">Statut du conteneur :</label><br>
+        <select id="tcStatusSelect" style="margin-top:8px;padding:8px 18px;border-radius:8px;border:2px solid #2563eb;font-size:1.08em;font-weight:600;color:#2563eb;background:#fff;width:100%;">
+          <option value="attente_paiement" ${
+            delivery.container_statuses &&
+            delivery.container_statuses[tcNum] !== "livre"
+              ? "selected"
+              : ""
+          }>En attente</option>
+          <option value="livre" ${
+            delivery.container_statuses &&
+            delivery.container_statuses[tcNum] === "livre"
+              ? "selected"
+              : ""
+          }>Livré</option>
+        </select>
+      </div>
+      <button id="saveTcStatusBtn" style="background:#0e274e;color:#fff;font-weight:700;font-size:1.08em;padding:10px 28px;border-radius:10px;border:none;box-shadow:0 2px 8px #2563eb22;cursor:pointer;">Enregistrer le statut</button>
+    </div>
+  `;
+        document.body.appendChild(popup);
+        // Fermeture
+        document.getElementById("closeTcPopupBtn").onclick = function () {
+          popup.remove();
+        };
+        // Enregistrement du statut
+        document.getElementById("saveTcStatusBtn").onclick = function () {
+          const select = document.getElementById("tcStatusSelect");
+          const newStatus = select.value;
+          if (!delivery.container_statuses) delivery.container_statuses = {};
+          delivery.container_statuses[tcNum] = newStatus;
+          // Mise à jour visuelle immédiate
+          popup.remove();
+          // Forcer le re-rendu du tableau
+          if (typeof updateTableForDateRange === "function") {
+            let dateStartInput = document.getElementById(
+              "mainTableDateStartFilter"
+            );
+            let dateEndInput = document.getElementById(
+              "mainTableDateEndFilter"
+            );
+            const startVal = dateStartInput ? dateStartInput.value : "";
+            const endVal = dateEndInput ? dateEndInput.value : "";
+            updateTableForDateRange(startVal, endVal);
+          }
+        };
       }
       tr.appendChild(td);
     });
