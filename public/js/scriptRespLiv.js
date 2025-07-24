@@ -872,7 +872,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             setTimeout(() => {
               if (isAllRequiredFilled()) {
                 showAccessMessage(
-                  " débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
+                  "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
                   "green"
                 );
               } else {
