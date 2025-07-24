@@ -1240,10 +1240,9 @@ app.post("/api/forgot-password", async (req, res) => {
     return res.status(400).json({ success: false, message: "Email requis." });
   }
   try {
-    const userRes = await pool.query(
-      "SELECT id, name FROM users WHERE email = $1",
-      [email]
-    );
+    const userRes = await pool.query("SELECT id FROM users WHERE email = $1", [
+      email,
+    ]);
     if (userRes.rows.length === 0) {
       return res.status(404).json({
         success: false,
@@ -1255,16 +1254,12 @@ app.post("/api/forgot-password", async (req, res) => {
     // Stocke le code temporairement (clé = email)
     resetCodes[email] = { code, expires: Date.now() + 15 * 60 * 1000 };
 
-    // Envoi du code par email via la fonction utilitaire
+    // Envoi du code par email via Gmail
     const mailSent = await sendMail({
       to: email,
       subject: "Code de réinitialisation de mot de passe - ITS Service",
-      text: `Bonjour ${
-        userRes.rows[0].name || "utilisateur"
-      },\nVotre code de réinitialisation est : ${code}\nCe code est valable 15 minutes.\nSi vous n'êtes pas à l'origine de cette demande, ignorez ce message.`,
-      html: `<p>Bonjour <b>${
-        userRes.rows[0].name || "utilisateur"
-      }</b>,</p><p>Votre code de réinitialisation est : <b>${code}</b></p><p>Ce code est valable 15 minutes.<br>Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>`,
+      text: `Votre code de réinitialisation est : ${code}\nCe code est valable 15 minutes.\nSi vous n'êtes pas à l'origine de cette demande, ignorez ce message.`,
+      html: `<p>Bonjour,</p><p>Votre code de réinitialisation est : <b>${code}</b></p><p>Ce code est valable 15 minutes.<br>Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>`,
     });
     if (!mailSent) {
       return res.status(500).json({
