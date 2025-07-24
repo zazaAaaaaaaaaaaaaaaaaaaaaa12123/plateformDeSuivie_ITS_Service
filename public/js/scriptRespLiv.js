@@ -465,12 +465,13 @@ const AGENT_TABLE_COLUMNS = [
   { id: "shipping_company", label: "Compagnie Maritime" },
   { id: "circuit", label: "Circuit" },
   { id: "transport_mode", label: "Mode de transport" },
+  { id: "visitor_agent", label: "Agent Visiteur" },
   { id: "transporter", label: "Transporteur" },
   { id: "inspector", label: "Inspecteur" },
   { id: "customs_agent", label: "Agent en Douanes" },
   { id: "driver_name", label: "Chauffeur" },
   { id: "driver_phone", label: "Tel Chauffeur" },
-  // ...
+  { id: "delivery_date_display", label: "Date de livraison" },
   { id: "status", label: "Statut" },
   { id: "observation", label: "Observations" },
 ];
@@ -488,6 +489,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.textContent = value;
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            value = dDate;
+          }
+        }
+        td.textContent = value;
+      } else if (col.id === "delivery_date_display") {
+        let dDate = delivery.delivery_date;
         if (dDate) {
           let dateObj = new Date(dDate);
           if (!isNaN(dateObj.getTime())) {
