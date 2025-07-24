@@ -764,11 +764,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               .slice(0, 2)
               .map(
                 (tc) =>
-                  `<span class="tc-tag" style="display:inline-block;background:#2563eb;color:#fff;font-weight:600;font-size:0.92em;padding:3px 10px;border-radius:12px;margin:2px 2px 2px 0;letter-spacing:0.5px;box-shadow:0 1px 6px rgba(37,99,235,0.09);cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">${tc}</span>`
+                  `<span class="tc-tag" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:600;font-size:0.92em;padding:3px 10px;border-radius:12px;margin:2px 2px 2px 0;letter-spacing:0.5px;box-shadow:0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">${tc}</span>`
               )
               .join("") +
             (tcList.length > 2
-              ? ` <span class="tc-tag tc-tag-more" style="display:inline-block;background:#eab308;color:#fff;font-weight:600;font-size:0.92em;padding:3px 10px;border-radius:12px;margin:2px 2px 2px 0;letter-spacing:0.5px;box-shadow:0 1px 6px rgba(37,99,235,0.09);cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">+${
+              ? ` <span class="tc-tag tc-tag-more" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:600;font-size:0.92em;padding:3px 10px;border-radius:12px;margin:2px 2px 2px 0;letter-spacing:0.5px;box-shadow:0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">+${
                   tcList.length - 2
                 }</span>`
               : "") +
@@ -808,26 +808,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           tag.textContent = tcList[0];
           tag.style.cssText = `
             display: inline-block;
-            background: #2563eb;
-            color: #fff;
+            background: #e6b800;
+            color: #0e274e;
             font-weight: 600;
             font-size: 0.92em;
             padding: 3px 10px;
             border-radius: 12px;
             margin: 2px 2px 2px 0;
             letter-spacing: 0.5px;
-            box-shadow: 0 1px 6px rgba(37,99,235,0.09);
+            box-shadow: 0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;
             cursor: pointer;
             transition: background 0.18s, box-shadow 0.18s;
             border: none;
           `;
           tag.onmouseenter = function () {
-            tag.style.background = "#1746a2";
-            tag.style.boxShadow = "0 4px 16px rgba(37,99,235,0.18)";
+            tag.style.background = "#ffd700";
+            tag.style.boxShadow =
+              "0 6px 24px rgba(30,41,59,0.32),0 1px 0 #fff inset";
           };
           tag.onmouseleave = function () {
-            tag.style.background = "#2563eb";
-            tag.style.boxShadow = "0 1px 6px rgba(37,99,235,0.09)";
+            tag.style.background = "#e6b800";
+            tag.style.boxShadow =
+              "0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset";
           };
           tag.onclick = (e) => {
             e.stopPropagation();
