@@ -1025,15 +1025,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         select.style.marginBottom = "18px";
         select.style.background = "#fff";
         select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
-        // Seul le statut 'livré' doit être proposé
-        const statusOptions = [{ value: "livre", label: "Livré" }];
+        // Statuts proposés : 'livré' et 'aucun'
+        const statusOptions = [
+          { value: "livre", label: "Livré" },
+          { value: "aucun", label: "Aucun" },
+        ];
         let currentStatus =
           delivery.container_statuses &&
           typeof delivery.container_statuses === "object" &&
           !Array.isArray(delivery.container_statuses) &&
           delivery.container_statuses[containerNumber]
             ? delivery.container_statuses[containerNumber]
-            : delivery.status || "pending";
+            : "aucun";
         statusOptions.forEach((opt) => {
           const option = document.createElement("option");
           option.value = opt.value;
