@@ -1098,12 +1098,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             );
             const data = await response.json();
             if (response.ok && data.success) {
-              alert(
-                `Statut du conteneur mis à jour : ${
-                  select.options[select.selectedIndex].text
-                }`
-              );
-              overlay.remove();
               // Mise à jour instantanée du statut dans allDeliveries
               if (delivery && delivery.id) {
                 const idx = allDeliveries.findIndex(
@@ -1120,19 +1114,52 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     select.value;
                 }
               }
-              // Rafraîchir le tableau pour mettre à jour l'entête Statut
-              const dateStartInput = document.getElementById(
-                "mainTableDateStartFilter"
-              );
-              const dateEndInput = document.getElementById(
-                "mainTableDateEndFilter"
-              );
-              if (dateStartInput && dateEndInput) {
-                updateTableForDateRange(
-                  dateStartInput.value,
-                  dateEndInput.value
-                );
+              // Mise à jour dynamique de la cellule Statut sans rechargement
+              const tableBody = document.getElementById("deliveriesTableBody");
+              if (tableBody) {
+                for (let row of tableBody.rows) {
+                  // On cherche la ligne correspondant à la livraison
+                  if (row.getAttribute("data-delivery-id") == delivery.id) {
+                    let tcList = [];
+                    if (Array.isArray(delivery.container_number)) {
+                      tcList = delivery.container_number.filter(Boolean);
+                    } else if (typeof delivery.container_number === "string") {
+                      tcList = delivery.container_number
+                        .split(/[,;\s]+/)
+                        .filter(Boolean);
+                    }
+                    let total = tcList.length;
+                    let delivered = 0;
+                    if (
+                      delivery.container_statuses &&
+                      typeof delivery.container_statuses === "object"
+                    ) {
+                      delivered = tcList.filter((tc) => {
+                        const s = delivery.container_statuses[tc];
+                        return s === "livre" || s === "livré";
+                      }).length;
+                    }
+                    let statusCellIdx = AGENT_TABLE_COLUMNS.findIndex(
+                      (c) => c.id === "statut"
+                    );
+                    if (statusCellIdx !== -1 && row.cells[statusCellIdx]) {
+                      if (delivered === total && total > 0) {
+                        row.cells[
+                          statusCellIdx
+                        ].innerHTML = `<span style="display:inline-block;padding:2px 18px;font-size:1.1em;font-weight:600;border-radius:12px;border:2px solid #eab308;background:#d1fadf;color:#15803d;">Livré</span>`;
+                      } else {
+                        row.cells[
+                          statusCellIdx
+                        ].innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+                          total > 1 ? "s" : ""
+                        }</button>`;
+                      }
+                    }
+                    break;
+                  }
+                }
               }
+              overlay.remove();
               // Envoi d'une notification WebSocket pour informer tous les clients
               if (window.ws && window.ws.readyState === 1) {
                 window.ws.send(
