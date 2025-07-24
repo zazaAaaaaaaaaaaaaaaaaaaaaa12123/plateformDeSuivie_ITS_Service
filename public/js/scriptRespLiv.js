@@ -801,7 +801,29 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const tag = document.createElement("span");
           tag.className = "tc-tag";
           tag.textContent = tcList[0];
-          tag.style.cursor = "pointer";
+          tag.style.cssText = `
+            display: inline-block;
+            background: #2563eb;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.08em;
+            padding: 7px 22px;
+            border-radius: 16px;
+            margin: 4px 2px 4px 0;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 12px rgba(37,99,235,0.13);
+            cursor: pointer;
+            transition: background 0.18s, box-shadow 0.18s;
+            border: none;
+          `;
+          tag.onmouseenter = function () {
+            tag.style.background = "#1746a2";
+            tag.style.boxShadow = "0 4px 16px rgba(37,99,235,0.18)";
+          };
+          tag.onmouseleave = function () {
+            tag.style.background = "#2563eb";
+            tag.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
+          };
           tag.onclick = (e) => {
             e.stopPropagation();
             // Correction : vérifier les champs obligatoires AVANT d'ouvrir le popup
@@ -1332,60 +1354,3 @@ function adaptTableResponsive() {
 }
 window.addEventListener("resize", adaptTableResponsive);
 adaptTableResponsive();
-
-// Ajout d’un style CSS moderne et lisible pour les tags TC : fond bleu, texte blanc, arrondi, ombre légère, effet au survol. Le tag "+N" est jaune pour plus de clarté.
-const style = document.createElement("style");
-style.innerHTML = `
-.tc-tag {
-  display: inline-block;
-  background: #2563eb;
-  color: #fff;
-  font-weight: 600;
-  font-size: 1.08em;
-  padding: 7px 18px;
-  border-radius: 16px;
-  margin: 2px 2px 2px 0;
-  letter-spacing: 0.5px;
-  border: none;
-  box-shadow: 0 2px 8px rgba(37,99,235,0.13);
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-  cursor: pointer;
-}
-.tc-tag:hover {
-  background: #1746a2;
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(37,99,235,0.18);
-}
-.tc-tag.tc-tag-more {
-  background: #fff;
-  color: #2563eb;
-  font-weight: 600;
-  border: none;
-  padding: 7px 12px;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(37,99,235,0.10);
-}
-/* Bouton déroulant TC minimal */
-.tc-tags-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  background: transparent;
-  border: none;
-  border-radius: 16px;
-
-  padding: 0;
-  cursor: pointer;
-  font-size: 0.98em;
-  white-space: nowrap;
-  box-shadow: none;
-}
-/* Chevron minimal */
-.tc-chevron {
-  color: #2563eb;
-  font-size: 1em;
-  margin-left: 2px;
-}
-`;
-document.head.appendChild(style);
-/** */
