@@ -659,13 +659,13 @@ document.addEventListener("DOMContentLoaded", function () {
     dateStartInput.value = sevenDaysAgoStr;
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      window.updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
     dateStartInput.addEventListener("change", () => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      window.updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
     dateEndInput.addEventListener("change", () => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      window.updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
   }
 });
