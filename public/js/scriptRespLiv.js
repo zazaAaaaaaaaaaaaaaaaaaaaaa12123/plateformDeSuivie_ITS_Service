@@ -704,6 +704,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }_${colId}`;
       }
       const td = document.createElement("td");
+      // Ajout : identifiant data-col-id sur la cellule pour le filtrage
+      td.setAttribute("data-col-id", col.id);
       let value = "-";
       // Récupère la valeur sauvegardée si elle existe (pour les colonnes éditables)
       let savedValue = null;
