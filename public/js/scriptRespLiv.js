@@ -533,22 +533,18 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       thead.innerHTML = "";
 
       // --- Bande jaune agents ---
+      const agentStartIdx = AGENT_TABLE_COLUMNS.findIndex(
+        (c) => c.id === "visitor_agent_name"
+      );
+      const agentEndIdx = AGENT_TABLE_COLUMNS.findIndex(
+        (c) => c.id === "delivery_date"
+      );
       const agentBandRow = document.createElement("tr");
       agentBandRow.className = "agent-band-row";
-      AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-        const td = document.createElement("td");
-        td.style.padding = "0";
-        td.style.border = "none";
-        td.style.background = "none";
-        td.style.height = "0";
-        // Affiche la bande jaune uniquement sur les colonnes agents
-        const agentStartIdx = AGENT_TABLE_COLUMNS.findIndex(
-          (c) => c.id === "visitor_agent_name"
-        );
-        const agentEndIdx = AGENT_TABLE_COLUMNS.findIndex(
-          (c) => c.id === "delivery_date"
-        );
-        if (idx >= agentStartIdx && idx <= agentEndIdx) {
+      for (let i = 0; i < AGENT_TABLE_COLUMNS.length; i++) {
+        if (i === agentStartIdx) {
+          const td = document.createElement("td");
+          td.colSpan = agentEndIdx - agentStartIdx + 1;
           td.style.position = "relative";
           td.style.height = "32px";
           td.style.background = "#fde047";
@@ -558,29 +554,32 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
           td.style.textAlign = "center";
           td.style.verticalAlign = "middle";
           td.className = "agent-band-cell";
-          if (idx === agentStartIdx) {
-            td.colSpan = agentEndIdx - agentStartIdx + 1;
-            td.innerHTML = `<span style='font-weight:bold;font-size:1.08em;color:#b45309;'>Côté agents ici pour la livraison</span>`;
-            td.onclick = function () {
-              flashColumns(agentStartIdx, agentEndIdx);
-            };
-          }
+          td.innerHTML = `<span style='font-weight:bold;font-size:1.08em;color:#b45309;'>Côté agents ici pour la livraison</span>`;
+          td.onclick = function () {
+            flashColumns(agentStartIdx, agentEndIdx);
+          };
+          agentBandRow.appendChild(td);
+          i = agentEndIdx;
+        } else {
+          const td = document.createElement("td");
+          td.style.height = "0";
+          td.style.padding = "0";
+          td.style.border = "none";
+          td.style.background = "none";
+          agentBandRow.appendChild(td);
         }
-        agentBandRow.appendChild(td);
-      });
+      }
       thead.appendChild(agentBandRow);
 
       // --- Bande jaune observation ---
+      const obsIdx = AGENT_TABLE_COLUMNS.findIndex(
+        (c) => c.id === "observation"
+      );
       const obsBandRow = document.createElement("tr");
       obsBandRow.className = "obs-band-row";
-      AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-        const td = document.createElement("td");
-        td.style.padding = "0";
-        td.style.border = "none";
-        td.style.background = "none";
-        td.style.height = "0";
-        // Affiche la bande jaune uniquement sur la colonne observation
-        if (col.id === "observation") {
+      for (let i = 0; i < AGENT_TABLE_COLUMNS.length; i++) {
+        if (i === obsIdx) {
+          const td = document.createElement("td");
           td.style.position = "relative";
           td.style.height = "32px";
           td.style.background = "#fde047";
@@ -591,14 +590,18 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
           td.style.verticalAlign = "middle";
           td.className = "obs-band-cell";
           td.onclick = function () {
-            const obsIdx = AGENT_TABLE_COLUMNS.findIndex(
-              (c) => c.id === "observation"
-            );
             flashColumns(obsIdx, obsIdx);
           };
+          obsBandRow.appendChild(td);
+        } else {
+          const td = document.createElement("td");
+          td.style.height = "0";
+          td.style.padding = "0";
+          td.style.border = "none";
+          td.style.background = "none";
+          obsBandRow.appendChild(td);
         }
-        obsBandRow.appendChild(td);
-      });
+      }
       thead.appendChild(obsBandRow);
 
       // --- En-tête classique ---
