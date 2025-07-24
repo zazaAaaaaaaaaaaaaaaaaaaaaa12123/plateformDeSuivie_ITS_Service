@@ -21,39 +21,6 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
-      .table thead tr:nth-child(2) th.highlight-th {
-        box-shadow: 0 0 0 3px #2563eb inset !important;
-        border-bottom: 3px solid #2563eb !important;
-        background: #e0e7ff !important;
-        color: #1e293b !important;
-        z-index: 30 !important;
-      }
-      .table thead tr:nth-child(2) th.highlight-th {
-        background: #e0e7ff !important;
-        color: #1e293b !important;
-        z-index: 20 !important;
-      }
-      /* Surlignage des entêtes éditables au survol d'une ligne */
-      .highlight-th {
-        background: #e0e7ff !important;
-        color: #1e293b !important;
-      }
-      /* Surlignage des cellules de la ligne survolée */
-      .highlight-col {
-        background-color: #e0e7ff !important;
-        color: #1e293b !important;
-        transition: background-color 0.2s;
-      }
-      /* Boutons de suppression historique (sidebar)
-   - .delete-history-btn.desktop-in : bouton dans la carte (desktop)
-   - .delete-history-btn.mobile-out : bouton sous la carte (mobile)
-   - .delete-history-btn-mobile-wrap : conteneur du bouton mobile
-*/
-      /* Surlignage de toute la ligne au survol */
-      .highlight-row {
-        background-color: #e3f0ff !important;
-        transition: background-color 0.2s;
-      }
       .delete-history-btn.desktop-in {
         background: none;
         border: none;
@@ -106,6 +73,136 @@
         .delete-history-btn.mobile-out,
         .delete-history-btn-mobile-wrap {
           display: flex !important;
+        }
+      }
+
+      /* Responsive header, avatar, dropdown, filtres et tableau */
+      @media (max-width: 900px) {
+        .card-section > .d-flex.align-items-center.justify-content-between.flex-wrap {
+          flex-direction: column;
+          align-items: stretch !important;
+          padding: 18px 8px 12px 8px !important;
+          gap: 12px !important;
+        }
+        .card-section h1 {
+          font-size: 1.25em !important;
+        }
+        .card-section > .d-flex > div {
+          max-width: 100% !important;
+        }
+      }
+      @media (max-width: 600px) {
+        .card-section > .d-flex.align-items-center.justify-content-between.flex-wrap {
+          flex-direction: column;
+          align-items: stretch !important;
+          padding: 10px 2vw 8px 2vw !important;
+          gap: 8px !important;
+        }
+        .card-section h1 {
+          font-size: 1.05em !important;
+        }
+        #profileAvatar {
+          width: 44px !important;
+          height: 44px !important;
+        }
+        #profileDropdown {
+          min-width: 170px !important;
+          padding: 12px 10px !important;
+          top: 54px !important;
+        }
+        .card-section .scrolling-message-bar {
+          max-width: 100vw !important;
+          font-size: 0.95em;
+        }
+        .d-flex.justify-content-center.align-items-center.mb-3.flex-wrap.gap-2 {
+          flex-direction: column !important;
+          align-items: stretch !important;
+          padding: 10px 2vw 6px 2vw !important;
+          gap: 8px !important;
+        }
+        .d-flex.align-items-center.gap-2.flex-wrap {
+          flex-direction: column !important;
+          align-items: stretch !important;
+          gap: 6px !important;
+        }
+        #searchInput, #mainTableDateStartFilter, #mainTableDateEndFilter {
+          font-size: 0.98em !important;
+          min-width: 80px !important;
+          padding: 5px 8px !important;
+        }
+        #searchButton {
+          font-size: 0.98em !important;
+          padding: 5px 10px !important;
+        }
+      }
+
+      /* Responsive tableau */
+      #tableScrollContainer {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      @media (max-width: 900px) {
+        .table th, .table td {
+          padding: 0.45rem !important;
+          font-size: 0.98em !important;
+        }
+        .table thead tr:first-child th {
+          font-size: 0.98em !important;
+        }
+      }
+      @media (max-width: 600px) {
+        .table th, .table td {
+          padding: 0.32rem 0.3rem !important;
+          font-size: 0.93em !important;
+          min-width: 90px;
+        }
+        .table thead tr:first-child th {
+          font-size: 0.93em !important;
+          padding-top: 4px !important;
+          padding-bottom: 4px !important;
+        }
+        .table thead tr:nth-child(2) th {
+          top: 32px !important;
+        }
+        .sticky-col-index {
+          min-width: 38px !important;
+          max-width: 48px !important;
+        }
+        .sticky-col-agent {
+          min-width: 70px !important;
+          max-width: 110px !important;
+          left: 48px !important;
+        }
+        .table-responsive {
+          border-radius: 8px !important;
+        }
+      }
+
+      /* Pagination responsive */
+      @media (max-width: 600px) {
+        .pagination {
+          font-size: 0.95em !important;
+          gap: 2px !important;
+        }
+        .pagination .page-link {
+          padding: 4px 8px !important;
+        }
+      }
+
+      /* Overlay, alert, etc. responsive */
+      @media (max-width: 600px) {
+        .custom-alert {
+          min-width: 140px !important;
+          font-size: 0.98em !important;
+          padding: 10px 8px !important;
+        }
+        .loading-overlay-content {
+          font-size: 1em !important;
+        }
+        .confirm-box {
+          padding: 14px !important;
+          font-size: 0.98em !important;
         }
       }
 
@@ -358,8 +455,38 @@
           0.2
         ) !important; /* Vert avec opacité légère */
       }
-    </style>
-  </head>
+
+      /* Responsive élargissement de la carte et du tableau */
+      @media (min-width: 1200px) {
+        .card-section {
+          width: 98vw !important;
+          max-width: 1600px !important;
+          margin: 32px auto 0 auto !important;
+          padding: 0 2vw !important;
+        }
+        #tableScrollContainer, #deliveriesTable {
+          max-width: 1500px !important;
+        }
+      }
+      @media (max-width: 1200px) {
+        .card-section {
+          max-width: 99vw !important;
+          padding: 0 1vw !important;
+        }
+        #tableScrollContainer, #deliveriesTable {
+          max-width: 99vw !important;
+        }
+      }
+      @media (max-width: 900px) {
+        .card-section {
+          max-width: 100vw !important;
+          padding: 0 0.5vw !important;
+        }
+        #tableScrollContainer, #deliveriesTable {
+          max-width: 100vw !important;
+        }
+      }
+    </style> </head>
 
   <body class="bg-light">
     <div class="container my-4">
