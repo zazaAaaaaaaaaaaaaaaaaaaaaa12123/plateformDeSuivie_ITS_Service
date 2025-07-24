@@ -23,6 +23,32 @@ function createCustomTooltip() {
 
 function showTooltip(text, x, y) {
   const tooltip = createCustomTooltip();
+  // Si le contenu commence par <div style="background:#fffbe6...">, on applique le style spécial
+  if (
+    typeof text === "string" &&
+    text.trim().startsWith('<div style="background:#fffbe6')
+  ) {
+    tooltip.style.background = "#fffbe6";
+    tooltip.style.color = "#b45309";
+    tooltip.style.border = "2px solid #eab308";
+    tooltip.style.borderRadius = "14px";
+    tooltip.style.boxShadow = "0 4px 24px rgba(30,41,59,0.10)";
+    tooltip.style.fontFamily = "inherit";
+    tooltip.style.padding = "0";
+    tooltip.style.maxWidth = "320px";
+    tooltip.style.minWidth = "220px";
+  } else {
+    // Style par défaut pour les autres tooltips
+    tooltip.style.background = "#222";
+    tooltip.style.color = "#fff";
+    tooltip.style.border = "none";
+    tooltip.style.borderRadius = "8px";
+    tooltip.style.boxShadow = "0 4px 24px rgba(30,41,59,0.18)";
+    tooltip.style.fontFamily = "inherit";
+    tooltip.style.padding = "8px 14px";
+    tooltip.style.maxWidth = "420px";
+    tooltip.style.minWidth = "0";
+  }
   tooltip.innerHTML = text;
   tooltip.style.display = "block";
   // Positionnement intelligent (évite de sortir de l'écran)
