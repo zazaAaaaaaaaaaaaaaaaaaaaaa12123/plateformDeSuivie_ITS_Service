@@ -404,7 +404,7 @@ document.addEventListener("DOMContentLoaded", function () {
           "linear-gradient(90deg,#f3f4f6 0%,#e0e7ff 100%)";
         cell.style.borderRadius = "7px";
         cell.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
-        // Si colonne éditable, fond jaune très transparent
+        // Si colonne éditable, fond jaune très transparent et police rouge foncé
         const editableColIds = [
           "visitor_agent_name",
           "transporter",
@@ -416,7 +416,8 @@ document.addEventListener("DOMContentLoaded", function () {
           "observation",
         ];
         if (editableColIds.includes(col.id)) {
-          cell.style.background = "rgba(255, 230, 0, 0.18)";
+          cell.style.background = "rgba(255, 230, 0, 0.08)";
+          cell.style.color = "#b91c1c";
         }
         row.appendChild(cell);
       });
@@ -739,10 +740,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.textContent = value;
         // Style joli et gras pour la cellule date livraison
         td.style.fontWeight = "bold";
-        td.style.color = "#1e293b";
+        td.style.color = "#b91c1c"; // rouge foncé
         td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
         td.style.letterSpacing = "0.5px";
-        td.style.background = "rgba(255, 230, 0, 0.18)";
+        td.style.background = "rgba(255, 230, 0, 0.08)"; // jaune très transparent
         td.style.borderRadius = "7px";
         td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
       } else if (col.id === "container_number") {
@@ -842,10 +843,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = displayValue;
           // Style joli et gras pour les cellules éditables
           td.style.fontWeight = "bold";
-          td.style.color = "#1e293b";
+          td.style.color = "#b91c1c"; // rouge foncé
           td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
           td.style.letterSpacing = "0.5px";
-          td.style.background = "rgba(255, 230, 0, 0.18)";
+          td.style.background = "rgba(255, 230, 0, 0.08)"; // jaune très transparent
           td.style.borderRadius = "7px";
           td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
           td.onclick = function (e) {
@@ -915,10 +916,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.textContent = displayValue;
         // Style joli et gras pour les cellules éditables
         td.style.fontWeight = "bold";
-        td.style.color = "#1e293b";
+        td.style.color = "#b91c1c"; // rouge foncé
         td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
         td.style.letterSpacing = "0.5px";
-        td.style.background = "rgba(255, 230, 0, 0.18)";
+        td.style.background = "rgba(255, 230, 0, 0.08)"; // jaune très transparent
         td.style.borderRadius = "7px";
         td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
         td.onclick = function (e) {
