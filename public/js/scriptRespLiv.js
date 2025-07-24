@@ -23,7 +23,7 @@ function createCustomTooltip() {
 
 function showTooltip(text, x, y) {
   const tooltip = createCustomTooltip();
-  tooltip.textContent = text;
+  tooltip.innerHTML = text;
   tooltip.style.display = "block";
   // Positionnement intelligent (évite de sortir de l'écran)
   const padding = 12;
@@ -91,23 +91,22 @@ document.addEventListener("mouseover", function (e) {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
         }
       }
-      let details = "";
+      let details =
+        "<div style='font-weight:bold;color:#b45309;font-size:1.08em;margin-bottom:6px;'>Détail des conteneurs</div>";
       if (
         tcList.length > 0 &&
         delivery &&
         delivery.container_statuses &&
         typeof delivery.container_statuses === "object"
       ) {
-        details = tcList
+        details += tcList
           .map((tc) => {
             let status = delivery.container_statuses[tc] || "-";
-            return `<b>Numéro TC :</b> ${tc}<br><b>Statut :</b> ${status}`;
+            return `<div style='display:flex;align-items:center;gap:8px;font-size:1.08em;'><span style='font-weight:bold;color:#1e293b;'>${tc}</span> <span style='color:#eab308;font-size:1.1em;'>&#x23F3;</span> <span style='color:#1e293b;'>${status}</span></div>`;
           })
-          .join(
-            "<hr style='margin:6px 0;border:none;border-top:1px solid #e5e7eb;'>"
-          );
+          .join("");
       } else {
-        details = "Aucun conteneur.";
+        details += "<div>--</div>";
       }
       showTooltip(details, e.clientX, e.clientY);
     }
