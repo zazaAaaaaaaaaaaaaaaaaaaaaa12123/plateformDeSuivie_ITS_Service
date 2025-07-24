@@ -130,22 +130,22 @@ document.addEventListener("DOMContentLoaded", function () {
               data.totalCount > 1 ? "s" : ""
             }</button>`;
           }
-          // Mise à jour de toutes les cellules de la colonne Statut
-          const statutCells = document.querySelectorAll(
-            "#deliveriesTable tbody td[data-col-id='statut']"
-          );
-          statutCells.forEach(function (cell) {
-            if (
-              typeof data.deliveredCount === "number" &&
-              typeof data.totalCount === "number"
-            ) {
-              cell.innerHTML = `<button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
-                data.deliveredCount
-              } sur ${data.totalCount} livré${
-                data.totalCount > 1 ? "s" : ""
-              }</button>`;
+          // Mise à jour de la cellule Statut de la ligne concernée uniquement
+          if (typeof data.deliveryId !== "undefined") {
+            const row = document.querySelector(
+              `#deliveriesTable tbody tr[data-delivery-id='${data.deliveryId}']`
+            );
+            if (row) {
+              const statutCell = row.querySelector("td[data-col-id='statut']");
+              if (statutCell) {
+                statutCell.innerHTML = `<button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
+                  data.deliveredCount
+                } sur ${data.totalCount} livré${
+                  data.totalCount > 1 ? "s" : ""
+                }</button>`;
+              }
             }
-          });
+          }
         }
       } catch (e) {
         //console.error("Erreur WebSocket BL (liv):", e);
@@ -567,6 +567,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   }
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
+    if (delivery.id) {
+      tr.setAttribute("data-delivery-id", delivery.id);
+    }
     // Champs obligatoires pour ce delivery
     const requiredFields = [
       "visitor_agent_name",
@@ -938,6 +941,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             return s === "livre" || s === "livré";
           }).length;
         }
+        td.setAttribute("data-col-id", "statut");
         td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
           total > 1 ? "s" : ""
         }</button>`;

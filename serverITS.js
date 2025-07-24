@@ -3154,7 +3154,7 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
     const wss = req.app.get("wss");
     const updatedDelivery = updateRes.rows[0];
     const alertMessage = `Statut du conteneur '${containerNumber}' mis à jour à '${status}'.`;
-    // Calcul du nombre de conteneurs livrés et du total
+    // Calcul du nombre de conteneurs livrés et du total pour cette livraison
     let total = 0;
     let delivered = 0;
     let tcList = [];
@@ -3183,6 +3183,7 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       const s = container_statuses_updated[tc];
       return s === "livre" || s === "livré";
     }).length;
+    // Envoi du ratio livré/total pour la livraison concernée (deliveryId)
     const payload = JSON.stringify({
       type: "container_status_update",
       message: alertMessage,
