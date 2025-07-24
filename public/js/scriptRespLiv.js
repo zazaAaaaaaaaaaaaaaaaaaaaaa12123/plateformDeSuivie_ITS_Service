@@ -928,7 +928,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.classList.add("observation-col");
         }
       } else if (col.id === "statut") {
-        // Affichage du modèle "x sur y livré" dans chaque cellule de la colonne Statut
+        // Affichage : badge vert "Livré" si tous les conteneurs sont livrés, sinon bouton x sur y livré(s)
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -947,9 +947,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }).length;
         }
         td.setAttribute("data-col-id", "statut");
-        td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
-          total > 1 ? "s" : ""
-        }</button>`;
+        if (delivered === total && total > 0) {
+          td.innerHTML = `<span style="display:inline-block;padding:2px 18px;font-size:1.1em;font-weight:600;border-radius:12px;border:2px solid #eab308;background:#d1fadf;color:#15803d;">Livré</span>`;
+        } else {
+          td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+            total > 1 ? "s" : ""
+          }</button>`;
+        }
       } else {
         // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
         value =
