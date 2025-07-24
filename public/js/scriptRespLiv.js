@@ -23,33 +23,7 @@ function createCustomTooltip() {
 
 function showTooltip(text, x, y) {
   const tooltip = createCustomTooltip();
-  // Si le contenu commence par <div style="background:#fffbe6...">, on applique le style spécial
-  if (
-    typeof text === "string" &&
-    text.trim().startsWith('<div style="background:#fffbe6')
-  ) {
-    tooltip.style.background = "#fffbe6";
-    tooltip.style.color = "#b45309";
-    tooltip.style.border = "2px solid #eab308";
-    tooltip.style.borderRadius = "14px";
-    tooltip.style.boxShadow = "0 4px 24px rgba(30,41,59,0.10)";
-    tooltip.style.fontFamily = "inherit";
-    tooltip.style.padding = "0";
-    tooltip.style.maxWidth = "320px";
-    tooltip.style.minWidth = "220px";
-  } else {
-    // Style par défaut pour les autres tooltips
-    tooltip.style.background = "#222";
-    tooltip.style.color = "#fff";
-    tooltip.style.border = "none";
-    tooltip.style.borderRadius = "8px";
-    tooltip.style.boxShadow = "0 4px 24px rgba(30,41,59,0.18)";
-    tooltip.style.fontFamily = "inherit";
-    tooltip.style.padding = "8px 14px";
-    tooltip.style.maxWidth = "420px";
-    tooltip.style.minWidth = "0";
-  }
-  tooltip.innerHTML = text;
+  tooltip.textContent = text;
   tooltip.style.display = "block";
   // Positionnement intelligent (évite de sortir de l'écran)
   const padding = 12;
@@ -94,6 +68,7 @@ document.addEventListener("mouseout", function (e) {
 });
 
 // Tooltip spécial pour la colonne Statut : détails conteneur(s) au survol
+// Survol colonne Statut : boîte flottante avec numéro TC et statut
 document.addEventListener("mouseover", function (e) {
   const statutCell = e.target.closest(
     "#deliveriesTable tbody td[data-col-id='statut']"
@@ -101,10 +76,6 @@ document.addEventListener("mouseover", function (e) {
   if (statutCell) {
     const row = statutCell.closest("tr");
     if (row) {
-      // Récupère le numéro du conteneur et son statut
-      const tcCell = row.querySelector("td[data-col-id='container_number']");
-      const tc = tcCell ? tcCell.textContent.trim() : "-";
-      let status = "-";
       let deliveryId = row.getAttribute("data-delivery-id");
       let delivery = null;
       if (window.allDeliveries && deliveryId) {
@@ -112,34 +83,32 @@ document.addEventListener("mouseover", function (e) {
           (d) => String(d.id) === String(deliveryId)
         );
       }
+      let tcList = [];
+      if (delivery) {
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+      }
+      let details = "";
       if (
+        tcList.length > 0 &&
         delivery &&
         delivery.container_statuses &&
         typeof delivery.container_statuses === "object"
       ) {
-        status = delivery.container_statuses[tc] || "-";
+        details = tcList
+          .map((tc) => {
+            let status = delivery.container_statuses[tc] || "-";
+            return `<b>Numéro TC :</b> ${tc}<br><b>Statut :</b> ${status}`;
+          })
+          .join(
+            "<hr style='margin:6px 0;border:none;border-top:1px solid #e5e7eb;'>"
+          );
+      } else {
+        details = "Aucun conteneur.";
       }
-      // Adaptation du statut pour affichage
-      let statusLabel = status;
-      let statusIcon = "";
-      if (status === "livre" || status === "livré") {
-        statusLabel = "Livré";
-        statusIcon = `<svg style='vertical-align:middle;margin-right:6px;' xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>`;
-      } else if (status === "aucun") {
-        statusLabel = "Aucun";
-        statusIcon = `<svg style='vertical-align:middle;margin-right:6px;' xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'><circle cx='12' cy='12' r='10' fill='#eab308'/><path d='M12 6v6l4 2' stroke='#fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>`;
-      }
-      // Boîte stylée façon exemple
-      let details = `
-        <div style="background:#fffbe6;border:2px solid #eab308;border-radius:14px;padding:16px 22px;min-width:220px;max-width:320px;color:#b45309;box-shadow:0 4px 24px rgba(30,41,59,0.10);font-family:inherit;">
-          <div style="font-weight:bold;font-size:1.08em;margin-bottom:8px;">Détail des conteneurs</div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-weight:700;font-size:1.08em;letter-spacing:0.5px;">${tc}</span>
-            ${statusIcon}
-            <span style="font-size:1.08em;font-weight:500;">${statusLabel}</span>
-          </div>
-        </div>
-      `;
       showTooltip(details, e.clientX, e.clientY);
     }
   }
