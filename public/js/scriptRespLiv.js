@@ -802,31 +802,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           tag.className = "tc-tag";
           tag.textContent = tcList[0];
           tag.style.cssText = `
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            display: inline-block;
             background: #2563eb;
             color: #fff;
-            font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
             font-weight: 600;
-            font-size: 1.12em;
-            padding: 8px 24px;
-            border-radius: 20px;
-            margin: 8px 2px 8px 0;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 16px rgba(37,99,235,0.13);
+            font-size: 1.08em;
+            padding: 7px 22px;
+            border-radius: 16px;
+            margin: 4px 2px 4px 0;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 12px rgba(37,99,235,0.13);
             cursor: pointer;
             transition: background 0.18s, box-shadow 0.18s;
             border: none;
-            outline: none;
           `;
           tag.onmouseenter = function () {
             tag.style.background = "#1746a2";
-            tag.style.boxShadow = "0 8px 24px rgba(37,99,235,0.18)";
+            tag.style.boxShadow = "0 4px 16px rgba(37,99,235,0.18)";
           };
           tag.onmouseleave = function () {
             tag.style.background = "#2563eb";
-            tag.style.boxShadow = "0 4px 16px rgba(37,99,235,0.13)";
+            tag.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
           };
           tag.onclick = (e) => {
             e.stopPropagation();
@@ -1358,4 +1354,4 @@ function adaptTableResponsive() {
 }
 window.addEventListener("resize", adaptTableResponsive);
 adaptTableResponsive();
-/**zdhudi */
+/****shj */
