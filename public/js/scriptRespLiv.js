@@ -45,8 +45,11 @@ function hideTooltip() {
 }
 
 // Appliquer le tooltip sur toutes les cellules du tableau (hors .tc-multi-cell)
+// Tooltip pour texte tronqué (toutes cellules hors .tc-multi-cell)
 document.addEventListener("mouseover", function (e) {
-  const td = e.target.closest("#deliveriesTable tbody td:not(.tc-multi-cell)");
+  const td = e.target.closest(
+    "#deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='statut'])"
+  );
   if (td && td.offsetWidth < td.scrollWidth) {
     showTooltip(td.textContent, e.clientX, e.clientY);
   }
@@ -58,8 +61,62 @@ document.addEventListener("mousemove", function (e) {
   }
 });
 document.addEventListener("mouseout", function (e) {
-  const td = e.target.closest("#deliveriesTable tbody td");
+  const td = e.target.closest(
+    "#deliveriesTable tbody td:not([data-col-id='statut'])"
+  );
   if (td) hideTooltip();
+});
+
+// Tooltip spécial pour la colonne Statut : détails conteneur(s) au survol
+document.addEventListener("mouseover", function (e) {
+  const statutCell = e.target.closest(
+    "#deliveriesTable tbody td[data-col-id='statut']"
+  );
+  if (statutCell) {
+    const row = statutCell.closest("tr");
+    if (row) {
+      // Récupère le numéro du conteneur et son statut
+      const tcCell = row.querySelector("td[data-col-id='container_number']");
+      const tc = tcCell ? tcCell.textContent.trim() : "-";
+      // Statut du conteneur
+      let status = "-";
+      // On essaye de récupérer l'objet delivery lié à la ligne
+      // On utilise le dataset si possible
+      let deliveryId = row.getAttribute("data-delivery-id");
+      let delivery = null;
+      if (window.allDeliveries && deliveryId) {
+        delivery = window.allDeliveries.find(
+          (d) => String(d.id) === String(deliveryId)
+        );
+      }
+      if (
+        delivery &&
+        delivery.container_statuses &&
+        typeof delivery.container_statuses === "object"
+      ) {
+        status = delivery.container_statuses[tc] || "-";
+      }
+      // Affichage simple
+      let details = `<b>Numéro du conteneur :</b> ${tc}<br><b>Statut :</b> ${status}`;
+      showTooltip(details, e.clientX, e.clientY);
+    }
+  }
+});
+document.addEventListener("mousemove", function (e) {
+  const statutCell = e.target.closest(
+    "#deliveriesTable tbody td[data-col-id='statut']"
+  );
+  const tooltip = document.getElementById("customTableTooltip");
+  if (statutCell && tooltip && tooltip.style.display === "block") {
+    tooltip.style.left = e.clientX + 12 + "px";
+    tooltip.style.top = e.clientY + 12 + "px";
+  }
+});
+document.addEventListener("mouseout", function (e) {
+  const statutCell = e.target.closest(
+    "#deliveriesTable tbody td[data-col-id='statut']"
+  );
+  if (statutCell) hideTooltip();
 });
 // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
