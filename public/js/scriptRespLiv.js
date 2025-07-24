@@ -114,24 +114,29 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         // Ajout : mise à jour instantanée de l'entête Statut ET des cellules de la colonne Statut
         if (data.type === "container_status_update") {
-          // Mise à jour de l'entête
-          const thStatut = document.querySelector(
-            "#deliveriesTable thead th[data-col-id='statut']"
-          );
+          // Mise à jour de l'entête Statut globale si info fournie
           if (
-            thStatut &&
+            typeof data.globalDeliveredCount === "number" &&
+            typeof data.globalTotalCount === "number"
+          ) {
+            const thStatut = document.querySelector(
+              "#deliveriesTable thead th[data-col-id='statut']"
+            );
+            if (thStatut) {
+              thStatut.innerHTML = `<span style=\"font-weight:bold;\">Statut</span><br>
+                <button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
+                  data.globalDeliveredCount
+                } sur ${data.globalTotalCount} livré${
+                data.globalTotalCount > 1 ? "s" : ""
+              }</button>`;
+            }
+          }
+          // Mise à jour de la cellule Statut de la ligne concernée uniquement
+          if (
+            typeof data.deliveryId !== "undefined" &&
             typeof data.deliveredCount === "number" &&
             typeof data.totalCount === "number"
           ) {
-            thStatut.innerHTML = `<span style=\"font-weight:bold;\">Statut</span><br>
-              <button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
-                data.deliveredCount
-              } sur ${data.totalCount} livré${
-              data.totalCount > 1 ? "s" : ""
-            }</button>`;
-          }
-          // Mise à jour de la cellule Statut de la ligne concernée uniquement
-          if (typeof data.deliveryId !== "undefined") {
             const row = document.querySelector(
               `#deliveriesTable tbody tr[data-delivery-id='${data.deliveryId}']`
             );
