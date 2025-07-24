@@ -112,8 +112,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
         }
-        // Ajout : mise à jour instantanée de l'entête Statut
+        // Ajout : mise à jour instantanée de l'entête Statut ET des cellules de la colonne Statut
         if (data.type === "container_status_update") {
+          // Mise à jour de l'entête
           const thStatut = document.querySelector(
             "#deliveriesTable thead th[data-col-id='statut']"
           );
@@ -123,12 +124,28 @@ document.addEventListener("DOMContentLoaded", function () {
             typeof data.totalCount === "number"
           ) {
             thStatut.innerHTML = `<span style=\"font-weight:bold;\">Statut</span><br>
-              <button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">
-                ${data.deliveredCount} sur ${data.totalCount} livré${
+              <button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
+                data.deliveredCount
+              } sur ${data.totalCount} livré${
               data.totalCount > 1 ? "s" : ""
-            }
-              </button>`;
+            }</button>`;
           }
+          // Mise à jour de toutes les cellules de la colonne Statut
+          const statutCells = document.querySelectorAll(
+            "#deliveriesTable tbody td[data-col-id='statut']"
+          );
+          statutCells.forEach(function (cell) {
+            if (
+              typeof data.deliveredCount === "number" &&
+              typeof data.totalCount === "number"
+            ) {
+              cell.innerHTML = `<button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
+                data.deliveredCount
+              } sur ${data.totalCount} livré${
+                data.totalCount > 1 ? "s" : ""
+              }</button>`;
+            }
+          });
         }
       } catch (e) {
         //console.error("Erreur WebSocket BL (liv):", e);
