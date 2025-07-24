@@ -422,7 +422,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Initialisation : charge toutes les livraisons puis affiche la plage de dates
+  // Initialisation : charge   zjtoutes les livraisons puis affiche la plage de dates
   const today = new Date().toISOString().split("T")[0];
   if (dateStartInput && dateEndInput) {
     dateStartInput.value = today;
