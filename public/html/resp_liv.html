@@ -962,23 +962,21 @@
           let found = false;
           rows.forEach(row => {
             // Ignore la ligne de chargement ou les lignes sans assez de cellules
-            if (!row.querySelector('[data-col-id="declaration_number"]')) {
+            const declarationCell = row.querySelector('[data-col-id="declaration_number"]');
+            const dossierCell = row.querySelector('[data-col-id="dossier_number"]');
+            if (!declarationCell && !dossierCell) {
               row.style.display = '';
               return;
             }
-            const declarationCell = row.querySelector('[data-col-id="declaration_number"]');
-            if (declarationCell && declarationCell.textContent.trim() !== "") {
-              const declarationText = normalize(declarationCell.textContent.trim().toLowerCase());
-              if (
-                (declarationText.includes(query) || query === "")
-              ) {
-                row.style.display = '';
-                found = true;
-              } else {
-                row.style.display = 'none';
-              }
-            } else {
+            const declarationText = declarationCell ? normalize(declarationCell.textContent.trim().toLowerCase()) : '';
+            const dossierText = dossierCell ? normalize(dossierCell.textContent.trim().toLowerCase()) : '';
+            if (
+              (declarationText.includes(query) || dossierText.includes(query) || query === "")
+            ) {
               row.style.display = '';
+              found = true;
+            } else {
+              row.style.display = 'none';
             }
           });
           // Affiche le message si aucune livraison trouvée
