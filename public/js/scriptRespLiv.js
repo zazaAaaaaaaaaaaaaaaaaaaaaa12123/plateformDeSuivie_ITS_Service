@@ -532,44 +532,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       }
       thead.innerHTML = "";
 
-      // --- Bande jaune agents ---
-      const agentStartIdx = AGENT_TABLE_COLUMNS.findIndex(
-        (c) => c.id === "visitor_agent_name"
-      );
-      const agentEndIdx = AGENT_TABLE_COLUMNS.findIndex(
-        (c) => c.id === "delivery_date"
-      );
-      const agentBandRow = document.createElement("tr");
-      agentBandRow.className = "agent-band-row";
-      for (let i = 0; i < AGENT_TABLE_COLUMNS.length; i++) {
-        if (i === agentStartIdx) {
-          const td = document.createElement("td");
-          td.colSpan = agentEndIdx - agentStartIdx + 1;
-          td.style.position = "relative";
-          td.style.height = "32px";
-          td.style.background = "#fde047";
-          td.style.cursor = "pointer";
-          td.style.borderTop = "2px solid #facc15";
-          td.style.borderBottom = "2px solid #facc15";
-          td.style.textAlign = "center";
-          td.style.verticalAlign = "middle";
-          td.className = "agent-band-cell";
-          td.innerHTML = `<span style='font-weight:bold;font-size:1.08em;color:#b45309;'>Côté agents ici pour la livraison</span>`;
-          td.onclick = function () {
-            flashColumns(agentStartIdx, agentEndIdx);
-          };
-          agentBandRow.appendChild(td);
-          i = agentEndIdx;
-        } else {
-          const td = document.createElement("td");
-          td.style.height = "0";
-          td.style.padding = "0";
-          td.style.border = "none";
-          td.style.background = "none";
-          agentBandRow.appendChild(td);
-        }
-      }
-      thead.appendChild(agentBandRow);
+      // ...rien ici, suppression de la bande blanche en haut des entêtes...
 
       // --- Bande jaune observation ---
       const obsIdx = AGENT_TABLE_COLUMNS.findIndex(
