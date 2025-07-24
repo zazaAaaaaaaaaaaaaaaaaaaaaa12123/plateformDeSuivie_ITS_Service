@@ -510,19 +510,23 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         td.textContent = value;
       } else if (col.id === "status") {
-        // Statut unique pour le responsable de livraison
+        // Statut sous forme de badge "X sur Y livrés"
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
         }
-        let allLivred = tcList.every(
+        let total = tcList.length;
+        let livred = tcList.filter(
           (tc) =>
             delivery.container_statuses &&
             delivery.container_statuses[tc] === "livre"
-        );
-        td.textContent = allLivred ? "Livré" : "Mise en livraison";
+        ).length;
+        // Style badge comme le modèle fourni
+        td.innerHTML = `<span style="display:inline-block;padding:4px 18px;border-radius:16px;border:2px solid #eab308;background:#fffbe6;color:#b45309;font-weight:700;font-size:1.08em;box-shadow:0 2px 8px rgba(234,179,8,0.13);">${livred} sur ${total} livré${
+          total > 1 ? "s" : ""
+        }</span>`;
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         td.textContent = value;
