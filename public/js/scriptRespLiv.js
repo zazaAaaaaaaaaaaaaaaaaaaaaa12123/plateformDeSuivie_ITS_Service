@@ -460,9 +460,7 @@ document.addEventListener("DOMContentLoaded", function () {
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
   if (deliveries.length === 0) {
-    // Masquer le tableau et afficher un message centré
     if (table) table.style.display = "none";
-    // Chercher ou créer un message d'absence
     let noDataMsg = document.getElementById("noDeliveriesMsg");
     if (!noDataMsg) {
       noDataMsg = document.createElement("div");
@@ -479,11 +477,10 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
     tableBodyElement.innerHTML = "";
   } else {
-    // Afficher le tableau et masquer le message
     if (table) table.style.display = "table";
     const noDataMsg = document.getElementById("noDeliveriesMsg");
     if (noDataMsg) noDataMsg.style.display = "none";
-    // Génération de l'en-tête
+    // Génération du bandeau coloré
     if (table) {
       let thead = table.querySelector("thead");
       if (!thead) {
@@ -491,16 +488,55 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         table.insertBefore(thead, tableBodyElement);
       }
       thead.innerHTML = "";
+      // Bandeau coloré principal
+      const bannerRow = document.createElement("tr");
+      const bannerTh = document.createElement("th");
+      bannerTh.colSpan = AGENT_TABLE_COLUMNS.length;
+      bannerTh.style.fontSize = "1.25em";
+      bannerTh.style.fontWeight = "700";
+      bannerTh.style.background =
+        "linear-gradient(90deg,#0e274e 0%,#ffc107 60%,#e6b800 100%)";
+      bannerTh.style.color = "#fff";
+      bannerTh.style.borderRadius = "18px 18px 0 0";
+      bannerTh.style.letterSpacing = "2px";
+      bannerTh.style.boxShadow = "0 4px 24px #0e274e22";
+      bannerTh.style.textShadow = "0 2px 8px #0e274e55";
+      bannerTh.textContent = "Responsable de Livraison";
+      bannerRow.appendChild(bannerTh);
+      thead.appendChild(bannerRow);
+      // En-tête stylisée
       const headerRow = document.createElement("tr");
-      AGENT_TABLE_COLUMNS.forEach((col) => {
+      AGENT_TABLE_COLUMNS.forEach((col, idx) => {
         const th = document.createElement("th");
-        if (col.id === "statut") {
-          // On affiche uniquement le texte Statut dans l'en-tête
-          th.innerHTML = `<span style=\"font-weight:bold;\">${col.label}</span>`;
-        } else {
-          th.textContent = col.label;
-        }
         th.setAttribute("data-col-id", col.id);
+        th.textContent = col.label;
+        // Alternance de couleurs pour chaque colonne
+        if (idx % 3 === 0) {
+          th.style.background = "#ffc107";
+          th.style.color = "#0e274e";
+          th.style.fontWeight = "700";
+          th.style.borderRight = "2px solid #e6b800";
+        } else if (idx % 3 === 1) {
+          th.style.background = "#0e274e";
+          th.style.color = "#ffc107";
+          th.style.fontWeight = "700";
+          th.style.borderRight = "2px solid #ffc107";
+        } else {
+          th.style.background = "#e6b800";
+          th.style.color = "#fff";
+          th.style.fontWeight = "700";
+          th.style.borderRight = "2px solid #ffc107";
+        }
+        th.style.textAlign = "center";
+        th.style.verticalAlign = "middle";
+        th.style.fontSize = "1em";
+        th.style.whiteSpace = "nowrap";
+        th.style.overflow = "hidden";
+        th.style.maxWidth = "180px";
+        th.style.boxShadow = "0 2px 8px #0e274e11";
+        if (col.id === "statut") {
+          th.innerHTML = `<span style=\"font-weight:bold;\">${col.label}</span>`;
+        }
         headerRow.appendChild(th);
       });
       thead.appendChild(headerRow);
