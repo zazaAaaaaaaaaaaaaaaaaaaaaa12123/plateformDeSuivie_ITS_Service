@@ -534,38 +534,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
 
       // ...rien ici, suppression de la bande blanche en haut des entêtes...
 
-      // --- Bande jaune observation ---
-      const obsIdx = AGENT_TABLE_COLUMNS.findIndex(
-        (c) => c.id === "observation"
-      );
-      const obsBandRow = document.createElement("tr");
-      obsBandRow.className = "obs-band-row";
-      for (let i = 0; i < AGENT_TABLE_COLUMNS.length; i++) {
-        if (i === obsIdx) {
-          const td = document.createElement("td");
-          td.style.position = "relative";
-          td.style.height = "32px";
-          td.style.background = "#fde047";
-          td.style.cursor = "pointer";
-          td.style.borderTop = "2px solid #facc15";
-          td.style.borderBottom = "2px solid #facc15";
-          td.style.textAlign = "center";
-          td.style.verticalAlign = "middle";
-          td.className = "obs-band-cell";
-          td.onclick = function () {
-            flashColumns(obsIdx, obsIdx);
-          };
-          obsBandRow.appendChild(td);
-        } else {
-          const td = document.createElement("td");
-          td.style.height = "0";
-          td.style.padding = "0";
-          td.style.border = "none";
-          td.style.background = "none";
-          obsBandRow.appendChild(td);
-        }
-      }
-      thead.appendChild(obsBandRow);
+      // ...rien ici, suppression de la bande jaune observation...
 
       // --- En-tête classique ---
       const headerRow = document.createElement("tr");
@@ -618,6 +587,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         }
       });
     }
+    flashColumns(startIdx, endIdx);
     renderAgentTableRows(deliveries, tableBodyElement);
   }
 }
