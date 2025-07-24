@@ -3,30 +3,29 @@ function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
   date.setHours(0, 0, 0, 0);
   return date;
-}
 
-// Fonction principale pour afficher les livraisons filtrées par date
-function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
-  const dateToCompare = normalizeDateToMidnight(selectedDate);
-  // Filtre les livraisons par date (champ created_at ou delivery_date)
-  const filtered = deliveries.filter((d) => {
-    let dDate = d.created_at || d.delivery_date;
-    if (!dDate) return false;
-    dDate = normalizeDateToMidnight(new Date(dDate));
-    return dDate.getTime() === dateToCompare.getTime();
-  });
-  if (filtered.length === 0) {
-    tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
-    return;
-  }
-  renderAgentTableRows(filtered, tableBodyElement);
-}
-
-// Initialisation et gestion du filtre date
-document.addEventListener("DOMContentLoaded", function () {
-  // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
-  const styleTC = document.createElement("style");
-  const newLocal = (styleTC.textContent = `
+  // Fonction principale pour afficher les livraisons filtrées par date
+  function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
+    const dateToCompare = normalizeDateToMidnight(selectedDate);
+    // Filtre les livraisons par date (champ created_at ou delivery_date)
+    const filtered = deliveries.filter((d) => {
+      let dDate = d.created_at || d.delivery_date;
+      if (!dDate) return false;
+      dDate = normalizeDateToMidnight(new Date(dDate));
+      return dDate.getTime() === dateToCompare.getTime();
+    });
+    if (filtered.length === 0) {
+      tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
+      return;
+    }
+    renderAgentTableRows(filtered, tableBodyElement);
+    // ...existing code...
+    // ...existing code...
+    // ...existing code...
+    // ...existing code...
+    // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
+    const styleTC = document.createElement("style");
+    const newLocal = (styleTC.textContent = `
     #deliveriesTableBody .tc-tag {
       display: inline-block;
       margin-right: 4px;
@@ -141,99 +140,99 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   `);
-  document.head.appendChild(styleTC);
-  const tableBody = document.getElementById("deliveriesTableBody");
-  // Ajout des deux champs de date (début et fin)
-  let dateStartInput = document.getElementById("mainTableDateStartFilter");
-  let dateEndInput = document.getElementById("mainTableDateEndFilter");
-  // Ajout du filtre de recherche N° Dossier / N° BL
-  let searchInput = document.getElementById("searchInput");
-  let searchBtn = document.getElementById("searchButton");
-  if (searchInput && searchBtn) {
-    searchBtn.addEventListener("click", function () {
-      let query = searchInput.value.trim().toLowerCase();
-      if (!query) {
-        // Si vide, on réaffiche selon la plage de dates
-        updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-        return;
-      }
-      // Filtrer sur N° Dossier ou N° BL
-      let deliveriesSource = window.allDeliveries || [];
-      let filtered = deliveriesSource.filter((delivery) => {
-        let dossier = String(delivery.dossier_number || "").toLowerCase();
-        let bls = [];
-        if (Array.isArray(delivery.bl_number)) {
-          bls = delivery.bl_number.map((b) => String(b).toLowerCase());
-        } else if (typeof delivery.bl_number === "string") {
-          bls = delivery.bl_number.split(/[,;\s]+/).map((b) => b.toLowerCase());
+    document.head.appendChild(styleTC);
+    const tableBody = document.getElementById("deliveriesTableBody");
+    // Ajout des deux champs de date (début et fin)
+    let dateStartInput = document.getElementById("mainTableDateStartFilter");
+    let dateEndInput = document.getElementById("mainTableDateEndFilter");
+    // Ajout du filtre de recherche N° Dossier / N° BL
+    let searchInput = document.getElementById("searchInput");
+    let searchBtn = document.getElementById("searchButton");
+    if (searchInput && searchBtn) {
+      searchBtn.addEventListener("click", function () {
+        let query = searchInput.value.trim().toLowerCase();
+        if (!query) {
+          // Si vide, on réaffiche selon la plage de dates
+          updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+          return;
         }
-        return dossier.includes(query) || bls.some((b) => b.includes(query));
-      });
-      // Tri du plus ancien au plus récent
-      filtered.sort((a, b) => {
-        let dateA = new Date(
-          a.delivery_date || a.created_at || a.Date || a["Date Livraison"]
+        // Filtrer sur N° Dossier ou N° BL
+        let deliveriesSource = window.allDeliveries || [];
+        let filtered = deliveriesSource.filter((delivery) => {
+          let dossier = String(delivery.dossier_number || "").toLowerCase();
+          let bls = [];
+          if (Array.isArray(delivery.bl_number)) {
+            bls = delivery.bl_number.map((b) => String(b).toLowerCase());
+          } else if (typeof delivery.bl_number === "string") {
+            bls = delivery.bl_number
+              .split(/[,;\s]+/)
+              .map((b) => b.toLowerCase());
+          }
+          return dossier.includes(query) || bls.some((b) => b.includes(query));
+        });
+        // Tri du plus ancien au plus récent
+        filtered.sort((a, b) => {
+          let dateA = new Date(
+            a.delivery_date || a.created_at || a.Date || a["Date Livraison"]
+          );
+          let dateB = new Date(
+            b.delivery_date || b.created_at || b.Date || b["Date Livraison"]
+          );
+          return dateA - dateB;
+        });
+        renderAgentTableFull(
+          filtered,
+          document.getElementById("deliveriesTableBody")
         );
-        let dateB = new Date(
-          b.delivery_date || b.created_at || b.Date || b["Date Livraison"]
-        );
-        return dateA - dateB;
       });
-      renderAgentTableFull(
-        filtered,
-        document.getElementById("deliveriesTableBody")
-      );
-    });
-    // Permet la recherche au clavier (Enter)
-    searchInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") searchBtn.click();
-    });
-  }
-  // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
-  const oldDateInput = document.getElementById("mainTableDateFilter");
-  if (!dateStartInput || !dateEndInput) {
-    // Création des deux inputs si besoin
-    const parent = oldDateInput ? oldDateInput.parentNode : document.body;
-    // Création du conteneur
-    const rangeDiv = document.createElement("div");
-    rangeDiv.style.display = "flex";
-    rangeDiv.style.gap = "12px";
-    rangeDiv.style.alignItems = "center";
-    rangeDiv.style.marginBottom = "12px";
-    // Date début
-    dateStartInput = document.createElement("input");
-    dateStartInput.type = "date";
-    dateStartInput.id = "mainTableDateStartFilter";
-    dateStartInput.style.padding = "6px 10px";
-    dateStartInput.style.borderRadius = "8px";
-    dateStartInput.style.border = "1.5px solid #2563eb";
-    // Date fin
-    dateEndInput = document.createElement("input");
-    dateEndInput.type = "date";
-    dateEndInput.id = "mainTableDateEndFilter";
-    dateEndInput.style.padding = "6px 10px";
-    dateEndInput.style.borderRadius = "8px";
-    dateEndInput.style.border = "1.5px solid #2563eb";
-    // Label
-    const label = document.createElement("span");
-    label.textContent = "Filtrer du ";
-    const label2 = document.createElement("span");
-    label2.textContent = " au ";
-    rangeDiv.appendChild(label);
-    rangeDiv.appendChild(dateStartInput);
-    rangeDiv.appendChild(label2);
-    rangeDiv.appendChild(dateEndInput);
-    // Ajout dans le DOM
-    if (oldDateInput) {
-      oldDateInput.style.display = "none";
-      parent.insertBefore(rangeDiv, oldDateInput);
-    } else {
-      document.body.insertBefore(rangeDiv, document.body.firstChild);
+      // Permet la recherche au clavier (Enter)
+      searchInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") searchBtn.click();
+      });
+    }
+    // Si les champs n'existent pas, on les crée dynamiquement à côté de l'ancien champ (pour compatibilité)
+    const oldDateInput = document.getElementById("mainTableDateFilter");
+    if (!dateStartInput || !dateEndInput) {
+      // Création des deux inputs si besoin
+      const parent = oldDateInput ? oldDateInput.parentNode : document.body;
+      // Création du conteneur
+      const rangeDiv = document.createElement("div");
+      rangeDiv.style.display = "flex";
+      rangeDiv.style.gap = "12px";
+      rangeDiv.style.alignItems = "center";
+      rangeDiv.style.marginBottom = "12px";
+      // Date début
+      dateStartInput = document.createElement("input");
+      dateStartInput.type = "date";
+      dateStartInput.id = "mainTableDateStartFilter";
+      dateStartInput.style.padding = "6px 10px";
+      dateStartInput.style.borderRadius = "8px";
+      dateStartInput.style.border = "1.5px solid #2563eb";
+      // Date fin
+      dateEndInput = document.createElement("input");
+      dateEndInput.type = "date";
+      dateEndInput.id = "mainTableDateEndFilter";
+      dateEndInput.style.padding = "6px 10px";
+      dateEndInput.style.borderRadius = "8px";
+      dateEndInput.style.border = "1.5px solid #2563eb";
+      // Label
+      const label = document.createElement("span");
+      label.textContent = "Filtrer du ";
+      const label2 = document.createElement("span");
+      label2.textContent = " au ";
+      rangeDiv.appendChild(label);
+      rangeDiv.appendChild(dateStartInput);
+      rangeDiv.appendChild(label2);
+      rangeDiv.appendChild(dateEndInput);
+      // Ajout dans le DOM
+      if (oldDateInput) {
+        oldDateInput.style.display = "none";
+        parent.insertBefore(rangeDiv, oldDateInput);
+      } else {
+        document.body.insertBefore(rangeDiv, document.body.firstChild);
+      }
     }
   }
-
-  // On charge toutes les livraisons une seule fois au chargement
-  let allDeliveries = [];
 
   // --- Connexion WebSocket pour maj temps réel BL et suppression instantanée ---
   let ws;
@@ -356,229 +355,492 @@ document.addEventListener("DOMContentLoaded", function () {
             normalized = dDate;
           }
         }
-      } else if (dDate instanceof Date) {
-        normalized = dDate.toISOString().split("T")[0];
-      } else {
-        normalized = String(dDate);
-      }
-      // Comparaison dans la plage
-      let dateObj = new Date(normalized);
-      if (isNaN(dateObj)) return false;
-      if (start && dateObj < start) return false;
-      if (end && dateObj > end) return false;
-      return true;
-    });
-  }
-
-  // Affiche les livraisons filtrées dans le tableau
-  function renderTable(deliveries) {
-    tableBody.innerHTML = "";
-    if (deliveries.length === 0) {
-      const row = document.createElement("tr");
-      const cell = document.createElement("td");
-      cell.colSpan = AGENT_TABLE_COLUMNS.length;
-      cell.textContent = "Aucune opération à cette date";
-      cell.className = "text-center text-muted";
-      row.appendChild(cell);
-      tableBody.appendChild(row);
-      return;
-    }
-    deliveries.forEach((delivery) => {
-      const row = document.createElement("tr");
-      AGENT_TABLE_COLUMNS.forEach((col) => {
-        const cell = document.createElement("td");
-        let value = "-";
-        if (col.id === "date_display") {
-          let dDate = delivery.delivery_date || delivery.created_at;
-          if (dDate) {
-            let dateObj = new Date(dDate);
-            if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toLocaleDateString("fr-FR");
-            } else if (typeof dDate === "string") {
-              value = dDate;
-            }
-          }
-        } else {
-          value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-        }
-        cell.textContent = value;
-        row.appendChild(cell);
-      });
-      tableBody.appendChild(row);
-    });
-  }
-
-  // Fonction principale pour charger et afficher selon la plage de dates
-  function updateTableForDateRange(dateStartStr, dateEndStr) {
-    let filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
-    console.log(
-      "[DEBUG] updateTableForDateRange - livraisons filtrées:",
-      filtered
-    );
-    // Tri du plus ancien au plus récent (ordre croissant)
-    filtered.sort((a, b) => {
-      let dateA = new Date(
-        a.delivery_date || a.created_at || a.Date || a["Date Livraison"]
-      );
-      let dateB = new Date(
-        b.delivery_date || b.created_at || b.Date || b["Date Livraison"]
-      );
-      return dateA - dateB;
-    });
-    renderAgentTableFull(filtered, tableBody);
-  }
-
-  // Initialisation : charge toutes les livraisons puis affiche la plage de dates (par défaut : 7 jours avant aujourd'hui jusqu'à aujourd'hui)
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(today.getDate() - 7);
-  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
-  if (dateStartInput && dateEndInput) {
-    dateStartInput.value = sevenDaysAgoStr;
-    dateEndInput.value = todayStr;
-    loadAllDeliveries().then(() => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-    });
-    dateStartInput.addEventListener("change", () => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-    });
-    dateEndInput.addEventListener("change", () => {
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-    });
-  }
-});
-// Colonnes pour le tableau du responsable de livraison
-const AGENT_TABLE_COLUMNS = [
-  { id: "row_number", label: "N°" },
-  { id: "date_display", label: "Date" },
-  { id: "employee_name", label: "Agent Acconier" },
-  { id: "client_name", label: "Nom Client" },
-  { id: "client_phone", label: "Client (Tel)" },
-  { id: "container_number", label: "Numéro TC(s)" },
-  { id: "location", label: "Lieu" },
-  { id: "container_type", label: "Type de conteneurs" },
-  { id: "content", label: "Contenu" },
-  { id: "declaration_number", label: "Numéro Déclaration" },
-  { id: "dossier_number", label: "Numéro Dossier" },
-  { id: "container_count", label: "NBR Conteneurs" },
-  { id: "shipping_company", label: "Compagnie Maritime" },
-  { id: "circuit", label: "Circuit" },
-  { id: "transport_mode", label: "Mode de transport" },
-  { id: "visitor_agent", label: "Agent Visiteur" },
-  { id: "transporter", label: "Transporteur" },
-  { id: "inspector", label: "Inspecteur" },
-  { id: "customs_agent", label: "Agent en Douanes" },
-  { id: "driver_name", label: "Chauffeur" },
-  { id: "driver_phone", label: "Tel Chauffeur" },
-  { id: "delivery_date_display", label: "Date de livraison" },
-  { id: "status", label: "Statut" },
-  { id: "observation", label: "Observations" },
-];
-
-// Fonction pour générer les lignes du tableau Agent Acconier
-function renderAgentTableRows(deliveries, tableBodyElement) {
-  tableBodyElement.innerHTML = "";
-  deliveries.forEach((delivery, idx) => {
-    const tr = document.createElement("tr");
-    AGENT_TABLE_COLUMNS.forEach((col) => {
-      const td = document.createElement("td");
-      let value = "-";
-      if (col.id === "row_number") {
-        value = idx + 1;
-        td.textContent = value;
-      } else if (col.id === "date_display") {
-        let dDate = delivery.delivery_date || delivery.created_at;
-        if (dDate) {
-          let dateObj = new Date(dDate);
-          if (!isNaN(dateObj.getTime())) {
-            value = dateObj.toLocaleDateString("fr-FR");
-          } else if (typeof dDate === "string") {
-            value = dDate;
-          }
-        }
-        td.textContent = value;
-      } else if (col.id === "delivery_date_display") {
-        let dDate = delivery.delivery_date;
-        if (dDate) {
-          let dateObj = new Date(dDate);
-          if (!isNaN(dateObj.getTime())) {
-            value = dateObj.toLocaleDateString("fr-FR");
-          } else if (typeof dDate === "string") {
-            value = dDate;
-          }
-        }
-        td.textContent = value;
       } else if (col.id === "container_number") {
-        // Affichage des numéros TC(s) sous forme de tags cliquables avec icône
+        // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
         }
-        td.innerHTML = tcList
-          .map(
-            (tc) => `
+        // Fonction popup TC statut (moderne, comme BL)
+        function showContainerStatusPopup(delivery, tcNum) {
+          const oldPopup = document.getElementById("containerStatusPopup");
+          if (oldPopup) oldPopup.remove();
+          const overlay = document.createElement("div");
+          overlay.id = "containerStatusPopup";
+          overlay.style.position = "fixed";
+          overlay.style.top = 0;
+          overlay.style.left = 0;
+          overlay.style.width = "100vw";
+          overlay.style.height = "100vh";
+          overlay.style.background = "rgba(30,41,59,0.45)";
+          overlay.style.zIndex = 9999;
+          overlay.style.display = "flex";
+          overlay.style.alignItems = "center";
+          overlay.style.justifyContent = "center";
+          const box = document.createElement("div");
+          box.style.background = "#fff";
+          box.style.borderRadius = "16px";
+          box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+          box.style.maxWidth = "420px";
+          box.style.width = "96vw";
+          box.style.maxHeight = "92vh";
+          box.style.overflowY = "auto";
+          box.style.padding = "0";
+          box.style.position = "relative";
+          box.style.display = "flex";
+          box.style.flexDirection = "column";
+          const header = document.createElement("div");
+          header.style.background = "#2563eb";
+          header.style.color = "#fff";
+          header.style.padding = "18px 28px 12px 28px";
+          header.style.fontWeight = "bold";
+          header.style.fontSize = "1.15rem";
+          header.style.display = "flex";
+          header.style.flexDirection = "column";
+          header.style.borderTopLeftRadius = "16px";
+          header.style.borderTopRightRadius = "16px";
+          header.innerHTML = `
+            <div style='margin-bottom:2px;'>
+              <span style='font-size:1.08em;'>${
+                delivery.employee_name || "-"
+              }</span>
+            </div>
+            <div style='font-size:0.98em;font-weight:400;'>
+              Client : <span style='color:#eab308;'>${
+                delivery.client_name || "-"
+              }</span><br>
+              Dossier : <span style='color:#eab308;'>${
+                delivery.dossier_number || "-"
+              }</span>  
+            </div>
+          `;
+          const closeBtn = document.createElement("button");
+          closeBtn.innerHTML = "&times;";
+          closeBtn.style.background = "none";
+          closeBtn.style.border = "none";
+          closeBtn.style.color = "#fff";
+          closeBtn.style.fontSize = "2.1rem";
+          closeBtn.style.cursor = "pointer";
+          closeBtn.style.position = "absolute";
+          closeBtn.style.top = "10px";
+          closeBtn.style.right = "18px";
+          closeBtn.setAttribute("aria-label", "Fermer");
+          closeBtn.onclick = () => overlay.remove();
+          header.appendChild(closeBtn);
+          box.appendChild(header);
+          const content = document.createElement("div");
+          content.style.padding = "24px 24px 24px 24px";
+          content.style.background = "#f8fafc";
+          content.style.flex = "1 1 auto";
+          content.style.overflowY = "auto";
+          const tcNumDiv = document.createElement("div");
+          tcNumDiv.style.fontSize = "1.25em";
+          tcNumDiv.style.fontWeight = "bold";
+          tcNumDiv.style.marginBottom = "18px";
+          tcNumDiv.style.textAlign = "center";
+          tcNumDiv.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${tcNum}</span>`;
+          content.appendChild(tcNumDiv);
+          // Ajout du sélecteur de statut pour le TC
+          const label = document.createElement("label");
+          label.textContent = "Statut du conteneur :";
+          label.style.display = "block";
+          label.style.marginBottom = "8px";
+          label.style.fontWeight = "500";
+          content.appendChild(label);
+          const select = document.createElement("select");
+          select.style.width = "100%";
+          select.style.padding = "10px 12px";
+          select.style.border = "1.5px solid #2563eb";
+          select.style.borderRadius = "7px";
+          select.style.fontSize = "1.08em";
+          select.style.marginBottom = "18px";
+          select.style.background = "#fff";
+          select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
+          const statusOptions = [
+            { value: "livre", label: "Livré" },
+            { value: "aucun", label: "Aucun" },
+          ];
+          if (
+            !delivery.container_statuses ||
+            typeof delivery.container_statuses !== "object"
+          ) {
+            delivery.container_statuses = {};
+          }
+          let currentStatus = delivery.container_statuses[tcNum] || "aucun";
+          if (currentStatus !== "livre") {
+            currentStatus = "aucun";
+          }
+          statusOptions.forEach((opt) => {
+            const option = document.createElement("option");
+            option.value = opt.value;
+            option.textContent = opt.label;
+            if (opt.value === currentStatus) option.selected = true;
+            select.appendChild(option);
+          });
+          content.appendChild(select);
+          const saveBtn = document.createElement("button");
+          saveBtn.textContent = "Enregistrer le statut";
+          saveBtn.className = "btn btn-primary w-full mt-2";
+          saveBtn.style.background =
+            "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
+          saveBtn.style.color = "#fff";
+          saveBtn.style.fontWeight = "bold";
+          saveBtn.style.fontSize = "1em";
+          saveBtn.style.border = "none";
+          saveBtn.style.borderRadius = "8px";
+          saveBtn.style.padding = "0.7em 1.7em";
+          saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
+          saveBtn.onclick = async () => {
+            let statutToSend =
+              select.value === "aucun" ? "aucun" : select.value;
+            // Confirmation si "livré"
+            if (statutToSend === "livre") {
+              const confirmOverlay = document.createElement("div");
+              confirmOverlay.style.position = "fixed";
+              confirmOverlay.style.top = 0;
+              confirmOverlay.style.left = 0;
+              confirmOverlay.style.width = "100vw";
+              confirmOverlay.style.height = "100vh";
+              confirmOverlay.style.background = "rgba(30,41,59,0.45)";
+              confirmOverlay.style.zIndex = 99999;
+              confirmOverlay.style.display = "flex";
+              confirmOverlay.style.alignItems = "center";
+              confirmOverlay.style.justifyContent = "center";
+              const confirmBox = document.createElement("div");
+              confirmBox.style.background = "#fff";
+              confirmBox.style.borderRadius = "18px";
+              confirmBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+              confirmBox.style.maxWidth = "420px";
+              confirmBox.style.width = "96vw";
+              confirmBox.style.padding = "0";
+              confirmBox.style.position = "relative";
+              confirmBox.style.display = "flex";
+              confirmBox.style.flexDirection = "column";
+              const confirmHeader = document.createElement("div");
+              confirmHeader.style.background =
+                "linear-gradient(90deg,#eab308 0%,#2563eb 100%)";
+              confirmHeader.style.color = "#fff";
+              confirmHeader.style.padding = "22px 32px 12px 32px";
+              confirmHeader.style.fontWeight = "bold";
+              confirmHeader.style.fontSize = "1.18rem";
+              confirmHeader.style.borderTopLeftRadius = "18px";
+              confirmHeader.style.borderTopRightRadius = "18px";
+              confirmHeader.innerHTML = `<span style='font-size:1.25em;'>⚠️ Confirmation requise</span>`;
+              confirmBox.appendChild(confirmHeader);
+              const confirmMsgDiv = document.createElement("div");
+              confirmMsgDiv.style.padding = "24px 24px 18px 24px";
+              confirmMsgDiv.style.background = "#f8fafc";
+              confirmMsgDiv.style.fontSize = "1.08em";
+              confirmMsgDiv.style.color = "#1e293b";
+              confirmMsgDiv.style.textAlign = "center";
+              confirmMsgDiv.innerHTML =
+                "<b>Vous êtes sur le point de valider le statut 'Livré' pour ce conteneur.</b><br><br>Cette opération est <span style='color:#eab308;font-weight:600;'>définitive</span> et ne pourra pas être annulée.<br><br>Voulez-vous vraiment continuer ?";
+              confirmBox.appendChild(confirmMsgDiv);
+              const btnsDiv = document.createElement("div");
+              btnsDiv.style.display = "flex";
+              btnsDiv.style.justifyContent = "center";
+              btnsDiv.style.gap = "18px";
+              btnsDiv.style.padding = "0 0 22px 0";
+              const cancelBtn = document.createElement("button");
+              cancelBtn.textContent = "Annuler";
+              cancelBtn.style.background = "#fff";
+              cancelBtn.style.color = "#2563eb";
+              cancelBtn.style.fontWeight = "bold";
+              cancelBtn.style.fontSize = "1em";
+              cancelBtn.style.border = "2px solid #2563eb";
+              cancelBtn.style.borderRadius = "8px";
+              cancelBtn.style.padding = "0.7em 1.7em";
+              cancelBtn.style.cursor = "pointer";
+              cancelBtn.onclick = () => confirmOverlay.remove();
+              const okBtn = document.createElement("button");
+              okBtn.textContent = "Confirmer";
+              okBtn.style.background =
+                "linear-gradient(90deg,#2563eb 0%,#eab308 100%)";
+              okBtn.style.color = "#fff";
+              okBtn.style.fontWeight = "bold";
+              okBtn.style.fontSize = "1em";
+              okBtn.style.border = "none";
+              okBtn.style.borderRadius = "8px";
+              okBtn.style.padding = "0.7em 1.7em";
+              okBtn.style.cursor = "pointer";
+              okBtn.onclick = async () => {
+                confirmOverlay.remove();
+                await finishTCStatusChange();
+              };
+              btnsDiv.appendChild(cancelBtn);
+              btnsDiv.appendChild(okBtn);
+              confirmBox.appendChild(btnsDiv);
+              confirmOverlay.appendChild(confirmBox);
+              document.body.appendChild(confirmOverlay);
+              confirmOverlay.onclick = (e) => {
+                if (e.target === confirmOverlay) confirmOverlay.remove();
+              };
+              return;
+            }
+            await finishTCStatusChange();
+            // Fonction pour continuer la procédure après confirmation
+            async function finishTCStatusChange() {
+              delivery.container_statuses[tcNum] = statutToSend;
+              // PATCH serveur
+              try {
+                await fetch(
+                  `/deliveries/status/${
+                    delivery._id
+                  }/container/${encodeURIComponent(tcNum)}`,
+                  {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status: statutToSend }),
+                  }
+                );
+              } catch (err) {
+                alert(
+                  "Erreur lors de la mise à jour du statut du conteneur.\n" +
+                    (err && err.message ? err.message : "")
+                );
+              }
+              overlay.remove();
+              // Mise à jour visuelle immédiate
+              if (typeof updateTableForDateRange === "function") {
+                let dateStartInput = document.getElementById(
+                  "mainTableDateStartFilter"
+                );
+                let dateEndInput = document.getElementById(
+                  "mainTableDateEndFilter"
+                );
+                const startVal = dateStartInput ? dateStartInput.value : "";
+                const endVal = dateEndInput ? dateEndInput.value : "";
+                updateTableForDateRange(startVal, endVal);
+              }
+            }
+          };
+          content.appendChild(saveBtn);
+          box.appendChild(content);
+          overlay.appendChild(box);
+          document.body.appendChild(overlay);
+          overlay.onclick = (e) => {
+            if (e.target === overlay) overlay.remove();
+          };
+        }
+        if (tcList.length > 1) {
+          td.classList.add("tc-multi-cell");
+          const btn = document.createElement("button");
+          btn.className = "tc-tags-btn";
+          btn.type = "button";
+          btn.innerHTML =
+            tcList
+              .slice(0, 2)
+              .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
+              .join("") +
+            (tcList.length > 2
+              ? ` <span class=\"tc-tag tc-tag-more\">+${
+                  tcList.length - 2
+                }</span>`
+              : "") +
+            ' <i class="fas fa-chevron-down tc-chevron"></i>';
+          const popup = document.createElement("div");
+          popup.className = "tc-popup";
+          popup.style.display = "none";
+          popup.style.minWidth = window.innerWidth <= 600 ? "90px" : "120px";
+          popup.style.fontSize = window.innerWidth <= 600 ? "0.97em" : "1.05em";
+          popup.innerHTML = tcList
+            .map(
+              (tc) =>
+                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
+            )
+            .join("");
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            document.querySelectorAll(".tc-popup").forEach((p) => {
+              if (p !== popup) p.style.display = "none";
+            });
+            popup.style.display =
+              popup.style.display === "block" ? "none" : "block";
+          };
+          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
+            item.onclick = (ev) => {
+              ev.stopPropagation();
+              popup.style.display = "none";
+              showContainerStatusPopup(delivery, item.textContent);
+            };
+          });
+          document.addEventListener("click", function hidePopup(e) {
+            if (!td.contains(e.target)) popup.style.display = "none";
+          });
+          td.appendChild(btn);
+          td.appendChild(popup);
+        } else if (tcList.length === 1) {
+          const tag = document.createElement("span");
+          tag.className = "tc-tag";
+          tag.textContent = tcList[0];
+          tag.style.cursor = "pointer";
+          tag.onclick = (e) => {
+            e.stopPropagation();
+            showContainerStatusPopup(delivery, tcList[0]);
+          };
+          td.appendChild(tag);
+        } else {
+          td.textContent = "-";
+        }
+      }
+
+      // Initialisation : charge toutes les livraisons puis affiche la plage de dates (par défaut : 7 jours avant aujourd'hui jusqu'à aujourd'hui)
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 7);
+      const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+      if (dateStartInput && dateEndInput) {
+        dateStartInput.value = sevenDaysAgoStr;
+        dateEndInput.value = todayStr;
+        loadAllDeliveries().then(() => {
+          updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+        });
+        dateStartInput.addEventListener("change", () => {
+          updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+        });
+        dateEndInput.addEventListener("change", () => {
+          updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+        });
+      }
+    });
+    // Colonnes pour le tableau du responsable de livraison
+    const AGENT_TABLE_COLUMNS = [
+      { id: "row_number", label: "N°" },
+      { id: "date_display", label: "Date" },
+      { id: "employee_name", label: "Agent Acconier" },
+      { id: "client_name", label: "Nom Client" },
+      { id: "client_phone", label: "Client (Tel)" },
+      { id: "container_number", label: "Numéro TC(s)" },
+      { id: "location", label: "Lieu" },
+      { id: "container_type", label: "Type de conteneurs" },
+      { id: "content", label: "Contenu" },
+      { id: "declaration_number", label: "Numéro Déclaration" },
+      { id: "dossier_number", label: "Numéro Dossier" },
+      { id: "container_count", label: "NBR Conteneurs" },
+      { id: "shipping_company", label: "Compagnie Maritime" },
+      { id: "circuit", label: "Circuit" },
+      { id: "transport_mode", label: "Mode de transport" },
+      { id: "visitor_agent", label: "Agent Visiteur" },
+      { id: "transporter", label: "Transporteur" },
+      { id: "inspector", label: "Inspecteur" },
+      { id: "customs_agent", label: "Agent en Douanes" },
+      { id: "driver_name", label: "Chauffeur" },
+      { id: "driver_phone", label: "Tel Chauffeur" },
+      { id: "delivery_date_display", label: "Date de livraison" },
+      { id: "status", label: "Statut" },
+      { id: "observation", label: "Observations" },
+    ];
+
+    // Fonction pour générer les lignes du tableau Agent Acconier
+    function renderAgentTableRows(deliveries, tableBodyElement) {
+      tableBodyElement.innerHTML = "";
+      deliveries.forEach((delivery, idx) => {
+        const tr = document.createElement("tr");
+        AGENT_TABLE_COLUMNS.forEach((col) => {
+          const td = document.createElement("td");
+          let value = "-";
+          if (col.id === "row_number") {
+            value = idx + 1;
+            td.textContent = value;
+          } else if (col.id === "date_display") {
+            let dDate = delivery.delivery_date || delivery.created_at;
+            if (dDate) {
+              let dateObj = new Date(dDate);
+              if (!isNaN(dateObj.getTime())) {
+                value = dateObj.toLocaleDateString("fr-FR");
+              } else if (typeof dDate === "string") {
+                value = dDate;
+              }
+            }
+            td.textContent = value;
+          } else if (col.id === "delivery_date_display") {
+            let dDate = delivery.delivery_date;
+            if (dDate) {
+              let dateObj = new Date(dDate);
+              if (!isNaN(dateObj.getTime())) {
+                value = dateObj.toLocaleDateString("fr-FR");
+              } else if (typeof dDate === "string") {
+                value = dDate;
+              }
+            }
+            td.textContent = value;
+          } else if (col.id === "container_number") {
+            // Affichage des numéros TC(s) sous forme de tags cliquables avec icône
+            let tcList = [];
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
+            td.innerHTML = tcList
+              .map(
+                (tc) => `
           <span class="tc-tag" style="margin-bottom:4px;cursor:pointer;position:relative;">
             <span style="padding-right:8px;">${tc}</span>
             <i class="fas fa-edit" style="color:#2563eb;font-size:1em;cursor:pointer;position:absolute;right:2px;top:2px;" data-tc="${tc}"></i>
           </span>
         `
-          )
-          .join("<br>");
-        // Ajout du handler pour chaque icône
-        setTimeout(() => {
-          td.querySelectorAll(".fa-edit").forEach((icon) => {
-            icon.onclick = function (e) {
-              e.stopPropagation();
-              const tcNum = this.getAttribute("data-tc");
-              showTcStatusPopup(tcNum, delivery);
-            };
-          });
-        }, 0);
-      } else if (col.id === "status") {
-        // Statut sous forme de badge "X sur Y livrés"
-        let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        let total = tcList.length;
-        let livred = tcList.filter(
-          (tc) =>
-            delivery.container_statuses &&
-            delivery.container_statuses[tc] === "livre"
-        ).length;
-        // Style badge comme le modèle fourni
-        td.innerHTML = `<span style="display:inline-block;padding:4px 18px;border-radius:16px;border:2px solid #eab308;background:#fffbe6;color:#b45309;font-weight:700;font-size:1.08em;box-shadow:0 2px 8px rgba(234,179,8,0.13);">${livred} sur ${total} livré${
-          total > 1 ? "s" : ""
-        }</span>`;
-      } else {
-        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-        td.textContent = value;
-      }
-      // Fonction pour afficher la popup de modification du statut TC
-      function showTcStatusPopup(tcNum, delivery) {
-        // Supprimer toute popup existante
-        let oldPopup = document.getElementById("tcStatusPopup");
-        if (oldPopup) oldPopup.remove();
-        // Création de la popup
-        const popup = document.createElement("div");
-        popup.id = "tcStatusPopup";
-        popup.style.position = "fixed";
-        popup.style.top = "50%";
-        popup.style.left = "50%";
-        popup.style.transform = "translate(-50%, -50%)";
-        popup.style.background = "#fff";
-        popup.style.borderRadius = "18px";
-        popup.style.boxShadow = "0 8px 32px rgba(37,99,235,0.18)";
-        popup.style.zIndex = "99999";
-        popup.style.padding = "0";
-        popup.style.minWidth = "340px";
-        popup.style.maxWidth = "98vw";
-        popup.innerHTML = `
+              )
+              .join("<br>");
+            // Ajout du handler pour chaque icône
+            setTimeout(() => {
+              td.querySelectorAll(".fa-edit").forEach((icon) => {
+                icon.onclick = function (e) {
+                  e.stopPropagation();
+                  const tcNum = this.getAttribute("data-tc");
+                  showTcStatusPopup(tcNum, delivery);
+                };
+              });
+            }, 0);
+          } else if (col.id === "status") {
+            // Statut sous forme de badge "X sur Y livrés"
+            let tcList = [];
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
+            let total = tcList.length;
+            let livred = tcList.filter(
+              (tc) =>
+                delivery.container_statuses &&
+                delivery.container_statuses[tc] === "livre"
+            ).length;
+            // Style badge comme le modèle fourni
+            td.innerHTML = `<span style="display:inline-block;padding:4px 18px;border-radius:16px;border:2px solid #eab308;background:#fffbe6;color:#b45309;font-weight:700;font-size:1.08em;box-shadow:0 2px 8px rgba(234,179,8,0.13);">${livred} sur ${total} livré${
+              total > 1 ? "s" : ""
+            }</span>`;
+          } else {
+            value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+            td.textContent = value;
+          }
+          // Fonction pour afficher la popup de modification du statut TC
+          function showTcStatusPopup(tcNum, delivery) {
+            // Supprimer toute popup existante
+            let oldPopup = document.getElementById("tcStatusPopup");
+            if (oldPopup) oldPopup.remove();
+            // Création de la popup
+            const popup = document.createElement("div");
+            popup.id = "tcStatusPopup";
+            popup.style.position = "fixed";
+            popup.style.top = "50%";
+            popup.style.left = "50%";
+            popup.style.transform = "translate(-50%, -50%)";
+            popup.style.background = "#fff";
+            popup.style.borderRadius = "18px";
+            popup.style.boxShadow = "0 8px 32px rgba(37,99,235,0.18)";
+            popup.style.zIndex = "99999";
+            popup.style.padding = "0";
+            popup.style.minWidth = "340px";
+            popup.style.maxWidth = "98vw";
+            popup.innerHTML = `
     <div style="background:linear-gradient(90deg,#2563eb 0%,#1e293b 100%);border-radius:18px 18px 0 0;padding:18px 24px 10px 24px;position:relative;">
       <span style="font-size:1.25em;font-weight:700;color:#fff;">${
         delivery.employee_name || ""
@@ -613,104 +875,128 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       <button id="saveTcStatusBtn" style="background:#0e274e;color:#fff;font-weight:700;font-size:1.08em;padding:10px 28px;border-radius:10px;border:none;box-shadow:0 2px 8px #2563eb22;cursor:pointer;">Enregistrer le statut</button>
     </div>
   `;
-        document.body.appendChild(popup);
-        // Fermeture
-        document.getElementById("closeTcPopupBtn").onclick = function () {
-          popup.remove();
-        };
-        // Enregistrement du statut
-        document.getElementById("saveTcStatusBtn").onclick = function () {
-          const select = document.getElementById("tcStatusSelect");
-          const newStatus = select.value;
-          if (!delivery.container_statuses) delivery.container_statuses = {};
-          delivery.container_statuses[tcNum] = newStatus;
-          // Mise à jour visuelle immédiate
-          popup.remove();
-          // Forcer le re-rendu du tableau
-          if (typeof updateTableForDateRange === "function") {
-            let dateStartInput = document.getElementById(
-              "mainTableDateStartFilter"
-            );
-            let dateEndInput = document.getElementById(
-              "mainTableDateEndFilter"
-            );
-            const startVal = dateStartInput ? dateStartInput.value : "";
-            const endVal = dateEndInput ? dateEndInput.value : "";
-            updateTableForDateRange(startVal, endVal);
+            document.body.appendChild(popup);
+            // Fermeture
+            document.getElementById("closeTcPopupBtn").onclick = function () {
+              popup.remove();
+            };
+            // Enregistrement du statut
+            document.getElementById("saveTcStatusBtn").onclick =
+              async function () {
+                const select = document.getElementById("tcStatusSelect");
+                const newStatus = select.value;
+                if (!delivery.container_statuses)
+                  delivery.container_statuses = {};
+                delivery.container_statuses[tcNum] = newStatus;
+                // PATCH serveur pour enregistrer le nouveau statut
+                try {
+                  await fetch(
+                    `/deliveries/status/${
+                      delivery._id
+                    }/container/${encodeURIComponent(tcNum)}`,
+                    {
+                      method: "PATCH",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({ status: newStatus }),
+                    }
+                  );
+                } catch (e) {
+                  console.error(
+                    "Erreur lors de la mise à jour du statut TC:",
+                    e
+                  );
+                }
+                // Mise à jour visuelle immédiate
+                popup.remove();
+                // Forcer le re-rendu du tableau
+                if (typeof updateTableForDateRange === "function") {
+                  let dateStartInput = document.getElementById(
+                    "mainTableDateStartFilter"
+                  );
+                  let dateEndInput = document.getElementById(
+                    "mainTableDateEndFilter"
+                  );
+                  const startVal = dateStartInput ? dateStartInput.value : "";
+                  const endVal = dateEndInput ? dateEndInput.value : "";
+                  updateTableForDateRange(startVal, endVal);
+                }
+              };
           }
-        };
+          tr.appendChild(td);
+        });
+        tableBodyElement.appendChild(tr);
+      });
+    }
+
+    // Fonction pour générer les en-têtes du tableau Agent Acconier
+    function renderAgentTableHeaders(tableElement, deliveries) {
+      const thead = tableElement.querySelector("thead");
+      thead.innerHTML = "";
+      const headerRow = document.createElement("tr");
+      AGENT_TABLE_COLUMNS.forEach((col) => {
+        const th = document.createElement("th");
+        th.textContent = col.label;
+        th.setAttribute("data-col-id", col.id);
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+    }
+
+    // Fonction pour générer le tableau Agent Acconier complet
+    function renderAgentTableFull(deliveries, tableBodyElement) {
+      const table = tableBodyElement.closest("table");
+      // ...
+      // Filtrer les livraisons à afficher dans le tableau du responsable de livraison :
+      // On ne montre que les livraisons où au moins un conteneur est en 'mise_en_livraison'
+      const deliveriesToShow = deliveries.filter((delivery) => {
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        let tcStatuses = tcList.map((tc) =>
+          delivery.container_statuses && delivery.container_statuses[tc]
+            ? delivery.container_statuses[tc]
+            : "aucun"
+        );
+        // On affiche uniquement si au moins un conteneur est en 'mise_en_livraison'
+        return tcStatuses.some((s) => s === "mise_en_livraison");
+      });
+      console.log(
+        "[DEBUG] renderAgentTableFull - deliveriesToShow (Respo Livraison):",
+        deliveriesToShow
+      );
+      if (deliveriesToShow.length === 0) {
+        if (table) table.style.display = "none";
+        let noDataMsg = document.getElementById("noDeliveriesMsg");
+        if (!noDataMsg) {
+          noDataMsg = document.createElement("div");
+          noDataMsg.id = "noDeliveriesMsg";
+          noDataMsg.style.textAlign = "center";
+          noDataMsg.style.padding = "48px 0 32px 0";
+          noDataMsg.style.fontSize = "1.25em";
+          noDataMsg.style.color = "#64748b";
+          noDataMsg.style.fontWeight = "500";
+          noDataMsg.textContent = "Aucune opération à cette date.";
+          tableBodyElement.parentNode.insertBefore(noDataMsg, tableBodyElement);
+        } else {
+          noDataMsg.style.display = "block";
+        }
+        tableBodyElement.innerHTML = "";
+      } else {
+        if (table) table.style.display = "table";
+        const noDataMsg = document.getElementById("noDeliveriesMsg");
+        if (noDataMsg) noDataMsg.style.display = "none";
+        // Utiliser la nouvelle fonction d'en-tête
+        if (table) {
+          renderAgentTableHeaders(table, deliveriesToShow);
+        }
+        renderAgentTableRows(deliveriesToShow, tableBodyElement);
       }
-      tr.appendChild(td);
-    });
-    tableBodyElement.appendChild(tr);
-  });
-}
-
-// Fonction pour générer les en-têtes du tableau Agent Acconier
-function renderAgentTableHeaders(tableElement, deliveries) {
-  const thead = tableElement.querySelector("thead");
-  thead.innerHTML = "";
-  const headerRow = document.createElement("tr");
-  AGENT_TABLE_COLUMNS.forEach((col) => {
-    const th = document.createElement("th");
-    th.textContent = col.label;
-    th.setAttribute("data-col-id", col.id);
-    headerRow.appendChild(th);
-  });
-  thead.appendChild(headerRow);
-}
-
-// Fonction pour générer le tableau Agent Acconier complet
-function renderAgentTableFull(deliveries, tableBodyElement) {
-  const table = tableBodyElement.closest("table");
-  // ...
-  // Filtrer les livraisons à afficher dans le tableau du responsable de livraison :
-  // On ne montre que les livraisons où au moins un conteneur est en 'mise_en_livraison'
-  const deliveriesToShow = deliveries.filter((delivery) => {
-    let tcList = [];
-    if (Array.isArray(delivery.container_number)) {
-      tcList = delivery.container_number.filter(Boolean);
-    } else if (typeof delivery.container_number === "string") {
-      tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
     }
-    let tcStatuses = tcList.map((tc) =>
-      delivery.container_statuses && delivery.container_statuses[tc]
-        ? delivery.container_statuses[tc]
-        : "aucun"
-    );
-    // On affiche uniquement si au moins un conteneur est en 'mise_en_livraison'
-    return tcStatuses.some((s) => s === "mise_en_livraison");
-  });
-  console.log(
-    "[DEBUG] renderAgentTableFull - deliveriesToShow (Respo Livraison):",
-    deliveriesToShow
-  );
-  if (deliveriesToShow.length === 0) {
-    if (table) table.style.display = "none";
-    let noDataMsg = document.getElementById("noDeliveriesMsg");
-    if (!noDataMsg) {
-      noDataMsg = document.createElement("div");
-      noDataMsg.id = "noDeliveriesMsg";
-      noDataMsg.style.textAlign = "center";
-      noDataMsg.style.padding = "48px 0 32px 0";
-      noDataMsg.style.fontSize = "1.25em";
-      noDataMsg.style.color = "#64748b";
-      noDataMsg.style.fontWeight = "500";
-      noDataMsg.textContent = "Aucune opération à cette date.";
-      tableBodyElement.parentNode.insertBefore(noDataMsg, tableBodyElement);
-    } else {
-      noDataMsg.style.display = "block";
-    }
-    tableBodyElement.innerHTML = "";
-  } else {
-    if (table) table.style.display = "table";
-    const noDataMsg = document.getElementById("noDeliveriesMsg");
-    if (noDataMsg) noDataMsg.style.display = "none";
-    // Utiliser la nouvelle fonction d'en-tête
-    if (table) {
-      renderAgentTableHeaders(table, deliveriesToShow);
-    }
-    renderAgentTableRows(deliveriesToShow, tableBodyElement);
   }
+  //originale
 }
-//originale
