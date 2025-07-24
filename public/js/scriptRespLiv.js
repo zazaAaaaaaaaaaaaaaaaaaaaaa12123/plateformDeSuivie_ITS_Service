@@ -1332,3 +1332,35 @@ function adaptTableResponsive() {
 }
 window.addEventListener("resize", adaptTableResponsive);
 adaptTableResponsive();
+
+// Ajout d’un style CSS moderne et lisible pour les tags TC : fond bleu, texte blanc, arrondi, ombre légère, effet au survol. Le tag "+N" est jaune pour plus de clarté.
+const style = document.createElement("style");
+style.innerHTML = `
+.tc-tag {
+  display: inline-block;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1em;
+  padding: 4px 16px;
+  border-radius: 8px;
+  margin: 2px 2px 2px 0;
+  letter-spacing: 1px;
+  box-shadow: 0 1px 6px rgba(30,41,59,0.10);
+  transition: background 0.18s, box-shadow 0.18s;
+  cursor: pointer;
+  border: none;
+}
+.tc-tag:hover {
+  background: #1746a2;
+  box-shadow: 0 2px 12px rgba(37,99,235,0.18);
+}
+.tc-tag.tc-tag-more {
+  background: #eab308;
+  color: #fff;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+`;
+document.head.appendChild(style);
