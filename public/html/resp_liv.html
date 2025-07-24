@@ -947,6 +947,44 @@
             avatarEl.style.position = 'relative';
           }
         }
+
+        // Filtrage par N° Dossier et N° Déclaration via le champ de recherche
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const deliveriesTableBody = document.getElementById('deliveriesTableBody');
+
+        function filterDeliveries() {
+          const query = searchInput.value.trim().toLowerCase();
+          const rows = deliveriesTableBody.querySelectorAll('tr');
+          let found = false;
+          rows.forEach(row => {
+            // On suppose que la colonne N° Déclaration est la 10ème (index 9) et N° Dossier la 11ème (index 10)
+            const declarationCell = row.cells[9];
+            const dossierCell = row.cells[10];
+            if (declarationCell && dossierCell) {
+              const declarationText = declarationCell.textContent.trim().toLowerCase();
+              const dossierText = dossierCell.textContent.trim().toLowerCase();
+              if (declarationText.includes(query) || dossierText.includes(query) || query === "") {
+                row.style.display = '';
+                found = true;
+              } else {
+                row.style.display = 'none';
+              }
+            }
+          });
+          // Affiche le message si aucune livraison trouvée
+          const noDeliveriesMsg = document.getElementById('noDeliveriesMessage');
+          if (!found) {
+            if (noDeliveriesMsg) noDeliveriesMsg.classList.remove('d-none');
+          } else {
+            if (noDeliveriesMsg) noDeliveriesMsg.classList.add('d-none');
+          }
+        }
+
+        if (searchButton && searchInput) {
+          searchButton.addEventListener('click', filterDeliveries);
+          searchInput.addEventListener('input', filterDeliveries);
+        }
       });
     </script>
   </body>
@@ -954,7 +992,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   
-
   </body>
 </html>
 <!--ABC-->
