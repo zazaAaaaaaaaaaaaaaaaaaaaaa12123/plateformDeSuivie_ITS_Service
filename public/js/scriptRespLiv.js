@@ -1077,7 +1077,23 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }`
               );
               overlay.remove();
-              // Rafraîchir les données si besoin
+              // Rafraîchir les données et le tableau pour mettre à jour l'entête Statut
+              if (typeof loadAllDeliveries === "function") {
+                await loadAllDeliveries();
+                // Récupérer les valeurs de date pour filtrer
+                const dateStartInput = document.getElementById(
+                  "mainTableDateStartFilter"
+                );
+                const dateEndInput = document.getElementById(
+                  "mainTableDateEndFilter"
+                );
+                if (dateStartInput && dateEndInput) {
+                  updateTableForDateRange(
+                    dateStartInput.value,
+                    dateEndInput.value
+                  );
+                }
+              }
             } else {
               alert(
                 data.message ||
