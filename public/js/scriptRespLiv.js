@@ -923,8 +923,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         td.setAttribute("data-col-id", "statut");
         if (delivered === total && total > 0) {
+          // Badge ou bouton vert si tout est livré (1/1 ou n/n)
           td.innerHTML = `<span style="display:inline-block;padding:2px 18px;font-size:1.1em;font-weight:600;border-radius:12px;border:2px solid #eab308;background:#d1fadf;color:#15803d;">Livré</span>`;
         } else {
+          // Si partiellement livré, bouton jaune classique
           td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
             total > 1 ? "s" : ""
           }</button>`;
