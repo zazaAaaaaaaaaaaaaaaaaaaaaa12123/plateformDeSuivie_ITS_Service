@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         // Ajout : mise à jour instantanée de l'entête Statut ET des cellules de la colonne Statut
         if (data.type === "container_status_update") {
-          // Mise à jour de l'entête Statut globale si info fournie
+          // Mise à jour de l'entête Statut globale : on affiche seulement le texte "Statut" sans le bouton x sur y livré
           if (
             typeof data.globalDeliveredCount === "number" &&
             typeof data.globalTotalCount === "number"
@@ -123,12 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
               "#deliveriesTable thead th[data-col-id='statut']"
             );
             if (thStatut) {
-              thStatut.innerHTML = `<span style=\"font-weight:bold;\">Statut</span><br>
-                <button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
-                  data.globalDeliveredCount
-                } sur ${data.globalTotalCount} livré${
-                data.globalTotalCount > 1 ? "s" : ""
-              }</button>`;
+              thStatut.innerHTML = `<span style=\"font-weight:bold;\">Statut</span>`;
             }
           }
           // Mise à jour de la cellule Statut de la ligne concernée uniquement
