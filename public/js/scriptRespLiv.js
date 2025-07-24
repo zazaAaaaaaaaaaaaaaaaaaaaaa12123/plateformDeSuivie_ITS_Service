@@ -94,19 +94,35 @@ document.addEventListener("mouseover", function (e) {
       let details =
         "<div style='font-weight:bold;color:#b45309;font-size:1.08em;margin-bottom:6px;'>Détail des conteneurs</div>";
       if (
-        tcList.length > 0 &&
         delivery &&
+        tcList.length > 0 &&
         delivery.container_statuses &&
         typeof delivery.container_statuses === "object"
       ) {
+        let hasStatus = false;
         details += tcList
           .map((tc) => {
-            let status = delivery.container_statuses[tc] || "-";
-            return `<div style='display:flex;align-items:center;gap:8px;font-size:1.08em;'><span style='font-weight:bold;color:#1e293b;'>${tc}</span> <span style='color:#eab308;font-size:1.1em;'>&#x23F3;</span> <span style='color:#1e293b;'>${status}</span></div>`;
+            let status = delivery.container_statuses[tc];
+            if (status && status !== "-" && status !== "aucun")
+              hasStatus = true;
+            return `<div style='display:flex;align-items:center;gap:8px;font-size:1.08em;'><span style='font-weight:bold;color:#1e293b;'>${tc}</span> <span style='color:#eab308;font-size:1.1em;'>&#x23F3;</span> <span style='color:#1e293b;'>${
+              status ? status : "En attente"
+            }</span></div>`;
+          })
+          .join("");
+        if (!hasStatus) {
+          details +=
+            "<div style='color:#64748b;font-size:0.98em;'>Aucun statut renseigné</div>";
+        }
+      } else if (delivery && tcList.length > 0) {
+        details += tcList
+          .map((tc) => {
+            return `<div style='display:flex;align-items:center;gap:8px;font-size:1.08em;'><span style='font-weight:bold;color:#1e293b;'>${tc}</span> <span style='color:#eab308;font-size:1.1em;'>&#x23F3;</span> <span style='color:#1e293b;'>En attente</span></div>`;
           })
           .join("");
       } else {
-        details += "<div>--</div>";
+        details +=
+          "<div style='color:#64748b;font-size:0.98em;'>Aucun conteneur</div>";
       }
       showTooltip(details, e.clientX, e.clientY);
     }
