@@ -771,35 +771,33 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const popup = document.createElement("div");
           popup.className = "tc-popup";
           popup.style.display = "none";
-          popup.innerHTML = tcList
-            .map(
-              (tc) =>
-                `<div class="tc-popup-item" style='cursor:pointer;'>${tc}</div>`
-            )
-            .join("");
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            document.querySelectorAll(".tc-popup").forEach((p) => {
-              if (p !== popup) p.style.display = "none";
-            });
-            popup.style.display =
-              popup.style.display === "block" ? "none" : "block";
+          tag.style.cssText = `
+            display: inline-block;
+            background: #eaf1ff;
+            color: #2563eb;
+            font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+            font-weight: 500;
+            font-size: 1em;
+            padding: 5px 18px;
+            border-radius: 12px;
+            margin-right: 8px;
+            margin-top: 4px;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+            border: 1px solid #2563eb;
+            box-shadow: none;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+            outline: none;
+          `;
+          tag.onmouseenter = function () {
+            tag.style.background = "#2563eb";
+            tag.style.color = "#fff";
           };
-          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
-            item.onclick = (ev) => {
-              ev.stopPropagation();
-              popup.style.display = "none";
-              showContainerDetailPopup(delivery, item.textContent);
-            };
-          });
-          document.addEventListener("click", function hidePopup(e) {
-            if (!td.contains(e.target)) popup.style.display = "none";
-          });
-          td.appendChild(btn);
-          td.appendChild(popup);
-        } else if (tcList.length === 1) {
-          const tag = document.createElement("span");
-          tag.className = "tc-tag";
+          tag.onmouseleave = function () {
+            tag.style.background = "#eaf1ff";
+            tag.style.color = "#2563eb";
+          };
           tag.textContent = tcList[0];
           tag.style.cssText = `
             display: inline-flex;
