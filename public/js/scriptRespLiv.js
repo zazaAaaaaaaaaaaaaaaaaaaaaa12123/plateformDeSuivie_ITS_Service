@@ -1118,18 +1118,41 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     select.value;
                 }
               }
-              // Rafraîchir le tableau pour mettre à jour l'entête Statut
-              const dateStartInput = document.getElementById(
-                "mainTableDateStartFilter"
+              // Mise à jour dynamique de la cellule Statut sans rechargement
+              const row = document.querySelector(
+                `tr[data-delivery-id='${delivery.id}']`
               );
-              const dateEndInput = document.getElementById(
-                "mainTableDateEndFilter"
-              );
-              if (dateStartInput && dateEndInput) {
-                updateTableForDateRange(
-                  dateStartInput.value,
-                  dateEndInput.value
+              if (row) {
+                const statutCell = row.querySelector(
+                  "td[data-col-id='statut']"
                 );
+                if (statutCell) {
+                  // Recalcule le nombre livré et total
+                  let tcList = [];
+                  if (Array.isArray(delivery.container_number)) {
+                    tcList = delivery.container_number.filter(Boolean);
+                  } else if (typeof delivery.container_number === "string") {
+                    tcList = delivery.container_number
+                      .split(/[,;\s]+/)
+                      .filter(Boolean);
+                  }
+                  let total = tcList.length;
+                  let delivered = 0;
+                  if (
+                    delivery.container_statuses &&
+                    typeof delivery.container_statuses === "object"
+                  ) {
+                    delivered = tcList.filter((tc) => {
+                      const s = delivery.container_statuses[tc];
+                      return s === "livre" || s === "livré";
+                    }).length;
+                  }
+                  if (delivered === total && total > 0) {
+                    statutCell.innerHTML = `<span style="display:inline-block;padding:6px 18px;border-radius:12px;background:#d1fae5;border:2px solid #22c55e;color:#059669;font-weight:bold;font-size:1.08em;">Livré</span>`;
+                  } else {
+                    statutCell.innerHTML = `<span style="display:inline-block;padding:6px 18px;border-radius:12px;background:#fff7ed;border:2px solid #fbbf24;color:#b45309;font-weight:bold;font-size:1.08em;">${delivered} sur ${total} livrés</span>`;
+                  }
+                }
               }
               // Envoi d'une notification WebSocket pour informer tous les clients
               if (window.ws && window.ws.readyState === 1) {
