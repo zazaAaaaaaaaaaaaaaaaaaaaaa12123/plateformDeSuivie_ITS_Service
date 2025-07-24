@@ -956,14 +956,18 @@
         function filterDeliveries() {
           let query = searchInput.value.trim().toLowerCase();
           // On retire les espaces et accents pour une recherche plus souple
-          const normalize = str => str.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\s+/g, '');
+          const normalize = str => str && str.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\s+/g, '');
           query = normalize(query);
           const rows = deliveriesTableBody.querySelectorAll('tr');
           let found = false;
           rows.forEach(row => {
-            // Colonne N° Déclaration = 10ème (index 9)
-            const declarationCell = row.cells[9];
-            if (declarationCell) {
+            // Ignore la ligne de chargement ou les lignes sans assez de cellules
+            if (!row.querySelector('[data-col-id="declaration_number"]')) {
+              row.style.display = '';
+              return;
+            }
+            const declarationCell = row.querySelector('[data-col-id="declaration_number"]');
+            if (declarationCell && declarationCell.textContent.trim() !== "") {
               const declarationText = normalize(declarationCell.textContent.trim().toLowerCase());
               if (
                 (declarationText.includes(query) || query === "")
