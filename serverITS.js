@@ -3154,6 +3154,35 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
     const wss = req.app.get("wss");
     const updatedDelivery = updateRes.rows[0];
     const alertMessage = `Statut du conteneur '${containerNumber}' mis à jour à '${status}'.`;
+    // Calcul du nombre de conteneurs livrés et du total
+    let total = 0;
+    let delivered = 0;
+    let tcList = [];
+    if (updatedDelivery.container_number) {
+      if (Array.isArray(updatedDelivery.container_number)) {
+        tcList = updatedDelivery.container_number.filter(Boolean);
+      } else if (typeof updatedDelivery.container_number === "string") {
+        tcList = updatedDelivery.container_number
+          .split(/[,;\s]+/)
+          .filter(Boolean);
+      }
+      total = tcList.length;
+    }
+    let container_statuses_updated = {};
+    if (updatedDelivery.container_statuses) {
+      try {
+        container_statuses_updated =
+          typeof updatedDelivery.container_statuses === "string"
+            ? JSON.parse(updatedDelivery.container_statuses)
+            : updatedDelivery.container_statuses;
+      } catch (e) {
+        container_statuses_updated = {};
+      }
+    }
+    delivered = tcList.filter((tc) => {
+      const s = container_statuses_updated[tc];
+      return s === "livre" || s === "livré";
+    }).length;
     const payload = JSON.stringify({
       type: "container_status_update",
       message: alertMessage,
@@ -3161,6 +3190,8 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       containerNumber,
       status,
       alertType: "success",
+      deliveredCount: delivered,
+      totalCount: total,
     });
     wss.clients.forEach((client) => {
       if (client.readyState === require("ws").OPEN) {
@@ -3171,6 +3202,8 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       success: true,
       message: alertMessage,
       delivery: updatedDelivery,
+      deliveredCount: delivered,
+      totalCount: total,
     });
   } catch (err) {
     console.error("Erreur lors de la mise à jour du statut du conteneur:", err);

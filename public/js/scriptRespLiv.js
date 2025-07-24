@@ -100,10 +100,9 @@ document.addEventListener("DOMContentLoaded", function () {
     ws.onmessage = function (event) {
       try {
         const data = JSON.parse(event.data);
+        // Gestion BL existante
         if (data.type === "bl_status_update") {
-          // Recharge la liste si un BL passe en 'mise_en_livraison'
           if (data.status === "mise_en_livraison") {
-            // Recharge toutes les livraisons et met à jour le tableau
             const dateInput = document.getElementById("mainTableDateFilter");
             const dateStr = dateInput ? dateInput.value : null;
             if (typeof loadAllDeliveries === "function" && dateStr) {
@@ -111,6 +110,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 updateTableForDate(dateStr);
               });
             }
+          }
+        }
+        // Ajout : mise à jour instantanée de l'entête Statut
+        if (data.type === "container_status_update") {
+          const thStatut = document.querySelector(
+            "#deliveriesTable thead th[data-col-id='statut']"
+          );
+          if (
+            thStatut &&
+            typeof data.deliveredCount === "number" &&
+            typeof data.totalCount === "number"
+          ) {
+            thStatut.innerHTML = `<span style=\"font-weight:bold;\">Statut</span><br>
+              <button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">
+                ${data.deliveredCount} sur ${data.totalCount} livré${
+              data.totalCount > 1 ? "s" : ""
+            }
+              </button>`;
           }
         }
       } catch (e) {
