@@ -1338,29 +1338,32 @@ const style = document.createElement("style");
 style.innerHTML = `
 .tc-tag {
   display: inline-block;
-  background: #2563eb;
-  color: #fff;
-  font-weight: 700;
+  background: #eaf1ff;
+  color: #2563eb;
+  font-weight: 600;
   font-size: 1em;
-  padding: 4px 16px;
-  border-radius: 8px;
+  padding: 4px 14px;
+  border-radius: 16px;
   margin: 2px 2px 2px 0;
-  letter-spacing: 1px;
-  box-shadow: 0 1px 6px rgba(30,41,59,0.10);
-  transition: background 0.18s, box-shadow 0.18s;
+  letter-spacing: 0.5px;
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 1px 6px rgba(30,41,59,0.08);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
   cursor: pointer;
-  border: none;
 }
 .tc-tag:hover {
-  background: #1746a2;
+  background: #2563eb;
+  color: #fff;
   box-shadow: 0 2px 12px rgba(37,99,235,0.18);
 }
 .tc-tag.tc-tag-more {
-  background: #eab308;
-  color: #fff;
-  font-weight: 700;
+  background: #fff;
+  color: #2563eb;
+  font-weight: 600;
+  border: 1.5px solid #2563eb;
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: 16px;
+  box-shadow: 0 1px 6px rgba(30,41,59,0.08);
 }
 `;
 document.head.appendChild(style);
