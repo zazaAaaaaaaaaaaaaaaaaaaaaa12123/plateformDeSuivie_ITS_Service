@@ -756,21 +756,25 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
         }
+        td.style.textAlign = "center";
         if (tcList.length > 1) {
           td.classList.add("tc-multi-cell");
           const btn = document.createElement("button");
           btn.className = "tc-tags-btn";
           btn.type = "button";
+          btn.style.display = "inline-flex";
+          btn.style.justifyContent = "center";
+          btn.style.alignItems = "center";
           btn.innerHTML =
             tcList
               .slice(0, 2)
               .map(
                 (tc) =>
-                  `<span class="tc-tag" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:600;font-size:0.92em;padding:3px 10px;border-radius:12px;margin:2px 2px 2px 0;letter-spacing:0.5px;box-shadow:0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">${tc}</span>`
+                  `<span class="tc-tag" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1.13em;padding:6px 18px;border-radius:16px;margin:6px 2px 6px 2px;letter-spacing:0.5px;box-shadow:0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">${tc}</span>`
               )
               .join("") +
             (tcList.length > 2
-              ? ` <span class="tc-tag tc-tag-more" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:600;font-size:0.92em;padding:3px 10px;border-radius:12px;margin:2px 2px 2px 0;letter-spacing:0.5px;box-shadow:0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">+${
+              ? ` <span class="tc-tag tc-tag-more" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1.13em;padding:6px 18px;border-radius:16px;margin:6px 2px 6px 2px;letter-spacing:0.5px;box-shadow:0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">+${
                   tcList.length - 2
                 }</span>`
               : "") +
@@ -781,7 +785,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           popup.innerHTML = tcList
             .map(
               (tc) =>
-                `<div class="tc-popup-item" style='cursor:pointer;color:#0e274e;font-weight:600;'>${tc}</div>`
+                `<div class="tc-popup-item" style='cursor:pointer;color:#0e274e;font-weight:700;font-size:1.13em;text-align:center;'>${tc}</div>`
             )
             .join("");
           btn.onclick = (e) => {
@@ -812,16 +816,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             display: inline-block;
             background: #e6b800;
             color: #0e274e;
-            font-weight: 600;
-            font-size: 0.92em;
-            padding: 3px 10px;
-            border-radius: 12px;
-            margin: 2px 2px 2px 0;
+            font-weight: 700;
+            font-size: 1.13em;
+            padding: 6px 18px;
+            border-radius: 16px;
+            margin: 6px 2px 6px 2px;
             letter-spacing: 0.5px;
             box-shadow: 0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;
             cursor: pointer;
             transition: background 0.18s, box-shadow 0.18s;
             border: none;
+            text-align: center;
           `;
           tag.onmouseenter = function () {
             tag.style.background = "#ffd700";
