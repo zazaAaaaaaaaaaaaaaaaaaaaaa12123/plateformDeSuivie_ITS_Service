@@ -100,55 +100,16 @@ document.addEventListener("DOMContentLoaded", function () {
     ws.onmessage = function (event) {
       try {
         const data = JSON.parse(event.data);
-        // Gestion BL existante
         if (data.type === "bl_status_update") {
+          // Recharge la liste si un BL passe en 'mise_en_livraison'
           if (data.status === "mise_en_livraison") {
+            // Recharge toutes les livraisons et met à jour le tableau
             const dateInput = document.getElementById("mainTableDateFilter");
             const dateStr = dateInput ? dateInput.value : null;
             if (typeof loadAllDeliveries === "function" && dateStr) {
               loadAllDeliveries().then(() => {
                 updateTableForDate(dateStr);
               });
-            }
-          }
-        }
-        // Ajout : mise à jour instantanée de l'entête Statut ET des cellules de la colonne Statut
-        if (data.type === "container_status_update") {
-          // Mise à jour de l'entête Statut globale si info fournie
-          if (
-            typeof data.globalDeliveredCount === "number" &&
-            typeof data.globalTotalCount === "number"
-          ) {
-            const thStatut = document.querySelector(
-              "#deliveriesTable thead th[data-col-id='statut']"
-            );
-            if (thStatut) {
-              thStatut.innerHTML = `<span style=\"font-weight:bold;\">Statut</span><br>
-                <button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
-                  data.globalDeliveredCount
-                } sur ${data.globalTotalCount} livré${
-                data.globalTotalCount > 1 ? "s" : ""
-              }</button>`;
-            }
-          }
-          // Mise à jour de la cellule Statut de la ligne concernée uniquement
-          if (
-            typeof data.deliveryId !== "undefined" &&
-            typeof data.deliveredCount === "number" &&
-            typeof data.totalCount === "number"
-          ) {
-            const row = document.querySelector(
-              `#deliveriesTable tbody tr[data-delivery-id='${data.deliveryId}']`
-            );
-            if (row) {
-              const statutCell = row.querySelector("td[data-col-id='statut']");
-              if (statutCell) {
-                statutCell.innerHTML = `<button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
-                  data.deliveredCount
-                } sur ${data.totalCount} livré${
-                  data.totalCount > 1 ? "s" : ""
-                }</button>`;
-              }
             }
           }
         }
@@ -461,8 +422,33 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const th = document.createElement("th");
         if (col.id === "statut") {
-          // Affichage simple : juste le texte 'Statut' en gras dans l'entête
-          th.innerHTML = `<span style="font-weight:bold;">${col.label}</span>`;
+          // Calcul du nombre de conteneurs livrés et total pour toutes les livraisons affichées
+          let total = 0;
+          let delivered = 0;
+          deliveries.forEach((delivery) => {
+            let tcList = [];
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
+            total += tcList.length;
+            if (
+              delivery.container_statuses &&
+              typeof delivery.container_statuses === "object"
+            ) {
+              delivered += Object.values(delivery.container_statuses).filter(
+                (s) => s === "livre" || s === "livré"
+              ).length;
+            }
+          });
+          th.innerHTML = `<span style="font-weight:bold;">${
+            col.label
+          }</span><br><button style="margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+            total > 1 ? "s" : ""
+          }</button>`;
         } else {
           th.textContent = col.label;
         }
@@ -500,6 +486,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "driver", label: "CHAUFFEUR" },
   { id: "driver_phone", label: "TEL CHAUFFEUR" },
   { id: "delivery_date", label: "DATE LIVRAISON" },
+  { id: "acconier_status", label: "STATUT (du Respo.ACCONIER)" },
   { id: "statut", label: "Statut" },
   { id: "observation", label: "Observations" },
 ];
@@ -547,9 +534,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   }
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    if (delivery.id) {
-      tr.setAttribute("data-delivery-id", delivery.id);
-    }
     // Champs obligatoires pour ce delivery
     const requiredFields = [
       "visitor_agent_name",
@@ -903,7 +887,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.classList.add("observation-col");
         }
       } else if (col.id === "statut") {
-        // Affichage : badge vert "Livré" si tous les conteneurs sont livrés, sinon bouton x sur y livré(s)
+        // Affichage du modèle "x sur y livré" dans chaque cellule de la colonne Statut
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -921,16 +905,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             return s === "livre" || s === "livré";
           }).length;
         }
-        td.setAttribute("data-col-id", "statut");
-        if (delivered === total && total > 0) {
-          // Badge ou bouton vert si tout est livré (1/1 ou n/n)
-          td.innerHTML = `<span style="display:inline-block;padding:2px 18px;font-size:1.1em;font-weight:600;border-radius:12px;border:2px solid #eab308;background:#d1fadf;color:#15803d;">Livré</span>`;
-        } else {
-          // Si partiellement livré, bouton jaune classique
-          td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
-            total > 1 ? "s" : ""
-          }</button>`;
-        }
+        td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+          total > 1 ? "s" : ""
+        }</button>`;
       } else {
         // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
         value =
@@ -1049,18 +1026,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         select.style.marginBottom = "18px";
         select.style.background = "#fff";
         select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
-        // Statuts proposés : 'livré' et 'aucun'
-        const statusOptions = [
-          { value: "livre", label: "Livré" },
-          { value: "aucun", label: "Aucun" },
-        ];
+        // Seul le statut 'livré' doit être proposé
+        const statusOptions = [{ value: "livre", label: "Livré" }];
         let currentStatus =
           delivery.container_statuses &&
           typeof delivery.container_statuses === "object" &&
           !Array.isArray(delivery.container_statuses) &&
           delivery.container_statuses[containerNumber]
             ? delivery.container_statuses[containerNumber]
-            : "aucun";
+            : delivery.status || "pending";
         statusOptions.forEach((opt) => {
           const option = document.createElement("option");
           option.value = opt.value;
@@ -1098,79 +1072,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             );
             const data = await response.json();
             if (response.ok && data.success) {
-              // Mise à jour instantanée du statut dans allDeliveries
-              if (delivery && delivery.id) {
-                const idx = allDeliveries.findIndex(
-                  (d) => d.id === delivery.id
-                );
-                if (idx !== -1) {
-                  if (
-                    !allDeliveries[idx].container_statuses ||
-                    typeof allDeliveries[idx].container_statuses !== "object"
-                  ) {
-                    allDeliveries[idx].container_statuses = {};
-                  }
-                  allDeliveries[idx].container_statuses[containerNumber] =
-                    select.value;
-                }
-              }
-              // Mise à jour dynamique de la cellule Statut sans rechargement
-              const tableBody = document.getElementById("deliveriesTableBody");
-              if (tableBody) {
-                for (let row of tableBody.rows) {
-                  // On cherche la ligne correspondant à la livraison
-                  if (row.getAttribute("data-delivery-id") == delivery.id) {
-                    let tcList = [];
-                    if (Array.isArray(delivery.container_number)) {
-                      tcList = delivery.container_number.filter(Boolean);
-                    } else if (typeof delivery.container_number === "string") {
-                      tcList = delivery.container_number
-                        .split(/[,;\s]+/)
-                        .filter(Boolean);
-                    }
-                    let total = tcList.length;
-                    let delivered = 0;
-                    if (
-                      delivery.container_statuses &&
-                      typeof delivery.container_statuses === "object"
-                    ) {
-                      delivered = tcList.filter((tc) => {
-                        const s = delivery.container_statuses[tc];
-                        return s === "livre" || s === "livré";
-                      }).length;
-                    }
-                    let statusCellIdx = AGENT_TABLE_COLUMNS.findIndex(
-                      (c) => c.id === "statut"
-                    );
-                    if (statusCellIdx !== -1 && row.cells[statusCellIdx]) {
-                      if (delivered === total && total > 0) {
-                        row.cells[
-                          statusCellIdx
-                        ].innerHTML = `<span style="display:inline-block;padding:2px 18px;font-size:1.1em;font-weight:600;border-radius:12px;border:2px solid #eab308;background:#d1fadf;color:#15803d;">Livré</span>`;
-                      } else {
-                        row.cells[
-                          statusCellIdx
-                        ].innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
-                          total > 1 ? "s" : ""
-                        }</button>`;
-                      }
-                    }
-                    break;
-                  }
-                }
-              }
+              alert(
+                `Statut du conteneur mis à jour : ${
+                  select.options[select.selectedIndex].text
+                }`
+              );
               overlay.remove();
-              // Envoi d'une notification WebSocket pour informer tous les clients
-              if (window.ws && window.ws.readyState === 1) {
-                window.ws.send(
-                  JSON.stringify({
-                    type: "container_status_update",
-                    deliveryId: delivery.id,
-                    containerNumber: containerNumber,
-                    status: select.value,
-                  })
-                );
-              }
+              // Rafraîchir les données si besoin
             } else {
               alert(
                 data.message ||
@@ -1195,4 +1103,3 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     tableBodyElement.appendChild(tr);
   });
 }
-/***s */
