@@ -779,7 +779,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           popup.innerHTML = tcList
             .map(
               (tc) =>
-                `<div class="tc-popup-item" style='cursor:pointer;'>${tc}</div>`
+                `<div class="tc-popup-item" style='cursor:pointer;color:#0e274e;font-weight:600;'>${tc}</div>`
             )
             .join("");
           btn.onclick = (e) => {
