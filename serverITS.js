@@ -3124,10 +3124,35 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       container_statuses
     );
     // Met à jour la base
-    const updateRes = await pool.query(
-      "UPDATE livraison_conteneur SET container_statuses = $1 WHERE id = $2 RETURNING *;",
-      [JSON.stringify(container_statuses), id]
-    );
+    // Vérifie si tous les conteneurs sont livrés
+    let tcListCheck = [];
+    if (result.rows[0].container_number) {
+      if (Array.isArray(result.rows[0].container_number)) {
+        tcListCheck = result.rows[0].container_number.filter(Boolean);
+      } else if (typeof result.rows[0].container_number === "string") {
+        tcListCheck = result.rows[0].container_number
+          .split(/[,;\s]+/)
+          .filter(Boolean);
+      }
+    }
+    const allDelivered =
+      tcListCheck.length > 0 &&
+      tcListCheck.every((tc) => {
+        const s = container_statuses[tc];
+        return s === "livre" || s === "livré";
+      });
+    let updateQuery = "UPDATE livraison_conteneur SET container_statuses = $1";
+    let updateValues = [JSON.stringify(container_statuses)];
+    if (allDelivered) {
+      updateQuery += ", delivery_status_acconier = $2";
+      updateValues.push("mise_en_livraison_acconier");
+      updateQuery += " WHERE id = $3 RETURNING *;";
+      updateValues.push(id);
+    } else {
+      updateQuery += " WHERE id = $2 RETURNING *;";
+      updateValues.push(id);
+    }
+    const updateRes = await pool.query(updateQuery, updateValues);
     if (updateRes.rows.length === 0) {
       return res
         .status(404)

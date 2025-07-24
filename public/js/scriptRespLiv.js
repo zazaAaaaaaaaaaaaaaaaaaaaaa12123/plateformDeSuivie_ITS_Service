@@ -918,9 +918,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         td.setAttribute("data-col-id", "statut");
         if (delivered > 0) {
-          td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
-            total > 1 ? "s" : ""
-          }</button>`;
+          if (delivered === total && total > 0) {
+            // Tous les conteneurs sont livrés : bouton vert avec icône camion et texte "Livré"
+            td.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
+              <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
+              Livré
+            </button>`;
+          } else {
+            // Affichage classique : x sur y livré(s)
+            td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+              total > 1 ? "s" : ""
+            }</button>`;
+          }
         } else {
           td.innerHTML = "";
         }
