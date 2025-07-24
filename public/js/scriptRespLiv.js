@@ -1354,4 +1354,3 @@ function adaptTableResponsive() {
 }
 window.addEventListener("resize", adaptTableResponsive);
 adaptTableResponsive();
-/****shj shsdhj*/
