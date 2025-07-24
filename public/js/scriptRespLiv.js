@@ -487,7 +487,6 @@ const AGENT_TABLE_COLUMNS = [
   { id: "employee_name", label: "Agent Acconier" },
   { id: "client_name", label: "Nom Client" },
   { id: "client_phone", label: "Numéro Client" },
-  { id: "container_number", label: "Numéro TC(s)" },
   { id: "lieu", label: "Lieu" },
   { id: "container_foot_type", label: "Type de Conteneur" },
   { id: "container_type_and_content", label: "Contenu" },
@@ -507,6 +506,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "driver", label: "CHAUFFEUR" },
   { id: "driver_phone", label: "TEL CHAUFFEUR" },
   { id: "delivery_date", label: "DATE LIVRAISON" },
+  { id: "container_number", label: "Numéro TC(s)" },
   { id: "statut", label: "Statut" },
   { id: "observation", label: "Observations" },
 ];
