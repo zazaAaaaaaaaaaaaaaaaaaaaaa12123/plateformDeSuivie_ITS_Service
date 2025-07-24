@@ -21,26 +21,35 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
-      /* En-tête et sous-titre plus sobres et réduits */
+      /* En-tête et sous-titre plus grands et simples, sans carte */
       .card-section h1 {
-        background: #f7f7f7 !important;
+        background: none !important;
         color: #0e274e !important;
-        font-size: 1.15em !important;
-        font-weight: 700 !important;
-        border-radius: 8px !important;
+        font-size: 2.1em !important;
+        font-weight: 900 !important;
+        border-radius: 0 !important;
         box-shadow: none !important;
-        padding: 8px 12px !important;
-        letter-spacing: 0.1px !important;
+        padding: 0 !important;
+        margin-bottom: 0.2em !important;
+        letter-spacing: 0 !important;
         text-shadow: none !important;
       }
       .card-section > div > div[style*='font-size:1.13em'] {
-        background: #f7f7f7 !important;
+        background: none !important;
         color: #0e274e !important;
-        font-weight: 400 !important;
-        border-radius: 6px !important;
-        padding: 5px 10px !important;
+        font-weight: 700 !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
         box-shadow: none !important;
-        font-size: 0.98em !important;
+        font-size: 1.25em !important;
+        margin-bottom: 1em !important;
+      }
+      /* Suppression du style carte sur le conteneur */
+      .d-flex.align-items-center.justify-content-between.flex-wrap.gap-3.mb-4 {
+        background: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
       }
       /* Filtres et recherche très sobres */
       .d-flex.justify-content-center.align-items-center.mb-3.flex-wrap.gap-2 {
