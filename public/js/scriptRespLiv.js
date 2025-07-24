@@ -735,28 +735,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-// Colonnes strictes pour Agent Acconier
+// Colonnes personnalisées pour la nouvelle demande
 const AGENT_TABLE_COLUMNS = [
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
-  { id: "employee_name", label: "Agent" },
-  { id: "client_name", label: "Client (Nom)" },
-  { id: "client_phone", label: "Client (Tél)" },
-  { id: "container_number", label: "Numéro TC(s)" },
-  { id: "lieu", label: "Lieu" },
-  { id: "container_foot_type", label: "Type Conteneur (pied)" },
-  { id: "container_type_and_content", label: "Contenu" },
-  { id: "declaration_number", label: "N° Déclaration" },
-  { id: "bl_number", label: "N° BL" },
-  { id: "dossier_number", label: "N° Dossier" },
-  { id: "number_of_containers", label: "Nombre de conteneurs" },
-  { id: "shipping_company", label: "Compagnie Maritime" },
-  { id: "weight", label: "Poids" },
-  { id: "ship_name", label: "Nom du navire" },
-  { id: "circuit", label: "Circuit" },
-  { id: "transporter_mode", label: "Mode de Transport" },
-  { id: "container_status", label: "Statut Dossier " },
-  { id: "observation", label: "Observation" },
+  { id: "employee_name", label: "NOM Agent visiteurs" },
+  { id: "transporter", label: "TRANSPORTEUR" },
+  { id: "inspector", label: "INSPECTEUR" },
+  { id: "customs_agent", label: "AGENT EN DOUANES" },
+  { id: "driver_name", label: "chauffeur" },
+  { id: "driver_phone", label: "Tel chauffeur" },
+  { id: "delivery_status_date", label: "date livraison statut" },
+  { id: "observation", label: "OBSERVATIONS" },
 ];
 
 // Fonction pour générer les lignes du tableau Agent Acconier
@@ -768,17 +758,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     let dDate = delivery.delivery_date || delivery.created_at;
     let dateObj = dDate ? new Date(dDate) : null;
     let now = new Date();
-    let color = "#2563eb"; // bleu par défaut (récent)
-    if (dateObj && !isNaN(dateObj.getTime())) {
-      let diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-      if (diffDays >= 30) {
-        color = "#a3a3a3"; // ancien : gris (1 mois et plus)
-      } else if (diffDays >= 7) {
-        color = "#eab308"; // assez ancien : jaune (1 semaine à moins d'1 mois)
-      } else if (diffDays >= 0) {
-        color = "#2563eb"; // récent : bleu (< 7 jours)
-      }
-    }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
@@ -853,808 +832,136 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
         }
         td.textContent = value;
-      } else if (col.id === "container_number") {
-        // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
-        let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        if (tcList.length > 1) {
-          td.classList.add("tc-multi-cell");
-          const btn = document.createElement("button");
-          btn.className = "tc-tags-btn";
-          btn.type = "button";
-          btn.innerHTML =
-            tcList
-              .slice(0, 2)
-              .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
-              .join("") +
-            (tcList.length > 2
-              ? ` <span class=\"tc-tag tc-tag-more\">+${
-                  tcList.length - 2
-                }</span>`
-              : "") +
-            ' <i class="fas fa-chevron-down tc-chevron"></i>';
-          const popup = document.createElement("div");
-          popup.className = "tc-popup";
-          popup.style.display = "none";
-          // Responsive popup width
-          popup.style.minWidth = window.innerWidth <= 600 ? "90px" : "120px";
-          popup.style.fontSize = window.innerWidth <= 600 ? "0.97em" : "1.05em";
-          popup.innerHTML = tcList
-            .map(
-              (tc) =>
-                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
-            )
-            .join("");
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            document.querySelectorAll(".tc-popup").forEach((p) => {
-              if (p !== popup) p.style.display = "none";
-            });
-            popup.style.display =
-              popup.style.display === "block" ? "none" : "block";
-          };
-          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
-            item.onclick = (ev) => {
-              ev.stopPropagation();
-              popup.style.display = "none";
-              showContainerDetailPopup(delivery, item.textContent);
-            };
-          });
-          // Fermer le popup au toucher/clic hors du bouton sur mobile
-          document.addEventListener("click", function hidePopup(e) {
-            if (!td.contains(e.target)) popup.style.display = "none";
-          });
-          td.appendChild(btn);
-          td.appendChild(popup);
-        } else if (tcList.length === 1) {
-          const tag = document.createElement("span");
-          tag.className = "tc-tag";
-          tag.textContent = tcList[0];
-          tag.style.cursor = "pointer";
-          tag.onclick = (e) => {
-            e.stopPropagation();
-            showContainerDetailPopup(delivery, tcList[0]);
-          };
-          td.appendChild(tag);
-        } else {
-          td.textContent = "-";
-        }
-      } else if (col.id === "bl_number") {
-        // Rendu avancé pour N° BL : badge/tag  et menu déroulant popup
-        let blList = [];
-        if (Array.isArray(delivery.bl_number)) {
-          blList = delivery.bl_number.filter(Boolean);
-        } else if (typeof delivery.bl_number === "string") {
-          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        if (blList.length > 1) {
-          td.classList.add("tc-multi-cell");
-          const btn = document.createElement("button");
-          btn.className = "tc-tags-btn";
-          btn.type = "button";
-          btn.innerHTML =
-            blList
-              .slice(0, 2)
-              .map((bl) => `<span class=\"tc-tag\">${bl}</span>`)
-              .join("") +
-            (blList.length > 2
-              ? ` <span class=\"tc-tag tc-tag-more\">+${
-                  blList.length - 2
-                }</span>`
-              : "") +
-            ' <i class="fas fa-chevron-down tc-chevron"></i>';
-          const popup = document.createElement("div");
-          popup.className = "tc-popup";
-          popup.style.display = "none";
-          popup.innerHTML = blList
-            .map(
-              (bl) =>
-                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${bl}</div>`
-            )
-            .join("");
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            document.querySelectorAll(".tc-popup").forEach((p) => {
-              if (p !== popup) p.style.display = "none";
-            });
-            popup.style.display =
-              popup.style.display === "block" ? "none" : "block";
-          };
-          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
-            item.onclick = (ev) => {
-              ev.stopPropagation();
-              popup.style.display = "none";
-              showBLDetailPopup(delivery, item.textContent);
-            };
-          });
-          document.addEventListener("click", function hidePopup(e) {
-            if (!td.contains(e.target)) popup.style.display = "none";
-          });
-          td.appendChild(btn);
-          td.appendChild(popup);
-        } else if (blList.length === 1) {
-          const tag = document.createElement("span");
-          tag.className = "tc-tag";
-          tag.textContent = blList[0];
-          tag.style.cursor = "pointer";
-          tag.onclick = (e) => {
-            e.stopPropagation();
-            showBLDetailPopup(delivery, blList[0]);
-          };
-          td.appendChild(tag);
-        } else {
-          td.textContent = "-";
-        }
-        // Fonction pour afficher le menu déroulant de BL (popup) avec statut
-        function showBLDetailPopup(delivery, blNumber) {
-          const oldPopup = document.getElementById("blDetailPopup");
-          if (oldPopup) oldPopup.remove();
-          const overlay = document.createElement("div");
-          overlay.id = "blDetailPopup";
-          overlay.style.position = "fixed";
-          overlay.style.top = 0;
-          overlay.style.left = 0;
-          overlay.style.width = "100vw";
-          overlay.style.height = "100vh";
-          overlay.style.background = "rgba(30,41,59,0.45)";
-          overlay.style.zIndex = 9999;
-          overlay.style.display = "flex";
-          overlay.style.alignItems = "center";
-          overlay.style.justifyContent = "center";
-          const box = document.createElement("div");
-          box.style.background = "#fff";
-          box.style.borderRadius = "16px";
-          box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-          box.style.maxWidth = "420px";
-          box.style.width = "96vw";
-          box.style.maxHeight = "92vh";
-          box.style.overflowY = "auto";
-          box.style.padding = "0";
-          box.style.position = "relative";
-          box.style.display = "flex";
-          box.style.flexDirection = "column";
-          const header = document.createElement("div");
-          header.style.background = "#2563eb";
-          header.style.color = "#fff";
-          header.style.padding = "18px 28px 12px 28px";
-          header.style.fontWeight = "bold";
-          header.style.fontSize = "1.15rem";
-          header.style.display = "flex";
-          header.style.flexDirection = "column";
-          header.style.borderTopLeftRadius = "16px";
-          header.style.borderTopRightRadius = "16px";
-          header.innerHTML = `
-            <div style='margin-bottom:2px;'>
-              <span style='font-size:1.08em;'>${
-                delivery.employee_name || "-"
-              }</span>
-            </div>
-            <div style='font-size:0.98em;font-weight:400;'>
-              Client : <span style='color:#eab308;'>${
-                delivery.client_name || "-"
-              }</span><br>
-              Dossier : <span style='color:#eab308;'>${
-                delivery.dossier_number || "-"
-              }</span>  
-            </div>
-          `;
-          const closeBtn = document.createElement("button");
-          closeBtn.innerHTML = "&times;";
-          closeBtn.style.background = "none";
-          closeBtn.style.border = "none";
-          closeBtn.style.color = "#fff";
-          closeBtn.style.fontSize = "2.1rem";
-          closeBtn.style.cursor = "pointer";
-          closeBtn.style.position = "absolute";
-          closeBtn.style.top = "10px";
-          closeBtn.style.right = "18px";
-          closeBtn.setAttribute("aria-label", "Fermer");
-          closeBtn.onclick = () => overlay.remove();
-          header.appendChild(closeBtn);
-          box.appendChild(header);
-          const content = document.createElement("div");
-          content.style.padding = "24px 24px 24px 24px";
-          content.style.background = "#f8fafc";
-          content.style.flex = "1 1 auto";
-          content.style.overflowY = "auto";
-          const blNum = document.createElement("div");
-          blNum.style.fontSize = "1.25em";
-          blNum.style.fontWeight = "bold";
-          blNum.style.marginBottom = "18px";
-          blNum.style.textAlign = "center";
-          blNum.innerHTML = `N° BL : <span style='color:#2563eb;'>${blNumber}</span>`;
-          content.appendChild(blNum);
-          // Ajout du sélecteur de statut pour le BL
-          const label = document.createElement("label");
-          label.textContent = "Statut du BL :";
-          label.style.display = "block";
-          label.style.marginBottom = "8px";
-          label.style.fontWeight = "500";
-          content.appendChild(label);
-          const select = document.createElement("select");
-          select.style.width = "100%";
-          select.style.padding = "10px 12px";
-          select.style.border = "1.5px solid #2563eb";
-          select.style.borderRadius = "7px";
-          select.style.fontSize = "1.08em";
-          select.style.marginBottom = "18px";
-          select.style.background = "#fff";
-          select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
-          const statusOptions = [
-            { value: "mise_en_livraison", label: "Mise en livraison" },
-            { value: "aucun", label: "Aucun" },
-          ];
-          // On stocke le statut BL dans delivery.bl_statuses (objet clé BL)
-          if (
-            !delivery.bl_statuses ||
-            typeof delivery.bl_statuses !== "object"
-          ) {
-            delivery.bl_statuses = {};
+      } else if (col.id === "delivery_status_date") {
+        // date livraison statut : fusionne date + statut BL
+        let dDate = delivery.delivery_date || delivery.created_at;
+        let status =
+          delivery.bl_statuses && typeof delivery.bl_statuses === "object"
+            ? Object.values(delivery.bl_statuses).find(
+                (s) => s === "mise_en_livraison"
+              )
+              ? "Mise en livraison"
+              : "En attente"
+            : "-";
+        let dateStr = "-";
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            dateStr = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            dateStr = dDate;
           }
-          let currentStatus = delivery.bl_statuses[blNumber] || "aucun";
-          if (currentStatus !== "mise_en_livraison") {
-            currentStatus = "aucun";
+        }
+        td.textContent = dateStr + " / " + status;
+      } else if (col.id === "observation") {
+        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+        td.classList.add("observation-col");
+        td.style.cursor = "pointer";
+        let localKey = `obs_${delivery.id}`;
+        let localObs = localStorage.getItem(localKey);
+        let displayValue = value;
+        if (value === "-" && localObs) {
+          displayValue = localObs;
+        }
+        td.textContent = displayValue;
+        if (localObs && value && value !== "-" && value !== localObs) {
+          localStorage.removeItem(localKey);
+        }
+        td.addEventListener("mouseenter", function (e) {
+          setTimeout(() => {
+            if (
+              td.offsetWidth < td.scrollWidth &&
+              td.textContent.trim() !== "-" &&
+              td.textContent.length > 0
+            ) {
+              let tooltip = document.createElement("div");
+              tooltip.className = "custom-tooltip-floating";
+              tooltip.textContent = td.textContent;
+              document.body.appendChild(tooltip);
+              const rect = td.getBoundingClientRect();
+              tooltip.style.position = "fixed";
+              tooltip.style.left = rect.left + window.scrollX + 10 + "px";
+              tooltip.style.top = rect.top + window.scrollY - 8 + "px";
+              tooltip.style.background = "#fff";
+              tooltip.style.color = "#1e293b";
+              tooltip.style.padding = "8px 16px";
+              tooltip.style.borderRadius = "10px";
+              tooltip.style.boxShadow = "0 4px 18px rgba(30,41,59,0.13)";
+              tooltip.style.fontSize = "1em";
+              tooltip.style.fontWeight = "500";
+              tooltip.style.zIndex = 99999;
+              tooltip.style.maxWidth = "420px";
+              tooltip.style.wordBreak = "break-word";
+              tooltip.style.pointerEvents = "none";
+              tooltip.style.opacity = "0";
+              tooltip.style.transition = "opacity 0.18s";
+              setTimeout(() => {
+                tooltip.style.opacity = "1";
+              }, 10);
+              td._customTooltip = tooltip;
+            }
+          }, 0);
+        });
+        td.addEventListener("mouseleave", function () {
+          if (td._customTooltip) {
+            td._customTooltip.style.opacity = "0";
+            setTimeout(() => {
+              if (td._customTooltip && td._customTooltip.parentNode) {
+                td._customTooltip.parentNode.removeChild(td._customTooltip);
+                td._customTooltip = null;
+              }
+            }, 120);
           }
-          statusOptions.forEach((opt) => {
-            const option = document.createElement("option");
-            option.value = opt.value;
-            option.textContent = opt.label;
-            if (opt.value === currentStatus) option.selected = true;
-            select.appendChild(option);
-          });
-          content.appendChild(select);
-          const saveBtn = document.createElement("button");
-          saveBtn.textContent = "Enregistrer le statut";
-          saveBtn.className = "btn btn-primary w-full mt-2";
-          saveBtn.style.background =
-            "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
-          saveBtn.style.color = "#fff";
-          saveBtn.style.fontWeight = "bold";
-          saveBtn.style.fontSize = "1em";
-          saveBtn.style.border = "none";
-          saveBtn.style.borderRadius = "8px";
-          saveBtn.style.padding = "0.7em 1.7em";
-          saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
-          saveBtn.onclick = async () => {
-            let statutToSend =
-              select.value === "aucun" ? "aucun" : select.value;
-            // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
-            if (statutToSend === "mise_en_livraison") {
-              // Popup de confirmation personnalisée
-              const confirmOverlay = document.createElement("div");
-              confirmOverlay.style.position = "fixed";
-              confirmOverlay.style.top = 0;
-              confirmOverlay.style.left = 0;
-              confirmOverlay.style.width = "100vw";
-              confirmOverlay.style.height = "100vh";
-              confirmOverlay.style.background = "rgba(30,41,59,0.45)";
-              confirmOverlay.style.zIndex = 99999;
-              confirmOverlay.style.display = "flex";
-              confirmOverlay.style.alignItems = "center";
-              confirmOverlay.style.justifyContent = "center";
-              const confirmBox = document.createElement("div");
-              confirmBox.style.background = "#fff";
-              confirmBox.style.borderRadius = "18px";
-              confirmBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-              confirmBox.style.maxWidth = "420px";
-              confirmBox.style.width = "96vw";
-              confirmBox.style.padding = "0";
-              confirmBox.style.position = "relative";
-              confirmBox.style.display = "flex";
-              confirmBox.style.flexDirection = "column";
-              // Header
-              const confirmHeader = document.createElement("div");
-              confirmHeader.style.background =
-                "linear-gradient(90deg,#eab308 0%,#2563eb 100%)";
-              confirmHeader.style.color = "#fff";
-              confirmHeader.style.padding = "22px 32px 12px 32px";
-              confirmHeader.style.fontWeight = "bold";
-              confirmHeader.style.fontSize = "1.18rem";
-              confirmHeader.style.borderTopLeftRadius = "18px";
-              confirmHeader.style.borderTopRightRadius = "18px";
-              confirmHeader.innerHTML = `<span style='font-size:1.25em;'>⚠️ Confirmation requise</span>`;
-              confirmBox.appendChild(confirmHeader);
-              // Message
-              const confirmMsgDiv = document.createElement("div");
-              confirmMsgDiv.style.padding = "24px 24px 18px 24px";
-              confirmMsgDiv.style.background = "#f8fafc";
-              confirmMsgDiv.style.fontSize = "1.08em";
-              confirmMsgDiv.style.color = "#1e293b";
-              confirmMsgDiv.style.textAlign = "center";
-              confirmMsgDiv.innerHTML =
-                "<b>Vous êtes sur le point de valider la mise en livraison pour ce BL.</b><br><br>Cette opération est <span style='color:#eab308;font-weight:600;'>définitive</span> et ne pourra pas être annulée.<br><br>Voulez-vous vraiment continuer ?";
-              confirmBox.appendChild(confirmMsgDiv);
-              // Boutons
-              const btnsDiv = document.createElement("div");
-              btnsDiv.style.display = "flex";
-              btnsDiv.style.justifyContent = "center";
-              btnsDiv.style.gap = "18px";
-              btnsDiv.style.padding = "0 0 22px 0";
-              // Bouton Annuler
-              const cancelBtn = document.createElement("button");
-              cancelBtn.textContent = "Annuler";
-              cancelBtn.style.background = "#fff";
-              cancelBtn.style.color = "#2563eb";
-              cancelBtn.style.fontWeight = "bold";
-              cancelBtn.style.fontSize = "1em";
-              cancelBtn.style.border = "2px solid #2563eb";
-              cancelBtn.style.borderRadius = "8px";
-              cancelBtn.style.padding = "0.7em 1.7em";
-              cancelBtn.style.cursor = "pointer";
-              cancelBtn.onclick = () => confirmOverlay.remove();
-              // Bouton Confirmer
-              const okBtn = document.createElement("button");
-              okBtn.textContent = "Confirmer";
-              okBtn.style.background =
-                "linear-gradient(90deg,#2563eb 0%,#eab308 100%)";
-              okBtn.style.color = "#fff";
-              okBtn.style.fontWeight = "bold";
-              okBtn.style.fontSize = "1em";
-              okBtn.style.border = "none";
-              okBtn.style.borderRadius = "8px";
-              okBtn.style.padding = "0.7em 1.7em";
-              okBtn.style.cursor = "pointer";
-              okBtn.onclick = () => {
-                confirmOverlay.remove();
-                // On continue la procédure
-                finishBLStatusChange();
-              };
-              btnsDiv.appendChild(cancelBtn);
-              btnsDiv.appendChild(okBtn);
-              confirmBox.appendChild(btnsDiv);
-              confirmOverlay.appendChild(confirmBox);
-              document.body.appendChild(confirmOverlay);
-              confirmOverlay.onclick = (e) => {
-                if (e.target === confirmOverlay) confirmOverlay.remove();
-              };
-              // On stoppe ici, finishBLStatusChange sera appelé si l'utilisateur confirme
-              return;
-              // Fonction pour continuer la procédure après confirmation
-              function finishBLStatusChange() {
-                // 1. MAJ locale immédiate du statut BL
-                delivery.bl_statuses[blNumber] = statutToSend;
-                // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
-                const tableBody = document.getElementById(
-                  "deliveriesTableBody"
-                );
-                if (tableBody) {
-                  for (let row of tableBody.rows) {
-                    let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
-                      (c) => c.id === "dossier_number"
-                    );
-                    if (
-                      dossierCellIdx !== -1 &&
-                      row.cells[dossierCellIdx] &&
-                      row.cells[dossierCellIdx].textContent ===
-                        String(delivery.dossier_number)
-                    ) {
-                      let colIdx = AGENT_TABLE_COLUMNS.findIndex(
-                        (c) => c.id === "container_status"
-                      );
-                      if (colIdx !== -1 && row.cells[colIdx]) {
-                        let blList = [];
-                        if (Array.isArray(delivery.bl_number)) {
-                          blList = delivery.bl_number.filter(Boolean);
-                        } else if (typeof delivery.bl_number === "string") {
-                          blList = delivery.bl_number
-                            .split(/[,;\s]+/)
-                            .filter(Boolean);
-                        }
-                        let blStatuses = blList.map((bl) =>
-                          delivery.bl_statuses && delivery.bl_statuses[bl]
-                            ? delivery.bl_statuses[bl]
-                            : "aucun"
-                        );
-                        let allMiseEnLivraison =
-                          blStatuses.length > 0 &&
-                          blStatuses.every((s) => s === "mise_en_livraison");
-                        if (allMiseEnLivraison) {
-                          row.cells[colIdx].innerHTML =
-                            '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-                        } else {
-                          row.cells[colIdx].innerHTML =
-                            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
-                        }
-                      }
-                      break;
-                    }
-                  }
-                }
-                // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
-                try {
-                  fetch(`/deliveries/${delivery.id}/bl-status`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ blNumber, status: statutToSend }),
-                  }).then(async (res) => {
-                    if (!res.ok) {
-                      let msg =
-                        "Erreur lors de la mise à jour du statut du BL.";
-                      try {
-                        const errData = await res.json();
-                        if (errData && errData.error)
-                          msg += "\n" + errData.error;
-                      } catch {}
-                      alert(msg);
-                      return;
-                    }
-                    overlay.remove();
-                  });
-                } catch (err) {
-                  alert(
-                    "Erreur lors de la mise à jour du statut du BL.\n" +
-                      (err && err.message ? err.message : "")
-                  );
-                }
-              }
+        });
+        td.onclick = function (e) {
+          if (td.querySelector("textarea")) return;
+          let currentText =
+            td.textContent && td.textContent.trim() !== "-"
+              ? td.textContent.trim()
+              : "";
+          const textarea = document.createElement("textarea");
+          textarea.value = currentText;
+          textarea.style.width = "100%";
+          textarea.style.fontSize = "1em";
+          textarea.style.padding = "2px 4px";
+          async function saveObservation(val) {
+            td.textContent = val || "-";
+            td.dataset.edited = "true";
+            if (val && val.trim() !== "") {
+              localStorage.setItem(localKey, val.trim());
+            } else {
+              localStorage.removeItem(localKey);
             }
-            // 1. MAJ locale immédiate du statut BL
-            delivery.bl_statuses[blNumber] = statutToSend;
-            // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
-            const tableBody = document.getElementById("deliveriesTableBody");
-            if (tableBody) {
-              for (let row of tableBody.rows) {
-                let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
-                  (c) => c.id === "dossier_number"
-                );
-                if (
-                  dossierCellIdx !== -1 &&
-                  row.cells[dossierCellIdx] &&
-                  row.cells[dossierCellIdx].textContent ===
-                    String(delivery.dossier_number)
-                ) {
-                  let colIdx = AGENT_TABLE_COLUMNS.findIndex(
-                    (c) => c.id === "container_status"
-                  );
-                  if (colIdx !== -1 && row.cells[colIdx]) {
-                    let blList = [];
-                    if (Array.isArray(delivery.bl_number)) {
-                      blList = delivery.bl_number.filter(Boolean);
-                    } else if (typeof delivery.bl_number === "string") {
-                      blList = delivery.bl_number
-                        .split(/[,;\s]+/)
-                        .filter(Boolean);
-                    }
-                    let blStatuses = blList.map((bl) =>
-                      delivery.bl_statuses && delivery.bl_statuses[bl]
-                        ? delivery.bl_statuses[bl]
-                        : "aucun"
-                    );
-                    let allMiseEnLivraison =
-                      blStatuses.length > 0 &&
-                      blStatuses.every((s) => s === "mise_en_livraison");
-                    if (allMiseEnLivraison) {
-                      row.cells[colIdx].innerHTML =
-                        '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-                    } else {
-                      row.cells[colIdx].innerHTML =
-                        '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
-                    }
-                  }
-                  break;
-                }
-              }
-            }
-            // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
             try {
-              const res = await fetch(`/deliveries/${delivery.id}/bl-status`, {
+              await fetch(`/deliveries/${delivery.id}/observation`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ blNumber, status: statutToSend }),
+                body: JSON.stringify({ observation: val }),
               });
-              if (!res.ok) {
-                let msg = "Erreur lors de la mise à jour du statut du BL.";
-                try {
-                  const errData = await res.json();
-                  if (errData && errData.error) msg += "\n" + errData.error;
-                } catch {}
-                alert(msg);
-                return;
-              }
-              overlay.remove();
             } catch (err) {
-              alert(
-                "Erreur lors de la mise à jour du statut du BL.\n" +
-                  (err && err.message ? err.message : "")
-              );
+              console.error("Erreur sauvegarde observation", err);
             }
-          };
-          content.appendChild(saveBtn);
-          box.appendChild(content);
-          overlay.appendChild(box);
-          document.body.appendChild(overlay);
-          overlay.onclick = (e) => {
-            if (e.target === overlay) overlay.remove();
-          };
-        }
-        // ...existing code...
-      } else if (col.id === "container_status") {
-        // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
-        let blList = [];
-        if (Array.isArray(delivery.bl_number)) {
-          blList = delivery.bl_number.filter(Boolean);
-        } else if (typeof delivery.bl_number === "string") {
-          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        let blStatuses = blList.map((bl) =>
-          delivery.bl_statuses && delivery.bl_statuses[bl]
-            ? delivery.bl_statuses[bl]
-            : "aucun"
-        );
-        let allMiseEnLivraison =
-          blStatuses.length > 0 &&
-          blStatuses.every((s) => s === "mise_en_livraison");
-        if (allMiseEnLivraison) {
-          td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-        } else {
-          td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
-        }
-      } else {
-        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-        // Ajout du tooltip custom si texte tronqué
-        if (col.id === "observation") {
-          td.classList.add("observation-col");
-          td.style.cursor = "pointer";
-          let localKey = `obs_${delivery.id}`;
-          let localObs = localStorage.getItem(localKey);
-          let displayValue = value;
-          if (value === "-" && localObs) {
-            displayValue = localObs;
           }
-          td.textContent = displayValue;
-          if (localObs && value && value !== "-" && value !== localObs) {
-            localStorage.removeItem(localKey);
-          }
-          // Tooltip custom au survol si texte tronqué
-          td.addEventListener("mouseenter", function (e) {
-            setTimeout(() => {
-              if (
-                td.offsetWidth < td.scrollWidth &&
-                td.textContent.trim() !== "-" &&
-                td.textContent.length > 0
-              ) {
-                let tooltip = document.createElement("div");
-                tooltip.className = "custom-tooltip-floating";
-                tooltip.textContent = td.textContent;
-                document.body.appendChild(tooltip);
-                // Positionnement près de la cellule
-                const rect = td.getBoundingClientRect();
-                tooltip.style.position = "fixed";
-                tooltip.style.left = rect.left + window.scrollX + 10 + "px";
-                tooltip.style.top = rect.top + window.scrollY - 8 + "px";
-                tooltip.style.background = "#fff";
-                tooltip.style.color = "#1e293b";
-                tooltip.style.padding = "8px 16px";
-                tooltip.style.borderRadius = "10px";
-                tooltip.style.boxShadow = "0 4px 18px rgba(30,41,59,0.13)";
-                tooltip.style.fontSize = "1em";
-                tooltip.style.fontWeight = "500";
-                tooltip.style.zIndex = 99999;
-                tooltip.style.maxWidth = "420px";
-                tooltip.style.wordBreak = "break-word";
-                tooltip.style.pointerEvents = "none";
-                tooltip.style.opacity = "0";
-                tooltip.style.transition = "opacity 0.18s";
-                setTimeout(() => {
-                  tooltip.style.opacity = "1";
-                }, 10);
-                td._customTooltip = tooltip;
-              }
-            }, 0);
-          });
-          td.addEventListener("mouseleave", function () {
-            if (td._customTooltip) {
-              td._customTooltip.style.opacity = "0";
-              setTimeout(() => {
-                if (td._customTooltip && td._customTooltip.parentNode) {
-                  td._customTooltip.parentNode.removeChild(td._customTooltip);
-                  td._customTooltip = null;
-                }
-              }, 120);
-            }
-          });
-          td.onclick = function (e) {
-            if (td.querySelector("textarea")) return;
-            let currentText =
-              td.textContent && td.textContent.trim() !== "-"
-                ? td.textContent.trim()
-                : "";
-            const textarea = document.createElement("textarea");
-            textarea.value = currentText;
-            textarea.style.width = "100%";
-            textarea.style.fontSize = "1em";
-            textarea.style.padding = "2px 4px";
-            async function saveObservation(val) {
-              td.textContent = val || "-";
-              td.dataset.edited = "true";
-              if (val && val.trim() !== "") {
-                localStorage.setItem(localKey, val.trim());
-              } else {
-                localStorage.removeItem(localKey);
-              }
-              try {
-                await fetch(`/deliveries/${delivery.id}/observation`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ observation: val }),
-                });
-              } catch (err) {
-                console.error("Erreur sauvegarde observation", err);
-              }
-            }
-            textarea.onkeydown = function (ev) {
-              if (ev.key === "Enter") {
-                saveObservation(textarea.value);
-              }
-            };
-            textarea.onblur = function () {
+          textarea.onkeydown = function (ev) {
+            if (ev.key === "Enter") {
               saveObservation(textarea.value);
-            };
-            td.textContent = "";
-            td.appendChild(textarea);
-            textarea.focus();
-            textarea.selectionStart = textarea.selectionEnd =
-              textarea.value.length;
-          };
-        } else {
-          td.textContent = value;
-          // Tooltip custom au survol si texte tronqué
-          td.addEventListener("mouseenter", function (e) {
-            setTimeout(() => {
-              if (
-                td.offsetWidth < td.scrollWidth &&
-                td.textContent.trim() !== "-" &&
-                td.textContent.length > 0
-              ) {
-                let tooltip = document.createElement("div");
-                tooltip.className = "custom-tooltip-floating";
-                tooltip.textContent = td.textContent;
-                document.body.appendChild(tooltip);
-                const rect = td.getBoundingClientRect();
-                tooltip.style.position = "fixed";
-                tooltip.style.left = rect.left + window.scrollX + 10 + "px";
-                tooltip.style.top = rect.top + window.scrollY - 8 + "px";
-                tooltip.style.background = "#fff";
-                tooltip.style.color = "#1e293b";
-                tooltip.style.padding = "8px 16px";
-                tooltip.style.borderRadius = "10px";
-                tooltip.style.boxShadow = "0 4px 18px rgba(30,41,59,0.13)";
-                tooltip.style.fontSize = "1em";
-                tooltip.style.fontWeight = "500";
-                tooltip.style.zIndex = 99999;
-                tooltip.style.maxWidth = "420px";
-                tooltip.style.wordBreak = "break-word";
-                tooltip.style.pointerEvents = "none";
-                tooltip.style.opacity = "0";
-                tooltip.style.transition = "opacity 0.18s";
-                setTimeout(() => {
-                  tooltip.style.opacity = "1";
-                }, 10);
-                td._customTooltip = tooltip;
-              }
-            }, 0);
-          });
-          td.addEventListener("mouseleave", function () {
-            if (td._customTooltip) {
-              td._customTooltip.style.opacity = "0";
-              setTimeout(() => {
-                if (td._customTooltip && td._customTooltip.parentNode) {
-                  td._customTooltip.parentNode.removeChild(td._customTooltip);
-                  td._customTooltip = null;
-                }
-              }, 120);
             }
-          });
-        }
+          };
+          textarea.onblur = function () {
+            saveObservation(textarea.value);
+          };
+          td.textContent = "";
+          td.appendChild(textarea);
+          textarea.focus();
+          textarea.selectionStart = textarea.selectionEnd =
+            textarea.value.length;
+        };
+      } else {
+        // Pour les autres colonnes, affichage direct
+        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+        td.textContent = value;
       }
       tr.appendChild(td);
-      // Fonction pour afficher le menu déroulant TC (popup) : uniquement infos TC, responsive
-      function showContainerDetailPopup(delivery, containerNumber) {
-        const oldPopup = document.getElementById("containerDetailPopup");
-        if (oldPopup) oldPopup.remove();
-        const overlay = document.createElement("div");
-        overlay.id = "containerDetailPopup";
-        overlay.style.position = "fixed";
-        overlay.style.top = 0;
-        overlay.style.left = 0;
-        overlay.style.width = "100vw";
-        overlay.style.height = "100vh";
-        overlay.style.background = "rgba(30,41,59,0.45)";
-        overlay.style.zIndex = 9999;
-        overlay.style.display = "flex";
-        overlay.style.alignItems = "center";
-        overlay.style.justifyContent = "center";
-        const box = document.createElement("div");
-        box.style.background = "#fff";
-        box.style.borderRadius = window.innerWidth <= 600 ? "10px" : "16px";
-        box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-        box.style.maxWidth = window.innerWidth <= 600 ? "98vw" : "420px";
-        box.style.width = window.innerWidth <= 600 ? "98vw" : "96vw";
-        box.style.maxHeight = window.innerWidth <= 600 ? "96vh" : "92vh";
-        box.style.overflowY = "auto";
-        box.style.padding = "0";
-        box.style.position = "relative";
-        box.style.display = "flex";
-        box.style.flexDirection = "column";
-        const header = document.createElement("div");
-        header.style.background = "#2563eb";
-        header.style.color = "#fff";
-        header.style.padding =
-          window.innerWidth <= 600
-            ? "12px 12px 8px 12px"
-            : "18px 28px 12px 28px";
-        header.style.fontWeight = "bold";
-        header.style.fontSize =
-          window.innerWidth <= 600 ? "1.01rem" : "1.15rem";
-        header.style.display = "flex";
-        header.style.flexDirection = "column";
-        header.style.borderTopLeftRadius =
-          window.innerWidth <= 600 ? "10px" : "16px";
-        header.style.borderTopRightRadius =
-          window.innerWidth <= 600 ? "10px" : "16px";
-        header.innerHTML = `
-          <div style='margin-bottom:2px;'>
-            <span style='font-size:1.08em;'>${
-              delivery.employee_name || "-"
-            }</span>
-          </div>
-          <div style='font-size:0.98em;font-weight:400;'>
-            Client : <span style='color:#eab308;'>${
-              delivery.client_name || "-"
-            }</span><br>
-            Dossier : <span style='color:#eab308;'>${
-              delivery.dossier_number || "-"
-            }</span>  
-          </div>
-        `;
-        const closeBtn = document.createElement("button");
-        closeBtn.innerHTML = "&times;";
-        closeBtn.style.background = "none";
-        closeBtn.style.border = "none";
-        closeBtn.style.color = "#fff";
-        closeBtn.style.fontSize =
-          window.innerWidth <= 600 ? "1.5rem" : "2.1rem";
-        closeBtn.style.cursor = "pointer";
-        closeBtn.style.position = "absolute";
-        closeBtn.style.top = window.innerWidth <= 600 ? "4px" : "10px";
-        closeBtn.style.right = window.innerWidth <= 600 ? "8px" : "18px";
-        closeBtn.setAttribute("aria-label", "Fermer");
-        closeBtn.onclick = () => overlay.remove();
-        header.appendChild(closeBtn);
-        box.appendChild(header);
-        const content = document.createElement("div");
-        content.style.padding =
-          window.innerWidth <= 600
-            ? "14px 10px 14px 10px"
-            : "24px 24px 24px 24px";
-        content.style.background = "#f8fafc";
-        content.style.flex = "1 1 auto";
-        content.style.overflowY = "auto";
-        const tcNum = document.createElement("div");
-        tcNum.style.fontSize = window.innerWidth <= 600 ? "1.08em" : "1.25em";
-        tcNum.style.fontWeight = "bold";
-        tcNum.style.marginBottom = window.innerWidth <= 600 ? "10px" : "18px";
-        tcNum.style.textAlign = "center";
-        tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${containerNumber}</span>`;
-        content.appendChild(tcNum);
-        box.appendChild(content);
-        overlay.appendChild(box);
-        document.body.appendChild(overlay);
-        overlay.onclick = (e) => {
-          if (e.target === overlay) overlay.remove();
-        };
-        // Scroll popup sur mobile si besoin
-        if (window.innerWidth <= 600) {
-          box.style.overflowY = "auto";
-          content.style.maxHeight = "60vh";
-        }
-      }
     });
     tableBodyElement.appendChild(tr);
   });
