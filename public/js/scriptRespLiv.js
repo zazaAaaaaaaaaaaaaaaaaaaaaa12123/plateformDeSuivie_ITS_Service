@@ -550,45 +550,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       });
       thead.appendChild(headerRow);
     }
-
-    // Fonction utilitaire pour flasher les colonnes
-    function flashColumns(startIdx, endIdx) {
-      const table = tableBodyElement.closest("table");
-      if (!table) return;
-      // Flasher l'en-tête
-      const thead = table.querySelector("thead");
-      if (thead) {
-        const headerRow = thead.querySelectorAll("tr")[2];
-        if (headerRow) {
-          for (let i = startIdx; i <= endIdx; i++) {
-            const th = headerRow.children[i];
-            if (th) {
-              th.style.transition = "background 0.3s";
-              th.style.background = "#fde047";
-              setTimeout(() => {
-                th.style.background = "";
-              }, 400);
-            }
-          }
-        }
-      }
-      // Flasher les cellules du corps
-      const rows = tableBodyElement.querySelectorAll("tr");
-      rows.forEach((row) => {
-        for (let i = startIdx; i <= endIdx; i++) {
-          const td = row.children[i];
-          if (td) {
-            td.style.transition = "background 0.3s";
-            td.style.background = "#fde047";
-            setTimeout(() => {
-              td.style.background = "";
-            }, 400);
-          }
-        }
-      });
-    }
-    flashColumns(startIdx, endIdx);
-    renderAgentTableRows(deliveries, tableBodyElement);
   }
 }
 const AGENT_TABLE_COLUMNS = [
