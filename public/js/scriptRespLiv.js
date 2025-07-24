@@ -422,12 +422,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Initialisation : charge   zjtoutes les livraisons puis affiche la plage de dates
+  // Initialisation : charge les livraisons puis affiche la plage de dates
   const today = new Date().toISOString().split("T")[0];
   if (dateStartInput && dateEndInput) {
-    dateStartInput.value = today;
-    dateEndInput.value = today;
+    // Si une valeur existe déjà, on la garde, sinon on initialise le début à la première livraison et la fin à aujourd'hui
     loadAllDeliveries().then(() => {
+      // Cherche la date la plus ancienne dans allDeliveries
+      let minDate = null;
+      if (allDeliveries.length > 0) {
+        minDate = allDeliveries.reduce((min, d) => {
+          let dDate =
+            d.delivery_date || d.created_at || d.Date || d["Date Livraison"];
+          let dateObj = new Date(dDate);
+          return !min || dateObj < min ? dateObj : min;
+        }, null);
+      }
+      if (!dateStartInput.value) {
+        dateStartInput.value = minDate
+          ? minDate.toISOString().split("T")[0]
+          : today;
+      }
+      if (!dateEndInput.value) {
+        dateEndInput.value = today;
+      }
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
     dateStartInput.addEventListener("change", () => {
