@@ -1308,3 +1308,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     tableBodyElement.appendChild(tr);
   });
 }
+// Ajout d'adaptation responsive pour le tableau généré
+function adaptTableResponsive() {
+  const table = document.getElementById("deliveriesTable");
+  if (!table) return;
+  // Pour les petits écrans, réduire la taille de police et le padding
+  if (window.innerWidth <= 900) {
+    table.style.fontSize = "0.98em";
+    Array.from(table.querySelectorAll("th, td")).forEach((cell) => {
+      cell.style.padding = "0.45rem";
+      cell.style.fontSize = "0.98em";
+      cell.style.minWidth = "80px";
+    });
+  }
+  if (window.innerWidth <= 600) {
+    table.style.fontSize = "0.93em";
+    Array.from(table.querySelectorAll("th, td")).forEach((cell) => {
+      cell.style.padding = "0.32rem 0.3rem";
+      cell.style.fontSize = "0.93em";
+      cell.style.minWidth = "60px";
+    });
+  }
+}
+window.addEventListener("resize", adaptTableResponsive);
+adaptTableResponsive();
