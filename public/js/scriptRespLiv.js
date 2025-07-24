@@ -1044,7 +1044,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             saveBtn.onclick = async () => {
               const statutToSend = select.value;
               delivery.container_statuses[tcNumber] = statutToSend;
-              // MAJ instantanée de la colonne dans le tableau principal
+              // MAJ instantanée de  SNSBJla colonne dans le tableau principal
               const tableBody = document.getElementById("deliveriesTableBody");
               if (tableBody) {
                 for (let row of tableBody.rows) {
