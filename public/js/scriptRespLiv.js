@@ -762,10 +762,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           btn.innerHTML =
             tcList
               .slice(0, 2)
-              .map((tc) => `<span class="tc-tag">${tc}</span>`)
+              .map(
+                (tc) =>
+                  `<span class="tc-tag" style="display:inline-block;background:#2563eb;color:#fff;font-weight:600;font-size:0.92em;padding:3px 10px;border-radius:12px;margin:2px 2px 2px 0;letter-spacing:0.5px;box-shadow:0 1px 6px rgba(37,99,235,0.09);cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">${tc}</span>`
+              )
               .join("") +
             (tcList.length > 2
-              ? ` <span class="tc-tag tc-tag-more">+${tcList.length - 2}</span>`
+              ? ` <span class="tc-tag tc-tag-more" style="display:inline-block;background:#eab308;color:#fff;font-weight:600;font-size:0.92em;padding:3px 10px;border-radius:12px;margin:2px 2px 2px 0;letter-spacing:0.5px;box-shadow:0 1px 6px rgba(37,99,235,0.09);cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">+${
+                  tcList.length - 2
+                }</span>`
               : "") +
             ' <i class="fas fa-chevron-down tc-chevron"></i>';
           const popup = document.createElement("div");
@@ -806,12 +811,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             background: #2563eb;
             color: #fff;
             font-weight: 600;
-            font-size: 1.08em;
-            padding: 7px 22px;
-            border-radius: 16px;
-            margin: 4px 2px 4px 0;
+            font-size: 0.92em;
+            padding: 3px 10px;
+            border-radius: 12px;
+            margin: 2px 2px 2px 0;
             letter-spacing: 0.5px;
-            box-shadow: 0 2px 12px rgba(37,99,235,0.13);
+            box-shadow: 0 1px 6px rgba(37,99,235,0.09);
             cursor: pointer;
             transition: background 0.18s, box-shadow 0.18s;
             border: none;
@@ -822,7 +827,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           };
           tag.onmouseleave = function () {
             tag.style.background = "#2563eb";
-            tag.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
+            tag.style.boxShadow = "0 1px 6px rgba(37,99,235,0.09)";
           };
           tag.onclick = (e) => {
             e.stopPropagation();
