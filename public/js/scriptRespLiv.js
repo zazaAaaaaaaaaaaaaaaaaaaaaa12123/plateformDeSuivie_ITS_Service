@@ -1340,30 +1340,49 @@ style.innerHTML = `
   display: inline-block;
   background: #eaf1ff;
   color: #2563eb;
-  font-weight: 600;
-  font-size: 1em;
-  padding: 4px 14px;
+  font-weight: 500;
+  font-size: 0.98em;
+  padding: 3px 13px;
   border-radius: 16px;
   margin: 2px 2px 2px 0;
   letter-spacing: 0.5px;
-  border: 1.5px solid #2563eb;
-  box-shadow: 0 1px 6px rgba(30,41,59,0.08);
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  border: 1px solid #2563eb;
+  box-shadow: none;
+  transition: background 0.18s, color 0.18s;
   cursor: pointer;
 }
 .tc-tag:hover {
   background: #2563eb;
   color: #fff;
-  box-shadow: 0 2px 12px rgba(37,99,235,0.18);
 }
 .tc-tag.tc-tag-more {
   background: #fff;
   color: #2563eb;
-  font-weight: 600;
-  border: 1.5px solid #2563eb;
-  padding: 4px 10px;
+  font-weight: 500;
+  border: 1px solid #2563eb;
+  padding: 3px 10px;
   border-radius: 16px;
-  box-shadow: 0 1px 6px rgba(30,41,59,0.08);
+  box-shadow: none;
+}
+/* Bouton déroulant TC minimal */
+.tc-tags-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  border-radius: 16px;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.98em;
+  white-space: nowrap;
+  box-shadow: none;
+}
+/* Chevron minimal */
+.tc-chevron {
+  color: #2563eb;
+  font-size: 1em;
+  margin-left: 2px;
 }
 `;
 document.head.appendChild(style);
