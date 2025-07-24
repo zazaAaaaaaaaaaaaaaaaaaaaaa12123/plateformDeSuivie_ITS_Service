@@ -143,30 +143,11 @@ document.addEventListener("DOMContentLoaded", function () {
             if (row) {
               const statutCell = row.querySelector("td[data-col-id='statut']");
               if (statutCell) {
-                // Barre de progression animée pour les livraisons multi-conteneurs
-                let delivered = data.deliveredCount;
-                let total = data.totalCount;
-                let percent =
-                  total > 0 ? Math.round((delivered / total) * 100) : 0;
-                let color = "#e5e7eb"; // gris
-                if (percent > 0 && percent < 50) color = "#fde68a"; // jaune
-                if (percent >= 50 && percent < 100) color = "#60a5fa"; // bleu
-                if (percent === 100) color = "#22c55e"; // vert
-                if (delivered === total && total > 0) {
-                  // Badge vert si tout est livré (1/1 ou n/n)
-                  statutCell.innerHTML = `<span style="display:inline-block;padding:2px 18px;font-size:1.1em;font-weight:600;border-radius:12px;border:2px solid #eab308;background:#d1fadf;color:#15803d;">Livré</span>`;
-                } else {
-                  statutCell.innerHTML = `
-                    <div style="position:relative;width:100%;height:32px;background:#f3f4f6;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(30,41,59,0.04);">
-                      <div class="statut-progress-bar" style="position:absolute;left:0;top:0;height:100%;width:${percent}%;background:${color};transition:width 0.7s cubic-bezier(.4,0,.2,1),background 0.7s;z-index:1;"></div>
-                      <div style="position:relative;z-index:2;text-align:center;font-size:1em;font-weight:600;color:${
-                        percent === 100 ? "#15803d" : "#b45309"
-                      };line-height:32px;">
-                        ${delivered} sur ${total} livré${total > 1 ? "s" : ""}
-                      </div>
-                    </div>
-                  `;
-                }
+                statutCell.innerHTML = `<button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
+                  data.deliveredCount
+                } sur ${data.totalCount} livré${
+                  data.totalCount > 1 ? "s" : ""
+                }</button>`;
               }
             }
           }
@@ -942,25 +923,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         td.setAttribute("data-col-id", "statut");
         if (delivered === total && total > 0) {
-          // Badge vert si tout est livré (1/1 ou n/n)
+          // Badge ou bouton vert si tout est livré (1/1 ou n/n)
           td.innerHTML = `<span style="display:inline-block;padding:2px 18px;font-size:1.1em;font-weight:600;border-radius:12px;border:2px solid #eab308;background:#d1fadf;color:#15803d;">Livré</span>`;
         } else {
-          // Barre de progression animée pour les livraisons multi-conteneurs
-          let percent = total > 0 ? Math.round((delivered / total) * 100) : 0;
-          let color = "#e5e7eb"; // gris
-          if (percent > 0 && percent < 50) color = "#fde68a"; // jaune
-          if (percent >= 50 && percent < 100) color = "#60a5fa"; // bleu
-          if (percent === 100) color = "#22c55e"; // vert
-          td.innerHTML = `
-            <div style="position:relative;width:100%;height:32px;background:#f3f4f6;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(30,41,59,0.04);">
-              <div class="statut-progress-bar" style="position:absolute;left:0;top:0;height:100%;width:${percent}%;background:${color};transition:width 0.7s cubic-bezier(.4,0,.2,1),background 0.7s;z-index:1;"></div>
-              <div style="position:relative;z-index:2;text-align:center;font-size:1em;font-weight:600;color:${
-                percent === 100 ? "#15803d" : "#b45309"
-              };line-height:32px;">
-                ${delivered} sur ${total} livré${total > 1 ? "s" : ""}
-              </div>
-            </div>
-          `;
+          // Si partiellement livré, bouton jaune classique
+          td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+            total > 1 ? "s" : ""
+          }</button>`;
         }
       } else {
         // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
