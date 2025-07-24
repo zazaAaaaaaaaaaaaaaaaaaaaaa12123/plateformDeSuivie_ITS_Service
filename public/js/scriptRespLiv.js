@@ -770,11 +770,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               .slice(0, 2)
               .map(
                 (tc) =>
-                  `<span class="tc-tag" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1.13em;padding:6px 18px;border-radius:16px;margin:6px 2px 6px 2px;letter-spacing:0.5px;box-shadow:0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">${tc}</span>`
+                  `<span class="tc-tag" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1em;padding:3px 10px;border-radius:10px;margin:4px 1px 4px 1px;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(30,41,59,0.13),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">${tc}</span>`
               )
               .join("") +
             (tcList.length > 2
-              ? ` <span class="tc-tag tc-tag-more" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1.13em;padding:6px 18px;border-radius:16px;margin:6px 2px 6px 2px;letter-spacing:0.5px;box-shadow:0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">+${
+              ? ` <span class="tc-tag tc-tag-more" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1em;padding:3px 10px;border-radius:10px;margin:4px 1px 4px 1px;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(30,41,59,0.13),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">+${
                   tcList.length - 2
                 }</span>`
               : "") +
@@ -817,12 +817,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             background: #e6b800;
             color: #0e274e;
             font-weight: 700;
-            font-size: 1.13em;
-            padding: 6px 18px;
-            border-radius: 16px;
-            margin: 6px 2px 6px 2px;
+            font-size: 1em;
+            padding: 3px 10px;
+            border-radius: 10px;
+            margin: 4px 1px 4px 1px;
             letter-spacing: 0.5px;
-            box-shadow: 0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset;
+            box-shadow: 0 2px 8px rgba(30,41,59,0.13),0 1px 0 #fff inset;
             cursor: pointer;
             transition: background 0.18s, box-shadow 0.18s;
             border: none;
