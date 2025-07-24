@@ -954,17 +954,19 @@
         const deliveriesTableBody = document.getElementById('deliveriesTableBody');
 
         function filterDeliveries() {
-          const query = searchInput.value.trim().toLowerCase();
+          let query = searchInput.value.trim().toLowerCase();
+          // On retire les espaces et accents pour une recherche plus souple
+          const normalize = str => str.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\s+/g, '');
+          query = normalize(query);
           const rows = deliveriesTableBody.querySelectorAll('tr');
           let found = false;
           rows.forEach(row => {
             // Colonne N° Déclaration = 10ème (index 9), N° Dossier = 11ème (index 10)
             const declarationCell = row.cells[9];
             const dossierCell = row.cells[10];
-            // On ne filtre QUE sur N° Déclaration et N° Dossier, PAS sur le BL (Numéro TC(s))
             if (declarationCell && dossierCell) {
-              const declarationText = declarationCell.textContent.trim().toLowerCase();
-              const dossierText = dossierCell.textContent.trim().toLowerCase();
+              const declarationText = normalize(declarationCell.textContent.trim().toLowerCase());
+              const dossierText = normalize(dossierCell.textContent.trim().toLowerCase());
               if (
                 (declarationText.includes(query) || dossierText.includes(query) || query === "")
               ) {
@@ -974,7 +976,6 @@
                 row.style.display = 'none';
               }
             } else {
-              // Si la ligne ne contient pas ces colonnes, on l'affiche par défaut
               row.style.display = '';
             }
           });
