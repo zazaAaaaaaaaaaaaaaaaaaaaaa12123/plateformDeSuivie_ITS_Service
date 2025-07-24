@@ -403,7 +403,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction principale pour charger et afficher selon la plage de dates
   function updateTableForDateRange(startStr, endStr) {
-    const filtered = filterDeliveriesByDateRange(startStr, endStr);
+    let filtered = filterDeliveriesByDateRange(startStr, endStr);
+    // Tri du plus ancien au plus récent
+    filtered = filtered.sort((a, b) => {
+      let aDate =
+        a.delivery_date || a.created_at || a.Date || a["Date Livraison"];
+      let bDate =
+        b.delivery_date || b.created_at || b.Date || b["Date Livraison"];
+      aDate = new Date(aDate);
+      bDate = new Date(bDate);
+      return aDate - bDate;
+    });
     const tableContainer = document.getElementById("deliveriesTableBody");
     if (tableContainer) {
       renderAgentTableFull(filtered, tableContainer);
@@ -467,53 +477,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       const headerRow = document.createElement("tr");
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const th = document.createElement("th");
-        // Ajout de la bande colorée sur l'en-tête 'N°' selon l'ancienneté
-        if (col.id === "row_number") {
-          th.textContent = col.label;
-          th.style.position = "relative";
-          // Déterminer la couleur selon la plage de dates filtrée
-          let color = "#2563eb"; // bleu par défaut
-          // Récupérer la plage de dates filtrée
-          const dateStartInput = document.getElementById(
-            "mainTableDateStartFilter"
-          );
-          const dateEndInput = document.getElementById(
-            "mainTableDateEndFilter"
-          );
-          let startDate = dateStartInput
-            ? new Date(dateStartInput.value)
-            : null;
-          let endDate = dateEndInput ? new Date(dateEndInput.value) : null;
-          // Calculer l'ancienneté moyenne des données affichées
-          let avgDays = 0;
-          if (deliveries.length > 0) {
-            let totalDays = 0;
-            deliveries.forEach((delivery) => {
-              let dDate = delivery.delivery_date || delivery.created_at;
-              if (dDate) {
-                let dateObj = new Date(dDate);
-                if (!isNaN(dateObj.getTime())) {
-                  let now = new Date();
-                  let diff = Math.floor(
-                    (now - dateObj) / (1000 * 60 * 60 * 24)
-                  );
-                  totalDays += diff;
-                }
-              }
-            });
-            avgDays = Math.round(totalDays / deliveries.length);
-          }
-          // Définir la couleur selon l'ancienneté moyenne
-          if (avgDays >= 60) {
-            color = "#64748b"; // gris pour très ancien
-          } else if (avgDays >= 15) {
-            color = "#eab308"; // jaune pour assez ancien
-          } else {
-            color = "#2563eb"; // bleu pour récent
-          }
-          // Ajouter la bande colorée (bordure fine à gauche)
-          th.style.borderLeft = `8px solid ${color}`;
-        } else if (col.id === "statut") {
+        if (col.id === "statut") {
           // On affiche uniquement le texte Statut dans l'en-tête
           th.innerHTML = `<span style=\"font-weight:bold;\">${col.label}</span>`;
         } else {
