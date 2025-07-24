@@ -395,6 +395,29 @@ document.addEventListener("DOMContentLoaded", function () {
           value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         }
         cell.textContent = value;
+        // Style joli et gras pour toutes les cellules de texte (hors cellules spéciales)
+        cell.style.fontWeight = "bold";
+        cell.style.color = "#1e293b";
+        cell.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
+        cell.style.letterSpacing = "0.5px";
+        cell.style.background =
+          "linear-gradient(90deg,#f3f4f6 0%,#e0e7ff 100%)";
+        cell.style.borderRadius = "7px";
+        cell.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
+        // Si colonne éditable, fond jaune très transparent
+        const editableColIds = [
+          "visitor_agent_name",
+          "transporter",
+          "inspector",
+          "customs_agent",
+          "driver",
+          "driver_phone",
+          "delivery_date",
+          "observation",
+        ];
+        if (editableColIds.includes(col.id)) {
+          cell.style.background = "rgba(255, 230, 0, 0.18)";
+        }
         row.appendChild(cell);
       });
       tableBody.appendChild(row);
@@ -510,6 +533,20 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         const th = document.createElement("th");
         th.setAttribute("data-col-id", col.id);
         th.textContent = col.label;
+        // Si colonne éditable, couleur rouge foncé pour l'en-tête
+        const editableHeaderIds = [
+          "visitor_agent_name",
+          "transporter",
+          "inspector",
+          "customs_agent",
+          "driver",
+          "driver_phone",
+          "delivery_date",
+          "observation",
+        ];
+        if (editableHeaderIds.includes(col.id)) {
+          th.style.color = "#b91c1c"; // rouge foncé
+        }
         // Alternance de couleurs pour chaque colonne
         if (idx % 3 === 0) {
           th.style.background = "#ffc107";
@@ -700,6 +737,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
         }
         td.textContent = value;
+        // Style joli et gras pour la cellule date livraison
+        td.style.fontWeight = "bold";
+        td.style.color = "#1e293b";
+        td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
+        td.style.letterSpacing = "0.5px";
+        td.style.background = "rgba(255, 230, 0, 0.18)";
+        td.style.borderRadius = "7px";
+        td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
       } else if (col.id === "container_number") {
         // ...existing code for container_number...
         let tcList = [];
@@ -795,6 +840,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               ? new Date(savedValue).toLocaleDateString("fr-FR")
               : value;
           td.textContent = displayValue;
+          // Style joli et gras pour les cellules éditables
+          td.style.fontWeight = "bold";
+          td.style.color = "#1e293b";
+          td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
+          td.style.letterSpacing = "0.5px";
+          td.style.background = "rgba(255, 230, 0, 0.18)";
+          td.style.borderRadius = "7px";
+          td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
           td.onclick = function (e) {
             if (td.querySelector("input")) return;
             const input = document.createElement("input");
@@ -860,6 +913,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         let displayValue =
           savedValue !== null && savedValue !== "" ? savedValue : value;
         td.textContent = displayValue;
+        // Style joli et gras pour les cellules éditables
+        td.style.fontWeight = "bold";
+        td.style.color = "#1e293b";
+        td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
+        td.style.letterSpacing = "0.5px";
+        td.style.background = "rgba(255, 230, 0, 0.18)";
+        td.style.borderRadius = "7px";
+        td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
         td.onclick = function (e) {
           if (td.querySelector("input") || td.querySelector("textarea")) return;
           // Blocage pour observation si champs obligatoires non remplis
