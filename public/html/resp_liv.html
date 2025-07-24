@@ -958,11 +958,17 @@
           const rows = deliveriesTableBody.querySelectorAll('tr');
           let found = false;
           rows.forEach(row => {
-            // On suppose que la colonne N° Déclaration est la 10ème (index 9)
+            // Colonne N° Déclaration = 10ème (index 9), N° Dossier = 11ème (index 10)
             const declarationCell = row.cells[9];
-            if (declarationCell) {
+            const dossierCell = row.cells[10];
+            if (declarationCell && dossierCell) {
               const declarationText = declarationCell.textContent.trim().toLowerCase();
-              if (declarationText.includes(query) || query === "") {
+              const dossierText = dossierCell.textContent.trim().toLowerCase();
+              if (
+                declarationText.includes(query) ||
+                dossierText.includes(query) ||
+                query === ""
+              ) {
                 row.style.display = '';
                 found = true;
               } else {
