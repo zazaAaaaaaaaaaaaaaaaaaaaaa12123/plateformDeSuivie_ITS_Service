@@ -51,7 +51,7 @@ function showStatutTooltip(delivery, x, y) {
             : `<svg style='vertical-align:middle;margin-right:7px;' width='22' height='22' viewBox='0 0 24 24' fill='none'><rect x='2' y='7' width='15' height='8' rx='2' fill='#64748b'/><circle cx='7' cy='18' r='2' fill='#64748b'/><circle cx='17' cy='18' r='2' fill='#64748b'/></svg>`;
         let statusLabel =
           status === "livre" || status === "livré" ? "Livré" : "Non livré";
-        return `<div style='display:flex;align-items:center;gap:8px;margin-bottom:2px;'><span>${icon}</span><span style='font-weight:700;color:#e6b800;'>${tc}</span><span style='margin-left:12px;font-weight:600;color:${
+        return `<div style='display:flex;align-items:center;gap:8px;margin-bottom:2px;'><span>${icon}</span><span style='font-weight:700;color:#0e274e;'>${tc}</span><span style='margin-left:12px;font-weight:600;color:${
           status === "livre" || status === "livré" ? "#22c55e" : "#64748b"
         };'>${statusLabel}</span></div>`;
       })
