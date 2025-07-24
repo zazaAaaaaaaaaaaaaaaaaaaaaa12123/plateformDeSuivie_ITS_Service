@@ -395,30 +395,6 @@ document.addEventListener("DOMContentLoaded", function () {
           value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         }
         cell.textContent = value;
-        // Style joli et gras pour toutes les cellules de texte (hors cellules spéciales)
-        cell.style.fontWeight = "bold";
-        cell.style.color = "#1e293b";
-        cell.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
-        cell.style.letterSpacing = "0.5px";
-        cell.style.background =
-          "linear-gradient(90deg,#f3f4f6 0%,#e0e7ff 100%)";
-        cell.style.borderRadius = "7px";
-        cell.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
-        // Si colonne éditable, fond jaune très transparent et police rouge foncé
-        const editableColIds = [
-          "visitor_agent_name",
-          "transporter",
-          "inspector",
-          "customs_agent",
-          "driver",
-          "driver_phone",
-          "delivery_date",
-          "observation",
-        ];
-        if (editableColIds.includes(col.id)) {
-          cell.style.background = "rgba(255, 230, 0, 0.08)";
-          cell.style.color = "#b91c1c";
-        }
         row.appendChild(cell);
       });
       tableBody.appendChild(row);
@@ -427,17 +403,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction principale pour charger et afficher selon la plage de dates
   function updateTableForDateRange(startStr, endStr) {
-    let filtered = filterDeliveriesByDateRange(startStr, endStr);
-    // Tri du plus ancien au plus récent
-    filtered = filtered.sort((a, b) => {
-      let aDate =
-        a.delivery_date || a.created_at || a.Date || a["Date Livraison"];
-      let bDate =
-        b.delivery_date || b.created_at || b.Date || b["Date Livraison"];
-      aDate = new Date(aDate);
-      bDate = new Date(bDate);
-      return aDate - bDate;
-    });
+    const filtered = filterDeliveriesByDateRange(startStr, endStr);
     const tableContainer = document.getElementById("deliveriesTableBody");
     if (tableContainer) {
       renderAgentTableFull(filtered, tableContainer);
@@ -446,29 +412,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Initialisation : charge les livraisons puis affiche la plage de dates
+  // Initialisation : charge toutes les livraisons puis affiche la plage de dates
   const today = new Date().toISOString().split("T")[0];
   if (dateStartInput && dateEndInput) {
-    // Si une valeur existe déjà, on la garde, sinon on initialise le début à la première livraison et la fin à aujourd'hui
+    dateStartInput.value = today;
+    dateEndInput.value = today;
     loadAllDeliveries().then(() => {
-      // Cherche la date la plus ancienne dans allDeliveries
-      let minDate = null;
-      if (allDeliveries.length > 0) {
-        minDate = allDeliveries.reduce((min, d) => {
-          let dDate =
-            d.delivery_date || d.created_at || d.Date || d["Date Livraison"];
-          let dateObj = new Date(dDate);
-          return !min || dateObj < min ? dateObj : min;
-        }, null);
-      }
-      if (!dateStartInput.value) {
-        dateStartInput.value = minDate
-          ? minDate.toISOString().split("T")[0]
-          : today;
-      }
-      if (!dateEndInput.value) {
-        dateEndInput.value = today;
-      }
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
     dateStartInput.addEventListener("change", () => {
@@ -484,7 +433,9 @@ document.addEventListener("DOMContentLoaded", function () {
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
   if (deliveries.length === 0) {
+    // Masquer le tableau et afficher un message centré
     if (table) table.style.display = "none";
+    // Chercher ou créer un message d'absence
     let noDataMsg = document.getElementById("noDeliveriesMsg");
     if (!noDataMsg) {
       noDataMsg = document.createElement("div");
@@ -501,10 +452,11 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
     tableBodyElement.innerHTML = "";
   } else {
+    // Afficher le tableau et masquer le message
     if (table) table.style.display = "table";
     const noDataMsg = document.getElementById("noDeliveriesMsg");
     if (noDataMsg) noDataMsg.style.display = "none";
-    // Génération du bandeau coloré
+    // Génération de l'en-tête
     if (table) {
       let thead = table.querySelector("thead");
       if (!thead) {
@@ -512,69 +464,16 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         table.insertBefore(thead, tableBodyElement);
       }
       thead.innerHTML = "";
-      // Bandeau coloré principal
-      const bannerRow = document.createElement("tr");
-      const bannerTh = document.createElement("th");
-      bannerTh.colSpan = AGENT_TABLE_COLUMNS.length;
-      bannerTh.style.fontSize = "1.25em";
-      bannerTh.style.fontWeight = "700";
-      bannerTh.style.background =
-        "linear-gradient(90deg,#0e274e 0%,#ffc107 60%,#e6b800 100%)";
-      bannerTh.style.color = "#fff";
-      bannerTh.style.borderRadius = "18px 18px 0 0";
-      bannerTh.style.letterSpacing = "2px";
-      bannerTh.style.boxShadow = "0 4px 24px #0e274e22";
-      bannerTh.style.textShadow = "0 2px 8px #0e274e55";
-      bannerTh.textContent = "Responsable de Livraison";
-      bannerRow.appendChild(bannerTh);
-      thead.appendChild(bannerRow);
-      // En-tête stylisée
       const headerRow = document.createElement("tr");
-      AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      AGENT_TABLE_COLUMNS.forEach((col) => {
         const th = document.createElement("th");
-        th.setAttribute("data-col-id", col.id);
-        th.textContent = col.label;
-        // Si colonne éditable, couleur rouge foncé pour l'en-tête
-        const editableHeaderIds = [
-          "visitor_agent_name",
-          "transporter",
-          "inspector",
-          "customs_agent",
-          "driver",
-          "driver_phone",
-          "delivery_date",
-          "observation",
-        ];
-        if (editableHeaderIds.includes(col.id)) {
-          th.style.color = "#b91c1c"; // rouge foncé
-        }
-        // Alternance de couleurs pour chaque colonne
-        if (idx % 3 === 0) {
-          th.style.background = "#ffc107";
-          th.style.color = "#0e274e";
-          th.style.fontWeight = "700";
-          th.style.borderRight = "2px solid #e6b800";
-        } else if (idx % 3 === 1) {
-          th.style.background = "#0e274e";
-          th.style.color = "#ffc107";
-          th.style.fontWeight = "700";
-          th.style.borderRight = "2px solid #ffc107";
-        } else {
-          th.style.background = "#e6b800";
-          th.style.color = "#fff";
-          th.style.fontWeight = "700";
-          th.style.borderRight = "2px solid #ffc107";
-        }
-        th.style.textAlign = "center";
-        th.style.verticalAlign = "middle";
-        th.style.fontSize = "1em";
-        th.style.whiteSpace = "nowrap";
-        th.style.overflow = "hidden";
-        th.style.maxWidth = "180px";
-        th.style.boxShadow = "0 2px 8px #0e274e11";
         if (col.id === "statut") {
+          // On affiche uniquement le texte Statut dans l'en-tête
           th.innerHTML = `<span style=\"font-weight:bold;\">${col.label}</span>`;
+        } else {
+          th.textContent = col.label;
         }
+        th.setAttribute("data-col-id", col.id);
         headerRow.appendChild(th);
       });
       thead.appendChild(headerRow);
@@ -588,6 +487,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "employee_name", label: "Agent Acconier" },
   { id: "client_name", label: "Nom Client" },
   { id: "client_phone", label: "Numéro Client" },
+  { id: "container_number", label: "Numéro TC(s)" },
   { id: "lieu", label: "Lieu" },
   { id: "container_foot_type", label: "Type de Conteneur" },
   { id: "container_type_and_content", label: "Contenu" },
@@ -607,8 +507,6 @@ const AGENT_TABLE_COLUMNS = [
   { id: "driver", label: "CHAUFFEUR" },
   { id: "driver_phone", label: "TEL CHAUFFEUR" },
   { id: "delivery_date", label: "DATE LIVRAISON" },
-  // Déplacement de 'Numéro TC(s)' juste avant 'Statut'
-  { id: "container_number", label: "Numéro TC(s)" },
   { id: "statut", label: "Statut" },
   { id: "observation", label: "Observations" },
 ];
@@ -738,14 +636,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
         }
         td.textContent = value;
-        // Style joli et gras pour la cellule date livraison
-        td.style.fontWeight = "bold";
-        td.style.color = "#b91c1c"; // rouge foncé
-        td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
-        td.style.letterSpacing = "0.5px";
-        td.style.background = "rgba(255, 230, 0, 0.08)"; // jaune très transparent
-        td.style.borderRadius = "7px";
-        td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
       } else if (col.id === "container_number") {
         // ...existing code for container_number...
         let tcList = [];
@@ -771,61 +661,37 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const popup = document.createElement("div");
           popup.className = "tc-popup";
           popup.style.display = "none";
-          tag.style.cssText = `
-            display: inline-block;
-            background: #eaf1ff;
-            color: #2563eb;
-            font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
-            font-weight: 500;
-            font-size: 1em;
-            padding: 5px 18px;
-            border-radius: 12px;
-            margin-right: 8px;
-            margin-top: 4px;
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
-            border: 1px solid #2563eb;
-            box-shadow: none;
-            cursor: pointer;
-            transition: background 0.18s, color 0.18s;
-            outline: none;
-          `;
-          tag.onmouseenter = function () {
-            tag.style.background = "#2563eb";
-            tag.style.color = "#fff";
+          popup.innerHTML = tcList
+            .map(
+              (tc) =>
+                `<div class="tc-popup-item" style='cursor:pointer;'>${tc}</div>`
+            )
+            .join("");
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            document.querySelectorAll(".tc-popup").forEach((p) => {
+              if (p !== popup) p.style.display = "none";
+            });
+            popup.style.display =
+              popup.style.display === "block" ? "none" : "block";
           };
-          tag.onmouseleave = function () {
-            tag.style.background = "#eaf1ff";
-            tag.style.color = "#2563eb";
-          };
+          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
+            item.onclick = (ev) => {
+              ev.stopPropagation();
+              popup.style.display = "none";
+              showContainerDetailPopup(delivery, item.textContent);
+            };
+          });
+          document.addEventListener("click", function hidePopup(e) {
+            if (!td.contains(e.target)) popup.style.display = "none";
+          });
+          td.appendChild(btn);
+          td.appendChild(popup);
+        } else if (tcList.length === 1) {
+          const tag = document.createElement("span");
+          tag.className = "tc-tag";
           tag.textContent = tcList[0];
-          tag.style.cssText = `
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: #2563eb;
-            color: #fff;
-            font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
-            font-weight: 600;
-            font-size: 1.12em;
-            padding: 8px 24px;
-            border-radius: 20px;
-            margin: 8px 2px 8px 0;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 16px rgba(37,99,235,0.13);
-            cursor: pointer;
-            transition: background 0.18s, box-shadow 0.18s;
-            border: none;
-            outline: none;
-          `;
-          tag.onmouseenter = function () {
-            tag.style.background = "#1746a2";
-            tag.style.boxShadow = "0 8px 24px rgba(37,99,235,0.18)";
-          };
-          tag.onmouseleave = function () {
-            tag.style.background = "#2563eb";
-            tag.style.boxShadow = "0 4px 16px rgba(37,99,235,0.13)";
-          };
+          tag.style.cursor = "pointer";
           tag.onclick = (e) => {
             e.stopPropagation();
             // Correction : vérifier les champs obligatoires AVANT d'ouvrir le popup
@@ -865,14 +731,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               ? new Date(savedValue).toLocaleDateString("fr-FR")
               : value;
           td.textContent = displayValue;
-          // Style joli et gras pour les cellules éditables
-          td.style.fontWeight = "bold";
-          td.style.color = "#b91c1c"; // rouge foncé
-          td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
-          td.style.letterSpacing = "0.5px";
-          td.style.background = "rgba(255, 230, 0, 0.08)"; // jaune très transparent
-          td.style.borderRadius = "7px";
-          td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
           td.onclick = function (e) {
             if (td.querySelector("input")) return;
             const input = document.createElement("input");
@@ -938,14 +796,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         let displayValue =
           savedValue !== null && savedValue !== "" ? savedValue : value;
         td.textContent = displayValue;
-        // Style joli et gras pour les cellules éditables
-        td.style.fontWeight = "bold";
-        td.style.color = "#b91c1c"; // rouge foncé
-        td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
-        td.style.letterSpacing = "0.5px";
-        td.style.background = "rgba(255, 230, 0, 0.08)"; // jaune très transparent
-        td.style.borderRadius = "7px";
-        td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
         td.onclick = function (e) {
           if (td.querySelector("input") || td.querySelector("textarea")) return;
           // Blocage pour observation si champs obligatoires non remplis
@@ -1332,27 +1182,3 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     tableBodyElement.appendChild(tr);
   });
 }
-// Ajout d'adaptation responsive pour le tableau généré
-function adaptTableResponsive() {
-  const table = document.getElementById("deliveriesTable");
-  if (!table) return;
-  // Pour les petits écrans, réduire la taille de police et le padding
-  if (window.innerWidth <= 900) {
-    table.style.fontSize = "0.98em";
-    Array.from(table.querySelectorAll("th, td")).forEach((cell) => {
-      cell.style.padding = "0.45rem";
-      cell.style.fontSize = "0.98em";
-      cell.style.minWidth = "80px";
-    });
-  }
-  if (window.innerWidth <= 600) {
-    table.style.fontSize = "0.93em";
-    Array.from(table.querySelectorAll("th, td")).forEach((cell) => {
-      cell.style.padding = "0.32rem 0.3rem";
-      cell.style.fontSize = "0.93em";
-      cell.style.minWidth = "60px";
-    });
-  }
-}
-window.addEventListener("resize", adaptTableResponsive);
-adaptTableResponsive();
