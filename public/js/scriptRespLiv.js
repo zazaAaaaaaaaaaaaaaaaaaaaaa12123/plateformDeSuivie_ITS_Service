@@ -1358,3 +1358,4 @@ function adaptTableResponsive() {
 }
 window.addEventListener("resize", adaptTableResponsive);
 adaptTableResponsive();
+/**zdhudi */
