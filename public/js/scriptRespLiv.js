@@ -23,7 +23,7 @@ function createCustomTooltip() {
 
 function showTooltip(text, x, y) {
   const tooltip = createCustomTooltip();
-  tooltip.textContent = text;
+  tooltip.innerHTML = text;
   tooltip.style.display = "block";
   // Positionnement intelligent (évite de sortir de l'écran)
   const padding = 12;
