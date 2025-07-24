@@ -461,33 +461,8 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const th = document.createElement("th");
         if (col.id === "statut") {
-          // Calcul du nombre de conteneurs livrés et total pour toutes les livraisons affichées
-          let total = 0;
-          let delivered = 0;
-          deliveries.forEach((delivery) => {
-            let tcList = [];
-            if (Array.isArray(delivery.container_number)) {
-              tcList = delivery.container_number.filter(Boolean);
-            } else if (typeof delivery.container_number === "string") {
-              tcList = delivery.container_number
-                .split(/[,;\s]+/)
-                .filter(Boolean);
-            }
-            total += tcList.length;
-            if (
-              delivery.container_statuses &&
-              typeof delivery.container_statuses === "object"
-            ) {
-              delivered += Object.values(delivery.container_statuses).filter(
-                (s) => s === "livre" || s === "livré"
-              ).length;
-            }
-          });
-          th.innerHTML = `<span style="font-weight:bold;">${
-            col.label
-          }</span><br><button style="margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
-            total > 1 ? "s" : ""
-          }</button>`;
+          // Affichage simple : juste le texte 'Statut' en gras dans l'entête
+          th.innerHTML = `<span style="font-weight:bold;">${col.label}</span>`;
         } else {
           th.textContent = col.label;
         }
@@ -928,7 +903,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.classList.add("observation-col");
         }
       } else if (col.id === "statut") {
-        // Affichage du modèle "x sur y livré" dans chaque cellule de la colonne Statut
+        // Affichage : badge vert "Livré" si tous les conteneurs sont livrés, sinon bouton x sur y livré(s)
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -947,9 +922,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }).length;
         }
         td.setAttribute("data-col-id", "statut");
-        td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
-          total > 1 ? "s" : ""
-        }</button>`;
+        if (delivered === total && total > 0) {
+          // Badge ou bouton vert si tout est livré (1/1 ou n/n)
+          td.innerHTML = `<span style="display:inline-block;padding:2px 18px;font-size:1.1em;font-weight:600;border-radius:12px;border:2px solid #eab308;background:#d1fadf;color:#15803d;">Livré</span>`;
+        } else {
+          // Si partiellement livré, bouton jaune classique
+          td.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+            total > 1 ? "s" : ""
+          }</button>`;
+        }
       } else {
         // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
         value =
