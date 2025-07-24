@@ -907,130 +907,50 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               showContainerDetailPopup(delivery, item.textContent);
             };
           });
-          // Fermer le popup au toucher/clic hors du bouton sur mobile
-          document.addEventListener("click", function hidePopup(e) {
-            if (!td.contains(e.target)) popup.style.display = "none";
-          });
-          td.appendChild(btn);
-          td.appendChild(popup);
-        } else if (tcList.length === 1) {
-          const tag = document.createElement("span");
-          tag.className = "tc-tag";
-          tag.textContent = tcList[0];
-          tag.style.cursor = "pointer";
-          tag.onclick = (e) => {
-            e.stopPropagation();
-            showContainerDetailPopup(delivery, tcList[0]);
-          };
-          td.appendChild(tag);
-        } else {
-          td.textContent = "-";
-        }
-      } else if (col.id === "bl_number") {
-        // Rendu avancé pour N° BL : badge/tag  et menu déroulant popup
-        let blList = [];
-        if (Array.isArray(delivery.bl_number)) {
-          blList = delivery.bl_number.filter(Boolean);
-        } else if (typeof delivery.bl_number === "string") {
-          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        if (blList.length > 1) {
-          td.classList.add("tc-multi-cell");
-          const btn = document.createElement("button");
-          btn.className = "tc-tags-btn";
-          btn.type = "button";
-          btn.innerHTML =
-            blList
-              .slice(0, 2)
-              .map((bl) => `<span class=\"tc-tag\">${bl}</span>`)
-              .join("") +
-            (blList.length > 2
-              ? ` <span class=\"tc-tag tc-tag-more\">+${
-                  blList.length - 2
-                }</span>`
-              : "") +
-            ' <i class="fas fa-chevron-down tc-chevron"></i>';
-          const popup = document.createElement("div");
-          popup.className = "tc-popup";
-          popup.style.display = "none";
-          popup.innerHTML = blList
-            .map(
-              (bl) =>
-                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${bl}</div>`
-            )
-            .join("");
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            document.querySelectorAll(".tc-popup").forEach((p) => {
-              if (p !== popup) p.style.display = "none";
-            });
-            popup.style.display =
-              popup.style.display === "block" ? "none" : "block";
-          };
-          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
-            item.onclick = (ev) => {
-              ev.stopPropagation();
-              popup.style.display = "none";
-              showBLDetailPopup(delivery, item.textContent);
-            };
-          });
-          document.addEventListener("click", function hidePopup(e) {
-            if (!td.contains(e.target)) popup.style.display = "none";
-          });
-          td.appendChild(btn);
-          td.appendChild(popup);
-        } else if (blList.length === 1) {
-          const tag = document.createElement("span");
-          tag.className = "tc-tag";
-          tag.textContent = blList[0];
-          tag.style.cursor = "pointer";
-          tag.onclick = (e) => {
-            e.stopPropagation();
-            showBLDetailPopup(delivery, blList[0]);
-          };
-          td.appendChild(tag);
-        } else {
-          td.textContent = "-";
-        }
-        // Fonction pour afficher le menu déroulant de BL (popup) avec statut
-        function showBLDetailPopup(delivery, blNumber) {
-          const oldPopup = document.getElementById("blDetailPopup");
-          if (oldPopup) oldPopup.remove();
-          const overlay = document.createElement("div");
-          overlay.id = "blDetailPopup";
-          overlay.style.position = "fixed";
-          overlay.style.top = 0;
-          overlay.style.left = 0;
-          overlay.style.width = "100vw";
-          overlay.style.height = "100vh";
-          overlay.style.background = "rgba(30,41,59,0.45)";
-          overlay.style.zIndex = 9999;
-          overlay.style.display = "flex";
-          overlay.style.alignItems = "center";
-          overlay.style.justifyContent = "center";
-          const box = document.createElement("div");
-          box.style.background = "#fff";
-          box.style.borderRadius = "16px";
-          box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-          box.style.maxWidth = "420px";
-          box.style.width = "96vw";
-          box.style.maxHeight = "92vh";
-          box.style.overflowY = "auto";
-          box.style.padding = "0";
-          box.style.position = "relative";
-          box.style.display = "flex";
-          box.style.flexDirection = "column";
-          const header = document.createElement("div");
-          header.style.background = "#2563eb";
-          header.style.color = "#fff";
-          header.style.padding = "18px 28px 12px 28px";
-          header.style.fontWeight = "bold";
-          header.style.fontSize = "1.15rem";
-          header.style.display = "flex";
-          header.style.flexDirection = "column";
-          header.style.borderTopLeftRadius = "16px";
-          header.style.borderTopRightRadius = "16px";
-          header.innerHTML = `
+          function showContainerStatusPopup(delivery, tcNumber) {
+            const oldPopup = document.getElementById("containerStatusPopup");
+            if (oldPopup) oldPopup.remove();
+            const overlay = document.createElement("div");
+            overlay.id = "containerStatusPopup";
+            overlay.style.position = "fixed";
+            overlay.style.top = 0;
+            overlay.style.left = 0;
+            overlay.style.width = "100vw";
+            overlay.style.height = "100vh";
+            overlay.style.background = "rgba(30,41,59,0.45)";
+            overlay.style.zIndex = 9999;
+            overlay.style.display = "flex";
+            overlay.style.alignItems = "center";
+            overlay.style.justifyContent = "center";
+            const box = document.createElement("div");
+            box.style.background = "#fff";
+            box.style.borderRadius = window.innerWidth <= 600 ? "10px" : "16px";
+            box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+            box.style.maxWidth = window.innerWidth <= 600 ? "98vw" : "420px";
+            box.style.width = window.innerWidth <= 600 ? "98vw" : "96vw";
+            box.style.maxHeight = window.innerWidth <= 600 ? "96vh" : "92vh";
+            box.style.overflowY = "auto";
+            box.style.padding = "0";
+            box.style.position = "relative";
+            box.style.display = "flex";
+            box.style.flexDirection = "column";
+            const header = document.createElement("div");
+            header.style.background = "#2563eb";
+            header.style.color = "#fff";
+            header.style.padding =
+              window.innerWidth <= 600
+                ? "12px 12px 8px 12px"
+                : "18px 28px 12px 28px";
+            header.style.fontWeight = "bold";
+            header.style.fontSize =
+              window.innerWidth <= 600 ? "1.01rem" : "1.15rem";
+            header.style.display = "flex";
+            header.style.flexDirection = "column";
+            header.style.borderTopLeftRadius =
+              window.innerWidth <= 600 ? "10px" : "16px";
+            header.style.borderTopRightRadius =
+              window.innerWidth <= 600 ? "10px" : "16px";
+            header.innerHTML = `
             <div style='margin-bottom:2px;'>
               <span style='font-size:1.08em;'>${
                 delivery.employee_name || "-"
@@ -1045,25 +965,146 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               }</span>  
             </div>
           `;
-          const closeBtn = document.createElement("button");
-          closeBtn.innerHTML = "&times;";
-          closeBtn.style.background = "none";
-          closeBtn.style.border = "none";
-          closeBtn.style.color = "#fff";
-          closeBtn.style.fontSize = "2.1rem";
-          closeBtn.style.cursor = "pointer";
-          closeBtn.style.position = "absolute";
-          closeBtn.style.top = "10px";
-          closeBtn.style.right = "18px";
-          closeBtn.setAttribute("aria-label", "Fermer");
-          closeBtn.onclick = () => overlay.remove();
-          header.appendChild(closeBtn);
-          box.appendChild(header);
-          const content = document.createElement("div");
-          content.style.padding = "24px 24px 24px 24px";
-          content.style.background = "#f8fafc";
-          content.style.flex = "1 1 auto";
-          content.style.overflowY = "auto";
+            const closeBtn = document.createElement("button");
+            closeBtn.innerHTML = "&times;";
+            closeBtn.style.background = "none";
+            closeBtn.style.border = "none";
+            closeBtn.style.color = "#fff";
+            closeBtn.style.fontSize =
+              window.innerWidth <= 600 ? "1.5rem" : "2.1rem";
+            closeBtn.style.cursor = "pointer";
+            closeBtn.style.position = "absolute";
+            closeBtn.style.top = window.innerWidth <= 600 ? "4px" : "10px";
+            closeBtn.style.right = window.innerWidth <= 600 ? "8px" : "18px";
+            closeBtn.setAttribute("aria-label", "Fermer");
+            closeBtn.onclick = () => overlay.remove();
+            header.appendChild(closeBtn);
+            box.appendChild(header);
+            const content = document.createElement("div");
+            content.style.padding =
+              window.innerWidth <= 600
+                ? "14px 10px 14px 10px"
+                : "24px 24px 24px 24px";
+            content.style.background = "#f8fafc";
+            content.style.flex = "1 1 auto";
+            content.style.overflowY = "auto";
+            const tcNum = document.createElement("div");
+            tcNum.style.fontSize =
+              window.innerWidth <= 600 ? "1.08em" : "1.25em";
+            tcNum.style.fontWeight = "bold";
+            tcNum.style.marginBottom =
+              window.innerWidth <= 600 ? "10px" : "18px";
+            tcNum.style.textAlign = "center";
+            tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${tcNumber}</span>`;
+            content.appendChild(tcNum);
+            // Sélecteur de statut (toujours visible)
+            const label = document.createElement("label");
+            label.textContent = "Statut du conteneur :";
+            label.style.display = "block";
+            label.style.margin = "18px 0 8px 0";
+            label.style.fontWeight = "500";
+            content.appendChild(label);
+            const select = document.createElement("select");
+            select.style.width = "100%";
+            select.style.padding = "10px 12px";
+            select.style.border = "1.5px solid #2563eb";
+            select.style.borderRadius = "7px";
+            select.style.fontSize = "1.08em";
+            select.style.marginBottom = "18px";
+            select.style.background = "#fff";
+            select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
+            // Ajout des options Livré et En attente
+            const statusOptions = [
+              { value: "livre", label: "Livré" },
+              { value: "en_attente", label: "En attente" },
+            ];
+            let currentStatus =
+              delivery.container_statuses[tcNumber] || "en_attente";
+            statusOptions.forEach((opt) => {
+              const option = document.createElement("option");
+              option.value = opt.value;
+              option.textContent = opt.label;
+              if (opt.value === currentStatus) option.selected = true;
+              select.appendChild(option);
+            });
+            content.appendChild(select);
+            // Bouton d'enregistrement
+            const saveBtn = document.createElement("button");
+            saveBtn.textContent = "Enregistrer le statut";
+            saveBtn.className = "btn btn-primary w-full mt-2";
+            saveBtn.style.background =
+              "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
+            saveBtn.style.color = "#fff";
+            saveBtn.style.fontWeight = "bold";
+            saveBtn.style.fontSize = "1em";
+            saveBtn.style.border = "none";
+            saveBtn.style.borderRadius = "8px";
+            saveBtn.style.padding = "0.7em 1.7em";
+            saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
+            saveBtn.onclick = async () => {
+              const statutToSend = select.value;
+              delivery.container_statuses[tcNumber] = statutToSend;
+              // MAJ instantanée de la colonne dans le tableau principal
+              const tableBody = document.getElementById("deliveriesTableBody");
+              if (tableBody) {
+                for (let row of tableBody.rows) {
+                  let tcCellIdx = AGENT_TABLE_COLUMNS.findIndex(
+                    (c) => c.id === "container_number"
+                  );
+                  if (
+                    tcCellIdx !== -1 &&
+                    row.cells[tcCellIdx] &&
+                    row.cells[tcCellIdx].textContent.includes(tcNumber)
+                  ) {
+                    // On force le rafraîchissement de la ligne
+                    // (le tableau sera de toute façon re-rendu à la prochaine action)
+                  }
+                }
+              }
+              // Envoi serveur (asynchrone, non bloquant pour l'UI)
+              try {
+                await fetch(`/deliveries/${delivery.id}/container-status`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    containerNumber: tcNumber,
+                    status: statutToSend,
+                  }),
+                });
+              } catch (err) {
+                alert(
+                  "Erreur lors de la mise à jour du statut du conteneur.\n" +
+                    (err && err.message ? err.message : "")
+                );
+              }
+              overlay.remove();
+              // Rafraîchir l'affichage si besoin
+              if (typeof updateTableForDateRange === "function") {
+                const dateStartInput = document.getElementById(
+                  "mainTableDateStartFilter"
+                );
+                const dateEndInput = document.getElementById(
+                  "mainTableDateEndFilter"
+                );
+                updateTableForDateRange(
+                  dateStartInput.value,
+                  dateEndInput.value
+                );
+              }
+            };
+            content.appendChild(saveBtn);
+            box.appendChild(content);
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+            overlay.onclick = (e) => {
+              if (e.target === overlay) overlay.remove();
+            };
+            // Scroll popup sur mobile si besoin
+            if (window.innerWidth <= 600) {
+              box.style.overflowY = "auto";
+              content.style.maxHeight = "60vh";
+            }
+          }
           const blNum = document.createElement("div");
           blNum.style.fontSize = "1.25em";
           blNum.style.fontWeight = "bold";
