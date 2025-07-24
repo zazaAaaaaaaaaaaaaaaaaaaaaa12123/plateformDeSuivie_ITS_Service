@@ -237,7 +237,8 @@ document.addEventListener("DOMContentLoaded", function () {
   `;
   document.head.appendChild(styleTC);
   const tableBody = document.getElementById("deliveriesTableBody");
-  const dateInput = document.getElementById("mainTableDateFilter");
+  const dateStartInput = document.getElementById("mainTableDateStartFilter");
+  const dateEndInput = document.getElementById("mainTableDateEndFilter");
 
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
@@ -274,32 +275,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Filtre les livraisons selon la date de livraison réelle (delivery_date)
-  function filterDeliveriesByDate(dateStr) {
+  // Filtre les livraisons selon une plage de dates (delivery_date ou created_at)
+  function filterDeliveriesByDateRange(startStr, endStr) {
+    if (!startStr && !endStr) return allDeliveries;
+    const startDate = startStr ? new Date(startStr) : null;
+    const endDate = endStr ? new Date(endStr) : null;
     return allDeliveries.filter((delivery) => {
-      // On utilise delivery_date si disponible, sinon created_at
       let dDate =
         delivery["delivery_date"] ||
         delivery["created_at"] ||
         delivery["Date"] ||
         delivery["Date Livraison"];
       if (!dDate) return false;
-      // Normalisation robuste du format
       let normalized = "";
       if (typeof dDate === "string") {
         if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
-          // Format JJ/MM/AAAA
           const [j, m, a] = dDate.split("/");
           normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
         } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
-          // Format YYYY-MM-DD
           normalized = dDate;
         } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
-          // Format JJ-MM-AAAA
           const [j, m, a] = dDate.split("-");
           normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
         } else {
-          // Autre format, on tente une conversion
           const dateObj = new Date(dDate);
           if (!isNaN(dateObj)) {
             normalized = dateObj.toISOString().split("T")[0];
@@ -312,7 +310,10 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         normalized = String(dDate);
       }
-      return normalized === dateStr;
+      const currentDate = new Date(normalized);
+      if (startDate && currentDate < startDate) return false;
+      if (endDate && currentDate > endDate) return false;
+      return true;
     });
   }
 
@@ -354,10 +355,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Fonction principale pour charger et afficher selon la date
-  function updateTableForDate(dateStr) {
-    const filtered = filterDeliveriesByDate(dateStr);
-    // Utilisation du nouveau modèle dynamique
+  // Fonction principale pour charger et afficher selon la plage de dates
+  function updateTableForDateRange(startStr, endStr) {
+    const filtered = filterDeliveriesByDateRange(startStr, endStr);
     const tableContainer = document.getElementById("deliveriesTableBody");
     if (tableContainer) {
       renderAgentTableFull(filtered, tableContainer);
@@ -366,15 +366,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Initialisation : charge toutes les livraisons puis affiche la date du jour
+  // Initialisation : charge toutes les livraisons puis affiche la plage de dates
   const today = new Date().toISOString().split("T")[0];
-  if (dateInput) {
-    dateInput.value = today;
+  if (dateStartInput && dateEndInput) {
+    dateStartInput.value = today;
+    dateEndInput.value = today;
     loadAllDeliveries().then(() => {
-      updateTableForDate(today);
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
-    dateInput.addEventListener("change", (e) => {
-      updateTableForDate(e.target.value);
+    dateStartInput.addEventListener("change", () => {
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+    });
+    dateEndInput.addEventListener("change", () => {
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
   }
 });
