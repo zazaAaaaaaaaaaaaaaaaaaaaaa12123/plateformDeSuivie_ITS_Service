@@ -461,33 +461,8 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const th = document.createElement("th");
         if (col.id === "statut") {
-          // Calcul du nombre de conteneurs livrés et total pour toutes les livraisons affichées
-          let total = 0;
-          let delivered = 0;
-          deliveries.forEach((delivery) => {
-            let tcList = [];
-            if (Array.isArray(delivery.container_number)) {
-              tcList = delivery.container_number.filter(Boolean);
-            } else if (typeof delivery.container_number === "string") {
-              tcList = delivery.container_number
-                .split(/[,;\s]+/)
-                .filter(Boolean);
-            }
-            total += tcList.length;
-            if (
-              delivery.container_statuses &&
-              typeof delivery.container_statuses === "object"
-            ) {
-              delivered += Object.values(delivery.container_statuses).filter(
-                (s) => s === "livre" || s === "livré"
-              ).length;
-            }
-          });
-          th.innerHTML = `<span style="font-weight:bold;">${
-            col.label
-          }</span><br><button style="margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
-            total > 1 ? "s" : ""
-          }</button>`;
+          // Affichage simple : juste le texte 'Statut' en gras dans l'entête
+          th.innerHTML = `<span style="font-weight:bold;">${col.label}</span>`;
         } else {
           th.textContent = col.label;
         }
