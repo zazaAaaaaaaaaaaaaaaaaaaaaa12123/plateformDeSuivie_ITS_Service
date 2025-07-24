@@ -950,46 +950,41 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             </span>
           `;
         } else {
-          // Nouvelle barre de progression glossy et animée
+          // Nouveau rendu carte glassmorphism, couleurs douces, animation camion
           let percent = total > 0 ? Math.round((delivered / total) * 100) : 0;
-          let color = "#e5e7eb"; // gris
-          let gradient = "linear-gradient(90deg,#93c5fd 0%,#e0e7ef 100%)";
-          let iconColor = "#2563eb";
+          let mainColor =
+            percent < 50 ? "#f1f5f9" : percent < 100 ? "#e0f2fe" : "#d1fadf";
+          let barColor =
+            percent < 50 ? "#fbbf24" : percent < 100 ? "#38bdf8" : "#22c55e";
+          let iconColor =
+            percent < 50 ? "#fbbf24" : percent < 100 ? "#38bdf8" : "#22c55e";
           let textColor =
-            percent < 50 ? "#b45309" : percent < 100 ? "#2563eb" : "#15803d";
-          if (percent > 0 && percent < 50) {
-            color = "#fde68a";
-            gradient = "linear-gradient(90deg,#fde68a 0%,#fef9c3 100%)";
-            iconColor = "#eab308";
-          }
-          if (percent >= 50 && percent < 100) {
-            color = "#60a5fa";
-            gradient = "linear-gradient(90deg,#60a5fa 0%,#93c5fd 100%)";
-            iconColor = "#2563eb";
-          }
-          if (percent === 100) {
-            color = "#22c55e";
-            gradient = "linear-gradient(90deg,#22c55e 0%,#bbf7d0 100%)";
-            iconColor = "#22c55e";
-          }
+            percent < 50 ? "#334155" : percent < 100 ? "#2563eb" : "#15803d";
+          let shadow =
+            percent < 50
+              ? "0 2px 12px #fbbf2422"
+              : percent < 100
+              ? "0 2px 12px #38bdf822"
+              : "0 2px 12px #22c55e22";
           td.innerHTML = `
-            <div class="statut-progress-block" style="position:relative;width:100%;height:44px;background:${gradient};border-radius:18px;overflow:hidden;box-shadow:0 4px 18px rgba(30,41,59,0.13);transition:box-shadow 0.3s;cursor:pointer;display:flex;align-items:center;">
-              <div class="statut-progress-bar" style="position:absolute;left:0;top:0;height:100%;width:${percent}%;background:linear-gradient(90deg,${color} 0%,#fff 100%);box-shadow:0 0 18px 2px #60a5fa33 inset,0 2px 8px #fff6 inset;transition:width 1.2s cubic-bezier(.4,0,.2,1),background 0.7s;z-index:1;"></div>
-              <div style="position:relative;z-index:2;width:100%;display:flex;align-items:center;justify-content:center;gap:14px;">
-                <span style='display:flex;align-items:center;justify-content:center;height:32px;width:32px;border-radius:50%;background:rgba(255,255,255,0.7);box-shadow:0 2px 8px #60a5fa22;'><i class='fas fa-truck-moving statut-anim-icon' style='color:${iconColor};font-size:1.35em;'></i></span>
-                <span style="font-size:1.18em;font-weight:700;color:${textColor};letter-spacing:0.5px;">
+            <div class="statut-progress-card" style="position:relative;width:100%;max-width:220px;height:48px;background:rgba(255,255,255,0.55);backdrop-filter:blur(7px);border-radius:18px;box-shadow:${shadow};border:1.5px solid ${mainColor};overflow:hidden;display:flex;align-items:center;justify-content:center;transition:box-shadow 0.3s;">
+              <div class="statut-progress-bar" style="position:absolute;left:0;top:0;height:100%;width:${percent}%;background:linear-gradient(90deg,${barColor} 0%,#fff 100%);opacity:0.85;transition:width 1.2s cubic-bezier(.4,0,.2,1),background 0.7s;z-index:1;border-radius:18px 0 0 18px;"></div>
+              <div style="position:relative;z-index:2;width:100%;display:flex;align-items:center;justify-content:center;gap:12px;">
+                <span style='display:flex;align-items:center;justify-content:center;height:32px;width:32px;border-radius:50%;background:rgba(255,255,255,0.8);box-shadow:0 2px 8px ${barColor}22;'><i class='fas fa-truck-moving statut-anim-icon' style='color:${iconColor};font-size:1.35em;'></i></span>
+                <span style="font-size:1.15em;font-weight:600;color:${textColor};font-family:'Segoe UI',Arial,sans-serif;letter-spacing:0.5px;">
                   ${delivered} <span style='font-weight:400;'>sur</span> ${total} <span style='font-weight:400;'>livré${
             total > 1 ? "s" : ""
           }</span>
                 </span>
-                <span style="font-size:1em;color:#64748b;opacity:0.7;margin-left:10px;">${percent}%</span>
+                <span style="font-size:0.98em;color:${textColor};opacity:0.7;margin-left:6px;">${percent}%</span>
               </div>
-              <div class="statut-glossy" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2;background:linear-gradient(90deg,rgba(255,255,255,0.18) 0%,rgba(255,255,255,0.08) 100%);"></div>
+              <div class="statut-glossy" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2;background:linear-gradient(90deg,rgba(255,255,255,0.22) 0%,rgba(255,255,255,0.08) 100%);"></div>
             </div>
             <style>
-              .statut-progress-block:hover {
-                box-shadow:0 8px 32px rgba(30,41,59,0.22);
-                background:linear-gradient(90deg,#e0e7ef 0%,#f3f4f6 100%);
+              .statut-progress-card:hover {
+                box-shadow:0 8px 32px rgba(30,41,59,0.18);
+                border-color:${barColor};
+                background:rgba(255,255,255,0.72);
               }
               .statut-progress-bar {
                 animation: statutBarAnim 1.2s cubic-bezier(.4,0,.2,1);
@@ -1003,7 +998,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               }
               @keyframes truckMoveAnim {
                 0% { transform: translateX(0); }
-                100% { transform: translateX(6px); }
+                100% { transform: translateX(7px); }
               }
             </style>
           `;
