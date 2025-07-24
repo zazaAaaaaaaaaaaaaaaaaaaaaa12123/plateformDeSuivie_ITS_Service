@@ -1080,22 +1080,45 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }`
               );
               overlay.remove();
-              // Rafraîchir les données et le tableau pour mettre à jour l'entête Statut
-              if (typeof loadAllDeliveries === "function") {
-                await loadAllDeliveries();
-                // Récupérer les valeurs de date pour filtrer
-                const dateStartInput = document.getElementById(
-                  "mainTableDateStartFilter"
+              // Mise à jour instantanée du statut dans allDeliveries
+              if (delivery && delivery.id) {
+                const idx = allDeliveries.findIndex(
+                  (d) => d.id === delivery.id
                 );
-                const dateEndInput = document.getElementById(
-                  "mainTableDateEndFilter"
-                );
-                if (dateStartInput && dateEndInput) {
-                  updateTableForDateRange(
-                    dateStartInput.value,
-                    dateEndInput.value
-                  );
+                if (idx !== -1) {
+                  if (
+                    !allDeliveries[idx].container_statuses ||
+                    typeof allDeliveries[idx].container_statuses !== "object"
+                  ) {
+                    allDeliveries[idx].container_statuses = {};
+                  }
+                  allDeliveries[idx].container_statuses[containerNumber] =
+                    select.value;
                 }
+              }
+              // Rafraîchir le tableau pour mettre à jour l'entête Statut
+              const dateStartInput = document.getElementById(
+                "mainTableDateStartFilter"
+              );
+              const dateEndInput = document.getElementById(
+                "mainTableDateEndFilter"
+              );
+              if (dateStartInput && dateEndInput) {
+                updateTableForDateRange(
+                  dateStartInput.value,
+                  dateEndInput.value
+                );
+              }
+              // Envoi d'une notification WebSocket pour informer tous les clients
+              if (window.ws && window.ws.readyState === 1) {
+                window.ws.send(
+                  JSON.stringify({
+                    type: "container_status_update",
+                    deliveryId: delivery.id,
+                    containerNumber: containerNumber,
+                    status: select.value,
+                  })
+                );
               }
             } else {
               alert(
