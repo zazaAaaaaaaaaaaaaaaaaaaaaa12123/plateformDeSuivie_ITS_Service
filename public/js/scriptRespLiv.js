@@ -154,7 +154,10 @@ document.addEventListener("DOMContentLoaded", function () {
       let query = searchInput.value.trim().toLowerCase();
       if (!query) {
         // Si vide, on réaffiche selon la plage de dates
-        updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+        window.updateTableForDateRange(
+          dateStartInput.value,
+          dateEndInput.value
+        );
         return;
       }
       // Filtrer sur N° Dossier ou N° BL
