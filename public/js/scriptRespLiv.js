@@ -878,7 +878,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             input.selectionStart = input.selectionEnd = input.value.length;
           }
         };
-        // Ajout : surveiller les modifications sur les champs obligatoires pour afficher le message d'accès
+        // Ajout : surveiller les modifications sghs sur les champs obligatoires pour afficher le message d'accès
         if (requiredFields.includes(col.id)) {
           td.addEventListener(
             "input",
