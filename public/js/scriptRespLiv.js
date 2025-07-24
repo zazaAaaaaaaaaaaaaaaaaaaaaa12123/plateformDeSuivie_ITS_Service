@@ -735,28 +735,31 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-// Colonnes strictes pour Agent Acconier
+// Colonnes strictes pour Agent Acconier (nouvel ordre et intitulés)
 const AGENT_TABLE_COLUMNS = [
-  { id: "row_number", label: "N°" },
-  { id: "date_display", label: "Date" },
-  { id: "employee_name", label: "Agent" },
-  { id: "client_name", label: "Client (Nom)" },
-  { id: "client_phone", label: "Client (Tél)" },
-  { id: "container_number", label: "Numéro TC(s)" },
-  { id: "lieu", label: "Lieu" },
-  { id: "container_foot_type", label: "Type Conteneur (pied)" },
-  { id: "container_type_and_content", label: "Contenu" },
-  { id: "declaration_number", label: "N° Déclaration" },
-  { id: "bl_number", label: "N° BL" },
-  { id: "dossier_number", label: "N° Dossier" },
-  { id: "number_of_containers", label: "Nombre de conteneurs" },
-  { id: "shipping_company", label: "Compagnie Maritime" },
-  { id: "weight", label: "Poids" },
-  { id: "ship_name", label: "Nom du navire" },
-  { id: "circuit", label: "Circuit" },
-  { id: "transporter_mode", label: "Mode de Transport" },
-  { id: "container_status", label: "Statut Dossier " },
-  { id: "observation", label: "Observation" },
+  { id: "date_display", label: "DATE" },
+  { id: "employee_name", label: "AGENT ACCONIER" },
+  { id: "client_name", label: "nom CLIENT" },
+  { id: "client_phone", label: "CLIENT (Tel)" },
+  { id: "container_number", label: "NUMÉRO TC(S)" },
+  { id: "lieu", label: "LIEU" },
+  { id: "container_foot_type", label: "TYPE DE CONTENEURS" },
+  { id: "container_type_and_content", label: "CONTENU" },
+  { id: "declaration_number", label: "NUMÉRO DÉCLARATION" },
+  { id: "dossier_number", label: "NUMÉRO DOSSIER" },
+  { id: "number_of_containers", label: "NBR CONTENEURS" },
+  { id: "shipping_company", label: "COMPAGNIE MARITIME" },
+  { id: "circuit", label: "CIRCUIT" },
+  { id: "transporter_mode", label: "MODE DE TRANSPORT" },
+  { id: "visitor_agent_name", label: "NOM Agent visiteurs" },
+  { id: "transporter_name", label: "TRANSPORTEUR" },
+  { id: "inspector_name", label: "INSPECTEUR" },
+  { id: "customs_agent_name", label: "AGENT EN d’DOUANES" },
+  { id: "driver_name", label: "chauffeur" },
+  { id: "driver_phone", label: "Tel chauffeur" },
+  { id: "delivery_date", label: "date livraison" },
+  { id: "status", label: "statut" },
+  { id: "observation", label: "OBSERVATIONS" },
 ];
 
 // Fonction pour générer les lignes du tableau Agent Acconier
@@ -1232,68 +1235,280 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                       row.cells[dossierCellIdx].textContent ===
                         String(delivery.dossier_number)
                     ) {
-                      let colIdx = AGENT_TABLE_COLUMNS.findIndex(
-                        (c) => c.id === "container_status"
-                      );
-                      if (colIdx !== -1 && row.cells[colIdx]) {
-                        let blList = [];
-                        if (Array.isArray(delivery.bl_number)) {
-                          blList = delivery.bl_number.filter(Boolean);
-                        } else if (typeof delivery.bl_number === "string") {
-                          blList = delivery.bl_number
-                            .split(/[,;\s]+/)
-                            .filter(Boolean);
-                        }
-                        let blStatuses = blList.map((bl) =>
-                          delivery.bl_statuses && delivery.bl_statuses[bl]
-                            ? delivery.bl_statuses[bl]
-                            : "aucun"
-                        );
-                        let allMiseEnLivraison =
-                          blStatuses.length > 0 &&
-                          blStatuses.every((s) => s === "mise_en_livraison");
-                        if (allMiseEnLivraison) {
-                          row.cells[colIdx].innerHTML =
-                            '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-                        } else {
-                          row.cells[colIdx].innerHTML =
-                            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
-                        }
-                      }
-                      break;
+                      // ... code existant ...
                     }
                   }
                 }
-                // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
+              }
+            }
+            // Affichage avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
+            let tcList = [];
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
+            // Initialisation des statuts TC si absent
+            if (
+              !delivery.container_statuses ||
+              typeof delivery.container_statuses !== "object"
+            ) {
+              delivery.container_statuses = {};
+            }
+            // Fonction pour afficher le popup de modification du statut TC
+            function showContainerStatusPopup(delivery, tcNumber) {
+              const oldPopup = document.getElementById("containerStatusPopup");
+              if (oldPopup) oldPopup.remove();
+              const overlay = document.createElement("div");
+              overlay.id = "containerStatusPopup";
+              overlay.style.position = "fixed";
+              overlay.style.top = 0;
+              overlay.style.left = 0;
+              overlay.style.width = "100vw";
+              overlay.style.height = "100vh";
+              overlay.style.background = "rgba(30,41,59,0.45)";
+              overlay.style.zIndex = 9999;
+              overlay.style.display = "flex";
+              overlay.style.alignItems = "center";
+              overlay.style.justifyContent = "center";
+              const box = document.createElement("div");
+              box.style.background = "#fff";
+              box.style.borderRadius =
+                window.innerWidth <= 600 ? "10px" : "16px";
+              box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+              box.style.maxWidth = window.innerWidth <= 600 ? "98vw" : "420px";
+              box.style.width = window.innerWidth <= 600 ? "98vw" : "96vw";
+              box.style.maxHeight = window.innerWidth <= 600 ? "96vh" : "92vh";
+              box.style.overflowY = "auto";
+              box.style.padding = "0";
+              box.style.position = "relative";
+              box.style.display = "flex";
+              box.style.flexDirection = "column";
+              const header = document.createElement("div");
+              header.style.background = "#2563eb";
+              header.style.color = "#fff";
+              header.style.padding =
+                window.innerWidth <= 600
+                  ? "12px 12px 8px 12px"
+                  : "18px 28px 12px 28px";
+              header.style.fontWeight = "bold";
+              header.style.fontSize =
+                window.innerWidth <= 600 ? "1.01rem" : "1.15rem";
+              header.style.display = "flex";
+              header.style.flexDirection = "column";
+              header.style.borderTopLeftRadius =
+                window.innerWidth <= 600 ? "10px" : "16px";
+              header.style.borderTopRightRadius =
+                window.innerWidth <= 600 ? "10px" : "16px";
+              header.innerHTML = `
+            <div style='margin-bottom:2px;'>
+              <span style='font-size:1.08em;'>${
+                delivery.employee_name || "-"
+              }</span>
+            </div>
+            <div style='font-size:0.98em;font-weight:400;'>
+              Client : <span style='color:#eab308;'>${
+                delivery.client_name || "-"
+              }</span><br>
+              Dossier : <span style='color:#eab308;'>${
+                delivery.dossier_number || "-"
+              }</span>  
+            </div>
+          `;
+              const closeBtn = document.createElement("button");
+              closeBtn.innerHTML = "&times;";
+              closeBtn.style.background = "none";
+              closeBtn.style.border = "none";
+              closeBtn.style.color = "#fff";
+              closeBtn.style.fontSize =
+                window.innerWidth <= 600 ? "1.5rem" : "2.1rem";
+              closeBtn.style.cursor = "pointer";
+              closeBtn.style.position = "absolute";
+              closeBtn.style.top = window.innerWidth <= 600 ? "4px" : "10px";
+              closeBtn.style.right = window.innerWidth <= 600 ? "8px" : "18px";
+              closeBtn.setAttribute("aria-label", "Fermer");
+              closeBtn.onclick = () => overlay.remove();
+              header.appendChild(closeBtn);
+              box.appendChild(header);
+              const content = document.createElement("div");
+              content.style.padding =
+                window.innerWidth <= 600
+                  ? "14px 10px 14px 10px"
+                  : "24px 24px 24px 24px";
+              content.style.background = "#f8fafc";
+              content.style.flex = "1 1 auto";
+              content.style.overflowY = "auto";
+              const tcNum = document.createElement("div");
+              tcNum.style.fontSize =
+                window.innerWidth <= 600 ? "1.08em" : "1.25em";
+              tcNum.style.fontWeight = "bold";
+              tcNum.style.marginBottom =
+                window.innerWidth <= 600 ? "10px" : "18px";
+              tcNum.style.textAlign = "center";
+              tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${tcNumber}</span>`;
+              content.appendChild(tcNum);
+              // Sélecteur de statut
+              const label = document.createElement("label");
+              label.textContent = "Statut du conteneur :";
+              label.style.display = "block";
+              label.style.marginBottom = "8px";
+              label.style.fontWeight = "500";
+              content.appendChild(label);
+              const select = document.createElement("select");
+              select.style.width = "100%";
+              select.style.padding = "10px 12px";
+              select.style.border = "1.5px solid #2563eb";
+              select.style.borderRadius = "7px";
+              select.style.fontSize = "1.08em";
+              select.style.marginBottom = "18px";
+              select.style.background = "#fff";
+              select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
+              const statusOptions = [
+                { value: "livre", label: "Livré" },
+                { value: "en_attente", label: "En attente" },
+              ];
+              let currentStatus =
+                delivery.container_statuses[tcNumber] || "en_attente";
+              statusOptions.forEach((opt) => {
+                const option = document.createElement("option");
+                option.value = opt.value;
+                option.textContent = opt.label;
+                if (opt.value === currentStatus) option.selected = true;
+                select.appendChild(option);
+              });
+              content.appendChild(select);
+              const saveBtn = document.createElement("button");
+              saveBtn.textContent = "Enregistrer le statut";
+              saveBtn.className = "btn btn-primary w-full mt-2";
+              saveBtn.style.background =
+                "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
+              saveBtn.style.color = "#fff";
+              saveBtn.style.fontWeight = "bold";
+              saveBtn.style.fontSize = "1em";
+              saveBtn.style.border = "none";
+              saveBtn.style.borderRadius = "8px";
+              saveBtn.style.padding = "0.7em 1.7em";
+              saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
+              saveBtn.onclick = async () => {
+                const statutToSend = select.value;
+                delivery.container_statuses[tcNumber] = statutToSend;
+                // MAJ instantanée de la colonne dans le tableau principal
+                const tableBody = document.getElementById(
+                  "deliveriesTableBody"
+                );
+                if (tableBody) {
+                  for (let row of tableBody.rows) {
+                    let tcCellIdx = AGENT_TABLE_COLUMNS.findIndex(
+                      (c) => c.id === "container_number"
+                    );
+                    if (
+                      tcCellIdx !== -1 &&
+                      row.cells[tcCellIdx] &&
+                      row.cells[tcCellIdx].textContent.includes(tcNumber)
+                    ) {
+                      // On force le rafraîchissement de la ligne
+                      // (le tableau sera de toute façon re-rendu à la prochaine action)
+                    }
+                  }
+                }
+                // Envoi serveur (asynchrone, non bloquant pour l'UI)
                 try {
-                  fetch(`/deliveries/${delivery.id}/bl-status`, {
+                  await fetch(`/deliveries/${delivery.id}/container-status`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ blNumber, status: statutToSend }),
-                  }).then(async (res) => {
-                    if (!res.ok) {
-                      let msg =
-                        "Erreur lors de la mise à jour du statut du BL.";
-                      try {
-                        const errData = await res.json();
-                        if (errData && errData.error)
-                          msg += "\n" + errData.error;
-                      } catch {}
-                      alert(msg);
-                      return;
-                    }
-                    overlay.remove();
+                    body: JSON.stringify({
+                      containerNumber: tcNumber,
+                      status: statutToSend,
+                    }),
                   });
                 } catch (err) {
                   alert(
-                    "Erreur lors de la mise à jour du statut du BL.\n" +
+                    "Erreur lors de la mise à jour du statut du conteneur.\n" +
                       (err && err.message ? err.message : "")
                   );
                 }
+                overlay.remove();
+                // Rafraîchir l'affichage si besoin
+                if (typeof updateTableForDateRange === "function") {
+                  const dateStartInput = document.getElementById(
+                    "mainTableDateStartFilter"
+                  );
+                  const dateEndInput = document.getElementById(
+                    "mainTableDateEndFilter"
+                  );
+                  updateTableForDateRange(
+                    dateStartInput.value,
+                    dateEndInput.value
+                  );
+                }
+              };
+              content.appendChild(saveBtn);
+              box.appendChild(content);
+              overlay.appendChild(box);
+              document.body.appendChild(overlay);
+              overlay.onclick = (e) => {
+                if (e.target === overlay) overlay.remove();
+              };
+              // Scroll popup sur mobile si besoin
+              if (window.innerWidth <= 600) {
+                box.style.overflowY = "auto";
+                content.style.maxHeight = "60vh";
               }
             }
-            // 1. MAJ locale immédiate du statut BL
-            delivery.bl_statuses[blNumber] = statutToSend;
+            // Affichage des TC avec leur statut
+            if (tcList.length > 1) {
+              td.classList.add("tc-multi-cell");
+              tcList.forEach((tc, idx) => {
+                if (idx > 0) {
+                  const sep = document.createElement("span");
+                  sep.textContent = ", ";
+                  td.appendChild(sep);
+                }
+                const tag = document.createElement("span");
+                tag.className = "tc-tag";
+                tag.textContent = tc;
+                tag.style.cursor = "pointer";
+                // Affichage du statut à côté du TC
+                let status = delivery.container_statuses[tc] || "en_attente";
+                const statusSpan = document.createElement("span");
+                statusSpan.style.marginLeft = "6px";
+                statusSpan.style.fontWeight = "bold";
+                statusSpan.style.color =
+                  status === "livre" ? "#2563eb" : "#b45309";
+                statusSpan.textContent =
+                  status === "livre" ? "Livré" : "En attente";
+                tag.appendChild(statusSpan);
+                tag.onclick = (e) => {
+                  e.stopPropagation();
+                  showContainerStatusPopup(delivery, tc);
+                };
+                td.appendChild(tag);
+              });
+            } else if (tcList.length === 1) {
+              const tag = document.createElement("span");
+              tag.className = "tc-tag";
+              tag.textContent = tcList[0];
+              tag.style.cursor = "pointer";
+              let status =
+                delivery.container_statuses[tcList[0]] || "en_attente";
+              const statusSpan = document.createElement("span");
+              statusSpan.style.marginLeft = "6px";
+              statusSpan.style.fontWeight = "bold";
+              statusSpan.style.color =
+                status === "livre" ? "#2563eb" : "#b45309";
+              statusSpan.textContent =
+                status === "livre" ? "Livré" : "En attente";
+              tag.appendChild(statusSpan);
+              tag.onclick = (e) => {
+                e.stopPropagation();
+                showContainerStatusPopup(delivery, tcList[0]);
+              };
+              td.appendChild(tag);
+            } else {
+              td.textContent = "-";
+            }
             // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
             const tableBody = document.getElementById("deliveriesTableBody");
             if (tableBody) {
