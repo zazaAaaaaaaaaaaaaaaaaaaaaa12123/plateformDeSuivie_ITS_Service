@@ -646,6 +646,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     renderAgentTableFull(filtered, tableBody);
   }
+  // Rendez la fonction accessible globalement
+  window.updateTableForDateRange = updateTableForDateRange;
 
   // Initialisation : charge toutes les livraisons puis affiche la plage de dates (par défaut : 7 jours avant aujourd'hui jusqu'à aujourd'hui)
   const today = new Date();
