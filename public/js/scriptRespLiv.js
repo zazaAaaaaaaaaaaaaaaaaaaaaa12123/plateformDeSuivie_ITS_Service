@@ -1338,31 +1338,32 @@ const style = document.createElement("style");
 style.innerHTML = `
 .tc-tag {
   display: inline-block;
-  background: #eaf1ff;
-  color: #2563eb;
-  font-weight: 500;
-  font-size: 0.98em;
-  padding: 3px 13px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.08em;
+  padding: 7px 18px;
   border-radius: 16px;
   margin: 2px 2px 2px 0;
   letter-spacing: 0.5px;
-  border: 1px solid #2563eb;
-  box-shadow: none;
-  transition: background 0.18s, color 0.18s;
+  border: none;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.13);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
   cursor: pointer;
 }
 .tc-tag:hover {
-  background: #2563eb;
+  background: #1746a2;
   color: #fff;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.18);
 }
 .tc-tag.tc-tag-more {
   background: #fff;
   color: #2563eb;
-  font-weight: 500;
-  border: 1px solid #2563eb;
-  padding: 3px 10px;
+  font-weight: 600;
+  border: none;
+  padding: 7px 12px;
   border-radius: 16px;
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.10);
 }
 /* Bouton déroulant TC minimal */
 .tc-tags-btn {
@@ -1372,6 +1373,7 @@ style.innerHTML = `
   background: transparent;
   border: none;
   border-radius: 16px;
+
   padding: 0;
   cursor: pointer;
   font-size: 0.98em;
