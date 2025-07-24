@@ -154,10 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
       let query = searchInput.value.trim().toLowerCase();
       if (!query) {
         // Si vide, on réaffiche selon la plage de dates
-        window.updateTableForDateRange(
-          dateStartInput.value,
-          dateEndInput.value
-        );
+        updateTableForDateRange(dateStartInput.value, dateEndInput.value);
         return;
       }
       // Filtrer sur N° Dossier ou N° BL
@@ -359,298 +356,77 @@ document.addEventListener("DOMContentLoaded", function () {
             normalized = dDate;
           }
         }
-      } else if (col.id === "container_number") {
-        // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
-        let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        // Fonction pour afficher la popup de modification du statut TC
-        function showContainerStatusPopup(delivery, tcNum) {
-          const oldPopup = document.getElementById("tcStatusPopup");
-          if (oldPopup) oldPopup.remove();
-          const overlay = document.createElement("div");
-          overlay.id = "tcStatusPopup";
-          overlay.style.position = "fixed";
-          overlay.style.top = 0;
-          overlay.style.left = 0;
-          overlay.style.width = "100vw";
-          overlay.style.height = "100vh";
-          overlay.style.background = "rgba(30,41,59,0.45)";
-          overlay.style.zIndex = 9999;
-          overlay.style.display = "flex";
-          overlay.style.alignItems = "center";
-          overlay.style.justifyContent = "center";
-          const box = document.createElement("div");
-          box.style.background = "#fff";
-          box.style.borderRadius = "16px";
-          box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-          box.style.maxWidth = "420px";
-          box.style.width = "96vw";
-          box.style.maxHeight = "92vh";
-          box.style.overflowY = "auto";
-          box.style.padding = "0";
-          box.style.position = "relative";
-          box.style.display = "flex";
-          box.style.flexDirection = "column";
-          const header = document.createElement("div");
-          header.style.background = "#2563eb";
-          header.style.color = "#fff";
-          header.style.padding = "18px 28px 12px 28px";
-          header.style.fontWeight = "bold";
-          header.style.fontSize = "1.15rem";
-          header.style.display = "flex";
-          header.style.flexDirection = "column";
-          header.style.borderTopLeftRadius = "16px";
-          header.style.borderTopRightRadius = "16px";
-          header.innerHTML = `
-            <div style='margin-bottom:2px;'>
-              <span style='font-size:1.08em;'>${
-                delivery.employee_name || "-"
-              }</span>
-            </div>
-            <div style='font-size:0.98em;font-weight:400;'>
-              Client : <span style='color:#eab308;'>${
-                delivery.client_name || "-"
-              }</span><br>
-              Dossier : <span style='color:#eab308;'>${
-                delivery.dossier_number || "-"
-              }</span>  
-            </div>
-          `;
-          const closeBtn = document.createElement("button");
-          closeBtn.innerHTML = "&times;";
-          closeBtn.style.background = "none";
-          closeBtn.style.border = "none";
-          closeBtn.style.color = "#fff";
-          closeBtn.style.fontSize = "2.1rem";
-          closeBtn.style.cursor = "pointer";
-          closeBtn.style.position = "absolute";
-          closeBtn.style.top = "10px";
-          closeBtn.style.right = "18px";
-          closeBtn.setAttribute("aria-label", "Fermer");
-          closeBtn.onclick = () => overlay.remove();
-          header.appendChild(closeBtn);
-          box.appendChild(header);
-          const content = document.createElement("div");
-          content.style.padding = "24px 24px 24px 24px";
-          content.style.background = "#f8fafc";
-          content.style.flex = "1 1 auto";
-          content.style.overflowY = "auto";
-          const tcNumDiv = document.createElement("div");
-          tcNumDiv.style.fontSize = "1.25em";
-          tcNumDiv.style.fontWeight = "bold";
-          tcNumDiv.style.marginBottom = "18px";
-          tcNumDiv.style.textAlign = "center";
-          tcNumDiv.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${tcNum}</span>`;
-          content.appendChild(tcNumDiv);
-          // Ajout du sélecteur de statut pour le TC
-          const label = document.createElement("label");
-          label.textContent = "Statut du conteneur :";
-          label.style.display = "block";
-          label.style.marginBottom = "8px";
-          label.style.fontWeight = "500";
-          content.appendChild(label);
-          const select = document.createElement("select");
-          select.style.width = "100%";
-          select.style.padding = "10px 12px";
-          select.style.border = "1.5px solid #2563eb";
-          select.style.borderRadius = "7px";
-          select.style.fontSize = "1.08em";
-          select.style.marginBottom = "18px";
-          select.style.background = "#fff";
-          select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
-          const statusOptions = [
-            { value: "livre", label: "Livré" },
-            { value: "aucun", label: "Aucun" },
-          ];
-          if (
-            !delivery.container_statuses ||
-            typeof delivery.container_statuses !== "object"
-          ) {
-            delivery.container_statuses = {};
-          }
-          let currentStatus = delivery.container_statuses[tcNum] || "aucun";
-          if (currentStatus !== "livre") {
-            currentStatus = "aucun";
-          }
-          statusOptions.forEach((opt) => {
-            const option = document.createElement("option");
-            option.value = opt.value;
-            option.textContent = opt.label;
-            if (opt.value === currentStatus) option.selected = true;
-            select.appendChild(option);
-          });
-          content.appendChild(select);
-          const saveBtn = document.createElement("button");
-          saveBtn.textContent = "Enregistrer le statut";
-          saveBtn.className = "btn btn-primary w-full mt-2";
-          saveBtn.style.background =
-            "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
-          saveBtn.style.color = "#fff";
-          saveBtn.style.fontWeight = "bold";
-          saveBtn.style.fontSize = "1em";
-          saveBtn.style.border = "none";
-          saveBtn.style.borderRadius = "8px";
-          saveBtn.style.padding = "0.7em 1.7em";
-          saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
-          saveBtn.onclick = async () => {
-            let statutToSend =
-              select.value === "aucun" ? "aucun" : select.value;
-            // 1. MAJ locale immédiate du statut TC
-            delivery.container_statuses[tcNum] = statutToSend;
-            // 2. MAJ instantanée de la colonne Statut dans la ligne du tableau
-            const tableBody = document.getElementById("deliveriesTableBody");
-            if (tableBody) {
-              for (let row of tableBody.rows) {
-                let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
-                  (c) => c.id === "dossier_number"
-                );
-                if (
-                  dossierCellIdx !== -1 &&
-                  row.cells[dossierCellIdx] &&
-                  row.cells[dossierCellIdx].textContent ===
-                    String(delivery.dossier_number)
-                ) {
-                  let colIdx = AGENT_TABLE_COLUMNS.findIndex(
-                    (c) => c.id === "status"
-                  );
-                  if (colIdx !== -1 && row.cells[colIdx]) {
-                    let tcList = [];
-                    if (Array.isArray(delivery.container_number)) {
-                      tcList = delivery.container_number.filter(Boolean);
-                    } else if (typeof delivery.container_number === "string") {
-                      tcList = delivery.container_number
-                        .split(/[,;\s]+/)
-                        .filter(Boolean);
-                    }
-                    let total = tcList.length;
-                    let livred = tcList.filter(
-                      (tc) =>
-                        delivery.container_statuses &&
-                        delivery.container_statuses[tc] === "livre"
-                    ).length;
-                    row.cells[
-                      colIdx
-                    ].innerHTML = `<span style="display:inline-block;padding:4px 18px;border-radius:16px;border:2px solid #eab308;background:#fffbe6;color:#b45309;font-weight:700;font-size:1.08em;box-shadow:0 2px 8px rgba(234,179,8,0.13);">${livred} sur ${total} livré${
-                      total > 1 ? "s" : ""
-                    }</span>`;
-                  }
-                  break;
-                }
-              }
-            }
-            // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
-            try {
-              const res = await fetch(
-                `/deliveries/${delivery.id}/container-status`,
-                {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    containerNumber: tcNum,
-                    status: statutToSend,
-                  }),
-                }
-              );
-              if (!res.ok) {
-                let msg =
-                  "Erreur lors de la mise à jour du statut du conteneur.";
-                try {
-                  const errData = await res.json();
-                  if (errData && errData.error) msg += "\n" + errData.error;
-                } catch {}
-                alert(msg);
-                return;
-              }
-              overlay.remove();
-            } catch (err) {
-              alert(
-                "Erreur lors de la mise à jour du statut du conteneur.\n" +
-                  (err && err.message ? err.message : "")
-              );
-            }
-          };
-          content.appendChild(saveBtn);
-          box.appendChild(content);
-          overlay.appendChild(box);
-          document.body.appendChild(overlay);
-          overlay.onclick = (e) => {
-            if (e.target === overlay) overlay.remove();
-          };
-        }
-        if (tcList.length > 1) {
-          td.classList.add("tc-multi-cell");
-          const btn = document.createElement("button");
-          btn.className = "tc-tags-btn";
-          btn.type = "button";
-          btn.innerHTML =
-            tcList
-              .slice(0, 2)
-              .map((tc) => `<span class=\"tc-tag\">${tc}</span>`)
-              .join("") +
-            (tcList.length > 2
-              ? ` <span class=\"tc-tag tc-tag-more\">+$${
-                  tcList.length - 2
-                }</span>`
-              : "") +
-            ' <i class="fas fa-chevron-down tc-chevron"></i>';
-          const popup = document.createElement("div");
-          popup.className = "tc-popup";
-          popup.style.display = "none";
-          // Responsive popup width
-          popup.style.minWidth = window.innerWidth <= 600 ? "90px" : "120px";
-          popup.style.fontSize = window.innerWidth <= 600 ? "0.97em" : "1.05em";
-          popup.innerHTML = tcList
-            .map(
-              (tc) =>
-                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
-            )
-            .join("");
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            document.querySelectorAll(".tc-popup").forEach((p) => {
-              if (p !== popup) p.style.display = "none";
-            });
-            popup.style.display =
-              popup.style.display === "block" ? "none" : "block";
-          };
-          // Ajout du handler pour chaque item du popup (après ajout au DOM)
-          setTimeout(() => {
-            popup.querySelectorAll(".tc-popup-item").forEach((item) => {
-              item.onclick = (ev) => {
-                ev.stopPropagation();
-                popup.style.display = "none";
-                showContainerStatusPopup(delivery, item.textContent);
-              };
-            });
-          }, 0);
-          document.addEventListener("click", function hidePopup(e) {
-            if (!td.contains(e.target)) popup.style.display = "none";
-          });
-          td.appendChild(btn);
-          td.appendChild(popup);
-        } else if (tcList.length === 1) {
-          const tag = document.createElement("span");
-          tag.className = "tc-tag";
-          tag.textContent = tcList[0];
-          tag.style.cursor = "pointer";
-          tag.onclick = (e) => {
-            e.stopPropagation();
-            showContainerStatusPopup(delivery, tcList[0]);
-          };
-          td.appendChild(tag);
-        } else {
-          td.textContent = "-";
-        }
+      } else if (dDate instanceof Date) {
+        normalized = dDate.toISOString().split("T")[0];
+      } else {
+        normalized = String(dDate);
       }
+      // Comparaison dans la plage
+      let dateObj = new Date(normalized);
+      if (isNaN(dateObj)) return false;
+      if (start && dateObj < start) return false;
+      if (end && dateObj > end) return false;
+      return true;
+    });
+  }
+
+  // Affiche les livraisons filtrées dans le tableau
+  function renderTable(deliveries) {
+    tableBody.innerHTML = "";
+    if (deliveries.length === 0) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = AGENT_TABLE_COLUMNS.length;
+      cell.textContent = "Aucune opération à cette date";
+      cell.className = "text-center text-muted";
+      row.appendChild(cell);
+      tableBody.appendChild(row);
+      return;
+    }
+    deliveries.forEach((delivery) => {
+      const row = document.createElement("tr");
+      AGENT_TABLE_COLUMNS.forEach((col) => {
+        const cell = document.createElement("td");
+        let value = "-";
+        if (col.id === "date_display") {
+          let dDate = delivery.delivery_date || delivery.created_at;
+          if (dDate) {
+            let dateObj = new Date(dDate);
+            if (!isNaN(dateObj.getTime())) {
+              value = dateObj.toLocaleDateString("fr-FR");
+            } else if (typeof dDate === "string") {
+              value = dDate;
+            }
+          }
+        } else {
+          value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+        }
+        cell.textContent = value;
+        row.appendChild(cell);
+      });
+      tableBody.appendChild(row);
+    });
+  }
+
+  // Fonction principale pour charger et afficher selon la plage de dates
+  function updateTableForDateRange(dateStartStr, dateEndStr) {
+    let filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
+    console.log(
+      "[DEBUG] updateTableForDateRange - livraisons filtrées:",
+      filtered
+    );
+    // Tri du plus ancien au plus récent (ordre croissant)
+    filtered.sort((a, b) => {
+      let dateA = new Date(
+        a.delivery_date || a.created_at || a.Date || a["Date Livraison"]
+      );
+      let dateB = new Date(
+        b.delivery_date || b.created_at || b.Date || b["Date Livraison"]
+      );
+      return dateA - dateB;
     });
     renderAgentTableFull(filtered, tableBody);
   }
-  // Rendez la fonction accessible globalement
-  window.updateTableForDateRange = updateTableForDateRange;
 
   // Initialisation : charge toutes les livraisons puis affiche la plage de dates (par défaut : 7 jours avant aujourd'hui jusqu'à aujourd'hui)
   const today = new Date();
@@ -662,13 +438,13 @@ document.addEventListener("DOMContentLoaded", function () {
     dateStartInput.value = sevenDaysAgoStr;
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
-      window.updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
     dateStartInput.addEventListener("change", () => {
-      window.updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
     dateEndInput.addEventListener("change", () => {
-      window.updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
     });
   }
 });
@@ -851,7 +627,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           // Mise à jour visuelle immédiate
           popup.remove();
           // Forcer le re-rendu du tableau
-          if (typeof window.updateTableForDateRange === "function") {
+          if (typeof updateTableForDateRange === "function") {
             let dateStartInput = document.getElementById(
               "mainTableDateStartFilter"
             );
@@ -860,7 +636,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             );
             const startVal = dateStartInput ? dateStartInput.value : "";
             const endVal = dateEndInput ? dateEndInput.value : "";
-            window.updateTableForDateRange(startVal, endVal);
+            updateTableForDateRange(startVal, endVal);
           }
         };
       }
