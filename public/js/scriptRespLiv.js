@@ -1080,64 +1080,35 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }`
               );
               overlay.remove();
-              // Mise à jour locale de allDeliveries avec la réponse backend
-              if (data && data.delivery && data.delivery.id) {
+              // Mise à jour instantanée du statut dans allDeliveries
+              if (delivery && delivery.id) {
                 const idx = allDeliveries.findIndex(
-                  (d) => d.id === data.delivery.id
+                  (d) => d.id === delivery.id
                 );
                 if (idx !== -1) {
-                  allDeliveries[idx] = {
-                    ...allDeliveries[idx],
-                    ...data.delivery,
-                  };
-                }
-              }
-              // Mise à jour instantanée de l'entête Statut sans recharger tout le tableau
-              function updateStatutHeaderInstant() {
-                // Récupère la plage de dates courante
-                const dateStartInput = document.getElementById(
-                  "mainTableDateStartFilter"
-                );
-                const dateEndInput = document.getElementById(
-                  "mainTableDateEndFilter"
-                );
-                let startStr = dateStartInput ? dateStartInput.value : null;
-                let endStr = dateEndInput ? dateEndInput.value : null;
-                // Filtre les livraisons affichées
-                let filtered =
-                  typeof filterDeliveriesByDateRange === "function"
-                    ? filterDeliveriesByDateRange(startStr, endStr)
-                    : allDeliveries;
-                // Calcul du nombre livré/total
-                let total = 0;
-                let delivered = 0;
-                filtered.forEach((delivery) => {
-                  let tcList = Array.isArray(delivery.container_number)
-                    ? delivery.container_number.filter(Boolean)
-                    : typeof delivery.container_number === "string"
-                    ? delivery.container_number.split(/[,;\s]+/).filter(Boolean)
-                    : [];
-                  total += tcList.length;
                   if (
-                    delivery.container_statuses &&
-                    typeof delivery.container_statuses === "object"
+                    !allDeliveries[idx].container_statuses ||
+                    typeof allDeliveries[idx].container_statuses !== "object"
                   ) {
-                    delivered += Object.values(
-                      delivery.container_statuses
-                    ).filter((s) => s === "livre" || s === "livré").length;
+                    allDeliveries[idx].container_statuses = {};
                   }
-                });
-                // Met à jour le bouton dans l'entête Statut
-                const thStatut = document.querySelector(
-                  "#deliveriesTable thead th[data-col-id='statut']"
-                );
-                if (thStatut) {
-                  thStatut.innerHTML = `<span style='font-weight:bold;'>Statut</span><br><button style='margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;'>${delivered} sur ${total} livré${
-                    total > 1 ? "s" : ""
-                  }</button>`;
+                  allDeliveries[idx].container_statuses[containerNumber] =
+                    select.value;
                 }
               }
-              updateStatutHeaderInstant();
+              // Rafraîchir le tableau pour mettre à jour l'entête Statut
+              const dateStartInput = document.getElementById(
+                "mainTableDateStartFilter"
+              );
+              const dateEndInput = document.getElementById(
+                "mainTableDateEndFilter"
+              );
+              if (dateStartInput && dateEndInput) {
+                updateTableForDateRange(
+                  dateStartInput.value,
+                  dateEndInput.value
+                );
+              }
               // Envoi d'une notification WebSocket pour informer tous les clients
               if (window.ws && window.ws.readyState === 1) {
                 window.ws.send(
