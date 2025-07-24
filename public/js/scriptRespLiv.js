@@ -23,7 +23,7 @@ function createCustomTooltip() {
 
 function showTooltip(text, x, y) {
   const tooltip = createCustomTooltip();
-  tooltip.innerHTML = text;
+  tooltip.textContent = text;
   tooltip.style.display = "block";
   // Positionnement intelligent (évite de sortir de l'écran)
   const padding = 12;
@@ -45,11 +45,8 @@ function hideTooltip() {
 }
 
 // Appliquer le tooltip sur toutes les cellules du tableau (hors .tc-multi-cell)
-// Tooltip pour texte tronqué (toutes cellules hors .tc-multi-cell)
 document.addEventListener("mouseover", function (e) {
-  const td = e.target.closest(
-    "#deliveriesTable tbody td:not(.tc-multi-cell):not([data-col-id='statut'])"
-  );
+  const td = e.target.closest("#deliveriesTable tbody td:not(.tc-multi-cell)");
   if (td && td.offsetWidth < td.scrollWidth) {
     showTooltip(td.textContent, e.clientX, e.clientY);
   }
@@ -61,72 +58,8 @@ document.addEventListener("mousemove", function (e) {
   }
 });
 document.addEventListener("mouseout", function (e) {
-  const td = e.target.closest(
-    "#deliveriesTable tbody td:not([data-col-id='statut'])"
-  );
+  const td = e.target.closest("#deliveriesTable tbody td");
   if (td) hideTooltip();
-});
-
-// Tooltip spécial pour la colonne Statut : détails conteneur(s) au survol
-// Survol colonne Statut : boîte flottante avec numéro TC et statut
-document.addEventListener("mouseover", function (e) {
-  const statutCell = e.target.closest(
-    "#deliveriesTable tbody td[data-col-id='statut']"
-  );
-  if (statutCell) {
-    const row = statutCell.closest("tr");
-    if (row) {
-      let deliveryId = row.getAttribute("data-delivery-id");
-      let delivery = null;
-      if (window.allDeliveries && deliveryId) {
-        delivery = window.allDeliveries.find(
-          (d) => String(d.id) === String(deliveryId)
-        );
-      }
-      let tcList = [];
-      if (delivery) {
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-        }
-      }
-      let details =
-        "<div style='font-weight:bold;color:#b45309;font-size:1.08em;margin-bottom:6px;'>Détail des conteneurs</div>";
-      if (
-        tcList.length > 0 &&
-        delivery &&
-        delivery.container_statuses &&
-        typeof delivery.container_statuses === "object"
-      ) {
-        details += tcList
-          .map((tc) => {
-            let status = delivery.container_statuses[tc] || "-";
-            return `<div style='display:flex;align-items:center;gap:8px;font-size:1.08em;'><span style='font-weight:bold;color:#1e293b;'>${tc}</span> <span style='color:#eab308;font-size:1.1em;'>&#x23F3;</span> <span style='color:#1e293b;'>${status}</span></div>`;
-          })
-          .join("");
-      } else {
-        details += "<div>--</div>";
-      }
-      showTooltip(details, e.clientX, e.clientY);
-    }
-  }
-});
-document.addEventListener("mousemove", function (e) {
-  const statutCell = e.target.closest(
-    "#deliveriesTable tbody td[data-col-id='statut']"
-  );
-  const tooltip = document.getElementById("customTableTooltip");
-  if (statutCell && tooltip && tooltip.style.display === "block") {
-    tooltip.style.left = e.clientX + 12 + "px";
-    tooltip.style.top = e.clientY + 12 + "px";
-  }
-});
-document.addEventListener("mouseout", function (e) {
-  const statutCell = e.target.closest(
-    "#deliveriesTable tbody td[data-col-id='statut']"
-  );
-  if (statutCell) hideTooltip();
 });
 // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
@@ -523,7 +456,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     if (table) table.style.display = "table";
     const noDataMsg = document.getElementById("noDeliveriesMsg");
     if (noDataMsg) noDataMsg.style.display = "none";
-    // Génération de l'en-tête avec bandes jaunes interactives
+    // Génération de l'en-tête
     if (table) {
       let thead = table.querySelector("thead");
       if (!thead) {
@@ -531,16 +464,11 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         table.insertBefore(thead, tableBodyElement);
       }
       thead.innerHTML = "";
-
-      // ...rien ici, suppression de la bande blanche en haut des entêtes...
-
-      // ...rien ici, suppression de la bande jaune observation...
-
-      // --- En-tête classique ---
       const headerRow = document.createElement("tr");
       AGENT_TABLE_COLUMNS.forEach((col) => {
         const th = document.createElement("th");
         if (col.id === "statut") {
+          // On affiche uniquement le texte Statut dans l'en-tête
           th.innerHTML = `<span style=\"font-weight:bold;\">${col.label}</span>`;
         } else {
           th.textContent = col.label;
@@ -550,6 +478,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       });
       thead.appendChild(headerRow);
     }
+    renderAgentTableRows(deliveries, tableBodyElement);
   }
 }
 const AGENT_TABLE_COLUMNS = [
