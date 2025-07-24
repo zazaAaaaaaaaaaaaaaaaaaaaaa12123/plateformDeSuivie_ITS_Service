@@ -1080,20 +1080,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }`
               );
               overlay.remove();
-              // Mise à jour instantanée du statut dans allDeliveries
-              if (delivery && delivery.id) {
+              // Mise à jour locale de allDeliveries avec la réponse backend
+              if (data && data.delivery && data.delivery.id) {
                 const idx = allDeliveries.findIndex(
-                  (d) => d.id === delivery.id
+                  (d) => d.id === data.delivery.id
                 );
                 if (idx !== -1) {
-                  if (
-                    !allDeliveries[idx].container_statuses ||
-                    typeof allDeliveries[idx].container_statuses !== "object"
-                  ) {
-                    allDeliveries[idx].container_statuses = {};
-                  }
-                  allDeliveries[idx].container_statuses[containerNumber] =
-                    select.value;
+                  allDeliveries[idx] = {
+                    ...allDeliveries[idx],
+                    ...data.delivery,
+                  };
                 }
               }
               // Mise à jour instantanée de l'entête Statut sans recharger tout le tableau
