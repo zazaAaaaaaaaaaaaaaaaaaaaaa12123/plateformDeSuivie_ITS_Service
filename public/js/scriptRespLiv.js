@@ -1118,7 +1118,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }`
               );
               overlay.remove();
-              // Mise à jour instantanée du statut dans allDeliveries
+              // Mise à jour instantanée du statut dans aallDeliveries
               if (delivery && delivery.id) {
                 const idx = allDeliveries.findIndex(
                   (d) => d.id === delivery.id
