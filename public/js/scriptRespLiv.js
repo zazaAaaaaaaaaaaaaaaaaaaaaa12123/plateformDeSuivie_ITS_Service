@@ -450,6 +450,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 // Colonnes pour le tableau du responsable de livraison
 const AGENT_TABLE_COLUMNS = [
+  { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent Acconier" },
   { id: "client_name", label: "Nom Client" },
@@ -477,13 +478,15 @@ const AGENT_TABLE_COLUMNS = [
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
-  deliveries.forEach((delivery) => {
+  deliveries.forEach((delivery, idx) => {
     const tr = document.createElement("tr");
     AGENT_TABLE_COLUMNS.forEach((col) => {
       const td = document.createElement("td");
-      let value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-      // Affichage spécial pour la date
-      if (col.id === "date_display") {
+      let value = "-";
+      if (col.id === "row_number") {
+        value = idx + 1;
+        td.textContent = value;
+      } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
         if (dDate) {
           let dateObj = new Date(dDate);
@@ -509,6 +512,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         );
         td.textContent = allLivred ? "Livré" : "Mise en livraison";
       } else {
+        value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         td.textContent = value;
       }
       tr.appendChild(td);
