@@ -961,14 +961,12 @@
           const rows = deliveriesTableBody.querySelectorAll('tr');
           let found = false;
           rows.forEach(row => {
-            // Colonne N° Déclaration = 10ème (index 9), N° Dossier = 11ème (index 10)
+            // Colonne N° Déclaration = 10ème (index 9)
             const declarationCell = row.cells[9];
-            const dossierCell = row.cells[10];
-            if (declarationCell && dossierCell) {
+            if (declarationCell) {
               const declarationText = normalize(declarationCell.textContent.trim().toLowerCase());
-              const dossierText = normalize(dossierCell.textContent.trim().toLowerCase());
               if (
-                (declarationText.includes(query) || dossierText.includes(query) || query === "")
+                (declarationText.includes(query) || query === "")
               ) {
                 row.style.display = '';
                 found = true;
