@@ -851,7 +851,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           // Mise à jour visuelle immédiate
           popup.remove();
           // Forcer le re-rendu du tableau
-          if (typeof updateTableForDateRange === "function") {
+          if (typeof window.updateTableForDateRange === "function") {
             let dateStartInput = document.getElementById(
               "mainTableDateStartFilter"
             );
@@ -860,7 +860,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             );
             const startVal = dateStartInput ? dateStartInput.value : "";
             const endVal = dateEndInput ? dateEndInput.value : "";
-            updateTableForDateRange(startVal, endVal);
+            window.updateTableForDateRange(startVal, endVal);
           }
         };
       }
