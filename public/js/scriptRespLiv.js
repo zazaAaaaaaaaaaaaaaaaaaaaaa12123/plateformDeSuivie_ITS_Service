@@ -1,3 +1,135 @@
+// --- Info-bulle personnalisée pour la colonne Statut (Numéro TC + statut avec icônes) ---
+function createStatutTooltip() {
+  let tooltip = document.getElementById("statutTableTooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "statutTableTooltip";
+    tooltip.style.position = "fixed";
+    tooltip.style.zIndex = "100010";
+    tooltip.style.background = "linear-gradient(90deg,#fffbe6 0%,#e6b800 100%)";
+    tooltip.style.color = "#0e274e";
+    tooltip.style.padding = "14px 22px 14px 18px";
+    tooltip.style.borderRadius = "14px";
+    tooltip.style.fontSize = "1.08em";
+    tooltip.style.maxWidth = "440px";
+    tooltip.style.boxShadow = "0 8px 32px #e6b80055, 0 2px 0 #fff inset";
+    tooltip.style.display = "none";
+    tooltip.style.pointerEvents = "none";
+    tooltip.style.wordBreak = "break-word";
+    tooltip.style.fontWeight = "500";
+    tooltip.style.border = "2.5px solid #ffc107";
+    tooltip.style.minWidth = "220px";
+    document.body.appendChild(tooltip);
+  }
+  return tooltip;
+}
+
+function showStatutTooltip(delivery, x, y) {
+  const tooltip = createStatutTooltip();
+  // Génère le contenu : liste des TC + statut + icône
+  let tcList = [];
+  if (Array.isArray(delivery.container_number)) {
+    tcList = delivery.container_number.filter(Boolean);
+  } else if (typeof delivery.container_number === "string") {
+    tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+  }
+  let statuses =
+    delivery.container_statuses &&
+    typeof delivery.container_statuses === "object"
+      ? delivery.container_statuses
+      : {};
+  let html = `<div style='font-weight:700;font-size:1.13em;margin-bottom:7px;text-align:left;'>Détail des conteneurs :</div>`;
+  if (tcList.length === 0) {
+    html += `<div style='color:#b91c1c;'>Aucun conteneur</div>`;
+  } else {
+    html += tcList
+      .map((tc) => {
+        let status = statuses[tc] || "aucun";
+        let icon =
+          status === "livre" || status === "livré"
+            ? `<svg style='vertical-align:middle;margin-right:7px;' width='22' height='22' viewBox='0 0 24 24' fill='none'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>`
+            : `<svg style='vertical-align:middle;margin-right:7px;' width='22' height='22' viewBox='0 0 24 24' fill='none'><rect x='2' y='7' width='15' height='8' rx='2' fill='#64748b'/><circle cx='7' cy='18' r='2' fill='#64748b'/><circle cx='17' cy='18' r='2' fill='#64748b'/></svg>`;
+        let statusLabel =
+          status === "livre" || status === "livré" ? "Livré" : "Non livré";
+        return `<div style='display:flex;align-items:center;gap:8px;margin-bottom:2px;'><span>${icon}</span><span style='font-weight:700;color:#e6b800;'>${tc}</span><span style='margin-left:12px;font-weight:600;color:${
+          status === "livre" || status === "livré" ? "#22c55e" : "#64748b"
+        };'>${statusLabel}</span></div>`;
+      })
+      .join("");
+  }
+  tooltip.innerHTML = html;
+  tooltip.style.display = "block";
+  // Positionnement intelligent (évite de sortir de l'écran)
+  const padding = 16;
+  let left = x + padding;
+  let top = y + padding;
+  if (left + tooltip.offsetWidth > window.innerWidth) {
+    left = window.innerWidth - tooltip.offsetWidth - padding;
+  }
+  if (top + tooltip.offsetHeight > window.innerHeight) {
+    top = y - tooltip.offsetHeight - padding;
+  }
+  tooltip.style.left = left + "px";
+  tooltip.style.top = top + "px";
+}
+
+function hideStatutTooltip() {
+  const tooltip = document.getElementById("statutTableTooltip");
+  if (tooltip) tooltip.style.display = "none";
+}
+// Gestion du survol sur la colonne Statut pour afficher l'info-bulle personnalisée
+document.addEventListener("mouseover", function (e) {
+  const td = e.target.closest(
+    "#deliveriesTable tbody td[data-col-id='statut']"
+  );
+  if (td) {
+    // Trouver la livraison associée à la ligne
+    const tr = td.closest("tr[data-delivery-id]");
+    if (tr) {
+      const deliveryId = tr.getAttribute("data-delivery-id");
+      // Chercher la livraison dans allDeliveries
+      if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+        const delivery = window.allDeliveries.find(
+          (d) => String(d.id) === String(deliveryId)
+        );
+        if (delivery) {
+          showStatutTooltip(delivery, e.clientX, e.clientY);
+        }
+      }
+    }
+  }
+});
+document.addEventListener("mousemove", function (e) {
+  const tooltip = document.getElementById("statutTableTooltip");
+  if (tooltip && tooltip.style.display === "block") {
+    // On cherche la cellule sous la souris
+    const td = document
+      .elementFromPoint(e.clientX, e.clientY)
+      ?.closest("#deliveriesTable tbody td[data-col-id='statut']");
+    if (td) {
+      const tr = td.closest("tr[data-delivery-id]");
+      if (tr) {
+        const deliveryId = tr.getAttribute("data-delivery-id");
+        if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+          const delivery = window.allDeliveries.find(
+            (d) => String(d.id) === String(deliveryId)
+          );
+          if (delivery) {
+            showStatutTooltip(delivery, e.clientX, e.clientY);
+          }
+        }
+      }
+    } else {
+      hideStatutTooltip();
+    }
+  }
+});
+document.addEventListener("mouseout", function (e) {
+  const td = e.target.closest(
+    "#deliveriesTable tbody td[data-col-id='statut']"
+  );
+  if (td) hideStatutTooltip();
+});
 // Ajout d'une info-bulle personnalisée pour texte tronqué (toutes cellules hors .tc-multi-cell)
 function createCustomTooltip() {
   let tooltip = document.getElementById("customTableTooltip");
@@ -287,7 +419,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const dateEndInput = document.getElementById("mainTableDateEndFilter");
 
   // On charge toutes les livraisons une seule fois au chargement
-  let allDeliveries = [];
+  // On rend allDeliveries accessible globalement pour le tooltip Statut
+  window.allDeliveries = [];
 
   async function loadAllDeliveries() {
     try {
@@ -295,7 +428,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
         // On ne garde que les livraisons dont TOUS les BL sont en 'mise_en_livraison'
-        allDeliveries = data.deliveries.filter((delivery) => {
+        window.allDeliveries = data.deliveries.filter((delivery) => {
           let blList = [];
           if (Array.isArray(delivery.bl_number)) {
             blList = delivery.bl_number.filter(Boolean);
@@ -313,11 +446,11 @@ document.addEventListener("DOMContentLoaded", function () {
           );
         });
       } else {
-        allDeliveries = [];
+        window.allDeliveries = [];
       }
     } catch (e) {
       console.error("Erreur lors du chargement des livraisons :", e);
-      allDeliveries = [];
+      window.allDeliveries = [];
     }
   }
 
@@ -326,7 +459,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!startStr && !endStr) return allDeliveries;
     const startDate = startStr ? new Date(startStr) : null;
     const endDate = endStr ? new Date(endStr) : null;
-    return allDeliveries.filter((delivery) => {
+    return window.allDeliveries.filter((delivery) => {
       let dDate =
         delivery["delivery_date"] ||
         delivery["created_at"] ||
