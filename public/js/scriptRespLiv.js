@@ -922,7 +922,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.classList.add("observation-col");
         }
       } else if (col.id === "statut") {
-        // Affichage : badge vert "Livré" si tous les conteneurs sont livrés, sinon bouton x sur y livré(s)
+        // Affichage : badge stylé et animé pour le statut de livraison
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -942,24 +942,50 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         td.setAttribute("data-col-id", "statut");
         if (delivered === total && total > 0) {
-          // Badge vert si tout est livré (1/1 ou n/n)
-          td.innerHTML = `<span style="display:inline-block;padding:2px 18px;font-size:1.1em;font-weight:600;border-radius:12px;border:2px solid #eab308;background:#d1fadf;color:#15803d;">Livré</span>`;
+          // Badge vert stylé si tout est livré
+          td.innerHTML = `
+            <span style="display:inline-flex;align-items:center;gap:8px;padding:6px 22px;font-size:1.18em;font-weight:700;border-radius:16px;border:2px solid #22c55e;background:linear-gradient(90deg,#d1fadf 0%,#bbf7d0 100%);color:#15803d;box-shadow:0 2px 12px rgba(34,197,94,0.13);">
+              <i class='fas fa-truck' style='color:#22c55e;font-size:1.2em;'></i>
+              Livré
+            </span>
+          `;
         } else {
-          // Barre de progression animée pour les livraisons multi-conteneurs
+          // Barre de progression animée et visuelle améliorée
           let percent = total > 0 ? Math.round((delivered / total) * 100) : 0;
           let color = "#e5e7eb"; // gris
           if (percent > 0 && percent < 50) color = "#fde68a"; // jaune
           if (percent >= 50 && percent < 100) color = "#60a5fa"; // bleu
           if (percent === 100) color = "#22c55e"; // vert
           td.innerHTML = `
-            <div style="position:relative;width:100%;height:32px;background:#f3f4f6;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(30,41,59,0.04);">
-              <div class="statut-progress-bar" style="position:absolute;left:0;top:0;height:100%;width:${percent}%;background:${color};transition:width 0.7s cubic-bezier(.4,0,.2,1),background 0.7s;z-index:1;"></div>
-              <div style="position:relative;z-index:2;text-align:center;font-size:1em;font-weight:600;color:${
+            <div class="statut-progress-block" style="position:relative;width:100%;height:38px;background:linear-gradient(90deg,#f3f4f6 0%,#e0e7ef 100%);border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(30,41,59,0.08);transition:box-shadow 0.3s;cursor:pointer;">
+              <div class="statut-progress-bar" style="position:absolute;left:0;top:0;height:100%;width:${percent}%;background:linear-gradient(90deg,${color} 0%,#fff 100%);transition:width 1.2s cubic-bezier(.4,0,.2,1),background 0.7s;z-index:1;"></div>
+              <div style="position:relative;z-index:2;text-align:center;font-size:1.13em;font-weight:700;color:${
                 percent === 100 ? "#15803d" : "#b45309"
-              };line-height:32px;">
-                ${delivered} sur ${total} livré${total > 1 ? "s" : ""}
+              };line-height:38px;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:10px;">
+                <i class='fas fa-truck-loading' style='color:${
+                  percent === 100 ? "#22c55e" : "#60a5fa"
+                };font-size:1.15em;'></i>
+                <span>${delivered} <span style='font-weight:400;'>sur</span> ${total} <span style='font-weight:400;'>livré${
+            total > 1 ? "s" : ""
+          }</span></span>
+              </div>
+              <div style="position:absolute;right:10px;top:8px;z-index:3;">
+                <span style="font-size:0.95em;color:#64748b;opacity:0.7;">${percent}%</span>
               </div>
             </div>
+            <style>
+              .statut-progress-block:hover {
+                box-shadow:0 6px 24px rgba(30,41,59,0.18);
+                background:linear-gradient(90deg,#e0e7ef 0%,#f3f4f6 100%);
+              }
+              .statut-progress-bar {
+                animation: statutBarAnim 1.2s cubic-bezier(.4,0,.2,1);
+              }
+              @keyframes statutBarAnim {
+                0% { width:0; }
+                100% { width:${percent}%; }
+              }
+            </style>
           `;
         }
       } else {
