@@ -49,6 +49,18 @@
         object-fit: cover;
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         padding: 6px;
+        animation: truckMove 1.7s ease-in-out infinite;
+      }
+      @keyframes truckMove {
+        0% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(12px);
+        }
+        100% {
+          transform: translateY(0);
+        }
       }
       .tabs {
         display: flex;
