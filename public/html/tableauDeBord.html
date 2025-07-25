@@ -1287,8 +1287,7 @@
               document.getElementById("iconRespLivraison");
             if (iconRespLivraison) {
               iconRespLivraison.addEventListener("click", function () {
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
+                window.location.href = "resp_liv.html";
               });
             }
             const iconRespAcconier =
@@ -2227,6 +2226,7 @@
               });
               const data = await res.json();
               if (res.ok && data.success) {
+                s;
                 msgDiv.textContent =
                   "Demande envoyée ! Vous recevrez le code par email.";
                 msgDiv.style.color = "#059669";
