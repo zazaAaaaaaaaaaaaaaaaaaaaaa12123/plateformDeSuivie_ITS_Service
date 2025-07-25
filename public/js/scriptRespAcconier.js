@@ -712,7 +712,7 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       return dateA - dateB;
     });
-    renderAgentTableFull(filtered, tableBody);
+    renderAgentTableRows(filtered, tableBody);
   }
 
   // Initialisation : charge toutes les livraisons puis affiche la plage de dates (par défaut : 7 jours avant aujourd'hui jusqu'à aujourd'hui)
