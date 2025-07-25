@@ -1287,6 +1287,13 @@
               document.getElementById("iconRespLivraison");
             if (iconRespLivraison) {
               iconRespLivraison.addEventListener("click", function () {
+                // Propagation de la session responsable livraison
+                try {
+                  const userRaw = localStorage.getItem("user");
+                  if (userRaw) {
+                    localStorage.setItem("respLivUser", userRaw);
+                  }
+                } catch (e) {}
                 window.location.href = "resp_liv.html";
               });
             }
