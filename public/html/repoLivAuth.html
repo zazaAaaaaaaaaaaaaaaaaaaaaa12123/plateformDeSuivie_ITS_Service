@@ -14,7 +14,7 @@
     />
     <style>
       body {
-        background: #f7faff;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         font-family: "Montserrat", sans-serif;
         min-height: 100vh;
         margin: 0;
@@ -24,45 +24,63 @@
       }
       .container {
         background: #fff;
-        border-radius: 14px;
-        box-shadow: 0 8px 32px rgba(30, 60, 114, 0.13);
-        padding: 2.2rem 2rem 2rem 2rem;
+        border-radius: 22px;
+        box-shadow: 0 12px 40px rgba(30, 60, 114, 0.18);
+        padding: 2.5rem 2.2rem 2.2rem 2.2rem;
         width: 100%;
-        max-width: 410px;
+        max-width: 430px;
         position: relative;
         overflow: hidden;
         transition: box-shadow 0.3s;
+        z-index: 2;
       }
       .container:hover {
-        box-shadow: 0 12px 40px rgba(30, 60, 114, 0.18);
+        box-shadow: 0 18px 60px rgba(30, 60, 114, 0.22);
+      }
+      .form-illustration {
+        width: 100px;
+        height: 100px;
+        display: block;
+        margin: 0 auto 1.2rem auto;
+        border-radius: 50%;
+        box-shadow: 0 4px 18px rgba(30, 60, 114, 0.13);
+        object-fit: cover;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        padding: 10px;
       }
       .tabs {
         display: flex;
         justify-content: space-between;
         margin-bottom: 2rem;
+        background: #f0f4fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.08);
+        overflow: hidden;
       }
       .tab {
         flex: 1;
         text-align: center;
-        padding: 0.7rem 0;
+        padding: 0.9rem 0;
         cursor: pointer;
         font-weight: 700;
         color: #1e3c72;
         border-bottom: 2px solid transparent;
-        transition: border 0.2s, color 0.2s;
+        transition: border 0.2s, color 0.2s, background 0.2s;
         letter-spacing: 1px;
         background: none;
+        font-size: 1.08rem;
       }
       .tab.active {
-        color: #1e3c72;
+        color: #fff;
+        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
         border-bottom: 2.5px solid #1e3c72;
-        background: #f0f4fa;
-        border-radius: 8px 8px 0 0;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.08);
       }
       form {
         display: none;
         flex-direction: column;
-        gap: 1.1rem;
+        gap: 1.3rem;
         animation: fadeIn 0.5s;
       }
       form.active {
@@ -72,48 +90,63 @@
         display: flex;
         flex-direction: column;
         gap: 0.3rem;
+        position: relative;
       }
       label {
-        font-size: 1rem;
+        font-size: 1.08rem;
         color: #1e3c72;
-        font-weight: 600;
+        font-weight: 700;
         margin-bottom: 0.2rem;
+        letter-spacing: 0.5px;
       }
       input[type="text"],
       input[type="email"],
       input[type="password"] {
-        padding: 0.7rem 1rem;
-        border: 1.5px solid #dbeafe;
-        border-radius: 7px;
-        font-size: 1rem;
+        padding: 0.85rem 1.1rem 0.85rem 2.7rem;
+        border: 2px solid #e3ecfa;
+        border-radius: 10px;
+        font-size: 1.08rem;
         background: #f7faff;
-        transition: border 0.2s;
+        transition: border 0.2s, box-shadow 0.2s;
         outline: none;
+        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.07);
       }
       input:focus {
-        border: 1.5px solid #1e3c72;
+        border: 2px solid #1e3c72;
         background: #e3ecfa;
+        box-shadow: 0 4px 16px rgba(30, 60, 114, 0.13);
+      }
+      .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #1e3c72;
+        font-size: 1.15rem;
+        opacity: 0.8;
       }
       .btn {
-        background: #1e3c72;
+        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
         color: #fff;
         border: none;
-        border-radius: 7px;
-        padding: 0.8rem 0;
-        font-size: 1.1rem;
+        border-radius: 10px;
+        padding: 1rem 0;
+        font-size: 1.15rem;
         font-weight: 700;
         cursor: pointer;
         margin-top: 0.5rem;
-        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.08);
-        transition: background 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 16px rgba(30, 60, 114, 0.13);
+        transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+        letter-spacing: 1px;
       }
       .btn:hover {
-        background: #274b8c;
-        box-shadow: 0 4px 16px rgba(30, 60, 114, 0.13);
+        background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+        box-shadow: 0 8px 32px rgba(30, 60, 114, 0.18);
+        transform: translateY(-2px) scale(1.03);
       }
       .message {
         margin-top: 0.5rem;
-        font-size: 0.98rem;
+        font-size: 1.05rem;
         text-align: center;
         color: #e74c3c;
         min-height: 1.2em;
@@ -139,35 +172,36 @@
         transform: translateY(-50%);
         cursor: pointer;
         color: #b0b8c1;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
+        z-index: 2;
       }
       .form-group.password-group {
         position: relative;
       }
       @media (max-width: 900px) {
         .container {
-          max-width: 95vw;
+          max-width: 97vw;
           padding: 2rem 1.2rem 1.2rem 1.2rem;
         }
         .tabs {
           margin-bottom: 1.2rem;
         }
         .tab {
-          font-size: 1rem;
-          padding: 0.6rem 0;
+          font-size: 1.03rem;
+          padding: 0.7rem 0;
         }
         label {
-          font-size: 0.98rem;
+          font-size: 1.03rem;
         }
         input[type="text"],
         input[type="email"],
         input[type="password"] {
-          font-size: 0.98rem;
-          padding: 0.6rem 0.8rem;
+          font-size: 1.03rem;
+          padding: 0.7rem 0.8rem 0.7rem 2.2rem;
         }
         .btn {
-          font-size: 1rem;
-          padding: 0.7rem 0;
+          font-size: 1.08rem;
+          padding: 0.8rem 0;
         }
       }
       @media (max-width: 600px) {
@@ -179,15 +213,15 @@
           max-width: 99vw;
           min-width: 0;
           padding: 1.2rem 0.5rem 1.2rem 0.5rem;
-          border-radius: 10px;
+          border-radius: 14px;
           box-shadow: 0 4px 18px rgba(255, 193, 7, 0.13);
         }
         .tabs {
           margin-bottom: 0.7rem;
         }
         .tab {
-          font-size: 0.97rem;
-          padding: 0.5rem 0;
+          font-size: 0.99rem;
+          padding: 0.6rem 0;
         }
         form {
           gap: 0.7rem;
@@ -196,34 +230,40 @@
           gap: 0.15rem;
         }
         label {
-          font-size: 0.95rem;
+          font-size: 0.98rem;
         }
         input[type="text"],
         input[type="email"],
         input[type="password"] {
-          font-size: 0.95rem;
-          padding: 0.5rem 0.6rem;
+          font-size: 0.98rem;
+          padding: 0.6rem 0.6rem 0.6rem 1.7rem;
         }
         .btn {
-          font-size: 0.98rem;
-          padding: 0.6rem 0;
+          font-size: 1rem;
+          padding: 0.7rem 0;
         }
         .show-password {
           right: 0.7rem;
-          font-size: 1rem;
+          font-size: 1.08rem;
         }
       }
     </style>
   </head>
   <body>
     <div class="container">
+      <img
+        src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+        alt="Illustration"
+        class="form-illustration"
+      />
       <div class="tabs">
         <div class="tab active" id="tab-signup">Inscription</div>
         <div class="tab" id="tab-login">Connexion</div>
       </div>
       <form id="signup-form" class="active" autocomplete="off">
         <div class="form-group">
-          <label for="signup-nom"><i class="fa fa-user"></i> Nom complet</label>
+          <span class="input-icon"><i class="fa fa-user"></i></span>
+          <label for="signup-nom">Nom complet</label>
           <input
             type="text"
             id="signup-nom"
@@ -233,7 +273,8 @@
           />
         </div>
         <div class="form-group">
-          <label for="signup-email"><i class="fa fa-envelope"></i> Email</label>
+          <span class="input-icon"><i class="fa fa-envelope"></i></span>
+          <label for="signup-email">Email</label>
           <input
             type="email"
             id="signup-email"
@@ -243,9 +284,8 @@
           />
         </div>
         <div class="form-group password-group">
-          <label for="signup-password"
-            ><i class="fa fa-lock"></i> Mot de passe</label
-          >
+          <span class="input-icon"><i class="fa fa-lock"></i></span>
+          <label for="signup-password">Mot de passe</label>
           <input
             type="password"
             id="signup-password"
@@ -264,7 +304,8 @@
       </form>
       <form id="login-form">
         <div class="form-group">
-          <label for="login-email"><i class="fa fa-envelope"></i> Email</label>
+          <span class="input-icon"><i class="fa fa-envelope"></i></span>
+          <label for="login-email">Email</label>
           <input
             type="email"
             id="login-email"
@@ -274,9 +315,8 @@
           />
         </div>
         <div class="form-group password-group">
-          <label for="login-password"
-            ><i class="fa fa-lock"></i> Mot de passe</label
-          >
+          <span class="input-icon"><i class="fa fa-lock"></i></span>
+          <label for="login-password">Mot de passe</label>
           <input
             type="password"
             id="login-password"
@@ -292,7 +332,89 @@
         </div>
         <button type="submit" class="btn">Se connecter</button>
         <div class="message" id="login-message"></div>
+        <div style="text-align: right; margin-top: 0.5rem">
+          <a
+            href="#"
+            id="forgot-link"
+            style="
+              color: #1e3c72;
+              font-size: 1.05rem;
+              text-decoration: underline;
+              font-weight: 600;
+            "
+            >Mot de passe oublié ?</a
+          >
+        </div>
       </form>
+      <!-- Popup mot de passe oublié -->
+      <div
+        id="forgot-popup"
+        style="
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(30, 60, 114, 0.13);
+          z-index: 1000;
+          align-items: center;
+          justify-content: center;
+        "
+      >
+        <div
+          style="
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(30, 60, 114, 0.18);
+            padding: 2rem 1.5rem;
+            max-width: 350px;
+            width: 90vw;
+            margin: auto;
+            position: relative;
+          "
+        >
+          <span
+            id="close-forgot"
+            style="
+              position: absolute;
+              top: 10px;
+              right: 14px;
+              font-size: 1.3rem;
+              color: #1e3c72;
+              cursor: pointer;
+            "
+            >&times;</span
+          >
+          <h3
+            style="
+              color: #1e3c72;
+              margin-bottom: 1.2rem;
+              font-size: 1.15rem;
+              text-align: center;
+            "
+          >
+            Réinitialiser le mot de passe
+          </h3>
+          <form id="forgot-form" autocomplete="off">
+            <div class="form-group">
+              <span class="input-icon"><i class="fa fa-envelope"></i></span>
+              <label for="forgot-email">Email</label>
+              <input
+                type="email"
+                id="forgot-email"
+                name="email"
+                placeholder="Votre email"
+                required
+              />
+            </div>
+            <button type="submit" class="btn" style="width: 100%">
+              Envoyer le lien de réinitialisation
+            </button>
+            <div class="message" id="forgot-message"></div>
+          </form>
+        </div>
+      </div>
     </div>
     <script>
       // Tab switching
@@ -319,6 +441,51 @@
           el.innerHTML = '<i class="fa fa-eye"></i>';
         }
       }
+      // Mot de passe oublié : ouverture popup
+      document.getElementById("forgot-link").onclick = function (e) {
+        e.preventDefault();
+        document.getElementById("forgot-popup").style.display = "flex";
+        document.getElementById("forgot-message").textContent = "";
+      };
+      document.getElementById("close-forgot").onclick = function () {
+        document.getElementById("forgot-popup").style.display = "none";
+      };
+      // Envoi du formulaire mot de passe oublié
+      document.getElementById("forgot-form").onsubmit = function (e) {
+        e.preventDefault();
+        var email = document.getElementById("forgot-email").value.trim();
+        if (!email) return;
+        document.getElementById("forgot-message").textContent =
+          "Envoi en cours...";
+        fetch("/api/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.success) {
+              document.getElementById("forgot-message").textContent =
+                "Un email de réinitialisation a été envoyé !";
+              document
+                .getElementById("forgot-message")
+                .classList.add("success");
+            } else {
+              document.getElementById("forgot-message").textContent =
+                data.message || "Erreur lors de l'envoi.";
+              document
+                .getElementById("forgot-message")
+                .classList.remove("success");
+            }
+          })
+          .catch(() => {
+            document.getElementById("forgot-message").textContent =
+              "Erreur serveur. Réessayez plus tard.";
+            document
+              .getElementById("forgot-message")
+              .classList.remove("success");
+          });
+      };
       // Gestion du formulaire d'inscription
       document.getElementById("signup-form").onsubmit = function (e) {
         e.preventDefault();
