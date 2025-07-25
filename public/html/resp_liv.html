@@ -663,11 +663,17 @@
             const removePhotoBtn = document.getElementById('removePhotoBtn');
             const mainAvatarPhoto = document.getElementById('mainAvatarPhoto');
             const mainAvatarIcon = document.getElementById('mainAvatarIcon');
-            // Affichage du menu profil
+            // Affichage du menu profil + déconnexion sur second clic
             if (avatar && dropdown) {
+              let avatarClickedOnce = false;
               avatar.onclick = function(e) {
                 e.stopPropagation();
-                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                if (dropdown.style.display === 'block') {
+                  // Si déjà ouvert, redirige vers la page de déconnexion
+                  window.location.href = 'https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html';
+                } else {
+                  dropdown.style.display = 'block';
+                }
               };
               document.addEventListener('click', function(e) {
                 if (!dropdown.contains(e.target) && e.target !== avatar) {
