@@ -3322,6 +3322,11 @@ app.get("/html/acconier_auth.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "acconier_auth.html"));
 });
 
+// Route explicite pour repoLivAuth.html
+app.get("/html/repoLivAuth.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "repoLivAuth.html"));
+});
+
 // ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================

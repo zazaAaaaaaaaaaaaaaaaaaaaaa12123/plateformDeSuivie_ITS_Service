@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inscription & Connexion - ITS Service</title>
+    <title>Inscription & Connexion - Responsable Livraison</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
       rel="stylesheet"
@@ -14,7 +14,7 @@
     />
     <style>
       body {
-        background: linear-gradient(120deg, #1e3c72, #2a5298);
+        background: linear-gradient(120deg, #fffbe6, #ffe082);
         font-family: "Montserrat", sans-serif;
         min-height: 100vh;
         margin: 0;
@@ -25,7 +25,7 @@
       .container {
         background: #fff;
         border-radius: 18px;
-        box-shadow: 0 8px 32px rgba(30, 60, 114, 0.18);
+        box-shadow: 0 8px 32px rgba(255, 193, 7, 0.18);
         padding: 2.5rem 2rem 2rem 2rem;
         width: 100%;
         max-width: 410px;
@@ -34,7 +34,7 @@
         transition: box-shadow 0.3s;
       }
       .container:hover {
-        box-shadow: 0 12px 40px rgba(30, 60, 114, 0.28);
+        box-shadow: 0 12px 40px rgba(255, 193, 7, 0.28);
       }
       .tabs {
         display: flex;
@@ -47,15 +47,15 @@
         padding: 0.7rem 0;
         cursor: pointer;
         font-weight: 700;
-        color: #1e3c72;
+        color: #ffc107;
         border-bottom: 2px solid transparent;
         transition: border 0.2s, color 0.2s;
         letter-spacing: 1px;
       }
       .tab.active {
-        color: #2a5298;
-        border-bottom: 2.5px solid #2a5298;
-        background: linear-gradient(90deg, #e3ecfa 60%, #f7faff 100%);
+        color: #fffbe6;
+        border-bottom: 2.5px solid #ffc107;
+        background: linear-gradient(90deg, #fffbe6 60%, #ffe082 100%);
         border-radius: 8px 8px 0 0;
       }
       form {
@@ -74,7 +74,7 @@
       }
       label {
         font-size: 1rem;
-        color: #1e3c72;
+        color: #ffc107;
         font-weight: 600;
         margin-bottom: 0.2rem;
       }
@@ -82,19 +82,19 @@
       input[type="email"],
       input[type="password"] {
         padding: 0.7rem 1rem;
-        border: 1.5px solid #dbeafe;
+        border: 1.5px solid #ffe082;
         border-radius: 7px;
         font-size: 1rem;
-        background: #f7faff;
+        background: #fffbe6;
         transition: border 0.2s;
         outline: none;
       }
       input:focus {
-        border: 1.5px solid #2a5298;
-        background: #e3ecfa;
+        border: 1.5px solid #ffc107;
+        background: #fffde7;
       }
       .btn {
-        background: linear-gradient(90deg, #1e3c72 60%, #2a5298 100%);
+        background: linear-gradient(90deg, #ffc107 60%, #ffe082 100%);
         color: #fff;
         border: none;
         border-radius: 7px;
@@ -103,12 +103,12 @@
         font-weight: 700;
         cursor: pointer;
         margin-top: 0.5rem;
-        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
         transition: background 0.2s, box-shadow 0.2s;
       }
       .btn:hover {
-        background: linear-gradient(90deg, #2a5298 60%, #1e3c72 100%);
-        box-shadow: 0 4px 16px rgba(30, 60, 114, 0.18);
+        background: linear-gradient(90deg, #ffe082 60%, #ffc107 100%);
+        box-shadow: 0 4px 16px rgba(255, 193, 7, 0.18);
       }
       .message {
         margin-top: 0.5rem;
@@ -143,8 +143,6 @@
       .form-group.password-group {
         position: relative;
       }
-
-      /* Responsive : Tablette */
       @media (max-width: 900px) {
         .container {
           max-width: 95vw;
@@ -171,8 +169,6 @@
           padding: 0.7rem 0;
         }
       }
-
-      /* Responsive : Mobile */
       @media (max-width: 600px) {
         body {
           align-items: flex-start;
@@ -183,7 +179,7 @@
           min-width: 0;
           padding: 1.2rem 0.5rem 1.2rem 0.5rem;
           border-radius: 10px;
-          box-shadow: 0 4px 18px rgba(30, 60, 114, 0.13);
+          box-shadow: 0 4px 18px rgba(255, 193, 7, 0.13);
         }
         .tabs {
           margin-bottom: 0.7rem;
@@ -297,9 +293,8 @@
         <div class="message" id="login-message"></div>
       </form>
     </div>
-    <script src="/js/auth.js"></script>
     <script>
-      // Tab switching (évite la redéclaration des variables déjà utilisées dans le JS externe)
+      // Tab switching
       document.getElementById("tab-signup").onclick = function () {
         this.classList.add("active");
         document.getElementById("tab-login").classList.remove("active");
@@ -312,7 +307,42 @@
         document.getElementById("login-form").classList.add("active");
         document.getElementById("signup-form").classList.remove("active");
       };
-      // La fonction togglePassword est dans le JS externe
+      // Affichage/masquage du mot de passe
+      function togglePassword(id, el) {
+        const input = document.getElementById(id);
+        if (input.type === "password") {
+          input.type = "text";
+          el.innerHTML = '<i class="fa fa-eye-slash"></i>';
+        } else {
+          input.type = "password";
+          el.innerHTML = '<i class="fa fa-eye"></i>';
+        }
+      }
+      // Gestion du formulaire d'inscription
+      document.getElementById("signup-form").onsubmit = function (e) {
+        e.preventDefault();
+        // Simule une inscription réussie
+        document.getElementById("signup-message").textContent =
+          "Inscription réussie ! Redirection vers la connexion...";
+        document.getElementById("signup-message").classList.add("success");
+        setTimeout(function () {
+          document.getElementById("tab-login").click();
+          document.getElementById("signup-message").textContent = "";
+          document.getElementById("signup-message").classList.remove("success");
+        }, 1200);
+      };
+      // Gestion du formulaire de connexion
+      document.getElementById("login-form").onsubmit = function (e) {
+        e.preventDefault();
+        // Simule une connexion réussie
+        document.getElementById("login-message").textContent =
+          "Connexion réussie ! Redirection...";
+        document.getElementById("login-message").classList.add("success");
+        setTimeout(function () {
+          window.location.href =
+            "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
+        }, 1200);
+      };
     </script>
   </body>
 </html>
