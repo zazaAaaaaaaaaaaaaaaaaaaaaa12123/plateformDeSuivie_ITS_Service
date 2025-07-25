@@ -1657,7 +1657,11 @@ document.addEventListener("DOMContentLoaded", function () {
       profilePopup.style.maxWidth = "96vw";
       profilePopup.style.textAlign = "center";
       profilePopup.style.fontFamily = "Montserrat, Arial, sans-serif";
-      // Photo de profil
+      // Photo de profil avec croix pour suppression
+      const photoWrapper = document.createElement("div");
+      photoWrapper.style.position = "relative";
+      photoWrapper.style.display = "inline-block";
+      photoWrapper.style.marginBottom = "12px";
       const imgEdit = document.createElement("img");
       imgEdit.id = "profile-avatar-edit-img";
       imgEdit.src = localStorage.getItem("user_photo") || avatarImg.src;
@@ -1666,20 +1670,43 @@ document.addEventListener("DOMContentLoaded", function () {
       imgEdit.style.height = "64px";
       imgEdit.style.borderRadius = "50%";
       imgEdit.style.objectFit = "cover";
-      imgEdit.style.boxShadow = "0 2px 8px #ffc10733";
-      imgEdit.style.marginBottom = "12px";
-      profilePopup.appendChild(imgEdit);
-      // Bouton pour choisir une photo
+      imgEdit.style.boxShadow = "0 2px 8px #e0e7ef33";
+      photoWrapper.appendChild(imgEdit);
+      // Croix pour suppression
+      const removeBtn = document.createElement("button");
+      removeBtn.innerHTML = "&times;";
+      removeBtn.title = "Supprimer la photo";
+      removeBtn.style.position = "absolute";
+      removeBtn.style.top = "-8px";
+      removeBtn.style.right = "-8px";
+      removeBtn.style.width = "22px";
+      removeBtn.style.height = "22px";
+      removeBtn.style.border = "1px solid #d1d5db";
+      removeBtn.style.background = "#fff";
+      removeBtn.style.color = "#2563eb";
+      removeBtn.style.borderRadius = "50%";
+      removeBtn.style.fontSize = "1.2em";
+      removeBtn.style.cursor = "pointer";
+      removeBtn.style.display = "flex";
+      removeBtn.style.alignItems = "center";
+      removeBtn.style.justifyContent = "center";
+      removeBtn.onclick = function () {
+        localStorage.removeItem("user_photo");
+        imgEdit.src = avatarImg.src =
+          "https://cdn-icons-png.flaticon.com/512/1048/1048953.png";
+      };
+      photoWrapper.appendChild(removeBtn);
+      profilePopup.appendChild(photoWrapper);
+      // Bouton pour choisir une photo (style simple)
       const photoBtn = document.createElement("button");
       photoBtn.textContent = "Changer la photo";
       photoBtn.style.margin = "0 0 18px 0";
       photoBtn.style.padding = "7px 18px";
-      photoBtn.style.borderRadius = "8px";
-      photoBtn.style.border = "none";
-      photoBtn.style.background =
-        "linear-gradient(90deg,#2563eb 0%,#ffc107 100%)";
-      photoBtn.style.color = "#fff";
-      photoBtn.style.fontWeight = "bold";
+      photoBtn.style.borderRadius = "6px";
+      photoBtn.style.border = "1px solid #d1d5db";
+      photoBtn.style.background = "#fff";
+      photoBtn.style.color = "#2563eb";
+      photoBtn.style.fontWeight = "500";
       photoBtn.style.cursor = "pointer";
       photoBtn.style.fontSize = "1em";
       profilePopup.appendChild(photoBtn);
@@ -1704,17 +1731,16 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       };
       profilePopup.appendChild(fileInput);
-      // Bouton déconnexions
+      // Bouton déconnexion (style simple)
       const logoutBtn = document.createElement("button");
       logoutBtn.textContent = "Déconnexion";
       logoutBtn.style.margin = "12px 0 0 0";
       logoutBtn.style.padding = "9px 24px";
-      logoutBtn.style.borderRadius = "8px";
-      logoutBtn.style.border = "none";
-      logoutBtn.style.background =
-        "linear-gradient(90deg,#ef4444 0%,#ffc107 100%)";
-      logoutBtn.style.color = "#fff";
-      logoutBtn.style.fontWeight = "bold";
+      logoutBtn.style.borderRadius = "6px";
+      logoutBtn.style.border = "1px solid #d1d5db";
+      logoutBtn.style.background = "#fff";
+      logoutBtn.style.color = "#2563eb";
+      logoutBtn.style.fontWeight = "500";
       logoutBtn.style.cursor = "pointer";
       logoutBtn.style.fontSize = "1.08em";
       logoutBtn.onclick = function () {
