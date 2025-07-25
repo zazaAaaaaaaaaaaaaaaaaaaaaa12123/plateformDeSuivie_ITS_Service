@@ -1362,14 +1362,55 @@
                 );
               });
             }
+            // Clic sur icône Responsable Acconier
             const iconRespAcconier =
               document.getElementById("iconRespAcconier");
             if (iconRespAcconier) {
               iconRespAcconier.addEventListener("click", function (e) {
                 e.preventDefault();
+                // Uniformisation de l'affichage : même logique que Suivi des Livraisons
                 chargerInterfaceDansMainContent(
                   "/html/resp_acconier.html",
                   "zoneRespAcconier",
+                  10000
+                );
+                // S'assurer que le conteneur occupe toute la largeur et est bien stylé
+                const mainContent = document.querySelector(".main-content");
+                if (mainContent) {
+                  mainContent.style.display = "flex";
+                  mainContent.style.flexDirection = "column";
+                  mainContent.style.alignItems = "stretch";
+                  mainContent.style.justifyContent = "flex-start";
+                  mainContent.style.padding = "30px";
+                }
+                setTimeout(function () {
+                  const zone = document.getElementById("zoneRespAcconier");
+                  if (zone) {
+                    zone.className = "dynamic-content-area";
+                    zone.style.margin = "0 auto";
+                    zone.style.maxWidth = "1200px";
+                    zone.style.width = "100%";
+                    zone.style.minHeight = "60vh";
+                    zone.style.background = "#fff";
+                    zone.style.borderRadius = "14px";
+                    zone.style.boxShadow =
+                      "0 2px 8px #2563eb22, 0 1px 4px #0001";
+                    zone.style.padding = "24px 18px";
+                    zone.style.overflowX = "auto";
+                    zone.style.boxSizing = "border-box";
+                    zone.style.display = "block";
+                  }
+                }, 100);
+              });
+            }
+            // Clic sur bouton Suivi des Livraisons de Conteneurs
+            const btnSuivi = document.getElementById("lienSuivi");
+            if (btnSuivi) {
+              btnSuivi.addEventListener("click", function (e) {
+                e.preventDefault();
+                chargerInterfaceDansMainContent(
+                  "/html/suivi_livraisons.html",
+                  "zoneSuiviLivraisons",
                   10000
                 );
               });
