@@ -1378,6 +1378,42 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (e.target === overlay) overlay.remove();
           };
         }
+        // Gestion stricte de la session responsable acconier
+        let respAcconierUser = null;
+        let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
+        if (!respAcconierUserRaw) {
+          // Si pas de session respAcconierUser, mais une session user existe, on permet l'accès au responsable principal SANS écraser une session existante
+          let userRaw = localStorage.getItem("user");
+          if (userRaw) {
+            try {
+              let user = JSON.parse(userRaw);
+              // On crée une session temporaire respAcconierUser pour ce cas précis
+              respAcconierUser = {
+                nom: user.nom || "",
+                email: user.email || "",
+                photo: user.photo || "",
+                profil: user.profil || "Responsable Acconier",
+              };
+              localStorage.setItem(
+                "respAcconierUser",
+                JSON.stringify(respAcconierUser)
+              );
+            } catch (e) {
+              window.location.href = "auth.html";
+              return;
+            }
+          } else {
+            window.location.href = "auth.html";
+            return;
+          }
+        } else {
+          try {
+            respAcconierUser = JSON.parse(respAcconierUserRaw);
+          } catch (e) {
+            window.location.href = "auth.html";
+            return;
+          }
+        }
         // ...existing code...
       } else if (col.id === "container_status") {
         // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
