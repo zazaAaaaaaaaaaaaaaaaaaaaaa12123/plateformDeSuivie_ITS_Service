@@ -663,17 +663,11 @@
             const removePhotoBtn = document.getElementById('removePhotoBtn');
             const mainAvatarPhoto = document.getElementById('mainAvatarPhoto');
             const mainAvatarIcon = document.getElementById('mainAvatarIcon');
-            // Affichage du menu profil + déconnexion sur second clic
+            // Affichage du menu profil
             if (avatar && dropdown) {
-              let avatarClickedOnce = false;
               avatar.onclick = function(e) {
                 e.stopPropagation();
-                if (dropdown.style.display === 'block') {
-                  // Si déjà ouvert, redirige vers la page de déconnexion
-                  window.location.href = 'https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html';
-                } else {
-                  dropdown.style.display = 'block';
-                }
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
               };
               document.addEventListener('click', function(e) {
                 if (!dropdown.contains(e.target) && e.target !== avatar) {
@@ -794,7 +788,7 @@
             if (logoutBtn) {
               logoutBtn.onclick = function(e) {
                 e.preventDefault();
-                  window.location.href = 'https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html';
+                window.location.href = 'https://plateformdesuivie-its-service-1cjx.onrender.com/html/auth.html#login';
               };
             }
             // Pour intégration future : remplacer ces valeurs dynamiquement après connexion
