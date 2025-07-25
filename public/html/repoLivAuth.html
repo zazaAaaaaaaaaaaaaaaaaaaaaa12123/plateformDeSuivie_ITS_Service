@@ -14,7 +14,7 @@
     />
     <style>
       body {
-        background: linear-gradient(120deg, #fffbe6, #ffe082);
+        background: linear-gradient(120deg, #1e3c72, #ffc107);
         font-family: "Montserrat", sans-serif;
         min-height: 100vh;
         margin: 0;
@@ -23,9 +23,9 @@
         justify-content: center;
       }
       .container {
-        background: #fff;
+        background: #ffc107;
         border-radius: 18px;
-        box-shadow: 0 8px 32px rgba(255, 193, 7, 0.18);
+        box-shadow: 0 8px 32px rgba(30, 60, 114, 0.18);
         padding: 2.5rem 2rem 2rem 2rem;
         width: 100%;
         max-width: 410px;
@@ -34,7 +34,7 @@
         transition: box-shadow 0.3s;
       }
       .container:hover {
-        box-shadow: 0 12px 40px rgba(255, 193, 7, 0.28);
+        box-shadow: 0 12px 40px rgba(30, 60, 114, 0.28);
       }
       .tabs {
         display: flex;
@@ -47,15 +47,15 @@
         padding: 0.7rem 0;
         cursor: pointer;
         font-weight: 700;
-        color: #ffc107;
+        color: #1e3c72;
         border-bottom: 2px solid transparent;
         transition: border 0.2s, color 0.2s;
         letter-spacing: 1px;
       }
       .tab.active {
-        color: #fffbe6;
-        border-bottom: 2.5px solid #ffc107;
-        background: linear-gradient(90deg, #fffbe6 60%, #ffe082 100%);
+        color: #ffc107;
+        border-bottom: 2.5px solid #1e3c72;
+        background: linear-gradient(90deg, #1e3c72 60%, #ffc107 100%);
         border-radius: 8px 8px 0 0;
       }
       form {
@@ -74,7 +74,7 @@
       }
       label {
         font-size: 1rem;
-        color: #ffc107;
+        color: #1e3c72;
         font-weight: 600;
         margin-bottom: 0.2rem;
       }
@@ -82,19 +82,19 @@
       input[type="email"],
       input[type="password"] {
         padding: 0.7rem 1rem;
-        border: 1.5px solid #ffe082;
+        border: 1.5px solid #1e3c72;
         border-radius: 7px;
         font-size: 1rem;
-        background: #fffbe6;
+        background: #fff;
         transition: border 0.2s;
         outline: none;
       }
       input:focus {
         border: 1.5px solid #ffc107;
-        background: #fffde7;
+        background: #e3ecfa;
       }
       .btn {
-        background: linear-gradient(90deg, #ffc107 60%, #ffe082 100%);
+        background: linear-gradient(90deg, #1e3c72 60%, #ffc107 100%);
         color: #fff;
         border: none;
         border-radius: 7px;
@@ -103,12 +103,12 @@
         font-weight: 700;
         cursor: pointer;
         margin-top: 0.5rem;
-        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.1);
+        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
         transition: background 0.2s, box-shadow 0.2s;
       }
       .btn:hover {
-        background: linear-gradient(90deg, #ffe082 60%, #ffc107 100%);
-        box-shadow: 0 4px 16px rgba(255, 193, 7, 0.18);
+        background: linear-gradient(90deg, #ffc107 60%, #1e3c72 100%);
+        box-shadow: 0 4px 16px rgba(30, 60, 114, 0.18);
       }
       .message {
         margin-top: 0.5rem;
