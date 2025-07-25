@@ -547,6 +547,25 @@
           "Connexion réussie ! Redirection...";
         document.getElementById("login-message").classList.add("success");
         setTimeout(function () {
+          // Récupère les valeurs du formulaire
+          var email = document.getElementById("login-email").value.trim();
+          var nom = "";
+          // Si le champ nom existe dans le formulaire d'inscription et l'utilisateur vient de s'inscrire, on le récupère
+          // Sinon, on laisse vide ou on peut le récupérer d'une API si besoin
+          // Ici, on tente de récupérer le nom depuis localStorage si déjà inscrit
+          if (localStorage.getItem("user_nom")) {
+            nom = localStorage.getItem("user_nom");
+          } else {
+            nom = "";
+          }
+          // Si l'utilisateur vient de s'inscrire, on récupère le nom du formulaire d'inscription
+          var signupNomInput = document.getElementById("signup-nom");
+          if (signupNomInput && signupNomInput.value) {
+            nom = signupNomInput.value.trim();
+          }
+          // Sauvegarde dans localStorage
+          localStorage.setItem("user_email", email);
+          localStorage.setItem("user_nom", nom);
           window.location.href =
             "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
         }, 1200);

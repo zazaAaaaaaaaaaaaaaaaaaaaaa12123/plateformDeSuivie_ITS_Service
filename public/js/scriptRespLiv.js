@@ -1565,3 +1565,71 @@ function adaptTableResponsive() {
 }
 window.addEventListener("resize", adaptTableResponsive);
 adaptTableResponsive();
+
+// ----------- AVATAR PROFIL EN HAUT À DROITE + DÉCONNEXION -----------
+document.addEventListener("DOMContentLoaded", function () {
+  // Crée le conteneur avatar
+  const avatarContainer = document.createElement("div");
+  avatarContainer.id = "profile-avatar-container";
+  avatarContainer.style.position = "fixed";
+  avatarContainer.style.top = "22px";
+  avatarContainer.style.right = "32px";
+  avatarContainer.style.zIndex = "100050";
+  avatarContainer.style.display = "flex";
+  avatarContainer.style.alignItems = "center";
+  avatarContainer.style.cursor = "pointer";
+  avatarContainer.style.background = "#fff";
+  avatarContainer.style.borderRadius = "50px";
+  avatarContainer.style.boxShadow = "0 4px 18px rgba(30,60,114,0.13)";
+  avatarContainer.style.padding = "7px 18px 7px 7px";
+  avatarContainer.style.transition = "box-shadow 0.2s";
+  avatarContainer.onmouseenter = function () {
+    avatarContainer.style.boxShadow = "0 8px 32px #ffc10755";
+  };
+  avatarContainer.onmouseleave = function () {
+    avatarContainer.style.boxShadow = "0 4px 18px rgba(30,60,114,0.13)";
+  };
+
+  // Avatar image
+  const avatarImg = document.createElement("img");
+  avatarImg.src = "https://cdn-icons-png.flaticon.com/512/1048/1048953.png";
+  avatarImg.alt = "Avatar profil";
+  avatarImg.style.width = "38px";
+  avatarImg.style.height = "38px";
+  avatarImg.style.borderRadius = "50%";
+  avatarImg.style.objectFit = "cover";
+  avatarImg.style.marginRight = "12px";
+  avatarImg.style.boxShadow = "0 2px 8px #ffc10733";
+  avatarContainer.appendChild(avatarImg);
+
+  // Infos utilisateur
+  const infoDiv = document.createElement("div");
+  infoDiv.style.display = "flex";
+  infoDiv.style.flexDirection = "column";
+  infoDiv.style.justifyContent = "center";
+  infoDiv.style.alignItems = "flex-start";
+  infoDiv.style.gap = "2px";
+  infoDiv.style.fontFamily = "Montserrat, Arial, sans-serif";
+  infoDiv.style.fontSize = "1.01em";
+  infoDiv.style.color = "#1e3c72";
+  infoDiv.style.fontWeight = "700";
+
+  // Récupère nom et email depuis localStorage
+  let userName = localStorage.getItem("user_nom") || "Utilisateur";
+  let userEmail = localStorage.getItem("user_email") || "-";
+  infoDiv.innerHTML = `<span style='font-weight:700;'>${userName}</span><span style='font-weight:400;font-size:0.97em;color:#2a5298;'>${userEmail}</span>`;
+  avatarContainer.appendChild(infoDiv);
+
+  // Ajoute le conteneur au body
+  document.body.appendChild(avatarContainer);
+
+  // Déconnexion au clic sur l'avatar
+  avatarContainer.onclick = function () {
+    // Supprime les infos utilisateur
+    localStorage.removeItem("user_nom");
+    localStorage.removeItem("user_email");
+    // Redirige vers la page d'authentification
+    window.location.href =
+      "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
+  };
+});
