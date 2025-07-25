@@ -1728,3 +1728,15 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   }
 }
 //originale
+
+
+
+1.Affichage dynamique dans la zone main-content
+Au lieu de rediriger vers une nouvelle page lors du clic sur les icônes, on va charger le contenu de resp_acconier.html ou resp_liv.html dans la section main-content via AJAX (fetch).
+Cela permet à l’administrateur de superviser les deux interfaces sans quitter son tableau de bord.
+
+2.Aucune modification pour les responsables
+Les responsables continueront d’accéder directement à leur interface respective, sans passer par le tableau de bord.
+
+3.Connexion parallèle pour le suivi en temps réel
+Pour le suivi en direct, il faudra mettre en place une communication en temps réel (WebSocket ou polling régulier) pour afficher les activités des responsables dans le tableau de bord de l’admin.

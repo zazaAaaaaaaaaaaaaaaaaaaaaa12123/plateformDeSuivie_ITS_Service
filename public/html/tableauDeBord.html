@@ -1264,21 +1264,71 @@
 
         <script>
           document.addEventListener("DOMContentLoaded", function () {
-            // Redirection au clic sur les icônes responsables
+            // Chargement dynamique des interfaces responsables dans main-content
+            function chargerInterfaceDansMainContent(url, zoneId) {
+              const mainContent = document.querySelector(".main-content");
+              if (!mainContent) return;
+              // Option : zone dédiée pour chaque interface
+              let zone = document.getElementById(zoneId);
+              if (!zone) {
+                zone = document.createElement("div");
+                zone.id = zoneId;
+                zone.className = "dynamic-content-area";
+                mainContent.innerHTML = "";
+                mainContent.appendChild(zone);
+              } else {
+                mainContent.innerHTML = "";
+                mainContent.appendChild(zone);
+              }
+              zone.innerHTML =
+                '<div style="text-align:center;padding:40px 0;font-size:1.2em;color:#2563eb;">Chargement en cours...</div>';
+              fetch(url)
+                .then((res) => res.text())
+                .then((html) => {
+                  // Extraire uniquement le contenu utile (éviter <html>, <head>, etc.)
+                  let extrait = html;
+                  // Si le fichier contient <main> ou une zone principale, on extrait
+                  const match = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+                  if (match) {
+                    extrait = match[1];
+                  } else {
+                    // Sinon, on tente d'extraire le <body>
+                    const matchBody = html.match(
+                      /<body[^>]*>([\s\S]*?)<\/body>/i
+                    );
+                    if (matchBody) extrait = matchBody[1];
+                  }
+                  zone.innerHTML = extrait;
+                  // Option : recharger les scripts JS nécessaires ?
+                  // (à adapter si besoin)
+                })
+                .catch(() => {
+                  zone.innerHTML =
+                    '<div style="color:#dc3545;text-align:center;padding:40px 0;">Erreur lors du chargement de l\'interface.</div>';
+                });
+            }
+            // Clic sur icône Responsable Livraisons
             const iconRespLivraison =
               document.getElementById("iconRespLivraison");
             if (iconRespLivraison) {
-              iconRespLivraison.addEventListener("click", function () {
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
+              iconRespLivraison.addEventListener("click", function (e) {
+                e.preventDefault();
+                chargerInterfaceDansMainContent(
+                  "/html/resp_liv.html",
+                  "zoneRespLivraison"
+                );
               });
             }
+            // Clic sur icône Responsable Acconier
             const iconRespAcconier =
               document.getElementById("iconRespAcconier");
             if (iconRespAcconier) {
-              iconRespAcconier.addEventListener("click", function () {
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
+              iconRespAcconier.addEventListener("click", function (e) {
+                e.preventDefault();
+                chargerInterfaceDansMainContent(
+                  "/html/resp_acconier.html",
+                  "zoneRespAcconier"
+                );
               });
             }
             // --- Gestion du popup de modification du code entreprise ---

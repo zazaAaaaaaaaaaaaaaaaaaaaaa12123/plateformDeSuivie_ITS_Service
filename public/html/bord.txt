@@ -1568,3 +1568,11 @@ adaptTableResponsive();
 
 
 /***bn */
+Mais pour faire un suivi bon meme il est preferable que si 
+le reponsable se connecte sur index.html et qu'il est rediriger
+ vers le tableau de bord qu'il soit aussi connecter aussi automatiquement 
+ dans les interface comme  https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html 
+ et https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html . 
+ il le fais pour fait le suivie 
+ sur chaque lien pour suivre les activite que ferons les responsable de livraison et responsable acconier 
+c'est a dire il verra leur  activite se faire devant lui . 
