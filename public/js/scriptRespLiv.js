@@ -1568,18 +1568,38 @@ adaptTableResponsive();
 
 // ----------- AVATAR PROFIL EN HAUT À DROITE + DÉCONNEXION -----------
 document.addEventListener("DOMContentLoaded", function () {
-  // Redirection immédiate si respLivUser absent
+  // Gestion stricte de la session responsable livraison
   let respLivUser = null;
   let respLivUserRaw = localStorage.getItem("respLivUser");
   if (!respLivUserRaw) {
-    window.location.href = "repoLivAuth.html";
-    return;
-  }
-  try {
-    respLivUser = JSON.parse(respLivUserRaw);
-  } catch (e) {
-    window.location.href = "repoLivAuth.html";
-    return;
+    // Si pas de session respLivUser, mais une session user existe, on permet l'accès au responsable principal SANS écraser une session existante
+    let userRaw = localStorage.getItem("user");
+    if (userRaw) {
+      try {
+        let user = JSON.parse(userRaw);
+        // On crée une session temporaire respLivUser pour ce cas précis
+        respLivUser = {
+          nom: user.nom || "",
+          email: user.email || "",
+          photo: user.photo || "",
+          profil: user.profil || "Responsable Livraison",
+        };
+        localStorage.setItem("respLivUser", JSON.stringify(respLivUser));
+      } catch (e) {
+        window.location.href = "repoLivAuth.html";
+        return;
+      }
+    } else {
+      window.location.href = "repoLivAuth.html";
+      return;
+    }
+  } else {
+    try {
+      respLivUser = JSON.parse(respLivUserRaw);
+    } catch (e) {
+      window.location.href = "repoLivAuth.html";
+      return;
+    }
   }
   // Crée le conteneur avatar
   const avatarContainer = document.createElement("div");
