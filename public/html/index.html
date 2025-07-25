@@ -485,6 +485,69 @@
       document.getElementById("ctaSignup").onclick = () => {
         document.getElementById("openSignupBtn").click();
       };
+
+      // Redirection automatique vers tableauDeBord.html après connexion réussie
+      document.addEventListener("DOMContentLoaded", function () {
+        const loginForm = document.getElementById("loginForm");
+        if (loginForm) {
+          loginForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            // ... récupération des champs ...
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value;
+            // Appel API ou vérification locale (à adapter selon ton backend)
+            fetch("/api/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password }),
+            })
+              .then((res) => res.json())
+              .then((data) => {
+                if (data.success) {
+                  // Stocke le nom/email dans localStorage pour le dashboard
+                  localStorage.setItem(
+                    "user_nom",
+                    data.nom || email.split("@")[0]
+                  );
+                  localStorage.setItem("user_email", email);
+                  // Redirige vers le tableau de bord principal
+                  window.location.href =
+                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/tableauDeBord.html";
+                } else {
+                  // Affiche une alerte ou un message d'erreur
+                  const alertMsg =
+                    document.getElementById("customAlertMessage");
+                  if (alertMsg) {
+                    alertMsg.textContent =
+                      data.message || "Identifiants incorrects.";
+                    document
+                      .getElementById("customAlert")
+                      .classList.remove("hidden");
+                    setTimeout(() => {
+                      document
+                        .getElementById("customAlert")
+                        .classList.add("hidden");
+                    }, 2500);
+                  }
+                }
+              })
+              .catch(() => {
+                const alertMsg = document.getElementById("customAlertMessage");
+                if (alertMsg) {
+                  alertMsg.textContent = "Erreur réseau.";
+                  document
+                    .getElementById("customAlert")
+                    .classList.remove("hidden");
+                  setTimeout(() => {
+                    document
+                      .getElementById("customAlert")
+                      .classList.add("hidden");
+                  }, 2500);
+                }
+              });
+          });
+        }
+      });
     </script>
   </body>
 </html>
