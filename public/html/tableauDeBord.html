@@ -20,6 +20,66 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
+      /* Icônes responsables sous l'avatar - Adaptation responsive et propre */
+      #sidebarUserProfile .icon-resp {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+        box-shadow: 0 2px 8px #05966922;
+        cursor: pointer;
+        margin: 0;
+        transition: box-shadow 0.18s, transform 0.18s;
+        overflow: hidden;
+      }
+      #sidebarUserProfile .icon-resp-acconier {
+        background: #fff7e3;
+        box-shadow: 0 2px 8px #f59e0b22;
+      }
+      #sidebarUserProfile .icon-resp-livraison {
+        background: #e3ffe3;
+        box-shadow: 0 2px 8px #05966922;
+      }
+      #sidebarUserProfile .icon-resp i {
+        font-size: 1.45em;
+        transition: color 0.18s;
+        display: block;
+      }
+      #sidebarUserProfile .icon-resp-acconier i {
+        color: #f59e0b;
+      }
+      #sidebarUserProfile .icon-resp-livraison i {
+        color: #059669;
+      }
+      @media (max-width: 700px) {
+        #sidebarUserProfile .icon-resp {
+          width: 32px;
+          height: 32px;
+        }
+        #sidebarUserProfile .icon-resp i {
+          font-size: 1.1em;
+        }
+      }
+      /* Adaptation du contenu dynamique dans main-content */
+      .main-content .dynamic-content-area {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px #2563eb22, 0 1px 4px #0001;
+        padding: 24px 18px;
+        margin: 0 auto;
+        max-width: 1200px;
+        width: 100%;
+        min-height: 60vh;
+        overflow-x: auto;
+        box-sizing: border-box;
+        display: block;
+      }
+      .main-content .dynamic-content-area > * {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
       /* Styles généraux pour le corps */
       html,
       body {
@@ -772,43 +832,17 @@
           >
             <span
               id="iconRespAcconier"
+              class="icon-resp icon-resp-acconier"
               title="Responsable Acconier"
-              style="
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #fff7e3;
-                border-radius: 50%;
-                width: 38px;
-                height: 38px;
-                box-shadow: 0 2px 8px #f59e0b22;
-                cursor: pointer;
-              "
             >
-              <i
-                class="fas fa-user-shield"
-                style="font-size: 1.45em; color: #f59e0b"
-              ></i>
+              <i class="fas fa-user-shield"></i>
             </span>
             <span
               id="iconRespLivraison"
+              class="icon-resp icon-resp-livraison"
               title="Responsable Livraison"
-              style="
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #e3ffe3;
-                border-radius: 50%;
-                width: 38px;
-                height: 38px;
-                box-shadow: 0 2px 8px #05966922;
-                cursor: pointer;
-              "
             >
-              <i
-                class="fas fa-user-check"
-                style="font-size: 1.45em; color: #059669"
-              ></i>
+              <i class="fas fa-user-check"></i>
             </span>
           </div>
         </div>
@@ -1265,10 +1299,18 @@
         <script>
           document.addEventListener("DOMContentLoaded", function () {
             // Chargement dynamique des interfaces responsables dans main-content
-            function chargerInterfaceDansMainContent(url, zoneId) {
+            // Rafraîchissement automatique du contenu dynamique
+            let refreshIntervals = {};
+            function chargerInterfaceDansMainContent(
+              url,
+              zoneId,
+              refreshMs = 10000
+            ) {
               const mainContent = document.querySelector(".main-content");
               if (!mainContent) return;
-              // Option : zone dédiée pour chaque interface
+              // Nettoyer les anciens intervalles
+              Object.values(refreshIntervals).forEach(clearInterval);
+              refreshIntervals = {};
               let zone = document.getElementById(zoneId);
               if (!zone) {
                 zone = document.createElement("div");
@@ -1280,32 +1322,32 @@
                 mainContent.innerHTML = "";
                 mainContent.appendChild(zone);
               }
-              zone.innerHTML =
-                '<div style="text-align:center;padding:40px 0;font-size:1.2em;color:#2563eb;">Chargement en cours...</div>';
-              fetch(url)
-                .then((res) => res.text())
-                .then((html) => {
-                  // Extraire uniquement le contenu utile (éviter <html>, <head>, etc.)
-                  let extrait = html;
-                  // Si le fichier contient <main> ou une zone principale, on extrait
-                  const match = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
-                  if (match) {
-                    extrait = match[1];
-                  } else {
-                    // Sinon, on tente d'extraire le <body>
-                    const matchBody = html.match(
-                      /<body[^>]*>([\s\S]*?)<\/body>/i
-                    );
-                    if (matchBody) extrait = matchBody[1];
-                  }
-                  zone.innerHTML = extrait;
-                  // Option : recharger les scripts JS nécessaires ?
-                  // (à adapter si besoin)
-                })
-                .catch(() => {
-                  zone.innerHTML =
-                    '<div style="color:#dc3545;text-align:center;padding:40px 0;">Erreur lors du chargement de l\'interface.</div>';
-                });
+              function chargerContenu() {
+                zone.innerHTML =
+                  '<div style="text-align:center;padding:40px 0;font-size:1.2em;color:#2563eb;">Chargement en cours...</div>';
+                fetch(url)
+                  .then((res) => res.text())
+                  .then((html) => {
+                    let extrait = html;
+                    const match = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+                    if (match) {
+                      extrait = match[1];
+                    } else {
+                      const matchBody = html.match(
+                        /<body[^>]*>([\s\S]*?)<\/body>/i
+                      );
+                      if (matchBody) extrait = matchBody[1];
+                    }
+                    zone.innerHTML = extrait;
+                  })
+                  .catch(() => {
+                    zone.innerHTML =
+                      '<div style="color:#dc3545;text-align:center;padding:40px 0;">Erreur lors du chargement de l\'interface.</div>';
+                  });
+              }
+              chargerContenu();
+              // Actualisation automatique
+              refreshIntervals[zoneId] = setInterval(chargerContenu, refreshMs);
             }
             // Clic sur icône Responsable Livraisons
             const iconRespLivraison =
@@ -1315,11 +1357,11 @@
                 e.preventDefault();
                 chargerInterfaceDansMainContent(
                   "/html/resp_liv.html",
-                  "zoneRespLivraison"
+                  "zoneRespLivraison",
+                  10000
                 );
               });
             }
-            // Clic sur icône Responsable Acconier
             const iconRespAcconier =
               document.getElementById("iconRespAcconier");
             if (iconRespAcconier) {
@@ -1327,7 +1369,8 @@
                 e.preventDefault();
                 chargerInterfaceDansMainContent(
                   "/html/resp_acconier.html",
-                  "zoneRespAcconier"
+                  "zoneRespAcconier",
+                  10000
                 );
               });
             }
