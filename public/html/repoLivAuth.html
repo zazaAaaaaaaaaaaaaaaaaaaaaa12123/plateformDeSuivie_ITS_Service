@@ -296,153 +296,6 @@
       >
         Espace Responsable de Livraison
       </h2>
-      <!-- Avatar bleu + dropdown profil -->
-      <div
-        class="d-flex flex-column align-items-end flex-shrink-0"
-        style="min-width: 60px; position: relative; margin-bottom: 18px"
-      >
-        <div
-          id="profileAvatar"
-          style="
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: #e0e7ef;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px #2563eb22;
-            cursor: pointer;
-            position: relative;
-          "
-        >
-          <i
-            class="fas fa-user"
-            id="mainAvatarIcon"
-            style="font-size: 2.1em; color: #2563eb"
-          ></i>
-          <img
-            id="mainAvatarPhoto"
-            src=""
-            alt="Photo de profil"
-            style="
-              display: none;
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-              position: absolute;
-              top: 0;
-              left: 0;
-              border-radius: 50%;
-              z-index: 1;
-            "
-          />
-        </div>
-        <div
-          id="profileDropdown"
-          style="
-            display: none;
-            position: absolute;
-            top: 76px;
-            right: 0;
-            min-width: 220px;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.18);
-            padding: 18px 20px;
-            z-index: 1001;
-          "
-        >
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              margin-bottom: 10px;
-              position: relative;
-            "
-          >
-            <span
-              id="profilePhotoCircle"
-              style="
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 48px;
-                height: 48px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, #2563eb 60%, #1e293b 100%);
-                box-shadow: 0 2px 8px #2563eb22;
-                overflow: hidden;
-                cursor: pointer;
-                position: relative;
-              "
-            >
-              <i
-                class="fas fa-camera"
-                id="cameraIcon"
-                style="font-size: 1.5em; color: #fff; z-index: 2"
-              ></i>
-              <img
-                id="profilePhotoPreview"
-                src=""
-                alt="Photo de profil"
-                style="
-                  display: none;
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  z-index: 1;
-                "
-              />
-              <button
-                id="removePhotoBtn"
-                title="Supprimer la photo"
-                style="
-                  display: none;
-                  position: absolute;
-                  top: 2px;
-                  right: 2px;
-                  width: 22px;
-                  height: 22px;
-                  border-radius: 50%;
-                  background: #fff;
-                  border: none;
-                  box-shadow: 0 1px 4px #2563eb22;
-                  z-index: 3;
-                  align-items: center;
-                  justify-content: center;
-                  padding: 0;
-                  cursor: pointer;
-                "
-              >
-                <i
-                  class="fas fa-times"
-                  style="color: #2563eb; font-size: 1em"
-                ></i>
-              </button>
-            </span>
-            <input
-              type="file"
-              id="profilePhotoInput"
-              accept="image/*"
-              style="display: none"
-            />
-          </div>
-          <div
-            id="profileName"
-            style="font-weight: 600; font-size: 1.08em; color: #0e274e"
-          >
-            Nom de l'utilisateur
-          </div>
-          <div id="profileEmail" style="font-size: 0.98em; color: #64748b">
-            email@exemple.com
-          </div>
-        </div>
-      </div>
       <div class="tabs">
         <div class="tab active" id="tab-signup">Inscription</div>
         <div class="tab" id="tab-login">Connexion</div>
@@ -604,69 +457,6 @@
       </div>
     </div>
     <script>
-      // Avatar bleu : injection nom/email + dropdown
-      document.addEventListener("DOMContentLoaded", function () {
-        const userName =
-          localStorage.getItem("user_nom") || localStorage.getItem("userName");
-        const userEmail =
-          localStorage.getItem("user_email") ||
-          localStorage.getItem("userEmail");
-        const avatarEl = document.getElementById("profileAvatar");
-        const nameEl = document.getElementById("profileName");
-        const emailEl = document.getElementById("profileEmail");
-        if (userName && userEmail) {
-          if (nameEl) nameEl.textContent = userName;
-          if (emailEl) emailEl.textContent = userEmail;
-          if (avatarEl) {
-            let initials = userName
-              .split(" ")
-              .map((w) => w[0])
-              .join("")
-              .toUpperCase();
-            if (initials.length > 2) initials = initials.slice(0, 2);
-            let icon = avatarEl.querySelector("i.fas.fa-user");
-            if (!icon) {
-              icon = document.createElement("i");
-              icon.className = "fas fa-user";
-              icon.style.fontSize = "2.1em";
-              icon.style.color = "#2563eb";
-              avatarEl.appendChild(icon);
-            }
-            let initialsSpan = avatarEl.querySelector(".avatar-initials");
-            if (!initialsSpan) {
-              initialsSpan = document.createElement("span");
-              initialsSpan.className = "avatar-initials";
-              initialsSpan.style.position = "absolute";
-              initialsSpan.style.right = "8px";
-              initialsSpan.style.bottom = "8px";
-              initialsSpan.style.fontSize = "1.1em";
-              initialsSpan.style.fontWeight = "700";
-              initialsSpan.style.color = "#2563eb";
-              initialsSpan.style.background = "#fff";
-              initialsSpan.style.borderRadius = "50%";
-              initialsSpan.style.padding = "2px 7px";
-              initialsSpan.style.boxShadow = "0 1px 4px #2563eb22";
-              avatarEl.appendChild(initialsSpan);
-            }
-            initialsSpan.textContent = initials;
-            avatarEl.style.position = "relative";
-          }
-        }
-        // Dropdown profil au clic sur avatar
-        const dropdown = document.getElementById("profileDropdown");
-        if (avatarEl && dropdown) {
-          avatarEl.onclick = function (e) {
-            e.stopPropagation();
-            dropdown.style.display =
-              dropdown.style.display === "block" ? "none" : "block";
-          };
-          document.addEventListener("click", function (e) {
-            if (!dropdown.contains(e.target) && e.target !== avatarEl) {
-              dropdown.style.display = "none";
-            }
-          });
-        }
-      });
       // Tab switching
       document.getElementById("tab-signup").onclick = function () {
         this.classList.add("active");
@@ -680,7 +470,7 @@
         document.getElementById("login-form").classList.add("active");
         document.getElementById("signup-form").classList.remove("active");
       };
-      // Affichage/masquage du mot de passes
+      // Affichage/masquage du mot de passe
       function togglePassword(id, el) {
         const input = document.getElementById(id);
         if (input.type === "password") {
@@ -749,7 +539,7 @@
           document.getElementById("signup-message").classList.remove("success");
         }, 1200);
       };
-      // Gestion du formulaire de connexion
+      // Gestion du formulaire de connexions
       document.getElementById("login-form").onsubmit = function (e) {
         e.preventDefault();
         // Simule une connexion réussie
