@@ -1631,14 +1631,123 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajoute le conteneur au body
   document.body.appendChild(avatarContainer);
 
-  // Déconnexion au clic sur l'avatar
-  avatarContainer.onclick = function () {
-    // Supprime les infos utilisateur
-    localStorage.removeItem("user_nom");
-    localStorage.removeItem("user_email");
-    // Redirige vers la page d'authentification
-    window.location.href =
-      "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
+  // Ajout de la boîte flottante profil
+  let profilePopup = null;
+  avatarContainer.onclick = function (e) {
+    e.stopPropagation();
+    // Si déjà ouverte, fermer
+    if (profilePopup && profilePopup.style.display === "block") {
+      profilePopup.style.display = "none";
+      return;
+    }
+    // Crée la boîte si pas déjà créée
+    if (!profilePopup) {
+      profilePopup = document.createElement("div");
+      profilePopup.id = "profile-popup-box";
+      profilePopup.style.position = "fixed";
+      profilePopup.style.top = "70px";
+      profilePopup.style.right = "42px";
+      profilePopup.style.zIndex = "100051";
+      profilePopup.style.background = "#fff";
+      profilePopup.style.borderRadius = "18px";
+      profilePopup.style.boxShadow = "0 8px 32px #2563eb33";
+      profilePopup.style.padding = "28px 32px 24px 32px";
+      profilePopup.style.display = "block";
+      profilePopup.style.minWidth = "260px";
+      profilePopup.style.maxWidth = "96vw";
+      profilePopup.style.textAlign = "center";
+      profilePopup.style.fontFamily = "Montserrat, Arial, sans-serif";
+      // Photo de profil
+      const imgEdit = document.createElement("img");
+      imgEdit.id = "profile-avatar-edit-img";
+      imgEdit.src = localStorage.getItem("user_photo") || avatarImg.src;
+      imgEdit.alt = "Photo de profil";
+      imgEdit.style.width = "64px";
+      imgEdit.style.height = "64px";
+      imgEdit.style.borderRadius = "50%";
+      imgEdit.style.objectFit = "cover";
+      imgEdit.style.boxShadow = "0 2px 8px #ffc10733";
+      imgEdit.style.marginBottom = "12px";
+      profilePopup.appendChild(imgEdit);
+      // Bouton pour choisir une photo
+      const photoBtn = document.createElement("button");
+      photoBtn.textContent = "Changer la photo";
+      photoBtn.style.margin = "0 0 18px 0";
+      photoBtn.style.padding = "7px 18px";
+      photoBtn.style.borderRadius = "8px";
+      photoBtn.style.border = "none";
+      photoBtn.style.background =
+        "linear-gradient(90deg,#2563eb 0%,#ffc107 100%)";
+      photoBtn.style.color = "#fff";
+      photoBtn.style.fontWeight = "bold";
+      photoBtn.style.cursor = "pointer";
+      photoBtn.style.fontSize = "1em";
+      profilePopup.appendChild(photoBtn);
+      // Input file caché
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
+      fileInput.style.display = "none";
+      photoBtn.onclick = function () {
+        fileInput.click();
+      };
+      fileInput.onchange = function (ev) {
+        const file = ev.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            imgEdit.src = e.target.result;
+            avatarImg.src = e.target.result;
+            localStorage.setItem("user_photo", e.target.result);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      profilePopup.appendChild(fileInput);
+      // Bouton déconnexion
+      const logoutBtn = document.createElement("button");
+      logoutBtn.textContent = "Déconnexion";
+      logoutBtn.style.margin = "12px 0 0 0";
+      logoutBtn.style.padding = "9px 24px";
+      logoutBtn.style.borderRadius = "8px";
+      logoutBtn.style.border = "none";
+      logoutBtn.style.background =
+        "linear-gradient(90deg,#ef4444 0%,#ffc107 100%)";
+      logoutBtn.style.color = "#fff";
+      logoutBtn.style.fontWeight = "bold";
+      logoutBtn.style.cursor = "pointer";
+      logoutBtn.style.fontSize = "1.08em";
+      logoutBtn.onclick = function () {
+        localStorage.removeItem("user_nom");
+        localStorage.removeItem("user_email");
+        localStorage.removeItem("user_photo");
+        window.location.href =
+          "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
+      };
+      profilePopup.appendChild(logoutBtn);
+      document.body.appendChild(profilePopup);
+    } else {
+      profilePopup.style.display = "block";
+    }
+    // Met à jour la photo si elle existe
+    const imgEdit = document.getElementById("profile-avatar-edit-img");
+    if (imgEdit && localStorage.getItem("user_photo")) {
+      imgEdit.src = localStorage.getItem("user_photo");
+      avatarImg.src = localStorage.getItem("user_photo");
+    }
+    // Fermer la boîte si clic en dehors
+    setTimeout(() => {
+      document.addEventListener("click", function hideProfilePopup(ev) {
+        if (
+          profilePopup &&
+          !profilePopup.contains(ev.target) &&
+          ev.target !== avatarContainer
+        ) {
+          profilePopup.style.display = "none";
+          document.removeEventListener("click", hideProfilePopup);
+        }
+      });
+    }, 10);
   };
 });
 /***bn */
