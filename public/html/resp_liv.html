@@ -723,12 +723,6 @@
           <div style="min-width:0;flex:1 1 0;">
             <h1 class="mb-1" style="font-size:2.1em;font-weight:900;color:#0e274e;letter-spacing:-1px;background:linear-gradient(90deg,#ffe066 0%,#0e274e 100%);padding:18px 32px;border-radius:18px;box-shadow:0 4px 24px #0e274e22;">Tableau - Responsable de Livraison</h1>
             <div style="font-size:1.13em;color:#0e274e;font-weight:600;background:rgba(255,230,0,0.13);padding:10px 24px;border-radius:12px;"> Livraison & Cotage des agent Visiteur pour la visite </div>
-            <!-- Bouton de redirection vers Resp.Aconnier -->
-            <div style="margin-top:18px;margin-bottom:8px;">
-              <button id="goToRespAcconierBtn" type="button" class="btn btn-warning" style="font-weight:700;font-size:1.08em;padding:10px 28px;border-radius:10px;background:linear-gradient(90deg,#ffc107 0%,#0e274e 100%);color:#0e274e;border:none;box-shadow:0 2px 8px #0e274e22;">
-                Allez vers Resp.Aconnier
-              </button>
-            </div>
             <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
             <div class="scrolling-message-bar" id="newAgentScrollingContainer" style="margin-top:10px;max-width:350px;width:100%;overflow-x:auto;">
               <div class="scrolling-message-content" id="newAgentScrollingContent"></div>
@@ -889,13 +883,6 @@
         if (searchButton && searchInput) {
           searchButton.addEventListener('click', filterDeliveries);
           searchInput.addEventListener('input', filterDeliveries);
-        }
-        // Ajout de l'écouteur pour le bouton de redirection
-        const goToRespAcconierBtn = document.getElementById('goToRespAcconierBtn');
-        if (goToRespAcconierBtn) {
-          goToRespAcconierBtn.addEventListener('click', function() {
-            window.location.href = 'https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html';
-          });
         }
       });
     </script>
