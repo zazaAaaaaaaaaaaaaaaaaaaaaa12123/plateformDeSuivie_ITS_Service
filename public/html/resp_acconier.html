@@ -1177,8 +1177,30 @@
     <script>
       // Injection du nom et email dans l'avatar et le dropdown profil après connexion
       document.addEventListener("DOMContentLoaded", function () {
-        const userName = localStorage.getItem("userName");
-        const userEmail = localStorage.getItem("userEmail");
+        // Récupération du nom/email du responsable principal (admin) ou du responsable acconier
+        let userName =
+          localStorage.getItem("user_nom") || localStorage.getItem("userName");
+        let userEmail =
+          localStorage.getItem("user_email") ||
+          localStorage.getItem("userEmail");
+        let isAdmin = false;
+        // Si les infos admin sont présentes, on considère que c'est le responsable principal
+        if (
+          userName &&
+          userEmail &&
+          userName !== "Utilisateur" &&
+          userEmail !== "-"
+        ) {
+          isAdmin = true;
+        }
+        if (!userName || userName === "Utilisateur") {
+          // Si le nom n'est pas défini, utiliser la partie avant le @ de l'email
+          if (userEmail && userEmail.includes("@")) {
+            userName = userEmail.split("@")[0];
+          } else {
+            userName = "-";
+          }
+        }
         if (userName && userEmail) {
           // Affiche le nom et l'email dans le dropdown profil
           const nameEl = document.getElementById("profileName");

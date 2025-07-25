@@ -1568,3 +1568,11 @@ adaptTableResponsive();
 
 
 /***bn */
+
+pour le numero du conteneur je veux que tu met une logique ,  la logique 
+c'est que  le NUMERO TC est de 11 caractere au totales 
+pour detailleé . Sur les 11 caracteres : 
+                - Les 4 premiers caracteres sont des lettres
+                -  7 Les autres caratere sont en Chiffres 
+Donc si en fonction de cette logique si les bons caractere ne sont pas entrer alors 
+mentionner une erreurs .

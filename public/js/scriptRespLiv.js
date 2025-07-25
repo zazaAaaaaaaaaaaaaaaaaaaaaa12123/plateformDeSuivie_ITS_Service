@@ -1614,9 +1614,20 @@ document.addEventListener("DOMContentLoaded", function () {
   infoDiv.style.color = "#1e3c72";
   infoDiv.style.fontWeight = "700";
 
-  // Récupère nom et email depuis localStorage
+  // Logique d'affichage admin ou responsable livraison
   let userEmail = localStorage.getItem("user_email") || "-";
   let userName = localStorage.getItem("user_nom");
+  let isAdmin = false;
+  // On considère que si user_nom et user_email sont présents et ont été posés par le tableau de bord admin, c'est l'admin
+  // (tu peux affiner la détection si besoin)
+  if (
+    userName &&
+    userEmail &&
+    userName !== "Utilisateur" &&
+    userEmail !== "-"
+  ) {
+    isAdmin = true;
+  }
   if (!userName || userName === "Utilisateur") {
     // Si le nom n'est pas défini, utiliser la partie avant le @ de l'email
     if (userEmail && userEmail.includes("@")) {
@@ -1747,8 +1758,9 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.removeItem("user_nom");
         localStorage.removeItem("user_email");
         localStorage.removeItem("user_photo");
-        window.location.href =
-          "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
+        window.location.href = isAdmin
+          ? "https://plateformdesuivie-its-service-1cjx.onrender.com/html/index.html"
+          : "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
       };
       profilePopup.appendChild(logoutBtn);
       document.body.appendChild(profilePopup);
