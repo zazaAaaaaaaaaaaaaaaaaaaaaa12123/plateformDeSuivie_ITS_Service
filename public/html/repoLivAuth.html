@@ -606,28 +606,23 @@
     <script>
       // Avatar bleu : injection nom/email + dropdown
       document.addEventListener("DOMContentLoaded", function () {
-        function updateProfileAvatar() {
-          const userName =
-            localStorage.getItem("userName") ||
-            localStorage.getItem("user_nom");
-          const userEmail =
-            localStorage.getItem("userEmail") ||
-            localStorage.getItem("user_email");
-          const avatarEl = document.getElementById("profileAvatar");
-          const nameEl = document.getElementById("profileName");
-          const emailEl = document.getElementById("profileEmail");
-          if (nameEl)
-            nameEl.textContent = userName ? userName : "Nom de l'utilisateur";
-          if (emailEl)
-            emailEl.textContent = userEmail ? userEmail : "email@exemple.com";
+        const userName =
+          localStorage.getItem("user_nom") || localStorage.getItem("userName");
+        const userEmail =
+          localStorage.getItem("user_email") ||
+          localStorage.getItem("userEmail");
+        const avatarEl = document.getElementById("profileAvatar");
+        const nameEl = document.getElementById("profileName");
+        const emailEl = document.getElementById("profileEmail");
+        if (userName && userEmail) {
+          if (nameEl) nameEl.textContent = userName;
+          if (emailEl) emailEl.textContent = userEmail;
           if (avatarEl) {
             let initials = userName
-              ? userName
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")
-                  .toUpperCase()
-              : "";
+              .split(" ")
+              .map((w) => w[0])
+              .join("")
+              .toUpperCase();
             if (initials.length > 2) initials = initials.slice(0, 2);
             let icon = avatarEl.querySelector("i.fas.fa-user");
             if (!icon) {
@@ -657,7 +652,6 @@
             avatarEl.style.position = "relative";
           }
         }
-        updateProfileAvatar();
         // Dropdown profil au clic sur avatar
         const dropdown = document.getElementById("profileDropdown");
         if (avatarEl && dropdown) {
