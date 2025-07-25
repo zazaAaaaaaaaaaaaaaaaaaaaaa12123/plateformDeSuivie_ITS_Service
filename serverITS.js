@@ -3248,6 +3248,74 @@ app.use((req, res, next) => {
 // ===============================
 // PATCH: Mise à jour du statut BL (bl_statuses) pour une livraison
 // ===============================
+app.patch("/deliveries/:id/bl-status", async (req, res) => {
+  const { id } = req.params;
+  const { blNumber, status } = req.body || {};
+  if (!blNumber || typeof status !== "string") {
+    return res.status(400).json({
+      success: false,
+      message: "Paramètres manquants (blNumber, status)",
+    });
+  }
+  try {
+    // Récupère l'existant
+    const result = await pool.query(
+      "SELECT * FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée" });
+    }
+    let bl_statuses = result.rows[0].bl_statuses || {};
+    if (typeof bl_statuses === "string") {
+      try {
+        bl_statuses = JSON.parse(bl_statuses);
+      } catch {
+        bl_statuses = {};
+      }
+    }
+    bl_statuses[blNumber] = status;
+    // Sauvegarde en base
+    const updateRes = await pool.query(
+      "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2 RETURNING *;",
+      [JSON.stringify(bl_statuses), id]
+    );
+    if (updateRes.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Erreur lors de la mise à jour." });
+    }
+    const updatedDelivery = updateRes.rows[0];
+    // Envoi WebSocket à tous les clients
+    const wss = req.app.get("wss") || global.wss || wss;
+    const alertMsg = `Dossier '${
+      updatedDelivery.dossier_number ||
+      updatedDelivery.bl_number ||
+      updatedDelivery.id
+    }' a été mis en livraison`;
+    const payload = JSON.stringify({
+      type: "bl_status_update",
+      delivery: updatedDelivery,
+      message: alertMsg,
+    });
+    if (wss && wss.clients) {
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(payload);
+        }
+      });
+    }
+    res.status(200).json({ success: true, delivery: updatedDelivery });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du statut BL:", err);
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur lors de la mise à jour du statut BL.",
+    });
+  }
+});
 
 // Route explicite pour acconier_auth.html
 app.get("/html/acconier_auth.html", (req, res) => {

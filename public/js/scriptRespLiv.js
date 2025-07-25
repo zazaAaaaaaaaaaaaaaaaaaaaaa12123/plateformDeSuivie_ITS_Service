@@ -275,6 +275,38 @@ document.addEventListener("DOMContentLoaded", function () {
           if (dateStartInput && dateEndInput) {
             updateTableForDateRange(dateStartInput.value, dateEndInput.value);
           }
+          // Affiche une alerte visible si message fourni
+          if (data.message) {
+            showDeliveryAlert(data.message);
+          }
+        }
+        // Affiche une alerte toast en haut de la page
+        function showDeliveryAlert(message) {
+          let alertDiv = document.getElementById("delivery-bl-alert-toast");
+          if (!alertDiv) {
+            alertDiv = document.createElement("div");
+            alertDiv.id = "delivery-bl-alert-toast";
+            alertDiv.style.position = "fixed";
+            alertDiv.style.top = "32px";
+            alertDiv.style.left = "50%";
+            alertDiv.style.transform = "translateX(-50%)";
+            alertDiv.style.background = "#2563eb";
+            alertDiv.style.color = "#fff";
+            alertDiv.style.padding = "16px 32px";
+            alertDiv.style.borderRadius = "12px";
+            alertDiv.style.fontSize = "1.15em";
+            alertDiv.style.fontWeight = "bold";
+            alertDiv.style.boxShadow = "0 4px 24px #2563eb55";
+            alertDiv.style.zIndex = "100020";
+            alertDiv.style.opacity = "0";
+            alertDiv.style.transition = "opacity 0.3s";
+            document.body.appendChild(alertDiv);
+          }
+          alertDiv.textContent = message;
+          alertDiv.style.opacity = "1";
+          setTimeout(() => {
+            alertDiv.style.opacity = "0";
+          }, 3500);
         }
         // Ajout : mise à jour instantanée de l'entête Statut ET des cellules de la colonne Statut
         if (data.type === "container_status_update") {
