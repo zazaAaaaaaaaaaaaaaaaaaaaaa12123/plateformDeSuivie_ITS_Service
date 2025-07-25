@@ -1657,90 +1657,32 @@ document.addEventListener("DOMContentLoaded", function () {
       profilePopup.style.maxWidth = "96vw";
       profilePopup.style.textAlign = "center";
       profilePopup.style.fontFamily = "Montserrat, Arial, sans-serif";
-      // Bloc contenant la photo et les boutons
-      const profileBtnBlock = document.createElement("div");
-      profileBtnBlock.style.display = "flex";
-      profileBtnBlock.style.flexDirection = "column";
-      profileBtnBlock.style.alignItems = "center";
-      profileBtnBlock.style.gap = "12px";
-      profileBtnBlock.style.marginBottom = "10px";
-
       // Photo de profil
-      const imgEdit = document.createElement("div");
-      imgEdit.style.position = "relative";
-      imgEdit.style.display = "inline-block";
-      imgEdit.style.marginBottom = "0px";
-      const imgEditImg = document.createElement("img");
-      imgEditImg.id = "profile-avatar-edit-img";
-      imgEditImg.src = localStorage.getItem("user_photo") || avatarImg.src;
-      imgEditImg.alt = "Photo de profil";
-      imgEditImg.style.width = "64px";
-      imgEditImg.style.height = "64px";
-      imgEditImg.style.borderRadius = "50%";
-      imgEditImg.style.objectFit = "cover";
-      imgEditImg.style.boxShadow = "0 2px 8px #ccc";
-      imgEdit.appendChild(imgEditImg);
-      // Ajout de la croix pour supprimer la photo
-      const removeBtn = document.createElement("button");
-      removeBtn.textContent = "✖";
-      removeBtn.title = "Supprimer la photo";
-      removeBtn.style.position = "absolute";
-      removeBtn.style.top = "-8px";
-      removeBtn.style.right = "-8px";
-      removeBtn.style.width = "28px";
-      removeBtn.style.height = "28px";
-      removeBtn.style.border = "none";
-      removeBtn.style.background = "#fff";
-      removeBtn.style.color = "#333";
-      removeBtn.style.borderRadius = "50%";
-      removeBtn.style.fontSize = "1.2em";
-      removeBtn.style.cursor = "pointer";
-      removeBtn.style.boxShadow = "0 1px 4px #aaa";
-      removeBtn.onclick = function () {
-        localStorage.removeItem("user_photo");
-        imgEditImg.src = avatarImg.src =
-          "https://cdn-icons-png.flaticon.com/512/1048/1048953.png";
-      };
-      imgEdit.appendChild(removeBtn);
-      profileBtnBlock.appendChild(imgEdit);
-
-      // Bloc boutons
-      const btnsRow = document.createElement("div");
-      btnsRow.style.display = "flex";
-      btnsRow.style.flexDirection = "row";
-      btnsRow.style.justifyContent = "center";
-      btnsRow.style.alignItems = "center";
-      btnsRow.style.gap = "10px";
-      btnsRow.style.width = "100%";
-
+      const imgEdit = document.createElement("img");
+      imgEdit.id = "profile-avatar-edit-img";
+      imgEdit.src = localStorage.getItem("user_photo") || avatarImg.src;
+      imgEdit.alt = "Photo de profil";
+      imgEdit.style.width = "64px";
+      imgEdit.style.height = "64px";
+      imgEdit.style.borderRadius = "50%";
+      imgEdit.style.objectFit = "cover";
+      imgEdit.style.boxShadow = "0 2px 8px #ffc10733";
+      imgEdit.style.marginBottom = "12px";
+      profilePopup.appendChild(imgEdit);
       // Bouton pour choisir une photo
       const photoBtn = document.createElement("button");
       photoBtn.textContent = "Changer la photo";
+      photoBtn.style.margin = "0 0 18px 0";
       photoBtn.style.padding = "7px 18px";
       photoBtn.style.borderRadius = "8px";
-      photoBtn.style.border = "1px solid #2563eb";
-      photoBtn.style.background = "#2563eb";
+      photoBtn.style.border = "none";
+      photoBtn.style.background =
+        "linear-gradient(90deg,#2563eb 0%,#ffc107 100%)";
       photoBtn.style.color = "#fff";
       photoBtn.style.fontWeight = "bold";
       photoBtn.style.cursor = "pointer";
       photoBtn.style.fontSize = "1em";
-      btnsRow.appendChild(photoBtn);
-
-      // Bouton déconnexion
-      const logoutBtn = document.createElement("button");
-      logoutBtn.textContent = "Déconnexion";
-      logoutBtn.style.padding = "7px 18px";
-      logoutBtn.style.borderRadius = "8px";
-      logoutBtn.style.border = "1px solid #ef4444";
-      logoutBtn.style.background = "#ef4444";
-      logoutBtn.style.color = "#fff";
-      logoutBtn.style.fontWeight = "bold";
-      logoutBtn.style.cursor = "pointer";
-      logoutBtn.style.fontSize = "1em";
-      btnsRow.appendChild(logoutBtn);
-
-      profileBtnBlock.appendChild(btnsRow);
-
+      profilePopup.appendChild(photoBtn);
       // Input file caché
       const fileInput = document.createElement("input");
       fileInput.type = "file";
@@ -1754,15 +1696,27 @@ document.addEventListener("DOMContentLoaded", function () {
         if (file) {
           const reader = new FileReader();
           reader.onload = function (e) {
-            imgEditImg.src = e.target.result;
+            imgEdit.src = e.target.result;
             avatarImg.src = e.target.result;
             localStorage.setItem("user_photo", e.target.result);
           };
           reader.readAsDataURL(file);
         }
       };
-      profileBtnBlock.appendChild(fileInput);
-
+      profilePopup.appendChild(fileInput);
+      // Bouton déconnexions
+      const logoutBtn = document.createElement("button");
+      logoutBtn.textContent = "Déconnexion";
+      logoutBtn.style.margin = "12px 0 0 0";
+      logoutBtn.style.padding = "9px 24px";
+      logoutBtn.style.borderRadius = "8px";
+      logoutBtn.style.border = "none";
+      logoutBtn.style.background =
+        "linear-gradient(90deg,#ef4444 0%,#ffc107 100%)";
+      logoutBtn.style.color = "#fff";
+      logoutBtn.style.fontWeight = "bold";
+      logoutBtn.style.cursor = "pointer";
+      logoutBtn.style.fontSize = "1.08em";
       logoutBtn.onclick = function () {
         localStorage.removeItem("user_nom");
         localStorage.removeItem("user_email");
@@ -1770,8 +1724,7 @@ document.addEventListener("DOMContentLoaded", function () {
         window.location.href =
           "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
       };
-
-      profilePopup.appendChild(profileBtnBlock);
+      profilePopup.appendChild(logoutBtn);
       document.body.appendChild(profilePopup);
     } else {
       profilePopup.style.display = "block";
