@@ -14,7 +14,7 @@
     />
     <style>
       body {
-        background: linear-gradient(120deg, #1e3c72, #ffc107);
+        background: #f7faff;
         font-family: "Montserrat", sans-serif;
         min-height: 100vh;
         margin: 0;
@@ -23,10 +23,10 @@
         justify-content: center;
       }
       .container {
-        background: #ffc107;
-        border-radius: 18px;
-        box-shadow: 0 8px 32px rgba(30, 60, 114, 0.18);
-        padding: 2.5rem 2rem 2rem 2rem;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 8px 32px rgba(30, 60, 114, 0.13);
+        padding: 2.2rem 2rem 2rem 2rem;
         width: 100%;
         max-width: 410px;
         position: relative;
@@ -34,7 +34,7 @@
         transition: box-shadow 0.3s;
       }
       .container:hover {
-        box-shadow: 0 12px 40px rgba(30, 60, 114, 0.28);
+        box-shadow: 0 12px 40px rgba(30, 60, 114, 0.18);
       }
       .tabs {
         display: flex;
@@ -51,11 +51,12 @@
         border-bottom: 2px solid transparent;
         transition: border 0.2s, color 0.2s;
         letter-spacing: 1px;
+        background: none;
       }
       .tab.active {
-        color: #ffc107;
+        color: #1e3c72;
         border-bottom: 2.5px solid #1e3c72;
-        background: linear-gradient(90deg, #1e3c72 60%, #ffc107 100%);
+        background: #f0f4fa;
         border-radius: 8px 8px 0 0;
       }
       form {
@@ -82,19 +83,19 @@
       input[type="email"],
       input[type="password"] {
         padding: 0.7rem 1rem;
-        border: 1.5px solid #1e3c72;
+        border: 1.5px solid #dbeafe;
         border-radius: 7px;
         font-size: 1rem;
-        background: #fff;
+        background: #f7faff;
         transition: border 0.2s;
         outline: none;
       }
       input:focus {
-        border: 1.5px solid #ffc107;
+        border: 1.5px solid #1e3c72;
         background: #e3ecfa;
       }
       .btn {
-        background: linear-gradient(90deg, #1e3c72 60%, #ffc107 100%);
+        background: #1e3c72;
         color: #fff;
         border: none;
         border-radius: 7px;
@@ -103,12 +104,12 @@
         font-weight: 700;
         cursor: pointer;
         margin-top: 0.5rem;
-        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
+        box-shadow: 0 2px 8px rgba(30, 60, 114, 0.08);
         transition: background 0.2s, box-shadow 0.2s;
       }
       .btn:hover {
-        background: linear-gradient(90deg, #ffc107 60%, #1e3c72 100%);
-        box-shadow: 0 4px 16px rgba(30, 60, 114, 0.18);
+        background: #274b8c;
+        box-shadow: 0 4px 16px rgba(30, 60, 114, 0.13);
       }
       .message {
         margin-top: 0.5rem;
