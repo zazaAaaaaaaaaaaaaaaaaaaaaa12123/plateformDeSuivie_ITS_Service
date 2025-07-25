@@ -20,66 +20,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
-      /* Icônes responsables sous l'avatar - Adaptation responsive et propre */
-      #sidebarUserProfile .icon-resp {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        width: 38px;
-        height: 38px;
-        box-shadow: 0 2px 8px #05966922;
-        cursor: pointer;
-        margin: 0;
-        transition: box-shadow 0.18s, transform 0.18s;
-        overflow: hidden;
-      }
-      #sidebarUserProfile .icon-resp-acconier {
-        background: #fff7e3;
-        box-shadow: 0 2px 8px #f59e0b22;
-      }
-      #sidebarUserProfile .icon-resp-livraison {
-        background: #e3ffe3;
-        box-shadow: 0 2px 8px #05966922;
-      }
-      #sidebarUserProfile .icon-resp i {
-        font-size: 1.45em;
-        transition: color 0.18s;
-        display: block;
-      }
-      #sidebarUserProfile .icon-resp-acconier i {
-        color: #f59e0b;
-      }
-      #sidebarUserProfile .icon-resp-livraison i {
-        color: #059669;
-      }
-      @media (max-width: 700px) {
-        #sidebarUserProfile .icon-resp {
-          width: 32px;
-          height: 32px;
-        }
-        #sidebarUserProfile .icon-resp i {
-          font-size: 1.1em;
-        }
-      }
-      /* Adaptation du contenu dynamique dans main-content */
-      .main-content .dynamic-content-area {
-        background: #fff;
-        border-radius: 14px;
-        box-shadow: 0 2px 8px #2563eb22, 0 1px 4px #0001;
-        padding: 24px 18px;
-        margin: 0 auto;
-        max-width: 1200px;
-        width: 100%;
-        min-height: 60vh;
-        overflow-x: auto;
-        box-sizing: border-box;
-        display: block;
-      }
-      .main-content .dynamic-content-area > * {
-        max-width: 100%;
-        box-sizing: border-box;
-      }
       /* Styles généraux pour le corps */
       html,
       body {
@@ -267,30 +207,6 @@
         padding: 20px 0;
         background: linear-gradient(180deg, #303d4c 0%, #212a33 100%);
         box-shadow: 8px 0 25px rgba(0, 0, 0, 0.3);
-      }
-      body.sidebar-collapsed
-        #sidebarUserProfile
-        > div[style*="flex-direction: row"] {
-        justify-content: center !important;
-        gap: 8px !important;
-        margin-top: 8px !important;
-      }
-      body.sidebar-collapsed
-        #sidebarUserProfile
-        > div[style*="flex-direction: row"]
-        span {
-        width: 28px !important;
-        height: 28px !important;
-        font-size: 1em !important;
-        margin: 0 1px !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-      }
-      body.sidebar-collapsed
-        #sidebarUserProfile
-        > div[style*="flex-direction: row"]
-        i {
-        font-size: 1em !important;
       }
 
       body.sidebar-collapsed .sidebar h2 {
@@ -820,30 +736,73 @@
           >
             Se déconnecter
           </button>
-          <!-- Icônes responsables sous l'avatar -->
+          <!-- Bouton icône demande code entreprise -->
           <div
             style="
               display: flex;
               flex-direction: row;
               align-items: center;
-              gap: 18px;
+              gap: 10px;
               margin-top: 8px;
             "
           >
-            <span
-              id="iconRespAcconier"
-              class="icon-resp icon-resp-acconier"
-              title="Responsable Acconier"
+            <button
+              id="demandeCodeEntrepriseBtn"
+              title="Demander le code entreprise"
+              style="
+                background: none;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+              "
             >
-              <i class="fas fa-user-shield"></i>
-            </span>
-            <span
-              id="iconRespLivraison"
-              class="icon-resp icon-resp-livraison"
-              title="Responsable Livraison"
+              <i
+                class="fas fa-key"
+                style="font-size: 1.3em; color: #2563eb"
+              ></i>
+              <span
+                id="badgeDemandesCodeEntreprise"
+                style="
+                  display: none;
+                  position: absolute;
+                  top: -4px;
+                  right: -8px;
+                  min-width: 14px;
+                  height: 14px;
+                  padding: 0 3px;
+                  background: #dc2626;
+                  color: #fff;
+                  font-size: 0.72em;
+                  font-weight: 700;
+                  border-radius: 8px;
+                  line-height: 14px;
+                  text-align: center;
+                  box-shadow: 0 2px 8px #dc262622;
+                  z-index: 2;
+                "
+              ></span>
+            </button>
+            <button
+              id="btnEditSidebar"
+              title="Modifier les paramètres"
+              style="
+                background: none;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+              "
             >
-              <i class="fas fa-user-check"></i>
-            </span>
+              <i
+                class="fas fa-pen"
+                style="font-size: 1.15em; color: #059669"
+              ></i>
+            </button>
           </div>
         </div>
         <!-- Popup modification code entreprise -->
@@ -1298,123 +1257,6 @@
 
         <script>
           document.addEventListener("DOMContentLoaded", function () {
-            // Chargement dynamique des interfaces responsables dans main-content
-            // Rafraîchissement automatique du contenu dynamique
-            let refreshIntervals = {};
-            function chargerInterfaceDansMainContent(
-              url,
-              zoneId,
-              refreshMs = 10000
-            ) {
-              const mainContent = document.querySelector(".main-content");
-              if (!mainContent) return;
-              // Nettoyer les anciens intervalles
-              Object.values(refreshIntervals).forEach(clearInterval);
-              refreshIntervals = {};
-              let zone = document.getElementById(zoneId);
-              if (!zone) {
-                zone = document.createElement("div");
-                zone.id = zoneId;
-                zone.className = "dynamic-content-area";
-                mainContent.innerHTML = "";
-                mainContent.appendChild(zone);
-              } else {
-                mainContent.innerHTML = "";
-                mainContent.appendChild(zone);
-              }
-              function chargerContenu() {
-                zone.innerHTML =
-                  '<div style="text-align:center;padding:40px 0;font-size:1.2em;color:#2563eb;">Chargement en cours...</div>';
-                fetch(url)
-                  .then((res) => res.text())
-                  .then((html) => {
-                    let extrait = html;
-                    const match = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
-                    if (match) {
-                      extrait = match[1];
-                    } else {
-                      const matchBody = html.match(
-                        /<body[^>]*>([\s\S]*?)<\/body>/i
-                      );
-                      if (matchBody) extrait = matchBody[1];
-                    }
-                    zone.innerHTML = extrait;
-                  })
-                  .catch(() => {
-                    zone.innerHTML =
-                      '<div style="color:#dc3545;text-align:center;padding:40px 0;">Erreur lors du chargement de l\'interface.</div>';
-                  });
-              }
-              chargerContenu();
-              // Actualisation automatique
-              refreshIntervals[zoneId] = setInterval(chargerContenu, refreshMs);
-            }
-            // Clic sur icône Responsable Livraisons
-            const iconRespLivraison =
-              document.getElementById("iconRespLivraison");
-            if (iconRespLivraison) {
-              iconRespLivraison.addEventListener("click", function (e) {
-                e.preventDefault();
-                chargerInterfaceDansMainContent(
-                  "/html/resp_liv.html",
-                  "zoneRespLivraison",
-                  10000
-                );
-              });
-            }
-            // Clic sur icône Responsable Acconier
-            const iconRespAcconier =
-              document.getElementById("iconRespAcconier");
-            if (iconRespAcconier) {
-              iconRespAcconier.addEventListener("click", function (e) {
-                e.preventDefault();
-                // Uniformisation de l'affichage : même logique que Suivi des Livraisons
-                chargerInterfaceDansMainContent(
-                  "/html/resp_acconier.html",
-                  "zoneRespAcconier",
-                  10000
-                );
-                // S'assurer que le conteneur occupe toute la largeur et est bien stylé
-                const mainContent = document.querySelector(".main-content");
-                if (mainContent) {
-                  mainContent.style.display = "flex";
-                  mainContent.style.flexDirection = "column";
-                  mainContent.style.alignItems = "stretch";
-                  mainContent.style.justifyContent = "flex-start";
-                  mainContent.style.padding = "30px";
-                }
-                setTimeout(function () {
-                  const zone = document.getElementById("zoneRespAcconier");
-                  if (zone) {
-                    zone.className = "dynamic-content-area";
-                    zone.style.margin = "0 auto";
-                    zone.style.maxWidth = "1200px";
-                    zone.style.width = "100%";
-                    zone.style.minHeight = "60vh";
-                    zone.style.background = "#fff";
-                    zone.style.borderRadius = "14px";
-                    zone.style.boxShadow =
-                      "0 2px 8px #2563eb22, 0 1px 4px #0001";
-                    zone.style.padding = "24px 18px";
-                    zone.style.overflowX = "auto";
-                    zone.style.boxSizing = "border-box";
-                    zone.style.display = "block";
-                  }
-                }, 100);
-              });
-            }
-            // Clic sur bouton Suivi des Livraisons de Conteneurs
-            const btnSuivi = document.getElementById("lienSuivi");
-            if (btnSuivi) {
-              btnSuivi.addEventListener("click", function (e) {
-                e.preventDefault();
-                chargerInterfaceDansMainContent(
-                  "/html/suivi_livraisons.html",
-                  "zoneSuiviLivraisons",
-                  10000
-                );
-              });
-            }
             // --- Gestion du popup de modification du code entreprise ---
             const btnEditSidebar = document.getElementById("btnEditSidebar");
             const popupEditCompanyCode = document.getElementById(
