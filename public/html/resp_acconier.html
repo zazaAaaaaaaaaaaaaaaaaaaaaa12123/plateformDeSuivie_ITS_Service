@@ -730,11 +730,12 @@
         </div>
 
         <div id="tableScrollContainer" class="table-responsive overflow-x-auto" style="border-radius:18px;box-shadow:0 8px 32px rgba(37,99,235,0.10);background:#fff;width:100%;max-width:1200px;margin:0 auto;">
-          <table
-            id="deliveriesTable"
-            class="table table-bordered table-hover align-middle"
-            style="width:100%;max-width:1200px;min-width:900px;border-radius:18px;table-layout:auto;margin:0 auto;"
-          >
+          <div style="width:100%;height:calc(100vh - 320px);min-height:350px;max-height:100vh;overflow-x:auto;overflow-y:auto;">
+            <table
+              id="deliveriesTable"
+              class="table table-bordered table-hover align-middle"
+              style="width:100%;max-width:1200px;min-width:900px;border-radius:18px;table-layout:auto;margin:0 auto;"
+            >
             <thead>
               <tr>
                 <th
@@ -778,7 +779,8 @@
                 </td>
               </tr>
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
 
         <nav aria-label="Pagination livraisons" class="mt-3">
@@ -863,3 +865,4 @@
     </script>
   </body>
 </html>
+<!--adhsjh-->
