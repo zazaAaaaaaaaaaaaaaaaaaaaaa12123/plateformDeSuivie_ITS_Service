@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr">
   <script>
-    // Vérification session et affichage avatar
+    // Vérification session et affichage avatar (strictement acconier)
     document.addEventListener("DOMContentLoaded", function () {
-      const adminUser = localStorage.getItem("user");
       const respAcconierUser = localStorage.getItem("respAcconierUser");
       let userData = null;
-      if (adminUser) {
-        userData = JSON.parse(adminUser);
-      } else if (respAcconierUser) {
+      if (respAcconierUser) {
         userData = JSON.parse(respAcconierUser);
       }
       if (!userData) {
