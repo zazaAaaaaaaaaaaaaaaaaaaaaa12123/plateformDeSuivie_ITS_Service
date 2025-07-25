@@ -1658,16 +1658,42 @@ document.addEventListener("DOMContentLoaded", function () {
       profilePopup.style.textAlign = "center";
       profilePopup.style.fontFamily = "Montserrat, Arial, sans-serif";
       // Photo de profil
-      const imgEdit = document.createElement("img");
-      imgEdit.id = "profile-avatar-edit-img";
-      imgEdit.src = localStorage.getItem("user_photo") || avatarImg.src;
-      imgEdit.alt = "Photo de profil";
-      imgEdit.style.width = "64px";
-      imgEdit.style.height = "64px";
-      imgEdit.style.borderRadius = "50%";
-      imgEdit.style.objectFit = "cover";
-      imgEdit.style.boxShadow = "0 2px 8px #ffc10733";
+      const imgEdit = document.createElement("div");
+      imgEdit.style.position = "relative";
+      imgEdit.style.display = "inline-block";
       imgEdit.style.marginBottom = "12px";
+      const imgEditImg = document.createElement("img");
+      imgEditImg.id = "profile-avatar-edit-img";
+      imgEditImg.src = localStorage.getItem("user_photo") || avatarImg.src;
+      imgEditImg.alt = "Photo de profil";
+      imgEditImg.style.width = "64px";
+      imgEditImg.style.height = "64px";
+      imgEditImg.style.borderRadius = "50%";
+      imgEditImg.style.objectFit = "cover";
+      imgEditImg.style.boxShadow = "0 2px 8px #ccc";
+      imgEdit.appendChild(imgEditImg);
+      // Ajout de la croix pour supprimer la photo
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "✖";
+      removeBtn.title = "Supprimer la photo";
+      removeBtn.style.position = "absolute";
+      removeBtn.style.top = "-8px";
+      removeBtn.style.right = "-8px";
+      removeBtn.style.width = "28px";
+      removeBtn.style.height = "28px";
+      removeBtn.style.border = "none";
+      removeBtn.style.background = "#fff";
+      removeBtn.style.color = "#333";
+      removeBtn.style.borderRadius = "50%";
+      removeBtn.style.fontSize = "1.2em";
+      removeBtn.style.cursor = "pointer";
+      removeBtn.style.boxShadow = "0 1px 4px #aaa";
+      removeBtn.onclick = function () {
+        localStorage.removeItem("user_photo");
+        imgEditImg.src = avatarImg.src =
+          "https://cdn-icons-png.flaticon.com/512/1048/1048953.png";
+      };
+      imgEdit.appendChild(removeBtn);
       profilePopup.appendChild(imgEdit);
       // Bouton pour choisir une photo
       const photoBtn = document.createElement("button");
@@ -1675,9 +1701,8 @@ document.addEventListener("DOMContentLoaded", function () {
       photoBtn.style.margin = "0 0 18px 0";
       photoBtn.style.padding = "7px 18px";
       photoBtn.style.borderRadius = "8px";
-      photoBtn.style.border = "none";
-      photoBtn.style.background =
-        "linear-gradient(90deg,#2563eb 0%,#ffc107 100%)";
+      photoBtn.style.border = "1px solid #2563eb";
+      photoBtn.style.background = "#2563eb";
       photoBtn.style.color = "#fff";
       photoBtn.style.fontWeight = "bold";
       photoBtn.style.cursor = "pointer";
@@ -1696,7 +1721,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (file) {
           const reader = new FileReader();
           reader.onload = function (e) {
-            imgEdit.src = e.target.result;
+            imgEditImg.src = e.target.result;
             avatarImg.src = e.target.result;
             localStorage.setItem("user_photo", e.target.result);
           };
@@ -1710,9 +1735,8 @@ document.addEventListener("DOMContentLoaded", function () {
       logoutBtn.style.margin = "12px 0 0 0";
       logoutBtn.style.padding = "9px 24px";
       logoutBtn.style.borderRadius = "8px";
-      logoutBtn.style.border = "none";
-      logoutBtn.style.background =
-        "linear-gradient(90deg,#ef4444 0%,#ffc107 100%)";
+      logoutBtn.style.border = "1px solid #ef4444";
+      logoutBtn.style.background = "#ef4444";
       logoutBtn.style.color = "#fff";
       logoutBtn.style.fontWeight = "bold";
       logoutBtn.style.cursor = "pointer";
