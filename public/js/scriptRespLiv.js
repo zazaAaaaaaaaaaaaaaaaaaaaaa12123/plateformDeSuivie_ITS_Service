@@ -1568,6 +1568,19 @@ adaptTableResponsive();
 
 // ----------- AVATAR PROFIL EN HAUT À DROITE + DÉCONNEXION -----------
 document.addEventListener("DOMContentLoaded", function () {
+  // Redirection immédiate si respLivUser absent
+  let respLivUser = null;
+  let respLivUserRaw = localStorage.getItem("respLivUser");
+  if (!respLivUserRaw) {
+    window.location.href = "repoLivAuth.html";
+    return;
+  }
+  try {
+    respLivUser = JSON.parse(respLivUserRaw);
+  } catch (e) {
+    window.location.href = "repoLivAuth.html";
+    return;
+  }
   // Crée le conteneur avatar
   const avatarContainer = document.createElement("div");
   avatarContainer.id = "profile-avatar-container";
@@ -1614,30 +1627,17 @@ document.addEventListener("DOMContentLoaded", function () {
   infoDiv.style.color = "#1e3c72";
   infoDiv.style.fontWeight = "700";
 
-  // Logique d'affichage admin ou responsable livraison
-  let userEmail = localStorage.getItem("user_email") || "-";
-  let userName = localStorage.getItem("user_nom");
-  let isAdmin = false;
-  // On considère que si user_nom et user_email sont présents et ont été posés par le tableau de bord admin, c'est l'admin
-  // (tu peux affiner la détection si besoin)
-  if (
-    userName &&
-    userEmail &&
-    userName !== "Utilisateur" &&
-    userEmail !== "-"
-  ) {
-    isAdmin = true;
-  }
-  if (!userName || userName === "Utilisateur") {
-    // Si le nom n'est pas défini, utiliser la partie avant le @ de l'email
-    if (userEmail && userEmail.includes("@")) {
-      userName = userEmail.split("@")[0];
-    } else {
-      userName = "-";
-    }
-  }
+  // Utilisation unique de respLivUser pour l'avatar
+  let userName = respLivUser && respLivUser.nom ? respLivUser.nom : "-";
+  let userEmail = respLivUser && respLivUser.email ? respLivUser.email : "-";
+  let userPhoto = respLivUser && respLivUser.photo ? respLivUser.photo : null;
+
+  // Affichage dans l'avatar
   infoDiv.innerHTML = `<span style='font-weight:700;'>${userName}</span><span style='font-weight:400;font-size:0.97em;color:#2a5298;'>${userEmail}</span>`;
   avatarContainer.appendChild(infoDiv);
+  if (userPhoto) {
+    avatarImg.src = userPhoto;
+  }
 
   // Ajoute le conteneur au body
   document.body.appendChild(avatarContainer);
