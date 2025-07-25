@@ -1657,11 +1657,19 @@ document.addEventListener("DOMContentLoaded", function () {
       profilePopup.style.maxWidth = "96vw";
       profilePopup.style.textAlign = "center";
       profilePopup.style.fontFamily = "Montserrat, Arial, sans-serif";
+      // Bloc contenant la photo et les boutons
+      const profileBtnBlock = document.createElement("div");
+      profileBtnBlock.style.display = "flex";
+      profileBtnBlock.style.flexDirection = "column";
+      profileBtnBlock.style.alignItems = "center";
+      profileBtnBlock.style.gap = "12px";
+      profileBtnBlock.style.marginBottom = "10px";
+
       // Photo de profil
       const imgEdit = document.createElement("div");
       imgEdit.style.position = "relative";
       imgEdit.style.display = "inline-block";
-      imgEdit.style.marginBottom = "12px";
+      imgEdit.style.marginBottom = "0px";
       const imgEditImg = document.createElement("img");
       imgEditImg.id = "profile-avatar-edit-img";
       imgEditImg.src = localStorage.getItem("user_photo") || avatarImg.src;
@@ -1694,11 +1702,20 @@ document.addEventListener("DOMContentLoaded", function () {
           "https://cdn-icons-png.flaticon.com/512/1048/1048953.png";
       };
       imgEdit.appendChild(removeBtn);
-      profilePopup.appendChild(imgEdit);
+      profileBtnBlock.appendChild(imgEdit);
+
+      // Bloc boutons
+      const btnsRow = document.createElement("div");
+      btnsRow.style.display = "flex";
+      btnsRow.style.flexDirection = "row";
+      btnsRow.style.justifyContent = "center";
+      btnsRow.style.alignItems = "center";
+      btnsRow.style.gap = "10px";
+      btnsRow.style.width = "100%";
+
       // Bouton pour choisir une photo
       const photoBtn = document.createElement("button");
       photoBtn.textContent = "Changer la photo";
-      photoBtn.style.margin = "0 0 18px 0";
       photoBtn.style.padding = "7px 18px";
       photoBtn.style.borderRadius = "8px";
       photoBtn.style.border = "1px solid #2563eb";
@@ -1707,7 +1724,23 @@ document.addEventListener("DOMContentLoaded", function () {
       photoBtn.style.fontWeight = "bold";
       photoBtn.style.cursor = "pointer";
       photoBtn.style.fontSize = "1em";
-      profilePopup.appendChild(photoBtn);
+      btnsRow.appendChild(photoBtn);
+
+      // Bouton déconnexion
+      const logoutBtn = document.createElement("button");
+      logoutBtn.textContent = "Déconnexion";
+      logoutBtn.style.padding = "7px 18px";
+      logoutBtn.style.borderRadius = "8px";
+      logoutBtn.style.border = "1px solid #ef4444";
+      logoutBtn.style.background = "#ef4444";
+      logoutBtn.style.color = "#fff";
+      logoutBtn.style.fontWeight = "bold";
+      logoutBtn.style.cursor = "pointer";
+      logoutBtn.style.fontSize = "1em";
+      btnsRow.appendChild(logoutBtn);
+
+      profileBtnBlock.appendChild(btnsRow);
+
       // Input file caché
       const fileInput = document.createElement("input");
       fileInput.type = "file";
@@ -1728,19 +1761,8 @@ document.addEventListener("DOMContentLoaded", function () {
           reader.readAsDataURL(file);
         }
       };
-      profilePopup.appendChild(fileInput);
-      // Bouton déconnexions
-      const logoutBtn = document.createElement("button");
-      logoutBtn.textContent = "Déconnexion";
-      logoutBtn.style.margin = "12px 0 0 0";
-      logoutBtn.style.padding = "9px 24px";
-      logoutBtn.style.borderRadius = "8px";
-      logoutBtn.style.border = "1px solid #ef4444";
-      logoutBtn.style.background = "#ef4444";
-      logoutBtn.style.color = "#fff";
-      logoutBtn.style.fontWeight = "bold";
-      logoutBtn.style.cursor = "pointer";
-      logoutBtn.style.fontSize = "1.08em";
+      profileBtnBlock.appendChild(fileInput);
+
       logoutBtn.onclick = function () {
         localStorage.removeItem("user_nom");
         localStorage.removeItem("user_email");
@@ -1748,7 +1770,8 @@ document.addEventListener("DOMContentLoaded", function () {
         window.location.href =
           "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
       };
-      profilePopup.appendChild(logoutBtn);
+
+      profilePopup.appendChild(profileBtnBlock);
       document.body.appendChild(profilePopup);
     } else {
       profilePopup.style.display = "block";
