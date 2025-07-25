@@ -1,5 +1,57 @@
 <!DOCTYPE html>
 <html lang="fr">
+  <script>
+    // Vérification session et affichage avatar
+    document.addEventListener("DOMContentLoaded", function () {
+      const adminUser = localStorage.getItem("user");
+      const respAcconierUser = localStorage.getItem("respAcconierUser");
+      let userData = null;
+      if (adminUser) {
+        userData = JSON.parse(adminUser);
+      } else if (respAcconierUser) {
+        userData = JSON.parse(respAcconierUser);
+      }
+      if (!userData) {
+        window.location.href = "repoAcconierAuth.html";
+        return;
+      }
+      // Injection du nom/email dans l'avatar (dropdown profil)
+      setTimeout(function () {
+        let nameEl = document.getElementById("profileName");
+        let emailEl = document.getElementById("profileEmail");
+        if (nameEl) nameEl.textContent = userData.nom || "";
+        if (emailEl) emailEl.textContent = userData.email || "";
+        // Avatar avec initiales (overlay sur l'icône FontAwesome)
+        const avatarEl = document.getElementById("profileAvatar");
+        if (avatarEl && userData.nom) {
+          let initials = userData.nom
+            .split(" ")
+            .map((w) => w[0])
+            .join("")
+            .toUpperCase();
+          if (initials.length > 2) initials = initials.slice(0, 2);
+          let initialsSpan = avatarEl.querySelector(".avatar-initials");
+          if (!initialsSpan) {
+            initialsSpan = document.createElement("span");
+            initialsSpan.className = "avatar-initials";
+            initialsSpan.style.position = "absolute";
+            initialsSpan.style.right = "8px";
+            initialsSpan.style.bottom = "8px";
+            initialsSpan.style.fontSize = "1.1em";
+            initialsSpan.style.fontWeight = "700";
+            initialsSpan.style.color = "#2563eb";
+            initialsSpan.style.background = "#fff";
+            initialsSpan.style.borderRadius = "50%";
+            initialsSpan.style.padding = "2px 7px";
+            initialsSpan.style.boxShadow = "0 1px 4px #2563eb22";
+            avatarEl.appendChild(initialsSpan);
+          }
+          initialsSpan.textContent = initials;
+          avatarEl.style.position = "relative";
+        }
+      }, 100);
+    });
+  </script>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

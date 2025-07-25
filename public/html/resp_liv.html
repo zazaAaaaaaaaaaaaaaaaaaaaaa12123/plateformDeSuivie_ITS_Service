@@ -1,5 +1,50 @@
 <!DOCTYPE html>
 <html lang="fr">
+<script>
+  // Vérification session et affichage avatar
+  document.addEventListener('DOMContentLoaded', function() {
+    const adminUser = localStorage.getItem('user');
+    const respLivUser = localStorage.getItem('respLivUser');
+    let userData = null;
+    if (adminUser) {
+      userData = JSON.parse(adminUser);
+    } else if (respLivUser) {
+      userData = JSON.parse(respLivUser);
+    }
+    if (!userData) {
+      window.location.href = 'repoLivAuth.html';
+      return;
+    }
+    // Injection du nom/email dans l'avatar (à adapter selon ta structure)
+    setTimeout(function() {
+      // Cherche un élément pour le nom/email dans l'en-tête ou le dropdown
+      let avatarName = document.getElementById('avatarName');
+      let avatarEmail = document.getElementById('avatarEmail');
+      // Si non présent, crée dynamiquement dans l'en-tête moderne
+      const header = document.querySelector('.d-flex.flex-column.align-items-end');
+      if (header) {
+        if (!avatarName) {
+          avatarName = document.createElement('div');
+          avatarName.id = 'avatarName';
+          avatarName.style.fontWeight = '700';
+          avatarName.style.color = '#2563eb';
+          avatarName.style.fontSize = '1.08em';
+          header.appendChild(avatarName);
+        }
+        if (!avatarEmail) {
+          avatarEmail = document.createElement('div');
+          avatarEmail.id = 'avatarEmail';
+          avatarEmail.style.fontWeight = '500';
+          avatarEmail.style.color = '#374151';
+          avatarEmail.style.fontSize = '0.97em';
+          header.appendChild(avatarEmail);
+        }
+        avatarName.textContent = userData.nom || '';
+        avatarEmail.textContent = userData.email || '';
+      }
+    }, 100);
+  });
+</script>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
