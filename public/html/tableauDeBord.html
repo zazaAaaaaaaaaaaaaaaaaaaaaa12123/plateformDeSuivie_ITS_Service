@@ -1287,33 +1287,26 @@
               document.getElementById("iconRespLivraison");
             if (iconRespLivraison) {
               iconRespLivraison.addEventListener("click", function () {
-                // Ne pas écraser une session existante respLivUser
-                if (!localStorage.getItem("respLivUser")) {
-                  try {
-                    const userRaw = localStorage.getItem("user");
-                    if (userRaw) {
-                      localStorage.setItem("respLivUser", userRaw);
-                    }
-                  } catch (e) {}
+                // Rediriger uniquement si la session respLivUser existe
+                if (localStorage.getItem("respLivUser")) {
+                  window.location.href = "resp_liv.html";
+                } else {
+                  // Rediriger vers la page de login livraison si pas de session
+                  window.location.href = "login_resp_liv.html";
                 }
-                window.location.href = "resp_liv.html";
               });
             }
             const iconRespAcconier =
               document.getElementById("iconRespAcconier");
             if (iconRespAcconier) {
               iconRespAcconier.addEventListener("click", function () {
-                // Ne pas écraser une session existante respAcconierUser
-                if (!localStorage.getItem("respAcconierUser")) {
-                  try {
-                    const userRaw = localStorage.getItem("user");
-                    if (userRaw) {
-                      localStorage.setItem("respAcconierUser", userRaw);
-                    }
-                  } catch (e) {}
+                // Rediriger uniquement si la session respAcconierUser existe
+                if (localStorage.getItem("respAcconierUser")) {
+                  window.location.href = "resp_acconier.html";
+                } else {
+                  // Rediriger vers la page de login acconier si pas de session
+                  window.location.href = "login_resp_acconier.html";
                 }
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
               });
             }
             // --- Gestion du popup de modification du code entreprise ---

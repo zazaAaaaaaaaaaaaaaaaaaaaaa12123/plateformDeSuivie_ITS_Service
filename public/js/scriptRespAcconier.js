@@ -1378,41 +1378,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (e.target === overlay) overlay.remove();
           };
         }
-        // Gestion stricte de la session responsable acconier
-        let respAcconierUser = null;
+        // Gestion stricte de la session responsable acconier :
+        // On utilise UNIQUEMENT respAcconierUser, jamais user !
         let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
+        let respAcconierUser = null;
         if (!respAcconierUserRaw) {
-          // Si pas de session respAcconierUser, mais une session user existe, on permet l'accès au responsable principal SANS écraser une session existante
-          let userRaw = localStorage.getItem("user");
-          if (userRaw) {
-            try {
-              let user = JSON.parse(userRaw);
-              // On crée une session temporaire respAcconierUser pour ce cas précis
-              respAcconierUser = {
-                nom: user.nom || "",
-                email: user.email || "",
-                photo: user.photo || "",
-                profil: user.profil || "Responsable Acconier",
-              };
-              localStorage.setItem(
-                "respAcconierUser",
-                JSON.stringify(respAcconierUser)
-              );
-            } catch (e) {
-              window.location.href = "auth.html";
-              return;
-            }
-          } else {
-            window.location.href = "auth.html";
-            return;
-          }
-        } else {
-          try {
-            respAcconierUser = JSON.parse(respAcconierUserRaw);
-          } catch (e) {
-            window.location.href = "auth.html";
-            return;
-          }
+          window.location.href = "repoAcconierAuth.html";
+          return;
+        }
+        try {
+          respAcconierUser = JSON.parse(respAcconierUserRaw);
+        } catch (e) {
+          window.location.href = "repoAcconierAuth.html";
+          return;
         }
         // ...existing code...
       } else if (col.id === "container_status") {
