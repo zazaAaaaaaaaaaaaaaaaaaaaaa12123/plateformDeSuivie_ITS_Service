@@ -1615,8 +1615,16 @@ document.addEventListener("DOMContentLoaded", function () {
   infoDiv.style.fontWeight = "700";
 
   // Récupère nom et email depuis localStorage
-  let userName = localStorage.getItem("user_nom") || "Utilisateur";
   let userEmail = localStorage.getItem("user_email") || "-";
+  let userName = localStorage.getItem("user_nom");
+  if (!userName || userName === "Utilisateur") {
+    // Si le nom n'est pas défini, utiliser la partie avant le @ de l'email
+    if (userEmail && userEmail.includes("@")) {
+      userName = userEmail.split("@")[0];
+    } else {
+      userName = "-";
+    }
+  }
   infoDiv.innerHTML = `<span style='font-weight:700;'>${userName}</span><span style='font-weight:400;font-size:0.97em;color:#2a5298;'>${userEmail}</span>`;
   avatarContainer.appendChild(infoDiv);
 
