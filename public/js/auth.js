@@ -129,27 +129,14 @@ if (loginForm) {
       });
       const data = await res.json();
       if (data.success) {
-        // Stocke l'objet utilisateur dans la bonne clé selon le rôle
-        if (data.user && data.user.role === "acconier") {
+        // Forcer le stockage et la redirection acconier
+        if (data.user) {
           localStorage.setItem("respAcconierUser", JSON.stringify(data.user));
-        } else if (data.user && data.user.role === "livraison") {
-          localStorage.setItem("respLivUser", JSON.stringify(data.user));
-        } else if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user));
         }
         showMessage(loginMessage, "Connexion réussie ! Redirection...", true);
         setTimeout(() => {
-          // Redirection selon le rôle
-          if (data.user && data.user.role === "acconier") {
-            window.location.href =
-              "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
-          } else if (data.user && data.user.role === "livraison") {
-            window.location.href =
-              "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
-          } else {
-            window.location.href =
-              "https://plateformdesuivie-its-service-1cjx.onrender.com/html/index.html";
-          }
+          window.location.href =
+            "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
         }, 1000);
       } else {
         showMessage(
