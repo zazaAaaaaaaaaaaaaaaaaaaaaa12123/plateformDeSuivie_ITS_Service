@@ -1704,7 +1704,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       };
       profilePopup.appendChild(fileInput);
-      // Bouton déconnexion
+      // Bouton déconnexions
       const logoutBtn = document.createElement("button");
       logoutBtn.textContent = "Déconnexion";
       logoutBtn.style.margin = "12px 0 0 0";
