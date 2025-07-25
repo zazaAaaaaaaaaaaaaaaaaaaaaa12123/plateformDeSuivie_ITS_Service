@@ -31,6 +31,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
+
+// ===============================
+// CONFIGURATION DES FICHIERS STATIQUES (HTML, CSS, JS, images...)
+// Sert tous les fichiers statiques du dossier public (y compris /html, /css, /js...)
+app.use(express.static(path.join(__dirname, "public")));
+
 // === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
 // ===============================
 const PORT = process.env.PORT || 3000;
@@ -1653,8 +1659,7 @@ app.post("/api/login", async (req, res) => {
     console.log("[LOGIN][API] Connexion réussie pour:", email);
     return res.status(200).json({
       success: true,
-      message: "Connexion réussie.",
-      name: user.name,
+      nom: user.name, // renvoie le nom sous la clé 'nom' pour compatibilité frontend
       email: user.email,
     });
   } catch (err) {
@@ -2993,13 +2998,14 @@ app.get("/clients", async (req, res) => {
 
 app.use("/uploads", express.static(uploadDir));
 
+// (Gardez la route spécifique si besoin)
 app.get("/interfaceFormulaireEmployer.html", (req, res) => {
   res.sendFile(path.join(__dirname, "interfaceFormulaireEmployer.html"));
 });
 
-app.use(express.static(path.join(__dirname)));
-
-app.use(express.static(path.join(__dirname, "public")));
+// Les deux lignes suivantes sont supprimées car déjà géré plus haut :
+// app.use(express.static(path.join(__dirname)));
+// app.use(express.static(path.join(__dirname, "public")));
 
 // ===============================
 // --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
@@ -3118,10 +3124,35 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       container_statuses
     );
     // Met à jour la base
-    const updateRes = await pool.query(
-      "UPDATE livraison_conteneur SET container_statuses = $1 WHERE id = $2 RETURNING *;",
-      [JSON.stringify(container_statuses), id]
-    );
+    // Vérifie si tous les conteneurs sont livrés
+    let tcListCheck = [];
+    if (result.rows[0].container_number) {
+      if (Array.isArray(result.rows[0].container_number)) {
+        tcListCheck = result.rows[0].container_number.filter(Boolean);
+      } else if (typeof result.rows[0].container_number === "string") {
+        tcListCheck = result.rows[0].container_number
+          .split(/[,;\s]+/)
+          .filter(Boolean);
+      }
+    }
+    const allDelivered =
+      tcListCheck.length > 0 &&
+      tcListCheck.every((tc) => {
+        const s = container_statuses[tc];
+        return s === "livre" || s === "livré";
+      });
+    let updateQuery = "UPDATE livraison_conteneur SET container_statuses = $1";
+    let updateValues = [JSON.stringify(container_statuses)];
+    if (allDelivered) {
+      updateQuery += ", delivery_status_acconier = $2";
+      updateValues.push("mise_en_livraison_acconier");
+      updateQuery += " WHERE id = $3 RETURNING *;";
+      updateValues.push(id);
+    } else {
+      updateQuery += " WHERE id = $2 RETURNING *;";
+      updateValues.push(id);
+    }
+    const updateRes = await pool.query(updateQuery, updateValues);
     if (updateRes.rows.length === 0) {
       return res
         .status(404)
@@ -3148,6 +3179,36 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
     const wss = req.app.get("wss");
     const updatedDelivery = updateRes.rows[0];
     const alertMessage = `Statut du conteneur '${containerNumber}' mis à jour à '${status}'.`;
+    // Calcul du nombre de conteneurs livrés et du total pour cette livraison
+    let total = 0;
+    let delivered = 0;
+    let tcList = [];
+    if (updatedDelivery.container_number) {
+      if (Array.isArray(updatedDelivery.container_number)) {
+        tcList = updatedDelivery.container_number.filter(Boolean);
+      } else if (typeof updatedDelivery.container_number === "string") {
+        tcList = updatedDelivery.container_number
+          .split(/[,;\s]+/)
+          .filter(Boolean);
+      }
+      total = tcList.length;
+    }
+    let container_statuses_updated = {};
+    if (updatedDelivery.container_statuses) {
+      try {
+        container_statuses_updated =
+          typeof updatedDelivery.container_statuses === "string"
+            ? JSON.parse(updatedDelivery.container_statuses)
+            : updatedDelivery.container_statuses;
+      } catch (e) {
+        container_statuses_updated = {};
+      }
+    }
+    delivered = tcList.filter((tc) => {
+      const s = container_statuses_updated[tc];
+      return s === "livre" || s === "livré";
+    }).length;
+    // Envoi du ratio livré/total pour la livraison concernée (deliveryId)
     const payload = JSON.stringify({
       type: "container_status_update",
       message: alertMessage,
@@ -3155,6 +3216,8 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       containerNumber,
       status,
       alertType: "success",
+      deliveredCount: delivered,
+      totalCount: total,
     });
     wss.clients.forEach((client) => {
       if (client.readyState === require("ws").OPEN) {
@@ -3165,6 +3228,8 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       success: true,
       message: alertMessage,
       delivery: updatedDelivery,
+      deliveredCount: delivered,
+      totalCount: total,
     });
   } catch (err) {
     console.error("Erreur lors de la mise à jour du statut du conteneur:", err);

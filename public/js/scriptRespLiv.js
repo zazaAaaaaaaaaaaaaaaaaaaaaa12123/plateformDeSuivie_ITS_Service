@@ -232,16 +232,48 @@ document.addEventListener("DOMContentLoaded", function () {
     ws.onmessage = function (event) {
       try {
         const data = JSON.parse(event.data);
-        // Gestion BL existante
-        if (data.type === "bl_status_update") {
-          if (data.status === "mise_en_livraison") {
-            const dateInput = document.getElementById("mainTableDateFilter");
-            const dateStr = dateInput ? dateInput.value : null;
-            if (typeof loadAllDeliveries === "function" && dateStr) {
-              loadAllDeliveries().then(() => {
-                updateTableForDate(dateStr);
-              });
+        // Gestion BL existante : ajout/suppression instantanée des livraisons
+        if (data.type === "bl_status_update" && data.delivery) {
+          // Vérifie si TOUS les BL de la livraison sont en 'mise_en_livraison'
+          let blList = Array.isArray(data.delivery.bl_number)
+            ? data.delivery.bl_number
+            : typeof data.delivery.bl_number === "string"
+            ? data.delivery.bl_number.split(/[,;\s]+/).filter(Boolean)
+            : [];
+          let blStatuses = blList.map((bl) =>
+            data.delivery.bl_statuses && data.delivery.bl_statuses[bl]
+              ? data.delivery.bl_statuses[bl]
+              : "aucun"
+          );
+          const allMiseEnLivraison =
+            blStatuses.length > 0 &&
+            blStatuses.every((s) => s === "mise_en_livraison");
+          // Cherche si la livraison est déjà dans allDeliveries
+          const idx = window.allDeliveries.findIndex(
+            (d) => d.id === data.delivery.id
+          );
+          if (allMiseEnLivraison) {
+            // Ajoute ou met à jour la livraison
+            if (idx === -1) {
+              window.allDeliveries.push(data.delivery);
+            } else {
+              window.allDeliveries[idx] = data.delivery;
             }
+          } else {
+            // Retire la livraison si elle n'est plus éligible
+            if (idx !== -1) {
+              window.allDeliveries.splice(idx, 1);
+            }
+          }
+          // Rafraîchit le tableau
+          const dateStartInput = document.getElementById(
+            "mainTableDateStartFilter"
+          );
+          const dateEndInput = document.getElementById(
+            "mainTableDateEndFilter"
+          );
+          if (dateStartInput && dateEndInput) {
+            updateTableForDateRange(dateStartInput.value, dateEndInput.value);
           }
         }
         // Ajout : mise à jour instantanée de l'entête Statut ET des cellules de la colonne Statut
