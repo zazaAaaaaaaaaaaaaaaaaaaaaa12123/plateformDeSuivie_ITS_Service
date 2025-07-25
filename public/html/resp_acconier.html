@@ -462,12 +462,26 @@
       }
 
       /* Responsive élargissement de la carte et du tableau */
-      @media (min-width: 1200px) {
+      @media (min-width: 1800px) {
+        .card-section {
+          width: 100vw !important;
+          max-width: 100vw !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border-radius: 0 !important;
+        }
+        #tableScrollContainer, #deliveriesTable {
+          max-width: 100vw !important;
+          min-width: 1200px !important;
+        }
+      }
+      @media (min-width: 1200px) and (max-width: 1799px) {
         .card-section {
           width: 98vw !important;
           max-width: 1600px !important;
           margin: 32px auto 0 auto !important;
           padding: 0 2vw !important;
+          border-radius: 18px !important;
         }
         #tableScrollContainer, #deliveriesTable {
           max-width: 1500px !important;
@@ -475,8 +489,11 @@
       }
       @media (max-width: 1200px) {
         .card-section {
+          width: 99vw !important;
           max-width: 99vw !important;
+          margin: 0 auto !important;
           padding: 0 1vw !important;
+          border-radius: 18px !important;
         }
         #tableScrollContainer, #deliveriesTable {
           max-width: 99vw !important;
@@ -484,8 +501,11 @@
       }
       @media (max-width: 900px) {
         .card-section {
+          width: 100vw !important;
           max-width: 100vw !important;
+          margin: 0 !important;
           padding: 0 0.5vw !important;
+          border-radius: 0 !important;
         }
         #tableScrollContainer, #deliveriesTable {
           max-width: 100vw !important;
