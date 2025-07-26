@@ -5,7 +5,7 @@ function normalizeDateToMidnight(date) {
   return date;
 }
 
-// Fonction principale pour afficher les livraisons filtrées par date
+// Fonction principale pour ,  afficher les livraisons filtrées par date
 function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
   const dateToCompare = normalizeDateToMidnight(selectedDate);
   // Filtre les livraisons par date (champ created_at ou delivery_date)
