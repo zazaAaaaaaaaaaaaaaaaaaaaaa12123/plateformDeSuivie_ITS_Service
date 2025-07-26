@@ -1681,7 +1681,7 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   thead.appendChild(headerRow);
 }
 
-// Fonction pour générer le tableau Agent Acconier complet
+// Fonction pour générersgv le tableau Agent Acconier complet
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
   // ...
