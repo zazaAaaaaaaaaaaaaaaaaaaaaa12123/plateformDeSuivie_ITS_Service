@@ -220,11 +220,12 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
   // Ajout des icônes historique et archive au-dessus de la barre de filtres
-  // Ajout des icônes historique et archive au-dessus de la barre de filtres
-  const dateStartInputForIcons = document.getElementById(
+  // Ajout des icônes historique et archive au-dessus des deux champs de date
+  const dateStartInputIcons = document.getElementById(
     "mainTableDateStartFilter"
   );
-  if (dateStartInputForIcons) {
+  const dateEndInputIcons = document.getElementById("mainTableDateEndFilter");
+  if (dateStartInputIcons && dateEndInputIcons) {
     let iconsBar = document.getElementById("history-archive-icons-bar");
     if (!iconsBar) {
       iconsBar = document.createElement("div");
@@ -246,10 +247,26 @@ document.addEventListener("DOMContentLoaded", function () {
       archiveIcon.style.cursor = "pointer";
       iconsBar.appendChild(historyIcon);
       iconsBar.appendChild(archiveIcon);
-      // Insertion juste avant la barre de filtres (dateStartInputForIcons)
-      const filterBar = dateStartInputForIcons.parentNode;
-      if (filterBar && filterBar.parentNode) {
-        filterBar.parentNode.insertBefore(iconsBar, filterBar);
+      // Insertion juste avant le conteneur des deux champs de date
+      // On cherche le parent commun des deux inputs date
+      const startParent = dateStartInputIcons.parentNode;
+      const endParent = dateEndInputIcons.parentNode;
+      let commonParent = null;
+      if (startParent === endParent) {
+        commonParent = startParent;
+      } else {
+        // On cherche le parent commun le plus proche
+        let p1 = startParent;
+        while (p1) {
+          if (p1.contains(endParent)) {
+            commonParent = p1;
+            break;
+          }
+          p1 = p1.parentNode;
+        }
+      }
+      if (commonParent && commonParent.parentNode) {
+        commonParent.parentNode.insertBefore(iconsBar, commonParent);
       }
     }
   }
