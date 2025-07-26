@@ -679,6 +679,53 @@ document.addEventListener("DOMContentLoaded", function () {
 // Colonnes strictes pour Agent Acconier
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
 function renderAgentTableFull(deliveries, tableBodyElement) {
+  // Ajout du bouton de suppression si absent
+  let delBtn = document.getElementById("deleteRowsBtn");
+  if (!delBtn) {
+    delBtn = document.createElement("button");
+    delBtn.id = "deleteRowsBtn";
+    delBtn.textContent = "Supprimer la sélection";
+    delBtn.style.margin = "12px 0 8px 0";
+    delBtn.style.background = "#ef4444";
+    delBtn.style.color = "#fff";
+    delBtn.style.fontWeight = "bold";
+    delBtn.style.border = "none";
+    delBtn.style.borderRadius = "8px";
+    delBtn.style.padding = "8px 22px";
+    delBtn.style.cursor = "pointer";
+    delBtn.style.fontSize = "1em";
+    delBtn.onclick = function () {
+      // Récupère toutes les cases cochées
+      const checked = document.querySelectorAll(
+        '#deliveriesTableBody input[type="checkbox"].row-select:checked'
+      );
+      if (checked.length === 0) {
+        alert("Veuillez sélectionner au moins une ligne à supprimer.");
+        return;
+      }
+      if (!confirm("Confirmer la suppression des lignes sélectionnées ?"))
+        return;
+      checked.forEach((cb) => {
+        const tr = cb.closest("tr[data-delivery-id]");
+        if (tr) {
+          const deliveryId = tr.getAttribute("data-delivery-id");
+          // Supprime du tableau DOM
+          tr.remove();
+          // Supprime aussi de window.allDeliveries
+          if (deliveryId && window.allDeliveries) {
+            window.allDeliveries = window.allDeliveries.filter(
+              (d) => String(d.id) !== String(deliveryId)
+            );
+          }
+        }
+      });
+    };
+    // Ajoute le bouton avant le tableau
+    const table = tableBodyElement.closest("table");
+    if (table && table.parentNode) {
+      table.parentNode.insertBefore(delBtn, table);
+    }
+  }
   const table = tableBodyElement.closest("table");
   if (deliveries.length === 0) {
     if (table) table.style.display = "none";
@@ -779,7 +826,9 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     renderAgentTableRows(deliveries, tableBodyElement);
   }
 }
+// Ajout colonne de sélection pour suppression
 const AGENT_TABLE_COLUMNS = [
+  { id: "select_row", label: "Sélection" },
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent Acconier" },
@@ -894,6 +943,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     let lastAccessState = null;
     let confirmationShown = false;
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      // Colonne sélection : case à cocher
+      if (col.id === "select_row") {
+        const td = document.createElement("td");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "row-select";
+        cb.style.cursor = "pointer";
+        cb.style.width = "18px";
+        cb.style.height = "18px";
+        td.style.textAlign = "center";
+        td.appendChild(cb);
+        tr.appendChild(td);
+        return;
+      }
       // Génère une clé unique pour chaque cellule éditable (par livraison et colonne)
       function getCellStorageKey(delivery, colId) {
         return `deliverycell_${
