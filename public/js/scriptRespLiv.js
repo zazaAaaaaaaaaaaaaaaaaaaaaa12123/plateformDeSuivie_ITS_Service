@@ -219,6 +219,41 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // Ajout des icônes historique et archive au-dessus de la barre de filtres
+  // Ajout des icônes historique et archive au-dessus de la barre de filtres
+  const dateStartInputForIcons = document.getElementById(
+    "mainTableDateStartFilter"
+  );
+  if (dateStartInputForIcons) {
+    let iconsBar = document.getElementById("history-archive-icons-bar");
+    if (!iconsBar) {
+      iconsBar = document.createElement("div");
+      iconsBar.id = "history-archive-icons-bar";
+      iconsBar.style.display = "flex";
+      iconsBar.style.alignItems = "center";
+      iconsBar.style.gap = "18px";
+      iconsBar.style.marginBottom = "8px";
+      iconsBar.style.marginLeft = "2px";
+      // Icône historique (horloge)
+      const historyIcon = document.createElement("span");
+      historyIcon.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="#2563eb" stroke-width="2.2" fill="#f3f4f6"/><path d="M12 7v5l3 2" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      historyIcon.title = "Historique";
+      historyIcon.style.cursor = "pointer";
+      // Icône archive (boîte)
+      const archiveIcon = document.createElement("span");
+      archiveIcon.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="7" width="18" height="4" rx="2" fill="#eab308" stroke="#b45309" stroke-width="1.5"/><rect x="5" y="11" width="14" height="7" rx="2" fill="#f3f4f6" stroke="#b45309" stroke-width="1.5"/><path d="M9 15h6" stroke="#b45309" stroke-width="2" stroke-linecap="round"/></svg>`;
+      archiveIcon.title = "Archive";
+      archiveIcon.style.cursor = "pointer";
+      iconsBar.appendChild(historyIcon);
+      iconsBar.appendChild(archiveIcon);
+      // Insertion juste avant la barre de filtres (dateStartInputForIcons)
+      const filterBar = dateStartInputForIcons.parentNode;
+      if (filterBar && filterBar.parentNode) {
+        filterBar.parentNode.insertBefore(iconsBar, filterBar);
+      }
+    }
+  }
+
   // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
   let ws;
   function setupWebSocket() {
