@@ -1207,6 +1207,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                       return;
                     }
                     overlay.remove();
+                    // Afficher l'alerte verte de confirmation
+                    showMiseEnLivraisonSuccessAlert();
                   });
                 } catch (err) {
                   alert(
@@ -1214,6 +1216,42 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                       (err && err.message ? err.message : "")
                   );
                 }
+              }
+
+              // Fonction d'alerte verte de confirmation
+              function showMiseEnLivraisonSuccessAlert() {
+                // Supprimer toute alerte existante
+                const oldAlert = document.getElementById(
+                  "mise-en-livraison-success-alert"
+                );
+                if (oldAlert) oldAlert.remove();
+                const alert = document.createElement("div");
+                alert.id = "mise-en-livraison-success-alert";
+                alert.textContent =
+                  "Vous avez mis un dossier en mise en livraison";
+                alert.style.position = "fixed";
+                alert.style.top = "80px";
+                alert.style.left = "50%";
+                alert.style.transform = "translateX(-50%)";
+                alert.style.background =
+                  "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
+                alert.style.color = "#fff";
+                alert.style.fontWeight = "bold";
+                alert.style.fontSize = "1.12em";
+                alert.style.padding = "18px 38px";
+                alert.style.borderRadius = "16px";
+                alert.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
+                alert.style.zIndex = 99999;
+                alert.style.opacity = "0";
+                alert.style.transition = "opacity 0.3s";
+                document.body.appendChild(alert);
+                setTimeout(() => {
+                  alert.style.opacity = "1";
+                }, 10);
+                setTimeout(() => {
+                  alert.style.opacity = "0";
+                  setTimeout(() => alert.remove(), 400);
+                }, 2600);
               }
             }
             // 1. MAJ locale immédiate du statut BL
