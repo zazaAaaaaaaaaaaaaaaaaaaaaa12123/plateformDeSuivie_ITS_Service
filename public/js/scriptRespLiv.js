@@ -233,7 +233,7 @@ document.addEventListener("DOMContentLoaded", function () {
       iconsBar.style.display = "flex";
       iconsBar.style.alignItems = "center";
       iconsBar.style.gap = "18px";
-      iconsBar.style.marginBottom = "8px";
+      iconsBar.style.marginBottom = "14px";
       iconsBar.style.marginLeft = "2px";
       // Icône historique (horloge)
       const historyIcon = document.createElement("span");
@@ -247,7 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
       archiveIcon.style.cursor = "pointer";
       iconsBar.appendChild(historyIcon);
       iconsBar.appendChild(archiveIcon);
-      // Insertion juste avant le conteneur des deux champs de date
+      // Insertion au-dessus du bloc contenant les deux champs de date
       // On cherche le parent commun des deux inputs date
       const startParent = dateStartInputIcons.parentNode;
       const endParent = dateEndInputIcons.parentNode;
@@ -266,6 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
       if (commonParent && commonParent.parentNode) {
+        // On insère la barre d'icônes avant le bloc des dates (et non à l'intérieur)
         commonParent.parentNode.insertBefore(iconsBar, commonParent);
       }
     }
