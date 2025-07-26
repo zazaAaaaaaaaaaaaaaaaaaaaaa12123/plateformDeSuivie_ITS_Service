@@ -219,7 +219,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
-  // Ajout des icônes historique et archive AU-DESSUS du bloc contenant les deux champs de date (pas sur la même ligne)
+  // Ajout des icônes historique et archive sur une ligne séparée, au-dessus du bloc des deux dates
   const dateStartInputIcons = document.getElementById(
     "mainTableDateStartFilter"
   );
@@ -233,8 +233,8 @@ document.addEventListener("DOMContentLoaded", function () {
       iconsBar.style.justifyContent = "center";
       iconsBar.style.alignItems = "center";
       iconsBar.style.gap = "22px";
-      iconsBar.style.marginBottom = "18px";
-      iconsBar.style.marginTop = "8px";
+      iconsBar.style.marginBottom = "10px";
+      iconsBar.style.marginTop = "0px";
       // Icône historique (horloge)
       const historyIcon = document.createElement("span");
       historyIcon.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="#2563eb" stroke-width="2.2" fill="#f3f4f6"/><path d="M12 7v5l3 2" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -271,6 +271,21 @@ document.addEventListener("DOMContentLoaded", function () {
         // On insère la barre d'icônes AVANT le bloc contenant les deux dates, donc sur une ligne séparée et bien centrée
         commonParent.parentNode.insertBefore(iconsBar, commonParent);
       }
+    }
+    // S'assurer que le bloc contenant les deux dates est bien en-dessous (en colonne)
+    let filterBar = dateStartInputIcons.parentNode;
+    if (filterBar && filterBar.style) {
+      filterBar.style.display = "flex";
+      filterBar.style.flexDirection = "row";
+      filterBar.style.alignItems = "center";
+      filterBar.style.gap = "8px";
+      filterBar.style.marginTop = "0px";
+    }
+    // S'assurer que le parent du bloc de dates n'est pas en flex-row avec les icônes
+    if (iconsBar.parentNode && iconsBar.parentNode.style) {
+      iconsBar.parentNode.style.display = "flex";
+      iconsBar.parentNode.style.flexDirection = "column";
+      iconsBar.parentNode.style.alignItems = "center";
     }
   }
 
