@@ -371,18 +371,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // Ajout du style CSS pour badges, tags, menu déroulant des conteneurs (Numéro TC(s)), et bouton suppression compact
   const styleTC = document.createElement("style");
   styleTC.textContent = `
-    /* Remonter la barre de filtres (dates + bouton suppression) */
-    #mainTableDateStartFilter, #mainTableDateEndFilter {
-      margin-top: -18px !important;
-    }
-    #mainTableDateStartFilter, #mainTableDateEndFilter, #deleteRowsBtn {
-      position: relative;
-      top: -8px;
-    }
-    /* Si le parent est flex, on ajuste l'alignement vertical */
-    #mainTableDateStartFilter, #mainTableDateEndFilter, #deleteRowsBtn {
-      align-self: flex-start;
-    }
     /* Bouton suppression compact à côté des filtres date */
     #deleteRowsBtn {
       margin-left: 18px !important;
@@ -752,20 +740,18 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     const dateStartInput = document.getElementById("mainTableDateStartFilter");
     const dateEndInput = document.getElementById("mainTableDateEndFilter");
     if (dateEndInput && dateEndInput.parentNode) {
-      // Crée un conteneur flex si pas déjà fait
+      // Crée un conteneur flex si pas déjà faits
       let filterBar = dateEndInput.parentNode;
       // Si le parent n'est pas déjà un flex, on le force
       if (getComputedStyle(filterBar).display !== "flex") {
         filterBar.style.display = "flex";
-        filterBar.style.alignItems = "flex-start";
+        filterBar.style.alignItems = "center";
         filterBar.style.gap = "8px";
       }
       // Place le bouton juste après le filtre date de fin
       if (dateEndInput.nextSibling !== delBtn) {
         dateEndInput.parentNode.insertBefore(delBtn, dateEndInput.nextSibling);
       }
-      // Ajout : on remonte la barre entière
-      filterBar.style.marginTop = "-18px";
     }
   }
   // Fonction pour afficher/masquer le bouton selon la sélection
