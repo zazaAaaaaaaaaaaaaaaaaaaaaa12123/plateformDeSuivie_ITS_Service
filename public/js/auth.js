@@ -129,27 +129,19 @@ if (loginForm) {
       });
       const data = await res.json();
       if (data.success) {
-        // Stocke l'objet utilisateur dans la bonne clé selon le rôle
-        if (data.user && data.user.role === "acconier") {
-          localStorage.setItem("respAcconierUser", JSON.stringify(data.user));
-        } else if (data.user && data.user.role === "livraison") {
-          localStorage.setItem("respLivUser", JSON.stringify(data.user));
-        } else if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user));
+        // Stocke le nom et l'email dans le localStorage pour la page profil
+        if (data.user && data.user.nom && data.user.email) {
+          localStorage.setItem("userName", data.user.nom);
+          localStorage.setItem("userEmail", data.user.email);
+        } else {
+          // Pour compatibilité si l'API ne renvoie pas user, on stocke ce qu'on a
+          localStorage.setItem("userName", data.nom || "");
+          localStorage.setItem("userEmail", data.email || email);
         }
         showMessage(loginMessage, "Connexion réussie ! Redirection...", true);
         setTimeout(() => {
-          // Redirection selon le rôle
-          if (data.user && data.user.role === "acconier") {
-            window.location.href =
-              "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
-          } else if (data.user && data.user.role === "livraison") {
-            window.location.href =
-              "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
-          } else {
-            window.location.href =
-              "https://plateformdesuivie-its-service-1cjx.onrender.com/html/index.html";
-          }
+          window.location.href =
+            "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
         }, 1000);
       } else {
         showMessage(
