@@ -679,7 +679,7 @@ document.addEventListener("DOMContentLoaded", function () {
 // Colonnes strictes pour Agent Acconier
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
 function renderAgentTableFull(deliveries, tableBodyElement) {
-  // Ajout du bouton de suppression si absent
+  // Création du bouton de suppression (mais caché par défaut)
   let delBtn = document.getElementById("deleteRowsBtn");
   if (!delBtn) {
     delBtn = document.createElement("button");
@@ -694,8 +694,8 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     delBtn.style.padding = "8px 22px";
     delBtn.style.cursor = "pointer";
     delBtn.style.fontSize = "1em";
+    delBtn.style.display = "none";
     delBtn.onclick = function () {
-      // Récupère toutes les cases cochées
       const checked = document.querySelectorAll(
         '#deliveriesTableBody input[type="checkbox"].row-select:checked'
       );
@@ -709,9 +709,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         const tr = cb.closest("tr[data-delivery-id]");
         if (tr) {
           const deliveryId = tr.getAttribute("data-delivery-id");
-          // Supprime du tableau DOM
           tr.remove();
-          // Supprime aussi de window.allDeliveries
           if (deliveryId && window.allDeliveries) {
             window.allDeliveries = window.allDeliveries.filter(
               (d) => String(d.id) !== String(deliveryId)
@@ -719,12 +717,25 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
           }
         }
       });
+      // Après suppression, masquer le bouton si plus aucune case cochée
+      setTimeout(() => {
+        const checkedNow = document.querySelectorAll(
+          '#deliveriesTableBody input[type="checkbox"].row-select:checked'
+        );
+        if (checkedNow.length === 0) delBtn.style.display = "none";
+      }, 100);
     };
-    // Ajoute le bouton avant le tableau
     const table = tableBodyElement.closest("table");
     if (table && table.parentNode) {
       table.parentNode.insertBefore(delBtn, table);
     }
+  }
+  // Fonction pour afficher/masquer le bouton selon la sélection
+  function updateDeleteBtnVisibility() {
+    const checked = document.querySelectorAll(
+      '#deliveriesTableBody input[type="checkbox"].row-select:checked'
+    );
+    delBtn.style.display = checked.length > 0 ? "inline-block" : "none";
   }
   const table = tableBodyElement.closest("table");
   if (deliveries.length === 0) {
@@ -954,6 +965,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         cb.style.height = "18px";
         td.style.textAlign = "center";
         td.appendChild(cb);
+        // Ajout : afficher/masquer le bouton de suppression selon la sélection
+        cb.addEventListener("change", function () {
+          const delBtn = document.getElementById("deleteRowsBtn");
+          if (delBtn) {
+            const checked = document.querySelectorAll(
+              '#deliveriesTableBody input[type="checkbox"].row-select:checked'
+            );
+            delBtn.style.display = checked.length > 0 ? "inline-block" : "none";
+          }
+        });
         tr.appendChild(td);
         return;
       }
