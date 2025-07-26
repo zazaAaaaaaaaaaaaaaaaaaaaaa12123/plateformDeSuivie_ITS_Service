@@ -5,7 +5,7 @@ function normalizeDateToMidnight(date) {
   return date;
 }
 
-// Fonction principale pour afficher les livraisons filtrées par date
+// Fonction principale pour ,  afficher les livraisons filtrées par date
 function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
   const dateToCompare = normalizeDateToMidnight(selectedDate);
   // Filtre les livraisons par date (champ created_at ou delivery_date)
@@ -764,19 +764,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    // Détermination de la couleur de la bande selon l'ancienneté
+    // Détermination de la couleur de l'avatar selon l'ancienneté
     let dDate = delivery.delivery_date || delivery.created_at;
     let dateObj = dDate ? new Date(dDate) : null;
     let now = new Date();
-    let color = "#2563eb"; // bleu par défaut (récent)
+    let avatarColor = "#2563eb"; // bleu par défaut (récent)
+    let avatarBg = "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
+    let badgeColor = "#2563eb";
     if (dateObj && !isNaN(dateObj.getTime())) {
       let diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
       if (diffDays >= 30) {
-        color = "#a3a3a3"; // ancien : gris (1 mois et plus)
+        avatarColor = "#a3a3a3"; // gris
+        avatarBg = "linear-gradient(135deg, #a3a3a3 60%, #6b7280 100%)";
+        badgeColor = "#a3a3a3";
       } else if (diffDays >= 7) {
-        color = "#eab308"; // assez ancien : jaune (1 semaine à moins d'1 mois)
+        avatarColor = "#eab308"; // jaune
+        avatarBg = "linear-gradient(135deg, #eab308 60%, #facc15 100%)";
+        badgeColor = "#eab308";
       } else if (diffDays >= 0) {
-        color = "#2563eb"; // récent : bleu (< 7 jours)
+        avatarColor = "#2563eb"; // bleu
+        avatarBg = "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
+        badgeColor = "#2563eb";
       }
     }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
@@ -784,7 +792,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       let value = "-";
       if (col.id === "row_number") {
         value = i + 1;
-        // Avatar stylisé moderne avec initiales
+        // Avatar stylisé moderne avec initiales et couleur dynamique
         const avatar = document.createElement("div");
         avatar.style.display = "flex";
         avatar.style.alignItems = "center";
@@ -792,8 +800,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         avatar.style.width = window.innerWidth <= 600 ? "32px" : "44px";
         avatar.style.height = window.innerWidth <= 600 ? "32px" : "44px";
         avatar.style.borderRadius = "50%";
-        avatar.style.background =
-          "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
+        avatar.style.background = avatarBg;
         avatar.style.boxShadow =
           "0 2px 12px rgba(37,99,235,0.13), 0 1.5px 8px rgba(30,41,59,0.10)";
         avatar.style.position = "relative";
@@ -832,7 +839,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         badge.style.bottom = "-6px";
         badge.style.right = "-6px";
         badge.style.background = "#fff";
-        badge.style.color = "#2563eb";
+        badge.style.color = badgeColor;
         badge.style.fontWeight = "bold";
         badge.style.fontSize = window.innerWidth <= 600 ? "0.85em" : "1em";
         badge.style.borderRadius = "50%";
@@ -1371,6 +1378,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (e.target === overlay) overlay.remove();
           };
         }
+        // Gestion stricte de la session responsable acconier :
+        // On utilise UNIQUEMENT respAcconierUser, jamais user !
+        let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
+        let respAcconierUser = null;
+        if (!respAcconierUserRaw) {
+          window.location.href = "repoAcconierAuth.html";
+          return;
+        }
+        try {
+          respAcconierUser = JSON.parse(respAcconierUserRaw);
+        } catch (e) {
+          window.location.href = "repoAcconierAuth.html";
+          return;
+        }
         // ...existing code...
       } else if (col.id === "container_status") {
         // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
@@ -1674,7 +1695,7 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   thead.appendChild(headerRow);
 }
 
-// Fonction pour générer le tableau Agent Acconier complet
+// Fonction pour générersgv le tableau Agent Acconier complet
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
   // ...
@@ -1727,4 +1748,4 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     renderAgentTableRows(deliveriesToShow, tableBodyElement);
   }
 }
-//originaleshdgsj
+//originale12345678910
