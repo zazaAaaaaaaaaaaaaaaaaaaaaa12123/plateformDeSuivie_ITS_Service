@@ -368,9 +368,23 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   }
   setupWebSocket();
-  // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
+  // Ajout du style CSS pour badges, tags, menu déroulant des conteneurs (Numéro TC(s)), et bouton suppression compact
   const styleTC = document.createElement("style");
   styleTC.textContent = `
+    /* Bouton suppression compact à côté des filtres date */
+    #deleteRowsBtn {
+      margin-left: 18px !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      padding: 4px 12px !important;
+      font-size: 0.97em !important;
+      height: 32px !important;
+      min-width: 0;
+      border-radius: 7px !important;
+      box-shadow: 0 1px 4px #ef444422;
+      vertical-align: middle;
+      display: none;
+    }
     #deliveriesTableBody .tc-tag {      
       display: inline-block;
       margin-right: 4px;
@@ -685,15 +699,13 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     delBtn = document.createElement("button");
     delBtn.id = "deleteRowsBtn";
     delBtn.textContent = "Supprimer la sélection";
-    delBtn.style.margin = "12px 0 8px 0";
+    delBtn.type = "button";
     delBtn.style.background = "#ef4444";
     delBtn.style.color = "#fff";
     delBtn.style.fontWeight = "bold";
     delBtn.style.border = "none";
-    delBtn.style.borderRadius = "8px";
-    delBtn.style.padding = "8px 22px";
     delBtn.style.cursor = "pointer";
-    delBtn.style.fontSize = "1em";
+    // Les autres styles sont gérés par le CSS ci-dessus
     delBtn.style.display = "none";
     delBtn.onclick = function () {
       const checked = document.querySelectorAll(
@@ -717,7 +729,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
           }
         }
       });
-      // Après suppression, masquer le bouton si plus aucune case cochée
       setTimeout(() => {
         const checkedNow = document.querySelectorAll(
           '#deliveriesTableBody input[type="checkbox"].row-select:checked'
@@ -725,9 +736,22 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         if (checkedNow.length === 0) delBtn.style.display = "none";
       }, 100);
     };
-    const table = tableBodyElement.closest("table");
-    if (table && table.parentNode) {
-      table.parentNode.insertBefore(delBtn, table);
+    // Ajout du bouton à côté des filtres de date
+    const dateStartInput = document.getElementById("mainTableDateStartFilter");
+    const dateEndInput = document.getElementById("mainTableDateEndFilter");
+    if (dateEndInput && dateEndInput.parentNode) {
+      // Crée un conteneur flex si pas déjà fait
+      let filterBar = dateEndInput.parentNode;
+      // Si le parent n'est pas déjà un flex, on le force
+      if (getComputedStyle(filterBar).display !== "flex") {
+        filterBar.style.display = "flex";
+        filterBar.style.alignItems = "center";
+        filterBar.style.gap = "8px";
+      }
+      // Place le bouton juste après le filtre date de fin
+      if (dateEndInput.nextSibling !== delBtn) {
+        dateEndInput.parentNode.insertBefore(delBtn, dateEndInput.nextSibling);
+      }
     }
   }
   // Fonction pour afficher/masquer le bouton selon la sélection
