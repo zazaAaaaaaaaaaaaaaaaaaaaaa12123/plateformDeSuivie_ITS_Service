@@ -1,4 +1,4 @@
-AA; // Fonction utilitaire pour normaliser la date à minuit
+// Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
   date.setHours(0, 0, 0, 0);
