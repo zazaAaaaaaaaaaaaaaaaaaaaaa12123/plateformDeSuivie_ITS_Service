@@ -777,25 +777,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       thead.appendChild(headerRow);
     }
     renderAgentTableRows(deliveries, tableBodyElement);
-    // Affichage dynamique du bouton suppression
-    let delBtn = document.getElementById("deleteRowsBtn");
-    if (delBtn) {
-      delBtn.style.display = "none";
-      function updateDeleteBtnVisibility() {
-        const checked = document.querySelectorAll(
-          '#deliveriesTableBody input[type="checkbox"].row-select:checked'
-        );
-        delBtn.style.display = checked.length > 0 ? "inline-block" : "none";
-      }
-      const checkboxes = document.querySelectorAll(
-        '#deliveriesTableBody input[type="checkbox"].row-select'
-      );
-      checkboxes.forEach((cb) => {
-        cb.removeEventListener("change", updateDeleteBtnVisibility);
-        cb.addEventListener("change", updateDeleteBtnVisibility);
-      });
-      updateDeleteBtnVisibility();
-    }
   }
 }
 const AGENT_TABLE_COLUMNS = [
