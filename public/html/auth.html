@@ -3,14 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inscription / Connexion - ITS Service</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Inscription & Connexion - ITS Service</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
     <style>
       body {
-        background: linear-gradient(120deg, #fffbe6 0%, #fff 100%);
-        font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
-        margin: 0;
+        background: linear-gradient(120deg, #1e3c72, #2a5298);
+        font-family: "Montserrat", sans-serif;
         min-height: 100vh;
+        margin: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -18,106 +25,39 @@
       .container {
         background: #fff;
         border-radius: 18px;
-        box-shadow: 0 8px 32px #e6b80033, 0 2px 0 #fff inset;
-        padding: 38px 32px 32px 32px;
-        max-width: 410px;
+        box-shadow: 0 8px 32px rgba(30, 60, 114, 0.18);
+        padding: 2.5rem 2rem 2rem 2rem;
         width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        border: 2.5px solid #ffc107;
+        max-width: 410px;
+        position: relative;
+        overflow: hidden;
+        transition: box-shadow 0.3s;
       }
-      .form-title {
-        font-size: 1.45em;
-        font-weight: 700;
-        color: #e6b800;
-        margin-bottom: 18px;
-        letter-spacing: 1px;
-        text-align: center;
+      .container:hover {
+        box-shadow: 0 12px 40px rgba(30, 60, 114, 0.28);
       }
       .tabs {
         display: flex;
-        gap: 12px;
-        margin-bottom: 22px;
-        justify-content: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
       }
       .tab {
-        background: #e6b800;
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        padding: 7px 22px;
-        font-size: 1em;
-        font-weight: 600;
+        flex: 1;
+        text-align: center;
+        padding: 0.7rem 0;
         cursor: pointer;
-        transition: background 0.2s;
+        font-weight: 700;
+        color: #1e3c72;
+        border-bottom: 2px solid transparent;
+        transition: border 0.2s, color 0.2s;
+        letter-spacing: 1px;
       }
       .tab.active {
-        background: #fffbe6;
-        color: #e6b800;
-        border: 2px solid #e6b800;
+        color: #2a5298;
+        border-bottom: 2.5px solid #2a5298;
+        background: linear-gradient(90deg, #e3ecfa 60%, #f7faff 100%);
+        border-radius: 8px 8px 0 0;
       }
-      form {
-        width: 100%;
-        display: none;
-        flex-direction: column;
-        gap: 16px;
-      }
-      form.active {
-        display: flex;
-      }
-      label {
-        font-weight: 500;
-        color: #0e274e;
-        margin-bottom: 4px;
-      }
-      input[type="text"], input[type="password"], input[type="email"] {
-        padding: 10px 12px;
-        border-radius: 7px;
-        border: 1.5px solid #e6b800;
-        font-size: 1em;
-        background: #fffbe6;
-        color: #0e274e;
-        outline: none;
-        transition: border 0.2s;
-      }
-      input:focus {
-        border: 2px solid #e6b800;
-      }
-      .btn {
-        background: linear-gradient(90deg,#e6b800 0%,#fffbe6 100%);
-        color: #0e274e;
-        font-weight: bold;
-        font-size: 1.08em;
-        border: none;
-        border-radius: 8px;
-        padding: 12px 0;
-        margin-top: 8px;
-        cursor: pointer;
-        box-shadow: 0 2px 12px #e6b80033;
-        transition: background 0.2s;
-      }
-      .btn:hover {
-        background: #ffc107;
-        color: #fff;
-      }
-      .message {
-        margin-top: 10px;
-        color: #b91c1c;
-        font-weight: 600;
-        text-align: center;
-        min-height: 22px;
-      }
-      .success {
-        color: #22c55e;
-      }
-      @media (max-width: 500px) {
-        .container {
-          padding: 18px 8px 18px 8px;
-          max-width: 98vw;
-        }
-      }
-    </style>
       form {
         display: none;
         flex-direction: column;
@@ -280,110 +220,99 @@
   </head>
   <body>
     <div class="container">
-      <div class="form-title">Plateforme ITS Service</div>
       <div class="tabs">
-        <button class="tab active" id="tab-signup" type="button">Inscription</button>
-        <button class="tab" id="tab-login" type="button">Connexion</button>
+        <div class="tab active" id="tab-signup">Inscription</div>
+        <div class="tab" id="tab-login">Connexion</div>
       </div>
       <form id="signup-form" class="active" autocomplete="off">
-        <label for="signup-username">Nom d'utilisateur</label>
-        <input type="text" id="signup-username" name="username" required autocomplete="username">
-        <label for="signup-email">Email</label>
-        <input type="email" id="signup-email" name="email" required autocomplete="email">
-        <label for="signup-password">Mot de passe</label>
-        <input type="password" id="signup-password" name="password" required autocomplete="new-password">
-        <button class="btn" type="submit">S'inscrire</button>
+        <div class="form-group">
+          <label for="signup-nom"><i class="fa fa-user"></i> Nom complet</label>
+          <input
+            type="text"
+            id="signup-nom"
+            name="nom"
+            placeholder="Votre nom complet"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="signup-email"><i class="fa fa-envelope"></i> Email</label>
+          <input
+            type="email"
+            id="signup-email"
+            name="email"
+            placeholder="Votre email"
+            required
+          />
+        </div>
+        <div class="form-group password-group">
+          <label for="signup-password"
+            ><i class="fa fa-lock"></i> Mot de passe</label
+          >
+          <input
+            type="password"
+            id="signup-password"
+            name="password"
+            placeholder="Mot de passe"
+            required
+          />
+          <span
+            class="show-password"
+            onclick="togglePassword('signup-password', this)"
+            ><i class="fa fa-eye"></i
+          ></span>
+        </div>
+        <button type="submit" class="btn">S'inscrire</button>
         <div class="message" id="signup-message"></div>
       </form>
       <form id="login-form">
-        <label for="login-username">Nom d'utilisateur ou Email</label>
-        <input type="text" id="login-username" name="username" required autocomplete="username">
-        <label for="login-password">Mot de passe</label>
-        <input type="password" id="login-password" name="password" required autocomplete="current-password">
-        <button class="btn" type="submit">Se connecter</button>
+        <div class="form-group">
+          <label for="login-email"><i class="fa fa-envelope"></i> Email</label>
+          <input
+            type="email"
+            id="login-email"
+            name="email"
+            placeholder="Votre email"
+            required
+          />
+        </div>
+        <div class="form-group password-group">
+          <label for="login-password"
+            ><i class="fa fa-lock"></i> Mot de passe</label
+          >
+          <input
+            type="password"
+            id="login-password"
+            name="password"
+            placeholder="Mot de passe"
+            required
+          />
+          <span
+            class="show-password"
+            onclick="togglePassword('login-password', this)"
+            ><i class="fa fa-eye"></i
+          ></span>
+        </div>
+        <button type="submit" class="btn">Se connecter</button>
         <div class="message" id="login-message"></div>
       </form>
     </div>
+    <script src="/js/auth.js"></script>
     <script>
-      // Switch entre inscription et connexion
-      const tabSignup = document.getElementById('tab-signup');
-      const tabLogin = document.getElementById('tab-login');
-      const signupForm = document.getElementById('signup-form');
-      const loginForm = document.getElementById('login-form');
-      tabSignup.onclick = function() {
-        tabSignup.classList.add('active');
-        tabLogin.classList.remove('active');
-        signupForm.classList.add('active');
-        loginForm.classList.remove('active');
+      // Tab switching (évite la redéclaration des variables déjà utilisées dans le JS externe)
+      document.getElementById("tab-signup").onclick = function () {
+        this.classList.add("active");
+        document.getElementById("tab-login").classList.remove("active");
+        document.getElementById("signup-form").classList.add("active");
+        document.getElementById("login-form").classList.remove("active");
       };
-      tabLogin.onclick = function() {
-        tabLogin.classList.add('active');
-        tabSignup.classList.remove('active');
-        signupForm.classList.remove('active');
-        loginForm.classList.add('active');
+      document.getElementById("tab-login").onclick = function () {
+        this.classList.add("active");
+        document.getElementById("tab-signup").classList.remove("active");
+        document.getElementById("login-form").classList.add("active");
+        document.getElementById("signup-form").classList.remove("active");
       };
-
-      // Inscription : envoie les données à l'API /signup
-      signupForm.onsubmit = async function(e) {
-        e.preventDefault();
-        const username = document.getElementById('signup-username').value.trim();
-        const email = document.getElementById('signup-email').value.trim();
-        const password = document.getElementById('signup-password').value;
-        const msg = document.getElementById('signup-message');
-        msg.textContent = '';
-        try {
-          const res = await fetch('/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
-          });
-          const data = await res.json();
-          if (data.success) {
-            msg.classList.add('success');
-            msg.textContent = 'Inscription réussie ! Vous pouvez vous connecter.';
-            setTimeout(() => {
-              tabLogin.click();
-              msg.textContent = '';
-            }, 1200);
-          } else {
-            msg.classList.remove('success');
-            msg.textContent = data.message || "Erreur d'inscription.";
-          }
-        } catch (err) {
-          msg.classList.remove('success');
-          msg.textContent = "Erreur serveur.";
-        }
-      };
-
-      // Connexion : envoie les données à l'API /login
-      loginForm.onsubmit = async function(e) {
-        e.preventDefault();
-        const username = document.getElementById('login-username').value.trim();
-        const password = document.getElementById('login-password').value;
-        const msg = document.getElementById('login-message');
-        msg.textContent = '';
-        try {
-          const res = await fetch('/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-          });
-          const data = await res.json();
-          if (data.success) {
-            msg.classList.add('success');
-            msg.textContent = 'Connexion réussie !';
-            setTimeout(() => {
-              window.location.href = 'https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html';
-            }, 900);
-          } else {
-            msg.classList.remove('success');
-            msg.textContent = data.message || "Identifiants incorrects.";
-          }
-        } catch (err) {
-          msg.classList.remove('success');
-          msg.textContent = "Erreur serveur.";
-        }
-      };
+      // La fonction togglePassword est dans le JS externe
     </script>
   </body>
 </html>
