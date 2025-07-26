@@ -5,7 +5,7 @@ function normalizeDateToMidnight(date) {
   return date;
 }
 
-// Fonction principale pour afficher les livraisons filtrées par date
+// Fonction principale pour ,  afficher les livraisons filtrées par date
 function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
   const dateToCompare = normalizeDateToMidnight(selectedDate);
   // Filtre les livraisons par date (champ created_at ou delivery_date)
@@ -1378,6 +1378,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (e.target === overlay) overlay.remove();
           };
         }
+        // Gestion stricte de la session responsable acconier :
+        // On utilise UNIQUEMENT respAcconierUser, jamais user !
+        let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
+        let respAcconierUser = null;
+        if (!respAcconierUserRaw) {
+          window.location.href = "repoAcconierAuth.html";
+          return;
+        }
+        try {
+          respAcconierUser = JSON.parse(respAcconierUserRaw);
+        } catch (e) {
+          window.location.href = "repoAcconierAuth.html";
+          return;
+        }
         // ...existing code...
       } else if (col.id === "container_status") {
         // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
@@ -1684,7 +1698,6 @@ function renderAgentTableHeaders(tableElement, deliveries) {
 // Fonction pour générersgv le tableau Agent Acconier complet
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
-  // ...
   // Filtrer les livraisons à afficher dans le tableau principal :
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
@@ -1702,10 +1715,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas dans le tableau principal
     return !blStatuses.every((s) => s === "mise_en_livraison");
   });
-  console.log(
-    "[DEBUG] renderAgentTableFull - deliveriesToShow:",
-    deliveriesToShow
-  );
+  // Rafraîchissement du tableau :
   if (deliveriesToShow.length === 0) {
     if (table) table.style.display = "none";
     let noDataMsg = document.getElementById("noDeliveriesMsg");
@@ -1733,5 +1743,46 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
     renderAgentTableRows(deliveriesToShow, tableBodyElement);
   }
+  // Fin de renderAgentTableFull
+
+  // --- Correction : Rafraîchir le tableau après mise en livraison d'un BL ---
+  // On patch la fonction showBLDetailPopup pour déclencher updateTableForDateRange après modification
+  // (On ne touche pas à la déclaration d'origine, on monkey-patch si déjà défini)
+  if (typeof window.showBLDetailPopupPatched === "undefined") {
+    window.showBLDetailPopupPatched = true;
+    const oldRenderAgentTableRows = renderAgentTableRows;
+    renderAgentTableRows = function (deliveries, tableBodyElement) {
+      oldRenderAgentTableRows(deliveries, tableBodyElement);
+      // Patcher tous les boutons "Enregistrer le statut" dans les popups BL pour rafraîchir le tableau après MAJ
+      setTimeout(() => {
+        document.querySelectorAll("#blDetailPopup button").forEach((btn) => {
+          if (btn._patched) return;
+          if (
+            btn.textContent &&
+            btn.textContent.includes("Enregistrer le statut")
+          ) {
+            btn._patched = true;
+            const oldOnClick = btn.onclick;
+            btn.onclick = async function (e) {
+              if (oldOnClick) await oldOnClick.call(this, e);
+              // Après la MAJ, on rafraîchit le tableau (date courante)
+              const dateStartInput = document.getElementById(
+                "mainTableDateStartFilter"
+              );
+              const dateEndInput = document.getElementById(
+                "mainTableDateEndFilter"
+              );
+              if (typeof updateTableForDateRange === "function") {
+                updateTableForDateRange(
+                  dateStartInput ? dateStartInput.value : "",
+                  dateEndInput ? dateEndInput.value : ""
+                );
+              }
+            };
+          }
+        });
+      }, 100);
+    };
+  }
 }
-//originaley
+//originale12345678910
