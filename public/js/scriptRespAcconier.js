@@ -256,161 +256,69 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (
           data.type === "bl_status_update" &&
-          data.status === "mise_en_livraison"
+          data.delivery &&
+          data.delivery.bl_statuses
         ) {
-          console.log("[WebSocket] bl_status_update reçu:", data);
-          // On cherche la livraison concernée dans window.allDeliveries
-          console.log(
-            "[DEBUG] window.allDeliveries:",
-            window.allDeliveries,
-            "data.deliveryId:",
-            data.deliveryId
-          );
-          const delivery = (window.allDeliveries || []).find(
-            (d) => String(d.id) === String(data.deliveryId)
-          );
-          if (!delivery) {
-            console.error(
-              "[ERREUR] Livraison non trouvée dans window.allDeliveries pour deliveryId:",
-              data.deliveryId
-            );
-            console.error(
-              "[ERREUR] Liste des ids dans allDeliveries:",
-              (window.allDeliveries || []).map((d) => d.id)
-            );
+          // Toujours normaliser la livraison reçue comme dans loadAllDeliveries
+          function normalizeDelivery(delivery) {
+            let tcList = [];
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
             if (
-              data.type === "bl_status_update" &&
-              data.delivery &&
-              data.delivery.bl_statuses
+              !delivery.container_statuses ||
+              typeof delivery.container_statuses !== "object"
             ) {
-              // On cherche la livraison correspondante dans window.allDeliveries et on la met à jour
-              const updatedDelivery = data.delivery;
-              if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
-                const idx = window.allDeliveries.findIndex(
-                  (d) => d.id === updatedDelivery.id
-                );
-                if (idx !== -1) {
-                  window.allDeliveries[idx] = updatedDelivery;
-                }
+              delivery.container_statuses = {};
+            }
+            tcList.forEach((tc) => {
+              if (!delivery.container_statuses[tc]) {
+                delivery.container_statuses[tc] = "attente_paiement";
               }
-              // Rafraîchir le tableau si la livraison est dans la plage de dates courante
-              const dateStartInput = document.getElementById(
-                "mainTableDateStartFilter"
-              );
-              const dateEndInput = document.getElementById(
-                "mainTableDateEndFilter"
-              );
-              if (typeof updateTableForDateRange === "function") {
-                updateTableForDateRange(
-                  dateStartInput ? dateStartInput.value : "",
-                  dateEndInput ? dateEndInput.value : ""
-                );
-              }
-              // Optionnel : afficher une notification si besoin
-              // showNewDeliveryAlert(updatedDelivery.employee_name || "-");
-            }
-            // Supprimer la ligne du DOM ET forcer le re-rendu du tableau avec la plage de dates courante
-            // Toujours utiliser window.allDeliveries comme source unique
-            console.log(
-              "[DEBUG] Avant suppression, window.allDeliveries:",
-              window.allDeliveries
-            );
-            window.allDeliveries = (window.allDeliveries || []).filter(
-              (d) => String(d.id) !== String(delivery.id)
-            );
-            // Toujours resynchroniser la variable globale
-            allDeliveries = window.allDeliveries;
-            console.log(
-              "[DEBUG] Après suppression, window.allDeliveries:",
-              window.allDeliveries
-            );
-            // Récupérer les valeurs actuelles des inputs de plage de dates
-            const dateStartInput = document.getElementById(
-              "mainTableDateStartFilter"
-            );
-            const dateEndInput = document.getElementById(
-              "mainTableDateEndFilter"
-            );
-            // Toujours forcer le re-rendu du tableau principal après suppression
-            if (typeof updateTableForDateRange === "function") {
-              const startVal = dateStartInput ? dateStartInput.value : "";
-              const endVal = dateEndInput ? dateEndInput.value : "";
-              console.log(
-                "[DEBUG] Appel updateTableForDateRange avec",
-                startVal,
-                endVal
-              );
-              updateTableForDateRange(startVal, endVal);
-            }
-            // Afficher un toast de confirmation élégants
-            showSuccessToast(
-              "Requête effectuée et envoyée au responsable de livraison."
-            );
-
-            // Toast notification (vert, pro, en haut)
-            function showSuccessToast(message) {
-              // Supprimer tout toast existant
-              const oldToast = document.getElementById("custom-success-toast");
-              if (oldToast) oldToast.remove();
-              const toast = document.createElement("div");
-              toast.id = "custom-success-toast";
-              toast.textContent = message;
-              toast.style.position = "fixed";
-              toast.style.top = "32px";
-              toast.style.left = "50%";
-              toast.style.transform = "translateX(-50%)";
-              toast.style.background =
-                "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
-              toast.style.color = "#fff";
-              toast.style.fontWeight = "bold";
-              toast.style.fontSize = "1.12em";
-              toast.style.padding = "18px 38px";
-              toast.style.borderRadius = "16px";
-              toast.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
-              toast.style.zIndex = 99999;
-              toast.style.opacity = "0";
-              toast.style.transition = "opacity 0.3s";
-              document.body.appendChild(toast);
-              setTimeout(() => {
-                toast.style.opacity = "1";
-              }, 10);
-              setTimeout(() => {
-                toast.style.opacity = "0";
-                setTimeout(() => toast.remove(), 400);
-              }, 2600);
-            }
-          } else {
-            // Sinon, mettre à jour le statut dossier dans la colonne sans reload
-            const tableBody = document.getElementById("deliveriesTableBody");
-            if (!tableBody) return;
-            for (let row of tableBody.rows) {
-              let dossierCellIdx = window.AGENT_TABLE_COLUMNS.findIndex(
-                (c) => c.id === "dossier_number"
-              );
-              if (
-                dossierCellIdx !== -1 &&
-                row.cells[dossierCellIdx] &&
-                row.cells[dossierCellIdx].textContent ===
-                  String(delivery.dossier_number)
-              ) {
-                let colIdx = window.AGENT_TABLE_COLUMNS.findIndex(
-                  (c) => c.id === "container_status"
-                );
-                if (colIdx !== -1 && row.cells[colIdx]) {
-                  let allMiseEnLivraison =
-                    blStatuses.length > 0 &&
-                    blStatuses.every((s) => s === "mise_en_livraison");
-                  if (allMiseEnLivraison) {
-                    row.cells[colIdx].innerHTML =
-                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-                  } else {
-                    row.cells[colIdx].innerHTML =
-                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
-                  }
-                }
-                break;
+            });
+            if (
+              delivery.bl_statuses &&
+              typeof delivery.bl_statuses === "string"
+            ) {
+              try {
+                delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+              } catch {
+                delivery.bl_statuses = {};
               }
             }
+            if (
+              !delivery.bl_statuses ||
+              typeof delivery.bl_statuses !== "object"
+            ) {
+              delivery.bl_statuses = {};
+            }
+            return delivery;
+          }
+          const normalizedDelivery = normalizeDelivery(data.delivery);
+          if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+            const idx = window.allDeliveries.findIndex(
+              (d) => d.id === normalizedDelivery.id
+            );
+            if (idx !== -1) {
+              window.allDeliveries[idx] = normalizedDelivery;
+            }
+          }
+          // Rafraîchir le tableau si la livraison est dans la plage de dates courante
+          const dateStartInput = document.getElementById(
+            "mainTableDateStartFilter"
+          );
+          const dateEndInput = document.getElementById(
+            "mainTableDateEndFilter"
+          );
+          if (typeof updateTableForDateRange === "function") {
+            updateTableForDateRange(
+              dateStartInput ? dateStartInput.value : "",
+              dateEndInput ? dateEndInput.value : ""
+            );
           }
         }
         // Ajout : réception automatique d'un nouvel ordre de livraison
