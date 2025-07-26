@@ -230,20 +230,25 @@ document.addEventListener("DOMContentLoaded", function () {
       iconsBar = document.createElement("div");
       iconsBar.id = "history-archive-icons-bar";
       iconsBar.style.display = "flex";
+      iconsBar.style.justifyContent = "center";
       iconsBar.style.alignItems = "center";
-      iconsBar.style.gap = "18px";
-      iconsBar.style.marginBottom = "14px";
-      iconsBar.style.marginLeft = "2px";
+      iconsBar.style.gap = "22px";
+      iconsBar.style.marginBottom = "18px";
+      iconsBar.style.marginTop = "8px";
       // Icône historique (horloge)
       const historyIcon = document.createElement("span");
-      historyIcon.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="#2563eb" stroke-width="2.2" fill="#f3f4f6"/><path d="M12 7v5l3 2" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      historyIcon.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="#2563eb" stroke-width="2.2" fill="#f3f4f6"/><path d="M12 7v5l3 2" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
       historyIcon.title = "Historique";
       historyIcon.style.cursor = "pointer";
+      historyIcon.style.display = "inline-flex";
+      historyIcon.style.alignItems = "center";
       // Icône archive (boîte)
       const archiveIcon = document.createElement("span");
-      archiveIcon.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="7" width="18" height="4" rx="2" fill="#eab308" stroke="#b45309" stroke-width="1.5"/><rect x="5" y="11" width="14" height="7" rx="2" fill="#f3f4f6" stroke="#b45309" stroke-width="1.5"/><path d="M9 15h6" stroke="#b45309" stroke-width="2" stroke-linecap="round"/></svg>`;
+      archiveIcon.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="7" width="18" height="4" rx="2" fill="#eab308" stroke="#b45309" stroke-width="1.5"/><rect x="5" y="11" width="14" height="7" rx="2" fill="#f3f4f6" stroke="#b45309" stroke-width="1.5"/><path d="M9 15h6" stroke="#b45309" stroke-width="2" stroke-linecap="round"/></svg>`;
       archiveIcon.title = "Archive";
       archiveIcon.style.cursor = "pointer";
+      archiveIcon.style.display = "inline-flex";
+      archiveIcon.style.alignItems = "center";
       iconsBar.appendChild(historyIcon);
       iconsBar.appendChild(archiveIcon);
       // Trouver le parent commun le plus proche des deux inputs date
@@ -262,9 +267,24 @@ document.addEventListener("DOMContentLoaded", function () {
           p1 = p1.parentNode;
         }
       }
+      // On crée un wrapper vertical si besoin pour garantir la structure
       if (commonParent && commonParent.parentNode) {
-        // On insère la barre d'icônes AVANT le bloc contenant les deux dates, donc sur une ligne séparée
-        commonParent.parentNode.insertBefore(iconsBar, commonParent);
+        // Vérifie si le parent direct contient déjà un wrapper vertical
+        let wrapper = commonParent.parentNode.querySelector(
+          "#date-filter-wrapper"
+        );
+        if (!wrapper) {
+          wrapper = document.createElement("div");
+          wrapper.id = "date-filter-wrapper";
+          wrapper.style.display = "flex";
+          wrapper.style.flexDirection = "column";
+          wrapper.style.alignItems = "stretch";
+          // On déplace le bloc des dates dedans
+          commonParent.parentNode.insertBefore(wrapper, commonParent);
+          wrapper.appendChild(commonParent);
+        }
+        // On insère la barre d'icônes tout en haut du wrapper
+        wrapper.insertBefore(iconsBar, wrapper.firstChild);
       }
     }
   }
