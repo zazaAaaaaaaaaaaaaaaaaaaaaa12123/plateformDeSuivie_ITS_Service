@@ -342,7 +342,7 @@ document.addEventListener("DOMContentLoaded", function () {
               );
               updateTableForDateRange(startVal, endVal);
             }
-            // Afficher un toast de confirmation élégant
+            // Afficher un toast de confirmation élégants
             showSuccessToast(
               "Requête effectuée et envoyée au responsable de livraison."
             );
