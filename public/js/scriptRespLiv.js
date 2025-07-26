@@ -274,16 +274,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // --- AJOUT : Connexion WebSocket pour maj temps réel BL -------
+  // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
   let ws;
   function setupWebSocket() {
     // Utilise le même protocole que la page (ws ou wss)
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = proto + "://" + window.location.host;
     ws = new WebSocket(wsUrl);
-    ws.onopen = function () {
-      //console.log("WebSocket connecté pour BL status update (liv)");
-    };
+    ws.onopen = function () {};
     ws.onmessage = function (event) {
       try {
         const data = JSON.parse(event.data);
