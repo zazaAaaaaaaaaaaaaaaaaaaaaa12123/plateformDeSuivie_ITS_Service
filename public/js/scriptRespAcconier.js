@@ -764,39 +764,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    if (delivery.id) tr.dataset.deliveryId = delivery.id;
-    // Ajout case à cocher sélection
-    const selectTd = document.createElement("td");
-    selectTd.style.textAlign = "center";
-    selectTd.style.verticalAlign = "middle";
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.className = "row-select";
-    cb.style.width = "18px";
-    cb.style.height = "18px";
-    selectTd.appendChild(cb);
-    tr.appendChild(selectTd);
-    // Détermination de la couleur de l'avatar selon l'ancienneté
+    // Détermination de la couleur de la bande selon l'ancienneté
     let dDate = delivery.delivery_date || delivery.created_at;
     let dateObj = dDate ? new Date(dDate) : null;
     let now = new Date();
-    let avatarColor = "#2563eb"; // bleu par défaut (récent)
-    let avatarBg = "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
-    let badgeColor = "#2563eb";
+    let color = "#2563eb"; // bleu par défaut (récent)
     if (dateObj && !isNaN(dateObj.getTime())) {
       let diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
       if (diffDays >= 30) {
-        avatarColor = "#a3a3a3"; // gris
-        avatarBg = "linear-gradient(135deg, #a3a3a3 60%, #6b7280 100%)";
-        badgeColor = "#a3a3a3";
+        color = "#a3a3a3"; // ancien : gris (1 mois et plus)
       } else if (diffDays >= 7) {
-        avatarColor = "#eab308"; // jaune
-        avatarBg = "linear-gradient(135deg, #eab308 60%, #facc15 100%)";
-        badgeColor = "#eab308";
+        color = "#eab308"; // assez ancien : jaune (1 semaine à moins d'1 mois)
       } else if (diffDays >= 0) {
-        avatarColor = "#2563eb"; // bleu
-        avatarBg = "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
-        badgeColor = "#2563eb";
+        color = "#2563eb"; // récent : bleu (< 7 jours)
       }
     }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
@@ -804,7 +784,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       let value = "-";
       if (col.id === "row_number") {
         value = i + 1;
-        // Avatar stylisé moderne avec initiales et couleur dynamique
+        // Avatar stylisé moderne avec initiales
         const avatar = document.createElement("div");
         avatar.style.display = "flex";
         avatar.style.alignItems = "center";
@@ -812,7 +792,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         avatar.style.width = window.innerWidth <= 600 ? "32px" : "44px";
         avatar.style.height = window.innerWidth <= 600 ? "32px" : "44px";
         avatar.style.borderRadius = "50%";
-        avatar.style.background = avatarBg;
+        avatar.style.background =
+          "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
         avatar.style.boxShadow =
           "0 2px 12px rgba(37,99,235,0.13), 0 1.5px 8px rgba(30,41,59,0.10)";
         avatar.style.position = "relative";
@@ -851,7 +832,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         badge.style.bottom = "-6px";
         badge.style.right = "-6px";
         badge.style.background = "#fff";
-        badge.style.color = badgeColor;
+        badge.style.color = "#2563eb";
         badge.style.fontWeight = "bold";
         badge.style.fontSize = window.innerWidth <= 600 ? "0.85em" : "1em";
         badge.style.borderRadius = "50%";
@@ -1669,7 +1650,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           if (e.target === overlay) overlay.remove();
         };
         // Scroll popup sur mobile si besoin
-
         if (window.innerWidth <= 600) {
           box.style.overflowY = "auto";
           content.style.maxHeight = "60vh";
@@ -1685,55 +1665,6 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   const thead = tableElement.querySelector("thead");
   thead.innerHTML = "";
   const headerRow = document.createElement("tr");
-  // Ajout colonne checkbox sélection
-  const selectTh = document.createElement("th");
-  selectTh.style.width = "38px";
-  // Bouton suppression global
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "🗑️ Supprimer";
-  deleteBtn.style.background = "#ef4444";
-  deleteBtn.style.color = "#fff";
-  deleteBtn.style.border = "none";
-  deleteBtn.style.borderRadius = "7px";
-  deleteBtn.style.padding = "4px 12px";
-  deleteBtn.style.fontWeight = "bold";
-  deleteBtn.style.cursor = "pointer";
-  deleteBtn.style.fontSize = "0.98em";
-  deleteBtn.style.margin = "0 0 0 4px";
-  deleteBtn.onclick = function () {
-    const tableBody = tableElement.querySelector("tbody");
-    const checked = Array.from(
-      tableBody.querySelectorAll("input[type='checkbox'].row-select:checked")
-    );
-    if (checked.length === 0) {
-      alert("Sélectionnez au moins une ligne à supprimer.");
-      return;
-    }
-    if (!confirm("Confirmer la suppression des livraisons sélectionnées ?"))
-      return;
-    checked.forEach((cb) => {
-      const tr = cb.closest("tr");
-      if (tr && tr.dataset.deliveryId) {
-        // Suppression locale
-        window.allDeliveries = (window.allDeliveries || []).filter(
-          (d) => String(d.id) !== String(tr.dataset.deliveryId)
-        );
-        tr.remove();
-        // Suppression serveur
-        fetch(`/deliveries/${tr.dataset.deliveryId}`, { method: "DELETE" });
-      }
-    });
-    // Optionnel : rafraîchir le tableau
-    if (typeof updateTableForDateRange === "function") {
-      const dateStartInput = document.getElementById(
-        "mainTableDateStartFilter"
-      );
-      const dateEndInput = document.getElementById("mainTableDateEndFilter");
-      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-    }
-  };
-  selectTh.appendChild(deleteBtn);
-  headerRow.appendChild(selectTh);
   AGENT_TABLE_COLUMNS.forEach((col) => {
     const th = document.createElement("th");
     th.textContent = col.label;
@@ -1742,4 +1673,58 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   });
   thead.appendChild(headerRow);
 }
-/*jgqfg*/
+
+// Fonction pour générer le tableau Agent Acconier complet
+function renderAgentTableFull(deliveries, tableBodyElement) {
+  const table = tableBodyElement.closest("table");
+  // ...
+  // Filtrer les livraisons à afficher dans le tableau principal :
+  // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
+  const deliveriesToShow = deliveries.filter((delivery) => {
+    let blList = [];
+    if (Array.isArray(delivery.bl_number)) {
+      blList = delivery.bl_number.filter(Boolean);
+    } else if (typeof delivery.bl_number === "string") {
+      blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+    }
+    let blStatuses = blList.map((bl) =>
+      delivery.bl_statuses && delivery.bl_statuses[bl]
+        ? delivery.bl_statuses[bl]
+        : "aucun"
+    );
+    // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas dans le tableau principal
+    return !blStatuses.every((s) => s === "mise_en_livraison");
+  });
+  console.log(
+    "[DEBUG] renderAgentTableFull - deliveriesToShow:",
+    deliveriesToShow
+  );
+  if (deliveriesToShow.length === 0) {
+    if (table) table.style.display = "none";
+    let noDataMsg = document.getElementById("noDeliveriesMsg");
+    if (!noDataMsg) {
+      noDataMsg = document.createElement("div");
+      noDataMsg.id = "noDeliveriesMsg";
+      noDataMsg.style.textAlign = "center";
+      noDataMsg.style.padding = "48px 0 32px 0";
+      noDataMsg.style.fontSize = "1.25em";
+      noDataMsg.style.color = "#64748b";
+      noDataMsg.style.fontWeight = "500";
+      noDataMsg.textContent = "Aucune opération à cette date.";
+      tableBodyElement.parentNode.insertBefore(noDataMsg, tableBodyElement);
+    } else {
+      noDataMsg.style.display = "block";
+    }
+    tableBodyElement.innerHTML = "";
+  } else {
+    if (table) table.style.display = "table";
+    const noDataMsg = document.getElementById("noDeliveriesMsg");
+    if (noDataMsg) noDataMsg.style.display = "none";
+    // Utiliser la nouvelle fonction d'en-tête
+    if (table) {
+      renderAgentTableHeaders(table, deliveriesToShow);
+    }
+    renderAgentTableRows(deliveriesToShow, tableBodyElement);
+  }
+}
+//originales
