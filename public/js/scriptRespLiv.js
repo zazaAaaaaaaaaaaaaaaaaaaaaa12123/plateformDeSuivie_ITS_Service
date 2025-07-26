@@ -219,76 +219,6 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
-  // Ajout des icônes historique et archive sur une ligne séparée, au-dessus du bloc des deux dates
-  const dateStartInputIcons = document.getElementById(
-    "mainTableDateStartFilter"
-  );
-  const dateEndInputIcons = document.getElementById("mainTableDateEndFilter");
-  if (dateStartInputIcons && dateEndInputIcons) {
-    let iconsBar = document.getElementById("history-archive-icons-bar");
-    if (!iconsBar) {
-      iconsBar = document.createElement("div");
-      iconsBar.id = "history-archive-icons-bar";
-      iconsBar.style.display = "flex";
-      iconsBar.style.justifyContent = "center";
-      iconsBar.style.alignItems = "center";
-      iconsBar.style.gap = "22px";
-      iconsBar.style.marginBottom = "10px";
-      iconsBar.style.marginTop = "0px";
-      // Icône historique (horloge)
-      const historyIcon = document.createElement("span");
-      historyIcon.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="#2563eb" stroke-width="2.2" fill="#f3f4f6"/><path d="M12 7v5l3 2" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      historyIcon.title = "Historique";
-      historyIcon.style.cursor = "pointer";
-      historyIcon.style.display = "inline-flex";
-      historyIcon.style.alignItems = "center";
-      // Icône archive (boîte)
-      const archiveIcon = document.createElement("span");
-      archiveIcon.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="7" width="18" height="4" rx="2" fill="#eab308" stroke="#b45309" stroke-width="1.5"/><rect x="5" y="11" width="14" height="7" rx="2" fill="#f3f4f6" stroke="#b45309" stroke-width="1.5"/><path d="M9 15h6" stroke="#b45309" stroke-width="2" stroke-linecap="round"/></svg>`;
-      archiveIcon.title = "Archive";
-      archiveIcon.style.cursor = "pointer";
-      archiveIcon.style.display = "inline-flex";
-      archiveIcon.style.alignItems = "center";
-      iconsBar.appendChild(historyIcon);
-      iconsBar.appendChild(archiveIcon);
-      // Trouver le parent commun le plus proche des deux inputs date
-      let startParent = dateStartInputIcons.parentNode;
-      let endParent = dateEndInputIcons.parentNode;
-      let commonParent = null;
-      if (startParent === endParent) {
-        commonParent = startParent;
-      } else {
-        let p1 = startParent;
-        while (p1) {
-          if (p1.contains(endParent)) {
-            commonParent = p1;
-            break;
-          }
-          p1 = p1.parentNode;
-        }
-      }
-      if (commonParent && commonParent.parentNode) {
-        // On insère la barre d'icônes AVANT le bloc contenant les deux dates, donc sur une ligne séparée et bien centrée
-        commonParent.parentNode.insertBefore(iconsBar, commonParent);
-      }
-    }
-    // S'assurer que le bloc contenant les deux dates est bien en-dessous (en colonne)
-    let filterBar = dateStartInputIcons.parentNode;
-    if (filterBar && filterBar.style) {
-      filterBar.style.display = "flex";
-      filterBar.style.flexDirection = "row";
-      filterBar.style.alignItems = "center";
-      filterBar.style.gap = "8px";
-      filterBar.style.marginTop = "0px";
-    }
-    // S'assurer que le parent du bloc de dates n'est pas en flex-row avec les icônes
-    if (iconsBar.parentNode && iconsBar.parentNode.style) {
-      iconsBar.parentNode.style.display = "flex";
-      iconsBar.parentNode.style.flexDirection = "column";
-      iconsBar.parentNode.style.alignItems = "center";
-    }
-  }
-
   // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
   let ws;
   function setupWebSocket() {
@@ -296,7 +226,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = proto + "://" + window.location.host;
     ws = new WebSocket(wsUrl);
-    ws.onopen = function () {};
+    ws.onopen = function () {
+      //console.log("WebSocket connecté pour BL status update (liv)");
+    };
     ws.onmessage = function (event) {
       try {
         const data = JSON.parse(event.data);
