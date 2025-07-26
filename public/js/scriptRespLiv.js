@@ -219,8 +219,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
-  // Ajout des icônes historique et archive au-dessus de la barre de filtres
-  // Ajout des icônes historique et archive au-dessus des deux champs de date
+  // Ajout des icônes historique et archive AU-DESSUS du bloc contenant les deux champs de date (pas sur la même ligne)
   const dateStartInputIcons = document.getElementById(
     "mainTableDateStartFilter"
   );
@@ -247,15 +246,13 @@ document.addEventListener("DOMContentLoaded", function () {
       archiveIcon.style.cursor = "pointer";
       iconsBar.appendChild(historyIcon);
       iconsBar.appendChild(archiveIcon);
-      // Insertion au-dessus du bloc contenant les deux champs de date
-      // On cherche le parent commun des deux inputs date
-      const startParent = dateStartInputIcons.parentNode;
-      const endParent = dateEndInputIcons.parentNode;
+      // Trouver le parent commun le plus proche des deux inputs date
+      let startParent = dateStartInputIcons.parentNode;
+      let endParent = dateEndInputIcons.parentNode;
       let commonParent = null;
       if (startParent === endParent) {
         commonParent = startParent;
       } else {
-        // On cherche le parent commun le plus proche
         let p1 = startParent;
         while (p1) {
           if (p1.contains(endParent)) {
@@ -266,7 +263,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
       if (commonParent && commonParent.parentNode) {
-        // On insère la barre d'icônes avant le bloc des dates (et non à l'intérieur)
+        // On insère la barre d'icônes AVANT le bloc contenant les deux dates, donc sur une ligne séparée
         commonParent.parentNode.insertBefore(iconsBar, commonParent);
       }
     }
