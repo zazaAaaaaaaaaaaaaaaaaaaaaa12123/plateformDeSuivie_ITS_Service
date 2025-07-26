@@ -1590,7 +1590,7 @@ document.addEventListener("DOMContentLoaded", function () {
     avatarContainer.style.boxShadow = "0 4px 18px rgba(30,60,114,0.13)";
   };
 
-  // Avatar image
+  // Avatar images
   const avatarImg = document.createElement("img");
   avatarImg.src = "https://cdn-icons-png.flaticon.com/512/1048/1048953.png";
   avatarImg.alt = "Avatar profil";
