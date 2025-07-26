@@ -1727,4 +1727,4 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     renderAgentTableRows(deliveriesToShow, tableBodyElement);
   }
 }
-//originale
+//originales
