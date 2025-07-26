@@ -839,7 +839,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
 }
 // Ajout colonne de sélection pour suppression
 const AGENT_TABLE_COLUMNS = [
-  { id: "select_row", label: "Sélection" },
+  { id: "select_row", label: "" },
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent Acconier" },
