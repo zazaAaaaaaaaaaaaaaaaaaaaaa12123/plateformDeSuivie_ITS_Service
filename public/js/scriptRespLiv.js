@@ -478,77 +478,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   `;
   document.head.appendChild(styleTC);
-
-  // Création d'un conteneur pour les filtres et le bouton suppression
-  let filterBar = document.getElementById("deliveriesFilterBar");
-  if (!filterBar) {
-    filterBar = document.createElement("div");
-    filterBar.id = "deliveriesFilterBar";
-    filterBar.style.display = "flex";
-    filterBar.style.alignItems = "center";
-    filterBar.style.justifyContent = "flex-start";
-    filterBar.style.gap = "18px";
-    filterBar.style.margin = "18px 0 10px 0";
-    filterBar.style.flexWrap = "wrap";
-    // Ajout d'un fond léger
-    filterBar.style.background =
-      "linear-gradient(90deg,#f3f4f6 0%,#e0e7ff 100%)";
-    filterBar.style.padding = "12px 18px 10px 18px";
-    filterBar.style.borderRadius = "12px";
-    filterBar.style.boxShadow = "0 2px 8px #0e274e11";
-    // Ajout dans le DOM juste avant le tableau
-    const table = document.getElementById("deliveriesTable");
-    if (table && table.parentNode) {
-      table.parentNode.insertBefore(filterBar, table);
-    }
-  }
-
-  // Sélecteurs existants
   const tableBody = document.getElementById("deliveriesTableBody");
   const dateStartInput = document.getElementById("mainTableDateStartFilter");
   const dateEndInput = document.getElementById("mainTableDateEndFilter");
-  // Champ recherche (si existe)
-  let searchInput = document.getElementById("mainTableSearchInput");
-  if (!searchInput) {
-    // Création d'un champ recherche si absent
-    searchInput = document.createElement("input");
-    searchInput.type = "text";
-    searchInput.id = "mainTableSearchInput";
-    searchInput.placeholder = "Rechercher...";
-    searchInput.style.fontSize = "1em";
-    searchInput.style.padding = "6px 14px";
-    searchInput.style.borderRadius = "7px";
-    searchInput.style.border = "1.5px solid #2563eb";
-    searchInput.style.background = "#fff";
-    searchInput.style.marginRight = "0";
-    searchInput.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
-    // Ajout dans le DOM
-    filterBar.appendChild(searchInput);
-  }
-  // Ajout des dates dans la barre si elles existent
-  if (dateStartInput && !filterBar.contains(dateStartInput)) {
-    dateStartInput.style.margin = "0 6px 0 0";
-    dateStartInput.style.fontSize = "1em";
-    dateStartInput.style.padding = "6px 10px";
-    dateStartInput.style.borderRadius = "7px";
-    dateStartInput.style.border = "1.5px solid #2563eb";
-    dateStartInput.style.background = "#fff";
-    filterBar.appendChild(dateStartInput);
-  }
-  if (dateEndInput && !filterBar.contains(dateEndInput)) {
-    dateEndInput.style.margin = "0 6px 0 0";
-    dateEndInput.style.fontSize = "1em";
-    dateEndInput.style.padding = "6px 10px";
-    dateEndInput.style.borderRadius = "7px";
-    dateEndInput.style.border = "1.5px solid #2563eb";
-    dateEndInput.style.background = "#fff";
-    filterBar.appendChild(dateEndInput);
-  }
-  // Ajout du bouton suppression dans la barre si déjà créé
-  let delBtn = document.getElementById("deleteRowsBtn");
-  if (delBtn && !filterBar.contains(delBtn)) {
-    filterBar.appendChild(delBtn);
-  }
 
   // On charge toutes les livraisons une seule fois au chargement
   // On rend allDeliveries accessible globalement pour le tooltip Statut
