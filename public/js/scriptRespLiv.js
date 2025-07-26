@@ -267,29 +267,14 @@ document.addEventListener("DOMContentLoaded", function () {
           p1 = p1.parentNode;
         }
       }
-      // On crée un wrapper vertical si besoin pour garantir la structure
       if (commonParent && commonParent.parentNode) {
-        // Vérifie si le parent direct contient déjà un wrapper vertical
-        let wrapper = commonParent.parentNode.querySelector(
-          "#date-filter-wrapper"
-        );
-        if (!wrapper) {
-          wrapper = document.createElement("div");
-          wrapper.id = "date-filter-wrapper";
-          wrapper.style.display = "flex";
-          wrapper.style.flexDirection = "column";
-          wrapper.style.alignItems = "stretch";
-          // On déplace le bloc des dates dedans
-          commonParent.parentNode.insertBefore(wrapper, commonParent);
-          wrapper.appendChild(commonParent);
-        }
-        // On insère la barre d'icônes tout en haut du wrapper
-        wrapper.insertBefore(iconsBar, wrapper.firstChild);
+        // On insère la barre d'icônes AVANT le bloc contenant les deux dates, donc sur une ligne séparée et bien centrée
+        commonParent.parentNode.insertBefore(iconsBar, commonParent);
       }
     }
   }
 
-  // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
+  // --- AJOUT : Connexion WebSocket pour maj temps réel BL -------
   let ws;
   function setupWebSocket() {
     // Utilise le même protocole que la page (ws ou wss)
