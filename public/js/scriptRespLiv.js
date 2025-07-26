@@ -1568,39 +1568,6 @@ adaptTableResponsive();
 
 // ----------- AVATAR PROFIL EN HAUT À DROITE + DÉCONNEXION -----------
 document.addEventListener("DOMContentLoaded", function () {
-  // Gestion stricte de la session responsable livraison
-  let respLivUser = null;
-  let respLivUserRaw = localStorage.getItem("respLivUser");
-  if (!respLivUserRaw) {
-    // Si pas de session respLivUser, mais une session user existe, on permet l'accès au responsable principal SANS écraser une session existante
-    let userRaw = localStorage.getItem("user");
-    if (userRaw) {
-      try {
-        let user = JSON.parse(userRaw);
-        // On crée une session temporaire respLivUser pour ce cas précis
-        respLivUser = {
-          nom: user.nom || "",
-          email: user.email || "",
-          photo: user.photo || "",
-          profil: user.profil || "Responsable Livraison",
-        };
-        localStorage.setItem("respLivUser", JSON.stringify(respLivUser));
-      } catch (e) {
-        window.location.href = "repoLivAuth.html";
-        return;
-      }
-    } else {
-      window.location.href = "repoLivAuth.html";
-      return;
-    }
-  } else {
-    try {
-      respLivUser = JSON.parse(respLivUserRaw);
-    } catch (e) {
-      window.location.href = "repoLivAuth.html";
-      return;
-    }
-  }
   // Crée le conteneur avatar
   const avatarContainer = document.createElement("div");
   avatarContainer.id = "profile-avatar-container";
@@ -1647,17 +1614,19 @@ document.addEventListener("DOMContentLoaded", function () {
   infoDiv.style.color = "#1e3c72";
   infoDiv.style.fontWeight = "700";
 
-  // Utilisation unique de respLivUser pour l'avatar
-  let userName = respLivUser && respLivUser.nom ? respLivUser.nom : "-";
-  let userEmail = respLivUser && respLivUser.email ? respLivUser.email : "-";
-  let userPhoto = respLivUser && respLivUser.photo ? respLivUser.photo : null;
-
-  // Affichage dans l'avatar
+  // Récupère nom et email depuis localStorage
+  let userEmail = localStorage.getItem("user_email") || "-";
+  let userName = localStorage.getItem("user_nom");
+  if (!userName || userName === "Utilisateur") {
+    // Si le nom n'est pas défini, utiliser la partie avant le @ de l'email
+    if (userEmail && userEmail.includes("@")) {
+      userName = userEmail.split("@")[0];
+    } else {
+      userName = "-";
+    }
+  }
   infoDiv.innerHTML = `<span style='font-weight:700;'>${userName}</span><span style='font-weight:400;font-size:0.97em;color:#2a5298;'>${userEmail}</span>`;
   avatarContainer.appendChild(infoDiv);
-  if (userPhoto) {
-    avatarImg.src = userPhoto;
-  }
 
   // Ajoute le conteneur au body
   document.body.appendChild(avatarContainer);
@@ -1778,9 +1747,8 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.removeItem("user_nom");
         localStorage.removeItem("user_email");
         localStorage.removeItem("user_photo");
-        window.location.href = isAdmin
-          ? "https://plateformdesuivie-its-service-1cjx.onrender.com/html/index.html"
-          : "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
+        window.location.href =
+          "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
       };
       profilePopup.appendChild(logoutBtn);
       document.body.appendChild(profilePopup);

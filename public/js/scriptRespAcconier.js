@@ -1,4 +1,4 @@
-// Fonction utilitaire pour normaliser la date à minuit
+AA; // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
   date.setHours(0, 0, 0, 0);
@@ -1378,20 +1378,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (e.target === overlay) overlay.remove();
           };
         }
-        // Gestion stricte de la session responsable acconier :
-        // On utilise UNIQUEMENT respAcconierUser, jamais user !
-        let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
-        let respAcconierUser = null;
-        if (!respAcconierUserRaw) {
-          window.location.href = "repoAcconierAuth.html";
-          return;
-        }
-        try {
-          respAcconierUser = JSON.parse(respAcconierUserRaw);
-        } catch (e) {
-          window.location.href = "repoAcconierAuth.html";
-          return;
-        }
         // ...existing code...
       } else if (col.id === "container_status") {
         // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
@@ -1748,4 +1734,4 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     renderAgentTableRows(deliveriesToShow, tableBodyElement);
   }
 }
-//originale12345
+//originale

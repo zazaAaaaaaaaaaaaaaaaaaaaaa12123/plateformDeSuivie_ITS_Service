@@ -26,8 +26,17 @@ document.addEventListener("DOMContentLoaded", function () {
   // Focus lors du changement d'onglet
   const tabSignup = document.getElementById("tab-signup");
   const tabLogin = document.getElementById("tab-login");
-  if (tabSignup) tabSignup.addEventListener("click", focusFirstInput);
-  if (tabLogin) tabLogin.addEventListener("click", focusFirstInput);
+  const forgotForm = document.getElementById("forgot-form");
+  if (tabSignup)
+    tabSignup.addEventListener("click", function () {
+      if (forgotForm) forgotForm.style.display = "none";
+      focusFirstInput();
+    });
+  if (tabLogin)
+    tabLogin.addEventListener("click", function () {
+      if (forgotForm) forgotForm.style.display = "none";
+      focusFirstInput();
+    });
 
   // Sur mobile/tablette, améliore le feedback lors de la soumission
   function addMobileFeedback(form, messageEl) {
@@ -129,9 +138,14 @@ if (loginForm) {
       });
       const data = await res.json();
       if (data.success) {
-        // Forcer le stockage et la redirection acconier
-        if (data.user) {
-          localStorage.setItem("respAcconierUser", JSON.stringify(data.user));
+        // Stocke le nom et l'email dans le localStorage pour la page profil
+        if (data.user && data.user.nom && data.user.email) {
+          localStorage.setItem("userName", data.user.nom);
+          localStorage.setItem("userEmail", data.user.email);
+        } else {
+          // Pour compatibilité si l'API ne renvoie pas user, on stocke ce qu'on a
+          localStorage.setItem("userName", data.nom || "");
+          localStorage.setItem("userEmail", data.email || email);
         }
         showMessage(loginMessage, "Connexion réussie ! Redirection...", true);
         setTimeout(() => {
@@ -146,6 +160,43 @@ if (loginForm) {
       }
     } catch (err) {
       showMessage(loginMessage, "Erreur réseau ou serveur.");
+    }
+  });
+}
+
+// Mot de passe oublié
+const forgotForm = document.getElementById("forgot-form");
+const forgotMessage = document.getElementById("forgot-message");
+if (forgotForm) {
+  forgotForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    showMessage(forgotMessage, "");
+    const email = forgotForm["forgot-email"].value.trim();
+    if (!email) {
+      showMessage(forgotMessage, "Veuillez entrer votre email.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showMessage(
+          forgotMessage,
+          "Un code de confirmation a été envoyé à votre adresse email.<br>Veuillez consulter votre boîte mail pour récupérer votre mot de passe.",
+          true
+        );
+      } else {
+        showMessage(
+          forgotMessage,
+          data.message || "Erreur lors de l'envoi du code."
+        );
+      }
+    } catch (err) {
+      showMessage(forgotMessage, "Erreur réseau ou serveur.");
     }
   });
 }
