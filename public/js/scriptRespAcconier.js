@@ -278,28 +278,37 @@ document.addEventListener("DOMContentLoaded", function () {
               "[ERREUR] Liste des ids dans allDeliveries:",
               (window.allDeliveries || []).map((d) => d.id)
             );
-            return;
-          }
-          console.log("[DEBUG] delivery trouvé:", delivery);
-          // Mettre à jour le statut local du BL concerné
-          if (!delivery.bl_statuses) delivery.bl_statuses = {};
-          delivery.bl_statuses[data.blNumber] = data.status;
-          // Vérifier si tous les BL sont en 'mise_en_livraison'
-          let blList = [];
-          if (Array.isArray(delivery.bl_number)) {
-            blList = delivery.bl_number.filter(Boolean);
-          } else if (typeof delivery.bl_number === "string") {
-            blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-          }
-          let blStatuses = blList.map((bl) =>
-            delivery.bl_statuses && delivery.bl_statuses[bl]
-              ? delivery.bl_statuses[bl]
-              : "aucun"
-          );
-          if (
-            blList.length > 0 &&
-            blStatuses.every((s) => s === "mise_en_livraison")
-          ) {
+            if (
+              data.type === "bl_status_update" &&
+              data.delivery &&
+              data.delivery.bl_statuses
+            ) {
+              // On cherche la livraison correspondante dans window.allDeliveries et on la met à jour
+              const updatedDelivery = data.delivery;
+              if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+                const idx = window.allDeliveries.findIndex(
+                  (d) => d.id === updatedDelivery.id
+                );
+                if (idx !== -1) {
+                  window.allDeliveries[idx] = updatedDelivery;
+                }
+              }
+              // Rafraîchir le tableau si la livraison est dans la plage de dates courante
+              const dateStartInput = document.getElementById(
+                "mainTableDateStartFilter"
+              );
+              const dateEndInput = document.getElementById(
+                "mainTableDateEndFilter"
+              );
+              if (typeof updateTableForDateRange === "function") {
+                updateTableForDateRange(
+                  dateStartInput ? dateStartInput.value : "",
+                  dateEndInput ? dateEndInput.value : ""
+                );
+              }
+              // Optionnel : afficher une notification si besoin
+              // showNewDeliveryAlert(updatedDelivery.employee_name || "-");
+            }
             // Supprimer la ligne du DOM ET forcer le re-rendu du tableau avec la plage de dates courante
             // Toujours utiliser window.allDeliveries comme source unique
             console.log(
