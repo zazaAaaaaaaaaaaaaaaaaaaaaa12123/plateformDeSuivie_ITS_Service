@@ -764,6 +764,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
+    if (delivery.id) tr.dataset.deliveryId = delivery.id;
+    // Ajout case à cocher sélection
+    const selectTd = document.createElement("td");
+    selectTd.style.textAlign = "center";
+    selectTd.style.verticalAlign = "middle";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.className = "row-select";
+    cb.style.width = "18px";
+    cb.style.height = "18px";
+    selectTd.appendChild(cb);
+    tr.appendChild(selectTd);
     // Détermination de la couleur de l'avatar selon l'ancienneté
     let dDate = delivery.delivery_date || delivery.created_at;
     let dateObj = dDate ? new Date(dDate) : null;
@@ -1378,20 +1390,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (e.target === overlay) overlay.remove();
           };
         }
-        // Gestion stricte de la session responsable acconier :
-        // On utilise UNIQUEMENT respAcconierUser, jamais user !
-        let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
-        let respAcconierUser = null;
-        if (!respAcconierUserRaw) {
-          window.location.href = "repoAcconierAuth.html";
-          return;
-        }
-        try {
-          respAcconierUser = JSON.parse(respAcconierUserRaw);
-        } catch (e) {
-          window.location.href = "repoAcconierAuth.html";
-          return;
-        }
         // ...existing code...
       } else if (col.id === "container_status") {
         // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
@@ -1671,6 +1669,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           if (e.target === overlay) overlay.remove();
         };
         // Scroll popup sur mobile si besoin
+
         if (window.innerWidth <= 600) {
           box.style.overflowY = "auto";
           content.style.maxHeight = "60vh";
@@ -1686,6 +1685,55 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   const thead = tableElement.querySelector("thead");
   thead.innerHTML = "";
   const headerRow = document.createElement("tr");
+  // Ajout colonne checkbox sélection
+  const selectTh = document.createElement("th");
+  selectTh.style.width = "38px";
+  // Bouton suppression global
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "🗑️ Supprimer";
+  deleteBtn.style.background = "#ef4444";
+  deleteBtn.style.color = "#fff";
+  deleteBtn.style.border = "none";
+  deleteBtn.style.borderRadius = "7px";
+  deleteBtn.style.padding = "4px 12px";
+  deleteBtn.style.fontWeight = "bold";
+  deleteBtn.style.cursor = "pointer";
+  deleteBtn.style.fontSize = "0.98em";
+  deleteBtn.style.margin = "0 0 0 4px";
+  deleteBtn.onclick = function () {
+    const tableBody = tableElement.querySelector("tbody");
+    const checked = Array.from(
+      tableBody.querySelectorAll("input[type='checkbox'].row-select:checked")
+    );
+    if (checked.length === 0) {
+      alert("Sélectionnez au moins une ligne à supprimer.");
+      return;
+    }
+    if (!confirm("Confirmer la suppression des livraisons sélectionnées ?"))
+      return;
+    checked.forEach((cb) => {
+      const tr = cb.closest("tr");
+      if (tr && tr.dataset.deliveryId) {
+        // Suppression locale
+        window.allDeliveries = (window.allDeliveries || []).filter(
+          (d) => String(d.id) !== String(tr.dataset.deliveryId)
+        );
+        tr.remove();
+        // Suppression serveur
+        fetch(`/deliveries/${tr.dataset.deliveryId}`, { method: "DELETE" });
+      }
+    });
+    // Optionnel : rafraîchir le tableau
+    if (typeof updateTableForDateRange === "function") {
+      const dateStartInput = document.getElementById(
+        "mainTableDateStartFilter"
+      );
+      const dateEndInput = document.getElementById("mainTableDateEndFilter");
+      updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+    }
+  };
+  selectTh.appendChild(deleteBtn);
+  headerRow.appendChild(selectTh);
   AGENT_TABLE_COLUMNS.forEach((col) => {
     const th = document.createElement("th");
     th.textContent = col.label;
@@ -1694,59 +1742,4 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   });
   thead.appendChild(headerRow);
 }
-
-// Fonction pour générersgv le tableau Agent Acconier complet
-function renderAgentTableFull(deliveries, tableBodyElement) {
-  const table = tableBodyElement.closest("table");
-  // ...
-  // Filtrer les livraisons à afficher dans le tableau principal :
-  // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
-  const deliveriesToShow = deliveries.filter((delivery) => {
-    let blList = [];
-    if (Array.isArray(delivery.bl_number)) {
-      blList = delivery.bl_number.filter(Boolean);
-    } else if (typeof delivery.bl_number === "string") {
-      blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-    }
-    let blStatuses = blList.map((bl) =>
-      delivery.bl_statuses && delivery.bl_statuses[bl]
-        ? delivery.bl_statuses[bl]
-        : "aucun"
-    );
-    // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas dans le tableau principal
-    return !blStatuses.every((s) => s === "mise_en_livraison");
-  });
-  console.log(
-    "[DEBUG] renderAgentTableFull - deliveriesToShow:",
-    deliveriesToShow
-  );
-  if (deliveriesToShow.length === 0) {
-    if (table) table.style.display = "none";
-    let noDataMsg = document.getElementById("noDeliveriesMsg");
-    if (!noDataMsg) {
-      noDataMsg = document.createElement("div");
-      noDataMsg.id = "noDeliveriesMsg";
-      noDataMsg.style.textAlign = "center";
-      noDataMsg.style.padding = "48px 0 32px 0";
-      noDataMsg.style.fontSize = "1.25em";
-      noDataMsg.style.color = "#64748b";
-      noDataMsg.style.fontWeight = "500";
-      noDataMsg.textContent = "Aucune opération à cette date.";
-      tableBodyElement.parentNode.insertBefore(noDataMsg, tableBodyElement);
-    } else {
-      noDataMsg.style.display = "block";
-    }
-    tableBodyElement.innerHTML = "";
-  } else {
-    if (table) table.style.display = "table";
-    const noDataMsg = document.getElementById("noDeliveriesMsg");
-    if (noDataMsg) noDataMsg.style.display = "none";
-    // Utiliser la nouvelle fonction d'en-tête
-    if (table) {
-      renderAgentTableHeaders(table, deliveriesToShow);
-    }
-    renderAgentTableRows(deliveriesToShow, tableBodyElement);
-  }
-}
-//originale12345
-//shgsdsc
+/*jgqfg*/
