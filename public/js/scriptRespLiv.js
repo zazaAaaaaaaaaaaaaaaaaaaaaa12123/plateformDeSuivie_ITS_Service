@@ -719,10 +719,12 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         return;
       // Suppression côté serveur pour chaque ligne sélectionnée
       let idsToDelete = [];
+      let trsToDelete = [];
       checked.forEach((cb) => {
         const tr = cb.closest("tr[data-delivery-id]");
         if (tr && tr.dataset.deliveryId) {
           idsToDelete.push(tr.dataset.deliveryId);
+          trsToDelete.push(tr);
         }
       });
       // Appel API pour chaque id
@@ -736,24 +738,17 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         })
       ).then((results) => {
         if (results.every((r) => r.success)) {
-          alert("Suppression réussie.");
-          // Recharger les livraisons et rafraîchir le tableau
-          if (typeof loadAllDeliveries === "function") {
-            loadAllDeliveries().then(() => {
-              const dateStartInput = document.getElementById(
-                "mainTableDateStartFilter"
+          // Supprimer les lignes du DOM immédiatement
+          trsToDelete.forEach((tr) => tr.remove());
+          // Mettre à jour allDeliveries côté client
+          if (window.allDeliveries) {
+            idsToDelete.forEach((id) => {
+              window.allDeliveries = window.allDeliveries.filter(
+                (d) => String(d.id) !== String(id)
               );
-              const dateEndInput = document.getElementById(
-                "mainTableDateEndFilter"
-              );
-              if (dateStartInput && dateEndInput) {
-                updateTableForDateRange(
-                  dateStartInput.value,
-                  dateEndInput.value
-                );
-              }
             });
           }
+          alert("Suppression réussie.");
         } else {
           alert("Erreur lors de la suppression d'une ou plusieurs lignes.");
         }
