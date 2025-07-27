@@ -24,16 +24,14 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
-  // Ajout dynamique du bouton de suppression compact lors de la sélection
+  // Ajout dynamique du bouton de suppression compact à côté des dates
   let deleteBtn = null;
+  let rangeDiv = null;
   function showDeleteBtn() {
     if (!deleteBtn) {
       deleteBtn = document.createElement("button");
       deleteBtn.id = "deleteRowsBtn";
       deleteBtn.textContent = "🗑️ Supprimer";
-      deleteBtn.style.position = "fixed";
-      deleteBtn.style.bottom = "32px";
-      deleteBtn.style.right = "32px";
       deleteBtn.style.background =
         "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
       deleteBtn.style.color = "#fff";
@@ -41,9 +39,9 @@ document.addEventListener("DOMContentLoaded", function () {
       deleteBtn.style.fontSize = "0.98em";
       deleteBtn.style.border = "none";
       deleteBtn.style.borderRadius = "50px";
-      deleteBtn.style.padding = "0.55em 1.3em";
-      deleteBtn.style.boxShadow = "0 4px 18px rgba(239,68,68,0.18)";
-      deleteBtn.style.zIndex = 10010;
+      deleteBtn.style.padding = "0.45em 1.1em";
+      deleteBtn.style.marginLeft = "12px";
+      deleteBtn.style.boxShadow = "0 2px 8px rgba(239,68,68,0.13)";
       deleteBtn.style.display = "none";
       deleteBtn.onclick = function () {
         const checked = document.querySelectorAll(
@@ -71,9 +69,28 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         hideDeleteBtn();
       };
-      document.body.appendChild(deleteBtn);
+      // Trouver le rangeDiv (le conteneur des dates)
+      rangeDiv = document.getElementById(
+        "mainTableDateStartFilter"
+      )?.parentNode;
+      if (rangeDiv && rangeDiv.nodeName === "DIV") {
+        rangeDiv.appendChild(deleteBtn);
+      } else {
+        // fallback : insérer après le champ date début
+        const dateStartInput = document.getElementById(
+          "mainTableDateStartFilter"
+        );
+        if (dateStartInput && dateStartInput.parentNode) {
+          dateStartInput.parentNode.insertBefore(
+            deleteBtn,
+            dateStartInput.nextSibling
+          );
+        } else {
+          document.body.appendChild(deleteBtn);
+        }
+      }
     }
-    deleteBtn.style.display = "block";
+    deleteBtn.style.display = "inline-block";
   }
   function hideDeleteBtn() {
     if (deleteBtn) deleteBtn.style.display = "none";
