@@ -1395,6 +1395,39 @@ function formatDateForDB(dateString) {
 // --- ROUTES API pour les livraisons uniquement ---
 // =========================================================================
 
+// ROUTE : Suppression de livraisons par liste d'ids
+app.post("/deliveries/delete", async (req, res) => {
+  const { ids } = req.body || {};
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Aucun id fourni." });
+  }
+  // Vérifie que tous les ids sont des entiers
+  const validIds = ids.map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
+  if (validIds.length === 0) {
+    return res.status(400).json({ success: false, message: "Ids invalides." });
+  }
+  try {
+    const result = await pool.query(
+      `DELETE FROM livraison_conteneur WHERE id = ANY($1::int[]) RETURNING id;`,
+      [validIds]
+    );
+    if (result.rowCount === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Aucune livraison supprimée." });
+    }
+    return res.json({
+      success: true,
+      deletedIds: result.rows.map((r) => r.id),
+    });
+  } catch (err) {
+    console.error("[POST /deliveries/delete] Erreur:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
 // ROUTE : Liste des livraisons avec statuts (inclut bl_statuses)
 app.get("/deliveries/status", async (req, res) => {
   try {
