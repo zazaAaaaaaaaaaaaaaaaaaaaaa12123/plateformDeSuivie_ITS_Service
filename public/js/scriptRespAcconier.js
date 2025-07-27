@@ -48,48 +48,141 @@ document.addEventListener("DOMContentLoaded", function () {
           ".select-row-checkbox:checked"
         );
         if (checked.length === 0) return;
-        if (!confirm("Voulez-vous vraiment supprimer la sélection ?")) return;
-        const idsToDelete = Array.from(checked).map((cb) =>
-          cb.getAttribute("data-id")
-        );
-        // Appel API backend pour suppression définitive
-        try {
-          const response = await fetch("/deliveries/delete", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ ids: idsToDelete }),
-          });
-          const result = await response.json();
-          if (result.success) {
-            // Suppression locale seulement si succès côté serveur
-            if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
-              window.allDeliveries = window.allDeliveries.filter(
-                (d) => !idsToDelete.includes(String(d.id))
+
+        // Message de confirmation personnalisé
+        const confirmOverlay = document.createElement("div");
+        confirmOverlay.style.position = "fixed";
+        confirmOverlay.style.top = 0;
+        confirmOverlay.style.left = 0;
+        confirmOverlay.style.width = "100vw";
+        confirmOverlay.style.height = "100vh";
+        confirmOverlay.style.background = "rgba(30,41,59,0.45)";
+        confirmOverlay.style.zIndex = 99999;
+        confirmOverlay.style.display = "flex";
+        confirmOverlay.style.alignItems = "center";
+        confirmOverlay.style.justifyContent = "center";
+
+        const confirmBox = document.createElement("div");
+        confirmBox.style.background = "#fff";
+        confirmBox.style.borderRadius = "18px";
+        confirmBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+        confirmBox.style.maxWidth = "420px";
+        confirmBox.style.width = "96vw";
+        confirmBox.style.padding = "0";
+        confirmBox.style.position = "relative";
+        confirmBox.style.display = "flex";
+        confirmBox.style.flexDirection = "column";
+
+        // Header
+        const confirmHeader = document.createElement("div");
+        confirmHeader.style.background =
+          "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+        confirmHeader.style.color = "#fff";
+        confirmHeader.style.padding = "22px 32px 12px 32px";
+        confirmHeader.style.fontWeight = "bold";
+        confirmHeader.style.fontSize = "1.18rem";
+        confirmHeader.style.borderTopLeftRadius = "18px";
+        confirmHeader.style.borderTopRightRadius = "18px";
+        confirmHeader.innerHTML = `<span style='font-size:1.25em;'>🗑️ Confirmation de suppression</span>`;
+        confirmBox.appendChild(confirmHeader);
+
+        // Message
+        const confirmMsgDiv = document.createElement("div");
+        confirmMsgDiv.style.padding = "24px 24px 18px 24px";
+        confirmMsgDiv.style.background = "#f8fafc";
+        confirmMsgDiv.style.fontSize = "1.08em";
+        confirmMsgDiv.style.color = "#1e293b";
+        confirmMsgDiv.style.textAlign = "center";
+        confirmMsgDiv.innerHTML =
+          "<b>Vous êtes sur le point de supprimer définitivement la sélection.</b><br><br>Cette opération est <span style='color:#ef4444;font-weight:600;'>irréversible</span>.<br><br>Voulez-vous vraiment continuer ?";
+        confirmBox.appendChild(confirmMsgDiv);
+
+        // Boutons
+        const btnsDiv = document.createElement("div");
+        btnsDiv.style.display = "flex";
+        btnsDiv.style.justifyContent = "center";
+        btnsDiv.style.gap = "18px";
+        btnsDiv.style.padding = "0 0 22px 0";
+
+        // Bouton Annuler
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Annuler";
+        cancelBtn.style.background = "#fff";
+        cancelBtn.style.color = "#ef4444";
+        cancelBtn.style.fontWeight = "bold";
+        cancelBtn.style.fontSize = "1em";
+        cancelBtn.style.border = "2px solid #ef4444";
+        cancelBtn.style.borderRadius = "8px";
+        cancelBtn.style.padding = "0.7em 1.7em";
+        cancelBtn.style.cursor = "pointer";
+        cancelBtn.onclick = () => confirmOverlay.remove();
+
+        // Bouton Confirmer
+        const okBtn = document.createElement("button");
+        okBtn.textContent = "Supprimer";
+        okBtn.style.background =
+          "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+        okBtn.style.color = "#fff";
+        okBtn.style.fontWeight = "bold";
+        okBtn.style.fontSize = "1em";
+        okBtn.style.border = "none";
+        okBtn.style.borderRadius = "8px";
+        okBtn.style.padding = "0.7em 1.7em";
+        okBtn.style.cursor = "pointer";
+        okBtn.onclick = async () => {
+          confirmOverlay.remove();
+          const idsToDelete = Array.from(checked).map((cb) =>
+            cb.getAttribute("data-id")
+          );
+          // Appel API backend pour suppression définitive
+          try {
+            const response = await fetch("/deliveries/delete", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ ids: idsToDelete }),
+            });
+            const result = await response.json();
+            if (result.success) {
+              // Suppression locale seulement si succès côté serveur
+              if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+                window.allDeliveries = window.allDeliveries.filter(
+                  (d) => !idsToDelete.includes(String(d.id))
+                );
+              }
+              const dateStartInput = document.getElementById(
+                "mainTableDateStartFilter"
+              );
+              const dateEndInput = document.getElementById(
+                "mainTableDateEndFilter"
+              );
+              if (typeof updateTableForDateRange === "function") {
+                updateTableForDateRange(
+                  dateStartInput ? dateStartInput.value : "",
+                  dateEndInput ? dateEndInput.value : ""
+                );
+              }
+              hideDeleteBtn();
+            } else {
+              alert(
+                "Erreur lors de la suppression côté serveur. Veuillez réessayer."
               );
             }
-            const dateStartInput = document.getElementById(
-              "mainTableDateStartFilter"
-            );
-            const dateEndInput = document.getElementById(
-              "mainTableDateEndFilter"
-            );
-            if (typeof updateTableForDateRange === "function") {
-              updateTableForDateRange(
-                dateStartInput ? dateStartInput.value : "",
-                dateEndInput ? dateEndInput.value : ""
-              );
-            }
-            hideDeleteBtn();
-          } else {
-            alert(
-              "Erreur lors de la suppression côté serveur. Veuillez réessayer."
-            );
+          } catch (e) {
+            alert("Erreur réseau lors de la suppression. Veuillez réessayer.");
           }
-        } catch (e) {
-          alert("Erreur réseau lors de la suppression. Veuillez réessayer.");
-        }
+        };
+
+        btnsDiv.appendChild(cancelBtn);
+        btnsDiv.appendChild(okBtn);
+        confirmBox.appendChild(btnsDiv);
+        confirmOverlay.appendChild(confirmBox);
+        document.body.appendChild(confirmOverlay);
+        // Fermer la popup si clic en dehors de la boîte
+        confirmOverlay.onclick = (e) => {
+          if (e.target === confirmOverlay) confirmOverlay.remove();
+        };
       };
       // Trouver le rangeDiv (le conteneur des dates)
       rangeDiv = document.getElementById(
