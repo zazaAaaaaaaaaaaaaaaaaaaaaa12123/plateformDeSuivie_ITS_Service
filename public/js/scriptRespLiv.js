@@ -1885,3 +1885,182 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 });
 /***bn */
+
+// --- POPUP HISTORIQUE DES DOSSIERS LIVRÉS ---
+document.addEventListener("DOMContentLoaded", function () {
+  const historyBtn = document.getElementById("historyIconBtn");
+  if (!historyBtn) return;
+  historyBtn.addEventListener("click", function (e) {
+    e.preventDefault();
+    // Récupérer tous les dossiers livrés
+    const allDeliveries = window.allDeliveries || [];
+    // Un dossier est livré si au moins un conteneur a le statut 'livre' ou 'Livré'
+    const isDelivered = (delivery) => {
+      if (
+        !delivery.container_statuses ||
+        typeof delivery.container_statuses !== "object"
+      )
+        return false;
+      return Object.values(delivery.container_statuses).some(
+        (s) =>
+          String(s).toLowerCase() === "livre" ||
+          String(s).toLowerCase() === "livré"
+      );
+    };
+    const deliveredList = allDeliveries.filter(isDelivered);
+    // Créer la popup
+    let popup = document.getElementById("historyPopup");
+    if (popup) popup.remove();
+    popup = document.createElement("div");
+    popup.id = "historyPopup";
+    popup.style.position = "fixed";
+    popup.style.top = "0";
+    popup.style.left = "0";
+    popup.style.width = "100vw";
+    popup.style.height = "100vh";
+    popup.style.background = "rgba(30,41,59,0.32)";
+    popup.style.zIndex = "100100";
+    popup.style.display = "flex";
+    popup.style.alignItems = "center";
+    popup.style.justifyContent = "center";
+    // Contenu principal
+    const box = document.createElement("div");
+    box.style.background = "#fff";
+    box.style.borderRadius = "18px";
+    box.style.boxShadow = "0 8px 32px #0e274e33";
+    box.style.maxWidth = "98vw";
+    box.style.width = "900px";
+    box.style.maxHeight = "90vh";
+    box.style.overflowY = "auto";
+    box.style.padding = "32px 28px 24px 28px";
+    box.style.position = "relative";
+    // Titre
+    const title = document.createElement("h2");
+    title.textContent = "Historique des dossiers livrés";
+    title.style.fontWeight = "900";
+    title.style.fontSize = "1.45em";
+    title.style.color = "#0e274e";
+    title.style.marginBottom = "18px";
+    box.appendChild(title);
+    // Bouton de fermeture
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.title = "Fermer";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.top = "12px";
+    closeBtn.style.right = "18px";
+    closeBtn.style.width = "32px";
+    closeBtn.style.height = "32px";
+    closeBtn.style.border = "none";
+    closeBtn.style.background = "#fff";
+    closeBtn.style.color = "#0e274e";
+    closeBtn.style.fontSize = "2em";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.style.borderRadius = "50%";
+    closeBtn.style.boxShadow = "0 2px 8px #0e274e22";
+    closeBtn.onclick = () => popup.remove();
+    box.appendChild(closeBtn);
+    // Si aucun dossier livré
+    if (deliveredList.length === 0) {
+      const empty = document.createElement("div");
+      empty.textContent = "Aucun dossier livré pour le moment.";
+      empty.style.textAlign = "center";
+      empty.style.color = "#64748b";
+      empty.style.fontSize = "1.15em";
+      empty.style.margin = "32px 0";
+      box.appendChild(empty);
+    } else {
+      // Tableau des dossiers livrés
+      const table = document.createElement("table");
+      table.style.width = "100%";
+      table.style.borderCollapse = "collapse";
+      table.style.marginTop = "8px";
+      table.style.fontSize = "1em";
+      table.innerHTML = `<thead><tr style='background:#f8fafc;font-weight:700;color:#0e274e;'>
+        <th style='padding:7px 8px;'>N°</th>
+        <th style='padding:7px 8px;'>Agent visiteur</th>
+        <th style='padding:7px 8px;'>Transporteur</th>
+        <th style='padding:7px 8px;'>Inspecteur</th>
+        <th style='padding:7px 8px;'>Agent en douanes</th>
+        <th style='padding:7px 8px;'>Chauffeur</th>
+        <th style='padding:7px 8px;'>Tél chauffeur</th>
+        <th style='padding:7px 8px;'>Date livraison</th>
+        <th style='padding:7px 8px;'>N° TC</th>
+        <th style='padding:7px 8px;'>Statut</th>
+        <th style='padding:7px 8px;'>N° Dossier</th>
+        <th style='padding:7px 8px;'>Observations</th>
+        <th style='padding:7px 8px;'>Date</th>
+      </tr></thead><tbody></tbody>`;
+      const tbody = table.querySelector("tbody");
+      deliveredList.forEach((delivery, idx) => {
+        // Statut global : si tous les conteneurs sont livrés, "Livré", sinon "Partiel"
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        let statuses = delivery.container_statuses || {};
+        let allDelivered =
+          tcList.length > 0 &&
+          tcList.every((tc) => {
+            const s = statuses[tc];
+            return (
+              s &&
+              (String(s).toLowerCase() === "livre" ||
+                String(s).toLowerCase() === "livré")
+            );
+          });
+        let statut = allDelivered ? "Livré" : "Partiel";
+        // Date livraison
+        let dateLiv = delivery.delivery_date || delivery.created_at || "-";
+        let dateLivAff = "-";
+        if (dateLiv) {
+          let d = new Date(dateLiv);
+          if (!isNaN(d.getTime())) dateLivAff = d.toLocaleDateString("fr-FR");
+        }
+        // Date création
+        let dateCre = delivery.created_at || delivery.delivery_date || "-";
+        let dateCreAff = "-";
+        if (dateCre) {
+          let d = new Date(dateCre);
+          if (!isNaN(d.getTime())) dateCreAff = d.toLocaleDateString("fr-FR");
+        }
+        // Observations
+        let obs = delivery.observation || "-";
+        // N° Dossier
+        let dossier = delivery.dossier_number || delivery.bl_number || "-";
+        // N° TC (tous)
+        let tcStr = tcList.length ? tcList.join(", ") : "-";
+        // Ligne
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style='padding:6px 8px;text-align:center;'>${idx + 1}</td>
+          <td style='padding:6px 8px;'>${
+            delivery.visitor_agent_name || "-"
+          }</td>
+          <td style='padding:6px 8px;'>${delivery.transporter || "-"}</td>
+          <td style='padding:6px 8px;'>${delivery.inspector || "-"}</td>
+          <td style='padding:6px 8px;'>${delivery.customs_agent || "-"}</td>
+          <td style='padding:6px 8px;'>${delivery.driver || "-"}</td>
+          <td style='padding:6px 8px;'>${delivery.driver_phone || "-"}</td>
+          <td style='padding:6px 8px;'>${dateLivAff}</td>
+          <td style='padding:6px 8px;'>${tcStr}</td>
+          <td style='padding:6px 8px;'>${statut}</td>
+          <td style='padding:6px 8px;'>${dossier}</td>
+          <td style='padding:6px 8px;'>${obs}</td>
+          <td style='padding:6px 8px;'>${dateCreAff}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      box.appendChild(table);
+    }
+    popup.appendChild(box);
+    document.body.appendChild(popup);
+    // Fermer la popup si clic hors de la box
+    popup.addEventListener("click", function (ev) {
+      if (ev.target === popup) popup.remove();
+    });
+  });
+});
