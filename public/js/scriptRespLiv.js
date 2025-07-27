@@ -717,24 +717,53 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       }
       if (!confirm("Confirmer la suppression des lignes sélectionnées ?"))
         return;
+      // Suppression côté serveur pour chaque ligne sélectionnée
+      let idsToDelete = [];
       checked.forEach((cb) => {
         const tr = cb.closest("tr[data-delivery-id]");
-        if (tr) {
-          const deliveryId = tr.getAttribute("data-delivery-id");
-          tr.remove();
-          if (deliveryId && window.allDeliveries) {
-            window.allDeliveries = window.allDeliveries.filter(
-              (d) => String(d.id) !== String(deliveryId)
-            );
-          }
+        if (tr && tr.dataset.deliveryId) {
+          idsToDelete.push(tr.dataset.deliveryId);
         }
       });
-      setTimeout(() => {
-        const checkedNow = document.querySelectorAll(
-          '#deliveriesTableBody input[type="checkbox"].row-select:checked'
-        );
-        if (checkedNow.length === 0) delBtn.style.display = "none";
-      }, 100);
+      // Appel API pour chaque id
+      Promise.all(
+        idsToDelete.map((id) => {
+          return fetch(`/deliveries/${id}`, {
+            method: "DELETE",
+          })
+            .then((res) => res.json())
+            .catch(() => ({ success: false }));
+        })
+      ).then((results) => {
+        if (results.every((r) => r.success)) {
+          alert("Suppression réussie.");
+          // Recharger les livraisons et rafraîchir le tableau
+          if (typeof loadAllDeliveries === "function") {
+            loadAllDeliveries().then(() => {
+              const dateStartInput = document.getElementById(
+                "mainTableDateStartFilter"
+              );
+              const dateEndInput = document.getElementById(
+                "mainTableDateEndFilter"
+              );
+              if (dateStartInput && dateEndInput) {
+                updateTableForDateRange(
+                  dateStartInput.value,
+                  dateEndInput.value
+                );
+              }
+            });
+          }
+        } else {
+          alert("Erreur lors de la suppression d'une ou plusieurs lignes.");
+        }
+        setTimeout(() => {
+          const checkedNow = document.querySelectorAll(
+            '#deliveriesTableBody input[type="checkbox"].row-select:checked'
+          );
+          if (checkedNow.length === 0) delBtn.style.display = "none";
+        }, 100);
+      });
     };
     // Ajout du bouton à côté des filtres de date
     const dateStartInput = document.getElementById("mainTableDateStartFilter");
