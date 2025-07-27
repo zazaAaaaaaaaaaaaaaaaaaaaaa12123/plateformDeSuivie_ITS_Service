@@ -24,6 +24,59 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // Ajout du bouton de suppression
+  setTimeout(() => {
+    const table = document
+      .getElementById("deliveriesTableBody")
+      ?.closest("table");
+    if (table && !document.getElementById("deleteRowsBtn")) {
+      const deleteBtn = document.createElement("button");
+      deleteBtn.id = "deleteRowsBtn";
+      deleteBtn.textContent = "Supprimer la sélection";
+      deleteBtn.style.background =
+        "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+      deleteBtn.style.color = "#fff";
+      deleteBtn.style.fontWeight = "bold";
+      deleteBtn.style.fontSize = "1em";
+      deleteBtn.style.border = "none";
+      deleteBtn.style.borderRadius = "8px";
+      deleteBtn.style.padding = "0.7em 1.7em";
+      deleteBtn.style.marginBottom = "12px";
+      deleteBtn.style.marginRight = "12px";
+      deleteBtn.onclick = function () {
+        // Récupérer les ids sélectionnés
+        const checked = document.querySelectorAll(
+          ".select-row-checkbox:checked"
+        );
+        if (checked.length === 0) {
+          alert("Veuillez sélectionner au moins une ligne à supprimer.");
+          return;
+        }
+        if (!confirm("Voulez-vous vraiment supprimer la sélection ?")) return;
+        const idsToDelete = Array.from(checked).map((cb) =>
+          cb.getAttribute("data-id")
+        );
+        // Supprimer côté JS (window.allDeliveries)
+        if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+          window.allDeliveries = window.allDeliveries.filter(
+            (d) => !idsToDelete.includes(String(d.id))
+          );
+        }
+        // Rafraîchir le tableau
+        const dateStartInput = document.getElementById(
+          "mainTableDateStartFilter"
+        );
+        const dateEndInput = document.getElementById("mainTableDateEndFilter");
+        if (typeof updateTableForDateRange === "function") {
+          updateTableForDateRange(
+            dateStartInput ? dateStartInput.value : "",
+            dateEndInput ? dateEndInput.value : ""
+          );
+        }
+      };
+      table.parentNode.insertBefore(deleteBtn, table);
+    }
+  }, 500);
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   const newLocal = (styleTC.textContent = `
@@ -654,6 +707,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 // Colonnes strictes pour Agent Acconier
 const AGENT_TABLE_COLUMNS = [
+  { id: "select_row", label: "" }, // Colonne pour la sélection
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent" },
@@ -707,7 +761,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
-      if (col.id === "row_number") {
+      if (col.id === "select_row") {
+        // Ajout d'une case à cocher pour la sélection
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "select-row-checkbox";
+        checkbox.setAttribute("data-id", delivery.id);
+        td.appendChild(checkbox);
+        td.style.textAlign = "center";
+      } else if (col.id === "row_number") {
         value = i + 1;
         // Avatar stylisé moderne avec initiales et couleur dynamique
         const avatar = document.createElement("div");
