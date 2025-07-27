@@ -1970,30 +1970,13 @@ document.addEventListener("DOMContentLoaded", function () {
       empty.style.margin = "32px 0";
       box.appendChild(empty);
     } else {
-      // Tableau des dossiers livrés
-      const table = document.createElement("table");
-      table.style.width = "100%";
-      table.style.borderCollapse = "collapse";
-      table.style.marginTop = "8px";
-      table.style.fontSize = "1em";
-      table.innerHTML = `<thead><tr style='background:#f8fafc;font-weight:700;color:#0e274e;'>
-        <th style='padding:7px 8px;'>N°</th>
-        <th style='padding:7px 8px;'>Agent visiteur</th>
-        <th style='padding:7px 8px;'>Transporteur</th>
-        <th style='padding:7px 8px;'>Inspecteur</th>
-        <th style='padding:7px 8px;'>Agent en douanes</th>
-        <th style='padding:7px 8px;'>Chauffeur</th>
-        <th style='padding:7px 8px;'>Tél chauffeur</th>
-        <th style='padding:7px 8px;'>Date livraison</th>
-        <th style='padding:7px 8px;'>N° TC</th>
-        <th style='padding:7px 8px;'>Statut</th>
-        <th style='padding:7px 8px;'>N° Dossier</th>
-        <th style='padding:7px 8px;'>Observations</th>
-        <th style='padding:7px 8px;'>Date</th>
-      </tr></thead><tbody></tbody>`;
-      const tbody = table.querySelector("tbody");
+      // Affichage sous forme de cartes cliquables
+      const cardsContainer = document.createElement("div");
+      cardsContainer.style.display = "flex";
+      cardsContainer.style.flexWrap = "wrap";
+      cardsContainer.style.gap = "18px";
+      cardsContainer.style.justifyContent = "center";
       deliveredList.forEach((delivery, idx) => {
-        // Statut global : si tous les conteneurs sont livrés, "Livré", sinon "Partiel"
         let tcList = [];
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
@@ -2012,49 +1995,158 @@ document.addEventListener("DOMContentLoaded", function () {
             );
           });
         let statut = allDelivered ? "Livré" : "Partiel";
-        // Date livraison
         let dateLiv = delivery.delivery_date || delivery.created_at || "-";
         let dateLivAff = "-";
         if (dateLiv) {
           let d = new Date(dateLiv);
           if (!isNaN(d.getTime())) dateLivAff = d.toLocaleDateString("fr-FR");
         }
-        // Date création
         let dateCre = delivery.created_at || delivery.delivery_date || "-";
         let dateCreAff = "-";
         if (dateCre) {
           let d = new Date(dateCre);
           if (!isNaN(d.getTime())) dateCreAff = d.toLocaleDateString("fr-FR");
         }
-        // Observations
         let obs = delivery.observation || "-";
-        // N° Dossier
         let dossier = delivery.dossier_number || delivery.bl_number || "-";
-        // N° TC (tous)
         let tcStr = tcList.length ? tcList.join(", ") : "-";
-        // Ligne
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td style='padding:6px 8px;text-align:center;'>${idx + 1}</td>
-          <td style='padding:6px 8px;'>${
+        // Carte cliquable
+        const card = document.createElement("div");
+        card.className = "history-card";
+        card.style.background =
+          "linear-gradient(90deg,#f8fafc 0%,#e6b80011 100%)";
+        card.style.border = "1.5px solid #ffc107";
+        card.style.borderRadius = "16px";
+        card.style.boxShadow = "0 2px 12px #0e274e11";
+        card.style.padding = "18px 22px 14px 22px";
+        card.style.minWidth = "260px";
+        card.style.maxWidth = "340px";
+        card.style.flex = "1 1 300px";
+        card.style.cursor = "pointer";
+        card.style.transition = "box-shadow 0.18s";
+        card.onmouseenter = () =>
+          (card.style.boxShadow = "0 8px 32px #ffc10733");
+        card.onmouseleave = () =>
+          (card.style.boxShadow = "0 2px 12px #0e274e11");
+        card.innerHTML = `
+          <div style='display:flex;align-items:center;gap:10px;margin-bottom:8px;'>
+            <span style='font-size:1.25em;font-weight:900;color:#0e274e;'>#${
+              idx + 1
+            }</span>
+            <span style='font-size:1em;font-weight:700;color:#2563eb;background:#e6b80022;padding:2px 10px;border-radius:8px;'>${statut}</span>
+            <span style='font-size:0.98em;color:#64748b;margin-left:auto;'>${dateLivAff}</span>
+          </div>
+          <div style='font-size:1.08em;font-weight:700;color:#0e274e;margin-bottom:4px;'>${
             delivery.visitor_agent_name || "-"
-          }</td>
-          <td style='padding:6px 8px;'>${delivery.transporter || "-"}</td>
-          <td style='padding:6px 8px;'>${delivery.inspector || "-"}</td>
-          <td style='padding:6px 8px;'>${delivery.customs_agent || "-"}</td>
-          <td style='padding:6px 8px;'>${delivery.driver || "-"}</td>
-          <td style='padding:6px 8px;'>${delivery.driver_phone || "-"}</td>
-          <td style='padding:6px 8px;'>${dateLivAff}</td>
-          <td style='padding:6px 8px;'>${tcStr}</td>
-          <td style='padding:6px 8px;'>${statut}</td>
-          <td style='padding:6px 8px;'>${dossier}</td>
-          <td style='padding:6px 8px;'>${obs}</td>
-          <td style='padding:6px 8px;'>${dateCreAff}</td>
+          }</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Transporteur :</b> ${
+            delivery.transporter || "-"
+          }</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Inspecteur :</b> ${
+            delivery.inspector || "-"
+          }</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Agent en douanes :</b> ${
+            delivery.customs_agent || "-"
+          }</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Chauffeur :</b> ${
+            delivery.driver || "-"
+          }</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Tél chauffeur :</b> ${
+            delivery.driver_phone || "-"
+          }</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>N° TC :</b> ${tcStr}</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>N° Dossier :</b> ${dossier}</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Observations :</b> ${obs}</div>
+          <div style='font-size:0.95em;color:#64748b;margin-top:6px;'><b>Date enregistrement :</b> ${dateCreAff}</div>
         `;
-        tbody.appendChild(tr);
+        // Affichage détaillé au clic (popup individuelle)
+        card.onclick = function () {
+          let detailPopup = document.getElementById("historyDetailPopup");
+          if (detailPopup) detailPopup.remove();
+          detailPopup = document.createElement("div");
+          detailPopup.id = "historyDetailPopup";
+          detailPopup.style.position = "fixed";
+          detailPopup.style.top = "0";
+          detailPopup.style.left = "0";
+          detailPopup.style.width = "100vw";
+          detailPopup.style.height = "100vh";
+          detailPopup.style.background = "rgba(30,41,59,0.32)";
+          detailPopup.style.zIndex = "100200";
+          detailPopup.style.display = "flex";
+          detailPopup.style.alignItems = "center";
+          detailPopup.style.justifyContent = "center";
+          const detailBox = document.createElement("div");
+          detailBox.style.background = "#fff";
+          detailBox.style.borderRadius = "18px";
+          detailBox.style.boxShadow = "0 8px 32px #0e274e33";
+          detailBox.style.maxWidth = "96vw";
+          detailBox.style.width = "420px";
+          detailBox.style.maxHeight = "90vh";
+          detailBox.style.overflowY = "auto";
+          detailBox.style.padding = "32px 28px 24px 28px";
+          detailBox.style.position = "relative";
+          // Titre
+          const detailTitle = document.createElement("h3");
+          detailTitle.textContent = `Dossier #${idx + 1} — ${statut}`;
+          detailTitle.style.fontWeight = "900";
+          detailTitle.style.fontSize = "1.18em";
+          detailTitle.style.color = "#0e274e";
+          detailTitle.style.marginBottom = "12px";
+          detailBox.appendChild(detailTitle);
+          // Bouton fermeture
+          const closeDetailBtn = document.createElement("button");
+          closeDetailBtn.innerHTML = "&times;";
+          closeDetailBtn.title = "Fermer";
+          closeDetailBtn.style.position = "absolute";
+          closeDetailBtn.style.top = "12px";
+          closeDetailBtn.style.right = "18px";
+          closeDetailBtn.style.width = "32px";
+          closeDetailBtn.style.height = "32px";
+          closeDetailBtn.style.border = "none";
+          closeDetailBtn.style.background = "#fff";
+          closeDetailBtn.style.color = "#0e274e";
+          closeDetailBtn.style.fontSize = "2em";
+          closeDetailBtn.style.cursor = "pointer";
+          closeDetailBtn.style.borderRadius = "50%";
+          closeDetailBtn.style.boxShadow = "0 2px 8px #0e274e22";
+          closeDetailBtn.onclick = () => detailPopup.remove();
+          detailBox.appendChild(closeDetailBtn);
+          // Contenu détaillé
+          detailBox.innerHTML += `
+            <div style='font-size:1.08em;font-weight:700;color:#0e274e;margin-bottom:8px;'>${
+              delivery.visitor_agent_name || "-"
+            }</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Transporteur :</b> ${
+              delivery.transporter || "-"
+            }</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Inspecteur :</b> ${
+              delivery.inspector || "-"
+            }</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Agent en douanes :</b> ${
+              delivery.customs_agent || "-"
+            }</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Chauffeur :</b> ${
+              delivery.driver || "-"
+            }</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Tél chauffeur :</b> ${
+              delivery.driver_phone || "-"
+            }</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>N° TC :</b> ${tcStr}</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>N° Dossier :</b> ${dossier}</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Observations :</b> ${obs}</div>
+            <div style='font-size:0.95em;color:#64748b;margin-top:6px;'><b>Date livraison :</b> ${dateLivAff}</div>
+            <div style='font-size:0.95em;color:#64748b;'><b>Date enregistrement :</b> ${dateCreAff}</div>
+          `;
+          detailPopup.appendChild(detailBox);
+          document.body.appendChild(detailPopup);
+          // Fermer la popup si clic hors de la box
+          detailPopup.addEventListener("click", function (ev) {
+            if (ev.target === detailPopup) detailPopup.remove();
+          });
+        };
+        cardsContainer.appendChild(card);
       });
-      table.appendChild(tbody);
-      box.appendChild(table);
+      box.appendChild(cardsContainer);
     }
     popup.appendChild(box);
     document.body.appendChild(popup);
