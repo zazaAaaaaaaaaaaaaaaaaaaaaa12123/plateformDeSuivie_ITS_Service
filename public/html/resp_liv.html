@@ -21,6 +21,41 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
+      /* Correction responsive pour la colonne Numéro TC(s) sur tablette */
+      @media (max-width: 900px) {
+        [data-col-id="container_number"] {
+          max-width: 120px !important;
+          min-width: 80px !important;
+          white-space: normal !important;
+          word-break: break-word !important;
+          text-align: center !important;
+          vertical-align: middle !important;
+        }
+        #deliveriesTableBody .tc-tag,
+        #deliveriesTableBody .tc-tags-btn {
+          display: inline-block !important;
+          margin: 2px 2px 2px 0 !important;
+          font-size: 0.97em !important;
+          min-width: 80px !important;
+          max-width: 100%;
+          white-space: normal !important;
+        }
+        #deliveriesTableBody .tc-tags-btn {
+          flex-wrap: wrap !important;
+          justify-content: center !important;
+        }
+      }
+      @media (max-width: 600px) {
+        [data-col-id="container_number"] {
+          max-width: 80px !important;
+          min-width: 60px !important;
+        }
+        #deliveriesTableBody .tc-tag,
+        #deliveriesTableBody .tc-tags-btn {
+          font-size: 0.93em !important;
+          min-width: 60px !important;
+        }
+      }
       html, body {
         height: 100%;
         min-height: 100vh;
