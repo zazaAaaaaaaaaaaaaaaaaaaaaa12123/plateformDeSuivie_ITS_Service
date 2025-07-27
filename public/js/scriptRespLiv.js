@@ -888,7 +888,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "driver", label: "CHAUFFEUR" },
   { id: "driver_phone", label: "TEL CHAUFFEUR" },
   { id: "delivery_date", label: "DATE LIVRAISON" },
-  // Déplacement de 'Numéro TC(s)' juste avant 'Statut'shbdshbk
+  // Déplacement de 'Numéro TC(s)' juste avant 'Statut'
   { id: "container_number", label: "Numéro TC(s)" },
   { id: "statut", label: "Statut" },
   { id: "observation", label: "Observations" },
