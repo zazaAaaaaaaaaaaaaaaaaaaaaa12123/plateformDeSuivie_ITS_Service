@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function hideDeleteBtn() {
     if (deleteBtn) deleteBtn.style.display = "none";
   }
-  // Gestion de l'affichage du bouton selon la sélection
+  // Gestion de l'affichage du bouton selonv vhvcb la sélection
   document.addEventListener("change", function (e) {
     if (
       e.target.classList &&
