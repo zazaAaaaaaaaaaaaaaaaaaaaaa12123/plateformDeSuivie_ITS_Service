@@ -867,9 +867,8 @@ const AGENT_TABLE_COLUMNS = [
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent Acconier" },
-  { id: "client_phone", label: "Numéro Client" },
   { id: "client_name", label: "Nom Client" },
-  { id: "container_number", label: "Numéro TC(s)" },
+  { id: "client_phone", label: "Numéro Client" },
   { id: "lieu", label: "Lieu" },
   { id: "container_foot_type", label: "Type de Conteneur" },
   { id: "container_type_and_content", label: "Contenu" },
@@ -889,6 +888,8 @@ const AGENT_TABLE_COLUMNS = [
   { id: "driver", label: "CHAUFFEUR" },
   { id: "driver_phone", label: "TEL CHAUFFEUR" },
   { id: "delivery_date", label: "DATE LIVRAISON" },
+  // Déplacement de 'Numéro TC(s)' juste avant 'Statut'shbdshbk
+  { id: "container_number", label: "Numéro TC(s)" },
   { id: "statut", label: "Statut" },
   { id: "observation", label: "Observations" },
 ];
