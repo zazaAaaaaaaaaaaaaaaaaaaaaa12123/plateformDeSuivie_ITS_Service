@@ -24,45 +24,41 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
-  // Ajout du bouton de suppression
-  setTimeout(() => {
-    const table = document
-      .getElementById("deliveriesTableBody")
-      ?.closest("table");
-    if (table && !document.getElementById("deleteRowsBtn")) {
-      const deleteBtn = document.createElement("button");
+  // Ajout dynamique du bouton de suppression compact lors de la sélection
+  let deleteBtn = null;
+  function showDeleteBtn() {
+    if (!deleteBtn) {
+      deleteBtn = document.createElement("button");
       deleteBtn.id = "deleteRowsBtn";
-      deleteBtn.textContent = "Supprimer la sélection";
+      deleteBtn.textContent = "🗑️ Supprimer";
+      deleteBtn.style.position = "fixed";
+      deleteBtn.style.bottom = "32px";
+      deleteBtn.style.right = "32px";
       deleteBtn.style.background =
         "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
       deleteBtn.style.color = "#fff";
       deleteBtn.style.fontWeight = "bold";
-      deleteBtn.style.fontSize = "1em";
+      deleteBtn.style.fontSize = "0.98em";
       deleteBtn.style.border = "none";
-      deleteBtn.style.borderRadius = "8px";
-      deleteBtn.style.padding = "0.7em 1.7em";
-      deleteBtn.style.marginBottom = "12px";
-      deleteBtn.style.marginRight = "12px";
+      deleteBtn.style.borderRadius = "50px";
+      deleteBtn.style.padding = "0.55em 1.3em";
+      deleteBtn.style.boxShadow = "0 4px 18px rgba(239,68,68,0.18)";
+      deleteBtn.style.zIndex = 10010;
+      deleteBtn.style.display = "none";
       deleteBtn.onclick = function () {
-        // Récupérer les ids sélectionnés
         const checked = document.querySelectorAll(
           ".select-row-checkbox:checked"
         );
-        if (checked.length === 0) {
-          alert("Veuillez sélectionner au moins une ligne à supprimer.");
-          return;
-        }
+        if (checked.length === 0) return;
         if (!confirm("Voulez-vous vraiment supprimer la sélection ?")) return;
         const idsToDelete = Array.from(checked).map((cb) =>
           cb.getAttribute("data-id")
         );
-        // Supprimer côté JS (window.allDeliveries)
         if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
           window.allDeliveries = window.allDeliveries.filter(
             (d) => !idsToDelete.includes(String(d.id))
           );
         }
-        // Rafraîchir le tableau
         const dateStartInput = document.getElementById(
           "mainTableDateStartFilter"
         );
@@ -73,10 +69,29 @@ document.addEventListener("DOMContentLoaded", function () {
             dateEndInput ? dateEndInput.value : ""
           );
         }
+        hideDeleteBtn();
       };
-      table.parentNode.insertBefore(deleteBtn, table);
+      document.body.appendChild(deleteBtn);
     }
-  }, 500);
+    deleteBtn.style.display = "block";
+  }
+  function hideDeleteBtn() {
+    if (deleteBtn) deleteBtn.style.display = "none";
+  }
+  // Gestion de l'affichage du bouton selon la sélection
+  document.addEventListener("change", function (e) {
+    if (
+      e.target.classList &&
+      e.target.classList.contains("select-row-checkbox")
+    ) {
+      const checked = document.querySelectorAll(".select-row-checkbox:checked");
+      if (checked.length > 0) {
+        showDeleteBtn();
+      } else {
+        hideDeleteBtn();
+      }
+    }
+  });
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   const newLocal = (styleTC.textContent = `
