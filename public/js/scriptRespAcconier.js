@@ -164,6 +164,33 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
               }
               hideDeleteBtn();
+
+              // Afficher une alerte visuelle "suppression effectuée"
+              const alertDiv = document.createElement("div");
+              alertDiv.textContent = "Suppression effectuée";
+              alertDiv.style.position = "fixed";
+              alertDiv.style.top = "80px";
+              alertDiv.style.left = "50%";
+              alertDiv.style.transform = "translateX(-50%)";
+              alertDiv.style.background =
+                "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+              alertDiv.style.color = "#fff";
+              alertDiv.style.fontWeight = "bold";
+              alertDiv.style.fontSize = "1.12em";
+              alertDiv.style.padding = "18px 38px";
+              alertDiv.style.borderRadius = "16px";
+              alertDiv.style.boxShadow = "0 6px 32px rgba(239,68,68,0.18)";
+              alertDiv.style.zIndex = 99999;
+              alertDiv.style.opacity = "0";
+              alertDiv.style.transition = "opacity 0.3s";
+              document.body.appendChild(alertDiv);
+              setTimeout(() => {
+                alertDiv.style.opacity = "1";
+              }, 10);
+              setTimeout(() => {
+                alertDiv.style.opacity = "0";
+                setTimeout(() => alertDiv.remove(), 400);
+              }, 2000);
             } else {
               alert(
                 "Erreur lors de la suppression côté serveur. Veuillez réessayer."
