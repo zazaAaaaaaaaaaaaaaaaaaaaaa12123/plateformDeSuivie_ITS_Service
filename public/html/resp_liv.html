@@ -21,6 +21,28 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
+      /* Alignement amélioré des filtres date sur tablette */
+      @media (max-width: 900px) {
+        .d-flex.align-items-center.gap-2.flex-wrap {
+          flex-wrap: wrap !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          gap: 6px !important;
+        }
+        #mainTableDateStartFilter, #mainTableDateEndFilter {
+          min-width: 90px !important;
+          max-width: 140px !important;
+          width: 100% !important;
+          margin: 0 2px !important;
+        }
+        .d-flex.align-items-center.gap-2.flex-wrap span {
+          min-width: 32px !important;
+          text-align: center !important;
+          font-size: 1em !important;
+          padding: 0 2px !important;
+        }
+      }
       /* Correction responsive pour la colonne Numéro TC(s) sur tablette */
       @media (max-width: 900px) {
         [data-col-id="container_number"] {
