@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
       deleteBtn.style.marginLeft = "12px";
       deleteBtn.style.boxShadow = "0 2px 8px rgba(239,68,68,0.13)";
       deleteBtn.style.display = "none";
-      deleteBtn.onclick = function () {
+      deleteBtn.onclick = async function () {
         const checked = document.querySelectorAll(
           ".select-row-checkbox:checked"
         );
@@ -52,22 +52,44 @@ document.addEventListener("DOMContentLoaded", function () {
         const idsToDelete = Array.from(checked).map((cb) =>
           cb.getAttribute("data-id")
         );
-        if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
-          window.allDeliveries = window.allDeliveries.filter(
-            (d) => !idsToDelete.includes(String(d.id))
-          );
+        // Appel API backend pour suppression définitive
+        try {
+          const response = await fetch("/deliveries/delete", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ ids: idsToDelete }),
+          });
+          const result = await response.json();
+          if (result.success) {
+            // Suppression locale seulement si succès côté serveur
+            if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+              window.allDeliveries = window.allDeliveries.filter(
+                (d) => !idsToDelete.includes(String(d.id))
+              );
+            }
+            const dateStartInput = document.getElementById(
+              "mainTableDateStartFilter"
+            );
+            const dateEndInput = document.getElementById(
+              "mainTableDateEndFilter"
+            );
+            if (typeof updateTableForDateRange === "function") {
+              updateTableForDateRange(
+                dateStartInput ? dateStartInput.value : "",
+                dateEndInput ? dateEndInput.value : ""
+              );
+            }
+            hideDeleteBtn();
+          } else {
+            alert(
+              "Erreur lors de la suppression côté serveur. Veuillez réessayer."
+            );
+          }
+        } catch (e) {
+          alert("Erreur réseau lors de la suppression. Veuillez réessayer.");
         }
-        const dateStartInput = document.getElementById(
-          "mainTableDateStartFilter"
-        );
-        const dateEndInput = document.getElementById("mainTableDateEndFilter");
-        if (typeof updateTableForDateRange === "function") {
-          updateTableForDateRange(
-            dateStartInput ? dateStartInput.value : "",
-            dateEndInput ? dateEndInput.value : ""
-          );
-        }
-        hideDeleteBtn();
       };
       // Trouver le rangeDiv (le conteneur des dates)
       rangeDiv = document.getElementById(
