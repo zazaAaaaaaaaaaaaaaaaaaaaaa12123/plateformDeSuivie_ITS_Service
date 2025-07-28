@@ -3819,9 +3819,16 @@ if (window["WebSocket"]) {
           cell.appendChild(dropdownContent);
           return cell;
         } else if (fieldName === "delivery_status_acconier") {
-          // Affichage du statut acconier dans la colonne : forcer "En attente de paiement" si statut = "pending_acconier"
+          // Affichage du statut acconier dans la colonne : logique métier complète
           let displayStatus = value;
-          if (value === "pending_acconier") {
+          // Si le statut contient "mise en livraison" (toutes variantes), on force l'affichage
+          if (
+            typeof value === "string" &&
+            (value.toLowerCase().includes("mise en livraison") ||
+              value === "mise_en_livraison_acconier")
+          ) {
+            displayStatus = "mise_en_livraison_acconier";
+          } else if (value === "pending_acconier") {
             displayStatus = "awaiting_payment_acconier";
           }
           const statusInfo = getStatusInfo(displayStatus);
@@ -5638,15 +5645,16 @@ if (window["WebSocket"]) {
   function calculateSummaryData(deliveriesArray) {
     const data = {
       totalDeliveries: deliveriesArray.length,
-      containerContents: {}, // { 'Type A': count, 'Type B': count }
+      containerContents: {},
       uniqueDeclarationNumbers: new Set(),
       uniqueBLNumbers: new Set(),
       uniqueDossierNumbers: new Set(),
       totalContainers: 0,
-      acconierStatusCounts: {}, // { 'Mise en livraison': count, 'Traité Acconier': count }
-      generalStatusCounts: {}, // { 'Livré': count, 'En attente': count }
-      uniqueDeliveryLocations: new Set(), // Pour "Lieu de livraison"
-      transporterModes: {}, // Pour Mode de Transport
+      acconierStatusCounts: {},
+      generalStatusCounts: {},
+      uniqueDeliveryLocations: new Set(),
+      transporterModes: {},
+      acconierObservations: [],
     };
 
     deliveriesArray.forEach((d) => {
@@ -5665,24 +5673,29 @@ if (window["WebSocket"]) {
       // Nombre de conteneurs
       data.totalContainers += d.number_of_containers || 0;
 
-      // Statut de livraison (Resp. Aconiés) : traduction Cleared_by_acconier en français
-      const acconierStatusInfo = getStatusInfo(d.delivery_status_acconier);
-      let statutAcconier = acconierStatusInfo.text;
-      if (statutAcconier && typeof statutAcconier === "string") {
-        const txt = statutAcconier.trim().toLowerCase();
-        if (
-          [
-            "cleared_by_acconier",
-            "clearedbyacconier",
-            "cleared-acconier",
-            "cleared acconier",
-          ].includes(txt)
-        ) {
-          statutAcconier = "Validé par Acconier";
-        }
+      // Statut de livraison (Resp. Acconiers) : logique métier
+      let acconierStatus = (
+        d.delivery_status_acconier ||
+        d.status_acconier ||
+        d.status ||
+        ""
+      )
+        .toString()
+        .toLowerCase();
+      if (
+        acconierStatus.includes("mise en livraison") ||
+        acconierStatus.includes("mise_en_livraison")
+      ) {
+        data.acconierStatusCounts["Mise en livraison"] =
+          (data.acconierStatusCounts["Mise en livraison"] || 0) + 1;
+      } else {
+        data.acconierStatusCounts["En attente de paiement"] =
+          (data.acconierStatusCounts["En attente de paiement"] || 0) + 1;
       }
-      data.acconierStatusCounts[statutAcconier] =
-        (data.acconierStatusCounts[statutAcconier] || 0) + 1;
+      // Observations (Resp. Acconiers)
+      if (d.observation_acconier) {
+        data.acconierObservations.push(d.observation_acconier);
+      }
 
       // Statut (Général) : calculé comme dans le tableau agent (X sur Y livrés)
       // On récupère toutes les livraisons du même dossier
@@ -5844,7 +5857,7 @@ if (window["WebSocket"]) {
       createSummaryItem("Mode de Transport", transporterModesText || "-")
     );
 
-    // Statut de livraison (Resp. Aconiés)
+    // Statut de livraison (Resp. Acconiers) - logique métier
     let acconierStatusText = Object.entries(summaryData.acconierStatusCounts)
       .map(([status, count]) => `${count} ${status}`)
       .join(", ");
@@ -5854,6 +5867,18 @@ if (window["WebSocket"]) {
         acconierStatusText || "-"
       )
     );
+    // Observations (Resp. Acconiers) - temps réel
+    if (
+      summaryData.acconierObservations &&
+      Array.isArray(summaryData.acconierObservations)
+    ) {
+      let obsText = summaryData.acconierObservations
+        .filter(Boolean)
+        .join(" | ");
+      parentElement.appendChild(
+        createSummaryItem("Observations (Resp. Acconiers)", obsText || "-")
+      );
+    }
 
     // Statut (Général)
     let generalStatusText = Object.entries(summaryData.generalStatusCounts)
