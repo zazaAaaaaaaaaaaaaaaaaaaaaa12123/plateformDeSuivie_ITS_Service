@@ -1440,7 +1440,7 @@ function init() {
           return;
         }
 
-        // Le numéro de téléphone clientvhgs est totalement facultatif : aucune validation, aucune contrainte, aucune bordure rouge.
+        // Le numéro de téléphone client est totalement facultatif : aucune validation, aucune contrainte, aucune bordure rouge. precis
         if (clientPhoneInput) {
           clientPhoneInput.classList.remove("border-red-500", "border-2");
         }
