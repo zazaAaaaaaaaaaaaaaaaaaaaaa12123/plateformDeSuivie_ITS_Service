@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
     toast.style.cursor = "pointer";
     toast.style.opacity = "0";
     toast.style.transition = "opacity 0.3s";
-    toast.textContent = `⚠️ ${lateDeliveries.length} dossier(s) en retard (>2 jours)`;
+    toast.textContent = `⚠️ ${lateDeliveries.length} dossier(s) en retard`;
     document.body.appendChild(toast);
     setTimeout(() => {
       toast.style.opacity = "1";
