@@ -795,65 +795,7 @@ if (window["WebSocket"]) {
             "delivery_deletion_alert",
             "new_delivery_notification",
           ];
-          if (
-            data &&
-            data.type === "acconier_bl_status_update" &&
-            data.blNumber &&
-            data.newStatus
-          ) {
-            // Mise à jour dynamique du statut dans la colonne "Statut de livraison (Resp. Acconiers)"
-            // Recherche la ligne du tableau correspondant au BL
-            const table = document.getElementById("deliveriesTable");
-            if (table) {
-              const tbody = table.querySelector("tbody");
-              if (tbody) {
-                for (const row of tbody.rows) {
-                  // Recherche la cellule BL (supposée avoir la classe ou data-col-id 'bl_number')
-                  let blCell = null;
-                  let acconierCell = null;
-                  for (let i = 0; i < row.cells.length; i++) {
-                    const cell = row.cells[i];
-                    if (
-                      cell.getAttribute("data-col-id") === "bl_number" ||
-                      (cell.classList && cell.classList.contains("bl_number"))
-                    ) {
-                      blCell = cell;
-                    }
-                    if (
-                      cell.getAttribute("data-col-id") ===
-                        "delivery_status_acconier" ||
-                      (cell.classList &&
-                        cell.classList.contains("col-statut-acconier"))
-                    ) {
-                      acconierCell = cell;
-                    }
-                  }
-                  if (
-                    blCell &&
-                    blCell.textContent &&
-                    blCell.textContent.includes(data.blNumber)
-                  ) {
-                    // Trouvé la ligne, on met à jour la colonne statut acconier
-                    if (acconierCell) {
-                      if (data.newStatus === "mise_en_livraison") {
-                        acconierCell.innerHTML =
-                          '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-                      } else {
-                        // Supprime le statut "En attente de paiement" et son icône, laisse la cellule vide
-                        acconierCell.innerHTML = "";
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            // Optionnel : afficher une alerte visuelle
-            showCustomAlert(
-              "Statut BL mis à jour en temps réel !",
-              "success",
-              2000
-            );
-          } else if (data && data.type && typesToRefresh.includes(data.type)) {
+          if (data && data.type && typesToRefresh.includes(data.type)) {
             loadDeliveries().then(() => {
               if (typeof checkLateContainers === "function")
                 checkLateContainers();
