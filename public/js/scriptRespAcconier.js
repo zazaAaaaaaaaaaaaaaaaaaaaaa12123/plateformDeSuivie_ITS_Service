@@ -194,7 +194,7 @@ document.addEventListener("DOMContentLoaded", function () {
         style.innerHTML = `
         .flash-red-cell {
           animation: flashRedCellAnim 1s cubic-bezier(0.4,0,0.2,1);
-          background: #f87171 !important;
+          background: #d49494ff !important;
           transition: background 0.3s;
         }
         @keyframes flashRedCellAnim {
