@@ -8978,6 +8978,7 @@ if (window["WebSocket"]) {
     const table = document.getElementById("deliveriesTable");
     if (!table) return;
     const rows = table.querySelectorAll("tbody tr");
+    let maj = false;
     rows.forEach((row) => {
       // Recherche par BL
       const blCell = row.querySelector('[data-column-id="bl_number"]');
@@ -8986,7 +8987,6 @@ if (window["WebSocket"]) {
       );
       let found = false;
       if (blCell && blCell.textContent.trim() === blNumber) found = true;
-      // Fallback : recherche aussi par dossier_number si BL non trouvé
       if (!found && dossierCell && dossierCell.textContent.trim() === blNumber)
         found = true;
       if (found) {
@@ -8994,10 +8994,25 @@ if (window["WebSocket"]) {
           '[data-column-id="delivery_status_acconier"]'
         );
         if (acconierStatusCell) {
+          console.log(
+            "[SYNC DEBUG] MAJ statut acconier pour BL/dossier",
+            blNumber,
+            "| Nouveau statut reçu :",
+            newStatus
+          );
           acconierStatusCell.textContent = newStatus;
+          maj = true;
         }
       }
     });
+    if (!maj) {
+      console.warn(
+        "[SYNC DEBUG] Aucune ligne trouvée pour BL/dossier",
+        blNumber,
+        "| Statut reçu :",
+        newStatus
+      );
+    }
   }
 
   // Ajoute l'écouteur WebSocket pour la synchronisation temps réel
@@ -9006,6 +9021,7 @@ if (window["WebSocket"]) {
     window.socket.addEventListener("message", function (event) {
       try {
         const data = JSON.parse(event.data);
+        console.log("[SYNC DEBUG] Message WebSocket reçu :", data);
         // Cas 1 : message de type bl_status_update (mise en livraison)
         if (
           data.type === "bl_status_update" &&
@@ -9013,8 +9029,13 @@ if (window["WebSocket"]) {
           data.delivery.bl_number
         ) {
           const blNumber = data.delivery.bl_number;
-          // Affiche le statut exact reçu du backend (ex : "mise en livraison", "livré", etc.)
           let statut = data.delivery.delivery_status_acconier || "";
+          console.log(
+            "[SYNC DEBUG] bl_status_update | BL:",
+            blNumber,
+            "| Statut reçu:",
+            statut
+          );
           updateAcconierStatusInTableauDeBord(blNumber, statut);
         }
         // Cas 2 : message de type delivery_update_alert (autre mise à jour possible)
@@ -9025,9 +9046,17 @@ if (window["WebSocket"]) {
         ) {
           const blNumber = data.deliveryData.bl_number;
           let statut = data.deliveryData.delivery_status_acconier || "";
+          console.log(
+            "[SYNC DEBUG] delivery_update_alert | BL:",
+            blNumber,
+            "| Statut reçu:",
+            statut
+          );
           updateAcconierStatusInTableauDeBord(blNumber, statut);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("[SYNC DEBUG] Erreur parsing WebSocket:", e);
+      }
     });
   }
 
