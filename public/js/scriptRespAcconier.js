@@ -121,11 +121,47 @@ document.addEventListener("DOMContentLoaded", function () {
         lateDeliveries.forEach((d) => {
           const li = document.createElement("li");
           li.style.marginBottom = "12px";
+          li.style.cursor = "pointer";
+          li.style.transition = "background 0.2s";
           li.innerHTML = `<span style='color:#ef4444;font-weight:bold;'>N° Dossier :</span> ${
             d.dossier_number || "-"
           } <br><span style='color:#2563eb;'>Agent :</span> ${
             d.employee_name || "-"
           }`;
+          // Ajout : au clic, scroll sur la ligne du tableau et flash
+          li.onclick = function (e) {
+            e.stopPropagation();
+            overlay.remove(); // ferme la popup
+            // Cherche la ligne du tableau avec le bon N° Dossier
+            const tableBody = document.getElementById("deliveriesTableBody");
+            if (tableBody) {
+              // On cherche la cellule qui contient le N° Dossier
+              const rows = tableBody.querySelectorAll("tr");
+              let foundRow = null;
+              rows.forEach((row) => {
+                const cells = row.querySelectorAll("td");
+                for (let i = 0; i < cells.length; i++) {
+                  if (
+                    cells[i].textContent &&
+                    String(cells[i].textContent).trim() ===
+                      String(d.dossier_number).trim()
+                  ) {
+                    foundRow = row;
+                  }
+                }
+              });
+              if (foundRow) {
+                foundRow.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+                foundRow.classList.add("flash-red-row");
+                setTimeout(() => {
+                  foundRow.classList.remove("flash-red-row");
+                }, 900);
+              }
+            }
+          };
           ul.appendChild(li);
         });
         content.appendChild(ul);
@@ -136,6 +172,22 @@ document.addEventListener("DOMContentLoaded", function () {
       overlay.onclick = (e) => {
         if (e.target === overlay) overlay.remove();
       };
+      // Ajout du style pour le flash rouge sur la ligne du tableau si pas déjà présent
+      if (!document.getElementById("flash-red-row-style")) {
+        const style = document.createElement("style");
+        style.id = "flash-red-row-style";
+        style.innerHTML = `
+        .flash-red-row {
+          animation: flashRedAnim 0.9s;
+        }
+        @keyframes flashRedAnim {
+          0% { background: #fee2e2; }
+          60% { background: #fecaca; }
+          100% { background: transparent; }
+        }
+        `;
+        document.head.appendChild(style);
+      }
     };
     // Disparition auto après 8s
     setTimeout(() => {
