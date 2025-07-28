@@ -155,14 +155,17 @@ document.addEventListener("DOMContentLoaded", function () {
                   behavior: "smooth",
                   block: "center",
                 });
-                // Forcer le retrait puis l'ajout pour relancer l'animation à chaque clic
-                foundRow.classList.remove("flash-red-row");
-                // Force reflow pour relancer l'animation même si déjà présente
-                void foundRow.offsetWidth;
-                foundRow.classList.add("flash-red-row");
+                // Appliquer le flash sur tous les td de la ligne pour garantir la visibilité
+                const tds = foundRow.querySelectorAll("td");
+                tds.forEach((td) => {
+                  td.classList.remove("flash-red-cell");
+                  // Force reflow pour relancer l'animation
+                  void td.offsetWidth;
+                  td.classList.add("flash-red-cell");
+                });
                 setTimeout(() => {
-                  foundRow.classList.remove("flash-red-row");
-                }, 900);
+                  tds.forEach((td) => td.classList.remove("flash-red-cell"));
+                }, 1100);
               }
             }
           };
@@ -181,12 +184,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const style = document.createElement("style");
         style.id = "flash-red-row-style";
         style.innerHTML = `
-        .flash-red-row {
-          animation: flashRedAnim 0.9s cubic-bezier(0.4,0,0.2,1);
+        .flash-red-cell {
+          animation: flashRedCellAnim 1.1s cubic-bezier(0.4,0,0.2,1);
+          background: #f87171 !important;
+          transition: background 0.3s;
         }
-        @keyframes flashRedAnim {
+        @keyframes flashRedCellAnim {
           0% { background: #fee2e2; }
-          60% { background: #fecaca; }
+          40% { background: #f87171; }
+          80% { background: #fecaca; }
           100% { background: transparent; }
         }
         `;
