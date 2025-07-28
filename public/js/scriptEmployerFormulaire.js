@@ -1063,16 +1063,13 @@ if (containerNumberInput) {
       tcSpinner.style.display = "inline-block";
       tcSpinner.style.marginLeft = "8px";
       tcSpinner.innerHTML = `
-        <span style="display:inline-block;width:36px;height:18px;vertical-align:middle;">
-          <style>
-            @keyframes github-bounce {
-              0%, 80%, 100% { transform: scale(1); }
-              40% { transform: scale(1.5); }
-            }
-          </style>
-          <span style="display:inline-block;width:10px;height:10px;background:#2563eb;border-radius:50%;margin:0 2px;animation:github-bounce 1.4s infinite both;"></span>
-          <span style="display:inline-block;width:10px;height:10px;background:#06b6d4;border-radius:50%;margin:0 2px;animation:github-bounce 1.4s infinite both;animation-delay:0.2s;"></span>
-          <span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:50%;margin:0 2px;animation:github-bounce 1.4s infinite both;animation-delay:0.4s;"></span>
+        <span style="display:inline-block;width:28px;height:28px;vertical-align:middle;">
+          <svg width="28" height="28" viewBox="0 0 50 50">
+            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e7ef" stroke-width="6"/>
+            <circle cx="25" cy="25" r="20" fill="none" stroke="#2563eb" stroke-width="6" stroke-linecap="round" stroke-dasharray="90 150" stroke-dashoffset="0">
+              <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
         </span>
       `;
       containerTagsInput.parentNode.insertBefore(
