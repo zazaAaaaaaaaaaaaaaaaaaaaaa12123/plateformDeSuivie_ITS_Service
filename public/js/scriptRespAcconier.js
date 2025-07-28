@@ -1768,6 +1768,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 alert(msg);
                 return;
               }
+              // ENVOI WEBSOCKET : notification temps réel pour le tableau de bord
+              if (window.ws && window.ws.readyState === 1) {
+                window.ws.send(
+                  JSON.stringify({
+                    type: "acconier_bl_status_update",
+                    blNumber: blNumber,
+                    newStatus: statutToSend,
+                    deliveryId: delivery.id,
+                    dossierNumber: delivery.dossier_number || null,
+                  })
+                );
+              }
               overlay.remove();
             } catch (err) {
               alert(
