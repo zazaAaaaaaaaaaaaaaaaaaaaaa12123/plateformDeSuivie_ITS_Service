@@ -1667,7 +1667,7 @@ if (window["WebSocket"]) {
   // Stores the name of the agent currently being filtered in the modal, null otherwise.
   let activeAgentFilterName = null;
 
-  let socket; // WebSocket connectionsbgvdsnshysj
+  let socket; // WebSocket connection
 
   // Define ALL possible backend statuses with their display info for GLOBAL DISPLAY
   const GLOBAL_DISPLAY_STATUS_INFO = {
@@ -4731,14 +4731,6 @@ if (window["WebSocket"]) {
   function applyCombinedFilters(shouldRenderTable = true) {
     // Removed showSpinner() call here as spinner is removed
     let filteredData = [...deliveries];
-    // Filtre pour masquer les BL mis en livraison (statut acconier)
-    filteredData = filteredData.filter((delivery) => {
-      // On masque si le statut acconier est "mise_en_livraison_acconier" ou "mise_en_livraison"
-      return (
-        delivery.delivery_status_acconier !== "mise_en_livraison_acconier" &&
-        delivery.delivery_status_acconier !== "mise_en_livraison"
-      );
-    });
 
     const searchTerm = searchInput.value.toLowerCase().trim();
     if (searchTerm !== "") {
@@ -6560,49 +6552,31 @@ if (window["WebSocket"]) {
           message.type === "new_delivery" ||
           message.type === "delivery_updated" ||
           message.type === "delivery_deleted" ||
-          message.type === "delivery_update_alert"
+          message.type === "delivery_update_alert" ||
+          message.type === "container_status_update" ||
+          message.type === "delivery_deletion_alert" ||
+          message.type === "new_delivery_notification" ||
+          message.type === "updateAgents"
         ) {
-          filterEmployeeList();
-        }
-        // --- NOUVEAU : écoute l'événement acconier_status_update pour mise à jour instantanée du statut BL ---
-        if (
-          message.type === "acconier_status_update" &&
-          message.deliveryId &&
-          message.status
-        ) {
-          // LOG DIAGNOSTIC : réception de l'événement
-          console.log("[SYNC][WS] Reçu acconier_status_update:", message);
-          let found = false;
-          [deliveries, allDeliveries].forEach((arr) => {
-            const d = arr.find((x) => x.id === message.deliveryId);
-            if (d) {
-              // On force la valeur à "mise_en_livraison_acconier" si besoin
-              d.delivery_status_acconier =
-                message.status === "mise_en_livraison" ||
-                message.status === "mise_en_livraison_acconier"
-                  ? "mise_en_livraison_acconier"
-                  : message.status;
-              // LOG DIAGNOSTIC : statut mis à jour
-              console.log(
-                "[SYNC][WS] MAJ statut acconier pour deliveryId=",
-                message.deliveryId,
-                ":",
-                d.delivery_status_acconier
-              );
-              found = true;
-            }
-          });
-          if (found) {
-            filterDeliveriesIntoCategories();
-            applyCombinedFilters();
-            // LOG DIAGNOSTIC : rafraîchissement du tableau principal
-            console.log(
-              "[SYNC][WS] Tableau principal rafraîchi après acconier_status_update"
-            );
+          await loadDeliveries();
+          applyCombinedFilters();
+          // Rafraîchit la boîte d'activité agent si besoin
+          if (
+            agentActivityBox &&
+            agentActivityBox.classList.contains("active") &&
+            selectedAgentName
+          ) {
+            showAgentActivity(selectedAgentName, currentAgentActivityDate);
+          }
+          // Rafraîchit la liste des employés si besoin
+          if (
+            message.type === "updateAgents" &&
+            employeePopup &&
+            employeePopup.classList.contains("is-visible")
+          ) {
+            filterEmployeeList();
           }
         }
-        // --- NOUVEAU : écoute l'événement acconier_status_update pour mise à jour instantanée du statut BL ---
-        // Ancien bloc acconier_status_update supprimé (remplacé par le bloc avec logs plus bas)
       } catch (error) {
         console.error("[WS][FRONT] Erreur parsing WebSocket message:", error);
       }
@@ -9006,4 +8980,4 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Scriptez ashs ajoutersds en cas dsjhdbje pertubation 125 GGGAAAA34 ***/
+/****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/

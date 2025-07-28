@@ -672,9 +672,73 @@ document.addEventListener("DOMContentLoaded", function () {
           data.status
         );
 
-        // Synchronisation en temps réel : on ne traite plus 'bl_status_update' ici, tout passe par 'acconier_status_update'.
-        // (Bloc supprimé pour éviter les doublons et les statuts undefined)
-        // Fin du bloc supprimé, on continue normalement.
+        if (
+          data.type === "bl_status_update" &&
+          data.delivery &&
+          data.delivery.bl_statuses
+        ) {
+          // Toujours normaliser la livraison reçue comme dans loadAllDeliveries
+          function normalizeDelivery(delivery) {
+            let tcList = [];
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
+            if (
+              !delivery.container_statuses ||
+              typeof delivery.container_statuses !== "object"
+            ) {
+              delivery.container_statuses = {};
+            }
+            tcList.forEach((tc) => {
+              if (!delivery.container_statuses[tc]) {
+                delivery.container_statuses[tc] = "attente_paiement";
+              }
+            });
+            if (
+              delivery.bl_statuses &&
+              typeof delivery.bl_statuses === "string"
+            ) {
+              try {
+                delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+              } catch {
+                delivery.bl_statuses = {};
+              }
+            }
+            if (
+              !delivery.bl_statuses ||
+              typeof delivery.bl_statuses !== "object"
+            ) {
+              delivery.bl_statuses = {};
+            }
+            return delivery;
+          }
+          const normalizedDelivery = normalizeDelivery(data.delivery);
+          if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+            const idx = window.allDeliveries.findIndex(
+              (d) => d.id === normalizedDelivery.id
+            );
+            if (idx !== -1) {
+              window.allDeliveries[idx] = normalizedDelivery;
+            }
+          }
+          // Rafraîchir le tableau si la livraison est dans la plage de dates courante
+          const dateStartInput = document.getElementById(
+            "mainTableDateStartFilter"
+          );
+          const dateEndInput = document.getElementById(
+            "mainTableDateEndFilter"
+          );
+          if (typeof updateTableForDateRange === "function") {
+            updateTableForDateRange(
+              dateStartInput ? dateStartInput.value : "",
+              dateEndInput ? dateEndInput.value : ""
+            );
+          }
+        }
         // Ajout : réception automatique d'un nouvel ordre de livraison
         if (data.type === "new_delivery_created" && data.delivery) {
           // Normalise la livraison reçue comme dans loadAllDeliveries
@@ -728,7 +792,7 @@ document.addEventListener("DOMContentLoaded", function () {
           );
           const startVal = dateStartInput ? dateStartInput.value : "";
           const endVal = dateEndInput ? dateEndInput.value : "";
-          // Vérifie si la nouvelle lshdgjsivraison est dans la plage de dates
+          // Vérifie si la nouvelle livraison est dans la plage de dates
           let dDate =
             normalizedDelivery.delivery_date || normalizedDelivery.created_at;
           let normalized = "";
@@ -1596,52 +1660,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     overlay.remove();
                     // Afficher l'alerte verte de confirmation
                     showMiseEnLivraisonSuccessAlert();
-                    // --- AJOUT : Notifier le tableau de bord général via WebSocket ---
-                    if (
-                      window.parent &&
-                      window.parent !== window &&
-                      window.parent.postMessage
-                    ) {
-                      // Si dans un iframe, on peut utiliser postMessage (optionnel)
-                      window.parent.postMessage(
-                        {
-                          type: "acconier_status_update",
-                          deliveryId: delivery.id,
-                          blNumber,
-                          status: statutToSend,
-                        },
-                        "*"
-                      );
-                    }
-                    // Sinon, si un socket WebSocket global existe, on émet un événement
-                    if (
-                      typeof ws !== "undefined" &&
-                      ws &&
-                      ws.readyState === 1
-                    ) {
-                      // On force le statut envoyé à "mise_en_livraison_acconier" si c'est une mise en livraison
-                      let statusToSend =
-                        statutToSend === "mise_en_livraison"
-                          ? "mise_en_livraison_acconier"
-                          : statutToSend;
-                      console.log(
-                        "[ACCONIER][WS] Envoi acconier_status_update:",
-                        {
-                          type: "acconier_status_update",
-                          deliveryId: delivery.id,
-                          blNumber,
-                          status: statusToSend,
-                        }
-                      );
-                      ws.send(
-                        JSON.stringify({
-                          type: "acconier_status_update",
-                          deliveryId: delivery.id,
-                          blNumber,
-                          status: statusToSend,
-                        })
-                      );
-                    }
                   });
                 } catch (err) {
                   alert(
@@ -2173,4 +2191,4 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     };
   }
 }
-//originale123456789101212
+//originale12345678910
