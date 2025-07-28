@@ -9013,15 +9013,8 @@ if (window["WebSocket"]) {
           data.delivery.bl_number
         ) {
           const blNumber = data.delivery.bl_number;
-          // Si le statut est "mise_en_livraison_acconier", on affiche "mise en livraison"
-          let statut = "En attente de paiement";
-          if (
-            data.delivery.delivery_status_acconier &&
-            data.delivery.delivery_status_acconier.toLowerCase() ===
-              "mise_en_livraison_acconier"
-          ) {
-            statut = "mise en livraison";
-          }
+          // Affiche le statut exact reçu du backend (ex : "mise en livraison", "livré", etc.)
+          let statut = data.delivery.delivery_status_acconier || "";
           updateAcconierStatusInTableauDeBord(blNumber, statut);
         }
         // Cas 2 : message de type delivery_update_alert (autre mise à jour possible)
@@ -9031,14 +9024,7 @@ if (window["WebSocket"]) {
           data.deliveryData.bl_number
         ) {
           const blNumber = data.deliveryData.bl_number;
-          let statut = "En attente de paiement";
-          if (
-            data.deliveryData.delivery_status_acconier &&
-            data.deliveryData.delivery_status_acconier.toLowerCase() ===
-              "mise_en_livraison_acconier"
-          ) {
-            statut = "mise en livraison";
-          }
+          let statut = data.deliveryData.delivery_status_acconier || "";
           updateAcconierStatusInTableauDeBord(blNumber, statut);
         }
       } catch (e) {}
