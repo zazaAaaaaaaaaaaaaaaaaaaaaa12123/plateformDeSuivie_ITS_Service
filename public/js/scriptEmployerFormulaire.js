@@ -1052,10 +1052,27 @@ if (containerNumberInput) {
     renderContainerFootTypes();
   }
 
-  // Validation TC avec spinner automatique 3s puis validation stricte (4 lettres + 7 chiffres)
-  let tcErrorMsg = null;
-  let tcSpinner = null;
+  // Ajout d'un spinner et validation stricte TC (4 lettres + 7 chiffres)
   let tcSpinnerTimeout = null;
+  let tcSpinner = null;
+  let tcErrorMsg = null;
+  function showTCSpinner() {
+    if (!tcSpinner) {
+      tcSpinner = document.createElement("span");
+      tcSpinner.className = "tc-spinner";
+      tcSpinner.style.display = "inline-block";
+      tcSpinner.style.marginLeft = "8px";
+      tcSpinner.innerHTML = `<svg width="22" height="22" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.415, 31.415" transform="rotate(0 25 25)"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/></circle></svg>`;
+      containerTagsInput.parentNode.insertBefore(
+        tcSpinner,
+        containerTagsInput.nextSibling
+      );
+    }
+    tcSpinner.style.display = "inline-block";
+  }
+  function hideTCSpinner() {
+    if (tcSpinner) tcSpinner.style.display = "none";
+  }
   function showTCError(msg) {
     if (!tcErrorMsg) {
       tcErrorMsg = document.createElement("div");
@@ -1079,54 +1096,6 @@ if (containerNumberInput) {
   function validateTCFormat(tc) {
     return /^[A-Za-z]{4}[0-9]{7}$/.test(tc);
   }
-  function showTCSpinner() {
-    if (!tcSpinner) {
-      tcSpinner = document.createElement("span");
-      tcSpinner.className = "tc-spinner";
-      tcSpinner.style.display = "inline-block";
-      tcSpinner.style.marginLeft = "8px";
-      tcSpinner.innerHTML = `
-        <span style="display:inline-block;width:28px;height:28px;vertical-align:middle;">
-          <svg width="28" height="28" viewBox="0 0 50 50">
-            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e7ef" stroke-width="6"/>
-            <circle cx="25" cy="25" r="20" fill="none" stroke="#2563eb" stroke-width="6" stroke-linecap="round" stroke-dasharray="90 150" stroke-dashoffset="0">
-              <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/>
-            </circle>
-          </svg>
-        </span>
-      `;
-      containerTagsInput.parentNode.insertBefore(
-        tcSpinner,
-        containerTagsInput.nextSibling
-      );
-    }
-    tcSpinner.style.display = "inline-block";
-  }
-  function hideTCSpinner() {
-    if (tcSpinner) tcSpinner.style.display = "none";
-  }
-  // Gestion de la saisie : spinner automatique puis validation
-  containerTagsInput.addEventListener("input", () => {
-    const value = containerTagsInput.value.trim();
-    hideTCError();
-    if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
-    if (!value) {
-      hideTCSpinner();
-      return;
-    }
-    showTCSpinner();
-    tcSpinnerTimeout = setTimeout(() => {
-      hideTCSpinner();
-      if (!validateTCFormat(value)) {
-        showTCError(
-          "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
-        );
-      } else {
-        hideTCError();
-      }
-    }, 3000);
-  });
-  // Ajout par Entrée, virgule, point-virgule
   containerTagsInput.addEventListener("keydown", (e) => {
     if (
       ["Enter", ",", ";"].includes(e.key) ||
@@ -1138,27 +1107,41 @@ if (containerNumberInput) {
       if (!value || containerTags.includes(value)) {
         containerTagsInput.value = "";
         renderContainerTags();
-        hideTCSpinner();
-        hideTCError();
         return;
       }
-      // Si spinner en cours, attendre la fin
-      if (tcSpinnerTimeout) {
-        return;
-      }
-      if (!validateTCFormat(value)) {
-        showTCError(
-          "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
-        );
-        hideTCSpinner();
-        return;
-      }
-      containerTags.push(value);
-      renderContainerTags();
+      showTCSpinner();
       hideTCError();
+      if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
+      tcSpinnerTimeout = setTimeout(() => {
+        hideTCSpinner();
+        if (!validateTCFormat(value)) {
+          showTCError(
+            "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
+          );
+        } else {
+          containerTags.push(value);
+          renderContainerTags();
+          hideTCError();
+        }
+        containerTagsInput.value = "";
+        renderContainerTags();
+      }, 3000);
+    }
+  });
+  // Affiche le spinner dès qu'on commence à saisir (input)
+  containerTagsInput.addEventListener("input", () => {
+    if (containerTagsInput.value.trim().length > 0) {
+      showTCSpinner();
+      hideTCError();
+      if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
+      tcSpinnerTimeout = setTimeout(() => {
+        hideTCSpinner();
+        // Ne valide pas ici, juste spinner visuel
+      }, 3000);
+    } else {
       hideTCSpinner();
-      containerTagsInput.value = "";
-      renderContainerTags();
+      hideTCError();
+      if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
     }
   });
   // Ajout par collage de plusieurs numéros séparés
@@ -1169,40 +1152,20 @@ if (containerNumberInput) {
       pasted.split(/[\n,;]+/).forEach((val) => {
         const v = val.trim();
         if (v && !containerTags.includes(v)) {
-          if (!validateTCFormat(v)) {
-            showTCError(
-              "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
-            );
-          } else {
-            containerTags.push(v);
-            hideTCError();
-          }
+          containerTags.push(v);
         }
       });
       renderContainerTags();
       containerTagsInput.value = "";
       renderContainerTags();
-      hideTCSpinner();
     }
   });
   // Clic sur l'icône Entrée verte
   enterIcon.addEventListener("click", function () {
     const value = containerTagsInput.value.trim();
     if (value && !containerTags.includes(value)) {
-      if (tcSpinnerTimeout) {
-        return;
-      }
-      if (!validateTCFormat(value)) {
-        showTCError(
-          "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
-        );
-        hideTCSpinner();
-        return;
-      }
       containerTags.push(value);
       renderContainerTags();
-      hideTCError();
-      hideTCSpinner();
     }
     containerTagsInput.value = "";
     renderContainerTags();
@@ -1477,7 +1440,7 @@ function init() {
           return;
         }
 
-        // Le numéro de téléphone client est totalement facultatif : aucune validation, aucune contrainte, aucune bordure rouge.
+        // Le numéro de téléphone clientvhgs est totalement facultatif : aucune validation, aucune contrainte, aucune bordure rouge.
         if (clientPhoneInput) {
           clientPhoneInput.classList.remove("border-red-500", "border-2");
         }
