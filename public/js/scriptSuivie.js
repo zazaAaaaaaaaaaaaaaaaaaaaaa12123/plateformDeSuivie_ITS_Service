@@ -2100,6 +2100,19 @@ if (window["WebSocket"]) {
    * @returns {{text: string, iconClass: string, tailwindColorClass: string, hexColor: string, badgeClass: string}}
    */
   function getStatusInfo(status) {
+    // Correction prioritaire : si le statut est "mise_en_livraison_acconier", forcer l'affichage "Mise en livraison"
+    if (
+      typeof status === "string" &&
+      status.trim() === "mise_en_livraison_acconier"
+    ) {
+      return {
+        text: "Mise en livraison",
+        iconClass: "fa-hourglass-half",
+        tailwindColorClass: "text-yellow-500",
+        hexColor: "#f59e0b",
+        badgeClass: "mise-en-livraison",
+      };
+    }
     if (!status || typeof status !== "string" || !status.trim()) {
       return {
         text: "-",
