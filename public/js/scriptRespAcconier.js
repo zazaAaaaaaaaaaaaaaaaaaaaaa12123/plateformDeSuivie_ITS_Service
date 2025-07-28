@@ -3,6 +3,59 @@ function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
   date.setHours(0, 0, 0, 0);
   return date;
+  // --- Protection lecture seule pour utilisateurs non authentifiés ---
+  function isAuthenticated() {
+    // Vérifie la présence d'un token d'authentification dans le localStorage
+    return !!localStorage.getItem("auth_token");
+  }
+
+  function setReadOnlyMode() {
+    // Désactive tous les boutons, inputs, selects, textareas
+    document
+      .querySelectorAll("button, input, select, textarea")
+      .forEach((el) => {
+        el.disabled = true;
+        el.style.pointerEvents = "none";
+        el.style.opacity = "0.65";
+        el.title = "Connectez-vous pour modifier";
+      });
+    // Désactive les liens d'action (ex: a.btn, a.action, etc.)
+    document.querySelectorAll("a").forEach((a) => {
+      a.onclick = (e) => e.preventDefault();
+      a.style.pointerEvents = "none";
+      a.style.opacity = "0.65";
+      a.title = "Connectez-vous pour modifier";
+    });
+    // Affiche une bannière d'information en haut de page
+    if (!document.getElementById("readonly-banner")) {
+      const banner = document.createElement("div");
+      banner.id = "readonly-banner";
+      banner.textContent =
+        "Mode lecture seule : connectez-vous pour modifier les données.";
+      banner.style.position = "fixed";
+      banner.style.top = 0;
+      banner.style.left = 0;
+      banner.style.width = "100vw";
+      banner.style.background =
+        "linear-gradient(90deg,#fbbf24 0%,#f87171 100%)";
+      banner.style.color = "#1e293b";
+      banner.style.fontWeight = "bold";
+      banner.style.fontSize = "1.08em";
+      banner.style.padding = "14px 0";
+      banner.style.textAlign = "center";
+      banner.style.zIndex = 100000;
+      banner.style.boxShadow = "0 2px 12px rgba(251,191,36,0.13)";
+      document.body.appendChild(banner);
+      // Décale le body pour ne pas masquer le contenu
+      document.body.style.paddingTop = "48px";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!isAuthenticated()) {
+      setReadOnlyMode();
+    }
+  });
 }
 
 // Fonction principale pour ,  afficher les livraisons filtrées par date

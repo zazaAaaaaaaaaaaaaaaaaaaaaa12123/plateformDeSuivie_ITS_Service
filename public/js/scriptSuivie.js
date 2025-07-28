@@ -668,6 +668,58 @@ if (window["WebSocket"]) {
 }
 
 (async () => {
+  // === Détection d'authentification et passage en lecture seule ===
+  function isAuthenticated() {
+    // À adapter selon votre logique d'authentification :
+    // Ici, on suppose qu'un token est stocké dans localStorage sous la clé 'auth_token'
+    return !!localStorage.getItem("auth_token");
+  }
+
+  function setReadOnlyMode() {
+    // Désactive tous les boutons de modification, dropdowns, inputs éditables, etc.
+    // Désactive tous les boutons sauf ceux de consultation (PDF, recherche, etc.)
+    document
+      .querySelectorAll("button, input, select, textarea")
+      .forEach((el) => {
+        // On ne désactive pas les boutons de recherche ou PDF
+        if (
+          el.id === "generatePdfBtn" ||
+          el.id === "searchButton" ||
+          el.classList.contains("eir-link-button")
+        )
+          return;
+        el.disabled = true;
+        el.classList.add("read-only-disabled");
+      });
+    // Désactive les dropdowns de statut
+    document
+      .querySelectorAll(".dropdown-toggle-button, .dropdown-content button")
+      .forEach((el) => {
+        el.disabled = true;
+        el.classList.add("read-only-disabled");
+      });
+    // Optionnel : affiche un message en haut de la page
+    if (!document.getElementById("readOnlyBanner")) {
+      const banner = document.createElement("div");
+      banner.id = "readOnlyBanner";
+      banner.textContent =
+        "Mode lecture seule : connectez-vous pour modifier les données.";
+      banner.style.background = "#ffc107";
+      banner.style.color = "#333";
+      banner.style.padding = "10px";
+      banner.style.textAlign = "center";
+      banner.style.fontWeight = "bold";
+      banner.style.zIndex = 2001;
+      document.body.prepend(banner);
+    }
+  }
+
+  // Appliquer le mode lecture seule si non authentifié
+  window.addEventListener("DOMContentLoaded", function () {
+    if (!isAuthenticated()) {
+      setReadOnlyMode();
+    }
+  });
   // === Désactivation de l'autocomplétion sur les champs sensibles ===
   window.addEventListener("DOMContentLoaded", function () {
     // Champ de recherche principal
