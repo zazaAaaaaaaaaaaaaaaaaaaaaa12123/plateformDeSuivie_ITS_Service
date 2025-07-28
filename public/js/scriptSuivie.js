@@ -8975,17 +8975,21 @@ if (window["WebSocket"]) {
   // Cette fonction met à jour dynamiquement la colonne Statut de livraison (Resp. Acconiers)
   // lors d'une mise à jour WebSocket (mise en livraison ou retour en attente de paiement)
   function updateAcconierStatusInTableauDeBord(blNumber, newStatus) {
-    // Sélectionne le tableau principal (adapter l'ID ou la classe si besoin)
     const table = document.getElementById("deliveriesTable");
     if (!table) return;
-    // Recherche la ligne correspondant au BL
     const rows = table.querySelectorAll("tbody tr");
     rows.forEach((row) => {
+      // Recherche par BL
       const blCell = row.querySelector('[data-column-id="bl_number"]');
-      if (!blCell) return;
-      const blValue = blCell.textContent.trim();
-      if (blValue === blNumber) {
-        // Trouve la cellule Statut de livraison (Resp. Acconiers)
+      const dossierCell = row.querySelector(
+        '[data-column-id="dossier_number"]'
+      );
+      let found = false;
+      if (blCell && blCell.textContent.trim() === blNumber) found = true;
+      // Fallback : recherche aussi par dossier_number si BL non trouvé
+      if (!found && dossierCell && dossierCell.textContent.trim() === blNumber)
+        found = true;
+      if (found) {
         const acconierStatusCell = row.querySelector(
           '[data-column-id="delivery_status_acconier"]'
         );
