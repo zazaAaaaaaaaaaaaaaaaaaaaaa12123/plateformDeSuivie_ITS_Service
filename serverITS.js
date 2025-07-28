@@ -3321,22 +3321,36 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
         .json({ success: false, message: "Erreur lors de la mise à jour." });
     }
     const updatedDelivery = updateRes.rows[0];
-    // Envoi WebSocket à tous les clients
+    // Envoi WebSocket à tous les clients (bl_status_update pour compat, acconier_status_update pour synchro dashboard)
     const wss = req.app.get("wss") || global.wss || wss;
     const alertMsg = `Dossier '${
       updatedDelivery.dossier_number ||
       updatedDelivery.bl_number ||
       updatedDelivery.id
     }' a été mis en livraison`;
+    // 1. Message legacy (bl_status_update)
     const payload = JSON.stringify({
       type: "bl_status_update",
       delivery: updatedDelivery,
       message: alertMsg,
     });
+    // 2. Message temps réel dashboard (acconier_status_update)
+    // On cherche le bon BL et son statut
+    let blNumber = req.body.blNumber || req.body.bl_number;
+    let status = bl_statuses && blNumber ? bl_statuses[blNumber] : undefined;
+    // Si le statut est "mise_en_livraison", on force la valeur acconier
+    if (status === "mise_en_livraison") status = "mise_en_livraison_acconier";
+    const acconierPayload = JSON.stringify({
+      type: "acconier_status_update",
+      deliveryId: updatedDelivery.id,
+      blNumber: blNumber,
+      status: status,
+    });
     if (wss && wss.clients) {
       wss.clients.forEach((client) => {
         if (client.readyState === require("ws").OPEN) {
-          client.send(payload);
+          client.send(payload); // legacy
+          client.send(acconierPayload); // synchro dashboard
         }
       });
     }
