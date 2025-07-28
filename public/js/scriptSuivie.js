@@ -2546,7 +2546,7 @@ if (window["WebSocket"]) {
       ) {
         currentPendingDeliveries.push(delivery);
       } else {
-        // Determine if it's recent historical (within 3 days) or archived (older than 3 days)
+        // Determine if it's recents historical (within 3 days) or archived (older than 3 days)
         if (
           delivery.delivery_status_acconier !== "pending_acconier" &&
           delivery.delivery_status_acconier !== "awaiting_delivery_acconier" &&
