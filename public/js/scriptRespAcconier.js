@@ -672,73 +672,9 @@ document.addEventListener("DOMContentLoaded", function () {
           data.status
         );
 
-        if (
-          data.type === "bl_status_update" &&
-          data.delivery &&
-          data.delivery.bl_statuses
-        ) {
-          // Toujours normaliser la livraison reçue comme dans loadAllDeliveries
-          function normalizeDelivery(delivery) {
-            let tcList = [];
-            if (Array.isArray(delivery.container_number)) {
-              tcList = delivery.container_number.filter(Boolean);
-            } else if (typeof delivery.container_number === "string") {
-              tcList = delivery.container_number
-                .split(/[,;\s]+/)
-                .filter(Boolean);
-            }
-            if (
-              !delivery.container_statuses ||
-              typeof delivery.container_statuses !== "object"
-            ) {
-              delivery.container_statuses = {};
-            }
-            tcList.forEach((tc) => {
-              if (!delivery.container_statuses[tc]) {
-                delivery.container_statuses[tc] = "attente_paiement";
-              }
-            });
-            if (
-              delivery.bl_statuses &&
-              typeof delivery.bl_statuses === "string"
-            ) {
-              try {
-                delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
-              } catch {
-                delivery.bl_statuses = {};
-              }
-            }
-            if (
-              !delivery.bl_statuses ||
-              typeof delivery.bl_statuses !== "object"
-            ) {
-              delivery.bl_statuses = {};
-            }
-            return delivery;
-          }
-          const normalizedDelivery = normalizeDelivery(data.delivery);
-          if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
-            const idx = window.allDeliveries.findIndex(
-              (d) => d.id === normalizedDelivery.id
-            );
-            if (idx !== -1) {
-              window.allDeliveries[idx] = normalizedDelivery;
-            }
-          }
-          // Rafraîchir le tableau si la livraison est dans la plage de dates courante
-          const dateStartInput = document.getElementById(
-            "mainTableDateStartFilter"
-          );
-          const dateEndInput = document.getElementById(
-            "mainTableDateEndFilter"
-          );
-          if (typeof updateTableForDateRange === "function") {
-            updateTableForDateRange(
-              dateStartInput ? dateStartInput.value : "",
-              dateEndInput ? dateEndInput.value : ""
-            );
-          }
-        }
+        // Synchronisation en temps réel : on ne traite plus 'bl_status_update' ici, tout passe par 'acconier_status_update'.
+        // (Bloc supprimé pour éviter les doublons et les statuts undefined)
+        // Fin du bloc supprimé, on continue normalement.
         // Ajout : réception automatique d'un nouvel ordre de livraison
         if (data.type === "new_delivery_created" && data.delivery) {
           // Normalise la livraison reçue comme dans loadAllDeliveries
