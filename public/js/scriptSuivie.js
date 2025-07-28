@@ -8978,6 +8978,6 @@ if (window["WebSocket"]) {
     originalApplyCombinedFilters.apply(this, args);
     setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
   };
-  // ================shg FIN CLIGNOTEMENT VERT ==================
+  // ================sh FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
