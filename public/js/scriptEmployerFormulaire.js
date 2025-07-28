@@ -1077,15 +1077,29 @@ if (containerNumberInput) {
     if (!tcErrorMsg) {
       tcErrorMsg = document.createElement("div");
       tcErrorMsg.className = "tc-error-msg";
+      // Style boîte flottante réduite
+      tcErrorMsg.style.position = "absolute";
+      tcErrorMsg.style.left = "0";
+      tcErrorMsg.style.top = "100%";
+      tcErrorMsg.style.zIndex = "10";
+      tcErrorMsg.style.background = "#fff";
+      tcErrorMsg.style.border = "1.5px solid #dc2626";
       tcErrorMsg.style.color = "#dc2626";
-      tcErrorMsg.style.fontWeight = "bold";
-      tcErrorMsg.style.fontSize = "0.98em";
-      tcErrorMsg.style.marginTop = "4px";
-      tcErrorMsg.style.marginBottom = "2px";
-      containerTagsContainer.parentNode.insertBefore(
-        tcErrorMsg,
-        containerTagsContainer.nextSibling
-      );
+      tcErrorMsg.style.fontWeight = "500";
+      tcErrorMsg.style.fontSize = "0.93em";
+      tcErrorMsg.style.padding = "5px 12px 5px 10px";
+      tcErrorMsg.style.borderRadius = "7px";
+      tcErrorMsg.style.boxShadow = "0 2px 8px #dc262622";
+      tcErrorMsg.style.marginTop = "2px";
+      tcErrorMsg.style.marginBottom = "0";
+      tcErrorMsg.style.minWidth = "180px";
+      tcErrorMsg.style.maxWidth = "320px";
+      tcErrorMsg.style.pointerEvents = "none";
+      // Positionner le parent en relative si ce n'est pas déjà fait
+      if (containerTagsContainer.parentNode.style.position !== "relative") {
+        containerTagsContainer.parentNode.style.position = "relative";
+      }
+      containerTagsContainer.parentNode.appendChild(tcErrorMsg);
     }
     tcErrorMsg.textContent = msg;
     tcErrorMsg.style.display = "block";
