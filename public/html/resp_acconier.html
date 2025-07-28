@@ -22,10 +22,9 @@
 
     <style>
       /* Responsive pour Numéro TC(s), Lieus et Statut sur tablette/mobile */
-      @media (max-width: 900px) {
-        [data-col-id="container_number"],
-        [data-col-id="lieu"],
-        [data-col-id*="statut"] {
+      /* Responsive Numéro TC(s) : retour à la ligne optimal tablette/mobile */
+      @media (max-width: 900px) and (min-width: 660px) {
+        [data-col-id="container_number"] {
           max-width: 220px !important;
           min-width: 140px !important;
           white-space: normal !important;
@@ -36,35 +35,50 @@
           padding-left: 4px !important;
           padding-right: 4px !important;
         }
-        /* Forcer retour à la ligne pour chaque numéro TC et son pied */
-        [data-col-id="container_number"] .tc-number-block {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
+        [data-col-id="container_number"] .tc-number-responsive {
+          display: block;
           white-space: normal !important;
-        }
-        [data-col-id="container_number"] .tc-number {
-          display: block;
-          font-weight: bold;
-          font-size: 1em;
-          line-height: 1.1;
-          margin-bottom: 2px;
-          word-break: break-all;
-        }
-        [data-col-id="container_number"] .tc-pied {
-          display: block;
-          font-size: 0.98em;
-          color: #222;
-          margin-top: 0px;
-          word-break: break-all;
-        }
-        /* Ajustement spécifique pour la colonne Statuts pour éviter la coupure du texte */
-        [data-col-id*="statut"] {
-          max-width: 240px !important;
-          min-width: 150px !important;
+          word-break: break-all !important;
+          overflow-wrap: anywhere !important;
+          font-size: 0.97em;
+          line-height: 1.2;
         }
       }
+      @media (max-width: 660px) {
+        [data-col-id="container_number"] {
+          max-width: 120px !important;
+          min-width: 90px !important;
+          font-size: 0.95em !important;
+          white-space: normal !important;
+          word-break: break-word !important;
+          text-align: center !important;
+          vertical-align: middle !important;
+          padding-left: 2px !important;
+          padding-right: 2px !important;
+        }
+        [data-col-id="container_number"] .tc-number-responsive {
+          display: block;
+          white-space: normal !important;
+          word-break: break-all !important;
+          overflow-wrap: anywhere !important;
+          font-size: 0.93em;
+          line-height: 1.15;
+        }
+      }
+
+      [data-col-id="container_number"] .tc-pied {
+        display: block;
+        font-size: 0.98em;
+        color: #222;
+        margin-top: 0px;
+        word-break: break-all;
+      }
+      /* Ajustement spécifique pour la colonne Statuts pour éviter la coupure du texte */
+      [data-col-id*="statut"] {
+        max-width: 240px !important;
+        min-width: 150px !important;
+      }
+
       @media (max-width: 600px) {
         [data-col-id="container_number"],
         [data-col-id="lieu"],
