@@ -548,6 +548,43 @@ const createAcconierTable = `
   );
 `;
 
+// ===============================
+// TABLE RESPONSABLE ACCONIER (authentification RespAcconier)
+// ===============================
+const createRespAcconierTable = `
+  CREATE TABLE IF NOT EXISTS resp_acconier (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`;
+
+async function ensureRespAcconierTable() {
+  try {
+    await pool.query(createRespAcconierTable);
+    console.log("Table 'resp_acconier' vérifiée/créée.");
+  } catch (err) {
+    console.error("Erreur création table resp_acconier:", err);
+  }
+}
+
+// On attend la connexion du pool avant de créer la table resp_acconier
+pool
+  .connect()
+  .then((client) => {
+    client.release();
+    return ensureRespAcconierTable();
+  })
+  .catch((err) => {
+    console.error(
+      "Erreur de connexion à la base PostgreSQL pour la table resp_acconier:",
+      err
+    );
+  });
+
 async function ensureAcconierTable() {
   try {
     await pool.query(createAcconierTable);
@@ -749,6 +786,138 @@ app.post("/api/respacconier/login", async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur serveur." });
   }
 });
+
+// Validation du code entreprise RespAcconier
+// Validation dynamique du code entreprise pour RespAcconier
+app.post("/api/respacconier/validate-code", async (req, res) => {
+  const { code, id } = req.body || {};
+  try {
+    const codeRes = await pool.query(
+      "SELECT code FROM company_code ORDER BY updated_at DESC LIMIT 1"
+    );
+    const codeEntreprise =
+      codeRes.rows.length > 0 ? codeRes.rows[0].code : "ITS2010";
+    if (code === codeEntreprise) {
+      res.json({ success: true });
+    } else {
+      res
+        .status(401)
+        .json({ success: false, message: "Code entreprise invalide." });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+
+// Suppression d'un agent visiteur programmé (par nom OU nom+date, plus permissif)
+app.post("/agents-visiteurs/programmes/supprimer", async (req, res) => {
+  const { nom_agent_visiteur, date_livraison } = req.body || {};
+  if (!nom_agent_visiteur) {
+    return res.status(400).json({
+      success: false,
+      message: "Nom agent visiteur requis.",
+    });
+  }
+
+  let query, values;
+  if (date_livraison && date_livraison !== "-") {
+    const formattedDate = formatDateForDB(date_livraison);
+    if (formattedDate) {
+      query = `DELETE FROM livraison_conteneur WHERE nom_agent_visiteur = $1 AND delivery_date = $2 RETURNING id;`;
+      values = [nom_agent_visiteur, formattedDate];
+    } else {
+      // Si la date est fournie mais invalide, ignorer la date et supprimer par nom uniquement
+      query = `DELETE FROM livraison_conteneur WHERE nom_agent_visiteur = $1 RETURNING id;`;
+      values = [nom_agent_visiteur];
+    }
+  } else {
+    // Si pas de date, suppression par nom uniquement
+    query = `DELETE FROM livraison_conteneur WHERE nom_agent_visiteur = $1 RETURNING id;`;
+    values = [nom_agent_visiteur];
+  }
+  try {
+    const result = await pool.query(query, values);
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Aucun agent visiteur trouvé pour ce nom (et date si fournie).",
+      });
+    }
+    // Peut supprimer plusieurs lignes, retourner tous les IDs supprimés
+    res.json({ success: true, deletedIds: result.rows.map((r) => r.id) });
+  } catch (err) {
+    console.error(
+      "Erreur lors de la suppression de l'agent visiteur programmé:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la suppression.",
+    });
+  }
+});
+
+// Fonction pour obtenir le texte et l'icône du statut en français (utilisé principalement pour les messages WebSocket)
+function getFrenchStatusWithIcon(status) {
+  let text = "";
+  let iconClass = "";
+  let customColorClass = ""; // Utilisé pour les alertes frontend
+
+  switch (status) {
+    case "awaiting_payment_acconier":
+      text = "En attente de paiement";
+      iconClass = "fa-solid fa-clock";
+      customColorClass = "info";
+      break;
+    case "in_progress_payment_acconier":
+      text = "En cours de paiement";
+      iconClass = "fa-solid fa-credit-card";
+      customColorClass = "warning";
+      break;
+    case "pending_acconier":
+      text = "Mise en livraison (ancienne)";
+      iconClass = "fa-solid fa-hourglass-half";
+      customColorClass = "success";
+      break;
+    case "mise_en_livraison_acconier":
+      text = "Mise en livraison";
+      iconClass = "fa-solid fa-hourglass-half";
+      customColorClass = "success";
+      break;
+    case "payment_done_acconier":
+      text = "Paiement effectué";
+      iconClass = "fa-solid fa-check-circle";
+      customColorClass = "success";
+      break;
+    case "processed_acconier":
+      text = "Traité Acconier";
+      iconClass = "fa-solid fa-check-circle";
+      customColorClass = "success";
+      break;
+    case "rejected_acconier":
+      text = "Rejeté Acconier";
+      iconClass = "fa-solid fa-times-circle";
+      customColorClass = "error";
+      break;
+    case "rejected_by_employee":
+      text = "Rejeté par l'employé";
+      iconClass = "fa-solid fa-ban";
+      customColorClass = "error";
+      break;
+    case "delivered":
+      text = "Livré";
+      iconClass = "fa-solid fa-circle-check";
+      customColorClass = "success";
+      break;
+    default:
+      text = status;
+      iconClass = "fa-solid fa-question-circle";
+      customColorClass = "info";
+      break;
+  }
+  return { text, iconClass, customColorClass };
+}
 
 // Fonction de traduction complète des statuts anglais → français (pour tous les contextes)
 function translateStatusToFr(status) {
