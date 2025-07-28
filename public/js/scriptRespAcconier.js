@@ -728,7 +728,7 @@ document.addEventListener("DOMContentLoaded", function () {
           );
           const startVal = dateStartInput ? dateStartInput.value : "";
           const endVal = dateEndInput ? dateEndInput.value : "";
-          // Vérifie si la nouvelle livraison est dans la plage de dates
+          // Vérifie si la nouvelle lshdgjsivraison est dans la plage de dates
           let dDate =
             normalizedDelivery.delivery_date || normalizedDelivery.created_at;
           let normalized = "";
