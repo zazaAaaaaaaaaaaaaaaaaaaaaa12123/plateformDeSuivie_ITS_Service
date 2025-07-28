@@ -24,6 +24,127 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // --- Toast dossiers en retard (>2 jours) ---
+  function showLateDeliveriesToast(lateDeliveries) {
+    // Supprimer tout toast existant
+    const oldToast = document.getElementById("late-deliveries-toast");
+    if (oldToast) oldToast.remove();
+    if (!lateDeliveries || lateDeliveries.length === 0) return;
+    const toast = document.createElement("div");
+    toast.id = "late-deliveries-toast";
+    toast.style.position = "fixed";
+    toast.style.top = "32px";
+    toast.style.right = "32px";
+    toast.style.background = "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+    toast.style.color = "#fff";
+    toast.style.fontWeight = "bold";
+    toast.style.fontSize = "1.08em";
+    toast.style.padding = "18px 32px";
+    toast.style.borderRadius = "16px";
+    toast.style.boxShadow = "0 6px 32px rgba(239,68,68,0.18)";
+    toast.style.zIndex = 99999;
+    toast.style.cursor = "pointer";
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity 0.3s";
+    toast.textContent = `⚠️ ${lateDeliveries.length} dossier(s) en retard (>2 jours)`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "1";
+    }, 10);
+    // Clic : affiche la liste détaillée
+    toast.onclick = function () {
+      // Supprimer popup existant
+      const oldPopup = document.getElementById("late-deliveries-popup");
+      if (oldPopup) oldPopup.remove();
+      const overlay = document.createElement("div");
+      overlay.id = "late-deliveries-popup";
+      overlay.style.position = "fixed";
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.width = "100vw";
+      overlay.style.height = "100vh";
+      overlay.style.background = "rgba(30,41,59,0.45)";
+      overlay.style.zIndex = 100000;
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "center";
+      overlay.style.justifyContent = "center";
+      const box = document.createElement("div");
+      box.style.background = "#fff";
+      box.style.borderRadius = "16px";
+      box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+      box.style.maxWidth = "420px";
+      box.style.width = "96vw";
+      box.style.maxHeight = "92vh";
+      box.style.overflowY = "auto";
+      box.style.padding = "0";
+      box.style.position = "relative";
+      box.style.display = "flex";
+      box.style.flexDirection = "column";
+      const header = document.createElement("div");
+      header.style.background = "#ef4444";
+      header.style.color = "#fff";
+      header.style.padding = "18px 28px 12px 28px";
+      header.style.fontWeight = "bold";
+      header.style.fontSize = "1.15rem";
+      header.style.display = "flex";
+      header.style.flexDirection = "column";
+      header.style.borderTopLeftRadius = "16px";
+      header.style.borderTopRightRadius = "16px";
+      header.innerHTML = `<span style='font-size:1.08em;'>Dossiers en retard</span>`;
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = "&times;";
+      closeBtn.style.background = "none";
+      closeBtn.style.border = "none";
+      closeBtn.style.color = "#fff";
+      closeBtn.style.fontSize = "2.1rem";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.style.position = "absolute";
+      closeBtn.style.top = "10px";
+      closeBtn.style.right = "18px";
+      closeBtn.setAttribute("aria-label", "Fermer");
+      closeBtn.onclick = () => overlay.remove();
+      header.appendChild(closeBtn);
+      box.appendChild(header);
+      const content = document.createElement("div");
+      content.style.padding = "24px 24px 24px 24px";
+      content.style.background = "#f8fafc";
+      content.style.flex = "1 1 auto";
+      content.style.overflowY = "auto";
+      if (lateDeliveries.length === 0) {
+        content.innerHTML =
+          "<div style='text-align:center;'>Aucun dossier en retard.</div>";
+      } else {
+        const ul = document.createElement("ul");
+        ul.style.listStyle = "none";
+        ul.style.padding = 0;
+        ul.style.margin = 0;
+        lateDeliveries.forEach((d) => {
+          const li = document.createElement("li");
+          li.style.marginBottom = "12px";
+          li.innerHTML = `<span style='color:#ef4444;font-weight:bold;'>N° Dossier :</span> ${
+            d.dossier_number || "-"
+          } <br><span style='color:#2563eb;'>Agent :</span> ${
+            d.employee_name || "-"
+          }`;
+          ul.appendChild(li);
+        });
+        content.appendChild(ul);
+      }
+      box.appendChild(content);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+      };
+    };
+    // Disparition auto après 8s
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+      }, 400);
+    }, 8000);
+  }
   // Ajout dynamique du bouton de suppression compact à côté des dates
   let deleteBtn = null;
   let rangeDiv = null;
@@ -870,6 +991,17 @@ document.addEventListener("DOMContentLoaded", function () {
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      // Après chargement, détecter les dossiers en retard (>2 jours)
+      const now = new Date();
+      const lateDeliveries = (window.allDeliveries || []).filter((d) => {
+        let dDate = d.delivery_date || d.created_at;
+        if (!dDate) return false;
+        let dateObj = new Date(dDate);
+        if (isNaN(dateObj.getTime())) return false;
+        const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+        return diffDays > 2;
+      });
+      showLateDeliveriesToast(lateDeliveries);
     });
     dateStartInput.addEventListener("change", () => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
