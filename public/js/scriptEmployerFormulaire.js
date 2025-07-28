@@ -1715,7 +1715,7 @@ async function submitDeliveryForm(status) {
   const requiredInputs = [
     employeeName,
     clientName,
-    containerTypeAndContent,
+    // containerTypeAndContent, // Champ Contenu rendu facultatif
     lieu,
     containerNumbers.length > 0 ? containerNumbers.join(",") : "",
     containerFootType,
