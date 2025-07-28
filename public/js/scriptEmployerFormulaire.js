@@ -1052,7 +1052,50 @@ if (containerNumberInput) {
     renderContainerFootTypes();
   }
 
-  // Ajout d'un tag à la validation (entrée, virgule, point-virgule)
+  // Ajout d'un spinner et validation stricte TC (4 lettres + 7 chiffres)
+  let tcSpinnerTimeout = null;
+  let tcSpinner = null;
+  let tcErrorMsg = null;
+  function showTCSpinner() {
+    if (!tcSpinner) {
+      tcSpinner = document.createElement("span");
+      tcSpinner.className = "tc-spinner";
+      tcSpinner.style.display = "inline-block";
+      tcSpinner.style.marginLeft = "8px";
+      tcSpinner.innerHTML = `<svg width="22" height="22" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.415, 31.415" transform="rotate(0 25 25)"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/></circle></svg>`;
+      containerTagsInput.parentNode.insertBefore(
+        tcSpinner,
+        containerTagsInput.nextSibling
+      );
+    }
+    tcSpinner.style.display = "inline-block";
+  }
+  function hideTCSpinner() {
+    if (tcSpinner) tcSpinner.style.display = "none";
+  }
+  function showTCError(msg) {
+    if (!tcErrorMsg) {
+      tcErrorMsg = document.createElement("div");
+      tcErrorMsg.className = "tc-error-msg";
+      tcErrorMsg.style.color = "#dc2626";
+      tcErrorMsg.style.fontWeight = "bold";
+      tcErrorMsg.style.fontSize = "0.98em";
+      tcErrorMsg.style.marginTop = "4px";
+      tcErrorMsg.style.marginBottom = "2px";
+      containerTagsContainer.parentNode.insertBefore(
+        tcErrorMsg,
+        containerTagsContainer.nextSibling
+      );
+    }
+    tcErrorMsg.textContent = msg;
+    tcErrorMsg.style.display = "block";
+  }
+  function hideTCError() {
+    if (tcErrorMsg) tcErrorMsg.style.display = "none";
+  }
+  function validateTCFormat(tc) {
+    return /^[A-Za-z]{4}[0-9]{7}$/.test(tc);
+  }
   containerTagsInput.addEventListener("keydown", (e) => {
     if (
       ["Enter", ",", ";"].includes(e.key) ||
@@ -1061,12 +1104,44 @@ if (containerNumberInput) {
     ) {
       e.preventDefault();
       const value = containerTagsInput.value.trim();
-      if (value && !containerTags.includes(value)) {
-        containerTags.push(value);
+      if (!value || containerTags.includes(value)) {
+        containerTagsInput.value = "";
         renderContainerTags();
+        return;
       }
-      containerTagsInput.value = "";
-      renderContainerTags();
+      showTCSpinner();
+      hideTCError();
+      if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
+      tcSpinnerTimeout = setTimeout(() => {
+        hideTCSpinner();
+        if (!validateTCFormat(value)) {
+          showTCError(
+            "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
+          );
+        } else {
+          containerTags.push(value);
+          renderContainerTags();
+          hideTCError();
+        }
+        containerTagsInput.value = "";
+        renderContainerTags();
+      }, 3000);
+    }
+  });
+  // Affiche le spinner dès qu'on commence à saisir (input)
+  containerTagsInput.addEventListener("input", () => {
+    if (containerTagsInput.value.trim().length > 0) {
+      showTCSpinner();
+      hideTCError();
+      if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
+      tcSpinnerTimeout = setTimeout(() => {
+        hideTCSpinner();
+        // Ne valide pas ici, juste spinner visuel
+      }, 3000);
+    } else {
+      hideTCSpinner();
+      hideTCError();
+      if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
     }
   });
   // Ajout par collage de plusieurs numéros séparés
