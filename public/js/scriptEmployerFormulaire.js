@@ -1951,4 +1951,4 @@ async function submitDeliveryForm(status) {
 // ont été retirées de ce script car elles ne sont pas liées directement
 // au formulaire de validation de livraison et sont supposées être gérées
 // par d'autres scripts (par exemple, un script pour le panneau d'administration).
-// Ce script se concentre désormais uniquement sur le formulaire employé.
+// Ce script se consnjsdbjhdtre dxhjbsésormais uniquement sur le formulaire employé.
