@@ -66,44 +66,6 @@ wss.on("connection", (ws) => {
 });
 
 // ===============================
-// MIDDLEWARE DE PROTECTION AUTHENTIFICATION (lecture seule pour non connectés)
-// ===============================
-// Ce middleware vérifie la présence d'un token d'authentification (auth_token)
-// dans l'en-tête Authorization (Bearer ...) ou dans le body, ou dans la query
-// Pour une vraie sécurité, il faudrait utiliser JWT signé côté serveur !
-function authRequired(req, res, next) {
-  let token = null;
-  if (req.headers && req.headers.authorization) {
-    const parts = req.headers.authorization.split(" ");
-    if (parts.length === 2 && parts[0] === "Bearer") {
-      token = parts[1];
-    }
-  }
-  if (!token && req.body && req.body.auth_token) {
-    token = req.body.auth_token;
-  }
-  if (!token && req.query && req.query.auth_token) {
-    token = req.query.auth_token;
-  }
-  if (!token || typeof token !== "string" || token.length < 10) {
-    return res.status(401).json({
-      success: false,
-      message: "Authentification requise pour modifier les données.",
-    });
-  }
-  // Vérification du JWT
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(401).json({
-      success: false,
-      message: "Token invalide ou expiré.",
-    });
-  }
-}
-// ===============================
 // ROUTE : PATCH statut BL (bl_statuses) pour une livraison
 // ===============================
 
@@ -156,7 +118,7 @@ app.get("/delivery-responsible", async (req, res) => {
 // ===============================
 // ROUTE : POST maj responsable de livraison persistée
 // ===============================
-app.post("/delivery-responsible", authRequired, async (req, res) => {
+app.post("/delivery-responsible", async (req, res) => {
   const { value } = req.body || {};
   if (typeof value !== "string") {
     return res.status(400).json({ success: false, message: "Valeur invalide" });
@@ -285,7 +247,7 @@ app.get("/api/company-code", async (req, res) => {
 // ===============================
 // ROUTE : Modifier le code entreprise (PUT)
 // ===============================
-app.put("/api/company-code", authRequired, async (req, res) => {
+app.put("/api/company-code", async (req, res) => {
   const { code } = req.body || {};
   if (!code || typeof code !== "string" || code.trim().length < 3) {
     return res.status(400).json({ success: false, message: "Code invalide." });
@@ -713,32 +675,33 @@ app.post("/acconier/login", async (req, res) => {
       "SELECT * FROM acconier WHERE email = $1",
       [email]
     );
+    console.log("[ACCONIER][LOGIN] Recherche utilisateur:", userRes.rows);
     if (userRes.rows.length === 0) {
+      console.warn("[ACCONIER][LOGIN] Aucun utilisateur trouvé pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
     const user = userRes.rows[0];
+    console.log("[ACCONIER][LOGIN] Utilisateur trouvé:", user);
+    console.log("[ACCONIER][LOGIN] Mot de passe reçu:", password);
+    console.log("[ACCONIER][LOGIN] Mot de passe hashé en base:", user.password);
     const match = await bcrypt.compare(password, user.password);
+    console.log("[ACCONIER][LOGIN] Résultat comparaison mot de passe:", match);
     if (!match) {
+      console.warn("[ACCONIER][LOGIN] Mot de passe incorrect pour:", email);
       return res
         .status(401)
         .json({ success: false, message: "Email ou mot de passe incorrect." });
     }
-    // Génère un JWT valable 24h
-    const token = jwt.sign(
-      { id: user.id, email: user.email, nom: user.nom, type: "acconier" },
-      JWT_SECRET,
-      { expiresIn: "24h" }
-    );
     return res.status(200).json({
       success: true,
       message: "Connexion réussie.",
       nom: user.nom,
       email: user.email,
-      auth_token: token,
     });
   } catch (err) {
+    console.error("[ACCONIER][LOGIN] Erreur:", err);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la connexion.",
@@ -1433,7 +1396,7 @@ function formatDateForDB(dateString) {
 // =========================================================================
 
 // ROUTE : Suppression de livraisons par liste d'ids
-app.post("/deliveries/delete", authRequired, async (req, res) => {
+app.post("/deliveries/delete", async (req, res) => {
   const { ids } = req.body || {};
   if (!Array.isArray(ids) || ids.length === 0) {
     return res
