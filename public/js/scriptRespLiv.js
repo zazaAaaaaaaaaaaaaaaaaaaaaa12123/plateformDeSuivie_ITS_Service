@@ -1,58 +1,3 @@
-// --- GESTION LECTURE SEULE SELON AUTHENTIFICATION ---
-function isUserAuthenticated() {
-  // On considère qu'un utilisateur authentifié a une clé spécifique dans localStorage
-  // (ex : 'user_authenticated' ou 'user_email' défini par le login)
-  // À adapter selon ta logique d'authentification réelle
-  return !!localStorage.getItem("user_email");
-}
-
-function setReadOnlyMode() {
-  // Désactive tous les boutons de modification, suppression, ajout, etc.
-  document.querySelectorAll('button, input[type="button"], input[type="submit"], .row-select, .tc-tags-btn, .btn, select, textarea, input[type="text"], input[type="date"], input[type="file"]').forEach(el => {
-    // On ne désactive pas les filtres de date pour la consultation
-    if (
-      el.id === "mainTableDateStartFilter" ||
-      el.id === "mainTableDateEndFilter"
-    ) return;
-    el.disabled = true;
-    el.style.pointerEvents = "none";
-    el.style.opacity = "0.6";
-    el.style.cursor = "not-allowed";
-  });
-  // Cache le bouton de suppression si présent
-  const delBtn = document.getElementById("deleteRowsBtn");
-  if (delBtn) delBtn.style.display = "none";
-  // Cache ou désactive les boutons d'ajout si existants
-  document.querySelectorAll('.add-btn, .edit-btn, .delete-btn').forEach(el => {
-    el.style.display = "none";
-  });
-  // Désactive les menus contextuels de modification
-  document.querySelectorAll('.tc-popup, .tc-popup-item').forEach(el => {
-    el.style.pointerEvents = "none";
-    el.style.opacity = "0.6";
-  });
-  // Désactive les actions JS de modification (patch les fonctions critiques)
-  window.__READ_ONLY_MODE__ = true;
-}
-
-// Patch des fonctions de modification pour empêcher toute action en lecture seule
-function blockModificationIfReadOnly(fn) {
-  return function(...args) {
-    if (window.__READ_ONLY_MODE__) {
-      alert("Mode consultation : modification non autorisée.");
-      return;
-    }
-    return fn.apply(this, args);
-  };
-}
-
-// Appliquer le mode lecture seule si besoin dès le chargement
-document.addEventListener("DOMContentLoaded", function () {
-  if (!isUserAuthenticated()) {
-    setReadOnlyMode();
-  }
-});
-
 // --- Info-bulle personnalisée pour la colonne Statut (Numéro TC + statut avec icônes) ---
 function createStatutTooltip() {
   let tooltip = document.getElementById("statutTableTooltip");
@@ -1056,12 +1001,215 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     ];
     // Fonction pour vérifier dynamiquement si tous les champs sont remplis (prend la valeur affichée dans la cellule)
     function isAllRequiredFilled() {
-      // Patch la fonction pour bloquer en lecture seule
-      const showContainerDetailPopup = blockModificationIfReadOnly(function (delivery, containerNumber) {
-        // ...existing code de la fonction showContainerDetailPopup...
-        // (reprendre ici tout le code d'origine de la fonction, inchangé)
-        // ...
+      // Toujours prendre la valeur affichée dans la cellule (input, textarea ou textContent)
+      return requiredFields.every((field) => {
+        const colIdx = AGENT_TABLE_COLUMNS.findIndex((c) => c.id === field);
+        if (colIdx === -1) return false;
+        const cell = tr.children[colIdx];
+        let val = undefined;
+        if (cell) {
+          const input = cell.querySelector("input,textarea");
+          if (input) {
+            val = input.value;
+          } else {
+            val = cell.textContent;
+          }
+        }
+        return (
+          val !== undefined &&
+          val !== null &&
+          String(val).trim() !== "" &&
+          val !== "-"
+        );
       });
+    }
+    // Gestion dynamique du message d'accès
+    let lastAccessState = null;
+    let confirmationShown = false;
+    AGENT_TABLE_COLUMNS.forEach((col, idx) => {
+      // Colonne sélection : case à cocher
+      if (col.id === "select_row") {
+        const td = document.createElement("td");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "row-select";
+        cb.style.cursor = "pointer";
+        cb.style.width = "18px";
+        cb.style.height = "18px";
+        td.style.textAlign = "center";
+        td.appendChild(cb);
+        // Ajout : afficher/masquer le bouton de suppression selon la sélection
+        cb.addEventListener("change", function () {
+          const delBtn = document.getElementById("deleteRowsBtn");
+          if (delBtn) {
+            const checked = document.querySelectorAll(
+              '#deliveriesTableBody input[type="checkbox"].row-select:checked'
+            );
+            delBtn.style.display = checked.length > 0 ? "inline-block" : "none";
+          }
+        });
+        tr.appendChild(td);
+        return;
+      }
+      // Génère une clé unique pour chaque cellule éditable (par livraison et colonne)
+      function getCellStorageKey(delivery, colId) {
+        return `deliverycell_${
+          delivery.id || delivery.dossier_number || i
+        }_${colId}`;
+      }
+      const td = document.createElement("td");
+      // Ajout : identifiant data-col-id sur la cellule pour le filtrage
+      td.setAttribute("data-col-id", col.id);
+      let value = "-";
+      // Récupère la valeur sauvegardée si elle existe (pour les colonnes éditables)
+      let savedValue = null;
+      if (
+        [
+          "visitor_agent_name",
+          "transporter",
+          "inspector",
+          "customs_agent",
+          "driver",
+          "driver_phone",
+          "delivery_date",
+          "observation",
+        ].includes(col.id)
+      ) {
+        const storageKey = getCellStorageKey(delivery, col.id);
+        savedValue = localStorage.getItem(storageKey);
+      }
+
+      if (col.id === "row_number") {
+        value = i + 1;
+        td.textContent = value;
+        td.classList.add("row-number-col");
+      } else if (col.id === "date_display") {
+        let dDate = delivery.delivery_date || delivery.created_at;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            value = dDate;
+          }
+        }
+        td.textContent = value;
+        // Style joli et gras pour la cellule date livraison
+        td.style.fontWeight = "bold";
+        td.style.color = "#b91c1c"; // rouge foncé
+        td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
+        td.style.letterSpacing = "0.5px";
+        td.style.background = "rgba(255, 230, 0, 0.08)"; // jaune très transparent
+        td.style.borderRadius = "7px";
+        td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
+      } else if (col.id === "container_number") {
+        // ...existing code for container_number...
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        td.style.textAlign = "center";
+        if (tcList.length > 1) {
+          td.classList.add("tc-multi-cell");
+          const btn = document.createElement("button");
+          btn.className = "tc-tags-btn";
+          btn.type = "button";
+          btn.style.display = "inline-flex";
+          btn.style.justifyContent = "center";
+          btn.style.alignItems = "center";
+          btn.innerHTML =
+            tcList
+              .slice(0, 2)
+              .map(
+                (tc) =>
+                  `<span class="tc-tag" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1em;padding:3px 10px;border-radius:10px;margin:4px 1px 4px 1px;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(30,41,59,0.13),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">${tc}</span>`
+              )
+              .join("") +
+            (tcList.length > 2
+              ? ` <span class="tc-tag tc-tag-more" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1em;padding:3px 10px;border-radius:10px;margin:4px 1px 4px 1px;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(30,41,59,0.13),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">+${
+                  tcList.length - 2
+                }</span>`
+              : "") +
+            ' <i class="fas fa-chevron-down tc-chevron"></i>';
+          const popup = document.createElement("div");
+          popup.className = "tc-popup";
+          popup.style.display = "none";
+          popup.innerHTML = tcList
+            .map(
+              (tc) =>
+                `<div class="tc-popup-item" style='cursor:pointer;color:#0e274e;font-weight:700;font-size:1.13em;text-align:center;'>${tc}</div>`
+            )
+            .join("");
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            document.querySelectorAll(".tc-popup").forEach((p) => {
+              if (p !== popup) p.style.display = "none";
+            });
+            popup.style.display =
+              popup.style.display === "block" ? "none" : "block";
+          };
+          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
+            item.onclick = (ev) => {
+              ev.stopPropagation();
+              popup.style.display = "none";
+              showContainerDetailPopup(delivery, item.textContent);
+            };
+          });
+          document.addEventListener("click", function hidePopup(e) {
+            if (!td.contains(e.target)) popup.style.display = "none";
+          });
+          td.appendChild(btn);
+          td.appendChild(popup);
+        } else if (tcList.length === 1) {
+          const tag = document.createElement("span");
+          tag.className = "tc-tag";
+          tag.textContent = tcList[0];
+          tag.style.cssText = `
+            display: inline-block;
+            background: #e6b800;
+            color: #0e274e;
+            font-weight: 700;
+            font-size: 1em;
+            padding: 3px 10px;
+            border-radius: 10px;
+            margin: 4px 1px 4px 1px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(30,41,59,0.13),0 1px 0 #fff inset;
+            cursor: pointer;
+            transition: background 0.18s, box-shadow 0.18s;
+            border: none;
+            text-align: center;
+          `;
+          tag.onmouseenter = function () {
+            tag.style.background = "#ffd700";
+            tag.style.boxShadow =
+              "0 6px 24px rgba(30,41,59,0.32),0 1px 0 #fff inset";
+          };
+          tag.onmouseleave = function () {
+            tag.style.background = "#e6b800";
+            tag.style.boxShadow =
+              "0 3px 12px rgba(30,41,59,0.22),0 1px 0 #fff inset";
+          };
+          tag.onclick = (e) => {
+            e.stopPropagation();
+            // Correction : vérifier les champs obligatoires AVANT d'ouvrir le popup
+            if (!isAllRequiredFilled()) {
+              showAccessMessage(
+                "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                "red"
+              );
+              return;
+            }
+            showContainerDetailPopup(delivery, tcList[0]);
+          };
+          td.appendChild(tag);
+        } else {
+          td.textContent = "-";
+        }
+      } else if (col.id === "delivery_date") {
+        // Correction : n'affiche rien si la date n'est pas renseignée
         let dDate = delivery.delivery_date;
         if (dDate) {
           let dateObj = new Date(dDate);
@@ -2057,9 +2205,3 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
-
-// ...
-
-
-   
-
