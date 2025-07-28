@@ -1062,7 +1062,22 @@ if (containerNumberInput) {
       tcSpinner.className = "tc-spinner";
       tcSpinner.style.display = "inline-block";
       tcSpinner.style.marginLeft = "8px";
-      tcSpinner.innerHTML = `<svg width="22" height="22" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.415, 31.415" transform="rotate(0 25 25)"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/></circle></svg>`;
+      tcSpinner.innerHTML = `
+        <span style="display:inline-block;width:28px;height:28px;vertical-align:middle;">
+          <svg width="28" height="28" viewBox="0 0 50 50">
+            <defs>
+              <linearGradient id="tcSpinnerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#2563eb"/>
+                <stop offset="100%" stop-color="#06b6d4"/>
+              </linearGradient>
+            </defs>
+            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e7ef" stroke-width="6"/>
+            <path d="M25 5 a20 20 0 0 1 0 40 a20 20 0 0 1 0 -40" stroke="url(#tcSpinnerGradient)" stroke-width="6" stroke-linecap="round" fill="none">
+              <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.9s" repeatCount="indefinite"/>
+            </path>
+          </svg>
+        </span>
+      `;
       containerTagsInput.parentNode.insertBefore(
         tcSpinner,
         containerTagsInput.nextSibling
