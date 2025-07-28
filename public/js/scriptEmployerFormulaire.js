@@ -1052,8 +1052,10 @@ if (containerNumberInput) {
     renderContainerFootTypes();
   }
 
-  // Validation synchrone du numéro TC (4 lettres + 7 chiffres, 11 caractères)
+  // Validation TC avec spinner automatique 3s puis validation stricte (4 lettres + 7 chiffres)
   let tcErrorMsg = null;
+  let tcSpinner = null;
+  let tcSpinnerTimeout = null;
   function showTCError(msg) {
     if (!tcErrorMsg) {
       tcErrorMsg = document.createElement("div");
@@ -1077,20 +1079,54 @@ if (containerNumberInput) {
   function validateTCFormat(tc) {
     return /^[A-Za-z]{4}[0-9]{7}$/.test(tc);
   }
+  function showTCSpinner() {
+    if (!tcSpinner) {
+      tcSpinner = document.createElement("span");
+      tcSpinner.className = "tc-spinner";
+      tcSpinner.style.display = "inline-block";
+      tcSpinner.style.marginLeft = "8px";
+      tcSpinner.innerHTML = `
+        <span style="display:inline-block;width:28px;height:28px;vertical-align:middle;">
+          <svg width="28" height="28" viewBox="0 0 50 50">
+            <circle cx="25" cy="25" r="20" fill="none" stroke="#e0e7ef" stroke-width="6"/>
+            <circle cx="25" cy="25" r="20" fill="none" stroke="#2563eb" stroke-width="6" stroke-linecap="round" stroke-dasharray="90 150" stroke-dashoffset="0">
+              <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </span>
+      `;
+      containerTagsInput.parentNode.insertBefore(
+        tcSpinner,
+        containerTagsInput.nextSibling
+      );
+    }
+    tcSpinner.style.display = "inline-block";
+  }
+  function hideTCSpinner() {
+    if (tcSpinner) tcSpinner.style.display = "none";
+  }
+  // Gestion de la saisie : spinner automatique puis validation
   containerTagsInput.addEventListener("input", () => {
     const value = containerTagsInput.value.trim();
+    hideTCError();
+    if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
     if (!value) {
-      hideTCError();
+      hideTCSpinner();
       return;
     }
-    if (!validateTCFormat(value)) {
-      showTCError(
-        "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
-      );
-    } else {
-      hideTCError();
-    }
+    showTCSpinner();
+    tcSpinnerTimeout = setTimeout(() => {
+      hideTCSpinner();
+      if (!validateTCFormat(value)) {
+        showTCError(
+          "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
+        );
+      } else {
+        hideTCError();
+      }
+    }, 3000);
   });
+  // Ajout par Entrée, virgule, point-virgule
   containerTagsInput.addEventListener("keydown", (e) => {
     if (
       ["Enter", ",", ";"].includes(e.key) ||
@@ -1102,17 +1138,25 @@ if (containerNumberInput) {
       if (!value || containerTags.includes(value)) {
         containerTagsInput.value = "";
         renderContainerTags();
+        hideTCSpinner();
+        hideTCError();
+        return;
+      }
+      // Si spinner en cours, attendre la fin
+      if (tcSpinnerTimeout) {
         return;
       }
       if (!validateTCFormat(value)) {
         showTCError(
           "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
         );
+        hideTCSpinner();
         return;
       }
       containerTags.push(value);
       renderContainerTags();
       hideTCError();
+      hideTCSpinner();
       containerTagsInput.value = "";
       renderContainerTags();
     }
@@ -1138,21 +1182,27 @@ if (containerNumberInput) {
       renderContainerTags();
       containerTagsInput.value = "";
       renderContainerTags();
+      hideTCSpinner();
     }
   });
   // Clic sur l'icône Entrée verte
   enterIcon.addEventListener("click", function () {
     const value = containerTagsInput.value.trim();
     if (value && !containerTags.includes(value)) {
+      if (tcSpinnerTimeout) {
+        return;
+      }
       if (!validateTCFormat(value)) {
         showTCError(
           "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
         );
+        hideTCSpinner();
         return;
       }
       containerTags.push(value);
       renderContainerTags();
       hideTCError();
+      hideTCSpinner();
     }
     containerTagsInput.value = "";
     renderContainerTags();
