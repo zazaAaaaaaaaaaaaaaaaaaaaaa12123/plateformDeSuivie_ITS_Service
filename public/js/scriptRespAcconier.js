@@ -1660,6 +1660,38 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     overlay.remove();
                     // Afficher l'alerte verte de confirmation
                     showMiseEnLivraisonSuccessAlert();
+                    // --- AJOUT : Notifier le tableau de bord général via WebSocket ---
+                    if (
+                      window.parent &&
+                      window.parent !== window &&
+                      window.parent.postMessage
+                    ) {
+                      // Si dans un iframe, on peut utiliser postMessage (optionnel)
+                      window.parent.postMessage(
+                        {
+                          type: "acconier_status_update",
+                          deliveryId: delivery.id,
+                          blNumber,
+                          status: statutToSend,
+                        },
+                        "*"
+                      );
+                    }
+                    // Sinon, si un socket WebSocket global existe, on émet un événement
+                    if (
+                      typeof ws !== "undefined" &&
+                      ws &&
+                      ws.readyState === 1
+                    ) {
+                      ws.send(
+                        JSON.stringify({
+                          type: "acconier_status_update",
+                          deliveryId: delivery.id,
+                          blNumber,
+                          status: statutToSend,
+                        })
+                      );
+                    }
                   });
                 } catch (err) {
                   alert(

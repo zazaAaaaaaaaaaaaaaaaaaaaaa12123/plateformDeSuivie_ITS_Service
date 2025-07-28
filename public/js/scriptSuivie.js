@@ -6577,6 +6577,31 @@ if (window["WebSocket"]) {
             filterEmployeeList();
           }
         }
+        // --- NOUVEAU : écoute l'événement acconier_status_update pour mise à jour instantanée du statut BL ---
+        if (
+          message.type === "acconier_status_update" &&
+          message.deliveryId &&
+          message.status
+        ) {
+          // Cherche la livraison dans deliveries et allDeliveries
+          let found = false;
+          [deliveries, allDeliveries].forEach((arr) => {
+            const d = arr.find((x) => x.id === message.deliveryId);
+            if (d) {
+              d.delivery_status_acconier =
+                message.status === "mise_en_livraison"
+                  ? "mise_en_livraison_acconier"
+                  : message.status === "pending_acconier"
+                  ? "pending_acconier"
+                  : message.status;
+              found = true;
+            }
+          });
+          if (found) {
+            filterDeliveriesIntoCategories();
+            applyCombinedFilters();
+          }
+        }
       } catch (error) {
         console.error("[WS][FRONT] Erreur parsing WebSocket message:", error);
       }
@@ -8980,4 +9005,4 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Scriptez a ajoutersds en cas de pertubation 125 GGGAAAA34 ***/
+/****** Scriptez ashs ajoutersds en cas dsjhdbje pertubation 125 GGGAAAA34 ***/

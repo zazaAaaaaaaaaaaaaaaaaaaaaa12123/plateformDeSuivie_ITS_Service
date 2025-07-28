@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
           // NE JAMAIS ÉCRIRE DANS LA CLÉ 'user' OU AUTRE !
           // Redirection directe vers le tableau de bord Acconier
           window.location.href =
-            "https://plateformdesuivie-its-service.onrender.com/html/interfaceRespAconier.html";
+            "https://plateformdesuivie-its-service-1cjx.onrender.com/html/interfaceRespAconier.html";
         } else {
           errorDiv.textContent = data.message || "Erreur lors de la connexion.";
         }
