@@ -82,26 +82,22 @@ document.addEventListener("DOMContentLoaded", function () {
       "avatarRespAconierContainer"
     );
     if (avatarContainer) {
-      // SÉPARATION STRICTE : ce JS NE DOIT JAMAIS lire/écrire autre chose que respacconierUser
+      // On lit l'utilisateur mais on ne crée plus rien dans le localStorage si absent
       let respacconierUser = null;
       try {
         respacconierUser = JSON.parse(localStorage.getItem("respacconierUser"));
       } catch (e) {
         respacconierUser = null;
       }
-      if (
-        !respacconierUser ||
-        typeof respacconierUser !== "object" ||
-        !respacconierUser.nom
-      ) {
-        respacconierUser = { nom: "Responsable", email: "" };
-        localStorage.setItem(
-          "respacconierUser",
-          JSON.stringify(respacconierUser)
-        );
-      }
-      const nom = respacconierUser.nom || "Responsable";
-      const email = respacconierUser.email || "";
+      // Si pas d'utilisateur authentifié, on affiche juste un avatar générique sans rien écrire dans le localStorage
+      const nom =
+        respacconierUser && respacconierUser.nom
+          ? respacconierUser.nom
+          : "Responsable";
+      const email =
+        respacconierUser && respacconierUser.email
+          ? respacconierUser.email
+          : "";
 
       function stringToColor(str) {
         let hash = 0;
