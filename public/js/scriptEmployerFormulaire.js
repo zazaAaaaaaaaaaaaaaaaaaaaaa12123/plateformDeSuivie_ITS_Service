@@ -1199,10 +1199,23 @@ if (containerNumberInput) {
   // Clic sur l'icône Entrée verte
   enterIcon.addEventListener("click", function () {
     const value = containerTagsInput.value.trim();
-    if (value && !containerTags.includes(value)) {
-      containerTags.push(value);
+    if (!value || containerTags.includes(value)) {
+      containerTagsInput.value = "";
       renderContainerTags();
+      return;
     }
+    // Validation stricte immédiate (même logique que keydown)
+    if (value.length !== 11) {
+      showTCError("Le numéro TC doit comporter exactement 11 caractères.");
+      return;
+    }
+    if (!/^[A-Za-z]{4}[0-9]{7}$/.test(value)) {
+      showTCError("Format invalide : 4 lettres suivies de 7 chiffres.");
+      return;
+    }
+    containerTags.push(value);
+    renderContainerTags();
+    hideTCError();
     containerTagsInput.value = "";
     renderContainerTags();
     containerTagsInput.focus();
