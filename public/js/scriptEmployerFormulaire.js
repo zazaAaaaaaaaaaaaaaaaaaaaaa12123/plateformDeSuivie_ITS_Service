@@ -1624,7 +1624,6 @@ async function submitDeliveryForm(status) {
   if (
     !employeeNameInput ||
     !clientNameInput ||
-    !containerTypeAndContentInput ||
     !lieuInput ||
     !containerNumberInput ||
     // !containerFootTypeSelect || // SUPPRIMÉ : ce champ n'existe plus, remplacé par la zone dynamique
