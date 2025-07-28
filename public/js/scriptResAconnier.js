@@ -738,7 +738,7 @@ document.addEventListener("DOMContentLoaded", function () {
             currentSelectedHistoryCard.classList.remove("selected");
           }
 
-          item.classList.add("selected"); // Add 'selected' to clicked item
+          item.classList.add("selected"); // Add(ajout) 'selected' to clicked item
           selectedDeliveryId = delivery.id; // Update selected ID to the clicked delivery
 
           // Always show the single delivery view when an item is clicked
