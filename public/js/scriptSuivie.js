@@ -8971,98 +8971,6 @@ if (window["WebSocket"]) {
     document.head.appendChild(style);
   })();
 
-  // ================== SYNCHRONISATION TEMPS RÉEL STATUT BL (TABLEAU DE BORD) ==================
-  // Cette fonction met à jour dynamiquement la colonne Statut de livraison (Resp. Acconiers)
-  // lors d'une mise à jour WebSocket (mise en livraison ou retour en attente de paiement)
-  function updateAcconierStatusInTableauDeBord(blNumber, newStatus) {
-    const table = document.getElementById("deliveriesTable");
-    if (!table) return;
-    const rows = table.querySelectorAll("tbody tr");
-    let maj = false;
-    rows.forEach((row) => {
-      // Recherche par BL
-      const blCell = row.querySelector('[data-column-id="bl_number"]');
-      const dossierCell = row.querySelector(
-        '[data-column-id="dossier_number"]'
-      );
-      let found = false;
-      if (blCell && blCell.textContent.trim() === blNumber) found = true;
-      if (!found && dossierCell && dossierCell.textContent.trim() === blNumber)
-        found = true;
-      if (found) {
-        const acconierStatusCell = row.querySelector(
-          '[data-column-id="delivery_status_acconier"]'
-        );
-        if (acconierStatusCell) {
-          console.log(
-            "[SYNC DEBUG] MAJ statut acconier pour BL/dossier",
-            blNumber,
-            "| Nouveau statut reçu :",
-            newStatus
-          );
-          acconierStatusCell.textContent = newStatus;
-          maj = true;
-        }
-      }
-    });
-    if (!maj) {
-      console.warn(
-        "[SYNC DEBUG] Aucune ligne trouvée pour BL/dossier",
-        blNumber,
-        "| Statut reçu :",
-        newStatus
-      );
-    }
-  }
-
-  // Ajoute l'écouteur WebSocket pour la synchronisation temps réel
-  function addAcconierStatusWebSocketSync() {
-    if (!window.socket) return;
-    window.socket.addEventListener("message", function (event) {
-      try {
-        const data = JSON.parse(event.data);
-        console.log("[SYNC DEBUG] Message WebSocket reçu :", data);
-        // Cas 1 : message de type bl_status_update (mise en livraison)
-        if (
-          data.type === "bl_status_update" &&
-          data.delivery &&
-          data.delivery.bl_number
-        ) {
-          const blNumber = data.delivery.bl_number;
-          let statut = data.delivery.delivery_status_acconier || "";
-          console.log(
-            "[SYNC DEBUG] bl_status_update | BL:",
-            blNumber,
-            "| Statut reçu:",
-            statut
-          );
-          updateAcconierStatusInTableauDeBord(blNumber, statut);
-        }
-        // Cas 2 : message de type delivery_update_alert (autre mise à jour possible)
-        if (
-          data.type === "delivery_update_alert" &&
-          data.deliveryData &&
-          data.deliveryData.bl_number
-        ) {
-          const blNumber = data.deliveryData.bl_number;
-          let statut = data.deliveryData.delivery_status_acconier || "";
-          console.log(
-            "[SYNC DEBUG] delivery_update_alert | BL:",
-            blNumber,
-            "| Statut reçu:",
-            statut
-          );
-          updateAcconierStatusInTableauDeBord(blNumber, statut);
-        }
-      } catch (e) {
-        console.error("[SYNC DEBUG] Erreur parsing WebSocket:", e);
-      }
-    });
-  }
-
-  // Lance la synchronisation WebSocket après l'initialisation
-  setTimeout(addAcconierStatusWebSocketSync, 1000);
-
   // Appelle le clignotement après chaque rendu du tableau principal
   const originalApplyCombinedFilters =
     window.applyCombinedFilters || applyCombinedFilters;
@@ -9072,4 +8980,4 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en cas de pertubation 125 GGGAAAA34 *******/
+/****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
