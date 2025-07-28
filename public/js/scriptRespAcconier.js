@@ -1,3 +1,30 @@
+// ===============================
+// Fonctions utilitaires pour requêtes API sécurisées avec JWT
+function getAuthToken() {
+  return localStorage.getItem("auth_token") || "";
+}
+
+function postWithAuth(url, data) {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + getAuthToken(),
+    },
+    body: JSON.stringify(data),
+  }).then((res) => res.json());
+}
+
+function putWithAuth(url, data) {
+  return fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + getAuthToken(),
+    },
+    body: JSON.stringify(data),
+  }).then((res) => res.json());
+}
 // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
