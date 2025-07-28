@@ -1667,7 +1667,7 @@ if (window["WebSocket"]) {
   // Stores the name of the agent currently being filtered in the modal, null otherwise.
   let activeAgentFilterName = null;
 
-  let socket; // WebSocket connectionsbgvdsn
+  let socket; // WebSocket connectionsbgvdsnshysj
 
   // Define ALL possible backend statuses with their display info for GLOBAL DISPLAY
   const GLOBAL_DISPLAY_STATUS_INFO = {
