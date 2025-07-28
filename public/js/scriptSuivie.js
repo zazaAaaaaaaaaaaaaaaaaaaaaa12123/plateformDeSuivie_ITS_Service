@@ -2100,19 +2100,6 @@ if (window["WebSocket"]) {
    * @returns {{text: string, iconClass: string, tailwindColorClass: string, hexColor: string, badgeClass: string}}
    */
   function getStatusInfo(status) {
-    // Correction prioritaire : si le statut est "mise_en_livraison_acconier", forcer l'affichage "Mise en livraison"
-    if (
-      typeof status === "string" &&
-      status.trim() === "mise_en_livraison_acconier"
-    ) {
-      return {
-        text: "Mise en livraison",
-        iconClass: "fa-hourglass-half",
-        tailwindColorClass: "text-yellow-500",
-        hexColor: "#f59e0b",
-        badgeClass: "mise-en-livraison",
-      };
-    }
     if (!status || typeof status !== "string" || !status.trim()) {
       return {
         text: "-",
@@ -2541,37 +2528,26 @@ if (window["WebSocket"]) {
         );
       }
 
-      // Inclure les BL en "mise en livraison" dans les livraisons en cours (tableau principal)
-      const isMiseEnLivraison =
-        delivery.delivery_status_acconier === "mise_en_livraison_acconier" ||
-        (typeof delivery.delivery_status_acconier === "string" &&
-          delivery.delivery_status_acconier
-            .toLowerCase()
-            .includes("mise en livraison"));
-
       if (
         (delivery.delivery_status_acconier === "pending_acconier" ||
-          delivery.delivery_status_acconier === "awaiting_delivery_acconier" ||
-          isMiseEnLivraison) &&
+          delivery.delivery_status_acconier === "awaiting_delivery_acconier") &&
         deliveryCreatedAtLocalMidnight && // Ensure it's a valid date
         deliveryCreatedAtLocalMidnight.getTime() ===
           todayLocalMidnight.getTime() // Compare timestamps
       ) {
         currentPendingDeliveries.push(delivery);
       } else {
-        // Determine if it's recents historical (within 3 days) or archived (older than 3 days)
+        // Determine if it's recent historical (within 3 days) or archived (older than 3 days)
         if (
           delivery.delivery_status_acconier !== "pending_acconier" &&
           delivery.delivery_status_acconier !== "awaiting_delivery_acconier" &&
-          !isMiseEnLivraison &&
           delivery.created_at &&
           delivery.created_at.getTime() >= threeDaysAgo.getTime()
         ) {
           recentHistoricalDeliveries.push(delivery);
         } else if (
           delivery.delivery_status_acconier !== "pending_acconier" &&
-          delivery.delivery_status_acconier !== "awaiting_delivery_acconier" &&
-          !isMiseEnLivraison
+          delivery.delivery_status_acconier !== "awaiting_delivery_acconier"
         ) {
           archivedDeliveries.push(delivery);
         }
@@ -3843,16 +3819,9 @@ if (window["WebSocket"]) {
           cell.appendChild(dropdownContent);
           return cell;
         } else if (fieldName === "delivery_status_acconier") {
-          // Affichage du statut acconier dans la colonne : logique métier complète
+          // Affichage du statut acconier dans la colonne : forcer "En attente de paiement" si statut = "pending_acconier"
           let displayStatus = value;
-          // Si le statut contient "mise en livraison" (toutes variantes), on force l'affichage
-          if (
-            typeof value === "string" &&
-            (value.toLowerCase().includes("mise en livraison") ||
-              value === "mise_en_livraison_acconier")
-          ) {
-            displayStatus = "mise_en_livraison_acconier";
-          } else if (value === "pending_acconier") {
+          if (value === "pending_acconier") {
             displayStatus = "awaiting_payment_acconier";
           }
           const statusInfo = getStatusInfo(displayStatus);
@@ -5669,16 +5638,15 @@ if (window["WebSocket"]) {
   function calculateSummaryData(deliveriesArray) {
     const data = {
       totalDeliveries: deliveriesArray.length,
-      containerContents: {},
+      containerContents: {}, // { 'Type A': count, 'Type B': count }
       uniqueDeclarationNumbers: new Set(),
       uniqueBLNumbers: new Set(),
       uniqueDossierNumbers: new Set(),
       totalContainers: 0,
-      acconierStatusCounts: {},
-      generalStatusCounts: {},
-      uniqueDeliveryLocations: new Set(),
-      transporterModes: {},
-      acconierObservations: [],
+      acconierStatusCounts: {}, // { 'Mise en livraison': count, 'Traité Acconier': count }
+      generalStatusCounts: {}, // { 'Livré': count, 'En attente': count }
+      uniqueDeliveryLocations: new Set(), // Pour "Lieu de livraison"
+      transporterModes: {}, // Pour Mode de Transport
     };
 
     deliveriesArray.forEach((d) => {
@@ -5697,29 +5665,24 @@ if (window["WebSocket"]) {
       // Nombre de conteneurs
       data.totalContainers += d.number_of_containers || 0;
 
-      // Statut de livraison (Resp. Acconiers) : logique métier
-      let acconierStatus = (
-        d.delivery_status_acconier ||
-        d.status_acconier ||
-        d.status ||
-        ""
-      )
-        .toString()
-        .toLowerCase();
-      if (
-        acconierStatus.includes("mise en livraison") ||
-        acconierStatus.includes("mise_en_livraison")
-      ) {
-        data.acconierStatusCounts["Mise en livraison"] =
-          (data.acconierStatusCounts["Mise en livraison"] || 0) + 1;
-      } else {
-        data.acconierStatusCounts["En attente de paiement"] =
-          (data.acconierStatusCounts["En attente de paiement"] || 0) + 1;
+      // Statut de livraison (Resp. Aconiés) : traduction Cleared_by_acconier en français
+      const acconierStatusInfo = getStatusInfo(d.delivery_status_acconier);
+      let statutAcconier = acconierStatusInfo.text;
+      if (statutAcconier && typeof statutAcconier === "string") {
+        const txt = statutAcconier.trim().toLowerCase();
+        if (
+          [
+            "cleared_by_acconier",
+            "clearedbyacconier",
+            "cleared-acconier",
+            "cleared acconier",
+          ].includes(txt)
+        ) {
+          statutAcconier = "Validé par Acconier";
+        }
       }
-      // Observations (Resp. Acconiers)
-      if (d.observation_acconier) {
-        data.acconierObservations.push(d.observation_acconier);
-      }
+      data.acconierStatusCounts[statutAcconier] =
+        (data.acconierStatusCounts[statutAcconier] || 0) + 1;
 
       // Statut (Général) : calculé comme dans le tableau agent (X sur Y livrés)
       // On récupère toutes les livraisons du même dossier
@@ -5881,7 +5844,7 @@ if (window["WebSocket"]) {
       createSummaryItem("Mode de Transport", transporterModesText || "-")
     );
 
-    // Statut de livraison (Resp. Acconiers) - logique métier
+    // Statut de livraison (Resp. Aconiés)
     let acconierStatusText = Object.entries(summaryData.acconierStatusCounts)
       .map(([status, count]) => `${count} ${status}`)
       .join(", ");
@@ -5891,18 +5854,6 @@ if (window["WebSocket"]) {
         acconierStatusText || "-"
       )
     );
-    // Observations (Resp. Acconiers) - temps réel
-    if (
-      summaryData.acconierObservations &&
-      Array.isArray(summaryData.acconierObservations)
-    ) {
-      let obsText = summaryData.acconierObservations
-        .filter(Boolean)
-        .join(" | ");
-      parentElement.appendChild(
-        createSummaryItem("Observations (Resp. Acconiers)", obsText || "-")
-      );
-    }
 
     // Statut (Général)
     let generalStatusText = Object.entries(summaryData.generalStatusCounts)
@@ -9027,6 +8978,6 @@ if (window["WebSocket"]) {
     originalApplyCombinedFilters.apply(this, args);
     setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
   };
-  // ================== FIN CLIGNOTEMENT VERT ==================
+  // ================shgj FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/

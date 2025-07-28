@@ -3310,26 +3310,11 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
       }
     }
     bl_statuses[blNumber] = status;
-
-    // Si le statut BL devient "mise en livraison", on met aussi à jour delivery_status_acconier
-    let updateQuery, updateValues;
-    if (
-      typeof status === "string" &&
-      status.toLowerCase().includes("mise en livraison")
-    ) {
-      updateQuery =
-        "UPDATE livraison_conteneur SET bl_statuses = $1, delivery_status_acconier = $2 WHERE id = $3 RETURNING *;";
-      updateValues = [
-        JSON.stringify(bl_statuses),
-        "mise_en_livraison_acconier",
-        id,
-      ];
-    } else {
-      updateQuery =
-        "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2 RETURNING *;";
-      updateValues = [JSON.stringify(bl_statuses), id];
-    }
-    const updateRes = await pool.query(updateQuery, updateValues);
+    // Sauvegarde en base
+    const updateRes = await pool.query(
+      "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2 RETURNING *;",
+      [JSON.stringify(bl_statuses), id]
+    );
     if (updateRes.rows.length === 0) {
       return res
         .status(404)
@@ -3378,7 +3363,7 @@ app.get("/html/repoLivAuth.html", (req, res) => {
 // ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
-// Cette route doit être TOUT EN BAS, après toutes les routes API !
+// Cette route doit être TOUT EN BAS, après toutessnbsj les routes API !
 // (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
