@@ -4731,6 +4731,14 @@ if (window["WebSocket"]) {
   function applyCombinedFilters(shouldRenderTable = true) {
     // Removed showSpinner() call here as spinner is removed
     let filteredData = [...deliveries];
+    // Filtre pour masquer les BL mis en livraison (statut acconier)
+    filteredData = filteredData.filter((delivery) => {
+      // On masque si le statut acconier est "mise_en_livraison_acconier" ou "mise_en_livraison"
+      return (
+        delivery.delivery_status_acconier !== "mise_en_livraison_acconier" &&
+        delivery.delivery_status_acconier !== "mise_en_livraison"
+      );
+    });
 
     const searchTerm = searchInput.value.toLowerCase().trim();
     if (searchTerm !== "") {
