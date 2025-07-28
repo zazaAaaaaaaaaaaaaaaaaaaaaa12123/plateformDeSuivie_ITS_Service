@@ -1685,31 +1685,6 @@ if (window["WebSocket"]) {
       tailwindColorClass: "text-yellow-500",
       hexColor: "#f59e0b",
     },
-    in_progress_payment_acconier: {
-      text: "En cours de paiement",
-      icon: "fa-credit-card",
-      tailwindColorClass: "text-blue-500",
-      hexColor: "#007bff",
-    },
-    payment_done_acconier: {
-      text: "Paiement effectué",
-      icon: "fa-check-circle",
-      tailwindColorClass: "text-green-500",
-      hexColor: "#22c55e",
-    },
-    awaiting_payment_acconier: {
-      text: "En attente de paiement",
-      icon: "fa-clock",
-      tailwindColorClass: "text-gray-500",
-      hexColor: "#6b7280",
-    },
-    // L'ancien statut "Mise en livraison (ancienne)" n'est plus utilisé, mais on garde le mapping pour l'historique
-    "Mise en livraison (ancienne)": {
-      text: "Attente paiement",
-      icon: "fa-clock",
-      tailwindColorClass: "text-gray-500",
-      hexColor: "#6b7280",
-    },
     in_progress_acconier: {
       text: "En cours de livraison",
       icon: "fa-truck-moving",
@@ -1784,13 +1759,7 @@ if (window["WebSocket"]) {
   // Define ONLY selectable options for the dropdown in the delivery card (if applicable)
   // This list is specific to what the user can *set* as a status.
   const ACCONIER_STATUS_OPTIONS_SELECTABLE = [
-    {
-      value: "pending_acconier",
-      text: "En attente de paiement",
-      icon: "fa-clock",
-      tailwindColorClass: "text-gray-500",
-      hexColor: "#6b7280",
-    },
+    // Statut paiement supprimé
     {
       value: "in_progress_acconier",
       text: "En cours de livraison",
@@ -1823,14 +1792,7 @@ if (window["WebSocket"]) {
 
   // Define ONLY selectable options for the main table's status filter dropdown
   const GLOBAL_STATUS_OPTIONS = [
-    /* {
-      value: "pending_acconier",
-      text: "En attente de paiement",
-      apiValue: "pending_acconier",
-      icon: "fa-clock",
-      tailwindColorClass: "text-gray-500",
-      hexColor: "#6b7280",
-    },*/
+    // Statut paiement supprimé
     {
       value: "livre",
       text: "Livré",
@@ -3694,7 +3656,7 @@ if (window["WebSocket"]) {
           // Affichage du statut dans l'entête : forcer "En attente de paiement" si statut = "pending_acconier"
           let displayStatus = value;
           if (value === "pending_acconier") {
-            displayStatus = "awaiting_payment_acconier";
+            displayStatus = "";
           }
           cell.classList.add("dropdown-cell-container");
           const dropdownToggleId = `status-toggle-${delivery.id}`;
@@ -3822,7 +3784,7 @@ if (window["WebSocket"]) {
           // Affichage du statut acconier dans la colonne : forcer "En attente de paiement" si statut = "pending_acconier"
           let displayStatus = value;
           if (value === "pending_acconier") {
-            displayStatus = "awaiting_payment_acconier";
+            displayStatus = "";
           }
           const statusInfo = getStatusInfo(displayStatus);
           // Only add icon if it's not empty
@@ -4354,7 +4316,7 @@ if (window["WebSocket"]) {
                 "<span style='color:#f59e0b;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-clock'></i></span>";
               // Correction : distinguer "pending_acconier"/"pending_aconnier" de "pending" classique
               if (["pending_acconier", "pending_aconnier"].includes(sNorm)) {
-                statut = "En attente de paiement";
+                statut = "En attente";
               } else {
                 statut = "En attente";
               }
