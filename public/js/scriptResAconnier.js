@@ -718,6 +718,10 @@ document.addEventListener("DOMContentLoaded", function () {
         if (delivery.id === selectedDeliveryId) {
           item.classList.add("selected");
         }
+
+        // --- Ajout : rendre les dossiers en retard cliquables et focus sur la ligne du tableau ---
+        item.style.cursor = "pointer";
+        item.title = "Voir ce dossier dans le tableau";
         item.addEventListener("click", () => {
           // Remove 'selected' from previously selected item in the new requests summary bar
           const currentSelected = newRequestsSummaryBar.querySelector(
@@ -744,6 +748,22 @@ document.addEventListener("DOMContentLoaded", function () {
           expandedHistoryView.classList.add("hidden");
           singleDeliveryView.classList.remove("hidden");
           newRequestsSection.classList.remove("hidden");
+
+          // --- SCROLL ET FLASH SUR LA LIGNE DU TABLEAU ---
+          const suiviTable = document.getElementById("suiviTable");
+          if (suiviTable) {
+            const row = suiviTable.querySelector(
+              `tr[data-delivery-id='${delivery.id}']`
+            );
+            if (row) {
+              row.scrollIntoView({ behavior: "smooth", block: "center" });
+              // Ajoute une classe de flash rouge temporaire
+              row.classList.add("flash-red-row");
+              setTimeout(() => {
+                row.classList.remove("flash-red-row");
+              }, 900);
+            }
+          }
         });
         item.appendChild(label);
         item.appendChild(deleteBtn);
@@ -751,6 +771,18 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   }
+  // --- Style pour le flash rouge sur la ligne du tableau ---
+  const styleFlash = document.createElement("style");
+  styleFlash.innerHTML = `
+.flash-red-row {
+  animation: flashRedAnim 0.9s;
+}
+@keyframes flashRedAnim {
+  0% { background: #fee2e2; }
+  60% { background: #fecaca; }
+  100% { background: transparent; }
+}`;
+  document.head.appendChild(styleFlash);
 
   /**
    * Displays the detailed card for a selected delivery in the main dashboard area.
