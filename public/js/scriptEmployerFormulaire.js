@@ -1096,6 +1096,31 @@ if (containerNumberInput) {
   function validateTCFormat(tc) {
     return /^[A-Za-z]{4}[0-9]{7}$/.test(tc);
   }
+  // Validation stricte à chaque saisie (input)
+  containerTagsInput.addEventListener("input", () => {
+    const value = containerTagsInput.value.trim();
+    if (value.length === 0) {
+      hideTCSpinner();
+      hideTCError();
+      if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
+      return;
+    }
+    showTCSpinner();
+    hideTCError();
+    if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
+    tcSpinnerTimeout = setTimeout(() => {
+      hideTCSpinner();
+      if (value.length !== 11) {
+        showTCError("Le numéro TC doit comporter exactement 11 caractères.");
+      } else if (!/^[A-Za-z]{4}[0-9]{7}$/.test(value)) {
+        showTCError("Format invalide : 4 lettres suivies de 7 chiffres.");
+      } else {
+        hideTCError();
+      }
+    }, 600); // délai court pour laisser le temps de saisir
+  });
+
+  // Ajout par touche Entrée, virgule, point-virgule
   containerTagsInput.addEventListener("keydown", (e) => {
     if (
       ["Enter", ",", ";"].includes(e.key) ||
@@ -1109,23 +1134,20 @@ if (containerNumberInput) {
         renderContainerTags();
         return;
       }
-      showTCSpinner();
+      // Validation stricte immédiate
+      if (value.length !== 11) {
+        showTCError("Le numéro TC doit comporter exactement 11 caractères.");
+        return;
+      }
+      if (!/^[A-Za-z]{4}[0-9]{7}$/.test(value)) {
+        showTCError("Format invalide : 4 lettres suivies de 7 chiffres.");
+        return;
+      }
+      containerTags.push(value);
+      renderContainerTags();
       hideTCError();
-      if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
-      tcSpinnerTimeout = setTimeout(() => {
-        hideTCSpinner();
-        if (!validateTCFormat(value)) {
-          showTCError(
-            "Le numéro TC doit comporter 11 caractères : 4 lettres suivies de 7 chiffres."
-          );
-        } else {
-          containerTags.push(value);
-          renderContainerTags();
-          hideTCError();
-        }
-        containerTagsInput.value = "";
-        renderContainerTags();
-      }, 3000);
+      containerTagsInput.value = "";
+      renderContainerTags();
     }
   });
   // Affiche le spinner dès qu'on commence à saisir (input)
