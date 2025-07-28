@@ -1742,7 +1742,7 @@ async function submitDeliveryForm(status) {
   formData.append("client_name", clientName);
   formData.append("client_phone", clientPhone);
   formData.append("container_type_and_content", containerTypeAndContent);
-  formData.append("status", status); // Le statut est maintenant 'pending_acconier' pour le bouton Valider
+  formData.append("status", status); // Le statuts est maintenant 'pending_acconier' pour le bouton Valider
   formData.append("lieu", lieu);
   // On envoie la liste des numéros TC sous forme de chaîne séparée par des virgules (ou tableau si backend accepte)
   formData.append("container_number", containerNumbers.join(", "));
