@@ -1652,7 +1652,7 @@ app.post(
     if (
       !employee_name ||
       !client_name ||
-      !container_type_and_content ||
+      //     !container_type_and_content ||
       !lieu ||
       !normalized_container_number ||
       !container_foot_type ||
