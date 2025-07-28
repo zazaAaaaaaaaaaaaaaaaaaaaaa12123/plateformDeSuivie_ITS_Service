@@ -3355,47 +3355,6 @@ app.get("/html/acconier_auth.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "acconier_auth.html"));
 });
 
-// ===============================
-// ROUTE API : Statut et observation acconier pour un BL
-// ===============================
-app.get("/api/resp_acconier_status", async (req, res) => {
-  const { bl } = req.query;
-  if (!bl) {
-    return res.status(400).json({
-      success: false,
-      message: "Paramètre 'bl' requis.",
-    });
-  }
-  try {
-    // On cherche la dernière livraison pour ce BL
-    const query = `SELECT delivery_status_acconier, observation_acconier FROM livraison_conteneur WHERE bl_number = $1 ORDER BY created_at DESC LIMIT 1;`;
-    const result = await pool.query(query, [bl]);
-    if (result.rows.length === 0) {
-      // Si aucun résultat, statut par défaut
-      return res.json({ statut: "En attente de paiement", observation: "" });
-    }
-    const row = result.rows[0];
-    let statut = "En attente de paiement";
-    if (
-      row.delivery_status_acconier &&
-      row.delivery_status_acconier.toLowerCase() ===
-        "mise_en_livraison_acconier"
-    ) {
-      statut = "mise en livraison";
-    }
-    res.json({
-      statut,
-      observation: row.observation_acconier || "",
-    });
-  } catch (err) {
-    console.error("Erreur API /api/resp_acconier_status:", err);
-    res.status(500).json({
-      success: false,
-      message: "Erreur serveur lors de la récupération du statut acconier.",
-    });
-  }
-});
-
 // Route explicite pour repoLivAuth.html
 app.get("/html/repoLivAuth.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "repoLivAuth.html"));
@@ -3404,8 +3363,9 @@ app.get("/html/repoLivAuth.html", (req, res) => {
 // ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
-// Cette route doit être TOUT EN BAS, après toutessnbsj les routes API !
+// Cette route doit être TOUT EN BAS, après toutes les routes API !
 // (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
+// ===============================cjusk
