@@ -839,8 +839,8 @@ if (window["WebSocket"]) {
                         acconierCell.innerHTML =
                           '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
                       } else {
-                        acconierCell.innerHTML =
-                          '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+                        // Supprime le statut "En attente de paiement" et son icône, laisse la cellule vide
+                        acconierCell.innerHTML = "";
                       }
                     }
                   }
