@@ -155,6 +155,10 @@ document.addEventListener("DOMContentLoaded", function () {
                   behavior: "smooth",
                   block: "center",
                 });
+                // Forcer le retrait puis l'ajout pour relancer l'animation à chaque clic
+                foundRow.classList.remove("flash-red-row");
+                // Force reflow pour relancer l'animation même si déjà présente
+                void foundRow.offsetWidth;
                 foundRow.classList.add("flash-red-row");
                 setTimeout(() => {
                   foundRow.classList.remove("flash-red-row");
@@ -178,7 +182,7 @@ document.addEventListener("DOMContentLoaded", function () {
         style.id = "flash-red-row-style";
         style.innerHTML = `
         .flash-red-row {
-          animation: flashRedAnim 0.9s;
+          animation: flashRedAnim 0.9s cubic-bezier(0.4,0,0.2,1);
         }
         @keyframes flashRedAnim {
           0% { background: #fee2e2; }
