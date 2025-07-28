@@ -1323,7 +1323,7 @@ function init() {
         const requiredInputs = [
           employeeNameInput,
           clientNameInput,
-          containerTypeAndContentInput,
+          // containerTypeAndContentInput, // Champ Contenu rendu facultatif
           lieuInput,
           containerNumberInput,
           // containerFootTypeSelect, // SUPPRIMÉ : ce champ n'existe plus, remplacé par la zone dynamique
