@@ -2095,6 +2095,28 @@ app.get("/deliveries/status", async (req, res) => {
 
 // PUT deliveries/:id (Mise à jour générale)
 app.put("/deliveries/:id", async (req, res) => {
+  // Émission WebSocket si passage à "mise_en_livraison_acconier"
+  if (
+    updates.hasOwnProperty("delivery_status_acconier") &&
+    updates.delivery_status_acconier === "mise_en_livraison_acconier"
+  ) {
+    const blStatusPayload = JSON.stringify({
+      type: "bl_status_update",
+      delivery: updatedDelivery,
+      message: `Le BL/dossier '${
+        updatedDelivery.dossier_number ||
+        updatedDelivery.bl_number ||
+        updatedDelivery.id
+      }' est passé en mise en livraison (acconier)`,
+    });
+    if (wss && wss.clients) {
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(blStatusPayload);
+        }
+      });
+    }
+  }
   const { id } = req.params;
   const updates = req.body;
 
@@ -2913,6 +2935,27 @@ app.get("/interfaceFormulaireEmployer.html", (req, res) => {
 // --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
 // ===============================
 app.patch("/deliveries/:id/container-status", async (req, res) => {
+  // Émission WebSocket si passage à "mise_en_livraison_acconier"
+  if (
+    updatedDelivery.delivery_status_acconier === "mise_en_livraison_acconier"
+  ) {
+    const blStatusPayload = JSON.stringify({
+      type: "bl_status_update",
+      delivery: updatedDelivery,
+      message: `Le BL/dossier '${
+        updatedDelivery.dossier_number ||
+        updatedDelivery.bl_number ||
+        updatedDelivery.id
+      }' est passé en mise en livraison (acconier)`,
+    });
+    if (wss && wss.clients) {
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(blStatusPayload);
+        }
+      });
+    }
+  }
   const { id } = req.params;
   const { containerNumber, status } = req.body || {};
   if (!containerNumber || !status) {
