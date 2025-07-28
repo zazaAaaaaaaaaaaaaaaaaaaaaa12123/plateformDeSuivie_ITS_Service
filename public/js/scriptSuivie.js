@@ -2528,9 +2528,18 @@ if (window["WebSocket"]) {
         );
       }
 
+      // Inclure les BL en "mise en livraison" dans les livraisons en cours (tableau principal)
+      const isMiseEnLivraison =
+        delivery.delivery_status_acconier === "mise_en_livraison_acconier" ||
+        (typeof delivery.delivery_status_acconier === "string" &&
+          delivery.delivery_status_acconier
+            .toLowerCase()
+            .includes("mise en livraison"));
+
       if (
         (delivery.delivery_status_acconier === "pending_acconier" ||
-          delivery.delivery_status_acconier === "awaiting_delivery_acconier") &&
+          delivery.delivery_status_acconier === "awaiting_delivery_acconier" ||
+          isMiseEnLivraison) &&
         deliveryCreatedAtLocalMidnight && // Ensure it's a valid date
         deliveryCreatedAtLocalMidnight.getTime() ===
           todayLocalMidnight.getTime() // Compare timestamps
@@ -2541,13 +2550,15 @@ if (window["WebSocket"]) {
         if (
           delivery.delivery_status_acconier !== "pending_acconier" &&
           delivery.delivery_status_acconier !== "awaiting_delivery_acconier" &&
+          !isMiseEnLivraison &&
           delivery.created_at &&
           delivery.created_at.getTime() >= threeDaysAgo.getTime()
         ) {
           recentHistoricalDeliveries.push(delivery);
         } else if (
           delivery.delivery_status_acconier !== "pending_acconier" &&
-          delivery.delivery_status_acconier !== "awaiting_delivery_acconier"
+          delivery.delivery_status_acconier !== "awaiting_delivery_acconier" &&
+          !isMiseEnLivraison
         ) {
           archivedDeliveries.push(delivery);
         }
