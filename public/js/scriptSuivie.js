@@ -5037,7 +5037,67 @@ if (window["WebSocket"]) {
   //   });
   // }
 
-  // Function to populate and manage the column selector panel - REMOVED
+  // ================== SYNCHRONISATION TEMPS RÉEL AVEC resp_acconier.html ==================
+  // Cette fonction récupère le statut et l'observation d'un BL depuis resp_acconier.html
+  // et met à jour dynamiquement l'interface Responsable Acconier
+  async function fetchAcconierStatusAndObservation(blNumber) {
+    try {
+      // On suppose que resp_acconier.html expose une API ou un endpoint JSON pour les statuts/observations
+      // Exemple d'endpoint : /api/resp_acconier_status?bl=xxxx
+      // À adapter selon l'implémentation réelle côté serveur !
+      const response = await fetch(
+        `/api/resp_acconier_status?bl=${encodeURIComponent(blNumber)}`
+      );
+      if (!response.ok)
+        throw new Error("Erreur lors de la récupération du statut acconier");
+      const data = await response.json();
+      // data = { statut: 'mise en livraison' | autre, observation: '...' }
+      return data;
+    } catch (e) {
+      // Si erreur, on retourne le statut par défaut
+      return { statut: "En attente de paiement", observation: "" };
+    }
+  }
+
+  // Met à jour dynamiquement le statut et l'observation dans l'interface Responsable Acconier
+  async function updateAcconierStatusAndObservation(
+    blNumber,
+    statutCell,
+    observationCell
+  ) {
+    const data = await fetchAcconierStatusAndObservation(blNumber);
+    // Logique métier :
+    // Si le statut n'est pas "mise en livraison", on affiche "En attente de paiement"
+    if (!data.statut || data.statut.toLowerCase() !== "mise en livraison") {
+      statutCell.textContent = "En attente de paiement";
+    } else {
+      statutCell.textContent = "mise en livraison";
+    }
+    observationCell.textContent = data.observation || "";
+  }
+
+  // Rafraîchit en temps réel toutes les lignes du tableau Responsable Acconier
+  function startRealtimeAcconierSync() {
+    // Sélectionne le tableau concerné (adapter l'ID ou la classe si besoin)
+    const table = document.getElementById("acconierTable");
+    if (!table) return;
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach((row) => {
+      // On suppose que chaque ligne a un attribut data-bl-number
+      const blNumber = row.getAttribute("data-bl-number");
+      if (!blNumber) return;
+      // On suppose que les cellules statut/observation ont des classes dédiées
+      const statutCell = row.querySelector(".acconier-status-cell");
+      const observationCell = row.querySelector(".acconier-observation-cell");
+      if (!statutCell || !observationCell) return;
+      updateAcconierStatusAndObservation(blNumber, statutCell, observationCell);
+    });
+  }
+
+  // Lancement du rafraîchissement temps réel toutes les 5 secondes (ou via WebSocket si dispo)
+  setInterval(startRealtimeAcconierSync, 5000);
+  // Premier appel immédiat
+  startRealtimeAcconierSync();
   // function populateColumnSelectorPanel(agentName) {
   //   let columnSelectorPanel = document.getElementById("columnSelectorPanel");
   //   if (!columnSelectorPanel) {
