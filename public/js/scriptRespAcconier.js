@@ -155,17 +155,25 @@ document.addEventListener("DOMContentLoaded", function () {
                   behavior: "smooth",
                   block: "center",
                 });
-                // Appliquer le flash sur tous les td de la ligne pour garantir la visibilité
+                // Clignotement 3 fois sur 3 secondes
                 const tds = foundRow.querySelectorAll("td");
-                tds.forEach((td) => {
-                  td.classList.remove("flash-red-cell");
-                  // Force reflow pour relancer l'animation
-                  void td.offsetWidth;
-                  td.classList.add("flash-red-cell");
-                });
-                setTimeout(() => {
-                  tds.forEach((td) => td.classList.remove("flash-red-cell"));
-                }, 1100);
+                let flashCount = 0;
+                const maxFlashes = 3;
+                function doFlash() {
+                  tds.forEach((td) => {
+                    td.classList.remove("flash-red-cell");
+                    void td.offsetWidth;
+                    td.classList.add("flash-red-cell");
+                  });
+                  setTimeout(() => {
+                    tds.forEach((td) => td.classList.remove("flash-red-cell"));
+                    flashCount++;
+                    if (flashCount < maxFlashes) {
+                      setTimeout(doFlash, 1000);
+                    }
+                  }, 1000);
+                }
+                doFlash();
               }
             }
           };
@@ -185,14 +193,14 @@ document.addEventListener("DOMContentLoaded", function () {
         style.id = "flash-red-row-style";
         style.innerHTML = `
         .flash-red-cell {
-          animation: flashRedCellAnim 1.1s cubic-bezier(0.4,0,0.2,1);
+          animation: flashRedCellAnim 1s cubic-bezier(0.4,0,0.2,1);
           background: #f87171 !important;
           transition: background 0.3s;
         }
         @keyframes flashRedCellAnim {
           0% { background: #fee2e2; }
-          40% { background: #f87171; }
-          80% { background: #fecaca; }
+          30% { background: #f87171; }
+          70% { background: #fecaca; }
           100% { background: transparent; }
         }
         `;
