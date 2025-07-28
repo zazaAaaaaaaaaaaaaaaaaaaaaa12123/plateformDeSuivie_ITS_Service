@@ -6552,30 +6552,9 @@ if (window["WebSocket"]) {
           message.type === "new_delivery" ||
           message.type === "delivery_updated" ||
           message.type === "delivery_deleted" ||
-          message.type === "delivery_update_alert" ||
-          message.type === "container_status_update" ||
-          message.type === "delivery_deletion_alert" ||
-          message.type === "new_delivery_notification" ||
-          message.type === "updateAgents"
+          message.type === "delivery_update_alert"
         ) {
-          await loadDeliveries();
-          applyCombinedFilters();
-          // Rafraîchit la boîte d'activité agent si besoin
-          if (
-            agentActivityBox &&
-            agentActivityBox.classList.contains("active") &&
-            selectedAgentName
-          ) {
-            showAgentActivity(selectedAgentName, currentAgentActivityDate);
-          }
-          // Rafraîchit la liste des employés si besoin
-          if (
-            message.type === "updateAgents" &&
-            employeePopup &&
-            employeePopup.classList.contains("is-visible")
-          ) {
-            filterEmployeeList();
-          }
+          filterEmployeeList();
         }
         // --- NOUVEAU : écoute l'événement acconier_status_update pour mise à jour instantanée du statut BL ---
         if (
@@ -6583,25 +6562,39 @@ if (window["WebSocket"]) {
           message.deliveryId &&
           message.status
         ) {
-          // Cherche la livraison dans deliveries et allDeliveries
+          // LOG DIAGNOSTIC : réception de l'événement
+          console.log("[SYNC][WS] Reçu acconier_status_update:", message);
           let found = false;
           [deliveries, allDeliveries].forEach((arr) => {
             const d = arr.find((x) => x.id === message.deliveryId);
             if (d) {
+              // On force la valeur à "mise_en_livraison_acconier" si besoin
               d.delivery_status_acconier =
-                message.status === "mise_en_livraison"
+                message.status === "mise_en_livraison" ||
+                message.status === "mise_en_livraison_acconier"
                   ? "mise_en_livraison_acconier"
-                  : message.status === "pending_acconier"
-                  ? "pending_acconier"
                   : message.status;
+              // LOG DIAGNOSTIC : statut mis à jour
+              console.log(
+                "[SYNC][WS] MAJ statut acconier pour deliveryId=",
+                message.deliveryId,
+                ":",
+                d.delivery_status_acconier
+              );
               found = true;
             }
           });
           if (found) {
             filterDeliveriesIntoCategories();
             applyCombinedFilters();
+            // LOG DIAGNOSTIC : rafraîchissement du tableau principal
+            console.log(
+              "[SYNC][WS] Tableau principal rafraîchi après acconier_status_update"
+            );
           }
         }
+        // --- NOUVEAU : écoute l'événement acconier_status_update pour mise à jour instantanée du statut BL ---
+        // Ancien bloc acconier_status_update supprimé (remplacé par le bloc avec logs plus bas)
       } catch (error) {
         console.error("[WS][FRONT] Erreur parsing WebSocket message:", error);
       }

@@ -1683,12 +1683,26 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                       ws &&
                       ws.readyState === 1
                     ) {
+                      // On force le statut envoyé à "mise_en_livraison_acconier" si c'est une mise en livraison
+                      let statusToSend =
+                        statutToSend === "mise_en_livraison"
+                          ? "mise_en_livraison_acconier"
+                          : statutToSend;
+                      console.log(
+                        "[ACCONIER][WS] Envoi acconier_status_update:",
+                        {
+                          type: "acconier_status_update",
+                          deliveryId: delivery.id,
+                          blNumber,
+                          status: statusToSend,
+                        }
+                      );
                       ws.send(
                         JSON.stringify({
                           type: "acconier_status_update",
                           deliveryId: delivery.id,
                           blNumber,
-                          status: statutToSend,
+                          status: statusToSend,
                         })
                       );
                     }
