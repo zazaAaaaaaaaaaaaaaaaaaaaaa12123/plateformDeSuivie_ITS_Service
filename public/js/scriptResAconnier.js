@@ -16,6 +16,66 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 (async () => {
+  // --- GESTION LECTURE SEULE SELON AUTHENTIFICATION ---
+  // Fonction utilitaire pour vérifier l'authentification
+  function isUserAuthenticated() {
+    // Ici, on considère qu'un utilisateur authentifié a un objet 'respacconierUser' dans le localStorage
+    // et qu'il provient d'une authentification (auth.html#login ou repoLivAuth.html)
+    // Tu peux adapter la logique selon ton système d'authentification réel (token, etc.)
+    try {
+      const user = JSON.parse(localStorage.getItem("respacconierUser"));
+      // On peut ajouter une vérification plus poussée si besoin (ex: présence d'un token, d'un champ spécifique...)
+      return user && user.nom && user.email;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Fonction pour passer toute l'interface en lecture seule
+  function setReadOnlyMode() {
+    // Désactiver tous les boutons d'action
+    document
+      .querySelectorAll(
+        "button, .action-button, .send-btn, .reject-btn, .delete-new-request-btn, .delete-history-item-btn"
+      )
+      .forEach((btn) => {
+        btn.disabled = true;
+        btn.classList.add("opacity-50", "cursor-not-allowed");
+        btn.removeEventListener &&
+          btn.removeEventListener("click", btn.onclick);
+      });
+    // Désactiver tous les champs de saisie
+    document.querySelectorAll("input, textarea, select").forEach((field) => {
+      field.disabled = true;
+      field.readOnly = true;
+      field.classList.add("bg-gray-100", "cursor-not-allowed");
+    });
+    // Masquer les boutons de suppression ou d'action si besoin
+    document
+      .querySelectorAll(
+        ".delete-new-request-btn, .delete-history-item-btn, .send-btn, .reject-btn"
+      )
+      .forEach((btn) => {
+        btn.style.display = "none";
+      });
+    // Optionnel : afficher une bannière ou un message "Mode consultation uniquement"
+    if (!document.getElementById("readonlyBanner")) {
+      const banner = document.createElement("div");
+      banner.id = "readonlyBanner";
+      banner.className =
+        "fixed top-0 left-0 w-full bg-yellow-400 text-center py-2 z-[3000] font-bold text-lg";
+      banner.textContent =
+        "Mode consultation uniquement : aucune modification n'est possible sur cette interface.";
+      document.body.appendChild(banner);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!isUserAuthenticated()) {
+      setTimeout(setReadOnlyMode, 300); // Laisse le temps au DOM de charger
+    }
+  });
+
   // --- AVATAR RESPONSABLE ACCONIER ---
   document.addEventListener("DOMContentLoaded", function () {
     const avatarContainer = document.getElementById(
