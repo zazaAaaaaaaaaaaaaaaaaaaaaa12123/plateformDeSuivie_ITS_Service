@@ -3819,18 +3819,19 @@ if (window["WebSocket"]) {
           cell.appendChild(dropdownContent);
           return cell;
         } else if (fieldName === "delivery_status_acconier") {
-          // Affichage du statut acconier dans la colonne : forcer "En attente de paiement" si statut = "pending_acconier"
+          // Affichage du statut acconier dans la colonne :
+          // - Forcer "En attente de paiement" si statut vide ou "pending_acconier"
+          // - Sinon afficher la valeur réelle (ex : "mise_en_livraison_acconier")
           let displayStatus = value;
-          if (value === "pending_acconier") {
+          if (!value || value === "pending_acconier") {
             displayStatus = "awaiting_payment_acconier";
           }
           const statusInfo = getStatusInfo(displayStatus);
-          // Only add icon if it's not empty
           const iconHtml = statusInfo.iconClass
-            ? `<i class=\"fas ${statusInfo.iconClass} mr-1\" style=\"color:${statusInfo.hexColor};\"></i>` // Apply inline style here
+            ? `<i class=\"fas ${statusInfo.iconClass} mr-1\" style=\"color:${statusInfo.hexColor};\"></i>`
             : "";
           cell.innerHTML = `<span class=\"${statusInfo.tailwindColorClass}\">${iconHtml} ${statusInfo.text}</span>`;
-          displayValue = statusInfo.text; // Set displayValue for originalValue storage
+          displayValue = statusInfo.text;
         } else {
           displayValue = value || "-"; // Changed from "N/A" to "-"
         }
