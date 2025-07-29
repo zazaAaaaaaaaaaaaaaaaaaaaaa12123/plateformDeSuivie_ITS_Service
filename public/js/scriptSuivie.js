@@ -8997,4 +8997,4 @@ if (window["WebSocket"]) {
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
-// 1212shduhsjbjshsdvjs
+// 1212shduhsjbjshsd
