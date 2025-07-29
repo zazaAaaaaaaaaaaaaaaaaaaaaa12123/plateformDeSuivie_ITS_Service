@@ -9024,6 +9024,13 @@ if (window["WebSocket"]) {
   if (typeof createCell === "function") {
     const originalCreateCell = createCell;
     window.createCell = function (row, col, value) {
+      // Log global pour chaque cellule créée
+      console.log(
+        `[CELL][DEBUG] Ligne:`,
+        row,
+        `| Colonne: '${col}' | Valeur:`,
+        value
+      );
       if (
         col === "delivery_status_acconier" ||
         col === "statut" ||
