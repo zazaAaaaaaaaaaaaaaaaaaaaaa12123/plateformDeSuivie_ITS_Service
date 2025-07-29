@@ -8773,6 +8773,21 @@ if (window["WebSocket"]) {
   window.showAgentActivity = showAgentActivity;
 
   // ================= AJOUT : Rafraîchissement dynamique du tableau dossiers en retard =================
+
+  // ================= AJOUT : Affichage Statut Dossier avec valeur par défaut =================
+  // À utiliser lors de la génération des lignes du tableau principal
+  function getStatutDossierForDisplay(delivery) {
+    // On prend la valeur du backend (statut_dossier ou statut), sinon valeur par défaut
+    // (adapter le nom du champ selon ta structure de données)
+    return (
+      delivery.statut_dossier || delivery.statut || "en attente de paiement"
+    );
+  }
+  // Exemple d'utilisation dans la génération du tableau :
+  // const tdStatutDossier = document.createElement('td');
+  // tdStatutDossier.textContent = getStatutDossierForDisplay(delivery);
+  // tr.appendChild(tdStatutDossier);
+  // =====================================================================
   // Fonction utilitaire pour détecter les agents en retard (à adapter selon ta logique métier)
   function getLateAgentsFromDeliveries(deliveries) {
     // On considère qu'un agent est en retard s'il a au moins un conteneur non livré
