@@ -1299,29 +1299,34 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "-";
         }
       } else if (col.id === "bl_number") {
-        // Rendu avancé pour N° BL : badge/tag  et menu déroulant popup
+        // Toujours afficher le BL comme bouton cliquable, même pour un seul BL
         let blList = [];
         if (Array.isArray(delivery.bl_number)) {
           blList = delivery.bl_number.filter(Boolean);
         } else if (typeof delivery.bl_number === "string") {
           blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
         }
-        if (blList.length > 1) {
+        if (blList.length > 0) {
           td.classList.add("tc-multi-cell");
           const btn = document.createElement("button");
           btn.className = "tc-tags-btn";
           btn.type = "button";
-          btn.innerHTML =
-            blList
-              .slice(0, 2)
-              .map((bl) => `<span class=\"tc-tag\">${bl}</span>`)
-              .join("") +
-            (blList.length > 2
-              ? ` <span class=\"tc-tag tc-tag-more\">+${
-                  blList.length - 2
-                }</span>`
-              : "") +
-            ' <i class="fas fa-chevron-down tc-chevron"></i>';
+          btn.style.cursor = "pointer";
+          if (blList.length > 1) {
+            btn.innerHTML =
+              blList
+                .slice(0, 2)
+                .map((bl) => `<span class=\"tc-tag\">${bl}</span>`)
+                .join("") +
+              (blList.length > 2
+                ? ` <span class=\"tc-tag tc-tag-more\">+${
+                    blList.length - 2
+                  }</span>`
+                : "") +
+              ' <i class="fas fa-chevron-down tc-chevron"></i>';
+          } else {
+            btn.innerHTML = `<span class=\"tc-tag\">${blList[0]}</span>`;
+          }
           const popup = document.createElement("div");
           popup.className = "tc-popup";
           popup.style.display = "none";
@@ -1336,8 +1341,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             document.querySelectorAll(".tc-popup").forEach((p) => {
               if (p !== popup) p.style.display = "none";
             });
-            popup.style.display =
-              popup.style.display === "block" ? "none" : "block";
+            if (blList.length > 1) {
+              popup.style.display =
+                popup.style.display === "block" ? "none" : "block";
+            } else {
+              // Un seul BL : ouvrir directement le popup de détail
+              showBLDetailPopup(delivery, blList[0]);
+            }
           };
           popup.querySelectorAll(".tc-popup-item").forEach((item) => {
             item.onclick = (ev) => {
@@ -1351,16 +1361,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           });
           td.appendChild(btn);
           td.appendChild(popup);
-        } else if (blList.length === 1) {
-          const tag = document.createElement("span");
-          tag.className = "tc-tag";
-          tag.textContent = blList[0];
-          tag.style.cursor = "pointer";
-          tag.onclick = (e) => {
-            e.stopPropagation();
-            showBLDetailPopup(delivery, blList[0]);
-          };
-          td.appendChild(tag);
         } else {
           td.textContent = "-";
         }
