@@ -4534,10 +4534,21 @@ if (window["WebSocket"]) {
     if (fieldName === "delivery_notes") {
       // Affichage de l'observation avec valeur par défaut
       let obs = displayValue;
-      if (!obs || obs === "-" || obs === undefined || obs === null) {
+      if (!obs || obs === undefined || obs === null) {
         obs = "-";
       }
-      cell.textContent = obs;
+      // Si on est en mode édition, afficher un textarea
+      if (cell.classList.contains("editable-cell")) {
+        cell.innerHTML = "";
+        const textarea = document.createElement("textarea");
+        textarea.value = obs;
+        textarea.rows = 3;
+        textarea.classList.add("w-full", "resize-y");
+        cell.appendChild(textarea);
+      } else {
+        // Sinon, affichage simple
+        cell.textContent = obs;
+      }
       return;
     }
     // Renamed newValue to displayValue for clarity
