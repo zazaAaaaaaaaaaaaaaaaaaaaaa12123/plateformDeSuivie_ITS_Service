@@ -1299,7 +1299,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "-";
         }
       } else if (col.id === "bl_number") {
-        // Rendu avancé pour N° BL : badge/tag  et menu déroulant popup
+        // Toujours afficher les BL comme boutons/tags cliquables, même sur mobile
         let blList = [];
         if (Array.isArray(delivery.bl_number)) {
           blList = delivery.bl_number.filter(Boolean);
@@ -1339,12 +1339,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             popup.style.display =
               popup.style.display === "block" ? "none" : "block";
           };
-          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
-            item.onclick = (ev) => {
+          // Délégation d'événement pour tous les items du popup
+          popup.addEventListener("click", function (ev) {
+            if (ev.target.classList.contains("tc-popup-item")) {
               ev.stopPropagation();
               popup.style.display = "none";
-              showBLDetailPopup(delivery, item.textContent);
-            };
+              showBLDetailPopup(delivery, ev.target.textContent);
+            }
           });
           document.addEventListener("click", function hidePopup(e) {
             if (!td.contains(e.target)) popup.style.display = "none";
@@ -1352,15 +1353,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.appendChild(btn);
           td.appendChild(popup);
         } else if (blList.length === 1) {
-          const tag = document.createElement("span");
-          tag.className = "tc-tag";
-          tag.textContent = blList[0];
-          tag.style.cursor = "pointer";
-          tag.onclick = (e) => {
+          // Toujours un bouton même pour un seul BL
+          const btn = document.createElement("button");
+          btn.className = "tc-tags-btn";
+          btn.type = "button";
+          btn.innerHTML = `<span class=\"tc-tag\">${blList[0]}</span>`;
+          btn.onclick = (e) => {
             e.stopPropagation();
             showBLDetailPopup(delivery, blList[0]);
           };
-          td.appendChild(tag);
+          td.appendChild(btn);
         } else {
           td.textContent = "-";
         }
@@ -1561,6 +1563,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               cancelBtn.style.padding = "0.7em 1.7em";
               cancelBtn.style.cursor = "pointer";
               cancelBtn.onclick = () => confirmOverlay.remove();
+
               // Bouton Confirmer
               const okBtn = document.createElement("button");
               okBtn.textContent = "Confirmer";
@@ -1789,13 +1792,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         let respAcconierUser = null;
         if (!respAcconierUserRaw) {
-          window.location.href = "repoAcconierAuth.html";
+          window.location.href = "resp_acconier.html";
           return;
         }
         try {
           respAcconierUser = JSON.parse(respAcconierUserRaw);
         } catch (e) {
-          window.location.href = "repoAcconierAuth.html";
+          window.location.href = "resp_acconier.html";
           return;
         }
         // ...existing code...
@@ -2191,4 +2194,3 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     };
   }
 }
-//originale123456789100
