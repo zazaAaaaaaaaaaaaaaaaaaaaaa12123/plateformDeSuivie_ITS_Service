@@ -4449,7 +4449,28 @@ if (window["WebSocket"]) {
         });
       })();
 
-      createCell(delivery.delivery_notes, "delivery_notes", "textarea", {}); // Observations
+      // Ajout Statut Dossier (toujours avant Observations)
+      let statutDossier = delivery.statut_dossier;
+      if (
+        !statutDossier ||
+        statutDossier === "-" ||
+        statutDossier === undefined ||
+        statutDossier === null
+      ) {
+        statutDossier = "en attente de paiement";
+      }
+      createCell(statutDossier, "statut_dossier", "text", {}); // Statut Dossier
+      // Observation : valeur par défaut si absente
+      let observation = delivery.delivery_notes;
+      if (
+        !observation ||
+        observation === "-" ||
+        observation === undefined ||
+        observation === null
+      ) {
+        observation = "-";
+      }
+      createCell(observation, "delivery_notes", "textarea", {}); // Observations
     });
     // =====================
     // Effet de surlignage interactif par section (flash coloré)
@@ -4496,6 +4517,29 @@ if (window["WebSocket"]) {
 
   // This function is now primarily used for displaying content after inline editing or initial render (non-editing mode)
   function updateCellContent(cell, displayValue, fieldName, type) {
+    if (fieldName === "delivery_notes") {
+      // Affichage de l'observation avec valeur par défaut
+      let obs = displayValue;
+      if (!obs || obs === "-" || obs === undefined || obs === null) {
+        obs = "-";
+      }
+      cell.textContent = obs;
+      return;
+    }
+    if (fieldName === "statut_dossier") {
+      // Affichage du statut dossier avec valeur par défaut
+      let statut = displayValue;
+      if (
+        !statut ||
+        statut === "-" ||
+        statut === undefined ||
+        statut === null
+      ) {
+        statut = "en attente de paiement";
+      }
+      cell.textContent = statut;
+      return;
+    }
     // Renamed newValue to displayValue for clarity
     cell.innerHTML = ""; // Clear content before updating
 
