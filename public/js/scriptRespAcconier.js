@@ -1788,15 +1788,32 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // On utilise UNIQUEMENT respAcconierUser, jamais user !
         let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         let respAcconierUser = null;
+        // Correction anti-boucle infinie : utiliser un flag localStorage
+        const redirectFlagKey = "respAcconierRedirected";
         if (!respAcconierUserRaw) {
-          window.location.href = "resp_acconier.html";
+          if (!localStorage.getItem(redirectFlagKey)) {
+            localStorage.setItem(redirectFlagKey, "1");
+            window.location.href = "resp_acconier.html";
+          } else {
+            // On stoppe la boucle ici
+            localStorage.removeItem(redirectFlagKey);
+          }
           return;
         }
         try {
           respAcconierUser = JSON.parse(respAcconierUserRaw);
         } catch (e) {
-          window.location.href = "resp_acconier.html";
+          if (!localStorage.getItem(redirectFlagKey)) {
+            localStorage.setItem(redirectFlagKey, "1");
+            window.location.href = "resp_acconier.html";
+          } else {
+            localStorage.removeItem(redirectFlagKey);
+          }
           return;
+        }
+        // Si tout est ok, on supprime le flag pour la prochaine session
+        if (localStorage.getItem(redirectFlagKey)) {
+          localStorage.removeItem(redirectFlagKey);
         }
         // ...existing code...
       } else if (col.id === "container_status") {
