@@ -1785,13 +1785,6 @@ if (window["WebSocket"]) {
   // This list is specific to what the user can *set* as a status.
   const ACCONIER_STATUS_OPTIONS_SELECTABLE = [
     {
-      value: "pending_acconier",
-      text: "",
-      icon: "",
-      tailwindColorClass: "",
-      hexColor: "",
-    },
-    {
       value: "in_progress_acconier",
       text: "En cours de livraison",
       icon: "fa-truck-moving",
