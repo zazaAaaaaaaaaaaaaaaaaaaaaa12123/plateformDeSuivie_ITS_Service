@@ -4449,6 +4449,16 @@ if (window["WebSocket"]) {
         });
       })();
 
+      // Ajout Statut Dossier (avant Observations)
+      let statutDossier = delivery.statut_dossier;
+      if (
+        !statutDossier ||
+        statutDossier === undefined ||
+        statutDossier === null
+      ) {
+        statutDossier = "-";
+      }
+      createCell(statutDossier, "statut_dossier", "text", {}); // Statut Dossier
       createCell(delivery.delivery_notes, "delivery_notes", "textarea", {}); // Observations
     });
     // =====================
@@ -4496,6 +4506,15 @@ if (window["WebSocket"]) {
 
   // This function is now primarily used for displaying content after inline editing or initial render (non-editing mode)
   function updateCellContent(cell, displayValue, fieldName, type) {
+    if (fieldName === "statut_dossier") {
+      // Affichage du statut dossier : '-' si vide
+      let statut = displayValue;
+      if (!statut || statut === undefined || statut === null) {
+        statut = "-";
+      }
+      cell.textContent = statut;
+      return;
+    }
     // Renamed newValue to displayValue for clarity
     cell.innerHTML = ""; // Clear content before updating
 
