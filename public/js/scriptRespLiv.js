@@ -719,7 +719,11 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     delBtn.style.border = "none";
     delBtn.style.cursor = "pointer";
     delBtn.style.display = "none";
-    delBtn.style.marginRight = "8px";
+    delBtn.style.marginRight = "4px";
+    delBtn.style.fontSize = "0.88em";
+    delBtn.style.padding = "2px 8px";
+    delBtn.style.height = "26px";
+    delBtn.style.borderRadius = "6px";
     delBtn.onclick = function () {
       const checked = document.querySelectorAll(
         '#deliveriesTableBody input[type="checkbox"].row-select:checked'
@@ -806,9 +810,11 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     respBtn.style.border = "none";
     respBtn.style.cursor = "pointer";
     respBtn.style.display = "none";
-    respBtn.style.borderRadius = "7px";
-    respBtn.style.padding = "4px 12px";
-    respBtn.style.marginRight = "8px";
+    respBtn.style.borderRadius = "6px";
+    respBtn.style.padding = "2px 8px";
+    respBtn.style.marginRight = "4px";
+    respBtn.style.fontSize = "0.88em";
+    respBtn.style.height = "26px";
     respBtn.onclick = function () {
       const checked = document.querySelectorAll(
         '#deliveriesTableBody input[type="checkbox"].row-select:checked'
