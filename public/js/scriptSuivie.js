@@ -5844,8 +5844,9 @@ if (window["WebSocket"]) {
       createSummaryItem("Mode de Transport", transporterModesText || "-")
     );
 
-    // Statut de livraison (Resp. Aconiés)
+    // Statut de livraison (Resp. Aconiés) - retire "En attente de paiement"
     let acconierStatusText = Object.entries(summaryData.acconierStatusCounts)
+      .filter(([status]) => status !== "En attente de paiement")
       .map(([status, count]) => `${count} ${status}`)
       .join(", ");
     parentElement.appendChild(
