@@ -2186,6 +2186,36 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   }
   // Fin de renderAgentTableFull
 
+  // --- Ajout : écouteur pour restaurer une ligne ramenée au Resp. Acconier ---
+  if (typeof window.respAcconierRestoreListener === "undefined") {
+    window.respAcconierRestoreListener = true;
+    window.addEventListener("restoreToRespAcconier", function (e) {
+      const deliveryId = e.detail && e.detail.deliveryId;
+      if (!deliveryId) return;
+      // Trouver la livraison et remettre tous ses BL à "aucun"
+      const deliveries = window.allDeliveries || [];
+      const delivery = deliveries.find(
+        (d) => String(d.id) === String(deliveryId)
+      );
+      if (delivery && delivery.bl_statuses) {
+        Object.keys(delivery.bl_statuses).forEach((bl) => {
+          delivery.bl_statuses[bl] = "aucun";
+        });
+      }
+      // Rafraîchir le tableau
+      const dateStartInput = document.getElementById(
+        "mainTableDateStartFilter"
+      );
+      const dateEndInput = document.getElementById("mainTableDateEndFilter");
+      if (typeof updateTableForDateRange === "function") {
+        updateTableForDateRange(
+          dateStartInput ? dateStartInput.value : "",
+          dateEndInput ? dateEndInput.value : ""
+        );
+      }
+    });
+  }
+
   // --- Correction : Rafraîchir le tableau après mise en livraison d'un BL ---
   // On patch la fonction showBLDetailPopup pour déclencher updateTableForDateRange après modification
   // (On ne touche pas à la déclaration d'origine, on monkey-patch si déjà défini)
