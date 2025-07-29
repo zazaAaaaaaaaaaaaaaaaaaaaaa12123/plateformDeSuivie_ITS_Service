@@ -4410,6 +4410,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 0);
     });
   }
-  // Masquer la section statistiques hbqsvcbau chargement
+  // Masquer la section statistiques au chargement
   if (sectionStats) sectionStats.style.display = "none";
 });
