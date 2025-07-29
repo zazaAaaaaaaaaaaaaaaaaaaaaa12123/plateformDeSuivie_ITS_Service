@@ -5828,7 +5828,7 @@ if (window["WebSocket"]) {
       )
     );
 
-    // Nombre de conteneurs
+    // Nombre de conteneursshsk
     parentElement.appendChild(
       createSummaryItem(
         "Nombre de conteneurs",
