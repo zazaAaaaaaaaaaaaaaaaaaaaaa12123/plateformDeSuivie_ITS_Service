@@ -8996,5 +8996,33 @@ if (window["WebSocket"]) {
     setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
+
+  // Harmonisation affichage statut acconier dans le tableau principal
+  function getAcconierStatusDisplay(status) {
+    if (!status) return "-";
+    const normalized = status.toString().toLowerCase().replace(/_/g, " ");
+    if (
+      normalized.includes("mise en livraison") ||
+      normalized.includes("livraison acconier")
+    ) {
+      return "Mise en livraison";
+    }
+    if (normalized.includes("attente paiement")) {
+      return "En attente de paiement";
+    }
+    // Ajoute d'autres mappings si besoin
+    return status;
+  }
+
+  // Patch la création de cellule pour le statut acconier
+  if (typeof createCell === "function") {
+    const originalCreateCell = createCell;
+    window.createCell = function (row, col, value) {
+      if (col === "delivery_status_acconier") {
+        return originalCreateCell(row, col, getAcconierStatusDisplay(value));
+      }
+      return originalCreateCell(row, col, value);
+    };
+  }
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA ***/
