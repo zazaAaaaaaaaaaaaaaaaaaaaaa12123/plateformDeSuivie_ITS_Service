@@ -4965,7 +4965,7 @@ if (window["WebSocket"]) {
   // Ajout d'une propriété de couleur pour les entêtes clés
   // Colonnes strictement dans l'ordre métier, sans colonnes parasites
   // Colonnes strictement selon la demande utilisateur
-  // Colonnes strictement selon la demande utilisateur (sans les colonnes à exclure)
+  // Colonnes strictement selon la demande utilisateur (corrigé)
   const AGENT_TABLE_COLUMNS = [
     { id: "employee_name", label: "Agent" },
     { id: "client_name", label: "Client (Nom)" },
@@ -4983,87 +4983,14 @@ if (window["WebSocket"]) {
     { id: "ship_name", label: "Nom du navire" },
     { id: "circuit", label: "Circuit" },
     { id: "transporter_mode", label: "Mode de Transport" },
-    { id: "statut", label: "Statut" },
+    // Bloc Responsable Acconier (lecture seule)
+    { id: "delivery_status_acconier", label: "Statut Acconier" },
+    { id: "observation_acconier", label: "Observation Acconier" }, // non modifiable
+    // Bloc Responsable de livraison (modifiables)
+    { id: "nom_agent_visiteur", label: "Nom agent visiteur" }, // modifiable
+    { id: "statut", label: "Statut Livraison" }, // modifiable
+    { id: "observations", label: "Observations" }, // modifiable
   ];
-
-  // Function to save column visibility to localStorage - REMOVED
-  // function saveColumnVisibility(agentName, hiddenColumns) {
-  //   localStorage.setItem(`agentColumns_${agentName}`, JSON.stringify(hiddenColumns));
-  // }
-
-  // Function to load column visibility from localStorage - REMOVED
-  // function loadColumnVisibility(agentName) {
-  //   const saved = localStorage.getItem(`agentColumns_${agentName}`);
-  //   return saved ? JSON.parse(saved) : [];
-  // }
-
-  // Function to apply column visibility - REMOVED (no longer needed without column management)
-  // function applyColumnVisibility(tableElement, hiddenColumns) {
-  //   AGENT_TABLE_COLUMNS.forEach(col => {
-  //     const elements = tableElement.querySelectorAll(`[data-column-id="${col.id}"]`);
-  //     elements.forEach(el => {
-  //       if (hiddenColumns.includes(col.id)) {
-  //         el.classList.add("hidden-column");
-  //       } else {
-  //         el.classList.remove("hidden-column");
-  //       }
-  //     });
-  //   });
-  // }
-
-  // Function to populate and manage the column selector panel - REMOVED
-  // function populateColumnSelectorPanel(agentName) {
-  //   let columnSelectorPanel = document.getElementById("columnSelectorPanel");
-  //   if (!columnSelectorPanel) {
-  //     columnSelectorPanel = document.createElement("div");
-  //     columnSelectorPanel.id = "columnSelectorPanel";
-  //     agentActivityBox.querySelector(".agent-activity-header").appendChild(columnSelectorPanel);
-  //   }
-  //   columnSelectorPanel.innerHTML = ""; // Clear previous content
-
-  //   const savedHiddenColumns = loadColumnVisibility(agentName);
-
-  //   AGENT_TABLE_COLUMNS.forEach(col => {
-  //     if (col.fixed) return; // Skip fixed columns
-
-  //     const label = document.createElement("label");
-  //     const checkbox = document.createElement("input");
-  //     checkbox.type = "checkbox";
-  //     checkbox.dataset.columnId = col.id;
-  //     checkbox.checked = !savedHiddenColumns.includes(col.id); // Checked if NOT hidden
-
-  //     checkbox.addEventListener("change", (e) => {
-  //       const columnId = e.target.dataset.columnId;
-  //       const isChecked = e.target.checked;
-  //       const currentHidden = loadColumnVisibility(agentName);
-
-  //       let newHiddenColumns;
-  //       if (isChecked) {
-  //         newHiddenColumns = currentHidden.filter(id => id !== columnId);
-  //       } else {
-  //         newHiddenColumns = [...currentHidden, columnId];
-  //       }
-  //       saveColumnVisibility(agentName, newHiddenColumns);
-  //       applyColumnVisibility(agentDailyDeliveriesTable, newHiddenColumns);
-  //     });
-
-  //     label.appendChild(checkbox);
-  //     label.appendChild(document.createTextNode(col.label));
-  //     columnSelectorPanel.appendChild(label);
-  //   });
-
-  //   // Close panel when clicking outside
-  //   document.addEventListener("click", (e) => {
-  //     if (columnSelectorPanel.classList.contains("show") &&
-  //         !columnSelectorPanel.contains(e.target) &&
-  //         !e.target.closest('.manage-columns-btn')) {
-  //   }
-  // });
-  //}
-  //       columnSelectorPanel.classList.remove("show");
-  //     }
-  //   });
-  // }
 
   async function showAgentActivity(agentName, dateToDisplay = new Date()) {
     if (loadingOverlay) {
