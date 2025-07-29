@@ -4127,7 +4127,14 @@ if (window["WebSocket"]) {
           "-",
         "statut_dossier"
       );
+      // Affichage Observation (remplace Observations (Resp. Aconiés))
       createCell(delivery.observation_acconier || "-", "observation");
+      createCell(
+        delivery.observation_acconier,
+        "observation_acconier",
+        "textarea",
+        {}
+      ); // Observations (Resp. Aconiés)
       createCell(delivery.nom_agent_visiteur, "nom_agent_visiteur", "text", {}); // Nom agent visiteur
       createCell(delivery.transporter, "transporter", "text", {}); // Transporteur
       createCell(delivery.inspecteur, "inspecteur", "text", {}); // Inspecteur
@@ -4137,13 +4144,309 @@ if (window["WebSocket"]) {
       createCell(delivery.driver_phone, "driver_phone", "text", {}); // Tél. Chauffeur
       createCell(delivery.delivery_date, "delivery_date", "date", {}); // Date Livraison
       createCell(delivery.delivery_time, "delivery_time", "time", {}); // Heure Livraison
-      // Les textarea d'observation à la fin
-      createCell(
-        delivery.observation_acconier,
-        "observation_acconier",
-        "textarea",
-        {}
-      ); // Observations (Resp. Aconiés)
+
+      // === Statut multi-conteneurs : carte dynamique ===
+      (function () {
+        const cell = row.insertCell();
+        cell.dataset.fieldName = "status";
+        // Récupère le numéro de dossier pour regrouper les livraisons
+        const dossierNumber = delivery.dossier_number;
+        // Filtre toutes les livraisons du même dossier (même n° dossier)
+        const allSameDossier = deliveriesToRender.filter(
+          (d) => d.dossier_number === dossierNumber
+        );
+        // Agrège tous les numéros de conteneur du dossier (pour éviter les doublons)
+        let allContainers = [];
+        allSameDossier.forEach((d) => {
+          let tcList = [];
+          if (Array.isArray(d.container_number)) {
+            tcList = d.container_number.filter(Boolean);
+          } else if (typeof d.container_number === "string") {
+            tcList = d.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          allContainers = allContainers.concat(tcList);
+        });
+        // Unicité des conteneurs
+        allContainers = Array.from(new Set(allContainers));
+        const total = allContainers.length;
+        // Statut de chaque conteneur : livré ou non ?
+        // On cherche dans chaque livraison du dossier si le conteneur est livré, en utilisant container_statuses si présent
+        let delivered = 0;
+        allContainers.forEach((tc) => {
+          // On cherche la livraison qui correspond à ce TC dans le dossier
+          const found = allSameDossier.find((d) => {
+            let tcList = [];
+            if (Array.isArray(d.container_number)) {
+              tcList = d.container_number.filter(Boolean);
+            } else if (typeof d.container_number === "string") {
+              tcList = d.container_number.split(/[,;\s]+/).filter(Boolean);
+            }
+            return tcList.includes(tc);
+          });
+          // Utilisation du mapping container_statuses si présent
+          let isDelivered = false;
+          if (found && found.container_statuses) {
+            // mapping objet (clé = numéro TC)
+            if (
+              typeof found.container_statuses === "object" &&
+              !Array.isArray(found.container_statuses)
+            ) {
+              const status = found.container_statuses[tc];
+              if (
+                typeof status === "string" &&
+                ["delivered", "livré", "livree", "livreee"].includes(
+                  status.trim().toLowerCase()
+                )
+              ) {
+                isDelivered = true;
+              }
+            } else if (Array.isArray(found.container_statuses)) {
+              // fallback tableau (rare)
+              let tcList = [];
+              if (Array.isArray(found.container_number)) {
+                tcList = found.container_number.filter(Boolean);
+              } else if (typeof found.container_number === "string") {
+                tcList = found.container_number
+                  .split(/[,;\s]+/)
+                  .filter(Boolean);
+              }
+              const idx = tcList.indexOf(tc);
+              if (
+                idx !== -1 &&
+                typeof found.container_statuses[idx] === "string" &&
+                found.container_statuses[idx].trim().toLowerCase() ===
+                  "delivered"
+              ) {
+                isDelivered = true;
+              }
+            }
+          } else if (found && typeof found.status === "string") {
+            // fallback compatibilité ancienne version
+            // On considère livré uniquement si le statut est strictement "Livré" (français) ou "delivered" (anglais)
+            const s = found.status.trim().toLowerCase();
+            if (s === "livré" || s === "delivered") {
+              isDelivered = true;
+            }
+          }
+          // Seuls les conteneurs actuellement marqués "Livré" sont comptés
+          if (isDelivered) {
+            delivered++;
+          }
+        });
+        // Affichage dynamique
+        const box = document.createElement("div");
+        box.style.display = "inline-block";
+        box.style.padding = "4px 12px";
+        box.style.borderRadius = "8px";
+        box.style.fontWeight = "bold";
+        box.style.fontSize = "0.98em";
+        box.style.letterSpacing = "0.5px";
+        box.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
+        box.style.border = "1.5px solid #eab308";
+        box.style.background =
+          delivered === total && total > 0 ? "#dcfce7" : "#fef9c3";
+        box.style.color =
+          delivered === total && total > 0 ? "#15803d" : "#a16207";
+
+        // Texte principal
+        if (total === 0) {
+          box.textContent = "-";
+        } else if (delivered === 0) {
+          box.textContent = `0 sur ${total} livrés`;
+        } else if (delivered === total) {
+          box.textContent = total === 1 ? "Livré" : `${total}/${total} livrés`;
+        } else {
+          box.textContent = `${delivered} sur ${total} livrés`;
+        }
+        cell.appendChild(box);
+
+        // --- Tooltip conteneurs détaillés au survol ---
+        // Nouveau tooltip robuste : disparition immédiate et sans bug
+        box.addEventListener("mouseenter", (e) => {
+          const tooltip = document.createElement("div");
+          tooltip.className = "status-tooltip-containers";
+          tooltip.style.position = "fixed";
+          tooltip.style.zIndex = 99999;
+          tooltip.style.background = "#fff";
+          tooltip.style.border = "1.5px solid #eab308";
+          tooltip.style.borderRadius = "10px";
+          tooltip.style.boxShadow = "0 6px 32px #eab30822, 0 2px 8px #0001";
+          tooltip.style.padding = "14px 18px 12px 18px";
+          tooltip.style.fontSize = "1em";
+          tooltip.style.color = "#222e3a";
+          tooltip.style.minWidth = "220px";
+          tooltip.style.maxWidth = "340px";
+          tooltip.style.pointerEvents = "auto";
+          tooltip.style.transition = "opacity 0.18s";
+          tooltip.style.opacity = "0";
+          // Liste des conteneurs et statuts
+          let html = `<div style='font-weight:700;font-size:1.08em;margin-bottom:7px;color:#a16207;'>Détail des conteneurs</div><ul style='list-style:none;padding:0;margin:0;'>`;
+          allContainers.forEach((tc) => {
+            let found = allSameDossier.find((d) => {
+              let tcList = [];
+              if (Array.isArray(d.container_number)) {
+                tcList = d.container_number.filter(Boolean);
+              } else if (typeof d.container_number === "string") {
+                tcList = d.container_number.split(/[,;\s]+/).filter(Boolean);
+              }
+              return tcList.includes(tc);
+            });
+            let statut = "-";
+            let icon = "<span style='color:#a0aec0;'>&#9675;</span>";
+            if (found && found.container_statuses) {
+              if (
+                typeof found.container_statuses === "object" &&
+                !Array.isArray(found.container_statuses)
+              ) {
+                let s = found.container_statuses[tc];
+                if (typeof s === "string") statut = s.trim();
+              } else if (Array.isArray(found.container_statuses)) {
+                let tcList = [];
+                if (Array.isArray(found.container_number)) {
+                  tcList = found.container_number.filter(Boolean);
+                } else if (typeof found.container_number === "string") {
+                  tcList = found.container_number
+                    .split(/[,;\s]+/)
+                    .filter(Boolean);
+                }
+                const idx = tcList.indexOf(tc);
+                if (
+                  idx !== -1 &&
+                  typeof found.container_statuses[idx] === "string"
+                ) {
+                  statut = found.container_statuses[idx].trim();
+                }
+              }
+            } else if (found && typeof found.status === "string") {
+              statut = found.status.trim();
+            }
+            let sNorm = statut.toLowerCase();
+            if (
+              ["livré", "delivered", "livree", "livreee", "livrée"].includes(
+                sNorm
+              )
+            ) {
+              icon =
+                "<span style='color:#22c55e;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-check-circle'></i></span>";
+              statut = "Livré";
+            } else if (
+              [
+                "en attente",
+                "pending",
+                "attente",
+                "waiting",
+                "à livrer",
+                "a livrer",
+                "pending_acconier",
+                "pending_aconnier",
+              ].includes(sNorm)
+            ) {
+              icon =
+                "<span style='color:#f59e0b;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-clock'></i></span>";
+              // Correction : distinguer "pending_acconier"/"pending_aconnier" de "pending" classique
+              if (["pending_acconier", "pending_aconnier"].includes(sNorm)) {
+                statut = "En attente";
+              } else {
+                statut = "En attente";
+              }
+            } else if (
+              ["rejeté", "rejetee", "refusé", "refuse", "rejected"].includes(
+                sNorm
+              )
+            ) {
+              icon =
+                "<span style='color:#ef4444;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-times-circle'></i></span>";
+              statut = "Rejeté";
+            } else if (
+              [
+                "en cours",
+                "in_progress",
+                "in progress",
+                "encours",
+                "en-cours",
+              ].includes(sNorm)
+            ) {
+              icon =
+                "<span style='color:#2563eb;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-spinner fa-spin'></i></span>";
+              statut = "En cours";
+            } else if (
+              [
+                "problème",
+                "probleme",
+                "bloqué",
+                "bloquee",
+                "detenu",
+                "détention",
+                "detention",
+                "retard",
+              ].some((x) => sNorm.includes(x))
+            ) {
+              icon =
+                "<span style='color:#ef4444;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-exclamation-triangle'></i></span>";
+              statut = "Problème";
+            } else if (sNorm && sNorm !== "-") {
+              icon =
+                "<span style='color:#2563eb;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-info-circle'></i></span>";
+            }
+            html += `<li style='display:flex;align-items:center;gap:10px;margin-bottom:2px;'><span style='font-family:monospace;font-weight:700;color:#374151;'>${tc}</span> ${icon} <span style='font-size:0.98em;'>${statut}</span></li>`;
+          });
+          html += `</ul>`;
+          tooltip.innerHTML = html;
+          document.body.appendChild(tooltip);
+          // Positionnement initial
+          const rect = box.getBoundingClientRect();
+          let top = rect.bottom + 8;
+          let left = rect.left;
+          if (left + tooltip.offsetWidth > window.innerWidth - 12) {
+            left = window.innerWidth - tooltip.offsetWidth - 12;
+          }
+          if (top + tooltip.offsetHeight > window.innerHeight - 12) {
+            top = rect.top - tooltip.offsetHeight - 8;
+          }
+          tooltip.style.left = left + "px";
+          tooltip.style.top = top + "px";
+          setTimeout(() => {
+            tooltip.style.opacity = "1";
+          }, 10);
+
+          // Gestion disparition immédiate et sans bug
+          function removeTooltip() {
+            if (tooltip && tooltip.parentNode)
+              tooltip.parentNode.removeChild(tooltip);
+            box.removeEventListener("mouseleave", onMouseLeave);
+            tooltip.removeEventListener("mouseenter", onTooltipEnter);
+            tooltip.removeEventListener("mouseleave", onTooltipLeave);
+            window.removeEventListener("scroll", removeTooltip, true);
+            window.removeEventListener("resize", removeTooltip, true);
+          }
+          let isOverTooltip = false;
+          function onMouseLeave(e) {
+            if (
+              e.relatedTarget === tooltip ||
+              (tooltip && tooltip.contains(e.relatedTarget))
+            )
+              return;
+            removeTooltip();
+          }
+          function onTooltipEnter() {
+            isOverTooltip = true;
+          }
+          function onTooltipLeave(e) {
+            if (
+              e.relatedTarget === box ||
+              (box && box.contains(e.relatedTarget))
+            )
+              return;
+            removeTooltip();
+          }
+          box.addEventListener("mouseleave", onMouseLeave);
+          tooltip.addEventListener("mouseenter", onTooltipEnter);
+          tooltip.addEventListener("mouseleave", onTooltipLeave);
+          window.addEventListener("scroll", removeTooltip, true);
+          window.addEventListener("resize", removeTooltip, true);
+        });
+      })();
+
       createCell(delivery.delivery_notes, "delivery_notes", "textarea", {}); // Observations
     });
     // =====================
@@ -8349,7 +8652,7 @@ if (window["WebSocket"]) {
       confirmOverlay.style.display = "flex";
       confirmOverlay.style.justifyContent = "center";
       confirmOverlay.style.alignItems = "center";
-      confirmOverlay.style.zIndex = "9999"; // Ensure it's on top of other elements, including dropdowns
+      confirmOverlay.style.zIndex = "9999"; // Enshjksure it's on top of other elements, including dropdowns
       confirmOverlay.innerHTML = `
                                 <div class="confirm-box">
                                   <p>Êtes-vous sûr de vouloir supprimer ${
