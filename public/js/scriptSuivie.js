@@ -1,11 +1,5 @@
 // === Génération dynamique du tableau principal des dossiers en retard ===
 // === INJECTION DU STYLE RESPONSIVE POUR LES BOUTONS DU TABLEAU DE SUIVI ===
-(function () {
-  // Statut par défaut pour le responsable acconier
-  window.getDefaultAcconierStatus = function () {
-    return "awaiting_payment_acconier";
-  };
-})();
 (function injectResponsiveButtonStyle() {
   if (document.getElementById("responsiveButtonStyle")) return;
   const style = document.createElement("style");
@@ -45,8 +39,6 @@ function renderLateDossiersTable() {
   let html = `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
   html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody>`;
   lateList.forEach((c) => {
-    // Log toutes les propriétés de la ligne pour diagnostic
-    console.log("[TABLEAU PRINCIPAL][DEBUG] Ligne:", c);
     let agent = c.agentName ? c.agentName : "-";
     let dateLiv = c.deliveryDate || "-";
     let heureLiv = "-";
@@ -70,7 +62,7 @@ function renderLateDossiersTable() {
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
 }
-// === SYSTÈME D'ALERTE AUTOMATIQUE POURsnhq, CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
+// === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
 
 function checkLateContainers() {
   // === LOG DIAGNOSTIC : Affiche l'état de window.deliveries à chaque appel ===
@@ -3829,20 +3821,10 @@ if (window["WebSocket"]) {
         } else if (fieldName === "delivery_status_acconier") {
           // Affichage du statut acconier dans la colonne :
           // - Forcer "En attente de paiement" si statut vide ou "pending_acconier"
-          // - Afficher "Mise en livraison" pour tous les cas
+          // - Sinon afficher la valeur réelle (ex : "mise_en_livraison_acconier")
           let displayStatus = value;
           if (!value || value === "pending_acconier") {
-            displayStatus = getDefaultAcconierStatus();
-          }
-          // Harmonisation des statuts "mise en livraison"
-          if (
-            [
-              "mise_en_livraison_acconier",
-              "mise_en_livraison",
-              "mise en livraison",
-            ].includes(value)
-          ) {
-            displayStatus = "mise_en_livraison_acconier";
+            displayStatus = "awaiting_payment_acconier";
           }
           const statusInfo = getStatusInfo(displayStatus);
           const iconHtml = statusInfo.iconClass
@@ -8998,54 +8980,5 @@ if (window["WebSocket"]) {
     setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
-
-  // Harmonisation affichage statut acconier dans le tableau principal
-  function getAcconierStatusDisplay(status) {
-    if (!status) {
-      console.log("[STATUT][Mapping] Statut brut: (vide/null) → Affiché: -");
-      return "-";
-    }
-    const normalized = status.toString().toLowerCase().replace(/_/g, " ");
-    let mapped = status;
-    if (
-      normalized.includes("mise en livraison") ||
-      normalized.includes("livraison acconier")
-    ) {
-      mapped = "Mise en livraison";
-    } else if (normalized.includes("attente paiement")) {
-      mapped = "En attente de paiement";
-    }
-    // Ajoute d'autres mappings si besoin
-    console.log(
-      `[STATUT][Mapping] Statut brut: '${status}' | Normalisé: '${normalized}' → Affiché: '${mapped}'`
-    );
-    return mapped;
-  }
-
-  // Patch la création de cellule pour le statut acconier
-  if (typeof createCell === "function") {
-    const originalCreateCell = createCell;
-    window.createCell = function (row, col, value) {
-      // Log global pour chaque cellule créée
-      console.log(
-        `[CELL][DEBUG] Ligne:`,
-        row,
-        `| Colonne: '${col}' | Valeur:`,
-        value
-      );
-      if (
-        col === "delivery_status_acconier" ||
-        col === "statut" ||
-        col === "status"
-      ) {
-        const mapped = getAcconierStatusDisplay(value);
-        console.log(
-          `[STATUT][Cellule] Colonne: '${col}' | Valeur brute: '${value}' → Affiché: '${mapped}'`
-        );
-        return originalCreateCell(row, col, mapped);
-      }
-      return originalCreateCell(row, col, value);
-    };
-  }
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA ***/

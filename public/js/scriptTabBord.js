@@ -3794,9 +3794,6 @@ function afficherDetailsStatistiquesActeur(
       in_progress_acconier: "En cours ",
       in_progress_payment_acconier: "En cours de paiement",
       mise_en_livraison_acconier: "Mise en livraison",
-      mise_en_livraison: "Mise en livraison",
-      "mise en livraison": "Mise en livraison",
-      mise_en_livraison_acconier: "Mise en livraison",
       "": "-",
     };
     return rows
@@ -3952,41 +3949,6 @@ function afficherDetailsStatistiquesActeur(
                   tailwindColorClass: "text-yellow-500",
                   hexColor: "#f59e0b",
                   badgeClass: "pending",
-                },
-                miseenlivraison: {
-                  text: "Mise en livraison",
-                  iconClass: "fa-shipping-fast",
-                  tailwindColorClass: "text-purple-500",
-                  hexColor: "#a855f7",
-                  badgeClass: "mise_en_livraison",
-                },
-                mise_en_livraison: {
-                  text: "Mise en livraison",
-                  iconClass: "fa-shipping-fast",
-                  tailwindColorClass: "text-purple-500",
-                  hexColor: "#a855f7",
-                  badgeClass: "mise_en_livraison",
-                },
-                "mise en livraison": {
-                  text: "Mise en livraison",
-                  iconClass: "fa-shipping-fast",
-                  tailwindColorClass: "text-purple-500",
-                  hexColor: "#a855f7",
-                  badgeClass: "mise_en_livraison",
-                },
-                miseenlivraisonacconier: {
-                  text: "Mise en livraison",
-                  iconClass: "fa-shipping-fast",
-                  tailwindColorClass: "text-purple-500",
-                  hexColor: "#a855f7",
-                  badgeClass: "mise_en_livraison",
-                },
-                mise_en_livraison_acconier: {
-                  text: "Mise en livraison",
-                  iconClass: "fa-shipping-fast",
-                  tailwindColorClass: "text-purple-500",
-                  hexColor: "#a855f7",
-                  badgeClass: "mise_en_livraison",
                 },
                 unknown: {
                   text: "-",
@@ -4448,6 +4410,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 0);
     });
   }
-  // Masquer la section statistiques au chargement
+  // Masquer la section statistiques hbqsvcbau chargement
   if (sectionStats) sectionStats.style.display = "none";
 });
