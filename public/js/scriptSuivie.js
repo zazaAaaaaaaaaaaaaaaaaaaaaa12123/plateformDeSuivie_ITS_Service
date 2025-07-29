@@ -3827,12 +3827,19 @@ if (window["WebSocket"]) {
         } else if (fieldName === "delivery_status_acconier") {
           // Affichage du statut acconier dans la colonne :
           // - Forcer "En attente de paiement" si statut vide ou "pending_acconier"
-          // - Afficher "Mise en livraison" si le statut est mis à jour
+          // - Afficher "Mise en livraison" pour tous les cas
           let displayStatus = value;
           if (!value || value === "pending_acconier") {
             displayStatus = getDefaultAcconierStatus();
           }
-          if (value === "mise_en_livraison_acconier") {
+          // Harmonisation des statuts "mise en livraison"
+          if (
+            [
+              "mise_en_livraison_acconier",
+              "mise_en_livraison",
+              "mise en livraison",
+            ].includes(value)
+          ) {
             displayStatus = "mise_en_livraison_acconier";
           }
           const statusInfo = getStatusInfo(displayStatus);
