@@ -668,6 +668,34 @@ if (window["WebSocket"]) {
 }
 
 (async () => {
+  // Ajout d'un style pour centrer et aligner proprement les colonnes Statut et Observations
+  (function injectTableAlignStyle() {
+    if (document.getElementById("tableAlignStyle")) return;
+    const style = document.createElement("style");
+    style.id = "tableAlignStyle";
+    style.textContent = `
+      th, td {
+        vertical-align: middle !important;
+      }
+      th.statut-col, th.observations-col, td.statut-col, td.observations-col {
+        text-align: center !important;
+        vertical-align: middle !important;
+      }
+      td.statut-col, td.observations-col {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+      }
+      .statut-badge, .observation-badge {
+        display: inline-block;
+        min-width: 80px;
+        text-align: center;
+      }
+      textarea {
+        vertical-align: middle;
+      }
+    `;
+    document.head.appendChild(style);
+  })();
   // === Désactivation de l'autocomplétion sur les champs sensibles ===
   window.addEventListener("DOMContentLoaded", function () {
     // Champ de recherche principal
@@ -4121,20 +4149,28 @@ if (window["WebSocket"]) {
       createCell(delivery.circuit, "circuit"); // Circuit
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
       // Affichage Statut Dossier (remplace Statut de livraison (Resp. Aconiés))
-      createCell(
+      // Colonne Statut Dossier bien centrée
+      const statutCell = createCell(
         delivery.delivery_status_acconier_fr ||
           delivery.delivery_status_acconier ||
           "-",
         "statut_dossier"
       );
-      // Affichage Observation (remplace Observations (Resp. Aconiés))
-      createCell(delivery.observation_acconier || "-", "observation");
-      createCell(
+      statutCell.classList.add("statut-col");
+      // Colonne Observations bien centrée
+      const obsCell = createCell(
+        delivery.observation_acconier || "-",
+        "observation"
+      );
+      obsCell.classList.add("observations-col");
+      // Zone de texte observation détaillée bien alignée
+      const obsTextCell = createCell(
         delivery.observation_acconier,
         "observation_acconier",
         "textarea",
         {}
-      ); // Observations (Resp. Aconiés)
+      );
+      obsTextCell.classList.add("observations-col");
       createCell(delivery.nom_agent_visiteur, "nom_agent_visiteur", "text", {}); // Nom agent visiteur
       createCell(delivery.transporter, "transporter", "text", {}); // Transporteur
       createCell(delivery.inspecteur, "inspecteur", "text", {}); // Inspecteur
