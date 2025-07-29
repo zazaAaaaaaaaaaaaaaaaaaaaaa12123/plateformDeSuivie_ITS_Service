@@ -1788,7 +1788,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // On utilise UNIQUEMENT respAcconierUser, jamais user !
         let respAcconierUserRaw = null;
         let respAcconierUser = null;
-        let alreadyRedirected = window.__alreadyRedirectedRespAcconier;
+        // Utilise sessionStorage pour éviter la boucle infinie
+        let alreadyRedirected = sessionStorage.getItem(
+          "__alreadyRedirectedRespAcconier"
+        );
         function isLocalStorageAccessible() {
           try {
             const testKey = "__test_ls__";
@@ -1802,10 +1805,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (isLocalStorageAccessible()) {
           respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         }
-        if (!isLocalStorageAccessible() || !respAcconierUserRaw) {
+        // Vérifie si on est déjà sur la page de login pour éviter la boucle
+        const isOnLoginPage =
+          window.location.pathname.endsWith("resp_acconier.html");
+        if (
+          (!isLocalStorageAccessible() || !respAcconierUserRaw) &&
+          !isOnLoginPage
+        ) {
           if (!alreadyRedirected) {
-            window.__alreadyRedirectedRespAcconier = true;
-            // On ne fait la redirection qu'une seule fois
+            sessionStorage.setItem("__alreadyRedirectedRespAcconier", "1");
             setTimeout(function () {
               window.location.replace("resp_acconier.html");
             }, 100);
@@ -1815,8 +1823,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         try {
           respAcconierUser = JSON.parse(respAcconierUserRaw);
         } catch (e) {
-          if (!alreadyRedirected) {
-            window.__alreadyRedirectedRespAcconier = true;
+          if (!alreadyRedirected && !isOnLoginPage) {
+            sessionStorage.setItem("__alreadyRedirectedRespAcconier", "1");
             setTimeout(function () {
               window.location.replace("resp_acconier.html");
             }, 100);
