@@ -2199,7 +2199,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     popup.appendChild(box);
     document.body.appendChild(popup);
-    // Fermer la popup si clic hors de la boxejsbhsjgjdh
+    // Fermer la popup si clic hors de la boxejsbdh
     popup.addEventListener("click", function (ev) {
       if (ev.target === popup) popup.remove();
     });

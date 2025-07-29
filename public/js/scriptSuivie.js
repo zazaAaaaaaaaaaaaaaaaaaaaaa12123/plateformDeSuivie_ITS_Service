@@ -667,14 +667,6 @@ if (window["WebSocket"]) {
   initWebSocketLivraison();
 }
 
-// Champs toujours éditables en ligne dans le tableau principal (modifiables côté Responsable de livraison)
-const ALWAYS_INLINE_EDITABLE_FIELDS = [
-  "nom_agent_visiteur", // modifiable côté Responsable de livraison
-  "statut", // modifiable côté Responsable de livraison
-  "observations", // modifiable côté Responsable de livraison
-  // Ajoute ici d'sqh,autres champs si besoin
-];
-
 (async () => {
   // === Désactivation de l'autocomplétion sur les champs sensibles ===
   window.addEventListener("DOMContentLoaded", function () {
@@ -1793,6 +1785,13 @@ const ALWAYS_INLINE_EDITABLE_FIELDS = [
   // This list is specific to what the user can *set* as a status.
   const ACCONIER_STATUS_OPTIONS_SELECTABLE = [
     {
+      value: "pending_acconier",
+      text: "En attente de paiement",
+      icon: "fa-clock",
+      tailwindColorClass: "text-gray-500",
+      hexColor: "#6b7280",
+    },
+    {
       value: "in_progress_acconier",
       text: "En cours de livraison",
       icon: "fa-truck-moving",
@@ -1861,10 +1860,29 @@ const ALWAYS_INLINE_EDITABLE_FIELDS = [
       text: "En cours",
       apiValue: "in_progress",
       icon: "fa-truck-moving",
-      tailwindColorClass: "text-blue-500",
-      hexColor: "#3b82f6",
+      tailwindColorClass: "text-blue-500", // Changed to blue
+      hexColor: "#3b82f6", // Changed to blue
     },
   ];
+
+  // Define fields that are always inline editable, regardless of global editing mode
+  // Removed "status" from here as it's handled by its own dropdown logic
+  const ALWAYS_INLINE_EDITABLE_FIELDS = [
+    "transporter",
+    "driver_name",
+    "truck_registration",
+    "driver_phone",
+    "delivery_date",
+    "delivery_time",
+    "nom_agent_visiteur",
+    "inspecteur",
+    "agent_en_douanes",
+    "delivery_notes",
+  ];
+
+  // DOM variables for the main table
+  const deliveriesTable = document.getElementById("deliveriesTable"); // Get the full table element
+  const deliveriesTableBody = document.getElementById("deliveriesTableBody");
   const generatePdfBtn = document.getElementById("generatePdfBtn"); // Global PDF button
   const searchInput = document.getElementById("searchInput");
   const searchButton = document.getElementById("searchButton");
@@ -4973,7 +4991,7 @@ const ALWAYS_INLINE_EDITABLE_FIELDS = [
   // Ajout d'une propriété de couleur pour les entêtes clés
   // Colonnes strictement dans l'ordre métier, sans colonnes parasites
   // Colonnes strictement selon la demande utilisateur
-  // Colonnes strictement selon la demande utilisateur (corrigé)
+  // Colonnes strictement selon la demande utilisateur (sans les colonnes à exclure)
   const AGENT_TABLE_COLUMNS = [
     { id: "employee_name", label: "Agent" },
     { id: "client_name", label: "Client (Nom)" },
@@ -4991,14 +5009,87 @@ const ALWAYS_INLINE_EDITABLE_FIELDS = [
     { id: "ship_name", label: "Nom du navire" },
     { id: "circuit", label: "Circuit" },
     { id: "transporter_mode", label: "Mode de Transport" },
-    // Bloc Responsable Acconier (lecture seule)
-    { id: "delivery_status_acconier", label: "Statut Acconier" },
-    { id: "observation_acconier", label: "Observation Acconier" }, // non modifiable
-    // Bloc Responsable de livraison (modifiables)
-    { id: "nom_agent_visiteur", label: "Nom agent visiteur" }, // modifiable
-    { id: "statut", label: "Statut Livraison" }, // modifiable
-    { id: "observations", label: "Observations" }, // modifiable
+    { id: "statut", label: "Statut" },
   ];
+
+  // Function to save column visibility to localStorage - REMOVED
+  // function saveColumnVisibility(agentName, hiddenColumns) {
+  //   localStorage.setItem(`agentColumns_${agentName}`, JSON.stringify(hiddenColumns));
+  // }
+
+  // Function to load column visibility from localStorage - REMOVED
+  // function loadColumnVisibility(agentName) {
+  //   const saved = localStorage.getItem(`agentColumns_${agentName}`);
+  //   return saved ? JSON.parse(saved) : [];
+  // }
+
+  // Function to apply column visibility - REMOVED (no longer needed without column management)
+  // function applyColumnVisibility(tableElement, hiddenColumns) {
+  //   AGENT_TABLE_COLUMNS.forEach(col => {
+  //     const elements = tableElement.querySelectorAll(`[data-column-id="${col.id}"]`);
+  //     elements.forEach(el => {
+  //       if (hiddenColumns.includes(col.id)) {
+  //         el.classList.add("hidden-column");
+  //       } else {
+  //         el.classList.remove("hidden-column");
+  //       }
+  //     });
+  //   });
+  // }
+
+  // Function to populate and manage the column selector panel - REMOVED
+  // function populateColumnSelectorPanel(agentName) {
+  //   let columnSelectorPanel = document.getElementById("columnSelectorPanel");
+  //   if (!columnSelectorPanel) {
+  //     columnSelectorPanel = document.createElement("div");
+  //     columnSelectorPanel.id = "columnSelectorPanel";
+  //     agentActivityBox.querySelector(".agent-activity-header").appendChild(columnSelectorPanel);
+  //   }
+  //   columnSelectorPanel.innerHTML = ""; // Clear previous content
+
+  //   const savedHiddenColumns = loadColumnVisibility(agentName);
+
+  //   AGENT_TABLE_COLUMNS.forEach(col => {
+  //     if (col.fixed) return; // Skip fixed columns
+
+  //     const label = document.createElement("label");
+  //     const checkbox = document.createElement("input");
+  //     checkbox.type = "checkbox";
+  //     checkbox.dataset.columnId = col.id;
+  //     checkbox.checked = !savedHiddenColumns.includes(col.id); // Checked if NOT hidden
+
+  //     checkbox.addEventListener("change", (e) => {
+  //       const columnId = e.target.dataset.columnId;
+  //       const isChecked = e.target.checked;
+  //       const currentHidden = loadColumnVisibility(agentName);
+
+  //       let newHiddenColumns;
+  //       if (isChecked) {
+  //         newHiddenColumns = currentHidden.filter(id => id !== columnId);
+  //       } else {
+  //         newHiddenColumns = [...currentHidden, columnId];
+  //       }
+  //       saveColumnVisibility(agentName, newHiddenColumns);
+  //       applyColumnVisibility(agentDailyDeliveriesTable, newHiddenColumns);
+  //     });
+
+  //     label.appendChild(checkbox);
+  //     label.appendChild(document.createTextNode(col.label));
+  //     columnSelectorPanel.appendChild(label);
+  //   });
+
+  //   // Close panel when clicking outside
+  //   document.addEventListener("click", (e) => {
+  //     if (columnSelectorPanel.classList.contains("show") &&
+  //         !columnSelectorPanel.contains(e.target) &&
+  //         !e.target.closest('.manage-columns-btn')) {
+  //   }
+  // });
+  //}
+  //       columnSelectorPanel.classList.remove("show");
+  //     }
+  //   });
+  // }
 
   async function showAgentActivity(agentName, dateToDisplay = new Date()) {
     if (loadingOverlay) {
@@ -8880,7 +8971,7 @@ const ALWAYS_INLINE_EDITABLE_FIELDS = [
     document.head.appendChild(style);
   })();
 
-  // Appelle le clighjcsnotement après chaque rendu du tableau principal
+  // Appelle le clignotement après chaque rendu du tableau principal
   const originalApplyCombinedFilters =
     window.applyCombinedFilters || applyCombinedFilters;
   window.applyCombinedFilters = function (...args) {
@@ -8889,5 +8980,4 @@ const ALWAYS_INLINE_EDITABLE_FIELDS = [
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en csjhskjas de pertubation 125 GGGAAAA34 ***/
-/************ */
+/****** Script a ajouter en cas de pertubation 125 AAAA ***/
