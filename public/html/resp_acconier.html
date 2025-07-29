@@ -612,29 +612,6 @@
           max-width: 100vw !important;
         }
       }
-
-      /* Sticky BL column à gauche sur mobile/tablette */
-      .sticky-col-bl {
-        position: sticky;
-        left: 50px; /* largeur de la colonne N° */
-        z-index: 13;
-        background: #e3f0ff !important;
-        box-shadow: 2px 0 6px -2px #2563eb11;
-      }
-      @media (max-width: 900px) {
-        .sticky-col-bl {
-          min-width: 80px !important;
-          max-width: 100px !important;
-          left: 50px !important;
-        }
-      }
-      @media (max-width: 600px) {
-        .sticky-col-bl {
-          min-width: 60px !important;
-          max-width: 80px !important;
-          left: 50px !important;
-        }
-      }
     </style>
   </head>
 
@@ -1135,7 +1112,7 @@
             style="
               width: 100%;
               max-width: 1200px;
-              min-width: 600px;
+              min-width: 900px;
               border-radius: 18px;
               table-layout: auto;
               margin: 0 auto;
@@ -1164,59 +1141,29 @@
                 </th>
               </tr>
               <tr id="deliveriesTableHead">
-                <th
-                  data-col-id="select"
-                  style="min-width: 36px; text-align: center"
-                >
+                <th style="min-width: 36px; text-align: center">
                   <input type="checkbox" id="selectAllRowsCheckbox" />
                 </th>
-                <th data-col-id="numero" style="min-width: 50px">N°</th>
-                <th
-                  data-col-id="bl"
-                  class="sticky-col sticky-col-bl"
-                  style="min-width: 90px; background: #e3f0ff"
-                >
-                  N° BL
-                </th>
-                <th data-col-id="date" style="min-width: 90px">Date</th>
-                <th data-col-id="agent" style="min-width: 120px">Agent</th>
-                <th data-col-id="client_nom" style="min-width: 120px">
-                  Client (Nom)
-                </th>
-                <th data-col-id="client_tel" style="min-width: 110px">
-                  Client (Tél)
-                </th>
-                <th data-col-id="tc" style="min-width: 150px">Numéro TC(s)</th>
-                <th data-col-id="lieu" style="min-width: 100px">Lieu</th>
-                <th data-col-id="type_conteneur" style="min-width: 110px">
-                  Type Conteneur (pied)
-                </th>
-                <th data-col-id="contenu" style="min-width: 110px">Contenu</th>
-                <th data-col-id="declaration" style="min-width: 110px">
-                  N° Déclaration
-                </th>
-                <th data-col-id="dossier" style="min-width: 110px">
-                  N° Dossier
-                </th>
-                <th data-col-id="nb_conteneurs" style="min-width: 110px">
-                  Nombre de conteneurs
-                </th>
-                <th data-col-id="compagnie" style="min-width: 120px">
-                  Compagnie Maritime
-                </th>
-                <th data-col-id="navire" style="min-width: 110px">
-                  Nom du navire
-                </th>
-                <th data-col-id="circuit" style="min-width: 90px">Circuit</th>
-                <th data-col-id="mode_transport" style="min-width: 150px">
-                  Mode de Transport
-                </th>
-                <th data-col-id="statut" style="min-width: 150px">
-                  Statut Dossier
-                </th>
-                <th data-col-id="observation" style="min-width: 120px">
-                  Observation
-                </th>
+                <th style="min-width: 50px">N°</th>
+                <th style="min-width: 90px">Date</th>
+                <th style="min-width: 120px">Agent</th>
+                <th style="min-width: 120px">Client (Nom)</th>
+                <th style="min-width: 110px">Client (Tél)</th>
+                <th style="min-width: 150px">Numéro TC(s)</th>
+                <th style="min-width: 100px">Lieu</th>
+                <th style="min-width: 110px">Type Conteneur (pied)</th>
+                <th style="min-width: 110px">Contenu</th>
+                <th style="min-width: 110px">N° Déclaration</th>
+                <th style="min-width: 110px">N° BL</th>
+                <th style="min-width: 110px">N° Dossier</th>
+                <th style="min-width: 110px">Nombre de conteneurs</th>
+                <th style="min-width: 120px">Compagnie Maritime</th>
+                <th style="min-width: 90px">Poids</th>
+                <th style="min-width: 110px">Nom du navire</th>
+                <th style="min-width: 90px">Circuit</th>
+                <th style="min-width: 150px">Mode de Transport</th>
+                <th style="min-width: 150px">Statut Dossier</th>
+                <th style="min-width: 120px">Observation</th>
               </tr>
             </thead>
 
@@ -1357,4 +1304,4 @@
     </script>
   </body>
 </html>
-<!---hdj-->
+<!--dhsj-->

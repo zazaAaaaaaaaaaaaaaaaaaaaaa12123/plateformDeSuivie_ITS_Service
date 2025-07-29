@@ -24,48 +24,6 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
-  // --- Correction responsive pour le tableau sur mobile/tablette ---
-  const styleResponsive = document.createElement("style");
-  styleResponsive.textContent = `
-    @media (max-width: 1100px) {
-      #deliveriesTable {
-        display: block;
-        overflow-x: auto;
-        width: 100%;
-        min-width: 700px;
-      }
-      #deliveriesTable thead, #deliveriesTable tbody {
-        width: 100%;
-      }
-      #deliveriesTable thead th, #deliveriesTable tbody td {
-        font-size: 0.97em;
-        padding: 4px 4px;
-        min-width: 90px;
-        max-width: 160px;
-        white-space: nowrap;
-      }
-      .tc-tags-btn, .tc-tag {
-        font-size: 0.97em !important;
-        padding: 2px 7px !important;
-      }
-    }
-    @media (max-width: 700px) {
-      #deliveriesTable {
-        min-width: 600px;
-      }
-      #deliveriesTable thead th, #deliveriesTable tbody td {
-        font-size: 0.92em;
-        padding: 2px 2px;
-        min-width: 70px;
-        max-width: 120px;
-      }
-      .tc-tags-btn, .tc-tag {
-        font-size: 0.92em !important;
-        padding: 2px 4px !important;
-      }
-    }
-  `;
-  document.head.appendChild(styleResponsive);
   // --- Toast dossiers en retard (>2 jours) ---
   function showLateDeliveriesToast(lateDeliveries) {
     // Supprimer tout toast existant
@@ -580,7 +538,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not([data-col-id='container_number']) {
+      #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 90px;
         font-size: 0.95em;
       }
@@ -591,7 +549,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     @media (max-width: 600px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not([data-col-id='container_number']) {
+      #deliveriesTable tbody td:not(:nth-child(5)) {
         max-width: 60px;
         font-size: 0.92em;
       }
@@ -1103,7 +1061,7 @@ document.addEventListener("DOMContentLoaded", function () {
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-      // Après chargement, détecter lesgvhs dossiers en retard (>2 jours)
+      // Après chargement, détecter les dossiers en retard (>2 jours)
       const now = new Date();
       const lateDeliveries = (window.allDeliveries || []).filter((d) => {
         let dDate = d.delivery_date || d.created_at;
@@ -1140,7 +1098,6 @@ document.addEventListener("DOMContentLoaded", function () {
 const AGENT_TABLE_COLUMNS = [
   { id: "select_row", label: "" }, // Colonne pour la sélection
   { id: "row_number", label: "N°" },
-  { id: "bl_number", label: "N° BL" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent" },
   { id: "client_name", label: "Client (Nom)" },
@@ -1150,10 +1107,11 @@ const AGENT_TABLE_COLUMNS = [
   { id: "container_foot_type", label: "Type Conteneur (pied)" },
   { id: "container_type_and_content", label: "Contenu" },
   { id: "declaration_number", label: "N° Déclaration" },
+  { id: "bl_number", label: "N° BL" },
   { id: "dossier_number", label: "N° Dossier" },
   { id: "number_of_containers", label: "Nombre de conteneurs" },
   { id: "shipping_company", label: "Compagnie Maritime" },
-  // { id: "weight", label: "Poids" }, // Supprimé pour alléger le tableau
+  { id: "weight", label: "Poids" },
   { id: "ship_name", label: "Nom du navire" },
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
@@ -1191,7 +1149,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
-      td.setAttribute("data-col-id", col.id);
       let value = "-";
       if (col.id === "select_row") {
         // Ajout d'une case à cocher pour la sélection
@@ -1342,34 +1299,29 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "-";
         }
       } else if (col.id === "bl_number") {
-        // Toujours afficher le BL comme bouton cliquable, même pour un seul BL
+        // Rendu avancé pour N° BL : badge/tag  et menu déroulant popup
         let blList = [];
         if (Array.isArray(delivery.bl_number)) {
           blList = delivery.bl_number.filter(Boolean);
         } else if (typeof delivery.bl_number === "string") {
           blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
         }
-        if (blList.length > 0) {
+        if (blList.length > 1) {
           td.classList.add("tc-multi-cell");
           const btn = document.createElement("button");
           btn.className = "tc-tags-btn";
           btn.type = "button";
-          btn.style.cursor = "pointer";
-          if (blList.length > 1) {
-            btn.innerHTML =
-              blList
-                .slice(0, 2)
-                .map((bl) => `<span class=\"tc-tag\">${bl}</span>`)
-                .join("") +
-              (blList.length > 2
-                ? ` <span class=\"tc-tag tc-tag-more\">+${
-                    blList.length - 2
-                  }</span>`
-                : "") +
-              ' <i class="fas fa-chevron-down tc-chevron"></i>';
-          } else {
-            btn.innerHTML = `<span class=\"tc-tag\">${blList[0]}</span>`;
-          }
+          btn.innerHTML =
+            blList
+              .slice(0, 2)
+              .map((bl) => `<span class=\"tc-tag\">${bl}</span>`)
+              .join("") +
+            (blList.length > 2
+              ? ` <span class=\"tc-tag tc-tag-more\">+${
+                  blList.length - 2
+                }</span>`
+              : "") +
+            ' <i class="fas fa-chevron-down tc-chevron"></i>';
           const popup = document.createElement("div");
           popup.className = "tc-popup";
           popup.style.display = "none";
@@ -1384,13 +1336,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             document.querySelectorAll(".tc-popup").forEach((p) => {
               if (p !== popup) p.style.display = "none";
             });
-            if (blList.length > 1) {
-              popup.style.display =
-                popup.style.display === "block" ? "none" : "block";
-            } else {
-              // Un seul BL : ouvrir directement le popup de détail
-              showBLDetailPopup(delivery, blList[0]);
-            }
+            popup.style.display =
+              popup.style.display === "block" ? "none" : "block";
           };
           popup.querySelectorAll(".tc-popup-item").forEach((item) => {
             item.onclick = (ev) => {
@@ -1404,6 +1351,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           });
           td.appendChild(btn);
           td.appendChild(popup);
+        } else if (blList.length === 1) {
+          const tag = document.createElement("span");
+          tag.className = "tc-tag";
+          tag.textContent = blList[0];
+          tag.style.cursor = "pointer";
+          tag.onclick = (e) => {
+            e.stopPropagation();
+            showBLDetailPopup(delivery, blList[0]);
+          };
+          td.appendChild(tag);
         } else {
           td.textContent = "-";
         }
@@ -1604,7 +1561,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               cancelBtn.style.padding = "0.7em 1.7em";
               cancelBtn.style.cursor = "pointer";
               cancelBtn.onclick = () => confirmOverlay.remove();
-
               // Bouton Confirmer
               const okBtn = document.createElement("button");
               okBtn.textContent = "Confirmer";
@@ -1832,29 +1788,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // On utilise UNIQUEMENT respAcconierUser, jamais user !
         let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         let respAcconierUser = null;
-        const redirectFlagKey = "respAcconierRedirected";
-        // Si on n'a pas de session, on redirige une seule fois, puis on bloque toute nouvelle redirection jusqu'à action utilisateur
         if (!respAcconierUserRaw) {
-          if (!localStorage.getItem(redirectFlagKey)) {
-            localStorage.setItem(redirectFlagKey, "1");
-            window.location.href = "resp_acconier.html";
-          }
-          // Si le flag existe déjà, on ne fait plus rien (on bloque la boucle)
+          window.location.href = "repoAcconierAuth.html";
           return;
         }
         try {
           respAcconierUser = JSON.parse(respAcconierUserRaw);
         } catch (e) {
-          if (!localStorage.getItem(redirectFlagKey)) {
-            localStorage.setItem(redirectFlagKey, "1");
-            window.location.href = "resp_acconier.html";
-          }
+          window.location.href = "repoAcconierAuth.html";
           return;
         }
-        // Si tout est ok (session valide), on supprime le flag UNIQUEMENT si il existe
-        if (localStorage.getItem(redirectFlagKey)) {
-          localStorage.removeItem(redirectFlagKey);
-        }
+        // ...existing code...
       } else if (col.id === "container_status") {
         // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
         let blList = [];
@@ -2247,3 +2191,4 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     };
   }
 }
+//originale12345678910shjdvsnb
