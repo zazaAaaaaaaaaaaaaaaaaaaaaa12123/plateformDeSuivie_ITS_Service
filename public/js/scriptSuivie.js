@@ -45,6 +45,8 @@ function renderLateDossiersTable() {
   let html = `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
   html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody>`;
   lateList.forEach((c) => {
+    // Log toutes les propriétés de la ligne pour diagnostic
+    console.log("[TABLEAU PRINCIPAL][DEBUG] Ligne:", c);
     let agent = c.agentName ? c.agentName : "-";
     let dateLiv = c.deliveryDate || "-";
     let heureLiv = "-";
