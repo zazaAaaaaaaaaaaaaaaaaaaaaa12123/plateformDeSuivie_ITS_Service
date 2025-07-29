@@ -517,22 +517,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
-        // On ne garde que les livraisons dont TOUS les BL sont en 'mise_en_livraison'
+        // On ne garde que les livraisons dont le statut acconier est 'mise_en_livraison_acconier'
         window.allDeliveries = data.deliveries.filter((delivery) => {
-          let blList = [];
-          if (Array.isArray(delivery.bl_number)) {
-            blList = delivery.bl_number.filter(Boolean);
-          } else if (typeof delivery.bl_number === "string") {
-            blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-          }
-          let blStatuses = blList.map((bl) =>
-            delivery.bl_statuses && delivery.bl_statuses[bl]
-              ? delivery.bl_statuses[bl]
-              : "aucun"
-          );
           return (
-            blStatuses.length > 0 &&
-            blStatuses.every((s) => s === "mise_en_livraison")
+            delivery.delivery_status_acconier === "mise_en_livraison_acconier"
           );
         });
       } else {
