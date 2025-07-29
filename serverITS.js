@@ -1681,7 +1681,7 @@ app.post(
       });
     }
 
-    // Mise à jour : Autoriser tous les nouveaux statuts métier acconier, y compris "mise_en_livraison_acconier" et "processed_acconier"
+    // Statuts métier autorisés pour l'acconier
     const allowedStatuses = [
       "awaiting_payment_acconier",
       "in_progress_payment_acconier",
@@ -1692,9 +1692,9 @@ app.post(
       "rejected_acconier",
       "rejected_by_employee",
     ];
+    // Si le statut n'est pas fourni ou invalide, on force la valeur par défaut
     let usedStatus = status;
-    if (!allowedStatuses.includes(status)) {
-      // Si le statut n'est pas fourni ou invalide, on force la valeur par défaut
+    if (!usedStatus || !allowedStatuses.includes(usedStatus)) {
       usedStatus = "awaiting_payment_acconier";
     }
 

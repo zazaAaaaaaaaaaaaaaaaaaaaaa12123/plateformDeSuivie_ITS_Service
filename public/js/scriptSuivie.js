@@ -1,5 +1,11 @@
 // === Génération dynamique du tableau principal des dossiers en retard ===
 // === INJECTION DU STYLE RESPONSIVE POUR LES BOUTONS DU TABLEAU DE SUIVI ===
+(function () {
+  // Statut par défaut pour le responsable acconier
+  window.getDefaultAcconierStatus = function () {
+    return "awaiting_payment_acconier";
+  };
+})();
 (function injectResponsiveButtonStyle() {
   if (document.getElementById("responsiveButtonStyle")) return;
   const style = document.createElement("style");
@@ -3821,10 +3827,13 @@ if (window["WebSocket"]) {
         } else if (fieldName === "delivery_status_acconier") {
           // Affichage du statut acconier dans la colonne :
           // - Forcer "En attente de paiement" si statut vide ou "pending_acconier"
-          // - Sinon afficher la valeur réelle (ex : "mise_en_livraison_acconier")
+          // - Afficher "Mise en livraison" si le statut est mis à jour
           let displayStatus = value;
           if (!value || value === "pending_acconier") {
-            displayStatus = "awaiting_payment_acconier";
+            displayStatus = getDefaultAcconierStatus();
+          }
+          if (value === "mise_en_livraison_acconier") {
+            displayStatus = "mise_en_livraison_acconier";
           }
           const statusInfo = getStatusInfo(displayStatus);
           const iconHtml = statusInfo.iconClass
