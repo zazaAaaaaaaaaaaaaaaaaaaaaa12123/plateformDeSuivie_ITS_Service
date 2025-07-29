@@ -694,7 +694,7 @@ document.addEventListener("DOMContentLoaded", function () {
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
 function renderAgentTableFull(deliveries, tableBodyElement) {
   // Création du bouton de suppression (mais caché par défaut)
-  let delBtn = document.getElementById("deleteRowsBtn");
+  let respBtn = document.getElementById("returnRespBtn");
   if (!delBtn) {
     delBtn = document.createElement("button");
     delBtn.id = "deleteRowsBtn";
@@ -705,8 +705,8 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     delBtn.style.fontWeight = "bold";
     delBtn.style.border = "none";
     delBtn.style.cursor = "pointer";
-    // Les autres styles sont gérés par le CSS ci-dessus
     delBtn.style.display = "none";
+    delBtn.style.marginRight = "8px";
     delBtn.onclick = function () {
       const checked = document.querySelectorAll(
         '#deliveriesTableBody input[type="checkbox"].row-select:checked'
@@ -717,7 +717,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
       }
       if (!confirm("Confirmer la suppression des lignes sélectionnées ?"))
         return;
-      // Suppression côté serveur pour chaque ligne sélectionnée
       let idsToDelete = [];
       let trsToDelete = [];
       checked.forEach((cb) => {
@@ -727,7 +726,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
           trsToDelete.push(tr);
         }
       });
-      // Appel API pour chaque id
       Promise.all(
         idsToDelete.map((id) => {
           return fetch(`/deliveries/${id}`, {
@@ -738,9 +736,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         })
       ).then((results) => {
         if (results.every((r) => r.success)) {
-          // Supprimer les lignes du DOM immédiatement
           trsToDelete.forEach((tr) => tr.remove());
-          // Mettre à jour allDeliveries côté client
           if (window.allDeliveries) {
             idsToDelete.forEach((id) => {
               window.allDeliveries = window.allDeliveries.filter(
@@ -748,7 +744,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
               );
             });
           }
-          // Afficher une alerte visuelle "Suppression effectuée"
           const alertDiv = document.createElement("div");
           alertDiv.textContent = "Suppression effectuée";
           alertDiv.style.position = "fixed";
@@ -785,30 +780,61 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         }, 100);
       });
     };
-    // Ajout du bouton à côté des filtres de date
+    // Création du bouton Ramener au Resp. Acconier
+    respBtn = document.createElement("button");
+    respBtn.id = "returnRespBtn";
+    respBtn.textContent = "Ramener au Resp. Acconier";
+    respBtn.type = "button";
+    respBtn.style.background = "#2563eb";
+    respBtn.style.color = "#fff";
+    respBtn.style.fontWeight = "bold";
+    respBtn.style.border = "none";
+    respBtn.style.cursor = "pointer";
+    respBtn.style.display = "none";
+    respBtn.style.marginRight = "8px";
+    respBtn.onclick = function () {
+      const checked = document.querySelectorAll(
+        '#deliveriesTableBody input[type="checkbox"].row-select:checked'
+      );
+      if (checked.length === 0) {
+        alert(
+          "Veuillez sélectionner au moins une ligne à ramener au Resp. Acconier."
+        );
+        return;
+      }
+      alert(
+        "Action : Ramener au Resp. Acconier pour " +
+          checked.length +
+          " ligne(s) sélectionnée(s)."
+      );
+      // Ici, ajoute ta logique métier/API pour le retour au Resp. Acconier
+    };
+    // Ajout des boutons à côté des filtres de date
     const dateStartInput = document.getElementById("mainTableDateStartFilter");
     const dateEndInput = document.getElementById("mainTableDateEndFilter");
     if (dateEndInput && dateEndInput.parentNode) {
-      // Crée un conteneur flex si pas déjà faits
       let filterBar = dateEndInput.parentNode;
-      // Si le parent n'est pas déjà un flex, on le force
       if (getComputedStyle(filterBar).display !== "flex") {
         filterBar.style.display = "flex";
         filterBar.style.alignItems = "center";
         filterBar.style.gap = "8px";
       }
-      // Place le bouton juste après le filtre date de fin
       if (dateEndInput.nextSibling !== delBtn) {
         dateEndInput.parentNode.insertBefore(delBtn, dateEndInput.nextSibling);
       }
+      if (delBtn.nextSibling !== respBtn) {
+        delBtn.parentNode.insertBefore(respBtn, delBtn.nextSibling);
+      }
     }
   }
-  // Fonction pour afficher/masquer le bouton selon la sélection
-  function updateDeleteBtnVisibility() {
+  // Fonction pour afficher/masquer les deux boutons selon la sélection
+  function updateActionBtnsVisibility() {
     const checked = document.querySelectorAll(
       '#deliveriesTableBody input[type="checkbox"].row-select:checked'
     );
-    delBtn.style.display = checked.length > 0 ? "inline-block" : "none";
+    const show = checked.length > 0;
+    delBtn.style.display = show ? "inline-block" : "none";
+    if (respBtn) respBtn.style.display = show ? "inline-block" : "none";
   }
   const table = tableBodyElement.closest("table");
   if (deliveries.length === 0) {
@@ -1040,12 +1066,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.appendChild(cb);
         // Ajout : afficher/masquer le bouton de suppression selon la sélection
         cb.addEventListener("change", function () {
-          const delBtn = document.getElementById("deleteRowsBtn");
-          if (delBtn) {
-            const checked = document.querySelectorAll(
-              '#deliveriesTableBody input[type="checkbox"].row-select:checked'
-            );
-            delBtn.style.display = checked.length > 0 ? "inline-block" : "none";
+          if (typeof updateActionBtnsVisibility === "function") {
+            updateActionBtnsVisibility();
           }
         });
         tr.appendChild(td);
