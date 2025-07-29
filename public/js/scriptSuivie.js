@@ -4517,15 +4517,6 @@ if (window["WebSocket"]) {
 
   // This function is now primarily used for displaying content after inline editing or initial render (non-editing mode)
   function updateCellContent(cell, displayValue, fieldName, type) {
-    if (fieldName === "delivery_notes") {
-      // Affichage de l'observation avec valeur par défaut
-      let obs = displayValue;
-      if (!obs || obs === "-" || obs === undefined || obs === null) {
-        obs = "-";
-      }
-      cell.textContent = obs;
-      return;
-    }
     if (fieldName === "statut_dossier") {
       // Affichage du statut dossier avec valeur par défaut
       let statut = displayValue;
@@ -4538,6 +4529,15 @@ if (window["WebSocket"]) {
         statut = "en attente de paiement";
       }
       cell.textContent = statut;
+      return;
+    }
+    if (fieldName === "delivery_notes") {
+      // Affichage de l'observation avec valeur par défaut
+      let obs = displayValue;
+      if (!obs || obs === "-" || obs === undefined || obs === null) {
+        obs = "-";
+      }
+      cell.textContent = obs;
       return;
     }
     // Renamed newValue to displayValue for clarity
