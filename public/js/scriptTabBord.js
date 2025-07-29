@@ -3566,7 +3566,10 @@ function afficherDetailsStatistiquesActeur(
     ];
     colonnesSecondaires = [];
   } else if (acteurKey === "responsableAcconier") {
-    colonnesPrincipales = ["Statut Dossier", "Observation"];
+    colonnesPrincipales = [
+      "Statut de livraison (Resp. Aconiés)",
+      "Observations (Resp. Aconiés)",
+    ];
   } else if (acteurKey === "responsableLivraison") {
     // Colonnes principales personnalisées pour Responsable Livraison (selon demande)
     colonnesPrincipales = [
@@ -3785,7 +3788,7 @@ function afficherDetailsStatistiquesActeur(
     // Mapping de traduction pour les statuts techniques acconier
     const traductionStatutsAcconier = {
       payment_done_acconier: "Paiement effectué",
-      pending_acconier: "En attente de paiement",
+      pending_acconier: "En attente ",
       delivered_acconier: "Livrée ",
       rejected_acconier: "Rejetée ",
       in_progress_acconier: "En cours ",
@@ -3798,32 +3801,34 @@ function afficherDetailsStatistiquesActeur(
         let tds = "";
         colonnesPrincipales.forEach((col) => {
           let val = ligne[col];
-          // LOGIQUE RENFORCÉE pour Responsable Acconier :
-          if (acteurKey === "responsableAcconier" && col === "Statut Dossier") {
-            // Toujours prendre la valeur brute du champ delivery_status_acconier si elle existe
+          // LOG de vérification pour Responsable Acconier
+          if (
+            acteurKey === "responsableAcconier" &&
+            col === "Statut de livraison (Resp. Aconiés)"
+          ) {
             if (
-              typeof ligne["delivery_status_acconier"] !== "undefined" &&
-              ligne["delivery_status_acconier"] !== null &&
-              ligne["delivery_status_acconier"] !== ""
+              ligne["delivery_status_acconier"] !== undefined &&
+              ligne["delivery_status_acconier"] !== null
             ) {
               val = ligne["delivery_status_acconier"];
+            } else if (ligne[col] !== undefined && ligne[col] !== null) {
+              val = ligne[col];
             } else {
-              val = "en attente de paiement";
+              val = "-";
             }
             // Traduction en français si valeur technique reconnue
             if (val && traductionStatutsAcconier[val] !== undefined) {
               val = traductionStatutsAcconier[val];
             }
-            // Log debug
             console.log(
-              `[STATISTIQUES][Ligne ${idx}] Statut Dossier (après logique renforcée) :`,
+              `[STATISTIQUES][Ligne ${idx}] Statut de livraison (Resp. Aconiés) :`,
               val,
               "| Donnée brute:",
               ligne["delivery_status_acconier"]
             );
           } else if (
             acteurKey === "responsableAcconier" &&
-            col === "Observation"
+            col === "Observations (Resp. Aconiés)"
           ) {
             if (
               ligne["observation_acconier"] !== undefined &&
@@ -3836,7 +3841,7 @@ function afficherDetailsStatistiquesActeur(
               val = "-";
             }
             console.log(
-              `[STATISTIQUES][Ligne ${idx}] Observation :`,
+              `[STATISTIQUES][Ligne ${idx}] Observations (Resp. Aconiés) :`,
               val,
               "| Donnée brute:",
               ligne["observation_acconier"]
@@ -4300,7 +4305,7 @@ function afficherDetailsStatistiquesActeur(
             }</span></div>`;
           });
           // Popup simple
-          let popup = document.getElementId("popupDetailsStats");
+          let popup = document.getElementById("popupDetailsStats");
           if (!popup) {
             popup = document.createElement("div");
             popup.id = "popupDetailsStats";
