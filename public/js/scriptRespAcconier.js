@@ -1789,13 +1789,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         let respAcconierUser = null;
         if (!respAcconierUserRaw) {
-          window.location.href = "repoAcconierAuth.html";
+          window.location.href = "resp_acconier.html";
           return;
         }
         try {
           respAcconierUser = JSON.parse(respAcconierUserRaw);
         } catch (e) {
-          window.location.href = "repoAcconierAuth.html";
+          window.location.href = "resp_acconier.html";
           return;
         }
         // ...existing code...
