@@ -1140,6 +1140,7 @@ document.addEventListener("DOMContentLoaded", function () {
 const AGENT_TABLE_COLUMNS = [
   { id: "select_row", label: "" }, // Colonne pour la sélection
   { id: "row_number", label: "N°" },
+  { id: "bl_number", label: "N° BL" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent" },
   { id: "client_name", label: "Client (Nom)" },
@@ -1149,7 +1150,6 @@ const AGENT_TABLE_COLUMNS = [
   { id: "container_foot_type", label: "Type Conteneur (pied)" },
   { id: "container_type_and_content", label: "Contenu" },
   { id: "declaration_number", label: "N° Déclaration" },
-  { id: "bl_number", label: "N° BL" },
   { id: "dossier_number", label: "N° Dossier" },
   { id: "number_of_containers", label: "Nombre de conteneurs" },
   { id: "shipping_company", label: "Compagnie Maritime" },
@@ -1604,6 +1604,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               cancelBtn.style.padding = "0.7em 1.7em";
               cancelBtn.style.cursor = "pointer";
               cancelBtn.onclick = () => confirmOverlay.remove();
+
               // Bouton Confirmer
               const okBtn = document.createElement("button");
               okBtn.textContent = "Confirmer";
@@ -1854,7 +1855,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (localStorage.getItem(redirectFlagKey)) {
           localStorage.removeItem(redirectFlagKey);
         }
-        // ...existing code...
       } else if (col.id === "container_status") {
         // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
         let blList = [];
@@ -2247,4 +2247,3 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     };
   }
 }
-//originale12345678910shbj
