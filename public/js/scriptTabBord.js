@@ -3794,6 +3794,9 @@ function afficherDetailsStatistiquesActeur(
       in_progress_acconier: "En cours ",
       in_progress_payment_acconier: "En cours de paiement",
       mise_en_livraison_acconier: "Mise en livraison",
+      mise_en_livraison: "Mise en livraison",
+      "mise en livraison": "Mise en livraison",
+      mise_en_livraison_acconier: "Mise en livraison",
       "": "-",
     };
     return rows
