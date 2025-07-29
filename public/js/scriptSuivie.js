@@ -9018,7 +9018,11 @@ if (window["WebSocket"]) {
   if (typeof createCell === "function") {
     const originalCreateCell = createCell;
     window.createCell = function (row, col, value) {
-      if (col === "delivery_status_acconier") {
+      if (
+        col === "delivery_status_acconier" ||
+        col === "statut" ||
+        col === "status"
+      ) {
         return originalCreateCell(row, col, getAcconierStatusDisplay(value));
       }
       return originalCreateCell(row, col, value);
