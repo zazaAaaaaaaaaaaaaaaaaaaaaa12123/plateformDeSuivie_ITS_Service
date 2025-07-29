@@ -881,52 +881,45 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
-        allDeliveries = data.deliveries
-          .filter(
-            (delivery) =>
-              delivery.delivery_status_acconier === "awaiting_payment_acconier"
-          )
-          .map((delivery) => {
-            // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
-            // Initialisation des statuts conteneurs si absent
-            let tcList = [];
-            if (Array.isArray(delivery.container_number)) {
-              tcList = delivery.container_number.filter(Boolean);
-            } else if (typeof delivery.container_number === "string") {
-              tcList = delivery.container_number
-                .split(/[,;\s]+/)
-                .filter(Boolean);
+        allDeliveries = data.deliveries.map((delivery) => {
+          // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
+          // Initialisation des statuts conteneurs si absent
+          let tcList = [];
+          if (Array.isArray(delivery.container_number)) {
+            tcList = delivery.container_number.filter(Boolean);
+          } else if (typeof delivery.container_number === "string") {
+            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          if (
+            !delivery.container_statuses ||
+            typeof delivery.container_statuses !== "object"
+          ) {
+            delivery.container_statuses = {};
+          }
+          tcList.forEach((tc) => {
+            if (!delivery.container_statuses[tc]) {
+              delivery.container_statuses[tc] = "attente_paiement";
             }
-            if (
-              !delivery.container_statuses ||
-              typeof delivery.container_statuses !== "object"
-            ) {
-              delivery.container_statuses = {};
-            }
-            tcList.forEach((tc) => {
-              if (!delivery.container_statuses[tc]) {
-                delivery.container_statuses[tc] = "attente_paiement";
-              }
-            });
-            // S'assurer que bl_statuses est bien un objet (si string JSON, parser)
-            if (
-              delivery.bl_statuses &&
-              typeof delivery.bl_statuses === "string"
-            ) {
-              try {
-                delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
-              } catch {
-                delivery.bl_statuses = {};
-              }
-            }
-            if (
-              !delivery.bl_statuses ||
-              typeof delivery.bl_statuses !== "object"
-            ) {
+          });
+          // S'assurer que bl_statuses est bien un objet (si string JSON, parser)
+          if (
+            delivery.bl_statuses &&
+            typeof delivery.bl_statuses === "string"
+          ) {
+            try {
+              delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+            } catch {
               delivery.bl_statuses = {};
             }
-            return delivery;
-          });
+          }
+          if (
+            !delivery.bl_statuses ||
+            typeof delivery.bl_statuses !== "object"
+          ) {
+            delivery.bl_statuses = {};
+          }
+          return delivery;
+        });
         // Synchronisation avec la variable globale utilisée dans renderAgentTableFull
         window.allDeliveries = allDeliveries;
       } else {
