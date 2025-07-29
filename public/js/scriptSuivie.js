@@ -8783,19 +8783,10 @@ if (window["WebSocket"]) {
       const agent = d.employee_name || "Agent inconnu";
       const status = d.status;
       const acconierStatus = d.delivery_status_acconier;
-      // Filtre : ignorer les statuts "En attente de paiement" (avec ou sans espaces)
-      const statusStr = (status || acconierStatus || "")
+      const isDelivered = (status || acconierStatus || "")
         .toString()
         .toLowerCase()
-        .trim();
-      if (
-        statusStr === "en attente de paiement" ||
-        statusStr.replace(/\s+/g, "") === "enattentedepaiement"
-      ) {
-        // On saute cette livraison
-        return;
-      }
-      const isDelivered = statusStr.includes("livr");
+        .includes("livr");
       // === LOG DÉTAILLÉ PAR LIVRAISON ===
       console.log(
         `[SYNC DIAG][LIVRAISON][#${idx}] Agent: ${agent} | status: '${status}' | acconier: '${acconierStatus}' | isDelivered:`,
@@ -8989,5 +8980,4 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
-// 1212shdujs
+/****** Script a ajouter en cas dsjnke pertubation 125 GGGAAAA34 ***/
