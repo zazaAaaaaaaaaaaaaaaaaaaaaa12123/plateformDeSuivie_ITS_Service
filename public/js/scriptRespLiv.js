@@ -385,6 +385,18 @@ document.addEventListener("DOMContentLoaded", function () {
       vertical-align: middle;
       display: none;
     }
+    #returnToRespBtn {
+      margin-left: 8px !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      padding: 4px 12px !important;
+      font-size: 0.97em !important;
+      height: 32px !important;
+      border-radius: 7px !important;
+      box-shadow: 0 1px 4px #2563eb22;
+      vertical-align: middle;
+      display: none;
+    }
     #deliveriesTableBody .tc-tag {      
       display: inline-block;
       margin-right: 4px;
@@ -693,8 +705,9 @@ document.addEventListener("DOMContentLoaded", function () {
 // Colonnes strictes pour Agent Acconier
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
 function renderAgentTableFull(deliveries, tableBodyElement) {
-  // Création du bouton de suppression (mais caché par défaut)
-  let respBtn = document.getElementById("returnRespBtn");
+  // Création des boutons d'action (suppression + ramener au Resp. Acconier)
+  let delBtn = document.getElementById("deleteRowsBtn");
+  let respBtn = document.getElementById("returnToRespBtn");
   if (!delBtn) {
     delBtn = document.createElement("button");
     delBtn.id = "deleteRowsBtn";
@@ -777,12 +790,14 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
             '#deliveriesTableBody input[type="checkbox"].row-select:checked'
           );
           if (checkedNow.length === 0) delBtn.style.display = "none";
+          if (respBtn && checkedNow.length === 0)
+            respBtn.style.display = "none";
         }, 100);
       });
     };
     // Création du bouton Ramener au Resp. Acconier
     respBtn = document.createElement("button");
-    respBtn.id = "returnRespBtn";
+    respBtn.id = "returnToRespBtn";
     respBtn.textContent = "Ramener au Resp. Acconier";
     respBtn.type = "button";
     respBtn.style.background = "#2563eb";
@@ -791,6 +806,8 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     respBtn.style.border = "none";
     respBtn.style.cursor = "pointer";
     respBtn.style.display = "none";
+    respBtn.style.borderRadius = "7px";
+    respBtn.style.padding = "4px 12px";
     respBtn.style.marginRight = "8px";
     respBtn.onclick = function () {
       const checked = document.querySelectorAll(
@@ -802,14 +819,14 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         );
         return;
       }
+      // Action métier à compléter ici
       alert(
-        "Action : Ramener au Resp. Acconier pour " +
+        "Action 'Ramener au Resp. Acconier' déclenchée pour " +
           checked.length +
-          " ligne(s) sélectionnée(s)."
+          " ligne(s)."
       );
-      // Ici, ajoute ta logique métier/API pour le retour au Resp. Acconier
     };
-    // Ajout des boutons à côté des filtres de date
+    // Ajout des deux boutons à côté des filtres de date
     const dateStartInput = document.getElementById("mainTableDateStartFilter");
     const dateEndInput = document.getElementById("mainTableDateEndFilter");
     if (dateEndInput && dateEndInput.parentNode) {
@@ -819,22 +836,24 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         filterBar.style.alignItems = "center";
         filterBar.style.gap = "8px";
       }
+      // Ajoute les deux boutons après le filtre date de fin
       if (dateEndInput.nextSibling !== delBtn) {
-        dateEndInput.parentNode.insertBefore(delBtn, dateEndInput.nextSibling);
+        filterBar.insertBefore(delBtn, dateEndInput.nextSibling);
       }
       if (delBtn.nextSibling !== respBtn) {
-        delBtn.parentNode.insertBefore(respBtn, delBtn.nextSibling);
+        filterBar.insertBefore(respBtn, delBtn.nextSibling);
       }
     }
   }
-  // Fonction pour afficher/masquer les deux boutons selon la sélection
-  function updateActionBtnsVisibility() {
+  // Fonction pour afficher/masquer les boutons selon la sélection
+  function updateDeleteBtnVisibility() {
     const checked = document.querySelectorAll(
       '#deliveriesTableBody input[type="checkbox"].row-select:checked'
     );
-    const show = checked.length > 0;
-    delBtn.style.display = show ? "inline-block" : "none";
-    if (respBtn) respBtn.style.display = show ? "inline-block" : "none";
+    delBtn.style.display = checked.length > 0 ? "inline-block" : "none";
+    if (!respBtn) respBtn = document.getElementById("returnToRespBtn");
+    if (respBtn)
+      respBtn.style.display = checked.length > 0 ? "inline-block" : "none";
   }
   const table = tableBodyElement.closest("table");
   if (deliveries.length === 0) {
@@ -1064,11 +1083,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         cb.style.height = "18px";
         td.style.textAlign = "center";
         td.appendChild(cb);
-        // Ajout : afficher/masquer le bouton de suppression selon la sélection
+        // Afficher/masquer les deux boutons ensemble selon la sélection
         cb.addEventListener("change", function () {
-          if (typeof updateActionBtnsVisibility === "function") {
-            updateActionBtnsVisibility();
-          }
+          const delBtn = document.getElementById("deleteRowsBtn");
+          const respBtn = document.getElementById("returnToRespBtn");
+          const checked = document.querySelectorAll(
+            '#deliveriesTableBody input[type="checkbox"].row-select:checked'
+          );
+          const show = checked.length > 0 ? "inline-block" : "none";
+          if (delBtn) delBtn.style.display = show;
+          if (respBtn) respBtn.style.display = show;
         });
         tr.appendChild(td);
         return;
@@ -1535,8 +1559,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         box.style.overflowY = "auto";
         box.style.padding = "0";
         box.style.position = "relative";
-        box.style.display = "flex";
-        box.style.flexDirection = "column";
         const header = document.createElement("div");
         header.style.background = "#2563eb";
         header.style.color = "#fff";
