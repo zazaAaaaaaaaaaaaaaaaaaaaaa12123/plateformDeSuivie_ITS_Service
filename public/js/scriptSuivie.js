@@ -5002,7 +5002,8 @@ if (window["WebSocket"]) {
     { id: "ship_name", label: "Nom du navire" },
     { id: "circuit", label: "Circuit" },
     { id: "transporter_mode", label: "Mode de Transport" },
-    { id: "statut", label: "Statut" },
+    { id: "statut_dossier", label: "Statut Dossier" },
+    { id: "observation", label: "Observation" },
   ];
 
   // Function to save column visibility to localStorage - REMOVED
@@ -5837,15 +5838,22 @@ if (window["WebSocket"]) {
       createSummaryItem("Mode de Transport", transporterModesText || "-")
     );
 
-    // Statut de livraison (Resp. Aconiés)
-    let acconierStatusText = Object.entries(summaryData.acconierStatusCounts)
+    // Statut Dossier
+    let statutDossierText = Object.entries(
+      summaryData.statutDossierCounts || {}
+    )
       .map(([status, count]) => `${count} ${status}`)
       .join(", ");
     parentElement.appendChild(
-      createSummaryItem(
-        "Statut de livraison (Resp. Acconiers)",
-        acconierStatusText || "-"
-      )
+      createSummaryItem("Statut Dossier", statutDossierText || "-")
+    );
+
+    // Observation
+    let observationText = Object.entries(summaryData.observationCounts || {})
+      .map(([obs, count]) => `${count} ${obs}`)
+      .join(", ");
+    parentElement.appendChild(
+      createSummaryItem("Observation", observationText || "-")
     );
 
     // Statut (Général)
