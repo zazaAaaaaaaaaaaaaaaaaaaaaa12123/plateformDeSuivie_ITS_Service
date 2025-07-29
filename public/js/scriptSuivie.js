@@ -4120,7 +4120,15 @@ if (window["WebSocket"]) {
       createCell(delivery.ship_name, "ship_name"); // Nom du navire
       createCell(delivery.circuit, "circuit"); // Circuit
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
-      createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
+      // Affichage Statut Dossier (remplace Statut de livraison (Resp. Aconiés))
+      createCell(
+        delivery.delivery_status_acconier_fr ||
+          delivery.delivery_status_acconier ||
+          "-",
+        "statut_dossier"
+      );
+      // Affichage Observation (remplace Observations (Resp. Aconiés))
+      createCell(delivery.observation_acconier || "-", "observation");
       createCell(
         delivery.observation_acconier,
         "observation_acconier",
