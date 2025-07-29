@@ -4455,13 +4455,12 @@ if (window["WebSocket"]) {
         !statutDossier ||
         statutDossier === "-" ||
         statutDossier === undefined ||
-        statutDossier === null ||
-        (typeof statutDossier === "string" && statutDossier.trim() === "")
+        statutDossier === null
       ) {
         statutDossier = "en attente de paiement";
       }
       createCell(statutDossier, "statut_dossier", "text", {}); // Statut Dossier
-      // Observation : valeur par défaut si absente
+      // Observation : valeur par défaut si ahbsjnbsente
       let observation = delivery.delivery_notes;
       if (
         !observation ||
@@ -4518,6 +4517,15 @@ if (window["WebSocket"]) {
 
   // This function is now primarily used for displaying content after inline editing or initial render (non-editing mode)
   function updateCellContent(cell, displayValue, fieldName, type) {
+    if (fieldName === "delivery_notes") {
+      // Affichage de l'observation avec valeur par défaut
+      let obs = displayValue;
+      if (!obs || obs === "-" || obs === undefined || obs === null) {
+        obs = "-";
+      }
+      cell.textContent = obs;
+      return;
+    }
     if (fieldName === "statut_dossier") {
       // Affichage du statut dossier avec valeur par défaut
       let statut = displayValue;
@@ -4525,32 +4533,11 @@ if (window["WebSocket"]) {
         !statut ||
         statut === "-" ||
         statut === undefined ||
-        statut === null ||
-        (typeof statut === "string" && statut.trim() === "")
+        statut === null
       ) {
         statut = "en attente de paiement";
       }
       cell.textContent = statut;
-      return;
-    }
-    if (fieldName === "delivery_notes") {
-      // Affichage de l'observation avec valeur par défaut
-      let obs = displayValue;
-      if (!obs || obs === undefined || obs === null) {
-        obs = "-";
-      }
-      // Si on est en mode édition, afficher un textarea
-      if (cell.classList.contains("editable-cell")) {
-        cell.innerHTML = "";
-        const textarea = document.createElement("textarea");
-        textarea.value = obs;
-        textarea.rows = 3;
-        textarea.classList.add("w-full", "resize-y");
-        cell.appendChild(textarea);
-      } else {
-        // Sinon, affichage simple
-        cell.textContent = obs;
-      }
       return;
     }
     // Renamed newValue to displayValue for clarity
