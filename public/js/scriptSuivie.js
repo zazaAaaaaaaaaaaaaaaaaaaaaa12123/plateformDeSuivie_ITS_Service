@@ -4137,6 +4137,22 @@ if (window["WebSocket"]) {
       createCell(delivery.ship_name, "ship_name"); // Nom du navire
       createCell(delivery.circuit, "circuit"); // Circuit
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
+      // Ajout Statut Dossier et Observations à la bonne position
+      let statutDossierCell = delivery.statut_dossier;
+      if (
+        !statutDossierCell ||
+        statutDossierCell === undefined ||
+        statutDossierCell === null ||
+        statutDossierCell === "-"
+      ) {
+        statutDossierCell = "";
+      }
+      createCell(statutDossierCell, "statut_dossier", "text", {}); // Statut Dossier
+      let observationCell = delivery.delivery_notes;
+      if (observationCell === undefined || observationCell === null) {
+        observationCell = "-";
+      }
+      createCell(observationCell, "delivery_notes", "textarea", {}); // Observations
       createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
       createCell(
         delivery.observation_acconier,
@@ -8773,21 +8789,6 @@ if (window["WebSocket"]) {
   window.showAgentActivity = showAgentActivity;
 
   // ================= AJOUT : Rafraîchissement dynamique du tableau dossiers en retard =================
-
-  // ================= AJOUT : Affichage Statut Dossier avec valeur par défaut =================
-  // À utiliser lors de la génération des lignes du tableau principal
-  function getStatutDossierForDisplay(delivery) {
-    // On prend la valeur du backend (statut_dossier ou statut), sinon valeur par défaut
-    // (adapter le nom du champ selon ta structure de données)
-    return (
-      delivery.statut_dossier || delivery.statut || "en attente de paiement"
-    );
-  }
-  // Exemple d'utilisation dans la génération du tableau :
-  // const tdStatutDossier = document.createElement('td');
-  // tdStatutDossier.textContent = getStatutDossierForDisplay(delivery);
-  // tr.appendChild(tdStatutDossier);
-  // =====================================================================
   // Fonction utilitaire pour détecter les agents en retard (à adapter selon ta logique métier)
   function getLateAgentsFromDeliveries(deliveries) {
     // On considère qu'un agent est en retard s'il a au moins un conteneur non livré
@@ -8993,6 +8994,7 @@ if (window["WebSocket"]) {
     originalApplyCombinedFilters.apply(this, args);
     setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
   };
-  // ================== FIN CLIsjnGNOTEMENT VERT ==================
+  // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
+// 1212shduhsjbjsc,bs
