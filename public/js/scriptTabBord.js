@@ -3798,15 +3798,15 @@ function afficherDetailsStatistiquesActeur(
         let tds = "";
         colonnesPrincipales.forEach((col) => {
           let val = ligne[col];
-          // LOG de vérification pour Responsable Acconier
+          // LOGIQUE RENFORCÉE pour Responsable Acconier :
           if (acteurKey === "responsableAcconier" && col === "Statut Dossier") {
+            // Toujours prendre la valeur brute du champ delivery_status_acconier si elle existe
             if (
-              ligne["delivery_status_acconier"] !== undefined &&
-              ligne["delivery_status_acconier"] !== null
+              typeof ligne["delivery_status_acconier"] !== "undefined" &&
+              ligne["delivery_status_acconier"] !== null &&
+              ligne["delivery_status_acconier"] !== ""
             ) {
               val = ligne["delivery_status_acconier"];
-            } else if (ligne[col] !== undefined && ligne[col] !== null) {
-              val = ligne[col];
             } else {
               val = "en attente de paiement";
             }
@@ -3814,8 +3814,9 @@ function afficherDetailsStatistiquesActeur(
             if (val && traductionStatutsAcconier[val] !== undefined) {
               val = traductionStatutsAcconier[val];
             }
+            // Log debug
             console.log(
-              `[STATISTIQUES][Ligne ${idx}] Statut Dossier :`,
+              `[STATISTIQUES][Ligne ${idx}] Statut Dossier (après logique renforcée) :`,
               val,
               "| Donnée brute:",
               ligne["delivery_status_acconier"]
@@ -4299,7 +4300,7 @@ function afficherDetailsStatistiquesActeur(
             }</span></div>`;
           });
           // Popup simple
-          let popup = document.getElementById("popupDetailsStats");
+          let popup = document.getElementId("popupDetailsStats");
           if (!popup) {
             popup = document.createElement("div");
             popup.id = "popupDetailsStats";
