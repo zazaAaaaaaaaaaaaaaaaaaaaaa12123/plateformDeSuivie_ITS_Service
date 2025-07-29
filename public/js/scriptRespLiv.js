@@ -815,7 +815,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     respBtn.style.marginRight = "4px";
     respBtn.style.fontSize = "0.88em";
     respBtn.style.height = "26px";
-    respBtn.onclick = function () {
+    respBtn.onclick = async function () {
       const checked = document.querySelectorAll(
         '#deliveriesTableBody input[type="checkbox"].row-select:checked'
       );
@@ -825,12 +825,78 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         );
         return;
       }
-      // Action métier à compléter ici
-      alert(
-        "Action 'Ramener au Resp. Acconier' déclenchée pour " +
-          checked.length +
-          " ligne(s)."
+      if (
+        !confirm(
+          "Confirmer le retour des lignes sélectionnées au Resp. Acconier ?"
+        )
+      )
+        return;
+      let idsToReturn = [];
+      let trsToRemove = [];
+      checked.forEach((cb) => {
+        const tr = cb.closest("tr[data-delivery-id]");
+        if (tr && tr.dataset.deliveryId) {
+          idsToReturn.push(tr.dataset.deliveryId);
+          trsToRemove.push(tr);
+        }
+      });
+      // Appel API pour chaque livraison à ramener
+      const results = await Promise.all(
+        idsToReturn.map((id) => {
+          // PATCH pour retirer le statut "mise_en_livraison" (à adapter selon l'API backend)
+          return fetch(`/deliveries/${id}/return-to-resp-acconier`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "return_to_resp_acconier" }),
+          })
+            .then((res) => res.json())
+            .catch(() => ({ success: false }));
+        })
       );
+      if (results.every((r) => r.success)) {
+        trsToRemove.forEach((tr) => tr.remove());
+        if (window.allDeliveries) {
+          idsToReturn.forEach((id) => {
+            window.allDeliveries = window.allDeliveries.filter(
+              (d) => String(d.id) !== String(id)
+            );
+          });
+        }
+        const alertDiv = document.createElement("div");
+        alertDiv.textContent = "Retour effectué vers Resp. Acconier";
+        alertDiv.style.position = "fixed";
+        alertDiv.style.top = "80px";
+        alertDiv.style.left = "50%";
+        alertDiv.style.transform = "translateX(-50%)";
+        alertDiv.style.background =
+          "linear-gradient(90deg,#2563eb 0%,#0e274e 100%)";
+        alertDiv.style.color = "#fff";
+        alertDiv.style.fontWeight = "bold";
+        alertDiv.style.fontSize = "1.12em";
+        alertDiv.style.padding = "18px 38px";
+        alertDiv.style.borderRadius = "16px";
+        alertDiv.style.boxShadow = "0 6px 32px rgba(37,99,235,0.18)";
+        alertDiv.style.zIndex = 99999;
+        alertDiv.style.opacity = "0";
+        alertDiv.style.transition = "opacity 0.3s";
+        document.body.appendChild(alertDiv);
+        setTimeout(() => {
+          alertDiv.style.opacity = "1";
+        }, 10);
+        setTimeout(() => {
+          alertDiv.style.opacity = "0";
+          setTimeout(() => alertDiv.remove(), 400);
+        }, 2000);
+      } else {
+        alert("Erreur lors du retour d'une ou plusieurs lignes.");
+      }
+      setTimeout(() => {
+        const checkedNow = document.querySelectorAll(
+          '#deliveriesTableBody input[type="checkbox"].row-select:checked'
+        );
+        if (checkedNow.length === 0) delBtn.style.display = "none";
+        if (respBtn && checkedNow.length === 0) respBtn.style.display = "none";
+      }, 100);
     };
     // Ajout des deux boutons à côté des filtres de date
     const dateStartInput = document.getElementById("mainTableDateStartFilter");

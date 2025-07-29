@@ -2909,6 +2909,47 @@ app.get("/interfaceFormulaireEmployer.html", (req, res) => {
 // --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
 // ===============================
 // ===============================
+// --- ROUTE PATCH: Ramener une livraison au Resp. Acconier ---
+// ===============================
+app.patch("/deliveries/:id/return-to-resp-acconier", async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Met à jour le statut acconier à 'pending_acconier' (retour Resp. Acconier)
+    const result = await pool.query(
+      "UPDATE livraison_conteneur SET delivery_status_acconier = $1 WHERE id = $2 RETURNING *;",
+      ["pending_acconier", id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+    // Optionnel : envoi WebSocket pour notification
+    const wss = req.app.get("wss");
+    const updatedDelivery = result.rows[0];
+    const alertMessage = `La livraison du dossier '${
+      updatedDelivery.dossier_number || updatedDelivery.id
+    }' a été ramenée au Resp. Acconier.`;
+    const payload = JSON.stringify({
+      type: "delivery_returned_acconier",
+      message: alertMessage,
+      deliveryId: updatedDelivery.id,
+      alertType: "info",
+    });
+    if (wss && wss.clients) {
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(payload);
+        }
+      });
+    }
+    return res.json({ success: true, delivery: updatedDelivery });
+  } catch (err) {
+    console.error("Erreur PATCH retour Resp. Acconier:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
+// ===============================
 // --- ROUTE PATCH: Mise à jour du statut acconier d'une livraison ---
 // ===============================
 app.patch("/deliveries/:id/acconier-status", async (req, res) => {
