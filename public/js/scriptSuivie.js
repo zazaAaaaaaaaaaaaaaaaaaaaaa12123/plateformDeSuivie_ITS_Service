@@ -4524,7 +4524,8 @@ if (window["WebSocket"]) {
         !statut ||
         statut === "-" ||
         statut === undefined ||
-        statut === null
+        statut === null ||
+        (typeof statut === "string" && statut.trim() === "")
       ) {
         statut = "en attente de paiement";
       }
