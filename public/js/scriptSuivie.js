@@ -4145,7 +4145,7 @@ if (window["WebSocket"]) {
         statutDossierCell === null ||
         statutDossierCell === "-"
       ) {
-        statutDossierCell = "";
+        statutDossierCell = "en attente de paiement";
       }
       createCell(statutDossierCell, "statut_dossier", "text", {}); // Statut Dossier
       let observationCell = delivery.delivery_notes;
@@ -8997,4 +8997,4 @@ if (window["WebSocket"]) {
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
 /****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
-// 1212shduhsjbjsc,bs
+// 1212shduhsjbjshsdvjs
