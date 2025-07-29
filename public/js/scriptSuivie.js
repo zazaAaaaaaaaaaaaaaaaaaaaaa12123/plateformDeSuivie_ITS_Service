@@ -1698,10 +1698,10 @@ if (window["WebSocket"]) {
       hexColor: "#22c55e",
     },
     awaiting_payment_acconier: {
-      text: "",
-      icon: "",
-      tailwindColorClass: "",
-      hexColor: "",
+      text: "En attente de paiement",
+      icon: "fa-clock",
+      tailwindColorClass: "text-gray-500",
+      hexColor: "#6b7280",
     },
     // L'ancien statut "Mise en livraison (ancienne)" n'est plus utilisé, mais on garde le mapping pour l'historique
     "Mise en livraison (ancienne)": {
@@ -1781,15 +1781,15 @@ if (window["WebSocket"]) {
     },
   };
 
-  // Define ONLY selectable options shsb,for the dropdown in the delivery card (if applicable)
+  // Define ONLY selectable options for the dropdown in the delivery card (if applicable)
   // This list is specific to what the user can *set* as a status.
   const ACCONIER_STATUS_OPTIONS_SELECTABLE = [
     {
       value: "pending_acconier",
-      text: "",
-      icon: "",
-      tailwindColorClass: "",
-      hexColor: "",
+      text: "En attente de paiement",
+      icon: "fa-clock",
+      tailwindColorClass: "text-gray-500",
+      hexColor: "#6b7280",
     },
     {
       value: "in_progress_acconier",
@@ -8980,4 +8980,5 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en cas de pertubxnchbjation 125 GGGAAAA34 ***/
+/****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
+// 1212shduhsjbjs
