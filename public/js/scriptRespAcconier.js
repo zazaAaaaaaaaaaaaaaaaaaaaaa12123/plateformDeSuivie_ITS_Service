@@ -1103,7 +1103,7 @@ document.addEventListener("DOMContentLoaded", function () {
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-      // Après chargement, détecter les dossiers en retard (>2 jours)
+      // Après chargement, détecter lesgvhs dossiers en retard (>2 jours)
       const now = new Date();
       const lateDeliveries = (window.allDeliveries || []).filter((d) => {
         let dDate = d.delivery_date || d.created_at;
