@@ -1785,13 +1785,6 @@ if (window["WebSocket"]) {
   // This list is specific to what the user can *set* as a status.
   const ACCONIER_STATUS_OPTIONS_SELECTABLE = [
     {
-      value: "pending_acconier",
-      text: "En attente de paiement",
-      icon: "fa-clock",
-      tailwindColorClass: "text-gray-500",
-      hexColor: "#6b7280",
-    },
-    {
       value: "in_progress_acconier",
       text: "En cours de livraison",
       icon: "fa-truck-moving",
@@ -1860,29 +1853,10 @@ if (window["WebSocket"]) {
       text: "En cours",
       apiValue: "in_progress",
       icon: "fa-truck-moving",
-      tailwindColorClass: "text-blue-500", // Changed to blue
-      hexColor: "#3b82f6", // Changed to blue
+      tailwindColorClass: "text-blue-500",
+      hexColor: "#3b82f6",
     },
   ];
-
-  // Define fields that are always inline editable, regardless of global editing mode
-  // Removed "status" from here as it's handled by its own dropdown logic
-  const ALWAYS_INLINE_EDITABLE_FIELDS = [
-    "transporter",
-    "driver_name",
-    "truck_registration",
-    "driver_phone",
-    "delivery_date",
-    "delivery_time",
-    "nom_agent_visiteur",
-    "inspecteur",
-    "agent_en_douanes",
-    "delivery_notes",
-  ];
-
-  // DOM variables for the main table
-  const deliveriesTable = document.getElementById("deliveriesTable"); // Get the full table element
-  const deliveriesTableBody = document.getElementById("deliveriesTableBody");
   const generatePdfBtn = document.getElementById("generatePdfBtn"); // Global PDF button
   const searchInput = document.getElementById("searchInput");
   const searchButton = document.getElementById("searchButton");
@@ -8971,7 +8945,7 @@ if (window["WebSocket"]) {
     document.head.appendChild(style);
   })();
 
-  // Appelle le clignotement après chaque rendu du tableau principal
+  // Appelle le clighjcsnotement après chaque rendu du tableau principal
   const originalApplyCombinedFilters =
     window.applyCombinedFilters || applyCombinedFilters;
   window.applyCombinedFilters = function (...args) {
@@ -8980,5 +8954,4 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script jxshja ajouter en cas de pertubation 125 GGGAAAA34 ***/
-// 1212shduhsjbjs
+/****** Script a ajouter en cas de pertubation 125 GGGAAAA34 ***/
