@@ -8999,19 +8999,25 @@ if (window["WebSocket"]) {
 
   // Harmonisation affichage statut acconier dans le tableau principal
   function getAcconierStatusDisplay(status) {
-    if (!status) return "-";
+    if (!status) {
+      console.log("[STATUT][Mapping] Statut brut: (vide/null) → Affiché: -");
+      return "-";
+    }
     const normalized = status.toString().toLowerCase().replace(/_/g, " ");
+    let mapped = status;
     if (
       normalized.includes("mise en livraison") ||
       normalized.includes("livraison acconier")
     ) {
-      return "Mise en livraison";
-    }
-    if (normalized.includes("attente paiement")) {
-      return "En attente de paiement";
+      mapped = "Mise en livraison";
+    } else if (normalized.includes("attente paiement")) {
+      mapped = "En attente de paiement";
     }
     // Ajoute d'autres mappings si besoin
-    return status;
+    console.log(
+      `[STATUT][Mapping] Statut brut: '${status}' | Normalisé: '${normalized}' → Affiché: '${mapped}'`
+    );
+    return mapped;
   }
 
   // Patch la création de cellule pour le statut acconier
@@ -9023,7 +9029,11 @@ if (window["WebSocket"]) {
         col === "statut" ||
         col === "status"
       ) {
-        return originalCreateCell(row, col, getAcconierStatusDisplay(value));
+        const mapped = getAcconierStatusDisplay(value);
+        console.log(
+          `[STATUT][Cellule] Colonne: '${col}' | Valeur brute: '${value}' → Affiché: '${mapped}'`
+        );
+        return originalCreateCell(row, col, mapped);
       }
       return originalCreateCell(row, col, value);
     };
