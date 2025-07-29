@@ -4137,6 +4137,22 @@ if (window["WebSocket"]) {
       createCell(delivery.ship_name, "ship_name"); // Nom du navire
       createCell(delivery.circuit, "circuit"); // Circuit
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
+      // Ajout Statut Dossier et Observations à la bonne position
+      let statutDossierCell = delivery.statut_dossier;
+      if (
+        !statutDossierCell ||
+        statutDossierCell === undefined ||
+        statutDossierCell === null ||
+        statutDossierCell === "-"
+      ) {
+        statutDossierCell = "en attente de paiement";
+      }
+      createCell(statutDossierCell, "statut_dossier", "text", {}); // Statut Dossier
+      let observationCell = delivery.delivery_notes;
+      if (observationCell === undefined || observationCell === null) {
+        observationCell = "-";
+      }
+      createCell(observationCell, "delivery_notes", "textarea", {}); // Observations
       createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
       createCell(
         delivery.observation_acconier,
