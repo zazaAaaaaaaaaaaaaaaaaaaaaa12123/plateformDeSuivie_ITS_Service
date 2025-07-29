@@ -4145,7 +4145,7 @@ if (window["WebSocket"]) {
         statutDossierCell === null ||
         statutDossierCell === "-"
       ) {
-        statutDossierCell = "en attente de paiement";
+        statutDossierCell = "";
       }
       createCell(statutDossierCell, "statut_dossier", "text", {}); // Statut Dossier
       let observationCell = delivery.delivery_notes;
