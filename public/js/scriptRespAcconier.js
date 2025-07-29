@@ -1791,17 +1791,25 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // On utilise UNIQUEMENT respAcconierUser, jamais user !
         let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         let respAcconierUser = null;
+        // Correction anti-boucle infinie :
         if (!respAcconierUserRaw) {
-          window.location.href = "resp_acconier.html";
+          if (!localStorage.getItem("acconierRedirected")) {
+            localStorage.setItem("acconierRedirected", "1");
+            window.location.href = "resp_acconier.html";
+          }
           return;
         }
         try {
           respAcconierUser = JSON.parse(respAcconierUserRaw);
         } catch (e) {
-          window.location.href = "resp_acconier.html";
+          if (!localStorage.getItem("acconierRedirected")) {
+            localStorage.setItem("acconierRedirected", "1");
+            window.location.href = "resp_acconier.html";
+          }
           return;
         }
-        // ...existing code...
+        // Si tout est ok, on supprime le flag pour les prochaines fois
+        localStorage.removeItem("acconierRedirected");
       } else if (col.id === "container_status") {
         // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
         let blList = [];
