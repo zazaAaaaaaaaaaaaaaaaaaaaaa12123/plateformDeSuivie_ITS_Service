@@ -1805,29 +1805,31 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (isLocalStorageAccessible()) {
           respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         }
-        // Vérifie si on est déjà sur la page de login pour éviter la boucle
-        const isOnLoginPage =
-          window.location.pathname.endsWith("resp_acconier.html");
+        // Vérifie si on est déjà sur la page de login pour éviter la boucle (même avec paramètres ou hash)
+        const isOnLoginPage = /resp_acconier\.html($|[?#])/i.test(
+          window.location.pathname +
+            window.location.search +
+            window.location.hash
+        );
         if (
           (!isLocalStorageAccessible() || !respAcconierUserRaw) &&
           !isOnLoginPage
         ) {
           if (!alreadyRedirected) {
             sessionStorage.setItem("__alreadyRedirectedRespAcconier", "1");
-            setTimeout(function () {
-              window.location.replace("resp_acconier.html");
-            }, 100);
+            // Redirige immédiatement, sans setTimeout (évite la boucle sur mobile)
+            window.location.replace("resp_acconier.html");
           }
           return;
         }
         try {
           respAcconierUser = JSON.parse(respAcconierUserRaw);
+          // Si on arrive à parser l'utilisateur, on supprime le flag pour permettre une reconnexion future
+          sessionStorage.removeItem("__alreadyRedirectedRespAcconier");
         } catch (e) {
           if (!alreadyRedirected && !isOnLoginPage) {
             sessionStorage.setItem("__alreadyRedirectedRespAcconier", "1");
-            setTimeout(function () {
-              window.location.replace("resp_acconier.html");
-            }, 100);
+            window.location.replace("resp_acconier.html");
           }
           return;
         }
