@@ -24,6 +24,48 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // --- Correction responsive pour le tableau sur mobile/tablette ---
+  const styleResponsive = document.createElement("style");
+  styleResponsive.textContent = `
+    @media (max-width: 1100px) {
+      #deliveriesTable {
+        display: block;
+        overflow-x: auto;
+        width: 100%;
+        min-width: 700px;
+      }
+      #deliveriesTable thead, #deliveriesTable tbody {
+        width: 100%;
+      }
+      #deliveriesTable thead th, #deliveriesTable tbody td {
+        font-size: 0.97em;
+        padding: 4px 4px;
+        min-width: 90px;
+        max-width: 160px;
+        white-space: nowrap;
+      }
+      .tc-tags-btn, .tc-tag {
+        font-size: 0.97em !important;
+        padding: 2px 7px !important;
+      }
+    }
+    @media (max-width: 700px) {
+      #deliveriesTable {
+        min-width: 600px;
+      }
+      #deliveriesTable thead th, #deliveriesTable tbody td {
+        font-size: 0.92em;
+        padding: 2px 2px;
+        min-width: 70px;
+        max-width: 120px;
+      }
+      .tc-tags-btn, .tc-tag {
+        font-size: 0.92em !important;
+        padding: 2px 4px !important;
+      }
+    }
+  `;
+  document.head.appendChild(styleResponsive);
   // --- Toast dossiers en retard (>2 jours) ---
   function showLateDeliveriesToast(lateDeliveries) {
     // Supprimer tout toast existant
@@ -1111,7 +1153,7 @@ const AGENT_TABLE_COLUMNS = [
   { id: "dossier_number", label: "N° Dossier" },
   { id: "number_of_containers", label: "Nombre de conteneurs" },
   { id: "shipping_company", label: "Compagnie Maritime" },
-  { id: "weight", label: "Poids" },
+  // { id: "weight", label: "Poids" }, // Supprimé pour alléger le tableau
   { id: "ship_name", label: "Nom du navire" },
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
