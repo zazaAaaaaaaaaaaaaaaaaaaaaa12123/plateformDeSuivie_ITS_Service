@@ -1698,10 +1698,10 @@ if (window["WebSocket"]) {
       hexColor: "#22c55e",
     },
     awaiting_payment_acconier: {
-      text: "En attente de paiement",
-      icon: "fa-clock",
-      tailwindColorClass: "text-gray-500",
-      hexColor: "#6b7280",
+      text: "",
+      icon: "",
+      tailwindColorClass: "",
+      hexColor: "",
     },
     // L'ancien statut "Mise en livraison (ancienne)" n'est plus utilisé, mais on garde le mapping pour l'historique
     "Mise en livraison (ancienne)": {
@@ -1786,10 +1786,10 @@ if (window["WebSocket"]) {
   const ACCONIER_STATUS_OPTIONS_SELECTABLE = [
     {
       value: "pending_acconier",
-      text: "En attente de paiement",
-      icon: "fa-clock",
-      tailwindColorClass: "text-gray-500",
-      hexColor: "#6b7280",
+      text: "",
+      icon: "",
+      tailwindColorClass: "",
+      hexColor: "",
     },
     {
       value: "in_progress_acconier",
