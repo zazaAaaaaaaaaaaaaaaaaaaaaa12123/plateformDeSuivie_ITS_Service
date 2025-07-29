@@ -53,17 +53,27 @@ function renderLateDossiersTable() {
     ) {
       dateLiv = dateLiv.toLocaleDateString("fr-FR");
     }
-    // Ajout du statut dossier acconier
-    let statutAcconier =
+    // Ajout du statut dossier acconier (traduction + icône)
+    let statutAcconierRaw =
       c.delivery_status_acconier ||
       c.statut_acconier ||
       c["delivery_status_acconier"] ||
       "-";
+    let statutInfo =
+      typeof getStatusInfo === "function"
+        ? getStatusInfo(statutAcconierRaw)
+        : {
+            text: statutAcconierRaw,
+            iconClass: "",
+            tailwindColorClass: "",
+            hexColor: "",
+          };
+    let statutAcconierHtml = `<span class="${statutInfo.tailwindColorClass}"><i class="fas ${statutInfo.iconClass}" style="color:${statutInfo.hexColor};margin-right:5px;"></i>${statutInfo.text}</span>`;
     html += `<tr><td style='padding:6px 10px;'>${
       c.numeroTC
     }</td><td style='padding:6px 10px;'>${agent}</td><td style='padding:6px 10px;'>${
       c.dateEnr || "-"
-    }</td><td style='padding:6px 10px;'>${dateLiv}</td><td style='padding:6px 10px;'>${heureLiv}</td><td style='padding:6px 10px;'>${statutAcconier}</td></tr>`;
+    }</td><td style='padding:6px 10px;'>${dateLiv}</td><td style='padding:6px 10px;'>${heureLiv}</td><td style='padding:6px 10px;'>${statutAcconierHtml}</td></tr>`;
   });
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
