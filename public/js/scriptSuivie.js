@@ -1671,6 +1671,12 @@ if (window["WebSocket"]) {
 
   // Define ALL possible backend statuses with their display info for GLOBAL DISPLAY
   const GLOBAL_DISPLAY_STATUS_INFO = {
+    awaiting_payment_acconier: {
+      text: "En attente de paiement",
+      icon: "fa-credit-card",
+      tailwindColorClass: "text-blue-500",
+      hexColor: "#007bff",
+    },
     mise_en_livraison_acconier: {
       text: "Mise en livraison",
       icon: "fa-hourglass-half",
@@ -1759,6 +1765,13 @@ if (window["WebSocket"]) {
   // Define ONLY selectable options for the dropdown in the delivery card (if applicable)
   // This list is specific to what the user can *set* as a status.
   const ACCONIER_STATUS_OPTIONS_SELECTABLE = [
+    {
+      value: "awaiting_payment_acconier",
+      text: "En attente de paiement",
+      icon: "fa-credit-card",
+      tailwindColorClass: "text-blue-500",
+      hexColor: "#007bff",
+    },
     // Statut paiement supprimé
     {
       value: "in_progress_acconier",
@@ -1792,6 +1805,14 @@ if (window["WebSocket"]) {
 
   // Define ONLY selectable options for the main table's status filter dropdown
   const GLOBAL_STATUS_OPTIONS = [
+    {
+      value: "awaiting_payment_acconier",
+      text: "En attente de paiement",
+      apiValue: "awaiting_payment_acconier",
+      icon: "fa-credit-card",
+      tailwindColorClass: "text-blue-500",
+      hexColor: "#007bff",
+    },
     // Statut paiement supprimé
     {
       value: "livre",
