@@ -70,7 +70,7 @@ function renderLateDossiersTable() {
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
 }
-// === SYSTÈME D'ALERTE AUTOMATIQUE POUR CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
+// === SYSTÈME D'ALERTE AUTOMATIQUE POURsnhq, CONTENEURS NON LIVRÉS APRÈS 2 JOURS ===
 
 function checkLateContainers() {
   // === LOG DIAGNOSTIC : Affiche l'état de window.deliveries à chaque appel ===
