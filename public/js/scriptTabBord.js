@@ -3566,10 +3566,7 @@ function afficherDetailsStatistiquesActeur(
     ];
     colonnesSecondaires = [];
   } else if (acteurKey === "responsableAcconier") {
-    colonnesPrincipales = [
-      "Statut de livraison (Resp. Aconiés)",
-      "Observations (Resp. Aconiés)",
-    ];
+    colonnesPrincipales = ["Statut Dossier", "Observation"];
   } else if (acteurKey === "responsableLivraison") {
     // Colonnes principales personnalisées pour Responsable Livraison (selon demande)
     colonnesPrincipales = [
@@ -3788,7 +3785,7 @@ function afficherDetailsStatistiquesActeur(
     // Mapping de traduction pour les statuts techniques acconier
     const traductionStatutsAcconier = {
       payment_done_acconier: "Paiement effectué",
-      pending_acconier: "En attente ",
+      pending_acconier: "En attente de paiement",
       delivered_acconier: "Livrée ",
       rejected_acconier: "Rejetée ",
       in_progress_acconier: "En cours ",
@@ -3802,10 +3799,7 @@ function afficherDetailsStatistiquesActeur(
         colonnesPrincipales.forEach((col) => {
           let val = ligne[col];
           // LOG de vérification pour Responsable Acconier
-          if (
-            acteurKey === "responsableAcconier" &&
-            col === "Statut de livraison (Resp. Aconiés)"
-          ) {
+          if (acteurKey === "responsableAcconier" && col === "Statut Dossier") {
             if (
               ligne["delivery_status_acconier"] !== undefined &&
               ligne["delivery_status_acconier"] !== null
@@ -3814,21 +3808,21 @@ function afficherDetailsStatistiquesActeur(
             } else if (ligne[col] !== undefined && ligne[col] !== null) {
               val = ligne[col];
             } else {
-              val = "-";
+              val = "en attente de paiement";
             }
             // Traduction en français si valeur technique reconnue
             if (val && traductionStatutsAcconier[val] !== undefined) {
               val = traductionStatutsAcconier[val];
             }
             console.log(
-              `[STATISTIQUES][Ligne ${idx}] Statut de livraison (Resp. Aconiés) :`,
+              `[STATISTIQUES][Ligne ${idx}] Statut Dossier :`,
               val,
               "| Donnée brute:",
               ligne["delivery_status_acconier"]
             );
           } else if (
             acteurKey === "responsableAcconier" &&
-            col === "Observations (Resp. Aconiés)"
+            col === "Observation"
           ) {
             if (
               ligne["observation_acconier"] !== undefined &&
@@ -3841,7 +3835,7 @@ function afficherDetailsStatistiquesActeur(
               val = "-";
             }
             console.log(
-              `[STATISTIQUES][Ligne ${idx}] Observations (Resp. Aconiés) :`,
+              `[STATISTIQUES][Ligne ${idx}] Observation :`,
               val,
               "| Donnée brute:",
               ligne["observation_acconier"]
