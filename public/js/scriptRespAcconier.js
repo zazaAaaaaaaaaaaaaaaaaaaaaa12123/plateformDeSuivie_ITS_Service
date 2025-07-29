@@ -1786,10 +1786,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         // Gestion stricte de la session responsable acconier :
         // On utilise UNIQUEMENT respAcconierUser, jamais user !
-        let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
+        let respAcconierUserRaw = null;
         let respAcconierUser = null;
-        // Correction anti-boucle d'actualisation sur mobile/tablette
-        // On vérifie si localStorage est accessible et on évite la redirection multiple
         let alreadyRedirected = window.__alreadyRedirectedRespAcconier;
         function isLocalStorageAccessible() {
           try {
@@ -1801,20 +1799,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             return false;
           }
         }
-        if (!isLocalStorageAccessible()) {
-          if (!alreadyRedirected) {
-            window.__alreadyRedirectedRespAcconier = true;
-            alert(
-              "Erreur : Le stockage local est désactivé ou indisponible. Veuillez activer le stockage local dans votre navigateur pour accéder à cette page."
-            );
-            window.location.replace("resp_acconier.html");
-          }
-          return;
+        if (isLocalStorageAccessible()) {
+          respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         }
-        if (!respAcconierUserRaw) {
+        if (!isLocalStorageAccessible() || !respAcconierUserRaw) {
           if (!alreadyRedirected) {
             window.__alreadyRedirectedRespAcconier = true;
-            window.location.replace("resp_acconier.html");
+            // On ne fait la redirection qu'une seule fois
+            setTimeout(function () {
+              window.location.replace("resp_acconier.html");
+            }, 100);
           }
           return;
         }
@@ -1823,7 +1817,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } catch (e) {
           if (!alreadyRedirected) {
             window.__alreadyRedirectedRespAcconier = true;
-            window.location.replace("resp_acconier.html");
+            setTimeout(function () {
+              window.location.replace("resp_acconier.html");
+            }, 100);
           }
           return;
         }
