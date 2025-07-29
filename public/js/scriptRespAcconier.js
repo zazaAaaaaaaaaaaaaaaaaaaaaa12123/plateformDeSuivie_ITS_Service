@@ -1835,7 +1835,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         // ...existing code...
       } else if (col.id === "container_status") {
-        // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
+        // Nouveau comportement : le statuto dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
         let blList = [];
         if (Array.isArray(delivery.bl_number)) {
           blList = delivery.bl_number.filter(Boolean);
