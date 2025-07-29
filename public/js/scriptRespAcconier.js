@@ -1788,16 +1788,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // On utilise UNIQUEMENT respAcconierUser, jamais user !
         let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         let respAcconierUser = null;
-        // Correction anti-boucle infinie : utiliser un flag localStorage
         const redirectFlagKey = "respAcconierRedirected";
+        // Si on n'a pas de session, on redirige une seule fois, puis on bloque toute nouvelle redirection jusqu'à action utilisateur
         if (!respAcconierUserRaw) {
           if (!localStorage.getItem(redirectFlagKey)) {
             localStorage.setItem(redirectFlagKey, "1");
             window.location.href = "resp_acconier.html";
-          } else {
-            // On stoppe la boucle ici
-            localStorage.removeItem(redirectFlagKey);
           }
+          // Si le flag existe déjà, on ne fait plus rien (on bloque la boucle)
           return;
         }
         try {
@@ -1806,12 +1804,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           if (!localStorage.getItem(redirectFlagKey)) {
             localStorage.setItem(redirectFlagKey, "1");
             window.location.href = "resp_acconier.html";
-          } else {
-            localStorage.removeItem(redirectFlagKey);
           }
           return;
         }
-        // Si tout est ok, on supprime le flag pour la prochaine session
+        // Si tout est ok (session valide), on supprime le flag UNIQUEMENT si il existe
         if (localStorage.getItem(redirectFlagKey)) {
           localStorage.removeItem(redirectFlagKey);
         }
