@@ -8783,10 +8783,19 @@ if (window["WebSocket"]) {
       const agent = d.employee_name || "Agent inconnu";
       const status = d.status;
       const acconierStatus = d.delivery_status_acconier;
-      const isDelivered = (status || acconierStatus || "")
+      // Filtre : ignorer les statuts "En attente de paiement" (avec ou sans espaces)
+      const statusStr = (status || acconierStatus || "")
         .toString()
         .toLowerCase()
-        .includes("livr");
+        .trim();
+      if (
+        statusStr === "en attente de paiement" ||
+        statusStr.replace(/\s+/g, "") === "enattentedepaiement"
+      ) {
+        // On saute cette livraison
+        return;
+      }
+      const isDelivered = statusStr.includes("livr");
       // === LOG DÉTAILLÉ PAR LIVRAISON ===
       console.log(
         `[SYNC DIAG][LIVRAISON][#${idx}] Agent: ${agent} | status: '${status}' | acconier: '${acconierStatus}' | isDelivered:`,
