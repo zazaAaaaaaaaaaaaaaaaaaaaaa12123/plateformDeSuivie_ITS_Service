@@ -4455,7 +4455,8 @@ if (window["WebSocket"]) {
         !statutDossier ||
         statutDossier === "-" ||
         statutDossier === undefined ||
-        statutDossier === null
+        statutDossier === null ||
+        (typeof statutDossier === "string" && statutDossier.trim() === "")
       ) {
         statutDossier = "en attente de paiement";
       }
