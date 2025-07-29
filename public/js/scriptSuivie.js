@@ -667,6 +667,14 @@ if (window["WebSocket"]) {
   initWebSocketLivraison();
 }
 
+// Champs toujours éditables en ligne dans le tableau principal (modifiables côté Responsable de livraison)
+const ALWAYS_INLINE_EDITABLE_FIELDS = [
+  "nom_agent_visiteur", // modifiable côté Responsable de livraison
+  "statut", // modifiable côté Responsable de livraison
+  "observations", // modifiable côté Responsable de livraison
+  // Ajoute ici d'autres champs si besoin
+];
+
 (async () => {
   // === Désactivation de l'autocomplétion sur les champs sensibles ===
   window.addEventListener("DOMContentLoaded", function () {
