@@ -5828,7 +5828,7 @@ if (window["WebSocket"]) {
       )
     );
 
-    // Nombre de conteneursshsk
+    // Nombre de conteneurs
     parentElement.appendChild(
       createSummaryItem(
         "Nombre de conteneurs",
@@ -5844,9 +5844,8 @@ if (window["WebSocket"]) {
       createSummaryItem("Mode de Transport", transporterModesText || "-")
     );
 
-    // Statut de livraison (Resp. Aconiés) - retire "En attente de paiement"
+    // Statut de livraison (Resp. Aconiés)
     let acconierStatusText = Object.entries(summaryData.acconierStatusCounts)
-      .filter(([status]) => status !== "En attente de paiement")
       .map(([status, count]) => `${count} ${status}`)
       .join(", ");
     parentElement.appendChild(
@@ -5901,7 +5900,7 @@ if (window["WebSocket"]) {
     // --- Daily Summary Calculations ---
     const dailySummaryData = calculateSummaryData(dailyDeliveries);
 
-    // --- Daily Summary Section --shjs-
+    // --- Daily Summary Section ---
     const currentDaySummaryBlock = document.createElement("div");
     currentDaySummaryBlock.classList.add("summary-block"); // Add new styling class
 
@@ -8981,4 +8980,4 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en cas dsjnke pertubation 125 GGGAAAA34 ***/
+/****** Script a ajouter en cas de pertubxnchbjation 125 GGGAAAA34 ***/
