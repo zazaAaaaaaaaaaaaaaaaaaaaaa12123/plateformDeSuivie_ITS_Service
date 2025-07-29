@@ -652,6 +652,43 @@
   </head>
 
   <body class="sidebar-expanded">
+    <script>
+      // Fonction pour recharger les livraisons et mettre à jour le tableau/statut acconier
+      async function reloadLivraisonsAcconier() {
+        try {
+          const res = await fetch("/deliveries/status");
+          const data = await res.json();
+          if (!data.success || !Array.isArray(data.deliveries)) {
+            // Optionnel : afficher une alerte ou un message d'erreur dans le tableau
+            return;
+          }
+          const container = document.getElementById("suiviContainer");
+          if (container) {
+            let html =
+              "<h2>Statut Dossier - Responsable Acconier</h2><table style='width:100%;border-collapse:collapse;'><thead><tr><th>ID</th><th>Agent</th><th>Client</th><th>Statut Acconier</th></tr></thead><tbody>";
+            data.deliveries.forEach((liv) => {
+              html += `<tr><td>${liv.id}</td><td>${
+                liv.employee_name || "-"
+              }</td><td>${liv.client_name || "-"}</td><td>${
+                liv.delivery_status_acconier_fr ||
+                liv.delivery_status_acconier ||
+                "-"
+              }</td></tr>`;
+            });
+            html += "</tbody></table>";
+            container.innerHTML = html;
+            container.style.display = "block";
+          }
+        } catch (err) {
+          // Optionnel : afficher une alerte ou un message d'erreur dans le tableau
+        }
+      }
+      // Rechargement automatique à l'ouverture et toutes les 15 secondes
+      document.addEventListener("DOMContentLoaded", function () {
+        reloadLivraisonsAcconier();
+        setInterval(reloadLivraisonsAcconier, 15000); // 15 secondes
+      });
+    </script>
     <div class="layout">
       <aside class="sidebar">
         <h2 id="sidebarTitle" style="position: relative">

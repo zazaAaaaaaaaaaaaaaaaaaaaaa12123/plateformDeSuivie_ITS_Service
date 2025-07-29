@@ -2908,6 +2908,47 @@ app.get("/interfaceFormulaireEmployer.html", (req, res) => {
 // ===============================
 // --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
 // ===============================
+// ===============================
+// --- ROUTE PATCH: Mise à jour du statut acconier d'une livraison ---
+// ===============================
+app.patch("/deliveries/:id/acconier-status", async (req, res) => {
+  const { id } = req.params;
+  const { delivery_status_acconier } = req.body || {};
+  const allowedStatuses = [
+    "awaiting_payment_acconier",
+    "in_progress_payment_acconier",
+    "pending_acconier",
+    "mise_en_livraison_acconier",
+    "payment_done_acconier",
+    "processed_acconier",
+    "rejected_acconier",
+    "rejected_by_employee",
+  ];
+  if (
+    !delivery_status_acconier ||
+    !allowedStatuses.includes(delivery_status_acconier)
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Statut acconier non autorisé ou manquant.",
+    });
+  }
+  try {
+    const result = await pool.query(
+      "UPDATE livraison_conteneur SET delivery_status_acconier = $1 WHERE id = $2 RETURNING *;",
+      [delivery_status_acconier, id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+    return res.json({ success: true, delivery: result.rows[0] });
+  } catch (err) {
+    console.error("Erreur PATCH delivery_status_acconier:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
 
 // ===============================
 // --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
