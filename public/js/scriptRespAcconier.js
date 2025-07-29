@@ -580,7 +580,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     @media (max-width: 900px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
+      #deliveriesTable tbody td:not([data-col-id='container_number']) {
         max-width: 90px;
         font-size: 0.95em;
       }
@@ -591,7 +591,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     @media (max-width: 600px) {
       #deliveriesTable thead th:not([data-col-id='container_number']),
-      #deliveriesTable tbody td:not(:nth-child(5)) {
+      #deliveriesTable tbody td:not([data-col-id='container_number']) {
         max-width: 60px;
         font-size: 0.92em;
       }
@@ -1191,6 +1191,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
+      td.setAttribute("data-col-id", col.id);
       let value = "-";
       if (col.id === "select_row") {
         // Ajout d'une case à cocher pour la sélection
