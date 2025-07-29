@@ -1657,6 +1657,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                       alert(msg);
                       return;
                     }
+                    // --- PATCH du statut dossier acconier si tous les BL sont en livraison ---
+                    if (allMiseEnLivraison) {
+                      try {
+                        await fetch(
+                          `/deliveries/${delivery.id}/acconier-status`,
+                          {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              delivery_status_acconier:
+                                "mise_en_livraison_acconier",
+                            }),
+                          }
+                        );
+                      } catch (err) {
+                        console.warn(
+                          "Erreur PATCH delivery_status_acconier:",
+                          err
+                        );
+                      }
+                    }
                     overlay.remove();
                     // Afficher l'alerte verte de confirmation
                     showMiseEnLivraisonSuccessAlert();

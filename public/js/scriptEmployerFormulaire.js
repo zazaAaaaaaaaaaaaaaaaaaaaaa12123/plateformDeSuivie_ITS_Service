@@ -1755,12 +1755,19 @@ async function submitDeliveryForm(status) {
   formData.append("transporter_mode", transporterMode);
 
   // Ajout du champ technique pour le backend (affichage correct du statut)
-  // Désormais, le statut par défaut est 'awaiting_payment_acconier' (En attente de paiement)
-  let deliveryStatusAcconier = "awaiting_payment_acconier";
-  if (status === "rejected_by_employee" || status === "rejected_acconier") {
+  // Toujours envoyer 'pending_acconier' à la création, sauf cas de rejet ou livraison
+  let deliveryStatusAcconier;
+  if (status === "pending_acconier") {
+    deliveryStatusAcconier = "pending_acconier";
+  } else if (
+    status === "rejected_by_employee" ||
+    status === "rejected_acconier"
+  ) {
     deliveryStatusAcconier = status;
   } else if (status === "delivered" || status === "livre") {
     deliveryStatusAcconier = "delivered";
+  } else {
+    deliveryStatusAcconier = "pending_acconier";
   }
   formData.append("delivery_status_acconier", deliveryStatusAcconier);
 
