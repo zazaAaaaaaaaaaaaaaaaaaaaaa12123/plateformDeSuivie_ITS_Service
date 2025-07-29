@@ -668,34 +668,6 @@ if (window["WebSocket"]) {
 }
 
 (async () => {
-  // Ajout d'un style pour centrer et aligner proprement les colonnes Statut et Observations
-  (function injectTableAlignStyle() {
-    if (document.getElementById("tableAlignStyle")) return;
-    const style = document.createElement("style");
-    style.id = "tableAlignStyle";
-    style.textContent = `
-      th, td {
-        vertical-align: middle !important;
-      }
-      th.statut-col, th.observations-col, td.statut-col, td.observations-col {
-        text-align: center !important;
-        vertical-align: middle !important;
-      }
-      td.statut-col, td.observations-col {
-        padding-top: 8px !important;
-        padding-bottom: 8px !important;
-      }
-      .statut-badge, .observation-badge {
-        display: inline-block;
-        min-width: 80px;
-        text-align: center;
-      }
-      textarea {
-        vertical-align: middle;
-      }
-    `;
-    document.head.appendChild(style);
-  })();
   // === Désactivation de l'autocomplétion sur les champs sensibles ===
   window.addEventListener("DOMContentLoaded", function () {
     // Champ de recherche principal
@@ -1699,12 +1671,6 @@ if (window["WebSocket"]) {
 
   // Define ALL possible backend statuses with their display info for GLOBAL DISPLAY
   const GLOBAL_DISPLAY_STATUS_INFO = {
-    awaiting_payment_acconier: {
-      text: "En attente de paiement",
-      icon: "fa-credit-card",
-      tailwindColorClass: "text-blue-500",
-      hexColor: "#007bff",
-    },
     mise_en_livraison_acconier: {
       text: "Mise en livraison",
       icon: "fa-hourglass-half",
@@ -1718,6 +1684,31 @@ if (window["WebSocket"]) {
       icon: "fa-hourglass-half",
       tailwindColorClass: "text-yellow-500",
       hexColor: "#f59e0b",
+    },
+    in_progress_payment_acconier: {
+      text: "En cours de paiement",
+      icon: "fa-credit-card",
+      tailwindColorClass: "text-blue-500",
+      hexColor: "#007bff",
+    },
+    payment_done_acconier: {
+      text: "Paiement effectué",
+      icon: "fa-check-circle",
+      tailwindColorClass: "text-green-500",
+      hexColor: "#22c55e",
+    },
+    awaiting_payment_acconier: {
+      text: "En attente de paiement",
+      icon: "fa-clock",
+      tailwindColorClass: "text-gray-500",
+      hexColor: "#6b7280",
+    },
+    // L'ancien statut "Mise en livraison (ancienne)" n'est plus utilisé, mais on garde le mapping pour l'historique
+    "Mise en livraison (ancienne)": {
+      text: "Attente paiement",
+      icon: "fa-clock",
+      tailwindColorClass: "text-gray-500",
+      hexColor: "#6b7280",
     },
     in_progress_acconier: {
       text: "En cours de livraison",
@@ -1794,13 +1785,12 @@ if (window["WebSocket"]) {
   // This list is specific to what the user can *set* as a status.
   const ACCONIER_STATUS_OPTIONS_SELECTABLE = [
     {
-      value: "awaiting_payment_acconier",
+      value: "pending_acconier",
       text: "En attente de paiement",
-      icon: "fa-credit-card",
-      tailwindColorClass: "text-blue-500",
-      hexColor: "#007bff",
+      icon: "fa-clock",
+      tailwindColorClass: "text-gray-500",
+      hexColor: "#6b7280",
     },
-    // Statut paiement supprimé
     {
       value: "in_progress_acconier",
       text: "En cours de livraison",
@@ -1833,15 +1823,14 @@ if (window["WebSocket"]) {
 
   // Define ONLY selectable options for the main table's status filter dropdown
   const GLOBAL_STATUS_OPTIONS = [
-    {
-      value: "awaiting_payment_acconier",
+    /* {
+      value: "pending_acconier",
       text: "En attente de paiement",
-      apiValue: "awaiting_payment_acconier",
-      icon: "fa-credit-card",
-      tailwindColorClass: "text-blue-500",
-      hexColor: "#007bff",
-    },
-    // Statut paiement supprimé
+      apiValue: "pending_acconier",
+      icon: "fa-clock",
+      tailwindColorClass: "text-gray-500",
+      hexColor: "#6b7280",
+    },*/
     {
       value: "livre",
       text: "Livré",
@@ -3705,7 +3694,7 @@ if (window["WebSocket"]) {
           // Affichage du statut dans l'entête : forcer "En attente de paiement" si statut = "pending_acconier"
           let displayStatus = value;
           if (value === "pending_acconier") {
-            displayStatus = "";
+            displayStatus = "awaiting_payment_acconier";
           }
           cell.classList.add("dropdown-cell-container");
           const dropdownToggleId = `status-toggle-${delivery.id}`;
@@ -3833,7 +3822,7 @@ if (window["WebSocket"]) {
           // Affichage du statut acconier dans la colonne : forcer "En attente de paiement" si statut = "pending_acconier"
           let displayStatus = value;
           if (value === "pending_acconier") {
-            displayStatus = "";
+            displayStatus = "awaiting_payment_acconier";
           }
           const statusInfo = getStatusInfo(displayStatus);
           // Only add icon if it's not empty
@@ -4148,29 +4137,13 @@ if (window["WebSocket"]) {
       createCell(delivery.ship_name, "ship_name"); // Nom du navire
       createCell(delivery.circuit, "circuit"); // Circuit
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
-      // Affichage Statut Dossier (remplace Statut de livraison (Resp. Aconiés))
-      // Colonne Statut Dossier bien centrée
-      const statutCell = createCell(
-        delivery.delivery_status_acconier_fr ||
-          delivery.delivery_status_acconier ||
-          "-",
-        "statut_dossier"
-      );
-      statutCell.classList.add("statut-col");
-      // Colonne Observations bien centrée
-      const obsCell = createCell(
-        delivery.observation_acconier || "-",
-        "observation"
-      );
-      obsCell.classList.add("observations-col");
-      // Zone de texte observation détaillée bien alignée
-      const obsTextCell = createCell(
+      createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
+      createCell(
         delivery.observation_acconier,
         "observation_acconier",
         "textarea",
         {}
-      );
-      obsTextCell.classList.add("observations-col");
+      ); // Observations (Resp. Aconiés)
       createCell(delivery.nom_agent_visiteur, "nom_agent_visiteur", "text", {}); // Nom agent visiteur
       createCell(delivery.transporter, "transporter", "text", {}); // Transporteur
       createCell(delivery.inspecteur, "inspecteur", "text", {}); // Inspecteur
@@ -4185,24 +4158,304 @@ if (window["WebSocket"]) {
       (function () {
         const cell = row.insertCell();
         cell.dataset.fieldName = "status";
-        // ...existing code...
+        // Récupère le numéro de dossier pour regrouper les livraisons
+        const dossierNumber = delivery.dossier_number;
+        // Filtre toutes les livraisons du même dossier (même n° dossier)
+        const allSameDossier = deliveriesToRender.filter(
+          (d) => d.dossier_number === dossierNumber
+        );
+        // Agrège tous les numéros de conteneur du dossier (pour éviter les doublons)
+        let allContainers = [];
+        allSameDossier.forEach((d) => {
+          let tcList = [];
+          if (Array.isArray(d.container_number)) {
+            tcList = d.container_number.filter(Boolean);
+          } else if (typeof d.container_number === "string") {
+            tcList = d.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          allContainers = allContainers.concat(tcList);
+        });
+        // Unicité des conteneurs
+        allContainers = Array.from(new Set(allContainers));
+        const total = allContainers.length;
+        // Statut de chaque conteneur : livré ou non ?
+        // On cherche dans chaque livraison du dossier si le conteneur est livré, en utilisant container_statuses si présent
+        let delivered = 0;
+        allContainers.forEach((tc) => {
+          // On cherche la livraison qui correspond à ce TC dans le dossier
+          const found = allSameDossier.find((d) => {
+            let tcList = [];
+            if (Array.isArray(d.container_number)) {
+              tcList = d.container_number.filter(Boolean);
+            } else if (typeof d.container_number === "string") {
+              tcList = d.container_number.split(/[,;\s]+/).filter(Boolean);
+            }
+            return tcList.includes(tc);
+          });
+          // Utilisation du mapping container_statuses si présent
+          let isDelivered = false;
+          if (found && found.container_statuses) {
+            // mapping objet (clé = numéro TC)
+            if (
+              typeof found.container_statuses === "object" &&
+              !Array.isArray(found.container_statuses)
+            ) {
+              const status = found.container_statuses[tc];
+              if (
+                typeof status === "string" &&
+                ["delivered", "livré", "livree", "livreee"].includes(
+                  status.trim().toLowerCase()
+                )
+              ) {
+                isDelivered = true;
+              }
+            } else if (Array.isArray(found.container_statuses)) {
+              // fallback tableau (rare)
+              let tcList = [];
+              if (Array.isArray(found.container_number)) {
+                tcList = found.container_number.filter(Boolean);
+              } else if (typeof found.container_number === "string") {
+                tcList = found.container_number
+                  .split(/[,;\s]+/)
+                  .filter(Boolean);
+              }
+              const idx = tcList.indexOf(tc);
+              if (
+                idx !== -1 &&
+                typeof found.container_statuses[idx] === "string" &&
+                found.container_statuses[idx].trim().toLowerCase() ===
+                  "delivered"
+              ) {
+                isDelivered = true;
+              }
+            }
+          } else if (found && typeof found.status === "string") {
+            // fallback compatibilité ancienne version
+            // On considère livré uniquement si le statut est strictement "Livré" (français) ou "delivered" (anglais)
+            const s = found.status.trim().toLowerCase();
+            if (s === "livré" || s === "delivered") {
+              isDelivered = true;
+            }
+          }
+          // Seuls les conteneurs actuellement marqués "Livré" sont comptés
+          if (isDelivered) {
+            delivered++;
+          }
+        });
+        // Affichage dynamique
+        const box = document.createElement("div");
+        box.style.display = "inline-block";
+        box.style.padding = "4px 12px";
+        box.style.borderRadius = "8px";
+        box.style.fontWeight = "bold";
+        box.style.fontSize = "0.98em";
+        box.style.letterSpacing = "0.5px";
+        box.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
+        box.style.border = "1.5px solid #eab308";
+        box.style.background =
+          delivered === total && total > 0 ? "#dcfce7" : "#fef9c3";
+        box.style.color =
+          delivered === total && total > 0 ? "#15803d" : "#a16207";
+
+        // Texte principal
+        if (total === 0) {
+          box.textContent = "-";
+        } else if (delivered === 0) {
+          box.textContent = `0 sur ${total} livrés`;
+        } else if (delivered === total) {
+          box.textContent = total === 1 ? "Livré" : `${total}/${total} livrés`;
+        } else {
+          box.textContent = `${delivered} sur ${total} livrés`;
+        }
+        cell.appendChild(box);
+
+        // --- Tooltip conteneurs détaillés au survol ---
+        // Nouveau tooltip robuste : disparition immédiate et sans bug
+        box.addEventListener("mouseenter", (e) => {
+          const tooltip = document.createElement("div");
+          tooltip.className = "status-tooltip-containers";
+          tooltip.style.position = "fixed";
+          tooltip.style.zIndex = 99999;
+          tooltip.style.background = "#fff";
+          tooltip.style.border = "1.5px solid #eab308";
+          tooltip.style.borderRadius = "10px";
+          tooltip.style.boxShadow = "0 6px 32px #eab30822, 0 2px 8px #0001";
+          tooltip.style.padding = "14px 18px 12px 18px";
+          tooltip.style.fontSize = "1em";
+          tooltip.style.color = "#222e3a";
+          tooltip.style.minWidth = "220px";
+          tooltip.style.maxWidth = "340px";
+          tooltip.style.pointerEvents = "auto";
+          tooltip.style.transition = "opacity 0.18s";
+          tooltip.style.opacity = "0";
+          // Liste des conteneurs et statuts
+          let html = `<div style='font-weight:700;font-size:1.08em;margin-bottom:7px;color:#a16207;'>Détail des conteneurs</div><ul style='list-style:none;padding:0;margin:0;'>`;
+          allContainers.forEach((tc) => {
+            let found = allSameDossier.find((d) => {
+              let tcList = [];
+              if (Array.isArray(d.container_number)) {
+                tcList = d.container_number.filter(Boolean);
+              } else if (typeof d.container_number === "string") {
+                tcList = d.container_number.split(/[,;\s]+/).filter(Boolean);
+              }
+              return tcList.includes(tc);
+            });
+            let statut = "-";
+            let icon = "<span style='color:#a0aec0;'>&#9675;</span>";
+            if (found && found.container_statuses) {
+              if (
+                typeof found.container_statuses === "object" &&
+                !Array.isArray(found.container_statuses)
+              ) {
+                let s = found.container_statuses[tc];
+                if (typeof s === "string") statut = s.trim();
+              } else if (Array.isArray(found.container_statuses)) {
+                let tcList = [];
+                if (Array.isArray(found.container_number)) {
+                  tcList = found.container_number.filter(Boolean);
+                } else if (typeof found.container_number === "string") {
+                  tcList = found.container_number
+                    .split(/[,;\s]+/)
+                    .filter(Boolean);
+                }
+                const idx = tcList.indexOf(tc);
+                if (
+                  idx !== -1 &&
+                  typeof found.container_statuses[idx] === "string"
+                ) {
+                  statut = found.container_statuses[idx].trim();
+                }
+              }
+            } else if (found && typeof found.status === "string") {
+              statut = found.status.trim();
+            }
+            let sNorm = statut.toLowerCase();
+            if (
+              ["livré", "delivered", "livree", "livreee", "livrée"].includes(
+                sNorm
+              )
+            ) {
+              icon =
+                "<span style='color:#22c55e;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-check-circle'></i></span>";
+              statut = "Livré";
+            } else if (
+              [
+                "en attente",
+                "pending",
+                "attente",
+                "waiting",
+                "à livrer",
+                "a livrer",
+                "pending_acconier",
+                "pending_aconnier",
+              ].includes(sNorm)
+            ) {
+              icon =
+                "<span style='color:#f59e0b;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-clock'></i></span>";
+              // Correction : distinguer "pending_acconier"/"pending_aconnier" de "pending" classique
+              if (["pending_acconier", "pending_aconnier"].includes(sNorm)) {
+                statut = "En attente de paiement";
+              } else {
+                statut = "En attente";
+              }
+            } else if (
+              ["rejeté", "rejetee", "refusé", "refuse", "rejected"].includes(
+                sNorm
+              )
+            ) {
+              icon =
+                "<span style='color:#ef4444;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-times-circle'></i></span>";
+              statut = "Rejeté";
+            } else if (
+              [
+                "en cours",
+                "in_progress",
+                "in progress",
+                "encours",
+                "en-cours",
+              ].includes(sNorm)
+            ) {
+              icon =
+                "<span style='color:#2563eb;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-spinner fa-spin'></i></span>";
+              statut = "En cours";
+            } else if (
+              [
+                "problème",
+                "probleme",
+                "bloqué",
+                "bloquee",
+                "detenu",
+                "détention",
+                "detention",
+                "retard",
+              ].some((x) => sNorm.includes(x))
+            ) {
+              icon =
+                "<span style='color:#ef4444;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-exclamation-triangle'></i></span>";
+              statut = "Problème";
+            } else if (sNorm && sNorm !== "-") {
+              icon =
+                "<span style='color:#2563eb;font-size:1.1em;vertical-align:-2px;'><i class='fas fa-info-circle'></i></span>";
+            }
+            html += `<li style='display:flex;align-items:center;gap:10px;margin-bottom:2px;'><span style='font-family:monospace;font-weight:700;color:#374151;'>${tc}</span> ${icon} <span style='font-size:0.98em;'>${statut}</span></li>`;
+          });
+          html += `</ul>`;
+          tooltip.innerHTML = html;
+          document.body.appendChild(tooltip);
+          // Positionnement initial
+          const rect = box.getBoundingClientRect();
+          let top = rect.bottom + 8;
+          let left = rect.left;
+          if (left + tooltip.offsetWidth > window.innerWidth - 12) {
+            left = window.innerWidth - tooltip.offsetWidth - 12;
+          }
+          if (top + tooltip.offsetHeight > window.innerHeight - 12) {
+            top = rect.top - tooltip.offsetHeight - 8;
+          }
+          tooltip.style.left = left + "px";
+          tooltip.style.top = top + "px";
+          setTimeout(() => {
+            tooltip.style.opacity = "1";
+          }, 10);
+
+          // Gestion disparition immédiate et sans bug
+          function removeTooltip() {
+            if (tooltip && tooltip.parentNode)
+              tooltip.parentNode.removeChild(tooltip);
+            box.removeEventListener("mouseleave", onMouseLeave);
+            tooltip.removeEventListener("mouseenter", onTooltipEnter);
+            tooltip.removeEventListener("mouseleave", onTooltipLeave);
+            window.removeEventListener("scroll", removeTooltip, true);
+            window.removeEventListener("resize", removeTooltip, true);
+          }
+          let isOverTooltip = false;
+          function onMouseLeave(e) {
+            if (
+              e.relatedTarget === tooltip ||
+              (tooltip && tooltip.contains(e.relatedTarget))
+            )
+              return;
+            removeTooltip();
+          }
+          function onTooltipEnter() {
+            isOverTooltip = true;
+          }
+          function onTooltipLeave(e) {
+            if (
+              e.relatedTarget === box ||
+              (box && box.contains(e.relatedTarget))
+            )
+              return;
+            removeTooltip();
+          }
+          box.addEventListener("mouseleave", onMouseLeave);
+          tooltip.addEventListener("mouseenter", onTooltipEnter);
+          tooltip.addEventListener("mouseleave", onTooltipLeave);
+          window.addEventListener("scroll", removeTooltip, true);
+          window.addEventListener("resize", removeTooltip, true);
+        });
       })();
 
-      // Colonne Observations bien centrée (texte)
-      let obsCellText = createCell(
-        delivery.observation_acconier || "-",
-        "observation"
-      );
-      obsCellText.classList.add("observations-col");
-      // Zone de texte observation détaillée bien alignée (textarea)
-      let obsCellTextarea = createCell(
-        delivery.observation_acconier,
-        "observation_acconier",
-        "textarea",
-        {}
-      );
-      obsCellTextarea.classList.add("observations-col");
-      // Dernière colonne : Observations générales (textarea)
       createCell(delivery.delivery_notes, "delivery_notes", "textarea", {}); // Observations
     });
     // =====================
@@ -8408,7 +8661,7 @@ if (window["WebSocket"]) {
       confirmOverlay.style.display = "flex";
       confirmOverlay.style.justifyContent = "center";
       confirmOverlay.style.alignItems = "center";
-      confirmOverlay.style.zIndex = "9999"; // Enshjksure it's on top of other elements, including dropdowns
+      confirmOverlay.style.zIndex = "9999"; // Ensure it's on top of other elements, including dropdowns
       confirmOverlay.innerHTML = `
                                 <div class="confirm-box">
                                   <p>Êtes-vous sûr de vouloir supprimer ${
