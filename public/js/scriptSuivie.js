@@ -37,7 +37,7 @@ function renderLateDossiersTable() {
     return;
   }
   let html = `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
-  html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody>`;
+  html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th><th style='padding:6px 10px;'>Statut Dossier (Resp. Acconier)</th></tr></thead><tbody>`;
   lateList.forEach((c) => {
     let agent = c.agentName ? c.agentName : "-";
     let dateLiv = c.deliveryDate || "-";
@@ -53,11 +53,17 @@ function renderLateDossiersTable() {
     ) {
       dateLiv = dateLiv.toLocaleDateString("fr-FR");
     }
+    // Ajout du statut dossier acconier
+    let statutAcconier =
+      c.delivery_status_acconier ||
+      c.statut_acconier ||
+      c["delivery_status_acconier"] ||
+      "-";
     html += `<tr><td style='padding:6px 10px;'>${
       c.numeroTC
     }</td><td style='padding:6px 10px;'>${agent}</td><td style='padding:6px 10px;'>${
       c.dateEnr || "-"
-    }</td><td style='padding:6px 10px;'>${dateLiv}</td><td style='padding:6px 10px;'>${heureLiv}</td></tr>`;
+    }</td><td style='padding:6px 10px;'>${dateLiv}</td><td style='padding:6px 10px;'>${heureLiv}</td><td style='padding:6px 10px;'>${statutAcconier}</td></tr>`;
   });
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
