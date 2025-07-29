@@ -21,6 +21,27 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
+      /* Colonnes à masquer sur mobile/tablette (max-width: 900px) */
+      @media (max-width: 900px) {
+        /* Masquer toutes les colonnes sauf : N°, Date, Agent, Client, N° BL, Statut, Détails */
+        [data-col-id="select_row"],
+        [data-col-id="client_phone"],
+        [data-col-id="container_number"],
+        [data-col-id="lieu"],
+        [data-col-id="container_foot_type"],
+        [data-col-id="container_type_and_content"],
+        [data-col-id="declaration_number"],
+        [data-col-id="dossier_number"],
+        [data-col-id="number_of_containers"],
+        [data-col-id="shipping_company"],
+        [data-col-id="weight"],
+        [data-col-id="ship_name"],
+        [data-col-id="circuit"],
+        [data-col-id="transporter_mode"],
+        [data-col-id="observation"] {
+          display: none !important;
+        }
+      }
       /* Responsive pour Numéro TC(s), Lieus et Statut sur tablette/mobile */
       /* Responsive Numéro TC(s) : retour à la ligne optimal tablette/mobile */
       @media (max-width: 900px) and (min-width: 660px) {

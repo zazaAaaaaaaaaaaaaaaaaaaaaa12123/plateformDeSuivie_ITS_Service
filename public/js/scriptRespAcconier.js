@@ -1788,14 +1788,43 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // On utilise UNIQUEMENT respAcconierUser, jamais user !
         let respAcconierUserRaw = localStorage.getItem("respAcconierUser");
         let respAcconierUser = null;
+        // Correction anti-boucle d'actualisation sur mobile/tablette
+        // On vérifie si localStorage est accessible et on évite la redirection multiple
+        let alreadyRedirected = window.__alreadyRedirectedRespAcconier;
+        function isLocalStorageAccessible() {
+          try {
+            const testKey = "__test_ls__";
+            localStorage.setItem(testKey, "1");
+            localStorage.removeItem(testKey);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+        if (!isLocalStorageAccessible()) {
+          if (!alreadyRedirected) {
+            window.__alreadyRedirectedRespAcconier = true;
+            alert(
+              "Erreur : Le stockage local est désactivé ou indisponible. Veuillez activer le stockage local dans votre navigateur pour accéder à cette page."
+            );
+            window.location.replace("resp_acconier.html");
+          }
+          return;
+        }
         if (!respAcconierUserRaw) {
-          window.location.href = "resp_acconier.html";
+          if (!alreadyRedirected) {
+            window.__alreadyRedirectedRespAcconier = true;
+            window.location.replace("resp_acconier.html");
+          }
           return;
         }
         try {
           respAcconierUser = JSON.parse(respAcconierUserRaw);
         } catch (e) {
-          window.location.href = "resp_acconier.html";
+          if (!alreadyRedirected) {
+            window.__alreadyRedirectedRespAcconier = true;
+            window.location.replace("resp_acconier.html");
+          }
           return;
         }
         // ...existing code...
