@@ -1781,9 +1781,16 @@ if (window["WebSocket"]) {
     },
   };
 
-  // Define ONLY selectable options for the dropdown in the delivery card (if applicable)
+  // Define ONLY selectable options shsb,for the dropdown in the delivery card (if applicable)
   // This list is specific to what the user can *set* as a status.
   const ACCONIER_STATUS_OPTIONS_SELECTABLE = [
+    {
+      value: "pending_acconier",
+      text: "",
+      icon: "",
+      tailwindColorClass: "",
+      hexColor: "",
+    },
     {
       value: "in_progress_acconier",
       text: "En cours de livraison",
@@ -4130,17 +4137,6 @@ if (window["WebSocket"]) {
       createCell(delivery.ship_name, "ship_name"); // Nom du navire
       createCell(delivery.circuit, "circuit"); // Circuit
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
-      // Ajout Statut Dossier et Observations à la bonne position
-      let statutDossierCell = delivery.statut_dossier;
-      if (!statutDossierCell || statutDossierCell === undefined || statutDossierCell === null) {
-        statutDossierCell = "-";
-      }
-      createCell(statutDossierCell, "statut_dossier", "text", {}); // Statut Dossier
-      let observationCell = delivery.delivery_notes;
-      if (!observationCell || observationCell === undefined || observationCell === null) {
-        observationCell = "-";
-      }
-      createCell(observationCell, "delivery_notes", "textarea", {}); // Observations
       createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
       createCell(
         delivery.observation_acconier,
@@ -4460,22 +4456,12 @@ if (window["WebSocket"]) {
         });
       })();
 
-      // Ajout Statut Dossier (avant Observations)
-      let statutDossier = delivery.statut_dossier;
-      if (
-        !statutDossier ||
-        statutDossier === undefined ||
-        statutDossier === null
-      ) {
-        statutDossier = "-";
-      }
-      createCell(statutDossier, "statut_dossier", "text", {}); // Statut Dossier
       createCell(delivery.delivery_notes, "delivery_notes", "textarea", {}); // Observations
     });
     // =====================
     // Effet de surlignage interactif par section (flash coloré)
     // =====================
-    // Gestion du flash coloréshjs uniquement, les couleurs sont désormais en CSS
+    // Gestion du flash coloré uniquement, les couleurs sont désormais en CSS
     const bandeAgent = document.getElementById("agentAcconierHeader");
     const bandeResp = document.getElementById("respAcconierHeader");
     const bandeLivraison = document.getElementById("respLivraisonHeader");
@@ -4517,15 +4503,6 @@ if (window["WebSocket"]) {
 
   // This function is now primarily used for displaying content after inline editing or initial render (non-editing mode)
   function updateCellContent(cell, displayValue, fieldName, type) {
-    if (fieldName === "statut_dossier") {
-      // Affichage du statut dossier : '-' si vide
-      let statut = displayValue;
-      if (!statut || statut === undefined || statut === null) {
-        statut = "-";
-      }
-      cell.textContent = statut;
-      return;
-    }
     // Renamed newValue to displayValue for clarity
     cell.innerHTML = ""; // Clear content before updating
 
@@ -5032,8 +5009,7 @@ if (window["WebSocket"]) {
     { id: "ship_name", label: "Nom du navire" },
     { id: "circuit", label: "Circuit" },
     { id: "transporter_mode", label: "Mode de Transport" },
-    { id: "statut_dossier", label: "Statut Dossier" },
-    { id: "observation", label: "Observation" },
+    { id: "statut", label: "Statut" },
   ];
 
   // Function to save column visibility to localStorage - REMOVED
@@ -5868,22 +5844,15 @@ if (window["WebSocket"]) {
       createSummaryItem("Mode de Transport", transporterModesText || "-")
     );
 
-    // Statut Dossier
-    let statutDossierText = Object.entries(
-      summaryData.statutDossierCounts || {}
-    )
+    // Statut de livraison (Resp. Aconiés)
+    let acconierStatusText = Object.entries(summaryData.acconierStatusCounts)
       .map(([status, count]) => `${count} ${status}`)
       .join(", ");
     parentElement.appendChild(
-      createSummaryItem("Statut Dossier", statutDossierText || "-")
-    );
-
-    // Observation
-    let observationText = Object.entries(summaryData.observationCounts || {})
-      .map(([obs, count]) => `${count} ${obs}`)
-      .join(", ");
-    parentElement.appendChild(
-      createSummaryItem("Observation", observationText || "-")
+      createSummaryItem(
+        "Statut de livraison (Resp. Acconiers)",
+        acconierStatusText || "-"
+      )
     );
 
     // Statut (Général)
