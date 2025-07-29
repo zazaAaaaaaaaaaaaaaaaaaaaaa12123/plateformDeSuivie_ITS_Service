@@ -5901,7 +5901,7 @@ if (window["WebSocket"]) {
     // --- Daily Summary Calculations ---
     const dailySummaryData = calculateSummaryData(dailyDeliveries);
 
-    // --- Daily Summary Section ---
+    // --- Daily Summary Section --shjs-
     const currentDaySummaryBlock = document.createElement("div");
     currentDaySummaryBlock.classList.add("summary-block"); // Add new styling class
 
