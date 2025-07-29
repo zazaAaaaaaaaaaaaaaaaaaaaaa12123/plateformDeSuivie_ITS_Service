@@ -881,46 +881,53 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
-        allDeliveries = data.deliveries.map((delivery) => {
-          // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
-          // Initialisation des statuts conteneurs si absent
-          let tcList = [];
-          if (Array.isArray(delivery.container_number)) {
-            tcList = delivery.container_number.filter(Boolean);
-          } else if (typeof delivery.container_number === "string") {
-            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-          }
-          if (
-            !delivery.container_statuses ||
-            typeof delivery.container_statuses !== "object"
-          ) {
-            delivery.container_statuses = {};
-          }
-          tcList.forEach((tc) => {
-            if (!delivery.container_statuses[tc]) {
-              delivery.container_statuses[tc] = "attente_paiement";
+        // Filtrer pour n'afficher que les livraisons renvoyées au Resp. Acconier
+        allDeliveries = data.deliveries
+          .filter(
+            (delivery) =>
+              delivery.delivery_status_acconier === "awaiting_payment_acconier"
+          )
+          .map((delivery) => {
+            // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
+            // Initialisation des statuts conteneurs si absent
+            let tcList = [];
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
             }
-          });
-          // S'assurer que bl_statuses est bien un objet (si string JSON, parser)
-          if (
-            delivery.bl_statuses &&
-            typeof delivery.bl_statuses === "string"
-          ) {
-            try {
-              delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
-            } catch {
+            if (
+              !delivery.container_statuses ||
+              typeof delivery.container_statuses !== "object"
+            ) {
+              delivery.container_statuses = {};
+            }
+            tcList.forEach((tc) => {
+              if (!delivery.container_statuses[tc]) {
+                delivery.container_statuses[tc] = "attente_paiement";
+              }
+            });
+            // S'assurer que bl_statuses est bien un objet (si string JSON, parser)
+            if (
+              delivery.bl_statuses &&
+              typeof delivery.bl_statuses === "string"
+            ) {
+              try {
+                delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+              } catch {
+                delivery.bl_statuses = {};
+              }
+            }
+            if (
+              !delivery.bl_statuses ||
+              typeof delivery.bl_statuses !== "object"
+            ) {
               delivery.bl_statuses = {};
             }
-          }
-          if (
-            !delivery.bl_statuses ||
-            typeof delivery.bl_statuses !== "object"
-          ) {
-            delivery.bl_statuses = {};
-          }
-          return delivery;
-        });
-        // Synchronisation avec la variable globale utilisée dans renderAgentTableFull
+            return delivery;
+          });
         window.allDeliveries = allDeliveries;
       } else {
         allDeliveries = [];
@@ -1561,6 +1568,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               cancelBtn.style.padding = "0.7em 1.7em";
               cancelBtn.style.cursor = "pointer";
               cancelBtn.onclick = () => confirmOverlay.remove();
+
               // Bouton Confirmer
               const okBtn = document.createElement("button");
               okBtn.textContent = "Confirmer";
@@ -1685,7 +1693,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 alert.style.left = "50%";
                 alert.style.transform = "translateX(-50%)";
                 alert.style.background =
-                  "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
+                  "linear-gradient(90deg,#22c55e  0%,#16a34a 100%)";
                 alert.style.color = "#fff";
                 alert.style.fontWeight = "bold";
                 alert.style.fontSize = "1.12em";
@@ -1835,28 +1843,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         // ...existing code...
       } else if (col.id === "container_status") {
-        // Nouveau comportement : le statuto dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
-        let blList = [];
-        if (Array.isArray(delivery.bl_number)) {
-          blList = delivery.bl_number.filter(Boolean);
-        } else if (typeof delivery.bl_number === "string") {
-          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        let blStatuses = blList.map((bl) =>
-          delivery.bl_statuses && delivery.bl_statuses[bl]
-            ? delivery.bl_statuses[bl]
-            : "aucun"
-        );
-        let allMiseEnLivraison =
-          blStatuses.length > 0 &&
-          blStatuses.every((s) => s === "mise_en_livraison");
-        if (allMiseEnLivraison) {
-          td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-        } else {
-          td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
-        }
+        // Toujours afficher "En attente de paiement" pour les livraisons renvoyées
+        td.innerHTML =
+          '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
         // Ajout du tooltip custom si texte tronqué
@@ -2226,4 +2215,3 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     };
   }
 }
-//originale12345678910shjdvsnb
