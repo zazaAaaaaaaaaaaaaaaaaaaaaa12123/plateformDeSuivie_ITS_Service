@@ -2221,15 +2221,19 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     window.addEventListener("restoreToRespAcconier", function (e) {
       const deliveryId = e.detail && e.detail.deliveryId;
       if (!deliveryId) return;
-      // Trouver la livraison et remettre tous ses BL à "aucun"
+      // Trouver la livraison et remettre tous ses BL à "aucun" et le statut dossier à "en attente de paiement"
       const deliveries = window.allDeliveries || [];
       const delivery = deliveries.find(
         (d) => String(d.id) === String(deliveryId)
       );
-      if (delivery && delivery.bl_statuses) {
-        Object.keys(delivery.bl_statuses).forEach((bl) => {
-          delivery.bl_statuses[bl] = "aucun";
-        });
+      if (delivery) {
+        if (delivery.bl_statuses) {
+          Object.keys(delivery.bl_statuses).forEach((bl) => {
+            delivery.bl_statuses[bl] = "aucun";
+          });
+        }
+        // Remettre le statut dossier à "en attente de paiement"
+        delivery.delivery_status_acconier = "en attente de paiement";
       }
       // Rafraîchir le tableau
       const dateStartInput = document.getElementById(
