@@ -1199,6 +1199,7 @@
         >
           <!-- Message de bienvenue animé -->
           <div id="welcomeTypewriter" class="welcome-typewriter"></div>
+          <div style="height: 38px"></div>
           <div class="etat-cards-row">
             <div class="etat-card dossier-attente animated-card">
               <div class="etat-icon"><i class="fas fa-hourglass-half"></i></div>
@@ -1243,6 +1244,10 @@
             align-items: center;
             gap: 38px;
             margin-bottom: 22px;
+          }
+          /* Décalage vertical des cartes sous le message de bienvenue */
+          .etat-cards-row:first-of-type {
+            margin-top: 18px;
           }
           .etat-card {
             background: linear-gradient(135deg, #f8fafc 70%, #e0e7ef 100%);
@@ -1382,6 +1387,9 @@
               flex-direction: column;
               gap: 16px;
               margin-bottom: 0;
+            }
+            .etat-cards-row:first-of-type {
+              margin-top: 10px;
             }
             .etat-card {
               min-width: 92vw;
