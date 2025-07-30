@@ -1481,6 +1481,114 @@
           <!-- Boutons Jours précédents et Mois passé supprimés -->
         </div>
 
+        <!-- Section mini-cartes animées en bas de page -->
+        <div id="miniCardsSection" class="mini-cards-section">
+          <div class="mini-cards-row">
+            <div class="mini-card mini-attente">
+              <div class="mini-icon"><i class="fas fa-hourglass-half"></i></div>
+              <div class="mini-desc">En attente de paiement</div>
+            </div>
+            <div class="mini-card mini-cours">
+              <div class="mini-icon"><i class="fas fa-truck-loading"></i></div>
+              <div class="mini-desc">En cours de mise en livraison</div>
+            </div>
+            <div class="mini-card mini-livre">
+              <div class="mini-icon"><i class="fas fa-check-circle"></i></div>
+              <div class="mini-desc">Dossier livré</div>
+            </div>
+            <div class="mini-card mini-retard">
+              <div class="mini-icon"><i class="fas fa-exclamation-triangle"></i></div>
+              <div class="mini-desc">Dossier en retard</div>
+            </div>
+          </div>
+        </div>
+        /* Mini-cartes animées en bas de page */
+        .mini-cards-section {
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: flex-end;
+          margin-top: 60px;
+          margin-bottom: 18px;
+          min-height: 90px;
+        }
+        .mini-cards-row {
+          display: flex;
+          flex-direction: row;
+          gap: 22px;
+        }
+        .mini-card {
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 2px 10px #2563eb18, 0 1px 2px #0001;
+          min-width: 90px;
+          max-width: 120px;
+          min-height: 70px;
+          padding: 10px 8px 8px 8px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          opacity: 0;
+          transform: translateY(30px) scale(0.95);
+          animation: miniCardFadeIn 0.7s cubic-bezier(0.23,1.01,0.32,1) forwards;
+        }
+        .mini-cards-row .mini-card:nth-child(1) { animation-delay: 0.1s; }
+        .mini-cards-row .mini-card:nth-child(2) { animation-delay: 0.5s; }
+        .mini-cards-row .mini-card:nth-child(3) { animation-delay: 0.9s; }
+        .mini-cards-row .mini-card:nth-child(4) { animation-delay: 1.3s; }
+        @keyframes miniCardFadeIn {
+          0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+          60% { opacity: 1; transform: translateY(-6px) scale(1.03); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .mini-icon {
+          font-size: 1.3em;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 6px;
+          margin-top: -18px;
+          box-shadow: 0 1px 4px #0001;
+          position: relative;
+        }
+        .mini-attente .mini-icon {
+          color: #f59e0b;
+          background: #fff7e3;
+        }
+        .mini-cours .mini-icon {
+          color: #2563eb;
+          background: #e3f0ff;
+        }
+        .mini-livre .mini-icon {
+          color: #059669;
+          background: #e3ffe3;
+        }
+        .mini-retard .mini-icon {
+          color: #dc3545;
+          background: #ffe3e3;
+        }
+        .mini-attente { border: 2px solid #f59e0b; background: linear-gradient(135deg, #fff7e3 80%, #f8fafc 100%); }
+        .mini-cours { border: 2px solid #2563eb; background: linear-gradient(135deg, #e3f0ff 80%, #f8fafc 100%); }
+        .mini-livre { border: 2px solid #059669; background: linear-gradient(135deg, #e3ffe3 80%, #f8fafc 100%); }
+        .mini-retard { border: 2px solid #dc3545; background: linear-gradient(135deg, #ffe3e3 80%, #f8fafc 100%); }
+        .mini-desc {
+          font-size: 0.98em;
+          color: #1d3557;
+          text-align: center;
+          margin-top: 2px;
+        }
+        @media (max-width: 700px) {
+          .mini-cards-section { margin-top: 30px; }
+          .mini-cards-row { gap: 10px; }
+          .mini-card { min-width: 70px; max-width: 98vw; padding: 7px 2px 6px 2px; }
+          .mini-icon { font-size: 1em; width: 22px; height: 22px; margin-top: -10px; }
+        }
+        </div>
+
         <!-- Popup résumé du mois passé (structure cachée au départ, insérée dans le DOM) -->
         <div
           id="popupResumeMoisPasse"
