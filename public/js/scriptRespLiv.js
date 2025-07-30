@@ -2638,19 +2638,19 @@ function generateEtatSortiePdf(rows, date1, date2) {
     // Largeur totale disponible (A4 paysage, marges incluses)
     // On répartit pour que la colonne OBSERVATION ne déborde pas et que le tableau soit équilibré
     const columns = [
-      { header: "CIRCUIT", dataKey: "circuit", width: 18 },
-      { header: "NOM CLIENT", dataKey: "client_name", width: 28 },
-      { header: "Numéro Dossier", dataKey: "dossier_number", width: 22 },
-      { header: "Numéro TC(s)", dataKey: "container_number", width: 26 },
+      { header: "CIRCUIT", dataKey: "circuit", width: 28 },
+      { header: "NOM CLIENT", dataKey: "client_name", width: 38 },
+      { header: "Numéro Dossier", dataKey: "dossier_number", width: 32 },
+      { header: "Numéro TC(s)", dataKey: "container_number", width: 36 },
       {
         header: "NOM Agent Visiteur",
         dataKey: "nom_agent_visiteur",
-        width: 22,
+        width: 32,
       },
-      { header: "Compagnie Maritime", dataKey: "shipping_company", width: 22 },
-      { header: "INSPECTEUR", dataKey: "inspecteur", width: 18 },
-      { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes", width: 22 },
-      { header: "OBSERVATION", dataKey: "observation_acconier", width: 28 }, // réduit pour éviter le débordement
+      { header: "Compagnie Maritime", dataKey: "shipping_company", width: 32 },
+      { header: "INSPECTEUR", dataKey: "inspecteur", width: 28 },
+      { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes", width: 32 },
+      { header: "OBSERVATION", dataKey: "observation_acconier", width: 44 }, // large mais jamais collée
     ];
     // Correction : récupérer les valeurs éditées dans le DOM si elles existent
     const dataRows = rows.map((d) => {
@@ -2717,8 +2717,8 @@ function generateEtatSortiePdf(rows, date1, date2) {
         fontStyle: "bold",
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
-      // Marge droite augmentée pour éviter que la colonne OBSERVATION soit collée à la bordure
-      margin: { left: 18, right: 28 },
+      // Marge droite encore augmentée pour garantir un espace blanc fixe à droite
+      margin: { left: 18, right: 40 },
       theme: "grid",
       columnStyles: columns.reduce((acc, col, idx) => {
         acc[idx] = { cellWidth: col.width };
