@@ -2339,7 +2339,7 @@ pdfBtn.style.height = "32px";
 pdfBtn.style.minWidth = "0";
 pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
 pdfBtn.style.verticalAlign = "middle";
-// Placement à côté du champ de recherche (date)
+// Placement à côté du champ de recherche (date) //
 document.addEventListener("DOMContentLoaded", function () {
   const dateStartInput = document.getElementById("mainTableDateStartFilter");
   if (dateStartInput && dateStartInput.parentNode) {
