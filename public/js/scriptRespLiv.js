@@ -2379,7 +2379,7 @@ function updateDeliveredForPdf() {
   });
 }
 
-// Met à jour la liste à chaque chargement ou modificationhbdszj
+// Met à jour la liste à chaque chargement ou modificationsqhdj
 if (window.allDeliveries) updateDeliveredForPdf();
 window.addEventListener("allDeliveriesUpdated", updateDeliveredForPdf);
 
