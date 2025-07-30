@@ -2716,7 +2716,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
       margin: { left: 10, right: 10 },
-      theme: "grid",
+      theme: "white",
       columnStyles: columns.reduce((acc, col, idx) => {
         acc[idx] = { cellWidth: col.width };
         return acc;
