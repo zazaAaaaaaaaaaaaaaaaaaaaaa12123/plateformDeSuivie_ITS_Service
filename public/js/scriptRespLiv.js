@@ -2719,7 +2719,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
         fontSize: 7, // taille réduite pour les entêtes du tableau
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
-      // Marges égales à gauche et à droite pour un centrage parfaitsgvh
+      // Marges égales à gauche et à droite pour un centrage parfaits
       margin: { left: 10, right: 10 },
       theme: "grid",
       columnStyles: columns.reduce((acc, col, idx) => {
