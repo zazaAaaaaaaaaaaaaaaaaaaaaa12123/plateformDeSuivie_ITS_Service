@@ -2635,11 +2635,13 @@ function generateEtatSortiePdf(rows, date1, date2) {
       doc.text(dateText, (pageWidth - dateTextWidth) / 2, 26);
     }
     // Colonnes avec des largeurs personnalisées pour un tableau large mais lisible
+    // Largeur totale disponible (A4 paysage, marges incluses)
+    // On répartit pour que la colonne OBSERVATION ne déborde pas et que le tableau soit équilibré
     const columns = [
-      { header: "CIRCUIT", dataKey: "circuit", width: 22 },
-      { header: "NOM CLIENT", dataKey: "client_name", width: 38 },
-      { header: "Numéro Dossier", dataKey: "dossier_number", width: 28 },
-      { header: "Numéro TC(s)", dataKey: "container_number", width: 38 },
+      { header: "CIRCUIT", dataKey: "circuit", width: 24 },
+      { header: "NOM CLIENT", dataKey: "client_name", width: 36 },
+      { header: "Numéro Dossier", dataKey: "dossier_number", width: 30 },
+      { header: "Numéro TC(s)", dataKey: "container_number", width: 36 },
       {
         header: "NOM Agent Visiteur",
         dataKey: "nom_agent_visiteur",
@@ -2648,7 +2650,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
       { header: "Compagnie Maritime", dataKey: "shipping_company", width: 32 },
       { header: "INSPECTEUR", dataKey: "inspecteur", width: 28 },
       { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes", width: 32 },
-      { header: "OBSERVATION", dataKey: "observation_acconier", width: 38 },
+      { header: "OBSERVATION", dataKey: "observation_acconier", width: 44 }, // plus large pour éviter le débordement
     ];
     // Correction : récupérer les valeurs éditées dans le DOM si elles existent
     const dataRows = rows.map((d) => {
