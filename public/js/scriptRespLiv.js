@@ -2716,7 +2716,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
         fillColor: [0, 0, 0], // noir
         textColor: 255,
         fontStyle: "bold",
-        fontSize: 9, // taille réduite pour les entêtes du tableau
+        fontSize: 7, // taille réduite pour les entêtes du tableau
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
       // Marges égales à gauche et à droite pour un centrage parfaitsgvh
