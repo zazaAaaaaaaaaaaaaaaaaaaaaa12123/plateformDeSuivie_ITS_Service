@@ -2632,7 +2632,6 @@ function generateEtatSortiePdf(rows, date1, date2) {
       { header: "INSPECTEUR", dataKey: "inspecteur" },
       { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes" },
       { header: "OBSERVATION", dataKey: "observation_acconier" },
-      { header: "DATE", dataKey: "delivery_date" },
     ];
     // Correction : récupérer les valeurs éditées dans le DOM si elles existent
     const dataRows = rows.map((d) => {
@@ -2685,11 +2684,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
           "observation_acconier",
           "observation",
         ]),
-        delivery_date:
-          getEditedValue(d, ["delivery_date", "date_display"]) &&
-          d.delivery_date
-            ? new Date(d.delivery_date).toLocaleDateString("fr-FR")
-            : "-",
+        // Suppression du champ delivery_date pour le PDF
       };
     });
     doc.autoTable({
