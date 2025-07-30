@@ -3392,11 +3392,31 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
       }
     }
     bl_statuses[blNumber] = status;
+    // Vérifie si tous les BL sont en 'mise_en_livraison'
+    let blList = [];
+    if (result.rows[0].bl_number) {
+      if (Array.isArray(result.rows[0].bl_number)) {
+        blList = result.rows[0].bl_number.filter(Boolean);
+      } else if (typeof result.rows[0].bl_number === "string") {
+        blList = result.rows[0].bl_number.split(/[,;\s]+/).filter(Boolean);
+      }
+    }
+    const allMiseEnLivraison =
+      blList.length > 0 &&
+      blList.every((bl) => bl_statuses[bl] === "mise_en_livraison");
     // Sauvegarde en base
-    const updateRes = await pool.query(
-      "UPDATE livraison_conteneur SET bl_statuses = $1 WHERE id = $2 RETURNING *;",
-      [JSON.stringify(bl_statuses), id]
-    );
+    let updateQuery = "UPDATE livraison_conteneur SET bl_statuses = $1";
+    let updateValues = [JSON.stringify(bl_statuses)];
+    if (allMiseEnLivraison) {
+      updateQuery += ", delivery_status_acconier = $2";
+      updateValues.push("mise_en_livraison_acconier");
+      updateQuery += " WHERE id = $3 RETURNING *;";
+      updateValues.push(id);
+    } else {
+      updateQuery += " WHERE id = $2 RETURNING *;";
+      updateValues.push(id);
+    }
+    const updateRes = await pool.query(updateQuery, updateValues);
     if (updateRes.rows.length === 0) {
       return res
         .status(404)
