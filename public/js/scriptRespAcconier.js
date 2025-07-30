@@ -1096,6 +1096,11 @@ document.addEventListener("DOMContentLoaded", function () {
       setInterval(() => {
         showLateDeliveriesToast(getLateDeliveries());
       }, 40000);
+
+      // Met à jour la liste des dossiers en retard à chaque changement de statut livraison
+      document.addEventListener("bl_status_update", function () {
+        showLateDeliveriesToast(getLateDeliveries());
+      });
     });
     dateStartInput.addEventListener("change", () => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
