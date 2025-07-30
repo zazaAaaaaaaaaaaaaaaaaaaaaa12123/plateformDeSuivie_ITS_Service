@@ -115,19 +115,36 @@ document.addEventListener("DOMContentLoaded", function () {
           "<div style='text-align:center;'>Aucun dossier en retard.</div>";
       } else {
         const ul = document.createElement("ul");
+        ul.className = "late-deliveries-list";
         ul.style.listStyle = "none";
         ul.style.padding = 0;
         ul.style.margin = 0;
         lateDeliveries.forEach((d) => {
           const li = document.createElement("li");
-          li.style.marginBottom = "12px";
+          li.className = "late-delivery-item";
+          li.style.marginBottom = "14px";
           li.style.cursor = "pointer";
-          li.style.transition = "background 0.2s";
-          li.innerHTML = `<span style='color:#ef4444;font-weight:bold;'>N° Dossier :</span> ${
-            d.dossier_number || "-"
-          } <br><span style='color:#2563eb;'>Agent :</span> ${
-            d.employee_name || "-"
-          }`;
+          li.style.borderRadius = "12px";
+          li.style.padding = "18px 18px 14px 18px";
+          li.style.background = "#fff";
+          li.style.boxShadow = "0 2px 10px rgba(239,68,68,0.07)";
+          li.style.border = "1.5px solid #fee2e2";
+          li.style.transition =
+            "background 0.18s, box-shadow 0.18s, border 0.18s";
+          li.innerHTML = `
+            <div style='font-size:1.08em; margin-bottom:6px;'>
+              <span style='color:#ef4444;font-weight:bold;'>N° Dossier :</span>
+              <span style='color:#b91c1c;font-weight:700;font-size:1.13em;'>${
+                d.dossier_number || "-"
+              }</span>
+            </div>
+            <div style='font-size:1em;'>
+              <span style='color:#2563eb;font-weight:600;'>Agent :</span>
+              <span style='color:#0e274e;font-weight:600;'>${
+                d.employee_name || "-"
+              }</span>
+            </div>
+          `;
           // Ajout : au clic, scroll sur la ligne du tableau et flash
           li.onclick = function (e) {
             e.stopPropagation();
@@ -180,6 +197,19 @@ document.addEventListener("DOMContentLoaded", function () {
           ul.appendChild(li);
         });
         content.appendChild(ul);
+        // Ajout du style pour le survol si pas déjà présent
+        if (!document.getElementById("late-delivery-hover-style")) {
+          const style = document.createElement("style");
+          style.id = "late-delivery-hover-style";
+          style.innerHTML = `
+            .late-deliveries-list .late-delivery-item:hover {
+              background: #fef2f2 !important;
+              border-color: #fca5a5 !important;
+              box-shadow: 0 4px 18px rgba(239,68,68,0.13);
+            }
+          `;
+          document.head.appendChild(style);
+        }
       }
       box.appendChild(content);
       overlay.appendChild(box);
