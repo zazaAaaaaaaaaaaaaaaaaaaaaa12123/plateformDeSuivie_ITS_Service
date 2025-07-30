@@ -2725,7 +2725,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
         return acc;
       }, {}),
       tableWidth: "auto",
-      horizontalAlign: "center", // Centrage horizontal du tableaux
+      horizontalAlign: "center", // Centrage horizontasl du tableauzsx
       didDrawPage: function (data) {
         // Rien à faire ici normalement
       },
