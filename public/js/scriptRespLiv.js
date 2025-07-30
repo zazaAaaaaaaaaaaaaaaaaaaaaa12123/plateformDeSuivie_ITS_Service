@@ -2650,7 +2650,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
       { header: "Compagnie Maritime", dataKey: "shipping_company", width: 32 },
       { header: "INSPECTEUR", dataKey: "inspecteur", width: 28 },
       { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes", width: 32 },
-      { header: "OBSERVATION", dataKey: "observation_acconier", width: 44 }, // large mais jamais collée
+      { header: "OBSERVATION", dataKey: "observation_acconier", width: 30 }, // large mais jamais collée
     ];
     // Correction : récupérer les valeurs éditées dans le DOM si elles existent
     const dataRows = rows.map((d) => {
@@ -2717,8 +2717,8 @@ function generateEtatSortiePdf(rows, date1, date2) {
         fontStyle: "bold",
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
-      // Marge droite encore augmentée pour garantir un espace blanc fixe à droite
-      margin: { left: 18, right: 40 },
+      // Marges égales à gauche et à droite pour un centrage parfait
+      margin: { left: 30, right: 30 },
       theme: "grid",
       columnStyles: columns.reduce((acc, col, idx) => {
         acc[idx] = { cellWidth: col.width };
