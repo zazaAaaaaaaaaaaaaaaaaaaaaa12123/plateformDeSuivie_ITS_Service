@@ -2322,7 +2322,8 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // --- AJOUT : Bouton Générer PDF et logique associée ---
-// Ajout du bouton au-dessus du tableau principal
+
+// Création du bouton Générer PDF
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
 pdfBtn.textContent = "Générer PDF";
@@ -2339,38 +2340,22 @@ pdfBtn.style.height = "32px";
 pdfBtn.style.minWidth = "0";
 pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
 pdfBtn.style.verticalAlign = "middle";
-// Placement à côté du champ de recherche (date) //
+
+// Placement à droite, à côté du profil utilisateur
 document.addEventListener("DOMContentLoaded", function () {
-  const dateStartInput = document.getElementById("mainTableDateStartFilter");
-  if (dateStartInput && dateStartInput.parentNode) {
-    // Réduire la largeur du champ de recherche date
-    dateStartInput.style.width = "160px";
-    dateStartInput.style.display = "inline-block";
-    dateStartInput.style.verticalAlign = "middle";
-    // Si le champ de fin existe, le réduire aussi
-    const dateEndInput = document.getElementById("mainTableDateEndFilter");
-    if (dateEndInput) {
-      dateEndInput.style.width = "160px";
-      dateEndInput.style.display = "inline-block";
-      dateEndInput.style.verticalAlign = "middle";
-    }
-    // Créer un conteneur flex pour aligner le champ et le bouton
-    let filterContainer = dateStartInput.parentNode;
-    filterContainer.style.display = "flex";
-    filterContainer.style.alignItems = "center";
-    filterContainer.style.gap = "8px";
-    // Placer le bouton PDF juste après le champ de fin si présent, sinon après le champ de début
-    if (dateEndInput) {
-      filterContainer.insertBefore(pdfBtn, dateEndInput.nextSibling);
-    } else {
-      filterContainer.insertBefore(pdfBtn, dateStartInput.nextSibling);
-    }
+  const avatarContainer = document.getElementById("profile-avatar-container");
+  if (avatarContainer && avatarContainer.parentNode) {
+    avatarContainer.parentNode.insertBefore(
+      pdfBtn,
+      avatarContainer.nextSibling
+    );
   } else {
-    // fallback : au-dessus du tableau si champ non trouvé //
-    const mainTable = document.getElementById("deliveriesTable");
-    if (mainTable && mainTable.parentNode) {
-      mainTable.parentNode.insertBefore(pdfBtn, mainTable);
-    }
+    // fallback : en haut à droite si le conteneur n'existe pas
+    pdfBtn.style.position = "fixed";
+    pdfBtn.style.top = "22px";
+    pdfBtn.style.right = "160px";
+    pdfBtn.style.zIndex = "100050";
+    document.body.appendChild(pdfBtn);
   }
 });
 
