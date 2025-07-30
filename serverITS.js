@@ -2914,10 +2914,10 @@ app.get("/interfaceFormulaireEmployer.html", (req, res) => {
 app.patch("/deliveries/:id/return-to-resp-acconier", async (req, res) => {
   const { id } = req.params;
   try {
-    // Met à jour le statut acconier à 'awaiting_payment_acconier' (retour Resp. Acconier)
+    // Met à jour le statut acconier à 'en attente de paiement' (retour Resp. Acconier)
     const result = await pool.query(
       "UPDATE livraison_conteneur SET delivery_status_acconier = $1 WHERE id = $2 RETURNING *;",
-      ["awaiting_payment_acconier", id]
+      ["en attente de paiement", id]
     );
     if (result.rows.length === 0) {
       return res
