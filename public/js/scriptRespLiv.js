@@ -2717,8 +2717,8 @@ function generateEtatSortiePdf(rows, date1, date2) {
         fontStyle: "bold",
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
-      // Marge gauche/droite personnalisée pour équilibrer l'espace
-      margin: { left: 18, right: 28 },
+      // Marge gauche/droite personnalisée pour équilibrer l'espace (corrigé pour OBSERVATION)
+      margin: { left: 18, right: 18 },
       theme: "grid",
       columnStyles: columns.reduce((acc, col, idx) => {
         acc[idx] = { cellWidth: col.width };
