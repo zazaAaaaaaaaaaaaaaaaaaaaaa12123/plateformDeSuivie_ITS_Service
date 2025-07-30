@@ -66,8 +66,9 @@ document.addEventListener("DOMContentLoaded", function () {
       overlay.style.background = "rgba(30,41,59,0.45)";
       overlay.style.zIndex = 100000;
       overlay.style.display = "flex";
-      overlay.style.alignItems = "center";
+      overlay.style.alignItems = "flex-start";
       overlay.style.justifyContent = "center";
+      overlay.style.paddingTop = "8vh";
       const box = document.createElement("div");
       box.style.background = "#fff";
       box.style.borderRadius = "16px";
