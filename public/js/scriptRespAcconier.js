@@ -1156,23 +1156,51 @@ document.addEventListener("DOMContentLoaded", function () {
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-      // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui ne sont PAS en livraison
+      // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui sont affichés dans le tableau et qui ne sont PAS en livraison
       function getLateDeliveries() {
         const now = new Date();
-        return (window.allDeliveries || []).filter((d) => {
+        // Récupère la liste actuellement affichée dans le tableau (filtrée)
+        let filteredDeliveries = [];
+        const tableBody = document.getElementById("deliveriesTableBody");
+        if (tableBody) {
+          // On récupère tous les N° Dossier affichés dans le tableau
+          const rows = tableBody.querySelectorAll("tr");
+          const displayedDossierNumbers = Array.from(rows)
+            .map((row) => {
+              const cells = row.querySelectorAll("td");
+              // Cherche la colonne N° Dossier (id: dossier_number)
+              for (let i = 0; i < cells.length; i++) {
+                if (
+                  cells[i].getAttribute("data-col-id") === "dossier_number" ||
+                  (cells[i].textContent &&
+                    cells[i].textContent.trim() &&
+                    cells[i].textContent.trim().length > 0)
+                ) {
+                  return cells[i].textContent.trim();
+                }
+              }
+              return null;
+            })
+            .filter(Boolean);
+          // On filtre les allDeliveries pour ne garder que ceux affichés
+          filteredDeliveries = (window.allDeliveries || []).filter((d) =>
+            displayedDossierNumbers.includes(String(d.dossier_number).trim())
+          );
+        } else {
+          filteredDeliveries = window.allDeliveries || [];
+        }
+        // On applique la logique de retard et de livraison
+        return filteredDeliveries.filter((d) => {
           let dDate = d.delivery_date || d.created_at;
           if (!dDate) return false;
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
           // On ne compte que les dossiers qui ne sont PAS en livraison
-          // et qui n'ont pas été mis en livraison (statut BL ou global)
-          // On vérifie aussi le statut BL si tous les BL sont "mise_en_livraison"
           let isEnLivraison = false;
           if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
             isEnLivraison = true;
           }
-          // Vérification des BL si présent
           if (d.bl_statuses && typeof d.bl_statuses === "object") {
             const blStatuses = Object.values(d.bl_statuses);
             if (
