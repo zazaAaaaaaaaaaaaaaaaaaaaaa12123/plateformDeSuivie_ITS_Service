@@ -848,6 +848,12 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
             window.allDeliveries = window.allDeliveries.filter(
               (d) => String(d.id) !== String(id)
             );
+            // Envoie un événement custom pour informer resp_acconier.html
+            window.dispatchEvent(
+              new CustomEvent("restoreToRespAcconier", {
+                detail: { deliveryId: id },
+              })
+            );
           });
         }
         const alertDiv = document.createElement("div");
