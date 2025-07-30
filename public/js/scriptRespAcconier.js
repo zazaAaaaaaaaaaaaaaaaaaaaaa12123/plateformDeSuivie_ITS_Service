@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Supprimer tout toast existant
     const oldToast = document.getElementById("late-deliveries-toast");
     if (oldToast) oldToast.remove();
-    // Afficher le toast même si la liste est vide
+    if (!lateDeliveries || lateDeliveries.length === 0) return;
     const toast = document.createElement("div");
     toast.id = "late-deliveries-toast";
     toast.style.position = "fixed";
@@ -1156,61 +1156,28 @@ document.addEventListener("DOMContentLoaded", function () {
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-      // Après chargement, détecter les dossiers en retard (>2 jours, jamais mis en livraison, colonne "Date" strictement)
+      // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui ne sont PAS en livraison
       function getLateDeliveries() {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        let filteredDeliveries = [];
-        const tableBody = document.getElementById("deliveriesTableBody");
-        if (tableBody) {
-          // On récupère tous les N° Dossier affichés dans le tableau
-          const rows = tableBody.querySelectorAll("tr");
-          const displayedDossierNumbers = Array.from(rows)
-            .map((row) => {
-              const cells = row.querySelectorAll("td");
-              for (let i = 0; i < cells.length; i++) {
-                if (
-                  cells[i].getAttribute &&
-                  cells[i].getAttribute("data-col-id") === "dossier_number"
-                ) {
-                  return cells[i].textContent.trim();
-                }
-              }
-              return null;
-            })
-            .filter(Boolean);
-          filteredDeliveries = (window.allDeliveries || []).filter((d) =>
-            displayedDossierNumbers.includes(String(d.dossier_number).trim())
-          );
-        } else {
-          filteredDeliveries = window.allDeliveries || [];
-        }
-        // Appliquer la logique stricte : colonne "Date" >2 jours, jamais mis en livraison
-        return filteredDeliveries.filter((d) => {
-          let dDate = d.Date || d["Date"];
+        const now = new Date();
+        return (window.allDeliveries || []).filter((d) => {
+          let dDate = d.delivery_date || d.created_at;
           if (!dDate) return false;
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
-          const diffDays = Math.floor(
-            (today - dateObj) / (1000 * 60 * 60 * 24)
-          );
-          // Vérifier que le dossier n'a JAMAIS été mis en livraison
+          const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+          // On ne compte que les dossiers qui ne sont PAS en livraison
+          // et qui n'ont pas été mis en livraison (statut BL ou global)
+          // On vérifie aussi le statut BL si tous les BL sont "mise_en_livraison"
           let isEnLivraison = false;
-          if (
-            d.delivery_status_acconier &&
-            String(d.delivery_status_acconier)
-              .toLowerCase()
-              .includes("livraison")
-          ) {
+          if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
             isEnLivraison = true;
           }
+          // Vérification des BL si présent
           if (d.bl_statuses && typeof d.bl_statuses === "object") {
             const blStatuses = Object.values(d.bl_statuses);
             if (
               blStatuses.length > 0 &&
-              blStatuses.every((s) =>
-                String(s).toLowerCase().includes("livraison")
-              )
+              blStatuses.every((s) => s === "mise_en_livraison")
             ) {
               isEnLivraison = true;
             }
@@ -2482,4 +2449,4 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     };
   }
 }
-//originale12345678910shjdvsnbsdhbj
+//originale12345678910
