@@ -2345,7 +2345,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (dateStartInput && dateStartInput.parentNode) {
     dateStartInput.parentNode.insertBefore(pdfBtn, dateStartInput.nextSibling);
   } else {
-    // fallback : au-dessus du tableau si champ non trouvé
+    // fallback : au-dessus du tableau si champ non trouvé //
     const mainTable = document.getElementById("deliveriesTable");
     if (mainTable && mainTable.parentNode) {
       mainTable.parentNode.insertBefore(pdfBtn, mainTable);
