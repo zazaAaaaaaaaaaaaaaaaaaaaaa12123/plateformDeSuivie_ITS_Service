@@ -1156,11 +1156,10 @@ document.addEventListener("DOMContentLoaded", function () {
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-      // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui sont affichés dans le tableau et qui ne sont PAS en livraison
+      // Après chargement, détecter les dossiers en retard (>2 jours, jamais mis en livraison, colonne "Date" strictement)
       function getLateDeliveries() {
-        // Date d'aujourd'hui dynamique
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // On normalise à minuit pour éviter les soucis d'heure
+        today.setHours(0, 0, 0, 0);
         let filteredDeliveries = [];
         const tableBody = document.getElementById("deliveriesTableBody");
         if (tableBody) {
@@ -1171,10 +1170,8 @@ document.addEventListener("DOMContentLoaded", function () {
               const cells = row.querySelectorAll("td");
               for (let i = 0; i < cells.length; i++) {
                 if (
-                  cells[i].getAttribute("data-col-id") === "dossier_number" ||
-                  (cells[i].textContent &&
-                    cells[i].textContent.trim() &&
-                    cells[i].textContent.trim().length > 0)
+                  cells[i].getAttribute &&
+                  cells[i].getAttribute("data-col-id") === "dossier_number"
                 ) {
                   return cells[i].textContent.trim();
                 }
@@ -1188,31 +1185,36 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
           filteredDeliveries = window.allDeliveries || [];
         }
-        // On applique la logique de retard stricte
+        // Appliquer la logique stricte : colonne "Date" >2 jours, jamais mis en livraison
         return filteredDeliveries.filter((d) => {
-          let dDate = d.delivery_date || d.created_at;
+          let dDate = d.Date || d["Date"];
           if (!dDate) return false;
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
-          // Calcul du nombre de jours entre aujourd'hui et la date d'ajout
           const diffDays = Math.floor(
             (today - dateObj) / (1000 * 60 * 60 * 24)
           );
-          // Dossier jamais mis en livraison ?
+          // Vérifier que le dossier n'a JAMAIS été mis en livraison
           let isEnLivraison = false;
-          if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
+          if (
+            d.delivery_status_acconier &&
+            String(d.delivery_status_acconier)
+              .toLowerCase()
+              .includes("livraison")
+          ) {
             isEnLivraison = true;
           }
           if (d.bl_statuses && typeof d.bl_statuses === "object") {
             const blStatuses = Object.values(d.bl_statuses);
             if (
               blStatuses.length > 0 &&
-              blStatuses.every((s) => s === "mise_en_livraison")
+              blStatuses.every((s) =>
+                String(s).toLowerCase().includes("livraison")
+              )
             ) {
               isEnLivraison = true;
             }
           }
-          // On ajoute uniquement si >2 jours et jamais mis en livraison
           return diffDays > 2 && !isEnLivraison;
         });
       }
