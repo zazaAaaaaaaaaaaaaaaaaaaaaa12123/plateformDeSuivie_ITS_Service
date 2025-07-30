@@ -1165,24 +1165,17 @@ document.addEventListener("DOMContentLoaded", function () {
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-          // On ne compte que les dossiers qui ne sont PAS en livraison
-          // et qui n'ont pas été mis en livraison (statut BL ou global)
-          // On vérifie aussi le statut BL si tous les BL sont "mise_en_livraison"
-          let isEnLivraison = false;
+          // Exclure tout dossier dont au moins un BL est en 'mise_en_livraison' ou le statut acconier est 'mise_en_livraison_acconier'
           if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
-            isEnLivraison = true;
+            return false;
           }
-          // Vérification des BL si présent
           if (d.bl_statuses && typeof d.bl_statuses === "object") {
             const blStatuses = Object.values(d.bl_statuses);
-            if (
-              blStatuses.length > 0 &&
-              blStatuses.every((s) => s === "mise_en_livraison")
-            ) {
-              isEnLivraison = true;
+            if (blStatuses.some((s) => s === "mise_en_livraison")) {
+              return false;
             }
           }
-          return diffDays > 2 && !isEnLivraison;
+          return diffDays > 2;
         });
       }
       showLateDeliveriesToast(getLateDeliveries());
