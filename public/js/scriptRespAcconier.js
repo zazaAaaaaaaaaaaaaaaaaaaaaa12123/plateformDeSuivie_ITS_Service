@@ -1159,23 +1159,41 @@ document.addEventListener("DOMContentLoaded", function () {
       // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui ne sont PAS en livraison
       function getLateDeliveries() {
         const now = new Date();
+        // Appliquer le même filtrage que le tableau principal
         return (window.allDeliveries || []).filter((d) => {
           let dDate = d.delivery_date || d.created_at;
           if (!dDate) return false;
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-          // Exclure tout dossier dont au moins un BL est en 'mise_en_livraison' ou le statut acconier est 'mise_en_livraison_acconier'
+          if (diffDays <= 2) return false;
+          // Même logique que renderAgentTableFull :
+          // Affiche TOUS les dossiers dont le statut acconier est 'en attente de paiement'
+          if (d.delivery_status_acconier === "en attente de paiement") {
+            return true;
+          }
+          // Sinon, on garde l'ancien filtrage BL
+          let blList = [];
+          if (Array.isArray(d.bl_number)) {
+            blList = d.bl_number.filter(Boolean);
+          } else if (typeof d.bl_number === "string") {
+            blList = d.bl_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          let blStatuses = blList.map((bl) =>
+            d.bl_statuses && d.bl_statuses[bl] ? d.bl_statuses[bl] : "aucun"
+          );
+          // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas
+          if (
+            blStatuses.length > 0 &&
+            blStatuses.every((s) => s === "mise_en_livraison")
+          ) {
+            return false;
+          }
+          // Exclure aussi si statut acconier est 'mise_en_livraison_acconier'
           if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
             return false;
           }
-          if (d.bl_statuses && typeof d.bl_statuses === "object") {
-            const blStatuses = Object.values(d.bl_statuses);
-            if (blStatuses.some((s) => s === "mise_en_livraison")) {
-              return false;
-            }
-          }
-          return diffDays > 2;
+          return true;
         });
       }
       showLateDeliveriesToast(getLateDeliveries());
