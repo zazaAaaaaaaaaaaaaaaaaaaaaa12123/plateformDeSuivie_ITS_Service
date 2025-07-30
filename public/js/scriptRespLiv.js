@@ -2322,8 +2322,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // --- AJOUT : Bouton Générer PDF et logique associée ---
-
-// Création du bouton Générer PDF
+// Ajout du bouton au-dessus du tableau principal
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
 pdfBtn.textContent = "Générer PDF";
@@ -2340,22 +2339,17 @@ pdfBtn.style.height = "32px";
 pdfBtn.style.minWidth = "0";
 pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
 pdfBtn.style.verticalAlign = "middle";
-
-// Placement à droite, à côté du profil utilisateur
+// Placement à côté du champ de recherche (date) //
 document.addEventListener("DOMContentLoaded", function () {
-  const avatarContainer = document.getElementById("profile-avatar-container");
-  if (avatarContainer && avatarContainer.parentNode) {
-    avatarContainer.parentNode.insertBefore(
-      pdfBtn,
-      avatarContainer.nextSibling
-    );
+  const dateStartInput = document.getElementById("mainTableDateStartFilter");
+  if (dateStartInput && dateStartInput.parentNode) {
+    dateStartInput.parentNode.insertBefore(pdfBtn, dateStartInput.nextSibling);
   } else {
-    // fallback : en haut à droite si le conteneur n'existe pas
-    pdfBtn.style.position = "fixed";
-    pdfBtn.style.top = "22px";
-    pdfBtn.style.right = "160px";
-    pdfBtn.style.zIndex = "100050";
-    document.body.appendChild(pdfBtn);
+    // fallback : au-dessus du tableau si champ non trouvé
+    const mainTable = document.getElementById("deliveriesTable");
+    if (mainTable && mainTable.parentNode) {
+      mainTable.parentNode.insertBefore(pdfBtn, mainTable);
+    }
   }
 });
 
@@ -2385,7 +2379,7 @@ function updateDeliveredForPdf() {
   });
 }
 
-// Met à jour la liste à chaque chargement ou modification
+// Met à jour la liste à chaque chargement ou modificationhbdszj
 if (window.allDeliveries) updateDeliveredForPdf();
 window.addEventListener("allDeliveriesUpdated", updateDeliveredForPdf);
 
