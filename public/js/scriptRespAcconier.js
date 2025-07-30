@@ -2229,20 +2229,48 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   if (typeof window.respAcconierRestoreListener === "undefined") {
     window.respAcconierRestoreListener = true;
     window.addEventListener("restoreToRespAcconier", async function (e) {
-      // Recharge toutes les livraisons depuis le backend pour garantir la présence du dossier ramené
-      if (typeof loadAllDeliveries === "function") {
+      // Recharge toutes les livraisons et met à jour le tableau instantanément
+      if (
+        typeof loadAllDeliveries === "function" &&
+        typeof updateTableForDateRange === "function"
+      ) {
         await loadAllDeliveries();
+        // Utilise la plage de dates actuelle
+        const dateStartInput = document.getElementById("dateStartInput");
+        const dateEndInput = document.getElementById("dateEndInput");
+        const dateStart = dateStartInput ? dateStartInput.value : null;
+        const dateEnd = dateEndInput ? dateEndInput.value : null;
+        updateTableForDateRange(dateStart, dateEnd);
       }
-      const dateStartInput = document.getElementById(
-        "mainTableDateStartFilter"
-      );
-      const dateEndInput = document.getElementById("mainTableDateEndFilter");
-      if (typeof updateTableForDateRange === "function") {
-        updateTableForDateRange(
-          dateStartInput ? dateStartInput.value : "",
-          dateEndInput ? dateEndInput.value : ""
-        );
-      }
+      // Affiche une alerte visuelle pour informer le responsable acconier
+      const oldAlert = document.getElementById("restore-dossier-alert");
+      if (oldAlert) oldAlert.remove();
+      const alert = document.createElement("div");
+      alert.id = "restore-dossier-alert";
+      alert.textContent =
+        "Le responsable de livraison a ramené un dossier dans votre tableau.";
+      alert.style.position = "fixed";
+      alert.style.top = "80px";
+      alert.style.left = "50%";
+      alert.style.transform = "translateX(-50%)";
+      alert.style.background = "linear-gradient(90deg,#eab308 0%,#2563eb 100%)";
+      alert.style.color = "#fff";
+      alert.style.fontWeight = "bold";
+      alert.style.fontSize = "1.12em";
+      alert.style.padding = "18px 38px";
+      alert.style.borderRadius = "16px";
+      alert.style.boxShadow = "0 6px 32px rgba(37,99,235,0.18)";
+      alert.style.zIndex = 99999;
+      alert.style.opacity = "0";
+      alert.style.transition = "opacity 0.3s";
+      document.body.appendChild(alert);
+      setTimeout(() => {
+        alert.style.opacity = "1";
+      }, 10);
+      setTimeout(() => {
+        alert.style.opacity = "0";
+        setTimeout(() => alert.remove(), 400);
+      }, 2600);
     });
   }
 
