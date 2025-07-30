@@ -2151,7 +2151,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let allDelivered =
           tcList.length > 0 &&
           tcList.every((tc) => {
-            const s = statuses[tc];
+            let s = statuses[tc];
             return (
               s &&
               (String(s).toLowerCase() === "livre" ||
@@ -2320,3 +2320,332 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
+
+// --- AJOUT : Bouton Générer PDF et logique associée ---
+// Ajout du bouton au-dessus du tableau principal
+const pdfBtn = document.createElement("button");
+pdfBtn.id = "generatePdfBtn";
+pdfBtn.textContent = "Générer PDF";
+pdfBtn.style.background = "#2563eb";
+pdfBtn.style.color = "#fff";
+pdfBtn.style.fontWeight = "bold";
+pdfBtn.style.border = "none";
+pdfBtn.style.cursor = "pointer";
+pdfBtn.style.borderRadius = "8px";
+pdfBtn.style.padding = "10px 28px";
+pdfBtn.style.fontSize = "1.08em";
+pdfBtn.style.margin = "18px 0 18px 0";
+pdfBtn.style.boxShadow = "0 2px 12px #2563eb22";
+const mainTable = document.getElementById("deliveriesTable");
+if (mainTable && mainTable.parentNode) {
+  mainTable.parentNode.insertBefore(pdfBtn, mainTable);
+}
+
+// Variable pour stocker les dossiers livrés
+let deliveredForPdf = [];
+
+// Fonction pour mettre à jour la liste des dossiers livrés à chaque changement
+function updateDeliveredForPdf() {
+  deliveredForPdf = (window.allDeliveries || []).filter((d) => {
+    let tcList = Array.isArray(d.container_number)
+      ? d.container_number.filter(Boolean)
+      : typeof d.container_number === "string"
+      ? d.container_number.split(/[,;\s]+/).filter(Boolean)
+      : [];
+    let allTcLivres =
+      tcList.length > 0 &&
+      tcList.every((tc) => {
+        let s = d.container_statuses && d.container_statuses[tc];
+        return s === "livre" || s === "livré";
+      });
+    let globalLivree =
+      (d.status && (d.status === "livre" || d.status === "livré")) ||
+      (d.delivery_status_acconier &&
+        (d.delivery_status_acconier === "livre" ||
+          d.delivery_status_acconier === "livré"));
+    return allTcLivres || globalLivree;
+  });
+}
+
+// Met à jour la liste à chaque chargement ou modification
+if (window.allDeliveries) updateDeliveredForPdf();
+window.addEventListener("allDeliveriesUpdated", updateDeliveredForPdf);
+
+// --- Modale de filtre PDF ---
+function showPdfFilterModal() {
+  const oldModal = document.getElementById("pdfFilterModal");
+  if (oldModal) oldModal.remove();
+  const overlay = document.createElement("div");
+  overlay.id = "pdfFilterModal";
+  overlay.style.position = "fixed";
+  overlay.style.top = 0;
+  overlay.style.left = 0;
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  overlay.style.background = "rgba(30,41,59,0.45)";
+  overlay.style.zIndex = 100000;
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  const box = document.createElement("div");
+  box.style.background = "#fff";
+  box.style.borderRadius = "16px";
+  box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+  box.style.maxWidth = "420px";
+  box.style.width = "96vw";
+  box.style.maxHeight = "92vh";
+  box.style.overflowY = "auto";
+  box.style.padding = "0";
+  box.style.position = "relative";
+  box.style.display = "flex";
+  box.style.flexDirection = "column";
+  const header = document.createElement("div");
+  header.style.background = "#2563eb";
+  header.style.color = "#fff";
+  header.style.padding = "18px 28px 12px 28px";
+  header.style.fontWeight = "bold";
+  header.style.fontSize = "1.15rem";
+  header.style.display = "flex";
+  header.style.flexDirection = "column";
+  header.style.borderTopLeftRadius = "16px";
+  header.style.borderTopRightRadius = "16px";
+  header.innerHTML = `<span style='font-size:1.08em;'>Génération PDF - État des sorties de conteneurs</span>`;
+  const closeBtn = document.createElement("button");
+  closeBtn.innerHTML = "&times;";
+  closeBtn.style.background = "none";
+  closeBtn.style.border = "none";
+  closeBtn.style.color = "#fff";
+  closeBtn.style.fontSize = "2.1rem";
+  closeBtn.style.cursor = "pointer";
+  closeBtn.style.position = "absolute";
+  closeBtn.style.top = "10px";
+  closeBtn.style.right = "18px";
+  closeBtn.setAttribute("aria-label", "Fermer");
+  closeBtn.onclick = () => overlay.remove();
+  header.appendChild(closeBtn);
+  box.appendChild(header);
+  const content = document.createElement("div");
+  content.style.padding = "24px 24px 24px 24px";
+  content.style.background = "#f8fafc";
+  content.style.flex = "1 1 auto";
+  content.style.overflowY = "auto";
+  content.innerHTML = `<div style='margin-bottom:18px;font-weight:600;'>Souhaitez-vous filtrer l'état des sorties de conteneurs par :</div>`;
+  const radioSingle = document.createElement("input");
+  radioSingle.type = "radio";
+  radioSingle.name = "pdfDateFilter";
+  radioSingle.id = "pdfFilterSingle";
+  radioSingle.checked = true;
+  const labelSingle = document.createElement("label");
+  labelSingle.textContent = "Une seule date";
+  labelSingle.htmlFor = "pdfFilterSingle";
+  labelSingle.style.marginRight = "18px";
+  const radioRange = document.createElement("input");
+  radioRange.type = "radio";
+  radioRange.name = "pdfDateFilter";
+  radioRange.id = "pdfFilterRange";
+  const labelRange = document.createElement("label");
+  labelRange.textContent = "Intervalle de dates";
+  labelRange.htmlFor = "pdfFilterRange";
+  content.appendChild(radioSingle);
+  content.appendChild(labelSingle);
+  content.appendChild(radioRange);
+  content.appendChild(labelRange);
+  const dateZone = document.createElement("div");
+  dateZone.style.marginTop = "18px";
+  content.appendChild(dateZone);
+  function renderSingleDateInput() {
+    dateZone.innerHTML = "";
+    const dateInput = document.createElement("input");
+    dateInput.type = "date";
+    dateInput.id = "pdfSingleDateInput";
+    dateInput.style.padding = "8px 18px";
+    dateInput.style.borderRadius = "8px";
+    dateInput.style.border = "1.5px solid #2563eb";
+    dateInput.style.fontSize = "1.08em";
+    dateInput.style.marginRight = "12px";
+    dateZone.appendChild(dateInput);
+  }
+  function renderRangeDateInputs() {
+    dateZone.innerHTML = "";
+    const dateStart = document.createElement("input");
+    dateStart.type = "date";
+    dateStart.id = "pdfRangeDateStart";
+    dateStart.style.padding = "8px 18px";
+    dateStart.style.borderRadius = "8px";
+    dateStart.style.border = "1.5px solid #2563eb";
+    dateStart.style.fontSize = "1.08em";
+    dateStart.style.marginRight = "12px";
+    const dateEnd = document.createElement("input");
+    dateEnd.type = "date";
+    dateEnd.id = "pdfRangeDateEnd";
+    dateEnd.style.padding = "8px 18px";
+    dateEnd.style.borderRadius = "8px";
+    dateEnd.style.border = "1.5px solid #2563eb";
+    dateEnd.style.fontSize = "1.08em";
+    dateZone.appendChild(dateStart);
+    dateZone.appendChild(dateEnd);
+  }
+  renderSingleDateInput();
+  radioSingle.onchange = renderSingleDateInput;
+  radioRange.onchange = renderRangeDateInputs;
+  const validateBtn = document.createElement("button");
+  validateBtn.textContent = "Générer PDF";
+  validateBtn.style.background = "#2563eb";
+  validateBtn.style.color = "#fff";
+  validateBtn.style.fontWeight = "bold";
+  validateBtn.style.border = "none";
+  validateBtn.style.cursor = "pointer";
+  validateBtn.style.borderRadius = "8px";
+  validateBtn.style.padding = "10px 28px";
+  validateBtn.style.fontSize = "1.08em";
+  validateBtn.style.marginTop = "24px";
+  validateBtn.onclick = function () {
+    let filterType = radioSingle.checked ? "single" : "range";
+    let date1 = null,
+      date2 = null;
+    if (filterType === "single") {
+      date1 = dateZone.querySelector("#pdfSingleDateInput")?.value;
+    } else {
+      date1 = dateZone.querySelector("#pdfRangeDateStart")?.value;
+      date2 = dateZone.querySelector("#pdfRangeDateEnd")?.value;
+    }
+    let filtered = deliveredForPdf.filter((d) => {
+      let dDate = d.delivery_date || d.created_at;
+      if (!dDate) return false;
+      let normalized = "";
+      if (typeof dDate === "string") {
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
+          const [j, m, a] = dDate.split("/");
+          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
+          normalized = dDate;
+        } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
+          const [j, m, a] = dDate.split("-");
+          normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
+        } else {
+          const dateObj = new Date(dDate);
+          if (!isNaN(dateObj)) {
+            normalized = dateObj.toISOString().split("T")[0];
+          } else {
+            normalized = dDate;
+          }
+        }
+      } else if (dDate instanceof Date) {
+        normalized = dDate.toISOString().split("T")[0];
+      } else {
+        normalized = String(dDate);
+      }
+      if (filterType === "single") {
+        return date1 && normalized === date1;
+      } else {
+        if (!date1 || !date2) return false;
+        return normalized >= date1 && normalized <= date2;
+      }
+    });
+    generateEtatSortiePdf(filtered, date1, date2);
+    overlay.remove();
+  };
+  content.appendChild(validateBtn);
+  box.appendChild(content);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+pdfBtn.onclick = showPdfFilterModal;
+
+function generateEtatSortiePdf(rows, date1, date2) {
+  if (!rows || rows.length === 0) {
+    alert("Aucun dossier livré à exporter pour la période choisie.");
+    return;
+  }
+  function loadJsPdfLibs(callback) {
+    if (window.jspdf && window.jspdf.jsPDF && window.jspdf.autoTable) {
+      callback();
+      return;
+    }
+    if (!document.getElementById("jspdf-script")) {
+      const script = document.createElement("script");
+      script.id = "jspdf-script";
+      script.src =
+        "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      script.onload = function () {
+        loadAutoTable();
+      };
+      document.body.appendChild(script);
+    } else {
+      loadAutoTable();
+    }
+    function loadAutoTable() {
+      if (!document.getElementById("jspdf-autotable-script")) {
+        const script = document.createElement("script");
+        script.id = "jspdf-autotable-script";
+        script.src =
+          "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js";
+        script.onload = function () {
+          callback();
+        };
+        document.body.appendChild(script);
+      } else {
+        callback();
+      }
+    }
+  }
+  loadJsPdfLibs(() => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("État des sorties de conteneurs", 14, 18);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    let dateText = "";
+    if (date1 && !date2) dateText = `Date : ${date1}`;
+    else if (date1 && date2) dateText = `Du ${date1} au ${date2}`;
+    doc.text(dateText, 14, 26);
+    const columns = [
+      { header: "CIRCUIT", dataKey: "circuit" },
+      { header: "NOM CLIENT", dataKey: "client_name" },
+      { header: "Numéro Dossier", dataKey: "dossier_number" },
+      { header: "Numéro TC(s)", dataKey: "container_number" },
+      { header: "NOM Agent Visiteur", dataKey: "nom_agent_visiteur" },
+      { header: "Compagnie Maritime", dataKey: "shipping_company" },
+      { header: "INSPECTEUR", dataKey: "inspecteur" },
+      { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes" },
+      { header: "OBSERVATION", dataKey: "observation_acconier" },
+      { header: "DATE", dataKey: "delivery_date" },
+    ];
+    const dataRows = rows.map((d) => {
+      return {
+        circuit: d.circuit || "-",
+        client_name: d.client_name || "-",
+        dossier_number: d.dossier_number || "-",
+        container_number: Array.isArray(d.container_number)
+          ? d.container_number.join(", ")
+          : d.container_number || "-",
+        nom_agent_visiteur: d.nom_agent_visiteur || "-",
+        shipping_company: d.shipping_company || "-",
+        inspecteur: d.inspecteur || "-",
+        agent_en_douanes: d.agent_en_douanes || "-",
+        observation_acconier: d.observation_acconier || "-",
+        delivery_date: d.delivery_date
+          ? new Date(d.delivery_date).toLocaleDateString("fr-FR")
+          : "-",
+      };
+    });
+    doc.autoTable({
+      startY: 32,
+      head: [columns.map((c) => c.header)],
+      body: dataRows.map((row) => columns.map((c) => row[c.dataKey])),
+      styles: { font: "helvetica", fontSize: 10 },
+      headStyles: {
+        fillColor: [37, 99, 235],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      alternateRowStyles: { fillColor: [240, 245, 255] },
+      margin: { left: 14, right: 14 },
+      theme: "grid",
+    });
+    doc.save("Etat_sorties_conteneurs.pdf");
+  });
+}
