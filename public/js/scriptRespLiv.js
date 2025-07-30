@@ -2658,7 +2658,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
       body: dataRows.map((row) => columns.map((c) => row[c.dataKey])),
       styles: { font: "helvetica", fontSize: 10 },
       headStyles: {
-        fillColor: [37, 99, 235],
+        fillColor: [0, 0, 0], // noir
         textColor: 255,
         fontStyle: "bold",
       },
