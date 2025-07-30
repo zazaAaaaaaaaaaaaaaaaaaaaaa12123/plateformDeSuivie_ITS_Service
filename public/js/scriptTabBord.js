@@ -1,3 +1,26 @@
+(function updateEtatDossiersCards() {
+  // Cette fonction met à jour dynamiquement les nombres sur les cartes d'états de dossiers
+  // À ADAPTER selon la structure réelle de vos données !
+  // Exemple de récupération via API ou variable globale
+  document.addEventListener("DOMContentLoaded", function () {
+    // Remplacez cette partie par vos vraies données !
+    // Exemple statique pour démo :
+    const stats = {
+      attente: 12, // Dossiers en attente de paiement
+      cours: 7, // Dossiers en cours de mise en livraison
+      livre: 34, // Dossiers livrés
+      retard: 2, // Dossiers en retard
+    };
+    if (document.getElementById("nbAttentePaiement"))
+      document.getElementById("nbAttentePaiement").textContent = stats.attente;
+    if (document.getElementById("nbEnCoursLivraison"))
+      document.getElementById("nbEnCoursLivraison").textContent = stats.cours;
+    if (document.getElementById("nbLivre"))
+      document.getElementById("nbLivre").textContent = stats.livre;
+    if (document.getElementById("nbRetard"))
+      document.getElementById("nbRetard").textContent = stats.retard;
+  });
+})();
 // --- Détection automatique de l'URL backend (API et WebSocket) ---
 // window.API_BASE_URL = base pour les fetch (http(s)://...)
 // window.WS_BASE_HOST = host:port pour WebSocket (sans ws://)
@@ -1488,68 +1511,8 @@ window.AGENT_TABLE_COLUMNS = [
                     <span style="font-size:0.7em;font-weight:600;color:#374151;background:#eaf1fb;padding:6px 18px;border-radius:12px;box-shadow:0 2px 8px #2563eb11;letter-spacing:0.5px;">${dateHierFr}</span>
                   </h2>`;
       html += `<div class="dashboard-cards-row">
-        <div class="dashboard-card livraisons" data-card="livraisons">
-          <div class="card-title"><i class="fas fa-truck-loading" style="color:#2563eb;"></i> Livraisons</div>
-          <div class="card-value">${total}</div>
-          <span class="card-arrow"><i class="fas fa-chevron-right"></i></span>
-          <div class="card-list">
-            <div style="margin-bottom:6px;"><strong>Statuts :</strong></div>
-            <div style="margin-bottom:8px;">
-              ${
-                Object.keys(statuts).length === 0
-                  ? "Aucun"
-                  : Object.entries(statuts)
-                      .map(
-                        ([s, n]) =>
-                          `<span class=\"card-badge\">${n} ${s}</span>`
-                      )
-                      .join(" ")
-              }
-            </div>
-            <div><strong>Lieux :</strong> <span>${
-              lieux.length > 0 ? lieux.join(", ") : "-"
-            }</span></div>
-          </div>
-        </div>
-        <div class="dashboard-card agents" data-card="agents">
-          <div class="card-title"><i class="fas fa-user-tie" style="color:#059669;"></i> Agents actifs</div>
-          <div class="card-value">${agents.length}</div>
-          <span class="card-arrow"><i class="fas fa-chevron-right"></i></span>
-          <div class="card-list">
-            <div style="margin-bottom:6px;"><strong>Liste :</strong></div>
-            ${
-              agents.length > 0
-                ? `<ul>${agents.map((a) => `<li>${a}</li>`).join("")}</ul>`
-                : "<span>-</span>"
-            }
-          </div>
-        </div>
-        <div class="dashboard-card clients" data-card="clients">
-          <div class="card-title"><i class="fas fa-users" style="color:#f59e0b;"></i> Clients différents</div>
-          <div class="card-value">${clients.length}</div>
-          <span class="card-arrow"><i class="fas fa-chevron-right"></i></span>
-          <div class="card-list">
-            <div style="margin-bottom:6px;"><strong>Liste :</strong></div>
-            ${
-              clients.length > 0
-                ? `<ul>${clients.map((c) => `<li>${c}</li>`).join("")}</ul>`
-                : "<span>-</span>"
-            }
-          </div>
-        </div>
-        <div class="dashboard-card" data-card="recap-mois" style="border-top:6px solid #6366f1;box-shadow:0 6px 32px #6366f133,0 2px 8px #0001;min-width:0;max-width:100%;overflow-y:auto;">
-          <div class="card-title"><i class="fas fa-calendar-alt" style="color:#6366f1;"></i> Récap. du mois</div>
-          <div class="card-value" style="font-size:2.1em;color:#6366f1;">Voir</div>
-          <div style="font-size:1em;font-weight:600;color:#374151;margin-bottom:8px;">${
-            moisFr[prevMonth]
-          } ${prevYear}</div>
-          <button id="btnRecapMois" style="margin-top:10px;padding:10px 22px;font-size:1em;font-weight:600;background:#6366f1;color:#fff;border:none;border-radius:8px;box-shadow:0 2px 8px #6366f122;cursor:pointer;transition:background 0.2s;">Récapitulatif du mois</button>
-        </div>
-       
-        <div class="dashboard-card detention" data-card="detention" style="border-top:5px solid #ef4444;box-shadow:0 4px 18px #ef444422,0 2px 8px #0001;background:linear-gradient(135deg,#fff7f7 60%,#fbeaea 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:220px;">
-          <div class="card-title" style="color:#ef4444;"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Dossiers en retard</div>
-          <button id="btnVoirDetentionDashboard" style="margin-top:12px;padding:10px 22px;font-size:1.08em;font-weight:700;background:#ef4444;color:#fff;border:none;border-radius:8px;box-shadow:0 2px 8px #ef444422;cursor:pointer;transition:background 0.2s;">🚨 Après 2 jours délai</button>
-        </div>
+        <!-- Carte Livraisons supprimée -->
+        <!-- Cartes Agents actifs, Clients différents, Récap. du mois et Dossiers en retard supprimées -->
       </div>`;
       // --- Script pour la carte Agent visiteur programmé ---
       // Nouvelle version : utilise l'API dédiée /agents-visiteurs/programmes

@@ -917,6 +917,40 @@
       </aside>
 
       <main class="main-content">
+        <!-- Cartes états des dossiers (visuel 3D) -->
+        <div
+          id="etatDossiersCards"
+          style="
+            display: flex;
+            gap: 28px;
+            justify-content: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+          "
+        >
+          <div class="etat-carte dossier-attente">
+            <div class="etat-icone"><i class="fas fa-hourglass-half"></i></div>
+            <div class="etat-titre">En attente de paiement</div>
+            <div class="etat-nombre" id="nbAttentePaiement">0</div>
+          </div>
+          <div class="etat-carte dossier-cours">
+            <div class="etat-icone"><i class="fas fa-shipping-fast"></i></div>
+            <div class="etat-titre">En cours de mise en livraison</div>
+            <div class="etat-nombre" id="nbEnCoursLivraison">0</div>
+          </div>
+          <div class="etat-carte dossier-livre">
+            <div class="etat-icone"><i class="fas fa-check-circle"></i></div>
+            <div class="etat-titre">Dossier livré</div>
+            <div class="etat-nombre" id="nbLivre">0</div>
+          </div>
+          <div class="etat-carte dossier-retard">
+            <div class="etat-icone">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="etat-titre">En retard</div>
+            <div class="etat-nombre" id="nbRetard">0</div>
+          </div>
+        </div>
         <!-- Popup demande code entreprise -->
         <div
           id="popupDemandeCodeEntreprise"
