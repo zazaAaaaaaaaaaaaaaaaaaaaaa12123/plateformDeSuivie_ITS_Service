@@ -256,13 +256,16 @@ document.addEventListener("DOMContentLoaded", function () {
             // Ajoute ou met à jour la livraison
             if (idx === -1) {
               window.allDeliveries.push(data.delivery);
+              updateDeliveredForPdf();
             } else {
               window.allDeliveries[idx] = data.delivery;
+              updateDeliveredForPdf();
             }
           } else {
             // Retire la livraison si elle n'est plus éligible
             if (idx !== -1) {
               window.allDeliveries.splice(idx, 1);
+              updateDeliveredForPdf();
             }
           }
           // Rafraîchit le tableau
@@ -2565,7 +2568,10 @@ function showPdfFilterModal() {
   document.body.appendChild(overlay);
 }
 
-pdfBtn.onclick = showPdfFilterModal;
+pdfBtn.onclick = function () {
+  updateDeliveredForPdf();
+  showPdfFilterModal();
+};
 
 function generateEtatSortiePdf(rows, date1, date2) {
   if (!rows || rows.length === 0) {
