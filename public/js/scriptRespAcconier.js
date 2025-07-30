@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Supprimer tout toast existant
     const oldToast = document.getElementById("late-deliveries-toast");
     if (oldToast) oldToast.remove();
-    if (!lateDeliveries || lateDeliveries.length === 0) return;
+    // Afficher le toast même si la liste est vide
     const toast = document.createElement("div");
     toast.id = "late-deliveries-toast";
     toast.style.position = "fixed";
@@ -1158,8 +1158,9 @@ document.addEventListener("DOMContentLoaded", function () {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
       // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui sont affichés dans le tableau et qui ne sont PAS en livraison
       function getLateDeliveries() {
-        const now = new Date();
-        // Récupère la liste actuellement affichée dans le tableau (filtrée)
+        // Date d'aujourd'hui dynamique
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // On normalise à minuit pour éviter les soucis d'heure
         let filteredDeliveries = [];
         const tableBody = document.getElementById("deliveriesTableBody");
         if (tableBody) {
@@ -1168,7 +1169,6 @@ document.addEventListener("DOMContentLoaded", function () {
           const displayedDossierNumbers = Array.from(rows)
             .map((row) => {
               const cells = row.querySelectorAll("td");
-              // Cherche la colonne N° Dossier (id: dossier_number)
               for (let i = 0; i < cells.length; i++) {
                 if (
                   cells[i].getAttribute("data-col-id") === "dossier_number" ||
@@ -1182,21 +1182,23 @@ document.addEventListener("DOMContentLoaded", function () {
               return null;
             })
             .filter(Boolean);
-          // On filtre les allDeliveries pour ne garder que ceux affichés
           filteredDeliveries = (window.allDeliveries || []).filter((d) =>
             displayedDossierNumbers.includes(String(d.dossier_number).trim())
           );
         } else {
           filteredDeliveries = window.allDeliveries || [];
         }
-        // On applique la logique de retard et de livraison
+        // On applique la logique de retard stricte
         return filteredDeliveries.filter((d) => {
           let dDate = d.delivery_date || d.created_at;
           if (!dDate) return false;
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
-          const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-          // On ne compte que les dossiers qui ne sont PAS en livraison
+          // Calcul du nombre de jours entre aujourd'hui et la date d'ajout
+          const diffDays = Math.floor(
+            (today - dateObj) / (1000 * 60 * 60 * 24)
+          );
+          // Dossier jamais mis en livraison ?
           let isEnLivraison = false;
           if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
             isEnLivraison = true;
@@ -1210,6 +1212,7 @@ document.addEventListener("DOMContentLoaded", function () {
               isEnLivraison = true;
             }
           }
+          // On ajoute uniquement si >2 jours et jamais mis en livraison
           return diffDays > 2 && !isEnLivraison;
         });
       }
