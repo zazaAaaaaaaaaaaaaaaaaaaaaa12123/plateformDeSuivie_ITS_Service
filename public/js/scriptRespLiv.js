@@ -2718,7 +2718,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
       // Marges égales à gauche et à droite pour un centrage parfaitsgvh
-      margin: { left: 15, right: 15 },
+      margin: { left: 13, right: 13 },
       theme: "grid",
       columnStyles: columns.reduce((acc, col, idx) => {
         acc[idx] = { cellWidth: col.width };
