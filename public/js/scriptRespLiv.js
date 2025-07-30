@@ -2717,7 +2717,8 @@ function generateEtatSortiePdf(rows, date1, date2) {
         fontStyle: "bold",
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
-      margin: { left: 10, right: 10 },
+      // Marge gauche/droite personnalisée pour équilibrer l'espace
+      margin: { left: 18, right: 28 },
       theme: "grid",
       columnStyles: columns.reduce((acc, col, idx) => {
         acc[idx] = { cellWidth: col.width };
@@ -2726,7 +2727,6 @@ function generateEtatSortiePdf(rows, date1, date2) {
       tableWidth: "auto",
       horizontalAlign: "center", // Centrage horizontal du tableau
       didDrawPage: function (data) {
-        // Centrage manuel si besoin (optionnel, car horizontalAlign gère déjà)
         // Rien à faire ici normalement
       },
     });
