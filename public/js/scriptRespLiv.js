@@ -854,6 +854,11 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
                 detail: { deliveryId: id },
               })
             );
+            // Synchronisation inter-onglets via localStorage
+            localStorage.setItem(
+              "restoreToRespAcconierEvent",
+              Date.now().toString()
+            );
           });
         }
         const alertDiv = document.createElement("div");
