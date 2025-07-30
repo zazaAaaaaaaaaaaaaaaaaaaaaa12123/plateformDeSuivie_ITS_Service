@@ -2171,6 +2171,11 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   // Filtrer les livraisons à afficher dans le tableau principal :
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
+    // Affiche TOUS les dossiers dont le statut acconier est 'en attente de paiement'
+    if (delivery.delivery_status_acconier === "en attente de paiement") {
+      return true;
+    }
+    // Sinon, on garde l'ancien filtrage BL
     let blList = [];
     if (Array.isArray(delivery.bl_number)) {
       blList = delivery.bl_number.filter(Boolean);
