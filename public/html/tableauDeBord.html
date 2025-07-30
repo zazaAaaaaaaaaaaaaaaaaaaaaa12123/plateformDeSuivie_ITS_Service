@@ -1499,22 +1499,16 @@
         <script>
           // Message de bienvenue animé (typewriter)
           document.addEventListener("DOMContentLoaded", function () {
-            var email = null;
-            // Essayons de récupérer l'email depuis localStorage ou sessionStorage
-            if (localStorage.getItem("userEmail")) {
-              email = localStorage.getItem("userEmail");
-            } else if (sessionStorage.getItem("userEmail")) {
-              email = sessionStorage.getItem("userEmail");
-            } else if (window.userEmail) {
-              email = window.userEmail;
-            }
-            var prenom = "Utilisateur";
-            if (email && typeof email === "string" && email.includes("@")) {
-              prenom = email.split("@")[0];
-              if (prenom.length > 1)
-                prenom = prenom.charAt(0).toUpperCase() + prenom.slice(1);
-            }
-            var message = `Bonjour ${prenom}, Bienvenue`;
+            // Affiche le nom de l'utilisateur connecté (stocké dans localStorage.user)
+            var nom = null;
+            try {
+              var user = JSON.parse(localStorage.getItem("user"));
+              if (user && user.nom) {
+                nom = user.nom;
+              }
+            } catch (e) {}
+            if (!nom || nom.length < 2) nom = "Utilisateur";
+            var message = `Bonjour ${nom}, Bienvenue`;
             var el = document.getElementById("welcomeTypewriter");
             if (el) {
               el.textContent = "";
