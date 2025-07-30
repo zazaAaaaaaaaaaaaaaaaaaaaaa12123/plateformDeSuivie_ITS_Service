@@ -183,6 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
               })
             );
             localStorage.setItem("showSuccessMessage", "true");
+            // Stocke l'email pour le message de bienvenue personnalisé
+            localStorage.setItem("userEmail", data.email);
           }
           // Redirection tableau de bord pour tout utilisateur inscrit ici (admin/responsable)
           if (data.isAdmin) {
