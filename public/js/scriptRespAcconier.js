@@ -1032,6 +1032,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction principale pour charger et afficher selon la plage de dates
   function updateTableForDateRange(dateStartStr, dateEndStr) {
+    // Vérification automatique : si la date de début est après la date de fin, on corrige
+    if (dateStartStr && dateEndStr && dateStartStr > dateEndStr) {
+      // On inverse les dates
+      const tmp = dateStartStr;
+      dateStartStr = dateEndStr;
+      dateEndStr = tmp;
+      // On met à jour les champs dans l'UI
+      const dateStartInput = document.getElementById(
+        "mainTableDateStartFilter"
+      );
+      const dateEndInput = document.getElementById("mainTableDateEndFilter");
+      if (dateStartInput) dateStartInput.value = dateStartStr;
+      if (dateEndInput) dateEndInput.value = dateEndStr;
+    }
     let filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
     console.log(
       "[DEBUG] updateTableForDateRange - livraisons filtrées:",
