@@ -1019,6 +1019,87 @@
             >
               Statistiques par Acteur
             </h1>
+            <!-- Cartes états dossiers -->
+            <div
+              id="etat-dossiers-cards"
+              style="
+                display: flex;
+                gap: 32px;
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: stretch;
+                margin-bottom: 36px;
+              "
+            >
+              <div class="etat-carte3d etat-attente">
+                <div class="etat-icone">
+                  <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="etat-titre">En attente de paiement</div>
+                <div class="etat-desc">
+                  Dossiers en attente de règlement avant traitement.
+                </div>
+                <div class="etat-nombre" id="nb-attente-paiement">-</div>
+              </div>
+              <div class="etat-carte3d etat-mise-livraison">
+                <div class="etat-icone">
+                  <i class="fas fa-shipping-fast"></i>
+                </div>
+                <div class="etat-titre">En cours de mise en livraison</div>
+                <div class="etat-desc">
+                  Dossiers en préparation pour la livraison.
+                </div>
+                <div class="etat-nombre" id="nb-mise-livraison">-</div>
+              </div>
+              <div class="etat-carte3d etat-livre">
+                <div class="etat-icone">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="etat-titre">Livré</div>
+                <div class="etat-desc">
+                  Dossiers dont la livraison est confirmée.
+                </div>
+                <div class="etat-nombre" id="nb-livre">-</div>
+              </div>
+              <div class="etat-carte3d etat-retard">
+                <div class="etat-icone">
+                  <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="etat-titre">En retard</div>
+                <div class="etat-desc">
+                  Dossiers dont la livraison a dépassé la date prévue.
+                </div>
+                <div class="etat-nombre" id="nb-retard">-</div>
+              </div>
+            </div>
+            /* --- Cartes états dossiers 3D --- */ #etat-dossiers-cards {
+            margin-bottom: 36px; } .etat-carte3d { background:
+            linear-gradient(135deg, #f7faff 60%, #e3e9f7 100%); border-radius:
+            18px; box-shadow: 0 8px 32px #2563eb22, 0 2px 8px #0001; padding:
+            28px 22px 22px 22px; min-width: 220px; max-width: 270px; flex: 1 1
+            220px; display: flex; flex-direction: column; align-items: center;
+            justify-content: flex-start; transition: box-shadow 0.22s, transform
+            0.18s; position: relative; margin-bottom: 0; perspective: 600px;
+            border: none; } .etat-carte3d:hover, .etat-carte3d:focus {
+            box-shadow: 0 16px 48px #2563eb33, 0 4px 16px #0002; transform:
+            translateY(-6px) scale(1.03) rotateX(2deg); z-index: 2; }
+            .etat-icone { font-size: 2.5em; margin-bottom: 12px; color: #2563eb;
+            filter: drop-shadow(0 2px 8px #2563eb22); text-shadow: 0 2px 8px
+            #2563eb22; } .etat-titre { font-size: 1.18em; font-weight: 700;
+            color: #1d3557; margin-bottom: 6px; text-align: center;
+            letter-spacing: 0.2px; } .etat-desc { font-size: 0.98em; color:
+            #374151; margin-bottom: 14px; text-align: center; min-height: 36px;
+            } .etat-nombre { font-size: 2.1em; font-weight: 900; color: #2563eb;
+            margin-bottom: 0; letter-spacing: 1px; text-align: center;
+            text-shadow: 0 2px 8px #2563eb22; } .etat-attente .etat-icone {
+            color: #f59e0b; } .etat-attente .etat-nombre { color: #f59e0b; }
+            .etat-mise-livraison .etat-icone { color: #2563eb; }
+            .etat-mise-livraison .etat-nombre { color: #2563eb; } .etat-livre
+            .etat-icone { color: #059669; } .etat-livre .etat-nombre { color:
+            #059669; } .etat-retard .etat-icone { color: #dc3545; } .etat-retard
+            .etat-nombre { color: #dc3545; } @media (max-width: 900px) {
+            #etat-dossiers-cards { flex-direction: column; gap: 18px; }
+            .etat-carte3d { min-width: 0; max-width: 100%; } }
             <div
               style="
                 display: flex;
