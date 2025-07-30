@@ -2218,24 +2218,11 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   // --- Ajout : écouteur pour restaurer une ligne ramenée au Resp. Acconier ---
   if (typeof window.respAcconierRestoreListener === "undefined") {
     window.respAcconierRestoreListener = true;
-    window.addEventListener("restoreToRespAcconier", function (e) {
-      const deliveryId = e.detail && e.detail.deliveryId;
-      if (!deliveryId) return;
-      // Trouver la livraison et remettre tous ses BL à "aucun" et le statut dossier à "en attente de paiement"
-      const deliveries = window.allDeliveries || [];
-      const delivery = deliveries.find(
-        (d) => String(d.id) === String(deliveryId)
-      );
-      if (delivery) {
-        if (delivery.bl_statuses) {
-          Object.keys(delivery.bl_statuses).forEach((bl) => {
-            delivery.bl_statuses[bl] = "aucun";
-          });
-        }
-        // Remettre le statut dossier à "en attente de paiement"
-        delivery.delivery_status_acconier = "en attente de paiement";
+    window.addEventListener("restoreToRespAcconier", async function (e) {
+      // Recharge toutes les livraisons depuis le backend pour garantir la présence du dossier ramené
+      if (typeof loadAllDeliveries === "function") {
+        await loadAllDeliveries();
       }
-      // Rafraîchir le tableau
       const dateStartInput = document.getElementById(
         "mainTableDateStartFilter"
       );
