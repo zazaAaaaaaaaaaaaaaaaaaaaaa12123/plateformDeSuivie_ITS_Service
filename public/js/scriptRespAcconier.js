@@ -1075,29 +1075,26 @@ document.addEventListener("DOMContentLoaded", function () {
     dateEndInput.value = todayStr;
     loadAllDeliveries().then(() => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-      // Après chargement, détecter les dossiers en retard (>2 jours)
-      const now = new Date();
-      const lateDeliveries = (window.allDeliveries || []).filter((d) => {
-        let dDate = d.delivery_date || d.created_at;
-        if (!dDate) return false;
-        let dateObj = new Date(dDate);
-        if (isNaN(dateObj.getTime())) return false;
-        const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-        return diffDays > 2;
-      });
-      showLateDeliveriesToast(lateDeliveries);
-      // Affichage toutes les 40 secondes
-      setInterval(() => {
+      // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui ne sont PAS en livraison
+      function getLateDeliveries() {
         const now = new Date();
-        const lateDeliveries = (window.allDeliveries || []).filter((d) => {
+        return (window.allDeliveries || []).filter((d) => {
           let dDate = d.delivery_date || d.created_at;
           if (!dDate) return false;
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-          return diffDays > 2;
+          // On ne compte que les dossiers qui ne sont PAS en livraison
+          return (
+            diffDays > 2 &&
+            d.delivery_status_acconier !== "mise_en_livraison_acconier"
+          );
         });
-        showLateDeliveriesToast(lateDeliveries);
+      }
+      showLateDeliveriesToast(getLateDeliveries());
+      // Affichage toutes les 40 secondes
+      setInterval(() => {
+        showLateDeliveriesToast(getLateDeliveries());
       }, 40000);
     });
     dateStartInput.addEventListener("change", () => {
