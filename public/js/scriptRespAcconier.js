@@ -119,32 +119,47 @@ document.addEventListener("DOMContentLoaded", function () {
         ul.style.listStyle = "none";
         ul.style.padding = 0;
         ul.style.margin = 0;
-        lateDeliveries.forEach((d) => {
+        lateDeliveries.forEach((d, idx) => {
           const li = document.createElement("li");
           li.className = "late-delivery-item";
-          li.style.marginBottom = "14px";
+          li.style.marginBottom = "18px";
           li.style.cursor = "pointer";
-          li.style.borderRadius = "12px";
+          li.style.borderRadius = "14px";
           li.style.padding = "18px 18px 14px 18px";
           li.style.background = "#fff";
-          li.style.boxShadow = "0 2px 10px rgba(239,68,68,0.07)";
-          li.style.border = "1.5px solid #fee2e2";
+          li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
+          li.style.border = "2px solid #fee2e2";
           li.style.transition =
-            "background 0.18s, box-shadow 0.18s, border 0.18s";
+            "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
           li.innerHTML = `
-            <div style='font-size:1.08em; margin-bottom:6px;'>
-              <span style='color:#ef4444;font-weight:bold;'>N° Dossier :</span>
+            <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
+              <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#ef4444 60%,#fca5a5 100%);color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #ef444433;'>${
+                idx + 1
+              }</span>
+              <span style='color:#ef4444;font-weight:bold;font-size:1.08em;'><i class="fas fa-folder-open" style="margin-right:6px;color:#ef4444;"></i>N° Dossier :</span>
               <span style='color:#b91c1c;font-weight:700;font-size:1.13em;'>${
                 d.dossier_number || "-"
               }</span>
             </div>
-            <div style='font-size:1em;'>
+            <div style='font-size:1em;margin-left:42px;'>
               <span style='color:#2563eb;font-weight:600;'>Agent :</span>
               <span style='color:#0e274e;font-weight:600;'>${
                 d.employee_name || "-"
               }</span>
             </div>
           `;
+          li.onmouseenter = function () {
+            li.style.background = "#fef2f2";
+            li.style.borderColor = "#fca5a5";
+            li.style.boxShadow = "0 6px 24px #ef444433";
+            li.style.transform = "translateY(-2px) scale(1.015)";
+          };
+          li.onmouseleave = function () {
+            li.style.background = "#fff";
+            li.style.borderColor = "#fee2e2";
+            li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
+            li.style.transform = "none";
+          };
           // Ajout : au clic, scroll sur la ligne du tableau et flash
           li.onclick = function (e) {
             e.stopPropagation();
@@ -197,19 +212,6 @@ document.addEventListener("DOMContentLoaded", function () {
           ul.appendChild(li);
         });
         content.appendChild(ul);
-        // Ajout du style pour le survol si pas déjà présent
-        if (!document.getElementById("late-delivery-hover-style")) {
-          const style = document.createElement("style");
-          style.id = "late-delivery-hover-style";
-          style.innerHTML = `
-            .late-deliveries-list .late-delivery-item:hover {
-              background: #fef2f2 !important;
-              border-color: #fca5a5 !important;
-              box-shadow: 0 4px 18px rgba(239,68,68,0.13);
-            }
-          `;
-          document.head.appendChild(style);
-        }
       }
       box.appendChild(content);
       overlay.appendChild(box);
@@ -366,7 +368,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             const result = await response.json();
             if (result.success) {
-              // Suppression locale seulement si succès côté serveur
+              // Suppression locale hfgvj seulement si succès côté serveur
               if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
                 window.allDeliveries = window.allDeliveries.filter(
                   (d) => !idsToDelete.includes(String(d.id))
