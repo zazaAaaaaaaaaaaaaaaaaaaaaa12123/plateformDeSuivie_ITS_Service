@@ -1864,27 +1864,32 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         // ...existing code...
       } else if (col.id === "container_status") {
-        // Nouveau comportement : le statuto dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
-        let blList = [];
-        if (Array.isArray(delivery.bl_number)) {
-          blList = delivery.bl_number.filter(Boolean);
-        } else if (typeof delivery.bl_number === "string") {
-          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        let blStatuses = blList.map((bl) =>
-          delivery.bl_statuses && delivery.bl_statuses[bl]
-            ? delivery.bl_statuses[bl]
-            : "aucun"
-        );
-        let allMiseEnLivraison =
-          blStatuses.length > 0 &&
-          blStatuses.every((s) => s === "mise_en_livraison");
-        if (allMiseEnLivraison) {
-          td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-        } else {
+        // Correction : si le statut acconier est 'en attente de paiement', on affiche toujours 'En attente de paiement'
+        if (delivery.delivery_status_acconier === "en attente de paiement") {
           td.innerHTML =
             '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+        } else {
+          let blList = [];
+          if (Array.isArray(delivery.bl_number)) {
+            blList = delivery.bl_number.filter(Boolean);
+          } else if (typeof delivery.bl_number === "string") {
+            blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          let blStatuses = blList.map((bl) =>
+            delivery.bl_statuses && delivery.bl_statuses[bl]
+              ? delivery.bl_statuses[bl]
+              : "aucun"
+          );
+          let allMiseEnLivraison =
+            blStatuses.length > 0 &&
+            blStatuses.every((s) => s === "mise_en_livraison");
+          if (allMiseEnLivraison) {
+            td.innerHTML =
+              '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
+          } else {
+            td.innerHTML =
+              '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+          }
         }
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
