@@ -2649,3 +2649,16 @@ function generateEtatSortiePdf(rows, date1, date2) {
     doc.save("Etat_sorties_conteneurs.pdf");
   });
 }
+
+// Réduction du champ de recherche date PDF
+const style = document.createElement("style");
+style.textContent = `
+  #pdfSingleDateInput, #pdfRangeDateStart, #pdfRangeDateEnd {
+    width: 160px !important;
+    min-width: 0 !important;
+    max-width: 180px !important;
+    padding: 6px 10px !important;
+    font-size: 1em !important;
+  }
+`;
+document.head.appendChild(style);
