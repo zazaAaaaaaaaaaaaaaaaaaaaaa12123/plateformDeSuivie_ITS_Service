@@ -2638,7 +2638,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
     // Largeur totale disponible (A4 paysage, marges incluses)
     // On répartit pour que la colonne OBSERVATION ne déborde pas et que le tableau soit équilibré
     const columns = [
-      { header: "CIRCUIT", dataKey: "circuit", width: 28 },
+      { header: "CIRCUIT", dataKey: "circuit", width: 23 },
       { header: "NOM CLIENT", dataKey: "client_name", width: 38 },
       { header: "Numéro Dossier", dataKey: "dossier_number", width: 32 },
       { header: "Numéro TC(s)", dataKey: "container_number", width: 36 },
@@ -2652,7 +2652,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
       { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes", width: 32 },
       { header: "OBSERVATION", dataKey: "observation_acconier", width: 25 }, // large mais jamais collée
     ];
-    // Correction : récupérer les valeurs éditées dans le DOM si elles existent
+    // Correction : récupérer les valeurs éditées danshdgs le DOM si elles existent
     const dataRows = rows.map((d) => {
       // Utilitaire pour récupérer la valeur éditée dans le tableau si présente, avec gestion des alias
       function getEditedValue(delivery, fields) {
