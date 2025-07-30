@@ -1152,9 +1152,24 @@ document.addEventListener("DOMContentLoaded", function () {
   sevenDaysAgo.setDate(today.getDate() - 7);
   const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
   if (dateStartInput && dateEndInput) {
-    dateStartInput.value = sevenDaysAgoStr;
-    dateEndInput.value = todayStr;
+    // On charge toutes les livraisons puis on détermine la date la plus ancienne
     loadAllDeliveries().then(() => {
+      // Chercher la date la plus ancienne dans toutes les livraisons
+      let minDate = null;
+      (window.allDeliveries || []).forEach((d) => {
+        let dDate = d.delivery_date || d.created_at;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            if (!minDate || dateObj < minDate) minDate = dateObj;
+          }
+        }
+      });
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+      let minDateStr = minDate ? minDate.toISOString().split("T")[0] : todayStr;
+      dateStartInput.value = minDateStr;
+      dateEndInput.value = todayStr;
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
       // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui ne sont PAS en livraison
       function getLateDeliveries() {
@@ -1168,7 +1183,7 @@ document.addEventListener("DOMContentLoaded", function () {
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
           if (diffDays <= 2) return false;
           // Même logique que renderAgentTableFull :
-          // Affiche TOUS les dossiers dont le statut acconier est 'en attente de paiement'
+          // Affiche TOUS les dossiers dont le statut shjacconier est 'en attente de paiement'
           if (d.delivery_status_acconier === "en attente de paiement") {
             return true;
           }
