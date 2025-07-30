@@ -513,6 +513,8 @@
                     // Ajoute d'autres champs si besoin
                   };
                   localStorage.setItem("user", JSON.stringify(userData));
+                  // Stocke l'email pour le message de bienvenue personnalisé sur le dashboard
+                  localStorage.setItem("userEmail", email);
                   // Redirige vers le tableau de bord principal
                   window.location.href =
                     "https://plateformdesuivie-its-service-1cjx.onrender.com/html/tableauDeBord.html";
