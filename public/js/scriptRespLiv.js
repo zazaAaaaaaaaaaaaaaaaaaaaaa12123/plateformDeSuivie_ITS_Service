@@ -2717,15 +2717,15 @@ function generateEtatSortiePdf(rows, date1, date2) {
         fontStyle: "bold",
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
-      // Marge gauche/droite personnalisée pour équilibrer l'espace (corrigé pour OBSERVATION)
-      margin: { left: 18, right: 18 },
+      // Marge droite augmentée pour éviter que la colonne OBSERVATION soit collée à la bordure
+      margin: { left: 18, right: 28 },
       theme: "grid",
       columnStyles: columns.reduce((acc, col, idx) => {
         acc[idx] = { cellWidth: col.width };
         return acc;
       }, {}),
       tableWidth: "auto",
-      horizontalAlign: "center", // Centrage horizontal du tableau
+      horizontalAlign: "center", // Centrage horizontal du tableaux
       didDrawPage: function (data) {
         // Rien à faire ici normalement
       },
