@@ -2625,7 +2625,8 @@ function generateEtatSortiePdf(rows, date1, date2) {
     const title = "État des sorties de conteneurs";
     const titleWidth = doc.getTextWidth(title);
     doc.text(title, (pageWidth - titleWidth) / 2, 18);
-    doc.setFontSize(12);
+    // Réduire la taille du texte des entêtes du tableau PDF
+    doc.setFontSize(10); // taille plus petite pour les entêtes
     doc.setFont("helvetica", "normal");
     let dateText = "";
     if (date1 && !date2) dateText = `Date : ${date1}`;
@@ -2715,6 +2716,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
         fillColor: [0, 0, 0], // noir
         textColor: 255,
         fontStyle: "bold",
+        fontSize: 9, // taille réduite pour les entêtes du tableau
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
       // Marges égales à gauche et à droite pour un centrage parfaitsgvh
