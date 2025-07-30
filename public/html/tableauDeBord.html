@@ -20,6 +20,73 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
+        /* --- Animations mini-cartes synthèse --- */
+        .mini-card {
+          /* ...autres styles déjà présents... */
+          overflow: visible;
+        }
+        .mini-card.mini-appear {
+          animation: miniCardAppear 0.7s cubic-bezier(0.23,1.01,0.32,1) forwards;
+        }
+        .mini-card.mini-pulse {
+          animation: miniCardPulse 0.7s cubic-bezier(0.23,1.01,0.32,1) 2 alternate;
+        }
+        .mini-card.mini-disappear {
+          animation: miniCardDisappear 0.7s cubic-bezier(0.7,0,0.9,1) forwards;
+        }
+        .mini-card .mini-icon.motion-blur {
+          animation: iconMotionBlur 0.55s cubic-bezier(0.7,0,0.9,1) forwards;
+        }
+        .mini-card .mini-desc.motion-blur {
+          animation: textMotionBlur 0.45s cubic-bezier(0.7,0,0.9,1) 0.15s forwards;
+        }
+        /* Apparition */
+        @keyframes miniCardAppear {
+          0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+          60% { opacity: 1; transform: translateY(-6px) scale(1.03); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        /* Pulse */
+        @keyframes miniCardPulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.07); box-shadow: 0 4px 18px #2563eb33; }
+          100% { transform: scale(1); }
+        }
+        /* Disparition motion blur */
+        @keyframes miniCardDisappear {
+          0% { opacity: 1; filter: none; }
+          60% { opacity: 1; filter: blur(1.5px); }
+          100% { opacity: 0; transform: translateX(180px) scale(0.95); filter: blur(8px); }
+        }
+        @keyframes iconMotionBlur {
+          0% { opacity: 1; filter: none; }
+          40% { filter: blur(1.5px); }
+          80% { filter: blur(6px); }
+          100% { opacity: 0; transform: translateX(120px) scale(1.2); filter: blur(12px); }
+        }
+        @keyframes textMotionBlur {
+          0% { opacity: 1; filter: none; }
+          60% { filter: blur(2px); }
+          100% { opacity: 0; transform: translateX(80px); filter: blur(10px); }
+        }
+        /* Traînée colorée (pseudo-élément) */
+        .mini-icon.motion-blur::after {
+          content: '';
+          position: absolute;
+          left: 100%;
+          top: 50%;
+          width: 60px;
+          height: 18px;
+          pointer-events: none;
+          border-radius: 12px;
+          opacity: 0.45;
+          transform: translateY(-50%) skewX(20deg);
+          z-index: 1;
+        }
+        .mini-attente .mini-icon.motion-blur::after { background: linear-gradient(90deg,#f59e0b77 0%,#fff7e3 100%); }
+        .mini-cours .mini-icon.motion-blur::after { background: linear-gradient(90deg,#2563eb77 0%,#e3f0ff 100%); }
+        .mini-livre .mini-icon.motion-blur::after { background: linear-gradient(90deg,#05966977 0%,#e3ffe3 100%); }
+        .mini-retard .mini-icon.motion-blur::after { background: linear-gradient(90deg,#dc354577 0%,#ffe3e3 100%); }
       /* Styles généraux pour le corps */
       html,
       body {
@@ -1563,6 +1630,33 @@
         </div>
 
         <script>
+        // Animation séquentielle des mini-cartes synthèse avec apparition, pulse, puis disparition motion blur
+        document.addEventListener("DOMContentLoaded", function () {
+          const miniCards = document.querySelectorAll('.mini-cards-row .mini-card');
+          let delay = 0;
+          miniCards.forEach((card, idx) => {
+            setTimeout(() => {
+              card.classList.add('mini-appear');
+              // Pulse pendant l'affichage
+              setTimeout(() => {
+                card.classList.add('mini-pulse');
+              }, 700);
+              // Après 7 secondes, disparition motion blur
+              setTimeout(() => {
+                const icon = card.querySelector('.mini-icon');
+                const desc = card.querySelector('.mini-desc');
+                if (icon) icon.classList.add('motion-blur');
+                setTimeout(() => {
+                  if (desc) desc.classList.add('motion-blur');
+                }, 180); // Décalage pour que l'icône parte d'abord
+                setTimeout(() => {
+                  card.classList.add('mini-disappear');
+                }, 600); // Après l'animation motion blur
+              }, 7000);
+            }, delay);
+            delay += 7500; // 7s d'affichage + 0.5s de transition avant la suivante
+          });
+        });
           // Message de bienvenue animé (typewriter)
           document.addEventListener("DOMContentLoaded", function () {
             // Affiche le nom de l'utilisateur connecté (stocké dans localStorage.user)
