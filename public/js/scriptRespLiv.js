@@ -2331,15 +2331,27 @@ pdfBtn.style.color = "#fff";
 pdfBtn.style.fontWeight = "bold";
 pdfBtn.style.border = "none";
 pdfBtn.style.cursor = "pointer";
-pdfBtn.style.borderRadius = "8px";
-pdfBtn.style.padding = "10px 28px";
-pdfBtn.style.fontSize = "1.08em";
-pdfBtn.style.margin = "18px 0 18px 0";
-pdfBtn.style.boxShadow = "0 2px 12px #2563eb22";
-const mainTable = document.getElementById("deliveriesTable");
-if (mainTable && mainTable.parentNode) {
-  mainTable.parentNode.insertBefore(pdfBtn, mainTable);
-}
+pdfBtn.style.borderRadius = "7px";
+pdfBtn.style.padding = "4px 12px";
+pdfBtn.style.fontSize = "0.97em";
+pdfBtn.style.margin = "0 0 0 12px";
+pdfBtn.style.height = "32px";
+pdfBtn.style.minWidth = "0";
+pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
+pdfBtn.style.verticalAlign = "middle";
+// Placement à côté du champ de recherche (date)
+document.addEventListener("DOMContentLoaded", function () {
+  const dateStartInput = document.getElementById("mainTableDateStartFilter");
+  if (dateStartInput && dateStartInput.parentNode) {
+    dateStartInput.parentNode.insertBefore(pdfBtn, dateStartInput.nextSibling);
+  } else {
+    // fallback : au-dessus du tableau si champ non trouvé
+    const mainTable = document.getElementById("deliveriesTable");
+    if (mainTable && mainTable.parentNode) {
+      mainTable.parentNode.insertBefore(pdfBtn, mainTable);
+    }
+  }
+});
 
 // Variable pour stocker les dossiers livrés
 let deliveredForPdf = [];
@@ -2649,16 +2661,3 @@ function generateEtatSortiePdf(rows, date1, date2) {
     doc.save("Etat_sorties_conteneurs.pdf");
   });
 }
-
-// Réduction du champ de recherche date PDF
-const style = document.createElement("style");
-style.textContent = `
-  #pdfSingleDateInput, #pdfRangeDateStart, #pdfRangeDateEnd {
-    width: 160px !important;
-    min-width: 0 !important;
-    max-width: 180px !important;
-    padding: 6px 10px !important;
-    font-size: 1em !important;
-  }
-`;
-document.head.appendChild(style);
