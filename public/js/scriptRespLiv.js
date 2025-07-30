@@ -2634,7 +2634,30 @@ function generateEtatSortiePdf(rows, date1, date2) {
       { header: "OBSERVATION", dataKey: "observation_acconier" },
       { header: "DATE", dataKey: "delivery_date" },
     ];
+    // Correction : récupérer les valeurs éditées dans le DOM si elles existent
     const dataRows = rows.map((d) => {
+      // Utilitaire pour récupérer la valeur éditée dans le tableau si présente
+      function getEditedValue(delivery, field) {
+        // Recherche la ligne correspondante dans le tableau principal
+        const tr = document.querySelector(
+          `tr[data-delivery-id='${delivery.id}']`
+        );
+        if (tr) {
+          const td = tr.querySelector(`td[data-col-id='${field}']`);
+          if (td) {
+            const input = td.querySelector("input,textarea");
+            if (input && input.value && input.value.trim() !== "") {
+              return input.value.trim();
+            }
+            // Si pas d'input, prendre le texte affiché
+            if (td.textContent && td.textContent.trim() !== "-") {
+              return td.textContent.trim();
+            }
+          }
+        }
+        // Sinon, valeur brute
+        return delivery[field] || "-";
+      }
       return {
         circuit: d.circuit || "-",
         client_name: d.client_name || "-",
@@ -2642,11 +2665,11 @@ function generateEtatSortiePdf(rows, date1, date2) {
         container_number: Array.isArray(d.container_number)
           ? d.container_number.join(", ")
           : d.container_number || "-",
-        nom_agent_visiteur: d.nom_agent_visiteur || "-",
+        nom_agent_visiteur: getEditedValue(d, "nom_agent_visiteur"),
         shipping_company: d.shipping_company || "-",
-        inspecteur: d.inspecteur || "-",
-        agent_en_douanes: d.agent_en_douanes || "-",
-        observation_acconier: d.observation_acconier || "-",
+        inspecteur: getEditedValue(d, "inspecteur"),
+        agent_en_douanes: getEditedValue(d, "agent_en_douanes"),
+        observation_acconier: getEditedValue(d, "observation_acconier"),
         delivery_date: d.delivery_date
           ? new Date(d.delivery_date).toLocaleDateString("fr-FR")
           : "-",
