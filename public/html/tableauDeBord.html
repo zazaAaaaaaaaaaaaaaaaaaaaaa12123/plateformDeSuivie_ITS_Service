@@ -1184,47 +1184,62 @@
           class="welcome-container"
           style="
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 32px;
             background: none;
             box-shadow: none;
             min-height: 320px;
+            gap: 0;
           "
         >
-          <!-- Cartes états des dossiers -->
-          <div class="etat-card dossier-attente">
-            <div class="etat-icon"><i class="fas fa-hourglass-half"></i></div>
-            <div class="etat-title">En attente de paiement</div>
-            <div class="etat-desc">
-              Dossiers en attente de règlement avant traitement.
+          <!-- Message de bienvenue animé -->
+          <div id="welcomeTypewriter" class="welcome-typewriter"></div>
+          <div class="etat-cards-row">
+            <div class="etat-card dossier-attente animated-card">
+              <div class="etat-icon"><i class="fas fa-hourglass-half"></i></div>
+              <div class="etat-title">En attente de paiement</div>
+              <div class="etat-desc">
+                Dossiers en attente de règlement avant traitement.
+              </div>
+            </div>
+            <div class="etat-card dossier-cours animated-card">
+              <div class="etat-icon"><i class="fas fa-truck-loading"></i></div>
+              <div class="etat-title">En cours de mise en livraison</div>
+              <div class="etat-desc">
+                Dossiers en préparation pour la livraison.
+              </div>
             </div>
           </div>
-          <div class="etat-card dossier-cours">
-            <div class="etat-icon"><i class="fas fa-truck-loading"></i></div>
-            <div class="etat-title">En cours de mise en livraison</div>
-            <div class="etat-desc">
-              Dossiers en préparation pour la livraison.
+          <div class="etat-cards-row">
+            <div class="etat-card dossier-livre animated-card">
+              <div class="etat-icon"><i class="fas fa-check-circle"></i></div>
+              <div class="etat-title">Dossier livré</div>
+              <div class="etat-desc">
+                Dossiers livrés avec succès au client.
+              </div>
             </div>
-          </div>
-          <div class="etat-card dossier-livre">
-            <div class="etat-icon"><i class="fas fa-check-circle"></i></div>
-            <div class="etat-title">Dossier livré</div>
-            <div class="etat-desc">Dossiers livrés avec succès au client.</div>
-          </div>
-          <div class="etat-card dossier-retard">
-            <div class="etat-icon">
-              <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="etat-title">Dossier en retard</div>
-            <div class="etat-desc">
-              Dossiers dont la livraison a dépassé le délai prévu.
+            <div class="etat-card dossier-retard animated-card">
+              <div class="etat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div class="etat-title">Dossier en retard</div>
+              <div class="etat-desc">
+                Dossiers dont la livraison a dépassé le délai prévu.
+              </div>
             </div>
           </div>
         </div>
         <style>
           /* Cartes états des dossiers (3D, moderne, esthétique) */
+          .etat-cards-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 32px;
+            margin-bottom: 18px;
+          }
           .etat-card {
             background: linear-gradient(135deg, #f8fafc 70%, #e0e7ef 100%);
             border-radius: 18px;
@@ -1241,6 +1256,35 @@
             transition: transform 0.18s, box-shadow 0.18s;
             position: relative;
             cursor: default;
+            opacity: 0;
+            animation: cardFadeInUp 0.7s cubic-bezier(0.23, 1.01, 0.32, 1)
+              forwards;
+          }
+          .etat-cards-row .etat-card:nth-child(1) {
+            animation-delay: 0.05s;
+          }
+          .etat-cards-row .etat-card:nth-child(2) {
+            animation-delay: 0.18s;
+          }
+          .etat-cards-row + .etat-cards-row .etat-card:nth-child(1) {
+            animation-delay: 0.32s;
+          }
+          .etat-cards-row + .etat-cards-row .etat-card:nth-child(2) {
+            animation-delay: 0.45s;
+          }
+          @keyframes cardFadeInUp {
+            0% {
+              opacity: 0;
+              transform: translateY(40px) scale(0.98);
+            }
+            60% {
+              opacity: 1;
+              transform: translateY(-8px) scale(1.03);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
           }
           .etat-card:hover {
             transform: translateY(-8px) scale(1.035) rotate(-1deg);
@@ -1307,8 +1351,7 @@
             will-change: auto;
           }
           @media (max-width: 1100px) {
-            #welcomeSection {
-              flex-wrap: wrap;
+            .etat-cards-row {
               gap: 18px;
             }
             .etat-card {
@@ -1320,12 +1363,60 @@
             #welcomeSection {
               flex-direction: column;
               align-items: stretch;
+              gap: 0;
+            }
+            .etat-cards-row {
+              flex-direction: column;
               gap: 18px;
+              margin-bottom: 0;
             }
             .etat-card {
               min-width: 90vw;
               max-width: 99vw;
             }
+          }
+
+          /* Message de bienvenue animé (typewriter) */
+          .welcome-typewriter {
+            font-size: 2.1em;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 28px;
+            min-height: 48px;
+            letter-spacing: 0.5px;
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 2.5px solid #2563eb;
+            box-sizing: border-box;
+            background: none;
+            animation: fadeIn 1.2s;
+          }
+          @media (max-width: 700px) {
+            .welcome-typewriter {
+              font-size: 1.25em;
+              min-height: 32px;
+              margin-bottom: 18px;
+            }
+          }
+          @keyframes blinkCursor {
+            0% {
+              border-right-color: #2563eb;
+            }
+            49% {
+              border-right-color: #2563eb;
+            }
+            50% {
+              border-right-color: transparent;
+            }
+            100% {
+              border-right-color: transparent;
+            }
+          }
+          .welcome-typewriter.typing {
+            animation: blinkCursor 0.9s steps(1) infinite;
           }
         </style>
 
@@ -1406,6 +1497,43 @@
         </div>
 
         <script>
+          // Message de bienvenue animé (typewriter)
+          document.addEventListener("DOMContentLoaded", function () {
+            var email = null;
+            // Essayons de récupérer l'email depuis localStorage ou sessionStorage
+            if (localStorage.getItem("userEmail")) {
+              email = localStorage.getItem("userEmail");
+            } else if (sessionStorage.getItem("userEmail")) {
+              email = sessionStorage.getItem("userEmail");
+            } else if (window.userEmail) {
+              email = window.userEmail;
+            }
+            var prenom = "Utilisateur";
+            if (email && typeof email === "string" && email.includes("@")) {
+              prenom = email.split("@")[0];
+              if (prenom.length > 1)
+                prenom = prenom.charAt(0).toUpperCase() + prenom.slice(1);
+            }
+            var message = `Bonjour ${prenom}, Bienvenue`;
+            var el = document.getElementById("welcomeTypewriter");
+            if (el) {
+              el.textContent = "";
+              let i = 0;
+              function typeWriter() {
+                if (i <= message.length) {
+                  el.textContent = message.slice(0, i);
+                  el.classList.add("typing");
+                  i++;
+                  setTimeout(typeWriter, 55 + Math.random() * 60);
+                } else {
+                  el.textContent = message;
+                  el.classList.remove("typing");
+                  el.style.borderRight = "none";
+                }
+              }
+              typeWriter();
+            }
+          });
           document.addEventListener("DOMContentLoaded", function () {
             // Propagation automatique de la session admin vers les interfaces responsables
             function autoConnectResponsableInterfaces() {

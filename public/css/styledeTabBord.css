@@ -1,3 +1,45 @@
+/* Message de bienvenue animé (typewriter) */
+.welcome-typewriter {
+  font-size: 2.1em;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 28px;
+  min-height: 48px;
+  letter-spacing: 0.5px;
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 2.5px solid #2563eb;
+  box-sizing: border-box;
+  background: none;
+  animation: fadeIn 1.2s;
+}
+@media (max-width: 700px) {
+  .welcome-typewriter {
+    font-size: 1.25em;
+    min-height: 32px;
+    margin-bottom: 18px;
+  }
+}
+@keyframes blinkCursor {
+  0% {
+    border-right-color: #2563eb;
+  }
+  49% {
+    border-right-color: #2563eb;
+  }
+  50% {
+    border-right-color: transparent;
+  }
+  100% {
+    border-right-color: transparent;
+  }
+}
+.welcome-typewriter.typing {
+  animation: blinkCursor 0.9s steps(1) infinite;
+}
 /* === DASHBOARD TITRES & SECTIONS === */
 .recap-dashboard-title {
   font-size: 2em;
