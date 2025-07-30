@@ -2322,7 +2322,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // --- AJOUT : Bouton Générer PDF et logique associée ---
-// Ajout du bouton au-dessus du tableau principal
+// Création du bouton Générer PDF
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
 pdfBtn.textContent = "Générer PDF";
@@ -2339,11 +2339,13 @@ pdfBtn.style.height = "32px";
 pdfBtn.style.minWidth = "0";
 pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
 pdfBtn.style.verticalAlign = "middle";
-// Placement à côté du champ de recherche (date) //
+// Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
-  const dateStartInput = document.getElementById("mainTableDateStartFilter");
-  if (dateStartInput && dateStartInput.parentNode) {
-    dateStartInput.parentNode.insertBefore(pdfBtn, dateStartInput.nextSibling);
+  const searchInput = document.querySelector(
+    "input[placeholder='Rechercher une livraison.']"
+  );
+  if (searchInput && searchInput.parentNode) {
+    searchInput.parentNode.appendChild(pdfBtn);
   } else {
     // fallback : au-dessus du tableau si champ non trouvé
     const mainTable = document.getElementById("deliveriesTable");
@@ -2379,7 +2381,7 @@ function updateDeliveredForPdf() {
   });
 }
 
-// Met à jour la liste à chaque chargement ou modificationsqhdj
+// Met à jour la liste à chaque chargement ou modification
 if (window.allDeliveries) updateDeliveredForPdf();
 window.addEventListener("allDeliveriesUpdated", updateDeliveredForPdf);
 
