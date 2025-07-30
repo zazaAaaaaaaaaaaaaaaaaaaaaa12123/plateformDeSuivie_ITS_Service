@@ -2343,7 +2343,28 @@ pdfBtn.style.verticalAlign = "middle";
 document.addEventListener("DOMContentLoaded", function () {
   const dateStartInput = document.getElementById("mainTableDateStartFilter");
   if (dateStartInput && dateStartInput.parentNode) {
-    dateStartInput.parentNode.insertBefore(pdfBtn, dateStartInput.nextSibling);
+    // Réduire la largeur du champ de recherche date
+    dateStartInput.style.width = "160px";
+    dateStartInput.style.display = "inline-block";
+    dateStartInput.style.verticalAlign = "middle";
+    // Si le champ de fin existe, le réduire aussi
+    const dateEndInput = document.getElementById("mainTableDateEndFilter");
+    if (dateEndInput) {
+      dateEndInput.style.width = "160px";
+      dateEndInput.style.display = "inline-block";
+      dateEndInput.style.verticalAlign = "middle";
+    }
+    // Créer un conteneur flex pour aligner le champ et le bouton
+    let filterContainer = dateStartInput.parentNode;
+    filterContainer.style.display = "flex";
+    filterContainer.style.alignItems = "center";
+    filterContainer.style.gap = "8px";
+    // Placer le bouton PDF juste après le champ de fin si présent, sinon après le champ de début
+    if (dateEndInput) {
+      filterContainer.insertBefore(pdfBtn, dateEndInput.nextSibling);
+    } else {
+      filterContainer.insertBefore(pdfBtn, dateStartInput.nextSibling);
+    }
   } else {
     // fallback : au-dessus du tableau si champ non trouvé //
     const mainTable = document.getElementById("deliveriesTable");
