@@ -2612,26 +2612,43 @@ function generateEtatSortiePdf(rows, date1, date2) {
   }
   loadJsPdfLibs(() => {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    // Création du PDF en mode paysage (landscape), format A4
+    const doc = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4",
+    });
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("État des sorties de conteneurs", 14, 18);
+    // Centrer le titre sur la largeur de la page
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const title = "État des sorties de conteneurs";
+    const titleWidth = doc.getTextWidth(title);
+    doc.text(title, (pageWidth - titleWidth) / 2, 18);
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     let dateText = "";
     if (date1 && !date2) dateText = `Date : ${date1}`;
     else if (date1 && date2) dateText = `Du ${date1} au ${date2}`;
-    doc.text(dateText, 14, 26);
+    if (dateText) {
+      const dateTextWidth = doc.getTextWidth(dateText);
+      doc.text(dateText, (pageWidth - dateTextWidth) / 2, 26);
+    }
+    // Colonnes avec des largeurs personnalisées pour un tableau large mais lisible
     const columns = [
-      { header: "CIRCUIT", dataKey: "circuit" },
-      { header: "NOM CLIENT", dataKey: "client_name" },
-      { header: "Numéro Dossier", dataKey: "dossier_number" },
-      { header: "Numéro TC(s)", dataKey: "container_number" },
-      { header: "NOM Agent Visiteur", dataKey: "nom_agent_visiteur" },
-      { header: "Compagnie Maritime", dataKey: "shipping_company" },
-      { header: "INSPECTEUR", dataKey: "inspecteur" },
-      { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes" },
-      { header: "OBSERVATION", dataKey: "observation_acconier" },
+      { header: "CIRCUIT", dataKey: "circuit", width: 22 },
+      { header: "NOM CLIENT", dataKey: "client_name", width: 38 },
+      { header: "Numéro Dossier", dataKey: "dossier_number", width: 28 },
+      { header: "Numéro TC(s)", dataKey: "container_number", width: 38 },
+      {
+        header: "NOM Agent Visiteur",
+        dataKey: "nom_agent_visiteur",
+        width: 32,
+      },
+      { header: "Compagnie Maritime", dataKey: "shipping_company", width: 32 },
+      { header: "INSPECTEUR", dataKey: "inspecteur", width: 28 },
+      { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes", width: 32 },
+      { header: "OBSERVATION", dataKey: "observation_acconier", width: 38 },
     ];
     // Correction : récupérer les valeurs éditées dans le DOM si elles existent
     const dataRows = rows.map((d) => {
@@ -2698,8 +2715,17 @@ function generateEtatSortiePdf(rows, date1, date2) {
         fontStyle: "bold",
       },
       alternateRowStyles: { fillColor: [240, 245, 255] },
-      margin: { left: 14, right: 14 },
+      margin: { left: 10, right: 10 },
       theme: "grid",
+      // Largeur personnalisée pour chaque colonne
+      columnStyles: columns.reduce((acc, col, idx) => {
+        acc[idx] = { cellWidth: col.width };
+        return acc;
+      }, {}),
+      tableWidth: "auto", // S'adapte à la largeur de la page
+      didDrawPage: function (data) {
+        // Pour l'adaptabilité, rien à faire ici car le PDF s'adapte à la page
+      },
     });
     doc.save("Etat_sorties_conteneurs.pdf");
   });
