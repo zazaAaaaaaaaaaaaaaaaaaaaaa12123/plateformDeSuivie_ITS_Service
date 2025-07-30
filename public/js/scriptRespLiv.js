@@ -2717,14 +2717,15 @@ function generateEtatSortiePdf(rows, date1, date2) {
       alternateRowStyles: { fillColor: [240, 245, 255] },
       margin: { left: 10, right: 10 },
       theme: "grid",
-      // Largeur personnalisée pour chaque colonne
       columnStyles: columns.reduce((acc, col, idx) => {
         acc[idx] = { cellWidth: col.width };
         return acc;
       }, {}),
-      tableWidth: "auto", // S'adapte à la largeur de la page
+      tableWidth: "auto",
+      horizontalAlign: "center", // Centrage horizontal du tableau
       didDrawPage: function (data) {
-        // Pour l'adaptabilité, rien à faire ici car le PDF s'adapte à la page
+        // Centrage manuel si besoin (optionnel, car horizontalAlign gère déjà)
+        // Rien à faire ici normalement
       },
     });
     doc.save("Etat_sorties_conteneurs.pdf");
