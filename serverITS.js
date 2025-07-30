@@ -2924,7 +2924,7 @@ app.patch("/deliveries/:id/return-to-resp-acconier", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Livraison non trouvée." });
     }
-    // Optionnel : envoi WebSocket pour notification
+    // Envoi WebSocket pour notification instantanée
     const wss = req.app.get("wss");
     const updatedDelivery = result.rows[0];
     const alertMessage = `La livraison du dossier '${
@@ -2934,11 +2934,14 @@ app.patch("/deliveries/:id/return-to-resp-acconier", async (req, res) => {
       type: "delivery_returned_acconier",
       message: alertMessage,
       deliveryId: updatedDelivery.id,
+      delivery: updatedDelivery,
       alertType: "info",
     });
     if (wss && wss.clients) {
+      // Correction : utiliser WebSocket.OPEN importé en haut du fichier
+      const WebSocket = require("ws");
       wss.clients.forEach((client) => {
-        if (client.readyState === require("ws").OPEN) {
+        if (client.readyState === WebSocket.OPEN) {
           client.send(payload);
         }
       });
