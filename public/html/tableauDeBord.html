@@ -1177,7 +1177,7 @@
           </div>
         </section>
         <!-- Section demandes code entreprise oublié (admin) -->
-        <!-- Section demandes de code d'entreprise udkjoublié supprimée (remplacée par le bouton sidebar) -->
+        <!-- Section demandes de code d'entreprise oublié supprimée (remplacée par le bouton sidebar) -->
 
         <div
           id="welcomeSection"
@@ -1201,7 +1201,84 @@
           <div id="welcomeTypewriter" class="welcome-typewriter"></div>
           <div style="height: 38px"></div>
           <div class="etat-cards-row">
-            <!-- Carte et popup "En attente de paiement" supprimées -->
+            <div
+              class="etat-card dossier-attente animated-card"
+              id="carteAttentePaiement"
+              style="cursor: pointer"
+            >
+              <div class="etat-icon"><i class="fas fa-hourglass-half"></i></div>
+              <div class="etat-title">En attente de paiement</div>
+              <div class="etat-desc">
+                Dossiers en attente de règlement avant traitement.
+              </div>
+            </div>
+            <!-- Popup dossiers en attente de paiement SJHDJshj-->
+            <div
+              id="popupAttentePaiement"
+              style="
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(30, 41, 59, 0.55);
+                z-index: 10000;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <div
+                style="
+                  background: #fff;
+                  border-radius: 18px;
+                  box-shadow: 0 8px 40px #2563eb44;
+                  padding: 32px 28px 24px 28px;
+                  max-width: 700px;
+                  width: 96vw;
+                  max-height: 90vh;
+                  overflow-y: auto;
+                  position: relative;
+                "
+              >
+                <button
+                  id="closePopupAttentePaiement"
+                  style="
+                    position: absolute;
+                    top: 18px;
+                    right: 18px;
+                    background: none;
+                    border: none;
+                    font-size: 1.5em;
+                    color: #2563eb;
+                    cursor: pointer;
+                  "
+                >
+                  &times;
+                </button>
+                <h2
+                  style="
+                    font-size: 1.18em;
+                    font-weight: 700;
+                    color: #f59e0b;
+                    margin-bottom: 18px;
+                    text-align: center;
+                  "
+                >
+                  Dossiers en attente de paiement
+                </h2>
+                <div id="listeAttentePaiement" style="min-height: 40px"></div>
+                <div
+                  id="msgAttentePaiement"
+                  style="
+                    margin-top: 10px;
+                    font-size: 0.98em;
+                    text-align: center;
+                    color: #dc3545;
+                  "
+                ></div>
+              </div>
+            </div>
 
             <!-- Popup détails dossier -->
             <div
