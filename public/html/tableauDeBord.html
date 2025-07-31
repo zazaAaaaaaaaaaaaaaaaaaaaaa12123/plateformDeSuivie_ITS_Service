@@ -2756,18 +2756,13 @@
               li.style.border = "2px solid #fde68a";
               li.style.transition =
                 "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
-              // Champs strictement selon la structure backend
-              const numDossier = d.dossier_number || d.id || "-";
+              // Champs strictement selon la structure réelle des données
+              const numDossier = d.id || "-";
               const agent = d.employee_name || "-";
               const client = d.client_name || "-";
-              let date = d.delivery_date || d.created_at || null;
               let dateAff = "-";
-              if (date) {
-                try {
-                  dateAff = new Date(date).toLocaleDateString("fr-FR");
-                } catch (e) {
-                  dateAff = date;
-                }
+              if (d.delivery_time) {
+                dateAff = d.delivery_time;
               }
               li.innerHTML = `
                 <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
