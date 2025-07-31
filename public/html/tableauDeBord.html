@@ -2624,8 +2624,17 @@
           let dossiers = Array.isArray(data.deliveries) ? data.deliveries : [];
           // Appliquer le même filtrage que resp_acconier
           dossiers = dossiers.filter((d) => {
-            // Statut principal
-            if (d.delivery_status_acconier !== "en attente de paiement")
+            // Statut principal (toutes variantes acceptées)
+            const attenteStatuts = [
+              "en attente de paiement",
+              "pending_acconier",
+              "in_progress_payment_acconier",
+            ];
+            if (
+              !attenteStatuts.includes(
+                (d.delivery_status_acconier || "").toLowerCase()
+              )
+            )
               return false;
             // Exclure si tous les BL sont en 'mise_en_livraison'
             let blList = [];
@@ -2644,7 +2653,10 @@
               return false;
             }
             // Exclure aussi si statut acconier est 'mise_en_livraison_acconier'
-            if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
+            if (
+              (d.delivery_status_acconier || "").toLowerCase() ===
+              "mise_en_livraison_acconier"
+            ) {
               return false;
             }
             return true;
