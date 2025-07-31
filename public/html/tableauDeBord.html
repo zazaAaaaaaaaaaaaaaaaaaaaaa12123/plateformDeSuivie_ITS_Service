@@ -1212,7 +1212,7 @@
                 Dossiers en attente de règlement avant traitement.
               </div>
             </div>
-            <!-- Popup dossiers en attente de paiement --->
+            <!-- Popup dossiers en attente de paiement -->
             <div
               id="popupAttentePaiement"
               style="
@@ -1433,38 +1433,22 @@
                     table += `<thead><tr style='background:#fff7e3;'><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Date</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Agent</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Client</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° BL</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° Dossier</th></tr></thead><tbody>`;
                     data.dossiers.forEach((dossier) => {
                       table += `<tr class='dossier-item-liste' style='background:linear-gradient(90deg,#fff7e3 80%,#f8fafc 100%);'>`;
-                      // Correction du mapping des champs selon la structure de l'API
-                      // Date : delivery_date ou created_at ou date
-                      let dateValue =
-                        dossier.delivery_date ||
-                        dossier.created_at ||
-                        dossier.date;
                       table += `<td style='padding:8px 6px;font-size:0.98em;color:#b26a00;font-weight:600;'>${
-                        dateValue
-                          ? new Date(dateValue).toLocaleDateString("fr-FR")
-                          : "-"
+                        dossier.date
+                          ? new Date(dossier.date).toLocaleDateString("fr-FR")
+                          : ""
                       }</td>`;
-                      // Agent : employee_name ou agent
                       table += `<td style='padding:8px 6px;font-size:1.08em;color:#1d3557;font-weight:700;'>${
-                        dossier.employee_name || dossier.agent || "-"
+                        dossier.agent || "-"
                       }</td>`;
-                      // Client : client_name ou nom ou client
                       table += `<td style='padding:8px 6px;'>${
-                        dossier.client_name ||
-                        dossier.nom ||
-                        dossier.client ||
-                        "-"
+                        dossier.nom || "-"
                       }</td>`;
-                      // N° BL : bl_number ou bl
                       table += `<td style='padding:8px 6px;'>${
-                        dossier.bl_number || dossier.bl || "-"
+                        dossier.bl || "-"
                       }</td>`;
-                      // N° Dossier : dossier_number ou dossier ou id
                       table += `<td style='padding:8px 6px;'>${
-                        dossier.dossier_number ||
-                        dossier.dossier ||
-                        dossier.id ||
-                        "-"
+                        dossier.dossier || "-"
                       }</td>`;
                       table += `</tr>`;
                     });
@@ -2643,6 +2627,14 @@
           let dossiers = Array.isArray(data.deliveries) ? data.deliveries : [];
           // Appliquer le même filtrage que resp_acconier
           dossiers = dossiers.filter((d) => {
+            // DEBUG : Affiche les clés du premier dossier pour comprendre la structure
+            if (dossiers.length > 0 && idx === 0) {
+              console.log("[DEBUG] Premier dossier brut:", dossiers[0]);
+              console.log(
+                "[DEBUG] Clés du premier dossier:",
+                Object.keys(dossiers[0])
+              );
+            }
             // Statut principal (toutes variantes acceptées)
             const attenteStatuts = [
               "en attente de paiement",
@@ -2680,21 +2672,13 @@
             }
             return true;
           });
-          // Afficher la structure du premier dossier filtré pour debug
-          if (dossiers.length > 0) {
-            console.log("[DEBUG] Premier dossier filtré:", dossiers[0]);
-            console.log(
-              "[DEBUG] Clés du premier dossier:",
-              Object.keys(dossiers[0])
-            );
-          }
           // Trier par date décroissante
           dossiers.sort(
             (a, b) =>
               new Date(b.delivery_date || b.created_at) -
               new Date(a.delivery_date || a.created_at)
           );
-          // Créer le popup liste
+          // Créer le popup liste12345
           popupListe = document.createElement("div");
           popupListe.style.position = "fixed";
           popupListe.style.top = "0";
@@ -2772,13 +2756,19 @@
               li.style.border = "2px solid #fde68a";
               li.style.transition =
                 "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
-              // Champs strictement selon la structure réelle des données
-              const numDossier = d.dossier || "-";
-              const agent = d.agent || "-";
-              const client = d.nom || "-";
+              // Champs robustes pour chaque dossier
+              const numDossier =
+                d.dossier || d.dossier_number || d.num_dossier || d.id || "-";
+              const agent = d.agent || d.employee_name || d.nom_agent || "-";
+              const client = d.client || d.client_name || d.nom_client || "-";
+              let date = d.date || d.delivery_date || d.created_at || null;
               let dateAff = "-";
-              if (d.date) {
-                dateAff = new Date(d.date).toLocaleDateString("fr-FR");
+              if (date) {
+                try {
+                  dateAff = new Date(date).toLocaleDateString("fr-FR");
+                } catch (e) {
+                  dateAff = date;
+                }
               }
               li.innerHTML = `
                 <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
