@@ -2627,14 +2627,6 @@
           let dossiers = Array.isArray(data.deliveries) ? data.deliveries : [];
           // Appliquer le même filtrage que resp_acconier
           dossiers = dossiers.filter((d) => {
-            // DEBUG : Affiche les clés du premier dossier pour comprendre la structure
-            if (dossiers.length > 0 && idx === 0) {
-              console.log("[DEBUG] Premier dossier brut:", dossiers[0]);
-              console.log(
-                "[DEBUG] Clés du premier dossier:",
-                Object.keys(dossiers[0])
-              );
-            }
             // Statut principal (toutes variantes acceptées)
             const attenteStatuts = [
               "en attente de paiement",
@@ -2672,6 +2664,11 @@
             }
             return true;
           });
+          // Afficher la structure du premier dossier filtré pour debug
+          if (dossiers.length > 0) {
+            console.log("[DEBUG] Premier dossier filtré:", dossiers[0]);
+            console.log("[DEBUG] Clés du premier dossier:", Object.keys(dossiers[0]));
+          }
           // Trier par date décroissante
           dossiers.sort(
             (a, b) =>
