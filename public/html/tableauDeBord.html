@@ -1433,22 +1433,38 @@
                     table += `<thead><tr style='background:#fff7e3;'><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Date</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Agent</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Client</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° BL</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° Dossier</th></tr></thead><tbody>`;
                     data.dossiers.forEach((dossier) => {
                       table += `<tr class='dossier-item-liste' style='background:linear-gradient(90deg,#fff7e3 80%,#f8fafc 100%);'>`;
+                      // Correction du mapping des champs selon la structure de l'API
+                      // Date : delivery_date ou created_at ou date
+                      let dateValue =
+                        dossier.delivery_date ||
+                        dossier.created_at ||
+                        dossier.date;
                       table += `<td style='padding:8px 6px;font-size:0.98em;color:#b26a00;font-weight:600;'>${
-                        dossier.date
-                          ? new Date(dossier.date).toLocaleDateString("fr-FR")
-                          : ""
+                        dateValue
+                          ? new Date(dateValue).toLocaleDateString("fr-FR")
+                          : "-"
                       }</td>`;
+                      // Agent : employee_name ou agent
                       table += `<td style='padding:8px 6px;font-size:1.08em;color:#1d3557;font-weight:700;'>${
-                        dossier.agent || "-"
+                        dossier.employee_name || dossier.agent || "-"
                       }</td>`;
+                      // Client : client_name ou nom ou client
                       table += `<td style='padding:8px 6px;'>${
-                        dossier.nom || "-"
+                        dossier.client_name ||
+                        dossier.nom ||
+                        dossier.client ||
+                        "-"
                       }</td>`;
+                      // N° BL : bl_number ou bl
                       table += `<td style='padding:8px 6px;'>${
-                        dossier.bl || "-"
+                        dossier.bl_number || dossier.bl || "-"
                       }</td>`;
+                      // N° Dossier : dossier_number ou dossier ou id
                       table += `<td style='padding:8px 6px;'>${
-                        dossier.dossier || "-"
+                        dossier.dossier_number ||
+                        dossier.dossier ||
+                        dossier.id ||
+                        "-"
                       }</td>`;
                       table += `</tr>`;
                     });
