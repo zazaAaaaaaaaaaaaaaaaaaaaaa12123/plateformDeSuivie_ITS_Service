@@ -2773,12 +2773,12 @@
               li.style.transition =
                 "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
               // Champs strictement selon la structure réelle des données
-              const numDossier = d.id || "-";
-              const agent = d.employee_name || "-";
-              const client = d.client_name || "-";
+              const numDossier = d.dossier || "-";
+              const agent = d.agent || "-";
+              const client = d.nom || "-";
               let dateAff = "-";
-              if (d.delivery_time) {
-                dateAff = d.delivery_time;
+              if (d.date) {
+                dateAff = new Date(d.date).toLocaleDateString("fr-FR");
               }
               li.innerHTML = `
                 <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
