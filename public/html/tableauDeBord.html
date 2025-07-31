@@ -2756,10 +2756,10 @@
               li.style.border = "2px solid #fde68a";
               li.style.transition =
                 "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
-              // Champs précis pour chaque dossier
-              const numDossier = d.id || d.dossier_number || d.dossier || "-";
-              const agent = d.employee_name || d.agent || "-";
-              const client = d.client_name || d.client || "-";
+              // Champs strictement selon la structure backend
+              const numDossier = d.dossier_number || d.id || "-";
+              const agent = d.employee_name || "-";
+              const client = d.client_name || "-";
               let date = d.delivery_date || d.created_at || null;
               let dateAff = "-";
               if (date) {
