@@ -1421,32 +1421,39 @@
                     }
                     // Tri par date décroissante (plus récent en haut)
                     data.dossiers.sort(
-                      (a, b) =>
-                        new Date(b.date_creation) - new Date(a.date_creation)
+                      (a, b) => new Date(b.date) - new Date(a.date)
                     );
                     if (data.dossiers.length === 0) {
                       listeDiv.innerHTML =
                         '<div style="text-align:center;color:#888;">Aucun dossier en attente de paiement.</div>';
                       return;
                     }
-                    listeDiv.innerHTML = "";
+                    // Affichage sous forme de tableau lisible
+                    let table = `<div style='overflow-x:auto;'><table style='width:100%;min-width:520px;border-collapse:collapse;'>`;
+                    table += `<thead><tr style='background:#fff7e3;'><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Date</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Agent</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Client</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° BL</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° Dossier</th></tr></thead><tbody>`;
                     data.dossiers.forEach((dossier) => {
-                      const div = document.createElement("div");
-                      div.className = "dossier-item-liste";
-                      div.innerHTML = `<div class='dossier-item-info'><span class='dossier-item-nom'>${
-                        dossier.nom || dossier.reference || "Dossier"
-                      }</span><span class='dossier-item-date'>${
-                        dossier.date_creation
-                          ? new Date(dossier.date_creation).toLocaleDateString(
-                              "fr-FR"
-                            )
+                      table += `<tr class='dossier-item-liste' style='background:linear-gradient(90deg,#fff7e3 80%,#f8fafc 100%);'>`;
+                      table += `<td style='padding:8px 6px;font-size:0.98em;color:#b26a00;font-weight:600;'>${
+                        dossier.date
+                          ? new Date(dossier.date).toLocaleDateString("fr-FR")
                           : ""
-                      }</span></div><span style='color:#f59e0b;font-size:1.3em;'><i class='fas fa-chevron-right'></i></span>`;
-                      div.onclick = function () {
-                        afficherDetailDossier(dossier);
-                      };
-                      listeDiv.appendChild(div);
+                      }</td>`;
+                      table += `<td style='padding:8px 6px;font-size:1.08em;color:#1d3557;font-weight:700;'>${
+                        dossier.agent || "-"
+                      }</td>`;
+                      table += `<td style='padding:8px 6px;'>${
+                        dossier.nom || "-"
+                      }</td>`;
+                      table += `<td style='padding:8px 6px;'>${
+                        dossier.bl || "-"
+                      }</td>`;
+                      table += `<td style='padding:8px 6px;'>${
+                        dossier.dossier || "-"
+                      }</td>`;
+                      table += `</tr>`;
                     });
+                    table += `</tbody></table></div>`;
+                    listeDiv.innerHTML = table;
                   })
                   .catch(() => {
                     listeDiv.innerHTML = "";
@@ -2840,7 +2847,7 @@
             envoyerBtn.disabled = true;
             envoyerBtn.textContent = "Envoi...";
             try {
-              // Appel backend SHBSKJà adapter selon ta routes
+              // Appel backend SHBSKJà adapter selon ta routesgjhkj
               const res = await fetch("/api/demande-code-entreprise", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
