@@ -2748,31 +2748,37 @@
               li.style.border = "2px solid #fde68a";
               li.style.transition =
                 "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
+              // Champs robustes pour chaque dossier
+              const numDossier =
+                d.dossier || d.dossier_number || d.num_dossier || d.id || "-";
+              const agent = d.agent || d.employee_name || d.nom_agent || "-";
+              const client = d.client || d.client_name || d.nom_client || "-";
+              let date = d.date || d.delivery_date || d.created_at || null;
+              let dateAff = "-";
+              if (date) {
+                try {
+                  dateAff = new Date(date).toLocaleDateString("fr-FR");
+                } catch (e) {
+                  dateAff = date;
+                }
+              }
               li.innerHTML = `
-              <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
-                <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#f59e0b 60%,#fbbf24 100%);color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #f59e0b33;'>${
-                  idx + 1
-                }</span>
-                <span style='color:#f59e0b;font-weight:bold;font-size:1.08em;'><i class="fas fa-folder-open" style="margin-right:6px;color:#f59e0b;"></i>N° Dossier :</span>
-                <span style='color:#b45309;font-weight:700;font-size:1.13em;'>${
-                  d.dossier || "-"
-                }</span>
-              </div>
-              <div style='font-size:1em;margin-left:42px;'>
-                <span style='color:#2563eb;font-weight:600;'>Agent :</span>
-                <span style='color:#0e274e;font-weight:600;'>${
-                  d.agent || "-"
-                }</span>
-                <span style='margin-left:18px;color:#374151;'>Client :</span>
-                <span style='color:#374151;font-weight:600;'>${
-                  d.nom || "-"
-                }</span>
-                <span style='margin-left:18px;color:#64748b;'>Date :</span>
-                <span style='color:#64748b;font-weight:600;'>${
-                  d.date ? new Date(d.date).toLocaleDateString("fr-FR") : "-"
-                }</span>
-              </div>
-            `;
+                <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
+                  <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#f59e0b 60%,#fbbf24 100%);color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #f59e0b33;'>${
+                    idx + 1
+                  }</span>
+                  <span style='color:#f59e0b;font-weight:bold;font-size:1.08em;'><i class="fas fa-folder-open" style="margin-right:6px;color:#f59e0b;"></i>N° Dossier :</span>
+                  <span style='color:#b45309;font-weight:700;font-size:1.13em;'>${numDossier}</span>
+                </div>
+                <div style='font-size:1em;margin-left:42px;'>
+                  <span style='color:#2563eb;font-weight:600;'>Agent :</span>
+                  <span style='color:#0e274e;font-weight:600;'>${agent}</span>
+                  <span style='margin-left:18px;color:#374151;'>Client :</span>
+                  <span style='color:#374151;font-weight:600;'>${client}</span>
+                  <span style='margin-left:18px;color:#64748b;'>Date :</span>
+                  <span style='color:#64748b;font-weight:600;'>${dateAff}</span>
+                </div>
+              `;
               li.onmouseenter = function () {
                 li.style.background = "#fef3c7";
                 li.style.borderColor = "#fbbf24";
