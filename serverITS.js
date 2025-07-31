@@ -2987,22 +2987,7 @@ app.patch("/deliveries/:id/acconier-status", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Livraison non trouvée." });
     }
-    // Ajout : envoi WebSocket dossier_status_updated
-    const wss = req.app.get("wss");
-    const updatedDelivery = result.rows[0];
-    const dossierStatusPayload = JSON.stringify({
-      type: "dossier_status_updated",
-      dossierId: updatedDelivery.dossier_number || updatedDelivery.id,
-      newStatus: updatedDelivery.delivery_status_acconier,
-    });
-    if (wss && wss.clients) {
-      wss.clients.forEach((client) => {
-        if (client.readyState === require("ws").OPEN) {
-          client.send(dossierStatusPayload);
-        }
-      });
-    }
-    return res.json({ success: true, delivery: updatedDelivery });
+    return res.json({ success: true, delivery: result.rows[0] });
   } catch (err) {
     console.error("Erreur PATCH delivery_status_acconier:", err);
     return res.status(500).json({ success: false, message: "Erreur serveur." });
@@ -3156,7 +3141,7 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Erreur lors de la mise à jour." });
     }
-    // Relit la ligne complète pour vérification
+    // Relit la ligne complète pour vérificationtdgf
     const checkRes = await pool.query(
       "SELECT id, container_statuses FROM livraison_conteneur WHERE id = $1",
       [id]
@@ -3220,18 +3205,6 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
     wss.clients.forEach((client) => {
       if (client.readyState === require("ws").OPEN) {
         client.send(payload);
-      }
-    });
-    // Envoi WebSocket pour la mise à jour du statut du dossier (pour le tableau de bord)
-    // On utilise dossier_number si présent, sinon l'id
-    const dossierStatusPayload = JSON.stringify({
-      type: "dossier_status_updated",
-      dossierId: updatedDelivery.dossier_number || updatedDelivery.id,
-      newStatus: updatedDelivery.delivery_status_acconier,
-    });
-    wss.clients.forEach((client) => {
-      if (client.readyState === require("ws").OPEN) {
-        client.send(dossierStatusPayload);
       }
     });
     res.status(200).json({
