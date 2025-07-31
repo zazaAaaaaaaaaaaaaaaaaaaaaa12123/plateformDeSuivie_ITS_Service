@@ -3477,14 +3477,32 @@ app.get("/api/dossiers/attente-paiement", async (req, res) => {
          employee_name AS agent,
          client_name AS nom,
          bl_number AS bl,
-         dossier_number AS dossier
+         dossier_number AS dossier,
+         delivery_status_acconier
        FROM livraison_conteneur
-       WHERE LOWER(delivery_status_acconier) = 'en attente de paiement'
        ORDER BY created_at DESC`
     );
+    // Log pour debug : voir ce que la base retourne réellement
+    console.log(
+      "[DEBUG] Résultats livraison_conteneur:",
+      result.rows.map((r) => ({
+        id: r.dossier,
+        statut: r.delivery_status_acconier,
+        agent: r.agent,
+        client: r.nom,
+      }))
+    );
+    // Filtrage plus souple : statut contient "attente" ET "paiement" (insensible à la casse, espaces ignorés)
+    const dossiers = result.rows.filter((row) => {
+      const statut = (row.delivery_status_acconier || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+      return statut.includes("attente") && statut.includes("paiement");
+    });
     res.json({
       success: true,
-      dossiers: result.rows,
+      dossiers,
     });
   } catch (err) {
     console.error("Erreur /api/dossiers/attente-paiement :", err);
