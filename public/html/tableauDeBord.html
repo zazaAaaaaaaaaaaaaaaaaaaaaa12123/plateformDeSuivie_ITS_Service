@@ -2605,7 +2605,7 @@
 
     <script src="../js/scriptTabBord.js"></script>
     <script>
-      // --- POPUP LISTE DES DOSSIERS EN ATTENTE DE PAIEsjshbkMENT sdui---hhsdhgshdk
+      // --- POPUP LISTE DES DOSSIERS EN ATTENTE DE PAIEMENT ---
       document.addEventListener("DOMContentLoaded", function () {
         const cardAttente = document.querySelector(
           ".etat-card.dossier-attente"
@@ -2618,12 +2618,55 @@
           // Fermer popup existant
           if (popupListe) popupListe.remove();
           if (popupDetail) popupDetail.remove();
-          // Récupérer les dossiers en attente de psdshjaiement
-          let res = await fetch("/api/dossiers/attente-paiement");
+          // Récupérer toutes les livraisons (comme resp_acconier)
+          let res = await fetch("/deliveries/status");
           let data = await res.json();
-          let dossiers = Array.isArray(data.dossiers) ? data.dossiers : [];
+          let dossiers = Array.isArray(data.deliveries) ? data.deliveries : [];
+          // Appliquer le même filtrage que resp_acconier
+          dossiers = dossiers.filter((d) => {
+            // Statut principal (toutes variantes acceptées)
+            const attenteStatuts = [
+              "en attente de paiement",
+              "pending_acconier",
+              "in_progress_payment_acconier",
+            ];
+            if (
+              !attenteStatuts.includes(
+                (d.delivery_status_acconier || "").toLowerCase()
+              )
+            )
+              return false;
+            // Exclure si tous les BL sont en 'mise_en_livraison'
+            let blList = [];
+            if (Array.isArray(d.bl_number)) {
+              blList = d.bl_number.filter(Boolean);
+            } else if (typeof d.bl_number === "string") {
+              blList = d.bl_number.split(/[,;\s]+/).filter(Boolean);
+            }
+            let blStatuses = blList.map((bl) =>
+              d.bl_statuses && d.bl_statuses[bl] ? d.bl_statuses[bl] : "aucun"
+            );
+            if (
+              blStatuses.length > 0 &&
+              blStatuses.every((s) => s === "mise_en_livraison")
+            ) {
+              return false;
+            }
+            // Exclure aussi si statut acconier est 'mise_en_livraison_acconier'
+            if (
+              (d.delivery_status_acconier || "").toLowerCase() ===
+              "mise_en_livraison_acconier"
+            ) {
+              return false;
+            }
+            return true;
+          });
           // Trier par date décroissante
-          dossiers.sort((a, b) => new Date(b.date) - new Date(a.date));
+          dossiers.sort(
+            (a, b) =>
+              new Date(b.delivery_date || b.created_at) -
+              new Date(a.delivery_date || a.created_at)
+          );
           // Créer le popup liste
           popupListe = document.createElement("div");
           popupListe.style.position = "fixed";
@@ -2742,7 +2785,7 @@
               li.onclick = function (e) {
                 e.stopPropagation();
                 if (popupDetail) popupDetail.remove();
-                // Afficher le popup
+                // Afficher le popup détail
                 popupDetail = document.createElement("div");
                 popupDetail.style.position = "fixed";
                 popupDetail.style.top = "0";
@@ -3109,4 +3152,3 @@
     </script>
   </body>
 </html>
-<!--sygudj123-->
