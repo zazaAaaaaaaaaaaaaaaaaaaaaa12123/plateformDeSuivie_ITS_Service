@@ -2607,14 +2607,16 @@
     <script>
       // --- POPUP LISTE DES DOSSIERS EN ATTENTE DE PAIEMENT ---
       document.addEventListener("DOMContentLoaded", function () {
-        const cardAttente = document.querySelector(
-          ".etat-card.dossier-attente"
-        );
-        if (!cardAttente) return;
+        const cardAttente = document.getElementById("carteAttentePaiement");
+        if (!cardAttente) {
+          console.warn("[DEBUG] carteAttentePaiement introuvable dans le DOM");
+          return;
+        }
         let popupListe = null;
         let popupDetail = null;
         cardAttente.style.cursor = "pointer";
         cardAttente.onclick = async function () {
+          console.log("[DEBUG] Clic sur la carte attente de paiement");
           // Fermer popup existant
           if (popupListe) popupListe.remove();
           if (popupDetail) popupDetail.remove();
