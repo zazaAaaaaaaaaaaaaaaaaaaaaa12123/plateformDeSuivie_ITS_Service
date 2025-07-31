@@ -3492,13 +3492,17 @@ app.get("/api/dossiers/attente-paiement", async (req, res) => {
         client: r.nom,
       }))
     );
-    // Filtrage plus souple : statut contient "attente" ET "paiement" (insensible à la casse, espaces ignorés)
+    // Filtrage : inclure aussi 'pending_acconier' et 'in_progress_payment_acconier'
     const dossiers = result.rows.filter((row) => {
       const statut = (row.delivery_status_acconier || "")
         .toLowerCase()
         .replace(/\s+/g, " ")
         .trim();
-      return statut.includes("attente") && statut.includes("paiement");
+      return (
+        (statut.includes("attente") && statut.includes("paiement")) ||
+        statut === "pending_acconier" ||
+        statut === "in_progress_payment_acconier"
+      );
     });
     res.json({
       success: true,
