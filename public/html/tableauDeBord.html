@@ -1313,66 +1313,6 @@
                 font-weight: 700;
               }
             </style>
-            <script>
-              // La gestion de la pop-up dossiers en attente de paiement a été supprimée
-
-              // Afficher le détail d'un dossier dans un pop-up
-              /*function afficherDetailDossier(dossier) {
-                const popup = document.getElementById("popupDetailDossier");
-                const contenu = document.getElementById("contenuDetailDossier");
-                contenu.innerHTML =
-                  '<div style="text-align:center;color:#888;">Chargement...</div>';
-                popup.style.display = "flex";
-                // Si on a déjà toutes les infos, on affiche, sinon on peut re-fetcher par id
-                if (dossier && dossier.id) {
-                  fetch(
-                    `https://plateformdesuivie-its-service-1cjx.onrender.com/api/dossiers/${dossier.id}`
-                  )
-                    .then((res) => res.json())
-                    .then((data) => {
-                      if (!data.success || !data.dossier) {
-                        contenu.innerHTML =
-                          '<div style="color:#dc3545;text-align:center;">Dossier introuvable.</div>';
-                        return;
-                      }
-                      const d = data.dossier;
-                      contenu.innerHTML = `<div style='font-size:1.08em;font-weight:700;color:#2563eb;margin-bottom:8px;'>${
-                        d.nom || d.reference || "Dossier"
-                      }</div>
-                  <div style='margin-bottom:8px;'><b>Date création :</b> ${
-                    d.date_creation
-                      ? new Date(d.date_creation).toLocaleString("fr-FR")
-                      : "-"
-                  }</div>
-                  <div style='margin-bottom:8px;'><b>Statut :</b> ${
-                    d.statut || "-"
-                  }</div>
-                  <div style='margin-bottom:8px;'><b>Client :</b> ${
-                    d.client || "-"
-                  }</div>hjvb
-                  <div style='margin-bottom:8px;'><b>Montant :</b> ${
-                    d.montant ? d.montant + " €" : "-"
-                  }</div>
-                  <div style='margin-bottom:8px;'><b>Description :</b> ${
-                    d.description || "-"
-                  }</div>
-                  <div style='margin-bottom:8px;'><b>Référence :</b> ${
-                    d.reference || "-"
-                  }</div>
-                  <div style='margin-bottom:8px;'><b>Autres infos :</b> ${
-                    d.autres_infos || "-"
-                  }</div>`;
-                    })
-                    .catch(() => {
-                      contenu.innerHTML =
-                        '<div style="color:#dc3545;text-align:center;">Erreur de chargement.</div>';
-                    });
-                } else {
-                  contenu.innerHTML =
-                    '<div style="color:#dc3545;text-align:center;">Dossier non valide.</div>';
-                }
-              }*/
-            </script>
             <div class="etat-card dossier-cours animated-card">
               <div class="etat-icon"><i class="fas fa-truck-loading"></i></div>
               <div class="etat-title">En cours de mise en livraison</div>

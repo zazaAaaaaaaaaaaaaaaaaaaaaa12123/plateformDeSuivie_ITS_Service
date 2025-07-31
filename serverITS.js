@@ -3207,6 +3207,18 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
         client.send(payload);
       }
     });
+    // Envoi WebSocket pour la mise à jour du statut du dossier (pour le tableau de bord)
+    // On utilise dossier_number si présent, sinon l'id
+    const dossierStatusPayload = JSON.stringify({
+      type: "dossier_status_updated",
+      dossierId: updatedDelivery.dossier_number || updatedDelivery.id,
+      newStatus: updatedDelivery.delivery_status_acconier,
+    });
+    wss.clients.forEach((client) => {
+      if (client.readyState === require("ws").OPEN) {
+        client.send(dossierStatusPayload);
+      }
+    });
     res.status(200).json({
       success: true,
       message: alertMessage,
