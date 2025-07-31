@@ -1428,28 +1428,44 @@
                         '<div style="text-align:center;color:#888;">Aucun dossier en attente de paiement.</div>';
                       return;
                     }
-                    // Affichage sous forme de tableau lisible
+                    // Correction du mapping des champs pour afficher les vraies valeurs
                     let table = `<div style='overflow-x:auto;'><table style='width:100%;min-width:520px;border-collapse:collapse;'>`;
-                    table += `<thead><tr style='background:#fff7e3;'><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Date</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Agent</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Client</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° BL</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° Dossier</th></tr></thead><tbody>`;
+                    table += `<thead><tr style='background:#fff7e3;'><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Date</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Agent</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Client</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° Dossier</th></tr></thead><tbody>`;
                     data.dossiers.forEach((dossier) => {
+                      // On tente d'afficher les champs les plus probables
+                      const date =
+                        dossier.date ||
+                        dossier.delivery_date ||
+                        dossier.date_creation ||
+                        dossier.created_at ||
+                        "";
+                      const agent =
+                        dossier.agent ||
+                        dossier.employee_name ||
+                        dossier.nom_agent ||
+                        dossier.utilisateur ||
+                        "-";
+                      const client =
+                        dossier.client ||
+                        dossier.client_name ||
+                        dossier.nom_client ||
+                        dossier.client_nom ||
+                        dossier.nom ||
+                        "-";
+                      const numDossier =
+                        dossier.dossier ||
+                        dossier.id ||
+                        dossier.numero ||
+                        dossier.num_dossier ||
+                        dossier.reference ||
+                        "-";
                       table += `<tr class='dossier-item-liste' style='background:linear-gradient(90deg,#fff7e3 80%,#f8fafc 100%);'>`;
                       table += `<td style='padding:8px 6px;font-size:0.98em;color:#b26a00;font-weight:600;'>${
-                        dossier.date
-                          ? new Date(dossier.date).toLocaleDateString("fr-FR")
-                          : ""
+                        date ? new Date(date).toLocaleDateString("fr-FR") : "-"
                       }</td>`;
-                      table += `<td style='padding:8px 6px;font-size:1.08em;color:#1d3557;font-weight:700;'>${
-                        dossier.agent || "-"
-                      }</td>`;
-                      table += `<td style='padding:8px 6px;'>${
-                        dossier.nom || "-"
-                      }</td>`;
-                      table += `<td style='padding:8px 6px;'>${
-                        dossier.bl || "-"
-                      }</td>`;
-                      table += `<td style='padding:8px 6px;'>${
-                        dossier.dossier || "-"
-                      }</td>`;
+                      table += `<td style='padding:8px 6px;font-size:1.08em;color:#1d3557;font-weight:700;'>${agent}</td>`;
+                      table += `<td style='padding:8px 6px;'>${client}</td>`;
+                      table += `<td style='padding:8px 6px;'>${numDossier}</td>`;
                       table += `</tr>`;
                     });
                     table += `</tbody></table></div>`;
