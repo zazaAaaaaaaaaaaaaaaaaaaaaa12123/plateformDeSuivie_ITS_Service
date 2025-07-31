@@ -1804,7 +1804,7 @@
         </div>
 
         <script>
-          // --- Interactivité mini-carte "En attente de paiement" (branchée sur la vraie source) ---
+          // --- Interactivité mini-carte "En attente de paiement" ---
           document.addEventListener("DOMContentLoaded", function () {
             const miniAttenteCard = document.getElementById("miniAttenteCard");
             const popupAttente = document.getElementById(
@@ -1816,57 +1816,39 @@
             const listeDossiersAttente = document.getElementById(
               "listeDossiersAttente"
             );
-            // Ouvre le popup et charge les dossiers depuis l'API réelle
+            // Ouvre le popup et charge les dossiers
             if (miniAttenteCard && popupAttente && closePopupAttente) {
               miniAttenteCard.addEventListener("click", function () {
                 popupAttente.style.display = "flex";
                 listeDossiersAttente.innerHTML =
                   '<div class="loading-dossiers">Chargement...</div>';
-                fetch("/deliveries/status")
+                // Récupération AJAX simulée (à remplacer par fetch réel)
+                fetch("/api/dossiers-attente")
                   .then((res) => res.json())
                   .then((data) => {
-                    if (!data.success || !Array.isArray(data.deliveries)) {
+                    if (!Array.isArray(data) || data.length === 0) {
                       listeDossiersAttente.innerHTML =
-                        '<div class="loading-dossiers">Aucune donnée reçue.</div>';
-                      return;
-                    }
-                    // Filtrer les dossiers en attente de paiement (statut acconier)
-                    const dossiers = data.deliveries.filter(
-                      (d) =>
-                        (d.delivery_status_acconier || "")
-                          .toLowerCase()
-                          .replace(/_/g, " ") === "en attente de paiement"
-                    );
-                    if (dossiers.length === 0) {
-                      listeDossiersAttente.innerHTML =
-                        '<div class="loading-dossiers">Aucun dossier en attente de paiement.</div>';
+                        '<div class="loading-dossiers">Aucun dossier en attente.</div>';
                       return;
                     }
                     // Tri par date décroissante
-                    dossiers.sort(
-                      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+                    data.sort(
+                      (a, b) =>
+                        new Date(b.date_creation) - new Date(a.date_creation)
                     );
-                    listeDossiersAttente.innerHTML = dossiers
+                    listeDossiersAttente.innerHTML = data
                       .map(
                         (dossier) => `
-                          <div class="dossier-item" data-id="${
-                            dossier.id
-                          }" style="cursor:pointer;">
-                            <div class="dossier-date">${
-                              dossier.created_at
-                                ? new Date(
-                                    dossier.created_at
-                                  ).toLocaleDateString("fr-FR")
-                                : "-"
-                            }</div>
-                            <div class="dossier-client">${
-                              dossier.client_name || "Client inconnu"
-                            }</div>
-                            <div class="dossier-id">N° Dossier: ${
-                              dossier.dossier_number || dossier.id
-                            }</div>
-                          </div>
-                        `
+            <div class="dossier-item" data-id="${dossier.id}">
+              <div class="dossier-date">${new Date(
+                dossier.date_creation
+              ).toLocaleDateString("fr-FR")}</div>
+              <div class="dossier-client">${
+                dossier.client || "Client inconnu"
+              }</div>
+              <div class="dossier-id">ID: ${dossier.id}</div>
+            </div>
+          `
                       )
                       .join("");
                   })
@@ -1885,14 +1867,14 @@
               });
             }
             // Gestion du clic sur un dossier pour afficher le détail
-            if (listeDossiersAttente) {
+            listeDossiersAttente &&
               listeDossiersAttente.addEventListener("click", function (e) {
                 const item = e.target.closest(".dossier-item");
-                if (item && item.dataset.id) {
-                  ouvrirPopupDetailDossier(item.dataset.id);
+                if (item) {
+                  const dossierId = item.getAttribute("data-id");
+                  ouvrirPopupDetailDossier(dossierId);
                 }
               });
-            }
           });
 
           // --- Popup détail dossier ---
@@ -2921,7 +2903,7 @@
             envoyerBtn.disabled = true;
             envoyerBtn.textContent = "Envoi...";
             try {
-              // Appel backend SHBSKJà adapter selosgdn ta routes
+              // Appel backend SHBSKJà adapter selon ta routes
               const res = await fetch("/api/demande-code-entreprise", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
