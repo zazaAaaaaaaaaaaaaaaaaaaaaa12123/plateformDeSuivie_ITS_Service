@@ -1,26 +1,3 @@
-(function updateEtatDossiersCards() {
-  // Cette fonction met à jour dynamiquement les nombres sur les cartes d'états de dossiers
-  // À ADAPTER selon la structure réelle de vos données !
-  // Exemple de récupération via API ou variable globale
-  document.addEventListener("DOMContentLoaded", function () {
-    // Remplacez cette partie par vos vraies données !
-    // Exemple statique pour démo :
-    const stats = {
-      attente: 12, // Dossiers en attente de paiement
-      cours: 7, // Dossiers en cours de mise en livraison
-      livre: 34, // Dossiers livrés
-      retard: 2, // Dossiers en retard
-    };
-    if (document.getElementById("nbAttentePaiement"))
-      document.getElementById("nbAttentePaiement").textContent = stats.attente;
-    if (document.getElementById("nbEnCoursLivraison"))
-      document.getElementById("nbEnCoursLivraison").textContent = stats.cours;
-    if (document.getElementById("nbLivre"))
-      document.getElementById("nbLivre").textContent = stats.livre;
-    if (document.getElementById("nbRetard"))
-      document.getElementById("nbRetard").textContent = stats.retard;
-  });
-})();
 // --- Détection automatique de l'URL backend (API et WebSocket) ---
 // window.API_BASE_URL = base pour les fetch (http(s)://...)
 // window.WS_BASE_HOST = host:port pour WebSocket (sans ws://)
