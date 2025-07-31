@@ -3472,7 +3472,7 @@ app.get("/html/repoLivAuth.html", (req, res) => {
 app.get("/api/dossiers/attente-paiement", async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, dossier_number AS reference, client_name AS nom, created_at AS date_creation, delivery_status_acconier AS statut, montant, description, observation_acconier AS autres_infos
+      `SELECT id, dossier_number AS reference, client_name AS nom, created_at AS date_creation, delivery_status_acconier AS statut, observation_acconier AS autres_infos
        FROM livraison_conteneur
        WHERE delivery_status_acconier = 'en attente de paiement'
        ORDER BY created_at DESC`
