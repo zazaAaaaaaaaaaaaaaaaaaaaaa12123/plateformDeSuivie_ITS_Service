@@ -2987,7 +2987,22 @@ app.patch("/deliveries/:id/acconier-status", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Livraison non trouvée." });
     }
-    return res.json({ success: true, delivery: result.rows[0] });
+    // Ajout : envoi WebSocket dossier_status_updated
+    const wss = req.app.get("wss");
+    const updatedDelivery = result.rows[0];
+    const dossierStatusPayload = JSON.stringify({
+      type: "dossier_status_updated",
+      dossierId: updatedDelivery.dossier_number || updatedDelivery.id,
+      newStatus: updatedDelivery.delivery_status_acconier,
+    });
+    if (wss && wss.clients) {
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(dossierStatusPayload);
+        }
+      });
+    }
+    return res.json({ success: true, delivery: updatedDelivery });
   } catch (err) {
     console.error("Erreur PATCH delivery_status_acconier:", err);
     return res.status(500).json({ success: false, message: "Erreur serveur." });
