@@ -1132,7 +1132,7 @@ document.addEventListener("DOMContentLoaded", function () {
       "[DEBUG] updateTableForDateRange - livraisons filtrées:",
       filtered
     );
-    // Tri du plus ancien au plus récent (ordre croissant)
+    // Tri du plus ancien au plus récent (ordre croissant)-----
     filtered.sort((a, b) => {
       let dateA = new Date(
         a.delivery_date || a.created_at || a.Date || a["Date Livraison"]
