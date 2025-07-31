@@ -2667,7 +2667,10 @@
           // Afficher la structure du premier dossier filtré pour debug
           if (dossiers.length > 0) {
             console.log("[DEBUG] Premier dossier filtré:", dossiers[0]);
-            console.log("[DEBUG] Clés du premier dossier:", Object.keys(dossiers[0]));
+            console.log(
+              "[DEBUG] Clés du premier dossier:",
+              Object.keys(dossiers[0])
+            );
           }
           // Trier par date décroissante
           dossiers.sort(
@@ -2753,12 +2756,11 @@
               li.style.border = "2px solid #fde68a";
               li.style.transition =
                 "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
-              // Champs robustes pour chaque dossier
-              const numDossier =
-                d.dossier || d.dossier_number || d.num_dossier || d.id || "-";
-              const agent = d.agent || d.employee_name || d.nom_agent || "-";
-              const client = d.client || d.client_name || d.nom_client || "-";
-              let date = d.date || d.delivery_date || d.created_at || null;
+              // Champs précis pour chaque dossier
+              const numDossier = d.id || d.dossier_number || d.dossier || "-";
+              const agent = d.employee_name || d.agent || "-";
+              const client = d.client_name || d.client || "-";
+              let date = d.delivery_date || d.created_at || null;
               let dateAff = "-";
               if (date) {
                 try {
