@@ -3162,7 +3162,7 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
     const wss = req.app.get("wss");
     const updatedDelivery = updateRes.rows[0];
     const alertMessage = `Statut du conteneur '${containerNumber}' mis à jour à '${status}'.`;
-    // Calcul du nombre de conteneurs livrés et du total dbpour cette livraison
+    // Calcul du nombre de conteneurs livrés et du total dbdsjpour cette livraison
     let total = 0;
     let delivered = 0;
     let tcList = [];
