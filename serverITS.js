@@ -3461,8 +3461,34 @@ app.get("/html/acconier_auth.html", (req, res) => {
 });
 
 // Route explicite pour repoLivAuth.html
+
 app.get("/html/repoLivAuth.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "repoLivAuth.html"));
+});
+
+// ===============================
+// ROUTE : Dossiers en attente de paiement (pour le tableau de bord)
+// ===============================
+app.get("/api/dossiers/attente-paiement", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, dossier_number AS reference, client_name AS nom, created_at AS date_creation, delivery_status_acconier AS statut, montant, description, observation_acconier AS autres_infos
+       FROM livraison_conteneur
+       WHERE delivery_status_acconier = 'en attente de paiement'
+       ORDER BY created_at DESC`
+    );
+    res.json({
+      success: true,
+      dossiers: result.rows,
+    });
+  } catch (err) {
+    console.error("Erreur /api/dossiers/attente-paiement :", err);
+    res.status(500).json({
+      success: false,
+      message:
+        "Erreur serveur lors de la récupération des dossiers en attente de paiement.",
+    });
+  }
 });
 
 // ===============================
