@@ -617,7 +617,9 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 // --- WebSocket temps réel pour les nouvelles livraisons (ordre de livraison créé) ---
-let wsLivraison = null;
+if (typeof wsLivraison === "undefined") {
+  var wsLivraison = null;
+}
 function initWebSocketLivraison() {
   const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
@@ -6578,32 +6580,6 @@ if (window["WebSocket"]) {
             filterEmployeeList();
           }
         }
-
-        // === Mise à jour en temps réel du champ Statut Dossier ===
-        if (message.type === "dossier_status_updated") {
-          // Recherche automatique du champ Statut Dossier dans l'en-tête
-          // On cherche un élément avec id qui contient 'statut' et 'dossier' (insensible à la casse)
-          const headerCandidates = Array.from(
-            document.querySelectorAll("[id]")
-          ).filter((el) => {
-            const id = el.id.toLowerCase();
-            return id.includes("statut") && id.includes("dossier");
-          });
-          headerCandidates.forEach((header) => {
-            // Si le champ correspond au dossier modifié ou si aucun filtre, on met à jour
-            if (
-              !header.dataset.dossierId ||
-              header.dataset.dossierId == message.dossierId
-            ) {
-              header.textContent = message.newStatus;
-              header.classList.add("status-updated-blink");
-              setTimeout(
-                () => header.classList.remove("status-updated-blink"),
-                1200
-              );
-            }
-          });
-        }
       } catch (error) {
         console.error("[WS][FRONT] Erreur parsing WebSocket message:", error);
       }
@@ -8993,15 +8969,6 @@ if (window["WebSocket"]) {
       .row-green-blink td {
         animation: green-blink 1s linear 0s 5;
         background-color: #34d399 !important;
-      }
-      .status-updated-blink {
-        animation: status-blink 1s linear 0s 1;
-        background-color: #34d399 !important;
-      }
-      @keyframes status-blink {
-        0% { background-color: #d1fae5; }
-        50% { background-color: #34d399; }
-        100% { background-color: inherit; }
       }
     `;
     document.head.appendChild(style);
