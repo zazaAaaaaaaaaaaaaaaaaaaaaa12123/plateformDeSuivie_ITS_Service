@@ -2929,6 +2929,43 @@
                 // Met à jour la carte Dossiers en retard (sans rechargement)
                 updateCarteDossiersRetard();
               }
+              // --- Ajout : synchronisation du statut dossier dans le tableau principal ---
+              if (data.type === "dossier-mise-en-livraison" && data.dossierId) {
+                // Affiche l'alerte personnalisée
+                showCustomAlert(
+                  `Le dossier ${data.dossierId} a été mis en livraison.`,
+                  "success"
+                );
+                // Met à jour la cellule statut du tableau
+                const table = document.querySelector(
+                  "#tableSuiviDossiers, .table-suivi-dossiers"
+                );
+                if (table) {
+                  // Cherche la ligne correspondant au dossier
+                  const rows = table.querySelectorAll("tbody tr");
+                  rows.forEach((row) => {
+                    // Adapte selon la structure : ici on suppose un attribut data-dossier-id ou une cellule contenant l'id
+                    if (
+                      row.getAttribute("data-dossier-id") == data.dossierId ||
+                      (row.querySelector(".dossier-id") &&
+                        row.querySelector(".dossier-id").textContent.trim() ==
+                          data.dossierId)
+                    ) {
+                      // Cherche la cellule statut (par classe ou index)
+                      let statutCell = row.querySelector(".statut-dossier");
+                      if (!statutCell) {
+                        // Si pas de classe, prend la 5e cellule (à adapter si besoin)
+                        statutCell = row.cells[4];
+                      }
+                      if (statutCell) {
+                        statutCell.textContent = "Mise en livraison";
+                        statutCell.style.color = "#059669";
+                        statutCell.style.fontWeight = "700";
+                      }
+                    }
+                  });
+                }
+              }
             } catch (e) {}
           };
           ws.onclose = function () {
@@ -2969,6 +3006,29 @@
               if (title) title.textContent = "Dossiers en retard";
               if (desc) desc.textContent = "Erreur de chargement.";
             });
+        }
+        // --- Ajout : fonction d'alerte personnalisée ---
+        function showCustomAlert(message, type = "success") {
+          let alertDiv = document.createElement("div");
+          alertDiv.className = `custom-alert show ${type}`;
+          alertDiv.textContent = message;
+          alertDiv.style.position = "fixed";
+          alertDiv.style.top = "32px";
+          alertDiv.style.right = "32px";
+          alertDiv.style.zIndex = "99999";
+          alertDiv.style.padding = "18px 32px";
+          alertDiv.style.background =
+            type === "success" ? "#059669" : "#dc3545";
+          alertDiv.style.color = "#fff";
+          alertDiv.style.fontSize = "1.18em";
+          alertDiv.style.borderRadius = "12px";
+          alertDiv.style.boxShadow = "0 8px 32px #05966944";
+          document.body.appendChild(alertDiv);
+          setTimeout(() => {
+            alertDiv.classList.remove("show");
+            alertDiv.style.opacity = "0";
+            setTimeout(() => alertDiv.remove(), 600);
+          }, 3200);
         }
         connectWebSocket();
       })();
