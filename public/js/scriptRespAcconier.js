@@ -24,6 +24,53 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // --- Clignotement automatique des dossiers en retard si demandé par le tableau de bord ---
+  if (localStorage.getItem("highlightRetard") === "1") {
+    localStorage.removeItem("highlightRetard");
+    // Attendre que le tableau soit chargé
+    setTimeout(function () {
+      // Sélectionne toutes les lignes de dossiers en retard
+      const tableBody = document.getElementById("deliveriesTableBody");
+      if (tableBody) {
+        const rows = tableBody.querySelectorAll("tr");
+        let retardRows = [];
+        rows.forEach((row) => {
+          // On considère qu'une ligne est en retard si elle contient le mot 'retard' dans le statut
+          const cells = row.querySelectorAll("td");
+          for (let i = 0; i < cells.length; i++) {
+            if (
+              cells[i].textContent &&
+              cells[i].textContent.toLowerCase().includes("retard")
+            ) {
+              retardRows.push(row);
+              break;
+            }
+          }
+        });
+        // Clignoter chaque ligne trouvée 3 fois
+        retardRows.forEach((row) => {
+          const tds = row.querySelectorAll("td");
+          let flashCount = 0;
+          const maxFlashes = 3;
+          function doFlash() {
+            tds.forEach((td) => {
+              td.classList.remove("flash-red-cell");
+              void td.offsetWidth;
+              td.classList.add("flash-red-cell");
+            });
+            setTimeout(() => {
+              tds.forEach((td) => td.classList.remove("flash-red-cell"));
+              flashCount++;
+              if (flashCount < maxFlashes) {
+                setTimeout(doFlash, 1000);
+              }
+            }, 1000);
+          }
+          doFlash();
+        });
+      }
+    }, 800);
+  }
   // --- Toast dossiers en retard (>2 jours) ---
   function showLateDeliveriesToast(lateDeliveries) {
     // Supprimer tout toast existant
