@@ -2,6 +2,7 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/reconnecting-websocket@4.4.0/dist/reconnecting-websocket.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Centre de Contact Clients</title>
 
@@ -1700,6 +1701,55 @@
         <script>
           // Message de bienvenue animé (typewriter)
           document.addEventListener("DOMContentLoaded", function () {
+            // --- WebSocket notification temps réel dossier mis en livraison ---
+            try {
+              const wsUrl =
+                (window.location.protocol === "https:" ? "wss://" : "ws://") +
+                window.location.hostname +
+                ":3000";
+              const ws = new ReconnectingWebSocket(wsUrl);
+              ws.onmessage = function (event) {
+                let data;
+                try {
+                  data = JSON.parse(event.data);
+                } catch (e) {
+                  return;
+                }
+                if (
+                  data &&
+                  data.type === "dossier-mise-en-livraison" &&
+                  data.dossierNumber
+                ) {
+                  // Affiche l'alerte
+                  if (typeof showCustomAlert === "function") {
+                    showCustomAlert(
+                      `Le dossier [${data.dossierNumber}] a été mis en livraison.`,
+                      "success",
+                      5000
+                    );
+                  } else {
+                    alert(
+                      `Le dossier [${data.dossierNumber}] a été mis en livraison.`
+                    );
+                  }
+                  // Met à jour le statut dans le tableau si affiché
+                  const row = document.querySelector(
+                    `[data-delivery-id='${data.deliveryId}']`
+                  );
+                  if (row) {
+                    const statusCell = Array.from(row.cells).find(
+                      (cell) =>
+                        cell.dataset.fieldName === "delivery_status_acconier"
+                    );
+                    if (statusCell) {
+                      statusCell.innerHTML = `<span class='text-blue-600'><i class='fas fa-truck mr-1' style='color:#2563eb;'></i> Mise en livraison</span>`;
+                    }
+                  }
+                }
+              };
+            } catch (e) {
+              /* ignore erreur ws */
+            }
             // Affiche le nom de l'utilisateur connecté (stocké dans localStorage.user)
             var nom = null;
             try {
