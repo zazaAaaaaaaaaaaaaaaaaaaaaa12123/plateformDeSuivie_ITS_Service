@@ -1691,99 +1691,11 @@
             );
             if (carteRetard) {
               carteRetard.style.cursor = "pointer";
-              carteRetard.addEventListener("click", async function () {
-                // Crée la popup si elle n'existe pas
-                let popup = document.getElementById("popupDossiersRetard");
-                if (!popup) {
-                  popup = document.createElement("div");
-                  popup.id = "popupDossiersRetard";
-                  popup.style.position = "fixed";
-                  popup.style.top = "0";
-                  popup.style.left = "0";
-                  popup.style.width = "100vw";
-                  popup.style.height = "100vh";
-                  popup.style.background = "rgba(220,53,69,0.12)";
-                  popup.style.zIndex = "10002";
-                  popup.style.display = "flex";
-                  popup.style.alignItems = "center";
-                  popup.style.justifyContent = "center";
-                  popup.innerHTML = `
-                    <div style="background:#fff;border-radius:18px;box-shadow:0 8px 40px #dc354544;padding:38px 32px 28px 32px;max-width:520px;width:96vw;max-height:92vh;overflow-y:auto;position:relative;">
-                      <button id="closePopupDossiersRetard" style="position:absolute;top:18px;right:18px;background:none;border:none;font-size:1.5em;color:#dc3545;cursor:pointer;">&times;</button>
-                      <div style="font-size:1.3em;font-weight:700;color:#dc3545;margin-bottom:18px;display:flex;align-items:center;gap:10px;"><i class="fas fa-exclamation-triangle"></i> Dossiers en retard</div>
-                      <div id="contenuDossiersRetard" style="min-height:80px;text-align:center;color:#374151;font-size:1.08em;"></div>
-                    </div>
-                  `;
-                  document.body.appendChild(popup);
-                  // Fermeture au clic sur le bouton ou l'extérieur
-                  popup.querySelector("#closePopupDossiersRetard").onclick =
-                    function () {
-                      popup.style.display = "none";
-                    };
-                  popup.addEventListener("click", function (e) {
-                    if (e.target === popup) popup.style.display = "none";
-                  });
-                } else {
-                  popup.style.display = "flex";
-                }
-                // Affiche le loader
-                const contenu = popup.querySelector("#contenuDossiersRetard");
-                contenu.innerHTML =
-                  '<div style="color:#dc3545;font-size:1.1em;margin:18px 0;">Chargement des dossiers en retard...</div>';
-                // Récupère le HTML distant
-                try {
-                  const resp = await fetch(
-                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html"
-                  );
-                  const html = await resp.text();
-                  // Extraction du bloc dossiers en retard
-                  // On cherche le bloc qui commence par <div class="dossiers-retard-list"> ou similaire
-                  let extrait = "";
-                  // Méthode 1 : parser le HTML
-                  const tempDiv = document.createElement("div");
-                  tempDiv.innerHTML = html;
-                  // Cherche le bloc principal
-                  let retardBloc = tempDiv.querySelector(
-                    ".dossiers-retard-list, .dossiers-retard, #dossiersRetard, .popup-dossiers-retard"
-                  );
-                  if (!retardBloc) {
-                    // Fallback : cherche le titre puis le parent
-                    const titre = Array.from(
-                      tempDiv.querySelectorAll("div, h2, h3, h4")
-                    ).find(
-                      (e) =>
-                        e.textContent &&
-                        e.textContent
-                          .toLowerCase()
-                          .includes("dossiers en retard")
-                    );
-                    if (titre && titre.parentNode) {
-                      retardBloc = titre.parentNode;
-                    }
-                  }
-                  if (retardBloc) {
-                    extrait = retardBloc.outerHTML;
-                  } else {
-                    // Fallback : extrait le bloc contenant le mot "N° Dossier"
-                    const candidats = Array.from(
-                      tempDiv.querySelectorAll("div, section")
-                    );
-                    const bloc = candidats.find(
-                      (e) =>
-                        e.textContent && e.textContent.includes("N° Dossier")
-                    );
-                    extrait = bloc ? bloc.outerHTML : "";
-                  }
-                  if (extrait) {
-                    contenu.innerHTML = extrait;
-                  } else {
-                    contenu.innerHTML =
-                      '<div style="color:#dc3545;font-size:1.1em;margin:18px 0;">Impossible de trouver la liste des dossiers en retard.</div>';
-                  }
-                } catch (e) {
-                  contenu.innerHTML =
-                    '<div style="color:#dc3545;font-size:1.1em;margin:18px 0;">Erreur lors du chargement distant.</div>';
-                }
+              carteRetard.addEventListener("click", function () {
+                // Indicateur pour la page cible afin de faire clignoter les dossiers en retard
+                localStorage.setItem("highlightRetard", "1");
+                window.location.href =
+                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
               });
             }
           });
@@ -2785,4 +2697,4 @@
     </script>
   </body>
 </html>
-<!--sydgshSSJj-->
+<!--sydgshSSJj-sjkn-->
