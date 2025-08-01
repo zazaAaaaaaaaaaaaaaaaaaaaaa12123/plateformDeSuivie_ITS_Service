@@ -6798,7 +6798,7 @@ if (window["WebSocket"]) {
         op.delivery_status_acconier_fr ||
         mapStatus(op.delivery_status_acconier || op.status || "");
 
-      // Nouvelle version : chaque info dans une fvhwhvhj "carte" moderne, responsive, business-friendly
+      // Nouvelle version : chaque info dans une fvhwhuhijvhj "carte" moderne, responsive, business-friendly
       modalContent.innerHTML = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 28px;">
           <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
