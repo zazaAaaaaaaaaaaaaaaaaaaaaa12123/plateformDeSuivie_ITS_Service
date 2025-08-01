@@ -257,6 +257,32 @@ document.addEventListener("DOMContentLoaded", function () {
               2500
             );
           }
+          // --- Mise à jour dynamique du statut dossier dans le dashboard ---
+          if (data.type === "bl_status_update" && data.dossier_number) {
+            const suiviTable = document.querySelector('#suiviContainer table');
+            if (suiviTable) {
+              const rows = suiviTable.querySelectorAll('tbody tr');
+              let updated = false;
+              // Trouver les index des colonnes "Statut dossier" et "N° Dossier"
+              let dossierCellIndex = -1;
+              let statutCellIndex = -1;
+              const ths = suiviTable.querySelectorAll('thead th');
+              ths.forEach(function(th, idx) {
+                if (th.textContent.toLowerCase().includes('statut')) statutCellIndex = idx;
+                if (th.textContent.toLowerCase().includes('dossier')) dossierCellIndex = idx;
+              });
+              rows.forEach(function(row) {
+                const cells = row.querySelectorAll('td');
+                if (dossierCellIndex !== -1 && statutCellIndex !== -1 && cells[dossierCellIndex] && cells[dossierCellIndex].textContent.trim() === data.dossier_number) {
+                  cells[statutCellIndex].innerHTML = '<span style="color:#f59e0b;font-weight:700;"><i class="fas fa-hourglass-half"></i> Mise en livraison</span>';
+                  updated = true;
+                }
+              });
+              if (updated) {
+                showCustomAlert(`Dossier ${data.dossier_number} mis en livraison (synchro temps réel) !`, "success", 3500);
+              }
+            }
+          }
           // --- Ajout : gestion de la notification d'ordre de livraison ---
           // (Suppression de l'alerte ici, elle est désormais gérée dans le tableau de suivi)
         } catch (e) {
