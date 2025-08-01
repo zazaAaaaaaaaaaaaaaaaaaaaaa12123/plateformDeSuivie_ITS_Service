@@ -1297,6 +1297,7 @@ if (containerNumberInput) {
 
 // Fonction pour générer dynamiquement la zone de saisie des types de pied par TC
 function renderContainerFootTypes() {
+  // Utiliser le conteneur dynamique du HTML
   const dynamicContainer = document.getElementById("containerFootTypesDynamic");
   if (!dynamicContainer) return;
   dynamicContainer.innerHTML = "";
@@ -1305,88 +1306,9 @@ function renderContainerFootTypes() {
   dynamicContainer.style.gap = "8px";
   dynamicContainer.style.marginBottom = "10px";
 
+  // Pour chaque TC, créer une ligne avec badge + select (ou input) pour le type de pied
   const piedOptions = ["10", "20", "40", "45"];
 
-  // Mode textarea si 8 TC ou plus
-  if (containerTags.length >= 8) {
-    // Textarea pour les types de pied
-    let piedTextarea = document.createElement("textarea");
-    piedTextarea.className = "pied-massive-textarea";
-    piedTextarea.style.width = "100%";
-    piedTextarea.style.minHeight = "50px";
-    piedTextarea.style.fontSize = "1em";
-    piedTextarea.style.border = "1.5px solid #2563eb";
-    piedTextarea.style.borderRadius = "7px";
-    piedTextarea.style.padding = "7px 8px";
-    piedTextarea.style.marginBottom = "6px";
-    piedTextarea.placeholder =
-      "Types de pied (un par TC, séparés par virgule, point-virgule ou retour à la ligne)";
-    piedTextarea.value = containerFootTypes
-      .map((obj) => obj.pied || "")
-      .join(", ");
-
-    // Textarea pour les poids
-    let poidsTextarea = document.createElement("textarea");
-    poidsTextarea.className = "poids-massive-textarea";
-    poidsTextarea.style.width = "100%";
-    poidsTextarea.style.minHeight = "50px";
-    poidsTextarea.style.fontSize = "1em";
-    poidsTextarea.style.border = "1.5px solid #2563eb";
-    poidsTextarea.style.borderRadius = "7px";
-    poidsTextarea.style.padding = "7px 8px";
-    poidsTextarea.placeholder =
-      "Poids (un par TC, séparés par virgule, point-virgule ou retour à la ligne)";
-    poidsTextarea.value = containerWeights.join(", ");
-
-    // Synchronisation pied
-    piedTextarea.addEventListener("input", function () {
-      let pieds = piedTextarea.value
-        .split(/[\n,;]+/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-      // Complète à la bonne taille
-      while (pieds.length < containerTags.length) pieds.push("");
-      pieds = pieds.slice(0, containerTags.length);
-      containerFootTypes = containerTags.map((tc, idx) => ({
-        tc,
-        pied: pieds[idx] || "",
-      }));
-    });
-    // Synchronisation poids
-    poidsTextarea.addEventListener("input", function () {
-      let poids = poidsTextarea.value
-        .split(/[\n,;]+/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-      while (poids.length < containerTags.length) poids.push("");
-      poids = poids.slice(0, containerTags.length);
-      containerWeights = poids;
-    });
-
-    // Label explicatif
-    let labelPied = document.createElement("div");
-    labelPied.textContent = "Types de pied (un par TC dans l'ordre) :";
-    labelPied.style.fontWeight = "bold";
-    labelPied.style.color = "#2563eb";
-    labelPied.style.marginBottom = "2px";
-    let labelPoids = document.createElement("div");
-    labelPoids.textContent = "Poids (un par TC dans l'ordre) :";
-    labelPoids.style.fontWeight = "bold";
-    labelPoids.style.color = "#2563eb";
-    labelPoids.style.margin = "8px 0 2px 0";
-
-    dynamicContainer.appendChild(labelPied);
-    dynamicContainer.appendChild(piedTextarea);
-    dynamicContainer.appendChild(labelPoids);
-    dynamicContainer.appendChild(poidsTextarea);
-    // Masquer le select d'origine
-    if (containerFootTypeSelect) {
-      containerFootTypeSelect.style.display = "none";
-    }
-    return;
-  }
-
-  // Sinon, mode classique par ligne
   containerTags.forEach((tc, idx) => {
     let row = document.createElement("div");
     const isMobile =
@@ -1396,6 +1318,7 @@ function renderContainerFootTypes() {
     row.style.gap = isMobile ? "6px" : "10px";
     row.style.marginBottom = isMobile ? "8px" : "0";
 
+    // Badge TC
     let tcLabel = document.createElement("span");
     tcLabel.textContent = tc;
     tcLabel.className = "tc-foot-label";
@@ -1408,6 +1331,7 @@ function renderContainerFootTypes() {
     tcLabel.style.display = "inline-block";
     tcLabel.style.marginBottom = "0";
 
+    // Select pour le type de pied
     let piedSelect = document.createElement("select");
     piedSelect.className = "tc-foot-select";
     piedSelect.style.width = isMobile ? "80px" : "auto";
@@ -1429,6 +1353,7 @@ function renderContainerFootTypes() {
       piedSelect.appendChild(option);
     });
 
+    // Option personnalisée (input texte si "Autre...")
     let piedInput = document.createElement("input");
     piedInput.type = "text";
     piedInput.placeholder = "Type personnalisé";
@@ -1447,6 +1372,7 @@ function renderContainerFootTypes() {
     piedInput.style.boxShadow = "none";
     piedInput.style.width = isMobile ? "80px" : "auto";
 
+    // Input pour le poids
     let poidsInput = document.createElement("input");
     poidsInput.type = "number";
     poidsInput.placeholder = "Poids (kg)";
@@ -1482,6 +1408,7 @@ function renderContainerFootTypes() {
       poidsInput.style.background = isMobile ? "#f1f5f9" : "#fff";
     });
 
+    // Initial value pied
     let currentValue = containerFootTypes[idx]
       ? containerFootTypes[idx].pied
       : "";
@@ -1495,6 +1422,7 @@ function renderContainerFootTypes() {
       piedInput.style.display = "inline-block";
     }
 
+    // Initial value poids
     poidsInput.value =
       containerWeights[idx] !== undefined ? containerWeights[idx] : "";
 
@@ -1515,10 +1443,12 @@ function renderContainerFootTypes() {
       containerWeights[idx] = poidsInput.value;
     });
 
+    // Init valeur
     if (!containerFootTypes[idx])
       containerFootTypes[idx] = { tc, pied: piedSelect.value };
     if (containerWeights[idx] === undefined) containerWeights[idx] = "";
 
+    // Ajout des éléments dans la ligne (alignés sur mobile)
     row.appendChild(tcLabel);
     row.appendChild(piedSelect);
     row.appendChild(piedInput);
@@ -1526,6 +1456,7 @@ function renderContainerFootTypes() {
     dynamicContainer.appendChild(row);
   });
 
+  // Masquer le select d'origine
   if (containerFootTypeSelect) {
     containerFootTypeSelect.style.display = "none";
   }

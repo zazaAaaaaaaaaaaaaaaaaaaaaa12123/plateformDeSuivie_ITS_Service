@@ -3141,7 +3141,7 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Erreur lors de la mise à jour." });
     }
-    // Relit la ligne complète pour vérificationSHDVZ
+    // Relit la ligne complète pour vérificationszssd
     const checkRes = await pool.query(
       "SELECT id, container_statuses FROM livraison_conteneur WHERE id = $1",
       [id]
@@ -3162,7 +3162,7 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
     const wss = req.app.get("wss");
     const updatedDelivery = updateRes.rows[0];
     const alertMessage = `Statut du conteneur '${containerNumber}' mis à jour à '${status}'.`;
-    // Calcul du nombre de conteneurs livrés et du total dbdsjpour cette livraison
+    // Calcul du nombre de conteneurs livrés et du total pour cette livraison
     let total = 0;
     let delivered = 0;
     let tcList = [];
@@ -3205,18 +3205,6 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
     wss.clients.forEach((client) => {
       if (client.readyState === require("ws").OPEN) {
         client.send(payload);
-      }
-    });
-    // Envoi WebSocket pour la mise à jour du statut du dossier (pour le tableau de bord)
-    // On utilise dossier_number si présent, sinon l'id
-    const dossierStatusPayload = JSON.stringify({
-      type: "dossier_status_updated",
-      dossierId: updatedDelivery.dossier_number || updatedDelivery.id,
-      newStatus: updatedDelivery.delivery_status_acconier,
-    });
-    wss.clients.forEach((client) => {
-      if (client.readyState === require("ws").OPEN) {
-        client.send(dossierStatusPayload);
       }
     });
     res.status(200).json({
