@@ -511,6 +511,31 @@
         animation: green-blink 1.2s linear 0s 5;
       }
 
+      /* Animation clignotement rouge pour ligne ciblée */
+      @keyframes red-blink {
+        0% {
+          background-color: #fecaca;
+        }
+        20% {
+          background-color: #ef4444;
+        }
+        40% {
+          background-color: #fecaca;
+        }
+        60% {
+          background-color: #ef4444;
+        }
+        80% {
+          background-color: #fecaca;
+        }
+        100% {
+          background-color: inherit;
+        }
+      }
+      .row-blink-red {
+        animation: red-blink 1.2s linear 0s 5;
+      }
+
       /* Styles pour l'effet de mise en évidence */
       .highlight-cell {
         transition: background-color 0.3s ease-in-out; /* Transition douce pour l'effet de flash */
@@ -1312,15 +1337,15 @@
         }
         const dossierId = getParam("dossier");
         if (dossierId) {
-          // Fonction pour flasher la ligne
+          // Fonction pour flasher la ligne en rouge
           function flashRow(row) {
             if (!row) return;
             let count = 0;
             const maxFlashes = 5;
             function doFlash() {
-              row.classList.add("row-blink-green");
+              row.classList.add("row-blink-red");
               setTimeout(() => {
-                row.classList.remove("row-blink-green");
+                row.classList.remove("row-blink-red");
                 count++;
                 if (count < maxFlashes) setTimeout(doFlash, 180);
               }, 180);
