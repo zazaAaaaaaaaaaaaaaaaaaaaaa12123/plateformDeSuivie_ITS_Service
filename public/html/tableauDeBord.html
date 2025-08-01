@@ -1798,50 +1798,44 @@
             );
             if (carteRetard && popupRetard && contenuRetard) {
               carteRetard.addEventListener("click", function () {
-                popupRetard.style.display = "flex";
-                contenuRetard.innerHTML =
-                  '<div style="text-align:center;color:#2563eb;">Chargement...</div>';
-                fetch("http://localhost:3000/deliveries/status")
+                // Utilise la nouvelle route backend pour récupérer les dossiers en retard
+                fetch("/api/dossiers/retard")
                   .then((res) => res.json())
-                  .then((data) => {
-                    if (!data.success || !Array.isArray(data.deliveries)) {
-                      contenuRetard.innerHTML =
-                        '<div style="color:#dc3545;text-align:center;">Erreur lors du chargement des dossiers en retard.</div>';
-                      return;
-                    }
-                    // Filtrer les dossiers en retard avec la logique métier
-                    var dossiersRetard = getLateDeliveries(data.deliveries);
-                    if (dossiersRetard.length === 0) {
-                      contenuRetard.innerHTML =
-                        '<div style="color:#dc3545;text-align:center;">Aucun dossier en retard.</div>';
-                      return;
-                    }
-                    var html =
-                      '<div id="listeDossiersRetard" style="display:flex;flex-direction:column;gap:14px;margin-bottom:8px;">';
-                    dossiersRetard.forEach((dossier) => {
-                      html +=
-                        `<div class=\"dossier-item-liste\" style=\"background:linear-gradient(90deg,#ffe3e3 80%,#f8fafc 100%);border:1.5px solid #dc3545;border-radius:12px;padding:14px 18px;cursor:pointer;box-shadow:0 2px 8px #dc354511;display:flex;flex-direction:row;align-items:center;justify-content:space-between;\">` +
-                        `<div class=\"dossier-item-info\">` +
-                        `<div class=\"dossier-item-date\">${
+                  .then((lateDossiers) => {
+                    // Affiche le popup avec la liste des dossiers en retard
+                    let html = "";
+                    if (!lateDossiers || lateDossiers.length === 0) {
+                      html =
+                        "<div style='color:#dc3545;text-align:center;font-size:1.15em;'>Aucun dossier en retard actuellement.</div>";
+                    } else {
+                      html = `<div style='font-size:1.25em;font-weight:700;color:#dc3545;margin-bottom:10px;text-align:center;'>Dossiers en retard</div>`;
+                      html += `<div style='max-height:60vh;overflow-y:auto;'>`;
+                      html += `<table style='width:100%;border-collapse:collapse;font-size:0.98em;'>`;
+                      html += `<thead><tr style='background:#ffe3e3;'><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Numéro</th><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Client</th><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Date création</th><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Statut</th></tr></thead><tbody>`;
+                      lateDossiers.forEach((dossier) => {
+                        html += `<tr><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'>${
+                          dossier.numero || "-"
+                        }</td><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'>${
+                          dossier.client || "-"
+                        }</td><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'>${
                           dossier.created_at
                             ? new Date(dossier.created_at).toLocaleDateString(
                                 "fr-FR"
                               )
-                            : ""
-                        }</div>` +
-                        `<div class=\"dossier-item-nom\">${
-                          dossier.client_name || "Client inconnu"
-                        }</div>` +
-                        `</div>` +
-                        `<div style=\"font-size:0.98em;color:#dc3545;font-weight:700;\">Retard</div>` +
-                        `</div>`;
-                    });
-                    html += "</div>";
+                            : "-"
+                        }</td><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'><span style='color:#dc3545;font-weight:600;'>${
+                          dossier.statut || "Retard"
+                        }</span></td></tr>`;
+                      });
+                      html += `</tbody></table></div>`;
+                    }
                     contenuRetard.innerHTML = html;
+                    popupRetard.style.display = "flex";
                   })
                   .catch(() => {
                     contenuRetard.innerHTML =
-                      '<div style="color:#dc3545;text-align:center;">Erreur réseau.</div>';
+                      "<div style='color:#dc3545;text-align:center;'>Impossible de charger les dossiers en retard.</div>";
+                    popupRetard.style.display = "flex";
                   });
               });
               if (closeRetard) {
