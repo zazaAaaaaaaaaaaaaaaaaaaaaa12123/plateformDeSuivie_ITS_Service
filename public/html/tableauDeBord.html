@@ -2928,6 +2928,39 @@
                 }
                 // Met à jour la carte Dossiers en retard (sans rechargement)
                 updateCarteDossiersRetard();
+                // --- Ajout : synchronisation du statut dossier dans le tableau principal ---
+                if (data.dossierNumber) {
+                  showCustomAlert(
+                    `Le dossier ${data.dossierNumber} a été mis en livraison (statut BL).`,
+                    "success"
+                  );
+                  // Met à jour la cellule statut du tableau
+                  const table = document.querySelector(
+                    "#tableSuiviDossiers, .table-suivi-dossiers"
+                  );
+                  if (table) {
+                    const rows = table.querySelectorAll("tbody tr");
+                    rows.forEach((row) => {
+                      if (
+                        row.getAttribute("data-dossier-id") ==
+                          data.dossierNumber ||
+                        (row.querySelector(".dossier-id") &&
+                          row.querySelector(".dossier-id").textContent.trim() ==
+                            data.dossierNumber)
+                      ) {
+                        let statutCell = row.querySelector(".statut-dossier");
+                        if (!statutCell) {
+                          statutCell = row.cells[4];
+                        }
+                        if (statutCell) {
+                          statutCell.textContent = "Mise en livraison";
+                          statutCell.style.color = "#059669";
+                          statutCell.style.fontWeight = "700";
+                        }
+                      }
+                    });
+                  }
+                }
               }
               // --- Ajout : synchronisation du statut dossier dans le tableau principal ---
               if (
