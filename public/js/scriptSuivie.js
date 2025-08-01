@@ -3441,17 +3441,65 @@ if (window["WebSocket"]) {
             box.style.width = "96vw";
             box.style.maxHeight = "92vh";
             box.style.overflowY = "auto";
-            box.style.padding = "32px 0";
+            box.style.padding = "0";
             box.style.position = "relative";
             box.style.display = "flex";
             box.style.flexDirection = "column";
-            // Contenu principal : uniquement le numéro TC
+            // Header
+            const header = document.createElement("div");
+            header.style.background = "#2563eb";
+            header.style.color = "#fff";
+            header.style.padding = "18px 28px 12px 28px";
+            header.style.fontWeight = "bold";
+            header.style.fontSize = "1.15rem";
+            header.style.display = "flex";
+            header.style.flexDirection = "column";
+            header.style.borderTopLeftRadius = "16px";
+            header.style.borderTopRightRadius = "16px";
+            header.innerHTML = `
+              <div style='margin-bottom:2px;'>
+                <span style='font-size:1.08em;'>${
+                  delivery.employee_name || "-"
+                }</span>
+              </div>
+              <div style='font-size:0.98em;font-weight:400;'>
+                Client : <span style='color:#eab308;'>${
+                  delivery.client_name || "-"
+                }</span><br>
+                Dossier : <span style='color:#eab308;'>${
+                  delivery.dossier_number || "-"
+                }</span>  
+              </div>
+            `;
+            // Bouton de fermeture
+            const closeBtn = document.createElement("button");
+            closeBtn.innerHTML = "&times;";
+            closeBtn.style.background = "none";
+            closeBtn.style.border = "none";
+            closeBtn.style.color = "#fff";
+            closeBtn.style.fontSize = "2.1rem";
+            closeBtn.style.cursor = "pointer";
+            closeBtn.style.position = "absolute";
+            closeBtn.style.top = "10px";
+            closeBtn.style.right = "18px";
+            closeBtn.setAttribute("aria-label", "Fermer");
+            closeBtn.onclick = () => overlay.remove();
+            header.appendChild(closeBtn);
+            box.appendChild(header);
+            // Corps
             const content = document.createElement("div");
-            content.style.textAlign = "center";
-            content.style.fontSize = "1.25em";
-            content.style.fontWeight = "bold";
-            content.style.padding = "24px 32px";
-            content.textContent = `Numéro TC : ${containerNumber}`;
+            content.style.padding = "24px 24px 24px 24px";
+            content.style.background = "#f8fafc";
+            content.style.flex = "1 1 auto";
+            content.style.overflowY = "auto";
+            // Numéro du conteneur
+            const tcNum = document.createElement("div");
+            tcNum.style.fontSize = "1.25em";
+            tcNum.style.fontWeight = "bold";
+            tcNum.style.marginBottom = "18px";
+            tcNum.style.textAlign = "center";
+            tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${containerNumber}</span>`;
+            content.appendChild(tcNum);
             box.appendChild(content);
             overlay.appendChild(box);
             document.body.appendChild(overlay);
