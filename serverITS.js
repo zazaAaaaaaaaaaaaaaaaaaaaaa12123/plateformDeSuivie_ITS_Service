@@ -3460,6 +3460,7 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
       type: "bl_status_update",
       delivery: updatedDelivery,
       message: alertMsg,
+      dossierNumber: updatedDelivery.dossier_number || updatedDelivery.id,
     });
     if (wss && wss.clients) {
       wss.clients.forEach((client) => {
