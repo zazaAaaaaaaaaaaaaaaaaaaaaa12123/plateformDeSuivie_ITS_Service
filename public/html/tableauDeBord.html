@@ -2959,10 +2959,23 @@
                                 delivery.employee_name || "";
                             }
                             if (row.querySelector(".statut-dossier")) {
+                              // Statut dynamique : "Mise en livraison" si livré, sinon "En attente de paiement"
+                              let statut = "En attente de paiement";
+                              // On considère livré si delivery.delivery_status_acconier contient "livraison"
+                              if (
+                                delivery.delivery_status_acconier &&
+                                delivery.delivery_status_acconier
+                                  .toLowerCase()
+                                  .includes("livraison")
+                              ) {
+                                statut = "Mise en livraison";
+                              }
                               row.querySelector(".statut-dossier").textContent =
-                                "Mise en livraison";
+                                statut;
                               row.querySelector(".statut-dossier").style.color =
-                                "#059669";
+                                statut === "Mise en livraison"
+                                  ? "#059669"
+                                  : "#f59e0b";
                               row.querySelector(
                                 ".statut-dossier"
                               ).style.fontWeight = "700";
