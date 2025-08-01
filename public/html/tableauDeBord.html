@@ -1841,6 +1841,15 @@
                 });
               }
             }
+            // --- Ajout gestion carte dossier livré ---
+            var carteLivre = document.querySelector(".dossier-livre.etat-card");
+            if (carteLivre) {
+              carteLivre.style.cursor = "pointer";
+              carteLivre.addEventListener("click", function () {
+                window.location.href =
+                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
+              });
+            }
           });
           document.addEventListener("DOMContentLoaded", function () {
             // Propagation automatique de la session admin vers les interfaces responsables
