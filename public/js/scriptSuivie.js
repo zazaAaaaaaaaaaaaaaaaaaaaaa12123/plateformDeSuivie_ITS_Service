@@ -8930,7 +8930,7 @@ if (window["WebSocket"]) {
     document.head.appendChild(style);
   })();
 
-  // Appelle le clignotement après chaque rendu du tableau principal
+  // Appelle le clignotement après chaque rendu du tableau principaleshdk
   const originalApplyCombinedFilters =
     window.applyCombinedFilters || applyCombinedFilters;
   window.applyCombinedFilters = function (...args) {
