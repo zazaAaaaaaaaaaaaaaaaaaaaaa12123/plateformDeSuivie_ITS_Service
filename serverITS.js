@@ -3558,13 +3558,17 @@ app.get("/api/dossiers/retard", async (req, res) => {
       }
       return true;
     });
-    res.json({ success: true, dossiers: dossiersRetard });
+    // Formatage minimal pour le frontend (numéro, client, date, statut)
+    const dossiersFormates = dossiersRetard.map((d) => ({
+      numero: d.dossier_number || d.id,
+      client: d.client_name,
+      created_at: d.created_at,
+      statut: d.delivery_status_acconier,
+    }));
+    res.json(dossiersFormates);
   } catch (err) {
     console.error("Erreur /api/dossiers/retard :", err);
-    res.status(500).json({
-      success: false,
-      message: "Erreur serveur lors de la récupération des dossiers en retard.",
-    });
+    res.json([]); // Renvoie un tableau vide en cas d'erreur pour éviter le crash frontend
   }
 });
 
