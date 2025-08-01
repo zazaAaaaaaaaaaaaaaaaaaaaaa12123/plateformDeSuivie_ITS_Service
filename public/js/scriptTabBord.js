@@ -298,6 +298,31 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   const closeBtnDemande = document.getElementById("closeDemandeCodeEntreprise");
   if (btnDemandeCodeEntreprise && popupDemande) {
+    // --- Ajout : gestion du message WebSocket 'bl_status_update' pour la mise en livraison ---
+    if (data.type === "bl_status_update") {
+      console.log("[WebSocket] Reçu bl_status_update:", data);
+      if (data.status && data.status === "Mise en livraison") {
+        showCustomAlert(
+          `Dossier ${data.dossier_number || "?"} mis en livraison !`,
+          "success",
+          3500
+        );
+        // Rafraîchir la vue si besoin (ex: reload tableau, ou appel API)
+        // Ici, on peut forcer le rafraîchissement des indicateurs ou du tableau si présent
+        if (typeof window.afficherSuivi === "function") {
+          // Si la section suivi est visible, on la recharge
+          const suiviContainer = document.getElementById("suiviContainer");
+          if (suiviContainer && suiviContainer.style.display !== "none") {
+            window.afficherSuivi();
+          }
+        }
+        // Sinon, on peut aussi rafraîchir les indicateurs du dashboard si besoin
+        // (ex: résuméHierDashboard, etc.)
+        if (typeof resumeHierDashboard === "function") {
+          resumeHierDashboard();
+        }
+      }
+    }
     // Toujours détacher d'abord tout ancien onclick pour éviter les doublons
     btnDemandeCodeEntreprise.onclick = null;
     btnDemandeCodeEntreprise.addEventListener("click", function (e) {

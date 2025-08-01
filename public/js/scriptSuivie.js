@@ -789,8 +789,14 @@ if (window["WebSocket"]) {
       ws.onmessage = function (event) {
         try {
           const data = JSON.parse(event.data);
+          console.log("[WebSocket] Message reçu:", event.data);
+          console.log("[WebSocket] Type:", data && data.type);
           // --- Ajout : gestion du message dossier_mise_en_livraison ---
           if (data && data.type === "dossier_mise_en_livraison") {
+            console.log(
+              "[WebSocket] Type dossier_mise_en_livraison détecté",
+              data
+            );
             if (typeof loadDeliveries === "function") {
               loadDeliveries().then(() => {
                 if (typeof checkLateContainers === "function")
@@ -800,6 +806,7 @@ if (window["WebSocket"]) {
             if (typeof showCustomAlert === "function") {
               showCustomAlert(data.message, data.alertType || "success", 6000);
             }
+            console.log("[WebSocket] Fin traitement dossier_mise_en_livraison");
             return;
           }
           const typesToRefresh = [
@@ -810,6 +817,10 @@ if (window["WebSocket"]) {
             "bl_status_update",
           ];
           if (data && data.type && typesToRefresh.includes(data.type)) {
+            console.log(
+              `[WebSocket] Type ${data.type} détecté, rafraîchissement des livraisons...`,
+              data
+            );
             loadDeliveries().then(() => {
               if (typeof checkLateContainers === "function")
                 checkLateContainers();
@@ -817,8 +828,14 @@ if (window["WebSocket"]) {
             if (typeof showCustomAlert === "function" && data.message) {
               showCustomAlert(data.message, data.alertType || "success", 6000);
             }
+            console.log(`[WebSocket] Fin traitement type ${data.type}`);
           }
         } catch (e) {
+          console.error(
+            "[WebSocket] Erreur de parsing ou traitement:",
+            event.data,
+            e
+          );
           console.warn(
             "[WebSocket] Message non JSON ou erreur :",
             event.data,
@@ -827,6 +844,7 @@ if (window["WebSocket"]) {
         }
       };
       ws.onclose = function (event) {
+        console.warn("[WebSocket] Connexion fermée:", event);
         let reason = "Connexion WebSocket perdue.";
         if (event && typeof event.code !== "undefined") {
           reason += ` (Code: ${event.code}`;
@@ -850,6 +868,7 @@ if (window["WebSocket"]) {
         }, 2000);
       };
       ws.onerror = function (event) {
+        console.error("[WebSocket] Erreur:", event);
         showCustomAlert(
           "Erreur WebSocket : " +
             (event && event.message ? event.message : "Erreur inconnue."),
