@@ -6755,7 +6755,7 @@ if (window["WebSocket"]) {
       }
       // Remplir le contenu
 
-      // Utilise le champ backend si dispo, sinon fallback JS
+      // Fonction utilitaire globale pour mapper le statut en texte lisible
       function mapStatus(status) {
         if (!status) return "-";
         const normalized = status.toLowerCase();
