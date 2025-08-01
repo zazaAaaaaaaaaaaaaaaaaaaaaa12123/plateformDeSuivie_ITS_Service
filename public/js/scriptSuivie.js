@@ -617,9 +617,7 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 // --- WebSocket temps réel pour les nouvelles livraisons (ordre de livraison créé) ---
-if (typeof wsLivraison === "undefined") {
-  var wsLivraison = null;
-}
+let wsLivraison = null;
 function initWebSocketLivraison() {
   const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
@@ -791,6 +789,19 @@ if (window["WebSocket"]) {
       ws.onmessage = function (event) {
         try {
           const data = JSON.parse(event.data);
+          // --- Ajout : gestion du message dossier_mise_en_livraison ---
+          if (data && data.type === "dossier_mise_en_livraison") {
+            if (typeof loadDeliveries === "function") {
+              loadDeliveries().then(() => {
+                if (typeof checkLateContainers === "function")
+                  checkLateContainers();
+              });
+            }
+            if (typeof showCustomAlert === "function") {
+              showCustomAlert(data.message, data.alertType || "success", 6000);
+            }
+            return;
+          }
           const typesToRefresh = [
             "delivery_update_alert",
             "container_status_update",
@@ -3500,6 +3511,104 @@ if (window["WebSocket"]) {
             tcNum.style.textAlign = "center";
             tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${containerNumber}</span>`;
             content.appendChild(tcNum);
+            // Menu déroulant statut
+            const label = document.createElement("label");
+            label.textContent = "Statut du conteneur :";
+            label.style.display = "block";
+            label.style.marginBottom = "8px";
+            label.style.fontWeight = "500";
+            content.appendChild(label);
+            const select = document.createElement("select");
+            select.style.width = "100%";
+            select.style.padding = "10px 12px";
+            select.style.border = "1.5px solid #2563eb";
+            select.style.borderRadius = "7px";
+            select.style.fontSize = "1.08em";
+            select.style.marginBottom = "18px";
+            select.style.background = "#fff";
+            select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
+            const statusOptions = [
+              { value: "delivered", label: "Livré" },
+              { value: "rejected", label: "Rejeté" },
+              { value: "pending", label: "En attente" },
+              { value: "in_progress", label: "En cours" },
+            ];
+            // Statut actuel (on cherche le statut du conteneur si stocké, sinon celui de la livraison)
+            let currentStatus =
+              delivery.container_statuses &&
+              typeof delivery.container_statuses === "object" &&
+              !Array.isArray(delivery.container_statuses) &&
+              delivery.container_statuses[containerNumber]
+                ? delivery.container_statuses[containerNumber]
+                : delivery.status || "pending";
+            statusOptions.forEach((opt) => {
+              const option = document.createElement("option");
+              option.value = opt.value;
+              option.textContent = opt.label;
+              if (opt.value === currentStatus) option.selected = true;
+              select.appendChild(option);
+            });
+            content.appendChild(select);
+            // Bouton enregistrer
+            const saveBtn = document.createElement("button");
+            saveBtn.textContent = "Enregistrer le statut";
+            saveBtn.className = "btn btn-primary w-full mt-2";
+            saveBtn.style.background =
+              "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
+            saveBtn.style.color = "#fff";
+            saveBtn.style.fontWeight = "bold";
+            saveBtn.style.fontSize = "1em";
+            saveBtn.style.border = "none";
+            saveBtn.style.borderRadius = "8px";
+            saveBtn.style.padding = "0.7em 1.7em";
+            saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
+            saveBtn.onclick = async () => {
+              // Appel API PATCH pour mettre à jour le statut du conteneur individuellement
+              try {
+                const response = await fetch(
+                  `/deliveries/${delivery.id}/container-status`,
+                  {
+                    method: "PATCH",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      containerNumber: containerNumber,
+                      status: select.value,
+                    }),
+                  }
+                );
+                const data = await response.json();
+                if (response.ok && data.success) {
+                  showCustomAlert(
+                    `Statut du conteneur mis à jour : ${
+                      select.options[select.selectedIndex].text
+                    }`,
+                    "success"
+                  );
+                  overlay.remove();
+                  // Rafraîchir les données pour mettre à jour le compteur "X sur Y livrés"
+                  if (typeof loadDeliveries === "function") {
+                    await loadDeliveries();
+                  }
+                  // Mise à jour immédiate de l'alerte dossier en retard après changement de statut conteneur
+                  if (typeof checkLateContainers === "function")
+                    checkLateContainers();
+                } else {
+                  showCustomAlert(
+                    data.message ||
+                      "Erreur lors de la mise à jour du statut du conteneur.",
+                    "error"
+                  );
+                }
+              } catch (err) {
+                showCustomAlert(
+                  "Erreur réseau lors de la mise à jour du statut du conteneur.",
+                  "error"
+                );
+              }
+            };
+            content.appendChild(saveBtn);
             box.appendChild(content);
             overlay.appendChild(box);
             document.body.appendChild(overlay);
@@ -6633,46 +6742,6 @@ if (window["WebSocket"]) {
       document.body.removeChild(link);
     }
 
-    // Fonction utilitaire globale pour mapper le statut en texte lisible
-    function mapStatus(status) {
-      if (!status) return "-";
-      const normalized = status.toLowerCase();
-      if (["livré", "livre", "livree", "livrée"].includes(normalized))
-        return "livré";
-      if (
-        [
-          "rejeté",
-          "rejete",
-          "rejetee",
-          "rejetée",
-          "rejected_acconier",
-          "rejected_by_employee",
-        ].includes(normalized)
-      )
-        return "rejeté";
-      if (
-        [
-          "en attente",
-          "attente",
-          "pending",
-          "pending_acconier",
-          "awaiting_delivery_acconier",
-        ].includes(normalized)
-      )
-        return "en attente";
-      if (
-        [
-          "en cours",
-          "encours",
-          "in progress",
-          "en-cours",
-          "in_progress_acconier",
-        ].includes(normalized)
-      )
-        return "en cours";
-      return "en cours";
-    }
-
     // Fonction pour ouvrir une modale de détail d'opération (réutilise la modale globale si possible)
     function showOperationDetailModal(op) {
       // Expose l'objet d'opération dans la console pour debug
@@ -6696,11 +6765,51 @@ if (window["WebSocket"]) {
         closeModalBtn = document.getElementById("closeModalBtn");
       }
       // Remplir le contenu
+
+      // Utilise le champ backend si dispo, sinon fallback JS
+      function mapStatus(status) {
+        if (!status) return "-";
+        const normalized = status.toLowerCase();
+        if (["livré", "livre", "livree", "livrée"].includes(normalized))
+          return "livré";
+        if (
+          [
+            "rejeté",
+            "rejete",
+            "rejetee",
+            "rejetée",
+            "rejected_acconier",
+            "rejected_by_employee",
+          ].includes(normalized)
+        )
+          return "rejeté";
+        if (
+          [
+            "en attente",
+            "attente",
+            "pending",
+            "pending_acconier",
+            "awaiting_delivery_acconier",
+          ].includes(normalized)
+        )
+          return "en attente";
+        if (
+          [
+            "en cours",
+            "encours",
+            "in progress",
+            "en-cours",
+            "in_progress_acconier",
+          ].includes(normalized)
+        )
+          return "en cours";
+        return "en cours";
+      }
       let displayStatus =
         op.delivery_status_acconier_fr ||
         mapStatus(op.delivery_status_acconier || op.status || "");
 
-      // Nouvelle version : chaque info dans une fvhwhuhijvhj "carte" moderne, responsive, business-friendly
+      // Nouvelle version : chaque info dans une "carte" moderne, responsive, business-friendly
       modalContent.innerHTML = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 28px;">
           <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
