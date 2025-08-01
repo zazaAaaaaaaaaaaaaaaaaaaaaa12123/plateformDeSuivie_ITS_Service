@@ -1802,7 +1802,6 @@
                 fetch("/api/dossiers/retard")
                   .then((res) => res.json())
                   .then((lateDossiers) => {
-                    // Affiche le popup avec la liste des dossiers en retard
                     let html = "";
                     if (!lateDossiers || lateDossiers.length === 0) {
                       html =
@@ -1810,24 +1809,25 @@
                     } else {
                       html = `<div style='font-size:1.25em;font-weight:700;color:#dc3545;margin-bottom:10px;text-align:center;'>Dossiers en retard</div>`;
                       html += `<div style='max-height:60vh;overflow-y:auto;'>`;
-                      html += `<table style='width:100%;border-collapse:collapse;font-size:0.98em;'>`;
-                      html += `<thead><tr style='background:#ffe3e3;'><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Numéro</th><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Client</th><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Date création</th><th style='padding:4px 8px;border-bottom:1px solid #e5e7eb;'>Statut</th></tr></thead><tbody>`;
-                      lateDossiers.forEach((dossier) => {
-                        html += `<tr><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'>${
-                          dossier.numero || "-"
-                        }</td><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'>${
-                          dossier.client || "-"
-                        }</td><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'>${
-                          dossier.created_at
-                            ? new Date(dossier.created_at).toLocaleDateString(
-                                "fr-FR"
-                              )
-                            : "-"
-                        }</td><td style='padding:3px 8px;border-bottom:1px solid #f1f1f1;'><span style='color:#dc3545;font-weight:600;'>${
-                          dossier.statut || "Retard"
-                        }</span></td></tr>`;
+                      html += `<ul style='list-style:none;padding:0;margin:0;'>`;
+                      lateDossiers.forEach((dossier, idx) => {
+                        html += `
+              <li style='background:#fff;border-radius:16px;box-shadow:0 2px 12px #dc354522;margin-bottom:18px;padding:18px 22px;display:flex;align-items:center;gap:18px;position:relative;'>
+                <div style='width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#dc3545 60%,#f87171 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.25em;font-weight:700;box-shadow:0 2px 8px #dc354522;position:absolute;left:12px;top:12px;'>${
+                  idx + 1
+                }</div>
+                <div style='margin-left:54px;'>
+                  <div style='font-size:1.08em;font-weight:700;color:#dc3545;margin-bottom:6px;'><i class='fas fa-folder-open' style='margin-right:7px;'></i> N° Dossier : <span style='font-size:1.15em;'>${
+                    dossier.numero || "-"
+                  }</span></div>
+                  <div style='font-size:1em;color:#2563eb;margin-bottom:2px;'><b>Agent :</b> <span style='color:#374151;'>${
+                    dossier.client || "-"
+                  }</span></div>
+                </div>
+              </li>
+            `;
                       });
-                      html += `</tbody></table></div>`;
+                      html += `</ul></div>`;
                     }
                     contenuRetard.innerHTML = html;
                     popupRetard.style.display = "flex";
@@ -2107,6 +2107,7 @@
                         pending: "En attente",
                         delivered: "Livrée",
                         pending_acconier: "En attente acconier",
+
                         Inconnu: "Inconnu",
                       };
                       moisMap[key].forEach((l) => {
