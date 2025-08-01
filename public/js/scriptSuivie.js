@@ -9017,4 +9017,59 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
+// ================== MISE À JOUR STATUT DOSSIER EN TEMPS RÉEL ==================
+function updateDossierStatusCell(dossierNumber, newStatus) {
+  if (!deliveriesTableBody) return;
+  // Recherche la ligne avec le bon numéro de dossier
+  const tr = Array.from(deliveriesTableBody.querySelectorAll("tr")).find(
+    (row) => {
+      const tdDossier = row.querySelector('[data-column-id="dossier_number"]');
+      return (
+        tdDossier && tdDossier.textContent.trim() === dossierNumber.toString()
+      );
+    }
+  );
+  if (!tr) {
+    console.warn("Aucune ligne trouvée pour le dossier:", dossierNumber);
+    return;
+  }
+  // Met à jour la cellule statut
+  const tdStatut = tr.querySelector('[data-column-id="statut"]');
+  if (!tdStatut) {
+    console.warn(
+      "Aucune cellule statut trouvée pour le dossier:",
+      dossierNumber
+    );
+    return;
+  }
+  // Affiche uniquement "Mise en livraison" ou "En attente de paiement"
+  let displayStatus = "";
+  let color = "";
+  if (newStatus && newStatus.toLowerCase().includes("livr")) {
+    displayStatus = "Mise en livraison";
+    color = "#34d399";
+  } else if (newStatus && newStatus.toLowerCase().includes("paiement")) {
+    displayStatus = "En attente de paiement";
+    color = "#facc15";
+  } else {
+    displayStatus = newStatus || "-";
+    color = "#64748b";
+  }
+  tdStatut.textContent = displayStatus;
+  tdStatut.style.backgroundColor = color;
+  tdStatut.style.color = color === "#64748b" ? "#fff" : "#1e293b";
+  tdStatut.style.fontWeight = "bold";
+  tdStatut.style.transition = "background-color 0.3s";
+  // Clignotement vert sur la ligne modifiée
+  tr.classList.add("row-green-blink");
+  setTimeout(() => {
+    tr.classList.remove("row-green-blink");
+    tdStatut.style.backgroundColor = "";
+    tdStatut.style.color = "";
+    tdStatut.style.fontWeight = "";
+  }, 5000);
+  console.log(
+    `[SYNC] Statut du dossier ${dossierNumber} mis à jour: ${displayStatus}`
+  );
+}
 /****** Script a ajouter en cas de pertubation 125 AAAA ***/
