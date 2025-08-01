@@ -2918,7 +2918,7 @@
                   `Le dossier ${data.dossierNumber} a été mis en livraison.`,
                   "success"
                 );
-                // Met à jour la cellule statut du tableau
+                // Recharge dynamiquement la ligne du tableau concernée
                 const table = document.querySelector(
                   "#tableSuiviDossiers, .table-suivi-dossiers"
                 );
@@ -2933,36 +2933,49 @@
                         row.querySelector(".dossier-id").textContent.trim() ==
                           data.dossierNumber)
                     ) {
-                      // Recherche de la cellule "Responsable Acconier" ou "Statut Dossier"
-                      let statutCell = row.querySelector(".statut-dossier");
-                      // Si pas de classe, cherche la colonne par l'en-tête
-                      if (!statutCell) {
-                        // Recherche de l'index de la colonne "Responsable Acconier" ou "Statut Dossier"
-                        const headerRow = table.querySelector("thead tr");
-                        let statutIdx = -1;
-                        if (headerRow) {
-                          const headers = headerRow.querySelectorAll("th");
-                          headers.forEach((th, idx) => {
-                            const txt = th.textContent.trim().toLowerCase();
-                            if (
-                              txt.includes("responsable acconier") ||
-                              txt.includes("statut dossier")
-                            ) {
-                              statutIdx = idx;
+                      // Requête AJAX pour récupérer les données à jour du dossier
+                      fetch(
+                        `/deliveries/search?dossierNumber=${encodeURIComponent(
+                          data.dossierNumber
+                        )}`
+                      )
+                        .then((res) => res.json())
+                        .then((result) => {
+                          if (result && result.success && result.delivery) {
+                            // Met à jour toutes les cellules de la ligne
+                            const delivery = result.delivery;
+                            // Adapter ici selon l'ordre des colonnes du tableau
+                            // Exemple : [dossier-id, client, agent, statut, ...]
+                            if (row.querySelector(".dossier-id")) {
+                              row.querySelector(".dossier-id").textContent =
+                                delivery.dossier_number || delivery.id;
                             }
-                          });
-                        }
-                        if (statutIdx !== -1) {
-                          statutCell = row.cells[statutIdx];
-                        }
-                      }
-                      if (statutCell) {
-                        statutCell.textContent = "Mise en livraison";
-                        statutCell.style.color = "#059669";
-                        statutCell.style.fontWeight = "700";
-                      }
+                            if (row.querySelector(".client-nom")) {
+                              row.querySelector(".client-nom").textContent =
+                                delivery.client_name || "";
+                            }
+                            if (row.querySelector(".agent-nom")) {
+                              row.querySelector(".agent-nom").textContent =
+                                delivery.employee_name || "";
+                            }
+                            if (row.querySelector(".statut-dossier")) {
+                              row.querySelector(".statut-dossier").textContent =
+                                "Mise en livraison";
+                              row.querySelector(".statut-dossier").style.color =
+                                "#059669";
+                              row.querySelector(
+                                ".statut-dossier"
+                              ).style.fontWeight = "700";
+                            }
+                            // Ajoutez ici d'autres cellules à mettre à jour si besoin
+                          }
+                        });
                     }
                   });
+                }
+                // Mise à jour de la carte "Dossiers en retard" en temps réel
+                if (typeof updateCarteDossiersRetard === "function") {
+                  updateCarteDossiersRetard();
                 }
               }
             } catch (e) {}
