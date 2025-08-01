@@ -2106,6 +2106,7 @@
                       const traductionStatuts = {
                         pending: "En attente",
                         delivered: "Livrée",
+
                         pending_acconier: "En attente acconier",
 
                         Inconnu: "Inconnu",
@@ -2845,6 +2846,50 @@
           };
         }
       });
+    </script>
+    <!-- --- WebSocket pour synchroniser la liste des dossiers en retard en temps réel --- -->
+    <script>
+      (function () {
+        let ws;
+        function connectWebSocket() {
+          // Utilise le bon endpoint selon l'environnement
+          const wsUrl =
+            window.location.hostname === "localhost"
+              ? "ws://localhost:3000"
+              : "wss://plateformdesuivie-its-service-1cjx.onrender.com";
+          ws = new WebSocket(wsUrl);
+          ws.onopen = function () {
+            // Optionnel : log
+          };
+          ws.onmessage = function (event) {
+            try {
+              const data = JSON.parse(event.data);
+              // Si un dossier a changé de statut (mise en livraison), on met à jour la popup si elle est ouverte
+              if (
+                data.type === "bl_status_update" ||
+                data.type === "container_status_update"
+              ) {
+                // Recharger la liste des dossiers en retard si la popup est ouverte
+                const popupRetard = document.getElementById(
+                  "popupDossiersRetard"
+                );
+                if (popupRetard && popupRetard.style.display === "flex") {
+                  // Simule un clic sur la carte pour rafraîchir la liste
+                  const carteRetard = document.querySelector(
+                    ".dossier-retard.etat-card"
+                  );
+                  if (carteRetard) carteRetard.click();
+                }
+              }
+            } catch (e) {}
+          };
+          ws.onclose = function () {
+            // Reconnexion auto après 2s
+            setTimeout(connectWebSocket, 2000);
+          };
+        }
+        connectWebSocket();
+      })();
     </script>
   </body>
 </html>
