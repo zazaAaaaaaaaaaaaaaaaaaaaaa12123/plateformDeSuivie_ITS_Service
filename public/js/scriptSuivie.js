@@ -617,7 +617,9 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 // --- WebSocket temps réel pour les nouvelles livraisons (ordre de livraison créé) ---
-let wsLivraison = null;
+if (typeof wsLivraison === "undefined") {
+  var wsLivraison = null;
+}
 function initWebSocketLivraison() {
   const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
@@ -6729,6 +6731,46 @@ if (window["WebSocket"]) {
       document.body.removeChild(link);
     }
 
+    // Fonction utilitaire globale pour mapper le statut en texte lisible
+    function mapStatus(status) {
+      if (!status) return "-";
+      const normalized = status.toLowerCase();
+      if (["livré", "livre", "livree", "livrée"].includes(normalized))
+        return "livré";
+      if (
+        [
+          "rejeté",
+          "rejete",
+          "rejetee",
+          "rejetée",
+          "rejected_acconier",
+          "rejected_by_employee",
+        ].includes(normalized)
+      )
+        return "rejeté";
+      if (
+        [
+          "en attente",
+          "attente",
+          "pending",
+          "pending_acconier",
+          "awaiting_delivery_acconier",
+        ].includes(normalized)
+      )
+        return "en attente";
+      if (
+        [
+          "en cours",
+          "encours",
+          "in progress",
+          "en-cours",
+          "in_progress_acconier",
+        ].includes(normalized)
+      )
+        return "en cours";
+      return "en cours";
+    }
+
     // Fonction pour ouvrir une modale de détail d'opération (réutilise la modale globale si possible)
     function showOperationDetailModal(op) {
       // Expose l'objet d'opération dans la console pour debug
@@ -6752,51 +6794,11 @@ if (window["WebSocket"]) {
         closeModalBtn = document.getElementById("closeModalBtn");
       }
       // Remplir le contenu
-
-      // Utilise le champ backend si dispo, sinon fallback JS
-      function mapStatus(status) {
-        if (!status) return "-";
-        const normalized = status.toLowerCase();
-        if (["livré", "livre", "livree", "livrée"].includes(normalized))
-          return "livré";
-        if (
-          [
-            "rejeté",
-            "rejete",
-            "rejetee",
-            "rejetée",
-            "rejected_acconier",
-            "rejected_by_employee",
-          ].includes(normalized)
-        )
-          return "rejeté";
-        if (
-          [
-            "en attente",
-            "attente",
-            "pending",
-            "pending_acconier",
-            "awaiting_delivery_acconier",
-          ].includes(normalized)
-        )
-          return "en attente";
-        if (
-          [
-            "en cours",
-            "encours",
-            "in progress",
-            "en-cours",
-            "in_progress_acconier",
-          ].includes(normalized)
-        )
-          return "en cours";
-        return "en cours";
-      }
       let displayStatus =
         op.delivery_status_acconier_fr ||
         mapStatus(op.delivery_status_acconier || op.status || "");
 
-      // Nouvelle version : chaque info dans une "carte" moderne, responsive, business-friendly
+      // Nouvelle version : chaque info dans une fvhwhuhijvhj "carte" moderne, responsive, business-friendly
       modalContent.innerHTML = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 28px;">
           <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
