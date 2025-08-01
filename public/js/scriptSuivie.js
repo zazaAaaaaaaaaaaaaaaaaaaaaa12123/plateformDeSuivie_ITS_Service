@@ -617,9 +617,7 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 // --- WebSocket temps réel pour les nouvelles livraisons (ordre de livraison créé) ---
-if (typeof wsLivraison === "undefined") {
-  var wsLivraison = null;
-}
+let wsLivraison = null;
 function initWebSocketLivraison() {
   const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
@@ -6731,46 +6729,6 @@ if (window["WebSocket"]) {
       document.body.removeChild(link);
     }
 
-    // Fonction utilitaire globale pour mapper le statut en texte lisible
-    function mapStatus(status) {
-      if (!status) return "-";
-      const normalized = status.toLowerCase();
-      if (["livré", "livre", "livree", "livrée"].includes(normalized))
-        return "livré";
-      if (
-        [
-          "rejeté",
-          "rejete",
-          "rejetee",
-          "rejetée",
-          "rejected_acconier",
-          "rejected_by_employee",
-        ].includes(normalized)
-      )
-        return "rejeté";
-      if (
-        [
-          "en attente",
-          "attente",
-          "pending",
-          "pending_acconier",
-          "awaiting_delivery_acconier",
-        ].includes(normalized)
-      )
-        return "en attente";
-      if (
-        [
-          "en cours",
-          "encours",
-          "in progress",
-          "en-cours",
-          "in_progress_acconier",
-        ].includes(normalized)
-      )
-        return "en cours";
-      return "en cours";
-    }
-
     // Fonction pour ouvrir une modale de détail d'opération (réutilise la modale globale si possible)
     function showOperationDetailModal(op) {
       // Expose l'objet d'opération dans la console pour debug
@@ -6786,19 +6744,103 @@ if (window["WebSocket"]) {
           "fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50";
         modal.innerHTML = `<div class='bg-white p-6 rounded-lg shadow-xl max-w-lg w-full m-4 relative'>
           <button id='closeModalBtn' class='absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-2xl font-bold'>&times;</button>
-          <h3 class='text-2xl font-bold mb-4 text-gray-800'>Numéro TC(s)</h3>
+          <h3 class='text-2xl font-bold mb-4 text-gray-800'>Détails de l'opération</h3>
           <div id='modalContent' class='text-gray-700 space-y-2 max-h-96 overflow-y-auto p-4'></div>
         </div>`;
         document.body.appendChild(modal);
         modalContent = document.getElementById("modalContent");
         closeModalBtn = document.getElementById("closeModalBtn");
       }
-      // Remplir le contenu : juste le N°TC(s)suyg
+      // Remplir le contenu
+
+      // Utilise le champ backend si dispo, sinon fallback JS
+      function mapStatus(status) {
+        if (!status) return "-";
+        const normalized = status.toLowerCase();
+        if (["livré", "livre", "livree", "livrée"].includes(normalized))
+          return "livré";
+        if (
+          [
+            "rejeté",
+            "rejete",
+            "rejetee",
+            "rejetée",
+            "rejected_acconier",
+            "rejected_by_employee",
+          ].includes(normalized)
+        )
+          return "rejeté";
+        if (
+          [
+            "en attente",
+            "attente",
+            "pending",
+            "pending_acconier",
+            "awaiting_delivery_acconier",
+          ].includes(normalized)
+        )
+          return "en attente";
+        if (
+          [
+            "en cours",
+            "encours",
+            "in progress",
+            "en-cours",
+            "in_progress_acconier",
+          ].includes(normalized)
+        )
+          return "en cours";
+        return "en cours";
+      }
+      let displayStatus =
+        op.delivery_status_acconier_fr ||
+        mapStatus(op.delivery_status_acconier || op.status || "");
+
+      // Nouvelle version : chaque info dans une "carte" moderne, responsive, business-friendly
       modalContent.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 0;">
-          <span style="font-size:1.18em;font-weight:700;color:#2563eb;letter-spacing:0.5px;">${
-            op.container_number || "-"
-          }</span>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 28px;">
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Agent</span>
+            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
+              op.employee_name || "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Date</span>
+            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
+              op.created_at
+                ? new Date(op.created_at).toLocaleDateString("fr-FR")
+                : "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:13px;box-shadow:0 2px 12px #facc1533;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
+            <span style="font-size:0.98em;color:#78350f;font-weight:600;margin-bottom:4px;">Client</span>
+            <span style="font-size:1.13em;font-weight:700;color:#78350f;">${
+              op.client_name || "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:13px;box-shadow:0 2px 12px #facc1533;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
+            <span style="font-size:0.98em;color:#78350f;font-weight:600;margin-bottom:4px;">N° Dossier</span>
+            <span style="font-size:1.13em;font-weight:800;color:#78350f;letter-spacing:0.5px;">${
+              op.dossier_number || op.dossier || "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Conteneur</span>
+            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
+              op.container_number || "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Statut</span>
+            <span style="font-size:1.13em;font-weight:700;color:#2563eb;">${displayStatus}</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Observation</span>
+            <span style="font-size:1.13em;font-weight:500;color:#334155;">${
+              op.observation_acconier || op.delivery_notes || "-"
+            }</span>
+          </div>
         </div>
       `;
       modal.classList.remove("hidden");
@@ -8930,7 +8972,7 @@ if (window["WebSocket"]) {
     document.head.appendChild(style);
   })();
 
-  // Appelle le clignotement après chaque rendu du tableau principaleshdk
+  // Appelle le clignotement après chaque rendu du tableau principal
   const originalApplyCombinedFilters =
     window.applyCombinedFilters || applyCombinedFilters;
   window.applyCombinedFilters = function (...args) {
