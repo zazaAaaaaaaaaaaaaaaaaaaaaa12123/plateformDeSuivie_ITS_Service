@@ -965,7 +965,21 @@ if (containerNumberInput) {
   containerTagsContainer.style.minHeight = "44px";
   containerTagsContainer.style.marginBottom = "6px";
 
-  // Input pour saisir les numéros TC
+  // Ajout d'une textarea pour mode "massif"
+  let containerTextarea = document.createElement("textarea");
+  containerTextarea.className = "container-massive-textarea";
+  containerTextarea.style.display = "none";
+  containerTextarea.style.width = "100%";
+  containerTextarea.style.minHeight = "70px";
+  containerTextarea.style.fontSize = "1em";
+  containerTextarea.style.border = "1.5px solid #2563eb";
+  containerTextarea.style.borderRadius = "7px";
+  containerTextarea.style.padding = "7px 8px";
+  containerTextarea.style.marginTop = "4px";
+  containerTextarea.placeholder =
+    "Collez ou saisissez plusieurs N°TC séparés par une virgule, un point-virgule ou un retour à la ligne";
+
+  // Input pour saisir les numéros TC (mode tags)
   containerTagsInput = document.createElement("input");
   containerTagsInput.type = "text";
   containerTagsInput.placeholder =
@@ -994,62 +1008,85 @@ if (containerNumberInput) {
   // Ajout input + icône dans le conteneur
   containerTagsContainer.appendChild(containerTagsInput);
   containerTagsContainer.appendChild(enterIcon);
+  // Ajout de la textarea (masquée par défaut)
+  containerTagsContainer.appendChild(containerTextarea);
   // On insère le conteneur juste avant l'input caché
   containerNumberInput.parentNode.insertBefore(
     containerTagsContainer,
     containerNumberInput
   );
 
-  // Fonction d'affichage des tags
+  // Fonction d'affichage des tags OU textarea selon le nombre
   function renderContainerTags() {
-    // Supprime tous les tags sauf l'input et l'icône
-    while (
-      containerTagsContainer.firstChild &&
-      containerTagsContainer.firstChild !== containerTagsInput &&
-      containerTagsContainer.firstChild !== enterIcon
-    ) {
-      containerTagsContainer.removeChild(containerTagsContainer.firstChild);
-    }
-    // Ajoute chaque tag
-    containerTags.forEach((tag, idx) => {
-      const tagEl = document.createElement("span");
-      tagEl.className = "tag-item";
-      tagEl.textContent = tag;
-      tagEl.style.background = "#2563eb";
-      tagEl.style.color = "#fff";
-      tagEl.style.padding = "3px 10px";
-      tagEl.style.borderRadius = "16px";
-      tagEl.style.display = "flex";
-      tagEl.style.alignItems = "center";
-      tagEl.style.fontSize = "0.98em";
-      tagEl.style.gap = "6px";
-      tagEl.style.marginRight = "2px";
-      // Bouton croix
-      const removeBtn = document.createElement("button");
-      removeBtn.type = "button";
-      removeBtn.innerHTML = "&times;";
-      removeBtn.style.background = "none";
-      removeBtn.style.border = "none";
-      removeBtn.style.color = "#fff";
-      removeBtn.style.fontWeight = "bold";
-      removeBtn.style.cursor = "pointer";
-      removeBtn.style.fontSize = "1.1em";
-      removeBtn.onclick = () => {
-        containerTags.splice(idx, 1);
-        renderContainerTags();
-        renderContainerFootTypes();
-      };
-      tagEl.appendChild(removeBtn);
-      containerTagsContainer.insertBefore(tagEl, containerTagsInput);
-    });
-    // Affiche ou masque l'icône Entrée selon la saisie
-    if (containerTagsInput.value.trim()) {
-      enterIcon.style.display = "inline-block";
-    } else {
+    // Si on est en mode textarea (8 tags ou plus)
+    if (containerTags.length >= 8) {
+      // Masquer les tags et l'input, afficher la textarea
+      containerTagsInput.style.display = "none";
       enterIcon.style.display = "none";
+      // On met tous les tags dans la textarea, séparés par virgule
+      containerTextarea.value = containerTags.join(", ");
+      containerTextarea.style.display = "block";
+      // Synchronise la valeur cachée
+      containerNumberInput.value = containerTextarea.value;
+      // Rafraîchir la zone dynamique des types de pied
+      renderContainerFootTypes();
+      return;
+    } else {
+      // Mode tags classique
+      containerTextarea.style.display = "none";
+      containerTagsInput.style.display = "inline-block";
+      // Supprime tous les tags sauf l'input, l'icône et la textarea
+      while (
+        containerTagsContainer.firstChild &&
+        containerTagsContainer.firstChild !== containerTagsInput &&
+        containerTagsContainer.firstChild !== enterIcon &&
+        containerTagsContainer.firstChild !== containerTextarea
+      ) {
+        containerTagsContainer.removeChild(containerTagsContainer.firstChild);
+      }
+      // Ajoute chaque tag
+      containerTags.forEach((tag, idx) => {
+        const tagEl = document.createElement("span");
+        tagEl.className = "tag-item";
+        tagEl.textContent = tag;
+        tagEl.style.background = "#2563eb";
+        tagEl.style.color = "#fff";
+        tagEl.style.padding = "3px 10px";
+        tagEl.style.borderRadius = "16px";
+        tagEl.style.display = "flex";
+        tagEl.style.alignItems = "center";
+        tagEl.style.fontSize = "0.98em";
+        tagEl.style.gap = "6px";
+        tagEl.style.marginRight = "2px";
+        // Bouton croix
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.innerHTML = "&times;";
+        removeBtn.style.background = "none";
+        removeBtn.style.border = "none";
+        removeBtn.style.color = "#fff";
+        removeBtn.style.fontWeight = "bold";
+        removeBtn.style.cursor = "pointer";
+        removeBtn.style.fontSize = "1.1em";
+        removeBtn.onclick = () => {
+          containerTags.splice(idx, 1);
+          renderContainerTags();
+          renderContainerFootTypes();
+        };
+        tagEl.appendChild(removeBtn);
+        containerTagsContainer.insertBefore(tagEl, containerTagsInput);
+      });
+      // Affiche ou masque l'icône Entrée selon la saisie
+      if (containerTagsInput.value.trim()) {
+        enterIcon.style.display = "inline-block";
+      } else {
+        enterIcon.style.display = "none";
+      }
+      // Synchronise la valeur cachée
+      containerNumberInput.value = containerTags.join(", ");
+      // Rafraîchir la zone dynamique des types de pied
+      renderContainerFootTypes();
     }
-    // Rafraîchir la zone dynamique des types de pied à chaque modif de tags
-    renderContainerFootTypes();
   }
 
   // Ajout d'un spinner et validation stricte TC (4 lettres + 7 chiffres)
@@ -1131,7 +1168,7 @@ if (containerNumberInput) {
       } else {
         hideTCError();
       }
-    }, 600); // délai court pour laisser le temps de saisir
+    }, 600);
   });
 
   // Ajout par touche Entrée, virgule, point-virgule
@@ -1148,7 +1185,6 @@ if (containerNumberInput) {
         renderContainerTags();
         return;
       }
-      // Validation stricte immédiate
       if (value.length !== 11) {
         showTCError("Le numéro TC doit comporter exactement 11 caractères.");
         return;
@@ -1172,7 +1208,6 @@ if (containerNumberInput) {
       if (tcSpinnerTimeout) clearTimeout(tcSpinnerTimeout);
       tcSpinnerTimeout = setTimeout(() => {
         hideTCSpinner();
-        // Ne valide pas ici, juste spinner visuel
       }, 3000);
     } else {
       hideTCSpinner();
@@ -1204,7 +1239,6 @@ if (containerNumberInput) {
       renderContainerTags();
       return;
     }
-    // Validation stricte immédiate (même logique que keydown)
     if (value.length !== 11) {
       showTCError("Le numéro TC doit comporter exactement 11 caractères.");
       return;
@@ -1223,20 +1257,41 @@ if (containerNumberInput) {
   // Affiche l'icône dès qu'on tape
   containerTagsInput.addEventListener("input", renderContainerTags);
 
+  // Gestion de la textarea (mode massif)
+  containerTextarea.addEventListener("input", function () {
+    // Split sur virgule, point-virgule, retour à la ligne
+    let vals = containerTextarea.value
+      .split(/[\n,;]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    containerTags = vals;
+    // Synchronise la valeur cachée
+    containerNumberInput.value = containerTextarea.value;
+    // Rafraîchir la zone dynamique des types de pied
+    renderContainerFootTypes();
+    // Si on repasse sous 8, on rebascule en mode tags
+    if (containerTags.length < 8) {
+      renderContainerTags();
+    }
+  });
+
   // Synchronise la valeur cachée pour compatibilité backend
   function syncHiddenInput() {
-    containerNumberInput.value = containerTags.join(", ");
+    if (containerTags.length >= 8) {
+      containerNumberInput.value = containerTextarea.value;
+    } else {
+      containerNumberInput.value = containerTags.join(", ");
+    }
   }
   // À chaque modif de tags, on synchronise
   const observer = new MutationObserver(syncHiddenInput);
   observer.observe(containerTagsContainer, { childList: true, subtree: true });
-  // Synchronise aussi à chaque ajout/suppression
   containerTagsInput.addEventListener("blur", syncHiddenInput);
   containerTagsInput.addEventListener("input", syncHiddenInput);
+  containerTextarea.addEventListener("input", syncHiddenInput);
   // Initial
   renderContainerTags();
   syncHiddenInput();
-  // Affiche la zone dynamique au chargement si TC déjà présents
   renderContainerFootTypes();
 }
 
