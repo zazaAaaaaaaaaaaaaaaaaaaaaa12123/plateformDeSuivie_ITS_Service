@@ -13,8 +13,7 @@ app.use((req, res, next) => {
     // Redirige vers le domaine -1cjx, en gardant le chemin et la query
     return res.redirect(
       301,
-      "https://plateformdesuivie-its-service-1cjx.onrender.com" +
-        req.originalUrl
+      "https://plateformdesuivie-its-service.onrender.com" + req.originalUrl
     );
   }
   next();
