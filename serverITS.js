@@ -20,6 +20,26 @@ app.use((req, res, next) => {
 });
 
 const cors = require("cors");
+
+// Configuration CORS pour autoriser les deux domaines Render
+const allowedOrigins = [
+  "https://plateformdesuivie-its-service.onrender.com",
+  "https://plateformdesuivie-its-service-1cjx.onrender.com",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Autorise les requêtes sans origin (ex: Postman) ou si l'origine est dans la liste
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // Active si tu utilises des cookies ou l'authentification
+  })
+);
 const path = require("path");
 const WebSocket = require("ws");
 // const bcrypt = require("bcryptjs"); // SUPPRIMÉ doublon, voir plus bas
