@@ -4,49 +4,23 @@ const multer = require("multer");
 const { Pool } = require("pg");
 const app = express();
 // Redirection automatique vers le domaine -1cjx si on accède au domaine principal
-// Redirection automatique vers le domaine principal UNIQUEMENT pour les requêtes de navigation (pas d'API ni d'AJAX)
 app.use((req, res, next) => {
-  const isApiOrAjax =
-    req.path.startsWith("/api") ||
-    req.path.startsWith("/deliveries") ||
-    req.xhr ||
-    req.headers.accept?.includes("application/json");
   if (
     req.hostname &&
-    req.hostname.includes("plateformdesuivie-its-service-1cjx.onrender.com") &&
-    !req.hostname.includes("plateformdesuivie-its-service.onrender.com") &&
-    !isApiOrAjax
+    req.hostname.includes("plateformdesuivie-its-service.onrender.com") &&
+    !req.hostname.includes("plateformdesuivie-its-service-1cjx.onrender.com")
   ) {
-    // Redirige uniquement les requêtes de navigation (HTML)
+    // Redirige vers le domaine -1cjx, en gardant le chemin et la query
     return res.redirect(
       301,
-      "https://plateformdesuivie-its-service.onrender.com" + req.originalUrl
+      "https://plateformdesuivie-its-service-1cjx.onrender.com" +
+        req.originalUrl
     );
   }
   next();
 });
 
 const cors = require("cors");
-
-// Configuration CORS pour autoriser les deux domaines Render
-const allowedOrigins = [
-  "https://plateformdesuivie-its-service.onrender.com",
-  "https://plateformdesuivie-its-service-1cjx.onrender.com",
-];
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Autorise les requêtes sans origin (ex: Postman) ou si l'origine est dans la liste
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true, // Active si tu utilises des cookies ou l'authentification
-  })
-);
 const path = require("path");
 const WebSocket = require("ws");
 // const bcrypt = require("bcryptjs"); // SUPPRIMÉ doublon, voir plus bas
@@ -3188,7 +3162,7 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
     const wss = req.app.get("wss");
     const updatedDelivery = updateRes.rows[0];
     const alertMessage = `Statut du conteneur '${containerNumber}' mis à jour à '${status}'.`;
-    // Calcul du nombre de conteneurs livrés et du total pour cette livraison
+    // Calcul du nombre de conteneurs livrés et du total dbdsjpour cette livraison
     let total = 0;
     let delivered = 0;
     let tcList = [];
