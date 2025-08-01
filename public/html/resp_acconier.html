@@ -1302,6 +1302,60 @@
         }
       });
     </script>
+    <script>
+      // --- Flash sur la ligne du dossier ciblé depuis le dashboard ---
+      document.addEventListener("DOMContentLoaded", function () {
+        // Fonction utilitaire pour récupérer le paramètre dossier dans l'URL
+        function getParam(name) {
+          const url = new URL(window.location.href);
+          return url.searchParams.get(name);
+        }
+        const dossierId = getParam("dossier");
+        if (dossierId) {
+          // Fonction pour flasher la ligne
+          function flashRow(row) {
+            if (!row) return;
+            let count = 0;
+            const maxFlashes = 5;
+            function doFlash() {
+              row.classList.add("row-blink-green");
+              setTimeout(() => {
+                row.classList.remove("row-blink-green");
+                count++;
+                if (count < maxFlashes) setTimeout(doFlash, 180);
+              }, 180);
+            }
+            doFlash();
+            // Scroll vers la ligne
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          // Attend que le tableau soit chargé
+          function tryHighlight() {
+            const tbody = document.getElementById("deliveriesTableBody");
+            if (!tbody) return;
+            // Cherche la ligne qui contient l'identifiant du dossier
+            let foundRow = null;
+            Array.from(tbody.rows).forEach((tr) => {
+              Array.from(tr.cells).forEach((td) => {
+                if (
+                  td.textContent &&
+                  td.textContent.trim().includes(dossierId)
+                ) {
+                  foundRow = tr;
+                }
+              });
+            });
+            if (foundRow) {
+              flashRow(foundRow);
+            } else {
+              // Si pas trouvé, réessaie après un court délai (cas où le tableau se charge en asynchrone)
+              setTimeout(tryHighlight, 400);
+            }
+          }
+          tryHighlight();
+        }
+      });
+    </script>
   </body>
 </html>
 <!--djkhfbzqjd-->
