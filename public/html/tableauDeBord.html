@@ -1212,7 +1212,73 @@
                 Dossiers en attente de règlement avant traitement.
               </div>
             </div>
-            <!-- La pop-up dossiers en attente de paiement a été supprimée -->
+            <!-- Popup dossiers en attente de paiement -->
+            <div
+              id="popupAttentePaiement"
+              style="
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(30, 41, 59, 0.55);
+                z-index: 10000;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <div
+                style="
+                  background: #fff;
+                  border-radius: 18px;
+                  box-shadow: 0 8px 40px #2563eb44;
+                  padding: 32px 28px 24px 28px;
+                  max-width: 700px;
+                  width: 96vw;
+                  max-height: 90vh;
+                  overflow-y: auto;
+                  position: relative;
+                "
+              >
+                <button
+                  id="closePopupAttentePaiement"
+                  style="
+                    position: absolute;
+                    top: 18px;
+                    right: 18px;
+                    background: none;
+                    border: none;
+                    font-size: 1.5em;
+                    color: #2563eb;
+                    cursor: pointer;
+                  "
+                >
+                  &times;
+                </button>
+                <h2
+                  style="
+                    font-size: 1.18em;
+                    font-weight: 700;
+                    color: #f59e0b;
+                    margin-bottom: 18px;
+                    text-align: center;
+                  "
+                >
+                  Dossiers en attente de paiement
+                </h2>
+                <div id="listeAttentePaiement" style="min-height: 40px"></div>
+                <div
+                  id="msgAttentePaiement"
+                  style="
+                    margin-top: 10px;
+                    font-size: 0.98em;
+                    text-align: center;
+                    color: #dc3545;
+                  "
+                ></div>
+              </div>
+            </div>
 
             <!-- Popup détails dossier -->
             <div
@@ -1313,6 +1379,145 @@
                 font-weight: 700;
               }
             </style>
+            <script>
+              // Gestion pop-up dossiers en attente de paiement
+              document.getElementById("carteAttentePaiement").onclick =
+                function () {
+                  document.getElementById(
+                    "popupAttentePaiement"
+                  ).style.display = "flex";
+                  chargerDossiersAttentePaiement();
+                };
+              document.getElementById("closePopupAttentePaiement").onclick =
+                function () {
+                  document.getElementById(
+                    "popupAttentePaiement"
+                  ).style.display = "none";
+                };
+              document.getElementById("closePopupDetailDossier").onclick =
+                function () {
+                  document.getElementById("popupDetailDossier").style.display =
+                    "none";
+                };
+
+              // Fonction pour charger les dossiers en attente de paiement
+              function chargerDossiersAttentePaiement() {
+                const listeDiv = document.getElementById(
+                  "listeAttentePaiement"
+                );
+                const msgDiv = document.getElementById("msgAttentePaiement");
+                listeDiv.innerHTML =
+                  '<div style="text-align:center;color:#888;">Chargement...</div>';
+                msgDiv.textContent = "";
+                fetch(
+                  "https://plateformdesuivie-its-service-1cjx.onrender.com/api/dossiers/attente-paiement"
+                )
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (!data.success || !Array.isArray(data.dossiers)) {
+                      listeDiv.innerHTML = "";
+                      msgDiv.textContent = "Aucun dossier trouvé.";
+                      return;
+                    }
+                    // Tri par date décroissante (plus récent en haut)
+                    data.dossiers.sort(
+                      (a, b) => new Date(b.date) - new Date(a.date)
+                    );
+                    if (data.dossiers.length === 0) {
+                      listeDiv.innerHTML =
+                        '<div style="text-align:center;color:#888;">Aucun dossier en attente de paiement.</div>';
+                      return;
+                    }
+                    // Affichage sous forme de tableau lisible
+                    let table = `<div style='overflow-x:auto;'><table style='width:100%;min-width:520px;border-collapse:collapse;'>`;
+                    table += `<thead><tr style='background:#fff7e3;'><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Date</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Agent</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>Client</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° BL</th><th style='padding:8px 6px;border-bottom:1.5px solid #f59e0b;'>N° Dossier</th></tr></thead><tbody>`;
+                    data.dossiers.forEach((dossier) => {
+                      table += `<tr class='dossier-item-liste' style='background:linear-gradient(90deg,#fff7e3 80%,#f8fafc 100%);'>`;
+                      table += `<td style='padding:8px 6px;font-size:0.98em;color:#b26a00;font-weight:600;'>${
+                        dossier.date
+                          ? new Date(dossier.date).toLocaleDateString("fr-FR")
+                          : ""
+                      }</td>`;
+                      table += `<td style='padding:8px 6px;font-size:1.08em;color:#1d3557;font-weight:700;'>${
+                        dossier.agent || "-"
+                      }</td>`;
+                      table += `<td style='padding:8px 6px;'>${
+                        dossier.nom || "-"
+                      }</td>`;
+                      table += `<td style='padding:8px 6px;'>${
+                        dossier.bl || "-"
+                      }</td>`;
+                      table += `<td style='padding:8px 6px;'>${
+                        dossier.dossier || "-"
+                      }</td>`;
+                      table += `</tr>`;
+                    });
+                    table += `</tbody></table></div>`;
+                    listeDiv.innerHTML = table;
+                  })
+                  .catch(() => {
+                    listeDiv.innerHTML = "";
+                    msgDiv.textContent = "Erreur de chargement.";
+                  });
+              }
+
+              // Afficher le détail d'un dossier dans un pop-up
+              function afficherDetailDossier(dossier) {
+                const popup = document.getElementById("popupDetailDossier");
+                const contenu = document.getElementById("contenuDetailDossier");
+                contenu.innerHTML =
+                  '<div style="text-align:center;color:#888;">Chargement...</div>';
+                popup.style.display = "flex";
+                // Si on a déjà toutes les infos, on affiche, sinon on peut re-fetcher par id
+                if (dossier && dossier.id) {
+                  fetch(
+                    `https://plateformdesuivie-its-service-1cjx.onrender.com/api/dossiers/${dossier.id}`
+                  )
+                    .then((res) => res.json())
+                    .then((data) => {
+                      if (!data.success || !data.dossier) {
+                        contenu.innerHTML =
+                          '<div style="color:#dc3545;text-align:center;">Dossier introuvable.</div>';
+                        return;
+                      }
+                      const d = data.dossier;
+                      contenu.innerHTML = `<div style='font-size:1.08em;font-weight:700;color:#2563eb;margin-bottom:8px;'>${
+                        d.nom || d.reference || "Dossier"
+                      }</div>
+                  <div style='margin-bottom:8px;'><b>Date création :</b> ${
+                    d.date_creation
+                      ? new Date(d.date_creation).toLocaleString("fr-FR")
+                      : "-"
+                  }</div>
+                  <div style='margin-bottom:8px;'><b>Statut :</b> ${
+                    d.statut || "-"
+                  }</div>
+                  <div style='margin-bottom:8px;'><b>Client :</b> ${
+                    d.client || "-"
+                  }</div>
+                  <div style='margin-bottom:8px;'><b>Montant :</b> ${
+                    d.montant ? d.montant + " €" : "-"
+                  }</div>
+                  <div style='margin-bottom:8px;'><b>Description :</b> ${
+                    d.description || "-"
+                  }</div>
+                  <div style='margin-bottom:8px;'><b>Référence :</b> ${
+                    d.reference || "-"
+                  }</div>
+                  <div style='margin-bottom:8px;'><b>Autres infos :</b> ${
+                    d.autres_infos || "-"
+                  }</div>`;
+                    })
+                    .catch(() => {
+                      contenu.innerHTML =
+                        '<div style="color:#dc3545;text-align:center;">Erreur de chargement.</div>';
+                    });
+                } else {
+                  contenu.innerHTML =
+                    '<div style="color:#dc3545;text-align:center;">Dossier non valide.</div>';
+                }
+              }
+            </script>
             <div class="etat-card dossier-cours animated-card">
               <div class="etat-icon"><i class="fas fa-truck-loading"></i></div>
               <div class="etat-title">En cours de mise en livraison</div>
@@ -1336,65 +1541,6 @@
               <div class="etat-title">Dossier en retard</div>
               <div class="etat-desc">
                 Dossiers dont la livraison a dépassé le délai prévu.
-              </div>
-            </div>
-            <!-- Popup dossiers en retard -->
-            <div
-              id="popupDossiersRetard"
-              style="
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background: rgba(220, 53, 69, 0.18);
-                z-index: 10001;
-                align-items: center;
-                justify-content: center;
-              "
-            >
-              <div
-                style="
-                  background: #fff;
-                  border-radius: 18px;
-                  box-shadow: 0 8px 40px #dc354544;
-                  padding: 32px 28px 24px 28px;
-                  max-width: 600px;
-                  width: 95vw;
-                  max-height: 88vh;
-                  overflow-y: auto;
-                  position: relative;
-                  border: 2.5px solid #dc3545;
-                "
-              >
-                <button
-                  id="closePopupDossiersRetard"
-                  style="
-                    position: absolute;
-                    top: 18px;
-                    right: 18px;
-                    background: none;
-                    border: none;
-                    font-size: 1.5em;
-                    color: #dc3545;
-                    cursor: pointer;
-                  "
-                >
-                  &times;
-                </button>
-                <h2
-                  style="
-                    font-size: 1.12em;
-                    font-weight: 700;
-                    color: #dc3545;
-                    margin-bottom: 18px;
-                    text-align: center;
-                  "
-                >
-                  Dossiers en retard
-                </h2>
-                <div id="contenuDossiersRetard"></div>
               </div>
             </div>
           </div>
@@ -1734,120 +1880,6 @@
               }
               typeWriter();
             }
-            // Ajout du filtre : redirection sur la carte "En attente de paiement"
-            var carteAttentePaiement = document.getElementById(
-              "carteAttentePaiement"
-            );
-            if (carteAttentePaiement) {
-              carteAttentePaiement.addEventListener("click", function () {
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
-              });
-            }
-            // --- Ajout gestion carte dossier en retard ---
-            // Fonction de filtrage métier des dossiers en retard (copiée de scriptRespAcconier.js)
-            function getLateDeliveries(allDeliveries) {
-              const now = new Date();
-              return (allDeliveries || []).filter((d) => {
-                let dDate = d.delivery_date || d.created_at;
-                if (!dDate) return false;
-                let dateObj = new Date(dDate);
-                if (isNaN(dateObj.getTime())) return false;
-                const diffDays = Math.floor(
-                  (now - dateObj) / (1000 * 60 * 60 * 24)
-                );
-                if (diffDays <= 2) return false;
-                if (d.delivery_status_acconier === "en attente de paiement") {
-                  return true;
-                }
-                let blList = [];
-                if (Array.isArray(d.bl_number)) {
-                  blList = d.bl_number.filter(Boolean);
-                } else if (typeof d.bl_number === "string") {
-                  blList = d.bl_number.split(/[,;\s]+/).filter(Boolean);
-                }
-                let blStatuses = blList.map((bl) =>
-                  d.bl_statuses && d.bl_statuses[bl]
-                    ? d.bl_statuses[bl]
-                    : "aucun"
-                );
-                if (
-                  blStatuses.length > 0 &&
-                  blStatuses.every((s) => s === "mise_en_livraison")
-                ) {
-                  return false;
-                }
-                if (
-                  d.delivery_status_acconier === "mise_en_livraison_acconier"
-                ) {
-                  return false;
-                }
-                return true;
-              });
-            }
-
-            var carteRetard = document.querySelector(
-              ".dossier-retard.etat-card"
-            );
-            var popupRetard = document.getElementById("popupDossiersRetard");
-            var closeRetard = document.getElementById(
-              "closePopupDossiersRetard"
-            );
-            var contenuRetard = document.getElementById(
-              "contenuDossiersRetard"
-            );
-            if (carteRetard && popupRetard && contenuRetard) {
-              carteRetard.addEventListener("click", function () {
-                // Utilise la nouvelle route backend pour récupérer les dossiers en retard
-                fetch("/api/dossiers/retard")
-                  .then((res) => res.json())
-                  .then((lateDossiers) => {
-                    let html = "";
-                    if (!lateDossiers || lateDossiers.length === 0) {
-                      html =
-                        "<div style='color:#dc3545;text-align:center;font-size:1.15em;'>Aucun dossier en retard actuellement.</div>";
-                    } else {
-                      html = `<div style='font-size:1.25em;font-weight:700;color:#dc3545;margin-bottom:10px;text-align:center;'>Dossiers en retard</div>`;
-                      html += `<div style='max-height:60vh;overflow-y:auto;'>`;
-                      html += `<ul style='list-style:none;padding:0;margin:0;'>`;
-                      lateDossiers.forEach((dossier, idx) => {
-                        html += `
-              <li style='background:#fff;border-radius:16px;box-shadow:0 2px 12px #dc354522;margin-bottom:18px;padding:18px 22px;display:flex;align-items:center;gap:18px;position:relative;'>
-                <div style='width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#dc3545 60%,#f87171 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.25em;font-weight:700;box-shadow:0 2px 8px #dc354522;position:absolute;left:12px;top:12px;'>${
-                  idx + 1
-                }</div>
-                <div style='margin-left:54px;'>
-                  <div style='font-size:1.08em;font-weight:700;color:#dc3545;margin-bottom:6px;'><i class='fas fa-folder-open' style='margin-right:7px;'></i> N° Dossier : <span style='font-size:1.15em;'>${
-                    dossier.numero || "-"
-                  }</span></div>
-                  <div style='font-size:1em;color:#2563eb;margin-bottom:2px;'><b>Agent :</b> <span style='color:#374151;'>${
-                    dossier.client || "-"
-                  }</span></div>
-                </div>
-              </li>
-            `;
-                      });
-                      html += `</ul></div>`;
-                    }
-                    contenuRetard.innerHTML = html;
-                    popupRetard.style.display = "flex";
-                  })
-                  .catch(() => {
-                    contenuRetard.innerHTML =
-                      "<div style='color:#dc3545;text-align:center;'>Impossible de charger les dossiers en retard.</div>";
-                    popupRetard.style.display = "flex";
-                  });
-              });
-              if (closeRetard) {
-                closeRetard.onclick = function () {
-                  popupRetard.style.display = "none";
-                };
-                popupRetard.addEventListener("click", function (e) {
-                  if (e.target === popupRetard)
-                    popupRetard.style.display = "none";
-                });
-              }
-            }
           });
           document.addEventListener("DOMContentLoaded", function () {
             // Propagation automatique de la session admin vers les interfaces responsables
@@ -1877,7 +1909,7 @@
                 if (localStorage.getItem("respLivUser")) {
                   window.location.href = "resp_liv.html";
                 } else {
-                  // Rediriger vers la page de logisn livraison si pas de session
+                  // Rediriger vers la page de login livraison si pas de session
                   window.location.href = "login_resp_liv.html";
                 }
               });
@@ -2106,9 +2138,7 @@
                       const traductionStatuts = {
                         pending: "En attente",
                         delivered: "Livrée",
-
                         pending_acconier: "En attente acconier",
-
                         Inconnu: "Inconnu",
                       };
                       moisMap[key].forEach((l) => {
@@ -2847,50 +2877,6 @@
         }
       });
     </script>
-    <!-- --- WebSocket pour synchroniser la liste des dossiers en retard en temps réel --- -->
-    <script>
-      (function () {
-        let ws;
-        function connectWebSocket() {
-          // Utilise le bon endpoint selon l'environnement
-          const wsUrl =
-            window.location.hostname === "localhost"
-              ? "ws://localhost:3000"
-              : "wss://plateformdesuivie-its-service-1cjx.onrender.com";
-          ws = new WebSocket(wsUrl);
-          ws.onopen = function () {
-            // Optionnel : log
-          };
-          ws.onmessage = function (event) {
-            try {
-              const data = JSON.parse(event.data);
-              // Si un dossier a changé de statut (mise en livraison), on met à jour la popup si elle est ouverte
-              if (
-                data.type === "bl_status_update" ||
-                data.type === "container_status_update"
-              ) {
-                // Recharger la liste des dossiers en retard si la popup est ouverte
-                const popupRetard = document.getElementById(
-                  "popupDossiersRetard"
-                );
-                if (popupRetard && popupRetard.style.display === "flex") {
-                  // Simule un clic sur la carte pour rafraîchir la liste
-                  const carteRetard = document.querySelector(
-                    ".dossier-retard.etat-card"
-                  );
-                  if (carteRetard) carteRetard.click();
-                }
-              }
-            } catch (e) {}
-          };
-          ws.onclose = function () {
-            // Reconnexion auto après 2s
-            setTimeout(connectWebSocket, 2000);
-          };
-        }
-        connectWebSocket();
-      })();
-    </script>
   </body>
 </html>
-<!--sydgshSSJj-->
+<!--sydgshbesfdgfj-->
