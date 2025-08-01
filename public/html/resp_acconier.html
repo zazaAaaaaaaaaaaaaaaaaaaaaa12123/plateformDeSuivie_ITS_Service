@@ -1337,15 +1337,16 @@
         }
         const dossierId = getParam("dossier");
         if (dossierId) {
-          // Fonction pour flasher la ligne en rouge
+          // Fonction pour flasher la ligne en rouge (sur chaque cellule)
           function flashRow(row) {
             if (!row) return;
             let count = 0;
             const maxFlashes = 5;
+            const tds = Array.from(row.cells);
             function doFlash() {
-              row.classList.add("row-blink-red");
+              tds.forEach((td) => td.classList.add("row-blink-red"));
               setTimeout(() => {
-                row.classList.remove("row-blink-red");
+                tds.forEach((td) => td.classList.remove("row-blink-red"));
                 count++;
                 if (count < maxFlashes) setTimeout(doFlash, 180);
               }, 180);
