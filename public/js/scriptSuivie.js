@@ -807,12 +807,16 @@ if (window["WebSocket"]) {
             "container_status_update",
             "delivery_deletion_alert",
             "new_delivery_notification",
+            "bl_status_update",
           ];
           if (data && data.type && typesToRefresh.includes(data.type)) {
             loadDeliveries().then(() => {
               if (typeof checkLateContainers === "function")
                 checkLateContainers();
             });
+            if (typeof showCustomAlert === "function" && data.message) {
+              showCustomAlert(data.message, data.alertType || "success", 6000);
+            }
           }
         } catch (e) {
           console.warn(
