@@ -9020,21 +9020,35 @@ if (window["WebSocket"]) {
 // ================== MISE À JOUR STATUT DOSSIER EN TEMPS RÉEL ==================
 function updateDossierStatusCell(dossierNumber, newStatus) {
   if (!deliveriesTableBody) return;
-  // Recherche la ligne avec le bon numéro de dossier
+  // Recherche la ligne avec le bon data-delivery-id
   const tr = Array.from(deliveriesTableBody.querySelectorAll("tr")).find(
     (row) => {
-      const tdDossier = row.querySelector('[data-column-id="dossier_number"]');
-      return (
-        tdDossier && tdDossier.textContent.trim() === dossierNumber.toString()
-      );
+      return row.getAttribute("data-delivery-id") === dossierNumber.toString();
     }
   );
   if (!tr) {
     console.warn("Aucune ligne trouvée pour le dossier:", dossierNumber);
     return;
   }
-  // Met à jour la cellule statut
-  const tdStatut = tr.querySelector('[data-column-id="statut"]');
+  // Trouve l'index des colonnes "N° Dossier" et "Statut" dans le header
+  const ths = Array.from(
+    deliveriesTableBody.parentNode.querySelectorAll("thead th")
+  );
+  let dossierIdx = -1,
+    statutIdx = -1;
+  ths.forEach((th, idx) => {
+    const txt = th.textContent.trim().toLowerCase();
+    if (txt.includes("dossier")) dossierIdx = idx;
+    if (txt.includes("statut")) statutIdx = idx;
+  });
+  if (dossierIdx === -1 || statutIdx === -1) {
+    console.warn(
+      "Colonnes 'N° Dossier' ou 'Statut' non trouvées dans le header."
+    );
+    return;
+  }
+  const tds = Array.from(tr.querySelectorAll("td"));
+  const tdStatut = tds[statutIdx];
   if (!tdStatut) {
     console.warn(
       "Aucune cellule statut trouvée pour le dossier:",
