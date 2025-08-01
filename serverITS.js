@@ -2991,12 +2991,13 @@ app.patch("/deliveries/:id/acconier-status", async (req, res) => {
     if (delivery_status_acconier === "mise_en_livraison_acconier") {
       const updatedDelivery = result.rows[0];
       const wss = req.app.get("wss") || global.wss;
-      const dossierNum = updatedDelivery.dossier_number || updatedDelivery.id;
-      const alertMessage = `Le dossier [${dossierNum}] a été mis en livraison.`;
+      const dossierNumber =
+        updatedDelivery.dossier_number || updatedDelivery.id;
+      const alertMessage = `Le dossier [${dossierNumber}] a été mis en livraison.`;
       const payload = JSON.stringify({
-        type: "dossier_mise_en_livraison",
+        type: "dossier-mise-en-livraison",
         message: alertMessage,
-        dossier_number: dossierNum,
+        dossierNumber: dossierNumber,
         delivery: updatedDelivery,
         alertType: "success",
       });
