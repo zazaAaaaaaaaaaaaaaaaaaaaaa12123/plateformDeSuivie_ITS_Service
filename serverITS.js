@@ -3519,6 +3519,56 @@ app.get("/api/dossiers/attente-paiement", async (req, res) => {
 });
 
 // ===============================
+// ROUTE : Dossiers en retard (pour le tableau de bord)
+// ===============================
+app.get("/api/dossiers/retard", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM livraison_conteneur ORDER BY created_at DESC`
+    );
+    const now = new Date();
+    // Logique métier identique à getLateDeliveries JS
+    const dossiersRetard = (result.rows || []).filter((d) => {
+      let dDate = d.delivery_date || d.created_at;
+      if (!dDate) return false;
+      let dateObj = new Date(dDate);
+      if (isNaN(dateObj.getTime())) return false;
+      const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 2) return false;
+      if (d.delivery_status_acconier === "en attente de paiement") {
+        return true;
+      }
+      let blList = [];
+      if (Array.isArray(d.bl_number)) {
+        blList = d.bl_number.filter(Boolean);
+      } else if (typeof d.bl_number === "string") {
+        blList = d.bl_number.split(/[,;\s]+/).filter(Boolean);
+      }
+      let blStatuses = blList.map((bl) =>
+        d.bl_statuses && d.bl_statuses[bl] ? d.bl_statuses[bl] : "aucun"
+      );
+      if (
+        blStatuses.length > 0 &&
+        blStatuses.every((s) => s === "mise_en_livraison")
+      ) {
+        return false;
+      }
+      if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
+        return false;
+      }
+      return true;
+    });
+    res.json({ success: true, dossiers: dossiersRetard });
+  } catch (err) {
+    console.error("Erreur /api/dossiers/retard :", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération des dossiers en retard.",
+    });
+  }
+});
+
+// ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
 // Cette route doit être TOUT EN BAS, après toutes les routes API !

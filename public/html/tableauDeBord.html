@@ -1745,6 +1745,47 @@
               });
             }
             // --- Ajout gestion carte dossier en retard ---
+            // Fonction de filtrage métier des dossiers en retard (copiée de scriptRespAcconier.js)
+            function getLateDeliveries(allDeliveries) {
+              const now = new Date();
+              return (allDeliveries || []).filter((d) => {
+                let dDate = d.delivery_date || d.created_at;
+                if (!dDate) return false;
+                let dateObj = new Date(dDate);
+                if (isNaN(dateObj.getTime())) return false;
+                const diffDays = Math.floor(
+                  (now - dateObj) / (1000 * 60 * 60 * 24)
+                );
+                if (diffDays <= 2) return false;
+                if (d.delivery_status_acconier === "en attente de paiement") {
+                  return true;
+                }
+                let blList = [];
+                if (Array.isArray(d.bl_number)) {
+                  blList = d.bl_number.filter(Boolean);
+                } else if (typeof d.bl_number === "string") {
+                  blList = d.bl_number.split(/[,;\s]+/).filter(Boolean);
+                }
+                let blStatuses = blList.map((bl) =>
+                  d.bl_statuses && d.bl_statuses[bl]
+                    ? d.bl_statuses[bl]
+                    : "aucun"
+                );
+                if (
+                  blStatuses.length > 0 &&
+                  blStatuses.every((s) => s === "mise_en_livraison")
+                ) {
+                  return false;
+                }
+                if (
+                  d.delivery_status_acconier === "mise_en_livraison_acconier"
+                ) {
+                  return false;
+                }
+                return true;
+              });
+            }
+
             var carteRetard = document.querySelector(
               ".dossier-retard.etat-card"
             );
@@ -1757,11 +1798,9 @@
             );
             if (carteRetard && popupRetard && contenuRetard) {
               carteRetard.addEventListener("click", function () {
-                // Affiche la popup
                 popupRetard.style.display = "flex";
                 contenuRetard.innerHTML =
                   '<div style="text-align:center;color:#2563eb;">Chargement...</div>';
-                // Récupérer les dossiers en retard via l'API
                 fetch("http://localhost:3000/deliveries/status")
                   .then((res) => res.json())
                   .then((data) => {
@@ -1770,16 +1809,13 @@
                         '<div style="color:#dc3545;text-align:center;">Erreur lors du chargement des dossiers en retard.</div>';
                       return;
                     }
-                    // Filtrer les dossiers en retard
-                    var dossiersRetard = data.deliveries.filter(
-                      (liv) => liv.status === "late"
-                    );
+                    // Filtrer les dossiers en retard avec la logique métier
+                    var dossiersRetard = getLateDeliveries(data.deliveries);
                     if (dossiersRetard.length === 0) {
                       contenuRetard.innerHTML =
                         '<div style="color:#dc3545;text-align:center;">Aucun dossier en retard.</div>';
                       return;
                     }
-                    // Générer la liste
                     var html =
                       '<div id="listeDossiersRetard" style="display:flex;flex-direction:column;gap:14px;margin-bottom:8px;">';
                     dossiersRetard.forEach((dossier) => {
@@ -1808,7 +1844,6 @@
                       '<div style="color:#dc3545;text-align:center;">Erreur réseau.</div>';
                   });
               });
-              // Fermeture popup
               if (closeRetard) {
                 closeRetard.onclick = function () {
                   popupRetard.style.display = "none";
