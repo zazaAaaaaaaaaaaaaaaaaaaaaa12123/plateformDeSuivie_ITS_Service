@@ -1395,48 +1395,6 @@ function formatDateForDB(dateString) {
 // --- ROUTES API pour les livraisons uniquement ---
 // =========================================================================
 
-// ROUTE : PATCH du statut du dossier (acconier) avec notification WebSocket
-app.patch("/deliveries/:id/acconier-status", async (req, res) => {
-  const deliveryId = parseInt(req.params.id, 10);
-  const { status } = req.body || {};
-  if (!deliveryId || typeof status !== "string") {
-    return res
-      .status(400)
-      .json({ success: false, message: "Paramètres invalides." });
-  }
-  try {
-    // Met à jour le statut dans la base
-    const result = await pool.query(
-      "UPDATE livraison_conteneur SET delivery_status_acconier = $1 WHERE id = $2 RETURNING dossier_number;",
-      [status, deliveryId]
-    );
-    if (result.rowCount === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Livraison non trouvée." });
-    }
-    // Si le statut est 'mise_en_livraison_acconier', notifier tous les clients WebSocket
-    if (status === "mise_en_livraison_acconier") {
-      const dossierNumber = result.rows[0].dossier_number;
-      wsClients.forEach((client) => {
-        if (client.readyState === 1) {
-          client.send(
-            JSON.stringify({
-              type: "dossier-mise-en-livraison",
-              dossierNumber,
-              deliveryId,
-            })
-          );
-        }
-      });
-    }
-    return res.json({ success: true });
-  } catch (err) {
-    console.error("[PATCH /deliveries/:id/acconier-status] Erreur:", err);
-    return res.status(500).json({ success: false, message: "Erreur serveur." });
-  }
-});
-
 // ROUTE : Suppression de livraisons par liste d'ids
 app.post("/deliveries/delete", async (req, res) => {
   const { ids } = req.body || {};
