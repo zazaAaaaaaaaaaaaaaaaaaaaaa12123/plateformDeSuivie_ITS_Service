@@ -6793,7 +6793,7 @@ if (window["WebSocket"]) {
         modalContent = document.getElementById("modalContent");
         closeModalBtn = document.getElementById("closeModalBtn");
       }
-      // Remplir le contenu : juste le N°TC(s)
+      // Remplir le contenu : juste le N°TC(s)suyg
       modalContent.innerHTML = `
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 0;">
           <span style="font-size:1.18em;font-weight:700;color:#2563eb;letter-spacing:0.5px;">${
