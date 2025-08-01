@@ -2930,10 +2930,13 @@
                 updateCarteDossiersRetard();
               }
               // --- Ajout : synchronisation du statut dossier dans le tableau principal ---
-              if (data.type === "dossier-mise-en-livraison" && data.dossierId) {
+              if (
+                data.type === "dossier-mise-en-livraison" &&
+                data.dossierNumber
+              ) {
                 // Affiche l'alerte personnalisée
                 showCustomAlert(
-                  `Le dossier ${data.dossierId} a été mis en livraison.`,
+                  `Le dossier ${data.dossierNumber} a été mis en livraison.`,
                   "success"
                 );
                 // Met à jour la cellule statut du tableau
@@ -2944,12 +2947,13 @@
                   // Cherche la ligne correspondant au dossier
                   const rows = table.querySelectorAll("tbody tr");
                   rows.forEach((row) => {
-                    // Adapte selon la structure : ici on supposehqvjdh un attribut data-dossier-id ou une cellule contenant l'id
+                    // Adapte selon la structure : ici on suppose un attribut data-dossier-id ou une cellule contenant l'id
                     if (
-                      row.getAttribute("data-dossier-id") == data.dossierId ||
+                      row.getAttribute("data-dossier-id") ==
+                        data.dossierNumber ||
                       (row.querySelector(".dossier-id") &&
                         row.querySelector(".dossier-id").textContent.trim() ==
-                          data.dossierId)
+                          data.dossierNumber)
                     ) {
                       // Cherche la cellule statut (par classe ou index)
                       let statutCell = row.querySelector(".statut-dossier");
@@ -3035,4 +3039,4 @@
     </script>
   </body>
 </html>
-<!--sydgshSSJj-->
+<!--sydgshSSJjkkk-->
