@@ -2880,6 +2880,8 @@
                   );
                   if (carteRetard) carteRetard.click();
                 }
+                // Met à jour la carte Dossiers en retard (sans rechargement)
+                updateCarteDossiersRetard();
               }
             } catch (e) {}
           };
@@ -2887,6 +2889,40 @@
             // Reconnexion auto après 2s
             setTimeout(connectWebSocket, 2000);
           };
+        }
+        // Nouvelle fonction pour mettre à jour la carte Dossiers en retard
+        function updateCarteDossiersRetard() {
+          // Sélectionne l'élément de la carte
+          const carteRetard = document.querySelector(
+            ".dossier-retard.etat-card"
+          );
+          if (!carteRetard) return;
+          // Appel API pour récupérer la liste à jour
+          fetch("/api/dossiers/retard")
+            .then((res) => res.json())
+            .then((dossiers) => {
+              // Met à jour le nombre affiché sur la carte
+              let count = Array.isArray(dossiers) ? dossiers.length : 0;
+              // Cherche l'élément qui affiche le nombre (exemple: .etat-title ou .etat-desc)
+              let title = carteRetard.querySelector(".etat-title");
+              let desc = carteRetard.querySelector(".etat-desc");
+              if (title) {
+                title.textContent = `Dossiers en retard (${count})`;
+              }
+              if (desc) {
+                desc.textContent =
+                  count === 0
+                    ? "Aucun dossier en retard."
+                    : `${count} dossier${count > 1 ? "s" : ""} en retard.`;
+              }
+            })
+            .catch(() => {
+              // En cas d'erreur, affiche un message
+              let title = carteRetard.querySelector(".etat-title");
+              let desc = carteRetard.querySelector(".etat-desc");
+              if (title) title.textContent = "Dossiers en retard";
+              if (desc) desc.textContent = "Erreur de chargement.";
+            });
         }
         connectWebSocket();
       })();
