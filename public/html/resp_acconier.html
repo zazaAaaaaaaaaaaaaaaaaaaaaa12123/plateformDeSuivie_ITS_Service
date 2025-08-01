@@ -511,29 +511,35 @@
         animation: green-blink 1.2s linear 0s 5;
       }
 
-      /* Animation clignotement rouge pour ligne ciblée */
+      /* Animation clignotement rouge pour ligne ciblée - forcée !important */
       @keyframes red-blink {
         0% {
-          background-color: #fecaca;
+          background-color: #fecaca !important;
+          color: #b91c1c !important;
         }
         20% {
-          background-color: #ef4444;
+          background-color: #ef4444 !important;
+          color: #b91c1c !important;
         }
         40% {
-          background-color: #fecaca;
+          background-color: #fecaca !important;
+          color: #b91c1c !important;
         }
         60% {
-          background-color: #ef4444;
+          background-color: #ef4444 !important;
+          color: #b91c1c !important;
         }
         80% {
-          background-color: #fecaca;
+          background-color: #fecaca !important;
+          color: #b91c1c !important;
         }
         100% {
-          background-color: inherit;
+          background-color: inherit !important;
+          color: inherit !important;
         }
       }
       .row-blink-red {
-        animation: red-blink 1.2s linear 0s 5;
+        animation: red-blink 1.2s linear 0s 5 !important;
       }
 
       /* Styles pour l'effet de mise en évidence */
