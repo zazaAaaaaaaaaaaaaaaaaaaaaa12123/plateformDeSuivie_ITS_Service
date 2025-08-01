@@ -2898,73 +2898,19 @@
       (function () {
         let ws;
         function connectWebSocket() {
-          // Utilise le bon endpoint selon l'environnement
           const wsUrl =
             window.location.hostname === "localhost"
               ? "ws://localhost:3000"
               : "wss://plateformdesuivie-its-service-1cjx.onrender.com";
           ws = new WebSocket(wsUrl);
-          ws.onopen = function () {
-            // Optionnel : log
-          };
+          ws.onopen = function () {};
           ws.onmessage = function (event) {
             try {
               const data = JSON.parse(event.data);
-              // Si un dossier a changé de statut (mise en livraison), on met à jour la popup si elle est ouverte
+              // Synchronisation précise du statut dossier dans la colonne "Responsable Acconier" ou "Statut Dossier" sans rechargement
               if (
-                data.type === "bl_status_update" ||
-                data.type === "container_status_update"
-              ) {
-                // Recharger la liste des dossiers en retard si la popup est ouverte
-                const popupRetard = document.getElementById(
-                  "popupDossiersRetard"
-                );
-                if (popupRetard && popupRetard.style.display === "flex") {
-                  // Simule un clic sur la carte pour rafraîchir la liste
-                  const carteRetard = document.querySelector(
-                    ".dossier-retard.etat-card"
-                  );
-                  if (carteRetard) carteRetard.click();
-                }
-                // Met à jour la carte Dossiers en retard (sans rechargement)
-                updateCarteDossiersRetard();
-                // --- Ajout : synchronisation du statut dossier dans le tableau principal ---
-                if (data.dossierNumber) {
-                  showCustomAlert(
-                    `Le dossier ${data.dossierNumber} a été mis en livraison (statut BL).`,
-                    "success"
-                  );
-                  // Met à jour la cellule statut du tableau
-                  const table = document.querySelector(
-                    "#tableSuiviDossiers, .table-suivi-dossiers"
-                  );
-                  if (table) {
-                    const rows = table.querySelectorAll("tbody tr");
-                    rows.forEach((row) => {
-                      if (
-                        row.getAttribute("data-dossier-id") ==
-                          data.dossierNumber ||
-                        (row.querySelector(".dossier-id") &&
-                          row.querySelector(".dossier-id").textContent.trim() ==
-                            data.dossierNumber)
-                      ) {
-                        let statutCell = row.querySelector(".statut-dossier");
-                        if (!statutCell) {
-                          statutCell = row.cells[4];
-                        }
-                        if (statutCell) {
-                          statutCell.textContent = "Mise en livraison";
-                          statutCell.style.color = "#059669";
-                          statutCell.style.fontWeight = "700";
-                        }
-                      }
-                    });
-                  }
-                }
-              }
-              // --- Ajout : synchronisation du statut dossier dans le tableau principal ---
-              if (
-                data.type === "dossier-mise-en-livraison" &&
+                (data.type === "dossier-mise-en-livraison" ||
+                  data.type === "bl_status_update") &&
                 data.dossierNumber
               ) {
                 // Affiche l'alerte personnalisée
@@ -2977,10 +2923,9 @@
                   "#tableSuiviDossiers, .table-suivi-dossiers"
                 );
                 if (table) {
-                  // Cherche la ligne correspondant au dossier
                   const rows = table.querySelectorAll("tbody tr");
                   rows.forEach((row) => {
-                    // Adapte selon la structure : ici on suppose un attribut data-dossier-id ou une cellule contenant l'id
+                    // Recherche par attribut data-dossier-id ou cellule dossier-id
                     if (
                       row.getAttribute("data-dossier-id") ==
                         data.dossierNumber ||
@@ -2988,11 +2933,28 @@
                         row.querySelector(".dossier-id").textContent.trim() ==
                           data.dossierNumber)
                     ) {
-                      // Cherche la cellule statut (par classe ou index)
+                      // Recherche de la cellule "Responsable Acconier" ou "Statut Dossier"
                       let statutCell = row.querySelector(".statut-dossier");
+                      // Si pas de classe, cherche la colonne par l'en-tête
                       if (!statutCell) {
-                        // Si pas de classe, prend la 5e cellule (à adapter si besoin)
-                        statutCell = row.cells[4];
+                        // Recherche de l'index de la colonne "Responsable Acconier" ou "Statut Dossier"
+                        const headerRow = table.querySelector("thead tr");
+                        let statutIdx = -1;
+                        if (headerRow) {
+                          const headers = headerRow.querySelectorAll("th");
+                          headers.forEach((th, idx) => {
+                            const txt = th.textContent.trim().toLowerCase();
+                            if (
+                              txt.includes("responsable acconier") ||
+                              txt.includes("statut dossier")
+                            ) {
+                              statutIdx = idx;
+                            }
+                          });
+                        }
+                        if (statutIdx !== -1) {
+                          statutCell = row.cells[statutIdx];
+                        }
                       }
                       if (statutCell) {
                         statutCell.textContent = "Mise en livraison";
@@ -3006,7 +2968,6 @@
             } catch (e) {}
           };
           ws.onclose = function () {
-            // Reconnexion auto après 2s
             setTimeout(connectWebSocket, 2000);
           };
         }
