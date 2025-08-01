@@ -3141,7 +3141,7 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Erreur lors de la mise à jour." });
     }
-    // Relit la ligne complète pour vérification
+    // Relit la ligne complète pour vérificationszssd
     const checkRes = await pool.query(
       "SELECT id, container_statuses FROM livraison_conteneur WHERE id = $1",
       [id]
@@ -3515,6 +3515,60 @@ app.get("/api/dossiers/attente-paiement", async (req, res) => {
       message:
         "Erreur serveur lors de la récupération des dossiers en attente de paiement.",
     });
+  }
+});
+
+// ===============================
+// ROUTE : Dossiers en retard (pour le tableau de bord)
+// ===============================
+app.get("/api/dossiers/retard", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM livraison_conteneur ORDER BY created_at DESC`
+    );
+    const now = new Date();
+    // Logique métier identique à getLateDeliveries JS
+    const dossiersRetard = (result.rows || []).filter((d) => {
+      let dDate = d.delivery_date || d.created_at;
+      if (!dDate) return false;
+      let dateObj = new Date(dDate);
+      if (isNaN(dateObj.getTime())) return false;
+      const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 2) return false;
+      if (d.delivery_status_acconier === "en attente de paiement") {
+        return true;
+      }
+      let blList = [];
+      if (Array.isArray(d.bl_number)) {
+        blList = d.bl_number.filter(Boolean);
+      } else if (typeof d.bl_number === "string") {
+        blList = d.bl_number.split(/[,;\s]+/).filter(Boolean);
+      }
+      let blStatuses = blList.map((bl) =>
+        d.bl_statuses && d.bl_statuses[bl] ? d.bl_statuses[bl] : "aucun"
+      );
+      if (
+        blStatuses.length > 0 &&
+        blStatuses.every((s) => s === "mise_en_livraison")
+      ) {
+        return false;
+      }
+      if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
+        return false;
+      }
+      return true;
+    });
+    // Formatage minimal pour le frontend (numéro, client, date, statut)
+    const dossiersFormates = dossiersRetard.map((d) => ({
+      numero: d.dossier_number || d.id,
+      client: d.client_name,
+      created_at: d.created_at,
+      statut: d.delivery_status_acconier,
+    }));
+    res.json(dossiersFormates);
+  } catch (err) {
+    console.error("Erreur /api/dossiers/retard :", err);
+    res.json([]); // Renvoie un tableau vide en cas d'erreur pour éviter le crash frontend
   }
 });
 
