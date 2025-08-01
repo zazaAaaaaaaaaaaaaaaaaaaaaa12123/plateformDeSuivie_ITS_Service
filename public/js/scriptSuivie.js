@@ -3441,65 +3441,17 @@ if (window["WebSocket"]) {
             box.style.width = "96vw";
             box.style.maxHeight = "92vh";
             box.style.overflowY = "auto";
-            box.style.padding = "0";
+            box.style.padding = "32px 0";
             box.style.position = "relative";
             box.style.display = "flex";
             box.style.flexDirection = "column";
-            // Header
-            const header = document.createElement("div");
-            saveBtn.style.fontWeight = "bold";
-            saveBtn.style.fontSize = "1em";
-            saveBtn.style.border = "none";
-            saveBtn.style.borderRadius = "8px";
-            saveBtn.style.padding = "0.7em 1.7em";
-            saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
-            saveBtn.onclick = async () => {
-              // Appel API PATCH pour mettre à jour le statut du conteneur individuellement
-              try {
-                const response = await fetch(
-                  `/deliveries/${delivery.id}/container-status`,
-                  {
-                    method: "PATCH",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      containerNumber: containerNumber,
-                      status: select.value,
-                    }),
-                  }
-                );
-                const data = await response.json();
-                if (response.ok && data.success) {
-                  showCustomAlert(
-                    `Statut du conteneur mis à jour : ${
-                      select.options[select.selectedIndex].text
-                    }`,
-                    "success"
-                  );
-                  overlay.remove();
-                  // Rafraîchir les données pour mettre à jour le compteur "X sur Y livrés"
-                  if (typeof loadDeliveries === "function") {
-                    await loadDeliveries();
-                  }
-                  // Mise à jour immédiate de l'alerte dossier en retard après changement de statut conteneur
-                  if (typeof checkLateContainers === "function")
-                    checkLateContainers();
-                } else {
-                  showCustomAlert(
-                    data.message ||
-                      "Erreur lors de la mise à jour du statut du conteneur.",
-                    "error"
-                  );
-                }
-              } catch (err) {
-                showCustomAlert(
-                  "Erreur réseau lors de la mise à jour du statut du conteneur.",
-                  "error"
-                );
-              }
-            };
-            content.appendChild(saveBtn);
+            // Contenu principal : uniquement le numéro TC
+            const content = document.createElement("div");
+            content.style.textAlign = "center";
+            content.style.fontSize = "1.25em";
+            content.style.fontWeight = "bold";
+            content.style.padding = "24px 32px";
+            content.textContent = `Numéro TC : ${containerNumber}`;
             box.appendChild(content);
             overlay.appendChild(box);
             document.body.appendChild(overlay);
