@@ -25,6 +25,71 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
   // --- Clignotement automatique des dossiers en retard si demandé par le tableau de bord ---
+  if (!document.getElementById("flash-red-row-style")) {
+    const style = document.createElement("style");
+    style.id = "flash-red-row-style";
+    style.innerHTML = `
+      .flash-red-cell {
+        animation: flashRedCellAnim 1s cubic-bezier(0.4,0,0.2,1);
+        background: #d49494ff !important;
+        transition: background 0.3s;
+      }
+      @keyframes flashRedCellAnim {
+        0% { background: #fee2e2; }
+        30% { background: #f87171; }
+        70% { background: #fecaca; }
+        100% { background: transparent; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  if (localStorage.getItem("highlightRetard") === "1") {
+    localStorage.removeItem("highlightRetard");
+    setTimeout(function () {
+      const tableBody = document.getElementById("deliveriesTableBody");
+      if (tableBody) {
+        const rows = tableBody.querySelectorAll("tr");
+        let retardRows = [];
+        rows.forEach((row) => {
+          const cells = row.querySelectorAll("td");
+          for (let i = 0; i < cells.length; i++) {
+            if (
+              cells[i].textContent &&
+              cells[i].textContent.toLowerCase().includes("retard")
+            ) {
+              retardRows.push(row);
+              break;
+            }
+          }
+        });
+        retardRows.forEach((row) => {
+          const tds = row.querySelectorAll("td");
+          let flashCount = 0;
+          const maxFlashes = 3;
+          function doFlash() {
+            tds.forEach((td) => {
+              td.classList.remove("flash-red-cell");
+              void td.offsetWidth;
+              td.classList.add("flash-red-cell");
+              td.style.background = "#d49494ff";
+            });
+            setTimeout(() => {
+              tds.forEach((td) => {
+                td.classList.remove("flash-red-cell");
+                td.style.background = "";
+              });
+              flashCount++;
+              if (flashCount < maxFlashes) {
+                setTimeout(doFlash, 1000);
+              }
+            }, 1000);
+          }
+          doFlash();
+        });
+      }
+    }, 800);
+  }
+  // --- Clignotement automatique des dossiers en retard si demandé par le tableau de bord ---
   if (localStorage.getItem("highlightRetard") === "1") {
     localStorage.removeItem("highlightRetard");
     // Attendre que le tableau soit chargé
