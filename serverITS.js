@@ -4,13 +4,20 @@ const multer = require("multer");
 const { Pool } = require("pg");
 const app = express();
 // Redirection automatique vers le domaine -1cjx si on accède au domaine principal
+// Redirection automatique vers le domaine principal UNIQUEMENT pour les requêtes de navigation (pas d'API ni d'AJAX)
 app.use((req, res, next) => {
+  const isApiOrAjax =
+    req.path.startsWith("/api") ||
+    req.path.startsWith("/deliveries") ||
+    req.xhr ||
+    req.headers.accept?.includes("application/json");
   if (
     req.hostname &&
     req.hostname.includes("plateformdesuivie-its-service-1cjx.onrender.com") &&
-    !req.hostname.includes("plateformdesuivie-its-service.onrender.com")
+    !req.hostname.includes("plateformdesuivie-its-service.onrender.com") &&
+    !isApiOrAjax
   ) {
-    // Redirige vers le domaine -1cjx, en gardant le chemingr et la query
+    // Redirige uniquement les requêtes de navigation (HTML)
     return res.redirect(
       301,
       "https://plateformdesuivie-its-service.onrender.com" + req.originalUrl
