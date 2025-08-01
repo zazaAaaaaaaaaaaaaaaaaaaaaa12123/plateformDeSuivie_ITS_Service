@@ -1221,6 +1221,50 @@ document.addEventListener("DOMContentLoaded", function () {
       });
       tableBody.appendChild(row);
     });
+    // --- Clignotement automatique des dossiers en retard si demandé par le tableau de bord ---
+    if (window.localStorage.getItem("highlightRetard") === "1") {
+      window.localStorage.removeItem("highlightRetard");
+      setTimeout(function () {
+        const rows = tableBody.querySelectorAll("tr");
+        let retardRows = [];
+        rows.forEach((row) => {
+          const cells = row.querySelectorAll("td");
+          for (let i = 0; i < cells.length; i++) {
+            if (
+              cells[i].textContent &&
+              cells[i].textContent.toLowerCase().includes("retard")
+            ) {
+              retardRows.push(row);
+              break;
+            }
+          }
+        });
+        retardRows.forEach((row) => {
+          const tds = row.querySelectorAll("td");
+          let flashCount = 0;
+          const maxFlashes = 3;
+          function doFlash() {
+            tds.forEach((td) => {
+              td.classList.remove("flash-red-cell");
+              void td.offsetWidth;
+              td.classList.add("flash-red-cell");
+              td.style.background = "#d49494ff";
+            });
+            setTimeout(() => {
+              tds.forEach((td) => {
+                td.classList.remove("flash-red-cell");
+                td.style.background = "";
+              });
+              flashCount++;
+              if (flashCount < maxFlashes) {
+                setTimeout(doFlash, 1000);
+              }
+            }, 1000);
+          }
+          doFlash();
+        });
+      }, 800);
+    }
   }
 
   // Fonction principale pour charger et afficher selon la plage de dates
