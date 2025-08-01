@@ -1685,19 +1685,6 @@
                   "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
               });
             }
-            // Ajout du filtre : redirection sur la carte "Dossier en retard"
-            var carteRetard = document.querySelector(
-              ".dossier-retard.etat-card"
-            );
-            if (carteRetard) {
-              carteRetard.style.cursor = "pointer";
-              carteRetard.addEventListener("click", function () {
-                // Indicateur pour la page cible afin de faire clignoter les dossiers en retard
-                localStorage.setItem("highlightRetard", "1");
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
-              });
-            }
           });
           document.addEventListener("DOMContentLoaded", function () {
             // Propagation automatique de la session admin vers les interfaces responsables
@@ -2697,4 +2684,4 @@
     </script>
   </body>
 </html>
-<!--sydgshSSJj-sjkn-->
+<!--sydgshSSJj-->
