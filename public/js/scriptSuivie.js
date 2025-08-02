@@ -6559,9 +6559,9 @@ if (window["WebSocket"]) {
           "delivery_deletion_alert",
           "new_delivery_notification",
           "updateAgents",
+          "bl_status_update", // Ajout ici pour notifier et rafraîchir sur ce type
         ];
         if (message && message.type && typesToNotify.includes(message.type)) {
-          message.type === "bl_status_update"; // <-- AJOUT ICI
           showWebSocketNotification(message);
         }
         // Rafraîchissement des données selon le type
@@ -6571,6 +6571,7 @@ if (window["WebSocket"]) {
           message.type === "delivery_deleted" ||
           message.type === "delivery_update_alert" ||
           message.type === "container_status_update" ||
+          message.type === "bl_status_update" || // Ajout ici pour rafraîchir le tableau
           message.type === "delivery_deletion_alert" ||
           message.type === "new_delivery_notification" ||
           message.type === "updateAgents"
