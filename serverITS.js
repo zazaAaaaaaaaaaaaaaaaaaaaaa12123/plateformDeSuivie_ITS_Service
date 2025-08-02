@@ -135,6 +135,18 @@ app.post("/delivery-responsible", async (req, res) => {
         [value]
       );
     }
+    // Appel du broadcast WebSocket si la valeur correspond à une mise en livraison
+    if (
+      value &&
+      (value === "mise_en_livraison_acconier" || value === "Mise en livraison")
+    ) {
+      // Ici, il faut passer l'identifiant du dossier concerné
+      // Si la requête contient un id, on l'utilise, sinon à adapter selon le contexte
+      const dossierId = req.body.dossierId || req.body.id || null;
+      if (dossierId) {
+        broadcastMiseEnLivraison(dossierId);
+      }
+    }
     res.json({ success: true });
   } catch (err) {
     res
@@ -147,6 +159,21 @@ function broadcastNouvelleDemandeCodeEntreprise() {
   wsClients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify({ type: "nouvelle-demande-code-entreprise" }));
+    }
+  });
+}
+
+// Broadcast WebSocket : notification de mise en livraison instantanée
+function broadcastMiseEnLivraison(dossierId) {
+  wsClients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(
+        JSON.stringify({
+          type: "delivery_update_alert",
+          status: "mise_en_livraison_acconier",
+          deliveryId: dossierId,
+        })
+      );
     }
   });
 }

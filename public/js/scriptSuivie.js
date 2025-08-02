@@ -799,6 +799,19 @@ if (window["WebSocket"]) {
             loadDeliveries().then(() => {
               if (typeof checkLateContainers === "function")
                 checkLateContainers();
+              // Ajout : si le statut est passé à "Mise en livraison", affiche l'alerte instantanée
+              if (
+                data.type === "delivery_update_alert" &&
+                (data.status === "mise_en_livraison_acconier" ||
+                  data.status === "Mise en livraison") &&
+                data.deliveryId
+              ) {
+                showCustomAlert(
+                  `Le dossier [${data.deliveryId}] a été mis en livraison.`,
+                  "success",
+                  3500
+                );
+              }
             });
           }
         } catch (e) {
@@ -6792,7 +6805,11 @@ if (window["WebSocket"]) {
           return "en cours";
         return "en cours";
       }
-      // Version informative uniquement : aucune logique de mise à jour du statut dossier
+      let displayStatus =
+        op.delivery_status_acconier_fr ||
+        mapStatus(op.delivery_status_acconier || op.status || "");
+
+      // Nouvelle version : chaque info dans une "carte" moderne, responsive, business-friendly
       modalContent.innerHTML = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 28px;">
           <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
@@ -6822,9 +6839,19 @@ if (window["WebSocket"]) {
             }</span>
           </div>
           <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Numéro du conteneur</span>
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Conteneur</span>
             <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
               op.container_number || "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Statut</span>
+            <span style="font-size:1.13em;font-weight:700;color:#2563eb;">${displayStatus}</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Observation</span>
+            <span style="font-size:1.13em;font-weight:500;color:#334155;">${
+              op.observation_acconier || op.delivery_notes || "-"
             }</span>
           </div>
         </div>
