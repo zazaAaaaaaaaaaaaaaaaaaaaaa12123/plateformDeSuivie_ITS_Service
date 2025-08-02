@@ -6537,36 +6537,9 @@ if (window["WebSocket"]) {
         let type = "info";
         // On affiche le message du backend si présent
         if (data.type === "new_delivery_notification") {
-          // Message personnalisé pour la création d'une nouvelle livraison
-          const agent =
-            data.delivery && data.delivery.employee_name
-              ? data.delivery.employee_name
-              : "Un agent";
-          message = `L'agent <b>${agent}</b> a établi un ordre de livraison.`;
-          type = "success";
-        } else if (data.message) {
-          message = data.message;
+          /* ... */
         } else {
-          switch (data.type) {
-            case "delivery_update_alert":
-              message = "Une livraison a été modifiée.";
-              type = "info";
-              break;
-            case "container_status_update":
-              message = "Statut d'un conteneur mis à jour.";
-              type = "info";
-              break;
-            case "delivery_deletion_alert":
-              message = "Une livraison a été supprimée.";
-              type = "warning";
-              break;
-            case "updateAgents":
-              message = "La liste des agents a été mise à jour.";
-              type = "info";
-              break;
-            default:
-              message = "Mise à jour reçue.";
-          }
+          /* ... */
         }
         showCustomAlert(message, type, 4000);
       }
@@ -6582,7 +6555,7 @@ if (window["WebSocket"]) {
           "updateAgents",
         ];
         if (message && message.type && typesToNotify.includes(message.type)) {
-          showWebSocketNotification(message);
+          /* ... */
         }
         // Rafraîchissement des données selon le type
         if (
@@ -6595,24 +6568,27 @@ if (window["WebSocket"]) {
           message.type === "new_delivery_notification" ||
           message.type === "updateAgents"
         ) {
-          await loadDeliveries();
-          applyCombinedFilters();
-          // Rafraîchit la boîte d'activité agent si besoin
-          if (
-            agentActivityBox &&
-            agentActivityBox.classList.contains("active") &&
-            selectedAgentName
-          ) {
-            showAgentActivity(selectedAgentName, currentAgentActivityDate);
-          }
-          // Rafraîchit la liste des employés si besoin
-          if (
-            message.type === "updateAgents" &&
-            employeePopup &&
-            employeePopup.classList.contains("is-visible")
-          ) {
-            filterEmployeeList();
-          }
+          /* ... */
+        }
+        // === Handler pour la mise à jour du statut dossier en temps réel ===
+        if (message.type === "dossier_status_update") {
+          // Log pour debug
+          console.log("[WS][FRONT] dossier_status_update reçu:", message);
+          // Affiche une alerte visuelle
+          showCustomAlert(
+            `Statut du dossier <b>${
+              message.dossier_number
+            }</b> mis à jour : <span style='color:#2563eb;font-weight:700;'>${
+              message.new_status_fr || message.new_status
+            }</span>`,
+            "success",
+            4000
+          );
+          // Met à jour la cellule du statut dans le tableau principal
+          updateDossierStatusCell(
+            message.dossier_number,
+            message.new_status_fr || message.new_status
+          );
         }
       } catch (error) {
         console.error("[WS][FRONT] Erreur parsing WebSocket message:", error);
@@ -6623,8 +6599,7 @@ if (window["WebSocket"]) {
       let reason = "Erreur de connexion WebSocket.";
       if (event && typeof event.code !== "undefined") {
         reason += ` (Code: ${event.code}`;
-        if (event.reason) reason += `, Motif: ${event.reason}`;
-        reason += ")";
+        if (event.reason) reason += ")";
       }
       showCustomAlert(reason + " Tentative de reconnexion...", "error", 7000);
       // Attempt to reconnect after a delay if the closure was not intentional
@@ -6651,7 +6626,6 @@ if (window["WebSocket"]) {
       socket.close();
     };
   }
-
   // =====================================================================
   // --- Initialisation et boucles de rafraîchissement ---
   // =====================================================================
@@ -9087,3 +9061,5 @@ function updateDossierStatusCell(dossierNumber, newStatus) {
   );
 }
 /****** Script a ajouter en cas de pertubation 125 AAAA ***/
+
+// --- Fonction utilitaire : met à jour la cellule statut du dossier dans le tableau principal ---
