@@ -3424,7 +3424,7 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
     });
   }
   try {
-    // Récupère l'existant
+    // Récupère la livraison existante
     const result = await pool.query(
       "SELECT * FROM livraison_conteneur WHERE id = $1",
       [id]
@@ -3475,20 +3475,18 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
     }
     const updatedDelivery = updateRes.rows[0];
     // Envoi WebSocket à tous les clients (BL et statut dossier)
-    const wss = req.app.get("wss") || global.wss || wss;
+    const wss = req.app.get("wss") || global.wss;
     const alertMsg = `Dossier '${
-      updatedDelivery.dossier_number ||
-      updatedDelivery.bl_number ||
-      updatedDelivery.id
-    }' a été mis en livraison`;
-    // Message BL (inchangé)
+      updatedDelivery.dossier_number || updatedDelivery.id
+    }' a été mis en livraison.`;
+    // Message BL (pour la colonne BL)
     const payloadBL = JSON.stringify({
       type: "bl_status_update",
       delivery: updatedDelivery,
       message: alertMsg,
       dossierNumber: updatedDelivery.dossier_number || updatedDelivery.id,
     });
-    // Message statut dossier (ajouté)
+    // Message statut dossier (pour la colonne Responsable Acconier)
     const payloadDossier = JSON.stringify({
       type: "dossier_status_update",
       dossierNumber: updatedDelivery.dossier_number || updatedDelivery.id,
