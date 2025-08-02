@@ -3449,23 +3449,31 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
         .json({ success: false, message: "Erreur lors de la mise à jour." });
     }
     const updatedDelivery = updateRes.rows[0];
-    // Envoi WebSocket à tous les clients
+    // Envoi WebSocket à tous les clients (BL et statut dossier)
     const wss = req.app.get("wss") || global.wss || wss;
     const alertMsg = `Dossier '${
       updatedDelivery.dossier_number ||
       updatedDelivery.bl_number ||
       updatedDelivery.id
     }' a été mis en livraison`;
-    const payload = JSON.stringify({
+    // Message BL (inchangé)
+    const payloadBL = JSON.stringify({
       type: "bl_status_update",
       delivery: updatedDelivery,
       message: alertMsg,
       dossierNumber: updatedDelivery.dossier_number || updatedDelivery.id,
     });
+    // Message statut dossier (ajouté)
+    const payloadDossier = JSON.stringify({
+      type: "dossier_status_update",
+      dossierNumber: updatedDelivery.dossier_number || updatedDelivery.id,
+      newStatus: "Mise en livraison",
+    });
     if (wss && wss.clients) {
       wss.clients.forEach((client) => {
         if (client.readyState === require("ws").OPEN) {
-          client.send(payload);
+          client.send(payloadBL);
+          client.send(payloadDossier);
         }
       });
     }
