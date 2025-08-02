@@ -2993,19 +2993,17 @@ app.patch("/deliveries/:id/acconier-status", async (req, res) => {
       const wss = req.app.get("wss") || global.wss;
       const dossierNumber =
         updatedDelivery.dossier_number || updatedDelivery.id;
-      const alertMessage = `Le dossier [${dossierNumber}] a été mis en livraison.`;
-      const payload = JSON.stringify({
-        type: "dossier-mise-en-livraison",
-        message: alertMessage,
+      // Envoi du message WebSocket au format attendu par le dashboard
+      const payloadDossier = JSON.stringify({
+        type: "dossier_status_update",
         dossierNumber: dossierNumber,
-        delivery: updatedDelivery,
-        alertType: "success",
+        newStatus: "Mise en livraison",
       });
       if (wss && wss.clients) {
         const WebSocket = require("ws");
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
-            client.send(payload);
+            client.send(payloadDossier);
           }
         });
       }
