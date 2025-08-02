@@ -6561,6 +6561,7 @@ if (window["WebSocket"]) {
           "updateAgents",
         ];
         if (message && message.type && typesToNotify.includes(message.type)) {
+          message.type === "bl_status_update"; // <-- AJOUT ICI
           showWebSocketNotification(message);
         }
         // Rafraîchissement des données selon le type
