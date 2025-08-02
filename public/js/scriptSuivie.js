@@ -6796,12 +6796,38 @@ if (window["WebSocket"]) {
         op.delivery_status_acconier_fr ||
         mapStatus(op.delivery_status_acconier || op.status || "");
 
-      // Nouvelle version : pop-up simplifiée, affiche uniquement le numéro du conteneur avec le style conservé
+      // Version simplifiée : infos principales sans champ de statut ni bouton
       modalContent.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:32px 24px;">
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:28px 38px;display:flex;flex-direction:column;align-items:center;">
-            <span style="font-size:1.08em;color:#64748b;font-weight:600;margin-bottom:8px;">Numéro du conteneur</span>
-            <span style="font-size:1.45em;font-weight:800;color:#2563eb;letter-spacing:1px;">${
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 28px;">
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Agent</span>
+            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
+              op.employee_name || "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Date</span>
+            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
+              op.created_at
+                ? new Date(op.created_at).toLocaleDateString("fr-FR")
+                : "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:13px;box-shadow:0 2px 12px #facc1533;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
+            <span style="font-size:0.98em;color:#78350f;font-weight:600;margin-bottom:4px;">Client</span>
+            <span style="font-size:1.13em;font-weight:700;color:#78350f;">${
+              op.client_name || "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:13px;box-shadow:0 2px 12px #facc1533;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
+            <span style="font-size:0.98em;color:#78350f;font-weight:600;margin-bottom:4px;">N° Dossier</span>
+            <span style="font-size:1.13em;font-weight:800;color:#78350f;letter-spacing:0.5px;">${
+              op.dossier_number || op.dossier || "-"
+            }</span>
+          </div>
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Numéro du conteneur</span>
+            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
               op.container_number || "-"
             }</span>
           </div>
