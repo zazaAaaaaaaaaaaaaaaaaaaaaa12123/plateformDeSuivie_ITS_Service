@@ -789,53 +789,19 @@ if (window["WebSocket"]) {
       ws.onmessage = function (event) {
         try {
           const data = JSON.parse(event.data);
-          console.log("[WebSocket] Message reçu:", event.data);
-          console.log("[WebSocket] Type:", data && data.type);
-          // --- Ajout : gestion du message dossier_mise_en_livraison ---
-          if (data && data.type === "dossier_mise_en_livraison") {
-            console.log(
-              "[WebSocket] Type dossier_mise_en_livraison détecté",
-              data
-            );
-            if (typeof loadDeliveries === "function") {
-              loadDeliveries().then(() => {
-                if (typeof checkLateContainers === "function")
-                  checkLateContainers();
-              });
-            }
-            if (typeof showCustomAlert === "function") {
-              showCustomAlert(data.message, data.alertType || "success", 6000);
-            }
-            console.log("[WebSocket] Fin traitement dossier_mise_en_livraison");
-            return;
-          }
           const typesToRefresh = [
             "delivery_update_alert",
             "container_status_update",
             "delivery_deletion_alert",
             "new_delivery_notification",
-            "bl_status_update",
           ];
           if (data && data.type && typesToRefresh.includes(data.type)) {
-            console.log(
-              `[WebSocket] Type ${data.type} détecté, rafraîchissement des livraisons...`,
-              data
-            );
             loadDeliveries().then(() => {
               if (typeof checkLateContainers === "function")
                 checkLateContainers();
             });
-            if (typeof showCustomAlert === "function" && data.message) {
-              showCustomAlert(data.message, data.alertType || "success", 6000);
-            }
-            console.log(`[WebSocket] Fin traitement type ${data.type}`);
           }
         } catch (e) {
-          console.error(
-            "[WebSocket] Erreur de parsing ou traitement:",
-            event.data,
-            e
-          );
           console.warn(
             "[WebSocket] Message non JSON ou erreur :",
             event.data,
@@ -844,7 +810,6 @@ if (window["WebSocket"]) {
         }
       };
       ws.onclose = function (event) {
-        console.warn("[WebSocket] Connexion fermée:", event);
         let reason = "Connexion WebSocket perdue.";
         if (event && typeof event.code !== "undefined") {
           reason += ` (Code: ${event.code}`;
@@ -868,7 +833,6 @@ if (window["WebSocket"]) {
         }, 2000);
       };
       ws.onerror = function (event) {
-        console.error("[WebSocket] Erreur:", event);
         showCustomAlert(
           "Erreur WebSocket : " +
             (event && event.message ? event.message : "Erreur inconnue."),
@@ -6537,9 +6501,36 @@ if (window["WebSocket"]) {
         let type = "info";
         // On affiche le message du backend si présent
         if (data.type === "new_delivery_notification") {
-          /* ... */
+          // Message personnalisé pour la création d'une nouvelle livraison
+          const agent =
+            data.delivery && data.delivery.employee_name
+              ? data.delivery.employee_name
+              : "Un agent";
+          message = `L'agent <b>${agent}</b> a établi un ordre de livraison.`;
+          type = "success";
+        } else if (data.message) {
+          message = data.message;
         } else {
-          /* ... */
+          switch (data.type) {
+            case "delivery_update_alert":
+              message = "Une livraison a été modifiée.";
+              type = "info";
+              break;
+            case "container_status_update":
+              message = "Statut d'un conteneur mis à jour.";
+              type = "info";
+              break;
+            case "delivery_deletion_alert":
+              message = "Une livraison a été supprimée.";
+              type = "warning";
+              break;
+            case "updateAgents":
+              message = "La liste des agents a été mise à jour.";
+              type = "info";
+              break;
+            default:
+              message = "Mise à jour reçue.";
+          }
         }
         showCustomAlert(message, type, 4000);
       }
@@ -6555,7 +6546,7 @@ if (window["WebSocket"]) {
           "updateAgents",
         ];
         if (message && message.type && typesToNotify.includes(message.type)) {
-          /* ... */
+          showWebSocketNotification(message);
         }
         // Rafraîchissement des données selon le type
         if (
@@ -6568,28 +6559,24 @@ if (window["WebSocket"]) {
           message.type === "new_delivery_notification" ||
           message.type === "updateAgents"
         ) {
-          /* ... */
-        }
-        // === Handler pour la mise à jour du statut dossier en temps réel ===
-        if (message.type === "dossier_status_update") {
-          // Log pour debug
-          console.log("[WS][FRONT] dossier_status_update reçu:", message);
-          // Harmonisation des propriétés (backend peut envoyer dossierNumber ou dossier_number, newStatus ou new_status)
-          const dossierNum =
-            message.dossierNumber || message.dossier_number || "?";
-          const newStatus =
-            message.newStatus ||
-            message.new_status ||
-            message.new_status_fr ||
-            "-";
-          // Affiche une alerte visuelle
-          showCustomAlert(
-            `Statut du dossier <b>${dossierNum}</b> mis à jour : <span style='color:#2563eb;font-weight:700;'>${newStatus}</span>`,
-            "success",
-            4000
-          );
-          // Met à jour la cellule du statut dans le tableau principal
-          updateDossierStatusCell(dossierNum, newStatus);
+          await loadDeliveries();
+          applyCombinedFilters();
+          // Rafraîchit la boîte d'activité agent si besoin
+          if (
+            agentActivityBox &&
+            agentActivityBox.classList.contains("active") &&
+            selectedAgentName
+          ) {
+            showAgentActivity(selectedAgentName, currentAgentActivityDate);
+          }
+          // Rafraîchit la liste des employés si besoin
+          if (
+            message.type === "updateAgents" &&
+            employeePopup &&
+            employeePopup.classList.contains("is-visible")
+          ) {
+            filterEmployeeList();
+          }
         }
       } catch (error) {
         console.error("[WS][FRONT] Erreur parsing WebSocket message:", error);
@@ -6600,7 +6587,8 @@ if (window["WebSocket"]) {
       let reason = "Erreur de connexion WebSocket.";
       if (event && typeof event.code !== "undefined") {
         reason += ` (Code: ${event.code}`;
-        if (event.reason) reason += ")";
+        if (event.reason) reason += `, Motif: ${event.reason}`;
+        reason += ")";
       }
       showCustomAlert(reason + " Tentative de reconnexion...", "error", 7000);
       // Attempt to reconnect after a delay if the closure was not intentional
@@ -6627,6 +6615,7 @@ if (window["WebSocket"]) {
       socket.close();
     };
   }
+
   // =====================================================================
   // --- Initialisation et boucles de rafraîchissement ---
   // =====================================================================
@@ -6807,49 +6796,13 @@ if (window["WebSocket"]) {
         op.delivery_status_acconier_fr ||
         mapStatus(op.delivery_status_acconier || op.status || "");
 
-      // Nouvelle version : chaque info dans une "carte" moderne, responsive, business-friendly
+      // Nouvelle version : pop-up simplifiée, affiche uniquement le numéro du conteneur avec le style conservé
       modalContent.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 28px;">
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Agent</span>
-            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
-              op.employee_name || "-"
-            }</span>
-          </div>
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Date</span>
-            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
-              op.created_at
-                ? new Date(op.created_at).toLocaleDateString("fr-FR")
-                : "-"
-            }</span>
-          </div>
-          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:13px;box-shadow:0 2px 12px #facc1533;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
-            <span style="font-size:0.98em;color:#78350f;font-weight:600;margin-bottom:4px;">Client</span>
-            <span style="font-size:1.13em;font-weight:700;color:#78350f;">${
-              op.client_name || "-"
-            }</span>
-          </div>
-          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:13px;box-shadow:0 2px 12px #facc1533;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
-            <span style="font-size:0.98em;color:#78350f;font-weight:600;margin-bottom:4px;">N° Dossier</span>
-            <span style="font-size:1.13em;font-weight:800;color:#78350f;letter-spacing:0.5px;">${
-              op.dossier_number || op.dossier || "-"
-            }</span>
-          </div>
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Conteneur</span>
-            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:32px 24px;">
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:28px 38px;display:flex;flex-direction:column;align-items:center;">
+            <span style="font-size:1.08em;color:#64748b;font-weight:600;margin-bottom:8px;">Numéro du conteneur</span>
+            <span style="font-size:1.45em;font-weight:800;color:#2563eb;letter-spacing:1px;">${
               op.container_number || "-"
-            }</span>
-          </div>
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Statut</span>
-            <span style="font-size:1.13em;font-weight:700;color:#2563eb;">${displayStatus}</span>
-          </div>
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Observation</span>
-            <span style="font-size:1.13em;font-weight:500;color:#334155;">${
-              op.observation_acconier || op.delivery_notes || "-"
             }</span>
           </div>
         </div>
@@ -8992,71 +8945,4 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-// ================== MISE À JOUR STATUT DOSSIER EN TEMPS RÉEL ==================
-function updateDossierStatusCell(dossierNumber, newStatus) {
-  if (!deliveriesTableBody) return;
-  // Recherche la ligne avec le bon data-dossier-id OU data-delivery-id
-  const tr = Array.from(deliveriesTableBody.querySelectorAll("tr")).find(
-    (row) =>
-      row.getAttribute("data-dossier-id") === dossierNumber.toString() ||
-      row.getAttribute("data-delivery-id") === dossierNumber.toString()
-  );
-  if (!tr) {
-    console.warn("Aucune ligne trouvée pour le dossier:", dossierNumber);
-    return;
-  }
-  // Recherche l'index de la colonne "Statut Dossier" dans le header
-  const ths = Array.from(
-    deliveriesTableBody.parentNode.querySelectorAll("thead th")
-  );
-  let statutDossierIdx = -1;
-  ths.forEach((th, idx) => {
-    const txt = th.textContent.trim().toLowerCase();
-    if (txt.includes("statut dossier")) statutDossierIdx = idx;
-  });
-  if (statutDossierIdx === -1) {
-    console.warn("Colonne 'Statut Dossier' non trouvée dans le header.");
-    return;
-  }
-  const tds = Array.from(tr.querySelectorAll("td"));
-  const tdStatutDossier = tds[statutDossierIdx];
-  if (!tdStatutDossier) {
-    console.warn(
-      "Aucune cellule 'Statut Dossier' trouvée pour le dossier:",
-      dossierNumber
-    );
-    return;
-  }
-  // Affiche uniquement "Mise en livraison" ou "En attente de paiement"
-  let displayStatus = "";
-  let color = "";
-  if (newStatus && newStatus.toLowerCase().includes("livr")) {
-    displayStatus = "Mise en livraison";
-    color = "#34d399";
-  } else if (newStatus && newStatus.toLowerCase().includes("paiement")) {
-    displayStatus = "En attente de paiement";
-    color = "#facc15";
-  } else {
-    displayStatus = newStatus || "-";
-    color = "#64748b";
-  }
-  tdStatutDossier.textContent = displayStatus;
-  tdStatutDossier.style.backgroundColor = color;
-  tdStatutDossier.style.color = color === "#64748b" ? "#fff" : "#1e293b";
-  tdStatutDossier.style.fontWeight = "bold";
-  tdStatutDossier.style.transition = "background-color 0.3s";
-  // Clignotement vert sur la ligne modifiée
-  tr.classList.add("row-green-blink");
-  setTimeout(() => {
-    tr.classList.remove("row-green-blink");
-    tdStatutDossier.style.backgroundColor = "";
-    tdStatutDossier.style.color = "";
-    tdStatutDossier.style.fontWeight = "";
-  }, 5000);
-  console.log(
-    `[SYNC] Statut Dossier ${dossierNumber} mis à jour: ${displayStatus}`
-  );
-}
 /****** Script a ajouter en cas de pertubation 125 AAAA ***/
-
-// --- Fonction utilitaire : met à jour la cellule statut du dossier dans le tableau principal ---
