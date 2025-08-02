@@ -6574,21 +6574,22 @@ if (window["WebSocket"]) {
         if (message.type === "dossier_status_update") {
           // Log pour debug
           console.log("[WS][FRONT] dossier_status_update reçu:", message);
+          // Harmonisation des propriétés (backend peut envoyer dossierNumber ou dossier_number, newStatus ou new_status)
+          const dossierNum =
+            message.dossierNumber || message.dossier_number || "?";
+          const newStatus =
+            message.newStatus ||
+            message.new_status ||
+            message.new_status_fr ||
+            "-";
           // Affiche une alerte visuelle
           showCustomAlert(
-            `Statut du dossier <b>${
-              message.dossier_number
-            }</b> mis à jour : <span style='color:#2563eb;font-weight:700;'>${
-              message.new_status_fr || message.new_status
-            }</span>`,
+            `Statut du dossier <b>${dossierNum}</b> mis à jour : <span style='color:#2563eb;font-weight:700;'>${newStatus}</span>`,
             "success",
             4000
           );
           // Met à jour la cellule du statut dans le tableau principal
-          updateDossierStatusCell(
-            message.dossier_number,
-            message.new_status_fr || message.new_status
-          );
+          updateDossierStatusCell(dossierNum, newStatus);
         }
       } catch (error) {
         console.error("[WS][FRONT] Erreur parsing WebSocket message:", error);
@@ -9004,29 +9005,24 @@ function updateDossierStatusCell(dossierNumber, newStatus) {
     console.warn("Aucune ligne trouvée pour le dossier:", dossierNumber);
     return;
   }
-  // Trouve l'index de la colonne "Statut dossier" ou "Statut" dans le header
+  // Recherche l'index de la colonne "Statut Dossier" dans le header
   const ths = Array.from(
     deliveriesTableBody.parentNode.querySelectorAll("thead th")
   );
-  let statutIdx = -1;
+  let statutDossierIdx = -1;
   ths.forEach((th, idx) => {
     const txt = th.textContent.trim().toLowerCase();
-    if (
-      txt.includes("statut dossier") ||
-      txt === "statut" ||
-      txt.includes("statut")
-    )
-      statutIdx = idx;
+    if (txt.includes("statut dossier")) statutDossierIdx = idx;
   });
-  if (statutIdx === -1) {
-    console.warn("Colonne 'Statut dossier' non trouvée dans le header.");
+  if (statutDossierIdx === -1) {
+    console.warn("Colonne 'Statut Dossier' non trouvée dans le header.");
     return;
   }
   const tds = Array.from(tr.querySelectorAll("td"));
-  const tdStatut = tds[statutIdx];
-  if (!tdStatut) {
+  const tdStatutDossier = tds[statutDossierIdx];
+  if (!tdStatutDossier) {
     console.warn(
-      "Aucune cellule statut trouvée pour le dossier:",
+      "Aucune cellule 'Statut Dossier' trouvée pour le dossier:",
       dossierNumber
     );
     return;
@@ -9044,21 +9040,21 @@ function updateDossierStatusCell(dossierNumber, newStatus) {
     displayStatus = newStatus || "-";
     color = "#64748b";
   }
-  tdStatut.textContent = displayStatus;
-  tdStatut.style.backgroundColor = color;
-  tdStatut.style.color = color === "#64748b" ? "#fff" : "#1e293b";
-  tdStatut.style.fontWeight = "bold";
-  tdStatut.style.transition = "background-color 0.3s";
+  tdStatutDossier.textContent = displayStatus;
+  tdStatutDossier.style.backgroundColor = color;
+  tdStatutDossier.style.color = color === "#64748b" ? "#fff" : "#1e293b";
+  tdStatutDossier.style.fontWeight = "bold";
+  tdStatutDossier.style.transition = "background-color 0.3s";
   // Clignotement vert sur la ligne modifiée
   tr.classList.add("row-green-blink");
   setTimeout(() => {
     tr.classList.remove("row-green-blink");
-    tdStatut.style.backgroundColor = "";
-    tdStatut.style.color = "";
-    tdStatut.style.fontWeight = "";
+    tdStatutDossier.style.backgroundColor = "";
+    tdStatutDossier.style.color = "";
+    tdStatutDossier.style.fontWeight = "";
   }, 5000);
   console.log(
-    `[SYNC] Statut du dossier ${dossierNumber} mis à jour: ${displayStatus}`
+    `[SYNC] Statut Dossier ${dossierNumber} mis à jour: ${displayStatus}`
   );
 }
 /****** Script a ajouter en cas de pertubation 125 AAAA ***/
