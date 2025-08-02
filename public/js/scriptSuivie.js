@@ -1054,6 +1054,8 @@ if (window["WebSocket"]) {
         flex-wrap: wrap; /* Allow wrapping on smaller screens */
         background-color: #ffc107; /* Changed to yellow */
     }
+         // Correction : déclenchement d'un événement custom pour forcer la mise à jour de la colonne Statut Dossier
+         document.dispatchEvent(new Event("bl_status_update"));
 
     .agent-activity-header .header-title {
         font-size: 1.5em; /* Larger title */
