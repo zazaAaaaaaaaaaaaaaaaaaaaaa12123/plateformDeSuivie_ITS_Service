@@ -383,6 +383,7 @@
 
         <div
           class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
+          style="min-height: 50px"
         >
           <select id="statusFilterSelect" class="icon-btn icon-btn-purple">
             <option value="">Sélectionner un statut</option>
@@ -391,10 +392,16 @@
           </select>
 
           <div
-            class="d-flex align-items-center gap-2 flex-wrap"
-            style="flex: 1 1 220px; min-width: 120px"
+            class="d-flex align-items-center gap-2 flex-nowrap"
+            style="flex: 1 1 auto; min-width: 400px; white-space: nowrap"
           >
-            <span style="font-weight: 600; color: #0e274e; font-size: 1.08em"
+            <span
+              style="
+                font-weight: 600;
+                color: #0e274e;
+                font-size: 1.08em;
+                flex-shrink: 0;
+              "
               >Filtrer du</span
             >
             <input
@@ -402,9 +409,15 @@
               id="mainTableDateStartFilter"
               class="icon-btn icon-btn-company-color"
               title="Date de début"
-              style="min-width: 120px"
+              style="min-width: 140px; flex-shrink: 0"
             />
-            <span style="font-weight: 600; color: #0e274e; font-size: 1.08em"
+            <span
+              style="
+                font-weight: 600;
+                color: #0e274e;
+                font-size: 1.08em;
+                flex-shrink: 0;
+              "
               >au</span
             >
             <input
@@ -412,7 +425,7 @@
               id="mainTableDateEndFilter"
               class="icon-btn icon-btn-company-color"
               title="Date de fin"
-              style="min-width: 120px"
+              style="min-width: 140px; flex-shrink: 0"
             />
           </div>
 
