@@ -390,12 +390,31 @@
             <option value="rejet">Rejet</option>
           </select>
 
-          <input
-            type="date"
-            id="mainTableDateFilter"
-            class="icon-btn icon-btn-company-color"
-            title="Filtrer par date"
-          />
+          <div
+            class="d-flex align-items-center gap-2 flex-wrap"
+            style="flex: 1 1 220px; min-width: 120px"
+          >
+            <span style="font-weight: 600; color: #0e274e; font-size: 1.08em"
+              >Filtrer du</span
+            >
+            <input
+              type="date"
+              id="mainTableDateStartFilter"
+              class="icon-btn icon-btn-company-color"
+              title="Date de début"
+              style="min-width: 120px"
+            />
+            <span style="font-weight: 600; color: #0e274e; font-size: 1.08em"
+              >au</span
+            >
+            <input
+              type="date"
+              id="mainTableDateEndFilter"
+              class="icon-btn icon-btn-company-color"
+              title="Date de fin"
+              style="min-width: 120px"
+            />
+          </div>
 
           <button id="toggleSelectionBtn" class="icon-btn-company-color">
             <i class="fas fa-check-square"></i> Activer selection

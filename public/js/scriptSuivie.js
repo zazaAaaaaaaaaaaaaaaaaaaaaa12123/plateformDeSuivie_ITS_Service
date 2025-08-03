@@ -2531,7 +2531,12 @@ function mapStatus(status) {
   // DOM element for the status filter
 
   const statusFilterSelect = document.getElementById("statusFilterSelect");
-  const mainTableDateFilter = document.getElementById("mainTableDateFilter");
+  const mainTableDateStartFilter = document.getElementById(
+    "mainTableDateStartFilter"
+  );
+  const mainTableDateEndFilter = document.getElementById(
+    "mainTableDateEndFilter"
+  );
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
@@ -2613,38 +2618,6 @@ function mapStatus(status) {
   document.body.appendChild(customAlert);
 
   console.log("Initializing admin dashboard...");
-
-  let currentMainFilterDate = (() => {
-    const storedDate = localStorage.getItem("mainTableFilterDate");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to start of today in local time
-
-    if (storedDate) {
-      const storedDateObj = new Date(storedDate);
-      storedDateObj.setHours(0, 0, 0, 0); // Normalize stored date to start of day in local time
-
-      if (storedDateObj.getTime() === today.getTime()) {
-        console.log("Using stored date (today):", storedDate);
-        return storedDateObj;
-      } else {
-        console.log(
-          "Stored date outdated, updating to today:",
-          today.toISOString().split("T")[0]
-        );
-      }
-    } else {
-      console.log(
-        "No date stored, initializing to today:",
-        today.toISOString().split("T")[0]
-      );
-    }
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    const formattedToday = `${year}-${month}-${day}`;
-    localStorage.setItem("mainTableFilterDate", formattedToday);
-    return today;
-  })();
 
   // DOM elements for the history sidebar (modal)
   const historySidebar = document.getElementById("historySidebar");
@@ -3033,6 +3006,46 @@ function mapStatus(status) {
       } (${oldestFormatted} - ${newestFormatted})`;
     }
   }
+
+  // Fonction pour obtenir la plage de dates par défaut
+  function getDefaultDateRange() {
+    if (!deliveries || deliveries.length === 0) {
+      // Si pas de données, utiliser aujourd'hui pour les deux
+      const today = new Date();
+      return {
+        startDate: today,
+        endDate: today,
+      };
+    }
+
+    // Trouver la plus ancienne date de création
+    let earliestDate = null;
+    deliveries.forEach((delivery) => {
+      if (delivery.created_at) {
+        const date = new Date(delivery.created_at);
+        if (!isNaN(date.getTime())) {
+          if (!earliestDate || date < earliestDate) {
+            earliestDate = date;
+          }
+        }
+      }
+    });
+
+    const today = new Date();
+    return {
+      startDate: earliestDate || today,
+      endDate: today,
+    };
+  }
+
+  // Fonction pour formater une date en format YYYY-MM-DD pour les inputs
+  function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
   // =====================================================================
   // --- Fonctions de chargement et de rendu des données ---
   // =====================================================================
@@ -5076,81 +5089,50 @@ function mapStatus(status) {
   const updateAgentStatusIndicator = () => {
     if (!agentStatusIndicator) return;
 
-    // This indicator should always reflect "today" for the scrolling bar,
-    // not necessarily the main table filter.
+    // Cette fonction maintient l'indication des agents actifs
+    // Elle ne dépend plus du filtre de date principal
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // If mainTableDateFilter is set to a past date, the indicator might show "Agents (Date Passée)"
-    // but the scrolling bar itself will still show "today's" agents.
-    const selectedDateStr = mainTableDateFilter.value;
-    if (selectedDateStr) {
-      const selectedDate = new Date(selectedDateStr);
-      selectedDate.setHours(0, 0, 0, 0);
-
-      if (selectedDate.getTime() < today.getTime()) {
-        agentStatusIndicator.classList.remove("status-active");
-        agentStatusIndicator.classList.add("status-past-date");
-        if (agentStatusText)
-          agentStatusText.textContent = "Agents (Date Passée)";
-        return;
-      }
-    }
-    // Default to active for today or future dates
+    // Toujours afficher comme actifs car on travaille avec une plage de dates maintenant
     agentStatusIndicator.classList.remove("status-past-date");
     agentStatusIndicator.classList.add("status-active");
-    if (agentStatusText)
-      agentStatusText.textContent = "Agents Actifs (Aujourd'hui)";
+    if (agentStatusText) agentStatusText.textContent = "Agents Actifs";
   };
   /**
    * Returns a sorted list of unique agent names who have performed an operation
-   * (either created or delivered a delivery) on the currently selected filter date.
-   * This function now strictly uses `currentMainFilterDate` for filtering.
+   * (either created or delivered a delivery) on today's date.
    * @returns {Array<string>} Sorted array of unique agent names.
    */
   function getAgentsForCurrentMainDate() {
-    // Get the ISO string for the date selected in the main filter, using UTC components for consistency
-    // This ensures that currentMainFilterDate (which is a Date object) is normalized to UTCYYYY-MM-DD
-    const selectedFilterDateISO = formatDateToISO(currentMainFilterDate);
+    // Utilise la date d'aujourd'hui pour l'affichage des agents actifs
+    const today = new Date();
+    const selectedFilterDateISO = formatDateToISO(today);
     console.log(
-      "getAgentsForCurrentMainDate: Selected filter date ISO (from filter):",
+      "getAgentsForCurrentMainDate: Using today's date for active agents:",
       selectedFilterDateISO
     );
-
-    // If the selected date is in the future, no agents should appear.
-    // We can check this by comparing the selectedFilterDateISO with today's ISO.
-    const todayISO = formatDateToISO(new Date());
-    if (selectedFilterDateISO > todayISO) {
-      console.log(
-        "Selected date is in the future. No agents will be displayed."
-      );
-      return [];
-    }
 
     const agentsSet = new Set();
     deliveries.forEach((delivery) => {
       let isAgentActiveOnFilterDate = false;
 
-      // Check if the delivery was created on the selected filter date (UTC comparison)
+      // Check if the delivery was created on today's date (UTC comparison)
       if (delivery.created_at) {
-        // Ensure delivery.created_at is treated as a Date object and then converted to UTCYYYY-MM-DD
-        const createdAtDate = new Date(delivery.created_at); // Ensure it's a Date object
-        const createdAtISO = formatDateToISO(createdAtDate); // Uses the now UTC-based formatDateToISO
+        const createdAtDate = new Date(delivery.created_at);
+        const createdAtISO = formatDateToISO(createdAtDate);
         if (createdAtISO === selectedFilterDateISO) {
           isAgentActiveOnFilterDate = true;
-          // console.log(`Agent ${delivery.employee_name} active on ${selectedFilterDateISO} via created_at: ${createdAtISO}`);
         }
       }
-      // Also check if the delivery was *delivered* on the selected filter date (UTC comparison).
-      // An agent is considered "active" on a day if they performed any relevant operation.
+
+      // Also check if the delivery was delivered on today's date (UTC comparison)
       if (!isAgentActiveOnFilterDate && delivery.delivery_date) {
-        // Ensure delivery.delivery_date is treated as a Date object and then converted to UTCYYYY-MM-DD
-        const deliveryDateObj = new Date(delivery.delivery_date); // Ensure it's a Date object
+        const deliveryDateObj = new Date(delivery.delivery_date);
         if (!isNaN(deliveryDateObj.getTime())) {
-          const deliveryDateISO = formatDateToISO(deliveryDateObj); // Uses the now UTC-based formatDateToISO
+          const deliveryDateISO = formatDateToISO(deliveryDateObj);
           if (deliveryDateISO === selectedFilterDateISO) {
             isAgentActiveOnFilterDate = true;
-            // console.log(`Agent ${delivery.employee_name} active on ${selectedFilterDateISO} via delivery_date: ${deliveryDateISO}`);
           }
         }
       }
@@ -5223,24 +5205,46 @@ function mapStatus(status) {
         });
       }
     }
-    if (currentMainFilterDate) {
-      console.log(
-        "Applying date filter (based on created_at):", // Changed log for clarity
-        currentMainFilterDate.toLocaleDateString("fr-FR")
-      );
-      const filterDate = normalizeDateToMidnight(currentMainFilterDate);
-      const nextDay = new Date(filterDate);
-      nextDay.setDate(nextDay.getDate() + 1);
 
+    // Filtrage par plage de dates (début et fin)
+    const startDateValue = mainTableDateStartFilter
+      ? mainTableDateStartFilter.value
+      : null;
+    const endDateValue = mainTableDateEndFilter
+      ? mainTableDateEndFilter.value
+      : null;
+
+    if (startDateValue || endDateValue) {
       filteredData = filteredData.filter((delivery) => {
-        let createdAtDate = null; // Only check created_at for the main filter
+        let createdAtDate = null;
         if (delivery.created_at) {
           createdAtDate = new Date(delivery.created_at);
         }
         if (!createdAtDate || isNaN(createdAtDate.getTime())) return false;
         createdAtDate = normalizeDateToMidnight(createdAtDate);
-        return createdAtDate >= filterDate && createdAtDate < nextDay;
+
+        // Vérifier date de début
+        if (startDateValue) {
+          const startDate = normalizeDateToMidnight(new Date(startDateValue));
+          if (createdAtDate < startDate) return false;
+        }
+
+        // Vérifier date de fin
+        if (endDateValue) {
+          const endDate = normalizeDateToMidnight(new Date(endDateValue));
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          if (createdAtDate >= nextDay) return false;
+        }
+
+        return true;
       });
+
+      console.log(
+        `Applying date range filter: ${startDateValue || "pas de début"} to ${
+          endDateValue || "pas de fin"
+        }`
+      );
     } else {
       console.log("No main filter date selected.");
     }
@@ -8405,24 +8409,6 @@ function mapStatus(status) {
       });
   });
 
-  if (mainTableDateFilter) {
-    const year = currentMainFilterDate.getFullYear();
-    const month = String(currentMainFilterDate.getMonth() + 1).padStart(2, "0");
-    const day = String(currentMainFilterDate.getDate()).padStart(2, "0");
-
-    const formattedDateForInput = `${year}-${month}-${day}`;
-
-    console.log("Applying date to filter input:", formattedDateForInput);
-    mainTableDateFilter.value = formattedDateForInput;
-    updateAgentStatusIndicator();
-    mainTableDateFilter.addEventListener("change", () => {
-      updateAgentStatusIndicator();
-    });
-  } else {
-    console.error(
-      "Error: The element #mainTableDateFilter was not found in the DOM!"
-    );
-  }
   await loadDeliveries(); // This now triggers applyCombinedFilters()
 
   // Initialize WebSocket connection AFTER initial data load
@@ -8478,21 +8464,60 @@ function mapStatus(status) {
     populateStatusFilter();
   }
 
-  if (mainTableDateFilter) {
-    mainTableDateFilter.addEventListener("change", (e) => {
-      currentMainFilterDate = normalizeDateToMidnight(new Date(e.target.value));
-      localStorage.setItem("mainTableFilterDate", e.target.value);
+  // Initialisation et gestion des champs de date début/fin
+  if (mainTableDateStartFilter && mainTableDateEndFilter) {
+    // Fonction pour initialiser les dates par défaut
+    const initializeDefaultDates = () => {
+      const storedStartDate = localStorage.getItem("mainTableDateStartFilter");
+      const storedEndDate = localStorage.getItem("mainTableDateEndFilter");
+
+      if (storedStartDate && storedEndDate) {
+        mainTableDateStartFilter.value = storedStartDate;
+        mainTableDateEndFilter.value = storedEndDate;
+      } else {
+        // Utiliser les dates par défaut après le chargement des données
+        const defaultRange = getDefaultDateRange();
+        const startDateFormatted = formatDateForInput(defaultRange.startDate);
+        const endDateFormatted = formatDateForInput(defaultRange.endDate);
+
+        mainTableDateStartFilter.value = startDateFormatted;
+        mainTableDateEndFilter.value = endDateFormatted;
+
+        localStorage.setItem("mainTableDateStartFilter", startDateFormatted);
+        localStorage.setItem("mainTableDateEndFilter", endDateFormatted);
+      }
+    };
+
+    // Événements pour la date de début
+    mainTableDateStartFilter.addEventListener("change", (e) => {
+      localStorage.setItem("mainTableDateStartFilter", e.target.value);
       applyCombinedFilters();
     });
-    mainTableDateFilter.addEventListener("input", () => {
-      if (!mainTableDateFilter.value) {
-        // If the date input is cleared, set currentMainFilterDate to today for the scrolling bar
-        // and clear the main table filter.
-        currentMainFilterDate = normalizeDateToMidnight(new Date()); // Default to today for scrolling bar
-        localStorage.removeItem("mainTableFilterDate");
-        applyCombinedFilters(); // This will render the main table for all dates if filter is empty
-      }
+
+    // Événements pour la date de fin
+    mainTableDateEndFilter.addEventListener("change", (e) => {
+      localStorage.setItem("mainTableDateEndFilter", e.target.value);
+      applyCombinedFilters();
     });
+
+    // Initialiser les dates par défaut
+    // Si les données sont déjà chargées
+    if (deliveries && deliveries.length > 0) {
+      initializeDefaultDates();
+    } else {
+      // Sinon, attendre que les données se chargent
+      const originalLoadDeliveries = window.loadDeliveries;
+      if (typeof originalLoadDeliveries === "function") {
+        window.loadDeliveries = async function (...args) {
+          const result = await originalLoadDeliveries.apply(this, args);
+          // Initialiser les dates après le chargement
+          setTimeout(() => {
+            initializeDefaultDates();
+          }, 100);
+          return result;
+        };
+      }
+    }
   }
 
   if (searchButton) {
