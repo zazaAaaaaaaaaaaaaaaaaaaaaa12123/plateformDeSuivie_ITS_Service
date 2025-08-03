@@ -2553,13 +2553,7 @@ function mapStatus(status) {
   // DOM element for the status filter
 
   const statusFilterSelect = document.getElementById("statusFilterSelect");
-
-  // Créer les champs de date dynamiquement
-  createDateFilters();
-
-  // Maintenant récupérer les références après création
-  const startDateFilter = document.getElementById("startDateFilter");
-  const endDateFilter = document.getElementById("endDateFilter");
+  const mainTableDateFilter = document.getElementById("mainTableDateFilter");
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
@@ -2643,63 +2637,39 @@ function mapStatus(status) {
 
   console.log("Initializing admin dashboard...");
 
-  // Fonction pour créer les champs de date dynamiquement
-  function createDateFilters() {
-    const container = document.getElementById("dateFiltersContainer");
-    if (!container) return;
+  let currentMainFilterDate = (() => {
+    const storedDate = localStorage.getItem("mainTableFilterDate");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of today in local time
 
-    // Créer le HTML pour les champs de date avec un alignement parfait
-    container.innerHTML = `
-      <div class="d-flex align-items-center" style="gap: 15px;">
-        <div class="d-flex align-items-center" style="gap: 8px;">
-          <label for="startDateFilter" class="mb-0" style="font-size: 0.9em; font-weight: 600; color: #495057; white-space: nowrap;">Du :</label>
-          <input type="date" id="startDateFilter" class="icon-btn icon-btn-company-color" title="Date de début" style="width: 150px; height: 38px;" />
-        </div>
-        <div class="d-flex align-items-center" style="gap: 8px;">
-          <label for="endDateFilter" class="mb-0" style="font-size: 0.9em; font-weight: 600; color: #495057; white-space: nowrap;">Au :</label>
-          <input type="date" id="endDateFilter" class="icon-btn icon-btn-company-color" title="Date de fin" style="width: 150px; height: 38px;" />
-        </div>
-      </div>
-    `;
-  }
+    if (storedDate) {
+      const storedDateObj = new Date(storedDate);
+      storedDateObj.setHours(0, 0, 0, 0); // Normalize stored date to start of day in local time
 
-  // Variables pour le filtrage par plage de dates
-  let currentStartDate = null;
-  let currentEndDate = null;
-
-  // Charger les dates sauvegardées depuis le localStorage
-  (() => {
-    const savedStartDate = localStorage.getItem("startDateFilter");
-    const savedEndDate = localStorage.getItem("endDateFilter");
-
-    if (savedStartDate) {
-      currentStartDate = normalizeDateToMidnight(new Date(savedStartDate));
+      if (storedDateObj.getTime() === today.getTime()) {
+        console.log("Using stored date (today):", storedDate);
+        return storedDateObj;
+      } else {
+        console.log(
+          "Stored date outdated, updating to today:",
+          today.toISOString().split("T")[0]
+        );
+      }
+    } else {
+      console.log(
+        "No date stored, initializing to today:",
+        today.toISOString().split("T")[0]
+      );
     }
-
-    if (savedEndDate) {
-      currentEndDate = normalizeDateToMidnight(new Date(savedEndDate));
-    }
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const formattedToday = `${year}-${month}-${day}`;
+    localStorage.setItem("mainTableFilterDate", formattedToday);
+    return today;
   })();
 
-  // Fonction pour initialiser les champs de date avec les valeurs sauvegardées
-  function initializeDateFields() {
-    const startDateFilter = document.getElementById("startDateFilter");
-    const endDateFilter = document.getElementById("endDateFilter");
-
-    if (startDateFilter && currentStartDate) {
-      const year = currentStartDate.getFullYear();
-      const month = String(currentStartDate.getMonth() + 1).padStart(2, "0");
-      const day = String(currentStartDate.getDate()).padStart(2, "0");
-      startDateFilter.value = `${year}-${month}-${day}`;
-    }
-
-    if (endDateFilter && currentEndDate) {
-      const year = currentEndDate.getFullYear();
-      const month = String(currentEndDate.getMonth() + 1).padStart(2, "0");
-      const day = String(currentEndDate.getDate()).padStart(2, "0");
-      endDateFilter.value = `${year}-${month}-${day}`;
-    }
-  } // DOM elements for the history sidebar (modal)
+  // DOM elements for the history sidebar (modal)
   const historySidebar = document.getElementById("historySidebar");
   const historyOverlay = document.getElementById("historyOverlay");
   const historyModalTitle = document.getElementById("historyModalTitle");
@@ -5156,20 +5126,12 @@ function mapStatus(status) {
       agentStatusText.textContent = "Agents Actifs (Aujourd'hui)";
   };
   /**
-   * [FONCTION LEGACY - À ADAPTER SI NÉCESSAIRE]
    * Returns a sorted list of unique agent names who have performed an operation
    * (either created or delivered a delivery) on the currently selected filter date.
-   * Cette fonction était utilisée avec l'ancien système de filtrage par date unique.
+   * This function now strictly uses `currentMainFilterDate` for filtering.
    * @returns {Array<string>} Sorted array of unique agent names.
    */
   function getAgentsForCurrentMainDate() {
-    // FONCTION DÉSACTIVÉE - À ADAPTER POUR LE NOUVEAU SYSTÈME DE PLAGE DE DATES
-    console.log(
-      "getAgentsForCurrentMainDate: Cette fonction est désactivée et doit être adaptée pour le nouveau système de plage de dates."
-    );
-    return [];
-
-    /* CODE ORIGINAL COMMENTÉ
     // Get the ISO string for the date selected in the main filter, using UTC components for consistency
     // This ensures that currentMainFilterDate (which is a Date object) is normalized to UTCYYYY-MM-DD
     const selectedFilterDateISO = formatDateToISO(currentMainFilterDate);
@@ -5187,9 +5149,45 @@ function mapStatus(status) {
       );
       return [];
     }
-    */
 
-    return [];
+    const agentsSet = new Set();
+    deliveries.forEach((delivery) => {
+      let isAgentActiveOnFilterDate = false;
+
+      // Check if the delivery was created on the selected filter date (UTC comparison)
+      if (delivery.created_at) {
+        // Ensure delivery.created_at is treated as a Date object and then converted to UTCYYYY-MM-DD
+        const createdAtDate = new Date(delivery.created_at); // Ensure it's a Date object
+        const createdAtISO = formatDateToISO(createdAtDate); // Uses the now UTC-based formatDateToISO
+        if (createdAtISO === selectedFilterDateISO) {
+          isAgentActiveOnFilterDate = true;
+          // console.log(`Agent ${delivery.employee_name} active on ${selectedFilterDateISO} via created_at: ${createdAtISO}`);
+        }
+      }
+      // Also check if the delivery was *delivered* on the selected filter date (UTC comparison).
+      // An agent is considered "active" on a day if they performed any relevant operation.
+      if (!isAgentActiveOnFilterDate && delivery.delivery_date) {
+        // Ensure delivery.delivery_date is treated as a Date object and then converted to UTCYYYY-MM-DD
+        const deliveryDateObj = new Date(delivery.delivery_date); // Ensure it's a Date object
+        if (!isNaN(deliveryDateObj.getTime())) {
+          const deliveryDateISO = formatDateToISO(deliveryDateObj); // Uses the now UTC-based formatDateToISO
+          if (deliveryDateISO === selectedFilterDateISO) {
+            isAgentActiveOnFilterDate = true;
+            // console.log(`Agent ${delivery.employee_name} active on ${selectedFilterDateISO} via delivery_date: ${deliveryDateISO}`);
+          }
+        }
+      }
+
+      if (isAgentActiveOnFilterDate && delivery.employee_name) {
+        agentsSet.add(delivery.employee_name);
+      }
+    });
+    const sortedAgents = Array.from(agentsSet).sort();
+    console.log(
+      `getAgentsForCurrentMainDate: Active agents for ${selectedFilterDateISO}:`,
+      sortedAgents
+    );
+    return sortedAgents;
   }
   function populateStatusFilter() {
     if (!statusFilterSelect) {
@@ -5248,45 +5246,26 @@ function mapStatus(status) {
         });
       }
     }
-    // Filtrage par plage de dates
-    if (currentStartDate || currentEndDate) {
+    if (currentMainFilterDate) {
       console.log(
-        "Applying date range filter:",
-        currentStartDate
-          ? currentStartDate.toLocaleDateString("fr-FR")
-          : "Pas de date de début",
-        "à",
-        currentEndDate
-          ? currentEndDate.toLocaleDateString("fr-FR")
-          : "Pas de date de fin"
+        "Applying date filter (based on created_at):", // Changed log for clarity
+        currentMainFilterDate.toLocaleDateString("fr-FR")
       );
+      const filterDate = normalizeDateToMidnight(currentMainFilterDate);
+      const nextDay = new Date(filterDate);
+      nextDay.setDate(nextDay.getDate() + 1);
 
       filteredData = filteredData.filter((delivery) => {
-        let createdAtDate = null;
+        let createdAtDate = null; // Only check created_at for the main filter
         if (delivery.created_at) {
           createdAtDate = new Date(delivery.created_at);
         }
         if (!createdAtDate || isNaN(createdAtDate.getTime())) return false;
         createdAtDate = normalizeDateToMidnight(createdAtDate);
-
-        // Vérifier la date de début
-        if (currentStartDate) {
-          const startDate = normalizeDateToMidnight(currentStartDate);
-          if (createdAtDate < startDate) return false;
-        }
-
-        // Vérifier la date de fin
-        if (currentEndDate) {
-          const endDate = normalizeDateToMidnight(currentEndDate);
-          const nextDay = new Date(endDate);
-          nextDay.setDate(nextDay.getDate() + 1);
-          if (createdAtDate >= nextDay) return false;
-        }
-
-        return true;
+        return createdAtDate >= filterDate && createdAtDate < nextDay;
       });
     } else {
-      console.log("Aucun filtre de date appliqué.");
+      console.log("No main filter date selected.");
     }
 
     if (shouldRenderTable) {
@@ -6915,22 +6894,11 @@ function mapStatus(status) {
         position += pageContentHeight; // Move to the next slice position
       }
 
-      // Générer le nom de fichier basé sur la plage de dates
-      let fileName = "Suivi_Livraisons";
-      if (currentStartDate && currentEndDate) {
-        fileName += `_${currentStartDate.toLocaleDateString(
+      doc.save(
+        `Suivi_Livraisons_${currentMainFilterDate.toLocaleDateString(
           "fr-FR"
-        )}_à_${currentEndDate.toLocaleDateString("fr-FR")}`;
-      } else if (currentStartDate) {
-        fileName += `_depuis_${currentStartDate.toLocaleDateString("fr-FR")}`;
-      } else if (currentEndDate) {
-        fileName += `_jusqu_${currentEndDate.toLocaleDateString("fr-FR")}`;
-      } else {
-        fileName += `_${new Date().toLocaleDateString("fr-FR")}`;
-      }
-      fileName += ".pdf";
-
-      doc.save(fileName);
+        )}.pdf`
+      );
       showCustomAlert(
         "Le PDF du tableau principal a été généré avec succès !",
         "success"
@@ -8802,10 +8770,24 @@ function mapStatus(status) {
       });
   });
 
-  // Initialiser les champs de date et leurs event listeners
-  initializeDateFields();
-  setupDateEventListeners();
+  if (mainTableDateFilter) {
+    const year = currentMainFilterDate.getFullYear();
+    const month = String(currentMainFilterDate.getMonth() + 1).padStart(2, "0");
+    const day = String(currentMainFilterDate.getDate()).padStart(2, "0");
 
+    const formattedDateForInput = `${year}-${month}-${day}`;
+
+    console.log("Applying date to filter input:", formattedDateForInput);
+    mainTableDateFilter.value = formattedDateForInput;
+    updateAgentStatusIndicator();
+    mainTableDateFilter.addEventListener("change", () => {
+      updateAgentStatusIndicator();
+    });
+  } else {
+    console.error(
+      "Error: The element #mainTableDateFilter was not found in the DOM!"
+    );
+  }
   await loadDeliveries(); // This now triggers applyCombinedFilters()
 
   // Initialize WebSocket connection AFTER initial data load
@@ -8861,36 +8843,21 @@ function mapStatus(status) {
     populateStatusFilter();
   }
 
-  // Event listeners pour les nouveaux champs de date (créés dynamiquement)
-  function setupDateEventListeners() {
-    const startDateFilter = document.getElementById("startDateFilter");
-    const endDateFilter = document.getElementById("endDateFilter");
-
-    if (startDateFilter) {
-      startDateFilter.addEventListener("change", (e) => {
-        if (e.target.value) {
-          currentStartDate = normalizeDateToMidnight(new Date(e.target.value));
-          localStorage.setItem("startDateFilter", e.target.value);
-        } else {
-          currentStartDate = null;
-          localStorage.removeItem("startDateFilter");
-        }
-        applyCombinedFilters();
-      });
-    }
-
-    if (endDateFilter) {
-      endDateFilter.addEventListener("change", (e) => {
-        if (e.target.value) {
-          currentEndDate = normalizeDateToMidnight(new Date(e.target.value));
-          localStorage.setItem("endDateFilter", e.target.value);
-        } else {
-          currentEndDate = null;
-          localStorage.removeItem("endDateFilter");
-        }
-        applyCombinedFilters();
-      });
-    }
+  if (mainTableDateFilter) {
+    mainTableDateFilter.addEventListener("change", (e) => {
+      currentMainFilterDate = normalizeDateToMidnight(new Date(e.target.value));
+      localStorage.setItem("mainTableFilterDate", e.target.value);
+      applyCombinedFilters();
+    });
+    mainTableDateFilter.addEventListener("input", () => {
+      if (!mainTableDateFilter.value) {
+        // If the date input is cleared, set currentMainFilterDate to today for the scrolling bar
+        // and clear the main table filter.
+        currentMainFilterDate = normalizeDateToMidnight(new Date()); // Default to today for scrolling bar
+        localStorage.removeItem("mainTableFilterDate");
+        applyCombinedFilters(); // This will render the main table for all dates if filter is empty
+      }
+    });
   }
 
   if (searchButton) {
@@ -9533,4 +9500,4 @@ function mapStatus(status) {
     "[SYNC] Fonctions de test disponibles: testContainerStatusSync(), debugContainerSync()"
   );
 })();
-/****** Script a ajouter en cas de pertubation 125 AAAA ***/
+/****** Script a ajouter en cas de pertubation 125 AAAA sjk***/
