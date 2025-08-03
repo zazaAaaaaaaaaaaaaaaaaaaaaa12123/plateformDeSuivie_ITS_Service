@@ -967,6 +967,46 @@ if (window["WebSocket"]) {
   initWebSocketLivraison();
 }
 
+// Fonction globale pour mapper les statuts
+function mapStatus(status) {
+  if (!status) return "-";
+  const normalized = status.toLowerCase();
+  if (["livré", "livre", "livree", "livrée"].includes(normalized))
+    return "livré";
+  if (
+    [
+      "rejeté",
+      "rejete",
+      "rejetee",
+      "rejetée",
+      "rejected_acconier",
+      "rejected_by_employee",
+    ].includes(normalized)
+  )
+    return "rejeté";
+  if (
+    [
+      "en attente",
+      "attente",
+      "pending",
+      "pending_acconier",
+      "awaiting_delivery_acconier",
+    ].includes(normalized)
+  )
+    return "en attente";
+  if (
+    [
+      "en cours",
+      "encours",
+      "in progress",
+      "en-cours",
+      "in_progress_acconier",
+    ].includes(normalized)
+  )
+    return "en cours";
+  return "en cours";
+}
+
 (async () => {
   // === Désactivation de l'autocomplétion sur les champs sensibles ===
   window.addEventListener("DOMContentLoaded", function () {
@@ -7180,45 +7220,6 @@ if (window["WebSocket"]) {
       }
       // Remplir le contenu
 
-      // Utilise le champ backend si dispo, sinon fallback JS
-      function mapStatus(status) {
-        if (!status) return "-";
-        const normalized = status.toLowerCase();
-        if (["livré", "livre", "livree", "livrée"].includes(normalized))
-          return "livré";
-        if (
-          [
-            "rejeté",
-            "rejete",
-            "rejetee",
-            "rejetée",
-            "rejected_acconier",
-            "rejected_by_employee",
-          ].includes(normalized)
-        )
-          return "rejeté";
-        if (
-          [
-            "en attente",
-            "attente",
-            "pending",
-            "pending_acconier",
-            "awaiting_delivery_acconier",
-          ].includes(normalized)
-        )
-          return "en attente";
-        if (
-          [
-            "en cours",
-            "encours",
-            "in progress",
-            "en-cours",
-            "in_progress_acconier",
-          ].includes(normalized)
-        )
-          return "en cours";
-        return "en cours";
-      }
       let displayStatus =
         op.delivery_status_acconier_fr ||
         mapStatus(op.delivery_status_acconier || op.status || "");
