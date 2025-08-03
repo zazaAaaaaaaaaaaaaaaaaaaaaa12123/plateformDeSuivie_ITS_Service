@@ -4495,10 +4495,8 @@ if (window["WebSocket"]) {
       createCell(delivery.inspecteur, "inspecteur", "text", {}); // Inspecteur
       createCell(delivery.agent_en_douanes, "agent_en_douanes", "text", {}); // Agent en Douanes
       createCell(delivery.driver_name, "driver_name", "text", {}); // Chauffeur
-      createCell(delivery.truck_registration, "truck_registration", "text", {}); // Immatriculation
       createCell(delivery.driver_phone, "driver_phone", "text", {}); // Tél. Chauffeur
       createCell(delivery.delivery_date, "delivery_date", "date", {}); // Date Livraison
-      createCell(delivery.delivery_time, "delivery_time", "time", {}); // Heure Livraison
 
       // === Statut multi-conteneurs : carte dynamique ===
       (function () {
