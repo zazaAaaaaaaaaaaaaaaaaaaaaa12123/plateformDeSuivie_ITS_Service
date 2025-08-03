@@ -60,14 +60,68 @@ const wss = new WebSocket.Server({ server });
 let wsClients = [];
 wss.on("connection", (ws) => {
   wsClients.push(ws);
+
+  ws.on("message", (message) => {
+    try {
+      const data = JSON.parse(message);
+      // Si un client envoie une mise à jour d'observation, on la diffuse à tous les autres
+      if (data.type === "observation_update") {
+        broadcastObservationUpdate(data.deliveryId, data.observation);
+      }
+    } catch (e) {
+      // Ignore les messages non JSON
+    }
+  });
+
   ws.on("close", () => {
     wsClients = wsClients.filter((c) => c !== ws);
   });
 });
 
+// Broadcast WebSocket pour mise à jour de l'observation
+function broadcastObservationUpdate(deliveryId, observation) {
+  wsClients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(
+        JSON.stringify({
+          type: "observation_update",
+          deliveryId,
+          observation,
+        })
+      );
+    }
+  });
+}
+
 // ===============================
 // ROUTE : PATCH statut BL (bl_statuses) pour une livraison
 // ===============================
+
+app.patch("/deliveries/:id/observation", async (req, res) => {
+  const { id } = req.params;
+  const { observation } = req.body;
+
+  try {
+    const result = await pool.query(
+      "UPDATE livraison_conteneur SET observation_acconier = $1 WHERE id = $2 RETURNING id, observation_acconier",
+      [observation, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+
+    // Diffuser la mise à jour via WebSocket
+    broadcastObservationUpdate(id, observation);
+
+    res.json({ success: true, delivery: result.rows[0] });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour de l'observation:", err);
+    res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
 
 // ===============================
 // TABLE POUR RESPONSABLE DE LIVRAISON PERSISTANT

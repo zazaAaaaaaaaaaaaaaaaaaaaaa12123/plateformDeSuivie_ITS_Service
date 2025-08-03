@@ -2087,6 +2087,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ observation: val }),
                 });
+                // Émettre l'événement WebSocket après la sauvegarde réussie
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                  ws.send(
+                    JSON.stringify({
+                      type: "observation_update",
+                      deliveryId: delivery.id,
+                      observation: val,
+                    })
+                  );
+                }
               } catch (err) {
                 console.error("Erreur sauvegarde observation", err);
               }

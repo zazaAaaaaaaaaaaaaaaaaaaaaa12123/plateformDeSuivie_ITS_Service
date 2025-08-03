@@ -640,6 +640,17 @@ function initWebSocketLivraison() {
           if (typeof loadDeliveries === "function") {
             loadDeliveries();
           }
+        } else if (data.type === "observation_update") {
+          // Mise à jour de l'observation dans le tableau principal
+          const { deliveryId, observation } = data;
+          const row = document.getElementById(`delivery-row-${deliveryId}`);
+          if (row) {
+            // La colonne des observations est la 20ème (index 19)
+            const cell = row.cells[19];
+            if (cell) {
+              cell.innerHTML = observation.replace(/\n/g, "<br>");
+            }
+          }
         }
       } catch (e) {
         console.warn("[WebSocket] Message non JSON ou erreur :", event.data);
