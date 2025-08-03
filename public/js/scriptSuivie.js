@@ -4155,7 +4155,7 @@ if (window["WebSocket"]) {
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
       createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
       createCell(
-        delivery.observation_acconier,
+        delivery.observation_acconier || delivery.delivery_notes || "",
         "observation_acconier",
         "textarea",
         {}
