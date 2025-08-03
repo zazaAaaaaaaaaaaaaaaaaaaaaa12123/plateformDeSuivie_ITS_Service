@@ -147,6 +147,7 @@ app.post("/api/sync-resplivraison", async (req, res) => {
     driver: "driver_name",
     driver_phone: "driver_phone",
     delivery_date: "delivery_date",
+    observation: "delivery_notes",
   };
 
   const dbFieldName = fieldMapping[fieldId];
@@ -225,7 +226,7 @@ app.get("/api/sync-resplivraison/:deliveryId", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, nom_agent_visiteur, transporter, inspecteur, agent_en_douanes, 
-              driver_name, driver_phone, delivery_date 
+              driver_name, driver_phone, delivery_date, delivery_notes 
        FROM livraison_conteneur 
        WHERE id = $1`,
       [deliveryId]
@@ -249,6 +250,7 @@ app.get("/api/sync-resplivraison/:deliveryId", async (req, res) => {
       driver_name: delivery.driver_name,
       driver_phone: delivery.driver_phone,
       delivery_date: delivery.delivery_date,
+      delivery_notes: delivery.delivery_notes,
     };
 
     res.json({
@@ -284,6 +286,7 @@ app.put("/api/sync-resplivraison/batch", async (req, res) => {
     driver: "driver_name",
     driver_phone: "driver_phone",
     delivery_date: "delivery_date",
+    observation: "delivery_notes",
   };
 
   try {

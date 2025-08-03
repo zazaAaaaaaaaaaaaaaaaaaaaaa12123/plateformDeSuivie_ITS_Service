@@ -1189,6 +1189,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           driver: "driver_name",
           driver_phone: "driver_phone",
           delivery_date: "delivery_date",
+          observation: "delivery_notes",
         };
 
         const suivieFieldId = fieldMapping[fieldId];
