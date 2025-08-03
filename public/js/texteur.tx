@@ -1,11 +1,11 @@
-// Fonction utilitaire pour normaliser la date à minuit
+ecoute moi tres bien ,  dans ce code : // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
   date.setHours(0, 0, 0, 0);
   return date;
 }
 
-// Fonction principale pour afficher les livraisons filtrées par date
+// Fonction principale pour ,  afficher les livraisons filtrées par date
 function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
   const dateToCompare = normalizeDateToMidnight(selectedDate);
   // Filtre les livraisons par date (champ created_at ou delivery_date)
@@ -24,6 +24,457 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // --- Toast dossiers en retard (>2 jours) ---
+  function showLateDeliveriesToast(lateDeliveries) {
+    // Supprimer tout toast existant
+    const oldToast = document.getElementById("late-deliveries-toast");
+    if (oldToast) oldToast.remove();
+    if (!lateDeliveries || lateDeliveries.length === 0) return;
+    const toast = document.createElement("div");
+    toast.id = "late-deliveries-toast";
+    toast.style.position = "fixed";
+    toast.style.top = "32px";
+    toast.style.right = "32px";
+    toast.style.background = "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+    toast.style.color = "#fff";
+    toast.style.fontWeight = "bold";
+    toast.style.fontSize = "1.08em";
+    toast.style.padding = "18px 32px";
+    toast.style.borderRadius = "16px";
+    toast.style.boxShadow = "0 6px 32px rgba(239,68,68,0.18)";
+    toast.style.zIndex = 99999;
+    toast.style.cursor = "pointer";
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity 0.3s";
+    toast.textContent = `⚠️ ${lateDeliveries.length} dossier(s) en retard`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "1";
+    }, 10);
+    // Clic : affiche la liste détaillées
+    toast.onclick = function () {
+      // Supprimer popup existant
+      const oldPopup = document.getElementById("late-deliveries-popup");
+      if (oldPopup) oldPopup.remove();
+      const overlay = document.createElement("div");
+      overlay.id = "late-deliveries-popup";
+      overlay.style.position = "fixed";
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.width = "100vw";
+      overlay.style.height = "100vh";
+      overlay.style.background = "rgba(30,41,59,0.45)";
+      overlay.style.zIndex = 100000;
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "flex-start";
+      overlay.style.justifyContent = "center";
+      overlay.style.paddingTop = "8vh";
+      const box = document.createElement("div");
+      box.style.background = "#fff";
+      box.style.borderRadius = "16px";
+      box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+      box.style.maxWidth = "420px";
+      box.style.width = "96vw";
+      box.style.maxHeight = "92vh";
+      box.style.overflowY = "auto";
+      box.style.padding = "0";
+      box.style.position = "relative";
+      box.style.display = "flex";
+      box.style.flexDirection = "column";
+      const header = document.createElement("div");
+      header.style.background = "#ef4444";
+      header.style.color = "#fff";
+      header.style.padding = "18px 28px 12px 28px";
+      header.style.fontWeight = "bold";
+      header.style.fontSize = "1.15rem";
+      header.style.display = "flex";
+      header.style.flexDirection = "column";
+      header.style.borderTopLeftRadius = "16px";
+      header.style.borderTopRightRadius = "16px";
+      header.innerHTML = `<span style='font-size:1.08em;'>Dossiers en retard</span>`;
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = "&times;";
+      closeBtn.style.background = "none";
+      closeBtn.style.border = "none";
+      closeBtn.style.color = "#fff";
+      closeBtn.style.fontSize = "2.1rem";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.style.position = "absolute";
+      closeBtn.style.top = "10px";
+      closeBtn.style.right = "18px";
+      closeBtn.setAttribute("aria-label", "Fermer");
+      closeBtn.onclick = () => overlay.remove();
+      header.appendChild(closeBtn);
+      box.appendChild(header);
+      const content = document.createElement("div");
+      content.style.padding = "24px 24px 24px 24px";
+      content.style.background = "#f8fafc";
+      content.style.flex = "1 1 auto";
+      content.style.overflowY = "auto";
+      if (lateDeliveries.length === 0) {
+        content.innerHTML =
+          "<div style='text-align:center;'>Aucun dossier en retard.</div>";
+      } else {
+        const ul = document.createElement("ul");
+        ul.className = "late-deliveries-list";
+        ul.style.listStyle = "none";
+        ul.style.padding = 0;
+        ul.style.margin = 0;
+        lateDeliveries.forEach((d, idx) => {
+          const li = document.createElement("li");
+          li.className = "late-delivery-item";
+          li.style.marginBottom = "18px";
+          li.style.cursor = "pointer";
+          li.style.borderRadius = "14px";
+          li.style.padding = "18px 18px 14px 18px";
+          li.style.background = "#fff";
+          li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
+          li.style.border = "2px solid #fee2e2";
+          li.style.transition =
+            "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
+          li.innerHTML = `
+            <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
+              <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#ef4444 60%,#fca5a5 100%);color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #ef444433;'>${
+                idx + 1
+              }</span>
+              <span style='color:#ef4444;font-weight:bold;font-size:1.08em;'><i class="fas fa-folder-open" style="margin-right:6px;color:#ef4444;"></i>N° Dossier :</span>
+              <span style='color:#b91c1c;font-weight:700;font-size:1.13em;'>${
+                d.dossier_number || "-"
+              }</span>
+            </div>
+            <div style='font-size:1em;margin-left:42px;'>
+              <span style='color:#2563eb;font-weight:600;'>Agent :</span>
+              <span style='color:#0e274e;font-weight:600;'>${
+                d.employee_name || "-"
+              }</span>
+            </div>
+          `;
+          li.onmouseenter = function () {
+            li.style.background = "#fef2f2";
+            li.style.borderColor = "#fca5a5";
+            li.style.boxShadow = "0 6px 24px #ef444433";
+            li.style.transform = "translateY(-2px) scale(1.015)";
+          };
+          li.onmouseleave = function () {
+            li.style.background = "#fff";
+            li.style.borderColor = "#fee2e2";
+            li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
+            li.style.transform = "none";
+          };
+          // Ajout : au clic, scroll sur la ligne du tableau et flash
+          li.onclick = function (e) {
+            e.stopPropagation();
+            overlay.remove(); // ferme la popup
+            // Cherche la ligne du tableau avec le bon N° Dossier
+            const tableBody = document.getElementById("deliveriesTableBody");
+            if (tableBody) {
+              // On cherche la cellule qui contient le N° Dossier
+              const rows = tableBody.querySelectorAll("tr");
+              let foundRow = null;
+              rows.forEach((row) => {
+                const cells = row.querySelectorAll("td");
+                for (let i = 0; i < cells.length; i++) {
+                  if (
+                    cells[i].textContent &&
+                    String(cells[i].textContent).trim() ===
+                      String(d.dossier_number).trim()
+                  ) {
+                    foundRow = row;
+                  }
+                }
+              });
+              if (foundRow) {
+                foundRow.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+                // Clignotement 3 fois sur 3 secondes
+                const tds = foundRow.querySelectorAll("td");
+                let flashCount = 0;
+                const maxFlashes = 3;
+                function doFlash() {
+                  tds.forEach((td) => {
+                    td.classList.remove("flash-red-cell");
+                    void td.offsetWidth;
+                    td.classList.add("flash-red-cell");
+                  });
+                  setTimeout(() => {
+                    tds.forEach((td) => td.classList.remove("flash-red-cell"));
+                    flashCount++;
+                    if (flashCount < maxFlashes) {
+                      setTimeout(doFlash, 1000);
+                    }
+                  }, 1000);
+                }
+                doFlash();
+              }
+            }
+          };
+          ul.appendChild(li);
+        });
+        content.appendChild(ul);
+      }
+      box.appendChild(content);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+      };
+      // Ajout du style pour le flash rouge sur la ligne du tableau si pas déjà présent
+      if (!document.getElementById("flash-red-row-style")) {
+        const style = document.createElement("style");
+        style.id = "flash-red-row-style";
+        style.innerHTML = `
+        .flash-red-cell {
+          animation: flashRedCellAnim 1s cubic-bezier(0.4,0,0.2,1);
+          background: #d49494ff !important;
+          transition: background 0.3s;
+        }
+        @keyframes flashRedCellAnim {
+          0% { background: #fee2e2; }
+          30% { background: #f87171; }
+          70% { background: #fecaca; }
+          100% { background: transparent; }
+        }
+        `;
+        document.head.appendChild(style);
+      }
+    };
+    // Disparition auto après 8s
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+      }, 400);
+    }, 8000);
+  }
+  // Ajout dynamique du bouton de suppression compact à côté des dates
+  let deleteBtn = null;
+  let rangeDiv = null;
+  function showDeleteBtn() {
+    if (!deleteBtn) {
+      deleteBtn = document.createElement("button");
+      deleteBtn.id = "deleteRowsBtn";
+      deleteBtn.textContent = "🗑️ Supprimer";
+      deleteBtn.style.background =
+        "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+      deleteBtn.style.color = "#fff";
+      deleteBtn.style.fontWeight = "bold";
+      deleteBtn.style.fontSize = "0.98em";
+      deleteBtn.style.border = "none";
+      deleteBtn.style.borderRadius = "50px";
+      deleteBtn.style.padding = "0.45em 1.1em";
+      deleteBtn.style.marginLeft = "12px";
+      deleteBtn.style.boxShadow = "0 2px 8px rgba(239,68,68,0.13)";
+      deleteBtn.style.display = "none";
+      deleteBtn.onclick = async function () {
+        const checked = document.querySelectorAll(
+          ".select-row-checkbox:checked"
+        );
+        if (checked.length === 0) return;
+
+        // Message de confirmation personnalisé
+        const confirmOverlay = document.createElement("div");
+        confirmOverlay.style.position = "fixed";
+        confirmOverlay.style.top = 0;
+        confirmOverlay.style.left = 0;
+        confirmOverlay.style.width = "100vw";
+        confirmOverlay.style.height = "100vh";
+        confirmOverlay.style.background = "rgba(30,41,59,0.45)";
+        confirmOverlay.style.zIndex = 99999;
+        confirmOverlay.style.display = "flex";
+        confirmOverlay.style.alignItems = "center";
+        confirmOverlay.style.justifyContent = "center";
+
+        const confirmBox = document.createElement("div");
+        confirmBox.style.background = "#fff";
+        confirmBox.style.borderRadius = "18px";
+        confirmBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+        confirmBox.style.maxWidth = "420px";
+        confirmBox.style.width = "96vw";
+        confirmBox.style.padding = "0";
+        confirmBox.style.position = "relative";
+        confirmBox.style.display = "flex";
+        confirmBox.style.flexDirection = "column";
+
+        // Header
+        const confirmHeader = document.createElement("div");
+        confirmHeader.style.background =
+          "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+        confirmHeader.style.color = "#fff";
+        confirmHeader.style.padding = "22px 32px 12px 32px";
+        confirmHeader.style.fontWeight = "bold";
+        confirmHeader.style.fontSize = "1.18rem";
+        confirmHeader.style.borderTopLeftRadius = "18px";
+        confirmHeader.style.borderTopRightRadius = "18px";
+        confirmHeader.innerHTML = `<span style='font-size:1.25em;'>🗑️ Confirmation de suppression</span>`;
+        confirmBox.appendChild(confirmHeader);
+
+        // Message
+        const confirmMsgDiv = document.createElement("div");
+        confirmMsgDiv.style.padding = "24px 24px 18px 24px";
+        confirmMsgDiv.style.background = "#f8fafc";
+        confirmMsgDiv.style.fontSize = "1.08em";
+        confirmMsgDiv.style.color = "#1e293b";
+        confirmMsgDiv.style.textAlign = "center";
+        confirmMsgDiv.innerHTML =
+          "<b>Vous êtes sur le point de supprimer définitivement la sélection.</b><br><br>Cette opération est <span style='color:#ef4444;font-weight:600;'>irréversible</span>.<br><br>Voulez-vous vraiment continuer ?";
+        confirmBox.appendChild(confirmMsgDiv);
+
+        // Boutons
+        const btnsDiv = document.createElement("div");
+        btnsDiv.style.display = "flex";
+        btnsDiv.style.justifyContent = "center";
+        btnsDiv.style.gap = "18px";
+        btnsDiv.style.padding = "0 0 22px 0";
+
+        // Bouton Annuler
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Annuler";
+        cancelBtn.style.background = "#fff";
+        cancelBtn.style.color = "#ef4444";
+        cancelBtn.style.fontWeight = "bold";
+        cancelBtn.style.fontSize = "1em";
+        cancelBtn.style.border = "2px solid #ef4444";
+        cancelBtn.style.borderRadius = "8px";
+        cancelBtn.style.padding = "0.7em 1.7em";
+        cancelBtn.style.cursor = "pointer";
+        cancelBtn.onclick = () => confirmOverlay.remove();
+
+        // Bouton Confirmer
+        const okBtn = document.createElement("button");
+        okBtn.textContent = "Supprimer";
+        okBtn.style.background =
+          "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+        okBtn.style.color = "#fff";
+        okBtn.style.fontWeight = "bold";
+        okBtn.style.fontSize = "1em";
+        okBtn.style.border = "none";
+        okBtn.style.borderRadius = "8px";
+        okBtn.style.padding = "0.7em 1.7em";
+        okBtn.style.cursor = "pointer";
+        okBtn.onclick = async () => {
+          confirmOverlay.remove();
+          const idsToDelete = Array.from(checked).map((cb) =>
+            cb.getAttribute("data-id")
+          );
+          // Appel API backend pour suppression définitive
+          try {
+            const response = await fetch("/deliveries/delete", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ ids: idsToDelete }),
+            });
+            const result = await response.json();
+            if (result.success) {
+              // Suppression locale hfgvj seulement si succès côté serveur
+              if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+                window.allDeliveries = window.allDeliveries.filter(
+                  (d) => !idsToDelete.includes(String(d.id))
+                );
+              }
+              const dateStartInput = document.getElementById(
+                "mainTableDateStartFilter"
+              );
+              const dateEndInput = document.getElementById(
+                "mainTableDateEndFilter"
+              );
+              if (typeof updateTableForDateRange === "function") {
+                updateTableForDateRange(
+                  dateStartInput ? dateStartInput.value : "",
+                  dateEndInput ? dateEndInput.value : ""
+                );
+              }
+              hideDeleteBtn();
+
+              // Afficher une alerte visuelle "suppression effectuée"
+              const alertDiv = document.createElement("div");
+              alertDiv.textContent = "Suppression effectuée";
+              alertDiv.style.position = "fixed";
+              alertDiv.style.top = "80px";
+              alertDiv.style.left = "50%";
+              alertDiv.style.transform = "translateX(-50%)";
+              alertDiv.style.background =
+                "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+              alertDiv.style.color = "#fff";
+              alertDiv.style.fontWeight = "bold";
+              alertDiv.style.fontSize = "1.12em";
+              alertDiv.style.padding = "18px 38px";
+              alertDiv.style.borderRadius = "16px";
+              alertDiv.style.boxShadow = "0 6px 32px rgba(239,68,68,0.18)";
+              alertDiv.style.zIndex = 99999;
+              alertDiv.style.opacity = "0";
+              alertDiv.style.transition = "opacity 0.3s";
+              document.body.appendChild(alertDiv);
+              setTimeout(() => {
+                alertDiv.style.opacity = "1";
+              }, 10);
+              setTimeout(() => {
+                alertDiv.style.opacity = "0";
+                setTimeout(() => alertDiv.remove(), 400);
+              }, 2000);
+            } else {
+              alert(
+                "Erreur lors de la suppression côté serveur. Veuillez réessayer."
+              );
+            }
+          } catch (e) {
+            alert("Erreur réseau lors de la suppression. Veuillez réessayer.");
+          }
+        };
+
+        btnsDiv.appendChild(cancelBtn);
+        btnsDiv.appendChild(okBtn);
+        confirmBox.appendChild(btnsDiv);
+        confirmOverlay.appendChild(confirmBox);
+        document.body.appendChild(confirmOverlay);
+        // Fermer la popup si clic en dehors de la boîte
+        confirmOverlay.onclick = (e) => {
+          if (e.target === confirmOverlay) confirmOverlay.remove();
+        };
+      };
+      // Trouver le rangeDiv (le conteneur des dates)
+      rangeDiv = document.getElementById(
+        "mainTableDateStartFilter"
+      )?.parentNode;
+      if (rangeDiv && rangeDiv.nodeName === "DIV") {
+        rangeDiv.appendChild(deleteBtn);
+      } else {
+        // fallback : insérer après le champ date début
+        const dateStartInput = document.getElementById(
+          "mainTableDateStartFilter"
+        );
+        if (dateStartInput && dateStartInput.parentNode) {
+          dateStartInput.parentNode.insertBefore(
+            deleteBtn,
+            dateStartInput.nextSibling
+          );
+        } else {
+          document.body.appendChild(deleteBtn);
+        }
+      }
+    }
+    deleteBtn.style.display = "inline-block";
+  }
+  function hideDeleteBtn() {
+    if (deleteBtn) deleteBtn.style.display = "none";
+  }
+  // Gestion de l'affichage du bouton selonv vhvcb la sélection
+  document.addEventListener("change", function (e) {
+    if (
+      e.target.classList &&
+      e.target.classList.contains("select-row-checkbox")
+    ) {
+      const checked = document.querySelectorAll(".select-row-checkbox:checked");
+      if (checked.length > 0) {
+        showDeleteBtn();
+      } else {
+        hideDeleteBtn();
+      }
+    }
+  });
   // Ajout du style CSS pour badges, tags et menu déroulant des conteneurs (Numéro TC(s))
   const styleTC = document.createElement("style");
   const newLocal = (styleTC.textContent = `
@@ -256,152 +707,69 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (
           data.type === "bl_status_update" &&
-          data.status === "mise_en_livraison"
+          data.delivery &&
+          data.delivery.bl_statuses
         ) {
-          console.log("[WebSocket] bl_status_update reçu:", data);
-          // On cherche la livraison concernée dans window.allDeliveries
-          console.log(
-            "[DEBUG] window.allDeliveries:",
-            window.allDeliveries,
-            "data.deliveryId:",
-            data.deliveryId
-          );
-          const delivery = (window.allDeliveries || []).find(
-            (d) => String(d.id) === String(data.deliveryId)
-          );
-          if (!delivery) {
-            console.error(
-              "[ERREUR] Livraison non trouvée dans window.allDeliveries pour deliveryId:",
-              data.deliveryId
-            );
-            console.error(
-              "[ERREUR] Liste des ids dans allDeliveries:",
-              (window.allDeliveries || []).map((d) => d.id)
-            );
-            return;
-          }
-          console.log("[DEBUG] delivery trouvé:", delivery);
-          // Mettre à jour le statut local du BL concerné
-          if (!delivery.bl_statuses) delivery.bl_statuses = {};
-          delivery.bl_statuses[data.blNumber] = data.status;
-          // Vérifier si tous les BL sont en 'mise_en_livraison'
-          let blList = [];
-          if (Array.isArray(delivery.bl_number)) {
-            blList = delivery.bl_number.filter(Boolean);
-          } else if (typeof delivery.bl_number === "string") {
-            blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-          }
-          let blStatuses = blList.map((bl) =>
-            delivery.bl_statuses && delivery.bl_statuses[bl]
-              ? delivery.bl_statuses[bl]
-              : "aucun"
-          );
-          if (
-            blList.length > 0 &&
-            blStatuses.every((s) => s === "mise_en_livraison")
-          ) {
-            // Supprimer la ligne du DOM ET forcer le re-rendu du tableau avec la plage de dates courante
-            // Toujours utiliser window.allDeliveries comme source unique
-            console.log(
-              "[DEBUG] Avant suppression, window.allDeliveries:",
-              window.allDeliveries
-            );
-            window.allDeliveries = (window.allDeliveries || []).filter(
-              (d) => String(d.id) !== String(delivery.id)
-            );
-            // Toujours resynchroniser la variable globale
-            allDeliveries = window.allDeliveries;
-            console.log(
-              "[DEBUG] Après suppression, window.allDeliveries:",
-              window.allDeliveries
-            );
-            // Récupérer les valeurs actuelles des inputs de plage de dates
-            const dateStartInput = document.getElementById(
-              "mainTableDateStartFilter"
-            );
-            const dateEndInput = document.getElementById(
-              "mainTableDateEndFilter"
-            );
-            // Toujours forcer le re-rendu du tableau principal après suppression
-            if (typeof updateTableForDateRange === "function") {
-              const startVal = dateStartInput ? dateStartInput.value : "";
-              const endVal = dateEndInput ? dateEndInput.value : "";
-              console.log(
-                "[DEBUG] Appel updateTableForDateRange avec",
-                startVal,
-                endVal
-              );
-              updateTableForDateRange(startVal, endVal);
+          // Toujours normaliser la livraison reçue comme dans loadAllDeliveries
+          function normalizeDelivery(delivery) {
+            let tcList = [];
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
             }
-            // Afficher un toast de confirmation élégant
-            showSuccessToast(
-              "Requête effectuée et envoyée au responsable de livraison."
-            );
-
-            // Toast notification (vert, pro, en haut)
-            function showSuccessToast(message) {
-              // Supprimer tout toast existant
-              const oldToast = document.getElementById("custom-success-toast");
-              if (oldToast) oldToast.remove();
-              const toast = document.createElement("div");
-              toast.id = "custom-success-toast";
-              toast.textContent = message;
-              toast.style.position = "fixed";
-              toast.style.top = "32px";
-              toast.style.left = "50%";
-              toast.style.transform = "translateX(-50%)";
-              toast.style.background =
-                "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
-              toast.style.color = "#fff";
-              toast.style.fontWeight = "bold";
-              toast.style.fontSize = "1.12em";
-              toast.style.padding = "18px 38px";
-              toast.style.borderRadius = "16px";
-              toast.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
-              toast.style.zIndex = 99999;
-              toast.style.opacity = "0";
-              toast.style.transition = "opacity 0.3s";
-              document.body.appendChild(toast);
-              setTimeout(() => {
-                toast.style.opacity = "1";
-              }, 10);
-              setTimeout(() => {
-                toast.style.opacity = "0";
-                setTimeout(() => toast.remove(), 400);
-              }, 2600);
+            if (
+              !delivery.container_statuses ||
+              typeof delivery.container_statuses !== "object"
+            ) {
+              delivery.container_statuses = {};
             }
-          } else {
-            // Sinon, mettre à jour le statut dossier dans la colonne sans reload
-            const tableBody = document.getElementById("deliveriesTableBody");
-            if (!tableBody) return;
-            for (let row of tableBody.rows) {
-              let dossierCellIdx = window.AGENT_TABLE_COLUMNS.findIndex(
-                (c) => c.id === "dossier_number"
-              );
-              if (
-                dossierCellIdx !== -1 &&
-                row.cells[dossierCellIdx] &&
-                row.cells[dossierCellIdx].textContent ===
-                  String(delivery.dossier_number)
-              ) {
-                let colIdx = window.AGENT_TABLE_COLUMNS.findIndex(
-                  (c) => c.id === "container_status"
-                );
-                if (colIdx !== -1 && row.cells[colIdx]) {
-                  let allMiseEnLivraison =
-                    blStatuses.length > 0 &&
-                    blStatuses.every((s) => s === "mise_en_livraison");
-                  if (allMiseEnLivraison) {
-                    row.cells[colIdx].innerHTML =
-                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-                  } else {
-                    row.cells[colIdx].innerHTML =
-                      '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
-                  }
-                }
-                break;
+            tcList.forEach((tc) => {
+              if (!delivery.container_statuses[tc]) {
+                delivery.container_statuses[tc] = "attente_paiement";
+              }
+            });
+            if (
+              delivery.bl_statuses &&
+              typeof delivery.bl_statuses === "string"
+            ) {
+              try {
+                delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+              } catch {
+                delivery.bl_statuses = {};
               }
             }
+            if (
+              !delivery.bl_statuses ||
+              typeof delivery.bl_statuses !== "object"
+            ) {
+              delivery.bl_statuses = {};
+            }
+            return delivery;
+          }
+          const normalizedDelivery = normalizeDelivery(data.delivery);
+          if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+            const idx = window.allDeliveries.findIndex(
+              (d) => d.id === normalizedDelivery.id
+            );
+            if (idx !== -1) {
+              window.allDeliveries[idx] = normalizedDelivery;
+            }
+          }
+          // Rafraîchir le tableau si la livraison est dans la plage de dates courante
+          const dateStartInput = document.getElementById(
+            "mainTableDateStartFilter"
+          );
+          const dateEndInput = document.getElementById(
+            "mainTableDateEndFilter"
+          );
+          if (typeof updateTableForDateRange === "function") {
+            updateTableForDateRange(
+              dateStartInput ? dateStartInput.value : "",
+              dateEndInput ? dateEndInput.value : ""
+            );
           }
         }
         // Ajout : réception automatique d'un nouvel ordre de livraison
@@ -497,6 +865,54 @@ document.addEventListener("DOMContentLoaded", function () {
           // Affiche une alerte avec le nom de l'agent
           const agentName = normalizedDelivery.employee_name || "-";
           showNewDeliveryAlert(agentName);
+        }
+        // Ajout : gestion du retour instantané d'un dossier au Resp. Acconier
+        if (data.type === "delivery_returned_acconier") {
+          // Recharge toutes les livraisons et rafraîchit le tableau
+          const dateStartInput = document.getElementById(
+            "mainTableDateStartFilter"
+          );
+          const dateEndInput = document.getElementById(
+            "mainTableDateEndFilter"
+          );
+          const startVal = dateStartInput ? dateStartInput.value : "";
+          const endVal = dateEndInput ? dateEndInput.value : "";
+          loadAllDeliveries().then(() => {
+            if (typeof updateTableForDateRange === "function") {
+              updateTableForDateRange(startVal, endVal);
+            }
+          });
+          // Affiche l'alerte reçue
+          if (data.message) {
+            const oldAlert = document.getElementById("restore-dossier-alert");
+            if (oldAlert) oldAlert.remove();
+            const alert = document.createElement("div");
+            alert.id = "restore-dossier-alert";
+            alert.textContent = data.message;
+            alert.style.position = "fixed";
+            alert.style.top = "80px";
+            alert.style.left = "50%";
+            alert.style.transform = "translateX(-50%)";
+            alert.style.background =
+              "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
+            alert.style.color = "#fff";
+            alert.style.fontWeight = "bold";
+            alert.style.fontSize = "1.12em";
+            alert.style.padding = "18px 38px";
+            alert.style.borderRadius = "16px";
+            alert.style.boxShadow = "0 6px 32px rgba(37,99,235,0.18)";
+            alert.style.zIndex = 99999;
+            alert.style.opacity = "0";
+            alert.style.transition = "opacity 0.3s";
+            document.body.appendChild(alert);
+            setTimeout(() => {
+              alert.style.opacity = "1";
+            }, 10);
+            setTimeout(() => {
+              alert.style.opacity = "0";
+              setTimeout(() => alert.remove(), 400);
+            }, 2600);
+          }
         }
       } catch (e) {
         console.error("WebSocket BL error:", e);
@@ -697,12 +1113,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction principale pour charger et afficher selon la plage de dates
   function updateTableForDateRange(dateStartStr, dateEndStr) {
+    // Vérification automatique : si la date de début est après la date de fin, on corrige
+    if (dateStartStr && dateEndStr && dateStartStr > dateEndStr) {
+      // On inverse les dates
+      const tmp = dateStartStr;
+      dateStartStr = dateEndStr;
+      dateEndStr = tmp;
+      // On met à jour les champs dans l'UI
+      const dateStartInput = document.getElementById(
+        "mainTableDateStartFilter"
+      );
+      const dateEndInput = document.getElementById("mainTableDateEndFilter");
+      if (dateStartInput) dateStartInput.value = dateStartStr;
+      if (dateEndInput) dateEndInput.value = dateEndStr;
+    }
     let filtered = filterDeliveriesByDateRange(dateStartStr, dateEndStr);
     console.log(
       "[DEBUG] updateTableForDateRange - livraisons filtrées:",
       filtered
     );
-    // Tri du plus ancien au plus récent (ordre croissant)
+    // Tri du plus ancien au plus récent (ordre croissant)--
     filtered.sort((a, b) => {
       let dateA = new Date(
         a.delivery_date || a.created_at || a.Date || a["Date Livraison"]
@@ -722,10 +1152,75 @@ document.addEventListener("DOMContentLoaded", function () {
   sevenDaysAgo.setDate(today.getDate() - 7);
   const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
   if (dateStartInput && dateEndInput) {
-    dateStartInput.value = sevenDaysAgoStr;
-    dateEndInput.value = todayStr;
+    // On charge toutes les livraisons puis on détermine la date la plus ancienne
     loadAllDeliveries().then(() => {
+      // Chercher la date la plus ancienne dans toutes les livraisons
+      let minDate = null;
+      (window.allDeliveries || []).forEach((d) => {
+        let dDate = d.delivery_date || d.created_at;
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            if (!minDate || dateObj < minDate) minDate = dateObj;
+          }
+        }
+      });
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+      let minDateStr = minDate ? minDate.toISOString().split("T")[0] : todayStr;
+      dateStartInput.value = minDateStr;
+      dateEndInput.value = todayStr;
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+      // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui ne sont PAS en livraison
+      function getLateDeliveries() {
+        const now = new Date();
+        // Appliquer le même filtrage que le tableau principal
+        return (window.allDeliveries || []).filter((d) => {
+          let dDate = d.delivery_date || d.created_at;
+          if (!dDate) return false;
+          let dateObj = new Date(dDate);
+          if (isNaN(dateObj.getTime())) return false;
+          const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+          if (diffDays <= 2) return false;
+          // Même logique que renderAgentTableFull :
+          // Affiche TOUS les dossiers dont le statut shjacconier est 'en attente de paiement'
+          if (d.delivery_status_acconier === "en attente de paiement") {
+            return true;
+          }
+          // Sinon, on garde l'ancien filtrage BL
+          let blList = [];
+          if (Array.isArray(d.bl_number)) {
+            blList = d.bl_number.filter(Boolean);
+          } else if (typeof d.bl_number === "string") {
+            blList = d.bl_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          let blStatuses = blList.map((bl) =>
+            d.bl_statuses && d.bl_statuses[bl] ? d.bl_statuses[bl] : "aucun"
+          );
+          // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas
+          if (
+            blStatuses.length > 0 &&
+            blStatuses.every((s) => s === "mise_en_livraison")
+          ) {
+            return false;
+          }
+          // Exclure aussi si statut acconier est 'mise_en_livraison_acconier'
+          if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
+            return false;
+          }
+          return true;
+        });
+      }
+      showLateDeliveriesToast(getLateDeliveries());
+      // Affichage toutes les 40 secondes
+      setInterval(() => {
+        showLateDeliveriesToast(getLateDeliveries());
+      }, 40000);
+
+      // Met à jour la liste des dossiers en retard à chaque changement de statut livraison
+      document.addEventListener("bl_status_update", function () {
+        showLateDeliveriesToast(getLateDeliveries());
+      });
     });
     dateStartInput.addEventListener("change", () => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
@@ -737,6 +1232,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 // Colonnes strictes pour Agent Acconier
 const AGENT_TABLE_COLUMNS = [
+  { id: "select_row", label: "" }, // Colonne pour la sélection
   { id: "row_number", label: "N°" },
   { id: "date_display", label: "Date" },
   { id: "employee_name", label: "Agent" },
@@ -764,27 +1260,43 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
-    // Détermination de la couleur de la bande selon l'ancienneté
+    // Détermination de la couleur de l'avatar selon l'ancienneté
     let dDate = delivery.delivery_date || delivery.created_at;
     let dateObj = dDate ? new Date(dDate) : null;
     let now = new Date();
-    let color = "#2563eb"; // bleu par défaut (récent)
+    let avatarColor = "#2563eb"; // bleu par défaut (récent)
+    let avatarBg = "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
+    let badgeColor = "#2563eb";
     if (dateObj && !isNaN(dateObj.getTime())) {
       let diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
       if (diffDays >= 30) {
-        color = "#a3a3a3"; // ancien : gris (1 mois et plus)
+        avatarColor = "#a3a3a3"; // gris
+        avatarBg = "linear-gradient(135deg, #a3a3a3 60%, #6b7280 100%)";
+        badgeColor = "#a3a3a3";
       } else if (diffDays >= 7) {
-        color = "#eab308"; // assez ancien : jaune (1 semaine à moins d'1 mois)
+        avatarColor = "#eab308"; // jaune
+        avatarBg = "linear-gradient(135deg, #eab308 60%, #facc15 100%)";
+        badgeColor = "#eab308";
       } else if (diffDays >= 0) {
-        color = "#2563eb"; // récent : bleu (< 7 jours)
+        avatarColor = "#2563eb"; // bleu
+        avatarBg = "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
+        badgeColor = "#2563eb";
       }
     }
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       const td = document.createElement("td");
       let value = "-";
-      if (col.id === "row_number") {
+      if (col.id === "select_row") {
+        // Ajout d'une case à cocher pour la sélection
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "select-row-checkbox";
+        checkbox.setAttribute("data-id", delivery.id);
+        td.appendChild(checkbox);
+        td.style.textAlign = "center";
+      } else if (col.id === "row_number") {
         value = i + 1;
-        // Avatar stylisé moderne avec initiales
+        // Avatar stylisé moderne avec initiales et couleur dynamique
         const avatar = document.createElement("div");
         avatar.style.display = "flex";
         avatar.style.alignItems = "center";
@@ -792,8 +1304,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         avatar.style.width = window.innerWidth <= 600 ? "32px" : "44px";
         avatar.style.height = window.innerWidth <= 600 ? "32px" : "44px";
         avatar.style.borderRadius = "50%";
-        avatar.style.background =
-          "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
+        avatar.style.background = avatarBg;
         avatar.style.boxShadow =
           "0 2px 12px rgba(37,99,235,0.13), 0 1.5px 8px rgba(30,41,59,0.10)";
         avatar.style.position = "relative";
@@ -832,7 +1343,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         badge.style.bottom = "-6px";
         badge.style.right = "-6px";
         badge.style.background = "#fff";
-        badge.style.color = "#2563eb";
+        badge.style.color = badgeColor;
         badge.style.fontWeight = "bold";
         badge.style.fontSize = window.innerWidth <= 600 ? "0.85em" : "1em";
         badge.style.borderRadius = "50%";
@@ -1283,6 +1794,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                       return;
                     }
                     overlay.remove();
+                    // Afficher l'alerte verte de confirmation
+                    showMiseEnLivraisonSuccessAlert();
                   });
                 } catch (err) {
                   alert(
@@ -1290,6 +1803,42 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                       (err && err.message ? err.message : "")
                   );
                 }
+              }
+
+              // Fonction d'alerte verte de confirmation
+              function showMiseEnLivraisonSuccessAlert() {
+                // Supprimer toute alerte existante
+                const oldAlert = document.getElementById(
+                  "mise-en-livraison-success-alert"
+                );
+                if (oldAlert) oldAlert.remove();
+                const alert = document.createElement("div");
+                alert.id = "mise-en-livraison-success-alert";
+                alert.textContent =
+                  "Vous avez mis un dossier en mise en livraison";
+                alert.style.position = "fixed";
+                alert.style.top = "80px";
+                alert.style.left = "50%";
+                alert.style.transform = "translateX(-50%)";
+                alert.style.background =
+                  "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
+                alert.style.color = "#fff";
+                alert.style.fontWeight = "bold";
+                alert.style.fontSize = "1.12em";
+                alert.style.padding = "18px 38px";
+                alert.style.borderRadius = "16px";
+                alert.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
+                alert.style.zIndex = 99999;
+                alert.style.opacity = "0";
+                alert.style.transition = "opacity 0.3s";
+                document.body.appendChild(alert);
+                setTimeout(() => {
+                  alert.style.opacity = "1";
+                }, 10);
+                setTimeout(() => {
+                  alert.style.opacity = "0";
+                  setTimeout(() => alert.remove(), 400);
+                }, 2600);
               }
             }
             // 1. MAJ locale immédiate du statut BL
@@ -1371,29 +1920,83 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (e.target === overlay) overlay.remove();
           };
         }
+        // Gestion stricte de la session responsable acconier :
+        // On utilise UNIQUEMENT respAcconierUser, jamais user !
+        let respAcconierUserRaw = null;
+        let respAcconierUser = null;
+        // Utilise sessionStorage pour éviter la boucle infinie
+        let alreadyRedirected = sessionStorage.getItem(
+          "__alreadyRedirectedRespAcconier"
+        );
+        function isLocalStorageAccessible() {
+          try {
+            const testKey = "__test_ls__";
+            localStorage.setItem(testKey, "1");
+            localStorage.removeItem(testKey);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+        if (isLocalStorageAccessible()) {
+          respAcconierUserRaw = localStorage.getItem("respAcconierUser");
+        }
+        // Vérifie si on est déjà sur la page de login pour éviter la boucle (même avec paramètres ou hash)
+        const isOnLoginPage = /resp_acconier\.html($|[?#])/i.test(
+          window.location.pathname +
+            window.location.search +
+            window.location.hash
+        );
+        if (
+          (!isLocalStorageAccessible() || !respAcconierUserRaw) &&
+          !isOnLoginPage
+        ) {
+          if (!alreadyRedirected) {
+            sessionStorage.setItem("__alreadyRedirectedRespAcconier", "1");
+            // Redirige immédiatement, sans setTimeout (évite la boucle sur mobile)
+            window.location.replace("resp_acconier.html");
+          }
+          return;
+        }
+        try {
+          respAcconierUser = JSON.parse(respAcconierUserRaw);
+          // Si on arrive à parser l'utilisateur, on supprime le flag pour permettre une reconnexion future
+          sessionStorage.removeItem("__alreadyRedirectedRespAcconier");
+        } catch (e) {
+          if (!alreadyRedirected && !isOnLoginPage) {
+            sessionStorage.setItem("__alreadyRedirectedRespAcconier", "1");
+            window.location.replace("resp_acconier.html");
+          }
+          return;
+        }
         // ...existing code...
       } else if (col.id === "container_status") {
-        // Nouveau comportement : le statut dépend uniquement du statut des BL (bl_statuses), le numéro TC n'a plus d'effet
-        let blList = [];
-        if (Array.isArray(delivery.bl_number)) {
-          blList = delivery.bl_number.filter(Boolean);
-        } else if (typeof delivery.bl_number === "string") {
-          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-        }
-        let blStatuses = blList.map((bl) =>
-          delivery.bl_statuses && delivery.bl_statuses[bl]
-            ? delivery.bl_statuses[bl]
-            : "aucun"
-        );
-        let allMiseEnLivraison =
-          blStatuses.length > 0 &&
-          blStatuses.every((s) => s === "mise_en_livraison");
-        if (allMiseEnLivraison) {
-          td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-        } else {
+        // Correction : si le statut acconier est 'en attente de paiement', on affiche toujours 'En attente de paiement'
+        if (delivery.delivery_status_acconier === "en attente de paiement") {
           td.innerHTML =
             '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+        } else {
+          let blList = [];
+          if (Array.isArray(delivery.bl_number)) {
+            blList = delivery.bl_number.filter(Boolean);
+          } else if (typeof delivery.bl_number === "string") {
+            blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          let blStatuses = blList.map((bl) =>
+            delivery.bl_statuses && delivery.bl_statuses[bl]
+              ? delivery.bl_statuses[bl]
+              : "aucun"
+          );
+          let allMiseEnLivraison =
+            blStatuses.length > 0 &&
+            blStatuses.every((s) => s === "mise_en_livraison");
+          if (allMiseEnLivraison) {
+            td.innerHTML =
+              '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
+          } else {
+            td.innerHTML =
+              '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+          }
         }
       } else {
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
@@ -1674,13 +2277,17 @@ function renderAgentTableHeaders(tableElement, deliveries) {
   thead.appendChild(headerRow);
 }
 
-// Fonction pour générer le tableau Agent Acconier complet
+// Fonction pour générersgv le tableau Agent Acconier complet
 function renderAgentTableFull(deliveries, tableBodyElement) {
   const table = tableBodyElement.closest("table");
-  // ...
   // Filtrer les livraisons à afficher dans le tableau principal :
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
+    // Affiche TOUS les dossiers dont le statut acconier est 'en attente de paiement'
+    if (delivery.delivery_status_acconier === "en attente de paiement") {
+      return true;
+    }
+    // Sinon, on garde l'ancien filtrage BL
     let blList = [];
     if (Array.isArray(delivery.bl_number)) {
       blList = delivery.bl_number.filter(Boolean);
@@ -1695,10 +2302,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas dans le tableau principal
     return !blStatuses.every((s) => s === "mise_en_livraison");
   });
-  console.log(
-    "[DEBUG] renderAgentTableFull - deliveriesToShow:",
-    deliveriesToShow
-  );
+  // Rafraîchissement du tableau :
   if (deliveriesToShow.length === 0) {
     if (table) table.style.display = "none";
     let noDataMsg = document.getElementById("noDeliveriesMsg");
@@ -1726,17 +2330,150 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     }
     renderAgentTableRows(deliveriesToShow, tableBodyElement);
   }
+  // Fin de renderAgentTableFull
+
+  // --- Ajout : écouteur pour restaurer une ligne ramenée au Resp. Acconier ---
+  if (typeof window.respAcconierRestoreListener === "undefined") {
+    window.respAcconierRestoreListener = true;
+    window.addEventListener("restoreToRespAcconier", async function (e) {
+      // Recharge toutes les livraisons et met à jour le tableau instantanément
+      if (
+        typeof loadAllDeliveries === "function" &&
+        typeof updateTableForDateRange === "function"
+      ) {
+        await loadAllDeliveries();
+        // Utilise la plage de dates actuelle
+        const dateStartInput = document.getElementById(
+          "mainTableDateStartFilter"
+        );
+        const dateEndInput = document.getElementById("mainTableDateEndFilter");
+        const dateStart = dateStartInput ? dateStartInput.value : null;
+        const dateEnd = dateEndInput ? dateEndInput.value : null;
+        updateTableForDateRange(dateStart, dateEnd);
+      }
+      // Affiche une alerte visuelle pour informer le responsable acconier
+      const oldAlert = document.getElementById("restore-dossier-alert");
+      if (oldAlert) oldAlert.remove();
+      const alert = document.createElement("div");
+      alert.id = "restore-dossier-alert";
+      alert.textContent =
+        "Le responsable de livraison a ramené un dossier dans votre tableau.";
+      alert.style.position = "fixed";
+      alert.style.top = "80px";
+      alert.style.left = "50%";
+      alert.style.transform = "translateX(-50%)";
+      alert.style.background = "linear-gradient(90deg,#eab308 0%,#2563eb 100%)";
+      alert.style.color = "#fff";
+      alert.style.fontWeight = "bold";
+      alert.style.fontSize = "1.12em";
+      alert.style.padding = "18px 38px";
+      alert.style.borderRadius = "16px";
+      alert.style.boxShadow = "0 6px 32px rgba(37,99,235,0.18)";
+      alert.style.zIndex = 99999;
+      alert.style.opacity = "0";
+      alert.style.transition = "opacity 0.3s";
+      document.body.appendChild(alert);
+      setTimeout(() => {
+        alert.style.opacity = "1";
+      }, 10);
+      setTimeout(() => {
+        alert.style.opacity = "0";
+        setTimeout(() => alert.remove(), 400);
+      }, 2600);
+    });
+    // Synchronisation inter-onglets via localStorage
+    window.addEventListener("storage", function (event) {
+      if (event.key === "restoreToRespAcconierEvent" && event.newValue) {
+        // Recharge et met à jour le tableau instantanément
+        if (
+          typeof loadAllDeliveries === "function" &&
+          typeof updateTableForDateRange === "function"
+        ) {
+          loadAllDeliveries().then(() => {
+            const dateStartInput = document.getElementById(
+              "mainTableDateStartFilter"
+            );
+            const dateEndInput = document.getElementById(
+              "mainTableDateEndFilter"
+            );
+            const dateStart = dateStartInput ? dateStartInput.value : null;
+            const dateEnd = dateEndInput ? dateEndInput.value : null;
+            updateTableForDateRange(dateStart, dateEnd);
+          });
+        }
+        // Affiche l'alerte visuelle
+        const oldAlert = document.getElementById("restore-dossier-alert");
+        if (oldAlert) oldAlert.remove();
+        const alert = document.createElement("div");
+        alert.id = "restore-dossier-alert";
+        alert.textContent =
+          "Le responsable de livraison a ramené un dossier dans votre tableau.";
+        alert.style.position = "fixed";
+        alert.style.top = "80px";
+        alert.style.left = "50%";
+        alert.style.transform = "translateX(-50%)";
+        alert.style.background =
+          "linear-gradient(90deg,#eab308 0%,#2563eb 100%)";
+        alert.style.color = "#fff";
+        alert.style.fontWeight = "bold";
+        alert.style.fontSize = "1.12em";
+        alert.style.padding = "18px 38px";
+        alert.style.borderRadius = "16px";
+        alert.style.boxShadow = "0 6px 32px rgba(37,99,235,0.18)";
+        alert.style.zIndex = 99999;
+        alert.style.opacity = "0";
+        alert.style.transition = "opacity 0.3s";
+        document.body.appendChild(alert);
+        setTimeout(() => {
+          alert.style.opacity = "1";
+        }, 10);
+        setTimeout(() => {
+          alert.style.opacity = "0";
+          setTimeout(() => alert.remove(), 400);
+        }, 2600);
+      }
+    });
+  }
+
+  // --- Correction : Rafraîchir le tableau après mise en livraison d'un BL ---
+  // On patch la fonction showBLDetailPopup pour déclencher updateTableForDateRange après modification
+  // (On ne touche pas à la déclaration d'origine, on monkey-patch si déjà défini)
+  if (typeof window.showBLDetailPopupPatched === "undefined") {
+    window.showBLDetailPopupPatched = true;
+    const oldRenderAgentTableRows = renderAgentTableRows;
+    renderAgentTableRows = function (deliveries, tableBodyElement) {
+      oldRenderAgentTableRows(deliveries, tableBodyElement);
+      // Patcher tous les boutons "Enregistrer le statut" dans les popups BL pour rafraîchir le tableau après MAJ
+      setTimeout(() => {
+        document.querySelectorAll("#blDetailPopup button").forEach((btn) => {
+          if (btn._patched) return;
+          if (
+            btn.textContent &&
+            btn.textContent.includes("Enregistrer le statut")
+          ) {
+            btn._patched = true;
+            const oldOnClick = btn.onclick;
+            btn.onclick = async function (e) {
+              if (oldOnClick) await oldOnClick.call(this, e);
+              // Après la MAJ, on rafraîchit le tableau (date courante)
+              const dateStartInput = document.getElementById(
+                "mainTableDateStartFilter"
+              );
+              const dateEndInput = document.getElementById(
+                "mainTableDateEndFilter"
+              );
+              if (typeof updateTableForDateRange === "function") {
+                updateTableForDateRange(
+                  dateStartInput ? dateStartInput.value : "",
+                  dateEndInput ? dateEndInput.value : ""
+                );
+              }
+            };
+          }
+        });
+      }, 100);
+    };
+  }
 }
-//originale
-
-
-
-1.Affichage dynamique dans la zone main-content
-Au lieu de rediriger vers une nouvelle page lors du clic sur les icônes, on va charger le contenu de resp_acconier.html ou resp_liv.html dans la section main-content via AJAX (fetch).
-Cela permet à l’administrateur de superviser les deux interfaces sans quitter son tableau de bord.
-
-2.Aucune modification pour les responsables
-Les responsables continueront d’accéder directement à leur interface respective, sans passer par le tableau de bord.
-
-3.Connexion parallèle pour le suivi en temps réel
-Pour le suivi en direct, il faudra mettre en place une communication en temps réel (WebSocket ou polling régulier) pour afficher les activités des responsables dans le tableau de bord de l’admin.
+//originale12345678910
+dans l'entete observation je veux que quand on remplit les donner de l'observation et on valide je veux que ses donne soit afficher dans l'entete "Responsable Acconier" precisement dans la partie "Observation" dans scriptSuivie.js :  je parle de ceci dans l'image . Donc fais le bien . 

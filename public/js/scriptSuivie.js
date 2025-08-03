@@ -4155,7 +4155,7 @@ if (window["WebSocket"]) {
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
       createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
       createCell(
-        delivery.observation_acconier || delivery.delivery_notes || "",
+        delivery.observation_acconier,
         "observation_acconier",
         "textarea",
         {}
@@ -8998,4 +8998,4 @@ if (window["WebSocket"]) {
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
 })();
-/****** Script a ajouter en cas de pertubation 125 AAAA ***/
+/****** Script a ajouter en cas de pertubation 125 AAAA sh***/

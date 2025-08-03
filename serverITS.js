@@ -1596,428 +1596,6 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// POST deliveries/validate
-app.post(
-  "/deliveries/validate",
-  upload.single("client_signature_photo"),
-  async (req, res) => {
-    console.log("------------------------------------------");
-    console.log("Requête POST /deliveries/validate reçue.");
-    console.log("req.body AVANT déstructuration:", req.body);
-    console.log("req.file (si upload.single est utilisé):", req.file);
-    console.log("------------------------------------------");
-
-    const {
-      employee_name,
-      client_name,
-      client_phone,
-      container_type_and_content,
-      status, // This 'status' is the initial status from the employee form
-      lieu,
-      container_number,
-      container_foot_type,
-      declaration_number,
-      number_of_containers,
-      bl_number,
-      dossier_number,
-      shipping_company,
-      transporter,
-      weight,
-      ship_name,
-      circuit,
-      number_of_packages,
-      transporter_mode,
-      driver_name,
-      driver_phone,
-      truck_registration,
-      delivery_notes,
-      // NOUVEAUX CHAMPS DÉSTRUCTURÉS
-      nom_agent_visiteur,
-      inspecteur,
-      agent_en_douanes,
-    } = req.body || {};
-
-    // Use helper functions to process date and time
-    const validated_delivery_date = formatDateForDB(req.body.delivery_date);
-    const validated_delivery_time = formatTimeForDB(req.body.delivery_time);
-
-    // --- NORMALISATION DU CHAMP container_number ---
-    let normalized_container_number = container_number;
-    if (Array.isArray(container_number)) {
-      // Si c'est un tableau (ex : envoyé par le formulaire en JSON), on join avec des virgules
-      normalized_container_number = container_number.filter(Boolean).join(",");
-    } else if (typeof container_number === "string") {
-      // Nettoyage des espaces et séparateurs multiples
-      normalized_container_number = container_number
-        .split(/[,;\s]+/)
-        .filter(Boolean)
-        .join(",");
-    } else {
-      normalized_container_number = "";
-    }
-
-    const is_eir_received = !!req.file;
-
-    // *** DÉBOGAGE : AFFICHER LES VALEURS DES CHAMPS OBLIGATOIRES REÇUES PAR LE BACKEND ***
-    console.log("Backend Validation Debug:");
-    console.log("   employee_name:", employee_name);
-    console.log("   client_name:", client_name);
-    console.log("   client_phone:", client_phone);
-    console.log("   container_type_and_content:", container_type_and_content);
-    console.log("   status (from employee form):", status);
-    console.log("   lieu:", lieu);
-    console.log(
-      "   container_number (normalized):",
-      normalized_container_number
-    );
-    console.log("   container_foot_type:", container_foot_type);
-    console.log("   declaration_number:", declaration_number);
-    console.log("   number_of_containers:", number_of_containers);
-    // *** FIN DÉBOGAGE ***
-
-    // Validation des champs obligatoires (MIS À JOUR)
-    if (
-      !employee_name ||
-      !client_name ||
-      //     !container_type_and_content ||
-      !lieu ||
-      !normalized_container_number ||
-      !container_foot_type ||
-      !declaration_number ||
-      !number_of_containers ||
-      !dossier_number
-    ) {
-      console.error("Validation failed: Missing required fields in backend.", {
-        employee_name,
-        delivery_date: validated_delivery_date, // Use validated value for log
-        delivery_time: validated_delivery_time, // Use validated value for log
-        client_name,
-        client_phone,
-        container_type_and_content,
-        status,
-        lieu,
-        container_number: normalized_container_number,
-        container_foot_type,
-        declaration_number,
-        number_of_containers,
-      });
-      return res.status(400).json({
-        success: false,
-        message:
-          "Tous les champs obligatoires (hors date et heure de livraison qui sont maintenant facultatives) sont requis.",
-      });
-    }
-
-    // Statuts métier autorisés pour l'acconier
-    const allowedStatuses = [
-      "awaiting_payment_acconier",
-      "in_progress_payment_acconier",
-      "pending_acconier",
-      "mise_en_livraison_acconier",
-      "payment_done_acconier",
-      "processed_acconier",
-      "rejected_acconier",
-      "rejected_by_employee",
-    ];
-    // Si le statut n'est pas fourni ou invalide, on force la valeur par défaut
-    let usedStatus = status;
-    if (!usedStatus || !allowedStatuses.includes(usedStatus)) {
-      usedStatus = "awaiting_payment_acconier";
-    }
-
-    try {
-      // Gestion du tableau de statuts par conteneur (container_statuses)
-      let container_statuses = null;
-      if (req.body.container_statuses) {
-        if (typeof req.body.container_statuses === "string") {
-          try {
-            container_statuses = JSON.parse(req.body.container_statuses);
-          } catch (e) {
-            container_statuses = null;
-          }
-        } else {
-          container_statuses = req.body.container_statuses;
-        }
-        // Si c'est un tableau, on le convertit en mapping
-        if (Array.isArray(container_statuses)) {
-          const tcList = normalized_container_number
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-          const mapping = {};
-          tcList.forEach((tc, idx) => {
-            mapping[tc] = container_statuses[idx] || usedStatus;
-          });
-          container_statuses = mapping;
-        }
-      } else {
-        // Génère un mapping par défaut avec un statut NEUTRE ("En attente") sauf si le statut global est explicitement "Livré" ou "delivered"
-        const tcList = normalized_container_number
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-        if (tcList.length > 0) {
-          const mapping = {};
-          // Statut neutre par défaut
-          let defaultStatus = "pending";
-          if (
-            [
-              "livré",
-              "livree",
-              "delivered",
-              "completed",
-              "finished",
-              "signed",
-            ].includes(String(usedStatus).toLowerCase())
-          ) {
-            defaultStatus = "delivered";
-          }
-          tcList.forEach((tc) => {
-            mapping[tc] = defaultStatus;
-          });
-          container_statuses = mapping;
-        }
-      }
-      const query = `
-          INSERT INTO livraison_conteneur (
-            employee_name, delivery_date, delivery_time, client_name, client_phone, 
-            container_type_and_content, lieu, status,
-            container_number, container_foot_type, declaration_number, number_of_containers,
-            bl_number, dossier_number, shipping_company, transporter, 
-            weight, ship_name, circuit, number_of_packages, transporter_mode,
-            nom_agent_visiteur, inspecteur, agent_en_douanes, -- NOUVEAUX CHAMPS DANS L'INSERT
-            driver_name, driver_phone, truck_registration,
-            delivery_notes, is_eir_received,
-            delivery_status_acconier, -- AJOUT DE LA COLONNE ICI
-            container_statuses -- NOUVEAU
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
-          RETURNING *;
-      `;
-      const values = [
-        employee_name,
-        validated_delivery_date, // Use validated value
-        validated_delivery_time, // Use validated value
-        client_name,
-        client_phone,
-        container_type_and_content,
-        lieu,
-        usedStatus, // Statut validé ou valeur par défaut
-        normalized_container_number,
-        container_foot_type,
-        declaration_number,
-        parseInt(number_of_containers, 10),
-        bl_number || null,
-        dossier_number || null,
-        shipping_company || null,
-        transporter || null,
-        weight || null,
-        ship_name || null,
-        circuit || null,
-        number_of_packages ? parseInt(number_of_packages, 10) : null,
-        transporter_mode || null,
-        nom_agent_visiteur || null, // NOUVELLE VALEUR
-        inspecteur || null, // NOUVELLE VALEUR
-        agent_en_douanes || null, // NOUVELLE VALEUR
-        driver_name || null,
-        driver_phone || null,
-        truck_registration || null,
-        delivery_notes || null,
-        is_eir_received,
-        usedStatus,
-        container_statuses ? JSON.stringify(container_statuses) : null,
-      ];
-      const result = await pool.query(query, values);
-      const newDelivery = result.rows[0];
-
-      const wss = req.app.get("wss");
-      // Utilisez le nouveau statut acconier pour l'alerte
-      const statusInfo = getFrenchStatusWithIcon(
-        newDelivery.delivery_status_acconier
-      );
-      const alertType = statusInfo.customColorClass;
-
-      const alertMessage = `L'agent acconié "${newDelivery.employee_name}" a établi un ordre de livraison.`;
-
-      // ENVOI EMAIL À TOUS LES RESPONSABLES ACCONIER
-      try {
-        const respRes = await pool.query(
-          "SELECT email, nom FROM resp_acconier"
-        );
-        if (respRes.rows.length > 0) {
-          const emailPromises = respRes.rows.map((resp) => {
-            return sendMail({
-              to: resp.email,
-              subject: "Nouvel ordre de livraison établi",
-              text: `Bonjour ${resp.nom},\n\nL'agent acconier '${newDelivery.employee_name}' a établi un ordre de livraison. Veuillez procéder à payer l'acconage.`,
-              html: `<p>Bonjour <b>${resp.nom}</b>,</p><p>L'agent acconier <b>${newDelivery.employee_name}</b> a établi un <b>ordre de livraison</b>.<br>Veuillez procéder à payer l'acconage.</p>`,
-            });
-          });
-          await Promise.all(emailPromises);
-          console.log("Emails envoyés à tous les responsables acconier.");
-        } else {
-          console.log(
-            "Aucun responsable acconier trouvé pour l'envoi d'email."
-          );
-        }
-      } catch (err) {
-        console.error(
-          "Erreur lors de l'envoi des emails aux responsables acconier:",
-          err
-        );
-      }
-
-      console.log(alertMessage);
-
-      // Envoi pour compatibilité ancienne version (peut être supprimé plus tard)
-      // --- ENVOI WEBSOCKET EN TEMPS RÉEL POUR ACCONIER ---
-      if (wss && wss.clients) {
-        // Correction : type et payload complet pour compatibilité frontend
-        const payloadObj = {
-          type: "new_delivery_created",
-          delivery: newDelivery, // On envoie tout l'objet newDelivery (tous les champs)
-        };
-        console.log("[WebSocket][DEBUG] Payload envoyé :", payloadObj);
-        const payload = JSON.stringify(payloadObj);
-        let clientCount = 0;
-        wss.clients.forEach((client, idx) => {
-          try {
-            if (client.readyState === require("ws").OPEN) {
-              client.send(payload);
-              let clientInfo = "";
-              if (client._socket && client._socket.remoteAddress) {
-                clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
-              }
-              console.log(
-                `[WebSocket] new_delivery_notification envoyé au client #${
-                  idx + 1
-                }${clientInfo}`
-              );
-              clientCount++;
-            } else {
-              let clientInfo = "";
-              if (client._socket && client._socket.remoteAddress) {
-                clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
-              }
-              console.warn(
-                `[WebSocket] Client #${
-                  idx + 1
-                }${clientInfo} non ouvert (readyState=${
-                  client.readyState
-                }), message ignoré.`
-              );
-            }
-          } catch (e) {
-            let clientInfo = "";
-            if (client._socket && client._socket.remoteAddress) {
-              clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
-            }
-            console.error(
-              `[WebSocket] Erreur lors de l'envoi à client #${
-                idx + 1
-              }${clientInfo} :`,
-              e
-            );
-          }
-        });
-        console.log(
-          `[WebSocket] new_delivery_notification envoyé à ${clientCount} client(s) sur ${wss.clients.size} connecté(s).`
-        );
-      }
-
-      // RETIRÉ : L'envoi de la liste des agents n'est plus déclenché ici
-      // await broadcastAgentList(wss);
-
-      res.status(201).json({
-        success: true,
-        message: "Statut de livraison enregistré avec succès !",
-        delivery: newDelivery,
-      });
-    } catch (err) {
-      console.error(
-        "Erreur lors de l'enregistrement du statut de livraison :",
-        err
-      );
-      res.status(500).json({
-        success: false,
-        message:
-          "Erreur serveur lors de l'enregistrement du statut de livraison.",
-      });
-    }
-  }
-);
-
-// GET delivery by container number, BL number, or dossier number
-app.get("/deliveries/search", async (req, res) => {
-  const { containerNumber, blNumber, dossierNumber } = req.query;
-
-  if (!containerNumber && !blNumber && !dossierNumber) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "Au moins un critère de recherche (containerNumber, blNumber, ou dossierNumber) est requis.",
-    });
-  }
-
-  let query = `
-        SELECT 
-          id, employee_name, delivery_date, delivery_time, client_name, client_phone, 
-          container_type_and_content, lieu, status, created_at,
-          container_number, container_foot_type, declaration_number, number_of_containers,
-          bl_number, dossier_number, shipping_company, transporter, 
-          weight, ship_name, circuit, number_of_packages, transporter_mode,
-          nom_agent_visiteur, inspecteur, agent_en_douanes, -- NOUVELLES COLONNES DANS LE SELECT
-          driver_name, driver_phone, truck_registration,
-          delivery_notes, is_eir_received,
-          delivery_status_acconier, observation_acconier -- AJOUT DES COLONNES ICI
-        FROM livraison_conteneur
-        WHERE 1 = 1
-    `;
-  const values = [];
-  let paramIndex = 1;
-
-  if (containerNumber) {
-    query += ` AND container_number ILIKE $${paramIndex}`;
-    values.push(`%${containerNumber}%`);
-    paramIndex++;
-  }
-  if (blNumber) {
-    query += ` AND bl_number ILIKE $${paramIndex}`;
-    values.push(`%${blNumber}%`);
-    paramIndex++;
-  }
-  if (dossierNumber) {
-    query += ` AND dossier_number ILIKE $${paramIndex}`;
-    values.push(`%${dossierNumber}%`);
-    paramIndex++;
-  }
-
-  query += ` ORDER BY created_at DESC LIMIT 1;`; // Limite à la dernière entrée si plusieurs correspondent
-
-  try {
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Aucune livraison trouvée." });
-    }
-    // Ajout du champ traduit
-    const delivery = result.rows[0];
-    delivery.delivery_status_acconier_fr = mapAcconierStatusToFr(
-      delivery.delivery_status_acconier
-    );
-    // Champ status TOUJOURS en français côté frontend
-    delivery.status = translateStatusToFr(delivery.status);
-    res.status(200).json({ success: true, delivery });
-  } catch (err) {
-    console.error("Erreur lors de la recherche de livraison :", err);
-    res.status(500).json({
-      success: false,
-      message: "Erreur serveur lors de la recherche de livraison.",
-    });
-  }
-});
-
 // PATCH GET /deliveries/status
 app.get("/deliveries/status", async (req, res) => {
   try {
@@ -2114,8 +1692,7 @@ app.get("/deliveries/status", async (req, res) => {
     );
     res.status(500).json({
       success: false,
-      message:
-        "Erreur serveur lors de la récupération des statuts de livraison.",
+      message: "Erreur serveur lors de la récupération des statuts de livraison.",
     });
   }
 });
@@ -2933,248 +2510,53 @@ app.get("/interfaceFormulaireEmployer.html", (req, res) => {
 // app.use(express.static(path.join(__dirname, "public")));
 
 // ===============================
-// --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
+// PATCH: Mise à jour du statut BL (bl_statuses) pour une livraison
 // ===============================
-// ===============================
-// --- ROUTE PATCH: Ramener une livraison au Resp. Acconier ---
-// ===============================
-app.patch("/deliveries/:id/return-to-resp-acconier", async (req, res) => {
+app.patch("/deliveries/:id/bl-status", async (req, res) => {
   const { id } = req.params;
-  try {
-    // Met à jour le statut acconier à 'en attente de paiement' (retour Resp. Acconier)
-    const result = await pool.query(
-      "UPDATE livraison_conteneur SET delivery_status_acconier = $1 WHERE id = $2 RETURNING *;",
-      ["en attente de paiement", id]
-    );
-    if (result.rows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Livraison non trouvée." });
-    }
-    // Envoi WebSocket pour notification instantanée
-    const wss = req.app.get("wss");
-    const updatedDelivery = result.rows[0];
-    const alertMessage = `La livraison du dossier '${
-      updatedDelivery.dossier_number || updatedDelivery.id
-    }' a été ramenée au Resp. Acconier.`;
-    const payload = JSON.stringify({
-      type: "delivery_returned_acconier",
-      message: alertMessage,
-      deliveryId: updatedDelivery.id,
-      delivery: updatedDelivery,
-      alertType: "info",
-    });
-    if (wss && wss.clients) {
-      // Correction : utiliser WebSocket.OPEN importé en haut du fichier
-      const WebSocket = require("ws");
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(payload);
-        }
-      });
-    }
-    return res.json({ success: true, delivery: updatedDelivery });
-  } catch (err) {
-    console.error("Erreur PATCH retour Resp. Acconier:", err);
-    return res.status(500).json({ success: false, message: "Erreur serveur." });
-  }
-});
-// ===============================
-// --- ROUTE PATCH: Mise à jour du statut acconier d'une livraison ---
-// ===============================
-app.patch("/deliveries/:id/acconier-status", async (req, res) => {
-  const { id } = req.params;
-  const { delivery_status_acconier } = req.body || {};
-  const allowedStatuses = [
-    "awaiting_payment_acconier",
-    "in_progress_payment_acconier",
-    "pending_acconier",
-    "mise_en_livraison_acconier",
-    "payment_done_acconier",
-    "processed_acconier",
-    "rejected_acconier",
-    "rejected_by_employee",
-  ];
-  if (
-    !delivery_status_acconier ||
-    !allowedStatuses.includes(delivery_status_acconier)
-  ) {
+  const { blNumber, status } = req.body || {};
+  if (!blNumber || typeof status !== "string") {
     return res.status(400).json({
       success: false,
-      message: "Statut acconier non autorisé ou manquant.",
-    });
-  }
-  try {
-    const result = await pool.query(
-      "UPDATE livraison_conteneur SET delivery_status_acconier = $1 WHERE id = $2 RETURNING *;",
-      [delivery_status_acconier, id]
-    );
-    if (result.rows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Livraison non trouvée." });
-    }
-    // Envoi WebSocket uniquement si le statut est 'mise_en_livraison_acconier'
-    if (delivery_status_acconier === "mise_en_livraison_acconier") {
-      const updatedDelivery = result.rows[0];
-      const wss = req.app.get("wss") || global.wss;
-      const dossierNumber =
-        updatedDelivery.dossier_number || updatedDelivery.id;
-      // Envoi du message WebSocket au format attendu par le dashboard
-      const payloadDossier = JSON.stringify({
-        type: "dossier_status_update",
-        dossierNumber: dossierNumber,
-        newStatus: "Mise en livraison",
-      });
-      if (wss && wss.clients) {
-        const WebSocket = require("ws");
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(payloadDossier);
-          }
-        });
-      }
-    }
-    return res.json({ success: true, delivery: result.rows[0] });
-  } catch (err) {
-    console.error("Erreur PATCH delivery_status_acconier:", err);
-    return res.status(500).json({ success: false, message: "Erreur serveur." });
-  }
-});
-
-// ===============================
-// --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
-// ===============================
-app.patch("/deliveries/:id/container-status", async (req, res) => {
-  const { id } = req.params;
-  const { containerNumber, status } = req.body || {};
-  if (!containerNumber || !status) {
-    return res.status(400).json({
-      success: false,
-      message: "Numéro de conteneur et statut requis.",
+      message: "Paramètres manquants (blNumber, status)",
     });
   }
   try {
     // Récupère la livraison existante
     const result = await pool.query(
-      "SELECT container_statuses, container_number FROM livraison_conteneur WHERE id = $1",
+      "SELECT * FROM livraison_conteneur WHERE id = $1",
       [id]
     );
     if (result.rows.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: "Livraison non trouvée." });
+        .json({ success: false, message: "Livraison non trouvée" });
     }
-
-    // --- FONCTION DE NORMALISATION (plus robuste) ---
-    function normalizeContainerStatuses(raw, container_number_csv) {
-      // Si déjà un mapping objet (pas un Array), retourne une copie
-      if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-        return { ...raw };
-      }
-      // Si tableau d'objets {tc, status} ou {numeroTC, statut}
-      if (
-        Array.isArray(raw) &&
-        raw.length > 0 &&
-        typeof raw[0] === "object" &&
-        raw[0] !== null &&
-        ("tc" in raw[0] || "numeroTC" in raw[0])
-      ) {
-        const mapping = {};
-        raw.forEach((item) => {
-          const tc = item.tc || item.numeroTC;
-          if (tc) mapping[tc] = item.status || item.statut || item.value || "-";
-        });
-        return mapping;
-      }
-      // Si tableau de strings (statuts), on mappe sur la liste des TC
-      if (
-        Array.isArray(raw) &&
-        raw.length > 0 &&
-        typeof raw[0] === "string" &&
-        container_number_csv
-      ) {
-        const tcList = String(container_number_csv)
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const mapping = {};
-        tcList.forEach((tc, idx) => {
-          mapping[tc] = raw[idx] || "-";
-        });
-        return mapping;
-      }
-      // Si tableau vide ou non reconnu
-      if (Array.isArray(raw)) {
-        return {};
-      }
-      // Si string JSON
-      if (typeof raw === "string") {
-        try {
-          return normalizeContainerStatuses(
-            JSON.parse(raw),
-            container_number_csv
-          );
-        } catch (e) {
-          return {};
-        }
-      }
-      // Sinon, retourne objet vide
-      return {};
-    }
-
-    // --- NORMALISATION ---
-    let container_statuses = {};
-    if (result.rows[0].container_statuses) {
+    let bl_statuses = result.rows[0].bl_statuses || {};
+    if (typeof bl_statuses === "string") {
       try {
-        const raw =
-          typeof result.rows[0].container_statuses === "string"
-            ? JSON.parse(result.rows[0].container_statuses)
-            : result.rows[0].container_statuses;
-        container_statuses = normalizeContainerStatuses(
-          raw,
-          result.rows[0].container_number
-        );
-      } catch (e) {
-        container_statuses = {};
-      }
-    } else {
-      container_statuses = normalizeContainerStatuses(
-        null,
-        result.rows[0].container_number
-      );
-    }
-    console.log(
-      `[PATCH][DEBUG] Avant update (normalisé) : container_statuses=`,
-      container_statuses
-    );
-    // Met à jour le statut du conteneur demandé
-    container_statuses[containerNumber] = status;
-    console.log(
-      `[PATCH][DEBUG] Après modification : container_statuses=`,
-      container_statuses
-    );
-    // Met à jour la base
-    // Vérifie si tous les conteneurs sont livrés
-    let tcListCheck = [];
-    if (result.rows[0].container_number) {
-      if (Array.isArray(result.rows[0].container_number)) {
-        tcListCheck = result.rows[0].container_number.filter(Boolean);
-      } else if (typeof result.rows[0].container_number === "string") {
-        tcListCheck = result.rows[0].container_number
-          .split(/[,;\s]+/)
-          .filter(Boolean);
+        bl_statuses = JSON.parse(bl_statuses);
+      } catch {
+        bl_statuses = {};
       }
     }
-    const allDelivered =
-      tcListCheck.length > 0 &&
-      tcListCheck.every((tc) => {
-        const s = container_statuses[tc];
-        return s === "livre" || s === "livré";
-      });
-    let updateQuery = "UPDATE livraison_conteneur SET container_statuses = $1";
-    let updateValues = [JSON.stringify(container_statuses)];
-    if (allDelivered) {
+    bl_statuses[blNumber] = status;
+    // Vérifie si tous les BL sont en 'mise_en_livraison'
+    let blList = [];
+    if (result.rows[0].bl_number) {
+      if (Array.isArray(result.rows[0].bl_number)) {
+        blList = result.rows[0].bl_number.filter(Boolean);
+      } else if (typeof result.rows[0].bl_number === "string") {
+        blList = result.rows[0].bl_number.split(/[,;\s]+/).filter(Boolean);
+      }
+    }
+    const allMiseEnLivraison =
+      blList.length > 0 &&
+      blList.every((bl) => bl_statuses[bl] === "mise_en_livraison");
+    // Sauvegarde en base
+    let updateQuery = "UPDATE livraison_conteneur SET bl_statuses = $1";
+    let updateValues = [JSON.stringify(bl_statuses)];
+    if (allMiseEnLivraison) {
       updateQuery += ", delivery_status_acconier = $2";
       updateValues.push("mise_en_livraison_acconier");
       updateQuery += " WHERE id = $3 RETURNING *;";
@@ -3189,90 +2571,162 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Erreur lors de la mise à jour." });
     }
-    // Relit la ligne complète pour vérificationszssd
-    const checkRes = await pool.query(
-      "SELECT id, container_statuses FROM livraison_conteneur WHERE id = $1",
-      [id]
-    );
-    if (checkRes.rows.length > 0) {
-      let persisted = checkRes.rows[0].container_statuses;
-      if (typeof persisted === "string") {
-        try {
-          persisted = JSON.parse(persisted);
-        } catch (e) {}
-      }
-      console.log(
-        `[PATCH][DEBUG] En base après update (id=${id}) :`,
-        persisted
-      );
-    }
-    // Envoi WebSocket (optionnel)
-    const wss = req.app.get("wss");
     const updatedDelivery = updateRes.rows[0];
-    const alertMessage = `Statut du conteneur '${containerNumber}' mis à jour à '${status}'.`;
-    // Calcul du nombre de conteneurs livrés et du total pour cette livraison
-    let total = 0;
-    let delivered = 0;
-    let tcList = [];
-    if (updatedDelivery.container_number) {
-      if (Array.isArray(updatedDelivery.container_number)) {
-        tcList = updatedDelivery.container_number.filter(Boolean);
-      } else if (typeof updatedDelivery.container_number === "string") {
-        tcList = updatedDelivery.container_number
-          .split(/[,;\s]+/)
-          .filter(Boolean);
-      }
-      total = tcList.length;
-    }
-    let container_statuses_updated = {};
-    if (updatedDelivery.container_statuses) {
-      try {
-        container_statuses_updated =
-          typeof updatedDelivery.container_statuses === "string"
-            ? JSON.parse(updatedDelivery.container_statuses)
-            : updatedDelivery.container_statuses;
-      } catch (e) {
-        container_statuses_updated = {};
-      }
-    }
-    delivered = tcList.filter((tc) => {
-      const s = container_statuses_updated[tc];
-      return s === "livre" || s === "livré";
-    }).length;
-    // Envoi du ratio livré/total pour la livraison concernée (deliveryId)
-    const payload = JSON.stringify({
-      type: "container_status_update",
-      message: alertMessage,
-      deliveryId: updatedDelivery.id,
-      containerNumber,
-      status,
-      alertType: "success",
-      deliveredCount: delivered,
-      totalCount: total,
-    });
-    wss.clients.forEach((client) => {
-      if (client.readyState === require("ws").OPEN) {
-        client.send(payload);
-      }
-    });
-    res.status(200).json({
-      success: true,
-      message: alertMessage,
+    // Envoi WebSocket à tous les clients (BL et statut dossier)
+    const wss = req.app.get("wss") || global.wss;
+    const alertMsg = `Dossier '${
+      updatedDelivery.dossier_number || updatedDelivery.id
+    }' a été mis en livraison.`;
+    // Message BL (pour la colonne BL)
+    const payloadBL = JSON.stringify({
+      type: "bl_status_update",
       delivery: updatedDelivery,
-      deliveredCount: delivered,
-      totalCount: total,
+      message: alertMsg,
+      dossierNumber: updatedDelivery.dossier_number || updatedDelivery.id,
     });
+    // Message statut dossier (pour la colonne Responsable Acconier)
+    const payloadDossier = JSON.stringify({
+      type: "dossier_status_update",
+      dossierNumber: updatedDelivery.dossier_number || updatedDelivery.id,
+      newStatus: "Mise en livraison",
+    });
+    if (wss && wss.clients) {
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(payloadBL);
+          client.send(payloadDossier);
+        }
+      });
+    }
+    res.status(200).json({ success: true, delivery: updatedDelivery });
   } catch (err) {
-    console.error("Erreur lors de la mise à jour du statut du conteneur:", err);
+    console.error("Erreur lors de la mise à jour du statut BL:", err);
     res.status(500).json({
       success: false,
-      message: "Erreur serveur lors de la mise à jour du statut du conteneur.",
+      error: "Erreur serveur lors de la mise à jour du statut BL.",
+    });
+  }
+});
+
+// Route explicite pour acconier_auth.html
+app.get("/html/acconier_auth.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "acconier_auth.html"));
+});
+
+// Route explicite pour repoLivAuth.html
+
+app.get("/html/repoLivAuth.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "html", "repoLivAuth.html"));
+});
+
+// ===============================
+// ROUTE : Dossiers en attente de paiement (pour le tableau de bord)
+// ===============================
+app.get("/api/dossiers/attente-paiement", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+         created_at AS date,
+         employee_name AS agent,
+         client_name AS nom,
+         bl_number AS bl,
+         dossier_number AS dossier,
+         delivery_status_acconier
+       FROM livraison_conteneur
+       ORDER BY created_at DESC`
+    );
+    // Log pour debug : voir ce que la base retourne réellement
+    console.log(
+      "[DEBUG] Résultats livraison_conteneur:",
+      result.rows.map((r) => ({
+        id: r.dossier,
+        statut: r.delivery_status_acconier,
+        agent: r.agent,
+        client: r.nom,
+      }))
+    );
+    // Filtrage : inclure aussi 'pending_acconier' et 'in_progress_payment_acconier'
+    const dossiers = result.rows.filter((row) => {
+      const statut = (row.delivery_status_acconier || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+      return (
+        (statut.includes("attente") && statut.includes("paiement")) ||
+        statut === "pending_acconier" ||
+        statut === "in_progress_payment_acconier"
+      );
+    });
+    res.json({
+      success: true,
+      dossiers,
+    });
+  } catch (err) {
+    console.error("Erreur /api/dossiers/attente-paiement :", err);
+    res.status(500).json({
+      success: false,
+      message:
+        "Erreur serveur lors de la récupération des dossiers en attente de paiement.",
     });
   }
 });
 
 // ===============================
-// ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
+// ROUTE : Dossiers en retard (pour le tableau de bord)
+// ===============================
+app.get("/api/dossiers/retard", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM livraison_conteneur ORDER BY created_at DESC`
+    );
+    const now = new Date();
+    // Logique métier identique à getLateDeliveries JS
+    const dossiersRetard = (result.rows || []).filter((d) => {
+      let dDate = d.delivery_date || d.created_at;
+      if (!dDate) return false;
+      let dateObj = new Date(dDate);
+      if (isNaN(dateObj.getTime())) return false;
+      const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 2) return false;
+      if (d.delivery_status_acconier === "en attente de paiement") {
+        return true;
+      }
+      let blList = [];
+      if (Array.isArray(d.bl_number)) {
+        blList = d.bl_number.filter(Boolean);
+      } else if (typeof d.bl_number === "string") {
+        blList = d.bl_number.split(/[,;\s]+/).filter(Boolean);
+      }
+      let blStatuses = blList.map((bl) =>
+        d.bl_statuses && d.bl_statuses[bl] ? d.bl_statuses[bl] : "aucun"
+      );
+      if (
+        blStatuses.length > 0 &&
+        blStatuses.every((s) => s === "mise_en_livraison")
+      ) {
+        return false;
+      }
+      if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
+        return false;
+      }
+      return true;
+    });
+    // Formatage minimal pour le frontend (numéro, client, date, statut)
+    const dossiersFormates = dossiersRetard.map((d) => ({
+      numero: d.dossier_number || d.id,
+      client: d.client_name,
+      created_at: d.created_at,
+      statut: d.delivery_status_acconier,
+    }));
+    res.json(dossiersFormates);
+  } catch (err) {
+    console.error("Erreur /api/dossiers/retard :", err);
+    res.json([]); // Renvoie un tableau vide en cas d'erreur pour éviter le crash frontend
+  }
+});
+
+// ===============================
+// ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
 
 // ===============================
@@ -3510,128 +2964,392 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
   }
 });
 
-// Route explicite pour acconier_auth.html
-app.get("/html/acconier_auth.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "html", "acconier_auth.html"));
-});
+// ROUTE : PATCH pour mettre à jour l'observation de l'acconier
+app.patch("/deliveries/:id/observation_acconier", async (req, res) => {
+  const { id } = req.params;
+  const { observation } = req.body;
 
-// Route explicite pour repoLivAuth.html
+  if (typeof observation === "undefined") {
+    return res
+      .status(400)
+      .json({ success: false, message: "Le champ observation est manquant." });
+  }
 
-app.get("/html/repoLivAuth.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "html", "repoLivAuth.html"));
-});
-
-// ===============================
-// ROUTE : Dossiers en attente de paiement (pour le tableau de bord)
-// ===============================
-app.get("/api/dossiers/attente-paiement", async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT 
-         created_at AS date,
-         employee_name AS agent,
-         client_name AS nom,
-         bl_number AS bl,
-         dossier_number AS dossier,
-         delivery_status_acconier
-       FROM livraison_conteneur
-       ORDER BY created_at DESC`
+      "UPDATE livraison_conteneur SET observation_acconier = $1 WHERE id = $2 RETURNING id, observation_acconier",
+      [observation, id]
     );
-    // Log pour debug : voir ce que la base retourne réellement
-    console.log(
-      "[DEBUG] Résultats livraison_conteneur:",
-      result.rows.map((r) => ({
-        id: r.dossier,
-        statut: r.delivery_status_acconier,
-        agent: r.agent,
-        client: r.nom,
-      }))
-    );
-    // Filtrage : inclure aussi 'pending_acconier' et 'in_progress_payment_acconier'
-    const dossiers = result.rows.filter((row) => {
-      const statut = (row.delivery_status_acconier || "")
-        .toLowerCase()
-        .replace(/\s+/g, " ")
-        .trim();
-      return (
-        (statut.includes("attente") && statut.includes("paiement")) ||
-        statut === "pending_acconier" ||
-        statut === "in_progress_payment_acconier"
-      );
+
+    if (result.rowCount === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+
+    // Diffuser la mise à jour à tous les clients WebSocket
+    wsClients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(
+          JSON.stringify({
+            type: "observation_acconier_updated",
+            deliveryId: id,
+            observation: observation,
+          })
+        );
+      }
     });
+
     res.json({
       success: true,
-      dossiers,
+      message: "Observation de l'acconier mise à jour.",
     });
   } catch (err) {
-    console.error("Erreur /api/dossiers/attente-paiement :", err);
-    res.status(500).json({
-      success: false,
-      message:
-        "Erreur serveur lors de la récupération des dossiers en attente de paiement.",
-    });
+    console.error(
+      "Erreur lors de la mise à jour de l'observation de l'acconier:",
+      err
+    );
+    res.status(500).json({ success: false, message: "Erreur serveur." });
   }
 });
 
+// ROUTE : Restaurer un dossier (le ramener au tableau du Resp. Acconier)
+app.post("/deliveries/:id/restore-to-acconier", async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Met à jour le statut acconier à 'en attente de paiement' (retour Resp. Acconier)
+    const result = await pool.query(
+      "UPDATE livraison_conteneur SET delivery_status_acconier = $1 WHERE id = $2 RETURNING *;",
+      ["en attente de paiement", id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+    // Envoi WebSocket pour notification instantanée
+    const wss = req.app.get("wss");
+    const updatedDelivery = result.rows[0];
+    const alertMessage = `La livraison du dossier '${
+      updatedDelivery.dossier_number || updatedDelivery.id
+    }' a été ramenée au Resp. Acconier.`;
+    const payload = JSON.stringify({
+      type: "delivery_returned_acconier",
+      message: alertMessage,
+      deliveryId: updatedDelivery.id,
+      delivery: updatedDelivery,
+      alertType: "info",
+    });
+    if (wss && wss.clients) {
+      // Correction : utiliser WebSocket.OPEN importé en haut du fichier
+      const WebSocket = require("ws");
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(payload);
+        }
+      });
+    }
+    return res.json({ success: true, delivery: updatedDelivery });
+  } catch (err) {
+    console.error("Erreur PATCH retour Resp. Acconier:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
 // ===============================
-// ROUTE : Dossiers en retard (pour le tableau de bord)
+// --- ROUTE PATCH: Mise à jour du statut acconier d'une livraison ---
 // ===============================
-app.get("/api/dossiers/retard", async (req, res) => {
+app.patch("/deliveries/:id/acconier-status", async (req, res) => {
+  const { id } = req.params;
+  const { delivery_status_acconier } = req.body || {};
+  const allowedStatuses = [
+    "awaiting_payment_acconier",
+    "in_progress_payment_acconier",
+    "pending_acconier",
+    "mise_en_livraison_acconier",
+    "payment_done_acconier",
+    "processed_acconier",
+    "rejected_acconier",
+    "rejected_by_employee",
+  ];
+  if (
+    !delivery_status_acconier ||
+    !allowedStatuses.includes(delivery_status_acconier)
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Statut acconier non autorisé ou manquant.",
+    });
+  }
   try {
     const result = await pool.query(
-      `SELECT * FROM livraison_conteneur ORDER BY created_at DESC`
+      "UPDATE livraison_conteneur SET delivery_status_acconier = $1 WHERE id = $2 RETURNING *;",
+      [delivery_status_acconier, id]
     );
-    const now = new Date();
-    // Logique métier identique à getLateDeliveries JS
-    const dossiersRetard = (result.rows || []).filter((d) => {
-      let dDate = d.delivery_date || d.created_at;
-      if (!dDate) return false;
-      let dateObj = new Date(dDate);
-      if (isNaN(dateObj.getTime())) return false;
-      const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-      if (diffDays <= 2) return false;
-      if (d.delivery_status_acconier === "en attente de paiement") {
-        return true;
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+    // Envoi WebSocket uniquement si le statut est 'mise_en_livraison_acconier'
+    if (delivery_status_acconier === "mise_en_livraison_acconier") {
+      const updatedDelivery = result.rows[0];
+      const wss = req.app.get("wss") || global.wss;
+      const dossierNumber =
+        updatedDelivery.dossier_number || updatedDelivery.id;
+      // Envoi du message WebSocket au format attendu par le dashboard
+      const payloadDossier = JSON.stringify({
+        type: "dossier_status_update",
+        dossierNumber: dossierNumber,
+        newStatus: "Mise en livraison",
+      });
+      if (wss && wss.clients) {
+        const WebSocket = require("ws");
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(payloadDossier);
+          }
+        });
       }
-      let blList = [];
-      if (Array.isArray(d.bl_number)) {
-        blList = d.bl_number.filter(Boolean);
-      } else if (typeof d.bl_number === "string") {
-        blList = d.bl_number.split(/[,;\s]+/).filter(Boolean);
-      }
-      let blStatuses = blList.map((bl) =>
-        d.bl_statuses && d.bl_statuses[bl] ? d.bl_statuses[bl] : "aucun"
-      );
-      if (
-        blStatuses.length > 0 &&
-        blStatuses.every((s) => s === "mise_en_livraison")
-      ) {
-        return false;
-      }
-      if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
-        return false;
-      }
-      return true;
-    });
-    // Formatage minimal pour le frontend (numéro, client, date, statut)
-    const dossiersFormates = dossiersRetard.map((d) => ({
-      numero: d.dossier_number || d.id,
-      client: d.client_name,
-      created_at: d.created_at,
-      statut: d.delivery_status_acconier,
-    }));
-    res.json(dossiersFormates);
+    }
+    return res.json({ success: true, delivery: result.rows[0] });
   } catch (err) {
-    console.error("Erreur /api/dossiers/retard :", err);
-    res.json([]); // Renvoie un tableau vide en cas d'erreur pour éviter le crash frontend
+    console.error("Erreur PATCH delivery_status_acconier:", err);
+    return res.status(500).json({ success: false, message: "Erreur serveur." });
   }
 });
 
 // ===============================
-// ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
+// --- ROUTE PATCH: Mise à jour du statut d'un conteneur individuel ---
 // ===============================
-// Cette route doit être TOUT EN BAS, après toutes les routes API !
-// (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
+app.patch("/deliveries/:id/container-status", async (req, res) => {
+  const { id } = req.params;
+  const { containerNumber, status } = req.body || {};
+  if (!containerNumber || !status) {
+    return res.status(400).json({
+      success: false,
+      message: "Numéro de conteneur et statut requis.",
+    });
+  }
+  try {
+    // Récupère la livraison existante
+    const result = await pool.query(
+      "SELECT * FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+
+    // --- FONCTION DE NORMALISATION (plus robuste) ---
+    function normalizeContainerStatuses(raw, container_number_csv) {
+      // Si déjà un mapping objet (pas un Array), retourne une copie
+      if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        return { ...raw };
+      }
+      // Si tableau d'objets {tc, status} ou {numeroTC, statut}
+      if (
+        Array.isArray(raw) &&
+        raw.length > 0 &&
+        typeof raw[0] === "object" &&
+        raw[0] !== null &&
+        ("tc" in raw[0] || "numeroTC" in raw[0])
+      ) {
+        const mapping = {};
+        raw.forEach((item) => {
+          const tc = item.tc || item.numeroTC;
+          if (tc) mapping[tc] = item.status || item.statut || item.value || "-";
+        });
+        return mapping;
+      }
+      // Si tableau de strings (statuts), on mappe sur la liste des TC
+      if (
+        Array.isArray(raw) &&
+        raw.length > 0 &&
+        typeof raw[0] === "string" &&
+        container_number_csv
+      ) {
+        const tcList = String(container_number_csv)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const mapping = {};
+        tcList.forEach((tc, idx) => {
+          mapping[tc] = raw[idx] || "-";
+        });
+        return mapping;
+      }
+      // Si tableau vide ou non reconnu
+      if (Array.isArray(raw)) {
+        return {};
+      }
+      // Si string JSON
+      if (typeof raw === "string") {
+        try {
+          return normalizeContainerStatuses(
+            JSON.parse(raw),
+            container_number_csv
+          );
+        } catch (e) {
+          return {};
+        }
+      }
+      // Sinon, retourne objet vide
+      return {};
+    }
+
+    // --- NORMALISATION ---
+    let container_statuses = {};
+    if (result.rows[0].container_statuses) {
+      try {
+        const raw =
+          typeof result.rows[0].container_statuses === "string"
+            ? JSON.parse(result.rows[0].container_statuses)
+            : result.rows[0].container_statuses;
+        container_statuses = normalizeContainerStatuses(
+          raw,
+          result.rows[0].container_number
+        );
+      } catch (e) {
+        container_statuses = {};
+      }
+    } else {
+      container_statuses = normalizeContainerStatuses(
+        null,
+        result.rows[0].container_number
+      );
+    }
+    console.log(
+      `[PATCH][DEBUG] Avant update (normalisé) : container_statuses=`,
+      container_statuses
+    );
+    // Met à jour le statut du conteneur demandé
+    container_statuses[containerNumber] = status;
+    console.log(
+      `[PATCH][DEBUG] Après modification : container_statuses=`,
+      container_statuses
+    );
+    // Met à jour la base
+    // Vérifie si tous les conteneurs sont livrés
+    let tcListCheck = [];
+    if (result.rows[0].container_number) {
+      if (Array.isArray(result.rows[0].container_number)) {
+        tcListCheck = result.rows[0].container_number.filter(Boolean);
+      } else if (typeof result.rows[0].container_number === "string") {
+        tcListCheck = result.rows[0].container_number
+          .split(/[,;\s]+/)
+          .filter(Boolean);
+      }
+    }
+    const allDelivered =
+      tcListCheck.length > 0 &&
+      tcListCheck.every((tc) => {
+        const s = container_statuses[tc];
+        return s === "livre" || s === "livré";
+      });
+    let updateQuery = "UPDATE livraison_conteneur SET container_statuses = $1";
+    let updateValues = [JSON.stringify(container_statuses)];
+    if (allDelivered) {
+      updateQuery += ", delivery_status_acconier = $2";
+      updateValues.push("mise_en_livraison_acconier");
+      updateQuery += " WHERE id = $3 RETURNING *;";
+      updateValues.push(id);
+    } else {
+      updateQuery += " WHERE id = $2 RETURNING *;";
+      updateValues.push(id);
+    }
+    const updateRes = await pool.query(updateQuery, updateValues);
+    if (updateRes.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Erreur lors de la mise à jour." });
+    }
+    // Relit la ligne complète pour vérificationszssd
+    const checkRes = await pool.query(
+      "SELECT id, container_statuses FROM livraison_conteneur WHERE id = $1",
+      [id]
+    );
+    if (checkRes.rows.length > 0) {
+      let persisted = checkRes.rows[0].container_statuses;
+      if (typeof persisted === "string") {
+        try {
+          persisted = JSON.parse(persisted);
+        } catch (e) {}
+      }
+      console.log(
+        `[PATCH][DEBUG] En base après update (id=${id}) :`,
+        persisted
+      );
+    }
+    // Envoi WebSocket (optionnel)
+    const wss = req.app.get("wss");
+    const updatedDelivery = updateRes.rows[0];
+    const alertMessage = `Statut du conteneur '${containerNumber}' mis à jour à '${status}'.`;
+    // Calcul du nombre de conteneurs livrés et du total pour cette livraison
+    let total = 0;
+    let delivered = 0;
+    let tcList = [];
+    if (updatedDelivery.container_number) {
+      if (Array.isArray(updatedDelivery.container_number)) {
+        tcList = updatedDelivery.container_number.filter(Boolean);
+      } else if (typeof updatedDelivery.container_number === "string") {
+        tcList = updatedDelivery.container_number
+          .split(/[,;\s]+/)
+          .filter(Boolean);
+      }
+      total = tcList.length;
+    }
+    let container_statuses_updated = {};
+    if (updatedDelivery.container_statuses) {
+      try {
+        container_statuses_updated =
+          typeof updatedDelivery.container_statuses === "string"
+            ? JSON.parse(updatedDelivery.container_statuses)
+            : updatedDelivery.container_statuses;
+      } catch (e) {
+        container_statuses_updated = {};
+      }
+    }
+    delivered = tcList.filter((tc) => {
+      const s = container_statuses_updated[tc];
+      return s === "livre" || s === "livré";
+    }).length;
+    // Envoi du ratio livré/total pour la livraison concernée (deliveryId)
+    const payload = JSON.stringify({
+      type: "container_status_update",
+      message: alertMessage,
+      deliveryId: updatedDelivery.id,
+      containerNumber,
+      status,
+      alertType: "success",
+      deliveredCount: delivered,
+      totalCount: total,
+    });
+    wss.clients.forEach((client) => {
+      if (client.readyState === require("ws").OPEN) {
+        client.send(payload);
+      }
+    });
+    res.status(200).json({
+      success: true,
+      message: alertMessage,
+      delivery: updatedDelivery,
+      deliveredCount: delivered,
+      totalCount: total,
+    });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du statut du conteneur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la mise à jour du statut du conteneur.",
+    });
+  }
+});
+
+// ===============================
+// ROUTE POUR SERVIR index.html À LA RACINE (doit être placée APRÈS toutes les autres routes)
+// ===============================
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
