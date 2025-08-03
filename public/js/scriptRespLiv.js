@@ -1177,6 +1177,99 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           delivery.id || delivery.dossier_number || i
         }_${colId}`;
       }
+
+      // === NOUVELLE FONCTION : Synchronisation vers scriptSuivie.js ===
+      function syncDataToSuivie(delivery, fieldId, value) {
+        // Correspondance des champs entre RespLiv et Suivie
+        const fieldMapping = {
+          visitor_agent_name: "nom_agent_visiteur",
+          transporter: "transporter",
+          inspector: "inspecteur",
+          customs_agent: "agent_en_douanes",
+          driver: "driver_name",
+          driver_phone: "driver_phone",
+          delivery_date: "delivery_date",
+        };
+
+        const suivieFieldId = fieldMapping[fieldId];
+        if (!suivieFieldId) return; // Pas de correspondance
+
+        // 1. Stockage local pour synchronisation immédiate
+        const syncKey = `sync_${
+          delivery.id || delivery.dossier_number
+        }_${suivieFieldId}`;
+        const syncData = {
+          value: value,
+          timestamp: Date.now(),
+          deliveryId: delivery.id || delivery.dossier_number,
+          fieldId: suivieFieldId,
+        };
+
+        localStorage.setItem(syncKey, JSON.stringify(syncData));
+
+        // 2. Synchronisation vers le backend
+        fetch("/api/sync-resplivraison", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            deliveryId: delivery.id || delivery.dossier_number,
+            fieldId: fieldId, // Champ original RespLiv
+            value: value,
+            timestamp: syncData.timestamp,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              console.log("Synchronisation backend réussie:", data);
+            } else {
+              console.warn("Erreur synchronisation backend:", data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Erreur réseau synchronisation:", error);
+          });
+
+        // 3. Déclencher un événement storage personnalisé pour la synchronisation immédiate
+        window.dispatchEvent(
+          new CustomEvent("respLivDataUpdate", {
+            detail: syncData,
+          })
+        );
+      }
+
+      // === FONCTION DE TEST POUR LA SYNCHRONISATION ===
+      window.testSynchronization = function () {
+        console.log("=== TEST DE SYNCHRONISATION RESPLIVDELIVERY → SUIVIE ===");
+
+        // Simuler une modification de données
+        const testDelivery = { id: "test123", dossier_number: "TEST-001" };
+        const testFields = [
+          { fieldId: "visitor_agent_name", value: "Agent Test Visiteur" },
+          { fieldId: "transporter", value: "Transporteur Test SA" },
+          { fieldId: "inspector", value: "Inspecteur Test" },
+          { fieldId: "customs_agent", value: "Agent Douanes Test" },
+          { fieldId: "driver", value: "Chauffeur Test" },
+          { fieldId: "driver_phone", value: "+33123456789" },
+          { fieldId: "delivery_date", value: "2025-03-15" },
+        ];
+
+        testFields.forEach((test) => {
+          console.log(`Test synchronisation: ${test.fieldId} = ${test.value}`);
+          syncDataToSuivie(testDelivery, test.fieldId, test.value);
+        });
+
+        console.log("Test terminé. Vérifiez:");
+        console.log("1. localStorage (clés sync_*)");
+        console.log("2. Appels API backend (/api/sync-resplivraison)");
+        console.log("3. Page Suivie pour synchronisation visuelle");
+        console.log(
+          "Clés de synchronisation créées:",
+          Object.keys(localStorage).filter((k) => k.startsWith("sync_test123"))
+        );
+      };
       const td = document.createElement("td");
       // Ajout : identifiant data-col-id sur la cellule pour le filtrage
       td.setAttribute("data-col-id", col.id);
@@ -1385,6 +1478,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   getCellStorageKey(delivery, col.id),
                   input.value
                 );
+                // === SYNCHRONISATION VERS SUIVIE ===
+                syncDataToSuivie(delivery, col.id, input.value);
               }
             };
             input.onblur = function () {
@@ -1399,6 +1494,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 getCellStorageKey(delivery, col.id),
                 input.value
               );
+              // === SYNCHRONISATION VERS SUIVIE ===
+              syncDataToSuivie(delivery, col.id, input.value);
             };
             td.textContent = "";
             td.appendChild(input);
@@ -1468,6 +1565,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 getCellStorageKey(delivery, col.id),
                 input.value
               );
+              // === SYNCHRONISATION VERS SUIVIE ===
+              syncDataToSuivie(delivery, col.id, input.value);
               setTimeout(() => {
                 if (isAllRequiredFilled()) {
                   showAccessMessage(
@@ -1492,6 +1591,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               getCellStorageKey(delivery, col.id),
               input.value
             );
+            // === SYNCHRONISATION VERS SUIVIE ===
+            syncDataToSuivie(delivery, col.id, input.value);
             setTimeout(() => {
               if (isAllRequiredFilled()) {
                 showAccessMessage(
@@ -2727,7 +2828,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
         return acc;
       }, {}),
       tableWidth: "auto",
-      horizontalAlign: "center", // Centrage horizontasl du tableau
+      horizontalAlign: "center", // Centrage horizontal du tableau
       didDrawPage: function (data) {
         // Rien à faire ici normalement
       },

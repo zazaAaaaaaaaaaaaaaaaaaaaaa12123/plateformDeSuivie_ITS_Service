@@ -124,6 +124,222 @@ app.patch("/deliveries/:id/observation", async (req, res) => {
 });
 
 // ===============================
+// ROUTES API POUR LA SYNCHRONISATION RESPLIVRAISON ↔ SUIVIE
+// ===============================
+
+// ROUTE : Sauvegarde des données modifiées depuis RespLiv
+app.post("/api/sync-resplivraison", async (req, res) => {
+  const { deliveryId, fieldId, value, timestamp } = req.body || {};
+
+  if (!deliveryId || !fieldId || value === undefined) {
+    return res.status(400).json({
+      success: false,
+      message: "Paramètres manquants: deliveryId, fieldId, value requis",
+    });
+  }
+
+  // Correspondance des champs RespLiv → Base de données
+  const fieldMapping = {
+    visitor_agent_name: "nom_agent_visiteur",
+    transporter: "transporter",
+    inspector: "inspecteur",
+    customs_agent: "agent_en_douanes",
+    driver: "driver_name",
+    driver_phone: "driver_phone",
+    delivery_date: "delivery_date",
+  };
+
+  const dbFieldName = fieldMapping[fieldId];
+  if (!dbFieldName) {
+    return res.status(400).json({
+      success: false,
+      message: `Champ non supporté: ${fieldId}`,
+    });
+  }
+
+  try {
+    // Mise à jour dans la base de données
+    let updateQuery, updateValues;
+
+    if (dbFieldName === "delivery_date") {
+      // Traitement spécial pour les dates
+      const formattedDate = formatDateForDB(value);
+      updateQuery = `UPDATE livraison_conteneur SET ${dbFieldName} = $1 WHERE id = $2 RETURNING id, ${dbFieldName}`;
+      updateValues = [formattedDate, deliveryId];
+    } else {
+      // Traitement standard pour les autres champs
+      updateQuery = `UPDATE livraison_conteneur SET ${dbFieldName} = $1 WHERE id = $2 RETURNING id, ${dbFieldName}`;
+      updateValues = [value, deliveryId];
+    }
+
+    const result = await pool.query(updateQuery, updateValues);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Livraison non trouvée",
+      });
+    }
+
+    // Diffusion WebSocket pour mise à jour temps réel
+    wsClients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(
+          JSON.stringify({
+            type: "resplivraison_sync_update",
+            deliveryId,
+            fieldId,
+            dbFieldName,
+            value,
+            timestamp: timestamp || Date.now(),
+          })
+        );
+      }
+    });
+
+    res.json({
+      success: true,
+      message: "Données synchronisées avec succès",
+      updated: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Erreur synchronisation RespLivraison:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la synchronisation",
+    });
+  }
+});
+
+// ROUTE : Récupération des données synchronisées pour Suivie
+app.get("/api/sync-resplivraison/:deliveryId", async (req, res) => {
+  const { deliveryId } = req.params;
+
+  if (!deliveryId) {
+    return res.status(400).json({
+      success: false,
+      message: "ID de livraison requis",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT id, nom_agent_visiteur, transporter, inspecteur, agent_en_douanes, 
+              driver_name, driver_phone, delivery_date 
+       FROM livraison_conteneur 
+       WHERE id = $1`,
+      [deliveryId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Livraison non trouvée",
+      });
+    }
+
+    const delivery = result.rows[0];
+
+    // Formatage de la réponse avec correspondance inverse
+    const syncData = {
+      nom_agent_visiteur: delivery.nom_agent_visiteur,
+      transporter: delivery.transporter,
+      inspecteur: delivery.inspecteur,
+      agent_en_douanes: delivery.agent_en_douanes,
+      driver_name: delivery.driver_name,
+      driver_phone: delivery.driver_phone,
+      delivery_date: delivery.delivery_date,
+    };
+
+    res.json({
+      success: true,
+      deliveryId,
+      syncData,
+    });
+  } catch (err) {
+    console.error("Erreur récupération données synchronisées:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération",
+    });
+  }
+});
+
+// ROUTE : Mise à jour en lot des champs synchronisés
+app.put("/api/sync-resplivraison/batch", async (req, res) => {
+  const { updates } = req.body || {};
+
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Liste de mises à jour requise",
+    });
+  }
+
+  const fieldMapping = {
+    visitor_agent_name: "nom_agent_visiteur",
+    transporter: "transporter",
+    inspector: "inspecteur",
+    customs_agent: "agent_en_douanes",
+    driver: "driver_name",
+    driver_phone: "driver_phone",
+    delivery_date: "delivery_date",
+  };
+
+  try {
+    const results = [];
+
+    for (const update of updates) {
+      const { deliveryId, fieldId, value } = update;
+      const dbFieldName = fieldMapping[fieldId];
+
+      if (!dbFieldName || !deliveryId) continue;
+
+      let updateQuery, updateValues;
+
+      if (dbFieldName === "delivery_date") {
+        const formattedDate = formatDateForDB(value);
+        updateQuery = `UPDATE livraison_conteneur SET ${dbFieldName} = $1 WHERE id = $2 RETURNING id`;
+        updateValues = [formattedDate, deliveryId];
+      } else {
+        updateQuery = `UPDATE livraison_conteneur SET ${dbFieldName} = $1 WHERE id = $2 RETURNING id`;
+        updateValues = [value, deliveryId];
+      }
+
+      const result = await pool.query(updateQuery, updateValues);
+      if (result.rows.length > 0) {
+        results.push({ deliveryId, fieldId, success: true });
+      }
+    }
+
+    // Diffusion WebSocket globale
+    wsClients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(
+          JSON.stringify({
+            type: "resplivraison_batch_sync",
+            updates: results,
+            timestamp: Date.now(),
+          })
+        );
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `${results.length} mises à jour effectuées`,
+      results,
+    });
+  } catch (err) {
+    console.error("Erreur synchronisation en lot:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la synchronisation en lot",
+    });
+  }
+});
+
+// ===============================
 // TABLE POUR RESPONSABLE DE LIVRAISON PERSISTANT
 // ===============================
 const createDeliveryResponsibleTable = `

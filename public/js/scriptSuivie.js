@@ -1,5 +1,223 @@
 // === Génération dynamique du tableau principal des dossiers en retard ===
 // === INJECTION DU STYLE RESPONSIVE POUR LES BOUTONS DU TABLEAU DE SUIVI ===
+
+// === SYSTÈME DE SYNCHRONISATION DEPUIS RESP_LIV ===
+(function initRespLivSynchronization() {
+  // Fonction pour appliquer les données synchronisées depuis RespLiv
+  function applySyncDataFromRespLiv() {
+    // Parcourt tous les éléments de synchronisation dans localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("sync_")) {
+        try {
+          const syncData = JSON.parse(localStorage.getItem(key));
+          const { deliveryId, fieldId, value, timestamp } = syncData;
+
+          // Trouve la ligne correspondante dans le tableau principal
+          const table = document.getElementById("deliveriesTable");
+          if (!table) continue;
+
+          const rows = table.querySelectorAll("tbody tr[data-delivery-id]");
+          rows.forEach((row) => {
+            const rowDeliveryId = row.getAttribute("data-delivery-id");
+            if (String(rowDeliveryId) === String(deliveryId)) {
+              // Trouve la cellule correspondante
+              const cell = row.querySelector(
+                `td[data-field-name="${fieldId}"]`
+              );
+              if (cell) {
+                // Met à jour la valeur affichée
+                updateCellDisplayValue(cell, value, fieldId);
+              }
+            }
+          });
+        } catch (e) {
+          console.error("Erreur lors de la synchronisation:", e);
+        }
+      }
+    }
+  }
+
+  // Fonction pour mettre à jour l'affichage d'une cellule
+  function updateCellDisplayValue(cell, value, fieldId) {
+    if (!value || value === "-") {
+      cell.textContent = "-";
+      return;
+    }
+
+    // Traitement spécial pour les dates
+    if (fieldId === "delivery_date") {
+      if (value) {
+        try {
+          const dateObj = new Date(value);
+          if (!isNaN(dateObj.getTime())) {
+            cell.textContent = dateObj.toLocaleDateString("fr-FR");
+          } else {
+            cell.textContent = value;
+          }
+        } catch (e) {
+          cell.textContent = value;
+        }
+      } else {
+        cell.textContent = "-";
+      }
+    } else {
+      // Pour les autres champs texte
+      cell.textContent = value;
+    }
+
+    // Marquer la cellule comme synchronisée
+    cell.style.backgroundColor = "rgba(34, 197, 94, 0.1)";
+    cell.style.borderLeft = "3px solid #22c55e";
+    cell.title = `Synchronisé depuis Resp. Livraison - ${value}`;
+  }
+
+  // Écouter les événements de synchronisation en temps réel
+  window.addEventListener("respLivDataUpdate", function (event) {
+    const { deliveryId, fieldId, value } = event.detail;
+
+    // Met à jour immédiatement le tableau si il est affiché
+    const table = document.getElementById("deliveriesTable");
+    if (table) {
+      const rows = table.querySelectorAll("tbody tr[data-delivery-id]");
+      rows.forEach((row) => {
+        const rowDeliveryId = row.getAttribute("data-delivery-id");
+        if (String(rowDeliveryId) === String(deliveryId)) {
+          const cell = row.querySelector(`td[data-field-name="${fieldId}"]`);
+          if (cell) {
+            updateCellDisplayValue(cell, value, fieldId);
+          }
+        }
+      });
+    }
+  });
+
+  // Écouter les changements dans localStorage d'autres onglets
+  window.addEventListener("storage", function (event) {
+    if (event.key && event.key.startsWith("sync_") && event.newValue) {
+      try {
+        const syncData = JSON.parse(event.newValue);
+        // Déclencher la mise à jour
+        window.dispatchEvent(
+          new CustomEvent("respLivDataUpdate", {
+            detail: syncData,
+          })
+        );
+      } catch (e) {
+        console.error("Erreur parsing sync data:", e);
+      }
+    }
+  });
+
+  // Appliquer les données existantes au chargement de la page
+  document.addEventListener("DOMContentLoaded", function () {
+    // Délai pour s'assurer que le tableau est rendu
+    setTimeout(applySyncDataFromRespLiv, 1000);
+  });
+
+  // Également appliquer après chaque rendu du tableau
+  window.addEventListener("deliveriesTableRendered", applySyncDataFromRespLiv);
+
+  // === FONCTION DE TEST POUR LA SYNCHRONISATION ===
+  window.testSyncReception = function () {
+    console.log(
+      "=== TEST RÉCEPTION SYNCHRONISATION DEPUIS RESPLIVDELIVERY ==="
+    );
+
+    // Vérifier les données dans localStorage
+    const syncKeys = Object.keys(localStorage).filter((k) =>
+      k.startsWith("sync_")
+    );
+    console.log("Clés de synchronisation trouvées:", syncKeys);
+
+    syncKeys.forEach((key) => {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        console.log(`${key}:`, data);
+      } catch (e) {
+        console.error("Erreur parsing:", key, e);
+      }
+    });
+
+    // Appliquer manuellement la synchronisation locale
+    applySyncDataFromRespLiv();
+
+    // Tester la récupération depuis le backend
+    loadSyncDataFromBackend().then(() => {
+      console.log("Données synchronisées rechargées depuis le backend.");
+    });
+
+    console.log(
+      "Test réception terminé. Vérifiez le tableau pour les données synchronisées."
+    );
+  };
+
+  // === FONCTION : Récupération des données synchronisées depuis le backend ===
+  async function loadSyncDataFromBackend() {
+    if (!window.deliveries || !Array.isArray(window.deliveries)) return;
+
+    try {
+      const syncPromises = window.deliveries.map(async (delivery) => {
+        try {
+          const response = await fetch(
+            `/api/sync-resplivraison/${delivery.id}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.syncData) {
+              // Mettre à jour les données de la livraison avec les données synchronisées
+              Object.keys(data.syncData).forEach((fieldName) => {
+                if (
+                  data.syncData[fieldName] !== null &&
+                  data.syncData[fieldName] !== undefined
+                ) {
+                  delivery[fieldName] = data.syncData[fieldName];
+                }
+              });
+              return { deliveryId: delivery.id, syncData: data.syncData };
+            }
+          }
+        } catch (error) {
+          console.warn(
+            `Erreur récupération sync pour livraison ${delivery.id}:`,
+            error
+          );
+        }
+        return null;
+      });
+
+      const results = await Promise.all(syncPromises);
+      const syncedDeliveries = results.filter((r) => r !== null);
+
+      if (syncedDeliveries.length > 0) {
+        console.log(
+          `[SYNC BACKEND] ${syncedDeliveries.length} livraisons synchronisées depuis le backend`
+        );
+
+        // Régénérer le tableau pour afficher les données synchronisées
+        if (typeof renderAdminDeliveriesTable === "function") {
+          renderAdminDeliveriesTable(window.deliveries);
+        }
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors du chargement des données synchronisées:",
+        error
+      );
+    }
+  }
+
+  // Charger les données synchronisées après le chargement initial des livraisons
+  const originalLoadDeliveries = window.loadDeliveries;
+  if (typeof originalLoadDeliveries === "function") {
+    window.loadDeliveries = async function (...args) {
+      const result = await originalLoadDeliveries.apply(this, args);
+      // Charger les données synchronisées après le chargement des livraisons
+      await loadSyncDataFromBackend();
+      return result;
+    };
+  }
+})();
 (function injectResponsiveButtonStyle() {
   if (document.getElementById("responsiveButtonStyle")) return;
   const style = document.createElement("style");
@@ -650,6 +868,77 @@ function initWebSocketLivraison() {
             if (cell) {
               cell.innerHTML = observation.replace(/\n/g, "<br>");
             }
+          }
+        } else if (data.type === "resplivraison_sync_update") {
+          // === NOUVELLE GESTION : Synchronisation depuis RespLivraison ===
+          const { deliveryId, fieldId, dbFieldName, value, timestamp } = data;
+          console.log(`[SYNC] Données reçues depuis RespLiv:`, data);
+
+          // Mise à jour du tableau principal
+          const row = document.getElementById(`delivery-row-${deliveryId}`);
+          if (row) {
+            // Trouver la cellule correspondante par le fieldName
+            const cell = row.querySelector(
+              `td[data-field-name="${dbFieldName}"]`
+            );
+            if (cell) {
+              // Mise à jour de la valeur affichée
+              if (dbFieldName === "delivery_date" && value) {
+                const dateObj = new Date(value);
+                if (!isNaN(dateObj.getTime())) {
+                  cell.textContent = dateObj.toLocaleDateString("fr-FR");
+                } else {
+                  cell.textContent = value;
+                }
+              } else {
+                cell.textContent = value || "-";
+              }
+
+              // Style visuel pour indiquer la synchronisation
+              cell.style.backgroundColor = "rgba(34, 197, 94, 0.1)";
+              cell.style.borderLeft = "3px solid #22c55e";
+              cell.style.fontWeight = "bold";
+              cell.title = `Synchronisé depuis Resp. Livraison: ${value}`;
+
+              // Animation de flash pour attirer l'attention
+              cell.style.transition = "background-color 0.3s ease";
+              const originalBg = cell.style.backgroundColor;
+              cell.style.backgroundColor = "rgba(34, 197, 94, 0.3)";
+              setTimeout(() => {
+                cell.style.backgroundColor = originalBg;
+              }, 1000);
+            }
+          }
+
+          // Mettre à jour les données en mémoire si elles existent
+          if (window.deliveries && Array.isArray(window.deliveries)) {
+            const delivery = window.deliveries.find(
+              (d) => String(d.id) === String(deliveryId)
+            );
+            if (delivery) {
+              delivery[dbFieldName] = value;
+            }
+          }
+
+          // Afficher une notification discrète
+          showCustomAlert(
+            `Données synchronisées: ${dbFieldName} = ${value}`,
+            "info",
+            2000
+          );
+        } else if (data.type === "resplivraison_batch_sync") {
+          // === GESTION DES MISES À JOUR EN LOT ===
+          console.log(`[SYNC BATCH] Données reçues:`, data);
+
+          // Recharger entièrement les données pour éviter les incohérences
+          if (typeof loadDeliveries === "function") {
+            loadDeliveries().then(() => {
+              showCustomAlert(
+                `${data.updates.length} champs synchronisés depuis RespLivraison`,
+                "success",
+                3000
+              );
+            });
           }
         }
       } catch (e) {
@@ -3428,6 +3717,27 @@ if (window["WebSocket"]) {
         cell.dataset.type = type;
         cell.dataset.actualValue = value;
 
+        // === VÉRIFICATION DES DONNÉES SYNCHRONISÉES DEPUIS RESP_LIV ===
+        const syncKey = `sync_${
+          delivery.id || delivery.dossier_number
+        }_${fieldName}`;
+        const syncData = localStorage.getItem(syncKey);
+        let syncedValue = null;
+
+        if (syncData) {
+          try {
+            const parsedSyncData = JSON.parse(syncData);
+            if (parsedSyncData && parsedSyncData.value) {
+              syncedValue = parsedSyncData.value;
+              // Utiliser la valeur synchronisée à la place de la valeur originale
+              value = syncedValue;
+              cell.dataset.actualValue = syncedValue;
+            }
+          } catch (e) {
+            console.error("Erreur parsing sync data:", e);
+          }
+        }
+
         let displayValue;
         // --- Affichage spécial pour la colonne Numéro TC(s) ---
         if (fieldName === "container_number") {
@@ -4134,6 +4444,15 @@ if (window["WebSocket"]) {
 
           cell.addEventListener("click", clickToEditHandler);
         }
+
+        // === MISE EN FORME VISUELLE POUR LES CELLULES SYNCHRONISÉES ===
+        if (syncedValue !== null) {
+          cell.style.backgroundColor = "rgba(34, 197, 94, 0.1)";
+          cell.style.borderLeft = "3px solid #22c55e";
+          cell.style.fontWeight = "bold";
+          cell.title = `Synchronisé depuis Resp. Livraison: ${syncedValue}`;
+        }
+
         return cell;
       };
 
@@ -4527,6 +4846,10 @@ if (window["WebSocket"]) {
       }
     }
   }
+
+  // === DÉCLENCHEMENT DE L'ÉVÉNEMENT APRÈS RENDU DU TABLEAU ===
+  // Déclencher l'événement personnalisé pour indiquer que le tableau a été rendu
+  window.dispatchEvent(new Event("deliveriesTableRendered"));
 
   // This function is now primarily used for displaying content after inline editing or initial render (non-editing mode)
   function updateCellContent(cell, displayValue, fieldName, type) {
