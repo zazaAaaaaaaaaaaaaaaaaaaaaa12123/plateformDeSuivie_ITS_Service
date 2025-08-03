@@ -4605,7 +4605,7 @@ function mapStatus(status) {
                   valueToSendToBackend // Send the backend-ready value
                 );
                 cell.dataset.originalValue = valueToSendToBackend; // Store the backend-ready value as original for next edit
-                cell.dataset.actualValue = valueToSendToBackend; // Update actual value for PDF cloning
+                cell.dataset.actualValue = valueToSendToBackend; // Update actual value
               } else {
                 console.log(
                   `No change detected for ${fieldName}. Old: "${originalFormattedValueForComparison}", New: "${formattedNewValueForComparison}"`
