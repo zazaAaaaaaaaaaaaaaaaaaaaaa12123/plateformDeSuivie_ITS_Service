@@ -387,12 +387,41 @@
             <option value="rejet">Rejet</option>
           </select>
 
-          <input
-            type="date"
-            id="mainTableDateFilter"
-            class="icon-btn icon-btn-company-color"
-            title="Filtrer par date"
-          />
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <label
+              for="startDateFilter"
+              class="form-label mb-0 text-nowrap"
+              style="font-size: 0.9em; font-weight: 600; color: #495057"
+              >Du :</label
+            >
+            <input
+              type="date"
+              id="startDateFilter"
+              class="icon-btn icon-btn-company-color"
+              title="Date de début"
+              style="min-width: 150px"
+            />
+            <label
+              for="endDateFilter"
+              class="form-label mb-0 text-nowrap"
+              style="font-size: 0.9em; font-weight: 600; color: #495057"
+              >Au :</label
+            >
+            <input
+              type="date"
+              id="endDateFilter"
+              class="icon-btn icon-btn-company-color"
+              title="Date de fin"
+              style="min-width: 150px"
+            />
+            <button
+              id="clearDateRangeBtn"
+              class="btn btn-outline-secondary btn-sm"
+              title="Effacer les dates"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
 
           <button id="activateEditBtn" class="icon-btn-company-color">
             <i class="fas fa-edit"></i> Administrateur
