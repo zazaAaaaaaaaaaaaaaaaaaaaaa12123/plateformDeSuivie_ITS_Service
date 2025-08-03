@@ -1881,6 +1881,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
         saveBtn.onclick = async () => {
           try {
+            // === APPEL API BACKEND UNIQUE POUR PERSISTER ET DÉCLENCHER WEBSOCKET ===
             const response = await fetch(
               `/deliveries/${delivery.id}/container-status`,
               {
@@ -1894,14 +1895,21 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }),
               }
             );
-            const data = await response.json();
-            if (response.ok && data.success) {
+
+            if (response.ok) {
+              const result = await response.json();
+              console.log(
+                `[RESP_LIV] Statut conteneur ${containerNumber} mis à jour:`,
+                result
+              );
+
               alert(
                 `Statut du conteneur mis à jour : ${
                   select.options[select.selectedIndex].text
                 }`
               );
               overlay.remove();
+
               // Mise à jour instantanée du statut dans allDeliveries
               if (delivery && delivery.id) {
                 const idx = allDeliveries.findIndex(
@@ -1918,6 +1926,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     select.value;
                 }
               }
+
               // Rafraîchir le tableau pour mettre à jour l'entête Statut
               const dateStartInput = document.getElementById(
                 "mainTableDateStartFilter"
@@ -1931,84 +1940,52 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   dateEndInput.value
                 );
               }
-              // === SYNCHRONISATION SPÉCIFIQUE POUR LES STATUTS DE CONTENEURS ===
-              // 1. Appel API backend pour persister le changement et déclencher WebSocket automatique
-              try {
-                const response = await fetch(
-                  `/deliveries/${delivery.id}/container-status`,
-                  {
-                    method: "PATCH",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      containerNumber: containerNumber,
-                      status: select.value,
-                    }),
-                  }
-                );
 
-                if (response.ok) {
-                  const result = await response.json();
-                  console.log(
-                    `[RESP_LIV] Statut conteneur ${containerNumber} mis à jour:`,
-                    result
-                  );
+              // Stockage local pour synchronisation immédiate
+              const containerSyncKey = `container_status_${
+                delivery.id || delivery.dossier_number
+              }_${containerNumber}`;
+              const containerSyncData = {
+                deliveryId: delivery.id || delivery.dossier_number,
+                containerNumber: containerNumber,
+                status: select.value,
+                timestamp: Date.now(),
+                type: "container_status_update",
+                deliveredCount: result.deliveredCount || 0,
+                totalCount: result.totalCount || 0,
+              };
 
-                  // 2. Stockage local pour synchronisation immédiate
-                  const containerSyncKey = `container_status_${
-                    delivery.id || delivery.dossier_number
-                  }_${containerNumber}`;
-                  const containerSyncData = {
-                    deliveryId: delivery.id || delivery.dossier_number,
-                    containerNumber: containerNumber,
-                    status: select.value,
-                    timestamp: Date.now(),
-                    type: "container_status_update",
-                  };
+              localStorage.setItem(
+                containerSyncKey,
+                JSON.stringify(containerSyncData)
+              );
 
-                  localStorage.setItem(
-                    containerSyncKey,
-                    JSON.stringify(containerSyncData)
-                  );
+              // Déclencher un événement storage personnalisé pour la synchronisation immédiate
+              window.dispatchEvent(
+                new CustomEvent("containerStatusUpdate", {
+                  detail: containerSyncData,
+                })
+              );
 
-                  // 3. Déclencher un événement storage personnalisé pour la synchronisation immédiate
-                  window.dispatchEvent(
-                    new CustomEvent("containerStatusUpdate", {
-                      detail: containerSyncData,
-                    })
-                  );
-
-                  console.log(
-                    `[RESP_LIV] Synchronisation vers tableauDeBord.html réussie pour conteneur ${containerNumber}`
-                  );
-                } else {
-                  console.error(
-                    `[RESP_LIV] Erreur mise à jour statut conteneur:`,
-                    await response.text()
-                  );
-                  showAccessMessage(
-                    `Erreur lors de la mise à jour du statut du conteneur ${containerNumber}`,
-                    "red"
-                  );
-                }
-              } catch (error) {
-                console.error(
-                  `[RESP_LIV] Erreur réseau lors de la mise à jour:`,
-                  error
-                );
-                showAccessMessage(
-                  `Erreur réseau lors de la mise à jour du statut`,
-                  "red"
-                );
-              }
+              console.log(
+                `[RESP_LIV] Synchronisation vers tableauDeBord.html réussie pour conteneur ${containerNumber}`
+              );
             } else {
+              const errorData = await response.json();
+              console.error(
+                `[RESP_LIV] Erreur mise à jour statut conteneur:`,
+                errorData
+              );
               alert(
-                data.message ||
+                errorData.message ||
                   "Erreur lors de la mise à jour du statut du conteneur."
               );
             }
-          } catch (err) {
+          } catch (error) {
+            console.error(
+              `[RESP_LIV] Erreur réseau lors de la mise à jour:`,
+              error
+            );
             alert(
               "Erreur réseau lors de la mise à jour du statut du conteneur."
             );
