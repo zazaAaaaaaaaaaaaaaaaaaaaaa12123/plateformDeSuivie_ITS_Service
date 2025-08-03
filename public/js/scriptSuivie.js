@@ -1079,6 +1079,322 @@ if (window["WebSocket"]) {
       pollingInterval = null;
     }
   }
+
+  /**
+   * Gère la mise à jour en temps réel des statuts de conteneurs depuis scriptRespLiv.js
+   * SYNCHRONISATION UNIDIRECTIONNELLE : resp_liv.html → tableauDeBord.html
+   * @param {Object} data - Données de mise à jour du statut: {deliveryId, containerNumber, status, timestamp}
+   */
+  function handleContainerStatusUpdate(data) {
+    try {
+      console.log(
+        "[SYNC] Mise à jour statut conteneur reçue depuis resp_liv:",
+        data
+      );
+
+      if (!data.deliveryId || !data.containerNumber || !data.status) {
+        console.warn(
+          "[SYNC] Données incomplètes pour la mise à jour du statut"
+        );
+        return;
+      }
+
+      // 1. Mettre à jour les données locales dans tous les tableaux correspondants
+      const deliveryIndex = deliveries.findIndex(
+        (d) => d.id === data.deliveryId
+      );
+      if (deliveryIndex !== -1) {
+        if (!deliveries[deliveryIndex].container_statuses) {
+          deliveries[deliveryIndex].container_statuses = {};
+        }
+
+        // Convertir le statut pour la cohérence
+        const normalizedStatus =
+          data.status === "livre" ? "livré" : data.status;
+        deliveries[deliveryIndex].container_statuses[data.containerNumber] =
+          normalizedStatus;
+
+        console.log(
+          `[SYNC] Statut mis à jour localement: ${data.containerNumber} = ${normalizedStatus}`
+        );
+      }
+
+      // Mettre à jour aussi dans allDeliveries pour les vues historiques
+      const allDeliveryIndex = allDeliveries.findIndex(
+        (d) => d.id === data.deliveryId
+      );
+      if (allDeliveryIndex !== -1) {
+        if (!allDeliveries[allDeliveryIndex].container_statuses) {
+          allDeliveries[allDeliveryIndex].container_statuses = {};
+        }
+        const normalizedStatus =
+          data.status === "livre" ? "livré" : data.status;
+        allDeliveries[allDeliveryIndex].container_statuses[
+          data.containerNumber
+        ] = normalizedStatus;
+      }
+
+      // 2. Mettre à jour l'affichage du tableau principal sans le re-rendre complètement
+      updateContainerStatusDisplay(
+        data.deliveryId,
+        data.containerNumber,
+        data.status
+      );
+
+      // 3. Afficher une notification discrète
+      const statusText = data.status === "livre" ? "Livré" : data.status;
+      showCustomAlert(
+        `Statut conteneur ${data.containerNumber} mis à jour: ${statusText}`,
+        "success",
+        2500
+      );
+
+      // 4. Mettre à jour les alertes de retard si nécessaire
+      if (typeof checkLateContainers === "function") {
+        checkLateContainers();
+      }
+
+      // 5. Forcer la mise à jour de l'affichage des filtres si nécessaire
+      // (utile si la modification change le statut global d'une livraison)
+      setTimeout(() => {
+        const event = new Event("bl_status_update");
+        document.dispatchEvent(event);
+      }, 100);
+    } catch (error) {
+      console.error(
+        "[SYNC] Erreur lors de la mise à jour du statut conteneur:",
+        error
+      );
+    }
+  }
+
+  /**
+   * Met à jour l'affichage des statuts de conteneurs dans le tableau principal
+   * Cette fonction s'assure que les changements depuis resp_liv.html sont visibles immédiatement
+   * @param {string} deliveryId - ID de la livraison
+   * @param {string} containerNumber - Numéro du conteneur
+   * @param {string} status - Nouveau statut
+   */
+  function updateContainerStatusDisplay(deliveryId, containerNumber, status) {
+    try {
+      console.log(
+        `[SYNC] Mise à jour affichage pour delivery ${deliveryId}, container ${containerNumber}, status ${status}`
+      );
+
+      // Trouve toutes les lignes concernées par cette livraison dans le tableau principal
+      const tableBody = document.getElementById("deliveriesTableBody");
+      if (tableBody) {
+        const rows = tableBody.querySelectorAll("tr[data-delivery-id]");
+        rows.forEach((row) => {
+          const rowDeliveryId = row.getAttribute("data-delivery-id");
+          if (rowDeliveryId === deliveryId) {
+            // Trouve la cellule de statut dans cette ligne
+            const statusCell = row.querySelector(
+              'td[data-field-name="status"]'
+            );
+            if (statusCell) {
+              // Re-calculer et mettre à jour l'affichage du statut
+              updateSingleRowStatusCell(row, deliveryId);
+              console.log(
+                `[SYNC] Cellule statut mise à jour pour delivery ${deliveryId}`
+              );
+            }
+          }
+        });
+      }
+
+      // Mettre à jour aussi dans la vue agent si elle est ouverte
+      const agentTableBody = document.getElementById(
+        "agentDailyDeliveriesTableBody"
+      );
+      if (agentTableBody) {
+        const agentRows = agentTableBody.querySelectorAll("tr");
+        agentRows.forEach((row) => {
+          const cells = row.querySelectorAll("td");
+          // Vérifie si cette ligne correspond à la livraison modifiée
+          if (cells.length > 0) {
+            // Recherche la cellule qui contient l'ID de la livraison pour vérification
+            const hasMatchingDelivery = Array.from(cells).some(
+              (cell) =>
+                cell.textContent && cell.textContent.includes(deliveryId)
+            );
+            if (hasMatchingDelivery) {
+              updateSingleRowStatusCell(row, deliveryId);
+              console.log(
+                `[SYNC] Vue agent mise à jour pour delivery ${deliveryId}`
+              );
+            }
+          }
+        });
+      }
+
+      // Mettre à jour les vues historiques si elles sont ouvertes
+      const historyCards = document.querySelectorAll(".delivery-card");
+      historyCards.forEach((card) => {
+        const cardDeliveryId = card.getAttribute("data-delivery-id");
+        if (cardDeliveryId === deliveryId) {
+          // Déclencher un événement pour forcer la mise à jour de la carte
+          const updateEvent = new CustomEvent("updateDeliveryCard", {
+            detail: { deliveryId, containerNumber, status },
+          });
+          card.dispatchEvent(updateEvent);
+        }
+      });
+    } catch (error) {
+      console.error(
+        "[SYNC] Erreur lors de la mise à jour de l'affichage:",
+        error
+      );
+    }
+  }
+
+  /**
+   * Met à jour la cellule de statut d'une ligne spécifique
+   * Recalcule le statut basé sur tous les conteneurs du même dossier
+   * @param {HTMLElement} row - Ligne du tableau
+   * @param {string} deliveryId - ID de la livraison
+   */
+  function updateSingleRowStatusCell(row, deliveryId) {
+    try {
+      const delivery = deliveries.find((d) => d.id === deliveryId);
+      if (!delivery) {
+        console.warn(
+          `[SYNC] Livraison ${deliveryId} non trouvée dans les données locales`
+        );
+        return;
+      }
+
+      const statusCell = row.querySelector('td[data-field-name="status"]');
+      if (!statusCell) {
+        console.warn(
+          `[SYNC] Cellule de statut non trouvée pour delivery ${deliveryId}`
+        );
+        return;
+      }
+
+      // Re-calculer le statut selon la même logique que le rendu initial
+      const dossierNumber = delivery.dossier_number;
+      const allSameDossier = deliveries.filter(
+        (d) => d.dossier_number === dossierNumber
+      );
+
+      let allContainers = [];
+      allSameDossier.forEach((d) => {
+        let tcList = [];
+        if (Array.isArray(d.container_number)) {
+          tcList = d.container_number.filter(Boolean);
+        } else if (typeof d.container_number === "string") {
+          tcList = d.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+        allContainers = allContainers.concat(tcList);
+      });
+      allContainers = Array.from(new Set(allContainers));
+      const total = allContainers.length;
+
+      let delivered = 0;
+      allContainers.forEach((tc) => {
+        const found = allSameDossier.find((d) => {
+          let tcList = [];
+          if (Array.isArray(d.container_number)) {
+            tcList = d.container_number.filter(Boolean);
+          } else if (typeof d.container_number === "string") {
+            tcList = d.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
+          return tcList.includes(tc);
+        });
+
+        let isDelivered = false;
+        if (found && found.container_statuses) {
+          if (
+            typeof found.container_statuses === "object" &&
+            !Array.isArray(found.container_statuses)
+          ) {
+            const status = found.container_statuses[tc];
+            if (
+              typeof status === "string" &&
+              [
+                "delivered",
+                "livré",
+                "livree",
+                "livreee",
+                "livre",
+                "livrée",
+              ].includes(status.trim().toLowerCase())
+            ) {
+              isDelivered = true;
+            }
+          } else if (Array.isArray(found.container_statuses)) {
+            // fallback tableau (rare)
+            let tcList = [];
+            if (Array.isArray(found.container_number)) {
+              tcList = found.container_number.filter(Boolean);
+            } else if (typeof found.container_number === "string") {
+              tcList = found.container_number.split(/[,;\s]+/).filter(Boolean);
+            }
+            const idx = tcList.indexOf(tc);
+            if (
+              idx !== -1 &&
+              typeof found.container_statuses[idx] === "string" &&
+              [
+                "delivered",
+                "livré",
+                "livree",
+                "livreee",
+                "livre",
+                "livrée",
+              ].includes(found.container_statuses[idx].trim().toLowerCase())
+            ) {
+              isDelivered = true;
+            }
+          }
+        } else if (found && typeof found.status === "string") {
+          // fallback compatibilité ancienne version
+          const s = found.status.trim().toLowerCase();
+          if (["livré", "delivered", "livre", "livrée"].includes(s)) {
+            isDelivered = true;
+          }
+        }
+
+        if (isDelivered) {
+          delivered++;
+        }
+      });
+
+      // Mettre à jour le contenu de la cellule
+      const box = statusCell.querySelector("div");
+      if (box) {
+        // Mettre à jour le style et le texte
+        box.style.background =
+          delivered === total && total > 0 ? "#dcfce7" : "#fef9c3";
+        box.style.color =
+          delivered === total && total > 0 ? "#15803d" : "#a16207";
+
+        if (total === 0) {
+          box.textContent = "-";
+        } else if (delivered === 0) {
+          box.textContent = `0 sur ${total} livrés`;
+        } else if (delivered === total) {
+          box.textContent = total === 1 ? "Livré" : `${total}/${total} livrés`;
+        } else {
+          box.textContent = `${delivered} sur ${total} livrés`;
+        }
+
+        console.log(
+          `[SYNC] Cellule mise à jour: ${delivered}/${total} conteneurs livrés pour dossier ${dossierNumber}`
+        );
+      } else {
+        console.warn(
+          `[SYNC] Élément div de statut non trouvé dans la cellule pour delivery ${deliveryId}`
+        );
+      }
+    } catch (error) {
+      console.error(
+        "[SYNC] Erreur lors de la mise à jour de la cellule:",
+        error
+      );
+    }
+  }
+
   function initWebSocketLivraisons() {
     try {
       ws = new WebSocket(wsUrl);
@@ -1096,6 +1412,12 @@ if (window["WebSocket"]) {
             "new_delivery_notification",
           ];
           if (data && data.type && typesToRefresh.includes(data.type)) {
+            // === TRAITEMENT SPÉCIFIQUE POUR LES STATUTS DE CONTENEURS ===
+            if (data.type === "container_status_update") {
+              handleContainerStatusUpdate(data);
+              return; // Ne pas recharger toutes les données pour un simple statut
+            }
+
             loadDeliveries().then(() => {
               if (typeof checkLateContainers === "function")
                 checkLateContainers();
@@ -9329,5 +9651,96 @@ if (window["WebSocket"]) {
     setTimeout(forceBlinkOnNewRows, 50); // Laisse le DOM se mettre à jour
   };
   // ================== FIN CLIGNOTEMENT VERT ==================
+
+  // ================== GESTIONNAIRES D'ÉVÉNEMENTS POUR LA SYNCHRONISATION ==================
+
+  // Gestionnaire d'événements personnalisé pour la synchronisation des statuts de conteneurs
+  window.addEventListener("containerStatusUpdate", function (event) {
+    console.log("[SYNC] Événement containerStatusUpdate reçu:", event.detail);
+    handleContainerStatusUpdate(event.detail);
+  });
+
+  // Gestionnaire pour les événements storage (synchronisation cross-tab)
+  window.addEventListener("storage", function (event) {
+    if (event.key && event.key.startsWith("container_status_")) {
+      try {
+        const data = JSON.parse(event.newValue);
+        console.log("[SYNC] Synchronisation cross-tab détectée:", data);
+        handleContainerStatusUpdate(data);
+      } catch (error) {
+        console.warn(
+          "[SYNC] Erreur lors de la lecture des données storage:",
+          error
+        );
+      }
+    }
+  });
+
+  // ================== FIN SYNCHRONISATION ==================
+
+  // ================== FONCTION DE TEST POUR LA SYNCHRONISATION ==================
+
+  /**
+   * Fonction de test pour vérifier la synchronisation des statuts de conteneurs
+   * Cette fonction peut être appelée depuis la console pour tester la synchronisation
+   */
+  window.testContainerStatusSync = function (
+    deliveryId,
+    containerNumber,
+    status
+  ) {
+    console.log(
+      `[TEST] Test de synchronisation: delivery=${deliveryId}, container=${containerNumber}, status=${status}`
+    );
+
+    const testData = {
+      deliveryId: deliveryId,
+      containerNumber: containerNumber,
+      status: status,
+      timestamp: new Date().toISOString(),
+      source: "test",
+    };
+
+    // Simuler la réception d'une mise à jour depuis scriptRespLiv.js
+    handleContainerStatusUpdate(testData);
+
+    console.log(
+      "[TEST] Test de synchronisation terminé - vérifiez l'affichage du tableau"
+    );
+  };
+
+  // Fonction pour afficher des informations de debug sur la synchronisation
+  window.debugContainerSync = function () {
+    console.log("[DEBUG] État actuel de la synchronisation:");
+    console.log(
+      "- WebSocket connecté:",
+      ws && ws.readyState === WebSocket.OPEN
+    );
+    console.log("- Nombre de livraisons chargées:", deliveries.length);
+    console.log(
+      "- Gestionnaires d'événements actifs:",
+      window.oncontainerstatusupdate ? "Oui" : "Non"
+    );
+
+    // Vérifier si les cellules de statut sont présentes
+    const statusCells = document.querySelectorAll(
+      'td[data-field-name="status"]'
+    );
+    console.log(
+      "- Cellules de statut trouvées dans le tableau:",
+      statusCells.length
+    );
+
+    return {
+      websocketConnected: ws && ws.readyState === WebSocket.OPEN,
+      deliveriesCount: deliveries.length,
+      statusCellsCount: statusCells.length,
+    };
+  };
+
+  console.log("[SYNC] Synchronisation des statuts de conteneurs initialisée");
+  console.log(
+    "[SYNC] Fonctions de test disponibles: testContainerStatusSync(), debugContainerSync()"
+  );
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA ***/

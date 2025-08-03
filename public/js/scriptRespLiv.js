@@ -1271,6 +1271,54 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           Object.keys(localStorage).filter((k) => k.startsWith("sync_test123"))
         );
       };
+
+      // === FONCTION DE TEST SPÉCIFIQUE POUR LES STATUTS DE CONTENEURS ===
+      window.testContainerStatusSynchronization = function () {
+        console.log(
+          "=== TEST DE SYNCHRONISATION DES STATUTS DE CONTENEURS ==="
+        );
+
+        // Simuler une mise à jour de statut de conteneur
+        const testData = {
+          deliveryId: "test_delivery_123",
+          containerNumber: "TCLU1234567",
+          status: "livre",
+          timestamp: Date.now(),
+          type: "container_status_update",
+        };
+
+        console.log("Test mise à jour statut conteneur:", testData);
+
+        // 1. Stockage local
+        const containerSyncKey = `container_status_${testData.deliveryId}_${testData.containerNumber}`;
+        localStorage.setItem(containerSyncKey, JSON.stringify(testData));
+
+        // 2. Événement personnalisé
+        window.dispatchEvent(
+          new CustomEvent("containerStatusUpdate", {
+            detail: testData,
+          })
+        );
+
+        // 3. WebSocket (si connecté)
+        if (window.ws && window.ws.readyState === 1) {
+          window.ws.send(JSON.stringify(testData));
+          console.log("WebSocket: message envoyé");
+        } else {
+          console.log("WebSocket: non connecté");
+        }
+
+        console.log("Test terminé. Vérifiez:");
+        console.log("1. localStorage (clé container_status_*)");
+        console.log("2. Page Suivie pour synchronisation en temps réel");
+        console.log("3. Logs dans la console de la page Suivie");
+        console.log(
+          "Clé de synchronisation créée:",
+          containerSyncKey,
+          "=",
+          localStorage.getItem(containerSyncKey)
+        );
+      };
       const td = document.createElement("td");
       // Ajout : identifiant data-col-id sur la cellule pour le filtrage
       td.setAttribute("data-col-id", col.id);
@@ -1883,7 +1931,32 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   dateEndInput.value
                 );
               }
-              // Envoi d'une notification WebSocket pour informer tous les clients
+              // === SYNCHRONISATION SPÉCIFIQUE POUR LES STATUTS DE CONTENEURS ===
+              // 1. Stockage local pour synchronisation immédiate
+              const containerSyncKey = `container_status_${
+                delivery.id || delivery.dossier_number
+              }_${containerNumber}`;
+              const containerSyncData = {
+                deliveryId: delivery.id || delivery.dossier_number,
+                containerNumber: containerNumber,
+                status: select.value,
+                timestamp: Date.now(),
+                type: "container_status_update",
+              };
+
+              localStorage.setItem(
+                containerSyncKey,
+                JSON.stringify(containerSyncData)
+              );
+
+              // 2. Déclencher un événement storage personnalisé pour la synchronisation immédiate
+              window.dispatchEvent(
+                new CustomEvent("containerStatusUpdate", {
+                  detail: containerSyncData,
+                })
+              );
+
+              // 3. Envoi d'une notification WebSocket pour informer tous les clients
               if (window.ws && window.ws.readyState === 1) {
                 window.ws.send(
                   JSON.stringify({
@@ -1891,6 +1964,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     deliveryId: delivery.id,
                     containerNumber: containerNumber,
                     status: select.value,
+                    timestamp: Date.now(),
                   })
                 );
               }
