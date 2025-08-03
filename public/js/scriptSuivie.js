@@ -2553,6 +2553,11 @@ function mapStatus(status) {
   // DOM element for the status filter
 
   const statusFilterSelect = document.getElementById("statusFilterSelect");
+
+  // Créer les champs de date dynamiquement
+  createDateFilters();
+
+  // Maintenant récupérer les références après création
   const startDateFilter = document.getElementById("startDateFilter");
   const endDateFilter = document.getElementById("endDateFilter");
 
@@ -2638,6 +2643,26 @@ function mapStatus(status) {
 
   console.log("Initializing admin dashboard...");
 
+  // Fonction pour créer les champs de date dynamiquement
+  function createDateFilters() {
+    const container = document.getElementById("dateFiltersContainer");
+    if (!container) return;
+
+    // Créer le HTML pour les champs de date avec un alignement parfait
+    container.innerHTML = `
+      <div class="d-flex align-items-center" style="gap: 15px;">
+        <div class="d-flex align-items-center" style="gap: 8px;">
+          <label for="startDateFilter" class="mb-0" style="font-size: 0.9em; font-weight: 600; color: #495057; white-space: nowrap;">Du :</label>
+          <input type="date" id="startDateFilter" class="icon-btn icon-btn-company-color" title="Date de début" style="width: 150px; height: 38px;" />
+        </div>
+        <div class="d-flex align-items-center" style="gap: 8px;">
+          <label for="endDateFilter" class="mb-0" style="font-size: 0.9em; font-weight: 600; color: #495057; white-space: nowrap;">Au :</label>
+          <input type="date" id="endDateFilter" class="icon-btn icon-btn-company-color" title="Date de fin" style="width: 150px; height: 38px;" />
+        </div>
+      </div>
+    `;
+  }
+
   // Variables pour le filtrage par plage de dates
   let currentStartDate = null;
   let currentEndDate = null;
@@ -2658,6 +2683,9 @@ function mapStatus(status) {
 
   // Fonction pour initialiser les champs de date avec les valeurs sauvegardées
   function initializeDateFields() {
+    const startDateFilter = document.getElementById("startDateFilter");
+    const endDateFilter = document.getElementById("endDateFilter");
+
     if (startDateFilter && currentStartDate) {
       const year = currentStartDate.getFullYear();
       const month = String(currentStartDate.getMonth() + 1).padStart(2, "0");
@@ -2671,9 +2699,7 @@ function mapStatus(status) {
       const day = String(currentEndDate.getDate()).padStart(2, "0");
       endDateFilter.value = `${year}-${month}-${day}`;
     }
-  }
-
-  // DOM elements for the history sidebar (modal)
+  } // DOM elements for the history sidebar (modal)
   const historySidebar = document.getElementById("historySidebar");
   const historyOverlay = document.getElementById("historyOverlay");
   const historyModalTitle = document.getElementById("historyModalTitle");
@@ -8776,8 +8802,9 @@ function mapStatus(status) {
       });
   });
 
-  // Initialiser les nouveaux champs de date
+  // Initialiser les champs de date et leurs event listeners
   initializeDateFields();
+  setupDateEventListeners();
 
   await loadDeliveries(); // This now triggers applyCombinedFilters()
 
@@ -8834,31 +8861,36 @@ function mapStatus(status) {
     populateStatusFilter();
   }
 
-  // Event listeners pour les nouveaux champs de date
-  if (startDateFilter) {
-    startDateFilter.addEventListener("change", (e) => {
-      if (e.target.value) {
-        currentStartDate = normalizeDateToMidnight(new Date(e.target.value));
-        localStorage.setItem("startDateFilter", e.target.value);
-      } else {
-        currentStartDate = null;
-        localStorage.removeItem("startDateFilter");
-      }
-      applyCombinedFilters();
-    });
-  }
+  // Event listeners pour les nouveaux champs de date (créés dynamiquement)
+  function setupDateEventListeners() {
+    const startDateFilter = document.getElementById("startDateFilter");
+    const endDateFilter = document.getElementById("endDateFilter");
 
-  if (endDateFilter) {
-    endDateFilter.addEventListener("change", (e) => {
-      if (e.target.value) {
-        currentEndDate = normalizeDateToMidnight(new Date(e.target.value));
-        localStorage.setItem("endDateFilter", e.target.value);
-      } else {
-        currentEndDate = null;
-        localStorage.removeItem("endDateFilter");
-      }
-      applyCombinedFilters();
-    });
+    if (startDateFilter) {
+      startDateFilter.addEventListener("change", (e) => {
+        if (e.target.value) {
+          currentStartDate = normalizeDateToMidnight(new Date(e.target.value));
+          localStorage.setItem("startDateFilter", e.target.value);
+        } else {
+          currentStartDate = null;
+          localStorage.removeItem("startDateFilter");
+        }
+        applyCombinedFilters();
+      });
+    }
+
+    if (endDateFilter) {
+      endDateFilter.addEventListener("change", (e) => {
+        if (e.target.value) {
+          currentEndDate = normalizeDateToMidnight(new Date(e.target.value));
+          localStorage.setItem("endDateFilter", e.target.value);
+        } else {
+          currentEndDate = null;
+          localStorage.removeItem("endDateFilter");
+        }
+        applyCombinedFilters();
+      });
+    }
   }
 
   if (searchButton) {
