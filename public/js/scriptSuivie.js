@@ -1278,13 +1278,59 @@ if (window["WebSocket"]) {
       // Mettre à jour le contenu de la cellule
       const box = statusCell.querySelector("div");
       if (box) {
-        // Affichage simple sans compter les conteneurs
-        box.style.background = "#f8fafc";
-        box.style.color = "#374151";
-        box.textContent = "-";
+        // Calculer le statut réel basé sur les conteneurs
+        let statusText = "-";
+        let statusColor = "#374151";
+        let statusBg = "#f8fafc";
+
+        // Vérifier si la livraison a des conteneurs et leurs statuts
+        if (
+          delivery.container_statuses &&
+          typeof delivery.container_statuses === "object"
+        ) {
+          let tcList = [];
+          if (Array.isArray(delivery.container_number)) {
+            tcList = delivery.container_number.filter(Boolean);
+          } else if (typeof delivery.container_number === "string") {
+            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
+
+          if (tcList.length > 0) {
+            // Compter les conteneurs livrés
+            const deliveredContainers = tcList.filter((tc) => {
+              const status = delivery.container_statuses[tc];
+              return status === "livre" || status === "livré";
+            });
+
+            if (deliveredContainers.length === tcList.length) {
+              // Tous les conteneurs sont livrés
+              statusText = "Livré";
+              statusColor = "#fff";
+              statusBg = "#22c55e";
+            } else if (deliveredContainers.length > 0) {
+              // Partiellement livré
+              statusText = `${deliveredContainers.length}/${tcList.length} Livré`;
+              statusColor = "#fff";
+              statusBg = "#f59e0b";
+            } else {
+              // Aucun conteneur livré
+              statusText = "En attente";
+              statusColor = "#374151";
+              statusBg = "#f3f4f6";
+            }
+          }
+        }
+
+        box.style.background = statusBg;
+        box.style.color = statusColor;
+        box.style.padding = "4px 8px";
+        box.style.borderRadius = "4px";
+        box.style.fontWeight = "500";
+        box.style.fontSize = "0.9em";
+        box.textContent = statusText;
 
         console.log(
-          `[SYNC] Cellule mise à jour: statut simple pour dossier ${dossierNumber}`
+          `[SYNC] Cellule mise à jour: statut "${statusText}" pour dossier ${dossierNumber}`
         );
       } else {
         console.warn(
@@ -4627,12 +4673,54 @@ if (window["WebSocket"]) {
       createCell(delivery.driver_phone, "driver_phone", "text", {}); // Tél. Chauffeur
       createCell(delivery.delivery_date, "delivery_date", "date", {}); // Date Livraison
 
-      // === Statut simple ===
+      // === Statut basé sur les conteneurs ===
       (function () {
         const cell = row.insertCell();
         cell.dataset.fieldName = "status";
 
-        // Affichage simple sans calcul
+        // Calculer le statut réel basé sur les conteneurs
+        let statusText = "-";
+        let statusColor = "#374151";
+        let statusBg = "#f8fafc";
+
+        // Vérifier si la livraison a des conteneurs et leurs statuts
+        if (
+          delivery.container_statuses &&
+          typeof delivery.container_statuses === "object"
+        ) {
+          let tcList = [];
+          if (Array.isArray(delivery.container_number)) {
+            tcList = delivery.container_number.filter(Boolean);
+          } else if (typeof delivery.container_number === "string") {
+            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
+
+          if (tcList.length > 0) {
+            // Compter les conteneurs livrés
+            const deliveredContainers = tcList.filter((tc) => {
+              const status = delivery.container_statuses[tc];
+              return status === "livre" || status === "livré";
+            });
+
+            if (deliveredContainers.length === tcList.length) {
+              // Tous les conteneurs sont livrés
+              statusText = "Livré";
+              statusColor = "#fff";
+              statusBg = "#22c55e";
+            } else if (deliveredContainers.length > 0) {
+              // Partiellement livré
+              statusText = `${deliveredContainers.length}/${tcList.length} Livré`;
+              statusColor = "#fff";
+              statusBg = "#f59e0b";
+            } else {
+              // Aucun conteneur livré
+              statusText = "En attente";
+              statusColor = "#374151";
+              statusBg = "#f3f4f6";
+            }
+          }
+        }
+
         const box = document.createElement("div");
         box.style.display = "inline-block";
         box.style.padding = "4px 12px";
@@ -4642,11 +4730,10 @@ if (window["WebSocket"]) {
         box.style.letterSpacing = "0.5px";
         box.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
         box.style.border = "1.5px solid #d1d5db";
-        box.style.background = "#f8fafc";
-        box.style.color = "#374151";
+        box.style.background = statusBg;
+        box.style.color = statusColor;
+        box.textContent = statusText;
 
-        // Affichage simple
-        box.textContent = "-";
         cell.appendChild(box);
       })();
 
