@@ -1932,40 +1932,74 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 );
               }
               // === SYNCHRONISATION SPÉCIFIQUE POUR LES STATUTS DE CONTENEURS ===
-              // 1. Stockage local pour synchronisation immédiate
-              const containerSyncKey = `container_status_${
-                delivery.id || delivery.dossier_number
-              }_${containerNumber}`;
-              const containerSyncData = {
-                deliveryId: delivery.id || delivery.dossier_number,
-                containerNumber: containerNumber,
-                status: select.value,
-                timestamp: Date.now(),
-                type: "container_status_update",
-              };
+              // 1. Appel API backend pour persister le changement et déclencher WebSocket automatique
+              try {
+                const response = await fetch(
+                  `/deliveries/${delivery.id}/container-status`,
+                  {
+                    method: "PATCH",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      containerNumber: containerNumber,
+                      status: select.value,
+                    }),
+                  }
+                );
 
-              localStorage.setItem(
-                containerSyncKey,
-                JSON.stringify(containerSyncData)
-              );
+                if (response.ok) {
+                  const result = await response.json();
+                  console.log(
+                    `[RESP_LIV] Statut conteneur ${containerNumber} mis à jour:`,
+                    result
+                  );
 
-              // 2. Déclencher un événement storage personnalisé pour la synchronisation immédiate
-              window.dispatchEvent(
-                new CustomEvent("containerStatusUpdate", {
-                  detail: containerSyncData,
-                })
-              );
-
-              // 3. Envoi d'une notification WebSocket pour informer tous les clients
-              if (window.ws && window.ws.readyState === 1) {
-                window.ws.send(
-                  JSON.stringify({
-                    type: "container_status_update",
-                    deliveryId: delivery.id,
+                  // 2. Stockage local pour synchronisation immédiate
+                  const containerSyncKey = `container_status_${
+                    delivery.id || delivery.dossier_number
+                  }_${containerNumber}`;
+                  const containerSyncData = {
+                    deliveryId: delivery.id || delivery.dossier_number,
                     containerNumber: containerNumber,
                     status: select.value,
                     timestamp: Date.now(),
-                  })
+                    type: "container_status_update",
+                  };
+
+                  localStorage.setItem(
+                    containerSyncKey,
+                    JSON.stringify(containerSyncData)
+                  );
+
+                  // 3. Déclencher un événement storage personnalisé pour la synchronisation immédiate
+                  window.dispatchEvent(
+                    new CustomEvent("containerStatusUpdate", {
+                      detail: containerSyncData,
+                    })
+                  );
+
+                  console.log(
+                    `[RESP_LIV] Synchronisation vers tableauDeBord.html réussie pour conteneur ${containerNumber}`
+                  );
+                } else {
+                  console.error(
+                    `[RESP_LIV] Erreur mise à jour statut conteneur:`,
+                    await response.text()
+                  );
+                  showAccessMessage(
+                    `Erreur lors de la mise à jour du statut du conteneur ${containerNumber}`,
+                    "red"
+                  );
+                }
+              } catch (error) {
+                console.error(
+                  `[RESP_LIV] Erreur réseau lors de la mise à jour:`,
+                  error
+                );
+                showAccessMessage(
+                  `Erreur réseau lors de la mise à jour du statut`,
+                  "red"
                 );
               }
             } else {
