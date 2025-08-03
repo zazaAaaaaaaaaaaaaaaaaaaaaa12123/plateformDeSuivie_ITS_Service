@@ -835,16 +835,16 @@ setInterval(() => {
 window.addEventListener("DOMContentLoaded", checkLateContainers);
 
 // --- WebSocket temps réel pour les nouvelles livraisons (ordre de livraison créé) ---
-let wsLivraison = null;
+window.wsLivraison = null;
 function initWebSocketLivraison() {
   const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
   let wsUrl = `${wsProtocol}://${window.WS_BASE_HOST}`;
   try {
-    wsLivraison = new WebSocket(wsUrl);
-    wsLivraison.onopen = function () {
+    window.wsLivraison = new WebSocket(wsUrl);
+    window.wsLivraison.onopen = function () {
       console.debug("[WebSocket] Connecté pour livraisons (scriptSuivie)");
     };
-    wsLivraison.onmessage = function (event) {
+    window.wsLivraison.onmessage = function (event) {
       try {
         const data = JSON.parse(event.data);
         if (data.type === "new_delivery_created") {
@@ -945,12 +945,12 @@ function initWebSocketLivraison() {
         console.warn("[WebSocket] Message non JSON ou erreur :", event.data);
       }
     };
-    wsLivraison.onclose = function () {
+    window.wsLivraison.onclose = function () {
       console.warn("[WebSocket] Livraison déconnecté. Reconnexion dans 10s...");
       setTimeout(initWebSocketLivraison, 10000);
     };
-    wsLivraison.onerror = function () {
-      wsLivraison.close();
+    window.wsLivraison.onerror = function () {
+      window.wsLivraison.close();
     };
   } catch (e) {
     console.error("[WebSocket] Erreur d'init livraison :", e);
