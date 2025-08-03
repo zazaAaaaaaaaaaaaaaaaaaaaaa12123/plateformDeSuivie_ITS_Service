@@ -2555,7 +2555,6 @@ function mapStatus(status) {
   const statusFilterSelect = document.getElementById("statusFilterSelect");
   const startDateFilter = document.getElementById("startDateFilter");
   const endDateFilter = document.getElementById("endDateFilter");
-  const clearDateRangeBtn = document.getElementById("clearDateRangeBtn");
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
@@ -8858,18 +8857,6 @@ function mapStatus(status) {
         currentEndDate = null;
         localStorage.removeItem("endDateFilter");
       }
-      applyCombinedFilters();
-    });
-  }
-
-  if (clearDateRangeBtn) {
-    clearDateRangeBtn.addEventListener("click", () => {
-      currentStartDate = null;
-      currentEndDate = null;
-      if (startDateFilter) startDateFilter.value = "";
-      if (endDateFilter) endDateFilter.value = "";
-      localStorage.removeItem("startDateFilter");
-      localStorage.removeItem("endDateFilter");
       applyCombinedFilters();
     });
   }
