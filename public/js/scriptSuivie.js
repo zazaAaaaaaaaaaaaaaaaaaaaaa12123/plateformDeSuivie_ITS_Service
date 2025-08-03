@@ -2465,16 +2465,17 @@ if (window["WebSocket"]) {
 
   // Define fields that are always inline editable, regardless of global editing mode
   // Removed "status" from here as it's handled by its own dropdown logic
-  const ALWAYS_INLINE_EDITABLE_FIELDS = [
-    "transporter",
-    "driver_name",
-    "truck_registration",
-    "driver_phone",
-    "delivery_date",
-    "delivery_time",
+  const ALWAYS_INLINE_EDITABLE_FIELDS = ["truck_registration", "delivery_time"];
+
+  // Champs qui ne doivent jamais être éditables (même en mode édition)
+  const NON_EDITABLE_FIELDS = [
     "nom_agent_visiteur",
+    "transporter",
     "inspecteur",
     "agent_en_douanes",
+    "driver_name",
+    "driver_phone",
+    "delivery_date",
     "delivery_notes",
   ];
 
@@ -4386,6 +4387,7 @@ if (window["WebSocket"]) {
           fieldName !== "status" &&
           fieldName !== "delivery_status_acconier" &&
           fieldName !== "created_at" && // <-- ADDED THIS LINE
+          !NON_EDITABLE_FIELDS.includes(fieldName) && // <-- ADDED: Vérifier si le champ n'est pas dans la liste des non-éditables
           (isEditingMode || ALWAYS_INLINE_EDITABLE_FIELDS.includes(fieldName))
         ) {
           cell.classList.add("editable-cell"); // Optional: Add a class for styling
