@@ -2271,27 +2271,6 @@ function mapStatus(status) {
   `;
   document.head.appendChild(style);
 
-  // Load jsPDF and html2canvas libraries
-  const loadScript = (src) => {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  };
-
-  // Wait for both libraries to load
-  await Promise.all([
-    loadScript(
-      "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
-    ),
-    loadScript(
-      "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
-    ),
-  ]);
-
   // Global variables (now local to this IIFE - Immediately Invoked Function Expression)
   let deliveries = []; // Stores all loaded deliveries
   let allDeliveries = []; // Stores all raw deliveries fetched from backend (used for history/agent views)
@@ -2522,7 +2501,6 @@ function mapStatus(status) {
   // DOM variables for the main table
   const deliveriesTable = document.getElementById("deliveriesTable"); // Get the full table element
   const deliveriesTableBody = document.getElementById("deliveriesTableBody");
-  const generatePdfBtn = document.getElementById("generatePdfBtn"); // Global PDF button
   const searchInput = document.getElementById("searchInput");
   const searchButton = document.getElementById("searchButton");
   // Removed loadingSpinner variable as it's no longer needed
@@ -2603,7 +2581,6 @@ function mapStatus(status) {
   );
   const agentSummarySection = document.getElementById("agentSummarySection");
   const evaluateAgentBtn = document.getElementById("evaluateAgentBtn");
-  const generateAgentPdfBtn = document.getElementById("generateAgentPdfBtn");
 
   // NEW: Date navigation buttons for agent activity
   const prevDayBtn = document.getElementById("prevDayBtn");
@@ -4353,7 +4330,7 @@ function mapStatus(status) {
               updatedChevronIcon.className = "fas fa-chevron-down";
               updatedChevronIcon.style.marginLeft = "8px";
               toggleButton.appendChild(updatedChevronIcon);
-              // Update the actualValue dataset to reflect the new state for PDF cloning
+              // Update the actualValue dataset to reflect the new state
               cell.dataset.actualValue = option.apiValue;
               dropdownContent.classList.remove("show");
               // Mise à jour backend et alertes APRES le rendu visuel immédiat
@@ -6586,342 +6563,6 @@ function mapStatus(status) {
     };
   }
 
-  /**
-   * Generates a PDF of the current agent-specific deliveries table.
-   */
-  async function generateAgentPdf() {
-    if (!agentDailyDeliveriesTable) {
-      showCustomAlert(
-        "Le tableau de suivi de l'agent n'a pas été trouvé pour la génération PDF.",
-        "error"
-      );
-      return;
-    }
-
-    if (loadingOverlay) {
-      loadingOverlay.style.display = "flex";
-    }
-
-    let tempTableContainer;
-    try {
-      const { jsPDF } = window.jspdf;
-      if (!jsPDF) {
-        throw new Error("jsPDF library not loaded.");
-      }
-      if (!window.html2canvas) {
-        throw new Error("html2canvas library not loaded.");
-      }
-
-      const doc = new jsPDF("l", "pt", "a4"); // Landscape, points, A4 size
-      const margin = 20;
-
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-
-      tempTableContainer = document.createElement("div");
-      tempTableContainer.style.position = "absolute";
-      tempTableContainer.style.left = "-9999px";
-      tempTableContainer.style.width = `${pageWidth}pt`;
-      document.body.appendChild(tempTableContainer);
-
-      // Clone the agent's table
-      const clonedTable = agentDailyDeliveriesTable.cloneNode(true);
-
-      // Apply PDF-specific styles to the cloned table
-      clonedTable.style.width = "100%";
-      clonedTable.style.maxWidth = "none";
-      clonedTable.style.borderCollapse = "collapse";
-      clonedTable.style.tableLayout = "fixed"; // Use fixed layout for predictable column widths in PDF
-
-      // Ensure all cells have borders and padding for PDF
-      clonedTable.querySelectorAll("th, td").forEach((cell) => {
-        cell.style.padding = "8px";
-        cell.style.border = "1px solid #ddd";
-        cell.style.whiteSpace = "normal"; // Allow text wrapping
-        cell.style.wordBreak = "break-word"; // Ensure long words break
-        // Remove any interactive elements or their specific styling
-        const statusSpan = cell.querySelector("span[class*='text-']");
-        if (statusSpan) {
-          const icon = statusSpan.querySelector("i");
-          if (icon) {
-            icon.style.color = statusSpan.style.color || ""; // Keep explicit color if set
-          }
-        }
-      });
-      // Hide the individual delete buttons in the cloned table for PDF
-      clonedTable
-        .querySelectorAll(".delete-individual-delivery-btn")
-        .forEach((btn) => {
-          btn.style.display = "none";
-        });
-
-      tempTableContainer.appendChild(clonedTable);
-
-      const canvas = await html2canvas(clonedTable, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-      });
-      const imgData = canvas.toDataURL("image/png");
-
-      const imgWidth = pageWidth - 2 * margin;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      doc.setFontSize(10);
-
-      while (heightLeft > 0) {
-        if (position > 0) {
-          doc.addPage();
-        }
-
-        const pageContentHeight = pageHeight - 2 * margin;
-
-        doc.addImage(
-          imgData,
-          "PNG",
-          margin,
-          margin,
-          imgWidth,
-          imgHeight,
-          null,
-          null,
-          null,
-          0,
-          -position
-        );
-
-        // Add page number at the bottom right
-        doc.text(
-          `Page ${doc.internal.getNumberOfPages()}`,
-          pageWidth - margin,
-          pageHeight - margin,
-          { align: "right" }
-        );
-
-        heightLeft -= pageContentHeight; // Subtract full page height
-        position += pageContentHeight; // Move to the next slice position
-      }
-
-      doc.save(
-        `Suivi_Agent_${selectedAgentName}_${currentAgentActivityDate.toLocaleDateString(
-          "fr-FR"
-        )}.pdf`
-      );
-      showCustomAlert(
-        "Le PDF du suivi de l'agent a été généré avec succès !",
-        "success"
-      );
-    } catch (error) {
-      showCustomAlert(
-        `Erreur lors de la génération du PDF de l'agent: ${error.message}`,
-        "error",
-        7000
-      );
-      console.error("Error generating agent PDF:", error);
-    } finally {
-      if (loadingOverlay) {
-        loadingOverlay.style.display = "none";
-      }
-      if (tempTableContainer && tempTableContainer.parentNode) {
-        tempTableContainer.parentNode.removeChild(tempTableContainer);
-      }
-    }
-  }
-
-  // NEW: Function to generate PDF of the main deliveries table
-  async function generateDeliveriesPdf() {
-    if (!deliveriesTable) {
-      showCustomAlert(
-        "Le tableau principal des livraisons n'a pas été trouvé pour la génération PDF.",
-        "error"
-      );
-      return;
-    }
-
-    if (loadingOverlay) {
-      loadingOverlay.style.display = "flex";
-    }
-
-    let tempTableContainer;
-    try {
-      const { jsPDF } = window.jspdf;
-      if (!jsPDF) {
-        throw new Error("jsPDF library not loaded.");
-      }
-      if (!window.html2canvas) {
-        throw new Error("html2canvas library not loaded.");
-      }
-
-      const doc = new jsPDF("l", "pt", "a4"); // Landscape, points, A4 size
-      const margin = 20;
-
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-
-      tempTableContainer = document.createElement("div");
-      tempTableContainer.style.position = "absolute";
-      tempTableContainer.style.left = "-9999px";
-      tempTableContainer.style.width = `${pageWidth}pt`;
-      document.body.appendChild(tempTableContainer);
-
-      // Clone the main table
-      const clonedTable = deliveriesTable.cloneNode(true);
-
-      // Apply PDF-specific styles to the cloned table
-      clonedTable.style.width = "100%";
-      clonedTable.style.maxWidth = "none";
-      clonedTable.style.borderCollapse = "collapse";
-      clonedTable.style.tableLayout = "fixed"; // Use fixed layout for predictable column widths in PDF
-
-      // Ensure all cells have borders and padding for PDF
-      clonedTable.querySelectorAll("th, td").forEach((cell) => {
-        cell.style.padding = "8px";
-        cell.style.border = "1px solid #ddd";
-        cell.style.whiteSpace = "normal"; // Allow text wrapping
-        cell.style.wordBreak = "break-word"; // Ensure long words break
-
-        // Handle dropdowns: replace with static text
-        if (cell.classList.contains("dropdown-cell-container")) {
-          const toggleButton = cell.querySelector(".dropdown-toggle-button");
-          if (toggleButton) {
-            const textSpan = toggleButton.querySelector("span");
-            const icon = toggleButton.querySelector("i");
-            let statusText = textSpan ? textSpan.textContent : "";
-            let iconHtml = icon ? icon.outerHTML : ""; // Keep icon HTML for display
-
-            // Use the actualValue dataset if available for the most accurate state
-            const actualValue = cell.dataset.actualValue;
-            if (actualValue) {
-              const statusInfo = getStatusInfo(actualValue);
-              statusText = statusInfo.text;
-              iconHtml = `<i class="fas ${statusInfo.iconClass}" style="color:${statusInfo.hexColor};"></i>`;
-            }
-
-            cell.innerHTML = `${iconHtml} ${statusText}`;
-          }
-        }
-        // Handle editable cells: replace input/textarea with their current value
-        else if (cell.classList.contains("editable-cell")) {
-          const inputElement = cell.querySelector("input, textarea");
-          if (inputElement) {
-            // Restore original content based on the stored actualValue or originalValue
-            let displayValue =
-              cell.dataset.actualValue ||
-              cell.dataset.originalValue ||
-              inputElement.value ||
-              "-";
-            let fieldName = cell.dataset.fieldName;
-            let type = cell.dataset.type;
-            cell.innerHTML = ""; // Clear current input
-            updateCellContent(cell, displayValue, fieldName, type); // Re-render as static text
-          }
-        }
-      });
-
-      // Hide selection checkboxes if they were visible
-      clonedTable
-        .querySelectorAll(".delivery-select-checkbox")
-        .forEach((cb) => {
-          cb.style.display = "none";
-        });
-      // Hide the master select all checkbox if it exists
-      const masterCheckbox = clonedTable.querySelector("#masterSelectAll");
-      if (masterCheckbox) {
-        masterCheckbox.style.display = "none";
-      }
-      // Restore the "N°" header if selection mode was active
-      const thNumeroCloned = clonedTable.querySelector("#thNumero");
-      if (thNumeroCloned && thNumeroCloned.textContent === "") {
-        thNumeroCloned.textContent = "N°";
-      }
-      const checkboxHeaderPlaceholderCloned = clonedTable.querySelector(
-        "#checkboxHeaderPlaceholder"
-      );
-      if (checkboxHeaderPlaceholderCloned) {
-        checkboxHeaderPlaceholderCloned.innerHTML = "";
-      }
-
-      tempTableContainer.appendChild(clonedTable);
-
-      const canvas = await html2canvas(clonedTable, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-      });
-      const imgData = canvas.toDataURL("image/png");
-
-      const imgWidth = pageWidth - 2 * margin;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      doc.setFontSize(10);
-
-      while (heightLeft > 0) {
-        if (position > 0) {
-          doc.addPage();
-        }
-
-        const pageContentHeight = pageHeight - 2 * margin;
-
-        doc.addImage(
-          imgData,
-          "PNG",
-          margin,
-          margin,
-          imgWidth,
-          imgHeight,
-          null,
-          null,
-          null,
-          0,
-          -position
-        );
-
-        // Add page number at the bottom right
-        doc.text(
-          `Page ${doc.internal.getNumberOfPages()}`,
-          pageWidth - margin,
-          pageHeight - margin,
-          { align: "right" }
-        );
-
-        heightLeft -= pageContentHeight; // Subtract full page height
-        position += pageContentHeight; // Move to the next slice position
-      }
-
-      doc.save(
-        `Suivi_Livraisons_${currentMainFilterDate.toLocaleDateString(
-          "fr-FR"
-        )}.pdf`
-      );
-      showCustomAlert(
-        "Le PDF du tableau principal a été généré avec succès !",
-        "success"
-      );
-    } catch (error) {
-      showCustomAlert(
-        `Erreur lors de la génération du PDF du tableau principal: ${error.message}`,
-        "error",
-        7000
-      );
-      console.error("Error generating main table PDF:", error);
-    } finally {
-      if (loadingOverlay) {
-        loadingOverlay.style.display = "none";
-      }
-      if (tempTableContainer && tempTableContainer.parentNode) {
-        tempTableContainer.parentNode.removeChild(tempTableContainer);
-      }
-      // Re-render the original table to restore interactive elements and checkboxes
-      applyCombinedFilters();
-    }
-  }
-
   // =====================================================================
   // --- WebSocket Initialization ---
   // =====================================================================
@@ -7089,9 +6730,8 @@ function mapStatus(status) {
 
   // Exécute ces fonctions si les éléments DOM principaux sont présents
   if (deliveriesTableBody) {
-    // === AJOUT BOUTON VUE DOSSIERS CLIENTS ENTRE ACTIVER SÉLECTION ET GÉNÉRER PDF ===
+    // === AJOUT BOUTON VUE DOSSIERS CLIENTS ===
     const toggleSelectionBtn = document.getElementById("toggleSelectionBtn");
-    const generatePdfBtn = document.getElementById("generatePdfBtn");
 
     const dossiersBtn = document.createElement("button");
     dossiersBtn.id = "viewClientFoldersBtn";
@@ -7119,17 +6759,12 @@ function mapStatus(status) {
     };
     dossiersBtn.addEventListener("click", showClientFoldersModal);
 
-    // Insère le bouton entre Activer Sélection et Générer PDF
-    if (
-      toggleSelectionBtn &&
-      generatePdfBtn &&
-      toggleSelectionBtn.parentNode === generatePdfBtn.parentNode
-    ) {
-      toggleSelectionBtn.parentNode.insertBefore(dossiersBtn, generatePdfBtn);
-    } else if (generatePdfBtn && generatePdfBtn.parentNode) {
-      generatePdfBtn.parentNode.insertBefore(dossiersBtn, generatePdfBtn);
-    } else if (toggleSelectionBtn && toggleSelectionBtn.parentNode) {
-      toggleSelectionBtn.parentNode.appendChild(dossiersBtn);
+    // Insère le bouton après Activer Sélection
+    if (toggleSelectionBtn && toggleSelectionBtn.parentNode) {
+      toggleSelectionBtn.parentNode.insertBefore(
+        dossiersBtn,
+        toggleSelectionBtn.nextSibling
+      );
     } else if (deliveriesTable && deliveriesTable.parentNode) {
       deliveriesTable.parentNode.insertBefore(dossiersBtn, deliveriesTable);
     }
@@ -8943,11 +8578,6 @@ function mapStatus(status) {
     });
   }
 
-  // NEW: Add event listener for PDF generation button for agent table
-  if (generateAgentPdfBtn) {
-    generateAgentPdfBtn.addEventListener("click", generateAgentPdf);
-  }
-
   if (prevDayBtn) {
     prevDayBtn.addEventListener("click", () => navigateAgentActivityDate(-1));
   }
@@ -9156,11 +8786,6 @@ function mapStatus(status) {
       }
       applyCombinedFilters();
     });
-  }
-
-  // NEW: Add event listener for the PDF generation button
-  if (generatePdfBtn) {
-    generatePdfBtn.addEventListener("click", generateDeliveriesPdf);
   }
 
   console.log(`Automatic refresh every ${REFRESH_INTERVAL / 1000} seconds.`);
