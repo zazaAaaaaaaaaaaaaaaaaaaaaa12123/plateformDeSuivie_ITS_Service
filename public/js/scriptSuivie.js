@@ -1304,17 +1304,19 @@ if (window["WebSocket"]) {
 
             if (deliveredContainers.length === tcList.length) {
               // Tous les conteneurs sont livrés
-              statusText = "Livré";
+              statusText =
+                '<i class="fas fa-check-circle" style="margin-right: 6px;"></i>Livré';
               statusColor = "#fff";
               statusBg = "#22c55e";
             } else if (deliveredContainers.length > 0) {
               // Partiellement livré
-              statusText = `${deliveredContainers.length}/${tcList.length} Livré`;
+              statusText = `<i class="fas fa-clock" style="margin-right: 6px;"></i>${deliveredContainers.length}/${tcList.length} Livré`;
               statusColor = "#fff";
               statusBg = "#f59e0b";
             } else {
               // Aucun conteneur livré
-              statusText = "En attente";
+              statusText =
+                '<i class="fas fa-hourglass-half" style="margin-right: 6px;"></i>En attente';
               statusColor = "#374151";
               statusBg = "#f3f4f6";
             }
@@ -1327,7 +1329,7 @@ if (window["WebSocket"]) {
         box.style.borderRadius = "4px";
         box.style.fontWeight = "500";
         box.style.fontSize = "0.9em";
-        box.textContent = statusText;
+        box.innerHTML = statusText;
 
         console.log(
           `[SYNC] Cellule mise à jour: statut "${statusText}" pour dossier ${dossierNumber}`
@@ -4704,17 +4706,19 @@ if (window["WebSocket"]) {
 
             if (deliveredContainers.length === tcList.length) {
               // Tous les conteneurs sont livrés
-              statusText = "Livré";
+              statusText =
+                '<i class="fas fa-check-circle" style="margin-right: 6px;"></i>Livré';
               statusColor = "#fff";
               statusBg = "#22c55e";
             } else if (deliveredContainers.length > 0) {
               // Partiellement livré
-              statusText = `${deliveredContainers.length}/${tcList.length} Livré`;
+              statusText = `<i class="fas fa-clock" style="margin-right: 6px;"></i>${deliveredContainers.length}/${tcList.length} Livré`;
               statusColor = "#fff";
               statusBg = "#f59e0b";
             } else {
               // Aucun conteneur livré
-              statusText = "En attente";
+              statusText =
+                '<i class="fas fa-hourglass-half" style="margin-right: 6px;"></i>En attente';
               statusColor = "#374151";
               statusBg = "#f3f4f6";
             }
@@ -4732,7 +4736,7 @@ if (window["WebSocket"]) {
         box.style.border = "1.5px solid #d1d5db";
         box.style.background = statusBg;
         box.style.color = statusColor;
-        box.textContent = statusText;
+        box.innerHTML = statusText;
 
         cell.appendChild(box);
       })();
