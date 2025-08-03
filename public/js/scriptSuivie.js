@@ -1331,6 +1331,15 @@ if (window["WebSocket"]) {
         box.style.fontSize = "0.9em";
         box.innerHTML = statusText;
 
+        // Ajouter les événements de survol pour le tooltip
+        box.style.cursor = "pointer";
+        box.addEventListener("mouseenter", (e) => {
+          createContainerStatusTooltip(delivery, box);
+        });
+        box.addEventListener("mouseleave", () => {
+          removeContainerStatusTooltip();
+        });
+
         console.log(
           `[SYNC] Cellule mise à jour: statut "${statusText}" pour dossier ${dossierNumber}`
         );
@@ -4738,6 +4747,15 @@ if (window["WebSocket"]) {
         box.style.color = statusColor;
         box.innerHTML = statusText;
 
+        // Ajouter les événements de survol pour le tooltip
+        box.style.cursor = "pointer";
+        box.addEventListener("mouseenter", (e) => {
+          createContainerStatusTooltip(delivery, box);
+        });
+        box.addEventListener("mouseleave", () => {
+          removeContainerStatusTooltip();
+        });
+
         cell.appendChild(box);
       })();
 
@@ -4888,6 +4906,132 @@ if (window["WebSocket"]) {
       cell.textContent = displayValue || "-";
     }
   }
+  // =====================================================================
+  // --- Fonction pour créer un tooltip de statut des conteneurs ---
+  // =====================================================================
+
+  function createContainerStatusTooltip(delivery, targetElement) {
+    // Supprime tout tooltip existant
+    const existingTooltip = document.getElementById("containerStatusTooltip");
+    if (existingTooltip) {
+      existingTooltip.remove();
+    }
+
+    // Création du tooltip
+    const tooltip = document.createElement("div");
+    tooltip.id = "containerStatusTooltip";
+    tooltip.style.position = "fixed";
+    tooltip.style.background = "rgba(30, 41, 59, 0.95)";
+    tooltip.style.color = "#fff";
+    tooltip.style.padding = "12px 16px";
+    tooltip.style.borderRadius = "10px";
+    tooltip.style.fontSize = "0.9em";
+    tooltip.style.fontWeight = "500";
+    tooltip.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3)";
+    tooltip.style.zIndex = "10000";
+    tooltip.style.maxWidth = "280px";
+    tooltip.style.border = "1px solid rgba(255, 255, 255, 0.1)";
+    tooltip.style.backdropFilter = "blur(8px)";
+    tooltip.style.opacity = "0";
+    tooltip.style.transform = "translateY(10px)";
+    tooltip.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+    tooltip.style.pointerEvents = "none";
+
+    // Obtenir la liste des conteneurs
+    let tcList = [];
+    if (Array.isArray(delivery.container_number)) {
+      tcList = delivery.container_number.filter(Boolean);
+    } else if (typeof delivery.container_number === "string") {
+      tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+    }
+
+    // Contenu du tooltip
+    let tooltipContent =
+      '<div style="font-weight: 600; margin-bottom: 8px; color: #fbbf24;">Détail des conteneurs :</div>';
+
+    if (
+      tcList.length > 0 &&
+      delivery.container_statuses &&
+      typeof delivery.container_statuses === "object"
+    ) {
+      tcList.forEach((tc, index) => {
+        const status = delivery.container_statuses[tc];
+        const isDelivered = status === "livre" || status === "livré";
+        const statusIcon = isDelivered
+          ? '<i class="fas fa-check-circle" style="color: #22c55e; margin-right: 6px;"></i>'
+          : '<i class="fas fa-hourglass-half" style="color: #f59e0b; margin-right: 6px;"></i>';
+        const statusText = isDelivered ? "Livré" : "En attente";
+        const statusColor = isDelivered ? "#22c55e" : "#f59e0b";
+
+        tooltipContent += `
+          <div style="display: flex; align-items: center; margin: 4px 0; padding: 4px 8px; background: rgba(255, 255, 255, 0.1); border-radius: 6px;">
+            ${statusIcon}
+            <span style="font-weight: 600; margin-right: 8px;">${tc}</span>
+            <span style="color: ${statusColor}; font-size: 0.85em;">${statusText}</span>
+          </div>
+        `;
+      });
+    } else if (tcList.length > 0) {
+      // Si pas de container_statuses, afficher juste les conteneurs
+      tcList.forEach((tc) => {
+        tooltipContent += `
+          <div style="display: flex; align-items: center; margin: 4px 0; padding: 4px 8px; background: rgba(255, 255, 255, 0.1); border-radius: 6px;">
+            <i class="fas fa-hourglass-half" style="color: #f59e0b; margin-right: 6px;"></i>
+            <span style="font-weight: 600; margin-right: 8px;">${tc}</span>
+            <span style="color: #f59e0b; font-size: 0.85em;">En attente</span>
+          </div>
+        `;
+      });
+    } else {
+      tooltipContent +=
+        '<div style="color: #9ca3af; font-style: italic;">Aucun conteneur spécifié</div>';
+    }
+
+    tooltip.innerHTML = tooltipContent;
+    document.body.appendChild(tooltip);
+
+    // Fonction pour positionner le tooltip
+    const updateTooltipPosition = (e) => {
+      const rect = targetElement.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+
+      let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+      let top = rect.top - tooltipRect.height - 10;
+
+      // Ajustements pour rester dans la fenêtre
+      if (left < 10) left = 10;
+      if (left + tooltipRect.width > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipRect.width - 10;
+      }
+      if (top < 10) {
+        top = rect.bottom + 10;
+      }
+
+      tooltip.style.left = left + "px";
+      tooltip.style.top = top + "px";
+    };
+
+    // Position initiale et animation d'apparition
+    updateTooltipPosition();
+    setTimeout(() => {
+      tooltip.style.opacity = "1";
+      tooltip.style.transform = "translateY(0)";
+    }, 10);
+
+    return tooltip;
+  }
+
+  function removeContainerStatusTooltip() {
+    const tooltip = document.getElementById("containerStatusTooltip");
+    if (tooltip) {
+      tooltip.style.opacity = "0";
+      tooltip.style.transform = "translateY(10px)";
+      setTimeout(() => {
+        tooltip.remove();
+      }, 200);
+    }
+  }
+
   // =====================================================================
   // --- Fonctions de gestion de l'interface utilisateur ---
   // =====================================================================
