@@ -713,12 +713,31 @@ document.addEventListener("DOMContentLoaded", function () {
           // Toujours normaliser la livraison reçue comme dans loadAllDeliveries
           function normalizeDelivery(delivery) {
             let tcList = [];
-            if (Array.isArray(delivery.container_number)) {
-              tcList = delivery.container_number.filter(Boolean);
-            } else if (typeof delivery.container_number === "string") {
-              tcList = delivery.container_number
-                .split(/[,;\s]+/)
-                .filter(Boolean);
+
+            // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
+            if (delivery.container_numbers_list) {
+              try {
+                if (typeof delivery.container_numbers_list === "string") {
+                  tcList = JSON.parse(delivery.container_numbers_list);
+                } else if (Array.isArray(delivery.container_numbers_list)) {
+                  tcList = delivery.container_numbers_list;
+                }
+                tcList = tcList.filter(Boolean); // Supprimer les valeurs vides
+              } catch (e) {
+                console.warn("Erreur parsing container_numbers_list:", e);
+                tcList = [];
+              }
+            }
+
+            // PRIORITÉ 2 : Si pas de données JSON, utiliser le champ classique
+            if (tcList.length === 0) {
+              if (Array.isArray(delivery.container_number)) {
+                tcList = delivery.container_number.filter(Boolean);
+              } else if (typeof delivery.container_number === "string") {
+                tcList = delivery.container_number
+                  .split(/[,;\s]+/)
+                  .filter(Boolean);
+              }
             }
             if (
               !delivery.container_statuses ||
@@ -777,12 +796,31 @@ document.addEventListener("DOMContentLoaded", function () {
           // Normalise la livraison reçue comme dans loadAllDeliveries
           function normalizeDelivery(delivery) {
             let tcList = [];
-            if (Array.isArray(delivery.container_number)) {
-              tcList = delivery.container_number.filter(Boolean);
-            } else if (typeof delivery.container_number === "string") {
-              tcList = delivery.container_number
-                .split(/[,;\s]+/)
-                .filter(Boolean);
+
+            // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
+            if (delivery.container_numbers_list) {
+              try {
+                if (typeof delivery.container_numbers_list === "string") {
+                  tcList = JSON.parse(delivery.container_numbers_list);
+                } else if (Array.isArray(delivery.container_numbers_list)) {
+                  tcList = delivery.container_numbers_list;
+                }
+                tcList = tcList.filter(Boolean); // Supprimer les valeurs vides
+              } catch (e) {
+                console.warn("Erreur parsing container_numbers_list:", e);
+                tcList = [];
+              }
+            }
+
+            // PRIORITÉ 2 : Si pas de données JSON, utiliser le champ classique
+            if (tcList.length === 0) {
+              if (Array.isArray(delivery.container_number)) {
+                tcList = delivery.container_number.filter(Boolean);
+              } else if (typeof delivery.container_number === "string") {
+                tcList = delivery.container_number
+                  .split(/[,;\s]+/)
+                  .filter(Boolean);
+              }
             }
             if (
               !delivery.container_statuses ||
@@ -966,10 +1004,31 @@ document.addEventListener("DOMContentLoaded", function () {
           // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
           // Initialisation des statuts conteneurs si absent
           let tcList = [];
-          if (Array.isArray(delivery.container_number)) {
-            tcList = delivery.container_number.filter(Boolean);
-          } else if (typeof delivery.container_number === "string") {
-            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+
+          // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
+          if (delivery.container_numbers_list) {
+            try {
+              if (typeof delivery.container_numbers_list === "string") {
+                tcList = JSON.parse(delivery.container_numbers_list);
+              } else if (Array.isArray(delivery.container_numbers_list)) {
+                tcList = delivery.container_numbers_list;
+              }
+              tcList = tcList.filter(Boolean); // Supprimer les valeurs vides
+            } catch (e) {
+              console.warn("Erreur parsing container_numbers_list:", e);
+              tcList = [];
+            }
+          }
+
+          // PRIORITÉ 2 : Si pas de données JSON, utiliser le champ classique
+          if (tcList.length === 0) {
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
           }
           if (
             !delivery.container_statuses ||
@@ -1367,10 +1426,29 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       } else if (col.id === "container_number") {
         // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
         let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+
+        // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
+        if (delivery.container_numbers_list) {
+          try {
+            if (typeof delivery.container_numbers_list === "string") {
+              tcList = JSON.parse(delivery.container_numbers_list);
+            } else if (Array.isArray(delivery.container_numbers_list)) {
+              tcList = delivery.container_numbers_list;
+            }
+            tcList = tcList.filter(Boolean); // Supprimer les valeurs vides
+          } catch (e) {
+            console.warn("Erreur parsing container_numbers_list:", e);
+            tcList = [];
+          }
+        }
+
+        // PRIORITÉ 2 : Si pas de données JSON, utiliser le champ classique
+        if (tcList.length === 0) {
+          if (Array.isArray(delivery.container_number)) {
+            tcList = delivery.container_number.filter(Boolean);
+          } else if (typeof delivery.container_number === "string") {
+            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
         }
         if (tcList.length > 1) {
           td.classList.add("tc-multi-cell");

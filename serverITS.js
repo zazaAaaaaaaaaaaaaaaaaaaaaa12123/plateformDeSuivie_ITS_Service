@@ -59,22 +59,25 @@ const pool = new Pool({
 // === AUTO-CRÉATION DES COLONNES JSON AU DÉMARRAGE ===
 async function initializeJsonColumns() {
   try {
-    console.log('🔧 Vérification/Création des colonnes JSON...');
-    
+    console.log("🔧 Vérification/Création des colonnes JSON...");
+
     // Ajouter les colonnes JSON si elles n'existent pas
     await pool.query(`
       ALTER TABLE livraison_conteneur 
       ADD COLUMN IF NOT EXISTS container_numbers_list JSONB;
     `);
-    
+
     await pool.query(`
       ALTER TABLE livraison_conteneur 
       ADD COLUMN IF NOT EXISTS container_foot_types_map JSONB;
     `);
-    
-    console.log('✅ Colonnes JSON vérifiées/créées avec succès !');
+
+    console.log("✅ Colonnes JSON vérifiées/créées avec succès !");
   } catch (error) {
-    console.error('❌ Erreur lors de l\'initialisation des colonnes JSON :', error.message);
+    console.error(
+      "❌ Erreur lors de l'initialisation des colonnes JSON :",
+      error.message
+    );
   }
 }
 
