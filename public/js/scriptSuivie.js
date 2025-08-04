@@ -8524,18 +8524,55 @@ function mapStatus(status) {
       dateRangeContainer.className = "date-range-container";
       dateRangeContainer.style.cssText = `
         display: flex;
-        gap: 12px;
+        gap: 16px;
         align-items: center;
-        margin-top: 12px;
+        margin-top: 16px;
         flex-wrap: wrap;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-radius: 16px;
+        border: 1px solid #cbd5e1;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        position: relative;
+        overflow: hidden;
       `;
+
+      // Ajouter un effet de brillance subtil
+      const shimmer = document.createElement("div");
+      shimmer.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        animation: shimmer 3s infinite;
+        pointer-events: none;
+      `;
+
+      // Ajouter l'animation shimmer au CSS global si elle n'existe pas
+      if (!document.querySelector("#shimmer-animation-style")) {
+        const shimmerStyle = document.createElement("style");
+        shimmerStyle.id = "shimmer-animation-style";
+        shimmerStyle.textContent = `
+          @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+          }
+        `;
+        document.head.appendChild(shimmerStyle);
+      }
+
+      dateRangeContainer.appendChild(shimmer);
 
       // Label "Filtrer du"
       const labelStart = document.createElement("span");
       labelStart.textContent = "Filtrer du ";
       labelStart.style.cssText = `
-        font-weight: 500;
-        color: #374151;
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 0.95em;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
       `;
 
       // Champ date de début
@@ -8543,20 +8580,59 @@ function mapStatus(status) {
       mainTableDateStartFilter.type = "date";
       mainTableDateStartFilter.id = "mainTableDateStartFilter";
       mainTableDateStartFilter.style.cssText = `
-        padding: 6px 10px;
-        border-radius: 8px;
-        border: 1.5px solid #2563eb;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 2px solid #3b82f6;
         font-size: 0.95em;
-        background: #fff;
-        color: #374151;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        color: #1f2937;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        min-width: 160px;
+        font-weight: 500;
+        cursor: pointer;
       `;
+
+      // Ajouter les événements hover et focus pour le champ de début
+      mainTableDateStartFilter.addEventListener("mouseenter", function () {
+        this.style.transform = "translateY(-2px)";
+        this.style.boxShadow = "0 8px 25px rgba(59, 130, 246, 0.25)";
+        this.style.borderColor = "#2563eb";
+      });
+
+      mainTableDateStartFilter.addEventListener("mouseleave", function () {
+        if (document.activeElement !== this) {
+          this.style.transform = "translateY(0)";
+          this.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.15)";
+          this.style.borderColor = "#3b82f6";
+        }
+      });
+
+      mainTableDateStartFilter.addEventListener("focus", function () {
+        this.style.transform = "translateY(-2px)";
+        this.style.boxShadow =
+          "0 8px 25px rgba(59, 130, 246, 0.3), 0 0 0 3px rgba(59, 130, 246, 0.1)";
+        this.style.borderColor = "#1d4ed8";
+        this.style.background =
+          "linear-gradient(135deg, #ffffff 0%, #eff6ff 100%)";
+      });
+
+      mainTableDateStartFilter.addEventListener("blur", function () {
+        this.style.transform = "translateY(0)";
+        this.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.15)";
+        this.style.borderColor = "#3b82f6";
+        this.style.background =
+          "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)";
+      });
 
       // Label "au"
       const labelEnd = document.createElement("span");
       labelEnd.textContent = " au ";
       labelEnd.style.cssText = `
-        font-weight: 500;
-        color: #374151;
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 0.95em;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
       `;
 
       // Champ date de fin
@@ -8564,13 +8640,50 @@ function mapStatus(status) {
       mainTableDateEndFilter.type = "date";
       mainTableDateEndFilter.id = "mainTableDateEndFilter";
       mainTableDateEndFilter.style.cssText = `
-        padding: 6px 10px;
-        border-radius: 8px;
-        border: 1.5px solid #2563eb;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 2px solid #3b82f6;
         font-size: 0.95em;
-        background: #fff;
-        color: #374151;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        color: #1f2937;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        min-width: 160px;
+        font-weight: 500;
+        cursor: pointer;
       `;
+
+      // Ajouter les événements hover et focus pour le champ de fin
+      mainTableDateEndFilter.addEventListener("mouseenter", function () {
+        this.style.transform = "translateY(-2px)";
+        this.style.boxShadow = "0 8px 25px rgba(59, 130, 246, 0.25)";
+        this.style.borderColor = "#2563eb";
+      });
+
+      mainTableDateEndFilter.addEventListener("mouseleave", function () {
+        if (document.activeElement !== this) {
+          this.style.transform = "translateY(0)";
+          this.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.15)";
+          this.style.borderColor = "#3b82f6";
+        }
+      });
+
+      mainTableDateEndFilter.addEventListener("focus", function () {
+        this.style.transform = "translateY(-2px)";
+        this.style.boxShadow =
+          "0 8px 25px rgba(59, 130, 246, 0.3), 0 0 0 3px rgba(59, 130, 246, 0.1)";
+        this.style.borderColor = "#1d4ed8";
+        this.style.background =
+          "linear-gradient(135deg, #ffffff 0%, #eff6ff 100%)";
+      });
+
+      mainTableDateEndFilter.addEventListener("blur", function () {
+        this.style.transform = "translateY(0)";
+        this.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.15)";
+        this.style.borderColor = "#3b82f6";
+        this.style.background =
+          "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)";
+      });
 
       // Assembler les éléments
       dateRangeContainer.appendChild(labelStart);
