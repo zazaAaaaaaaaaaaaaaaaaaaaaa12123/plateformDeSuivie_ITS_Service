@@ -4343,8 +4343,11 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
         counts.livres++;
         console.log(`[COUNTS] ✅ Dossier livré: ${delivery.dossier_number}`);
       }
-      // PRIORITÉ 2: Dossier visible dans resp_liv (mis en livraison)
-      else if (isVisibleInRespLiv(delivery)) {
+      // PRIORITÉ 2: Dossier visible dans resp_liv ET PAS encore complètement livré
+      else if (
+        isVisibleInRespLiv(delivery) &&
+        !isDeliveryFullyDelivered(delivery)
+      ) {
         counts.mise_en_livraison++;
         console.log(
           `[COUNTS] � Dossier mis en livraison: ${delivery.dossier_number}`
