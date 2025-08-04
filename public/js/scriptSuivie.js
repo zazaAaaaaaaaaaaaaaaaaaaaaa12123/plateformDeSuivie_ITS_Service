@@ -4799,13 +4799,17 @@ function mapStatus(status) {
                 // Vérifier si le statut est "en attente de paiement" et pas "mise en livraison"
                 const isEnAttentePaiement =
                   delivery.status &&
-                  delivery.status
+                  (delivery.status
                     .toLowerCase()
-                    .includes("en attente de paiement");
+                    .includes("en attente de paiement") ||
+                    delivery.status === "pending_acconier");
 
                 const isMiseEnLivraison =
                   delivery.status &&
-                  delivery.status.toLowerCase().includes("mise en livraison");
+                  (delivery.status
+                    .toLowerCase()
+                    .includes("mise en livraison") ||
+                    delivery.status === "mise_en_livraison_acconier");
 
                 console.log(
                   `[DEBUG RETARD] Est en attente de paiement: ${isEnAttentePaiement}`
