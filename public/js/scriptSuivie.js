@@ -5246,11 +5246,11 @@ function mapStatus(status) {
       console.log("No main filter date selected.");
     }
 
-    // === TRI PAR ORDRE CHRONOLOGIQUE CROISSANT (PLUS ANCIENNE EN HAUT) ===
+    // === TRI PAR ORDRE CHRONOLOGIQUE : ANCIENS EN HAUT, RÉCENTS EN BAS ===
     filteredData.sort((a, b) => {
       const dateA = new Date(a.created_at || a.delivery_date || 0);
       const dateB = new Date(b.created_at || b.delivery_date || 0);
-      return dateA - dateB; // Ordre croissant : plus ancienne en haut
+      return dateA - dateB; // Ordre croissant : plus ancien en haut, plus récent en bas
     });
 
     if (shouldRenderTable) {
