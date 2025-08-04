@@ -4082,6 +4082,107 @@ app.get("/api/dossiers/retard", async (req, res) => {
 });
 
 // ===============================
+// ROUTE : Compteurs des statuts de dossiers (pour le tableau de bord)
+// ===============================
+app.get("/api/deliveries/status-counts", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM livraison_conteneur ORDER BY created_at DESC`
+    );
+
+    const deliveries = result.rows || [];
+    const counts = {
+      en_attente_paiement: 0,
+      mise_en_livraison: 0,
+      livres: 0,
+      en_retard: 0,
+    };
+
+    const now = new Date();
+
+    deliveries.forEach((delivery) => {
+      const status = delivery.delivery_status_acconier || delivery.status;
+
+      // Logique pour "En attente de paiement"
+      if (
+        status === "en attente de paiement" ||
+        status === "pending_acconier" ||
+        !status
+      ) {
+        counts.en_attente_paiement++;
+      }
+      // Logique pour "Mis en livraison"
+      else if (
+        status === "mise_en_livraison_acconier" ||
+        status === "mise_en_livraison"
+      ) {
+        counts.mise_en_livraison++;
+      }
+      // Logique pour "Livrés"
+      else if (
+        status === "delivered" ||
+        status === "livre" ||
+        status === "livré"
+      ) {
+        counts.livres++;
+      }
+
+      // Logique pour "En retard" (cross-cutting)
+      let dDate = delivery.delivery_date || delivery.created_at;
+      if (dDate) {
+        let dateObj = new Date(dDate);
+        if (!isNaN(dateObj.getTime())) {
+          const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+          if (diffDays > 2) {
+            // Conditions similaires à getLateDeliveries
+            if (
+              delivery.delivery_status_acconier === "en attente de paiement"
+            ) {
+              counts.en_retard++;
+            } else {
+              let blList = [];
+              if (Array.isArray(delivery.bl_number)) {
+                blList = delivery.bl_number.filter(Boolean);
+              } else if (typeof delivery.bl_number === "string") {
+                blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+              }
+              let blStatuses = blList.map((bl) =>
+                delivery.bl_statuses && delivery.bl_statuses[bl]
+                  ? delivery.bl_statuses[bl]
+                  : "aucun"
+              );
+              if (
+                !(
+                  blStatuses.length > 0 &&
+                  blStatuses.every((s) => s === "mise_en_livraison")
+                ) &&
+                delivery.delivery_status_acconier !==
+                  "mise_en_livraison_acconier"
+              ) {
+                counts.en_retard++;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({ success: true, counts: counts });
+  } catch (err) {
+    console.error("Erreur /api/deliveries/status-counts :", err);
+    res.json({
+      success: false,
+      counts: {
+        en_attente_paiement: 0,
+        mise_en_livraison: 0,
+        livres: 0,
+        en_retard: 0,
+      },
+    });
+  }
+});
+
+// ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
 // Cette route doit être TOUT EN BAS, après toutes les routes API !

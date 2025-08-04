@@ -1213,6 +1213,18 @@
                 Dossiers en attente de règlement avant traitement.
               </div>
             </div>
+
+            <div
+              class="etat-card dossier-mise-livraison animated-card"
+              id="carteMiseLivraison"
+              style="cursor: pointer"
+            >
+              <div class="etat-icon"><i class="fas fa-truck-loading"></i></div>
+              <div class="etat-title">Dossiers mis en livraison</div>
+              <div class="etat-desc">
+                Dossiers prêts pour la livraison et en cours de traitement.
+              </div>
+            </div>
             <!-- La pop-up dossiers en attentes de paiement a été supprimée -->
 
             <!-- Popup détails dossier -->
@@ -1317,7 +1329,7 @@
             <!-- Carte 'En cours de mise en livraison' supprimée -->
           </div>
           <div class="etat-cards-row">
-            <div class="etat-card dossier-livre animated-card">
+            <div class="etat-card dossier-livre animated-card" id="carteLivre">
               <div class="etat-icon"><i class="fas fa-check-circle"></i></div>
               <div class="etat-title">Dossier livré</div>
               <div class="etat-desc">
@@ -1431,6 +1443,10 @@
             background: linear-gradient(135deg, #fff7e3 80%, #f8fafc 100%);
             border: 2.5px solid #f59e0b;
           }
+          .dossier-mise-livraison.etat-card {
+            background: linear-gradient(135deg, #e3f2ff 80%, #f8fafc 100%);
+            border: 2.5px solid #0ea5e9;
+          }
           .dossier-cours.etat-card {
             background: linear-gradient(135deg, #e3f0ff 80%, #f8fafc 100%);
             border: 2.5px solid #2563eb;
@@ -1514,6 +1530,11 @@
             color: #f59e0b;
             background: #fff7e3;
             box-shadow: 0 2px 12px #f59e0b22, 0 1px 2px #0001;
+          }
+          .dossier-mise-livraison .etat-icon {
+            color: #0ea5e9;
+            background: #e3f2ff;
+            box-shadow: 0 2px 12px #0ea5e922, 0 1px 2px #0001;
           }
           .dossier-cours .etat-icon {
             color: #2563eb;
@@ -1786,6 +1807,16 @@
               carteAttentePaiement.addEventListener("click", function () {
                 window.location.href =
                   "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
+              });
+            }
+
+            // Ajout de la logique pour la carte "Dossiers mis en livraison"
+            var carteMiseLivraison =
+              document.getElementById("carteMiseLivraison");
+            if (carteMiseLivraison) {
+              carteMiseLivraison.addEventListener("click", function () {
+                window.location.href =
+                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
               });
             }
             // --- Ajout gestion carte dossier en retard ---
@@ -2471,6 +2502,110 @@
               popupMois.addEventListener("click", (e) => {
                 if (e.target === popupMois) popupMois.style.display = "none";
               });
+            }
+
+            // === FONCTIONS DE MISE À JOUR DES COMPTEURS DE CARTES ===
+
+            // Fonction pour mettre à jour les compteurs des cartes
+            function updateCardCounters() {
+              fetch("/api/deliveries/status-counts")
+                .then((response) => response.json())
+                .then((data) => {
+                  if (data.success) {
+                    // Mise à jour de la carte "En cours de paiement"
+                    updateCardCounter(
+                      "carteAttentePaiement",
+                      data.counts.en_attente_paiement || 0
+                    );
+
+                    // Mise à jour de la carte "Dossiers mis en livraison"
+                    updateCardCounter(
+                      "carteMiseLivraison",
+                      data.counts.mise_en_livraison || 0
+                    );
+
+                    // Mise à jour de la carte "Dossiers livrés"
+                    updateCardCounter("carteLivre", data.counts.livres || 0);
+                  }
+                })
+                .catch((error) => {
+                  console.error(
+                    "Erreur lors de la récupération des compteurs:",
+                    error
+                  );
+                });
+            }
+
+            // Fonction utilitaire pour mettre à jour un compteur spécifique
+            function updateCardCounter(cardId, count) {
+              const card = document.getElementById(cardId);
+              if (card) {
+                let counterElement = card.querySelector(".card-counter");
+                if (!counterElement) {
+                  // Créer l'élément compteur s'il n'existe pas
+                  counterElement = document.createElement("div");
+                  counterElement.className = "card-counter";
+                  counterElement.style.cssText = `
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    background: rgba(255, 255, 255, 0.9);
+                    color: #1d3557;
+                    font-weight: 700;
+                    font-size: 0.85em;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    min-width: 20px;
+                    text-align: center;
+                  `;
+                  card.appendChild(counterElement);
+                }
+                counterElement.textContent = count;
+
+                // Animation de mise à jour
+                counterElement.style.transform = "scale(1.2)";
+                setTimeout(() => {
+                  counterElement.style.transform = "scale(1)";
+                }, 200);
+              }
+            }
+
+            // Appeler la fonction de mise à jour des compteurs au chargement
+            updateCardCounters();
+
+            // Mettre à jour les compteurs toutes les 30 secondes
+            setInterval(updateCardCounters, 30000);
+
+            // Écouter les événements WebSocket pour les mises à jour en temps réel
+            try {
+              const wsUrl =
+                (window.location.protocol === "https:" ? "wss://" : "ws://") +
+                window.location.hostname +
+                ":3000";
+              const ws = new ReconnectingWebSocket(wsUrl);
+
+              ws.onmessage = function (event) {
+                let data;
+                try {
+                  data = JSON.parse(event.data);
+                } catch (e) {
+                  return;
+                }
+
+                // Mettre à jour les compteurs si c'est un événement de changement de statut
+                if (
+                  data &&
+                  (data.type === "status-change" ||
+                    data.type === "dossier-mise-en-livraison")
+                ) {
+                  updateCardCounters();
+                }
+              };
+            } catch (e) {
+              console.log(
+                "WebSocket non disponible pour les mises à jour temps réel"
+              );
             }
           });
         </script>
