@@ -4035,6 +4035,27 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
     const alertMsg = `Dossier '${
       updatedDelivery.dossier_number || updatedDelivery.id
     }' a été mis en livraison.`;
+
+    // Si le dossier passe en "mise_en_livraison_acconier", il disparaît du tableau resp_acconier
+    // donc on doit décrémenter la carte "Dossiers mis en livraison"
+    if (allMiseEnLivraison) {
+      const dashboardPayload = JSON.stringify({
+        type: "dossier-quitte-acconier",
+        action: "decrement_mise_en_livraison",
+        dossierNumber: updatedDelivery.dossier_number || updatedDelivery.id,
+        message: alertMsg,
+        forceCounterUpdate: true,
+      });
+
+      if (wss && wss.clients) {
+        wss.clients.forEach((client) => {
+          if (client.readyState === require("ws").OPEN) {
+            client.send(dashboardPayload);
+          }
+        });
+      }
+    }
+
     // Message BL (pour la colonne BL)
     const payloadBL = JSON.stringify({
       type: "bl_status_update",

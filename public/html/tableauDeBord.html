@@ -2601,14 +2601,73 @@
                   return;
                 }
 
+                console.log("[DASHBOARD] WebSocket reçu:", data);
+
                 // Mettre à jour les compteurs si c'est un événement de changement de statut
                 if (
                   data &&
                   (data.type === "status-change" ||
                     data.type === "dossier-mise-en-livraison" ||
-                    data.type === "container_status_update")
+                    data.type === "container_status_update" ||
+                    data.type === "dossier-quitte-acconier" ||
+                    data.forceCounterUpdate)
                 ) {
-                  window.updateCardCounters();
+                  console.log(
+                    "[DASHBOARD] Mise à jour des compteurs déclenchée par:",
+                    data.type
+                  );
+                  console.log("[DASHBOARD] Action détectée:", data.action);
+
+                  // Si c'est un dossier qui quitte resp_acconier (mis en livraison)
+                  if (
+                    data.type === "dossier-quitte-acconier" &&
+                    data.action === "decrement_mise_en_livraison"
+                  ) {
+                    console.log(
+                      "[DASHBOARD] ⬇️ Dossier quitté resp_acconier, décrément 'Dossiers mis en livraison'"
+                    );
+                    // Mise à jour immédiate forcée
+                    setTimeout(() => {
+                      window.updateCardCounters();
+                    }, 100);
+                  }
+
+                  // Si c'est un dossier complètement livré
+                  if (
+                    (data.type === "status-change" ||
+                      data.type === "container_status_update") &&
+                    data.action === "delivery_completed"
+                  ) {
+                    console.log(
+                      "[DASHBOARD] ✅ Dossier complètement livré, incrément 'Dossiers livrés'"
+                    );
+                    // Mise à jour immédiate forcée
+                    setTimeout(() => {
+                      window.updateCardCounters();
+                    }, 100);
+                  }
+
+                  // Si c'est un conteneur marqué livré (mais pas le dernier)
+                  if (
+                    data.type === "container_status_update" &&
+                    (data.action === "container_delivered" ||
+                      data.status === "livre" ||
+                      data.status === "livré")
+                  ) {
+                    console.log(
+                      "[DASHBOARD] 📦 Conteneur livré:",
+                      data.containerNumber
+                    );
+                    // Mise à jour immédiate forcée
+                    setTimeout(() => {
+                      window.updateCardCounters();
+                    }, 100);
+                  }
+
+                  // Mise à jour standard avec léger délai
+                  setTimeout(() => {
+                    window.updateCardCounters();
+                  }, 200);
                 }
               };
             } catch (e) {
