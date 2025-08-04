@@ -2531,12 +2531,9 @@ function mapStatus(status) {
   // DOM element for the status filter
 
   const statusFilterSelect = document.getElementById("statusFilterSelect");
-  const mainTableDateStartFilter = document.getElementById(
-    "mainTableDateStartFilter"
-  );
-  const mainTableDateEndFilter = document.getElementById(
-    "mainTableDateEndFilter"
-  );
+  // Les variables mainTableDateStartFilter et mainTableDateEndFilter sont déclarées dynamiquement plus bas
+  // const mainTableDateStartFilter = document.getElementById("mainTableDateStartFilter");
+  // const mainTableDateEndFilter = document.getElementById("mainTableDateEndFilter");
 
   const agentStatusIndicator = document.getElementById("agentStatusIndicator");
   const agentStatusText = document.getElementById("agentStatusText");
@@ -8409,6 +8406,184 @@ function mapStatus(status) {
       });
   });
 
+  // === CRÉATION DYNAMIQUE DES CHAMPS DE DATE ===
+  // Fonction utilitaire pour normaliser la date à minuit
+  function normalizeDateToMidnight(date) {
+    if (!(date instanceof Date)) date = new Date(date);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  // Créer dynamiquement les champs de date s'ils n'existent pas
+  let mainTableDateStartFilter = document.getElementById(
+    "mainTableDateStartFilter"
+  );
+  let mainTableDateEndFilter = document.getElementById(
+    "mainTableDateEndFilter"
+  );
+
+  if (!mainTableDateStartFilter || !mainTableDateEndFilter) {
+    // Trouver le conteneur approprié (à côté de la barre de recherche)
+    const searchWrapper =
+      document.querySelector(".search-bar-wrapper-top") ||
+      document.querySelector(".search-wrapper") ||
+      document.querySelector(".header-with-search");
+
+    if (searchWrapper) {
+      // Créer le conteneur des dates
+      const dateRangeContainer = document.createElement("div");
+      dateRangeContainer.className = "date-range-container";
+      dateRangeContainer.style.cssText = `
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      `;
+
+      // Label "Filtrer du"
+      const labelStart = document.createElement("span");
+      labelStart.textContent = "Filtrer du ";
+      labelStart.style.cssText = `
+        font-weight: 500;
+        color: #374151;
+      `;
+
+      // Champ date de début
+      mainTableDateStartFilter = document.createElement("input");
+      mainTableDateStartFilter.type = "date";
+      mainTableDateStartFilter.id = "mainTableDateStartFilter";
+      mainTableDateStartFilter.style.cssText = `
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1.5px solid #2563eb;
+        font-size: 0.95em;
+        background: #fff;
+        color: #374151;
+      `;
+
+      // Label "au"
+      const labelEnd = document.createElement("span");
+      labelEnd.textContent = " au ";
+      labelEnd.style.cssText = `
+        font-weight: 500;
+        color: #374151;
+      `;
+
+      // Champ date de fin
+      mainTableDateEndFilter = document.createElement("input");
+      mainTableDateEndFilter.type = "date";
+      mainTableDateEndFilter.id = "mainTableDateEndFilter";
+      mainTableDateEndFilter.style.cssText = `
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1.5px solid #2563eb;
+        font-size: 0.95em;
+        background: #fff;
+        color: #374151;
+      `;
+
+      // Assembler les éléments
+      dateRangeContainer.appendChild(labelStart);
+      dateRangeContainer.appendChild(mainTableDateStartFilter);
+      dateRangeContainer.appendChild(labelEnd);
+      dateRangeContainer.appendChild(mainTableDateEndFilter);
+
+      // Insérer après la barre de recherche
+      searchWrapper.parentNode.insertBefore(
+        dateRangeContainer,
+        searchWrapper.nextSibling
+      );
+    }
+  }
+
+  // Fonction principale pour afficher les livraisons filtrées par date
+  function updateTableForDateRange(dateStartStr, dateEndStr) {
+    // Vérification automatique : si la date de début est après la date de fin, on corrige
+    if (dateStartStr && dateEndStr && dateStartStr > dateEndStr) {
+      // On inverse les dates
+      const tmp = dateStartStr;
+      dateStartStr = dateEndStr;
+      dateEndStr = tmp;
+      // On met à jour les champs dans l'UI
+      if (mainTableDateStartFilter)
+        mainTableDateStartFilter.value = dateStartStr;
+      if (mainTableDateEndFilter) mainTableDateEndFilter.value = dateEndStr;
+    }
+
+    // Utiliser applyCombinedFilters qui gère déjà le filtrage par date
+    if (typeof applyCombinedFilters === "function") {
+      applyCombinedFilters();
+    }
+  }
+
+  // Faire la fonction updateTableForDateRange disponible globalement
+  window.updateTableForDateRange = updateTableForDateRange;
+
+  // === INITIALISATION DES CHAMPS DE DATE APRÈS CRÉATION ===
+  if (mainTableDateStartFilter && mainTableDateEndFilter) {
+    // Fonction pour initialiser les dates par défaut
+    const initializeDefaultDates = () => {
+      const storedStartDate = localStorage.getItem("mainTableDateStartFilter");
+      const storedEndDate = localStorage.getItem("mainTableDateEndFilter");
+
+      if (storedStartDate && storedEndDate) {
+        mainTableDateStartFilter.value = storedStartDate;
+        mainTableDateEndFilter.value = storedEndDate;
+      } else {
+        // Utiliser les dates par défaut : depuis la date la plus ancienne jusqu'à aujourd'hui
+        const today = new Date();
+        const todayStr = today.toISOString().split("T")[0];
+
+        // Chercher la date la plus ancienne dans toutes les livraisons
+        let minDate = null;
+        if (window.deliveries && window.deliveries.length > 0) {
+          window.deliveries.forEach((d) => {
+            let dDate = d.delivery_date || d.created_at;
+            if (dDate) {
+              let dateObj = new Date(dDate);
+              if (!isNaN(dateObj.getTime())) {
+                if (!minDate || dateObj < minDate) minDate = dateObj;
+              }
+            }
+          });
+        }
+
+        const minDateStr = minDate
+          ? minDate.toISOString().split("T")[0]
+          : todayStr;
+
+        mainTableDateStartFilter.value = minDateStr;
+        mainTableDateEndFilter.value = todayStr;
+
+        localStorage.setItem("mainTableDateStartFilter", minDateStr);
+        localStorage.setItem("mainTableDateEndFilter", todayStr);
+      }
+    };
+
+    // Événements pour la date de début
+    mainTableDateStartFilter.addEventListener("change", (e) => {
+      localStorage.setItem("mainTableDateStartFilter", e.target.value);
+      updateTableForDateRange(e.target.value, mainTableDateEndFilter.value);
+    });
+
+    // Événements pour la date de fin
+    mainTableDateEndFilter.addEventListener("change", (e) => {
+      localStorage.setItem("mainTableDateEndFilter", e.target.value);
+      updateTableForDateRange(mainTableDateStartFilter.value, e.target.value);
+    });
+
+    // Initialiser les dates par défaut après le chargement des données
+    setTimeout(() => {
+      initializeDefaultDates();
+      // Appliquer le filtrage initial
+      updateTableForDateRange(
+        mainTableDateStartFilter.value,
+        mainTableDateEndFilter.value
+      );
+    }, 500);
+  }
+
   await loadDeliveries(); // This now triggers applyCombinedFilters()
 
   // Initialize WebSocket connection AFTER initial data load
@@ -8464,61 +8639,7 @@ function mapStatus(status) {
     populateStatusFilter();
   }
 
-  // Initialisation et gestion des champs de date début/fin
-  if (mainTableDateStartFilter && mainTableDateEndFilter) {
-    // Fonction pour initialiser les dates par défaut
-    const initializeDefaultDates = () => {
-      const storedStartDate = localStorage.getItem("mainTableDateStartFilter");
-      const storedEndDate = localStorage.getItem("mainTableDateEndFilter");
-
-      if (storedStartDate && storedEndDate) {
-        mainTableDateStartFilter.value = storedStartDate;
-        mainTableDateEndFilter.value = storedEndDate;
-      } else {
-        // Utiliser les dates par défaut après le chargement des données
-        const defaultRange = getDefaultDateRange();
-        const startDateFormatted = formatDateForInput(defaultRange.startDate);
-        const endDateFormatted = formatDateForInput(defaultRange.endDate);
-
-        mainTableDateStartFilter.value = startDateFormatted;
-        mainTableDateEndFilter.value = endDateFormatted;
-
-        localStorage.setItem("mainTableDateStartFilter", startDateFormatted);
-        localStorage.setItem("mainTableDateEndFilter", endDateFormatted);
-      }
-    };
-
-    // Événements pour la date de début
-    mainTableDateStartFilter.addEventListener("change", (e) => {
-      localStorage.setItem("mainTableDateStartFilter", e.target.value);
-      applyCombinedFilters();
-    });
-
-    // Événements pour la date de fin
-    mainTableDateEndFilter.addEventListener("change", (e) => {
-      localStorage.setItem("mainTableDateEndFilter", e.target.value);
-      applyCombinedFilters();
-    });
-
-    // Initialiser les dates par défaut
-    // Si les données sont déjà chargées
-    if (deliveries && deliveries.length > 0) {
-      initializeDefaultDates();
-    } else {
-      // Sinon, attendre que les données se chargent
-      const originalLoadDeliveries = window.loadDeliveries;
-      if (typeof originalLoadDeliveries === "function") {
-        window.loadDeliveries = async function (...args) {
-          const result = await originalLoadDeliveries.apply(this, args);
-          // Initialiser les dates après le chargement
-          setTimeout(() => {
-            initializeDefaultDates();
-          }, 100);
-          return result;
-        };
-      }
-    }
-  }
+  // L'initialisation des champs de date est maintenant gérée après leur création dynamique
 
   if (searchButton) {
     searchButton.addEventListener("click", () => {

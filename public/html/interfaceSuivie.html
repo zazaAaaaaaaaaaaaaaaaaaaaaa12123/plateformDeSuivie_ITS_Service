@@ -391,6 +391,24 @@
             <option value="rejet">Rejet</option>
           </select>
 
+          <!-- Champs de filtre par date -->
+          <div class="d-flex gap-2 align-items-center">
+            <label for="mainTableDateStartFilter" class="form-label mb-0">Du:</label>
+            <input
+              type="date"
+              id="mainTableDateStartFilter"
+              class="form-control"
+              style="width: auto;"
+            />
+            <label for="mainTableDateEndFilter" class="form-label mb-0">Au:</label>
+            <input
+              type="date"
+              id="mainTableDateEndFilter"
+              class="form-control"
+              style="width: auto;"
+            />
+          </div>
+
           <button id="toggleSelectionBtn" class="icon-btn-company-color">
             <i class="fas fa-check-square"></i> Activer selection
           </button>
