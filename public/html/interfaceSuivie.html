@@ -240,7 +240,7 @@
         z-index: 11; /* Plus haut que les en-têtes de colonnes normales */
         cursor: pointer; /* Indique que le bandeau est cliquable */
       }
-      /* La première cellule du bandeau (pour N° et Date & Heure) reste neutre */
+      /* La première cellule du bandeau (pour N° et Date) reste neutre */
       .table thead tr:first-child th:nth-child(1) {
         background-color: #f8f9fa; /* Correspond à l'arrière-plan de l'en-tête normal */
         color: #495057; /* Correspond à la couleur de texte de l'en-tête normal */
@@ -503,7 +503,7 @@
               <!-- NOUVELLE LIGNE POUR LES BANDEAUX COLORÉS sdh-->
               <tr>
                 <th colspan="2" class="bg-transparent border-b-0"></th>
-                <!-- Pour N° et Date & Heure -->
+                <!-- Pour N° et Date -->
                 <th
                   colspan="16"
                   id="agentAcconierHeader"
@@ -532,7 +532,7 @@
                   N°
                   <span id="checkboxHeaderPlaceholder"></span>
                 </th>
-                <th>Date & Heure</th>
+                <th>Date</th>
                 <th class="sticky-col sticky-col-agent">Agent</th>
                 <th>Client (Nom)</th>
                 <th>Client (Tél)</th>

@@ -1589,7 +1589,7 @@ function mapStatus(status) {
       vertical-align: middle; /* Align the dot with the text */
     }
 
-    /* Styles pour la combinaison image + date/heure */
+    /* Styles pour la combinaison image + date */
     .eir-display-container {
       display: flex;
       flex-direction: column;
@@ -1978,7 +1978,7 @@ function mapStatus(status) {
     }
 
     /* Styles pour stabiliser d'autres colonnes importantes si nécessaire (ajuster les nombres d'enfants si l'ordre change) */
-    .table thead th:nth-child(2), /* Date & Heure */
+    .table thead th:nth-child(2), /* Date */
     .table tbody td:nth-child(2) {
         min-width: 130px;
     }
@@ -4263,75 +4263,11 @@ function mapStatus(status) {
         }
         // --- Fin affichage spécial TC ---
         else if (value instanceof Date && type === "datetime-local") {
-          // Si la date a une heure de 00:00:00, essayer d'utiliser l'heure réelle de création
-          if (
-            fieldName === "created_at" &&
-            value.getHours() === 0 &&
-            value.getMinutes() === 0 &&
-            value.getSeconds() === 0
-          ) {
-            // Tenter d'obtenir l'heure de création depuis les données détaillées des conteneurs
-            let realCreatedAt = null;
-            if (
-              delivery.containers_info &&
-              Object.keys(delivery.containers_info).length > 0
-            ) {
-              // Prendre la première date de création trouvée dans les conteneurs
-              for (const tcInfo of Object.values(delivery.containers_info)) {
-                if (tcInfo.created_at) {
-                  realCreatedAt = new Date(tcInfo.created_at);
-                  if (
-                    realCreatedAt.getHours() !== 0 ||
-                    realCreatedAt.getMinutes() !== 0 ||
-                    realCreatedAt.getSeconds() !== 0
-                  ) {
-                    break; // Utiliser cette heure si elle n'est pas 00:00:00
-                  }
-                }
-              }
-            }
-
-            // Si on a trouvé une heure réelle, l'utiliser, sinon utiliser l'heure actuelle avec la date originale
-            if (
-              realCreatedAt &&
-              (realCreatedAt.getHours() !== 0 ||
-                realCreatedAt.getMinutes() !== 0 ||
-                realCreatedAt.getSeconds() !== 0)
-            ) {
-              displayValue = realCreatedAt
-                .toLocaleString("fr-FR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                })
-                .replace(",", "");
-            } else {
-              // Utiliser la date originale avec l'heure actuelle comme approximation
-              const now = new Date();
-              const dateWithCurrentTime = new Date(value);
-              dateWithCurrentTime.setHours(
-                now.getHours(),
-                now.getMinutes(),
-                now.getSeconds()
-              );
-              displayValue = dateWithCurrentTime
-                .toLocaleString("fr-FR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                })
-                .replace(",", "");
-            }
+          // Pour created_at, afficher seulement la date (sans l'heure)
+          if (fieldName === "created_at") {
+            displayValue = value.toLocaleDateString("fr-FR");
           } else {
-            // Utilisation normale si l'heure n'est pas 00:00:00
+            // Pour d'autres champs datetime-local, garder l'affichage complet
             displayValue = value
               .toLocaleString("fr-FR", {
                 year: "numeric",
@@ -4814,7 +4750,7 @@ function mapStatus(status) {
 
       // Ordre strictement synchronisé avec l'en-tête HTML
       // N° (déjà géré par la logique selectionMode ou index + 1)
-      createCell(delivery.created_at, "created_at", "datetime-local", {}); // Date & Heure
+      createCell(delivery.created_at, "created_at", "datetime-local", {}); // Date
       createCell(delivery.employee_name, "employee_name"); // Agent
       createCell(delivery.client_name, "client_name"); // Client (Nom)
       createCell(delivery.client_phone, "client_phone"); // Client (Tél)
@@ -5156,87 +5092,11 @@ function mapStatus(status) {
       // If it's a string, attempt to parse it as a date and format
       const dateObj = new Date(displayValue);
       if (!isNaN(dateObj.getTime())) {
-        // Si la date a une heure de 00:00:00, essayer d'utiliser l'heure réelle de création
-        if (
-          fieldName === "created_at" &&
-          dateObj.getHours() === 0 &&
-          dateObj.getMinutes() === 0 &&
-          dateObj.getSeconds() === 0
-        ) {
-          // Chercher dans les données de livraison pour obtenir une heure plus précise
-          const deliveryRow = cell.closest("tr");
-          let delivery = null;
-
-          // Essayer de récupérer les données de livraison depuis l'index de la ligne
-          if (deliveryRow && window.deliveries) {
-            const rowIndex = Array.from(
-              deliveryRow.parentNode.children
-            ).indexOf(deliveryRow);
-            delivery = window.deliveries[rowIndex];
-          }
-
-          let realCreatedAt = null;
-          if (
-            delivery &&
-            delivery.containers_info &&
-            Object.keys(delivery.containers_info).length > 0
-          ) {
-            // Prendre la première date de création trouvée dans les conteneurs
-            for (const tcInfo of Object.values(delivery.containers_info)) {
-              if (tcInfo.created_at) {
-                realCreatedAt = new Date(tcInfo.created_at);
-                if (
-                  realCreatedAt.getHours() !== 0 ||
-                  realCreatedAt.getMinutes() !== 0 ||
-                  realCreatedAt.getSeconds() !== 0
-                ) {
-                  break; // Utiliser cette heure si elle n'est pas 00:00:00
-                }
-              }
-            }
-          }
-
-          // Si on a trouvé une heure réelle, l'utiliser, sinon utiliser l'heure actuelle avec la date originale
-          if (
-            realCreatedAt &&
-            (realCreatedAt.getHours() !== 0 ||
-              realCreatedAt.getMinutes() !== 0 ||
-              realCreatedAt.getSeconds() !== 0)
-          ) {
-            cell.textContent = realCreatedAt
-              .toLocaleString("fr-FR", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: false,
-              })
-              .replace(",", "");
-          } else {
-            // Utiliser la date originale avec l'heure actuelle comme approximation
-            const now = new Date();
-            const dateWithCurrentTime = new Date(dateObj);
-            dateWithCurrentTime.setHours(
-              now.getHours(),
-              now.getMinutes(),
-              now.getSeconds()
-            );
-            cell.textContent = dateWithCurrentTime
-              .toLocaleString("fr-FR", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: false,
-              })
-              .replace(",", "");
-          }
+        // Pour created_at, afficher seulement la date (sans l'heure)
+        if (fieldName === "created_at") {
+          cell.textContent = dateObj.toLocaleDateString("fr-FR");
         } else {
-          // Utilisation normale si l'heure n'est pas 00:00:00
+          // Pour d'autres champs datetime-local, garder l'affichage complet
           cell.textContent = dateObj
             .toLocaleString("fr-FR", {
               year: "numeric",
