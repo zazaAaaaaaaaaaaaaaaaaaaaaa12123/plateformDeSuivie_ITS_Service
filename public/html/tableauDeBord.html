@@ -2610,6 +2610,7 @@
                     data.type === "dossier-mise-en-livraison" ||
                     data.type === "container_status_update" ||
                     data.type === "dossier-quitte-acconier" ||
+                    data.type === "dossier-entre-en-livraison" ||
                     data.forceCounterUpdate)
                 ) {
                   console.log(
@@ -2617,6 +2618,21 @@
                     data.type
                   );
                   console.log("[DASHBOARD] Action détectée:", data.action);
+
+                  // Si c'est un dossier qui entre en livraison (depuis resp_acconier)
+                  if (
+                    data.type === "dossier-entre-en-livraison" &&
+                    data.action ===
+                      "increment_mise_en_livraison_decrement_attente"
+                  ) {
+                    console.log(
+                      "[DASHBOARD] 🚛⬆️ Dossier entré en livraison, mise à jour des compteurs"
+                    );
+                    // Mise à jour immédiate forcée
+                    setTimeout(() => {
+                      window.updateCardCounters();
+                    }, 100);
+                  }
 
                   // Si c'est un dossier qui quitte resp_acconier (mis en livraison)
                   if (

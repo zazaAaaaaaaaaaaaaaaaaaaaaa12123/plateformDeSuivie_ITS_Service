@@ -3980,7 +3980,7 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
     });
   }
   try {
-    // Récupère la livraison existante
+    // Récupère la livraison existante pour comparaison
     const result = await pool.query(
       "SELECT * FROM livraison_conteneur WHERE id = $1",
       [id]
@@ -3990,7 +3990,10 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Livraison non trouvée" });
     }
-    let bl_statuses = result.rows[0].bl_statuses || {};
+
+    const existingDelivery = result.rows[0];
+
+    let bl_statuses = existingDelivery.bl_statuses || {};
     if (typeof bl_statuses === "string") {
       try {
         bl_statuses = JSON.parse(bl_statuses);
@@ -3998,19 +4001,29 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
         bl_statuses = {};
       }
     }
+
+    // Garde l'ancien statut pour détecter le changement
+    const previousStatus = existingDelivery.delivery_status_acconier;
+    const previousBLStatus = bl_statuses[blNumber];
+
     bl_statuses[blNumber] = status;
     // Vérifie si tous les BL sont en 'mise_en_livraison'
     let blList = [];
-    if (result.rows[0].bl_number) {
-      if (Array.isArray(result.rows[0].bl_number)) {
-        blList = result.rows[0].bl_number.filter(Boolean);
-      } else if (typeof result.rows[0].bl_number === "string") {
-        blList = result.rows[0].bl_number.split(/[,;\s]+/).filter(Boolean);
+    if (existingDelivery.bl_number) {
+      if (Array.isArray(existingDelivery.bl_number)) {
+        blList = existingDelivery.bl_number.filter(Boolean);
+      } else if (typeof existingDelivery.bl_number === "string") {
+        blList = existingDelivery.bl_number.split(/[,;\s]+/).filter(Boolean);
       }
     }
     const allMiseEnLivraison =
       blList.length > 0 &&
       blList.every((bl) => bl_statuses[bl] === "mise_en_livraison");
+
+    // Détecte le changement d'état du dossier
+    const wasAllMiseEnLivraison =
+      previousStatus === "mise_en_livraison_acconier";
+    const willBeAllMiseEnLivraison = allMiseEnLivraison;
     // Sauvegarde en base
     let updateQuery = "UPDATE livraison_conteneur SET bl_statuses = $1";
     let updateValues = [JSON.stringify(bl_statuses)];
@@ -4030,18 +4043,20 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
         .json({ success: false, message: "Erreur lors de la mise à jour." });
     }
     const updatedDelivery = updateRes.rows[0];
-    // Envoi WebSocket à tous les clients (BL et statut dossier)
+    // Envoi WebSocket à tous les clients
     const wss = req.app.get("wss") || global.wss;
     const alertMsg = `Dossier '${
       updatedDelivery.dossier_number || updatedDelivery.id
     }' a été mis en livraison.`;
 
-    // Si le dossier passe en "mise_en_livraison_acconier", il disparaît du tableau resp_acconier
-    // donc on doit décrémenter la carte "Dossiers mis en livraison"
-    if (allMiseEnLivraison) {
+    // Gestion des changements d'état pour le dashboard
+    if (!wasAllMiseEnLivraison && willBeAllMiseEnLivraison) {
+      // Le dossier vient de passer en "mise_en_livraison_acconier"
+      // Il va disparaître du tableau resp_acconier, donc décrémenter "En attente de paiement"
+      // et incrémenter "Dossiers mis en livraison"
       const dashboardPayload = JSON.stringify({
-        type: "dossier-quitte-acconier",
-        action: "decrement_mise_en_livraison",
+        type: "dossier-entre-en-livraison",
+        action: "increment_mise_en_livraison_decrement_attente",
         dossierNumber: updatedDelivery.dossier_number || updatedDelivery.id,
         message: alertMsg,
         forceCounterUpdate: true,
@@ -4054,6 +4069,12 @@ app.patch("/deliveries/:id/bl-status", async (req, res) => {
           }
         });
       }
+
+      console.log(
+        `[TRANSITION] 📋→🚛 Dossier ${
+          updatedDelivery.dossier_number || updatedDelivery.id
+        } : en_attente → mise_en_livraison`
+      );
     }
 
     // Message BL (pour la colonne BL)
@@ -4280,29 +4301,45 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
         );
       }
 
-      // Logique de comptage basée sur l'état réel des conteneurs
+      // Logique de comptage améliorée basée sur l'état réel des conteneurs
       if (isDeliveryFullyDelivered(delivery)) {
-        // Dossier complètement livré
+        // Cas 1: Dossier complètement livré (tous les conteneurs livrés)
         counts.livres++;
-        console.log(`[COUNTS] Dossier livré: ${delivery.dossier_number}`);
-      } else if (
-        hasPartialDelivery(delivery) ||
-        status === "mise_en_livraison_acconier" ||
-        status === "mise_en_livraison"
-      ) {
-        // Dossier en cours de livraison (partiellement livré ou mis en livraison)
+        console.log(`[COUNTS] ✅ Dossier livré: ${delivery.dossier_number}`);
+      } else if (hasPartialDelivery(delivery)) {
+        // Cas 2: Dossier en cours de livraison (au moins un conteneur livré)
         counts.mise_en_livraison++;
         console.log(
-          `[COUNTS] Dossier en livraison: ${delivery.dossier_number}`
+          `[COUNTS] 🚛 Dossier en livraison (conteneurs livrés): ${delivery.dossier_number}`
+        );
+      } else if (status === "mise_en_livraison_acconier") {
+        // Cas 3: Dossier mis en livraison par l'acconier (mais aucun conteneur livré encore)
+        counts.mise_en_livraison++;
+        console.log(
+          `[COUNTS] 📋 Dossier mis en livraison (acconier): ${delivery.dossier_number}`
+        );
+      } else if (status === "mise_en_livraison") {
+        // Cas 4: Dossier mis en livraison général (mais aucun conteneur livré encore)
+        counts.mise_en_livraison++;
+        console.log(
+          `[COUNTS] 🚚 Dossier mis en livraison (général): ${delivery.dossier_number}`
         );
       } else if (
         status === "en attente de paiement" ||
         status === "pending_acconier" ||
         !status
       ) {
-        // Dossier en attente de paiement
+        // Cas 5: Dossier en attente de paiement
         counts.en_attente_paiement++;
-        console.log(`[COUNTS] Dossier en attente: ${delivery.dossier_number}`);
+        console.log(
+          `[COUNTS] ⏳ Dossier en attente: ${delivery.dossier_number}`
+        );
+      } else {
+        // Cas 6: Autres statuts - compter en attente par défaut
+        counts.en_attente_paiement++;
+        console.log(
+          `[COUNTS] ❓ Dossier statut inconnu (${status}): ${delivery.dossier_number}`
+        );
       }
 
       // Logique pour "En retard" (cross-cutting)
