@@ -4376,12 +4376,92 @@ function mapStatus(status) {
           if (!value || value === "pending_acconier") {
             displayStatus = "awaiting_payment_acconier";
           }
-          const statusInfo = getStatusInfo(displayStatus);
-          const iconHtml = statusInfo.iconClass
-            ? `<i class=\"fas ${statusInfo.iconClass} mr-1\" style=\"color:${statusInfo.hexColor};\"></i>`
-            : "";
-          cell.innerHTML = `<span class=\"${statusInfo.tailwindColorClass}\">${iconHtml} ${statusInfo.text}</span>`;
-          displayValue = statusInfo.text;
+
+          // LOGIQUE DE DÉTECTION DES DOSSIERS EN RETARD
+          let isOverdue = false;
+          let overrideStatusText = null;
+          let overrideStatusColor = null;
+          let overrideStatusBg = null;
+
+          // Vérifier si c'est en retard seulement pour "en attente de paiement"
+          if (displayStatus === "awaiting_payment_acconier") {
+            // Utiliser created_at pour la date de création du dossier
+            let creationDate = null;
+            if (delivery.created_at) {
+              creationDate = new Date(delivery.created_at);
+            } else if (delivery.delivery_date) {
+              creationDate = new Date(delivery.delivery_date);
+            }
+
+            if (creationDate) {
+              const currentDate = new Date();
+              const daysDifference = Math.floor(
+                (currentDate - creationDate) / (1000 * 60 * 60 * 24)
+              );
+
+              // Log de débogage
+              console.log(
+                `[DEBUG RETARD ACCONIER] Livraison ID: ${delivery.id || "N/A"}`
+              );
+              console.log(
+                `[DEBUG RETARD ACCONIER] Date création: ${
+                  delivery.created_at || delivery.delivery_date
+                }`
+              );
+              console.log(
+                `[DEBUG RETARD ACCONIER] Jours de différence: ${daysDifference}`
+              );
+              console.log(
+                `[DEBUG RETARD ACCONIER] Statut acconier: "${displayStatus}"`
+              );
+
+              if (daysDifference > 2) {
+                isOverdue = true;
+                overrideStatusText = "Dossier en retard";
+                overrideStatusColor = "#fff";
+                overrideStatusBg = "#dc2626";
+                console.log(
+                  `[DEBUG RETARD ACCONIER] ✅ DOSSIER EN RETARD DÉTECTÉ!`
+                );
+              }
+            }
+          }
+
+          if (isOverdue) {
+            // Affichage spécial pour dossier en retard avec clignotement
+            const box = document.createElement("div");
+            box.style.display = "inline-block";
+            box.style.padding = "4px 12px";
+            box.style.borderRadius = "8px";
+            box.style.fontWeight = "bold";
+            box.style.fontSize = "0.98em";
+            box.style.letterSpacing = "0.5px";
+            box.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
+            box.style.border = "1.5px solid #d1d5db";
+            box.style.background = overrideStatusBg;
+            box.style.color = overrideStatusColor;
+            box.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>${overrideStatusText}`;
+
+            // Ajouter l'animation clignotante
+            box.style.animation = "blinkRed 1.5s infinite";
+            box.classList.add("overdue-status");
+
+            cell.innerHTML = "";
+            cell.appendChild(box);
+            console.log(
+              `[DEBUG RETARD ACCONIER] ✅ Animation clignotante appliquée!`
+            );
+          } else {
+            // Affichage normal du statut acconier
+            const statusInfo = getStatusInfo(displayStatus);
+            const iconHtml = statusInfo.iconClass
+              ? `<i class=\"fas ${statusInfo.iconClass} mr-1\" style=\"color:${statusInfo.hexColor};\"></i>`
+              : "";
+            cell.innerHTML = `<span class=\"${statusInfo.tailwindColorClass}\">${iconHtml} ${statusInfo.text}</span>`;
+          }
+          displayValue = isOverdue
+            ? overrideStatusText
+            : getStatusInfo(displayStatus).text;
         } else {
           displayValue = value || "-"; // Changed from "N/A" to "-"
         }
@@ -4722,7 +4802,6 @@ function mapStatus(status) {
         let statusText = "-";
         let statusColor = "#374151";
         let statusBg = "#f8fafc";
-        let isOverdue = false;
 
         // Vérifier si la livraison a des conteneurs et leurs statuts
         if (
@@ -4762,83 +4841,7 @@ function mapStatus(status) {
               statusBg = "#f3f4f6";
             }
 
-            // Vérifier si c'est en retard (pour tous les cas sauf livraison complète)
-            if (deliveredContainers.length < tcList.length) {
-              // Utiliser created_at pour la date de création du dossier
-              let creationDate = null;
-              if (delivery.created_at) {
-                creationDate = new Date(delivery.created_at);
-              } else if (delivery.delivery_date) {
-                creationDate = new Date(delivery.delivery_date);
-              }
-
-              if (creationDate) {
-                const currentDate = new Date();
-                const daysDifference = Math.floor(
-                  (currentDate - creationDate) / (1000 * 60 * 60 * 24)
-                );
-
-                // Log de débogage
-                console.log(
-                  `[DEBUG RETARD] Livraison ID: ${delivery.id || "N/A"}`
-                );
-                console.log(
-                  `[DEBUG RETARD] Date création: ${
-                    delivery.created_at || delivery.delivery_date
-                  }`
-                );
-                console.log(
-                  `[DEBUG RETARD] Jours de différence: ${daysDifference}`
-                );
-                console.log(
-                  `[DEBUG RETARD] Statut delivery.status: "${
-                    delivery.status || "N/A"
-                  }"`
-                );
-
-                // Vérifier si le statut est "en attente de paiement" et pas "mise en livraison"
-                const isEnAttentePaiement =
-                  delivery.status &&
-                  (delivery.status
-                    .toLowerCase()
-                    .includes("en attente de paiement") ||
-                    delivery.status === "pending_acconier");
-
-                const isMiseEnLivraison =
-                  delivery.status &&
-                  (delivery.status
-                    .toLowerCase()
-                    .includes("mise en livraison") ||
-                    delivery.status === "mise_en_livraison_acconier");
-
-                console.log(
-                  `[DEBUG RETARD] Est en attente de paiement: ${isEnAttentePaiement}`
-                );
-                console.log(
-                  `[DEBUG RETARD] Est mise en livraison: ${isMiseEnLivraison}`
-                );
-                console.log(
-                  `[DEBUG RETARD] Condition retard (>2 jours ET en attente paiement ET pas mise en livraison): ${
-                    daysDifference > 2 &&
-                    isEnAttentePaiement &&
-                    !isMiseEnLivraison
-                  }`
-                );
-
-                if (
-                  daysDifference > 2 &&
-                  isEnAttentePaiement &&
-                  !isMiseEnLivraison
-                ) {
-                  isOverdue = true;
-                  statusText =
-                    '<i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Dossier en retard';
-                  statusColor = "#fff";
-                  statusBg = "#dc2626";
-                  console.log(`[DEBUG RETARD] ✅ DOSSIER EN RETARD DÉTECTÉ!`);
-                }
-              }
-            }
+            // Plus de logique de retard ici - déplacée vers delivery_status_acconier
           }
         }
 
@@ -4854,13 +4857,6 @@ function mapStatus(status) {
         box.style.background = statusBg;
         box.style.color = statusColor;
         box.innerHTML = statusText;
-
-        // Ajouter l'animation clignotante pour les dossiers en retard
-        if (isOverdue) {
-          box.style.animation = "blinkRed 1.5s infinite";
-          box.classList.add("overdue-status");
-          console.log(`[DEBUG RETARD] ✅ Animation clignotante appliquée!`);
-        }
 
         // Ajouter les événements de survol pour le tooltip
         box.style.cursor = "pointer";
