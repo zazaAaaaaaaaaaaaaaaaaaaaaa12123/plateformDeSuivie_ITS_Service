@@ -4284,72 +4284,114 @@ function mapStatus(status) {
         }
         // --- Fin affichage spécial TC ---
         else if (value instanceof Date && type === "datetime-local") {
-          // Si la date a une heure de 00:00:00, essayer d'utiliser l'heure réelle de création
+          // Si la date a une heure de 00:00:00, essayer d'utiliser l'heure réelle de livraison
           if (
             fieldName === "created_at" &&
             value.getHours() === 0 &&
             value.getMinutes() === 0 &&
             value.getSeconds() === 0
           ) {
-            // Tenter d'obtenir l'heure de création depuis les données détaillées des conteneurs
-            let realCreatedAt = null;
+            // PRIORITÉ 1: Utiliser delivery_time si disponible (heure réelle de livraison)
             if (
-              delivery.containers_info &&
-              Object.keys(delivery.containers_info).length > 0
+              delivery.delivery_time &&
+              delivery.delivery_time.trim() !== ""
             ) {
-              // Prendre la première date de création trouvée dans les conteneurs
-              for (const tcInfo of Object.values(delivery.containers_info)) {
-                if (tcInfo.created_at) {
-                  realCreatedAt = new Date(tcInfo.created_at);
-                  if (
-                    realCreatedAt.getHours() !== 0 ||
-                    realCreatedAt.getMinutes() !== 0 ||
-                    realCreatedAt.getSeconds() !== 0
-                  ) {
-                    break; // Utiliser cette heure si elle n'est pas 00:00:00
+              // Combiner delivery_date avec delivery_time pour une date/heure précise
+              let preciseDateTime = null;
+              if (delivery.delivery_date) {
+                // Utiliser delivery_date + delivery_time
+                const dateStr = new Date(delivery.delivery_date)
+                  .toISOString()
+                  .split("T")[0];
+                const timeStr = delivery.delivery_time.trim();
+                preciseDateTime = new Date(`${dateStr}T${timeStr}`);
+              } else {
+                // Utiliser created_at date + delivery_time
+                const dateStr = value.toISOString().split("T")[0];
+                const timeStr = delivery.delivery_time.trim();
+                preciseDateTime = new Date(`${dateStr}T${timeStr}`);
+              }
+
+              if (preciseDateTime && !isNaN(preciseDateTime.getTime())) {
+                displayValue = preciseDateTime
+                  .toLocaleString("fr-FR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: false,
+                  })
+                  .replace(",", "");
+              } else {
+                // Fallback si le parsing échoue
+                displayValue = `${value.toLocaleDateString("fr-FR")} ${
+                  delivery.delivery_time
+                }`;
+              }
+            }
+            // PRIORITÉ 2: Tenter d'obtenir l'heure de création depuis les données détaillées des conteneurs
+            else {
+              let realCreatedAt = null;
+              if (
+                delivery.containers_info &&
+                Object.keys(delivery.containers_info).length > 0
+              ) {
+                // Prendre la première date de création trouvée dans les conteneurs
+                for (const tcInfo of Object.values(delivery.containers_info)) {
+                  if (tcInfo.created_at) {
+                    realCreatedAt = new Date(tcInfo.created_at);
+                    if (
+                      realCreatedAt.getHours() !== 0 ||
+                      realCreatedAt.getMinutes() !== 0 ||
+                      realCreatedAt.getSeconds() !== 0
+                    ) {
+                      break; // Utiliser cette heure si elle n'est pas 00:00:00
+                    }
                   }
                 }
               }
-            }
 
-            // Si on a trouvé une heure réelle, l'utiliser, sinon utiliser l'heure actuelle avec la date originale
-            if (
-              realCreatedAt &&
-              (realCreatedAt.getHours() !== 0 ||
-                realCreatedAt.getMinutes() !== 0 ||
-                realCreatedAt.getSeconds() !== 0)
-            ) {
-              displayValue = realCreatedAt
-                .toLocaleString("fr-FR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                })
-                .replace(",", "");
-            } else {
-              // Utiliser la date originale avec l'heure actuelle comme approximation
-              const now = new Date();
-              const dateWithCurrentTime = new Date(value);
-              dateWithCurrentTime.setHours(
-                now.getHours(),
-                now.getMinutes(),
-                now.getSeconds()
-              );
-              displayValue = dateWithCurrentTime
-                .toLocaleString("fr-FR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                })
-                .replace(",", "");
+              // Si on a trouvé une heure réelle, l'utiliser, sinon utiliser l'heure actuelle avec la date originale
+              if (
+                realCreatedAt &&
+                (realCreatedAt.getHours() !== 0 ||
+                  realCreatedAt.getMinutes() !== 0 ||
+                  realCreatedAt.getSeconds() !== 0)
+              ) {
+                displayValue = realCreatedAt
+                  .toLocaleString("fr-FR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: false,
+                  })
+                  .replace(",", "");
+              } else {
+                // PRIORITÉ 3: Utiliser l'heure actuelle comme approximation
+                const now = new Date();
+                const dateWithCurrentTime = new Date(value);
+                dateWithCurrentTime.setHours(
+                  now.getHours(),
+                  now.getMinutes(),
+                  now.getSeconds()
+                );
+                displayValue = dateWithCurrentTime
+                  .toLocaleString("fr-FR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: false,
+                  })
+                  .replace(",", "");
+              }
             }
           } else {
             // Utilisation normale si l'heure n'est pas 00:00:00
@@ -4921,6 +4963,7 @@ function mapStatus(status) {
       createCell(delivery.driver_name, "driver_name", "text", {}); // Chauffeur
       createCell(delivery.driver_phone, "driver_phone", "text", {}); // Tél. Chauffeur
       createCell(delivery.delivery_date, "delivery_date", "date", {}); // Date Livraison
+      createCell(delivery.delivery_time, "delivery_time", "text", {}); // Heure Livraison
 
       // === Statut basé sur les conteneurs ===
       (function () {
@@ -5129,7 +5172,7 @@ function mapStatus(status) {
       cell.innerHTML = (displayValue || "-").replace(/\n/g, "<br>");
     } else if (type === "datetime-local" && displayValue instanceof Date) {
       // Pour created_at qui est un objet Date
-      // Si la date a une heure de 00:00:00, essayer d'utiliser l'heure réelle de création
+      // Si la date a une heure de 00:00:00, essayer d'utiliser l'heure réelle de livraison
       if (
         fieldName === "created_at" &&
         displayValue.getHours() === 0 &&
@@ -5148,104 +5191,49 @@ function mapStatus(status) {
           delivery = window.deliveries[rowIndex];
         }
 
-        let realCreatedAt = null;
+        // PRIORITÉ 1: Utiliser delivery_time si disponible (heure réelle de livraison)
         if (
           delivery &&
-          delivery.containers_info &&
-          Object.keys(delivery.containers_info).length > 0
+          delivery.delivery_time &&
+          delivery.delivery_time.trim() !== ""
         ) {
-          // Prendre la première date de création trouvée dans les conteneurs
-          for (const tcInfo of Object.values(delivery.containers_info)) {
-            if (tcInfo.created_at) {
-              realCreatedAt = new Date(tcInfo.created_at);
-              if (
-                realCreatedAt.getHours() !== 0 ||
-                realCreatedAt.getMinutes() !== 0 ||
-                realCreatedAt.getSeconds() !== 0
-              ) {
-                break; // Utiliser cette heure si elle n'est pas 00:00:00
-              }
-            }
-          }
-        }
-
-        // Si on a trouvé une heure réelle, l'utiliser, sinon utiliser l'heure actuelle avec la date originale
-        if (
-          realCreatedAt &&
-          (realCreatedAt.getHours() !== 0 ||
-            realCreatedAt.getMinutes() !== 0 ||
-            realCreatedAt.getSeconds() !== 0)
-        ) {
-          cell.textContent = realCreatedAt
-            .toLocaleString("fr-FR", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-              hour12: false,
-            })
-            .replace(",", "");
-        } else {
-          // Utiliser la date originale avec l'heure actuelle comme approximation
-          const now = new Date();
-          const dateWithCurrentTime = new Date(displayValue);
-          dateWithCurrentTime.setHours(
-            now.getHours(),
-            now.getMinutes(),
-            now.getSeconds()
-          );
-          cell.textContent = dateWithCurrentTime
-            .toLocaleString("fr-FR", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-              hour12: false,
-            })
-            .replace(",", "");
-        }
-      } else {
-        // Utilisation normale si l'heure n'est pas 00:00:00
-        cell.textContent = displayValue
-          .toLocaleString("fr-FR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false,
-          })
-          .replace(",", "");
-      }
-    } else if (type === "datetime-local" && typeof displayValue === "string") {
-      // For created_at from backend (string)
-      // If it's a string, attempt to parse it as a date and format
-      const dateObj = new Date(displayValue);
-      if (!isNaN(dateObj.getTime())) {
-        // Si la date a une heure de 00:00:00, essayer d'utiliser l'heure réelle de création
-        if (
-          fieldName === "created_at" &&
-          dateObj.getHours() === 0 &&
-          dateObj.getMinutes() === 0 &&
-          dateObj.getSeconds() === 0
-        ) {
-          // Chercher dans les données de livraison pour obtenir une heure plus précise
-          const deliveryRow = cell.closest("tr");
-          let delivery = null;
-
-          // Essayer de récupérer les données de livraison depuis l'index de la ligne
-          if (deliveryRow && window.deliveries) {
-            const rowIndex = Array.from(
-              deliveryRow.parentNode.children
-            ).indexOf(deliveryRow);
-            delivery = window.deliveries[rowIndex];
+          // Combiner delivery_date avec delivery_time pour une date/heure précise
+          let preciseDateTime = null;
+          if (delivery.delivery_date) {
+            // Utiliser delivery_date + delivery_time
+            const dateStr = new Date(delivery.delivery_date)
+              .toISOString()
+              .split("T")[0];
+            const timeStr = delivery.delivery_time.trim();
+            preciseDateTime = new Date(`${dateStr}T${timeStr}`);
+          } else {
+            // Utiliser created_at date + delivery_time
+            const dateStr = displayValue.toISOString().split("T")[0];
+            const timeStr = delivery.delivery_time.trim();
+            preciseDateTime = new Date(`${dateStr}T${timeStr}`);
           }
 
+          if (preciseDateTime && !isNaN(preciseDateTime.getTime())) {
+            cell.textContent = preciseDateTime
+              .toLocaleString("fr-FR", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+              })
+              .replace(",", "");
+          } else {
+            // Fallback si le parsing échoue
+            cell.textContent = `${displayValue.toLocaleDateString("fr-FR")} ${
+              delivery.delivery_time
+            }`;
+          }
+        }
+        // PRIORITÉ 2: Tenter d'obtenir l'heure de création depuis les données détaillées des conteneurs
+        else {
           let realCreatedAt = null;
           if (
             delivery &&
@@ -5286,9 +5274,9 @@ function mapStatus(status) {
               })
               .replace(",", "");
           } else {
-            // Utiliser la date originale avec l'heure actuelle comme approximation
+            // PRIORITÉ 3: Utiliser l'heure actuelle comme approximation
             const now = new Date();
-            const dateWithCurrentTime = new Date(dateObj);
+            const dateWithCurrentTime = new Date(displayValue);
             dateWithCurrentTime.setHours(
               now.getHours(),
               now.getMinutes(),
@@ -5305,6 +5293,149 @@ function mapStatus(status) {
                 hour12: false,
               })
               .replace(",", "");
+          }
+        }
+      } else {
+        // Utilisation normale si l'heure n'est pas 00:00:00
+        cell.textContent = displayValue
+          .toLocaleString("fr-FR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          })
+          .replace(",", "");
+      }
+    } else if (type === "datetime-local" && typeof displayValue === "string") {
+      // For created_at from backend (string)
+      // If it's a string, attempt to parse it as a date and format
+      const dateObj = new Date(displayValue);
+      if (!isNaN(dateObj.getTime())) {
+        // Si la date a une heure de 00:00:00, essayer d'utiliser l'heure réelle de livraison
+        if (
+          fieldName === "created_at" &&
+          dateObj.getHours() === 0 &&
+          dateObj.getMinutes() === 0 &&
+          dateObj.getSeconds() === 0
+        ) {
+          // Chercher dans les données de livraison pour obtenir une heure plus précise
+          const deliveryRow = cell.closest("tr");
+          let delivery = null;
+
+          // Essayer de récupérer les données de livraison depuis l'index de la ligne
+          if (deliveryRow && window.deliveries) {
+            const rowIndex = Array.from(
+              deliveryRow.parentNode.children
+            ).indexOf(deliveryRow);
+            delivery = window.deliveries[rowIndex];
+          }
+
+          // PRIORITÉ 1: Utiliser delivery_time si disponible (heure réelle de livraison)
+          if (
+            delivery &&
+            delivery.delivery_time &&
+            delivery.delivery_time.trim() !== ""
+          ) {
+            // Combiner delivery_date avec delivery_time pour une date/heure précise
+            let preciseDateTime = null;
+            if (delivery.delivery_date) {
+              // Utiliser delivery_date + delivery_time
+              const dateStr = new Date(delivery.delivery_date)
+                .toISOString()
+                .split("T")[0];
+              const timeStr = delivery.delivery_time.trim();
+              preciseDateTime = new Date(`${dateStr}T${timeStr}`);
+            } else {
+              // Utiliser created_at date + delivery_time
+              const dateStr = dateObj.toISOString().split("T")[0];
+              const timeStr = delivery.delivery_time.trim();
+              preciseDateTime = new Date(`${dateStr}T${timeStr}`);
+            }
+
+            if (preciseDateTime && !isNaN(preciseDateTime.getTime())) {
+              cell.textContent = preciseDateTime
+                .toLocaleString("fr-FR", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                })
+                .replace(",", "");
+            } else {
+              // Fallback si le parsing échoue
+              cell.textContent = `${dateObj.toLocaleDateString("fr-FR")} ${
+                delivery.delivery_time
+              }`;
+            }
+          }
+          // PRIORITÉ 2: Tenter d'obtenir l'heure de création depuis les données détaillées des conteneurs
+          else {
+            let realCreatedAt = null;
+            if (
+              delivery &&
+              delivery.containers_info &&
+              Object.keys(delivery.containers_info).length > 0
+            ) {
+              // Prendre la première date de création trouvée dans les conteneurs
+              for (const tcInfo of Object.values(delivery.containers_info)) {
+                if (tcInfo.created_at) {
+                  realCreatedAt = new Date(tcInfo.created_at);
+                  if (
+                    realCreatedAt.getHours() !== 0 ||
+                    realCreatedAt.getMinutes() !== 0 ||
+                    realCreatedAt.getSeconds() !== 0
+                  ) {
+                    break; // Utiliser cette heure si elle n'est pas 00:00:00
+                  }
+                }
+              }
+            }
+
+            // Si on a trouvé une heure réelle, l'utiliser, sinon utiliser l'heure actuelle avec la date originale
+            if (
+              realCreatedAt &&
+              (realCreatedAt.getHours() !== 0 ||
+                realCreatedAt.getMinutes() !== 0 ||
+                realCreatedAt.getSeconds() !== 0)
+            ) {
+              cell.textContent = realCreatedAt
+                .toLocaleString("fr-FR", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                })
+                .replace(",", "");
+            } else {
+              // PRIORITÉ 3: Utiliser l'heure actuelle comme approximation
+              const now = new Date();
+              const dateWithCurrentTime = new Date(dateObj);
+              dateWithCurrentTime.setHours(
+                now.getHours(),
+                now.getMinutes(),
+                now.getSeconds()
+              );
+              cell.textContent = dateWithCurrentTime
+                .toLocaleString("fr-FR", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                })
+                .replace(",", "");
+            }
           }
         } else {
           // Utilisation normale si l'heure n'est pas 00:00:00
