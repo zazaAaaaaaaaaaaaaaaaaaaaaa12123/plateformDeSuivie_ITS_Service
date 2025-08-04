@@ -330,7 +330,7 @@ document.addEventListener("DOMContentLoaded", function () {
               thStatut.innerHTML = `<span style=\"font-weight:bold;\">Statut</span>`;
             }
           }
-          // Mise à jour de la cellule Statut de la ligne concernée uniquement
+          // 🔧 CORRECTION : Mise à jour de la cellule Statut avec données JSON synchronisées
           if (
             typeof data.deliveryId !== "undefined" &&
             typeof data.deliveredCount === "number" &&
@@ -342,23 +342,59 @@ document.addEventListener("DOMContentLoaded", function () {
             if (row) {
               const statutCell = row.querySelector("td[data-col-id='statut']");
               if (statutCell) {
+                // S'assurer que la livraison a des données JSON synchronisées
+                const delivery = window.allDeliveries.find(
+                  (d) => d.id === data.deliveryId
+                );
+
+                let realTotal = data.totalCount;
+                let realDelivered = data.deliveredCount;
+
+                // Si on a les données JSON, les utiliser pour le calcul exact
                 if (
-                  data.deliveredCount === data.totalCount &&
-                  data.totalCount > 0
+                  delivery &&
+                  delivery.container_numbers_list &&
+                  Array.isArray(delivery.container_numbers_list)
                 ) {
+                  realTotal = delivery.container_numbers_list.length;
+                  if (
+                    delivery.container_statuses &&
+                    typeof delivery.container_statuses === "object"
+                  ) {
+                    realDelivered = delivery.container_numbers_list.filter(
+                      (tc) => {
+                        const s = delivery.container_statuses[tc];
+                        return s === "livre" || s === "livré";
+                      }
+                    ).length;
+                  }
+                  console.log(
+                    `[WEBSOCKET UPDATE] Utilisation données JSON: ${realDelivered}/${realTotal} livrés`
+                  );
+                } else {
+                  console.log(
+                    `[WEBSOCKET UPDATE] Utilisation données WebSocket: ${realDelivered}/${realTotal} livrés`
+                  );
+                }
+
+                if (realDelivered === realTotal && realTotal > 0) {
                   // Tous livrés : bouton vert + icône camion + texte Livré
                   statutCell.innerHTML = `<button style=\"display:flex;align-items:center;gap:8px;margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;\">
                     <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
                     Livré
                   </button>`;
-                } else {
-                  // Affichage classique : x sur y livré(s)
-                  statutCell.innerHTML = `<button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${
-                    data.deliveredCount
-                  } sur ${data.totalCount} livré${
-                    data.totalCount > 1 ? "s" : ""
+                } else if (realDelivered > 0) {
+                  // Affichage classique : x sur y livré(s) avec le NOMBRE EXACT
+                  statutCell.innerHTML = `<button style=\"margin-top:6px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;\">${realDelivered} sur ${realTotal} livré${
+                    realTotal > 1 ? "s" : ""
                   }</button>`;
+                } else {
+                  statutCell.innerHTML = "";
                 }
+
+                console.log(
+                  `[WEBSOCKET UPDATE] ✅ Cellule statut mise à jour: ${realDelivered}/${realTotal}`
+                );
               }
             }
           }
@@ -945,47 +981,92 @@ async function propagateStatusToAllTCs(deliveryId, newStatus) {
 
     // Met à jour l'affichage visuel uniquement si au moins une mise à jour a réussi
     if (successCount > 0) {
-      // Met à jour tous les éléments visuels dans le tableau
-      const tableRows = document.querySelectorAll("#delivery-table tbody tr");
-      let updatedRows = 0;
+      // 🔧 CORRECTION : Mise à jour instantanée de la cellule statut SANS recharger tout le tableau
+      const row = document.querySelector(
+        `#deliveriesTableBody tr[data-delivery-id='${deliveryId}']`
+      );
+      if (row) {
+        const statutCell = row.querySelector("td[data-col-id='statut']");
+        if (statutCell) {
+          // Recalcule le statut avec les données JSON mises à jour
+          let delivered = 0;
+          const total = tcNumbers.length;
 
-      tableRows.forEach((row) => {
-        const rowDeliveryId = parseInt(row.dataset.deliveryId);
-        if (rowDeliveryId === deliveryId) {
-          // Met à jour les cellules de statut si elles existent
-          const statusSelects = row.querySelectorAll(".status-cell select");
-          statusSelects.forEach((select) => {
-            if (select.value !== newStatus) {
-              select.value = newStatus;
-            }
-          });
+          // Compte les TC livrés après la mise à jour
+          if (delivery && delivery.container_statuses) {
+            delivered = tcNumbers.filter((tc) => {
+              const s = delivery.container_statuses[tc];
+              return s === "livre" || s === "livré";
+            }).length;
+          }
 
-          // Met à jour la cellule d'affichage des TC pour refléter le nouveau statut
-          const tcCell = row.querySelector(".tc-display-cell");
-          if (tcCell) {
-            const detailElement = tcCell.querySelector(".tc-detail");
-            if (detailElement) {
-              detailElement.textContent = `Total: ${tcNumbers.length} TC - Statut: ${newStatus}`;
+          console.log(
+            `[STATUS PROPAGATION] 📊 Mise à jour statut: ${delivered}/${total} livrés`
+          );
+
+          // Met à jour l'affichage du statut
+          if (delivered === total && total > 0) {
+            // Tous livrés : bouton vert + icône camion + texte Livré
+            statutCell.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
+              <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
+              Livré
+            </button>`;
+          } else if (delivered > 0) {
+            // Affichage classique : x sur y livré(s) avec le NOMBRE EXACT
+            statutCell.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+              total > 1 ? "s" : ""
+            }</button>`;
+          } else {
+            statutCell.innerHTML = "";
+          }
+
+          console.log(
+            `[STATUS PROPAGATION] ✅ Cellule statut mise à jour instantanément`
+          );
+        }
+
+        // Met à jour également l'affichage des TC pour utiliser les données JSON
+        const tcCell = row.querySelector("td[data-col-id='container_number']");
+        if (tcCell && tcNumbers.length > 1) {
+          // Reconstruit l'affichage des TC avec le nombre exact
+          const btn = tcCell.querySelector(".tc-tags-btn");
+          if (btn) {
+            const chevron = btn.querySelector(".tc-chevron");
+            const chevronHTML = chevron
+              ? ' <i class="fas fa-chevron-down tc-chevron"></i>'
+              : "";
+
+            btn.innerHTML =
+              tcNumbers
+                .slice(0, 2)
+                .map(
+                  (tc) =>
+                    `<span class="tc-tag" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1em;padding:3px 10px;border-radius:10px;margin:4px 1px 4px 1px;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(30,41,59,0.13),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">${tc}</span>`
+                )
+                .join("") +
+              (tcNumbers.length > 2
+                ? ` <span class="tc-tag tc-tag-more" style="display:inline-block;background:#e6b800;color:#0e274e;font-weight:700;font-size:1em;padding:3px 10px;border-radius:10px;margin:4px 1px 4px 1px;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(30,41,59,0.13),0 1px 0 #fff inset;cursor:pointer;transition:background 0.18s,box-shadow 0.18s;border:none;">+${
+                    tcNumbers.length - 2
+                  }</span>`
+                : "") +
+              chevronHTML;
+
+            // Met à jour le popup aussi
+            const popup = tcCell.querySelector(".tc-popup");
+            if (popup) {
+              popup.innerHTML = tcNumbers
+                .map(
+                  (tc) =>
+                    `<div class="tc-popup-item" style='cursor:pointer;color:#0e274e;font-weight:700;font-size:1.13em;text-align:center;'>${tc}</div>`
+                )
+                .join("");
             }
           }
-          updatedRows++;
+
+          console.log(
+            `[STATUS PROPAGATION] ✅ Affichage TC mis à jour avec ${tcNumbers.length} conteneurs`
+          );
         }
-      });
-
-      console.log(
-        `[STATUS PROPAGATION] ✅ Affichage mis à jour: ${updatedRows} lignes`
-      );
-
-      // Rafraîchit le tableau pour mettre à jour les comptages
-      const dateStartInput = document.getElementById(
-        "mainTableDateStartFilter"
-      );
-      const dateEndInput = document.getElementById("mainTableDateEndFilter");
-      if (dateStartInput && dateEndInput && window.updateTableForDateRange) {
-        window.updateTableForDateRange(
-          dateStartInput.value,
-          dateEndInput.value
-        );
       }
 
       // Affiche une notification de succès
@@ -2391,6 +2472,54 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   window.allDeliveries[idx].container_statuses[
                     containerNumber
                   ] = select.value;
+
+                  // 🔧 SYNCHRONISATION FORCÉE : S'assurer que les données JSON sont à jour
+                  if (
+                    !window.allDeliveries[idx].container_numbers_list ||
+                    !Array.isArray(
+                      window.allDeliveries[idx].container_numbers_list
+                    )
+                  ) {
+                    console.log(
+                      `[SYNC] Synchronisation forcée pour delivery ${delivery.id}`
+                    );
+
+                    // Reconstruction des données JSON si elles manquent
+                    let tcList = [];
+                    if (Array.isArray(delivery.container_number)) {
+                      tcList = delivery.container_number.filter(Boolean);
+                    } else if (typeof delivery.container_number === "string") {
+                      if (delivery.container_number.includes("+")) {
+                        // Données tronquées détectées
+                        const parts =
+                          delivery.container_number.split(/\s*\+\s*\d+\s*/);
+                        if (parts.length > 0) {
+                          tcList = parts[0].split(/[,;\s]+/).filter(Boolean);
+                        }
+                      } else {
+                        tcList = delivery.container_number
+                          .split(/[,;\s]+/)
+                          .filter(Boolean);
+                      }
+                    }
+
+                    if (tcList.length > 0) {
+                      window.allDeliveries[idx].container_numbers_list = tcList;
+
+                      if (!window.allDeliveries[idx].container_foot_types_map) {
+                        window.allDeliveries[idx].container_foot_types_map = {};
+                        tcList.forEach((tc) => {
+                          window.allDeliveries[idx].container_foot_types_map[
+                            tc
+                          ] = delivery.container_foot_type || "20";
+                        });
+                      }
+
+                      console.log(
+                        `[SYNC] ✅ Données JSON synchronisées: ${tcList.length} TC`
+                      );
+                    }
+                  }
                 }
               }
 
@@ -2408,21 +2537,78 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     error
                   );
                 }
+              } else {
+                // 🔧 MISE À JOUR INSTANTANÉE POUR UN SEUL TC
+                console.log(
+                  `[SINGLE UPDATE] Mise à jour instantanée pour TC: ${containerNumber}`
+                );
+
+                const row = document.querySelector(
+                  `#deliveriesTableBody tr[data-delivery-id='${delivery.id}']`
+                );
+                if (row) {
+                  const statutCell = row.querySelector(
+                    "td[data-col-id='statut']"
+                  );
+                  if (statutCell) {
+                    // Recalcule le statut avec les données mises à jour
+                    const updatedDelivery = window.allDeliveries.find(
+                      (d) => d.id === delivery.id
+                    );
+                    let tcList = [];
+
+                    if (
+                      updatedDelivery &&
+                      updatedDelivery.container_numbers_list &&
+                      Array.isArray(updatedDelivery.container_numbers_list)
+                    ) {
+                      tcList = updatedDelivery.container_numbers_list;
+                    } else if (Array.isArray(delivery.container_number)) {
+                      tcList = delivery.container_number.filter(Boolean);
+                    } else if (typeof delivery.container_number === "string") {
+                      tcList = delivery.container_number
+                        .split(/[,;\s]+/)
+                        .filter(Boolean);
+                    }
+
+                    let delivered = 0;
+                    if (updatedDelivery && updatedDelivery.container_statuses) {
+                      delivered = tcList.filter((tc) => {
+                        const s = updatedDelivery.container_statuses[tc];
+                        return s === "livre" || s === "livré";
+                      }).length;
+                    }
+
+                    const total = tcList.length;
+                    console.log(
+                      `[SINGLE UPDATE] Statut calculé: ${delivered}/${total} livrés`
+                    );
+
+                    // Met à jour l'affichage du statut
+                    if (delivered === total && total > 0) {
+                      // Tous livrés : bouton vert + icône camion + texte Livré
+                      statutCell.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
+                        <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
+                        Livré
+                      </button>`;
+                    } else if (delivered > 0) {
+                      // Affichage classique : x sur y livré(s) avec le NOMBRE EXACT
+                      statutCell.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+                        total > 1 ? "s" : ""
+                      }</button>`;
+                    } else {
+                      statutCell.innerHTML = "";
+                    }
+
+                    console.log(
+                      `[SINGLE UPDATE] ✅ Cellule statut mise à jour instantanément`
+                    );
+                  }
+                }
               }
 
-              // Rafraîchir le tableau pour mettre à jour l'entête Statut
-              const dateStartInput = document.getElementById(
-                "mainTableDateStartFilter"
-              );
-              const dateEndInput = document.getElementById(
-                "mainTableDateEndFilter"
-              );
-              if (dateStartInput && dateEndInput) {
-                updateTableForDateRange(
-                  dateStartInput.value,
-                  dateEndInput.value
-                );
-              }
+              // 🔧 CORRECTION : Plus de rechargement complet du tableau - mise à jour ciblée uniquement
+              // Note: Le tableau ne sera plus rechargé complètement, évitant ainsi la perte des données JSON synchronisées
 
               // Stockage local pour synchronisation immédiate
               const containerSyncKey = `container_status_${
