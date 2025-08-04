@@ -4755,32 +4755,61 @@ function mapStatus(status) {
               statusColor = "#fff";
               statusBg = "#f59e0b";
             } else {
-              // Aucun conteneur livré - vérifier si en retard
+              // Aucun conteneur livré
               statusText =
                 '<i class="fas fa-hourglass-half" style="margin-right: 6px;"></i>En attente';
               statusColor = "#374151";
               statusBg = "#f3f4f6";
+            }
 
-              // Vérifier si c'est en retard (plus de 2 jours) et pas "mise en livraison"
-              if (delivery.delivery_date) {
-                const deliveryDate = new Date(delivery.delivery_date);
-                const currentDate = new Date();
-                const daysDifference = Math.floor(
-                  (currentDate - deliveryDate) / (1000 * 60 * 60 * 24)
-                );
+            // Vérifier si c'est en retard (pour tous les cas sauf livraison complète)
+            if (
+              deliveredContainers.length < tcList.length &&
+              delivery.delivery_date
+            ) {
+              const deliveryDate = new Date(delivery.delivery_date);
+              const currentDate = new Date();
+              const daysDifference = Math.floor(
+                (currentDate - deliveryDate) / (1000 * 60 * 60 * 24)
+              );
 
-                // Vérifier le statut pour s'assurer qu'il n'est pas "mise en livraison"
-                const isMiseEnLivraison =
-                  delivery.status &&
-                  delivery.status.toLowerCase().includes("mise en livraison");
+              // Log de débogage
+              console.log(
+                `[DEBUG RETARD] Livraison ID: ${delivery.id || "N/A"}`
+              );
+              console.log(
+                `[DEBUG RETARD] Date livraison: ${delivery.delivery_date}`
+              );
+              console.log(
+                `[DEBUG RETARD] Jours de différence: ${daysDifference}`
+              );
+              console.log(
+                `[DEBUG RETARD] Statut delivery.status: "${
+                  delivery.status || "N/A"
+                }"`
+              );
 
-                if (daysDifference > 2 && !isMiseEnLivraison) {
-                  isOverdue = true;
-                  statusText =
-                    '<i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Dossier en retard';
-                  statusColor = "#fff";
-                  statusBg = "#dc2626";
-                }
+              // Vérifier le statut pour s'assurer qu'il n'est pas "mise en livraison"
+              const isMiseEnLivraison =
+                delivery.status &&
+                delivery.status.toLowerCase().includes("mise en livraison");
+
+              console.log(
+                `[DEBUG RETARD] Est mise en livraison: ${isMiseEnLivraison}`
+              );
+              console.log(
+                `[DEBUG RETARD] Condition retard (>2 jours ET pas mise en livraison): ${
+                  daysDifference > 2 && !isMiseEnLivraison
+                }`
+              );
+
+              if (daysDifference > 2 && !isMiseEnLivraison) {
+                isOverdue = true;
+                statusText =
+                  '<i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Dossier en retard';
+                statusColor = "#fff";
+                statusBg = "#dc2626";
+                console.log(`[DEBUG RETARD] ✅ DOSSIER EN RETARD DÉTECTÉ!`);
               }
             }
           }
@@ -4803,6 +4832,7 @@ function mapStatus(status) {
         if (isOverdue) {
           box.style.animation = "blinkRed 1.5s infinite";
           box.classList.add("overdue-status");
+          console.log(`[DEBUG RETARD] ✅ Animation clignotante appliquée!`);
         }
 
         // Ajouter les événements de survol pour le tooltip
