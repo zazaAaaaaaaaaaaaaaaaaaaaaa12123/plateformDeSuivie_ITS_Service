@@ -4401,7 +4401,7 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
 // ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
-// Cette route doit être TOUT EN BAS, après toutes les routes API !
+// Cette route doit être TOUT EN BAS, après toutes zyugles routes API !
 // (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
