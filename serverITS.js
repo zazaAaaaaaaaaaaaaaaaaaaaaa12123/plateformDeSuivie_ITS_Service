@@ -1946,6 +1946,8 @@ app.post(
     console.log("   container_foot_type:", container_foot_type);
     console.log("   declaration_number:", declaration_number);
     console.log("   number_of_containers:", number_of_containers);
+    console.log("   full_container_numbers_list:", full_container_numbers_list);
+    console.log("   container_foot_types_map:", container_foot_types_map);
     // *** FIN DÉBOGAGE ***
 
     // Validation des champs obligatoires (MIS À JOUR)
@@ -1998,6 +2000,53 @@ app.post(
       usedStatus = "awaiting_payment_acconier";
     }
 
+    // Traitement des nouveaux champs pour gérer les TC multiples
+    let full_container_numbers_list = [];
+    let container_foot_types_map = null;
+
+    // Traitement du nouveau champ container_numbers_list (liste complète des TC)
+    if (req.body.container_numbers_list) {
+      try {
+        if (typeof req.body.container_numbers_list === "string") {
+          full_container_numbers_list = JSON.parse(
+            req.body.container_numbers_list
+          );
+        } else if (Array.isArray(req.body.container_numbers_list)) {
+          full_container_numbers_list = req.body.container_numbers_list;
+        }
+      } catch (e) {
+        console.warn("Erreur parsing container_numbers_list:", e);
+        full_container_numbers_list = [];
+      }
+    }
+
+    // Traitement du nouveau champ container_foot_types_map (mapping complet TC/type/poids)
+    if (req.body.container_foot_types_map) {
+      try {
+        if (typeof req.body.container_foot_types_map === "string") {
+          container_foot_types_map = JSON.parse(
+            req.body.container_foot_types_map
+          );
+        } else {
+          container_foot_types_map = req.body.container_foot_types_map;
+        }
+      } catch (e) {
+        console.warn("Erreur parsing container_foot_types_map:", e);
+        container_foot_types_map = null;
+      }
+    }
+
+    // Si nous n'avons pas la liste complète, essayer de l'extraire du champ normalized_container_number
+    if (
+      full_container_numbers_list.length === 0 &&
+      normalized_container_number
+    ) {
+      const tcList = normalized_container_number
+        .split(/[,;\s]+/)
+        .filter(Boolean);
+      full_container_numbers_list = tcList;
+    }
+
     try {
       // Gestion du tableau de statuts par conteneur (container_statuses)
       let container_statuses = null;
@@ -2013,10 +2062,13 @@ app.post(
         }
         // Si c'est un tableau, on le convertit en mapping
         if (Array.isArray(container_statuses)) {
-          const tcList = normalized_container_number
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
+          const tcList =
+            full_container_numbers_list.length > 0
+              ? full_container_numbers_list
+              : normalized_container_number
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
           const mapping = {};
           tcList.forEach((tc, idx) => {
             mapping[tc] = container_statuses[idx] || usedStatus;
@@ -2025,10 +2077,13 @@ app.post(
         }
       } else {
         // Génère un mapping par défaut avec un statut NEUTRE ("En attente") sauf si le statut global est explicitement "Livré" ou "delivered"
-        const tcList = normalized_container_number
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
+        const tcList =
+          full_container_numbers_list.length > 0
+            ? full_container_numbers_list
+            : normalized_container_number
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
         if (tcList.length > 0) {
           const mapping = {};
           // Statut neutre par défaut

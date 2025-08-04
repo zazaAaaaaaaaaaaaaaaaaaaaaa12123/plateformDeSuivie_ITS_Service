@@ -1756,8 +1756,17 @@ async function submitDeliveryForm(status) {
   formData.append("container_type_and_content", containerTypeAndContent);
   formData.append("status", status); // Le statuts est maintenant 'pending_acconier' pour le bouton Valider
   formData.append("lieu", lieu);
-  // On envoie la liste des numéros TC sous forme de chaîne séparée par des virgules (ou tableau si backend accepte)
-  formData.append("container_number", containerNumbers.join(", "));
+  // On envoie une version tronquée pour le champ container_number (limité à 100 caractères)
+  let containerNumberForDB = "";
+  if (containerNumbers.length === 1) {
+    containerNumberForDB = containerNumbers[0];
+  } else if (containerNumbers.length > 1) {
+    // Format: "Premier TC + X autres" pour respecter la limite de 100 caractères
+    const firstTC = containerNumbers[0];
+    const remainingCount = containerNumbers.length - 1;
+    containerNumberForDB = `${firstTC} + ${remainingCount} autres`;
+  }
+  formData.append("container_number", containerNumberForDB);
   formData.append("container_foot_type", containerFootType);
   formData.append("declaration_number", declarationNumber);
   formData.append("number_of_containers", numberOfContainers);
@@ -1797,6 +1806,9 @@ async function submitDeliveryForm(status) {
     "container_foot_types_map",
     JSON.stringify(containerFootTypesData)
   );
+
+  // Envoie aussi la liste complète des TC séparément
+  formData.append("container_numbers_list", JSON.stringify(containerNumbers));
 
   try {
     // Choix dynamique de l'URL backend
