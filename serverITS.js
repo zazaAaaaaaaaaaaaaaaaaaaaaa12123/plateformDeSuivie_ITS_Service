@@ -1731,10 +1731,27 @@ app.post("/deliveries/delete", async (req, res) => {
 // ROUTE : Liste des livraisons avec statuts (inclut bl_statuses)
 app.get("/deliveries/status", async (req, res) => {
   try {
-    // On sélectionne explicitement bl_statuses (et container_statuses) + NOUVEAUX CHAMPS JSON
-    const result = await pool.query(
-      `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses, container_numbers_list, container_foot_types_map FROM livraison_conteneur ORDER BY created_at DESC`
-    );
+    // Vérifier d'abord si les nouvelles colonnes JSON existent
+    const columnsCheck = await pool.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'livraison_conteneur' 
+      AND column_name IN ('container_numbers_list', 'container_foot_types_map')
+    `);
+
+    const hasJsonColumns = columnsCheck.rows.length === 2;
+
+    let query;
+    if (hasJsonColumns) {
+      // Si les colonnes JSON existent, les inclure dans la requête
+      query = `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses, container_numbers_list, container_foot_types_map FROM livraison_conteneur ORDER BY created_at DESC`;
+    } else {
+      // Sinon, utiliser l'ancienne requête sans les colonnes JSON
+      query = `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses FROM livraison_conteneur ORDER BY created_at DESC`;
+    }
+
+    // On sélectionne explicitement bl_statuses (et container_statuses) + NOUVEAUX CHAMPS JSON si disponibles
+    const result = await pool.query(query);
     res.json({ success: true, deliveries: result.rows });
   } catch (err) {
     console.error("[GET /deliveries/status] Erreur:", err);
@@ -2115,55 +2132,127 @@ app.post(
       console.log("   container_statuses:", container_statuses);
       // *** FIN DÉBOGAGE PROCESSED FIELDS ***
 
-      const query = `
+      // Vérifier si les colonnes JSON existent avant de les utiliser
+      const columnsCheck = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'livraison_conteneur' 
+        AND column_name IN ('container_numbers_list', 'container_foot_types_map')
+      `);
+
+      const hasJsonColumns = columnsCheck.rows.length === 2;
+
+      let query, values;
+
+      if (hasJsonColumns) {
+        // Si les colonnes JSON existent, les inclure dans l'INSERT
+        query = `
           INSERT INTO livraison_conteneur (
             employee_name, delivery_date, delivery_time, client_name, client_phone, 
             container_type_and_content, lieu, status,
             container_number, container_foot_type, declaration_number, number_of_containers,
             bl_number, dossier_number, shipping_company, transporter, 
             weight, ship_name, circuit, number_of_packages, transporter_mode,
-            nom_agent_visiteur, inspecteur, agent_en_douanes, -- NOUVEAUX CHAMPS DANS L'INSERT
+            nom_agent_visiteur, inspecteur, agent_en_douanes,
             driver_name, driver_phone, truck_registration,
             delivery_notes, is_eir_received,
-            delivery_status_acconier, -- AJOUT DE LA COLONNE ICI
-            container_statuses -- NOUVEAU
+            delivery_status_acconier,
+            container_statuses, container_numbers_list, container_foot_types_map
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
+          RETURNING *;
+        `;
+        values = [
+          employee_name,
+          validated_delivery_date,
+          validated_delivery_time,
+          client_name,
+          client_phone,
+          container_type_and_content,
+          lieu,
+          usedStatus,
+          normalized_container_number,
+          container_foot_type,
+          declaration_number,
+          parseInt(number_of_containers, 10),
+          bl_number || null,
+          dossier_number || null,
+          shipping_company || null,
+          transporter || null,
+          weight || null,
+          ship_name || null,
+          circuit || null,
+          number_of_packages ? parseInt(number_of_packages, 10) : null,
+          transporter_mode || null,
+          nom_agent_visiteur || null,
+          inspecteur || null,
+          agent_en_douanes || null,
+          driver_name || null,
+          driver_phone || null,
+          truck_registration || null,
+          delivery_notes || null,
+          is_eir_received,
+          usedStatus,
+          container_statuses ? JSON.stringify(container_statuses) : null,
+          full_container_numbers_list.length > 0
+            ? JSON.stringify(full_container_numbers_list)
+            : null,
+          container_foot_types_map
+            ? JSON.stringify(container_foot_types_map)
+            : null,
+        ];
+      } else {
+        // Si les colonnes JSON n'existent pas, utiliser l'ancienne requête
+        query = `
+          INSERT INTO livraison_conteneur (
+            employee_name, delivery_date, delivery_time, client_name, client_phone, 
+            container_type_and_content, lieu, status,
+            container_number, container_foot_type, declaration_number, number_of_containers,
+            bl_number, dossier_number, shipping_company, transporter, 
+            weight, ship_name, circuit, number_of_packages, transporter_mode,
+            nom_agent_visiteur, inspecteur, agent_en_douanes,
+            driver_name, driver_phone, truck_registration,
+            delivery_notes, is_eir_received,
+            delivery_status_acconier,
+            container_statuses
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
           RETURNING *;
-      `;
-      const values = [
-        employee_name,
-        validated_delivery_date, // Use validated value
-        validated_delivery_time, // Use validated value
-        client_name,
-        client_phone,
-        container_type_and_content,
-        lieu,
-        usedStatus, // Statut validé ou valeur par défaut
-        normalized_container_number,
-        container_foot_type,
-        declaration_number,
-        parseInt(number_of_containers, 10),
-        bl_number || null,
-        dossier_number || null,
-        shipping_company || null,
-        transporter || null,
-        weight || null,
-        ship_name || null,
-        circuit || null,
-        number_of_packages ? parseInt(number_of_packages, 10) : null,
-        transporter_mode || null,
-        nom_agent_visiteur || null, // NOUVELLE VALEUR
-        inspecteur || null, // NOUVELLE VALEUR
-        agent_en_douanes || null, // NOUVELLE VALEUR
-        driver_name || null,
-        driver_phone || null,
-        truck_registration || null,
-        delivery_notes || null,
-        is_eir_received,
-        usedStatus,
-        container_statuses ? JSON.stringify(container_statuses) : null,
-      ];
+        `;
+        values = [
+          employee_name,
+          validated_delivery_date,
+          validated_delivery_time,
+          client_name,
+          client_phone,
+          container_type_and_content,
+          lieu,
+          usedStatus,
+          normalized_container_number,
+          container_foot_type,
+          declaration_number,
+          parseInt(number_of_containers, 10),
+          bl_number || null,
+          dossier_number || null,
+          shipping_company || null,
+          transporter || null,
+          weight || null,
+          ship_name || null,
+          circuit || null,
+          number_of_packages ? parseInt(number_of_packages, 10) : null,
+          transporter_mode || null,
+          nom_agent_visiteur || null,
+          inspecteur || null,
+          agent_en_douanes || null,
+          driver_name || null,
+          driver_phone || null,
+          truck_registration || null,
+          delivery_notes || null,
+          is_eir_received,
+          usedStatus,
+          container_statuses ? JSON.stringify(container_statuses) : null,
+        ];
+      }
       const result = await pool.query(query, values);
       const newDelivery = result.rows[0];
 

@@ -1083,7 +1083,7 @@ function mapStatus(status) {
     wsUrl = `${wsProtocol}://${wsHost}:3000`;
   } else {
     // Production : onrender.com ou autre domaine
-    wsUrl = `${wsProtocol}://plateformdesuivie-its-service.onrender.com`;
+    wsUrl = `${wsProtocol}://plateformdesuivie-its-service-1cjx.onrender.com`;
   }
   let ws = null;
   let pollingInterval = null;
