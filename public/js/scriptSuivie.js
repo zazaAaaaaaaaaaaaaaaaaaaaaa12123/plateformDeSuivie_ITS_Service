@@ -8428,7 +8428,7 @@ function mapStatus(status) {
       });
   });
 
-  // === CRÉATION DYNAMIQUE DES CHAMPS DE DATE ===
+  // === RÉFÉRENCE AUX CHAMPS DE DATE ===
   // Fonction utilitaire pour normaliser la date à minuit
   function normalizeDateToMidnight(date) {
     if (!(date instanceof Date)) date = new Date(date);
@@ -8436,7 +8436,7 @@ function mapStatus(status) {
     return date;
   }
 
-  // Créer dynamiquement les champs de date s'ils n'existent pas
+  // Récupérer les champs de date depuis le HTML
   let mainTableDateStartFilter = document.getElementById(
     "mainTableDateStartFilter"
   );
@@ -8444,111 +8444,29 @@ function mapStatus(status) {
     "mainTableDateEndFilter"
   );
 
-  if (!mainTableDateStartFilter || !mainTableDateEndFilter) {
-    // Trouver le conteneur approprié (à côté de la barre de recherche)
-    const searchWrapper =
-      document.querySelector(".search-bar-wrapper-top") ||
-      document.querySelector(".search-wrapper") ||
-      document.querySelector(".header-with-search");
+  // Ajouter les événements de style aux champs de date s'ils existent
+  if (mainTableDateStartFilter) {
+    mainTableDateStartFilter.addEventListener("focus", function () {
+      this.style.borderColor = "#3b82f6";
+      this.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.1)";
+    });
 
-    if (searchWrapper) {
-      // Créer le conteneur des dates
-      const dateRangeContainer = document.createElement("div");
-      dateRangeContainer.className = "date-range-container";
-      dateRangeContainer.style.cssText = `
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        margin-top: 12px;
-        flex-wrap: wrap;
-        padding: 12px 16px;
-        background: #f9fafb;
-        border-radius: 8px;
-        border: 1px solid #e5e7eb;
-      `;
+    mainTableDateStartFilter.addEventListener("blur", function () {
+      this.style.borderColor = "#d1d5db";
+      this.style.boxShadow = "none";
+    });
+  }
 
-      // Label "Filtrer du"
-      const labelStart = document.createElement("span");
-      labelStart.textContent = "Filtrer du ";
-      labelStart.style.cssText = `
-        font-weight: 500;
-        color: #374151;
-        font-size: 0.9em;
-      `;
+  if (mainTableDateEndFilter) {
+    mainTableDateEndFilter.addEventListener("focus", function () {
+      this.style.borderColor = "#3b82f6";
+      this.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.1)";
+    });
 
-      // Champ date de début
-      mainTableDateStartFilter = document.createElement("input");
-      mainTableDateStartFilter.type = "date";
-      mainTableDateStartFilter.id = "mainTableDateStartFilter";
-      mainTableDateStartFilter.style.cssText = `
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid #d1d5db;
-        font-size: 0.9em;
-        background: #ffffff;
-        color: #374151;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        min-width: 140px;
-      `;
-
-      // Événements subtils pour le champ de début
-      mainTableDateStartFilter.addEventListener("focus", function () {
-        this.style.borderColor = "#3b82f6";
-        this.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.1)";
-      });
-
-      mainTableDateStartFilter.addEventListener("blur", function () {
-        this.style.borderColor = "#d1d5db";
-        this.style.boxShadow = "none";
-      });
-
-      // Label "au"
-      const labelEnd = document.createElement("span");
-      labelEnd.textContent = " au ";
-      labelEnd.style.cssText = `
-        font-weight: 500;
-        color: #374151;
-        font-size: 0.9em;
-      `;
-
-      // Champ date de fin
-      mainTableDateEndFilter = document.createElement("input");
-      mainTableDateEndFilter.type = "date";
-      mainTableDateEndFilter.id = "mainTableDateEndFilter";
-      mainTableDateEndFilter.style.cssText = `
-        padding: 8px 12px;
-        border-radius: 6px;
-        border: 1px solid #d1d5db;
-        font-size: 0.9em;
-        background: #ffffff;
-        color: #374151;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        min-width: 140px;
-      `;
-
-      // Événements subtils pour le champ de fin
-      mainTableDateEndFilter.addEventListener("focus", function () {
-        this.style.borderColor = "#3b82f6";
-        this.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.1)";
-      });
-
-      mainTableDateEndFilter.addEventListener("blur", function () {
-        this.style.borderColor = "#d1d5db";
-        this.style.boxShadow = "none";
-      });
-
-      // Assembler les éléments
-      dateRangeContainer.appendChild(labelStart);
-      dateRangeContainer.appendChild(mainTableDateStartFilter);
-      dateRangeContainer.appendChild(labelEnd);
-      dateRangeContainer.appendChild(mainTableDateEndFilter);
-
-      // Insérer après la barre de recherche
-      searchWrapper.parentNode.insertBefore(
-        dateRangeContainer,
-        searchWrapper.nextSibling
-      );
-    }
+    mainTableDateEndFilter.addEventListener("blur", function () {
+      this.style.borderColor = "#d1d5db";
+      this.style.boxShadow = "none";
+    });
   }
 
   // Fonction principale pour afficher les livraisons filtrées par date

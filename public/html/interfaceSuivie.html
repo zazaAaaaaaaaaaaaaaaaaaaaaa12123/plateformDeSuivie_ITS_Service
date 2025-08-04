@@ -385,53 +385,106 @@
           class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
           style="min-height: 50px"
         >
-          <button id="toggleSelectionBtn" class="icon-btn-company-color">
-            <i class="fas fa-check-square"></i> Activer selection
-          </button>
-
-          <button
-            id="deleteSelectedDeliveriesBtn"
-            class="btn btn-danger icon-btn"
-            style="display: none"
-          >
-            <i class="fas fa-trash-alt"></i> Supprimer sélection
-          </button>
-
-          <div class="dropdown-container">
-            <button
-              id="employeeTrackingBtn"
-              class="icon-btn icon-btn-company-color"
-              title="Accéder au suivi spécifique des employés"
+          <!-- Champs de date -->
+          <div class="d-flex align-items-center gap-2 me-3 flex-wrap">
+            <span
+              style="
+                font-weight: 500;
+                color: #374151;
+                font-size: 0.9em;
+                white-space: nowrap;
+              "
+              >Du:</span
             >
-              <i class="fas fa-user-tie"></i> Suivi Spécifique Agent
+            <input
+              type="date"
+              id="mainTableDateStartFilter"
+              style="
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid #d1d5db;
+                font-size: 0.9em;
+                background: #ffffff;
+                color: #374151;
+                min-width: 140px;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+              "
+            />
+            <span
+              style="
+                font-weight: 500;
+                color: #374151;
+                font-size: 0.9em;
+                white-space: nowrap;
+              "
+              >Au:</span
+            >
+            <input
+              type="date"
+              id="mainTableDateEndFilter"
+              style="
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid #d1d5db;
+                font-size: 0.9em;
+                background: #ffffff;
+                color: #374151;
+                min-width: 140px;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+              "
+            />
+          </div>
+
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button id="toggleSelectionBtn" class="icon-btn-company-color">
+              <i class="fas fa-check-square"></i> Activer selection
             </button>
 
-            <div id="employeePopup" class="employee-popup">
-              <div class="popup-header">
-                <h5 class="popup-title">
-                  Sélectionner un Agent <span id="employeeCountDisplay"></span>
-                </h5>
-                <button
-                  type="button"
-                  class="close-popup-btn"
-                  aria-label="Fermer"
-                >
-                  &times;
-                </button>
-              </div>
+            <button
+              id="deleteSelectedDeliveriesBtn"
+              class="btn btn-danger icon-btn"
+              style="display: none"
+            >
+              <i class="fas fa-trash-alt"></i> Supprimer sélection
+            </button>
 
-              <div class="popup-search-wrapper">
-                <i class="fas fa-search popup-search-icon"></i>
-                <input
-                  type="text"
-                  id="employeeSearchInput"
-                  class="popup-search-input"
-                  placeholder="Rechercher un employé..."
-                />
-              </div>
+            <div class="dropdown-container">
+              <button
+                id="employeeTrackingBtn"
+                class="icon-btn icon-btn-company-color"
+                title="Accéder au suivi spécifique des employés"
+              >
+                <i class="fas fa-user-tie"></i> Suivi Spécifique Agent
+              </button>
 
-              <div class="popup-body">
-                <ul id="employeeList" class="employee-list"></ul>
+              <div id="employeePopup" class="employee-popup">
+                <div class="popup-header">
+                  <h5 class="popup-title">
+                    Sélectionner un Agent
+                    <span id="employeeCountDisplay"></span>
+                  </h5>
+                  <button
+                    type="button"
+                    class="close-popup-btn"
+                    aria-label="Fermer"
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <div class="popup-search-wrapper">
+                  <i class="fas fa-search popup-search-icon"></i>
+                  <input
+                    type="text"
+                    id="employeeSearchInput"
+                    class="popup-search-input"
+                    placeholder="Rechercher un employé..."
+                  />
+                </div>
+
+                <div class="popup-body">
+                  <ul id="employeeList" class="employee-list"></ul>
+                </div>
               </div>
             </div>
           </div>
