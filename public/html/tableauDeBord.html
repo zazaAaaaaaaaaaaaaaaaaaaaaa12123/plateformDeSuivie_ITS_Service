@@ -3550,6 +3550,78 @@
           }, 3200);
         }
         connectWebSocket();
+
+        // Fonction de debug temporaire pour diagnostiquer le problème des compteurs
+        window.debugCardCounters = function () {
+          console.log("🔍 [DEBUG] État actuel des cartes:");
+          const cartes = [
+            "carteAttentePaiement",
+            "carteMiseLivraison",
+            "carteLivres",
+          ];
+          cartes.forEach((cardId) => {
+            const card = document.getElementById(cardId);
+            if (card) {
+              const counter = card.querySelector(".card-counter");
+              const currentValue = counter
+                ? counter.textContent
+                : "AUCUN COMPTEUR";
+              console.log(`  📊 ${cardId}: ${currentValue}`);
+            }
+          });
+
+          // Forcer la mise à jour des compteurs
+          console.log("🔄 Forcement de la mise à jour des compteurs...");
+          window.updateCardCounters();
+        };
+
+        // Exécuter le debug dans 2 secondes après le chargement complet
+        setTimeout(() => {
+          console.log("🚀 [DEBUG] Diagnostic automatique des compteurs...");
+          window.debugCardCounters();
+
+          // Fonction pour forcer la correction si nécessaire
+          setTimeout(() => {
+            const miseLivraisonCard =
+              document.getElementById("carteMiseLivraison");
+            if (miseLivraisonCard) {
+              const counter = miseLivraisonCard.querySelector(".card-counter");
+              if (counter && counter.textContent === "99") {
+                console.log(
+                  "🚨 [AUTO-FIX] Détection de la valeur incorrecte '99', correction automatique..."
+                );
+
+                // Supprimer le compteur incorrect
+                counter.remove();
+
+                // Forcer la mise à jour avec la bonne valeur depuis l'API
+                fetch("/api/deliveries/status-counts")
+                  .then((response) => response.json())
+                  .then((data) => {
+                    if (data.success) {
+                      const correctValue = data.counts.mise_en_livraison || 0;
+                      console.log(
+                        `✅ [AUTO-FIX] Application de la valeur correcte: ${correctValue}`
+                      );
+                      window.updateCardCounter(
+                        "carteMiseLivraison",
+                        correctValue
+                      );
+                    }
+                  })
+                  .catch((error) =>
+                    console.error("❌ [AUTO-FIX] Erreur:", error)
+                  );
+              }
+            }
+          }, 1500);
+        }, 2000);
+
+        // Ajouter une fonction globale pour forcer la correction manuelle si nécessaire
+        window.fixCardCounters = function () {
+          console.log("🔧 [MANUAL FIX] Correction manuelle des compteurs...");
+          window.updateCardCounters();
+        };
       })();
     </script>
   </body>
