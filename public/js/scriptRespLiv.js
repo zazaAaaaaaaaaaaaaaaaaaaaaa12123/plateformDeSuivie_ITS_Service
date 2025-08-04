@@ -1759,22 +1759,42 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 ev.stopPropagation();
                 popup.style.display = "none";
 
-                // 🔧 MODIFICATION : Permettre la modification même après marquage complet
+                // 🔧 MODIFICATION AMÉLIORÉE : Permettre la modification une fois que la livraison a été "activée"
                 let canModify = isAllRequiredFilled();
 
-                // Vérifier si des conteneurs sont déjà livrés (permettre modification de retour)
-                let hasDeliveredContainers = false;
+                // Vérifier si cette livraison a déjà été "activée" pour les modifications
+                const deliveryKey = `delivery_activated_${
+                  delivery.id || delivery.dossier_number
+                }`;
+                let isDeliveryActivated =
+                  localStorage.getItem(deliveryKey) === "true";
+
+                // Vérifier si des conteneurs ont déjà eu un statut défini (même "aucun" après avoir été "livré")
+                let hasStatusHistory = false;
                 if (
                   delivery.container_statuses &&
                   typeof delivery.container_statuses === "object"
                 ) {
-                  hasDeliveredContainers = Object.values(
+                  // Vérifier si au moins un conteneur a un statut défini (même "aucun")
+                  hasStatusHistory =
+                    Object.keys(delivery.container_statuses).length > 0;
+
+                  // Si on trouve des statuts "livre"/"livré", marquer la livraison comme activée
+                  const hasDeliveredContainers = Object.values(
                     delivery.container_statuses
                   ).some((status) => status === "livre" || status === "livré");
+
+                  if (hasDeliveredContainers && !isDeliveryActivated) {
+                    localStorage.setItem(deliveryKey, "true");
+                    isDeliveryActivated = true;
+                  }
                 }
 
-                // Si des conteneurs sont déjà livrés, on permet la modification même sans tous les champs obligatoires
-                if (!canModify && !hasDeliveredContainers) {
+                // Permettre la modification si :
+                // 1. Tous les champs obligatoires sont remplis OU
+                // 2. La livraison a déjà été activée (même si conteneurs remis à "aucun") OU
+                // 3. Des conteneurs ont un historique de statut
+                if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
                   showAccessMessage(
                     "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
                     "red"
@@ -1818,6 +1838,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 // Utilise la fonction de propagation existante
                 await window.propagateStatusToAllTCs(delivery.id, "livre");
 
+                // Marquer la livraison comme activée pour les modifications futures
+                const deliveryKey = `delivery_activated_${
+                  delivery.id || delivery.dossier_number
+                }`;
+                localStorage.setItem(deliveryKey, "true");
+
                 // Affiche un message de succès
                 showAccessMessage(
                   `✅ Tous les ${tcList.length} conteneurs ont été marqués comme livrés !`,
@@ -1855,6 +1881,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               try {
                 // Utilise la fonction de propagation existante avec le statut "aucun"
                 await window.propagateStatusToAllTCs(delivery.id, "aucun");
+
+                // Marquer la livraison comme activée pour les modifications futures
+                // (même quand on démarque, on garde l'autorisation de modification)
+                const deliveryKey = `delivery_activated_${
+                  delivery.id || delivery.dossier_number
+                }`;
+                localStorage.setItem(deliveryKey, "true");
 
                 // Affiche un message de succès
                 showAccessMessage(
@@ -1910,21 +1943,42 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           };
           tag.onclick = (e) => {
             e.stopPropagation();
-            // 🔧 MODIFICATION : Permettre la modification même après marquage complet
+            // 🔧 MODIFICATION AMÉLIORÉE : Permettre la modification une fois que la livraison a été "activée"
             let canModify = isAllRequiredFilled();
 
-            // Vérifier si le conteneur est déjà livré (permettre modification de retour)
-            let isContainerDelivered = false;
+            // Vérifier si cette livraison a déjà été "activée" pour les modifications
+            const deliveryKey = `delivery_activated_${
+              delivery.id || delivery.dossier_number
+            }`;
+            let isDeliveryActivated =
+              localStorage.getItem(deliveryKey) === "true";
+
+            // Vérifier si le conteneur a déjà eu un statut défini (même "aucun" après avoir été "livré")
+            let hasStatusHistory = false;
             if (
               delivery.container_statuses &&
               typeof delivery.container_statuses === "object"
             ) {
+              // Vérifier si le conteneur a un statut défini (même "aucun")
+              hasStatusHistory =
+                delivery.container_statuses[tcList[0]] !== undefined;
+
+              // Si le conteneur est livré, marquer la livraison comme activée
               const status = delivery.container_statuses[tcList[0]];
-              isContainerDelivered = status === "livre" || status === "livré";
+              if (
+                (status === "livre" || status === "livré") &&
+                !isDeliveryActivated
+              ) {
+                localStorage.setItem(deliveryKey, "true");
+                isDeliveryActivated = true;
+              }
             }
 
-            // Si le conteneur est déjà livré, on permet la modification même sans tous les champs obligatoires
-            if (!canModify && !isContainerDelivered) {
+            // Permettre la modification si :
+            // 1. Tous les champs obligatoires sont remplis OU
+            // 2. La livraison a déjà été activée (même si conteneur remis à "aucun") OU
+            // 3. Le conteneur a un historique de statut
+            if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
               showAccessMessage(
                 "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
                 "red"
@@ -2237,23 +2291,41 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       tr.appendChild(td);
       // ...existing code for showContainerDetailPopup...
       function showContainerDetailPopup(delivery, containerNumber) {
-        // 🔧 MODIFICATION : Permettre la modification même après marquage complet
-        // Si tous les conteneurs sont livrés, on permet quand même la modification individuelle
+        // 🔧 MODIFICATION AMÉLIORÉE : Permettre la modification une fois que la livraison a été "activée"
         let canModify = isAllRequiredFilled();
 
-        // Vérifier si au moins un conteneur est livré (permettre modification de retour)
-        let hasDeliveredContainers = false;
+        // Vérifier si cette livraison a déjà été "activée" pour les modifications
+        const deliveryKey = `delivery_activated_${
+          delivery.id || delivery.dossier_number
+        }`;
+        let isDeliveryActivated = localStorage.getItem(deliveryKey) === "true";
+
+        // Vérifier si des conteneurs ont déjà eu un statut défini (même "aucun" après avoir été "livré")
+        let hasStatusHistory = false;
         if (
           delivery.container_statuses &&
           typeof delivery.container_statuses === "object"
         ) {
-          hasDeliveredContainers = Object.values(
+          // Vérifier si au moins un conteneur a un statut défini (même "aucun")
+          hasStatusHistory =
+            Object.keys(delivery.container_statuses).length > 0;
+
+          // Si on trouve des statuts "livre"/"livré", marquer la livraison comme activée
+          const hasDeliveredContainers = Object.values(
             delivery.container_statuses
           ).some((status) => status === "livre" || status === "livré");
+
+          if (hasDeliveredContainers && !isDeliveryActivated) {
+            localStorage.setItem(deliveryKey, "true");
+            isDeliveryActivated = true;
+          }
         }
 
-        // Si des conteneurs sont déjà livrés, on permet la modification même sans tous les champs obligatoires
-        if (!canModify && !hasDeliveredContainers) {
+        // Permettre la modification si :
+        // 1. Tous les champs obligatoires sont remplis OU
+        // 2. La livraison a déjà été activée (même si conteneurs remis à "aucun") OU
+        // 3. Des conteneurs ont un historique de statut
+        if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
           showAccessMessage(
             "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
             "red"
@@ -2268,7 +2340,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           );
         } else {
           showAccessMessage(
-            "Modification autorisée : conteneurs déjà en cours de livraison.",
+            "Modification autorisée : livraison déjà activée pour les modifications.",
             "green"
           );
         }
@@ -2422,6 +2494,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }`
               );
               overlay.remove();
+
+              // Marquer la livraison comme activée pour les modifications futures
+              const deliveryKey = `delivery_activated_${
+                delivery.id || delivery.dossier_number
+              }`;
+              localStorage.setItem(deliveryKey, "true");
 
               // Mise à jour instantanée du statut dans allDeliveries
               if (delivery && delivery.id) {
