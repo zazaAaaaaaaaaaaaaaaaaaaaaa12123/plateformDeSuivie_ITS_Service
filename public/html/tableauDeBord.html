@@ -3042,17 +3042,37 @@
           ws.onmessage = function (event) {
             try {
               const data = JSON.parse(event.data);
+
+              // === GESTION DES CHANGEMENTS DE STATUT POUR LES COMPTEURS ===
+              if (data.type === "status-change" && data.statusChange) {
+                console.log(
+                  "[DASHBOARD] Changement de statut reçu:",
+                  data.statusChange
+                );
+
+                // Afficher l'alerte
+                showCustomAlert(data.message || "Statut mis à jour", "success");
+
+                // Mettre à jour les compteurs immédiatement
+                updateCardCounters();
+              }
+
               // Synchronisation précise du statut dossier dans la colonne "Responsable Acconier" ou "Statut Dossier" sans rechargement
               if (
                 (data.type === "dossier-mise-en-livraison" ||
-                  data.type === "bl_status_update") &&
+                  data.type === "bl_status_update" ||
+                  data.type === "container_status_update") &&
                 data.dossierNumber
               ) {
                 // Affiche l'alerte personnalisée
                 showCustomAlert(
-                  `Le dossier ${data.dossierNumber} a été mis en livraison.`,
+                  `Le dossier ${data.dossierNumber} a été mis à jour.`,
                   "success"
                 );
+
+                // Mettre à jour les compteurs du tableau de bord
+                updateCardCounters();
+
                 // Recharge dynamiquement la ligne du tableau concernée
                 const table = document.querySelector(
                   "#tableSuiviDossiers, .table-suivi-dossiers"
@@ -3126,7 +3146,9 @@
                   updateCarteDossiersRetard();
                 }
               }
-            } catch (e) {}
+            } catch (e) {
+              console.error("[DASHBOARD] Erreur WebSocket:", e);
+            }
           };
           ws.onclose = function () {
             setTimeout(connectWebSocket, 2000);

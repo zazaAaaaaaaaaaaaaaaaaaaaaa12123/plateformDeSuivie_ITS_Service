@@ -3693,6 +3693,31 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       const s = container_statuses_updated[tc];
       return s === "livre" || s === "livré";
     }).length;
+
+    // Déterminer le changement de statut du dossier pour les compteurs du tableau de bord
+    let statusChange = null;
+    const previousDelivered =
+      delivered - (status === "livre" || status === "livré" ? 1 : 0);
+
+    // Si tous les conteneurs sont maintenant livrés et ce n'était pas le cas avant
+    if (delivered === total && delivered > 0 && previousDelivered < total) {
+      statusChange = {
+        from: "mise_en_livraison",
+        to: "livre",
+        dossierNumber: updatedDelivery.dossier_number,
+        message: `Dossier ${updatedDelivery.dossier_number} complètement livré`,
+      };
+    }
+    // Si le dossier passe de aucun livré à partiellement/totalement livré
+    else if (delivered > 0 && previousDelivered === 0) {
+      statusChange = {
+        from: "en_attente_paiement",
+        to: "mise_en_livraison",
+        dossierNumber: updatedDelivery.dossier_number,
+        message: `Dossier ${updatedDelivery.dossier_number} mis en livraison`,
+      };
+    }
+
     // Envoi du ratio livré/total pour la livraison concernée (deliveryId)
     const payload = JSON.stringify({
       type: "container_status_update",
@@ -3709,6 +3734,26 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
         client.send(payload);
       }
     });
+
+    // Envoi spécifique pour mise à jour des compteurs du tableau de bord
+    if (statusChange) {
+      const dashboardPayload = JSON.stringify({
+        type: "status-change",
+        statusChange: statusChange,
+        deliveryId: updatedDelivery.id,
+        dossierNumber: updatedDelivery.dossier_number,
+        message: statusChange.message,
+      });
+      wss.clients.forEach((client) => {
+        if (client.readyState === require("ws").OPEN) {
+          client.send(dashboardPayload);
+        }
+      });
+      console.log(
+        `[DASHBOARD NOTIFICATION] Envoi changement de statut:`,
+        statusChange
+      );
+    }
     res.status(200).json({
       success: true,
       message: alertMessage,
