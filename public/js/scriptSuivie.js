@@ -255,27 +255,18 @@ function renderLateDossiersTable() {
     return;
   }
   let html = `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:0.98em;margin-top:0;background:none;'>`;
-  html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th><th style='padding:6px 10px;'>Heure livraison</th></tr></thead><tbody>`;
+  html += `<thead><tr style='background:#fbeaea;'><th style='padding:6px 10px;'>TC</th><th style='padding:6px 10px;'>Agent</th><th style='padding:6px 10px;'>Date enregistrement</th><th style='padding:6px 10px;'>Date livraison</th></tr></thead><tbody>`;
   lateList.forEach((c) => {
     let agent = c.agentName ? c.agentName : "-";
     let dateLiv = c.deliveryDate || "-";
-    let heureLiv = "-";
-    if (typeof dateLiv === "string" && dateLiv.includes(" ")) {
-      const parts = dateLiv.split(" ");
-      dateLiv = parts[0];
-      heureLiv = parts[1] || "-";
-    } else if (
-      dateLiv &&
-      typeof dateLiv === "object" &&
-      dateLiv instanceof Date
-    ) {
+    if (dateLiv && typeof dateLiv === "object" && dateLiv instanceof Date) {
       dateLiv = dateLiv.toLocaleDateString("fr-FR");
     }
     html += `<tr><td style='padding:6px 10px;'>${
       c.numeroTC
     }</td><td style='padding:6px 10px;'>${agent}</td><td style='padding:6px 10px;'>${
       c.dateEnr || "-"
-    }</td><td style='padding:6px 10px;'>${dateLiv}</td><td style='padding:6px 10px;'>${heureLiv}</td></tr>`;
+    }</td><td style='padding:6px 10px;'>${dateLiv}</td></tr>`;
   });
   html += `</tbody></table></div>`;
   tableContainer.innerHTML = html;
@@ -557,7 +548,6 @@ function showLateContainersAlert(lateContainers, lateDossiersCount) {
                   <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Agent</th>
                   <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Date enregistrement</th>
                   <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Date livraison</th>
-                  <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Heure livraison</th>
                   <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Notifier</th>
                   <th style='padding:8px 12px;border-bottom:1px solid #e5e7eb;'>Détail</th>
                 </tr>
@@ -567,12 +557,7 @@ function showLateContainersAlert(lateContainers, lateDossiersCount) {
                   .map((c, idx) => {
                     let agent = c.agentName ? c.agentName : "-";
                     let dateLiv = c.deliveryDate || "-";
-                    let heureLiv = "-";
-                    if (typeof dateLiv === "string" && dateLiv.includes(" ")) {
-                      const parts = dateLiv.split(" ");
-                      dateLiv = parts[0];
-                      heureLiv = parts[1] || "-";
-                    } else if (
+                    if (
                       dateLiv &&
                       typeof dateLiv === "object" &&
                       dateLiv instanceof Date
@@ -584,7 +569,6 @@ function showLateContainersAlert(lateContainers, lateDossiersCount) {
                       <td style='padding:7px 10px;'>${agent}</td>
                       <td style='padding:7px 10px;'>${c.dateEnr || "-"}</td>
                       <td style='padding:7px 10px;'>${dateLiv}</td>
-                      <td style='padding:7px 10px;'>${heureLiv}</td>
                       <td style='padding:7px 10px;'><a href='#' class='notifier-agent-link' data-agent='${
                         c.agentName || ""
                       }' data-email='${c.agentEmail || ""}' data-tc='${
@@ -2029,13 +2013,8 @@ function mapStatus(status) {
         min-width: 100px;
     }
 
-    .table thead th:nth-child(29), /* Heure Livraison (maintenant 29ème) */
+    .table thead th:nth-child(29), /* Statut (maintenant 29ème) */
     .table tbody td:nth-child(29) {
-        min-width: 90px;
-    }
-
-    .table thead th:nth-child(30), /* Statut (maintenant 30ème) */
-    .table tbody td:nth-child(30) {
         min-width: 120px;
     }
 
@@ -2527,7 +2506,7 @@ function mapStatus(status) {
 
   // Define fields that are always inline editable, regardless of global editing mode
   // Removed "status" from here as it's handled by its own dropdown logic
-  const ALWAYS_INLINE_EDITABLE_FIELDS = ["truck_registration", "delivery_time"];
+  const ALWAYS_INLINE_EDITABLE_FIELDS = ["truck_registration"];
 
   // Champs qui ne doivent jamais être éditables (même en mode édition)
   const NON_EDITABLE_FIELDS = [
@@ -4025,8 +4004,8 @@ function mapStatus(status) {
     }
     deliveriesTableBody.innerHTML = "";
 
-    // Total columns: 29 original + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) = 31
-    const ACTUAL_COLUMN_COUNT = 31;
+    // Total columns: 28 original + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) = 30
+    const ACTUAL_COLUMN_COUNT = 30;
 
     if (deliveriesToRender.length === 0) {
       deliveriesTableBody.innerHTML = `
@@ -4606,9 +4585,6 @@ function mapStatus(status) {
         if (fieldName === "delivery_date") {
           // Store the initial delivery_date in ISO format for consistent comparison later
           cell.dataset.originalValue = value ? formatDateToISO(value) : null;
-        } else if (fieldName === "delivery_time") {
-          // Store the initial delivery_time as is (should be HH:MM or similar)
-          cell.dataset.originalValue = value || null;
         } else if (fieldName === "created_at" && value instanceof Date) {
           // Store created_at as ISO string
           cell.dataset.originalValue = value.toISOString();
@@ -4668,21 +4644,6 @@ function mapStatus(status) {
                 value.match(/^\d{4}-\d{2}-\d{2}$/)
               ) {
                 input.value = value;
-              } else {
-                input.value = "";
-              }
-            } else if (fieldName === "delivery_time") {
-              // Utiliser un input de type "time" (sélecteur d'heure natif)
-              input = document.createElement("input");
-              input.type = "time";
-              // Si value est déjà au format HH:MM, l'utiliser, sinon essayer de le formater
-              if (typeof value === "string" && value.match(/^\d{2}:\d{2}$/)) {
-                input.value = value;
-              } else if (value instanceof Date && !isNaN(value.getTime())) {
-                // Si value est un objet Date, extraire l'heure
-                const hours = String(value.getHours()).padStart(2, "0");
-                const minutes = String(value.getMinutes()).padStart(2, "0");
-                input.value = `${hours}:${minutes}`;
               } else {
                 input.value = "";
               }
@@ -4755,34 +4716,6 @@ function mapStatus(status) {
                   currentValueFromInput
                 );
                 valueToSendToBackend = formattedNewValueForComparison; // This will be ISO-8601 or null
-              } else if (fieldName === "delivery_time") {
-                // Frontend already has basic formatting for HH:MM, reuse it
-                const parts = currentValueFromInput.split(":");
-                if (parts.length >= 2) {
-                  let hours = parseInt(parts[0], 10);
-                  let minutes = parseInt(parts[1], 10);
-                  if (
-                    !isNaN(hours) &&
-                    hours >= 0 &&
-                    hours <= 23 &&
-                    !isNaN(minutes) &&
-                    minutes >= 0 &&
-                    minutes >= 0 &&
-                    minutes <= 59
-                  ) {
-                    formattedNewValueForComparison = `${String(hours).padStart(
-                      2,
-                      "0"
-                    )}:${String(minutes).padStart(2, "0")}`;
-                    valueToSendToBackend = formattedNewValueForComparison;
-                  } else {
-                    formattedNewValueForComparison = null; // Mark as invalid for comparison
-                    valueToSendToBackend = null; // Send null to backend for invalid time
-                  }
-                } else {
-                  formattedNewValueForComparison = null; // Mark as invalid for comparison
-                  valueToSendToBackend = null; // Send null to backend for invalid time
-                }
               } else if (type === "datetime-local") {
                 // for created_at
                 let parsedDateTime = new Date(currentValueFromInput);
@@ -4807,7 +4740,6 @@ function mapStatus(status) {
                   ? null
                   : cell.dataset.originalValue;
               // For delivery_date which originally came as a Date object, it's stored as ISO-8601 in dataset.originalValue
-              // For delivery_time, it's stored as string in dataset.originalValue
               // For created_at, it's stored as ISO string in dataset.originalValue
 
               // Compare the formatted values
@@ -4921,7 +4853,6 @@ function mapStatus(status) {
       createCell(delivery.driver_name, "driver_name", "text", {}); // Chauffeur
       createCell(delivery.driver_phone, "driver_phone", "text", {}); // Tél. Chauffeur
       createCell(delivery.delivery_date, "delivery_date", "date", {}); // Date Livraison
-      createCell(delivery.delivery_time, "delivery_time", "text", {}); // Heure Livraison
 
       // === Statut basé sur les conteneurs ===
       (function () {
@@ -5047,7 +4978,7 @@ function mapStatus(status) {
     }
     const COLS_AGENT = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
     const COLS_RESP = [18, 19];
-    const COLS_LIVRAISON = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
+    const COLS_LIVRAISON = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
     function flashCells(colIndexes, flashClass) {
       const rows = table.tBodies[0]?.rows;
       if (!rows) return;
@@ -5118,9 +5049,6 @@ function mapStatus(status) {
       } else {
         cell.textContent = "-";
       }
-    } else if (fieldName === "delivery_time" && displayValue) {
-      // For delivery_time (text input), display directly (it should already be HH:MM or similar)
-      cell.textContent = displayValue;
     } else if (
       fieldName === "delivery_notes" ||
       fieldName === "observation_acconier"
@@ -6049,8 +5977,8 @@ function mapStatus(status) {
       // Removed manageColumnsBtn logic as the button is removed
 
       // Total columns for agent activity table (should match the HTML's <thead> count)
-      // Count them manually from HTML: N°, Agent, Client (Nom), Client (Tél), Numéro TC(s), Lieu, Type Conteneur (pied), Contenu, N° Déclaration, N° BL, N° Dossier, Nombre de conteneurs, Compagnie Maritime, Poids, Nom du navire, Circuit, Mode de Transport, Statut de livraison (Resp. Aconiés), Observations (Resp. Aconiés), Nom agent visiteur, Transporteur, Inspecteur, Agent en Douanes, Chauffeur, Immatriculation, Tél. Chauffeur, Date Livraison, Heure Livraison, Statut, Observations
-      // Total: 29 columns + 1 (Action) = 30 columns
+      // Count them manually from HTML: N°, Agent, Client (Nom), Client (Tél), Numéro TC(s), Lieu, Type Conteneur (pied), Contenu, N° Déclaration, N° BL, N° Dossier, Nombre de conteneurs, Compagnie Maritime, Poids, Nom du navire, Circuit, Mode de Transport, Statut de livraison (Resp. Aconiés), Observations (Resp. Aconiés), Nom agent visiteur, Transporteur, Inspecteur, Agent en Douanes, Chauffeur, Immatriculation, Tél. Chauffeur, Date Livraison, Statut, Observations
+      // Total: 28 columns + 1 (Action) = 29 columns
       const AGENT_TABLE_COLUMN_COUNT = AGENT_TABLE_COLUMNS.length; // Use the defined array length
 
       agentDailyDeliveriesTableBody.innerHTML = "";
