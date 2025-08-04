@@ -3696,26 +3696,58 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
 
     // Déterminer le changement de statut du dossier pour les compteurs du tableau de bord
     let statusChange = null;
-    const previousDelivered =
-      delivered - (status === "livre" || status === "livré" ? 1 : 0);
+    const wasDeliveredBefore =
+      status === "livre" || status === "livré" ? delivered - 1 : delivered;
+    const isDeliveredNow = delivered;
 
-    // Si tous les conteneurs sont maintenant livrés et ce n'était pas le cas avant
-    if (delivered === total && delivered > 0 && previousDelivered < total) {
+    console.log(
+      `[STATUS CHANGE DEBUG] Dossier ${updatedDelivery.dossier_number}: ${wasDeliveredBefore}/${total} -> ${isDeliveredNow}/${total}`
+    );
+
+    // Cas 1: Le dossier passe de partiellement livré à complètement livré
+    if (isDeliveredNow === total && total > 0 && wasDeliveredBefore < total) {
       statusChange = {
         from: "mise_en_livraison",
         to: "livre",
         dossierNumber: updatedDelivery.dossier_number,
-        message: `Dossier ${updatedDelivery.dossier_number} complètement livré`,
+        message: `Dossier ${
+          updatedDelivery.dossier_number || updatedDelivery.id
+        } complètement livré`,
+        action: "delivery_completed",
       };
+      console.log(
+        `[STATUS CHANGE] ✅ Dossier complètement livré: ${updatedDelivery.dossier_number}`
+      );
     }
-    // Si le dossier passe de aucun livré à partiellement/totalement livré
-    else if (delivered > 0 && previousDelivered === 0) {
+    // Cas 2: Premier conteneur livré (0 -> 1+)
+    else if (isDeliveredNow > 0 && wasDeliveredBefore === 0) {
       statusChange = {
         from: "en_attente_paiement",
         to: "mise_en_livraison",
         dossierNumber: updatedDelivery.dossier_number,
-        message: `Dossier ${updatedDelivery.dossier_number} mis en livraison`,
+        message: `Dossier ${
+          updatedDelivery.dossier_number || updatedDelivery.id
+        } mis en livraison`,
+        action: "delivery_started",
       };
+      console.log(
+        `[STATUS CHANGE] ⚡ Premier conteneur livré: ${updatedDelivery.dossier_number}`
+      );
+    }
+    // Cas 3: Ajout d'un conteneur livré (mais pas le dernier)
+    else if (isDeliveredNow > wasDeliveredBefore && isDeliveredNow < total) {
+      statusChange = {
+        from: "mise_en_livraison",
+        to: "mise_en_livraison",
+        dossierNumber: updatedDelivery.dossier_number,
+        message: `Conteneur supplémentaire livré pour le dossier ${
+          updatedDelivery.dossier_number || updatedDelivery.id
+        }`,
+        action: "container_delivered",
+      };
+      console.log(
+        `[STATUS CHANGE] 📦 Conteneur supplémentaire livré: ${updatedDelivery.dossier_number}`
+      );
     }
 
     // Envoi du ratio livré/total pour la livraison concernée (deliveryId)
@@ -3743,6 +3775,9 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
         deliveryId: updatedDelivery.id,
         dossierNumber: updatedDelivery.dossier_number,
         message: statusChange.message,
+        action: statusChange.action,
+        deliveredCount: delivered,
+        totalCount: total,
       });
       wss.clients.forEach((client) => {
         if (client.readyState === require("ws").OPEN) {
@@ -3750,10 +3785,32 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
         }
       });
       console.log(
-        `[DASHBOARD NOTIFICATION] Envoi changement de statut:`,
+        `[DASHBOARD NOTIFICATION] 🚀 Envoi changement de statut:`,
         statusChange
       );
     }
+
+    // Envoi supplémentaire pour forcer mise à jour immédiate des compteurs
+    const forceUpdatePayload = JSON.stringify({
+      type: "container_status_update",
+      message: alertMessage,
+      deliveryId: updatedDelivery.id,
+      dossierNumber: updatedDelivery.dossier_number,
+      containerNumber,
+      status,
+      alertType: "success",
+      deliveredCount: delivered,
+      totalCount: total,
+      forceCounterUpdate: true,
+    });
+    wss.clients.forEach((client) => {
+      if (client.readyState === require("ws").OPEN) {
+        client.send(forceUpdatePayload);
+      }
+    });
+    console.log(
+      `[FORCE UPDATE] 💥 Forçage mise à jour compteurs pour conteneur ${containerNumber} -> ${status}`
+    );
     res.status(200).json({
       success: true,
       message: alertMessage,

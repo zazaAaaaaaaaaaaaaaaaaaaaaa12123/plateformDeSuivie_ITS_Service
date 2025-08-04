@@ -2506,26 +2506,34 @@
 
             // === FONCTIONS DE MISE À JOUR DES COMPTEURS DE CARTES ===
 
-            // Fonction pour mettre à jour les compteurs des cartes
-            function updateCardCounters() {
+            // Fonction pour mettre à jour les compteurs des cartes (GLOBALE)
+            window.updateCardCounters = function () {
               fetch("/api/deliveries/status-counts")
                 .then((response) => response.json())
                 .then((data) => {
                   if (data.success) {
                     // Mise à jour de la carte "En cours de paiement"
-                    updateCardCounter(
+                    window.updateCardCounter(
                       "carteAttentePaiement",
                       data.counts.en_attente_paiement || 0
                     );
 
                     // Mise à jour de la carte "Dossiers mis en livraison"
-                    updateCardCounter(
+                    window.updateCardCounter(
                       "carteMiseLivraison",
                       data.counts.mise_en_livraison || 0
                     );
 
                     // Mise à jour de la carte "Dossiers livrés"
-                    updateCardCounter("carteLivre", data.counts.livres || 0);
+                    window.updateCardCounter(
+                      "carteLivre",
+                      data.counts.livres || 0
+                    );
+
+                    console.log(
+                      "[DASHBOARD] Compteurs mis à jour:",
+                      data.counts
+                    );
                   }
                 })
                 .catch((error) => {
@@ -2534,10 +2542,10 @@
                     error
                   );
                 });
-            }
+            };
 
-            // Fonction utilitaire pour mettre à jour un compteur spécifique
-            function updateCardCounter(cardId, count) {
+            // Fonction utilitaire pour mettre à jour un compteur spécifique (GLOBALE)
+            window.updateCardCounter = function (cardId, count) {
               const card = document.getElementById(cardId);
               if (card) {
                 let counterElement = card.querySelector(".card-counter");
@@ -2569,13 +2577,13 @@
                   counterElement.style.transform = "scale(1)";
                 }, 200);
               }
-            }
+            };
 
             // Appeler la fonction de mise à jour des compteurs au chargement
-            updateCardCounters();
+            window.updateCardCounters();
 
             // Mettre à jour les compteurs toutes les 30 secondes
-            setInterval(updateCardCounters, 30000);
+            setInterval(window.updateCardCounters, 30000);
 
             // Écouter les événements WebSocket pour les mises à jour en temps réel
             try {
@@ -2597,9 +2605,10 @@
                 if (
                   data &&
                   (data.type === "status-change" ||
-                    data.type === "dossier-mise-en-livraison")
+                    data.type === "dossier-mise-en-livraison" ||
+                    data.type === "container_status_update")
                 ) {
-                  updateCardCounters();
+                  window.updateCardCounters();
                 }
               };
             } catch (e) {
@@ -3046,7 +3055,7 @@
               // === GESTION DES CHANGEMENTS DE STATUT POUR LES COMPTEURS ===
               if (data.type === "status-change" && data.statusChange) {
                 console.log(
-                  "[DASHBOARD] Changement de statut reçu:",
+                  "[DASHBOARD] 🎯 Changement de statut reçu:",
                   data.statusChange
                 );
 
@@ -3054,7 +3063,36 @@
                 showCustomAlert(data.message || "Statut mis à jour", "success");
 
                 // Mettre à jour les compteurs immédiatement
-                updateCardCounters();
+                if (typeof window.updateCardCounters === "function") {
+                  setTimeout(() => {
+                    window.updateCardCounters();
+                  }, 100); // Petit délai pour assurer la persistence en base
+                }
+              }
+
+              // === GESTION DES MISES À JOUR FORCÉES DE CONTENEURS ===
+              if (
+                data.type === "container_status_update" &&
+                data.forceCounterUpdate
+              ) {
+                console.log(
+                  "[DASHBOARD] 💥 Mise à jour forcée conteneur:",
+                  `${data.containerNumber} -> ${data.status}`,
+                  `(${data.deliveredCount}/${data.totalCount})`
+                );
+
+                // Afficher l'alerte
+                showCustomAlert(
+                  `Conteneur ${data.containerNumber} mis à jour: ${data.status}`,
+                  "success"
+                );
+
+                // Forcer la mise à jour des compteurs immédiatement
+                if (typeof window.updateCardCounters === "function") {
+                  setTimeout(() => {
+                    window.updateCardCounters();
+                  }, 50);
+                }
               }
 
               // Synchronisation précise du statut dossier dans la colonne "Responsable Acconier" ou "Statut Dossier" sans rechargement
@@ -3064,14 +3102,18 @@
                   data.type === "container_status_update") &&
                 data.dossierNumber
               ) {
-                // Affiche l'alerte personnalisée
-                showCustomAlert(
-                  `Le dossier ${data.dossierNumber} a été mis à jour.`,
-                  "success"
-                );
+                // Affiche l'alerte personnalisée pour les autres types
+                if (!data.forceCounterUpdate) {
+                  showCustomAlert(
+                    `Le dossier ${data.dossierNumber} a été mis à jour.`,
+                    "success"
+                  );
+                }
 
-                // Mettre à jour les compteurs du tableau de bord
-                updateCardCounters();
+                // Mettre à jour les compteurs immédiatement
+                if (typeof window.updateCardCounters === "function") {
+                  window.updateCardCounters();
+                }
 
                 // Recharge dynamiquement la ligne du tableau concernée
                 const table = document.querySelector(

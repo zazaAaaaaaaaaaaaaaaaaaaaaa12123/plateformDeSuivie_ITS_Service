@@ -799,7 +799,7 @@
           </div>
           <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1 1 260px;min-width:120px;max-width:100vw;">
             <i class="fas fa-search search-icon" style="color:#2563eb;font-size:1.15em;"></i>
-            <input type="search" id="searchInput" class="search-input" placeholder="Rechercher une livraison." aria-label="Recherche" style="flex:1 1 80px;min-width:80px;max-width:100%;padding:6px 12px;border-radius:8px;border:2px solid #0e274e;background:rgba(255,230,0,0.10);color:#0e274e;font-weight:500;font-size:1em;" />
+            <input type="search" id="searchInput" class="search-input" placeholder="Rechercher par N° Dossier, N° Déclaration ou Compagnie Maritime..." aria-label="Recherche" style="flex:1 1 80px;min-width:80px;max-width:100%;padding:6px 12px;border-radius:8px;border:2px solid #0e274e;background:rgba(255,230,0,0.10);color:#0e274e;font-weight:500;font-size:1em;" />
             <button id="searchButton" class="btn btn-primary" style="font-weight:700;font-size:1em;padding:6px 22px;border-radius:8px;background:linear-gradient(90deg,#ffe066 0%,#0e274e 100%);color:#0e274e;border:none;box-shadow:0 2px 8px #0e274e22;">Rechercher</button>
           </div>
         </div>
@@ -897,7 +897,7 @@
     <script>
       // Injection du nom et email dans l'avatar et le dropdown profil après connexion
       document.addEventListener('DOMContentLoaded', function() {
-        // Filtrage par N° Dossier et N° Déclaration via le champ de recherche
+        // Filtrage par N° Dossier, N° Déclaration et Compagnie Maritime via le champ de recherche
         const searchInput = document.getElementById('searchInput');
         const searchButton = document.getElementById('searchButton');
         const deliveriesTableBody = document.getElementById('deliveriesTableBody');
@@ -913,14 +913,16 @@
             // Ignore la ligne de chargement ou les lignes sans assez de cellules
             const declarationCell = row.querySelector('[data-col-id="declaration_number"]');
             const dossierCell = row.querySelector('[data-col-id="dossier_number"]');
-            if (!declarationCell && !dossierCell) {
+            const shippingCompanyCell = row.querySelector('[data-col-id="shipping_company"]');
+            if (!declarationCell && !dossierCell && !shippingCompanyCell) {
               row.style.display = '';
               return;
             }
             const declarationText = declarationCell ? normalize(declarationCell.textContent.trim().toLowerCase()) : '';
             const dossierText = dossierCell ? normalize(dossierCell.textContent.trim().toLowerCase()) : '';
+            const shippingCompanyText = shippingCompanyCell ? normalize(shippingCompanyCell.textContent.trim().toLowerCase()) : '';
             if (
-              (declarationText.includes(query) || dossierText.includes(query) || query === "")
+              (declarationText.includes(query) || dossierText.includes(query) || shippingCompanyText.includes(query) || query === "")
             ) {
               row.style.display = '';
               found = true;
