@@ -6758,28 +6758,13 @@ function mapStatus(status) {
 
     const dossiersBtn = document.createElement("button");
     dossiersBtn.id = "viewClientFoldersBtn";
-    dossiersBtn.textContent = "📁 Vue Dossiers Clients";
-    dossiersBtn.className = "btn btn-primary mb-3";
-    dossiersBtn.style.background =
-      "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
-    dossiersBtn.style.color = "#fff";
-    dossiersBtn.style.fontWeight = "bold";
-    dossiersBtn.style.fontSize = "0.8em";
-    dossiersBtn.style.border = "none";
-    dossiersBtn.style.borderRadius = "8px";
-    dossiersBtn.style.padding = "0.7em 1.7em";
-    dossiersBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
-    dossiersBtn.style.letterSpacing = "0.5px";
-    dossiersBtn.style.transition = "background 0.2s,box-shadow 0.2s";
-    dossiersBtn.onmouseover = () => {
-      dossiersBtn.style.background = "#1e293b";
-      dossiersBtn.style.boxShadow = "0 4px 18px rgba(30,41,59,0.18)";
-    };
-    dossiersBtn.onmouseout = () => {
-      dossiersBtn.style.background =
-        "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
-      dossiersBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
-    };
+    dossiersBtn.innerHTML =
+      '<i class="fas fa-folder"></i> Vue Dossiers Clients';
+    dossiersBtn.className = "icon-btn-company-color";
+    dossiersBtn.style.fontSize = "0.9em";
+    dossiersBtn.style.padding = "8px 16px";
+    dossiersBtn.style.marginLeft = "25px";
+    dossiersBtn.style.marginRight = "25px";
     dossiersBtn.addEventListener("click", showClientFoldersModal);
 
     // Insère le bouton après Activer Sélection
