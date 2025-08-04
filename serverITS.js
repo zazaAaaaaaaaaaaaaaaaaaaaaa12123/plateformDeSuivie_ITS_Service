@@ -4244,146 +4244,142 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
 
     const now = new Date();
 
+    // Fonction pour vérifier si un dossier est complètement livré
+    function isDeliveryFullyDelivered(delivery) {
+      if (!delivery.container_statuses) return false;
+
+      let container_statuses = {};
+      try {
+        container_statuses =
+          typeof delivery.container_statuses === "string"
+            ? JSON.parse(delivery.container_statuses)
+            : delivery.container_statuses;
+      } catch (e) {
+        return false;
+      }
+
+      // Récupérer la liste des conteneurs
+      let tcList = [];
+      if (delivery.container_number) {
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+      }
+
+      // Si pas de conteneurs, pas livré
+      if (tcList.length === 0) return false;
+
+      // Vérifier que tous les conteneurs sont livrés
+      return tcList.every((tc) => {
+        const s = container_statuses[tc];
+        return s === "livre" || s === "livré";
+      });
+    }
+
+    // Fonction pour vérifier si un dossier est visible dans resp_acconier (en attente de paiement)
+    function isVisibleInRespAcconier(delivery) {
+      // Exclure si tous les BL sont en 'mise_en_livraison'
+      let blList = [];
+      if (Array.isArray(delivery.bl_number)) {
+        blList = delivery.bl_number.filter(Boolean);
+      } else if (typeof delivery.bl_number === "string") {
+        blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+      }
+
+      let blStatuses = blList.map((bl) =>
+        delivery.bl_statuses && delivery.bl_statuses[bl]
+          ? delivery.bl_statuses[bl]
+          : "aucun"
+      );
+
+      if (
+        blStatuses.length > 0 &&
+        blStatuses.every((s) => s === "mise_en_livraison")
+      ) {
+        return false; // N'apparaît plus dans resp_acconier
+      }
+
+      // Exclure si statut acconier est 'mise_en_livraison_acconier'
+      if (delivery.delivery_status_acconier === "mise_en_livraison_acconier") {
+        return false; // N'apparaît plus dans resp_acconier
+      }
+
+      return true; // Visible dans resp_acconier (donc en attente de paiement)
+    }
+
+    // Fonction pour vérifier si un dossier est visible dans resp_liv (mis en livraison)
+    function isVisibleInRespLiv(delivery) {
+      // Visible dans resp_liv si :
+      // 1. Statut acconier est 'mise_en_livraison_acconier' OU
+      // 2. Tous les BL sont en 'mise_en_livraison'
+      if (delivery.delivery_status_acconier === "mise_en_livraison_acconier") {
+        return true;
+      }
+
+      let blList = [];
+      if (Array.isArray(delivery.bl_number)) {
+        blList = delivery.bl_number.filter(Boolean);
+      } else if (typeof delivery.bl_number === "string") {
+        blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+      }
+
+      let blStatuses = blList.map((bl) =>
+        delivery.bl_statuses && delivery.bl_statuses[bl]
+          ? delivery.bl_statuses[bl]
+          : "aucun"
+      );
+
+      return (
+        blStatuses.length > 0 &&
+        blStatuses.every((s) => s === "mise_en_livraison")
+      );
+    }
+
     deliveries.forEach((delivery) => {
-      const status = delivery.delivery_status_acconier || delivery.status;
-
-      // Fonction pour vérifier si un dossier est complètement livré
-      function isDeliveryFullyDelivered(delivery) {
-        if (!delivery.container_statuses) return false;
-
-        let container_statuses = {};
-        try {
-          container_statuses =
-            typeof delivery.container_statuses === "string"
-              ? JSON.parse(delivery.container_statuses)
-              : delivery.container_statuses;
-        } catch (e) {
-          return false;
-        }
-
-        // Récupérer la liste des conteneurs
-        let tcList = [];
-        if (delivery.container_number) {
-          if (Array.isArray(delivery.container_number)) {
-            tcList = delivery.container_number.filter(Boolean);
-          } else if (typeof delivery.container_number === "string") {
-            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-          }
-        }
-
-        // Si pas de conteneurs, pas livré
-        if (tcList.length === 0) return false;
-
-        // Vérifier que tous les conteneurs sont livrés
-        return tcList.every((tc) => {
-          const s = container_statuses[tc];
-          return s === "livre" || s === "livré";
-        });
-      }
-
-      // Fonction pour vérifier si un dossier a au moins un conteneur livré
-      function hasPartialDelivery(delivery) {
-        if (!delivery.container_statuses) return false;
-
-        let container_statuses = {};
-        try {
-          container_statuses =
-            typeof delivery.container_statuses === "string"
-              ? JSON.parse(delivery.container_statuses)
-              : delivery.container_statuses;
-        } catch (e) {
-          return false;
-        }
-
-        // Vérifier s'il y a au moins un conteneur livré
-        return Object.values(container_statuses).some(
-          (s) => s === "livre" || s === "livré"
-        );
-      }
-
-      // Logique de comptage améliorée basée sur l'état réel des conteneurs
+      // PRIORITÉ 1: Dossier complètement livré (tous conteneurs livrés)
       if (isDeliveryFullyDelivered(delivery)) {
-        // Cas 1: Dossier complètement livré (tous les conteneurs livrés)
         counts.livres++;
         console.log(`[COUNTS] ✅ Dossier livré: ${delivery.dossier_number}`);
-      } else if (hasPartialDelivery(delivery)) {
-        // Cas 2: Dossier en cours de livraison (au moins un conteneur livré)
+      }
+      // PRIORITÉ 2: Dossier visible dans resp_liv (mis en livraison)
+      else if (isVisibleInRespLiv(delivery)) {
         counts.mise_en_livraison++;
         console.log(
-          `[COUNTS] 🚛 Dossier en livraison (conteneurs livrés): ${delivery.dossier_number}`
+          `[COUNTS] � Dossier mis en livraison: ${delivery.dossier_number}`
         );
-      } else if (status === "mise_en_livraison_acconier") {
-        // Cas 3: Dossier mis en livraison par l'acconier (mais aucun conteneur livré encore)
-        counts.mise_en_livraison++;
-        console.log(
-          `[COUNTS] 📋 Dossier mis en livraison (acconier): ${delivery.dossier_number}`
-        );
-      } else if (status === "mise_en_livraison") {
-        // Cas 4: Dossier mis en livraison général (mais aucun conteneur livré encore)
-        counts.mise_en_livraison++;
-        console.log(
-          `[COUNTS] 🚚 Dossier mis en livraison (général): ${delivery.dossier_number}`
-        );
-      } else if (
-        status === "en attente de paiement" ||
-        status === "pending_acconier" ||
-        !status
-      ) {
-        // Cas 5: Dossier en attente de paiement
+      }
+      // PRIORITÉ 3: Dossier visible dans resp_acconier (en attente de paiement)
+      else if (isVisibleInRespAcconier(delivery)) {
         counts.en_attente_paiement++;
         console.log(
           `[COUNTS] ⏳ Dossier en attente: ${delivery.dossier_number}`
         );
-      } else {
-        // Cas 6: Autres statuts - compter en attente par défaut
+      }
+      // PRIORITÉ 4: Autres cas (compter en attente par défaut)
+      else {
         counts.en_attente_paiement++;
         console.log(
-          `[COUNTS] ❓ Dossier statut inconnu (${status}): ${delivery.dossier_number}`
+          `[COUNTS] ❓ Dossier autre cas: ${delivery.dossier_number}`
         );
       }
 
-      // Logique pour "En retard" (cross-cutting)
+      // Logique pour "En retard" (cross-cutting, indépendant du statut)
       let dDate = delivery.delivery_date || delivery.created_at;
       if (dDate) {
         let dateObj = new Date(dDate);
         if (!isNaN(dateObj.getTime())) {
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-          if (diffDays > 2) {
-            // Conditions similaires à getLateDeliveries
-            if (
-              delivery.delivery_status_acconier === "en attente de paiement"
-            ) {
-              counts.en_retard++;
-            } else {
-              let blList = [];
-              if (Array.isArray(delivery.bl_number)) {
-                blList = delivery.bl_number.filter(Boolean);
-              } else if (typeof delivery.bl_number === "string") {
-                blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
-              }
-              let blStatuses = blList.map((bl) =>
-                delivery.bl_statuses && delivery.bl_statuses[bl]
-                  ? delivery.bl_statuses[bl]
-                  : "aucun"
-              );
-              if (
-                !(
-                  blStatuses.length > 0 &&
-                  blStatuses.every((s) => s === "mise_en_livraison")
-                ) &&
-                delivery.delivery_status_acconier !==
-                  "mise_en_livraison_acconier" &&
-                !isDeliveryFullyDelivered(delivery)
-              ) {
-                counts.en_retard++;
-              }
-            }
+          if (diffDays > 2 && !isDeliveryFullyDelivered(delivery)) {
+            // Compter en retard seulement si pas complètement livré et > 2 jours
+            counts.en_retard++;
           }
         }
       }
     });
 
-    console.log(`[STATUS COUNTS] Résultats finaux:`, counts);
+    console.log(`[STATUS COUNTS] 📊 Comptage précis terminé:`, counts);
     res.json({ success: true, counts: counts });
   } catch (err) {
     console.error("Erreur /api/deliveries/status-counts :", err);

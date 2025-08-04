@@ -1206,9 +1206,10 @@
               class="etat-card dossier-attente animated-card"
               id="carteAttentePaiement"
               style="cursor: pointer"
+              title="💡 Synchronisation: Dossiers visibles dans resp_acconier.html. Décrément automatique quand un dossier passe en 'mise en livraison'."
             >
               <div class="etat-icon"><i class="fas fa-hourglass-half"></i></div>
-              <div class="etat-title">En cour de paiement</div>
+              <div class="etat-title">En cours de paiement</div>
               <div class="etat-desc">
                 Dossiers en attente de règlement avant traitement.
               </div>
@@ -1218,6 +1219,7 @@
               class="etat-card dossier-mise-livraison animated-card"
               id="carteMiseLivraison"
               style="cursor: pointer"
+              title="💡 Synchronisation: Dossiers visibles dans resp_liv.html. Incrément quand un dossier quitte resp_acconier, décrément quand tous conteneurs sont livrés."
             >
               <div class="etat-icon"><i class="fas fa-truck-loading"></i></div>
               <div class="etat-title">Dossiers mis en livraison</div>
@@ -1329,7 +1331,11 @@
             <!-- Carte 'En cours de mise en livraison' supprimée -->
           </div>
           <div class="etat-cards-row">
-            <div class="etat-card dossier-livre animated-card" id="carteLivre">
+            <div
+              class="etat-card dossier-livre animated-card"
+              id="carteLivre"
+              title="💡 Synchronisation: Incrément automatique quand tous les conteneurs d'un dossier sont marqués 'livré' dans resp_liv.html."
+            >
               <div class="etat-icon"><i class="fas fa-check-circle"></i></div>
               <div class="etat-title">Dossier livré</div>
               <div class="etat-desc">
@@ -2508,37 +2514,69 @@
 
             // Fonction pour mettre à jour les compteurs des cartes (GLOBALE)
             window.updateCardCounters = function () {
+              console.log("[DASHBOARD] 📊 Début mise à jour des compteurs...");
+
               fetch("/api/deliveries/status-counts")
                 .then((response) => response.json())
                 .then((data) => {
                   if (data.success) {
+                    console.log(
+                      "[DASHBOARD] ✅ Compteurs reçus du serveur:",
+                      data.counts
+                    );
+
                     // Mise à jour de la carte "En cours de paiement"
-                    window.updateCardCounter(
+                    const oldAttente = window.updateCardCounter(
                       "carteAttentePaiement",
                       data.counts.en_attente_paiement || 0
                     );
+                    console.log(
+                      `[DASHBOARD] 📋 En attente de paiement: ${
+                        data.counts.en_attente_paiement || 0
+                      }`
+                    );
 
                     // Mise à jour de la carte "Dossiers mis en livraison"
-                    window.updateCardCounter(
+                    const oldMiseEnLivraison = window.updateCardCounter(
                       "carteMiseLivraison",
                       data.counts.mise_en_livraison || 0
                     );
+                    console.log(
+                      `[DASHBOARD] 🚛 Dossiers mis en livraison: ${
+                        data.counts.mise_en_livraison || 0
+                      }`
+                    );
 
                     // Mise à jour de la carte "Dossiers livrés"
-                    window.updateCardCounter(
+                    const oldLivres = window.updateCardCounter(
                       "carteLivre",
                       data.counts.livres || 0
                     );
+                    console.log(
+                      `[DASHBOARD] ✅ Dossiers livrés: ${
+                        data.counts.livres || 0
+                      }`
+                    );
 
                     console.log(
-                      "[DASHBOARD] Compteurs mis à jour:",
-                      data.counts
+                      "[DASHBOARD] 🔄 Mise à jour terminée - Totaux:",
+                      {
+                        "En attente": data.counts.en_attente_paiement || 0,
+                        "Mis en livraison": data.counts.mise_en_livraison || 0,
+                        Livrés: data.counts.livres || 0,
+                        "En retard": data.counts.en_retard || 0,
+                      }
+                    );
+                  } else {
+                    console.error(
+                      "[DASHBOARD] ❌ Erreur dans la réponse du serveur:",
+                      data
                     );
                   }
                 })
                 .catch((error) => {
                   console.error(
-                    "Erreur lors de la récupération des compteurs:",
+                    "[DASHBOARD] ❌ Erreur lors de la récupération des compteurs:",
                     error
                   );
                 });
@@ -2549,6 +2587,8 @@
               const card = document.getElementById(cardId);
               if (card) {
                 let counterElement = card.querySelector(".card-counter");
+                let oldValue = 0;
+
                 if (!counterElement) {
                   // Créer l'élément compteur s'il n'existe pas
                   counterElement = document.createElement("div");
@@ -2566,16 +2606,45 @@
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                     min-width: 20px;
                     text-align: center;
+                    transition: all 0.3s ease;
                   `;
                   card.appendChild(counterElement);
+                } else {
+                  oldValue = parseInt(counterElement.textContent) || 0;
                 }
+
                 counterElement.textContent = count;
 
-                // Animation de mise à jour
-                counterElement.style.transform = "scale(1.2)";
-                setTimeout(() => {
-                  counterElement.style.transform = "scale(1)";
-                }, 200);
+                // Animation de mise à jour avec couleur selon le changement
+                if (count !== oldValue) {
+                  if (count > oldValue) {
+                    counterElement.style.background = "rgba(34, 197, 94, 0.9)"; // Vert pour augmentation
+                    counterElement.style.color = "#fff";
+                  } else if (count < oldValue) {
+                    counterElement.style.background = "rgba(239, 68, 68, 0.9)"; // Rouge pour diminution
+                    counterElement.style.color = "#fff";
+                  }
+
+                  counterElement.style.transform = "scale(1.3)";
+                  setTimeout(() => {
+                    counterElement.style.transform = "scale(1)";
+                    // Retour à la couleur normale après animation
+                    setTimeout(() => {
+                      counterElement.style.background =
+                        "rgba(255, 255, 255, 0.9)";
+                      counterElement.style.color = "#1d3557";
+                    }, 300);
+                  }, 200);
+
+                  console.log(
+                    `[CARD UPDATE] ${cardId}: ${oldValue} → ${count}`
+                  );
+                }
+
+                return oldValue;
+              } else {
+                console.warn(`[CARD UPDATE] ⚠️ Carte non trouvée: ${cardId}`);
+                return 0;
               }
             };
 
@@ -2584,6 +2653,128 @@
 
             // Mettre à jour les compteurs toutes les 30 secondes
             setInterval(window.updateCardCounters, 30000);
+
+            // Fonction de test pour vérifier la synchronisation des cartes (DEBUG UNIQUEMENT)
+            window.testCardSynchronization = function () {
+              console.log("[DEBUG] 🧪 Test de synchronisation des cartes...");
+              fetch("/api/deliveries/status-counts")
+                .then((response) => response.json())
+                .then((data) => {
+                  if (data.success) {
+                    console.log("[DEBUG] 📊 Compteurs actuels:", data.counts);
+                    console.log(
+                      "[DEBUG] ✅ Test terminé - Les cartes devraient refléter ces valeurs"
+                    );
+                  } else {
+                    console.error("[DEBUG] ❌ Erreur test:", data);
+                  }
+                })
+                .catch((error) => {
+                  console.error("[DEBUG] ❌ Erreur réseau test:", error);
+                });
+            };
+
+            // Fonction pour forcer le rafraîchissement des compteurs (DEBUG)
+            window.forceRefreshCounters = function () {
+              console.log("[DEBUG] 🔄 Rafraîchissement forcé des compteurs...");
+              window.updateCardCounters();
+            };
+
+            // Fonction de diagnostic complète pour vérifier la synchronisation
+            window.diagnoseTablóeDeBord = function () {
+              console.log("🔍 ====== DIAGNOSTIC TABLEAU DE BORD ======");
+              console.log("📅 Date/Heure:", new Date().toLocaleString());
+
+              // Vérifier la présence des cartes
+              const cartes = [
+                { id: "carteAttentePaiement", nom: "En cours de paiement" },
+                { id: "carteMiseLivraison", nom: "Dossiers mis en livraison" },
+                { id: "carteLivre", nom: "Dossiers livrés" },
+              ];
+
+              console.log("🎯 Vérification des cartes:");
+              cartes.forEach((carte) => {
+                const element = document.getElementById(carte.id);
+                const compteur = element
+                  ? element.querySelector(".card-counter")
+                  : null;
+                const valeur = compteur
+                  ? compteur.textContent
+                  : "aucun compteur";
+                console.log(
+                  `  ${carte.nom}: ${
+                    element ? "✅" : "❌"
+                  } | Compteur: ${valeur}`
+                );
+              });
+
+              // Tester la connectivité API
+              console.log("🌐 Test connectivité API...");
+              fetch("/api/deliveries/status-counts")
+                .then((response) => response.json())
+                .then((data) => {
+                  if (data.success) {
+                    console.log(
+                      "✅ API réachable - Compteurs serveur:",
+                      data.counts
+                    );
+                    console.log("📊 Répartition:");
+                    console.log(
+                      `  • En attente de paiement: ${
+                        data.counts.en_attente_paiement || 0
+                      }`
+                    );
+                    console.log(
+                      `  • Mis en livraison: ${
+                        data.counts.mise_en_livraison || 0
+                      }`
+                    );
+                    console.log(`  • Livrés: ${data.counts.livres || 0}`);
+                    console.log(`  • En retard: ${data.counts.en_retard || 0}`);
+
+                    // Comparer avec l'affichage actuel
+                    console.log("🔄 Comparaison affichage vs serveur:");
+                    cartes.forEach((carte, index) => {
+                      const element = document.getElementById(carte.id);
+                      const compteur = element
+                        ? element.querySelector(".card-counter")
+                        : null;
+                      const valeurAffichee = compteur
+                        ? parseInt(compteur.textContent) || 0
+                        : 0;
+                      const valeurServeur =
+                        Object.values(data.counts)[index] || 0;
+                      const status =
+                        valeurAffichee === valeurServeur ? "✅" : "⚠️";
+                      console.log(
+                        `  ${carte.nom}: Affiché=${valeurAffichee}, Serveur=${valeurServeur} ${status}`
+                      );
+                    });
+                  } else {
+                    console.error("❌ Erreur API:", data);
+                  }
+                })
+                .catch((error) => {
+                  console.error("❌ Erreur réseau API:", error);
+                });
+
+              // Vérifier les fonctions globales
+              console.log("🔧 Fonctions globales disponibles:");
+              console.log(
+                `  updateCardCounters: ${
+                  typeof window.updateCardCounters === "function" ? "✅" : "❌"
+                }`
+              );
+              console.log(
+                `  updateCardCounter: ${
+                  typeof window.updateCardCounter === "function" ? "✅" : "❌"
+                }`
+              );
+
+              console.log(
+                "🏁 Diagnostic terminé. Consultez les logs ci-dessus."
+              );
+            };
 
             // Écouter les événements WebSocket pour les mises à jour en temps réel
             try {
@@ -2678,9 +2869,7 @@
                     setTimeout(() => {
                       window.updateCardCounters();
                     }, 100);
-                  }
-
-                  // Mise à jour standard avec léger délai
+                  } // Mise à jour standard avec léger délai
                   setTimeout(() => {
                     window.updateCardCounters();
                   }, 200);
@@ -2688,7 +2877,7 @@
               };
             } catch (e) {
               console.log(
-                "WebSocket non disponible pour les mises à jour temps réel"
+                "[DASHBOARD] ⚠️ WebSocket non disponible pour les mises à jour temps réel"
               );
             }
           });
@@ -3137,11 +3326,43 @@
                 // Afficher l'alerte
                 showCustomAlert(data.message || "Statut mis à jour", "success");
 
-                // Mettre à jour les compteurs immédiatement
+                // Mettre à jour les compteurs immédiatement selon l'action spécifique
                 if (typeof window.updateCardCounters === "function") {
                   setTimeout(() => {
                     window.updateCardCounters();
                   }, 100); // Petit délai pour assurer la persistence en base
+                }
+
+                // Actions spécifiques pour les transitions de cartes
+                if (data.statusChange.action === "delivery_completed") {
+                  console.log(
+                    `[DASHBOARD] ✅ Transition: "${data.statusChange.dossierNumber}" Mise en livraison → Livré`
+                  );
+                } else if (data.statusChange.action === "delivery_started") {
+                  console.log(
+                    `[DASHBOARD] ⚡ Transition: "${data.statusChange.dossierNumber}" En attente → Mise en livraison (via conteneur)`
+                  );
+                }
+              }
+
+              // === GESTION DES TRANSITIONS RESP_ACCONIER → RESP_LIV ===
+              if (data.type === "dossier-entre-en-livraison") {
+                console.log(
+                  "[DASHBOARD] 📋→🚛 Dossier entre en livraison:",
+                  data.dossierNumber
+                );
+
+                // Afficher l'alerte
+                showCustomAlert(
+                  `Dossier ${data.dossierNumber} mis en livraison`,
+                  "success"
+                );
+
+                // Forcer la mise à jour des compteurs avec priorité sur ce type d'événement
+                if (typeof window.updateCardCounters === "function") {
+                  setTimeout(() => {
+                    window.updateCardCounters();
+                  }, 50); // Délai très court pour synchronisation rapide
                 }
               }
 
