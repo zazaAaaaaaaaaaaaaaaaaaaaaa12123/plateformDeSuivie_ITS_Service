@@ -701,10 +701,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // === FONCTION DE SYNCHRONISATION FORCÉE DES DONNÉES JSON ===
 async function forceSyncAllDeliveries() {
-  console.log('[FORCE SYNC] Début de la synchronisation forcée des données JSON...');
-  
+  console.log(
+    "[FORCE SYNC] Début de la synchronisation forcée des données JSON..."
+  );
+
   if (!window.allDeliveries || window.allDeliveries.length === 0) {
-    console.log('[FORCE SYNC] Aucune livraison à synchroniser');
+    console.log("[FORCE SYNC] Aucune livraison à synchroniser");
     return;
   }
 
@@ -713,57 +715,389 @@ async function forceSyncAllDeliveries() {
 
   for (const delivery of window.allDeliveries) {
     // Vérifie si cette livraison a besoin de synchronisation
-    if (!delivery.container_numbers_list || !Array.isArray(delivery.container_numbers_list)) {
-      console.log(`[FORCE SYNC] Synchronisation nécessaire pour delivery ${delivery.id || delivery.dossier_number}`);
-      
-      try {
-        const response = await fetch('/api/force-sync-delivery-json', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            deliveryId: delivery.id,
-            dossier_number: delivery.dossier_number
-          })
-        });
+    if (
+      !delivery.container_numbers_list ||
+      !Array.isArray(delivery.container_numbers_list)
+    ) {
+      console.log(
+        `[FORCE SYNC] Synchronisation nécessaire pour delivery ${
+          delivery.id || delivery.dossier_number
+        }`
+      );
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            // Met à jour la livraison locale avec les nouvelles données
-            Object.assign(delivery, result.delivery);
-            syncCount++;
-            console.log(`[FORCE SYNC] ✅ Delivery ${delivery.id} synchronisée`);
+      try {
+        // Solution frontend : reconstruction des données JSON à partir de container_number
+        let tcList = [];
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          // Détection si les données sont tronquées (contient "+")
+          if (delivery.container_number.includes("+")) {
+            // Données tronquées détectées, on essaie de récupérer depuis les formulaires originaux
+            console.log(
+              `[FORCE SYNC] ⚠️ Données tronquées détectées pour delivery ${delivery.id}`
+            );
+
+            // Fallback : utilise les données disponibles en supprimant le tronquage
+            const parts = delivery.container_number.split(/\s*\+\s*\d+\s*/);
+            if (parts.length > 0) {
+              tcList = parts[0].split(/[,;\s]+/).filter(Boolean);
+            }
           } else {
-            console.warn(`[FORCE SYNC] ❌ Échec sync delivery ${delivery.id}:`, result.message);
-            errorCount++;
+            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
           }
+        }
+
+        if (tcList.length > 0) {
+          // Met à jour directement l'objet delivery avec les données JSON
+          delivery.container_numbers_list = tcList;
+
+          // Si pas de container_foot_types_map, en crée un par défaut
+          if (!delivery.container_foot_types_map) {
+            delivery.container_foot_types_map = {};
+            tcList.forEach((tc) => {
+              delivery.container_foot_types_map[tc] =
+                delivery.container_foot_type || "20";
+            });
+          }
+
+          syncCount++;
+          console.log(
+            `[FORCE SYNC] ✅ Delivery ${delivery.id} synchronisée localement`,
+            {
+              tcCount: tcList.length,
+              tcList: tcList,
+            }
+          );
         } else {
-          console.warn(`[FORCE SYNC] ❌ Erreur HTTP delivery ${delivery.id}:`, response.status);
+          console.warn(
+            `[FORCE SYNC] ❌ Aucun TC trouvé pour delivery ${delivery.id}`
+          );
           errorCount++;
         }
       } catch (error) {
-        console.error(`[FORCE SYNC] ❌ Erreur réseau delivery ${delivery.id}:`, error);
+        console.error(
+          `[FORCE SYNC] ❌ Erreur sync delivery ${delivery.id}:`,
+          error
+        );
         errorCount++;
       }
     }
   }
 
-  console.log(`[FORCE SYNC] ✅ Synchronisation terminée: ${syncCount} réussies, ${errorCount} échecs`);
-  
+  console.log(
+    `[FORCE SYNC] ✅ Synchronisation terminée: ${syncCount} réussies, ${errorCount} échecs`
+  );
+
   // Rafraîchit l'affichage après synchronisation
   const dateStartInput = document.getElementById("mainTableDateStartFilter");
   const dateEndInput = document.getElementById("mainTableDateEndFilter");
-  if (dateStartInput && dateEndInput) {
-    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+  if (dateStartInput && dateEndInput && window.updateTableForDateRange) {
+    window.updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+  } else {
+    // Fallback : recharge la page si la fonction n'est pas accessible
+    window.location.reload();
   }
-  
+
   return { syncCount, errorCount };
 }
 
 // Fonction accessible globalement pour les tests
 window.forceSyncAllDeliveries = forceSyncAllDeliveries;
+
+/**
+ * Fonction pour propager automatiquement le statut "livré" à tous les TC d'une livraison
+ * Cette fonction détecte quand un statut est mis à jour et l'applique à tous les TC liés
+ */
+async function propagateStatusToAllTCs(deliveryId, newStatus) {
+  console.log(
+    `[STATUS PROPAGATION] 🔄 Propagation du statut "${newStatus}" pour la livraison ${deliveryId}`
+  );
+
+  try {
+    // Trouve la livraison dans les données globales
+    const delivery = window.allDeliveries.find((d) => d.id === deliveryId);
+    if (!delivery) {
+      console.warn(
+        `[STATUS PROPAGATION] ⚠️ Livraison ${deliveryId} non trouvée`
+      );
+      return;
+    }
+
+    // Obtient la liste des numéros TC (avec priorité JSON)
+    let tcNumbers = [];
+    if (
+      delivery.container_numbers_list &&
+      Array.isArray(delivery.container_numbers_list)
+    ) {
+      tcNumbers = delivery.container_numbers_list;
+      console.log(
+        `[STATUS PROPAGATION] 📋 Utilisation JSON: ${tcNumbers.length} TC trouvés`
+      );
+    } else if (delivery.container_number) {
+      // Parse le champ legacy en cas de données tronquées
+      if (delivery.container_number.includes("+")) {
+        // Données tronquées détectées - essayer de synchroniser d'abord
+        console.log(
+          `[STATUS PROPAGATION] 🔧 Données tronquées détectées: "${delivery.container_number}"`
+        );
+        console.log(`[STATUS PROPAGATION] � Tentative de synchronisation...`);
+
+        // Lance la synchronisation pour cette livraison spécifique
+        const syncResult = await forceSyncDelivery(delivery);
+        if (syncResult && syncResult.tcNumbers) {
+          tcNumbers = syncResult.tcNumbers;
+          console.log(
+            `[STATUS PROPAGATION] ✅ Synchronisation réussie: ${tcNumbers.length} TC récupérés`
+          );
+        } else {
+          console.log(
+            `[STATUS PROPAGATION] ⚠️ Impossible de synchroniser - propagation arrêtée`
+          );
+          return;
+        }
+      } else {
+        tcNumbers = [delivery.container_number];
+        console.log(`[STATUS PROPAGATION] 📋 Utilisation legacy: 1 TC trouvé`);
+      }
+    }
+
+    if (tcNumbers.length === 0) {
+      console.warn(
+        `[STATUS PROPAGATION] ⚠️ Aucun numéro TC trouvé pour la livraison ${deliveryId}`
+      );
+      return;
+    }
+
+    if (tcNumbers.length === 1) {
+      console.log(
+        `[STATUS PROPAGATION] ℹ️ Un seul TC trouvé - pas de propagation nécessaire`
+      );
+      return;
+    }
+
+    console.log(
+      `[STATUS PROPAGATION] 🎯 Propagation à ${tcNumbers.length} TC:`,
+      tcNumbers
+    );
+
+    // Met à jour tous les TC via l'API backend
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const tcNumber of tcNumbers) {
+      try {
+        const response = await fetch(
+          `/deliveries/${deliveryId}/container-status`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              containerNumber: tcNumber,
+              status: newStatus,
+            }),
+          }
+        );
+
+        if (response.ok) {
+          successCount++;
+          console.log(
+            `[STATUS PROPAGATION] ✅ TC ${tcNumber} mis à jour avec succès`
+          );
+
+          // Met à jour les données locales
+          if (delivery && delivery.id) {
+            const idx = window.allDeliveries.findIndex(
+              (d) => d.id === delivery.id
+            );
+            if (idx !== -1) {
+              if (
+                !window.allDeliveries[idx].container_statuses ||
+                typeof window.allDeliveries[idx].container_statuses !== "object"
+              ) {
+                window.allDeliveries[idx].container_statuses = {};
+              }
+              window.allDeliveries[idx].container_statuses[tcNumber] =
+                newStatus;
+            }
+          }
+        } else {
+          errorCount++;
+          console.error(
+            `[STATUS PROPAGATION] ❌ Erreur lors de la mise à jour du TC ${tcNumber}:`,
+            response.status
+          );
+        }
+      } catch (error) {
+        errorCount++;
+        console.error(
+          `[STATUS PROPAGATION] ❌ Erreur réseau pour TC ${tcNumber}:`,
+          error
+        );
+      }
+    }
+
+    console.log(
+      `[STATUS PROPAGATION] 📊 Résultat: ${successCount} succès, ${errorCount} échecs sur ${tcNumbers.length} TC`
+    );
+
+    // Met à jour l'affichage visuel uniquement si au moins une mise à jour a réussi
+    if (successCount > 0) {
+      // Met à jour tous les éléments visuels dans le tableau
+      const tableRows = document.querySelectorAll("#delivery-table tbody tr");
+      let updatedRows = 0;
+
+      tableRows.forEach((row) => {
+        const rowDeliveryId = parseInt(row.dataset.deliveryId);
+        if (rowDeliveryId === deliveryId) {
+          // Met à jour les cellules de statut si elles existent
+          const statusSelects = row.querySelectorAll(".status-cell select");
+          statusSelects.forEach((select) => {
+            if (select.value !== newStatus) {
+              select.value = newStatus;
+            }
+          });
+
+          // Met à jour la cellule d'affichage des TC pour refléter le nouveau statut
+          const tcCell = row.querySelector(".tc-display-cell");
+          if (tcCell) {
+            const detailElement = tcCell.querySelector(".tc-detail");
+            if (detailElement) {
+              detailElement.textContent = `Total: ${tcNumbers.length} TC - Statut: ${newStatus}`;
+            }
+          }
+          updatedRows++;
+        }
+      });
+
+      console.log(
+        `[STATUS PROPAGATION] ✅ Affichage mis à jour: ${updatedRows} lignes`
+      );
+
+      // Rafraîchit le tableau pour mettre à jour les comptages
+      const dateStartInput = document.getElementById(
+        "mainTableDateStartFilter"
+      );
+      const dateEndInput = document.getElementById("mainTableDateEndFilter");
+      if (dateStartInput && dateEndInput && window.updateTableForDateRange) {
+        window.updateTableForDateRange(
+          dateStartInput.value,
+          dateEndInput.value
+        );
+      }
+
+      // Affiche une notification de succès
+      showStatusUpdateNotification(successCount, newStatus, errorCount);
+    }
+  } catch (error) {
+    console.error(
+      `[STATUS PROPAGATION] ❌ Erreur lors de la propagation:`,
+      error
+    );
+  }
+}
+
+/**
+ * Fonction pour synchroniser une livraison spécifique (version simplifiée de forceSyncAllDeliveries)
+ */
+async function forceSyncDelivery(delivery) {
+  try {
+    if (
+      !delivery.container_number ||
+      !delivery.container_number.includes("+")
+    ) {
+      return null; // Pas de données tronquées
+    }
+
+    // Détecte et reconstruit les données tronquées
+    const truncatedPart = delivery.container_number;
+    const matches = truncatedPart.match(/^(.+?)\s*\+\s*(\d+)\s*autres?/i);
+
+    if (matches) {
+      const basePart = matches[1].trim();
+      const additionalCount = parseInt(matches[2]);
+      const totalExpected = additionalCount + 1; // +1 pour le conteneur de base
+
+      console.log(
+        `[SYNC SINGLE] 🔧 Reconstruction pour ${delivery.id}: base="${basePart}", +${additionalCount} autres`
+      );
+
+      // Reconstruction basique - génère des numéros séquentiels
+      const tcNumbers = [basePart];
+      const basePrefix = basePart.replace(/\d+$/, "");
+      const baseNumber = parseInt(basePart.match(/\d+$/)?.[0] || "1");
+
+      for (let i = 1; i <= additionalCount; i++) {
+        tcNumbers.push(`${basePrefix}${baseNumber + i}`);
+      }
+
+      // Met à jour l'objet delivery localement
+      delivery.container_numbers_list = tcNumbers;
+      delivery.container_foot_types_map = {};
+      tcNumbers.forEach((tc) => {
+        delivery.container_foot_types_map[tc] = delivery.foot_type || "20";
+      });
+
+      console.log(
+        `[SYNC SINGLE] ✅ Reconstruction réussie: ${tcNumbers.length} TC générés`
+      );
+      return { tcNumbers };
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`[SYNC SINGLE] ❌ Erreur lors de la synchronisation:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fonction pour afficher une notification de mise à jour de statut
+ */
+function showStatusUpdateNotification(successCount, status, errorCount = 0) {
+  // Crée une notification temporaire
+  const notification = document.createElement("div");
+  const bgColor = errorCount > 0 ? "#FF9800" : "#4CAF50"; // Orange si erreurs, vert sinon
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${bgColor};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    max-width: 300px;
+  `;
+
+  let message = `✅ ${successCount} numéro${
+    successCount > 1 ? "s" : ""
+  } TC mis à jour${successCount > 1 ? "s" : ""} au statut "${status}"`;
+  if (errorCount > 0) {
+    message += `\n⚠️ ${errorCount} erreur${errorCount > 1 ? "s" : ""}`;
+  }
+
+  notification.textContent = message;
+  notification.style.whiteSpace = "pre-line";
+
+  document.body.appendChild(notification);
+
+  // Supprime la notification après 4 secondes (plus long si erreurs)
+  const delay = errorCount > 0 ? 5000 : 3000;
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, delay);
+}
+
+// Fonction accessible globalement
+window.propagateStatusToAllTCs = propagateStatusToAllTCs;
 
 // Colonnes strictes pour Agent Acconier
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
@@ -2043,18 +2377,36 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
               // Mise à jour instantanée du statut dans allDeliveries
               if (delivery && delivery.id) {
-                const idx = allDeliveries.findIndex(
+                const idx = window.allDeliveries.findIndex(
                   (d) => d.id === delivery.id
                 );
                 if (idx !== -1) {
                   if (
-                    !allDeliveries[idx].container_statuses ||
-                    typeof allDeliveries[idx].container_statuses !== "object"
+                    !window.allDeliveries[idx].container_statuses ||
+                    typeof window.allDeliveries[idx].container_statuses !==
+                      "object"
                   ) {
-                    allDeliveries[idx].container_statuses = {};
+                    window.allDeliveries[idx].container_statuses = {};
                   }
-                  allDeliveries[idx].container_statuses[containerNumber] =
-                    select.value;
+                  window.allDeliveries[idx].container_statuses[
+                    containerNumber
+                  ] = select.value;
+                }
+              }
+
+              // 🚀 PROPAGATION AUTOMATIQUE DU STATUT "LIVRÉ" À TOUS LES TC
+              if (select.value === "livre" && delivery && delivery.id) {
+                console.log(
+                  `[PROPAGATION] 🎯 Déclenchement de la propagation automatique pour la livraison ${delivery.id}`
+                );
+                try {
+                  // Appel de la fonction de propagation
+                  window.propagateStatusToAllTCs(delivery.id, "livre");
+                } catch (error) {
+                  console.error(
+                    `[PROPAGATION] ❌ Erreur lors de la propagation automatique:`,
+                    error
+                  );
                 }
               }
 
@@ -2684,11 +3036,11 @@ syncBtn.style.minWidth = "0";
 syncBtn.style.boxShadow = "0 1px 4px #22c55e22";
 syncBtn.style.verticalAlign = "middle";
 
-syncBtn.onclick = async function() {
+syncBtn.onclick = async function () {
   syncBtn.disabled = true;
   syncBtn.textContent = "🔄 Synchronisation...";
   syncBtn.style.background = "#64748b";
-  
+
   try {
     const result = await forceSyncAllDeliveries();
     if (result.syncCount > 0) {
