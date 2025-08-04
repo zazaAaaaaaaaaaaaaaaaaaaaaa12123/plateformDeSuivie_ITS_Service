@@ -6759,12 +6759,12 @@ function mapStatus(status) {
     const dossiersBtn = document.createElement("button");
     dossiersBtn.id = "viewClientFoldersBtn";
     dossiersBtn.innerHTML =
-      '<i class="fas fa-folder"></i> Vue Dossiers Clients';
+      '<i class="fas fa-folder" style="color: #f59e0b;"></i> Vue Dossiers Clients';
     dossiersBtn.className = "icon-btn-company-color";
-    dossiersBtn.style.fontSize = "0.9em";
-    dossiersBtn.style.padding = "8px 16px";
-    dossiersBtn.style.marginLeft = "25px";
-    dossiersBtn.style.marginRight = "25px";
+    dossiersBtn.style.fontSize = "0.8em";
+    dossiersBtn.style.padding = "6px 12px";
+    dossiersBtn.style.marginLeft = "20px";
+    dossiersBtn.style.marginRight = "20px";
     dossiersBtn.addEventListener("click", showClientFoldersModal);
 
     // Insère le bouton après Activer Sélection
