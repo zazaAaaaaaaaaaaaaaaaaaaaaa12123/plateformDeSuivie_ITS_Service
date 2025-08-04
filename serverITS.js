@@ -1731,9 +1731,9 @@ app.post("/deliveries/delete", async (req, res) => {
 // ROUTE : Liste des livraisons avec statuts (inclut bl_statuses)
 app.get("/deliveries/status", async (req, res) => {
   try {
-    // On sélectionne explicitement bl_statuses (et container_statuses)
+    // On sélectionne explicitement bl_statuses (et container_statuses) + NOUVEAUX CHAMPS JSON
     const result = await pool.query(
-      `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses FROM livraison_conteneur ORDER BY created_at DESC`
+      `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses, container_numbers_list, container_foot_types_map FROM livraison_conteneur ORDER BY created_at DESC`
     );
     res.json({ success: true, deliveries: result.rows });
   } catch (err) {

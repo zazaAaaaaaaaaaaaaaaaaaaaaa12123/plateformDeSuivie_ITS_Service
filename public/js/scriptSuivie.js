@@ -4010,12 +4010,31 @@ function mapStatus(status) {
         let displayValue;
         // --- Affichage spécial pour la colonne Numéro TC(s) ---
         if (fieldName === "container_number") {
-          // On accepte soit une string séparée par "," ou ";" ou un tableau
+          // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
           let tcList = [];
-          if (Array.isArray(value)) {
-            tcList = value.filter(Boolean);
-          } else if (typeof value === "string") {
-            tcList = value.split(/[,;\s]+/).filter(Boolean);
+
+          // Essayer d'abord le champ JSON container_numbers_list
+          if (delivery.container_numbers_list) {
+            try {
+              if (typeof delivery.container_numbers_list === "string") {
+                tcList = JSON.parse(delivery.container_numbers_list);
+              } else if (Array.isArray(delivery.container_numbers_list)) {
+                tcList = delivery.container_numbers_list;
+              }
+              tcList = tcList.filter(Boolean); // Supprimer les valeurs vides
+            } catch (e) {
+              console.warn("Erreur parsing container_numbers_list:", e);
+              tcList = [];
+            }
+          }
+
+          // PRIORITÉ 2 : Si pas de données JSON, utiliser le champ classique
+          if (tcList.length === 0) {
+            if (Array.isArray(value)) {
+              tcList = value.filter(Boolean);
+            } else if (typeof value === "string") {
+              tcList = value.split(/[,;\s]+/).filter(Boolean);
+            }
           }
           // Fonction pour ouvrir la pop-up détaillée
           function showContainerDetailPopup(delivery, containerNumber) {
