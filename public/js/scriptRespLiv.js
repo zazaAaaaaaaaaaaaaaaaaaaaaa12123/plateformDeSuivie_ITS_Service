@@ -735,112 +735,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// === FONCTION DE SYNCHRONISATION FORCÉE DES DONNÉES JSON ===
-async function forceSyncAllDeliveries() {
-  console.log(
-    "[FORCE SYNC] Début de la synchronisation forcée des données JSON..."
-  );
-
-  if (!window.allDeliveries || window.allDeliveries.length === 0) {
-    console.log("[FORCE SYNC] Aucune livraison à synchroniser");
-    return;
-  }
-
-  let syncCount = 0;
-  let errorCount = 0;
-
-  for (const delivery of window.allDeliveries) {
-    // Vérifie si cette livraison a besoin de synchronisation
-    if (
-      !delivery.container_numbers_list ||
-      !Array.isArray(delivery.container_numbers_list)
-    ) {
-      console.log(
-        `[FORCE SYNC] Synchronisation nécessaire pour delivery ${
-          delivery.id || delivery.dossier_number
-        }`
-      );
-
-      try {
-        // Solution frontend : reconstruction des données JSON à partir de container_number
-        let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
-          tcList = delivery.container_number.filter(Boolean);
-        } else if (typeof delivery.container_number === "string") {
-          // Détection si les données sont tronquées (contient "+")
-          if (delivery.container_number.includes("+")) {
-            // Données tronquées détectées, on essaie de récupérer depuis les formulaires originaux
-            console.log(
-              `[FORCE SYNC] ⚠️ Données tronquées détectées pour delivery ${delivery.id}`
-            );
-
-            // Fallback : utilise les données disponibles en supprimant le tronquage
-            const parts = delivery.container_number.split(/\s*\+\s*\d+\s*/);
-            if (parts.length > 0) {
-              tcList = parts[0].split(/[,;\s]+/).filter(Boolean);
-            }
-          } else {
-            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-          }
-        }
-
-        if (tcList.length > 0) {
-          // Met à jour directement l'objet delivery avec les données JSON
-          delivery.container_numbers_list = tcList;
-
-          // Si pas de container_foot_types_map, en crée un par défaut
-          if (!delivery.container_foot_types_map) {
-            delivery.container_foot_types_map = {};
-            tcList.forEach((tc) => {
-              delivery.container_foot_types_map[tc] =
-                delivery.container_foot_type || "20";
-            });
-          }
-
-          syncCount++;
-          console.log(
-            `[FORCE SYNC] ✅ Delivery ${delivery.id} synchronisée localement`,
-            {
-              tcCount: tcList.length,
-              tcList: tcList,
-            }
-          );
-        } else {
-          console.warn(
-            `[FORCE SYNC] ❌ Aucun TC trouvé pour delivery ${delivery.id}`
-          );
-          errorCount++;
-        }
-      } catch (error) {
-        console.error(
-          `[FORCE SYNC] ❌ Erreur sync delivery ${delivery.id}:`,
-          error
-        );
-        errorCount++;
-      }
-    }
-  }
-
-  console.log(
-    `[FORCE SYNC] ✅ Synchronisation terminée: ${syncCount} réussies, ${errorCount} échecs`
-  );
-
-  // Rafraîchit l'affichage après synchronisation
-  const dateStartInput = document.getElementById("mainTableDateStartFilter");
-  const dateEndInput = document.getElementById("mainTableDateEndFilter");
-  if (dateStartInput && dateEndInput && window.updateTableForDateRange) {
-    window.updateTableForDateRange(dateStartInput.value, dateEndInput.value);
-  } else {
-    // Fallback : recharge la page si la fonction n'est pas accessible
-    window.location.reload();
-  }
-
-  return { syncCount, errorCount };
-}
-
-// Fonction accessible globalement pour les tests
-window.forceSyncAllDeliveries = forceSyncAllDeliveries;
-
 /**
  * Fonction pour propager automatiquement le statut "livré" à tous les TC d'une livraison
  * Cette fonction détecte quand un statut est mis à jour et l'applique à tous les TC liés
@@ -1081,7 +975,7 @@ async function propagateStatusToAllTCs(deliveryId, newStatus) {
 }
 
 /**
- * Fonction pour synchroniser une livraison spécifique (version simplifiée de forceSyncAllDeliveries)
+ * Fonction pour synchroniser une livraison spécifique lors de données tronquées
  */
 async function forceSyncDelivery(delivery) {
   try {
@@ -1743,84 +1637,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         );
       }
 
-      // === FONCTION DE TEST POUR LA SYNCHRONISATION ===
-      window.testSynchronization = function () {
-        console.log("=== TEST DE SYNCHRONISATION RESPLIVDELIVERY → SUIVIE ===");
-
-        // Simuler une modification de données
-        const testDelivery = { id: "test123", dossier_number: "TEST-001" };
-        const testFields = [
-          { fieldId: "visitor_agent_name", value: "Agent Test Visiteur" },
-          { fieldId: "transporter", value: "Transporteur Test SA" },
-          { fieldId: "inspector", value: "Inspecteur Test" },
-          { fieldId: "customs_agent", value: "Agent Douanes Test" },
-          { fieldId: "driver", value: "Chauffeur Test" },
-          { fieldId: "driver_phone", value: "+33123456789" },
-          { fieldId: "delivery_date", value: "2025-03-15" },
-        ];
-
-        testFields.forEach((test) => {
-          console.log(`Test synchronisation: ${test.fieldId} = ${test.value}`);
-          syncDataToSuivie(testDelivery, test.fieldId, test.value);
-        });
-
-        console.log("Test terminé. Vérifiez:");
-        console.log("1. localStorage (clés sync_*)");
-        console.log("2. Appels API backend (/api/sync-resplivraison)");
-        console.log("3. Page Suivie pour synchronisation visuelle");
-        console.log(
-          "Clés de synchronisation créées:",
-          Object.keys(localStorage).filter((k) => k.startsWith("sync_test123"))
-        );
-      };
-
-      // === FONCTION DE TEST SPÉCIFIQUE POUR LES STATUTS DE CONTENEURS ===
-      window.testContainerStatusSynchronization = function () {
-        console.log(
-          "=== TEST DE SYNCHRONISATION DES STATUTS DE CONTENEURS ==="
-        );
-
-        // Simuler une mise à jour de statut de conteneur
-        const testData = {
-          deliveryId: "test_delivery_123",
-          containerNumber: "TCLU1234567",
-          status: "livre",
-          timestamp: Date.now(),
-          type: "container_status_update",
-        };
-
-        console.log("Test mise à jour statut conteneur:", testData);
-
-        // 1. Stockage local
-        const containerSyncKey = `container_status_${testData.deliveryId}_${testData.containerNumber}`;
-        localStorage.setItem(containerSyncKey, JSON.stringify(testData));
-
-        // 2. Événement personnalisé
-        window.dispatchEvent(
-          new CustomEvent("containerStatusUpdate", {
-            detail: testData,
-          })
-        );
-
-        // 3. WebSocket (si connecté)
-        if (window.ws && window.ws.readyState === 1) {
-          window.ws.send(JSON.stringify(testData));
-          console.log("WebSocket: message envoyé");
-        } else {
-          console.log("WebSocket: non connecté");
-        }
-
-        console.log("Test terminé. Vérifiez:");
-        console.log("1. localStorage (clé container_status_*)");
-        console.log("2. Page Suivie pour synchronisation en temps réel");
-        console.log("3. Logs dans la console de la page Suivie");
-        console.log(
-          "Clé de synchronisation créée:",
-          containerSyncKey,
-          "=",
-          localStorage.getItem(containerSyncKey)
-        );
-      };
       const td = document.createElement("td");
       // Ajout : identifiant data-col-id sur la cellule pour le filtrage
       td.setAttribute("data-col-id", col.id);
@@ -3204,59 +3020,6 @@ pdfBtn.style.minWidth = "0";
 pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
 pdfBtn.style.verticalAlign = "middle";
 
-// Création du bouton de synchronisation forcée
-const syncBtn = document.createElement("button");
-syncBtn.id = "forceSyncBtn";
-syncBtn.textContent = "🔄 Sync JSON";
-syncBtn.style.background = "#22c55e";
-syncBtn.style.color = "#fff";
-syncBtn.style.fontWeight = "bold";
-syncBtn.style.border = "none";
-syncBtn.style.cursor = "pointer";
-syncBtn.style.borderRadius = "7px";
-syncBtn.style.padding = "4px 12px";
-syncBtn.style.fontSize = "0.97em";
-syncBtn.style.margin = "0 0 0 8px";
-syncBtn.style.height = "32px";
-syncBtn.style.minWidth = "0";
-syncBtn.style.boxShadow = "0 1px 4px #22c55e22";
-syncBtn.style.verticalAlign = "middle";
-
-syncBtn.onclick = async function () {
-  syncBtn.disabled = true;
-  syncBtn.textContent = "🔄 Synchronisation...";
-  syncBtn.style.background = "#64748b";
-
-  try {
-    const result = await forceSyncAllDeliveries();
-    if (result.syncCount > 0) {
-      syncBtn.textContent = `✅ ${result.syncCount} sync OK`;
-      syncBtn.style.background = "#22c55e";
-      setTimeout(() => {
-        syncBtn.textContent = "🔄 Sync JSON";
-        syncBtn.disabled = false;
-      }, 3000);
-    } else {
-      syncBtn.textContent = "✅ Tout à jour";
-      syncBtn.style.background = "#22c55e";
-      setTimeout(() => {
-        syncBtn.textContent = "🔄 Sync JSON";
-        syncBtn.disabled = false;
-      }, 2000);
-    }
-  } catch (error) {
-    console.error("Erreur synchronisation:", error);
-    syncBtn.textContent = "❌ Erreur";
-    syncBtn.style.background = "#ef4444";
-    setTimeout(() => {
-      syncBtn.textContent = "🔄 Sync JSON";
-      syncBtn.style.background = "#22c55e";
-      syncBtn.disabled = false;
-    }, 3000);
-  }
-};
-pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
-pdfBtn.style.verticalAlign = "middle";
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
   const searchInput = document.querySelector(
@@ -3264,13 +3027,11 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   if (searchInput && searchInput.parentNode) {
     searchInput.parentNode.appendChild(pdfBtn);
-    searchInput.parentNode.appendChild(syncBtn);
   } else {
     // fallback : au-dessus du tableau si champ non trouvé
     const mainTable = document.getElementById("deliveriesTable");
     if (mainTable && mainTable.parentNode) {
       mainTable.parentNode.insertBefore(pdfBtn, mainTable);
-      mainTable.parentNode.insertBefore(syncBtn, mainTable);
     }
   }
 });
