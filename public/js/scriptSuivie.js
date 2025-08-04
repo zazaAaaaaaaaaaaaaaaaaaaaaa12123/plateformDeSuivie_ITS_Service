@@ -2489,9 +2489,6 @@ function mapStatus(status) {
     }
   });
 
-  // DOM element for the status filter
-
-  const statusFilterSelect = document.getElementById("statusFilterSelect");
   // Les variables mainTableDateStartFilter et mainTableDateEndFilter sont déclarées dynamiquement plus bas
   // const mainTableDateStartFilter = document.getElementById("mainTableDateStartFilter");
   // const mainTableDateEndFilter = document.getElementById("mainTableDateEndFilter");
@@ -5187,19 +5184,6 @@ function mapStatus(status) {
       sortedAgents
     );
     return sortedAgents;
-  }
-  function populateStatusFilter() {
-    if (!statusFilterSelect) {
-      console.error("Element #statusFilterSelect not found.");
-      return;
-    }
-    statusFilterSelect.innerHTML = "";
-    GLOBAL_STATUS_OPTIONS.forEach((option) => {
-      const optElement = document.createElement("option");
-      optElement.value = option.value;
-      optElement.textContent = option.text;
-      statusFilterSelect.appendChild(optElement);
-    });
   }
 
   function applyCombinedFilters(shouldRenderTable = true) {
@@ -8704,11 +8688,6 @@ function mapStatus(status) {
     });
   }
 
-  if (statusFilterSelect) {
-    statusFilterSelect.addEventListener("change", applyCombinedFilters);
-    populateStatusFilter();
-  }
-
   // L'initialisation des champs de date est maintenant gérée après leur création dynamique
 
   if (searchButton) {
@@ -8716,11 +8695,6 @@ function mapStatus(status) {
       // The old filterDeliveriesByContainerNumber is replaced by applyCombinedFilters
       applyCombinedFilters();
     });
-  }
-
-  if (statusFilterSelect) {
-    statusFilterSelect.addEventListener("change", applyCombinedFilters);
-    populateStatusFilter();
   }
 
   if (activateEditBtn) {
