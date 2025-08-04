@@ -799,13 +799,7 @@ async function propagateStatusToAllTCs(deliveryId, newStatus) {
       return;
     }
 
-    if (tcNumbers.length === 1) {
-      console.log(
-        `[STATUS PROPAGATION] ℹ️ Un seul TC trouvé - pas de propagation nécessaire`
-      );
-      return;
-    }
-
+    // Permettre la propagation même pour un seul TC (pour l'action manuelle)
     console.log(
       `[STATUS PROPAGATION] 🎯 Propagation à ${tcNumbers.length} TC:`,
       tcNumbers
@@ -1738,12 +1732,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const popup = document.createElement("div");
           popup.className = "tc-popup";
           popup.style.display = "none";
-          popup.innerHTML = tcList
-            .map(
-              (tc) =>
-                `<div class="tc-popup-item" style='cursor:pointer;color:#0e274e;font-weight:700;font-size:1.13em;text-align:center;'>${tc}</div>`
-            )
-            .join("");
+          popup.innerHTML =
+            tcList
+              .map(
+                (tc) =>
+                  `<div class="tc-popup-item" style='cursor:pointer;color:#0e274e;font-weight:700;font-size:1.13em;text-align:center;'>${tc}</div>`
+              )
+              .join("") +
+            `<div class="tc-popup-separator" style="height:1px;background:#e5e7eb;margin:4px 8px;"></div>
+            <div class="tc-popup-item tc-popup-mark-all" style='cursor:pointer;color:#22c55e;font-weight:700;font-size:1.1em;text-align:center;background:#f0fdf4;border-radius:4px;margin:4px;'>📦 Marquer tous comme livrés</div>`;
           btn.onclick = (e) => {
             e.stopPropagation();
             document.querySelectorAll(".tc-popup").forEach((p) => {
@@ -1752,13 +1749,62 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             popup.style.display =
               popup.style.display === "block" ? "none" : "block";
           };
-          popup.querySelectorAll(".tc-popup-item").forEach((item) => {
-            item.onclick = (ev) => {
+          popup
+            .querySelectorAll(".tc-popup-item:not(.tc-popup-mark-all)")
+            .forEach((item) => {
+              item.onclick = (ev) => {
+                ev.stopPropagation();
+                popup.style.display = "none";
+                showContainerDetailPopup(delivery, item.textContent);
+              };
+            });
+
+          // Gestion du bouton "Marquer tous comme livrés"
+          const markAllBtn = popup.querySelector(".tc-popup-mark-all");
+          if (markAllBtn) {
+            markAllBtn.onclick = async (ev) => {
               ev.stopPropagation();
               popup.style.display = "none";
-              showContainerDetailPopup(delivery, item.textContent);
+
+              // Vérification des champs obligatoires
+              if (!isAllRequiredFilled()) {
+                showAccessMessage(
+                  "⚠️ Veuillez d'abord remplir tous les champs obligatoires (Agent visiteurs, Transporteur, Inspecteur, Agent en douanes, Chauffeur, Tel chauffeur, Date livraison).",
+                  "red"
+                );
+                return;
+              }
+
+              if (
+                !confirm(
+                  `Êtes-vous sûr de vouloir marquer TOUS les ${tcList.length} conteneurs comme livrés ?`
+                )
+              ) {
+                return;
+              }
+
+              console.log(
+                `[MARK ALL] 🎯 Marquage de tous les conteneurs comme livrés pour la livraison ${delivery.id}`
+              );
+
+              try {
+                // Utilise la fonction de propagation existante
+                await window.propagateStatusToAllTCs(delivery.id, "livre");
+
+                // Affiche un message de succès
+                showAccessMessage(
+                  `✅ Tous les ${tcList.length} conteneurs ont été marqués comme livrés !`,
+                  "green"
+                );
+              } catch (error) {
+                console.error(`[MARK ALL] ❌ Erreur lors du marquage:`, error);
+                showAccessMessage(
+                  "❌ Erreur lors du marquage des conteneurs",
+                  "red"
+                );
+              }
             };
-          });
+          }
           document.addEventListener("click", function hidePopup(e) {
             if (!td.contains(e.target)) popup.style.display = "none";
           });
@@ -2339,87 +2385,71 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }
               }
 
-              // 🚀 PROPAGATION AUTOMATIQUE DU STATUT "LIVRÉ" À TOUS LES TC
-              if (select.value === "livre" && delivery && delivery.id) {
-                console.log(
-                  `[PROPAGATION] 🎯 Déclenchement de la propagation automatique pour la livraison ${delivery.id}`
+              // � MISE À JOUR INSTANTANÉE POUR UN SEUL TC (pas de propagation automatique)
+              console.log(
+                `[SINGLE UPDATE] Mise à jour instantanée pour TC: ${containerNumber}`
+              );
+
+              const row = document.querySelector(
+                `#deliveriesTableBody tr[data-delivery-id='${delivery.id}']`
+              );
+              if (row) {
+                const statutCell = row.querySelector(
+                  "td[data-col-id='statut']"
                 );
-                try {
-                  // Appel de la fonction de propagation
-                  window.propagateStatusToAllTCs(delivery.id, "livre");
-                } catch (error) {
-                  console.error(
-                    `[PROPAGATION] ❌ Erreur lors de la propagation automatique:`,
-                    error
+                if (statutCell) {
+                  // Recalcule le statut avec les données mises à jour
+                  const updatedDelivery = window.allDeliveries.find(
+                    (d) => d.id === delivery.id
                   );
-                }
-              } else {
-                // 🔧 MISE À JOUR INSTANTANÉE POUR UN SEUL TC
-                console.log(
-                  `[SINGLE UPDATE] Mise à jour instantanée pour TC: ${containerNumber}`
-                );
+                  let tcList = [];
 
-                const row = document.querySelector(
-                  `#deliveriesTableBody tr[data-delivery-id='${delivery.id}']`
-                );
-                if (row) {
-                  const statutCell = row.querySelector(
-                    "td[data-col-id='statut']"
-                  );
-                  if (statutCell) {
-                    // Recalcule le statut avec les données mises à jour
-                    const updatedDelivery = window.allDeliveries.find(
-                      (d) => d.id === delivery.id
-                    );
-                    let tcList = [];
-
-                    if (
-                      updatedDelivery &&
-                      updatedDelivery.container_numbers_list &&
-                      Array.isArray(updatedDelivery.container_numbers_list)
-                    ) {
-                      tcList = updatedDelivery.container_numbers_list;
-                    } else if (Array.isArray(delivery.container_number)) {
-                      tcList = delivery.container_number.filter(Boolean);
-                    } else if (typeof delivery.container_number === "string") {
-                      tcList = delivery.container_number
-                        .split(/[,;\s]+/)
-                        .filter(Boolean);
-                    }
-
-                    let delivered = 0;
-                    if (updatedDelivery && updatedDelivery.container_statuses) {
-                      delivered = tcList.filter((tc) => {
-                        const s = updatedDelivery.container_statuses[tc];
-                        return s === "livre" || s === "livré";
-                      }).length;
-                    }
-
-                    const total = tcList.length;
-                    console.log(
-                      `[SINGLE UPDATE] Statut calculé: ${delivered}/${total} livrés`
-                    );
-
-                    // Met à jour l'affichage du statut
-                    if (delivered === total && total > 0) {
-                      // Tous livrés : bouton vert + icône camion + texte Livré
-                      statutCell.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
-                        <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
-                        Livré
-                      </button>`;
-                    } else if (delivered > 0) {
-                      // Affichage classique : x sur y livré(s) avec le NOMBRE EXACT
-                      statutCell.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
-                        total > 1 ? "s" : ""
-                      }</button>`;
-                    } else {
-                      statutCell.innerHTML = "";
-                    }
-
-                    console.log(
-                      `[SINGLE UPDATE] ✅ Cellule statut mise à jour instantanément`
-                    );
+                  if (
+                    updatedDelivery &&
+                    updatedDelivery.container_numbers_list &&
+                    Array.isArray(updatedDelivery.container_numbers_list)
+                  ) {
+                    tcList = updatedDelivery.container_numbers_list;
+                  } else if (Array.isArray(delivery.container_number)) {
+                    tcList = delivery.container_number.filter(Boolean);
+                  } else if (typeof delivery.container_number === "string") {
+                    tcList = delivery.container_number
+                      .split(/[,;\s]+/)
+                      .filter(Boolean);
                   }
+
+                  let delivered = 0;
+                  if (updatedDelivery && updatedDelivery.container_statuses) {
+                    delivered = tcList.filter((tc) => {
+                      const s = updatedDelivery.container_statuses[tc];
+                      return s === "livre" || s === "livré";
+                    }).length;
+                  }
+
+                  const total = tcList.length;
+                  console.log(
+                    `[SINGLE UPDATE] Statut calculé: ${delivered}/${total} livrés`
+                  );
+
+                  // Met à jour l'affichage du statut
+                  if (delivered === total && total > 0) {
+                    // Tous livrés : bouton vert + icône camion + texte Livré
+                    statutCell.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
+                      <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
+                      Livré
+                    </button>`;
+                  } else if (delivered > 0) {
+                    // Affichage classique : x sur y livré(s) avec le NOMBRE EXACT
+                    statutCell.innerHTML = `<button style="font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #eab308;background:#fffbe6;color:#b45309;">${delivered} sur ${total} livré${
+                      total > 1 ? "s" : ""
+                    }</button>`;
+                  } else {
+                    statutCell.innerHTML = "";
+                  }
+
+                  console.log(
+                    `[SINGLE UPDATE] ✅ Cellule statut mise à jour instantanément`
+                  );
                 }
               }
 
