@@ -4722,6 +4722,7 @@ function mapStatus(status) {
         let statusText = "-";
         let statusColor = "#374151";
         let statusBg = "#f8fafc";
+        let isOverdue = false;
 
         // Vérifier si la livraison a des conteneurs et leurs statuts
         if (
@@ -4754,11 +4755,33 @@ function mapStatus(status) {
               statusColor = "#fff";
               statusBg = "#f59e0b";
             } else {
-              // Aucun conteneur livré
+              // Aucun conteneur livré - vérifier si en retard
               statusText =
                 '<i class="fas fa-hourglass-half" style="margin-right: 6px;"></i>En attente';
               statusColor = "#374151";
               statusBg = "#f3f4f6";
+
+              // Vérifier si c'est en retard (plus de 2 jours) et pas "mise en livraison"
+              if (delivery.delivery_date) {
+                const deliveryDate = new Date(delivery.delivery_date);
+                const currentDate = new Date();
+                const daysDifference = Math.floor(
+                  (currentDate - deliveryDate) / (1000 * 60 * 60 * 24)
+                );
+
+                // Vérifier le statut pour s'assurer qu'il n'est pas "mise en livraison"
+                const isMiseEnLivraison =
+                  delivery.status &&
+                  delivery.status.toLowerCase().includes("mise en livraison");
+
+                if (daysDifference > 2 && !isMiseEnLivraison) {
+                  isOverdue = true;
+                  statusText =
+                    '<i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Dossier en retard';
+                  statusColor = "#fff";
+                  statusBg = "#dc2626";
+                }
+              }
             }
           }
         }
@@ -4775,6 +4798,12 @@ function mapStatus(status) {
         box.style.background = statusBg;
         box.style.color = statusColor;
         box.innerHTML = statusText;
+
+        // Ajouter l'animation clignotante pour les dossiers en retard
+        if (isOverdue) {
+          box.style.animation = "blinkRed 1.5s infinite";
+          box.classList.add("overdue-status");
+        }
 
         // Ajouter les événements de survol pour le tooltip
         box.style.cursor = "pointer";
@@ -9173,6 +9202,14 @@ function mapStatus(status) {
       .row-green-blink td {
         animation: green-blink 1s linear 0s 5;
         background-color: #34d399 !important;
+      }
+      @keyframes blinkRed {
+        0% { background-color: #dc2626; opacity: 1; }
+        50% { background-color: #ef4444; opacity: 0.7; }
+        100% { background-color: #dc2626; opacity: 1; }
+      }
+      .overdue-status {
+        animation: blinkRed 1.5s infinite !important;
       }
     `;
     document.head.appendChild(style);
