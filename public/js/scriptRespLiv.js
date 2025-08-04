@@ -698,6 +698,73 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+// === FONCTION DE SYNCHRONISATION FORCÉE DES DONNÉES JSON ===
+async function forceSyncAllDeliveries() {
+  console.log('[FORCE SYNC] Début de la synchronisation forcée des données JSON...');
+  
+  if (!window.allDeliveries || window.allDeliveries.length === 0) {
+    console.log('[FORCE SYNC] Aucune livraison à synchroniser');
+    return;
+  }
+
+  let syncCount = 0;
+  let errorCount = 0;
+
+  for (const delivery of window.allDeliveries) {
+    // Vérifie si cette livraison a besoin de synchronisation
+    if (!delivery.container_numbers_list || !Array.isArray(delivery.container_numbers_list)) {
+      console.log(`[FORCE SYNC] Synchronisation nécessaire pour delivery ${delivery.id || delivery.dossier_number}`);
+      
+      try {
+        const response = await fetch('/api/force-sync-delivery-json', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            deliveryId: delivery.id,
+            dossier_number: delivery.dossier_number
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            // Met à jour la livraison locale avec les nouvelles données
+            Object.assign(delivery, result.delivery);
+            syncCount++;
+            console.log(`[FORCE SYNC] ✅ Delivery ${delivery.id} synchronisée`);
+          } else {
+            console.warn(`[FORCE SYNC] ❌ Échec sync delivery ${delivery.id}:`, result.message);
+            errorCount++;
+          }
+        } else {
+          console.warn(`[FORCE SYNC] ❌ Erreur HTTP delivery ${delivery.id}:`, response.status);
+          errorCount++;
+        }
+      } catch (error) {
+        console.error(`[FORCE SYNC] ❌ Erreur réseau delivery ${delivery.id}:`, error);
+        errorCount++;
+      }
+    }
+  }
+
+  console.log(`[FORCE SYNC] ✅ Synchronisation terminée: ${syncCount} réussies, ${errorCount} échecs`);
+  
+  // Rafraîchit l'affichage après synchronisation
+  const dateStartInput = document.getElementById("mainTableDateStartFilter");
+  const dateEndInput = document.getElementById("mainTableDateEndFilter");
+  if (dateStartInput && dateEndInput) {
+    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+  }
+  
+  return { syncCount, errorCount };
+}
+
+// Fonction accessible globalement pour les tests
+window.forceSyncAllDeliveries = forceSyncAllDeliveries;
+
 // Colonnes strictes pour Agent Acconier
 // Fonction robuste pour générer le tableau complet (en-tête + lignes)
 function renderAgentTableFull(deliveries, tableBodyElement) {
@@ -1070,19 +1137,21 @@ const AGENT_TABLE_COLUMNS = [
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
-  
+
   // DEBUG: Affichage des données de livraison reçues
-  console.log(`[DEBUG RENDER] Nombre de livraisons à afficher: ${deliveries.length}`);
+  console.log(
+    `[DEBUG RENDER] Nombre de livraisons à afficher: ${deliveries.length}`
+  );
   deliveries.forEach((delivery, idx) => {
     console.log(`[DEBUG RENDER ${idx}] Delivery:`, {
       id: delivery.id,
       dossier_number: delivery.dossier_number,
       container_number: delivery.container_number,
       container_numbers_list: delivery.container_numbers_list,
-      container_statuses: delivery.container_statuses
+      container_statuses: delivery.container_statuses,
     });
   });
-  
+
   // Colonnes éditables demandées
   const editableCols = [
     "visitor_agent_name",
@@ -1390,15 +1459,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           Array.isArray(delivery.container_numbers_list)
         ) {
           tcList = delivery.container_numbers_list.filter(Boolean);
-          console.log(`[DEBUG TC DISPLAY] Utilisation container_numbers_list (${tcList.length}):`, tcList);
+          console.log(
+            `[DEBUG TC DISPLAY] Utilisation container_numbers_list (${tcList.length}):`,
+            tcList
+          );
         } else if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
-          console.log(`[DEBUG TC DISPLAY] Utilisation container_number array (${tcList.length}):`, tcList);
+          console.log(
+            `[DEBUG TC DISPLAY] Utilisation container_number array (${tcList.length}):`,
+            tcList
+          );
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-          console.log(`[DEBUG TC DISPLAY] Utilisation container_number string (${tcList.length}):`, tcList);
+          console.log(
+            `[DEBUG TC DISPLAY] Utilisation container_number string (${tcList.length}):`,
+            tcList
+          );
         }
-        console.log(`[DEBUG TC DISPLAY] Delivery ID: ${delivery.id || delivery.dossier_number}, Total TC: ${tcList.length}`);
+        console.log(
+          `[DEBUG TC DISPLAY] Delivery ID: ${
+            delivery.id || delivery.dossier_number
+          }, Total TC: ${tcList.length}`
+        );
         td.style.textAlign = "center";
         if (tcList.length > 1) {
           td.classList.add("tc-multi-cell");
@@ -1730,15 +1812,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           Array.isArray(delivery.container_numbers_list)
         ) {
           tcList = delivery.container_numbers_list.filter(Boolean);
-          console.log(`[DEBUG STATUT] Utilisation container_numbers_list (${tcList.length}):`, tcList);
+          console.log(
+            `[DEBUG STATUT] Utilisation container_numbers_list (${tcList.length}):`,
+            tcList
+          );
         } else if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
-          console.log(`[DEBUG STATUT] Utilisation container_number array (${tcList.length}):`, tcList);
+          console.log(
+            `[DEBUG STATUT] Utilisation container_number array (${tcList.length}):`,
+            tcList
+          );
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
-          console.log(`[DEBUG STATUT] Utilisation container_number string (${tcList.length}):`, tcList);
+          console.log(
+            `[DEBUG STATUT] Utilisation container_number string (${tcList.length}):`,
+            tcList
+          );
         }
-        console.log(`[DEBUG STATUT] Delivery ID: ${delivery.id || delivery.dossier_number}, Total TC: ${tcList.length}`);
+        console.log(
+          `[DEBUG STATUT] Delivery ID: ${
+            delivery.id || delivery.dossier_number
+          }, Total TC: ${tcList.length}`
+        );
         let total = tcList.length;
         let delivered = 0;
         if (
@@ -2570,6 +2665,60 @@ pdfBtn.style.height = "32px";
 pdfBtn.style.minWidth = "0";
 pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
 pdfBtn.style.verticalAlign = "middle";
+
+// Création du bouton de synchronisation forcée
+const syncBtn = document.createElement("button");
+syncBtn.id = "forceSyncBtn";
+syncBtn.textContent = "🔄 Sync JSON";
+syncBtn.style.background = "#22c55e";
+syncBtn.style.color = "#fff";
+syncBtn.style.fontWeight = "bold";
+syncBtn.style.border = "none";
+syncBtn.style.cursor = "pointer";
+syncBtn.style.borderRadius = "7px";
+syncBtn.style.padding = "4px 12px";
+syncBtn.style.fontSize = "0.97em";
+syncBtn.style.margin = "0 0 0 8px";
+syncBtn.style.height = "32px";
+syncBtn.style.minWidth = "0";
+syncBtn.style.boxShadow = "0 1px 4px #22c55e22";
+syncBtn.style.verticalAlign = "middle";
+
+syncBtn.onclick = async function() {
+  syncBtn.disabled = true;
+  syncBtn.textContent = "🔄 Synchronisation...";
+  syncBtn.style.background = "#64748b";
+  
+  try {
+    const result = await forceSyncAllDeliveries();
+    if (result.syncCount > 0) {
+      syncBtn.textContent = `✅ ${result.syncCount} sync OK`;
+      syncBtn.style.background = "#22c55e";
+      setTimeout(() => {
+        syncBtn.textContent = "🔄 Sync JSON";
+        syncBtn.disabled = false;
+      }, 3000);
+    } else {
+      syncBtn.textContent = "✅ Tout à jour";
+      syncBtn.style.background = "#22c55e";
+      setTimeout(() => {
+        syncBtn.textContent = "🔄 Sync JSON";
+        syncBtn.disabled = false;
+      }, 2000);
+    }
+  } catch (error) {
+    console.error("Erreur synchronisation:", error);
+    syncBtn.textContent = "❌ Erreur";
+    syncBtn.style.background = "#ef4444";
+    setTimeout(() => {
+      syncBtn.textContent = "🔄 Sync JSON";
+      syncBtn.style.background = "#22c55e";
+      syncBtn.disabled = false;
+    }, 3000);
+  }
+};
+pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
+pdfBtn.style.verticalAlign = "middle";
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
   const searchInput = document.querySelector(
@@ -2577,11 +2726,13 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   if (searchInput && searchInput.parentNode) {
     searchInput.parentNode.appendChild(pdfBtn);
+    searchInput.parentNode.appendChild(syncBtn);
   } else {
     // fallback : au-dessus du tableau si champ non trouvé
     const mainTable = document.getElementById("deliveriesTable");
     if (mainTable && mainTable.parentNode) {
       mainTable.parentNode.insertBefore(pdfBtn, mainTable);
+      mainTable.parentNode.insertBefore(syncBtn, mainTable);
     }
   }
 });
