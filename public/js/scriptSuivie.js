@@ -2440,22 +2440,7 @@ function mapStatus(status) {
 
   // Define ONLY selectable options for the main table's status filter dropdown
   const GLOBAL_STATUS_OPTIONS = [
-    {
-      value: "pending",
-      text: "En attente",
-      apiValue: "pending",
-      icon: "fa-hourglass-half",
-      tailwindColorClass: "text-yellow-500",
-      hexColor: "#f59e0b",
-    },
-    {
-      value: "livre",
-      text: "Livré",
-      apiValue: "delivered",
-      icon: "fa-check-circle",
-      tailwindColorClass: "text-green-500",
-      hexColor: "#22c55e",
-    },
+    // Aucune option disponible - filtre de statut désactivé
   ];
 
   // Define fields that are always inline editable, regardless of global editing mode
@@ -5208,7 +5193,7 @@ function mapStatus(status) {
       console.error("Element #statusFilterSelect not found.");
       return;
     }
-    statusFilterSelect.innerHTML = '<option value="">Tous les statuts</option>';
+    statusFilterSelect.innerHTML = "";
     GLOBAL_STATUS_OPTIONS.forEach((option) => {
       const optElement = document.createElement("option");
       optElement.value = option.value;
