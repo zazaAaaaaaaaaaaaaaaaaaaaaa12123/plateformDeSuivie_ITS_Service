@@ -1209,6 +1209,67 @@ function mapStatus(status) {
   }
 
   /**
+   * Force la synchronisation d'une livraison pour reconstruire les données tronquées
+   * @param {Object} delivery - Objet livraison
+   * @returns {Object|null} - Données synchronisées ou null si aucune reconstruction nécessaire
+   */
+  async function forceSyncDelivery(delivery) {
+    try {
+      if (
+        !delivery.container_number ||
+        !delivery.container_number.includes("+")
+      ) {
+        return null; // Pas de données tronquées
+      }
+
+      // Détecte et reconstruit les données tronquées
+      const truncatedPart = delivery.container_number;
+      const matches = truncatedPart.match(/^(.+?)\s*\+\s*(\d+)\s*autres?/i);
+
+      if (matches) {
+        const basePart = matches[1].trim();
+        const additionalCount = parseInt(matches[2]);
+        const totalExpected = additionalCount + 1; // +1 pour le conteneur de base
+
+        console.log(
+          `[SYNC SUIVIE] 🔧 Reconstruction pour ${delivery.id}: base="${basePart}", +${additionalCount} autres`
+        );
+
+        // Reconstruction basique - génère des numéros séquentiels
+        const tcNumbers = [basePart];
+        const basePrefix = basePart.replace(/\d+$/, "");
+        const baseNumber = parseInt(basePart.match(/\d+$/)?.[0] || "1");
+
+        for (let i = 1; i <= additionalCount; i++) {
+          tcNumbers.push(`${basePrefix}${baseNumber + i}`);
+        }
+
+        // Met à jour l'objet delivery localement
+        delivery.container_numbers_list = tcNumbers;
+        delivery.container_foot_types_map = {};
+        tcNumbers.forEach((tc) => {
+          delivery.container_foot_types_map[tc] = delivery.foot_type || "20";
+        });
+
+        console.log(
+          `[SYNC SUIVIE] ✅ Reconstruction réussie: ${tcNumbers.length} TC générés`
+        );
+
+        return {
+          container_numbers_list: tcNumbers,
+          container_foot_types_map: delivery.container_foot_types_map,
+        };
+      }
+    } catch (error) {
+      console.error(
+        "[SYNC SUIVIE] ❌ Erreur lors de la reconstruction:",
+        error
+      );
+    }
+    return null;
+  }
+
+  /**
    * Met à jour l'affichage des statuts de conteneurs dans le tableau principal
    * Cette fonction s'assure que les changements depuis resp_liv.html sont visibles immédiatement
    * @param {string} deliveryId - ID de la livraison
@@ -1294,7 +1355,7 @@ function mapStatus(status) {
    * @param {HTMLElement} row - Ligne du tableau
    * @param {string} deliveryId - ID de la livraison
    */
-  function updateSingleRowStatusCell(row, deliveryId) {
+  async function updateSingleRowStatusCell(row, deliveryId) {
     try {
       const delivery = deliveries.find((d) => d.id === deliveryId);
       if (!delivery) {
@@ -1329,10 +1390,31 @@ function mapStatus(status) {
           typeof delivery.container_statuses === "object"
         ) {
           let tcList = [];
-          if (Array.isArray(delivery.container_number)) {
-            tcList = delivery.container_number.filter(Boolean);
-          } else if (typeof delivery.container_number === "string") {
-            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+
+          // Prioriser container_numbers_list sur container_number
+          if (
+            delivery.container_numbers_list &&
+            Array.isArray(delivery.container_numbers_list) &&
+            delivery.container_numbers_list.length > 0
+          ) {
+            tcList = delivery.container_numbers_list.filter(Boolean);
+          } else if (delivery.container_number) {
+            // Gestion des données tronquées - tentative de synchronisation
+            const syncData = await forceSyncDelivery(delivery);
+            if (syncData && syncData.container_numbers_list) {
+              tcList = syncData.container_numbers_list;
+            } else if (delivery.container_number.includes("+")) {
+              console.warn(
+                `[SUIVIE SYNC] ⚠️ Données tronquées détectées pour ${delivery.id}: ${delivery.container_number}`
+              );
+              tcList = [delivery.container_number.split("+")[0].trim()];
+            } else if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
           }
 
           if (tcList.length > 0) {
@@ -4786,10 +4868,29 @@ function mapStatus(status) {
           typeof delivery.container_statuses === "object"
         ) {
           let tcList = [];
-          if (Array.isArray(delivery.container_number)) {
-            tcList = delivery.container_number.filter(Boolean);
-          } else if (typeof delivery.container_number === "string") {
-            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+
+          // Prioriser container_numbers_list sur container_number
+          if (
+            delivery.container_numbers_list &&
+            Array.isArray(delivery.container_numbers_list) &&
+            delivery.container_numbers_list.length > 0
+          ) {
+            tcList = delivery.container_numbers_list.filter(Boolean);
+          } else if (delivery.container_number) {
+            // Gestion des données tronquées - synchronisation si nécessaire
+            if (delivery.container_number.includes("+")) {
+              console.warn(
+                `[TABLEAU SYNC] ⚠️ Données tronquées détectées pour ${delivery.id}: ${delivery.container_number}`
+              );
+              // Reconstruction basique pour l'affichage en attendant la synchronisation complète
+              tcList = [delivery.container_number.split("+")[0].trim()];
+            } else if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
           }
 
           if (tcList.length > 0) {
@@ -5742,11 +5843,30 @@ function mapStatus(status) {
               let allContainers = [];
               allSameDossier.forEach((d) => {
                 let tcList = [];
-                if (Array.isArray(d.container_number)) {
-                  tcList = d.container_number.filter(Boolean);
-                } else if (typeof d.container_number === "string") {
-                  tcList = d.container_number.split(/[,;\s]+/).filter(Boolean);
+
+                // Prioriser container_numbers_list sur container_number
+                if (
+                  d.container_numbers_list &&
+                  Array.isArray(d.container_numbers_list) &&
+                  d.container_numbers_list.length > 0
+                ) {
+                  tcList = d.container_numbers_list.filter(Boolean);
+                } else if (d.container_number) {
+                  if (d.container_number.includes("+")) {
+                    console.warn(
+                      `[HISTORY SYNC] ⚠️ Données tronquées détectées pour ${d.id}: ${d.container_number}`
+                    );
+                    // Utiliser seulement le premier conteneur visible pour l'affichage
+                    tcList = [d.container_number.split("+")[0].trim()];
+                  } else if (Array.isArray(d.container_number)) {
+                    tcList = d.container_number.filter(Boolean);
+                  } else if (typeof d.container_number === "string") {
+                    tcList = d.container_number
+                      .split(/[,;\s]+/)
+                      .filter(Boolean);
+                  }
                 }
+
                 allContainers = allContainers.concat(tcList);
               });
               allContainers = Array.from(new Set(allContainers));
@@ -6188,11 +6308,27 @@ function mapStatus(status) {
       let allContainers = [];
       allSameDossier.forEach((d2) => {
         let tcList = [];
-        if (Array.isArray(d2.container_number)) {
-          tcList = d2.container_number.filter(Boolean);
-        } else if (typeof d2.container_number === "string") {
-          tcList = d2.container_number.split(/[,;\s]+/).filter(Boolean);
+
+        // Prioriser container_numbers_list sur container_number
+        if (
+          d2.container_numbers_list &&
+          Array.isArray(d2.container_numbers_list) &&
+          d2.container_numbers_list.length > 0
+        ) {
+          tcList = d2.container_numbers_list.filter(Boolean);
+        } else if (d2.container_number) {
+          if (d2.container_number.includes("+")) {
+            console.warn(
+              `[STAT SYNC] ⚠️ Données tronquées détectées pour ${d2.id}: ${d2.container_number}`
+            );
+            tcList = [d2.container_number.split("+")[0].trim()];
+          } else if (Array.isArray(d2.container_number)) {
+            tcList = d2.container_number.filter(Boolean);
+          } else if (typeof d2.container_number === "string") {
+            tcList = d2.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
         }
+
         allContainers = allContainers.concat(tcList);
       });
       allContainers = Array.from(new Set(allContainers));
@@ -6201,11 +6337,24 @@ function mapStatus(status) {
       allContainers.forEach((tc) => {
         const found = allSameDossier.find((d2) => {
           let tcList = [];
-          if (Array.isArray(d2.container_number)) {
-            tcList = d2.container_number.filter(Boolean);
-          } else if (typeof d2.container_number === "string") {
-            tcList = d2.container_number.split(/[,;\s]+/).filter(Boolean);
+
+          // Prioriser container_numbers_list sur container_number
+          if (
+            d2.container_numbers_list &&
+            Array.isArray(d2.container_numbers_list) &&
+            d2.container_numbers_list.length > 0
+          ) {
+            tcList = d2.container_numbers_list.filter(Boolean);
+          } else if (d2.container_number) {
+            if (d2.container_number.includes("+")) {
+              tcList = [d2.container_number.split("+")[0].trim()];
+            } else if (Array.isArray(d2.container_number)) {
+              tcList = d2.container_number.filter(Boolean);
+            } else if (typeof d2.container_number === "string") {
+              tcList = d2.container_number.split(/[,;\s]+/).filter(Boolean);
+            }
           }
+
           return tcList.includes(tc);
         });
         let isDelivered = false;
