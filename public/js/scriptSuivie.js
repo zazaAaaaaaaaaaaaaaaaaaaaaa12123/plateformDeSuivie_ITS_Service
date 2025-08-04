@@ -1455,8 +1455,8 @@ function mapStatus(status) {
 
         // Ajouter les événements de survol pour le tooltip
         box.style.cursor = "pointer";
-        box.addEventListener("mouseenter", (e) => {
-          createContainerStatusTooltip(delivery, box);
+        box.addEventListener("mouseenter", async (e) => {
+          await createContainerStatusTooltip(delivery, box);
         });
         box.addEventListener("mouseleave", () => {
           removeContainerStatusTooltip();
@@ -4938,8 +4938,8 @@ function mapStatus(status) {
 
         // Ajouter les événements de survol pour le tooltip
         box.style.cursor = "pointer";
-        box.addEventListener("mouseenter", (e) => {
-          createContainerStatusTooltip(delivery, box);
+        box.addEventListener("mouseenter", async (e) => {
+          await createContainerStatusTooltip(delivery, box);
         });
         box.addEventListener("mouseleave", () => {
           removeContainerStatusTooltip();
@@ -5099,7 +5099,7 @@ function mapStatus(status) {
   // --- Fonction pour créer un tooltip de statut des conteneurs ---
   // =====================================================================
 
-  function createContainerStatusTooltip(delivery, targetElement) {
+  async function createContainerStatusTooltip(delivery, targetElement) {
     // Supprime tout tooltip existant
     const existingTooltip = document.getElementById("containerStatusTooltip");
     if (existingTooltip) {
@@ -5128,10 +5128,37 @@ function mapStatus(status) {
 
     // Obtenir la liste des conteneurs
     let tcList = [];
-    if (Array.isArray(delivery.container_number)) {
-      tcList = delivery.container_number.filter(Boolean);
-    } else if (typeof delivery.container_number === "string") {
-      tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+
+    // Prioriser container_numbers_list sur container_number
+    if (
+      delivery.container_numbers_list &&
+      Array.isArray(delivery.container_numbers_list) &&
+      delivery.container_numbers_list.length > 0
+    ) {
+      tcList = delivery.container_numbers_list.filter(Boolean);
+    } else if (delivery.container_number) {
+      // Gestion des données tronquées - tentative de synchronisation
+      if (delivery.container_number.includes("+")) {
+        console.warn(
+          `[TOOLTIP SYNC] ⚠️ Données tronquées détectées pour ${delivery.id}: ${delivery.container_number}`
+        );
+
+        // Essayer de forcer la synchronisation
+        const syncData = await forceSyncDelivery(delivery);
+        if (syncData && syncData.container_numbers_list) {
+          tcList = syncData.container_numbers_list;
+          console.log(
+            `[TOOLTIP SYNC] ✅ Reconstruction réussie: ${tcList.length} conteneurs générés`
+          );
+        } else {
+          // Fallback - utiliser seulement le premier conteneur visible
+          tcList = [delivery.container_number.split("+")[0].trim()];
+        }
+      } else if (Array.isArray(delivery.container_number)) {
+        tcList = delivery.container_number.filter(Boolean);
+      } else if (typeof delivery.container_number === "string") {
+        tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+      }
     }
 
     // Contenu du tooltip
@@ -9389,9 +9416,55 @@ function mapStatus(status) {
     };
   };
 
+  // Fonction pour forcer la reconstruction des données tronquées
+  window.forceReconstruction = async function (deliveryId) {
+    console.log(
+      `[FORCE RECONSTRUCTION] Reconstruction forcée pour delivery ID: ${deliveryId}`
+    );
+
+    const delivery = deliveries.find((d) => d.id == deliveryId);
+    if (!delivery) {
+      console.error(
+        `[FORCE RECONSTRUCTION] Livraison ${deliveryId} non trouvée`
+      );
+      return;
+    }
+
+    console.log(`[FORCE RECONSTRUCTION] Données avant:`, {
+      container_number: delivery.container_number,
+      container_numbers_list: delivery.container_numbers_list,
+    });
+
+    if (delivery.container_number && delivery.container_number.includes("+")) {
+      const syncResult = await forceSyncDelivery(delivery);
+      if (syncResult) {
+        console.log(
+          `[FORCE RECONSTRUCTION] ✅ Données reconstruites:`,
+          syncResult
+        );
+
+        // Mettre à jour les données dans la liste globale
+        const index = deliveries.findIndex((d) => d.id == deliveryId);
+        if (index !== -1) {
+          deliveries[index] = { ...deliveries[index], ...syncResult };
+          console.log(
+            `[FORCE RECONSTRUCTION] ✅ Données mises à jour dans deliveries[${index}]`
+          );
+
+          // Forcer le rafraîchissement du tableau
+          if (typeof applyCombinedFilters === "function") {
+            applyCombinedFilters();
+          }
+        }
+      }
+    } else {
+      console.log(`[FORCE RECONSTRUCTION] Aucune donnée tronquée détectée`);
+    }
+  };
+
   console.log("[SYNC] Synchronisation des statuts de conteneurs initialisée");
   console.log(
-    "[SYNC] Fonctions de test disponibles: testContainerStatusSync(), debugContainerSync()"
+    "[SYNC] Fonctions de test disponibles: testContainerStatusSync(), debugContainerSync(), forceReconstruction(deliveryId)"
   );
 })();
 /****** Script a ajouter en cas de pertubation 125 AAAA sjkd***/
