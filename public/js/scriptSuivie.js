@@ -2440,14 +2440,14 @@ function mapStatus(status) {
 
   // Define ONLY selectable options for the main table's status filter dropdown
   const GLOBAL_STATUS_OPTIONS = [
-    /* {
-      value: "pending_acconier",
-      text: "En attente de paiement",
-      apiValue: "pending_acconier",
-      icon: "fa-clock",
-      tailwindColorClass: "text-gray-500",
-      hexColor: "#6b7280",
-    },*/
+    {
+      value: "pending",
+      text: "En attente",
+      apiValue: "pending",
+      icon: "fa-hourglass-half",
+      tailwindColorClass: "text-yellow-500",
+      hexColor: "#f59e0b",
+    },
     {
       value: "livre",
       text: "Livré",
@@ -2455,30 +2455,6 @@ function mapStatus(status) {
       icon: "fa-check-circle",
       tailwindColorClass: "text-green-500",
       hexColor: "#22c55e",
-    },
-    {
-      value: "rejet",
-      text: "Rejeté",
-      apiValue: "rejected",
-      icon: "fa-times-circle",
-      tailwindColorClass: "text-red-500",
-      hexColor: "#ef4444",
-    },
-    {
-      value: "pending",
-      text: "En attente",
-      apiValue: "pending",
-      icon: "fa-hourglass-half",
-      tailwindColorClass: "text-yellow-500", // Changed to yellow/orange
-      hexColor: "#f59e0b", // Changed to yellow/orange
-    },
-    {
-      value: "in_progress",
-      text: "En cours",
-      apiValue: "in_progress",
-      icon: "fa-truck-moving",
-      tailwindColorClass: "text-blue-500", // Changed to blue
-      hexColor: "#3b82f6", // Changed to blue
     },
   ];
 
