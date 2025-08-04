@@ -4734,7 +4734,7 @@ function mapStatus(status) {
       createCell(delivery.employee_name, "employee_name"); // Agent
       createCell(delivery.client_name, "client_name"); // Client (Nom)
       createCell(delivery.client_phone, "client_phone"); // Client (Tél)
-      createCell(delivery.container_number, "container_number"); // Numéro TC(s)
+      createCell(null, "container_number"); // Numéro TC(s) - utilise container_numbers_list JSON en priorité
       createCell(delivery.lieu, "lieu", "text", {}); // Lieu
       createCell(delivery.container_foot_type, "container_foot_type"); // Type Conteneur (pied)
       createCell(
