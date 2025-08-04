@@ -4763,53 +4763,76 @@ function mapStatus(status) {
             }
 
             // Vérifier si c'est en retard (pour tous les cas sauf livraison complète)
-            if (
-              deliveredContainers.length < tcList.length &&
-              delivery.delivery_date
-            ) {
-              const deliveryDate = new Date(delivery.delivery_date);
-              const currentDate = new Date();
-              const daysDifference = Math.floor(
-                (currentDate - deliveryDate) / (1000 * 60 * 60 * 24)
-              );
+            if (deliveredContainers.length < tcList.length) {
+              // Utiliser created_at pour la date de création du dossier
+              let creationDate = null;
+              if (delivery.created_at) {
+                creationDate = new Date(delivery.created_at);
+              } else if (delivery.delivery_date) {
+                creationDate = new Date(delivery.delivery_date);
+              }
 
-              // Log de débogage
-              console.log(
-                `[DEBUG RETARD] Livraison ID: ${delivery.id || "N/A"}`
-              );
-              console.log(
-                `[DEBUG RETARD] Date livraison: ${delivery.delivery_date}`
-              );
-              console.log(
-                `[DEBUG RETARD] Jours de différence: ${daysDifference}`
-              );
-              console.log(
-                `[DEBUG RETARD] Statut delivery.status: "${
-                  delivery.status || "N/A"
-                }"`
-              );
+              if (creationDate) {
+                const currentDate = new Date();
+                const daysDifference = Math.floor(
+                  (currentDate - creationDate) / (1000 * 60 * 60 * 24)
+                );
 
-              // Vérifier le statut pour s'assurer qu'il n'est pas "mise en livraison"
-              const isMiseEnLivraison =
-                delivery.status &&
-                delivery.status.toLowerCase().includes("mise en livraison");
+                // Log de débogage
+                console.log(
+                  `[DEBUG RETARD] Livraison ID: ${delivery.id || "N/A"}`
+                );
+                console.log(
+                  `[DEBUG RETARD] Date création: ${
+                    delivery.created_at || delivery.delivery_date
+                  }`
+                );
+                console.log(
+                  `[DEBUG RETARD] Jours de différence: ${daysDifference}`
+                );
+                console.log(
+                  `[DEBUG RETARD] Statut delivery.status: "${
+                    delivery.status || "N/A"
+                  }"`
+                );
 
-              console.log(
-                `[DEBUG RETARD] Est mise en livraison: ${isMiseEnLivraison}`
-              );
-              console.log(
-                `[DEBUG RETARD] Condition retard (>2 jours ET pas mise en livraison): ${
-                  daysDifference > 2 && !isMiseEnLivraison
-                }`
-              );
+                // Vérifier si le statut est "en attente de paiement" et pas "mise en livraison"
+                const isEnAttentePaiement =
+                  delivery.status &&
+                  delivery.status
+                    .toLowerCase()
+                    .includes("en attente de paiement");
 
-              if (daysDifference > 2 && !isMiseEnLivraison) {
-                isOverdue = true;
-                statusText =
-                  '<i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Dossier en retard';
-                statusColor = "#fff";
-                statusBg = "#dc2626";
-                console.log(`[DEBUG RETARD] ✅ DOSSIER EN RETARD DÉTECTÉ!`);
+                const isMiseEnLivraison =
+                  delivery.status &&
+                  delivery.status.toLowerCase().includes("mise en livraison");
+
+                console.log(
+                  `[DEBUG RETARD] Est en attente de paiement: ${isEnAttentePaiement}`
+                );
+                console.log(
+                  `[DEBUG RETARD] Est mise en livraison: ${isMiseEnLivraison}`
+                );
+                console.log(
+                  `[DEBUG RETARD] Condition retard (>2 jours ET en attente paiement ET pas mise en livraison): ${
+                    daysDifference > 2 &&
+                    isEnAttentePaiement &&
+                    !isMiseEnLivraison
+                  }`
+                );
+
+                if (
+                  daysDifference > 2 &&
+                  isEnAttentePaiement &&
+                  !isMiseEnLivraison
+                ) {
+                  isOverdue = true;
+                  statusText =
+                    '<i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Dossier en retard';
+                  statusColor = "#fff";
+                  statusBg = "#dc2626";
+                  console.log(`[DEBUG RETARD] ✅ DOSSIER EN RETARD DÉTECTÉ!`);
+                }
               }
             }
           }
