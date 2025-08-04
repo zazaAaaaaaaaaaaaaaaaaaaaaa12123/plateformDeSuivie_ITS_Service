@@ -5581,7 +5581,7 @@ function mapStatus(status) {
       renderAdminDeliveriesTable(filteredData);
     }
     // Note: hideSpinner() is called in loadDeliveries().finally, which is triggered by applyCombinedFilters.
-    // This ensures the spinner is hidden after data is fully loaded and rendered.
+    // This ensures the spinner is hidden aftygjer data is fully loaded and rendered.
     return filteredData;
   }
 
