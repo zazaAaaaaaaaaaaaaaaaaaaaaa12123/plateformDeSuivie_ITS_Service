@@ -5646,7 +5646,7 @@ function mapStatus(status) {
     filteredData.sort((a, b) => {
       const dateA = new Date(a.created_at || a.delivery_date || 0);
       const dateB = new Date(b.created_at || b.delivery_date || 0);
-      return dateA - dateB; // Ordre décroissant : plus récent en haut, plus ancien en bas
+      return dateB - dateA; // Ordre décroissant : plus récent en haut, plus ancien en bas
     });
 
     if (shouldRenderTable) {
@@ -9701,4 +9701,4 @@ function mapStatus(status) {
     "[SYNC] Fonctions de test disponibles: testContainerStatusSync(), debugContainerSync(), forceReconstruction(deliveryId)"
   );
 })();
-/****** Script a ajouter en cas de pertubation 125 AAAA sjkd***/
+/****** Script a ajouter en cas de pertubation 125 AAAA sjkd*gvh**/
