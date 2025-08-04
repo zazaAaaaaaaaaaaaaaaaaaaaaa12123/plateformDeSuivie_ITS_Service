@@ -1932,7 +1932,7 @@ app.post(
     const is_eir_received = !!req.file;
 
     // *** DÉBOGAGE : AFFICHER LES VALEURS DES CHAMPS OBLIGATOIRES REÇUES PAR LE BACKEND ***
-    console.log("Backend Validation Debug:");
+    console.log("Backend Validation Debug - Basic fields:");
     console.log("   employee_name:", employee_name);
     console.log("   client_name:", client_name);
     console.log("   client_phone:", client_phone);
@@ -1946,9 +1946,7 @@ app.post(
     console.log("   container_foot_type:", container_foot_type);
     console.log("   declaration_number:", declaration_number);
     console.log("   number_of_containers:", number_of_containers);
-    console.log("   full_container_numbers_list:", full_container_numbers_list);
-    console.log("   container_foot_types_map:", container_foot_types_map);
-    // *** FIN DÉBOGAGE ***
+    // *** FIN DÉBOGAGE BASIC FIELDS ***
 
     // Validation des champs obligatoires (MIS À JOUR)
     if (
@@ -2106,6 +2104,17 @@ app.post(
           container_statuses = mapping;
         }
       }
+
+      // *** DÉBOGAGE : AFFICHER LES VALEURS DES NOUVEAUX CHAMPS APRÈS TRAITEMENT ***
+      console.log("Backend Validation Debug - Processed JSON fields:");
+      console.log(
+        "   full_container_numbers_list:",
+        full_container_numbers_list
+      );
+      console.log("   container_foot_types_map:", container_foot_types_map);
+      console.log("   container_statuses:", container_statuses);
+      // *** FIN DÉBOGAGE PROCESSED FIELDS ***
+
       const query = `
           INSERT INTO livraison_conteneur (
             employee_name, delivery_date, delivery_time, client_name, client_phone, 
