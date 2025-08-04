@@ -9481,4 +9481,4 @@ function mapStatus(status) {
     "[SYNC] Fonctions de test disponibles: testContainerStatusSync(), debugContainerSync()"
   );
 })();
-/****** Script a ajouter en cas de pertubation 125 AAAA sjk***/
+/****** Script a ajouter en cas de pertubation 125 AAAA sjkd***/
