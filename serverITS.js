@@ -4226,28 +4226,83 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
     deliveries.forEach((delivery) => {
       const status = delivery.delivery_status_acconier || delivery.status;
 
-      // Logique pour "En attente de paiement"
-      if (
+      // Fonction pour vérifier si un dossier est complètement livré
+      function isDeliveryFullyDelivered(delivery) {
+        if (!delivery.container_statuses) return false;
+
+        let container_statuses = {};
+        try {
+          container_statuses =
+            typeof delivery.container_statuses === "string"
+              ? JSON.parse(delivery.container_statuses)
+              : delivery.container_statuses;
+        } catch (e) {
+          return false;
+        }
+
+        // Récupérer la liste des conteneurs
+        let tcList = [];
+        if (delivery.container_number) {
+          if (Array.isArray(delivery.container_number)) {
+            tcList = delivery.container_number.filter(Boolean);
+          } else if (typeof delivery.container_number === "string") {
+            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+          }
+        }
+
+        // Si pas de conteneurs, pas livré
+        if (tcList.length === 0) return false;
+
+        // Vérifier que tous les conteneurs sont livrés
+        return tcList.every((tc) => {
+          const s = container_statuses[tc];
+          return s === "livre" || s === "livré";
+        });
+      }
+
+      // Fonction pour vérifier si un dossier a au moins un conteneur livré
+      function hasPartialDelivery(delivery) {
+        if (!delivery.container_statuses) return false;
+
+        let container_statuses = {};
+        try {
+          container_statuses =
+            typeof delivery.container_statuses === "string"
+              ? JSON.parse(delivery.container_statuses)
+              : delivery.container_statuses;
+        } catch (e) {
+          return false;
+        }
+
+        // Vérifier s'il y a au moins un conteneur livré
+        return Object.values(container_statuses).some(
+          (s) => s === "livre" || s === "livré"
+        );
+      }
+
+      // Logique de comptage basée sur l'état réel des conteneurs
+      if (isDeliveryFullyDelivered(delivery)) {
+        // Dossier complètement livré
+        counts.livres++;
+        console.log(`[COUNTS] Dossier livré: ${delivery.dossier_number}`);
+      } else if (
+        hasPartialDelivery(delivery) ||
+        status === "mise_en_livraison_acconier" ||
+        status === "mise_en_livraison"
+      ) {
+        // Dossier en cours de livraison (partiellement livré ou mis en livraison)
+        counts.mise_en_livraison++;
+        console.log(
+          `[COUNTS] Dossier en livraison: ${delivery.dossier_number}`
+        );
+      } else if (
         status === "en attente de paiement" ||
         status === "pending_acconier" ||
         !status
       ) {
+        // Dossier en attente de paiement
         counts.en_attente_paiement++;
-      }
-      // Logique pour "Mis en livraison"
-      else if (
-        status === "mise_en_livraison_acconier" ||
-        status === "mise_en_livraison"
-      ) {
-        counts.mise_en_livraison++;
-      }
-      // Logique pour "Livrés"
-      else if (
-        status === "delivered" ||
-        status === "livre" ||
-        status === "livré"
-      ) {
-        counts.livres++;
+        console.log(`[COUNTS] Dossier en attente: ${delivery.dossier_number}`);
       }
 
       // Logique pour "En retard" (cross-cutting)
@@ -4280,7 +4335,8 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
                   blStatuses.every((s) => s === "mise_en_livraison")
                 ) &&
                 delivery.delivery_status_acconier !==
-                  "mise_en_livraison_acconier"
+                  "mise_en_livraison_acconier" &&
+                !isDeliveryFullyDelivered(delivery)
               ) {
                 counts.en_retard++;
               }
@@ -4290,6 +4346,7 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
       }
     });
 
+    console.log(`[STATUS COUNTS] Résultats finaux:`, counts);
     res.json({ success: true, counts: counts });
   } catch (err) {
     console.error("Erreur /api/deliveries/status-counts :", err);
