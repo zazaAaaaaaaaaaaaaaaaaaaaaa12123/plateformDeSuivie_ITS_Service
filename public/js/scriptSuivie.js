@@ -9831,4 +9831,4 @@ function mapStatus(status) {
     "[SYNC] Fonctions de test disponibles: testContainerStatusSync(), debugContainerSync(), forceReconstruction(deliveryId)"
   );
 })();
-/****** Script a ajouter en cas de pertubation 125 AAAA ***/
+/****** Script a ajouter en cas de pertubation 125 AAAA gtfhc***/
