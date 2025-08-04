@@ -5250,14 +5250,61 @@ function mapStatus(status) {
     }
     const selectedStatusValue = statusFilterSelect.value;
     if (selectedStatusValue !== "") {
+      console.log(`[FILTRAGE] Statut sélectionné: "${selectedStatusValue}"`);
+
       const matchedOption = GLOBAL_STATUS_OPTIONS.find(
         (opt) => opt.value === selectedStatusValue
       );
+
       if (matchedOption) {
         const apiStatusToFilter = matchedOption.apiValue;
+        console.log(`[FILTRAGE] Valeur API à filtrer: "${apiStatusToFilter}"`);
+        console.log(
+          `[FILTRAGE] Avant filtrage: ${filteredData.length} livraisons`
+        );
+
         filteredData = filteredData.filter((delivery) => {
-          return delivery.status === apiStatusToFilter;
+          // Vérifier plusieurs champs de statut possibles
+          let shouldInclude = false;
+
+          if (apiStatusToFilter === "delivered") {
+            // Pour "Livré", vérifier plusieurs conditions
+            shouldInclude =
+              delivery.status === "delivered" ||
+              delivery.status === "livre" ||
+              (delivery.container_statuses &&
+                Object.values(delivery.container_statuses).every(
+                  (status) => status === "livre" || status === "delivered"
+                ));
+          } else if (apiStatusToFilter === "pending") {
+            // Pour "En attente", vérifier plusieurs conditions
+            shouldInclude =
+              delivery.status === "pending" ||
+              delivery.status === "en_attente" ||
+              delivery.delivery_status_acconier === "pending_acconier" ||
+              delivery.delivery_status_acconier === "awaiting_payment_acconier";
+          } else {
+            // Pour autres statuts, comparaison directe
+            shouldInclude = delivery.status === apiStatusToFilter;
+          }
+
+          // Log détaillé pour les premières livraisons
+          if (filteredData.indexOf(delivery) < 5) {
+            console.log(
+              `[FILTRAGE] Livraison ID: ${delivery.id}, status: "${delivery.status}", delivery_status_acconier: "${delivery.delivery_status_acconier}", inclure: ${shouldInclude}`
+            );
+          }
+
+          return shouldInclude;
         });
+
+        console.log(
+          `[FILTRAGE] Après filtrage: ${filteredData.length} livraisons`
+        );
+      } else {
+        console.warn(
+          `[FILTRAGE] Option non trouvée pour: "${selectedStatusValue}"`
+        );
       }
     }
 
