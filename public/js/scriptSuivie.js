@@ -5246,6 +5246,13 @@ function mapStatus(status) {
       console.log("No main filter date selected.");
     }
 
+    // === TRI PAR ORDRE CHRONOLOGIQUE CROISSANT (PLUS ANCIENNE EN HAUT) ===
+    filteredData.sort((a, b) => {
+      const dateA = new Date(a.created_at || a.delivery_date || 0);
+      const dateB = new Date(b.created_at || b.delivery_date || 0);
+      return dateA - dateB; // Ordre croissant : plus ancienne en haut
+    });
+
     if (shouldRenderTable) {
       renderAdminDeliveriesTable(filteredData);
     }
