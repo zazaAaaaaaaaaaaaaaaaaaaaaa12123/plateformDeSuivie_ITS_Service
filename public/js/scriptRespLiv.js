@@ -28,7 +28,9 @@ function showStatutTooltip(delivery, x, y) {
   const tooltip = createStatutTooltip();
   // Génère le contenu : liste des TC + statut + icône
   let tcList = [];
-  if (Array.isArray(delivery.container_number)) {
+  if (delivery.container_numbers_list && Array.isArray(delivery.container_numbers_list)) {
+    tcList = delivery.container_numbers_list.filter(Boolean);
+  } else if (Array.isArray(delivery.container_number)) {
     tcList = delivery.container_number.filter(Boolean);
   } else if (typeof delivery.container_number === "string") {
     tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
@@ -1365,9 +1367,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.style.borderRadius = "7px";
         td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
       } else if (col.id === "container_number") {
-        // ...existing code for container_number...
+        // Priorité JSON : utilise container_numbers_list si disponible, sinon container_number
         let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
+        if (delivery.container_numbers_list && Array.isArray(delivery.container_numbers_list)) {
+          tcList = delivery.container_numbers_list.filter(Boolean);
+        } else if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
@@ -1698,7 +1702,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       } else if (col.id === "statut") {
         // Affichage du modèle "x sur y livré" dans chaque cellule de la colonne Statut uniquement si au moins un conteneur est livré
         let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
+        if (delivery.container_numbers_list && Array.isArray(delivery.container_numbers_list)) {
+          tcList = delivery.container_numbers_list.filter(Boolean);
+        } else if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
@@ -2332,7 +2338,9 @@ document.addEventListener("DOMContentLoaded", function () {
       cardsContainer.style.justifyContent = "center";
       deliveredList.forEach((delivery, idx) => {
         let tcList = [];
-        if (Array.isArray(delivery.container_number)) {
+        if (delivery.container_numbers_list && Array.isArray(delivery.container_numbers_list)) {
+          tcList = delivery.container_numbers_list.filter(Boolean);
+        } else if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
         } else if (typeof delivery.container_number === "string") {
           tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
@@ -2551,7 +2559,9 @@ let deliveredForPdf = [];
 // Fonction pour mettre à jour la liste des dossiers livrés à chaque changement
 function updateDeliveredForPdf() {
   deliveredForPdf = (window.allDeliveries || []).filter((d) => {
-    let tcList = Array.isArray(d.container_number)
+    let tcList = (d.container_numbers_list && Array.isArray(d.container_numbers_list))
+      ? d.container_numbers_list.filter(Boolean)
+      : Array.isArray(d.container_number)
       ? d.container_number.filter(Boolean)
       : typeof d.container_number === "string"
       ? d.container_number.split(/[,;\s]+/).filter(Boolean)
@@ -2874,7 +2884,9 @@ function generateEtatSortiePdf(rows, date1, date2) {
         circuit: d.circuit || "-",
         client_name: d.client_name || "-",
         dossier_number: d.dossier_number || "-",
-        container_number: Array.isArray(d.container_number)
+        container_number: (d.container_numbers_list && Array.isArray(d.container_numbers_list))
+          ? d.container_numbers_list.join(", ")
+          : Array.isArray(d.container_number)
           ? d.container_number.join(", ")
           : d.container_number || "-",
         nom_agent_visiteur: getEditedValue(d, [
