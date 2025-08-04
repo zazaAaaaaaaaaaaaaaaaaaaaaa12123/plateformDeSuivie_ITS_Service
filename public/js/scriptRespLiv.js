@@ -1740,7 +1740,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               )
               .join("") +
             `<div class="tc-popup-separator" style="height:1px;background:#e5e7eb;margin:4px 8px;"></div>
-            <div class="tc-popup-item tc-popup-mark-all" style='cursor:pointer;color:#22c55e;font-weight:700;font-size:1.1em;text-align:center;background:#f0fdf4;border-radius:4px;margin:4px;'>📦 Marquer tous comme livrés</div>`;
+            <div class="tc-popup-item tc-popup-mark-all" style='cursor:pointer;color:#22c55e;font-weight:700;font-size:1.1em;text-align:center;background:#f0fdf4;border-radius:4px;margin:4px;'>📦 Marquer tous comme livrés</div>
+            <div class="tc-popup-item tc-popup-unmark-all" style='cursor:pointer;color:#ef4444;font-weight:700;font-size:1.1em;text-align:center;background:#fef2f2;border-radius:4px;margin:4px;'>📭 Marquer tous comme non livrés</div>`;
           btn.onclick = (e) => {
             e.stopPropagation();
             document.querySelectorAll(".tc-popup").forEach((p) => {
@@ -1750,11 +1751,37 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               popup.style.display === "block" ? "none" : "block";
           };
           popup
-            .querySelectorAll(".tc-popup-item:not(.tc-popup-mark-all)")
+            .querySelectorAll(
+              ".tc-popup-item:not(.tc-popup-mark-all):not(.tc-popup-unmark-all)"
+            )
             .forEach((item) => {
               item.onclick = (ev) => {
                 ev.stopPropagation();
                 popup.style.display = "none";
+
+                // 🔧 MODIFICATION : Permettre la modification même après marquage complet
+                let canModify = isAllRequiredFilled();
+
+                // Vérifier si des conteneurs sont déjà livrés (permettre modification de retour)
+                let hasDeliveredContainers = false;
+                if (
+                  delivery.container_statuses &&
+                  typeof delivery.container_statuses === "object"
+                ) {
+                  hasDeliveredContainers = Object.values(
+                    delivery.container_statuses
+                  ).some((status) => status === "livre" || status === "livré");
+                }
+
+                // Si des conteneurs sont déjà livrés, on permet la modification même sans tous les champs obligatoires
+                if (!canModify && !hasDeliveredContainers) {
+                  showAccessMessage(
+                    "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                    "red"
+                  );
+                  return;
+                }
+
                 showContainerDetailPopup(delivery, item.textContent);
               };
             });
@@ -1805,6 +1832,47 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               }
             };
           }
+
+          // Gestion du bouton "Marquer tous comme non livrés"
+          const unmarkAllBtn = popup.querySelector(".tc-popup-unmark-all");
+          if (unmarkAllBtn) {
+            unmarkAllBtn.onclick = async (ev) => {
+              ev.stopPropagation();
+              popup.style.display = "none";
+
+              if (
+                !confirm(
+                  `Êtes-vous sûr de vouloir marquer TOUS les ${tcList.length} conteneurs comme NON livrés ?`
+                )
+              ) {
+                return;
+              }
+
+              console.log(
+                `[UNMARK ALL] 🎯 Marquage de tous les conteneurs comme non livrés pour la livraison ${delivery.id}`
+              );
+
+              try {
+                // Utilise la fonction de propagation existante avec le statut "aucun"
+                await window.propagateStatusToAllTCs(delivery.id, "aucun");
+
+                // Affiche un message de succès
+                showAccessMessage(
+                  `✅ Tous les ${tcList.length} conteneurs ont été marqués comme non livrés !`,
+                  "green"
+                );
+              } catch (error) {
+                console.error(
+                  `[UNMARK ALL] ❌ Erreur lors du démarquage:`,
+                  error
+                );
+                showAccessMessage(
+                  "❌ Erreur lors du démarquage des conteneurs",
+                  "red"
+                );
+              }
+            };
+          }
           document.addEventListener("click", function hidePopup(e) {
             if (!td.contains(e.target)) popup.style.display = "none";
           });
@@ -1842,14 +1910,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           };
           tag.onclick = (e) => {
             e.stopPropagation();
-            // Correction : vérifier les champs obligatoires AVANT d'ouvrir le popup
-            if (!isAllRequiredFilled()) {
+            // 🔧 MODIFICATION : Permettre la modification même après marquage complet
+            let canModify = isAllRequiredFilled();
+
+            // Vérifier si le conteneur est déjà livré (permettre modification de retour)
+            let isContainerDelivered = false;
+            if (
+              delivery.container_statuses &&
+              typeof delivery.container_statuses === "object"
+            ) {
+              const status = delivery.container_statuses[tcList[0]];
+              isContainerDelivered = status === "livre" || status === "livré";
+            }
+
+            // Si le conteneur est déjà livré, on permet la modification même sans tous les champs obligatoires
+            if (!canModify && !isContainerDelivered) {
               showAccessMessage(
                 "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
                 "red"
               );
               return;
             }
+
             showContainerDetailPopup(delivery, tcList[0]);
           };
           td.appendChild(tag);
@@ -2155,18 +2237,41 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       tr.appendChild(td);
       // ...existing code for showContainerDetailPopup...
       function showContainerDetailPopup(delivery, containerNumber) {
-        // Vérification dynamique des champs obligatoires (toujours valeur affichée)
-        if (!isAllRequiredFilled()) {
+        // 🔧 MODIFICATION : Permettre la modification même après marquage complet
+        // Si tous les conteneurs sont livrés, on permet quand même la modification individuelle
+        let canModify = isAllRequiredFilled();
+
+        // Vérifier si au moins un conteneur est livré (permettre modification de retour)
+        let hasDeliveredContainers = false;
+        if (
+          delivery.container_statuses &&
+          typeof delivery.container_statuses === "object"
+        ) {
+          hasDeliveredContainers = Object.values(
+            delivery.container_statuses
+          ).some((status) => status === "livre" || status === "livré");
+        }
+
+        // Si des conteneurs sont déjà livrés, on permet la modification même sans tous les champs obligatoires
+        if (!canModify && !hasDeliveredContainers) {
           showAccessMessage(
             "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
             "red"
           );
           return;
         }
-        showAccessMessage(
-          "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
-          "green"
-        );
+
+        if (canModify) {
+          showAccessMessage(
+            "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
+            "green"
+          );
+        } else {
+          showAccessMessage(
+            "Modification autorisée : conteneurs déjà en cours de livraison.",
+            "green"
+          );
+        }
         const oldPopup = document.getElementById("containerDetailPopup");
         if (oldPopup) oldPopup.remove();
         const overlay = document.createElement("div");
