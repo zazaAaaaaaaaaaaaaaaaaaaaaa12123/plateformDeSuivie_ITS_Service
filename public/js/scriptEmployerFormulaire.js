@@ -1036,8 +1036,11 @@ if (containerNumberInput) {
       removeBtn.style.fontSize = "1.1em";
       removeBtn.onclick = () => {
         containerTags.splice(idx, 1);
+        // Supprimer également les données associées
+        containerFootTypes.splice(idx, 1);
+        containerWeights.splice(idx, 1);
         renderContainerTags();
-        renderContainerFootTypes();
+        renderContainerFootTypes(); // Appel direct au lieu de syncFootTypesWithTags pour éviter la boucle
       };
       tagEl.appendChild(removeBtn);
       containerTagsContainer.insertBefore(tagEl, containerTagsInput);
@@ -1048,8 +1051,6 @@ if (containerNumberInput) {
     } else {
       enterIcon.style.display = "none";
     }
-    // Rafraîchir la zone dynamique des types de pied à chaque modif de tags
-    renderContainerFootTypes();
   }
 
   // Ajout d'un spinner et validation stricte TC (4 lettres + 7 chiffres)
@@ -1158,10 +1159,11 @@ if (containerNumberInput) {
         return;
       }
       containerTags.push(value);
+      syncFootTypesWithTags(); // Synchronise immédiatement
       renderContainerTags();
       hideTCError();
       containerTagsInput.value = "";
-      renderContainerTags();
+      containerTagsInput.focus();
     }
   });
   // Affiche le spinner dès qu'on commence à saisir (input)
@@ -1185,15 +1187,19 @@ if (containerNumberInput) {
     const pasted = (e.clipboardData || window.clipboardData).getData("text");
     if (pasted) {
       e.preventDefault();
+      const newTCs = [];
       pasted.split(/[\n,;]+/).forEach((val) => {
         const v = val.trim();
         if (v && !containerTags.includes(v)) {
-          containerTags.push(v);
+          newTCs.push(v);
         }
       });
+
+      // Ajouter tous les nouveaux TC d'un coup
+      containerTags.push(...newTCs);
+      syncFootTypesWithTags(); // Synchronise une seule fois
       renderContainerTags();
       containerTagsInput.value = "";
-      renderContainerTags();
     }
   });
   // Clic sur l'icône Entrée verte
@@ -1214,10 +1220,10 @@ if (containerNumberInput) {
       return;
     }
     containerTags.push(value);
+    syncFootTypesWithTags(); // Synchronise immédiatement
     renderContainerTags();
     hideTCError();
     containerTagsInput.value = "";
-    renderContainerTags();
     containerTagsInput.focus();
   });
   // Affiche l'icône dès qu'on tape
@@ -1237,7 +1243,7 @@ if (containerNumberInput) {
   renderContainerTags();
   syncHiddenInput();
   // Affiche la zone dynamique au chargement si TC déjà présents
-  renderContainerFootTypes();
+  syncFootTypesWithTags();
 }
 
 // Fonction pour générer dynamiquement la zone de saisie des types de pied par TC
@@ -1409,25 +1415,31 @@ function renderContainerFootTypes() {
 
 // Rafraîchir la zone à chaque modif des tags TC
 function syncFootTypesWithTags() {
-  // Synchronise la longueur du tableau
-  containerFootTypes = containerTags.map((tc, idx) => ({
-    tc,
-    pied: containerFootTypes[idx] ? containerFootTypes[idx].pied : "",
-  }));
-  containerWeights = containerTags.map((tc, idx) =>
-    containerWeights[idx] !== undefined ? containerWeights[idx] : ""
-  );
+  // Synchronise la longueur du tableau avec une meilleure gestion
+  const newContainerFootTypes = [];
+  const newContainerWeights = [];
+
+  containerTags.forEach((tc, idx) => {
+    // Cherche si ce TC existait déjà dans l'ancien tableau
+    const existingIndex = containerFootTypes.findIndex(
+      (item) => item && item.tc === tc
+    );
+
+    if (existingIndex !== -1) {
+      // Garde les données existantes
+      newContainerFootTypes[idx] = containerFootTypes[existingIndex];
+      newContainerWeights[idx] = containerWeights[existingIndex] || "";
+    } else {
+      // Nouveau TC, valeurs par défaut
+      newContainerFootTypes[idx] = { tc, pied: "40" };
+      newContainerWeights[idx] = "";
+    }
+  });
+
+  containerFootTypes = newContainerFootTypes;
+  containerWeights = newContainerWeights;
   renderContainerFootTypes();
 }
-
-// Ajout dans renderContainerTags pour déclencher la synchro
-const originalRenderContainerTags = renderContainerTags;
-renderContainerTags = function () {
-  originalRenderContainerTags();
-  syncFootTypesWithTags();
-};
-// Appel initial si tags déjà présents
-syncFootTypesWithTags();
 
 /**
  * Initialise les écouteurs d'événements au chargement de la page.
