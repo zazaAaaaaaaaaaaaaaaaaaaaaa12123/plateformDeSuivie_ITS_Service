@@ -1431,12 +1431,12 @@ function createEditModeButton() {
 
   // Créer le conteneur pour le bouton
   const buttonContainer = document.createElement("div");
-  buttonContainer.style.marginBottom = "15px";
-  buttonContainer.style.marginTop = "10px";
+  buttonContainer.style.marginBottom = "10px";
+  buttonContainer.style.marginTop = "8px";
   buttonContainer.style.display = "flex";
   buttonContainer.style.justifyContent = "flex-end";
   buttonContainer.style.alignItems = "center";
-  buttonContainer.style.gap = "10px";
+  buttonContainer.style.gap = "8px";
 
   // Créer le bouton
   const editBtn = document.createElement("button");
@@ -1445,18 +1445,18 @@ function createEditModeButton() {
   editBtn.style.background = "linear-gradient(90deg, #2563eb 0%, #1e293b 100%)";
   editBtn.style.color = "#fff";
   editBtn.style.border = "none";
-  editBtn.style.borderRadius = "8px";
-  editBtn.style.padding = "10px 20px";
-  editBtn.style.fontSize = "1rem";
-  editBtn.style.fontWeight = "bold";
+  editBtn.style.borderRadius = "6px";
+  editBtn.style.padding = "6px 12px";
+  editBtn.style.fontSize = "0.85rem";
+  editBtn.style.fontWeight = "600";
   editBtn.style.cursor = "pointer";
-  editBtn.style.boxShadow = "0 2px 8px rgba(37,99,235,0.2)";
+  editBtn.style.boxShadow = "0 1px 4px rgba(37,99,235,0.15)";
   editBtn.style.transition = "all 0.3s ease";
 
   // Indicateur de mode
   const modeIndicator = document.createElement("span");
   modeIndicator.id = "editModeIndicator";
-  modeIndicator.style.fontSize = "0.9rem";
+  modeIndicator.style.fontSize = "0.8rem";
   modeIndicator.style.fontWeight = "500";
   modeIndicator.style.color = "#64748b";
   updateModeIndicator(modeIndicator);
