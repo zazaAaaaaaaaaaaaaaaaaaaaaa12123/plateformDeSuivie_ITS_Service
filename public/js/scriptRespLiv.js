@@ -3846,7 +3846,7 @@ function showProfessionalHistoryModal() {
   header.style.alignItems = "center";
 
   const title = document.createElement("h2");
-  title.textContent = "📋 Historique Professionnel des Conteneurs Livrés";
+  title.textContent = "📋 Historique des Conteneurs Livrés";
   title.style.margin = "0";
   title.style.fontSize = "1.4em";
   title.style.fontWeight = "bold";
