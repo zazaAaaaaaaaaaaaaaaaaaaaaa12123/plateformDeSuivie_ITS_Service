@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
     toast.style.color = "#fff";
     toast.style.fontWeight = "bold";
     toast.style.fontSize = "1.08em";
-    toast.style.padding = "18px 32px";
+    toast.style.padding = "12px 32px";
     toast.style.borderRadius = "16px";
     toast.style.boxShadow = "0 6px 32px rgba(239,68,68,0.18)";
     toast.style.zIndex = 99999;

@@ -1498,8 +1498,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     if (delivery.id) {
       tr.setAttribute("data-delivery-id", delivery.id);
     }
-    // Champs obligatoires pour ce delivery
-    const requiredFields = [
+    // Champs facultatifs pour ce delivery (plus d'obligation)
+    const optionalFields = [
       "visitor_agent_name",
       "transporter",
       "inspector",
@@ -1508,29 +1508,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       "driver_phone",
       "delivery_date",
     ];
-    // Fonction pour vérifier dynamiquement si tous les champs sont remplis (prend la valeur affichée dans la cellule)
+    // Fonction pour vérifier si tous les champs sont remplis (maintenant facultatif - toujours autorisé)
     function isAllRequiredFilled() {
-      // Toujours prendre la valeur affichée dans la cellule (input, textarea ou textContent)
-      return requiredFields.every((field) => {
-        const colIdx = AGENT_TABLE_COLUMNS.findIndex((c) => c.id === field);
-        if (colIdx === -1) return false;
-        const cell = tr.children[colIdx];
-        let val = undefined;
-        if (cell) {
-          const input = cell.querySelector("input,textarea");
-          if (input) {
-            val = input.value;
-          } else {
-            val = cell.textContent;
-          }
-        }
-        return (
-          val !== undefined &&
-          val !== null &&
-          String(val).trim() !== "" &&
-          val !== "-"
-        );
-      });
+      // Les champs sont maintenant facultatifs, donc toujours autorisé
+      return true;
     }
     // Gestion dynamique du message d'accès
     let lastAccessState = null;
@@ -1790,18 +1771,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   }
                 }
 
-                // Permettre la modification si :
-                // 1. Tous les champs obligatoires sont remplis OU
-                // 2. La livraison a déjà été activée (même si conteneurs remis à "aucun") OU
-                // 3. Des conteneurs ont un historique de statut
-                if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
-                  showAccessMessage(
-                    "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
-                    "red"
-                  );
-                  return;
-                }
-
+                // Permettre la modification maintenant que les champs sont facultatifs
+                // Accès libre pour tous les utilisateurs
                 showContainerDetailPopup(delivery, item.textContent);
               };
             });
@@ -1813,14 +1784,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               ev.stopPropagation();
               popup.style.display = "none";
 
-              // Vérification des champs obligatoires
-              if (!isAllRequiredFilled()) {
-                showAccessMessage(
-                  "⚠️ Veuillez d'abord remplir tous les champs obligatoires (Agent visiteurs, Transporteur, Inspecteur, Agent en douanes, Chauffeur, Tel chauffeur, Date livraison).",
-                  "red"
-                );
-                return;
-              }
+              // Les champs sont maintenant facultatifs - plus de vérification
 
               if (
                 !confirm(
@@ -2138,19 +2102,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               );
               // === SYNCHRONISATION VERS SUIVIE ===
               syncDataToSuivie(delivery, col.id, input.value);
-              setTimeout(() => {
-                if (isAllRequiredFilled()) {
-                  showAccessMessage(
-                    "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
-                    "green"
-                  );
-                } else {
-                  showAccessMessage(
-                    "Vous n'avez plus accès à l'observation et au statut du conteneur.",
-                    "red"
-                  );
-                }
-              }, 10);
+              // Plus de vérification des champs - accès libre
+              showAccessMessage(
+                "Modification enregistrée avec succès.",
+                "green"
+              );
             }
           };
           input.onblur = function () {
@@ -2291,59 +2247,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       tr.appendChild(td);
       // ...existing code for showContainerDetailPopup...
       function showContainerDetailPopup(delivery, containerNumber) {
-        // 🔧 MODIFICATION AMÉLIORÉE : Permettre la modification une fois que la livraison a été "activée"
-        let canModify = isAllRequiredFilled();
+        // 🔧 MODIFICATION : Les champs sont maintenant facultatifs - accès libre
 
-        // Vérifier si cette livraison a déjà été "activée" pour les modifications
-        const deliveryKey = `delivery_activated_${
-          delivery.id || delivery.dossier_number
-        }`;
-        let isDeliveryActivated = localStorage.getItem(deliveryKey) === "true";
-
-        // Vérifier si des conteneurs ont déjà eu un statut défini (même "aucun" après avoir été "livré")
-        let hasStatusHistory = false;
-        if (
-          delivery.container_statuses &&
-          typeof delivery.container_statuses === "object"
-        ) {
-          // Vérifier si au moins un conteneur a un statut défini (même "aucun")
-          hasStatusHistory =
-            Object.keys(delivery.container_statuses).length > 0;
-
-          // Si on trouve des statuts "livre"/"livré", marquer la livraison comme activée
-          const hasDeliveredContainers = Object.values(
-            delivery.container_statuses
-          ).some((status) => status === "livre" || status === "livré");
-
-          if (hasDeliveredContainers && !isDeliveryActivated) {
-            localStorage.setItem(deliveryKey, "true");
-            isDeliveryActivated = true;
-          }
-        }
-
-        // Permettre la modification si :
-        // 1. Tous les champs obligatoires sont remplis OU
-        // 2. La livraison a déjà été activée (même si conteneurs remis à "aucun") OU
-        // 3. Des conteneurs ont un historique de statut
-        if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
-          showAccessMessage(
-            "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
-            "red"
-          );
-          return;
-        }
-
-        if (canModify) {
-          showAccessMessage(
-            "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
-            "green"
-          );
-        } else {
-          showAccessMessage(
-            "Modification autorisée : livraison déjà activée pour les modifications.",
-            "green"
-          );
-        }
+        // Message d'accès libre
+        showAccessMessage(
+          "Accès libre : vous pouvez modifier le statut du conteneur et l'observation.",
+          "green"
+        );
         const oldPopup = document.getElementById("containerDetailPopup");
         if (oldPopup) oldPopup.remove();
         const overlay = document.createElement("div");
