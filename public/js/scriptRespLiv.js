@@ -2142,34 +2142,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             input.selectionStart = input.selectionEnd = input.value.length;
           }
         };
-        // Ajout : surveiller les modifications sur les champs obligatoires pour afficher le message d'accès
-        if (requiredFields.includes(col.id)) {
-          td.addEventListener(
-            "input",
-            function () {
-              if (isAllRequiredFilled()) {
-                showAccessMessage(
-                  "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
-                  "green"
-                );
-                if (!confirmationShown) {
-                  confirmationShown = true;
-                  showAccessMessage(
-                    "✅ Les données obligatoires ont bien été insérées !",
-                    "green"
-                  );
-                }
-              } else {
-                showAccessMessage(
-                  "Vous n'avez plus accès à l'observation et au statut du conteneur.",
-                  "red"
-                );
-                confirmationShown = false;
-              }
-            },
-            true
-          );
-        }
         if (col.id === "observation") {
           td.classList.add("observation-col");
         }
