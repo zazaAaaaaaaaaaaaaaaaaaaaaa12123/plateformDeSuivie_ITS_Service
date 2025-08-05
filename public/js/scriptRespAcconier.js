@@ -1753,7 +1753,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateEchangeBLInput.style.fontSize = "1em";
           dateEchangeBLInput.style.marginBottom = "12px";
           dateEchangeBLInput.style.background = "#fff";
-          dateEchangeBLInput.value = delivery.date_echange_bl || "";
+
+          // Récupérer la valeur sauvée temporairement ou depuis la BDD
+          const tempKeyBL = `temp_date_echange_bl_${delivery.id}`;
+          const tempValueBL = localStorage.getItem(tempKeyBL);
+          dateEchangeBLInput.value =
+            tempValueBL || delivery.date_echange_bl || "";
+
+          // Sauvegarde automatique lors de la modification
+          dateEchangeBLInput.addEventListener("change", function () {
+            localStorage.setItem(tempKeyBL, this.value);
+            // Synchronisation automatique vers le tableau de suivi
+            syncToTableauSuivie(delivery.id, "date_echange_bl", this.value);
+          });
+
           content.appendChild(dateEchangeBLInput);
 
           // 3. Date de DO
@@ -1775,7 +1788,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateDOInput.style.fontSize = "1em";
           dateDOInput.style.marginBottom = "12px";
           dateDOInput.style.background = "#fff";
-          dateDOInput.value = delivery.date_do || "";
+
+          // Récupérer la valeur sauvée temporairement ou depuis la BDD
+          const tempKeyDO = `temp_date_do_${delivery.id}`;
+          const tempValueDO = localStorage.getItem(tempKeyDO);
+          dateDOInput.value = tempValueDO || delivery.date_do || "";
+
+          // Sauvegarde automatique lors de la modification
+          dateDOInput.addEventListener("change", function () {
+            localStorage.setItem(tempKeyDO, this.value);
+            // Synchronisation automatique vers le tableau de suivi
+            syncToTableauSuivie(delivery.id, "date_do", this.value);
+          });
+
           content.appendChild(dateDOInput);
 
           // 4. Date de BADT
@@ -1797,7 +1822,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateBADTInput.style.fontSize = "1em";
           dateBADTInput.style.marginBottom = "18px";
           dateBADTInput.style.background = "#fff";
-          dateBADTInput.value = delivery.date_badt || "";
+
+          // Récupérer la valeur sauvée temporairement ou depuis la BDD
+          const tempKeyBADT = `temp_date_badt_${delivery.id}`;
+          const tempValueBADT = localStorage.getItem(tempKeyBADT);
+          dateBADTInput.value = tempValueBADT || delivery.date_badt || "";
+
+          // Sauvegarde automatique lors de la modification
+          dateBADTInput.addEventListener("change", function () {
+            localStorage.setItem(tempKeyBADT, this.value);
+            // Synchronisation automatique vers le tableau de suivi
+            syncToTableauSuivie(delivery.id, "date_badt", this.value);
+          });
+
           content.appendChild(dateBADTInput);
 
           const saveBtn = document.createElement("button");
@@ -1997,12 +2034,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(exchangeData),
-                      }).catch((err) => {
-                        console.warn(
-                          "Erreur lors de la mise à jour des données d'échange:",
-                          err
-                        );
-                      });
+                      })
+                        .then(() => {
+                          // Nettoyer le localStorage temporaire après sauvegarde réussie
+                          clearTempDatesFromStorage(delivery.id);
+                        })
+                        .catch((err) => {
+                          console.warn(
+                            "Erreur lors de la mise à jour des données d'échange:",
+                            err
+                          );
+                        });
+                    } else {
+                      // Nettoyer le localStorage même s'il n'y a pas de données d'échange à sauvegarder
+                      clearTempDatesFromStorage(delivery.id);
                     }
 
                     overlay.remove();
@@ -2738,4 +2783,75 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
     };
   }
 }
+
+// Fonction de synchronisation vers le tableau de suivi
+function syncToTableauSuivie(deliveryId, dateField, dateValue) {
+  try {
+    // Vérifier si on est dans la page de tableau de suivi
+    if (typeof window.parent !== "undefined" && window.parent !== window) {
+      // Communication avec la fenêtre parent si on est dans un iframe
+      window.parent.postMessage(
+        {
+          type: "updateDateField",
+          deliveryId: deliveryId,
+          field: dateField,
+          value: dateValue,
+        },
+        "*"
+      );
+    } else {
+      // Si on est dans la même page, chercher le tableau
+      const tableBody = document.querySelector("#deliveryTable tbody");
+      if (tableBody) {
+        const rows = tableBody.querySelectorAll("tr");
+        rows.forEach((row) => {
+          const idCell = row.querySelector('td[data-field="id"]');
+          if (idCell && idCell.textContent.trim() === deliveryId.toString()) {
+            // Trouver la colonne correspondante et mettre à jour
+            let columnIndex;
+            switch (dateField) {
+              case "date_echange_bl":
+                columnIndex = 32; // Index de la colonne Date d'échange BL
+                break;
+              case "date_do":
+                columnIndex = 33; // Index de la colonne Date de DO
+                break;
+              case "date_badt":
+                columnIndex = 34; // Index de la colonne Date de BADT
+                break;
+            }
+
+            if (columnIndex !== undefined) {
+              const cells = row.querySelectorAll("td");
+              if (cells[columnIndex]) {
+                // Formater la date au format français pour l'affichage
+                const formattedDate = dateValue
+                  ? new Date(dateValue).toLocaleDateString("fr-FR")
+                  : "";
+                cells[columnIndex].textContent = formattedDate;
+              }
+            }
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.log("Synchronisation non critique:", error);
+  }
+}
+
+// Fonction pour nettoyer le localStorage temporaire après sauvegarde réussie
+function clearTempDatesFromStorage(deliveryId) {
+  try {
+    localStorage.removeItem(`temp_date_echange_bl_${deliveryId}`);
+    localStorage.removeItem(`temp_date_do_${deliveryId}`);
+    localStorage.removeItem(`temp_date_badt_${deliveryId}`);
+    console.log(
+      `Nettoyage localStorage temporaire pour livraison ${deliveryId}`
+    );
+  } catch (error) {
+    console.log("Erreur lors du nettoyage localStorage:", error);
+  }
+}
+
 //originale12345678910
