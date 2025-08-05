@@ -649,6 +649,202 @@
       }
 
       /* --- Fin styles popup admin --- */
+
+      /* === STYLES AMÉLIORÉS POUR LES CARTES ET BADGES === */
+
+      /* Animation de pulsation pour les cartes actives */
+      @keyframes cardPulse {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+        50% {
+          transform: translateY(-2px) scale(1.02);
+        }
+        100% {
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      /* Animation de rotation douce pour les badges */
+      @keyframes badgeRotate {
+        0% {
+          transform: rotate(0deg) scale(1);
+        }
+        25% {
+          transform: rotate(5deg) scale(1.1);
+        }
+        75% {
+          transform: rotate(-5deg) scale(1.1);
+        }
+        100% {
+          transform: rotate(0deg) scale(1);
+        }
+      }
+
+      /* Animation de bouncing pour les nouvelles valeurs */
+      @keyframes badgeBounce {
+        0% {
+          transform: scale(1) translateY(0);
+        }
+        30% {
+          transform: scale(1.3) translateY(-8px);
+        }
+        50% {
+          transform: scale(1.1) translateY(-4px);
+        }
+        70% {
+          transform: scale(1.2) translateY(-6px);
+        }
+        100% {
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      /* Animation de particules flottantes */
+      @keyframes floatingParticle {
+        0% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        50% {
+          opacity: 0.7;
+          transform: translateY(-20px) scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-40px) scale(0);
+        }
+      }
+
+      /* Styles pour les cartes avec effet glassmorphism */
+      .etat-card {
+        position: relative;
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        overflow: visible;
+      }
+
+      .etat-card:hover {
+        transform: translateY(-8px) scale(1.03);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
+          0 8px 30px rgba(0, 0, 0, 0.1);
+        background: rgba(255, 255, 255, 0.35);
+      }
+
+      /* Amélioration des badges de compteurs */
+      .card-counter {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.5px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        user-select: none;
+        animation: badgeBounce 0.6s ease-out;
+      }
+
+      .card-counter:hover {
+        animation: badgeRotate 0.8s ease-in-out;
+      }
+
+      /* Effet de brillance sur les badges */
+      .card-counter::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          transparent 30%,
+          rgba(255, 255, 255, 0.3) 50%,
+          transparent 70%
+        );
+        border-radius: inherit;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .card-counter:hover::before {
+        opacity: 1;
+        animation: shimmer 1.5s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%) rotate(45deg);
+        }
+        100% {
+          transform: translateX(100%) rotate(45deg);
+        }
+      }
+
+      /* Styles spécifiques selon le type de carte */
+      #carteAttentePaiement .card-counter {
+        background: linear-gradient(
+          135deg,
+          #f59e0b 0%,
+          #d97706 100%
+        ) !important;
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3),
+          0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+      }
+
+      #carteMiseLivraison .card-counter {
+        background: linear-gradient(
+          135deg,
+          #3b82f6 0%,
+          #2563eb 100%
+        ) !important;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3),
+          0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+      }
+
+      #carteLivre .card-counter {
+        background: linear-gradient(
+          135deg,
+          #10b981 0%,
+          #059669 100%
+        ) !important;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3),
+          0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+      }
+
+      /* Animation de mise à jour des cartes */
+      .card-updating {
+        animation: cardPulse 1s ease-in-out;
+      }
+
+      /* Effet de glow pour les badges actifs */
+      .card-counter.updating {
+        animation: badgeBounce 0.6s ease-out,
+          glow 2s ease-in-out infinite alternate;
+      }
+
+      @keyframes glow {
+        from {
+          filter: drop-shadow(0 0 5px currentColor);
+        }
+        to {
+          filter: drop-shadow(0 0 15px currentColor);
+        }
+      }
+
+      /* Responsive pour les badges */
+      @media (max-width: 768px) {
+        .card-counter {
+          font-size: 0.8em !important;
+          padding: 6px 10px !important;
+          min-width: 24px !important;
+          min-height: 24px !important;
+        }
+      }
+
+      /* === FIN STYLES CARTES ET BADGES === */
     </style>
   </head>
 
@@ -2593,22 +2789,44 @@
                   // Créer l'élément compteur s'il n'existe pas
                   counterElement = document.createElement("div");
                   counterElement.className = "card-counter";
+
+                  // Déterminer le style selon le type de carte
+                  let badgeStyle = getBadgeStyleForCard(cardId);
+
                   counterElement.style.cssText = `
                     position: absolute;
-                    top: 8px;
-                    right: 8px;
-                    background: rgba(255, 255, 255, 0.9);
-                    color: #1d3557;
-                    font-weight: 700;
-                    font-size: 0.85em;
-                    padding: 4px 8px;
-                    border-radius: 12px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                    min-width: 20px;
+                    top: -8px;
+                    right: -8px;
+                    background: ${badgeStyle.background};
+                    color: ${badgeStyle.color};
+                    font-weight: 800;
+                    font-size: 0.9em;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                    padding: 8px 12px;
+                    border-radius: 20px;
+                    border: 3px solid #ffffff;
+                    box-shadow: 0 4px 16px ${badgeStyle.shadowColor}, 0 2px 8px rgba(0, 0, 0, 0.1);
+                    min-width: 28px;
+                    min-height: 28px;
                     text-align: center;
-                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    z-index: 10;
+                    backdrop-filter: blur(10px);
+                    transform-origin: center;
                   `;
+
+                  // Animation d'apparition
+                  counterElement.style.opacity = "0";
+                  counterElement.style.transform = "scale(0) rotate(180deg)";
                   card.appendChild(counterElement);
+
+                  setTimeout(() => {
+                    counterElement.style.opacity = "1";
+                    counterElement.style.transform = "scale(1) rotate(0deg)";
+                  }, 50);
                 } else {
                   oldValue = parseInt(counterElement.textContent) || 0;
                 }
@@ -2617,29 +2835,53 @@
 
                 // Animation de mise à jour avec couleur selon le changement
                 if (count !== oldValue) {
+                  // Animation de pulsation avec couleurs dynamiques
                   if (count > oldValue) {
-                    counterElement.style.background = "rgba(34, 197, 94, 0.9)"; // Vert pour augmentation
-                    counterElement.style.color = "#fff";
+                    // Augmentation - Animation verte
+                    counterElement.style.background =
+                      "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+                    counterElement.style.color = "#ffffff";
+                    counterElement.style.boxShadow =
+                      "0 6px 20px rgba(16, 185, 129, 0.4), 0 0 0 4px rgba(16, 185, 129, 0.2)";
+                    counterElement.style.transform = "scale(1.4) rotate(10deg)";
+
+                    // Effet de particules
+                    createSuccessParticles(counterElement);
                   } else if (count < oldValue) {
-                    counterElement.style.background = "rgba(239, 68, 68, 0.9)"; // Rouge pour diminution
-                    counterElement.style.color = "#fff";
+                    // Diminution - Animation rouge
+                    counterElement.style.background =
+                      "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)";
+                    counterElement.style.color = "#ffffff";
+                    counterElement.style.boxShadow =
+                      "0 6px 20px rgba(239, 68, 68, 0.4), 0 0 0 4px rgba(239, 68, 68, 0.2)";
+                    counterElement.style.transform =
+                      "scale(1.4) rotate(-10deg)";
                   }
 
-                  counterElement.style.transform = "scale(1.3)";
+                  // Retour à l'état normal avec animation fluide
                   setTimeout(() => {
-                    counterElement.style.transform = "scale(1)";
-                    // Retour à la couleur normale après animation
-                    setTimeout(() => {
-                      counterElement.style.background =
-                        "rgba(255, 255, 255, 0.9)";
-                      counterElement.style.color = "#1d3557";
-                    }, 300);
-                  }, 200);
+                    let originalStyle = getBadgeStyleForCard(cardId);
+                    counterElement.style.background = originalStyle.background;
+                    counterElement.style.color = originalStyle.color;
+                    counterElement.style.boxShadow = `0 4px 16px ${originalStyle.shadowColor}, 0 2px 8px rgba(0, 0, 0, 0.1)`;
+                    counterElement.style.transform = "scale(1) rotate(0deg)";
+                  }, 600);
 
                   console.log(
                     `[CARD UPDATE] ${cardId}: ${oldValue} → ${count}`
                   );
                 }
+
+                // Effet hover permanent
+                counterElement.onmouseenter = function () {
+                  this.style.transform = "scale(1.15) translateY(-2px)";
+                  this.style.filter = "brightness(1.1)";
+                };
+
+                counterElement.onmouseleave = function () {
+                  this.style.transform = "scale(1) translateY(0px)";
+                  this.style.filter = "brightness(1)";
+                };
 
                 return oldValue;
               } else {
@@ -2647,6 +2889,144 @@
                 return 0;
               }
             };
+
+            // Fonction pour obtenir le style de badge selon la carte
+            function getBadgeStyleForCard(cardId) {
+              const styles = {
+                carteAttentePaiement: {
+                  background:
+                    "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                  color: "#ffffff",
+                  shadowColor: "rgba(245, 158, 11, 0.3)",
+                },
+                carteMiseLivraison: {
+                  background:
+                    "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                  color: "#ffffff",
+                  shadowColor: "rgba(59, 130, 246, 0.3)",
+                },
+                carteLivre: {
+                  background:
+                    "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                  color: "#ffffff",
+                  shadowColor: "rgba(16, 185, 129, 0.3)",
+                },
+              };
+
+              return (
+                styles[cardId] || {
+                  background:
+                    "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
+                  color: "#ffffff",
+                  shadowColor: "rgba(107, 114, 128, 0.3)",
+                }
+              );
+            }
+
+            // Fonction pour créer des particules de succès
+            function createSuccessParticles(element) {
+              const particleCount = 6;
+              const rect = element.getBoundingClientRect();
+
+              for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement("div");
+                particle.style.cssText = `
+                  position: fixed;
+                  width: 4px;
+                  height: 4px;
+                  background: #10b981;
+                  border-radius: 50%;
+                  pointer-events: none;
+                  z-index: 9999;
+                  left: ${rect.left + rect.width / 2}px;
+                  top: ${rect.top + rect.height / 2}px;
+                `;
+
+                document.body.appendChild(particle);
+
+                const angle = (i / particleCount) * Math.PI * 2;
+                const distance = 30 + Math.random() * 20;
+                const duration = 600 + Math.random() * 200;
+
+                particle.animate(
+                  [
+                    {
+                      transform: "translate(0, 0) scale(1)",
+                      opacity: 1,
+                    },
+                    {
+                      transform: `translate(${Math.cos(angle) * distance}px, ${
+                        Math.sin(angle) * distance
+                      }px) scale(0)`,
+                      opacity: 0,
+                    },
+                  ],
+                  {
+                    duration: duration,
+                    easing: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                  }
+                ).onfinish = () => particle.remove();
+              }
+            }
+
+            // Amélioration de la fonction updateCardCounters avec effets visuels
+            const originalUpdateCardCounters = window.updateCardCounters;
+            window.updateCardCounters = function () {
+              console.log("[DASHBOARD] 📊 Début mise à jour des compteurs...");
+
+              // Ajouter une classe temporaire pour l'animation de mise à jour
+              const cardIds = [
+                "carteAttentePaiement",
+                "carteMiseLivraison",
+                "carteLivre",
+              ];
+              cardIds.forEach((cardId) => {
+                const card = document.getElementById(cardId);
+                if (card) {
+                  card.classList.add("card-updating");
+                  setTimeout(
+                    () => card.classList.remove("card-updating"),
+                    1000
+                  );
+                }
+              });
+
+              // Appeler la fonction originale
+              return originalUpdateCardCounters.apply(this, arguments);
+            };
+
+            // Fonction pour afficher un effet de succès lors de la mise à jour
+            window.showCounterUpdateSuccess = function () {
+              const successIndicator = document.createElement("div");
+              successIndicator.innerHTML = "✨";
+              successIndicator.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                font-size: 2em;
+                z-index: 9999;
+                animation: successPulse 2s ease-out forwards;
+                pointer-events: none;
+              `;
+
+              document.body.appendChild(successIndicator);
+              setTimeout(() => successIndicator.remove(), 2000);
+            };
+
+            // Ajout de l'animation CSS pour l'indicateur de succès
+            if (!document.getElementById("dynamic-animations")) {
+              const style = document.createElement("style");
+              style.id = "dynamic-animations";
+              style.textContent = `
+                @keyframes successPulse {
+                  0% { opacity: 0; transform: scale(0) rotate(0deg); }
+                  20% { opacity: 1; transform: scale(1.5) rotate(180deg); }
+                  80% { opacity: 1; transform: scale(1) rotate(360deg); }
+                  100% { opacity: 0; transform: scale(0.5) rotate(540deg); }
+                }
+              `;
+              document.head.appendChild(style);
+            }
 
             // Appeler la fonction de mise à jour des compteurs au chargement
             window.updateCardCounters();
