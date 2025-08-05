@@ -225,10 +225,8 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
   // 🆕 AJOUT : Vérification de l'historique professionnel au chargement
-  // Petit délai pour s'assurer que tous les éléments sont bien chargés
-  setTimeout(() => {
-    checkAndShowHistoryButton();
-  }, 100);
+  // Création immédiate du bouton historique
+  checkAndShowHistoryButton();
 
   // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
   let ws;
@@ -3148,29 +3146,38 @@ pdfBtn.style.verticalAlign = "middle";
 
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
-  const searchInput = document.querySelector(
-    "input[placeholder='Rechercher une livraison.']"
-  );
-  if (searchInput && searchInput.parentNode) {
-    // 🆕 MODIFICATION : Améliorer l'affichage du conteneur parent
-    const parentContainer = searchInput.parentNode;
-    parentContainer.style.display = "flex";
-    parentContainer.style.alignItems = "center";
-    parentContainer.style.gap = "8px";
+  // 🆕 CRÉATION PRIORITAIRE : Créer le bouton historique en premier
+  setTimeout(() => {
+    checkAndShowHistoryButton();
 
-    // 🆕 MODIFICATION : Réduire légèrement la largeur du champ de recherche
-    searchInput.style.width = "85%"; // Réduit la largeur de 100% à 85%
-    searchInput.style.flex = "1"; // Permet au champ de recherche de s'adapter
+    // Ensuite, configurer le conteneur parent après création du bouton historique
+    setTimeout(() => {
+      const searchInput = document.querySelector(
+        "input[placeholder='Rechercher une livraison.']"
+      );
+      if (searchInput && searchInput.parentNode) {
+        // 🆕 MODIFICATION : Améliorer l'affichage du conteneur parent
+        const parentContainer = searchInput.parentNode;
+        parentContainer.style.display = "flex";
+        parentContainer.style.alignItems = "center";
+        parentContainer.style.gap = "8px";
 
-    // Ajouter le bouton PDF après le champ de recherche
-    searchInput.parentNode.appendChild(pdfBtn);
-  } else {
-    // fallback : au-dessus du tableau si champ non trouvé
-    const mainTable = document.getElementById("deliveriesTable");
-    if (mainTable && mainTable.parentNode) {
-      mainTable.parentNode.insertBefore(pdfBtn, mainTable);
-    }
-  }
+        // 🆕 MODIFICATION : Réduire la largeur du champ de recherche plus visiblement
+        searchInput.style.width = "70%"; // Réduit encore plus : de 85% à 70%
+        searchInput.style.maxWidth = "400px"; // Limite la largeur maximale
+        searchInput.style.flex = "0 1 auto"; // Ne permet pas au champ de prendre tout l'espace
+
+        // Ajouter le bouton PDF après le champ de recherche
+        searchInput.parentNode.appendChild(pdfBtn);
+      } else {
+        // fallback : au-dessus du tableau si champ non trouvé
+        const mainTable = document.getElementById("deliveriesTable");
+        if (mainTable && mainTable.parentNode) {
+          mainTable.parentNode.insertBefore(pdfBtn, mainTable);
+        }
+      }
+    }, 50);
+  }, 150);
 });
 
 // Variable pour stocker les dossiers livrés
@@ -3703,8 +3710,18 @@ function showHistoryButtonIfNeeded() {
       "input[placeholder='Rechercher une livraison.']"
     );
     if (searchInput && searchInput.parentNode) {
-      // Insérer le bouton historique avant le champ de recherche
-      searchInput.parentNode.insertBefore(historyBtn, searchInput);
+      // Insérer le bouton historique AVANT le champ de recherche (premier élément)
+      const parentContainer = searchInput.parentNode;
+      parentContainer.insertBefore(historyBtn, parentContainer.firstChild);
+
+      // Ajuster la largeur du champ de recherche
+      searchInput.style.width = "70%";
+      searchInput.style.maxWidth = "400px";
+
+      // Configurer le conteneur parent en flexbox
+      parentContainer.style.display = "flex";
+      parentContainer.style.alignItems = "center";
+      parentContainer.style.gap = "8px";
     } else {
       // Fallback : ajouter au body si pas de champ de recherche trouvé
       document.body.appendChild(historyBtn);
