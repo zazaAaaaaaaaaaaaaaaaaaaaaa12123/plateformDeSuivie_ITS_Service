@@ -1592,21 +1592,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           overlay.style.height = "100vh";
           overlay.style.background = "rgba(30,41,59,0.45)";
           overlay.style.zIndex = 9999;
-          overlay.style.display = "flex";
-          // Positionnement en haut avec espace en bas sur mobile/tablette
-          if (window.innerWidth <= 768) {
-            overlay.style.alignItems = "flex-start";
-            overlay.style.paddingTop = window.innerWidth <= 480 ? "8vh" : "6vh";
-            overlay.style.paddingBottom =
-              window.innerWidth <= 480 ? "15vh" : "20vh";
-          } else {
-            overlay.style.alignItems = "center";
-          }
-          overlay.style.justifyContent = "center";
+          overlay.style.display = "block"; // Changé de flex à block pour popup déplaçable
+          overlay.style.pointerEvents = "none"; // Permettre les clics à travers l'overlay
+          // Positionnement initial pour popup déplaçable
           const box = document.createElement("div");
           box.style.background = "#fff";
           box.style.borderRadius = window.innerWidth <= 768 ? "12px" : "16px";
           box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+          box.style.position = "fixed"; // Position fixe pour drag-and-drop
+          box.style.pointerEvents = "auto"; // Restaurer les événements pour la popup
           // Adaptation responsive : popup réduite pour meilleur centrage sur tablette
           if (window.innerWidth <= 480) {
             // Mobile - format compact horizontal
@@ -1631,12 +1625,36 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
           box.style.overflowY = "auto";
           box.style.padding = "0";
-          box.style.position = "relative";
           box.style.display = "flex";
           box.style.flexDirection = "column";
+          // Rendre la popup déplaçable - positionnement initial centré
+          box.style.cursor = "move";
+          box.style.zIndex = 10000;
+
+          // Positionner la popup au centre initialement
+          const boxWidth =
+            window.innerWidth <= 480
+              ? window.innerWidth * 0.92
+              : window.innerWidth <= 768
+              ? window.innerWidth * 0.82
+              : window.innerWidth <= 1024
+              ? window.innerWidth * 0.75
+              : 520;
+          const boxHeight =
+            window.innerWidth <= 768
+              ? window.innerHeight * 0.65
+              : window.innerHeight * 0.7;
+
+          box.style.left = (window.innerWidth - boxWidth) / 2 + "px";
+          box.style.top =
+            window.innerWidth <= 768
+              ? "8vh"
+              : (window.innerHeight - boxHeight) / 2 + "px";
+
           const header = document.createElement("div");
           header.style.background = "#2563eb";
           header.style.color = "#fff";
+          header.style.cursor = "move";
           // Adaptation responsive du header - très compact
           if (window.innerWidth <= 768) {
             header.style.padding = "8px 12px 6px 12px";
@@ -1648,6 +1666,99 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           header.style.fontWeight = "bold";
           header.style.display = "flex";
           header.style.flexDirection = "column";
+
+          // Fonctionnalité de glisser-déposer pour rendre la popup déplaçable
+          let isDragging = false;
+          let currentX;
+          let currentY;
+          let initialX;
+          let initialY;
+          let xOffset = 0;
+          let yOffset = 0;
+
+          // Position initiale centrée
+          const rect = box.getBoundingClientRect();
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+
+          setTimeout(() => {
+            const boxRect = box.getBoundingClientRect();
+            xOffset = (viewportWidth - boxRect.width) / 2;
+            yOffset =
+              window.innerWidth <= 768
+                ? window.innerWidth <= 480
+                  ? window.innerHeight * 0.08
+                  : window.innerHeight * 0.06
+                : (viewportHeight - boxRect.height) / 2;
+
+            box.style.left = xOffset + "px";
+            box.style.top = yOffset + "px";
+            box.style.transform = "none";
+          }, 10);
+
+          function dragStart(e) {
+            if (e.type === "touchstart") {
+              initialX = e.touches[0].clientX - xOffset;
+              initialY = e.touches[0].clientY - yOffset;
+            } else {
+              initialX = e.clientX - xOffset;
+              initialY = e.clientY - yOffset;
+            }
+
+            if (e.target === header || header.contains(e.target)) {
+              isDragging = true;
+              box.style.cursor = "grabbing";
+              header.style.cursor = "grabbing";
+            }
+          }
+
+          function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            box.style.cursor = "move";
+            header.style.cursor = "move";
+          }
+
+          function drag(e) {
+            if (isDragging) {
+              e.preventDefault();
+
+              if (e.type === "touchmove") {
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+              } else {
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+              }
+
+              xOffset = currentX;
+              yOffset = currentY;
+
+              // Contraintes pour garder la popup dans les limites de l'écran
+              const boxRect = box.getBoundingClientRect();
+              const minX = 0;
+              const minY = 0;
+              const maxX = viewportWidth - boxRect.width;
+              const maxY = viewportHeight - boxRect.height;
+
+              xOffset = Math.max(minX, Math.min(maxX, xOffset));
+              yOffset = Math.max(minY, Math.min(maxY, yOffset));
+
+              box.style.left = xOffset + "px";
+              box.style.top = yOffset + "px";
+            }
+          }
+
+          // Event listeners pour desktop
+          header.addEventListener("mousedown", dragStart, false);
+          document.addEventListener("mouseup", dragEnd, false);
+          document.addEventListener("mousemove", drag, false);
+
+          // Event listeners pour mobile/tablette
+          header.addEventListener("touchstart", dragStart, false);
+          document.addEventListener("touchend", dragEnd, false);
+          document.addEventListener("touchmove", drag, false);
           header.style.borderTopLeftRadius =
             window.innerWidth <= 768 ? "12px" : "16px";
           header.style.borderTopRightRadius =
