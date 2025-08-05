@@ -4913,9 +4913,11 @@ function mapStatus(status) {
         flashCells(COLS_LIVRAISON, "highlight-green-flash");
       };
     }
-    const COLS_AGENT = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
-    const COLS_RESP = [18, 19];
-    const COLS_LIVRAISON = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+    const COLS_AGENT = [
+      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+    ]; // Ajout de la colonne 18 (Date d'échange)
+    const COLS_RESP = [19, 20]; // Décalage de +1
+    const COLS_LIVRAISON = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]; // Décalage de +1
     function flashCells(colIndexes, flashClass) {
       const rows = table.tBodies[0]?.rows;
       if (!rows) return;

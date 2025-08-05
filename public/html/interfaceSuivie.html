@@ -197,6 +197,17 @@
         width: 100%;
         table-layout: auto; /* Permet aux colonnes de s'auto-ajuster au contenu */
       }
+
+      /* Styles spécifiques pour certaines colonnes */
+      .table th:nth-child(18), /* Colonne Date d'échange (position 18) */
+      .table td:nth-child(18) {
+        width: 110px; /* Largeur réduite pour Date d'échange */
+        min-width: 100px;
+        max-width: 120px;
+        white-space: nowrap;
+        text-align: center;
+      }
+
       .table th,
       .table td {
         vertical-align: top; /* Aligne le contenu en haut des cellules */
