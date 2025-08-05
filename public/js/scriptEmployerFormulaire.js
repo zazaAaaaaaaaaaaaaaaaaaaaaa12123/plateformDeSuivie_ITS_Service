@@ -32,6 +32,52 @@ const formSuccessDisplay = document.getElementById("formSuccess");
 const cancelSubmitBtn = document.getElementById("cancelSubmitBtn");
 let countdownInterval;
 let countdownTime = 3; // secondes
+
+// --- GESTION DES NUMÉROS BL UTILISÉS ---
+// Stockage des numéros BL déjà utilisés pour éviter les doublons
+let usedBLNumbers = [];
+
+// Fonction pour charger les numéros BL existants depuis localStorage au démarrage
+function loadUsedBLNumbers() {
+  try {
+    const savedBLNumbers = localStorage.getItem("used_bl_numbers");
+    if (savedBLNumbers) {
+      usedBLNumbers = JSON.parse(savedBLNumbers);
+    }
+  } catch (error) {
+    console.warn("Erreur lors du chargement des numéros BL:", error);
+    usedBLNumbers = [];
+  }
+}
+
+// Fonction pour sauvegarder un nouveau numéro BL
+function saveBLNumber(blNumber) {
+  if (blNumber && blNumber.trim() && !usedBLNumbers.includes(blNumber.trim())) {
+    usedBLNumbers.push(blNumber.trim());
+    try {
+      localStorage.setItem("used_bl_numbers", JSON.stringify(usedBLNumbers));
+    } catch (error) {
+      console.warn("Erreur lors de la sauvegarde du numéro BL:", error);
+    }
+  }
+}
+
+// Fonction pour vérifier si un numéro BL est déjà utilisé
+function isBLNumberUsed(blNumber) {
+  return blNumber && blNumber.trim() && usedBLNumbers.includes(blNumber.trim());
+}
+
+// Fonction pour réinitialiser la liste des numéros BL (utilitaire pour le développement/test)
+function resetUsedBLNumbers() {
+  usedBLNumbers = [];
+  try {
+    localStorage.removeItem("used_bl_numbers");
+    console.log("Liste des numéros BL réinitialisée avec succès.");
+  } catch (error) {
+    console.warn("Erreur lors de la réinitialisation des numéros BL:", error);
+  }
+}
+
 // Ce script gère le formulaire de validation de livraison pour l'employé.
 // Il gère la saisie du code d'entreprise et la soumission des données de livraison.
 
@@ -920,6 +966,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Charger les numéros BL existants au démarrage
+  loadUsedBLNumbers();
   init();
   // Suppression de toute logique liée au code entreprise
 });
@@ -1502,6 +1550,26 @@ function init() {
           return;
         }
 
+        // --- VALIDATION NUMÉRO BL UNIQUE ---
+        const currentBLNumber = blNumberInput ? blNumberInput.value.trim() : "";
+        if (currentBLNumber && isBLNumberUsed(currentBLNumber)) {
+          // Retirer les bordures rouges des autres champs
+          requiredInputs.forEach((input) => {
+            input.classList.remove("border-red-500", "border-2");
+          });
+          // Ajouter bordure rouge au champ BL
+          if (blNumberInput) {
+            blNumberInput.classList.add("border-red-500", "border-2");
+            blNumberInput.focus();
+          }
+          displayMessage(
+            formErrorDisplay,
+            `❌ Le numéro BL "${currentBLNumber}" a déjà été utilisé. Veuillez saisir un numéro BL différent.`,
+            "error"
+          );
+          return;
+        }
+
         // Le numéro de téléphone client est totalement facultatif : aucune validation, aucune contrainte, aucune bordure rouge. precis
         if (clientPhoneInput) {
           clientPhoneInput.classList.remove("border-red-500", "border-2");
@@ -1561,6 +1629,28 @@ function init() {
       option.value = opt.value;
       option.textContent = opt.label;
       circuitInput.appendChild(option);
+    });
+  }
+
+  // --- VALIDATION EN TEMPS RÉEL DU NUMÉRO BL ---
+  if (blNumberInput) {
+    // Supprimer les bordures d'erreur quand l'utilisateur modifie le champ
+    blNumberInput.addEventListener("input", function () {
+      blNumberInput.classList.remove("border-red-500", "border-2");
+      clearMessages(formErrorDisplay);
+    });
+
+    // Validation quand l'utilisateur quitte le champ (onblur)
+    blNumberInput.addEventListener("blur", function () {
+      const blValue = blNumberInput.value.trim();
+      if (blValue && isBLNumberUsed(blValue)) {
+        blNumberInput.classList.add("border-red-500", "border-2");
+        displayMessage(
+          formErrorDisplay,
+          `❌ Le numéro BL "${blValue}" a déjà été utilisé. Veuillez saisir un numéro BL différent.`,
+          "error"
+        );
+      }
     });
   }
 
@@ -1860,6 +1950,12 @@ async function submitDeliveryForm(status) {
           `Opération (${operationType}) enregistrée avec succès !`,
         "success"
       );
+
+      // --- SAUVEGARDE DU NUMÉRO BL POUR ÉVITER LES DOUBLONS ---
+      const finalBlNumber = blNumberInput ? blNumberInput.value.trim() : "";
+      if (finalBlNumber) {
+        saveBLNumber(finalBlNumber);
+      }
 
       // --- AJOUT HISTORIQUE AGENT ACCONIER ---
       try {
