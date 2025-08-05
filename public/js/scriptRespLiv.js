@@ -3508,7 +3508,7 @@ function generateEtatSortiePdf(rows, date1, date2) {
       tableWidth: "auto",
       horizontalAlign: "center", // Centrage horizontal du tableau
       didDrawPage: function (data) {
-        // Rien à faire ici normalementcd
+        // Rien à faire ici normalement
       },
     });
     doc.save("Etat_sorties_conteneurs.pdf");

@@ -2371,7 +2371,7 @@
                 left: 0;
                 width: 100vw;
                 height: 100vh;
-                background: rgba(220, 53, 69, 0.18);
+                background: rgba(220, 53, 69, 0.25);
                 z-index: 10001;
                 align-items: center;
                 justify-content: center;
@@ -2381,11 +2381,11 @@
                 style="
                   background: #fff;
                   border-radius: 18px;
-                  box-shadow: 0 8px 40px #dc354544;
+                  box-shadow: 0 12px 40px rgba(220, 53, 69, 0.3);
                   padding: 32px 28px 24px 28px;
-                  max-width: 600px;
+                  max-width: 680px;
                   width: 95vw;
-                  max-height: 88vh;
+                  max-height: 85vh;
                   overflow-y: auto;
                   position: relative;
                   border: 2.5px solid #dc3545;
@@ -2408,13 +2408,19 @@
                 </button>
                 <h2
                   style="
-                    font-size: 1.12em;
+                    font-size: 1.4em;
                     font-weight: 700;
                     color: #dc3545;
-                    margin-bottom: 18px;
+                    margin-bottom: 22px;
                     text-align: center;
+                    border-bottom: 2px solid #dc3545;
+                    padding-bottom: 12px;
                   "
                 >
+                  <i
+                    class="fas fa-exclamation-triangle"
+                    style="margin-right: 8px"
+                  ></i>
                   Dossiers en retard
                 </h2>
                 <div id="contenuDossiersRetard"></div>
@@ -2893,32 +2899,122 @@
                 fetch("/api/dossiers/retard")
                   .then((res) => res.json())
                   .then((dossiers) => {
-                    let html =
-                      "<div><ul style='list-style:none;padding:0;margin:0;'>";
-                    dossiers.forEach((dossier) => {
-                      // Utilise un identifiant unique (ex: dossier.id ou dossier.numero_bl)
-                      const dossierId =
-                        dossier.id ||
-                        dossier.numero_bl ||
-                        dossier.numero ||
-                        dossier._id ||
-                        "";
-                      html += `
-                        <li style='background:#fff;border-radius:16px;box-shadow:0 2px 12px #dc354522;margin-bottom:18px;padding:18px 22px;display:flex;align-items:center;gap:18px;position:relative;cursor:pointer;' onclick="window.location.href='https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?dossier=${encodeURIComponent(
-                          dossierId
-                        )}'">
-                          <span style='font-weight:700;color:#dc3545;'>${
-                            dossier.client_name || dossier.nom || "Dossier"
-                          }</span>
-                          <span style='margin-left:auto;color:#374151;'>${dossierId}</span>
-                        </li>
+                    if (!dossiers || dossiers.length === 0) {
+                      contenuRetard.innerHTML = `
+                        <div style='text-align:center;padding:40px 20px;color:#6b7280;'>
+                          <i class="fas fa-check-circle" style="font-size:3em;color:#22c55e;margin-bottom:15px;"></i>
+                          <p style="font-size:1.2em;margin:0;">Aucun dossier en retard</p>
+                          <p style="font-size:1em;margin:8px 0 0 0;">Tous les dossiers sont à jour !</p>
+                        </div>
                       `;
-                    });
-                    html += "</ul></div>";
-                    contenuRetard.innerHTML = html;
+                    } else {
+                      let html = `
+                        <div style="margin-bottom:12px;">
+                          <p style="color:#374151;font-size:1.05em;margin:0;text-align:center;">
+                            <strong>${dossiers.length}</strong> dossier${
+                        dossiers.length > 1 ? "s" : ""
+                      } en retard
+                          </p>
+                        </div>
+                        <div style="max-height:400px;overflow-y:auto;">
+                          <ul style='list-style:none;padding:0;margin:0;'>
+                      `;
+
+                      dossiers.forEach((dossier, index) => {
+                        const dossierId =
+                          dossier.id ||
+                          dossier.numero_bl ||
+                          dossier.numero ||
+                          dossier._id ||
+                          "";
+                        const clientName =
+                          dossier.client_name ||
+                          dossier.nom ||
+                          "Client non défini";
+                        const employeeName =
+                          dossier.employee_name || "Agent non défini";
+                        const dossierNumber =
+                          dossier.dossier_number || dossierId;
+
+                        html += `
+                          <li style='
+                            background: linear-gradient(135deg, #fef2f2 80%, #fecaca 100%);
+                            border: 2px solid #fecaca;
+                            border-radius: 12px;
+                            margin-bottom: 12px;
+                            padding: 18px 20px;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            border-left: 4px solid #dc3545;
+                            position: relative;
+                          ' 
+                          onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.25)';"
+                          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
+                          onclick="window.location.href='https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?dossier=${encodeURIComponent(
+                            dossierId
+                          )}'">
+                            
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                              <span style="
+                                background:#dc3545;
+                                color:#fff;
+                                font-weight:700;
+                                font-size:0.9em;
+                                padding:4px 8px;
+                                border-radius:6px;
+                                min-width:30px;
+                                text-align:center;
+                              ">${index + 1}</span>
+                              
+                              <div style="flex:1;">
+                                <div style="font-size:1.15em; font-weight:700; color:#dc3545; margin-bottom:2px;">
+                                  <i class="fas fa-folder-open" style="margin-right:6px;"></i>
+                                  ${clientName}
+                                </div>
+                                <div style="font-size:0.95em; color:#6b7280;">
+                                  Dossier: <strong style="color:#374151;">${dossierNumber}</strong>
+                                </div>
+                              </div>
+                              
+                              <div style="text-align:right;">
+                                <div style="font-size:0.9em; color:#6b7280; margin-bottom:2px;">Agent</div>
+                                <div style="font-size:1em; font-weight:600; color:#374151;">${employeeName}</div>
+                              </div>
+                            </div>
+                            
+                            <div style="
+                              font-size:0.85em;
+                              color:#dc3545;
+                              background:#fff;
+                              padding:6px 10px;
+                              border-radius:6px;
+                              text-align:center;
+                              font-weight:600;
+                            ">
+                              <i class="fas fa-clock" style="margin-right:4px;"></i>
+                              Cliquez pour voir les détails
+                            </div>
+                          </li>
+                        `;
+                      });
+
+                      html += "</ul></div>";
+                      contenuRetard.innerHTML = html;
+                    }
                     popupRetard.style.display = "flex";
                   })
-                  .catch(() => {
+                  .catch((error) => {
+                    console.error(
+                      "Erreur lors du chargement des dossiers en retard:",
+                      error
+                    );
+                    contenuRetard.innerHTML = `
+                      <div style='text-align:center;padding:40px 20px;color:#dc3545;'>
+                        <i class="fas fa-exclamation-circle" style="font-size:3em;margin-bottom:15px;"></i>
+                        <p style="font-size:1.2em;margin:0;">Erreur de chargement</p>
+                        <p style="font-size:1em;margin:8px 0 0 0;color:#6b7280;">Impossible de récupérer les dossiers en retard</p>
+                      </div>
+                    `;
                     popupRetard.style.display = "flex";
                   });
               });
