@@ -1593,7 +1593,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           overlay.style.background = "rgba(30,41,59,0.45)";
           overlay.style.zIndex = 9999;
           overlay.style.display = "flex";
-          overlay.style.alignItems = "center";
+          // Amélioration du centrage mobile - légèrement vers le haut
+          if (window.innerWidth <= 768) {
+            overlay.style.alignItems = "flex-start";
+            overlay.style.paddingTop =
+              window.innerWidth <= 480 ? "15vh" : "12vh";
+          } else {
+            overlay.style.alignItems = "center";
+          }
           overlay.style.justifyContent = "center";
           const box = document.createElement("div");
           box.style.background = "#fff";
