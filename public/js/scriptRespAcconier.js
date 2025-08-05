@@ -1405,12 +1405,34 @@ function createEditModeButton() {
   let existingBtn = document.getElementById("tableEditModeBtn");
   if (existingBtn) return;
 
-  const table = document.getElementById("deliveriesTable");
-  if (!table) return;
+  // Chercher la zone de recherche ou le conteneur des champs de date
+  const searchInput = document.getElementById("searchInput");
+  const dateStartInput = document.getElementById("mainTableDateStartFilter");
+
+  // Déterminer le point d'insertion
+  let insertionPoint = null;
+  let parentContainer = null;
+
+  if (searchInput) {
+    // Si la zone de recherche existe, insérer avant
+    insertionPoint = searchInput.parentNode;
+    parentContainer = insertionPoint.parentNode;
+  } else if (dateStartInput) {
+    // Sinon, insérer après le conteneur des dates
+    insertionPoint = dateStartInput.parentNode.nextSibling;
+    parentContainer = dateStartInput.parentNode.parentNode;
+  } else {
+    // Fallback : chercher le tableau
+    const table = document.getElementById("deliveriesTable");
+    if (!table) return;
+    insertionPoint = table;
+    parentContainer = table.parentNode;
+  }
 
   // Créer le conteneur pour le bouton
   const buttonContainer = document.createElement("div");
   buttonContainer.style.marginBottom = "15px";
+  buttonContainer.style.marginTop = "10px";
   buttonContainer.style.display = "flex";
   buttonContainer.style.justifyContent = "flex-end";
   buttonContainer.style.alignItems = "center";
@@ -1447,8 +1469,10 @@ function createEditModeButton() {
   buttonContainer.appendChild(modeIndicator);
   buttonContainer.appendChild(editBtn);
 
-  // Insérer le bouton avant le tableau
-  table.parentNode.insertBefore(buttonContainer, table);
+  // Insérer le bouton au bon endroit
+  if (insertionPoint && parentContainer) {
+    parentContainer.insertBefore(buttonContainer, insertionPoint);
+  }
 }
 
 // Fonction pour mettre à jour l'indicateur de mode
