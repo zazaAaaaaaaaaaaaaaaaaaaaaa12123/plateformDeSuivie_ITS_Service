@@ -1596,11 +1596,25 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           overlay.style.justifyContent = "center";
           const box = document.createElement("div");
           box.style.background = "#fff";
-          box.style.borderRadius = "16px";
+          box.style.borderRadius = window.innerWidth <= 768 ? "12px" : "16px";
           box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-          box.style.maxWidth = "420px";
-          box.style.width = "96vw";
-          box.style.maxHeight = "92vh";
+          // Adaptation responsive : plus petit sur tablette/mobile
+          if (window.innerWidth <= 480) {
+            // Téléphone
+            box.style.maxWidth = "95vw";
+            box.style.width = "95vw";
+            box.style.maxHeight = "85vh";
+          } else if (window.innerWidth <= 768) {
+            // Tablette
+            box.style.maxWidth = "90vw";
+            box.style.width = "90vw";
+            box.style.maxHeight = "80vh";
+          } else {
+            // Desktop
+            box.style.maxWidth = "420px";
+            box.style.width = "96vw";
+            box.style.maxHeight = "92vh";
+          }
           box.style.overflowY = "auto";
           box.style.padding = "0";
           box.style.position = "relative";
@@ -1609,13 +1623,21 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const header = document.createElement("div");
           header.style.background = "#2563eb";
           header.style.color = "#fff";
-          header.style.padding = "18px 28px 12px 28px";
+          // Adaptation responsive du header
+          if (window.innerWidth <= 768) {
+            header.style.padding = "12px 16px 8px 16px";
+            header.style.fontSize = "1.05rem";
+          } else {
+            header.style.padding = "18px 28px 12px 28px";
+            header.style.fontSize = "1.15rem";
+          }
           header.style.fontWeight = "bold";
-          header.style.fontSize = "1.15rem";
           header.style.display = "flex";
           header.style.flexDirection = "column";
-          header.style.borderTopLeftRadius = "16px";
-          header.style.borderTopRightRadius = "16px";
+          header.style.borderTopLeftRadius =
+            window.innerWidth <= 768 ? "12px" : "16px";
+          header.style.borderTopRightRadius =
+            window.innerWidth <= 768 ? "12px" : "16px";
           header.innerHTML = `
             <div style='margin-bottom:2px;'>
               <span style='font-size:1.08em;'>${
@@ -1636,24 +1658,44 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           closeBtn.style.background = "none";
           closeBtn.style.border = "none";
           closeBtn.style.color = "#fff";
-          closeBtn.style.fontSize = "2.1rem";
+          // Adaptation responsive du bouton fermer
+          if (window.innerWidth <= 768) {
+            closeBtn.style.fontSize = "1.8rem";
+            closeBtn.style.top = "6px";
+            closeBtn.style.right = "12px";
+          } else {
+            closeBtn.style.fontSize = "2.1rem";
+            closeBtn.style.top = "10px";
+            closeBtn.style.right = "18px";
+          }
           closeBtn.style.cursor = "pointer";
           closeBtn.style.position = "absolute";
-          closeBtn.style.top = "10px";
-          closeBtn.style.right = "18px";
           closeBtn.setAttribute("aria-label", "Fermer");
           closeBtn.onclick = () => overlay.remove();
           header.appendChild(closeBtn);
           box.appendChild(header);
           const content = document.createElement("div");
-          content.style.padding = "24px 24px 24px 24px";
+          // Adaptation responsive du contenu
+          if (window.innerWidth <= 768) {
+            content.style.padding = "16px 16px 20px 16px";
+          } else {
+            content.style.padding = "24px 24px 24px 24px";
+          }
           content.style.background = "#f8fafc";
           content.style.flex = "1 1 auto";
           content.style.overflowY = "auto";
+          // Assurer que le contenu peut défiler pour voir le bouton
+          content.style.minHeight = "0";
           const blNum = document.createElement("div");
-          blNum.style.fontSize = "1.25em";
+          // Adaptation responsive de la taille de police
+          if (window.innerWidth <= 768) {
+            blNum.style.fontSize = "1.1em";
+            blNum.style.marginBottom = "12px";
+          } else {
+            blNum.style.fontSize = "1.25em";
+            blNum.style.marginBottom = "18px";
+          }
           blNum.style.fontWeight = "bold";
-          blNum.style.marginBottom = "18px";
           blNum.style.textAlign = "center";
           blNum.innerHTML = `N° BL : <span style='color:#2563eb;'>${blNumber}</span>`;
           content.appendChild(blNum);
@@ -1666,11 +1708,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           content.appendChild(label);
           const select = document.createElement("select");
           select.style.width = "100%";
-          select.style.padding = "10px 12px";
+          // Adaptation responsive des inputs
+          if (window.innerWidth <= 768) {
+            select.style.padding = "8px 10px";
+            select.style.fontSize = "1em";
+            select.style.marginBottom = "12px";
+          } else {
+            select.style.padding = "10px 12px";
+            select.style.fontSize = "1.08em";
+            select.style.marginBottom = "18px";
+          }
           select.style.border = "1.5px solid #2563eb";
           select.style.borderRadius = "7px";
-          select.style.fontSize = "1.08em";
-          select.style.marginBottom = "18px";
           select.style.background = "#fff";
           select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
           const statusOptions = [
@@ -1702,13 +1751,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           // Séparateur visuel
           const separator = document.createElement("div");
           separator.style.borderTop = "2px solid #e5e7eb";
-          separator.style.margin = "20px 0 16px 0";
+          // Réduction de la marge sur mobile/tablette
+          if (window.innerWidth <= 768) {
+            separator.style.margin = "12px 0 10px 0";
+          } else {
+            separator.style.margin = "20px 0 16px 0";
+          }
           content.appendChild(separator);
 
           // Titre section
           const sectionTitle = document.createElement("div");
-          sectionTitle.innerHTML =
-            '<h4 style="color:#2563eb;font-weight:600;margin-bottom:12px;font-size:1.1em;">📊 Données d\'échange</h4>';
+          const titleFontSize = window.innerWidth <= 768 ? "1.05em" : "1.1em";
+          sectionTitle.innerHTML = `<h4 style="color:#2563eb;font-weight:600;margin-bottom:10px;font-size:${titleFontSize};">📊 Données d'échange</h4>`;
           content.appendChild(sectionTitle);
 
           // 1. Paiement Acconage
@@ -1728,7 +1782,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           paiementInput.style.border = "1.5px solid #d1d5db";
           paiementInput.style.borderRadius = "6px";
           paiementInput.style.fontSize = "1em";
-          paiementInput.style.marginBottom = "12px";
+          // Réduction de la marge sur tablette
+          if (window.innerWidth <= 768) {
+            paiementInput.style.marginBottom = "10px";
+          } else {
+            paiementInput.style.marginBottom = "12px";
+          }
           paiementInput.style.background = "#fff";
           paiementInput.placeholder = "Ex: Payé, En attente, Partiel...";
           paiementInput.value = delivery.paiement_acconage || "";
@@ -1751,7 +1810,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateEchangeBLInput.style.border = "1.5px solid #d1d5db";
           dateEchangeBLInput.style.borderRadius = "6px";
           dateEchangeBLInput.style.fontSize = "1em";
-          dateEchangeBLInput.style.marginBottom = "12px";
+          // Réduction de la marge sur tablette
+          if (window.innerWidth <= 768) {
+            dateEchangeBLInput.style.marginBottom = "10px";
+          } else {
+            dateEchangeBLInput.style.marginBottom = "12px";
+          }
           dateEchangeBLInput.style.background = "#fff";
 
           // Récupérer la valeur sauvée temporairement ou depuis la BDD
@@ -1786,7 +1850,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateDOInput.style.border = "1.5px solid #d1d5db";
           dateDOInput.style.borderRadius = "6px";
           dateDOInput.style.fontSize = "1em";
-          dateDOInput.style.marginBottom = "12px";
+          // Réduction de la marge sur tablette
+          if (window.innerWidth <= 768) {
+            dateDOInput.style.marginBottom = "10px";
+          } else {
+            dateDOInput.style.marginBottom = "12px";
+          }
           dateDOInput.style.background = "#fff";
 
           // Récupérer la valeur sauvée temporairement ou depuis la BDD
@@ -1820,7 +1889,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateBADTInput.style.border = "1.5px solid #d1d5db";
           dateBADTInput.style.borderRadius = "6px";
           dateBADTInput.style.fontSize = "1em";
-          dateBADTInput.style.marginBottom = "18px";
+          // Réduction de la marge sur tablette, un peu plus d'espace avant le bouton
+          if (window.innerWidth <= 768) {
+            dateBADTInput.style.marginBottom = "15px";
+          } else {
+            dateBADTInput.style.marginBottom = "18px";
+          }
           dateBADTInput.style.background = "#fff";
 
           // Récupérer la valeur sauvée temporairement ou depuis la BDD
@@ -1844,11 +1918,23 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
           saveBtn.style.color = "#fff";
           saveBtn.style.fontWeight = "bold";
-          saveBtn.style.fontSize = "1em";
+          // Adaptation responsive du bouton
+          if (window.innerWidth <= 768) {
+            saveBtn.style.fontSize = "0.95em";
+            saveBtn.style.padding = "0.8em 1.5em";
+            saveBtn.style.marginTop = "8px";
+          } else {
+            saveBtn.style.fontSize = "1em";
+            saveBtn.style.padding = "0.7em 1.7em";
+            saveBtn.style.marginTop = "0";
+          }
           saveBtn.style.border = "none";
           saveBtn.style.borderRadius = "8px";
-          saveBtn.style.padding = "0.7em 1.7em";
           saveBtn.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
+          // S'assurer que le bouton reste visible
+          saveBtn.style.position = "sticky";
+          saveBtn.style.bottom = "0";
+          saveBtn.style.zIndex = "10";
           saveBtn.onclick = async () => {
             let statutToSend =
               select.value === "aucun" ? "aucun" : select.value;
@@ -1868,10 +1954,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               confirmOverlay.style.justifyContent = "center";
               const confirmBox = document.createElement("div");
               confirmBox.style.background = "#fff";
-              confirmBox.style.borderRadius = "18px";
+              confirmBox.style.borderRadius =
+                window.innerWidth <= 768 ? "14px" : "18px";
               confirmBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-              confirmBox.style.maxWidth = "420px";
-              confirmBox.style.width = "96vw";
+              // Adaptation responsive de la popup de confirmation
+              if (window.innerWidth <= 480) {
+                confirmBox.style.maxWidth = "95vw";
+                confirmBox.style.width = "95vw";
+              } else if (window.innerWidth <= 768) {
+                confirmBox.style.maxWidth = "85vw";
+                confirmBox.style.width = "85vw";
+              } else {
+                confirmBox.style.maxWidth = "420px";
+                confirmBox.style.width = "96vw";
+              }
               confirmBox.style.padding = "0";
               confirmBox.style.position = "relative";
               confirmBox.style.display = "flex";
@@ -1881,11 +1977,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               confirmHeader.style.background =
                 "linear-gradient(90deg,#eab308 0%,#2563eb 100%)";
               confirmHeader.style.color = "#fff";
-              confirmHeader.style.padding = "22px 32px 12px 32px";
+              // Adaptation responsive du header de confirmation
+              if (window.innerWidth <= 768) {
+                confirmHeader.style.padding = "16px 20px 10px 20px";
+                confirmHeader.style.fontSize = "1.1rem";
+              } else {
+                confirmHeader.style.padding = "22px 32px 12px 32px";
+                confirmHeader.style.fontSize = "1.18rem";
+              }
               confirmHeader.style.fontWeight = "bold";
-              confirmHeader.style.fontSize = "1.18rem";
-              confirmHeader.style.borderTopLeftRadius = "18px";
-              confirmHeader.style.borderTopRightRadius = "18px";
+              confirmHeader.style.borderTopLeftRadius =
+                window.innerWidth <= 768 ? "14px" : "18px";
+              confirmHeader.style.borderTopRightRadius =
+                window.innerWidth <= 768 ? "14px" : "18px";
               confirmHeader.innerHTML = `<span style='font-size:1.25em;'>⚠️ Confirmation requise</span>`;
               confirmBox.appendChild(confirmHeader);
               // Message
