@@ -4944,7 +4944,7 @@ function mapStatus(status) {
       2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
     ]; // Ajout de la colonne 18 (Date d'échange)
     const COLS_RESP = [19, 20, 21, 22, 23]; // 19=Statut Dossier, 20=Date échange BL, 21=Date DO, 22=Date BADT, 23=Observation
-    const COLS_LIVRAISON = [24, 25, 26, 27, 28, 29, 30, 31, 32, 33]; // Décalage de +3
+    const COLS_LIVRAISON = [24, 25, 26, 27, 28, 29, 30, 31, 32, 33]; // Colonnes Responsable de livraison
     function flashCells(colIndexes, flashClass) {
       const rows = table.tBodies[0]?.rows;
       if (!rows) return;
