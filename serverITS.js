@@ -2324,6 +2324,9 @@ app.post(
     console.log("   container_foot_type:", container_foot_type);
     console.log("   declaration_number:", declaration_number);
     console.log("   number_of_containers:", number_of_containers);
+    console.log("   dossier_number:", dossier_number);
+    console.log("   bl_number:", bl_number);
+    console.log("   shipping_company:", shipping_company);
     // *** FIN DÉBOGAGE BASIC FIELDS ***
 
     // Validation des champs obligatoires (MIS À JOUR)
@@ -2335,8 +2338,9 @@ app.post(
       !normalized_container_number ||
       !container_foot_type ||
       !declaration_number ||
-      !number_of_containers ||
-      !dossier_number
+      !number_of_containers
+      // Temporairement, on rend dossier_number optionnel pour diagnostiquer
+      // !dossier_number
     ) {
       console.error("Validation failed: Missing required fields in backend.", {
         employee_name,
@@ -2493,20 +2497,27 @@ app.post(
       console.log("   container_statuses:", container_statuses);
       // *** FIN DÉBOGAGE PROCESSED FIELDS ***
 
-      // Vérifier si les colonnes JSON existent avant de les utiliser
+      // Vérifier si les colonnes JSON et d'échange existent avant de les utiliser
       const columnsCheck = await pool.query(`
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'livraison_conteneur' 
-        AND column_name IN ('container_numbers_list', 'container_foot_types_map')
+        AND column_name IN ('container_numbers_list', 'container_foot_types_map', 'date_echange')
       `);
 
-      const hasJsonColumns = columnsCheck.rows.length === 2;
+      const hasJsonColumns = columnsCheck.rows.some((row) =>
+        ["container_numbers_list", "container_foot_types_map"].includes(
+          row.column_name
+        )
+      );
+      const hasDateEchange = columnsCheck.rows.some(
+        (row) => row.column_name === "date_echange"
+      );
 
       let query, values;
 
-      if (hasJsonColumns) {
-        // Si les colonnes JSON existent, les inclure dans l'INSERT
+      if (hasJsonColumns && hasDateEchange) {
+        // Si les colonnes JSON et date_echange existent, les inclure dans l'INSERT
         query = `
           INSERT INTO livraison_conteneur (
             employee_name, delivery_date, delivery_time, client_name, client_phone, 
@@ -2564,8 +2575,65 @@ app.post(
             : null,
           date_echange || null,
         ];
-      } else {
-        // Si les colonnes JSON n'existent pas, utiliser l'ancienne requête
+      } else if (hasJsonColumns) {
+        // Si seules les colonnes JSON existent (sans date_echange)
+        query = `
+          INSERT INTO livraison_conteneur (
+            employee_name, delivery_date, delivery_time, client_name, client_phone, 
+            container_type_and_content, lieu, status,
+            container_number, container_foot_type, declaration_number, number_of_containers,
+            bl_number, dossier_number, shipping_company, transporter, 
+            weight, ship_name, circuit, number_of_packages, transporter_mode,
+            nom_agent_visiteur, inspecteur, agent_en_douanes,
+            driver_name, driver_phone, truck_registration,
+            delivery_notes, is_eir_received,
+            delivery_status_acconier,
+            container_statuses, container_numbers_list, container_foot_types_map
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
+          RETURNING *;
+        `;
+        values = [
+          employee_name,
+          validated_delivery_date,
+          validated_delivery_time,
+          client_name,
+          client_phone,
+          container_type_and_content,
+          lieu,
+          usedStatus,
+          normalized_container_number,
+          container_foot_type,
+          declaration_number,
+          parseInt(number_of_containers, 10),
+          bl_number || null,
+          dossier_number || null,
+          shipping_company || null,
+          transporter || null,
+          weight || null,
+          ship_name || null,
+          circuit || null,
+          number_of_packages ? parseInt(number_of_packages, 10) : null,
+          transporter_mode || null,
+          nom_agent_visiteur || null,
+          inspecteur || null,
+          agent_en_douanes || null,
+          driver_name || null,
+          driver_phone || null,
+          truck_registration || null,
+          delivery_notes || null,
+          is_eir_received,
+          usedStatus,
+          container_statuses ? JSON.stringify(container_statuses) : null,
+          full_container_numbers_list.length > 0
+            ? JSON.stringify(full_container_numbers_list)
+            : null,
+          container_foot_types_map
+            ? JSON.stringify(container_foot_types_map)
+            : null,
+        ];
+      } else if (hasDateEchange) {
+        // Si seule la colonne date_echange existe (sans colonnes JSON)
         query = `
           INSERT INTO livraison_conteneur (
             employee_name, delivery_date, delivery_time, client_name, client_phone, 
@@ -2616,6 +2684,57 @@ app.post(
           usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
           date_echange || null,
+        ];
+      } else {
+        // Si ni les colonnes JSON ni date_echange n'existent, utiliser l'ancienne requête
+        query = `
+          INSERT INTO livraison_conteneur (
+            employee_name, delivery_date, delivery_time, client_name, client_phone, 
+            container_type_and_content, lieu, status,
+            container_number, container_foot_type, declaration_number, number_of_containers,
+            bl_number, dossier_number, shipping_company, transporter, 
+            weight, ship_name, circuit, number_of_packages, transporter_mode,
+            nom_agent_visiteur, inspecteur, agent_en_douanes,
+            driver_name, driver_phone, truck_registration,
+            delivery_notes, is_eir_received,
+            delivery_status_acconier,
+            container_statuses
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
+          RETURNING *;
+        `;
+        values = [
+          employee_name,
+          validated_delivery_date,
+          validated_delivery_time,
+          client_name,
+          client_phone,
+          container_type_and_content,
+          lieu,
+          usedStatus,
+          normalized_container_number,
+          container_foot_type,
+          declaration_number,
+          parseInt(number_of_containers, 10),
+          bl_number || null,
+          dossier_number || null,
+          shipping_company || null,
+          transporter || null,
+          weight || null,
+          ship_name || null,
+          circuit || null,
+          number_of_packages ? parseInt(number_of_packages, 10) : null,
+          transporter_mode || null,
+          nom_agent_visiteur || null,
+          inspecteur || null,
+          agent_en_douanes || null,
+          driver_name || null,
+          driver_phone || null,
+          truck_registration || null,
+          delivery_notes || null,
+          is_eir_received,
+          usedStatus,
+          container_statuses ? JSON.stringify(container_statuses) : null,
         ];
       }
       const result = await pool.query(query, values);
@@ -2729,10 +2848,14 @@ app.post(
         "Erreur lors de l'enregistrement du statut de livraison :",
         err
       );
+      console.error("Détail de l'erreur SQL:", err.message);
+      console.error("Code d'erreur:", err.code);
+      console.error("Contrainte violée:", err.constraint);
       res.status(500).json({
         success: false,
         message:
           "Erreur serveur lors de l'enregistrement du statut de livraison.",
+        details: err.message, // Ajout du détail de l'erreur pour le debugging
       });
     }
   }
