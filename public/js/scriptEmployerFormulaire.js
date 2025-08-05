@@ -1703,8 +1703,13 @@ async function submitDeliveryForm(status) {
     ? transporterModeSelect.value.trim()
     : "";
 
+  // NOUVEAU : Récupération de la date d'échange
+  const dateEchangeInput = document.getElementById("dateEchange");
+  const dateEchange = dateEchangeInput ? dateEchangeInput.value.trim() : "";
+
   // *** IMPORTANT: Logs de débogage pour vérifier les valeurs avant FormData ***
   console.log("Debug: Values before FormData append:");
+  console.log("  dateEchange value:", dateEchange);
   console.log(
     "  blNumber value:",
     blNumberInput
@@ -1775,6 +1780,11 @@ async function submitDeliveryForm(status) {
   formData.append("ship_name", shipName);
   formData.append("circuit", circuit);
   formData.append("transporter_mode", transporterMode);
+
+  // NOUVEAU : Ajout de la date d'échange
+  if (dateEchange) {
+    formData.append("date_echange", dateEchange);
+  }
 
   // Ajout du champ technique pour le backend (affichage correct du statut)
   // Désormais, le statut par défaut est 'awaiting_payment_acconier' (En attente de paiement)

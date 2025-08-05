@@ -1696,8 +1696,112 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             select.appendChild(option);
           });
           content.appendChild(select);
+
+          // --- NOUVEAUX CHAMPS D'ÉCHANGE POUR LE SYSTÈME PHP ---
+
+          // Séparateur visuel
+          const separator = document.createElement("div");
+          separator.style.borderTop = "2px solid #e5e7eb";
+          separator.style.margin = "20px 0 16px 0";
+          content.appendChild(separator);
+
+          // Titre section
+          const sectionTitle = document.createElement("div");
+          sectionTitle.innerHTML =
+            '<h4 style="color:#2563eb;font-weight:600;margin-bottom:12px;font-size:1.1em;">📊 Données d\'échange</h4>';
+          content.appendChild(sectionTitle);
+
+          // 1. Paiement Acconage
+          const paiementLabel = document.createElement("label");
+          paiementLabel.textContent = "Paiement Acconage :";
+          paiementLabel.style.display = "block";
+          paiementLabel.style.marginBottom = "6px";
+          paiementLabel.style.fontWeight = "500";
+          paiementLabel.style.fontSize = "0.95em";
+          content.appendChild(paiementLabel);
+
+          const paiementInput = document.createElement("input");
+          paiementInput.type = "text";
+          paiementInput.id = "paiementAcconage";
+          paiementInput.style.width = "100%";
+          paiementInput.style.padding = "8px 10px";
+          paiementInput.style.border = "1.5px solid #d1d5db";
+          paiementInput.style.borderRadius = "6px";
+          paiementInput.style.fontSize = "1em";
+          paiementInput.style.marginBottom = "12px";
+          paiementInput.style.background = "#fff";
+          paiementInput.placeholder = "Ex: Payé, En attente, Partiel...";
+          paiementInput.value = delivery.paiement_acconage || "";
+          content.appendChild(paiementInput);
+
+          // 2. Date d'échange BL
+          const dateEchangeBLLabel = document.createElement("label");
+          dateEchangeBLLabel.textContent = "📅 Date d'échange BL :";
+          dateEchangeBLLabel.style.display = "block";
+          dateEchangeBLLabel.style.marginBottom = "6px";
+          dateEchangeBLLabel.style.fontWeight = "500";
+          dateEchangeBLLabel.style.fontSize = "0.95em";
+          content.appendChild(dateEchangeBLLabel);
+
+          const dateEchangeBLInput = document.createElement("input");
+          dateEchangeBLInput.type = "date";
+          dateEchangeBLInput.id = "dateEchangeBL";
+          dateEchangeBLInput.style.width = "100%";
+          dateEchangeBLInput.style.padding = "8px 10px";
+          dateEchangeBLInput.style.border = "1.5px solid #d1d5db";
+          dateEchangeBLInput.style.borderRadius = "6px";
+          dateEchangeBLInput.style.fontSize = "1em";
+          dateEchangeBLInput.style.marginBottom = "12px";
+          dateEchangeBLInput.style.background = "#fff";
+          dateEchangeBLInput.value = delivery.date_echange_bl || "";
+          content.appendChild(dateEchangeBLInput);
+
+          // 3. Date de DO
+          const dateDOLabel = document.createElement("label");
+          dateDOLabel.textContent = "📅 Date de DO :";
+          dateDOLabel.style.display = "block";
+          dateDOLabel.style.marginBottom = "6px";
+          dateDOLabel.style.fontWeight = "500";
+          dateDOLabel.style.fontSize = "0.95em";
+          content.appendChild(dateDOLabel);
+
+          const dateDOInput = document.createElement("input");
+          dateDOInput.type = "date";
+          dateDOInput.id = "dateDO";
+          dateDOInput.style.width = "100%";
+          dateDOInput.style.padding = "8px 10px";
+          dateDOInput.style.border = "1.5px solid #d1d5db";
+          dateDOInput.style.borderRadius = "6px";
+          dateDOInput.style.fontSize = "1em";
+          dateDOInput.style.marginBottom = "12px";
+          dateDOInput.style.background = "#fff";
+          dateDOInput.value = delivery.date_do || "";
+          content.appendChild(dateDOInput);
+
+          // 4. Date de BADT
+          const dateBADTLabel = document.createElement("label");
+          dateBADTLabel.textContent = "📅 Date de BADT :";
+          dateBADTLabel.style.display = "block";
+          dateBADTLabel.style.marginBottom = "6px";
+          dateBADTLabel.style.fontWeight = "500";
+          dateBADTLabel.style.fontSize = "0.95em";
+          content.appendChild(dateBADTLabel);
+
+          const dateBADTInput = document.createElement("input");
+          dateBADTInput.type = "date";
+          dateBADTInput.id = "dateBADT";
+          dateBADTInput.style.width = "100%";
+          dateBADTInput.style.padding = "8px 10px";
+          dateBADTInput.style.border = "1.5px solid #d1d5db";
+          dateBADTInput.style.borderRadius = "6px";
+          dateBADTInput.style.fontSize = "1em";
+          dateBADTInput.style.marginBottom = "18px";
+          dateBADTInput.style.background = "#fff";
+          dateBADTInput.value = delivery.date_badt || "";
+          content.appendChild(dateBADTInput);
+
           const saveBtn = document.createElement("button");
-          saveBtn.textContent = "Enregistrer le statut";
+          saveBtn.textContent = "Enregistrer toutes les données";
           saveBtn.className = "btn btn-primary w-full mt-2";
           saveBtn.style.background =
             "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
@@ -1855,6 +1959,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }
                 // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
                 try {
+                  // Récupération des valeurs des nouveaux champs
+                  const paiementAcconage = paiementInput.value.trim();
+                  const dateEchangeBL = dateEchangeBLInput.value.trim();
+                  const dateDO = dateDOInput.value.trim();
+                  const dateBADT = dateBADTInput.value.trim();
+
+                  // 1. Mise à jour du statut BL
                   fetch(`/deliveries/${delivery.id}/bl-status`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
@@ -1871,6 +1982,29 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                       alert(msg);
                       return;
                     }
+
+                    // 2. Mise à jour des données d'échange si présentes
+                    const exchangeData = {};
+                    if (paiementAcconage)
+                      exchangeData.paiement_acconage = paiementAcconage;
+                    if (dateEchangeBL)
+                      exchangeData.date_echange_bl = dateEchangeBL;
+                    if (dateDO) exchangeData.date_do = dateDO;
+                    if (dateBADT) exchangeData.date_badt = dateBADT;
+
+                    if (Object.keys(exchangeData).length > 0) {
+                      fetch(`/api/exchange/update/${delivery.id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(exchangeData),
+                      }).catch((err) => {
+                        console.warn(
+                          "Erreur lors de la mise à jour des données d'échange:",
+                          err
+                        );
+                      });
+                    }
+
                     overlay.remove();
                     // Afficher l'alerte verte de confirmation
                     showMiseEnLivraisonSuccessAlert();
@@ -1968,24 +2102,65 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             }
             // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
             try {
-              const res = await fetch(`/deliveries/${delivery.id}/bl-status`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ blNumber, status: statutToSend }),
-              });
-              if (!res.ok) {
+              // Récupération des valeurs des nouveaux champs
+              const paiementAcconage = paiementInput.value.trim();
+              const dateEchangeBL = dateEchangeBLInput.value.trim();
+              const dateDO = dateDOInput.value.trim();
+              const dateBADT = dateBADTInput.value.trim();
+
+              // 1. Mise à jour du statut BL
+              const blStatusRes = await fetch(
+                `/deliveries/${delivery.id}/bl-status`,
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ blNumber, status: statutToSend }),
+                }
+              );
+
+              if (!blStatusRes.ok) {
                 let msg = "Erreur lors de la mise à jour du statut du BL.";
                 try {
-                  const errData = await res.json();
+                  const errData = await blStatusRes.json();
                   if (errData && errData.error) msg += "\n" + errData.error;
                 } catch {}
                 alert(msg);
                 return;
               }
+
+              // 2. Mise à jour des données d'échange via la nouvelle API
+              const exchangeData = {};
+              if (paiementAcconage)
+                exchangeData.paiement_acconage = paiementAcconage;
+              if (dateEchangeBL) exchangeData.date_echange_bl = dateEchangeBL;
+              if (dateDO) exchangeData.date_do = dateDO;
+              if (dateBADT) exchangeData.date_badt = dateBADT;
+
+              // Si des données d'échange sont présentes, les envoyer
+              if (Object.keys(exchangeData).length > 0) {
+                const exchangeRes = await fetch(
+                  `/api/exchange/update/${delivery.id}`,
+                  {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(exchangeData),
+                  }
+                );
+
+                if (!exchangeRes.ok) {
+                  const errData = await exchangeRes.json();
+                  console.warn(
+                    "Erreur lors de la mise à jour des données d'échange:",
+                    errData.message
+                  );
+                  // Ne pas arrêter le processus si seules les données d'échange échouent
+                }
+              }
+
               overlay.remove();
             } catch (err) {
               alert(
-                "Erreur lors de la mise à jour du statut du BL.\n" +
+                "Erreur lors de la mise à jour des données.\n" +
                   (err && err.message ? err.message : "")
               );
             }

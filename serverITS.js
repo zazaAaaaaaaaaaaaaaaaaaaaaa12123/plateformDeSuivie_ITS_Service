@@ -1778,6 +1778,27 @@ app.post("/deliveries/delete", async (req, res) => {
   }
 });
 
+// Fonction pour créer les nouvelles colonnes pour l'échange de données
+async function ensureExchangeFieldsTable() {
+  try {
+    // Ajout des nouveaux champs pour l'échange de données
+    await pool.query(`
+      ALTER TABLE livraison_conteneur 
+      ADD COLUMN IF NOT EXISTS date_echange DATE,
+      ADD COLUMN IF NOT EXISTS paiement_acconage TEXT,
+      ADD COLUMN IF NOT EXISTS date_echange_bl DATE,
+      ADD COLUMN IF NOT EXISTS date_do DATE,
+      ADD COLUMN IF NOT EXISTS date_badt DATE
+    `);
+    console.log("✅ Colonnes d'échange de données vérifiées/créées");
+  } catch (err) {
+    console.error("❌ Erreur lors de la création des colonnes d'échange:", err);
+  }
+}
+
+// Appeler la fonction au démarrage
+ensureExchangeFieldsTable();
+
 // ROUTE : Liste des livraisons avec statuts (inclut bl_statuses)
 app.get("/deliveries/status", async (req, res) => {
   try {
@@ -1786,14 +1807,30 @@ app.get("/deliveries/status", async (req, res) => {
       SELECT column_name 
       FROM information_schema.columns 
       WHERE table_name = 'livraison_conteneur' 
-      AND column_name IN ('container_numbers_list', 'container_foot_types_map')
+      AND column_name IN ('container_numbers_list', 'container_foot_types_map', 'date_echange', 'paiement_acconage', 'date_echange_bl', 'date_do', 'date_badt')
     `);
 
-    const hasJsonColumns = columnsCheck.rows.length === 2;
+    const hasJsonColumns = columnsCheck.rows.some((row) =>
+      ["container_numbers_list", "container_foot_types_map"].includes(
+        row.column_name
+      )
+    );
+    const hasExchangeFields = columnsCheck.rows.some((row) =>
+      [
+        "date_echange",
+        "paiement_acconage",
+        "date_echange_bl",
+        "date_do",
+        "date_badt",
+      ].includes(row.column_name)
+    );
 
     let query;
-    if (hasJsonColumns) {
-      // Si les colonnes JSON existent, les inclure dans la requête
+    if (hasJsonColumns && hasExchangeFields) {
+      // Si toutes les colonnes existent, les inclure dans la requête
+      query = `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses, container_numbers_list, container_foot_types_map, date_echange, paiement_acconage, date_echange_bl, date_do, date_badt FROM livraison_conteneur ORDER BY created_at DESC`;
+    } else if (hasJsonColumns) {
+      // Si seulement les colonnes JSON existent, les inclure dans la requête
       query = `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses, container_numbers_list, container_foot_types_map FROM livraison_conteneur ORDER BY created_at DESC`;
     } else {
       // Sinon, utiliser l'ancienne requête sans les colonnes JSON
@@ -1806,6 +1843,280 @@ app.get("/deliveries/status", async (req, res) => {
   } catch (err) {
     console.error("[GET /deliveries/status] Erreur:", err);
     res.status(500).json({ success: false, deliveries: [] });
+  }
+});
+
+// ===============================
+// API DÉDIÉE POUR ÉCHANGE DE DONNÉES AVEC SYSTÈME PHP
+// ===============================
+
+// ROUTE : GET - Récupération des données d'échange pour le système PHP
+app.get("/api/exchange/data", async (req, res) => {
+  try {
+    const { dossier_number, bl_number, start_date, end_date } = req.query;
+
+    let query = `
+      SELECT 
+        id, 
+        dossier_number, 
+        bl_number, 
+        date_echange,
+        paiement_acconage,
+        date_echange_bl,
+        date_do,
+        date_badt,
+        client_name,
+        created_at,
+        delivery_date
+      FROM livraison_conteneur 
+      WHERE 1=1
+    `;
+
+    const queryParams = [];
+    let paramCounter = 1;
+
+    // Filtres optionnels
+    if (dossier_number) {
+      query += ` AND dossier_number = $${paramCounter}`;
+      queryParams.push(dossier_number);
+      paramCounter++;
+    }
+
+    if (bl_number) {
+      query += ` AND bl_number LIKE $${paramCounter}`;
+      queryParams.push(`%${bl_number}%`);
+      paramCounter++;
+    }
+
+    if (start_date) {
+      query += ` AND delivery_date >= $${paramCounter}`;
+      queryParams.push(start_date);
+      paramCounter++;
+    }
+
+    if (end_date) {
+      query += ` AND delivery_date <= $${paramCounter}`;
+      queryParams.push(end_date);
+      paramCounter++;
+    }
+
+    query += ` ORDER BY created_at DESC`;
+
+    const result = await pool.query(query, queryParams);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error("[GET /api/exchange/data] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des données",
+      error: err.message,
+    });
+  }
+});
+
+// ROUTE : PUT - Mise à jour des champs d'échange
+app.put("/api/exchange/update/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      date_echange,
+      paiement_acconage,
+      date_echange_bl,
+      date_do,
+      date_badt,
+    } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de livraison requis",
+      });
+    }
+
+    // Construction dynamique de la requête UPDATE
+    const updates = [];
+    const values = [];
+    let paramCounter = 1;
+
+    if (date_echange !== undefined) {
+      updates.push(`date_echange = $${paramCounter}`);
+      values.push(date_echange);
+      paramCounter++;
+    }
+
+    if (paiement_acconage !== undefined) {
+      updates.push(`paiement_acconage = $${paramCounter}`);
+      values.push(paiement_acconage);
+      paramCounter++;
+    }
+
+    if (date_echange_bl !== undefined) {
+      updates.push(`date_echange_bl = $${paramCounter}`);
+      values.push(date_echange_bl);
+      paramCounter++;
+    }
+
+    if (date_do !== undefined) {
+      updates.push(`date_do = $${paramCounter}`);
+      values.push(date_do);
+      paramCounter++;
+    }
+
+    if (date_badt !== undefined) {
+      updates.push(`date_badt = $${paramCounter}`);
+      values.push(date_badt);
+      paramCounter++;
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Aucun champ à mettre à jour",
+      });
+    }
+
+    values.push(id); // ID en dernier paramètre
+    const query = `
+      UPDATE livraison_conteneur 
+      SET ${updates.join(", ")} 
+      WHERE id = $${paramCounter}
+      RETURNING id, date_echange, paiement_acconage, date_echange_bl, date_do, date_badt
+    `;
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Livraison non trouvée",
+      });
+    }
+
+    // Broadcast WebSocket pour mise à jour en temps réel
+    wsClients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(
+          JSON.stringify({
+            type: "exchange_data_update",
+            deliveryId: id,
+            updatedFields: result.rows[0],
+          })
+        );
+      }
+    });
+
+    res.json({
+      success: true,
+      data: result.rows[0],
+      message: "Données d'échange mises à jour avec succès",
+    });
+  } catch (err) {
+    console.error("[PUT /api/exchange/update] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la mise à jour",
+      error: err.message,
+    });
+  }
+});
+
+// ROUTE : POST - Création/Mise à jour en lot des données d'échange
+app.post("/api/exchange/bulk-update", async (req, res) => {
+  try {
+    const { updates } = req.body; // Array d'objets {id, date_echange, paiement_acconage, etc.}
+
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Le paramètre 'updates' doit être un tableau non vide",
+      });
+    }
+
+    const results = [];
+
+    // Transaction pour assurer la cohérence
+    await pool.query("BEGIN");
+
+    try {
+      for (const update of updates) {
+        const {
+          id,
+          date_echange,
+          paiement_acconage,
+          date_echange_bl,
+          date_do,
+          date_badt,
+        } = update;
+
+        if (!id) continue;
+
+        const result = await pool.query(
+          `
+          UPDATE livraison_conteneur 
+          SET 
+            date_echange = COALESCE($2, date_echange),
+            paiement_acconage = COALESCE($3, paiement_acconage),
+            date_echange_bl = COALESCE($4, date_echange_bl),
+            date_do = COALESCE($5, date_do),
+            date_badt = COALESCE($6, date_badt)
+          WHERE id = $1
+          RETURNING id, dossier_number, date_echange, paiement_acconage, date_echange_bl, date_do, date_badt
+        `,
+          [
+            id,
+            date_echange,
+            paiement_acconage,
+            date_echange_bl,
+            date_do,
+            date_badt,
+          ]
+        );
+
+        if (result.rows.length > 0) {
+          results.push(result.rows[0]);
+        }
+      }
+
+      await pool.query("COMMIT");
+
+      // Broadcast WebSocket pour chaque mise à jour
+      results.forEach((updatedDelivery) => {
+        wsClients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(
+              JSON.stringify({
+                type: "exchange_data_update",
+                deliveryId: updatedDelivery.id,
+                updatedFields: updatedDelivery,
+              })
+            );
+          }
+        });
+      });
+
+      res.json({
+        success: true,
+        data: results,
+        count: results.length,
+        message: `${results.length} livraison(s) mise(s) à jour avec succès`,
+      });
+    } catch (err) {
+      await pool.query("ROLLBACK");
+      throw err;
+    }
+  } catch (err) {
+    console.error("[POST /api/exchange/bulk-update] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la mise à jour en lot",
+      error: err.message,
+    });
   }
 });
 
@@ -2207,9 +2518,10 @@ app.post(
             driver_name, driver_phone, truck_registration,
             delivery_notes, is_eir_received,
             delivery_status_acconier,
-            container_statuses, container_numbers_list, container_foot_types_map
+            container_statuses, container_numbers_list, container_foot_types_map,
+            date_echange
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
           RETURNING *;
         `;
         values = [
@@ -2250,6 +2562,7 @@ app.post(
           container_foot_types_map
             ? JSON.stringify(container_foot_types_map)
             : null,
+          date_echange || null,
         ];
       } else {
         // Si les colonnes JSON n'existent pas, utiliser l'ancienne requête
@@ -2264,9 +2577,10 @@ app.post(
             driver_name, driver_phone, truck_registration,
             delivery_notes, is_eir_received,
             delivery_status_acconier,
-            container_statuses
+            container_statuses,
+            date_echange
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
           RETURNING *;
         `;
         values = [
@@ -2301,6 +2615,7 @@ app.post(
           is_eir_received,
           usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
+          date_echange || null,
         ];
       }
       const result = await pool.query(query, values);
