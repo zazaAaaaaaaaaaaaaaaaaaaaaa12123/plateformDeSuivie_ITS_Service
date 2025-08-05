@@ -1314,6 +1314,252 @@ const AGENT_TABLE_COLUMNS = [
   { id: "observation", label: "Observation" },
 ];
 
+// --- SYSTÈME D'ÉDITION DU TABLEAU ---
+let isTableEditMode = false; // État global du mode édition
+let editedCellsData = {}; // Stockage des données modifiées {deliveryId: {columnId: value}}
+
+// Colonnes modifiables selon la demande de l'utilisateur
+const EDITABLE_COLUMNS = [
+  "date_display",
+  "employee_name",
+  "client_name",
+  "client_phone",
+  "lieu",
+  "container_foot_type",
+  "container_type_and_content",
+  "declaration_number",
+  "bl_number",
+  "dossier_number",
+  "number_of_containers",
+  "shipping_company",
+  "weight",
+  "ship_name",
+  "circuit",
+  "transporter_mode",
+];
+
+// Fonction pour charger les données modifiées depuis localStorage
+function loadEditedData() {
+  try {
+    const saved = localStorage.getItem("table_edited_data_resp_acconier");
+    if (saved) {
+      editedCellsData = JSON.parse(saved);
+    }
+  } catch (error) {
+    console.warn("Erreur lors du chargement des données éditées:", error);
+    editedCellsData = {};
+  }
+}
+
+// Fonction pour sauvegarder les données modifiées dans localStorage
+function saveEditedData() {
+  try {
+    localStorage.setItem(
+      "table_edited_data_resp_acconier",
+      JSON.stringify(editedCellsData)
+    );
+  } catch (error) {
+    console.warn("Erreur lors de la sauvegarde des données éditées:", error);
+  }
+}
+
+// Fonction pour obtenir la valeur d'une cellule (priorité aux données éditées)
+function getCellValue(delivery, columnId) {
+  if (
+    editedCellsData[delivery.id] &&
+    editedCellsData[delivery.id][columnId] !== undefined
+  ) {
+    return editedCellsData[delivery.id][columnId];
+  }
+  return delivery[columnId] !== undefined ? delivery[columnId] : "-";
+}
+
+// Fonction pour sauvegarder une valeur de cellule modifiée
+function saveCellValue(deliveryId, columnId, value) {
+  if (!editedCellsData[deliveryId]) {
+    editedCellsData[deliveryId] = {};
+  }
+  editedCellsData[deliveryId][columnId] = value;
+  saveEditedData();
+
+  // Envoyer au serveur pour synchronisation
+  syncCellToServer(deliveryId, columnId, value);
+}
+
+// Fonction pour synchroniser avec le serveur
+async function syncCellToServer(deliveryId, columnId, value) {
+  try {
+    await fetch(`/deliveries/${deliveryId}/cell-update`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [columnId]: value }),
+    });
+  } catch (error) {
+    console.warn(`Erreur lors de la synchronisation de ${columnId}:`, error);
+  }
+}
+
+// Fonction pour créer et afficher le bouton Modifier
+function createEditModeButton() {
+  // Vérifier si le bouton existe déjà
+  let existingBtn = document.getElementById("tableEditModeBtn");
+  if (existingBtn) return;
+
+  const table = document.getElementById("deliveriesTable");
+  if (!table) return;
+
+  // Créer le conteneur pour le bouton
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.marginBottom = "15px";
+  buttonContainer.style.display = "flex";
+  buttonContainer.style.justifyContent = "flex-end";
+  buttonContainer.style.alignItems = "center";
+  buttonContainer.style.gap = "10px";
+
+  // Créer le bouton
+  const editBtn = document.createElement("button");
+  editBtn.id = "tableEditModeBtn";
+  editBtn.innerHTML = '<i class="fas fa-edit"></i> Modifier';
+  editBtn.style.background = "linear-gradient(90deg, #2563eb 0%, #1e293b 100%)";
+  editBtn.style.color = "#fff";
+  editBtn.style.border = "none";
+  editBtn.style.borderRadius = "8px";
+  editBtn.style.padding = "10px 20px";
+  editBtn.style.fontSize = "1rem";
+  editBtn.style.fontWeight = "bold";
+  editBtn.style.cursor = "pointer";
+  editBtn.style.boxShadow = "0 2px 8px rgba(37,99,235,0.2)";
+  editBtn.style.transition = "all 0.3s ease";
+
+  // Indicateur de mode
+  const modeIndicator = document.createElement("span");
+  modeIndicator.id = "editModeIndicator";
+  modeIndicator.style.fontSize = "0.9rem";
+  modeIndicator.style.fontWeight = "500";
+  modeIndicator.style.color = "#64748b";
+  updateModeIndicator(modeIndicator);
+
+  // Gestionnaire d'événement
+  editBtn.onclick = function () {
+    toggleEditMode(editBtn, modeIndicator);
+  };
+
+  buttonContainer.appendChild(modeIndicator);
+  buttonContainer.appendChild(editBtn);
+
+  // Insérer le bouton avant le tableau
+  table.parentNode.insertBefore(buttonContainer, table);
+}
+
+// Fonction pour mettre à jour l'indicateur de mode
+function updateModeIndicator(indicator) {
+  if (isTableEditMode) {
+    indicator.textContent =
+      "✏️ Mode édition activé - Cliquez sur les cellules pour les modifier";
+    indicator.style.color = "#16a34a";
+  } else {
+    indicator.textContent = "🔒 Mode lecture seule";
+    indicator.style.color = "#64748b";
+  }
+}
+
+// Fonction pour basculer le mode d'édition
+function toggleEditMode(button, indicator) {
+  isTableEditMode = !isTableEditMode;
+
+  if (isTableEditMode) {
+    button.innerHTML = '<i class="fas fa-lock"></i> Verrouiller';
+    button.style.background =
+      "linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)";
+  } else {
+    button.innerHTML = '<i class="fas fa-edit"></i> Modifier';
+    button.style.background =
+      "linear-gradient(90deg, #2563eb 0%, #1e293b 100%)";
+  }
+
+  updateModeIndicator(indicator);
+  updateTableEditMode();
+}
+
+// Fonction pour mettre à jour l'état d'édition de toutes les cellules
+function updateTableEditMode() {
+  const table = document.getElementById("deliveriesTable");
+  if (!table) return;
+
+  const cells = table.querySelectorAll("td[data-editable]");
+  cells.forEach((cell) => {
+    if (isTableEditMode) {
+      cell.style.cursor = "pointer";
+      cell.style.backgroundColor = "#f8fafc";
+      cell.title = "Cliquez pour modifier";
+      cell.classList.add("editable-cell");
+    } else {
+      cell.style.cursor = "default";
+      cell.style.backgroundColor = "";
+      cell.title = "";
+      cell.classList.remove("editable-cell");
+    }
+  });
+}
+
+// Fonction pour créer un input d'édition selon le type de colonne
+function createEditInput(columnId, currentValue) {
+  let input;
+
+  if (columnId === "container_type_and_content" || columnId === "observation") {
+    input = document.createElement("textarea");
+    input.style.minHeight = "60px";
+    input.style.resize = "vertical";
+  } else if (columnId === "circuit") {
+    input = document.createElement("select");
+    const options = ["", "VAD", "VAQ", "BAE", "SCANNER"];
+    options.forEach((opt) => {
+      const option = document.createElement("option");
+      option.value = opt;
+      option.textContent = opt || "Sélectionner...";
+      if (opt === currentValue) option.selected = true;
+      input.appendChild(option);
+    });
+  } else if (columnId === "transporter_mode") {
+    input = document.createElement("select");
+    const options = ["", "REMORQUE", "AUTO-CHARGEUSE"];
+    options.forEach((opt) => {
+      const option = document.createElement("option");
+      option.value = opt;
+      option.textContent = opt || "Sélectionner...";
+      if (opt === currentValue) option.selected = true;
+      input.appendChild(option);
+    });
+  } else if (columnId === "client_phone") {
+    input = document.createElement("input");
+    input.type = "tel";
+  } else if (columnId === "weight" || columnId === "number_of_containers") {
+    input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+  } else if (columnId === "date_display") {
+    input = document.createElement("input");
+    input.type = "date";
+  } else {
+    input = document.createElement("input");
+    input.type = "text";
+  }
+
+  // Configuration commune de l'input
+  if (input.tagName !== "SELECT") {
+    input.value = currentValue;
+  }
+  input.style.width = "100%";
+  input.style.border = "2px solid #2563eb";
+  input.style.borderRadius = "4px";
+  input.style.padding = "6px 8px";
+  input.style.fontSize = "0.9rem";
+  input.style.fontFamily = "inherit";
+  input.style.backgroundColor = "#fff";
+
+  return input;
+}
+
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
   tableBodyElement.innerHTML = "";
@@ -1422,7 +1668,80 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             value = dDate;
           }
         }
+
+        // Utiliser la valeur éditée si disponible
+        value =
+          getCellValue(delivery, col.id) !== "-"
+            ? getCellValue(delivery, col.id)
+            : value;
         td.textContent = value;
+
+        // Système d'édition pour les colonnes modifiables
+        if (EDITABLE_COLUMNS.includes(col.id)) {
+          td.setAttribute("data-editable", "true");
+          td.setAttribute("data-delivery-id", delivery.id);
+          td.setAttribute("data-column-id", col.id);
+
+          // Appliquer le style selon le mode d'édition
+          if (isTableEditMode) {
+            td.style.cursor = "pointer";
+            td.style.backgroundColor = "#f8fafc";
+            td.title = "Cliquez pour modifier";
+            td.classList.add("editable-cell");
+          }
+
+          // Ajouter l'événement de clic pour l'édition
+          td.onclick = function (e) {
+            if (!isTableEditMode) return;
+            if (td.querySelector("input, textarea, select")) return;
+
+            const currentValue =
+              td.textContent.trim() === "-" ? "" : td.textContent.trim();
+            const input = createEditInput(col.id, currentValue);
+
+            // Fonction de sauvegarde
+            function saveValue() {
+              const newValue = input.value.trim();
+              saveCellValue(delivery.id, col.id, newValue);
+              td.textContent = newValue || "-";
+
+              // Feedback visuel
+              td.style.backgroundColor = "#dcfce7";
+              td.style.border = "1px solid #16a34a";
+              setTimeout(() => {
+                if (isTableEditMode) {
+                  td.style.backgroundColor = "#f8fafc";
+                } else {
+                  td.style.backgroundColor = "";
+                }
+                td.style.border = "";
+              }, 2000);
+            }
+
+            // Gestionnaires d'événements
+            input.onkeydown = function (ev) {
+              if (ev.key === "Enter") {
+                ev.preventDefault();
+                saveValue();
+              } else if (ev.key === "Escape") {
+                td.textContent = currentValue || "-";
+              }
+            };
+
+            input.onblur = function () {
+              saveValue();
+            };
+
+            // Remplacer le contenu de la cellule par l'input
+            td.textContent = "";
+            td.appendChild(input);
+            input.focus();
+
+            if (input.setSelectionRange) {
+              input.setSelectionRange(0, input.value.length);
+            }
+          };
+        }
       } else if (col.id === "container_number") {
         // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
         let tcList = [];
@@ -2580,8 +2899,89 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
         }
       } else {
+        // Traitement pour toutes les autres colonnes
         value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-        // Ajout du tooltip custom si texte tronqué
+
+        // Utiliser la valeur éditée si disponible
+        value =
+          getCellValue(delivery.id, col.id) !== "-"
+            ? getCellValue(delivery.id, col.id)
+            : value;
+
+        // Traitement spécial pour les colonnes éditables
+        if (EDITABLE_COLUMNS.includes(col.id)) {
+          td.setAttribute("data-editable", "true");
+          td.setAttribute("data-delivery-id", delivery.id);
+          td.setAttribute("data-column-id", col.id);
+
+          // Appliquer le style selon le mode d'édition
+          if (isTableEditMode) {
+            td.style.cursor = "pointer";
+            td.style.backgroundColor = "#f8fafc";
+            td.title = "Cliquez pour modifier";
+            td.classList.add("editable-cell");
+          }
+
+          // Ajouter l'événement de clic pour l'édition
+          td.onclick = function (e) {
+            if (!isTableEditMode) return;
+            if (td.querySelector("input, textarea, select")) return;
+
+            // Pour la colonne observation, utiliser textarea si nécessaire
+            if (col.id === "observation") {
+              handleObservationEdit(td, delivery, value);
+              return;
+            }
+
+            const currentValue =
+              td.textContent.trim() === "-" ? "" : td.textContent.trim();
+            const input = createEditInput(col.id, currentValue);
+
+            // Fonction de sauvegarde
+            function saveValue() {
+              const newValue = input.value.trim();
+              saveCellValue(delivery.id, col.id, newValue);
+              td.textContent = newValue || "-";
+
+              // Feedback visuel
+              td.style.backgroundColor = "#dcfce7";
+              td.style.border = "1px solid #16a34a";
+              setTimeout(() => {
+                if (isTableEditMode) {
+                  td.style.backgroundColor = "#f8fafc";
+                } else {
+                  td.style.backgroundColor = "";
+                }
+                td.style.border = "";
+              }, 2000);
+            }
+
+            // Gestionnaires d'événements
+            input.onkeydown = function (ev) {
+              if (ev.key === "Enter") {
+                ev.preventDefault();
+                saveValue();
+              } else if (ev.key === "Escape") {
+                td.textContent = currentValue || "-";
+              }
+            };
+
+            input.onblur = function () {
+              saveValue();
+            };
+
+            // Remplacer le contenu de la cellule par l'input
+            td.textContent = "";
+            td.appendChild(input);
+            input.focus();
+
+            if (input.setSelectionRange) {
+              input.setSelectionRange(0, input.value.length);
+            }
+          };
+        }
+
+        // Ajout du tooltip custom si texte tronqué pour la colonne observation
         if (col.id === "observation") {
           td.classList.add("observation-col");
           td.style.cursor = "pointer";
@@ -3138,3 +3538,36 @@ function clearTempDatesFromStorage(deliveryId) {
 }
 
 //originale12345678910
+
+// Initialisation du système d'édition
+document.addEventListener("DOMContentLoaded", function () {
+  // Charger les données éditées depuis localStorage
+  loadEditedData();
+
+  // Créer le bouton modifier
+  setTimeout(() => {
+    createEditModeButton();
+  }, 500);
+});
+
+// Observer les changements dans le tableau pour recréer le bouton si nécessaire
+const tableObserver = new MutationObserver(function (mutations) {
+  mutations.forEach(function (mutation) {
+    if (mutation.type === "childList") {
+      const table = document.getElementById("deliveriesTable");
+      const button = document.getElementById("tableEditModeBtn");
+      if (table && !button) {
+        createEditModeButton();
+      }
+    }
+  });
+});
+
+// Observer le body pour détecter les changements de contenu
+const bodyElement = document.body;
+if (bodyElement) {
+  tableObserver.observe(bodyElement, {
+    childList: true,
+    subtree: true,
+  });
+}
