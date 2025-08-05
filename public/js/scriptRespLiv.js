@@ -224,6 +224,9 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // 🆕 AJOUT : Vérification de l'historique professionnel au chargement
+  checkAndShowHistoryButton();
+
   // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
   let ws;
   function setupWebSocket() {
@@ -894,6 +897,15 @@ async function propagateStatusToAllTCs(deliveryId, newStatus) {
 
           // Met à jour l'affichage du statut
           if (delivered === total && total > 0) {
+            // 🆕 AJOUT : Enregistrer tous les conteneurs livrés dans l'historique
+            if (newStatus === "livre" || newStatus === "livré") {
+              tcNumbers.forEach((tcNumber) => {
+                saveToDeliveryHistory(delivery, tcNumber);
+              });
+              // 🆕 AJOUT : Afficher le bouton historique s'il n'est pas déjà visible
+              showHistoryButtonIfNeeded();
+            }
+
             // Tous livrés : bouton vert + icône camion + texte Livré
             statutCell.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
               <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
@@ -2496,8 +2508,24 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     `[SINGLE UPDATE] Statut calculé: ${delivered}/${total} livrés`
                   );
 
+                  // 🆕 AJOUT : Enregistrer le conteneur individuel dans l'historique s'il vient d'être livré
+                  if (select.value === "livre" || select.value === "livré") {
+                    saveToDeliveryHistory(
+                      updatedDelivery || delivery,
+                      containerNumber
+                    );
+                    showHistoryButtonIfNeeded();
+                  }
+
                   // Met à jour l'affichage du statut
                   if (delivered === total && total > 0) {
+                    // 🆕 AJOUT : Enregistrer dans l'historique professionnel quand livré
+                    saveToDeliveryHistory(
+                      updatedDelivery || delivery,
+                      containerNumber
+                    );
+                    // 🆕 AJOUT : Afficher le bouton historique s'il n'est pas déjà visible
+                    showHistoryButtonIfNeeded();
                     // Tous livrés : bouton vert + icône camion + texte Livré
                     statutCell.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
                       <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
@@ -3514,3 +3542,457 @@ function generateEtatSortiePdf(rows, date1, date2) {
     doc.save("Etat_sorties_conteneurs.pdf");
   });
 }
+
+// ========================================================================
+// === HISTORIQUE PROFESSIONNEL DES CONTENEURS LIVRÉS ===
+// ========================================================================
+
+/**
+ * Clé pour le stockage local de l'historique professionnel
+ */
+const DELIVERY_HISTORY_KEY = "professional_delivery_history";
+
+/**
+ * Enregistre un conteneur livré dans l'historique professionnel
+ * @param {Object} delivery - Livraison complète
+ * @param {string} containerNumber - Numéro du conteneur livré
+ */
+function saveToDeliveryHistory(delivery, containerNumber) {
+  try {
+    // Récupère l'historique existant
+    let history = JSON.parse(
+      localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+    );
+
+    // Crée un enregistrement unique pour ce conteneur
+    const historyEntry = {
+      id: Date.now() + Math.random(), // ID unique
+      delivery_id: delivery.id,
+      container_number: containerNumber,
+      dossier_number: delivery.dossier_number,
+      bl_number: delivery.bl_number,
+      client_name: delivery.client_name,
+      client_phone: delivery.client_phone,
+      employee_name: delivery.employee_name,
+      circuit: delivery.circuit,
+      shipping_company: delivery.shipping_company,
+      visitor_agent_name: delivery.visitor_agent_name,
+      transporter: delivery.transporter,
+      inspector: delivery.inspector,
+      customs_agent: delivery.customs_agent,
+      driver: delivery.driver,
+      driver_phone: delivery.driver_phone,
+      container_foot_type: delivery.container_foot_type,
+      weight: delivery.weight,
+      ship_name: delivery.ship_name,
+      delivery_date: delivery.delivery_date,
+      observation: delivery.observation,
+      delivered_at: new Date().toISOString(), // Horodatage de livraison
+      delivered_by: localStorage.getItem("user_nom") || "Inconnu",
+    };
+
+    // Vérifie si ce conteneur n'est pas déjà dans l'historique
+    const exists = history.some(
+      (entry) =>
+        entry.delivery_id === delivery.id &&
+        entry.container_number === containerNumber
+    );
+
+    if (!exists) {
+      history.unshift(historyEntry); // Ajoute en tête
+
+      // Limite l'historique à 1000 entrées max
+      if (history.length > 1000) {
+        history = history.slice(0, 1000);
+      }
+
+      // Sauvegarde
+      localStorage.setItem(DELIVERY_HISTORY_KEY, JSON.stringify(history));
+
+      console.log(
+        `[HISTORIQUE] ✅ Conteneur ${containerNumber} enregistré dans l'historique professionnel`
+      );
+    } else {
+      console.log(
+        `[HISTORIQUE] ⚠️ Conteneur ${containerNumber} déjà présent dans l'historique`
+      );
+    }
+  } catch (error) {
+    console.error("[HISTORIQUE] ❌ Erreur lors de l'enregistrement:", error);
+  }
+}
+
+/**
+ * Vérifie s'il y a un historique et affiche le bouton si nécessaire
+ */
+function checkAndShowHistoryButton() {
+  try {
+    const history = JSON.parse(
+      localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+    );
+    if (history.length > 0) {
+      console.log(
+        `[HISTORIQUE] ✅ ${history.length} entrées trouvées dans l'historique`
+      );
+      showHistoryButtonIfNeeded();
+    } else {
+      console.log("[HISTORIQUE] ℹ️ Aucun historique trouvé");
+    }
+  } catch (error) {
+    console.error("[HISTORIQUE] ❌ Erreur lors de la vérification:", error);
+  }
+}
+
+/**
+ * Affiche le bouton historique s'il y a des conteneurs livrés
+ */
+function showHistoryButtonIfNeeded() {
+  let historyBtn = document.getElementById("professionalHistoryBtn");
+
+  if (!historyBtn) {
+    // Crée le bouton historique professionnel
+    historyBtn = document.createElement("button");
+    historyBtn.id = "professionalHistoryBtn";
+    historyBtn.innerHTML = "📋 Historique";
+    historyBtn.title =
+      "Consulter l'historique professionnel des conteneurs livrés";
+    historyBtn.style.background =
+      "linear-gradient(90deg,#059669 0%,#047857 100%)";
+    historyBtn.style.color = "#fff";
+    historyBtn.style.fontWeight = "bold";
+    historyBtn.style.border = "none";
+    historyBtn.style.cursor = "pointer";
+    historyBtn.style.borderRadius = "8px";
+    historyBtn.style.padding = "8px 16px";
+    historyBtn.style.fontSize = "0.95em";
+    historyBtn.style.margin = "0 8px";
+    historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
+    historyBtn.style.transition = "all 0.2s ease";
+    historyBtn.style.position = "fixed";
+    historyBtn.style.top = "20px";
+    historyBtn.style.right = "450px"; // Positionné à côté de l'avatar
+    historyBtn.style.zIndex = "100040";
+
+    // Effet de survol
+    historyBtn.onmouseenter = () => {
+      historyBtn.style.transform = "translateY(-2px)";
+      historyBtn.style.boxShadow = "0 4px 16px rgba(5,150,105,0.4)";
+    };
+    historyBtn.onmouseleave = () => {
+      historyBtn.style.transform = "translateY(0)";
+      historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
+    };
+
+    // Événement de clic
+    historyBtn.onclick = showProfessionalHistoryModal;
+
+    // Ajoute au body
+    document.body.appendChild(historyBtn);
+  }
+
+  // Rend le bouton visible avec animation
+  if (historyBtn.style.display === "none") {
+    historyBtn.style.display = "block";
+    historyBtn.style.opacity = "0";
+    historyBtn.style.transform = "scale(0.8)";
+
+    setTimeout(() => {
+      historyBtn.style.transition = "all 0.3s ease";
+      historyBtn.style.opacity = "1";
+      historyBtn.style.transform = "scale(1)";
+    }, 100);
+  }
+}
+
+/**
+ * Affiche la modal de l'historique professionnel
+ */
+function showProfessionalHistoryModal() {
+  // Récupère l'historique
+  const history = JSON.parse(
+    localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+  );
+
+  // Supprime la modal existante si elle existe
+  const existingModal = document.getElementById("professionalHistoryModal");
+  if (existingModal) existingModal.remove();
+
+  // Crée la modal
+  const modal = document.createElement("div");
+  modal.id = "professionalHistoryModal";
+  modal.style.position = "fixed";
+  modal.style.top = "0";
+  modal.style.left = "0";
+  modal.style.width = "100vw";
+  modal.style.height = "100vh";
+  modal.style.background = "rgba(0,0,0,0.6)";
+  modal.style.zIndex = "100200";
+  modal.style.display = "flex";
+  modal.style.alignItems = "center";
+  modal.style.justifyContent = "center";
+  modal.style.backdropFilter = "blur(4px)";
+
+  // Conteneur principal
+  const container = document.createElement("div");
+  container.style.background = "#fff";
+  container.style.borderRadius = "16px";
+  container.style.boxShadow = "0 20px 60px rgba(0,0,0,0.3)";
+  container.style.maxWidth = "95vw";
+  container.style.width = "1100px";
+  container.style.maxHeight = "90vh";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.overflow = "hidden";
+
+  // En-tête
+  const header = document.createElement("div");
+  header.style.background = "linear-gradient(90deg,#059669 0%,#047857 100%)";
+  header.style.color = "#fff";
+  header.style.padding = "20px 30px";
+  header.style.borderTopLeftRadius = "16px";
+  header.style.borderTopRightRadius = "16px";
+  header.style.display = "flex";
+  header.style.justifyContent = "space-between";
+  header.style.alignItems = "center";
+
+  const title = document.createElement("h2");
+  title.textContent = "📋 Historique Professionnel des Conteneurs Livrés";
+  title.style.margin = "0";
+  title.style.fontSize = "1.4em";
+  title.style.fontWeight = "bold";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.innerHTML = "✕";
+  closeBtn.style.background = "rgba(255,255,255,0.2)";
+  closeBtn.style.color = "#fff";
+  closeBtn.style.border = "none";
+  closeBtn.style.borderRadius = "50%";
+  closeBtn.style.width = "35px";
+  closeBtn.style.height = "35px";
+  closeBtn.style.cursor = "pointer";
+  closeBtn.style.fontSize = "1.2em";
+  closeBtn.style.display = "flex";
+  closeBtn.style.alignItems = "center";
+  closeBtn.style.justifyContent = "center";
+  closeBtn.onclick = () => modal.remove();
+
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  container.appendChild(header);
+
+  // Statistiques
+  const stats = document.createElement("div");
+  stats.style.padding = "15px 30px";
+  stats.style.background = "#f8fafc";
+  stats.style.borderBottom = "1px solid #e5e7eb";
+  stats.innerHTML = `
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+      <div style="color: #059669; font-weight: bold;">
+        📦 Total conteneurs livrés: <span style="color: #047857;">${
+          history.length
+        }</span>
+      </div>
+      <div style="color: #059669; font-weight: bold;">
+        📅 Dernière livraison: <span style="color: #047857;">${
+          history.length > 0
+            ? new Date(history[0].delivered_at).toLocaleDateString("fr-FR")
+            : "Aucune"
+        }</span>
+      </div>
+    </div>
+  `;
+  container.appendChild(stats);
+
+  // Zone de contenu avec scroll
+  const content = document.createElement("div");
+  content.style.flex = "1";
+  content.style.padding = "20px 30px";
+  content.style.overflowY = "auto";
+  content.style.background = "#fff";
+
+  if (history.length === 0) {
+    content.innerHTML = `
+      <div style="text-align: center; padding: 50px 20px; color: #6b7280;">
+        <div style="font-size: 3em; margin-bottom: 20px;">📋</div>
+        <h3 style="color: #374151; margin-bottom: 10px;">Aucun historique pour le moment</h3>
+        <p>Les conteneurs marqués comme "Livrés" apparaîtront ici automatiquement.</p>
+      </div>
+    `;
+  } else {
+    // Tableau de l'historique
+    const table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+    table.style.fontSize = "0.9em";
+
+    // En-tête du tableau
+    table.innerHTML = `
+      <thead>
+        <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Date/Heure</th>
+          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Conteneur</th>
+          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Dossier</th>
+          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Client</th>
+          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Agent</th>
+          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Transporteur</th>
+          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Livré par</th>
+          <th style="padding: 12px 8px; text-align: center; font-weight: bold; color: #374151;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${history
+          .map(
+            (entry, index) => `
+          <tr style="border-bottom: 1px solid #f3f4f6; ${
+            index % 2 === 0 ? "background: #fafafa;" : ""
+          }">
+            <td style="padding: 10px 8px; color: #4b5563;">
+              ${new Date(entry.delivered_at).toLocaleDateString("fr-FR")}<br>
+              <small style="color: #9ca3af;">${new Date(
+                entry.delivered_at
+              ).toLocaleTimeString("fr-FR")}</small>
+            </td>
+            <td style="padding: 10px 8px; font-weight: bold; color: #059669;">${
+              entry.container_number
+            }</td>
+            <td style="padding: 10px 8px; color: #4b5563;">${
+              entry.dossier_number || "-"
+            }</td>
+            <td style="padding: 10px 8px; color: #4b5563;">${
+              entry.client_name || "-"
+            }</td>
+            <td style="padding: 10px 8px; color: #4b5563;">${
+              entry.visitor_agent_name || "-"
+            }</td>
+            <td style="padding: 10px 8px; color: #4b5563;">${
+              entry.transporter || "-"
+            }</td>
+            <td style="padding: 10px 8px; color: #047857; font-weight: 500;">${
+              entry.delivered_by
+            }</td>
+            <td style="padding: 10px 8px; text-align: center;">
+              <button onclick="showHistoryEntryDetail('${entry.id}')" 
+                style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">
+                Détails
+              </button>
+            </td>
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    `;
+
+    content.appendChild(table);
+  }
+
+  container.appendChild(content);
+  modal.appendChild(container);
+  document.body.appendChild(modal);
+
+  // Fermeture en cliquant à côté
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
+}
+
+/**
+ * Affiche les détails d'une entrée de l'historique
+ */
+window.showHistoryEntryDetail = function (entryId) {
+  const history = JSON.parse(
+    localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+  );
+  const entry = history.find((e) => e.id == entryId);
+
+  if (!entry) {
+    alert("Entrée non trouvée dans l'historique.");
+    return;
+  }
+
+  // Supprime la modal de détail existante
+  const existingDetail = document.getElementById("historyDetailModal");
+  if (existingDetail) existingDetail.remove();
+
+  // Crée la modal de détail
+  const modal = document.createElement("div");
+  modal.id = "historyDetailModal";
+  modal.style.position = "fixed";
+  modal.style.top = "0";
+  modal.style.left = "0";
+  modal.style.width = "100vw";
+  modal.style.height = "100vh";
+  modal.style.background = "rgba(0,0,0,0.5)";
+  modal.style.zIndex = "100300";
+  modal.style.display = "flex";
+  modal.style.alignItems = "center";
+  modal.style.justifyContent = "center";
+
+  const container = document.createElement("div");
+  container.style.background = "#fff";
+  container.style.borderRadius = "12px";
+  container.style.boxShadow = "0 15px 40px rgba(0,0,0,0.2)";
+  container.style.maxWidth = "90vw";
+  container.style.width = "500px";
+  container.style.maxHeight = "80vh";
+  container.style.overflowY = "auto";
+  container.style.padding = "25px";
+
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">
+      <h3 style="margin: 0; color: #059669; font-size: 1.3em;">📦 Détails du Conteneur ${
+        entry.container_number
+      }</h3>
+      <button onclick="document.getElementById('historyDetailModal').remove()" 
+        style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+        Fermer
+      </button>
+    </div>
+    <div style="display: grid; gap: 12px;">
+      <div><strong>Conteneur:</strong> ${entry.container_number}</div>
+      <div><strong>Dossier:</strong> ${entry.dossier_number || "-"}</div>
+      <div><strong>BL:</strong> ${entry.bl_number || "-"}</div>
+      <div><strong>Client:</strong> ${entry.client_name || "-"}</div>
+      <div><strong>Téléphone client:</strong> ${entry.client_phone || "-"}</div>
+      <div><strong>Circuit:</strong> ${entry.circuit || "-"}</div>
+      <div><strong>Compagnie maritime:</strong> ${
+        entry.shipping_company || "-"
+      }</div>
+      <div><strong>Agent visiteur:</strong> ${
+        entry.visitor_agent_name || "-"
+      }</div>
+      <div><strong>Transporteur:</strong> ${entry.transporter || "-"}</div>
+      <div><strong>Inspecteur:</strong> ${entry.inspector || "-"}</div>
+      <div><strong>Agent en douanes:</strong> ${
+        entry.customs_agent || "-"
+      }</div>
+      <div><strong>Chauffeur:</strong> ${entry.driver || "-"}</div>
+      <div><strong>Tél. chauffeur:</strong> ${entry.driver_phone || "-"}</div>
+      <div><strong>Type conteneur:</strong> ${
+        entry.container_foot_type || "-"
+      }</div>
+      <div><strong>Poids:</strong> ${entry.weight || "-"}</div>
+      <div><strong>Nom navire:</strong> ${entry.ship_name || "-"}</div>
+      <div><strong>Date livraison:</strong> ${entry.delivery_date || "-"}</div>
+      <div><strong>Observations:</strong> ${entry.observation || "-"}</div>
+      <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px; background: #f9fafb; padding: 10px; border-radius: 6px;">
+        <div><strong>Livré le:</strong> ${new Date(
+          entry.delivered_at
+        ).toLocaleString("fr-FR")}</div>
+        <div><strong>Livré par:</strong> ${entry.delivered_by}</div>
+      </div>
+    </div>
+  `;
+
+  modal.appendChild(container);
+  document.body.appendChild(modal);
+
+  // Fermeture en cliquant à côté
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
+};
+
+// ========================================================================
+// === FIN HISTORIQUE PROFESSIONNEL ===
+// ========================================================================
