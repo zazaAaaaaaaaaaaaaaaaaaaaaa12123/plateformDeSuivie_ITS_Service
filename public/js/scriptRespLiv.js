@@ -225,7 +225,10 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
   // 🆕 AJOUT : Vérification de l'historique professionnel au chargement
-  checkAndShowHistoryButton();
+  // Petit délai pour s'assurer que tous les éléments sont bien chargés
+  setTimeout(() => {
+    checkAndShowHistoryButton();
+  }, 100);
 
   // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
   let ws;
@@ -3149,6 +3152,17 @@ document.addEventListener("DOMContentLoaded", function () {
     "input[placeholder='Rechercher une livraison.']"
   );
   if (searchInput && searchInput.parentNode) {
+    // 🆕 MODIFICATION : Améliorer l'affichage du conteneur parent
+    const parentContainer = searchInput.parentNode;
+    parentContainer.style.display = "flex";
+    parentContainer.style.alignItems = "center";
+    parentContainer.style.gap = "8px";
+
+    // 🆕 MODIFICATION : Réduire légèrement la largeur du champ de recherche
+    searchInput.style.width = "85%"; // Réduit la largeur de 100% à 85%
+    searchInput.style.flex = "1"; // Permet au champ de recherche de s'adapter
+
+    // Ajouter le bouton PDF après le champ de recherche
     searchInput.parentNode.appendChild(pdfBtn);
   } else {
     // fallback : au-dessus du tableau si champ non trouvé
@@ -3665,13 +3679,11 @@ function showHistoryButtonIfNeeded() {
     historyBtn.style.borderRadius = "8px";
     historyBtn.style.padding = "8px 16px";
     historyBtn.style.fontSize = "0.95em";
-    historyBtn.style.margin = "0 8px";
+    historyBtn.style.margin = "0 8px 0 0"; // Margin à droite seulement
     historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
     historyBtn.style.transition = "all 0.2s ease";
-    historyBtn.style.position = "fixed";
-    historyBtn.style.top = "20px";
-    historyBtn.style.right = "450px"; // Positionné à côté de l'avatar
-    historyBtn.style.zIndex = "100040";
+    historyBtn.style.height = "32px"; // Même hauteur que les autres boutons
+    historyBtn.style.verticalAlign = "middle";
 
     // Effet de survol
     historyBtn.onmouseenter = () => {
@@ -3686,13 +3698,22 @@ function showHistoryButtonIfNeeded() {
     // Événement de clic
     historyBtn.onclick = showProfessionalHistoryModal;
 
-    // Ajoute au body
-    document.body.appendChild(historyBtn);
+    // 🆕 MODIFICATION : Placer le bouton avant le champ de recherche
+    const searchInput = document.querySelector(
+      "input[placeholder='Rechercher une livraison.']"
+    );
+    if (searchInput && searchInput.parentNode) {
+      // Insérer le bouton historique avant le champ de recherche
+      searchInput.parentNode.insertBefore(historyBtn, searchInput);
+    } else {
+      // Fallback : ajouter au body si pas de champ de recherche trouvé
+      document.body.appendChild(historyBtn);
+    }
   }
 
   // 🆕 MODIFICATION : Le bouton est maintenant toujours visible, pas de condition
   // S'assure que le bouton est visible
-  historyBtn.style.display = "block";
+  historyBtn.style.display = "inline-block"; // Changed from "block" to "inline-block"
   historyBtn.style.opacity = "1";
   historyBtn.style.transform = "scale(1)";
 }
