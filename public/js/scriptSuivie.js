@@ -3104,6 +3104,10 @@ function mapStatus(status) {
             // Ensure delivery_date is a Date object if it exists
             delivery.delivery_date = new Date(delivery.delivery_date);
           }
+          if (delivery.date_echange) {
+            // Ensure date_echange is a Date object if it exists
+            delivery.date_echange = new Date(delivery.date_echange);
+          }
           return delivery;
         });
         allDeliveries = [...deliveries]; // Keep a copy of all original deliveries
@@ -4281,6 +4285,8 @@ function mapStatus(status) {
               .replace(",", "");
           }
         } else if (value instanceof Date && fieldName === "delivery_date") {
+          displayValue = value.toLocaleDateString("fr-FR");
+        } else if (value instanceof Date && fieldName === "date_echange") {
           displayValue = value.toLocaleDateString("fr-FR");
         } else if (value instanceof Date) {
           displayValue = value.toLocaleDateString("fr-FR");
