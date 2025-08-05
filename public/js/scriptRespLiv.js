@@ -3623,28 +3623,28 @@ function saveToDeliveryHistory(delivery, containerNumber) {
 }
 
 /**
- * Vérifie s'il y a un historique et affiche le bouton si nécessaire
+ * Vérifie s'il y a un historique et affiche le bouton par défaut
  */
 function checkAndShowHistoryButton() {
   try {
     const history = JSON.parse(
       localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
     );
-    if (history.length > 0) {
-      console.log(
-        `[HISTORIQUE] ✅ ${history.length} entrées trouvées dans l'historique`
-      );
-      showHistoryButtonIfNeeded();
-    } else {
-      console.log("[HISTORIQUE] ℹ️ Aucun historique trouvé");
-    }
+
+    // 🆕 MODIFICATION : Afficher le bouton par défaut, même sans historique
+    console.log(
+      `[HISTORIQUE] ℹ️ ${history.length} entrées trouvées dans l'historique - Affichage du bouton par défaut`
+    );
+    showHistoryButtonIfNeeded();
   } catch (error) {
     console.error("[HISTORIQUE] ❌ Erreur lors de la vérification:", error);
+    // Même en cas d'erreur, on affiche le bouton
+    showHistoryButtonIfNeeded();
   }
 }
 
 /**
- * Affiche le bouton historique s'il y a des conteneurs livrés
+ * Affiche le bouton historique par défaut (toujours visible)
  */
 function showHistoryButtonIfNeeded() {
   let historyBtn = document.getElementById("professionalHistoryBtn");
@@ -3690,18 +3690,11 @@ function showHistoryButtonIfNeeded() {
     document.body.appendChild(historyBtn);
   }
 
-  // Rend le bouton visible avec animation
-  if (historyBtn.style.display === "none") {
-    historyBtn.style.display = "block";
-    historyBtn.style.opacity = "0";
-    historyBtn.style.transform = "scale(0.8)";
-
-    setTimeout(() => {
-      historyBtn.style.transition = "all 0.3s ease";
-      historyBtn.style.opacity = "1";
-      historyBtn.style.transform = "scale(1)";
-    }, 100);
-  }
+  // 🆕 MODIFICATION : Le bouton est maintenant toujours visible, pas de condition
+  // S'assure que le bouton est visible
+  historyBtn.style.display = "block";
+  historyBtn.style.opacity = "1";
+  historyBtn.style.transform = "scale(1)";
 }
 
 /**
