@@ -845,6 +845,312 @@
       }
 
       /* === FIN STYLES CARTES ET BADGES === */
+
+      /* === ANIMATIONS DE LIAISON DES CARTES SYNCHRONISÉES === */
+
+      /* Conteneur pour les lignes de connexion */
+      .card-connections {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+        overflow: hidden;
+      }
+
+      /* Lignes de connexion animées */
+      .connection-line {
+        position: absolute;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          #3b82f6 20%,
+          #06b6d4 50%,
+          #3b82f6 80%,
+          transparent 100%
+        );
+        opacity: 0.6;
+        transform-origin: left center;
+        animation: connectionPulse 4s ease-in-out infinite;
+      }
+
+      .connection-line::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(59, 130, 246, 0.3) 50%,
+          transparent 100%
+        );
+        filter: blur(2px);
+      }
+
+      @keyframes connectionPulse {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scaleX(0.8);
+          filter: brightness(1);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scaleX(1.1);
+          filter: brightness(1.5);
+        }
+      }
+
+      /* Particules voyageuses */
+      .connection-particle {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: radial-gradient(circle, #06b6d4 0%, #3b82f6 100%);
+        border-radius: 50%;
+        box-shadow: 0 0 10px #06b6d4, 0 0 20px rgba(6, 182, 212, 0.5);
+        z-index: 2;
+      }
+
+      /* Animation des particules */
+      @keyframes particleTravel1 {
+        0% {
+          left: 20%;
+          top: 50%;
+          opacity: 0;
+          transform: scale(0);
+        }
+        10% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          left: 50%;
+          top: 45%;
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        100% {
+          left: 80%;
+          top: 50%;
+          opacity: 0;
+          transform: scale(0);
+        }
+      }
+
+      @keyframes particleTravel2 {
+        0% {
+          left: 50%;
+          top: 45%;
+          opacity: 0;
+          transform: scale(0);
+        }
+        10% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          left: 75%;
+          top: 70%;
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        100% {
+          left: 100%;
+          top: 95%;
+          opacity: 0;
+          transform: scale(0);
+        }
+      }
+
+      @keyframes particleTravel3 {
+        0% {
+          left: 80%;
+          top: 50%;
+          opacity: 0;
+          transform: scale(0);
+        }
+        10% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          left: 50%;
+          top: 75%;
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        100% {
+          left: 20%;
+          top: 50%;
+          opacity: 0;
+          transform: scale(0);
+        }
+      }
+
+      /* Effet de synchronisation globale */
+      .cards-synchronized {
+        animation: syncPulse 2s ease-in-out;
+      }
+
+      @keyframes syncPulse {
+        0% {
+          transform: scale(1);
+          filter: brightness(1);
+        }
+        50% {
+          transform: scale(1.02);
+          filter: brightness(1.1);
+        }
+        100% {
+          transform: scale(1);
+          filter: brightness(1);
+        }
+      }
+
+      /* Onde d'énergie entre les cartes */
+      .energy-wave {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        border: 2px solid #06b6d4;
+        border-radius: 50%;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      @keyframes energyWave {
+        0% {
+          transform: scale(0.1);
+          opacity: 0.8;
+          border-width: 3px;
+        }
+        50% {
+          transform: scale(2);
+          opacity: 0.4;
+          border-width: 1px;
+        }
+        100% {
+          transform: scale(4);
+          opacity: 0;
+          border-width: 0px;
+        }
+      }
+
+      /* === AMÉLIORATION DU FOND WELCOME SECTION === */
+
+      #welcomeSection {
+        background: linear-gradient(
+          135deg,
+          #f8fafc 0%,
+          #e2e8f0 25%,
+          #f1f5f9 50%,
+          #e2e8f0 75%,
+          #f8fafc 100%
+        ) !important;
+        background-size: 400% 400%;
+        animation: gradientShift 8s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Animation du gradient de fond */
+      @keyframes gradientShift {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        25% {
+          background-position: 100% 50%;
+        }
+        50% {
+          background-position: 100% 100%;
+        }
+        75% {
+          background-position: 0% 100%;
+        }
+      }
+
+      /* Motifs géométriques en arrière-plan */
+      #welcomeSection::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(
+            circle at 20% 20%,
+            rgba(59, 130, 246, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 80%,
+            rgba(6, 182, 212, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 40% 70%,
+            rgba(16, 185, 129, 0.08) 0%,
+            transparent 50%
+          );
+        background-size: 300px 300px, 250px 250px, 400px 400px;
+        background-position: 0 0, 100px 100px, 200px 50px;
+        animation: floatingPatterns 12s linear infinite;
+        z-index: 0;
+      }
+
+      @keyframes floatingPatterns {
+        0% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        33% {
+          transform: translate(-10px, -10px) rotate(120deg);
+        }
+        66% {
+          transform: translate(10px, -5px) rotate(240deg);
+        }
+        100% {
+          transform: translate(0, 0) rotate(360deg);
+        }
+      }
+
+      /* Effet glassmorphism sur les cartes */
+      .etat-card {
+        backdrop-filter: blur(10px) saturate(200%);
+        background: rgba(255, 255, 255, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+          0 2px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* Amélioration hover avec glassmorphism */
+      .etat-card:hover {
+        backdrop-filter: blur(15px) saturate(250%);
+        background: rgba(255, 255, 255, 0.9) !important;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
+          0 8px 30px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+      }
+
+      /* === FIN ANIMATIONS DE LIAISON === */
     </style>
   </head>
 
@@ -2127,6 +2433,184 @@
                   "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
               });
             }
+
+            // === ANIMATIONS DE LIAISON ENTRE LES CARTES SYNCHRONISÉES ===
+
+            // Initialiser les animations de liaison
+            initCardConnectionAnimations();
+
+            function initCardConnectionAnimations() {
+              const welcomeSection = document.getElementById("welcomeSection");
+              if (!welcomeSection) return;
+
+              // Créer le conteneur des connexions
+              const connectionsContainer = document.createElement("div");
+              connectionsContainer.className = "card-connections";
+              welcomeSection.appendChild(connectionsContainer);
+
+              // Attendre que les cartes soient bien positionnées
+              setTimeout(() => {
+                createConnectionLines();
+                createFloatingParticles();
+                startSynchronizationEffects();
+              }, 1000);
+            }
+
+            function createConnectionLines() {
+              const container = document.querySelector(".card-connections");
+              if (!container) return;
+
+              const cards = [
+                document.getElementById("carteAttentePaiement"),
+                document.getElementById("carteMiseLivraison"),
+                document.getElementById("carteLivre"),
+              ];
+
+              cards.forEach((card, index) => {
+                if (!card) return;
+
+                const nextCard = cards[(index + 1) % cards.length];
+                if (!nextCard) return;
+
+                const line = document.createElement("div");
+                line.className = "connection-line";
+                line.style.animationDelay = `${index * 1.3}s`;
+
+                // Positionner la ligne entre les cartes
+                positionConnectionLine(line, card, nextCard);
+                container.appendChild(line);
+              });
+            }
+
+            function positionConnectionLine(line, fromCard, toCard) {
+              const fromRect = fromCard.getBoundingClientRect();
+              const toRect = toCard.getBoundingClientRect();
+              const containerRect = document
+                .getElementById("welcomeSection")
+                .getBoundingClientRect();
+
+              const fromX =
+                fromRect.left + fromRect.width / 2 - containerRect.left;
+              const fromY =
+                fromRect.top + fromRect.height / 2 - containerRect.top;
+              const toX = toRect.left + toRect.width / 2 - containerRect.left;
+              const toY = toRect.top + toRect.height / 2 - containerRect.top;
+
+              const length = Math.sqrt(
+                Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2)
+              );
+              const angle =
+                (Math.atan2(toY - fromY, toX - fromX) * 180) / Math.PI;
+
+              line.style.left = fromX + "px";
+              line.style.top = fromY + "px";
+              line.style.width = length + "px";
+              line.style.transform = `rotate(${angle}deg)`;
+            }
+
+            function createFloatingParticles() {
+              const container = document.querySelector(".card-connections");
+              if (!container) return;
+
+              for (let i = 0; i < 6; i++) {
+                const particle = document.createElement("div");
+                particle.className = "connection-particle";
+
+                const animationName = `particleTravel${(i % 3) + 1}`;
+                particle.style.animation = `${animationName} ${
+                  4 + Math.random() * 2
+                }s linear infinite`;
+                particle.style.animationDelay = `${Math.random() * 3}s`;
+
+                container.appendChild(particle);
+              }
+            }
+
+            function startSynchronizationEffects() {
+              // Effet de synchronisation toutes les 8 secondes
+              setInterval(() => {
+                const cards = document.querySelectorAll(".etat-card");
+                cards.forEach((card, index) => {
+                  setTimeout(() => {
+                    card.classList.add("cards-synchronized");
+                    setTimeout(() => {
+                      card.classList.remove("cards-synchronized");
+                    }, 2000);
+                  }, index * 200);
+                });
+              }, 8000);
+            }
+
+            // Fonction pour déclencher l'effet de synchronisation lors des mises à jour
+            window.triggerCardSyncEffect = function () {
+              const cards = document.querySelectorAll(".etat-card");
+
+              // Effet d'onde d'énergie
+              cards.forEach((card, index) => {
+                setTimeout(() => {
+                  const wave = document.createElement("div");
+                  wave.className = "energy-wave";
+
+                  const rect = card.getBoundingClientRect();
+                  const welcomeRect = document
+                    .getElementById("welcomeSection")
+                    .getBoundingClientRect();
+
+                  wave.style.left =
+                    rect.left + rect.width / 2 - welcomeRect.left - 50 + "px";
+                  wave.style.top =
+                    rect.top + rect.height / 2 - welcomeRect.top - 50 + "px";
+                  wave.style.animation = "energyWave 1.5s ease-out forwards";
+
+                  document.querySelector(".card-connections").appendChild(wave);
+
+                  setTimeout(() => wave.remove(), 1500);
+                }, index * 150);
+              });
+
+              // Effet de pulsation synchronisée
+              setTimeout(() => {
+                cards.forEach((card) => {
+                  card.classList.add("cards-synchronized");
+                  setTimeout(() => {
+                    card.classList.remove("cards-synchronized");
+                  }, 2000);
+                });
+              }, 500);
+            };
+
+            // Recalculer les positions des lignes lors du redimensionnement
+            window.addEventListener(
+              "resize",
+              debounce(() => {
+                const lines = document.querySelectorAll(".connection-line");
+                const cards = [
+                  document.getElementById("carteAttentePaiement"),
+                  document.getElementById("carteMiseLivraison"),
+                  document.getElementById("carteLivre"),
+                ];
+
+                lines.forEach((line, index) => {
+                  const fromCard = cards[index];
+                  const toCard = cards[(index + 1) % cards.length];
+                  if (fromCard && toCard) {
+                    positionConnectionLine(line, fromCard, toCard);
+                  }
+                });
+              }, 250)
+            );
+
+            function debounce(func, wait) {
+              let timeout;
+              return function executedFunction(...args) {
+                const later = () => {
+                  clearTimeout(timeout);
+                  func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+              };
+            }
           });
           document.addEventListener("DOMContentLoaded", function () {
             // Propagation automatique de la session admin vers les interfaces responsables
@@ -2990,6 +3474,13 @@
                   );
                 }
               });
+
+              // Déclencher les animations de liaison lors de la synchronisation
+              if (typeof window.triggerCardSyncEffect === "function") {
+                setTimeout(() => {
+                  window.triggerCardSyncEffect();
+                }, 500);
+              }
 
               // Appeler la fonction originale
               return originalUpdateCardCounters.apply(this, arguments);
