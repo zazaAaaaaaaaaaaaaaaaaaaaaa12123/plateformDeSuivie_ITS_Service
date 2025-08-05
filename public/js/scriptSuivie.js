@@ -4004,8 +4004,8 @@ function mapStatus(status) {
     }
     deliveriesTableBody.innerHTML = "";
 
-    // Total columns: 28 original + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) = 30
-    const ACTUAL_COLUMN_COUNT = 30;
+    // Total columns: 29 original + 1 (Date d'échange) + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) = 32
+    const ACTUAL_COLUMN_COUNT = 32;
 
     if (deliveriesToRender.length === 0) {
       deliveriesTableBody.innerHTML = `
@@ -4775,6 +4775,7 @@ function mapStatus(status) {
       createCell(delivery.ship_name, "ship_name"); // Nom du navire
       createCell(delivery.circuit, "circuit"); // Circuit
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
+      createCell(delivery.date_echange, "date_echange", "date", {}); // Date d'échange
       createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
       createCell(
         delivery.observation_acconier,
