@@ -1360,8 +1360,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         avatar.style.display = "flex";
         avatar.style.alignItems = "center";
         avatar.style.justifyContent = "center";
-        avatar.style.width = window.innerWidth <= 600 ? "32px" : "44px";
-        avatar.style.height = window.innerWidth <= 600 ? "32px" : "44px";
+        avatar.style.width = window.innerWidth <= 600 ? "28px" : "38px";
+        avatar.style.height = window.innerWidth <= 600 ? "28px" : "38px";
         avatar.style.borderRadius = "50%";
         avatar.style.background = avatarBg;
         avatar.style.boxShadow =
@@ -1390,7 +1390,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         initialsSpan.style.color = "#fff";
         initialsSpan.style.fontWeight = "bold";
         initialsSpan.style.fontSize =
-          window.innerWidth <= 600 ? "1.1em" : "1.25em";
+          window.innerWidth <= 600 ? "1em" : "1.15em";
         initialsSpan.style.letterSpacing = "0.5px";
         avatar.appendChild(initialsSpan);
         // Effet de halo
@@ -1399,14 +1399,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         const badge = document.createElement("span");
         badge.textContent = value;
         badge.style.position = "absolute";
-        badge.style.bottom = "-6px";
-        badge.style.right = "-6px";
+        badge.style.bottom = "-5px";
+        badge.style.right = "-5px";
         badge.style.background = "#fff";
         badge.style.color = badgeColor;
         badge.style.fontWeight = "bold";
-        badge.style.fontSize = window.innerWidth <= 600 ? "0.85em" : "1em";
+        badge.style.fontSize = window.innerWidth <= 600 ? "0.8em" : "0.95em";
         badge.style.borderRadius = "50%";
-        badge.style.padding = window.innerWidth <= 600 ? "2px 6px" : "3px 8px";
+        badge.style.padding = window.innerWidth <= 600 ? "1px 5px" : "2px 7px";
         badge.style.boxShadow = "0 1px 4px rgba(30,41,59,0.13)";
         badge.style.border = "2px solid #f1f5f9";
         avatar.appendChild(badge);
