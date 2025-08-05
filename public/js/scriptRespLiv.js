@@ -3703,18 +3703,25 @@ function showHistoryButtonIfNeeded() {
     // Événement de clic
     historyBtn.onclick = showProfessionalHistoryModal;
 
-    // 🆕 MODIFICATION : Placer le bouton avant le champ de recherche
-    const searchInput = document.querySelector(
-      "input[placeholder='Rechercher une livraison.']"
-    );
-    if (searchInput && searchInput.parentNode) {
-      // Insérer le bouton historique au TOUT DÉBUT du conteneur (avant l'icône de recherche)
-      const parentContainer = searchInput.parentNode;
-      parentContainer.insertBefore(historyBtn, parentContainer.firstChild);
+    // 🆕 MODIFICATION : Placer le bouton AVANT l'icône de recherche spécifiquement
+    const searchIcon =
+      document.querySelector(".fas.fa-search.search-icon") ||
+      document.querySelector("i.search-icon") ||
+      document.querySelector(".search-icon");
+
+    if (searchIcon && searchIcon.parentNode) {
+      // Insérer le bouton historique AVANT l'icône de recherche
+      const parentContainer = searchIcon.parentNode;
+      parentContainer.insertBefore(historyBtn, searchIcon);
 
       // Réduire encore plus la largeur du champ de recherche
-      searchInput.style.width = "45%";
-      searchInput.style.maxWidth = "280px";
+      const searchInput =
+        document.querySelector("input[placeholder*='Rechercher']") ||
+        document.getElementById("searchInput");
+      if (searchInput) {
+        searchInput.style.width = "35%";
+        searchInput.style.maxWidth = "250px";
+      }
 
       // Configurer le conteneur parent en flexbox
       parentContainer.style.display = "flex";
@@ -3722,36 +3729,59 @@ function showHistoryButtonIfNeeded() {
       parentContainer.style.gap = "8px";
       parentContainer.style.flexWrap = "wrap";
     } else {
-      // Rechercher d'autres sélecteurs possibles pour le champ de recherche
-      const altSearchInput =
-        document.querySelector("input[type='text']") ||
-        document.getElementById("search-bl") ||
-        document.querySelector(".search-input");
+      // Fallback : rechercher le champ de recherche
+      const searchInput = document.querySelector(
+        "input[placeholder='Rechercher une livraison.']"
+      );
+      if (searchInput && searchInput.parentNode) {
+        // Insérer le bouton historique au TOUT DÉBUT du conteneur (avant l'icône de recherche)
+        const parentContainer = searchInput.parentNode;
+        parentContainer.insertBefore(historyBtn, parentContainer.firstChild);
 
-      if (altSearchInput && altSearchInput.parentNode) {
-        const parentContainer = altSearchInput.parentNode;
-        parentContainer.insertBefore(historyBtn, altSearchInput);
+        // Réduire encore plus la largeur du champ de recherche
+        searchInput.style.width = "35%";
+        searchInput.style.maxWidth = "250px";
 
-        // Configuration du conteneur
+        // Configurer le conteneur parent en flexbox
         parentContainer.style.display = "flex";
         parentContainer.style.alignItems = "center";
         parentContainer.style.gap = "8px";
-
-        // Ajuster la largeur du champ de recherche
-        altSearchInput.style.width = "70%";
-        altSearchInput.style.maxWidth = "400px";
+        parentContainer.style.flexWrap = "wrap";
       } else {
-        // En dernier recours, chercher le conteneur de recherche et l'ajouter au début
-        const searchContainer =
-          document.querySelector(".row-search") ||
-          document.querySelector(".search-container") ||
-          document.querySelector("[class*='search']");
+        // Rechercher d'autres sélecteurs possibles pour le champ de recherche
+        const altSearchInput =
+          document.querySelector("input[type='text']") ||
+          document.getElementById("search-bl") ||
+          document.querySelector(".search-input");
 
-        if (searchContainer) {
-          searchContainer.insertBefore(historyBtn, searchContainer.firstChild);
-          searchContainer.style.display = "flex";
-          searchContainer.style.alignItems = "center";
-          searchContainer.style.gap = "8px";
+        if (altSearchInput && altSearchInput.parentNode) {
+          const parentContainer = altSearchInput.parentNode;
+          parentContainer.insertBefore(historyBtn, altSearchInput);
+
+          // Configuration du conteneur
+          parentContainer.style.display = "flex";
+          parentContainer.style.alignItems = "center";
+          parentContainer.style.gap = "8px";
+
+          // Ajuster la largeur du champ de recherche
+          altSearchInput.style.width = "70%";
+          altSearchInput.style.maxWidth = "400px";
+        } else {
+          // En dernier recours, chercher le conteneur de recherche et l'ajouter au début
+          const searchContainer =
+            document.querySelector(".row-search") ||
+            document.querySelector(".search-container") ||
+            document.querySelector("[class*='search']");
+
+          if (searchContainer) {
+            searchContainer.insertBefore(
+              historyBtn,
+              searchContainer.firstChild
+            );
+            searchContainer.style.display = "flex";
+            searchContainer.style.alignItems = "center";
+            searchContainer.style.gap = "8px";
+          }
         }
       }
     }
