@@ -3146,38 +3146,36 @@ pdfBtn.style.verticalAlign = "middle";
 
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
-  // 🆕 CRÉATION PRIORITAIRE : Créer le bouton historique en premier
-  setTimeout(() => {
-    checkAndShowHistoryButton();
+  // Créer le bouton historique immédiatement
+  checkAndShowHistoryButton();
 
-    // Ensuite, configurer le conteneur parent après création du bouton historique
-    setTimeout(() => {
-      const searchInput = document.querySelector(
-        "input[placeholder='Rechercher une livraison.']"
-      );
-      if (searchInput && searchInput.parentNode) {
-        // 🆕 MODIFICATION : Améliorer l'affichage du conteneur parent
-        const parentContainer = searchInput.parentNode;
-        parentContainer.style.display = "flex";
-        parentContainer.style.alignItems = "center";
-        parentContainer.style.gap = "8px";
+  // Configurer le conteneur et ajouter le bouton PDF
+  const searchInput = document.querySelector(
+    "input[placeholder='Rechercher une livraison.']"
+  );
+  if (searchInput && searchInput.parentNode) {
+    const parentContainer = searchInput.parentNode;
 
-        // 🆕 MODIFICATION : Réduire la largeur du champ de recherche plus visiblement
-        searchInput.style.width = "70%"; // Réduit encore plus : de 85% à 70%
-        searchInput.style.maxWidth = "400px"; // Limite la largeur maximale
-        searchInput.style.flex = "0 1 auto"; // Ne permet pas au champ de prendre tout l'espace
+    // Configuration du conteneur en flexbox
+    parentContainer.style.display = "flex";
+    parentContainer.style.alignItems = "center";
+    parentContainer.style.gap = "8px";
+    parentContainer.style.flexWrap = "wrap";
 
-        // Ajouter le bouton PDF après le champ de recherche
-        searchInput.parentNode.appendChild(pdfBtn);
-      } else {
-        // fallback : au-dessus du tableau si champ non trouvé
-        const mainTable = document.getElementById("deliveriesTable");
-        if (mainTable && mainTable.parentNode) {
-          mainTable.parentNode.insertBefore(pdfBtn, mainTable);
-        }
-      }
-    }, 50);
-  }, 150);
+    // Réduction de la largeur du champ de recherche
+    searchInput.style.width = "70%";
+    searchInput.style.maxWidth = "400px";
+    searchInput.style.flex = "0 1 auto";
+
+    // Ajouter le bouton PDF à la fin
+    parentContainer.appendChild(pdfBtn);
+  } else {
+    // Fallback : au-dessus du tableau si champ non trouvé
+    const mainTable = document.getElementById("deliveriesTable");
+    if (mainTable && mainTable.parentNode) {
+      mainTable.parentNode.insertBefore(pdfBtn, mainTable);
+    }
+  }
 });
 
 // Variable pour stocker les dossiers livrés
@@ -3710,9 +3708,9 @@ function showHistoryButtonIfNeeded() {
       "input[placeholder='Rechercher une livraison.']"
     );
     if (searchInput && searchInput.parentNode) {
-      // Insérer le bouton historique AVANT le champ de recherche (premier élément)
+      // Insérer le bouton historique AVANT le champ de recherche
       const parentContainer = searchInput.parentNode;
-      parentContainer.insertBefore(historyBtn, parentContainer.firstChild);
+      parentContainer.insertBefore(historyBtn, searchInput);
 
       // Ajuster la largeur du champ de recherche
       searchInput.style.width = "70%";
@@ -3722,9 +3720,40 @@ function showHistoryButtonIfNeeded() {
       parentContainer.style.display = "flex";
       parentContainer.style.alignItems = "center";
       parentContainer.style.gap = "8px";
+      parentContainer.style.flexWrap = "wrap";
     } else {
-      // Fallback : ajouter au body si pas de champ de recherche trouvé
-      document.body.appendChild(historyBtn);
+      // Rechercher d'autres sélecteurs possibles pour le champ de recherche
+      const altSearchInput =
+        document.querySelector("input[type='text']") ||
+        document.getElementById("search-bl") ||
+        document.querySelector(".search-input");
+
+      if (altSearchInput && altSearchInput.parentNode) {
+        const parentContainer = altSearchInput.parentNode;
+        parentContainer.insertBefore(historyBtn, altSearchInput);
+
+        // Configuration du conteneur
+        parentContainer.style.display = "flex";
+        parentContainer.style.alignItems = "center";
+        parentContainer.style.gap = "8px";
+
+        // Ajuster la largeur du champ de recherche
+        altSearchInput.style.width = "70%";
+        altSearchInput.style.maxWidth = "400px";
+      } else {
+        // En dernier recours, chercher le conteneur de recherche et l'ajouter au début
+        const searchContainer =
+          document.querySelector(".row-search") ||
+          document.querySelector(".search-container") ||
+          document.querySelector("[class*='search']");
+
+        if (searchContainer) {
+          searchContainer.insertBefore(historyBtn, searchContainer.firstChild);
+          searchContainer.style.display = "flex";
+          searchContainer.style.alignItems = "center";
+          searchContainer.style.gap = "8px";
+        }
+      }
     }
   }
 
