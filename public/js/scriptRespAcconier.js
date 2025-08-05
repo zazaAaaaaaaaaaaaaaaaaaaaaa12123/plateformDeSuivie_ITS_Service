@@ -1598,22 +1598,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           box.style.background = "#fff";
           box.style.borderRadius = window.innerWidth <= 768 ? "12px" : "16px";
           box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-          // Adaptation responsive : optimisé pour la disposition horizontale
+          // Adaptation responsive : popup très compact pour tablette/mobile
           if (window.innerWidth <= 480) {
-            // Téléphone - layout vertical compact
-            box.style.maxWidth = "95vw";
-            box.style.width = "95vw";
-            box.style.maxHeight = "85vh";
+            // Téléphone - très compact
+            box.style.maxWidth = "92vw";
+            box.style.width = "92vw";
+            box.style.maxHeight = "80vh";
           } else if (window.innerWidth <= 768) {
-            // Tablette - layout horizontal optimisé
-            box.style.maxWidth = "95vw";
-            box.style.width = "95vw";
-            box.style.maxHeight = "75vh";
-          } else if (window.innerWidth <= 1024) {
-            // Petits écrans desktop
+            // Tablette - popup très réduit pour optimiser l'espace
             box.style.maxWidth = "85vw";
             box.style.width = "85vw";
-            box.style.maxHeight = "80vh";
+            box.style.maxHeight = "65vh";
+          } else if (window.innerWidth <= 1024) {
+            // Petits écrans desktop
+            box.style.maxWidth = "75vw";
+            box.style.width = "75vw";
+            box.style.maxHeight = "70vh";
           } else {
             // Desktop large
             box.style.maxWidth = "420px";
@@ -1628,10 +1628,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const header = document.createElement("div");
           header.style.background = "#2563eb";
           header.style.color = "#fff";
-          // Adaptation responsive du header
+          // Adaptation responsive du header - très compact
           if (window.innerWidth <= 768) {
-            header.style.padding = "12px 16px 8px 16px";
-            header.style.fontSize = "1.05rem";
+            header.style.padding = "8px 12px 6px 12px";
+            header.style.fontSize = "0.95rem";
           } else {
             header.style.padding = "18px 28px 12px 28px";
             header.style.fontSize = "1.15rem";
@@ -1663,11 +1663,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           closeBtn.style.background = "none";
           closeBtn.style.border = "none";
           closeBtn.style.color = "#fff";
-          // Adaptation responsive du bouton fermer
+          // Adaptation responsive du bouton fermer - plus compact
           if (window.innerWidth <= 768) {
-            closeBtn.style.fontSize = "1.8rem";
-            closeBtn.style.top = "6px";
-            closeBtn.style.right = "12px";
+            closeBtn.style.fontSize = "1.5rem";
+            closeBtn.style.top = "2px";
+            closeBtn.style.right = "8px";
           } else {
             closeBtn.style.fontSize = "2.1rem";
             closeBtn.style.top = "10px";
@@ -1680,13 +1680,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           header.appendChild(closeBtn);
           box.appendChild(header);
           const content = document.createElement("div");
-          // Adaptation responsive du contenu - layout en grille pour tablette
+          // Adaptation responsive du contenu - padding très réduit pour tablette/mobile
           if (window.innerWidth <= 480) {
-            // Mobile - layout vertical
-            content.style.padding = "16px 16px 20px 16px";
+            // Mobile - padding minimal
+            content.style.padding = "8px 10px 12px 10px";
           } else if (window.innerWidth <= 768) {
-            // Tablette - padding réduit pour maximiser l'espace horizontal
-            content.style.padding = "12px 16px 16px 16px";
+            // Tablette - padding très réduit pour maximiser l'espace
+            content.style.padding = "6px 12px 10px 12px";
           } else {
             content.style.padding = "24px 24px 24px 24px";
           }
@@ -1696,10 +1696,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           // Assurer que le contenu peut défiler pour voir le bouton
           content.style.minHeight = "0";
           const blNum = document.createElement("div");
-          // Adaptation responsive de la taille de police
+          // Adaptation responsive de la taille de police - très compact
           if (window.innerWidth <= 768) {
-            blNum.style.fontSize = "1.1em";
-            blNum.style.marginBottom = "12px";
+            blNum.style.fontSize = "0.95em";
+            blNum.style.marginBottom = "6px";
           } else {
             blNum.style.fontSize = "1.25em";
             blNum.style.marginBottom = "18px";
@@ -1712,16 +1712,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const label = document.createElement("label");
           label.textContent = "Statut du BL :";
           label.style.display = "block";
-          label.style.marginBottom = "8px";
+          label.style.marginBottom = "4px";
           label.style.fontWeight = "500";
+          label.style.fontSize = window.innerWidth <= 768 ? "0.85em" : "1em";
           content.appendChild(label);
+
           const select = document.createElement("select");
           select.style.width = "100%";
-          // Adaptation responsive des inputs
+          // Adaptation responsive des inputs - très compact
           if (window.innerWidth <= 768) {
-            select.style.padding = "8px 10px";
-            select.style.fontSize = "1em";
-            select.style.marginBottom = "12px";
+            select.style.padding = "4px 6px";
+            select.style.fontSize = "0.9em";
+            select.style.marginBottom = "6px";
           } else {
             select.style.padding = "10px 12px";
             select.style.fontSize = "1.08em";
@@ -1759,10 +1761,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
           // Séparateur visuel
           const separator = document.createElement("div");
-          separator.style.borderTop = "2px solid #e5e7eb";
-          // Réduction de la marge sur mobile/tablette
+          separator.style.borderTop = "1px solid #e5e7eb";
+          // Réduction maximale de la marge sur mobile/tablette
           if (window.innerWidth <= 768) {
-            separator.style.margin = "8px 0 8px 0";
+            separator.style.margin = "4px 0 4px 0";
           } else {
             separator.style.margin = "20px 0 16px 0";
           }
@@ -1770,22 +1772,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
           // Titre section
           const sectionTitle = document.createElement("div");
-          const titleFontSize = window.innerWidth <= 768 ? "1.05em" : "1.1em";
-          sectionTitle.innerHTML = `<h4 style="color:#2563eb;font-weight:600;margin-bottom:8px;font-size:${titleFontSize};">📊 Données d'échange</h4>`;
+          const titleFontSize = window.innerWidth <= 768 ? "0.9em" : "1.1em";
+          sectionTitle.innerHTML = `<h4 style="color:#2563eb;font-weight:600;margin-bottom:4px;font-size:${titleFontSize};">📊 Données d'échange</h4>`;
           content.appendChild(sectionTitle);
 
-          // Container pour layout en grille sur tablette
+          // Container pour layout en grille sur tablette - optimisé pour espace réduit
           const fieldsContainer = document.createElement("div");
           if (window.innerWidth > 480 && window.innerWidth <= 768) {
-            // Layout grille 2 colonnes sur tablette
+            // Layout grille 2 colonnes sur tablette avec gaps réduits
             fieldsContainer.style.display = "grid";
             fieldsContainer.style.gridTemplateColumns = "1fr 1fr";
-            fieldsContainer.style.gap = "12px 16px";
-            fieldsContainer.style.marginBottom = "12px";
+            fieldsContainer.style.gap = "6px 10px";
+            fieldsContainer.style.marginBottom = "8px";
           } else {
             // Layout vertical sur mobile et desktop
             fieldsContainer.style.display = "block";
-            fieldsContainer.style.marginBottom = "8px";
+            fieldsContainer.style.marginBottom = "6px";
           }
           content.appendChild(fieldsContainer);
 
@@ -1798,25 +1800,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const paiementLabel = document.createElement("label");
           paiementLabel.textContent = "Paiement Acconage :";
           paiementLabel.style.display = "block";
-          paiementLabel.style.marginBottom = "4px";
+          paiementLabel.style.marginBottom = "2px";
           paiementLabel.style.fontWeight = "500";
-          paiementLabel.style.fontSize = "0.92em";
+          paiementLabel.style.fontSize =
+            window.innerWidth <= 768 ? "0.82em" : "0.92em";
           paiementGroup.appendChild(paiementLabel);
 
           const paiementInput = document.createElement("input");
           paiementInput.type = "text";
           paiementInput.id = "paiementAcconage";
           paiementInput.style.width = "100%";
-          paiementInput.style.padding = "6px 8px";
+          paiementInput.style.padding =
+            window.innerWidth <= 768 ? "3px 5px" : "6px 8px";
           paiementInput.style.border = "1.5px solid #d1d5db";
-          paiementInput.style.borderRadius = "6px";
-          paiementInput.style.fontSize = "0.95em";
+          paiementInput.style.borderRadius = "4px";
+          paiementInput.style.fontSize =
+            window.innerWidth <= 768 ? "0.85em" : "0.95em";
           // Marge adaptée selon le layout
           if (window.innerWidth > 480 && window.innerWidth <= 768) {
             paiementInput.style.marginBottom = "0";
           } else {
             paiementInput.style.marginBottom =
-              window.innerWidth <= 480 ? "8px" : "10px";
+              window.innerWidth <= 480 ? "4px" : "10px";
           }
           paiementInput.style.background = "#fff";
           paiementInput.placeholder = "Ex: Payé, En attente...";
@@ -1830,25 +1835,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const dateEchangeBLLabel = document.createElement("label");
           dateEchangeBLLabel.textContent = "📅 Date d'échange BL :";
           dateEchangeBLLabel.style.display = "block";
-          dateEchangeBLLabel.style.marginBottom = "4px";
+          dateEchangeBLLabel.style.marginBottom = "2px";
           dateEchangeBLLabel.style.fontWeight = "500";
-          dateEchangeBLLabel.style.fontSize = "0.92em";
+          dateEchangeBLLabel.style.fontSize =
+            window.innerWidth <= 768 ? "0.82em" : "0.92em";
           dateEchangeBLGroup.appendChild(dateEchangeBLLabel);
 
           const dateEchangeBLInput = document.createElement("input");
           dateEchangeBLInput.type = "date";
           dateEchangeBLInput.id = "dateEchangeBL";
           dateEchangeBLInput.style.width = "100%";
-          dateEchangeBLInput.style.padding = "6px 8px";
+          dateEchangeBLInput.style.padding =
+            window.innerWidth <= 768 ? "3px 5px" : "6px 8px";
           dateEchangeBLInput.style.border = "1.5px solid #d1d5db";
-          dateEchangeBLInput.style.borderRadius = "6px";
-          dateEchangeBLInput.style.fontSize = "0.95em";
+          dateEchangeBLInput.style.borderRadius = "4px";
+          dateEchangeBLInput.style.fontSize =
+            window.innerWidth <= 768 ? "0.85em" : "0.95em";
           // Marge adaptée selon le layout
           if (window.innerWidth > 480 && window.innerWidth <= 768) {
             dateEchangeBLInput.style.marginBottom = "0";
           } else {
             dateEchangeBLInput.style.marginBottom =
-              window.innerWidth <= 480 ? "8px" : "10px";
+              window.innerWidth <= 480 ? "4px" : "10px";
           }
           dateEchangeBLInput.style.background = "#fff";
 
@@ -1874,25 +1882,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const dateDOLabel = document.createElement("label");
           dateDOLabel.textContent = "📅 Date de DO :";
           dateDOLabel.style.display = "block";
-          dateDOLabel.style.marginBottom = "4px";
+          dateDOLabel.style.marginBottom = "2px";
           dateDOLabel.style.fontWeight = "500";
-          dateDOLabel.style.fontSize = "0.92em";
+          dateDOLabel.style.fontSize =
+            window.innerWidth <= 768 ? "0.82em" : "0.92em";
           dateDOGroup.appendChild(dateDOLabel);
 
           const dateDOInput = document.createElement("input");
           dateDOInput.type = "date";
           dateDOInput.id = "dateDO";
           dateDOInput.style.width = "100%";
-          dateDOInput.style.padding = "6px 8px";
+          dateDOInput.style.padding =
+            window.innerWidth <= 768 ? "3px 5px" : "6px 8px";
           dateDOInput.style.border = "1.5px solid #d1d5db";
-          dateDOInput.style.borderRadius = "6px";
-          dateDOInput.style.fontSize = "0.95em";
+          dateDOInput.style.borderRadius = "4px";
+          dateDOInput.style.fontSize =
+            window.innerWidth <= 768 ? "0.85em" : "0.95em";
           // Marge adaptée selon le layout
           if (window.innerWidth > 480 && window.innerWidth <= 768) {
             dateDOInput.style.marginBottom = "0";
           } else {
             dateDOInput.style.marginBottom =
-              window.innerWidth <= 480 ? "8px" : "10px";
+              window.innerWidth <= 480 ? "4px" : "10px";
           }
           dateDOInput.style.background = "#fff";
 
@@ -1917,25 +1928,28 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const dateBADTLabel = document.createElement("label");
           dateBADTLabel.textContent = "📅 Date de BADT :";
           dateBADTLabel.style.display = "block";
-          dateBADTLabel.style.marginBottom = "4px";
+          dateBADTLabel.style.marginBottom = "2px";
           dateBADTLabel.style.fontWeight = "500";
-          dateBADTLabel.style.fontSize = "0.92em";
+          dateBADTLabel.style.fontSize =
+            window.innerWidth <= 768 ? "0.82em" : "0.92em";
           dateBADTGroup.appendChild(dateBADTLabel);
 
           const dateBADTInput = document.createElement("input");
           dateBADTInput.type = "date";
           dateBADTInput.id = "dateBADT";
           dateBADTInput.style.width = "100%";
-          dateBADTInput.style.padding = "6px 8px";
+          dateBADTInput.style.padding =
+            window.innerWidth <= 768 ? "3px 5px" : "6px 8px";
           dateBADTInput.style.border = "1.5px solid #d1d5db";
-          dateBADTInput.style.borderRadius = "6px";
-          dateBADTInput.style.fontSize = "0.95em";
+          dateBADTInput.style.borderRadius = "4px";
+          dateBADTInput.style.fontSize =
+            window.innerWidth <= 768 ? "0.85em" : "0.95em";
           // Marge finale avant le bouton
           if (window.innerWidth > 480 && window.innerWidth <= 768) {
             dateBADTInput.style.marginBottom = "0";
           } else {
             dateBADTInput.style.marginBottom =
-              window.innerWidth <= 480 ? "12px" : "15px";
+              window.innerWidth <= 480 ? "6px" : "15px";
           }
           dateBADTInput.style.background = "#fff";
 
@@ -1954,12 +1968,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateBADTGroup.appendChild(dateBADTInput);
           fieldsContainer.appendChild(dateBADTGroup);
 
-          // Espacement avant le bouton
+          // Espacement avant le bouton - très réduit
           const buttonSpacer = document.createElement("div");
           if (window.innerWidth > 480 && window.innerWidth <= 768) {
-            buttonSpacer.style.marginTop = "16px";
-          } else {
             buttonSpacer.style.marginTop = "8px";
+          } else {
+            buttonSpacer.style.marginTop = "4px";
           }
           content.appendChild(buttonSpacer);
 
@@ -1970,17 +1984,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
           saveBtn.style.color = "#fff";
           saveBtn.style.fontWeight = "bold";
-          // Adaptation responsive du bouton - optimisé pour tablette
+          // Adaptation responsive du bouton - ultra compact pour tablette/mobile
           if (window.innerWidth <= 480) {
-            // Mobile
-            saveBtn.style.fontSize = "0.95em";
-            saveBtn.style.padding = "0.85em 1.2em";
-            saveBtn.style.marginTop = "8px";
+            // Mobile - bouton compact
+            saveBtn.style.fontSize = "0.85em";
+            saveBtn.style.padding = "0.6em 1em";
+            saveBtn.style.marginTop = "4px";
           } else if (window.innerWidth <= 768) {
-            // Tablette - bouton plus grand et visible
-            saveBtn.style.fontSize = "1.05em";
-            saveBtn.style.padding = "0.9em 1.8em";
-            saveBtn.style.marginTop = "12px";
+            // Tablette - bouton visible mais compact
+            saveBtn.style.fontSize = "0.9em";
+            saveBtn.style.padding = "0.65em 1.2em";
+            saveBtn.style.marginTop = "6px";
             saveBtn.style.width = "100%";
           } else {
             // Desktop
