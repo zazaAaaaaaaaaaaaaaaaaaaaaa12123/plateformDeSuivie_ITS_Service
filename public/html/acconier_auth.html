@@ -173,6 +173,28 @@
     </style>
   </head>
   <body>
+    <button
+      id="logoutAcconierBtn"
+      style="
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 9999;
+        padding: 8px 18px;
+        background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        font-weight: 600;
+        box-shadow: 0 2px 8px #2563eb22;
+        cursor: pointer;
+        transition: filter 0.18s;
+        display: none;
+      "
+    >
+      Se déconnecter
+    </button>
     <div class="auth-container">
       <div id="form-inscription">
         <div class="auth-title">Inscription Agent Transit</div>
@@ -268,12 +290,6 @@
             const email = document.getElementById("login-email").value.trim();
             const password = document.getElementById("login-password").value;
             // Envoi de la requête de connexion
-            <button
-              id="logoutAcconierBtn"
-              style="position:fixed;top:18px;right:18px;z-index:9999;padding:8px 18px;background:linear-gradient(90deg,#2563eb 0%,#06b6d4 100%);color:#fff;border:none;border-radius:8px;font-size:1em;font-weight:600;box-shadow:0 2px 8px #2563eb22;cursor:pointer;transition:filter .18s;"
-            >
-              Se déconnecter
-            </button>;
             try {
               const res = await fetch("/acconier/login", {
                 method: "POST",
@@ -291,12 +307,37 @@
                     avatar: "",
                   })
                 );
+                // Affiche le bouton de déconnexion
+                document.getElementById("logoutAcconierBtn").style.display =
+                  "block";
                 // Redirige vers la partie Connexion Agent Transit du formulaire Employer
+                window.location.href = "/employer_form.html";
+              } else {
+                document.getElementById("login-error").textContent =
+                  data.message || "Erreur de connexion";
               }
             } catch (err) {
-              // Optionnel : gestion d'erreur
+              document.getElementById("login-error").textContent =
+                "Erreur de connexion";
             }
           });
+        }
+
+        // Gestion du bouton de déconnexion
+        const logoutBtn = document.getElementById("logoutAcconierBtn");
+        if (logoutBtn) {
+          logoutBtn.addEventListener("click", function () {
+            localStorage.removeItem("acconier_user");
+            logoutBtn.style.display = "none";
+            // Optionnel: recharger la page ou rediriger
+            window.location.reload();
+          });
+        }
+
+        // Vérifier si l'utilisateur est déjà connecté au chargement de la page
+        const userData = localStorage.getItem("acconier_user");
+        if (userData) {
+          document.getElementById("logoutAcconierBtn").style.display = "block";
         }
       });
     </script>
