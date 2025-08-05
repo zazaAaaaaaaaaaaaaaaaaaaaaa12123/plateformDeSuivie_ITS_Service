@@ -3162,9 +3162,9 @@ document.addEventListener("DOMContentLoaded", function () {
     parentContainer.style.gap = "8px";
     parentContainer.style.flexWrap = "wrap";
 
-    // Réduction de la largeur du champ de recherche
-    searchInput.style.width = "60%";
-    searchInput.style.maxWidth = "350px";
+    // Réduction encore plus importante de la largeur du champ de recherche
+    searchInput.style.width = "45%";
+    searchInput.style.maxWidth = "280px";
     searchInput.style.flex = "0 1 auto";
 
     // Ajouter le bouton PDF à la fin
@@ -3712,9 +3712,9 @@ function showHistoryButtonIfNeeded() {
       const parentContainer = searchInput.parentNode;
       parentContainer.insertBefore(historyBtn, parentContainer.firstChild);
 
-      // Réduire davantage la largeur du champ de recherche
-      searchInput.style.width = "60%";
-      searchInput.style.maxWidth = "350px";
+      // Réduire encore plus la largeur du champ de recherche
+      searchInput.style.width = "45%";
+      searchInput.style.maxWidth = "280px";
 
       // Configurer le conteneur parent en flexbox
       parentContainer.style.display = "flex";
