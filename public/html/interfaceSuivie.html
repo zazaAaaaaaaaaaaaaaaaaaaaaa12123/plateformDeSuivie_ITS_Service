@@ -208,6 +208,20 @@
         text-align: center;
       }
 
+      /* Styles pour les nouvelles colonnes de dates */
+      .table th:nth-child(20), /* Colonne Date d'échange BL (position 20) */
+      .table td:nth-child(20),
+      .table th:nth-child(21), /* Colonne Date de DO (position 21) */
+      .table td:nth-child(21),
+      .table th:nth-child(22), /* Colonne Date de BADT (position 22) */
+      .table td:nth-child(22) {
+        width: 120px;
+        min-width: 110px;
+        max-width: 140px;
+        white-space: nowrap;
+        text-align: center;
+      }
+
       .table th,
       .table td {
         vertical-align: top; /* Aligne le contenu en haut des cellules */
@@ -530,7 +544,7 @@
                   Responsable Acconier
                 </th>
                 <th
-                  colspan="14"
+                  colspan="17"
                   id="respLivraisonHeader"
                   class="header-resp-livraison"
                 >
@@ -562,6 +576,9 @@
                 <th>Mode de Transport</th>
                 <th>Date d'échange</th>
                 <th>Statut Dossier</th>
+                <th>Date d'échange BL</th>
+                <th>Date de DO</th>
+                <th>Date de BADT</th>
                 <th>Observation</th>
                 <th>Nom agent visiteur</th>
                 <th>Transporteur</th>
@@ -578,7 +595,7 @@
             <tbody id="deliveriesTableBody">
               <!-- Les lignes serofghnt générées dynamiquement par JS -->
               <tr>
-                <td colspan="32" class="text-center text-muted">
+                <td colspan="35" class="text-center text-muted">
                   <i class="fas fa-spinner fa-spin me-2"></i> Chargement des
                   livraisons...
                 </td>

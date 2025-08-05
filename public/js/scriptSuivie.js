@@ -3108,6 +3108,18 @@ function mapStatus(status) {
             // Ensure date_echange is a Date object if it exists
             delivery.date_echange = new Date(delivery.date_echange);
           }
+          if (delivery.date_echange_bl) {
+            // Ensure date_echange_bl is a Date object if it exists
+            delivery.date_echange_bl = new Date(delivery.date_echange_bl);
+          }
+          if (delivery.date_do) {
+            // Ensure date_do is a Date object if it exists
+            delivery.date_do = new Date(delivery.date_do);
+          }
+          if (delivery.date_badt) {
+            // Ensure date_badt is a Date object if it exists
+            delivery.date_badt = new Date(delivery.date_badt);
+          }
           return delivery;
         });
         allDeliveries = [...deliveries]; // Keep a copy of all original deliveries
@@ -4008,8 +4020,8 @@ function mapStatus(status) {
     }
     deliveriesTableBody.innerHTML = "";
 
-    // Total columns: 29 original + 1 (Date d'échange) + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) = 32
-    const ACTUAL_COLUMN_COUNT = 32;
+    // Total columns: 29 original + 1 (Date d'échange) + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) + 3 (nouvelles dates) = 35
+    const ACTUAL_COLUMN_COUNT = 35;
 
     if (deliveriesToRender.length === 0) {
       deliveriesTableBody.innerHTML = `
@@ -4287,6 +4299,12 @@ function mapStatus(status) {
         } else if (value instanceof Date && fieldName === "delivery_date") {
           displayValue = value.toLocaleDateString("fr-FR");
         } else if (value instanceof Date && fieldName === "date_echange") {
+          displayValue = value.toLocaleDateString("fr-FR");
+        } else if (value instanceof Date && fieldName === "date_echange_bl") {
+          displayValue = value.toLocaleDateString("fr-FR");
+        } else if (value instanceof Date && fieldName === "date_do") {
+          displayValue = value.toLocaleDateString("fr-FR");
+        } else if (value instanceof Date && fieldName === "date_badt") {
           displayValue = value.toLocaleDateString("fr-FR");
         } else if (value instanceof Date) {
           displayValue = value.toLocaleDateString("fr-FR");
@@ -4783,6 +4801,9 @@ function mapStatus(status) {
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
       createCell(delivery.date_echange, "date_echange", "date", {}); // Date d'échange
       createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
+      createCell(delivery.date_echange_bl, "date_echange_bl", "date", {}); // Date d'échange BL
+      createCell(delivery.date_do, "date_do", "date", {}); // Date de DO
+      createCell(delivery.date_badt, "date_badt", "date", {}); // Date de BADT
       createCell(
         delivery.observation_acconier,
         "observation_acconier",
@@ -4922,8 +4943,8 @@ function mapStatus(status) {
     const COLS_AGENT = [
       2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
     ]; // Ajout de la colonne 18 (Date d'échange)
-    const COLS_RESP = [19, 20]; // Décalage de +1
-    const COLS_LIVRAISON = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30]; // Décalage de +1
+    const COLS_RESP = [19, 20, 21, 22, 23]; // 19=Statut Dossier, 20=Date échange BL, 21=Date DO, 22=Date BADT, 23=Observation
+    const COLS_LIVRAISON = [24, 25, 26, 27, 28, 29, 30, 31, 32, 33]; // Décalage de +3
     function flashCells(colIndexes, flashClass) {
       const rows = table.tBodies[0]?.rows;
       if (!rows) return;
