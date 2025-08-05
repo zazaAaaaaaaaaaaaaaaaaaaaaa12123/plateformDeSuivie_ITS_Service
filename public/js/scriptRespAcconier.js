@@ -1578,8 +1578,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.textContent = "-";
         }
-        // Fonction pour afficher le menu déroulant de BL (popup) avec statut
+        // Fonction pour afficher le menu déroulant de BL (popup) avec statut - VERSION ULTRA COMPACTE 2024
         function showBLDetailPopup(delivery, blNumber) {
+          console.log("🚀 POPUP ULTRA COMPACT - Version tablette optimisée");
           const oldPopup = document.getElementById("blDetailPopup");
           if (oldPopup) oldPopup.remove();
           const overlay = document.createElement("div");
@@ -1596,6 +1597,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           overlay.style.justifyContent = "center";
           const box = document.createElement("div");
           box.style.background = "#fff";
+          box.style.border = "3px solid #ff0000"; // BORDURE ROUGE POUR TEST
           box.style.borderRadius = window.innerWidth <= 768 ? "12px" : "16px";
           box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
           // Adaptation responsive : popup ULTRA compact pour tablette/mobile
