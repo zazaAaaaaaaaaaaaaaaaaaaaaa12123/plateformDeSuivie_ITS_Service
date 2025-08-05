@@ -3345,6 +3345,46 @@
                 }
               }
 
+              // === NOUVELLE GESTION POUR SYNCHRONISATION DIRECTE DES CARTES ===
+              if (
+                (data.type === "status-change" && data.action) ||
+                data.forceCounterUpdate
+              ) {
+                console.log(
+                  "[DASHBOARD] 🔄 Synchronisation directe des cartes:",
+                  data.action,
+                  "pour dossier",
+                  data.dossierNumber
+                );
+
+                // Mise à jour immédiate des compteurs sans délai
+                if (typeof window.updateCardCounters === "function") {
+                  window.updateCardCounters();
+                }
+
+                // Affichage spécifique selon le type de transition
+                switch (data.action) {
+                  case "delivery_completed":
+                    showCustomAlert(
+                      `✅ Dossier ${data.dossierNumber} complètement livré`,
+                      "success"
+                    );
+                    break;
+                  case "delivery_started":
+                    showCustomAlert(
+                      `🚛 Dossier ${data.dossierNumber} mis en livraison`,
+                      "success"
+                    );
+                    break;
+                  case "increment_mise_en_livraison_decrement_attente":
+                    showCustomAlert(
+                      `📋→🚛 Dossier ${data.dossierNumber} transféré en livraison`,
+                      "success"
+                    );
+                    break;
+                }
+              }
+
               // === GESTION DES TRANSITIONS RESP_ACCONIER → RESP_LIV ===
               if (data.type === "dossier-entre-en-livraison") {
                 console.log(
@@ -3557,7 +3597,7 @@
           const cartes = [
             "carteAttentePaiement",
             "carteMiseLivraison",
-            "carteLivres",
+            "carteLivre",
           ];
           cartes.forEach((cardId) => {
             const card = document.getElementById(cardId);
@@ -3577,44 +3617,45 @@
 
         // Exécuter le debug dans 2 secondes après le chargement complet
         setTimeout(() => {
-          console.log("🚀 [DEBUG] Diagnostic automatique des compteurs...");
-          window.debugCardCounters();
+          console.log(
+            "🚀 [SYNCHRONISATION] Initialisation de la synchronisation des cartes..."
+          );
 
-          // Fonction pour forcer la correction si nécessaire
-          setTimeout(() => {
-            const miseLivraisonCard =
-              document.getElementById("carteMiseLivraison");
-            if (miseLivraisonCard) {
-              const counter = miseLivraisonCard.querySelector(".card-counter");
-              if (counter && counter.textContent === "99") {
-                console.log(
-                  "🚨 [AUTO-FIX] Détection de la valeur incorrecte '99', correction automatique..."
-                );
+          // Vérifier que toutes les cartes existent
+          const cartesRequises = [
+            "carteAttentePaiement",
+            "carteMiseLivraison",
+            "carteLivre",
+          ];
+          const cartesManquantes = cartesRequises.filter(
+            (id) => !document.getElementById(id)
+          );
 
-                // Supprimer le compteur incorrect
-                counter.remove();
+          if (cartesManquantes.length > 0) {
+            console.error(
+              "❌ [SYNCHRONISATION] Cartes manquantes:",
+              cartesManquantes
+            );
+            return;
+          }
 
-                // Forcer la mise à jour avec la bonne valeur depuis l'API
-                fetch("/api/deliveries/status-counts")
-                  .then((response) => response.json())
-                  .then((data) => {
-                    if (data.success) {
-                      const correctValue = data.counts.mise_en_livraison || 0;
-                      console.log(
-                        `✅ [AUTO-FIX] Application de la valeur correcte: ${correctValue}`
-                      );
-                      window.updateCardCounter(
-                        "carteMiseLivraison",
-                        correctValue
-                      );
-                    }
-                  })
-                  .catch((error) =>
-                    console.error("❌ [AUTO-FIX] Erreur:", error)
-                  );
-              }
-            }
-          }, 1500);
+          console.log("✅ [SYNCHRONISATION] Toutes les cartes sont présentes");
+
+          // Première synchronisation
+          window.updateCardCounters();
+
+          // Programmer les synchronisations automatiques
+          setInterval(() => {
+            console.log("🔄 [SYNCHRONISATION] Mise à jour périodique...");
+            window.updateCardCounters();
+          }, 30000); // Toutes les 30 secondes
+
+          console.log(
+            "✅ [SYNCHRONISATION] Système de synchronisation initialisé"
+          );
+          console.log(
+            "💡 [SYNCHRONISATION] Utilisez window.diagnoseTablóeDeBord() pour diagnostiquer"
+          );
         }, 2000);
 
         // Ajouter une fonction globale pour forcer la correction manuelle si nécessaire

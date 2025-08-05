@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test de Synchronisation des Cartes</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .test-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 5px 10px;
+        border-radius: 4px;
+        color: white;
+        font-weight: bold;
+      }
+      .success {
+        background: #22c55e;
+      }
+      .error {
+        background: #ef4444;
+      }
+      .warning {
+        background: #f59e0b;
+      }
+      .info {
+        background: #3b82f6;
+      }
+      .test-button {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .test-button:hover {
+        background: #2563eb;
+      }
+      .counter-display {
+        display: flex;
+        gap: 20px;
+        margin: 20px 0;
+      }
+      .counter-box {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        flex: 1;
+      }
+      .counter-value {
+        font-size: 2em;
+        font-weight: bold;
+        color: #2563eb;
+      }
+      .counter-label {
+        color: #64748b;
+        font-size: 0.9em;
+        margin-top: 5px;
+      }
+      .logs {
+        background: #1a1a1a;
+        color: #00ff00;
+        padding: 15px;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+        max-height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧪 Test de Synchronisation des Cartes</h1>
+
+    <div class="test-card">
+      <h2>📊 État Actuel des Compteurs</h2>
+      <div class="counter-display">
+        <div class="counter-box">
+          <div class="counter-value" id="countAttente">-</div>
+          <div class="counter-label">En attente de paiement</div>
+        </div>
+        <div class="counter-box">
+          <div class="counter-value" id="countMiseLivraison">-</div>
+          <div class="counter-label">Dossiers mis en livraison</div>
+        </div>
+        <div class="counter-box">
+          <div class="counter-value" id="countLivres">-</div>
+          <div class="counter-label">Dossiers livrés</div>
+        </div>
+      </div>
+      <button class="test-button" onclick="refreshCounters()">
+        🔄 Actualiser
+      </button>
+      <button class="test-button" onclick="testApiConnection()">
+        🌐 Test API
+      </button>
+      <button class="test-button" onclick="testWebSocket()">
+        📡 Test WebSocket
+      </button>
+    </div>
+
+    <div class="test-card">
+      <h2>🎯 Tests de Fonctionnalité</h2>
+      <div id="testResults"></div>
+      <button class="test-button" onclick="runAllTests()">
+        ▶️ Lancer tous les tests
+      </button>
+      <button class="test-button" onclick="clearLogs()">
+        🗑️ Effacer les logs
+      </button>
+    </div>
+
+    <div class="test-card">
+      <h2>📝 Console de Logs</h2>
+      <div class="logs" id="logConsole"></div>
+    </div>
+
+    <script>
+      let ws = null;
+
+      function log(message, type = "info") {
+        const console = document.getElementById("logConsole");
+        const timestamp = new Date().toLocaleTimeString();
+        const typeIcon = {
+          info: "ℹ️",
+          success: "✅",
+          error: "❌",
+          warning: "⚠️",
+        };
+
+        console.innerHTML += `[${timestamp}] ${typeIcon[type]} ${message}\n`;
+        console.scrollTop = console.scrollHeight;
+      }
+
+      function addTestResult(testName, status, message) {
+        const results = document.getElementById("testResults");
+        const statusClass =
+          status === "success"
+            ? "success"
+            : status === "error"
+            ? "error"
+            : "warning";
+        results.innerHTML += `
+                <div style="margin: 10px 0; display: flex; align-items: center; gap: 10px;">
+                    <span class="status ${statusClass}">${status.toUpperCase()}</span>
+                    <strong>${testName}</strong>: ${message}
+                </div>
+            `;
+      }
+
+      async function refreshCounters() {
+        try {
+          log("Récupération des compteurs depuis l'API...");
+          const response = await fetch("/api/deliveries/status-counts");
+          const data = await response.json();
+
+          if (data.success) {
+            document.getElementById("countAttente").textContent =
+              data.counts.en_attente_paiement || 0;
+            document.getElementById("countMiseLivraison").textContent =
+              data.counts.mise_en_livraison || 0;
+            document.getElementById("countLivres").textContent =
+              data.counts.livres || 0;
+            log(
+              `Compteurs mis à jour: ${JSON.stringify(data.counts)}`,
+              "success"
+            );
+          } else {
+            log("Erreur dans la réponse API: " + JSON.stringify(data), "error");
+          }
+        } catch (error) {
+          log(
+            "Erreur lors de la récupération des compteurs: " + error.message,
+            "error"
+          );
+        }
+      }
+
+      async function testApiConnection() {
+        try {
+          log("Test de connexion API...");
+          const start = Date.now();
+          const response = await fetch("/api/deliveries/status-counts");
+          const duration = Date.now() - start;
+
+          if (response.ok) {
+            const data = await response.json();
+            addTestResult(
+              "API Connection",
+              "success",
+              `Connecté en ${duration}ms - ${JSON.stringify(data.counts)}`
+            );
+            log(`API accessible en ${duration}ms`, "success");
+          } else {
+            addTestResult("API Connection", "error", `HTTP ${response.status}`);
+            log(`Erreur HTTP ${response.status}`, "error");
+          }
+        } catch (error) {
+          addTestResult("API Connection", "error", error.message);
+          log("Erreur de connexion API: " + error.message, "error");
+        }
+      }
+
+      function testWebSocket() {
+        try {
+          log("Test de connexion WebSocket...");
+          const wsUrl =
+            window.location.protocol === "https:"
+              ? `wss://${window.location.host}`
+              : `ws://${window.location.host}`;
+
+          ws = new WebSocket(wsUrl);
+
+          ws.onopen = function () {
+            addTestResult(
+              "WebSocket Connection",
+              "success",
+              "Connecté avec succès"
+            );
+            log("WebSocket connecté", "success");
+          };
+
+          ws.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            log(`Message WebSocket reçu: ${JSON.stringify(data)}`, "info");
+          };
+
+          ws.onerror = function (error) {
+            addTestResult(
+              "WebSocket Connection",
+              "error",
+              "Erreur de connexion"
+            );
+            log("Erreur WebSocket: " + error.message, "error");
+          };
+
+          ws.onclose = function () {
+            log("WebSocket fermé", "warning");
+          };
+        } catch (error) {
+          addTestResult("WebSocket Connection", "error", error.message);
+          log("Erreur WebSocket: " + error.message, "error");
+        }
+      }
+
+      async function runAllTests() {
+        document.getElementById("testResults").innerHTML = "";
+        log("🚀 Début des tests de synchronisation...", "info");
+
+        // Test 1: API Connection
+        await testApiConnection();
+
+        // Test 2: WebSocket
+        testWebSocket();
+
+        // Test 3: Compteurs
+        await refreshCounters();
+
+        // Test 4: Vérification des cartes sur le tableau de bord
+        try {
+          const mainPageResponse = await fetch("/html/tableauDeBord.html");
+          if (mainPageResponse.ok) {
+            addTestResult(
+              "Page principale",
+              "success",
+              "Tableau de bord accessible"
+            );
+          } else {
+            addTestResult(
+              "Page principale",
+              "error",
+              `HTTP ${mainPageResponse.status}`
+            );
+          }
+        } catch (error) {
+          addTestResult("Page principale", "error", error.message);
+        }
+
+        log("✅ Tests terminés", "success");
+      }
+
+      function clearLogs() {
+        document.getElementById("logConsole").innerHTML = "";
+        document.getElementById("testResults").innerHTML = "";
+      }
+
+      // Auto-refresh des compteurs toutes les 10 secondes
+      setInterval(refreshCounters, 10000);
+
+      // Initialisation
+      document.addEventListener("DOMContentLoaded", function () {
+        log("🎯 Interface de test initialisée", "success");
+        refreshCounters();
+      });
+    </script>
+  </body>
+</html>
