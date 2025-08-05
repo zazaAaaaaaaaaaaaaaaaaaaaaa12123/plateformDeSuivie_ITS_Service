@@ -3163,8 +3163,8 @@ document.addEventListener("DOMContentLoaded", function () {
     parentContainer.style.flexWrap = "wrap";
 
     // Réduction de la largeur du champ de recherche
-    searchInput.style.width = "70%";
-    searchInput.style.maxWidth = "400px";
+    searchInput.style.width = "60%";
+    searchInput.style.maxWidth = "350px";
     searchInput.style.flex = "0 1 auto";
 
     // Ajouter le bouton PDF à la fin
@@ -3708,13 +3708,13 @@ function showHistoryButtonIfNeeded() {
       "input[placeholder='Rechercher une livraison.']"
     );
     if (searchInput && searchInput.parentNode) {
-      // Insérer le bouton historique AVANT le champ de recherche
+      // Insérer le bouton historique au TOUT DÉBUT du conteneur (avant l'icône de recherche)
       const parentContainer = searchInput.parentNode;
-      parentContainer.insertBefore(historyBtn, searchInput);
+      parentContainer.insertBefore(historyBtn, parentContainer.firstChild);
 
-      // Ajuster la largeur du champ de recherche
-      searchInput.style.width = "70%";
-      searchInput.style.maxWidth = "400px";
+      // Réduire davantage la largeur du champ de recherche
+      searchInput.style.width = "60%";
+      searchInput.style.maxWidth = "350px";
 
       // Configurer le conteneur parent en flexbox
       parentContainer.style.display = "flex";
