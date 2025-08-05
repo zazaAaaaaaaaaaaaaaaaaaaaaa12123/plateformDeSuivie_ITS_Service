@@ -771,7 +771,7 @@ async function propagateStatusToAllTCs(deliveryId, newStatus) {
         console.log(
           `[STATUS PROPAGATION] 🔧 Données tronquées détectées: "${delivery.container_number}"`
         );
-        console.log(`[STATUS PROPAGATION] � Tentative de synchronisation...`);
+        console.log(`[STATUS PROPAGATION]   Tentative de synchronisation...`);
 
         // Lance la synchronisation pour cette livraison spécifique
         const syncResult = await forceSyncDelivery(delivery);
@@ -2450,7 +2450,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }
               }
 
-              // � MISE À JOUR INSTANTANÉE POUR UN SEUL TC (pas de propagation automatique)
+              //   MISE À JOUR INSTANTANÉE POUR UN SEUL TC (pas de propagation automatique)
               console.log(
                 `[SINGLE UPDATE] Mise à jour instantanée pour TC: ${containerNumber}`
               );
