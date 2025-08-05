@@ -860,90 +860,300 @@
         overflow: hidden;
       }
 
-      /* Lignes de connexion animées */
+      /* Lignes de connexion animées avec transitions de couleurs fluides */
       .connection-line {
         position: absolute;
-        height: 2px;
+        height: 3px;
         background: linear-gradient(
           90deg,
           transparent 0%,
-          #3b82f6 20%,
-          #06b6d4 50%,
-          #3b82f6 80%,
+          var(--connection-color-1) 20%,
+          var(--connection-color-2) 40%,
+          var(--connection-color-3) 60%,
+          var(--connection-color-1) 80%,
           transparent 100%
         );
-        opacity: 0.6;
+        --connection-color-1: #3b82f6;
+        --connection-color-2: #06b6d4;
+        --connection-color-3: #8b5cf6;
+        opacity: 0.7;
         transform-origin: left center;
-        animation: connectionPulse 4s ease-in-out infinite;
+        animation: connectionPulse 4s ease-in-out infinite,
+          connectionColorShift 6s ease-in-out infinite;
+        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
       }
 
       .connection-line::before {
         content: "";
         position: absolute;
-        top: -1px;
+        top: -2px;
         left: 0;
         width: 100%;
-        height: 4px;
+        height: 7px;
         background: linear-gradient(
           90deg,
           transparent 0%,
-          rgba(59, 130, 246, 0.3) 50%,
+          rgba(59, 130, 246, 0.3) 25%,
+          rgba(6, 182, 212, 0.4) 50%,
+          rgba(139, 92, 246, 0.3) 75%,
           transparent 100%
         );
-        filter: blur(2px);
+        filter: blur(3px);
+        animation: connectionGlow 3s ease-in-out infinite;
+      }
+
+      .connection-line::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 12px;
+        height: 12px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.9) 0%,
+          var(--connection-color-2) 50%,
+          transparent 100%
+        );
+        border-radius: 50%;
+        transform: translateY(-50%);
+        animation: sparkleTravel 4s linear infinite;
       }
 
       @keyframes connectionPulse {
         0%,
         100% {
+          opacity: 0.4;
+          transform: scaleX(0.8) scaleY(1);
+          filter: brightness(1) drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
+        }
+        50% {
+          opacity: 0.9;
+          transform: scaleX(1.2) scaleY(1.5);
+          filter: brightness(1.8) drop-shadow(0 0 15px rgba(59, 130, 246, 0.8));
+        }
+      }
+
+      @keyframes connectionColorShift {
+        0% {
+          --connection-color-1: #3b82f6;
+          --connection-color-2: #06b6d4;
+          --connection-color-3: #8b5cf6;
+        }
+        25% {
+          --connection-color-1: #06b6d4;
+          --connection-color-2: #8b5cf6;
+          --connection-color-3: #ec4899;
+        }
+        50% {
+          --connection-color-1: #8b5cf6;
+          --connection-color-2: #ec4899;
+          --connection-color-3: #f59e0b;
+        }
+        75% {
+          --connection-color-1: #ec4899;
+          --connection-color-2: #f59e0b;
+          --connection-color-3: #10b981;
+        }
+        100% {
+          --connection-color-1: #3b82f6;
+          --connection-color-2: #06b6d4;
+          --connection-color-3: #8b5cf6;
+        }
+      }
+
+      @keyframes connectionGlow {
+        0%,
+        100% {
           opacity: 0.3;
-          transform: scaleX(0.8);
-          filter: brightness(1);
+          filter: blur(3px) hue-rotate(0deg);
         }
         50% {
           opacity: 0.8;
-          transform: scaleX(1.1);
-          filter: brightness(1.5);
+          filter: blur(6px) hue-rotate(90deg);
         }
       }
 
-      /* Particules voyageuses */
-      .connection-particle {
-        position: absolute;
-        width: 8px;
-        height: 8px;
-        background: radial-gradient(circle, #06b6d4 0%, #3b82f6 100%);
-        border-radius: 50%;
-        box-shadow: 0 0 10px #06b6d4, 0 0 20px rgba(6, 182, 212, 0.5);
-        z-index: 2;
+      @keyframes sparkleTravel {
+        0% {
+          left: -6px;
+          opacity: 0;
+          background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.9) 0%,
+            #3b82f6 50%,
+            transparent 100%
+          );
+        }
+        10% {
+          opacity: 1;
+        }
+        25% {
+          background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.9) 0%,
+            #06b6d4 50%,
+            transparent 100%
+          );
+        }
+        50% {
+          background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.9) 0%,
+            #8b5cf6 50%,
+            transparent 100%
+          );
+        }
+        75% {
+          background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.9) 0%,
+            #ec4899 50%,
+            transparent 100%
+          );
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          left: calc(100% + 6px);
+          opacity: 0;
+          background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.9) 0%,
+            #3b82f6 50%,
+            transparent 100%
+          );
+        }
       }
 
-      /* Animation des particules */
+      /* Particules voyageuses avec couleurs fluides */
+      .connection-particle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.9) 0%,
+          var(--particle-color-primary) 40%,
+          var(--particle-color-secondary) 100%
+        );
+        --particle-color-primary: #06b6d4;
+        --particle-color-secondary: #3b82f6;
+        border-radius: 50%;
+        box-shadow: 0 0 15px var(--particle-color-primary),
+          0 0 30px rgba(6, 182, 212, 0.6),
+          inset 0 0 5px rgba(255, 255, 255, 0.8);
+        z-index: 2;
+        animation: particleColorCycle 5s ease-in-out infinite;
+        filter: brightness(1.2);
+      }
+
+      .connection-particle::before {
+        content: "";
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        width: 16px;
+        height: 16px;
+        background: radial-gradient(
+          circle,
+          transparent 40%,
+          var(--particle-color-primary) 60%,
+          transparent 100%
+        );
+        border-radius: 50%;
+        filter: blur(2px);
+        animation: particleAura 3s ease-in-out infinite;
+      }
+
+      @keyframes particleColorCycle {
+        0% {
+          --particle-color-primary: #06b6d4;
+          --particle-color-secondary: #3b82f6;
+        }
+        20% {
+          --particle-color-primary: #3b82f6;
+          --particle-color-secondary: #8b5cf6;
+        }
+        40% {
+          --particle-color-primary: #8b5cf6;
+          --particle-color-secondary: #ec4899;
+        }
+        60% {
+          --particle-color-primary: #ec4899;
+          --particle-color-secondary: #f59e0b;
+        }
+        80% {
+          --particle-color-primary: #f59e0b;
+          --particle-color-secondary: #10b981;
+        }
+        100% {
+          --particle-color-primary: #06b6d4;
+          --particle-color-secondary: #3b82f6;
+        }
+      }
+
+      @keyframes particleAura {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scale(0.8);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.4);
+        }
+      }
+
+      /* Animation des particules avec transitions de couleurs fluides */
       @keyframes particleTravel1 {
         0% {
           left: 20%;
           top: 50%;
           opacity: 0;
           transform: scale(0);
+          --particle-color-primary: #3b82f6;
+          --particle-color-secondary: #06b6d4;
+          filter: brightness(1) hue-rotate(0deg);
         }
         10% {
           opacity: 1;
-          transform: scale(1);
+          transform: scale(1.2);
+          filter: brightness(1.3) hue-rotate(30deg);
+        }
+        25% {
+          --particle-color-primary: #06b6d4;
+          --particle-color-secondary: #8b5cf6;
+          filter: brightness(1.5) hue-rotate(60deg);
         }
         50% {
           left: 50%;
           top: 45%;
           opacity: 1;
+          transform: scale(1);
+          --particle-color-primary: #8b5cf6;
+          --particle-color-secondary: #ec4899;
+          filter: brightness(1.8) hue-rotate(90deg);
+        }
+        75% {
+          --particle-color-primary: #ec4899;
+          --particle-color-secondary: #f59e0b;
+          filter: brightness(1.5) hue-rotate(120deg);
         }
         90% {
           opacity: 1;
-          transform: scale(1);
+          transform: scale(1.2);
+          filter: brightness(1.3) hue-rotate(150deg);
         }
         100% {
           left: 80%;
           top: 50%;
           opacity: 0;
           transform: scale(0);
+          --particle-color-primary: #10b981;
+          --particle-color-secondary: #3b82f6;
+          filter: brightness(1) hue-rotate(180deg);
         }
       }
 
@@ -953,25 +1163,47 @@
           top: 45%;
           opacity: 0;
           transform: scale(0);
+          --particle-color-primary: #8b5cf6;
+          --particle-color-secondary: #ec4899;
+          filter: brightness(1) hue-rotate(60deg);
         }
         10% {
           opacity: 1;
-          transform: scale(1);
+          transform: scale(1.2);
+          filter: brightness(1.4) hue-rotate(90deg);
+        }
+        25% {
+          --particle-color-primary: #ec4899;
+          --particle-color-secondary: #f59e0b;
+          filter: brightness(1.6) hue-rotate(120deg);
         }
         50% {
           left: 75%;
           top: 70%;
           opacity: 1;
+          transform: scale(1);
+          --particle-color-primary: #f59e0b;
+          --particle-color-secondary: #10b981;
+          filter: brightness(1.9) hue-rotate(150deg);
+        }
+        75% {
+          --particle-color-primary: #10b981;
+          --particle-color-secondary: #06b6d4;
+          filter: brightness(1.6) hue-rotate(180deg);
         }
         90% {
           opacity: 1;
-          transform: scale(1);
+          transform: scale(1.2);
+          filter: brightness(1.4) hue-rotate(210deg);
         }
         100% {
           left: 100%;
           top: 95%;
           opacity: 0;
           transform: scale(0);
+          --particle-color-primary: #06b6d4;
+          --particle-color-secondary: #3b82f6;
+          filter: brightness(1) hue-rotate(240deg);
         }
       }
 
@@ -981,113 +1213,263 @@
           top: 50%;
           opacity: 0;
           transform: scale(0);
+          --particle-color-primary: #f59e0b;
+          --particle-color-secondary: #10b981;
+          filter: brightness(1) hue-rotate(120deg);
         }
         10% {
           opacity: 1;
-          transform: scale(1);
+          transform: scale(1.2);
+          filter: brightness(1.5) hue-rotate(150deg);
+        }
+        25% {
+          --particle-color-primary: #10b981;
+          --particle-color-secondary: #06b6d4;
+          filter: brightness(1.7) hue-rotate(180deg);
         }
         50% {
           left: 50%;
           top: 75%;
           opacity: 1;
+          transform: scale(1);
+          --particle-color-primary: #06b6d4;
+          --particle-color-secondary: #3b82f6;
+          filter: brightness(2) hue-rotate(210deg);
+        }
+        75% {
+          --particle-color-primary: #3b82f6;
+          --particle-color-secondary: #8b5cf6;
+          filter: brightness(1.7) hue-rotate(240deg);
         }
         90% {
           opacity: 1;
-          transform: scale(1);
+          transform: scale(1.2);
+          filter: brightness(1.5) hue-rotate(270deg);
         }
         100% {
           left: 20%;
           top: 50%;
           opacity: 0;
           transform: scale(0);
+          --particle-color-primary: #8b5cf6;
+          --particle-color-secondary: #ec4899;
+          filter: brightness(1) hue-rotate(300deg);
         }
       }
 
-      /* Effet de synchronisation globale */
+      /* Effet de synchronisation globale avec couleurs fluides */
       .cards-synchronized {
-        animation: syncPulse 2s ease-in-out;
+        animation: syncPulse 2s ease-in-out, syncColorWave 3s ease-in-out;
+        filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
       }
 
       @keyframes syncPulse {
         0% {
           transform: scale(1);
-          filter: brightness(1);
+          filter: brightness(1) saturate(1) hue-rotate(0deg);
+        }
+        25% {
+          transform: scale(1.015);
+          filter: brightness(1.2) saturate(1.3) hue-rotate(30deg);
         }
         50% {
-          transform: scale(1.02);
-          filter: brightness(1.1);
+          transform: scale(1.03);
+          filter: brightness(1.4) saturate(1.6) hue-rotate(60deg);
+        }
+        75% {
+          transform: scale(1.015);
+          filter: brightness(1.2) saturate(1.3) hue-rotate(30deg);
         }
         100% {
           transform: scale(1);
-          filter: brightness(1);
+          filter: brightness(1) saturate(1) hue-rotate(0deg);
         }
       }
 
-      /* Onde d'énergie entre les cartes */
+      @keyframes syncColorWave {
+        0% {
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.3),
+            0 0 40px rgba(59, 130, 246, 0.2);
+        }
+        20% {
+          box-shadow: 0 0 25px rgba(6, 182, 212, 0.4),
+            0 0 50px rgba(6, 182, 212, 0.3);
+        }
+        40% {
+          box-shadow: 0 0 30px rgba(139, 92, 246, 0.5),
+            0 0 60px rgba(139, 92, 246, 0.4);
+        }
+        60% {
+          box-shadow: 0 0 25px rgba(236, 72, 153, 0.4),
+            0 0 50px rgba(236, 72, 153, 0.3);
+        }
+        80% {
+          box-shadow: 0 0 30px rgba(245, 158, 11, 0.5),
+            0 0 60px rgba(245, 158, 11, 0.4);
+        }
+        100% {
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.3),
+            0 0 40px rgba(59, 130, 246, 0.2);
+        }
+      }
+
+      /* Onde d'énergie entre les cartes avec couleurs fluides */
       .energy-wave {
         position: absolute;
-        width: 100px;
-        height: 100px;
-        border: 2px solid #06b6d4;
+        width: 120px;
+        height: 120px;
+        border: 3px solid var(--wave-color);
+        --wave-color: #06b6d4;
         border-radius: 50%;
         opacity: 0;
         pointer-events: none;
         z-index: 2;
+        background: radial-gradient(
+          circle,
+          transparent 40%,
+          rgba(6, 182, 212, 0.1) 60%,
+          transparent 100%
+        );
+        box-shadow: 0 0 30px var(--wave-color),
+          inset 0 0 20px rgba(255, 255, 255, 0.1);
+      }
+
+      .energy-wave::before {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        width: calc(100% + 20px);
+        height: calc(100% + 20px);
+        border: 1px solid var(--wave-color);
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          transparent 50%,
+          rgba(6, 182, 212, 0.05) 70%,
+          transparent 100%
+        );
+        filter: blur(2px);
       }
 
       @keyframes energyWave {
         0% {
           transform: scale(0.1);
-          opacity: 0.8;
-          border-width: 3px;
+          opacity: 0.9;
+          border-width: 4px;
+          --wave-color: #3b82f6;
+          filter: brightness(1.5) saturate(1.5) hue-rotate(0deg);
+        }
+        20% {
+          --wave-color: #06b6d4;
+          filter: brightness(1.8) saturate(1.8) hue-rotate(60deg);
+        }
+        40% {
+          --wave-color: #8b5cf6;
+          filter: brightness(2) saturate(2) hue-rotate(120deg);
         }
         50% {
-          transform: scale(2);
-          opacity: 0.4;
-          border-width: 1px;
+          transform: scale(2.5);
+          opacity: 0.6;
+          border-width: 2px;
+          --wave-color: #ec4899;
+          filter: brightness(2.2) saturate(2.2) hue-rotate(180deg);
+        }
+        70% {
+          --wave-color: #f59e0b;
+          filter: brightness(2) saturate(1.8) hue-rotate(240deg);
+        }
+        90% {
+          --wave-color: #10b981;
+          filter: brightness(1.5) saturate(1.5) hue-rotate(300deg);
         }
         100% {
-          transform: scale(4);
+          transform: scale(5);
           opacity: 0;
           border-width: 0px;
+          --wave-color: #06b6d4;
+          filter: brightness(1) saturate(1) hue-rotate(360deg);
         }
       }
 
-      /* === AMÉLIORATION DU FOND WELCOME SECTION === */
+      /* === AMÉLIORATION DU FOND WELCOME SECTION AVEC COULEURS FLUIDES === */
 
       #welcomeSection {
         background: linear-gradient(
           135deg,
-          #f8fafc 0%,
-          #e2e8f0 25%,
-          #f1f5f9 50%,
-          #e2e8f0 75%,
-          #f8fafc 100%
+          var(--bg-color-1) 0%,
+          var(--bg-color-2) 25%,
+          var(--bg-color-3) 50%,
+          var(--bg-color-4) 75%,
+          var(--bg-color-1) 100%
         ) !important;
+        --bg-color-1: #f8fafc;
+        --bg-color-2: #e2e8f0;
+        --bg-color-3: #f1f5f9;
+        --bg-color-4: #e8f4f8;
         background-size: 400% 400%;
-        animation: gradientShift 8s ease-in-out infinite;
+        animation: gradientShift 12s ease-in-out infinite,
+          backgroundColorCycle 20s ease-in-out infinite;
         position: relative;
         overflow: hidden;
+        filter: brightness(1.02);
       }
 
-      /* Animation du gradient de fond */
+      /* Animation du gradient de fond avec couleurs changeantes */
       @keyframes gradientShift {
         0%,
         100% {
           background-position: 0% 50%;
+          filter: brightness(1.02) saturate(1.05);
         }
         25% {
           background-position: 100% 50%;
+          filter: brightness(1.05) saturate(1.1);
         }
         50% {
           background-position: 100% 100%;
+          filter: brightness(1.08) saturate(1.15);
         }
         75% {
           background-position: 0% 100%;
+          filter: brightness(1.05) saturate(1.1);
         }
       }
 
-      /* Motifs géométriques en arrière-plan */
+      @keyframes backgroundColorCycle {
+        0% {
+          --bg-color-1: #f8fafc;
+          --bg-color-2: #e2e8f0;
+          --bg-color-3: #f1f5f9;
+          --bg-color-4: #e8f4f8;
+        }
+        25% {
+          --bg-color-1: #f0f9ff;
+          --bg-color-2: #e0f2fe;
+          --bg-color-3: #f0f4ff;
+          --bg-color-4: #eff6ff;
+        }
+        50% {
+          --bg-color-1: #fdf4ff;
+          --bg-color-2: #fae8ff;
+          --bg-color-3: #f3e8ff;
+          --bg-color-4: #f9f0ff;
+        }
+        75% {
+          --bg-color-1: #fffbeb;
+          --bg-color-2: #fef3c7;
+          --bg-color-3: #fff7ed;
+          --bg-color-4: #fef5e7;
+        }
+        100% {
+          --bg-color-1: #f8fafc;
+          --bg-color-2: #e2e8f0;
+          --bg-color-3: #f1f5f9;
+          --bg-color-4: #e8f4f8;
+        }
+      }
+
+      /* Motifs géométriques en arrière-plan avec couleurs fluides */
       #welcomeSection::before {
         content: "";
         position: absolute;
@@ -1097,57 +1479,183 @@
         height: 100%;
         background-image: radial-gradient(
             circle at 20% 20%,
-            rgba(59, 130, 246, 0.1) 0%,
+            var(--pattern-color-1) 0%,
             transparent 50%
           ),
           radial-gradient(
             circle at 80% 80%,
-            rgba(6, 182, 212, 0.1) 0%,
+            var(--pattern-color-2) 0%,
             transparent 50%
           ),
           radial-gradient(
             circle at 40% 70%,
-            rgba(16, 185, 129, 0.08) 0%,
+            var(--pattern-color-3) 0%,
             transparent 50%
+          ),
+          radial-gradient(
+            circle at 60% 30%,
+            var(--pattern-color-4) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 10% 90%,
+            var(--pattern-color-5) 0%,
+            transparent 45%
           );
-        background-size: 300px 300px, 250px 250px, 400px 400px;
-        background-position: 0 0, 100px 100px, 200px 50px;
-        animation: floatingPatterns 12s linear infinite;
+        --pattern-color-1: rgba(59, 130, 246, 0.08);
+        --pattern-color-2: rgba(6, 182, 212, 0.08);
+        --pattern-color-3: rgba(16, 185, 129, 0.06);
+        --pattern-color-4: rgba(139, 92, 246, 0.06);
+        --pattern-color-5: rgba(236, 72, 153, 0.05);
+        background-size: 300px 300px, 250px 250px, 400px 400px, 350px 350px,
+          280px 280px;
+        background-position: 0 0, 100px 100px, 200px 50px, 50px 200px,
+          300px 150px;
+        animation: floatingPatterns 15s linear infinite,
+          patternColorCycle 25s ease-in-out infinite;
         z-index: 0;
+        filter: blur(0.5px);
       }
 
       @keyframes floatingPatterns {
         0% {
           transform: translate(0, 0) rotate(0deg);
+          background-position: 0 0, 100px 100px, 200px 50px, 50px 200px,
+            300px 150px;
         }
-        33% {
-          transform: translate(-10px, -10px) rotate(120deg);
+        25% {
+          transform: translate(-15px, -10px) rotate(90deg);
+          background-position: 20px 10px, 120px 110px, 220px 60px, 70px 210px,
+            320px 160px;
         }
-        66% {
-          transform: translate(10px, -5px) rotate(240deg);
+        50% {
+          transform: translate(10px, -15px) rotate(180deg);
+          background-position: -10px 20px, 110px 90px, 210px 70px, 60px 190px,
+            310px 140px;
+        }
+        75% {
+          transform: translate(15px, 10px) rotate(270deg);
+          background-position: 15px -5px, 115px 105px, 215px 45px, 55px 205px,
+            315px 155px;
         }
         100% {
           transform: translate(0, 0) rotate(360deg);
+          background-position: 0 0, 100px 100px, 200px 50px, 50px 200px,
+            300px 150px;
         }
       }
 
-      /* Effet glassmorphism sur les cartes */
-      .etat-card {
-        backdrop-filter: blur(10px) saturate(200%);
-        background: rgba(255, 255, 255, 0.8) !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
-          0 2px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-        position: relative;
-        z-index: 2;
+      @keyframes patternColorCycle {
+        0% {
+          --pattern-color-1: rgba(59, 130, 246, 0.08);
+          --pattern-color-2: rgba(6, 182, 212, 0.08);
+          --pattern-color-3: rgba(16, 185, 129, 0.06);
+          --pattern-color-4: rgba(139, 92, 246, 0.06);
+          --pattern-color-5: rgba(236, 72, 153, 0.05);
+        }
+        20% {
+          --pattern-color-1: rgba(6, 182, 212, 0.09);
+          --pattern-color-2: rgba(139, 92, 246, 0.09);
+          --pattern-color-3: rgba(236, 72, 153, 0.07);
+          --pattern-color-4: rgba(245, 158, 11, 0.07);
+          --pattern-color-5: rgba(16, 185, 129, 0.06);
+        }
+        40% {
+          --pattern-color-1: rgba(139, 92, 246, 0.1);
+          --pattern-color-2: rgba(236, 72, 153, 0.1);
+          --pattern-color-3: rgba(245, 158, 11, 0.08);
+          --pattern-color-4: rgba(16, 185, 129, 0.08);
+          --pattern-color-5: rgba(59, 130, 246, 0.07);
+        }
+        60% {
+          --pattern-color-1: rgba(236, 72, 153, 0.09);
+          --pattern-color-2: rgba(245, 158, 11, 0.09);
+          --pattern-color-3: rgba(16, 185, 129, 0.07);
+          --pattern-color-4: rgba(59, 130, 246, 0.07);
+          --pattern-color-5: rgba(6, 182, 212, 0.06);
+        }
+        80% {
+          --pattern-color-1: rgba(245, 158, 11, 0.08);
+          --pattern-color-2: rgba(16, 185, 129, 0.08);
+          --pattern-color-3: rgba(59, 130, 246, 0.06);
+          --pattern-color-4: rgba(6, 182, 212, 0.06);
+          --pattern-color-5: rgba(139, 92, 246, 0.05);
+        }
+        100% {
+          --pattern-color-1: rgba(59, 130, 246, 0.08);
+          --pattern-color-2: rgba(6, 182, 212, 0.08);
+          --pattern-color-3: rgba(16, 185, 129, 0.06);
+          --pattern-color-4: rgba(139, 92, 246, 0.06);
+          --pattern-color-5: rgba(236, 72, 153, 0.05);
+        }
       }
 
-      /* Amélioration hover avec glassmorphism */
+      /* Effet glassmorphism sur les cartes avec couleurs fluides */
+      .etat-card {
+        backdrop-filter: blur(12px) saturate(200%);
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.85) 0%,
+          rgba(255, 255, 255, 0.75) 100%
+        ) !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+          0 2px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6),
+          0 0 20px var(--card-glow-color) !important;
+        --card-glow-color: rgba(59, 130, 246, 0.1);
+        position: relative;
+        z-index: 2;
+        animation: cardGlowCycle 8s ease-in-out infinite;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .dossier-attente.etat-card {
+        --card-glow-color: rgba(245, 158, 11, 0.12);
+      }
+
+      .dossier-mise-livraison.etat-card {
+        --card-glow-color: rgba(14, 165, 233, 0.12);
+      }
+
+      .dossier-livre.etat-card {
+        --card-glow-color: rgba(16, 185, 129, 0.12);
+      }
+
+      .dossier-retard.etat-card {
+        --card-glow-color: rgba(220, 53, 69, 0.12);
+      }
+
+      @keyframes cardGlowCycle {
+        0%,
+        100% {
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+            0 2px 16px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6),
+            0 0 20px var(--card-glow-color);
+          filter: brightness(1) saturate(1);
+        }
+        50% {
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12),
+            0 4px 20px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.7),
+            0 0 30px var(--card-glow-color);
+          filter: brightness(1.05) saturate(1.1);
+        }
+      }
+
+      /* Amélioration hover avec glassmorphism et couleurs fluides */
       .etat-card:hover {
-        backdrop-filter: blur(15px) saturate(250%);
-        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(16px) saturate(250%);
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.92) 0%,
+          rgba(255, 255, 255, 0.88) 100%
+        ) !important;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
-          0 8px 30px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+          0 8px 30px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8),
+          0 0 40px var(--card-glow-color) !important;
+        transform: translateY(-12px) scale(1.04) rotate(-1.5deg);
+        filter: brightness(1.08) saturate(1.2);
       }
 
       /* === FIN ANIMATIONS DE LIAISON === */
