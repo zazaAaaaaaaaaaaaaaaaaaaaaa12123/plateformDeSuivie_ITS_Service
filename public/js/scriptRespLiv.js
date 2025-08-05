@@ -3822,7 +3822,7 @@ function showProfessionalHistoryModal() {
   modal.style.justifyContent = "center";
   modal.style.backdropFilter = "blur(4px)";
 
-  // Conteneur principal
+  // Conteneur principalfx
   const container = document.createElement("div");
   container.style.background = "#fff";
   container.style.borderRadius = "16px";
