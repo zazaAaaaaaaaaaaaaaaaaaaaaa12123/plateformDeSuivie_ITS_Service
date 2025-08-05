@@ -1654,10 +1654,6 @@ async function createTables() {
       { name: "container_statuses", type: "JSONB", nullable: true },
       // NOUVEAU : Statut par BL (JSONB)
       { name: "bl_statuses", type: "JSONB", nullable: true },
-      // NOUVEAUX CHAMPS DE DATES
-      { name: "date_echange_bl", type: "DATE", nullable: true },
-      { name: "date_deo", type: "DATE", nullable: true },
-      { name: "date_badt", type: "DATE", nullable: true },
     ];
 
     for (const col of columnsToAdd) {
@@ -1979,10 +1975,6 @@ app.post(
       nom_agent_visiteur,
       inspecteur,
       agent_en_douanes,
-      // NOUVEAUX CHAMPS DE DATES
-      date_echange_bl,
-      date_deo,
-      date_badt,
     } = req.body || {};
 
     // Use helper functions to process date and time
@@ -2215,10 +2207,9 @@ app.post(
             driver_name, driver_phone, truck_registration,
             delivery_notes, is_eir_received,
             delivery_status_acconier,
-            container_statuses, container_numbers_list, container_foot_types_map,
-            date_echange_bl, date_deo, date_badt
+            container_statuses, container_numbers_list, container_foot_types_map
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
           RETURNING *;
         `;
         values = [
@@ -2259,10 +2250,6 @@ app.post(
           container_foot_types_map
             ? JSON.stringify(container_foot_types_map)
             : null,
-          // NOUVELLES VALEURS DE DATES
-          date_echange_bl || null,
-          date_deo || null,
-          date_badt || null,
         ];
       } else {
         // Si les colonnes JSON n'existent pas, utiliser l'ancienne requête
@@ -2277,10 +2264,9 @@ app.post(
             driver_name, driver_phone, truck_registration,
             delivery_notes, is_eir_received,
             delivery_status_acconier,
-            container_statuses,
-            date_echange_bl, date_deo, date_badt
+            container_statuses
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
           RETURNING *;
         `;
         values = [
@@ -2315,10 +2301,6 @@ app.post(
           is_eir_received,
           usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
-          // NOUVELLES VALEURS DE DATES
-          date_echange_bl || null,
-          date_deo || null,
-          date_badt || null,
         ];
       }
       const result = await pool.query(query, values);
@@ -4488,7 +4470,6 @@ app.get("/api/deliveries", async (req, res) => {
         lieu, container_number, container_foot_type, declaration_number, 
         number_of_containers, weight, ship_name, circuit, transporter_mode,
         bl_number, dossier_number, shipping_company, status,
-        date_echange_bl, date_deo, date_badt,
         delivery_date, delivery_time, created_at, updated_at
       FROM livraison_conteneur
       ${whereClause}
@@ -4535,7 +4516,6 @@ app.get("/api/deliveries/:id", async (req, res) => {
         lieu, container_number, container_foot_type, declaration_number, 
         number_of_containers, weight, ship_name, circuit, transporter_mode,
         bl_number, dossier_number, shipping_company, status,
-        date_echange_bl, date_deo, date_badt,
         delivery_date, delivery_time, created_at, updated_at,
         container_numbers_list, container_foot_types_map, container_statuses
       FROM livraison_conteneur

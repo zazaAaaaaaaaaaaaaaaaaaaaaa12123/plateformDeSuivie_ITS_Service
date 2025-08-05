@@ -27,11 +27,6 @@ const shipNameInput = document.getElementById("shipName");
 const circuitInput = document.getElementById("circuit");
 const transporterModeSelect = document.getElementById("transporterMode");
 
-// NOUVEAUX CHAMPS DE DATES
-const dateEchangeBLInput = document.getElementById("dateEchangeBL");
-const dateDEOInput = document.getElementById("dateDEO");
-const dateBADTInput = document.getElementById("dateBADT");
-
 const formErrorDisplay = document.getElementById("formError");
 const formSuccessDisplay = document.getElementById("formSuccess");
 const cancelSubmitBtn = document.getElementById("cancelSubmitBtn");
@@ -864,27 +859,6 @@ document.addEventListener("DOMContentLoaded", () => {
       };border-radius:12px;">
           <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Mode de transport</span><br><span style='font-weight:700;'>${
             d.transporterMode || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Date d'échange BL</span><br><span style='font-weight:700;'>${
-            d.dateEchangeBL || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Date de DEO</span><br><span style='font-weight:700;'>${
-            d.dateDEO || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Date de BADT</span><br><span style='font-weight:700;'>${
-            d.dateBADT || "-"
           }</span></div>
         </div>
       </div>`;
@@ -1729,13 +1703,6 @@ async function submitDeliveryForm(status) {
     ? transporterModeSelect.value.trim()
     : "";
 
-  // RÉCUPÉRATION DES NOUVELLES DONNÉES DE DATES
-  const dateEchangeBL = dateEchangeBLInput
-    ? dateEchangeBLInput.value.trim()
-    : "";
-  const dateDEO = dateDEOInput ? dateDEOInput.value.trim() : "";
-  const dateBADT = dateBADTInput ? dateBADTInput.value.trim() : "";
-
   // *** IMPORTANT: Logs de débogage pour vérifier les valeurs avant FormData ***
   console.log("Debug: Values before FormData append:");
   console.log(
@@ -1756,9 +1723,6 @@ async function submitDeliveryForm(status) {
       ? shippingCompanyInput.value.trim()
       : "N/A (element not found or empty)"
   );
-  console.log("  dateEchangeBL value:", dateEchangeBL);
-  console.log("  dateDEO value:", dateDEO);
-  console.log("  dateBADT value:", dateBADT);
   // *** FIN des logs de débogage ***
 
   const requiredInputs = [
@@ -1811,11 +1775,6 @@ async function submitDeliveryForm(status) {
   formData.append("ship_name", shipName);
   formData.append("circuit", circuit);
   formData.append("transporter_mode", transporterMode);
-
-  // AJOUT DES NOUVELLES DONNÉES DE DATES
-  formData.append("date_echange_bl", dateEchangeBL);
-  formData.append("date_deo", dateDEO);
-  formData.append("date_badt", dateBADT);
 
   // Ajout du champ technique pour le backend (affichage correct du statut)
   // Désormais, le statut par défaut est 'awaiting_payment_acconier' (En attente de paiement)
@@ -1932,10 +1891,6 @@ async function submitDeliveryForm(status) {
             deliveryStatusAcconier,
             blNumber: finalBlNumber,
             dossierNumber: finalDossierNumber,
-            // NOUVELLES DONNÉES DE DATES
-            dateEchangeBL,
-            dateDEO,
-            dateBADT,
           },
         };
         historyData["Agent Acconier"].unshift(newOperation);
