@@ -2287,7 +2287,7 @@ app.post(
       inspecteur,
       agent_en_douanes,
       date_echange,
-      //delivery_status_acconier,
+      delivery_status_acconier,
     } = req.body || {};
 
     // Use helper functions to process date and time
