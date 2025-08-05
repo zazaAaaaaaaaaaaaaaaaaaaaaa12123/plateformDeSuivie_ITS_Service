@@ -2219,7 +2219,7 @@
               title="💡 Synchronisation: Dossiers visibles dans resp_acconier.html. Décrément automatique quand un dossier passe en 'mise en livraison'."
             >
               <div class="etat-icon"><i class="fas fa-hourglass-half"></i></div>
-              <div class="etat-title">En cours de paiement</div>
+              <div class="etat-title">Dossier soumis</div>
               <div class="etat-desc">
                 Dossiers en attente de règlement avant traitement.
               </div>
@@ -3809,13 +3809,13 @@
                       data.counts
                     );
 
-                    // Mise à jour de la carte "En cours de paiement"
+                    // Mise à jour de la carte "Dossier soumis"
                     const oldAttente = window.updateCardCounter(
                       "carteAttentePaiement",
                       data.counts.en_attente_paiement || 0
                     );
                     console.log(
-                      `[DASHBOARD] 📋 En attente de paiement: ${
+                      `[DASHBOARD] 📋 Dossier soumis: ${
                         data.counts.en_attente_paiement || 0
                       }`
                     );
@@ -4162,7 +4162,7 @@
 
               // Vérifier la présence des cartes
               const cartes = [
-                { id: "carteAttentePaiement", nom: "En cours de paiement" },
+                { id: "carteAttentePaiement", nom: "Dossier soumis" },
                 { id: "carteMiseLivraison", nom: "Dossiers mis en livraison" },
                 { id: "carteLivre", nom: "Dossiers livrés" },
               ];
