@@ -1784,7 +1784,6 @@ async function ensureExchangeFieldsTable() {
     // Ajout des nouveaux champs pour l'échange de données
     await pool.query(`
       ALTER TABLE livraison_conteneur 
-      ADD COLUMN IF NOT EXISTS date_echange DATE,
       ADD COLUMN IF NOT EXISTS paiement_acconage TEXT,
       ADD COLUMN IF NOT EXISTS date_echange_bl DATE,
       ADD COLUMN IF NOT EXISTS date_do DATE,
@@ -1807,7 +1806,7 @@ app.get("/deliveries/status", async (req, res) => {
       SELECT column_name 
       FROM information_schema.columns 
       WHERE table_name = 'livraison_conteneur' 
-      AND column_name IN ('container_numbers_list', 'container_foot_types_map', 'date_echange', 'paiement_acconage', 'date_echange_bl', 'date_do', 'date_badt')
+      AND column_name IN ('container_numbers_list', 'container_foot_types_map', 'paiement_acconage', 'date_echange_bl', 'date_do', 'date_badt')
     `);
 
     const hasJsonColumns = columnsCheck.rows.some((row) =>
@@ -1816,19 +1815,15 @@ app.get("/deliveries/status", async (req, res) => {
       )
     );
     const hasExchangeFields = columnsCheck.rows.some((row) =>
-      [
-        "date_echange",
-        "paiement_acconage",
-        "date_echange_bl",
-        "date_do",
-        "date_badt",
-      ].includes(row.column_name)
+      ["paiement_acconage", "date_echange_bl", "date_do", "date_badt"].includes(
+        row.column_name
+      )
     );
 
     let query;
     if (hasJsonColumns && hasExchangeFields) {
       // Si toutes les colonnes existent, les inclure dans la requête
-      query = `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses, container_numbers_list, container_foot_types_map, date_echange, paiement_acconage, date_echange_bl, date_do, date_badt FROM livraison_conteneur ORDER BY created_at DESC`;
+      query = `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses, container_numbers_list, container_foot_types_map, paiement_acconage, date_echange_bl, date_do, date_badt FROM livraison_conteneur ORDER BY created_at DESC`;
     } else if (hasJsonColumns) {
       // Si seulement les colonnes JSON existent, les inclure dans la requête
       query = `SELECT id, employee_name, delivery_date, delivery_time, client_name, client_phone, container_type_and_content, lieu, container_number, container_foot_type, declaration_number, number_of_containers, bl_number, dossier_number, shipping_company, transporter, weight, ship_name, circuit, number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes, driver_name, driver_phone, truck_registration, delivery_notes, status, is_eir_received, delivery_status_acconier, observation_acconier, created_at, container_statuses, bl_statuses, container_numbers_list, container_foot_types_map FROM livraison_conteneur ORDER BY created_at DESC`;
@@ -1860,7 +1855,6 @@ app.get("/api/exchange/data", async (req, res) => {
         id, 
         dossier_number, 
         bl_number, 
-        date_echange,
         paiement_acconage,
         date_echange_bl,
         date_do,
@@ -1924,13 +1918,7 @@ app.get("/api/exchange/data", async (req, res) => {
 app.put("/api/exchange/update/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      date_echange,
-      paiement_acconage,
-      date_echange_bl,
-      date_do,
-      date_badt,
-    } = req.body;
+    const { paiement_acconage, date_echange_bl, date_do, date_badt } = req.body;
 
     if (!id) {
       return res.status(400).json({
@@ -1943,12 +1931,6 @@ app.put("/api/exchange/update/:id", async (req, res) => {
     const updates = [];
     const values = [];
     let paramCounter = 1;
-
-    if (date_echange !== undefined) {
-      updates.push(`date_echange = $${paramCounter}`);
-      values.push(date_echange);
-      paramCounter++;
-    }
 
     if (paiement_acconage !== undefined) {
       updates.push(`paiement_acconage = $${paramCounter}`);
@@ -1986,7 +1968,7 @@ app.put("/api/exchange/update/:id", async (req, res) => {
       UPDATE livraison_conteneur 
       SET ${updates.join(", ")} 
       WHERE id = $${paramCounter}
-      RETURNING id, date_echange, paiement_acconage, date_echange_bl, date_do, date_badt
+      RETURNING id, paiement_acconage, date_echange_bl, date_do, date_badt
     `;
 
     const result = await pool.query(query, values);
@@ -2029,7 +2011,7 @@ app.put("/api/exchange/update/:id", async (req, res) => {
 // ROUTE : POST - Création/Mise à jour en lot des données d'échange
 app.post("/api/exchange/bulk-update", async (req, res) => {
   try {
-    const { updates } = req.body; // Array d'objets {id, date_echange, paiement_acconage, etc.}
+    const { updates } = req.body; // Array d'objets {id, paiement_acconage, date_echange_bl, date_do, date_badt, etc.}
 
     if (!Array.isArray(updates) || updates.length === 0) {
       return res.status(400).json({
@@ -2286,7 +2268,7 @@ app.post(
       nom_agent_visiteur,
       inspecteur,
       agent_en_douanes,
-      date_echange,
+      date_echange_bl,
       delivery_status_acconier,
     } = req.body || {};
 
@@ -2329,7 +2311,7 @@ app.post(
     console.log("   dossier_number:", dossier_number);
     console.log("   bl_number:", bl_number);
     console.log("   shipping_company:", shipping_company);
-    console.log("   date_echange:", date_echange);
+    console.log("   date_echange_bl:", date_echange_bl);
     console.log("   delivery_status_acconier:", delivery_status_acconier);
     // *** FIN DÉBOGAGE BASIC FIELDS ***
 
@@ -2514,14 +2496,14 @@ app.post(
           row.column_name
         )
       );
-      const hasDateEchange = columnsCheck.rows.some(
-        (row) => row.column_name === "date_echange"
+      const hasDateEchangeBL = columnsCheck.rows.some(
+        (row) => row.column_name === "date_echange_bl"
       );
 
       let query, values;
 
-      if (hasJsonColumns && hasDateEchange) {
-        // Si les colonnes JSON et date_echange existent, les inclure dans l'INSERT
+      if (hasJsonColumns && hasDateEchangeBL) {
+        // Si les colonnes JSON et date_echange_bl existent, les inclure dans l'INSERT
         query = `
           INSERT INTO livraison_conteneur (
             employee_name, delivery_date, delivery_time, client_name, client_phone, 
@@ -2534,7 +2516,7 @@ app.post(
             delivery_notes, is_eir_received,
             delivery_status_acconier,
             container_statuses, container_numbers_list, container_foot_types_map,
-            date_echange
+            date_echange_bl
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
           RETURNING *;
@@ -2577,7 +2559,7 @@ app.post(
           container_foot_types_map
             ? JSON.stringify(container_foot_types_map)
             : null,
-          date_echange || null,
+          date_echange_bl || null,
         ];
       } else if (hasJsonColumns) {
         // Si seules les colonnes JSON existent (sans date_echange)
@@ -2636,8 +2618,8 @@ app.post(
             ? JSON.stringify(container_foot_types_map)
             : null,
         ];
-      } else if (hasDateEchange) {
-        // Si seule la colonne date_echange existe (sans colonnes JSON)
+      } else if (hasDateEchangeBL) {
+        // Si seule la colonne date_echange_bl existe (sans colonnes JSON)
         query = `
           INSERT INTO livraison_conteneur (
             employee_name, delivery_date, delivery_time, client_name, client_phone, 
@@ -2650,7 +2632,7 @@ app.post(
             delivery_notes, is_eir_received,
             delivery_status_acconier,
             container_statuses,
-            date_echange
+            date_echange_bl
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
           RETURNING *;
@@ -2687,10 +2669,10 @@ app.post(
           is_eir_received,
           delivery_status_acconier || usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
-          date_echange || null,
+          date_echange_bl || null,
         ];
       } else {
-        // Si ni les colonnes JSON ni date_echange n'existent, utiliser l'ancienne requête
+        // Si ni les colonnes JSON ni date_echange_bl n'existent, utiliser l'ancienne requête
         query = `
           INSERT INTO livraison_conteneur (
             employee_name, delivery_date, delivery_time, client_name, client_phone, 
@@ -4989,9 +4971,55 @@ app.get("/api/deliveries/:id", async (req, res) => {
 });
 
 // ===============================
+// 📋 DOCUMENTATION API POUR COLLÈGUE PHP
+// ===============================
+/*
+🔗 URL DE BASE: https://plateformdesuivie-its-service-1cjx.onrender.com
+
+📊 ENDPOINTS DISPONIBLES:
+1. GET  /api/exchange/data           - Récupérer toutes les données
+2. PUT  /api/exchange/update/:id     - Mettre à jour une livraison
+3. POST /api/exchange/bulk-update    - Mettre à jour plusieurs livraisons
+
+📋 CHAMPS DISPONIBLES:
+LECTURE (tous les GET):
+- id, dossier_number, bl_number, client_name, delivery_date, created_at
+
+ÉCRITURE (PUT/POST):
+- paiement_acconage (TEXT)
+- date_echange_bl (DATE format YYYY-MM-DD)
+- date_do (DATE format YYYY-MM-DD)  
+- date_badt (DATE format YYYY-MM-DD)
+
+🔍 EXEMPLES PHP:
+// 1. Récupérer toutes les données
+$response = file_get_contents('https://plateformdesuivie-its-service-1cjx.onrender.com/api/exchange/data');
+$data = json_decode($response, true);
+
+// 2. Filtrer par dossier
+$response = file_get_contents('https://plateformdesuivie-its-service-1cjx.onrender.com/api/exchange/data?dossier_number=DOS123');
+
+// 3. Mettre à jour une livraison
+$livraison_id = 123;
+$update_data = [
+    'paiement_acconage' => 'Payé',
+    'date_echange_bl' => '2025-08-05'
+];
+$options = [
+    'http' => [
+        'method' => 'PUT',
+        'header' => 'Content-Type: application/json',
+        'content' => json_encode($update_data)
+    ]
+];
+$context = stream_context_create($options);
+$result = file_get_contents("https://plateformdesuivie-its-service-1cjx.onrender.com/api/exchange/update/$livraison_id", false, $context);
+*/
+
+// ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
-// Cette route doit être TOUT EN BAS, après toutes zyugles routes API !
+// Cette route doit être TOUT EN BAS, après toutes les routes API !
 // (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));

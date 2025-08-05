@@ -1793,13 +1793,15 @@ async function submitDeliveryForm(status) {
     ? transporterModeSelect.value.trim()
     : "";
 
-  // NOUVEAU : Récupération de la date d'échange
-  const dateEchangeInput = document.getElementById("dateEchange");
-  const dateEchange = dateEchangeInput ? dateEchangeInput.value.trim() : "";
+  // NOUVEAU : Récupération de la date d'échange BL
+  const dateEchangeBLInput = document.getElementById("dateEchangeBL");
+  const dateEchangeBL = dateEchangeBLInput
+    ? dateEchangeBLInput.value.trim()
+    : "";
 
   // *** IMPORTANT: Logs de débogage pour vérifier les valeurs avant FormData ***
   console.log("Debug: Values before FormData append:");
-  console.log("  dateEchange value:", dateEchange);
+  console.log("  dateEchangeBL value:", dateEchangeBL);
   console.log(
     "  blNumber value:",
     blNumberInput
@@ -1871,9 +1873,9 @@ async function submitDeliveryForm(status) {
   formData.append("circuit", circuit);
   formData.append("transporter_mode", transporterMode);
 
-  // NOUVEAU : Ajout de la date d'échange
-  if (dateEchange) {
-    formData.append("date_echange", dateEchange);
+  // NOUVEAU : Ajout de la date d'échange BL
+  if (dateEchangeBL) {
+    formData.append("date_echange_bl", dateEchangeBL);
   }
 
   // Ajout du champ technique pour le backend (affichage correct du statut)

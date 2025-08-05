@@ -2294,48 +2294,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           paiementGroup.appendChild(paiementInput);
           fieldsContainer.appendChild(paiementGroup);
 
-          // 2. Date d'échange BL
-          const dateEchangeBLGroup = document.createElement("div");
-
-          const dateEchangeBLLabel = document.createElement("label");
-          dateEchangeBLLabel.textContent = "📅 Date échange BL :";
-          dateEchangeBLLabel.style.display = "block";
-          dateEchangeBLLabel.style.marginBottom = "2px";
-          dateEchangeBLLabel.style.fontWeight = "500";
-          dateEchangeBLLabel.style.fontSize =
-            window.innerWidth <= 768 ? "0.78em" : "0.92em";
-          dateEchangeBLGroup.appendChild(dateEchangeBLLabel);
-
-          const dateEchangeBLInput = document.createElement("input");
-          dateEchangeBLInput.type = "date";
-          dateEchangeBLInput.id = "dateEchangeBL";
-          dateEchangeBLInput.style.width = "100%";
-          dateEchangeBLInput.style.padding =
-            window.innerWidth <= 768 ? "2px 4px" : "6px 8px";
-          dateEchangeBLInput.style.border = "1.5px solid #d1d5db";
-          dateEchangeBLInput.style.borderRadius = "4px";
-          dateEchangeBLInput.style.fontSize =
-            window.innerWidth <= 768 ? "0.8em" : "0.95em";
-          dateEchangeBLInput.style.marginBottom = "0";
-          dateEchangeBLInput.style.background = "#fff";
-
-          // Récupérer la valeur sauvée temporairement ou depuis la BDD
-          const tempKeyBL = `temp_date_echange_bl_${delivery.id}`;
-          const tempValueBL = localStorage.getItem(tempKeyBL);
-          dateEchangeBLInput.value =
-            tempValueBL || delivery.date_echange_bl || "";
-
-          // Sauvegarde automatique lors de la modification
-          dateEchangeBLInput.addEventListener("change", function () {
-            localStorage.setItem(tempKeyBL, this.value);
-            // Synchronisation automatique vers le tableau de suivi
-            syncToTableauSuivie(delivery.id, "date_echange_bl", this.value);
-          });
-
-          dateEchangeBLGroup.appendChild(dateEchangeBLInput);
-          fieldsContainer.appendChild(dateEchangeBLGroup);
-
-          // 3. Date de DO
+          // 2. Date de DO
           const dateDOGroup = document.createElement("div");
 
           const dateDOLabel = document.createElement("label");
@@ -2375,7 +2334,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateDOGroup.appendChild(dateDOInput);
           fieldsContainer.appendChild(dateDOGroup);
 
-          // 4. Date de BADT
+          // 3. Date de BADT
           const dateBADTGroup = document.createElement("div");
 
           const dateBADTLabel = document.createElement("label");
@@ -2624,7 +2583,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 try {
                   // Récupération des valeurs des nouveaux champs
                   const paiementAcconage = paiementInput.value.trim();
-                  const dateEchangeBL = dateEchangeBLInput.value.trim();
                   const dateDO = dateDOInput.value.trim();
                   const dateBADT = dateBADTInput.value.trim();
 
@@ -2650,8 +2608,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     const exchangeData = {};
                     if (paiementAcconage)
                       exchangeData.paiement_acconage = paiementAcconage;
-                    if (dateEchangeBL)
-                      exchangeData.date_echange_bl = dateEchangeBL;
                     if (dateDO) exchangeData.date_do = dateDO;
                     if (dateBADT) exchangeData.date_badt = dateBADT;
 
@@ -2775,7 +2731,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             try {
               // Récupération des valeurs des nouveaux champs
               const paiementAcconage = paiementInput.value.trim();
-              const dateEchangeBL = dateEchangeBLInput.value.trim();
               const dateDO = dateDOInput.value.trim();
               const dateBADT = dateBADTInput.value.trim();
 
@@ -2803,7 +2758,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               const exchangeData = {};
               if (paiementAcconage)
                 exchangeData.paiement_acconage = paiementAcconage;
-              if (dateEchangeBL) exchangeData.date_echange_bl = dateEchangeBL;
               if (dateDO) exchangeData.date_do = dateDO;
               if (dateBADT) exchangeData.date_badt = dateBADT;
 
@@ -3517,14 +3471,11 @@ function syncToTableauSuivie(deliveryId, dateField, dateValue) {
             // Trouver la colonne correspondante et mettre à jour
             let columnIndex;
             switch (dateField) {
-              case "date_echange_bl":
-                columnIndex = 32; // Index de la colonne Date d'échange BL
-                break;
               case "date_do":
-                columnIndex = 33; // Index de la colonne Date de DO
+                columnIndex = 32; // Index de la colonne Date de DO
                 break;
               case "date_badt":
-                columnIndex = 34; // Index de la colonne Date de BADT
+                columnIndex = 33; // Index de la colonne Date de BADT
                 break;
             }
 
@@ -3550,7 +3501,6 @@ function syncToTableauSuivie(deliveryId, dateField, dateValue) {
 // Fonction pour nettoyer le localStorage temporaire après sauvegarde réussie
 function clearTempDatesFromStorage(deliveryId) {
   try {
-    localStorage.removeItem(`temp_date_echange_bl_${deliveryId}`);
     localStorage.removeItem(`temp_date_do_${deliveryId}`);
     localStorage.removeItem(`temp_date_badt_${deliveryId}`);
     console.log(
