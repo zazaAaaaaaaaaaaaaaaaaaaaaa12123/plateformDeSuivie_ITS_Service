@@ -1598,22 +1598,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           box.style.background = "#fff";
           box.style.borderRadius = window.innerWidth <= 768 ? "12px" : "16px";
           box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-          // Adaptation responsive : popup très compact pour tablette/mobile
+          // Adaptation responsive : popup ULTRA compact pour tablette/mobile
           if (window.innerWidth <= 480) {
-            // Téléphone - très compact
-            box.style.maxWidth = "92vw";
-            box.style.width = "92vw";
-            box.style.maxHeight = "80vh";
+            // Téléphone - ultra compact
+            box.style.maxWidth = "88vw";
+            box.style.width = "88vw";
+            box.style.maxHeight = "70vh";
           } else if (window.innerWidth <= 768) {
-            // Tablette - popup très réduit pour optimiser l'espace
-            box.style.maxWidth = "85vw";
-            box.style.width = "85vw";
-            box.style.maxHeight = "65vh";
-          } else if (window.innerWidth <= 1024) {
-            // Petits écrans desktop
+            // Tablette - popup TRÈS réduit pour optimiser l'espace
             box.style.maxWidth = "75vw";
             box.style.width = "75vw";
-            box.style.maxHeight = "70vh";
+            box.style.maxHeight = "55vh";
+          } else if (window.innerWidth <= 1024) {
+            // Petits écrans desktop
+            box.style.maxWidth = "65vw";
+            box.style.width = "65vw";
+            box.style.maxHeight = "60vh";
           } else {
             // Desktop large
             box.style.maxWidth = "420px";
