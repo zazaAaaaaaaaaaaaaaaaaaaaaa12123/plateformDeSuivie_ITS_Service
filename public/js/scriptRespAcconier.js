@@ -1593,11 +1593,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           overlay.style.background = "rgba(30,41,59,0.45)";
           overlay.style.zIndex = 9999;
           overlay.style.display = "flex";
-          // Amélioration du centrage mobile - légèrement vers le haut
+          // Positionnement en haut avec espace en bas sur mobile/tablette
           if (window.innerWidth <= 768) {
             overlay.style.alignItems = "flex-start";
-            overlay.style.paddingTop =
-              window.innerWidth <= 480 ? "15vh" : "12vh";
+            overlay.style.paddingTop = window.innerWidth <= 480 ? "8vh" : "6vh";
+            overlay.style.paddingBottom =
+              window.innerWidth <= 480 ? "15vh" : "20vh";
           } else {
             overlay.style.alignItems = "center";
           }
