@@ -2286,6 +2286,8 @@ app.post(
       nom_agent_visiteur,
       inspecteur,
       agent_en_douanes,
+      date_echange,
+      //delivery_status_acconier,
     } = req.body || {};
 
     // Use helper functions to process date and time
@@ -2327,6 +2329,8 @@ app.post(
     console.log("   dossier_number:", dossier_number);
     console.log("   bl_number:", bl_number);
     console.log("   shipping_company:", shipping_company);
+    console.log("   date_echange:", date_echange);
+    console.log("   delivery_status_acconier:", delivery_status_acconier);
     // *** FIN DÉBOGAGE BASIC FIELDS ***
 
     // Validation des champs obligatoires (MIS À JOUR)
@@ -2565,7 +2569,7 @@ app.post(
           truck_registration || null,
           delivery_notes || null,
           is_eir_received,
-          usedStatus,
+          delivery_status_acconier || usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
           full_container_numbers_list.length > 0
             ? JSON.stringify(full_container_numbers_list)
@@ -2623,7 +2627,7 @@ app.post(
           truck_registration || null,
           delivery_notes || null,
           is_eir_received,
-          usedStatus,
+          delivery_status_acconier || usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
           full_container_numbers_list.length > 0
             ? JSON.stringify(full_container_numbers_list)
@@ -2681,7 +2685,7 @@ app.post(
           truck_registration || null,
           delivery_notes || null,
           is_eir_received,
-          usedStatus,
+          delivery_status_acconier || usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
           date_echange || null,
         ];
@@ -2733,7 +2737,7 @@ app.post(
           truck_registration || null,
           delivery_notes || null,
           is_eir_received,
-          usedStatus,
+          delivery_status_acconier || usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
         ];
       }
