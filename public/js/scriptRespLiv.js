@@ -1407,6 +1407,23 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         th.style.overflow = "hidden";
         th.style.maxWidth = "180px";
         th.style.boxShadow = "0 2px 8px #0e274e11";
+
+        // Style spécial pour les colonnes de dates
+        if (
+          col.id === "date_echange" ||
+          col.id === "date_echange_bl" ||
+          col.id === "date_do" ||
+          col.id === "date_badt"
+        ) {
+          th.style.width = "140px";
+          th.style.minWidth = "140px";
+          th.style.maxWidth = "140px";
+          th.style.background =
+            "linear-gradient(90deg, #1e40af 0%, #3b82f6 100%)";
+          th.style.color = "#ffffff";
+          th.style.fontWeight = "bold";
+        }
+
         if (col.id === "statut") {
           th.innerHTML = `<span style=\"font-weight:bold;\">${col.label}</span>`;
         }
@@ -1437,6 +1454,10 @@ const AGENT_TABLE_COLUMNS = [
   { id: "ship_name", label: "Nom du Navire" },
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
+  { id: "date_echange", label: "Date d'échange" },
+  { id: "date_echange_bl", label: "Date d'échange BL" },
+  { id: "date_do", label: "Date de DO" },
+  { id: "date_badt", label: "Date de BADT" },
   { id: "visitor_agent_name", label: "NOM Agent visiteurs" },
   { id: "transporter", label: "TRANSPORTEUR" },
   { id: "inspector", label: "INSPECTEUR" },
@@ -2216,6 +2237,36 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else {
           td.innerHTML = "";
         }
+      } else if (
+        col.id === "date_echange" ||
+        col.id === "date_echange_bl" ||
+        col.id === "date_do" ||
+        col.id === "date_badt"
+      ) {
+        // Traitement spécial pour les colonnes de dates
+        let dateValue = delivery[col.id];
+        if (dateValue) {
+          let dateObj = new Date(dateValue);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dateValue === "string") {
+            value = dateValue;
+          }
+        } else {
+          value = "-";
+        }
+        td.textContent = value;
+        // Style spécial pour les colonnes de dates
+        td.style.fontWeight = "bold";
+        td.style.color = "#1e40af"; // bleu foncé
+        td.style.fontFamily = "'Segoe UI', 'Roboto', 'Arial', sans-serif";
+        td.style.letterSpacing = "0.5px";
+        td.style.background = "rgba(59, 130, 246, 0.08)"; // bleu très transparent
+        td.style.borderRadius = "7px";
+        td.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
+        td.style.width = "140px";
+        td.style.minWidth = "140px";
+        td.style.textAlign = "center";
       } else {
         // Pour toutes les autres colonnes, on affiche "-" si la donnée est absente, vide ou nulle
         value =
