@@ -3151,7 +3151,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Configurer le conteneur et ajouter le bouton PDF
   const searchInput = document.querySelector(
-    "input[placeholder='Rechercher une livraison.']"
+    "input[placeholder*='Rechercher par N° Dossier']"
   );
   if (searchInput && searchInput.parentNode) {
     const parentContainer = searchInput.parentNode;
@@ -3731,7 +3731,7 @@ function showHistoryButtonIfNeeded() {
     } else {
       // Fallback : rechercher le champ de recherche
       const searchInput = document.querySelector(
-        "input[placeholder='Rechercher une livraison.']"
+        "input[placeholder*='Rechercher par N° Dossier']"
       );
       if (searchInput && searchInput.parentNode) {
         // Insérer le bouton historique au TOUT DÉBUT du conteneur (avant l'icône de recherche)
