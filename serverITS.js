@@ -1654,6 +1654,10 @@ async function createTables() {
       { name: "container_statuses", type: "JSONB", nullable: true },
       // NOUVEAU : Statut par BL (JSONB)
       { name: "bl_statuses", type: "JSONB", nullable: true },
+      // NOUVEAUX CHAMPS DE DATES
+      { name: "date_echange_bl", type: "DATE", nullable: true },
+      { name: "date_deo", type: "DATE", nullable: true },
+      { name: "date_badt", type: "DATE", nullable: true },
     ];
 
     for (const col of columnsToAdd) {
@@ -1975,6 +1979,10 @@ app.post(
       nom_agent_visiteur,
       inspecteur,
       agent_en_douanes,
+      // NOUVEAUX CHAMPS DE DATES
+      date_echange_bl,
+      date_deo,
+      date_badt,
     } = req.body || {};
 
     // Use helper functions to process date and time
@@ -2207,9 +2215,10 @@ app.post(
             driver_name, driver_phone, truck_registration,
             delivery_notes, is_eir_received,
             delivery_status_acconier,
-            container_statuses, container_numbers_list, container_foot_types_map
+            container_statuses, container_numbers_list, container_foot_types_map,
+            date_echange_bl, date_deo, date_badt
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
           RETURNING *;
         `;
         values = [
@@ -2250,6 +2259,10 @@ app.post(
           container_foot_types_map
             ? JSON.stringify(container_foot_types_map)
             : null,
+          // NOUVELLES VALEURS DE DATES
+          date_echange_bl || null,
+          date_deo || null,
+          date_badt || null,
         ];
       } else {
         // Si les colonnes JSON n'existent pas, utiliser l'ancienne requête
@@ -2264,9 +2277,10 @@ app.post(
             driver_name, driver_phone, truck_registration,
             delivery_notes, is_eir_received,
             delivery_status_acconier,
-            container_statuses
+            container_statuses,
+            date_echange_bl, date_deo, date_badt
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
           RETURNING *;
         `;
         values = [
@@ -2301,6 +2315,10 @@ app.post(
           is_eir_received,
           usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
+          // NOUVELLES VALEURS DE DATES
+          date_echange_bl || null,
+          date_deo || null,
+          date_badt || null,
         ];
       }
       const result = await pool.query(query, values);
@@ -4414,6 +4432,136 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
         livres: 0,
         en_retard: 0,
       },
+    });
+  }
+});
+
+// ===============================
+// API ENDPOINTS POUR RÉCUPÉRATION DES DONNÉES DE LIVRAISON
+// ===============================
+
+// GET /api/deliveries - Récupère toutes les livraisons avec pagination
+app.get("/api/deliveries", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = (page - 1) * limit;
+
+    // Filtres optionnels
+    const status = req.query.status;
+    const dateFrom = req.query.date_from;
+    const dateTo = req.query.date_to;
+
+    let whereClause = "";
+    let queryParams = [];
+    let paramCount = 0;
+
+    if (status) {
+      paramCount++;
+      whereClause += ` WHERE status = $${paramCount}`;
+      queryParams.push(status);
+    }
+
+    if (dateFrom) {
+      paramCount++;
+      whereClause += whereClause ? ` AND` : ` WHERE`;
+      whereClause += ` created_at >= $${paramCount}`;
+      queryParams.push(dateFrom);
+    }
+
+    if (dateTo) {
+      paramCount++;
+      whereClause += whereClause ? ` AND` : ` WHERE`;
+      whereClause += ` created_at <= $${paramCount}`;
+      queryParams.push(dateTo + " 23:59:59");
+    }
+
+    // Ajouter LIMIT et OFFSET
+    paramCount++;
+    queryParams.push(limit);
+    paramCount++;
+    queryParams.push(offset);
+
+    const query = `
+      SELECT 
+        id, employee_name, client_name, client_phone, container_type_and_content,
+        lieu, container_number, container_foot_type, declaration_number, 
+        number_of_containers, weight, ship_name, circuit, transporter_mode,
+        bl_number, dossier_number, shipping_company, status,
+        date_echange_bl, date_deo, date_badt,
+        delivery_date, delivery_time, created_at, updated_at
+      FROM livraison_conteneur
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT $${paramCount - 1} OFFSET $${paramCount}
+    `;
+
+    const result = await pool.query(query, queryParams);
+
+    // Compter le total pour la pagination
+    const countQuery = `SELECT COUNT(*) FROM livraison_conteneur${whereClause}`;
+    const countParams = queryParams.slice(0, -2); // Enlever LIMIT et OFFSET
+    const countResult = await pool.query(countQuery, countParams);
+    const total = parseInt(countResult.rows[0].count);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des livraisons:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur lors de la récupération des données",
+      code: 500,
+    });
+  }
+});
+
+// GET /api/deliveries/:id - Récupère une livraison spécifique
+app.get("/api/deliveries/:id", async (req, res) => {
+  try {
+    const deliveryId = req.params.id;
+
+    const query = `
+      SELECT 
+        id, employee_name, client_name, client_phone, container_type_and_content,
+        lieu, container_number, container_foot_type, declaration_number, 
+        number_of_containers, weight, ship_name, circuit, transporter_mode,
+        bl_number, dossier_number, shipping_company, status,
+        date_echange_bl, date_deo, date_badt,
+        delivery_date, delivery_time, created_at, updated_at,
+        container_numbers_list, container_foot_types_map, container_statuses
+      FROM livraison_conteneur
+      WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [deliveryId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Livraison non trouvée",
+        code: 404,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération de la livraison:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur lors de la récupération des données",
+      code: 500,
     });
   }
 });
