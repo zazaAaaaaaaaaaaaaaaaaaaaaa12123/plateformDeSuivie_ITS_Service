@@ -2127,22 +2127,21 @@ function mapStatus(status) {
     .dropdown-content .eir-provided { color: #28a745; }
     .dropdown-content .eir-not-provided { color: #dc3545; }
 
-    /* Styles pour la colonne "Statut de livraison (Resp. Aconiés)" */
-    .table thead th:nth-child(18),
-    .table tbody td:nth-child(18) {
-        min-width: 150px;
-        width: 200px;
-        max-width: 250px;
-        white-space: normal;
-        word-break: break-word;
-    }
 
-    /* NOUVEAU STYLE POUR LA COLONNE "OBSERVATIONS (RESP. ACCONIÉS)" (19ème colonne) */
+    /* Ajustement léger des largeurs pour Responsable Acconier (colonnes 19 à 23) */
     .table thead th:nth-child(19),
-    .table tbody td:nth-child(19) {
-        min-width: 180px; /* Peut être plus large pour les observations */
-        width: 250px;
-        max-width: 350px;
+    .table tbody td:nth-child(19),
+    .table thead th:nth-child(20),
+    .table tbody td:nth-child(20),
+    .table thead th:nth-child(21),
+    .table tbody td:nth-child(21),
+    .table thead th:nth-child(22),
+    .table tbody td:nth-child(22),
+    .table thead th:nth-child(23),
+    .table tbody td:nth-child(23) {
+        min-width: 140px;
+        width: 170px;
+        max-width: 200px;
         white-space: normal;
         word-break: break-word;
     }
