@@ -1,3 +1,4 @@
+// prettier-ignore-start
 const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
@@ -2648,7 +2649,7 @@ app.post(
           container_foot_types_map
             ? JSON.stringify(container_foot_types_map)
             : null,
-          new Date(), // Pour date_echange_bl ($33)
+          new Date() // DERNIER ELEMENT - PAS DE VIRGULE
         ];
       } else if (hasJsonColumns) {
         // Si seules les colonnes JSON existent (sans date_echange)
