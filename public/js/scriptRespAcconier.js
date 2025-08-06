@@ -2122,10 +2122,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               }</span>
             </div>
             <div style='font-size:0.98em;font-weight:400;'>
-              Client : <span style='color:#eab308;'>${
+              Client : <span style='color:#111;font-weight:700;'>${
                 delivery.client_name || "-"
               }</span><br>
-              Dossier : <span style='color:#eab308;'>${
+              Dossier : <span style='color:#111;font-weight:700;'>${
                 delivery.dossier_number || "-"
               }</span>  
             </div>
