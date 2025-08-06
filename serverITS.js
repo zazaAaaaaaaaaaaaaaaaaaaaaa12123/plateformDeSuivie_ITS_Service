@@ -2326,11 +2326,42 @@ app.post(
       // Si c'est un tableau (ex : envoyé par le formulaire en JSON), on join avec des virgules
       normalized_container_number = container_number.filter(Boolean).join(",");
     } else if (typeof container_number === "string") {
-      // Nettoyage des espaces et séparateurs multiples
-      normalized_container_number = container_number
-        .split(/[,;\s]+/)
-        .filter(Boolean)
-        .join(",");
+      // Vérifier si c'est un texte affiché tronqué du style "FYCH1234567 + 1 autres"
+      if (
+        container_number.includes(" + ") &&
+        container_number.includes(" autres")
+      ) {
+        // Dans ce cas, utiliser plutôt container_numbers_list si disponible
+        if (req.body.container_numbers_list) {
+          try {
+            let fullList = [];
+            if (typeof req.body.container_numbers_list === "string") {
+              fullList = JSON.parse(req.body.container_numbers_list);
+            } else if (Array.isArray(req.body.container_numbers_list)) {
+              fullList = req.body.container_numbers_list;
+            }
+            normalized_container_number = fullList.filter(Boolean).join(",");
+          } catch (e) {
+            console.warn(
+              "Erreur parsing container_numbers_list pour normalisation:",
+              e
+            );
+            // Fallback : extraire juste le premier TC
+            const firstTC = container_number.split(" + ")[0].trim();
+            normalized_container_number = firstTC;
+          }
+        } else {
+          // Fallback : extraire juste le premier TC
+          const firstTC = container_number.split(" + ")[0].trim();
+          normalized_container_number = firstTC;
+        }
+      } else {
+        // Nettoyage normal des espaces et séparateurs multiples
+        normalized_container_number = container_number
+          .split(/[,;\s]+/)
+          .filter(Boolean)
+          .join(",");
+      }
     } else {
       normalized_container_number = "";
     }
@@ -2450,10 +2481,25 @@ app.post(
       full_container_numbers_list.length === 0 &&
       normalized_container_number
     ) {
-      const tcList = normalized_container_number
-        .split(/[,;\s]+/)
-        .filter(Boolean);
-      full_container_numbers_list = tcList;
+      // Ne pas refaire un split sur normalized_container_number s'il provient déjà de container_numbers_list
+      // Vérifier d'abord si le container_number original était tronqué
+      if (
+        container_number &&
+        container_number.includes(" + ") &&
+        container_number.includes(" autres")
+      ) {
+        // Dans ce cas, full_container_numbers_list devrait déjà être rempli par la normalisation ci-dessus
+        // Si ce n'est pas le cas, utiliser le premier TC seulement
+        if (full_container_numbers_list.length === 0) {
+          full_container_numbers_list = [normalized_container_number];
+        }
+      } else {
+        // Cas normal : extraire les TC du champ normalisé
+        const tcList = normalized_container_number
+          .split(/[,;\s]+/)
+          .filter(Boolean);
+        full_container_numbers_list = tcList;
+      }
     }
 
     try {
