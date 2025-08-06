@@ -1933,17 +1933,25 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           overlay.style.left = 0;
           overlay.style.width = "100vw";
           overlay.style.height = "100vh";
-          overlay.style.background = "rgba(30,41,59,0.45)";
+          // Mode sombre : overlay plus foncé
+          const isDark =
+            document.documentElement.getAttribute("data-theme") === "dark";
+          overlay.style.background = isDark
+            ? "rgba(15,23,42,0.75)"
+            : "rgba(30,41,59,0.45)";
           overlay.style.zIndex = 9999;
-          overlay.style.display = "block"; // Changé de flex à block pour popup déplaçable
-          overlay.style.pointerEvents = "none"; // Permettre les clics à travers l'overlay
+          overlay.style.display = "block";
+          overlay.style.pointerEvents = "none";
           // Positionnement initial pour popup déplaçable
           const box = document.createElement("div");
-          box.style.background = "#fff";
+          // Mode sombre : fond, bordure, ombre
+          box.style.background = isDark ? "#1e293b" : "#fff";
           box.style.borderRadius = window.innerWidth <= 768 ? "12px" : "16px";
-          box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-          box.style.position = "fixed"; // Position fixe pour drag-and-drop
-          box.style.pointerEvents = "auto"; // Restaurer les événements pour la popup
+          box.style.boxShadow = isDark
+            ? "0 12px 40px rgba(59,130,246,0.13)"
+            : "0 12px 40px rgba(30,41,59,0.22)";
+          box.style.position = "fixed";
+          box.style.pointerEvents = "auto";
           // Adaptation responsive : popup réduite pour meilleur centrage sur tablette
           if (window.innerWidth <= 480) {
             // Mobile - format compact horizontal
@@ -1995,8 +2003,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               : (window.innerHeight - boxHeight) / 2 + "px";
 
           const header = document.createElement("div");
-          header.style.background = "#2563eb";
-          header.style.color = "#fff";
+          // Mode sombre : header jaune vif, texte foncé
+          header.style.background = isDark ? "#ffd600" : "#2563eb";
+          header.style.color = isDark ? "#1e293b" : "#fff";
           header.style.cursor = "move";
           // Adaptation responsive du header - très compact
           if (window.innerWidth <= 768) {
@@ -2170,6 +2179,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           blNum.style.fontWeight = "bold";
           blNum.style.textAlign = "center";
           blNum.innerHTML = `N° BL : <span style='color:#2563eb;'>${blNumber}</span>`;
+          // Mode sombre : numéro BL en jaune vif
+          blNum.innerHTML = `N° BL : <span style='color:${
+            isDark ? "#ffd600" : "#2563eb"
+          };'>${blNumber}</span>`;
           content.appendChild(blNum);
 
           // Ajout du sélecteur de statut pour le BL
@@ -2179,6 +2192,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           label.style.marginBottom = "3px";
           label.style.fontWeight = "500";
           label.style.fontSize = window.innerWidth <= 768 ? "0.8em" : "0.95em";
+          if (isDark) label.style.color = "#fff";
           content.appendChild(label);
 
           const select = document.createElement("select");
@@ -2193,10 +2207,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             select.style.fontSize = "1em";
             select.style.marginBottom = "12px";
           }
-          select.style.border = "1.5px solid #2563eb";
+          select.style.border = isDark
+            ? "1.5px solid #ffd600"
+            : "1.5px solid #2563eb";
           select.style.borderRadius = "7px";
-          select.style.background = "#fff";
-          select.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
+          select.style.background = isDark ? "#1e293b" : "#fff";
+          select.style.color = isDark ? "#fff" : "#222";
+          select.style.boxShadow = isDark
+            ? "0 1px 4px rgba(255,214,0,0.08)"
+            : "0 1px 4px rgba(30,41,59,0.04)";
           const statusOptions = [
             { value: "mise_en_livraison", label: "Mise en livraison" },
             { value: "aucun", label: "Aucun" },
@@ -2226,6 +2245,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           // Séparateur visuel
           const separator = document.createElement("div");
           separator.style.borderTop = "1px solid #e5e7eb";
+          if (isDark) separator.style.borderTop = "1px solid #ffd600";
           // Réduction de la marge pour layout horizontal
           if (window.innerWidth <= 768) {
             separator.style.margin = "6px 0 4px 0";
@@ -2238,6 +2258,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const sectionTitle = document.createElement("div");
           const titleFontSize = window.innerWidth <= 768 ? "0.85em" : "1.05em";
           sectionTitle.innerHTML = `<h4 style="color:#2563eb;font-weight:600;margin-bottom:4px;font-size:${titleFontSize};">📊 Données d'échange</h4>`;
+          // Mode sombre : titre section jaune
+          sectionTitle.innerHTML = `<h4 style="color:${
+            isDark ? "#ffd600" : "#2563eb"
+          };font-weight:600;margin-bottom:4px;font-size:${titleFontSize};">📊 Données d'échange</h4>`;
           content.appendChild(sectionTitle);
 
           // Container pour layout horizontal optimisé - tablette et mobile
@@ -2275,6 +2299,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           paiementLabel.style.fontWeight = "500";
           paiementLabel.style.fontSize =
             window.innerWidth <= 768 ? "0.78em" : "0.92em";
+          if (isDark) paiementLabel.style.color = "#fff";
           paiementGroup.appendChild(paiementLabel);
 
           const paiementInput = document.createElement("input");
@@ -2283,12 +2308,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           paiementInput.style.width = "100%";
           paiementInput.style.padding =
             window.innerWidth <= 768 ? "2px 4px" : "6px 8px";
-          paiementInput.style.border = "1.5px solid #d1d5db";
+          paiementInput.style.border = isDark
+            ? "1.5px solid #ffd600"
+            : "1.5px solid #d1d5db";
           paiementInput.style.borderRadius = "4px";
           paiementInput.style.fontSize =
             window.innerWidth <= 768 ? "0.8em" : "0.95em";
           paiementInput.style.marginBottom = "0";
-          paiementInput.style.background = "#fff";
+          paiementInput.style.background = isDark ? "#1e293b" : "#fff";
+          paiementInput.style.color = isDark ? "#fff" : "#222";
 
           // Récupérer la valeur de date depuis la base de données et la convertir au format YYYY-MM-DD
           const tempKeyPaiement = `temp_paiement_acconage_${delivery.id}`;
@@ -2327,6 +2355,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateDOLabel.style.fontWeight = "500";
           dateDOLabel.style.fontSize =
             window.innerWidth <= 768 ? "0.78em" : "0.92em";
+          if (isDark) dateDOLabel.style.color = "#fff";
           dateDOGroup.appendChild(dateDOLabel);
 
           const dateDOInput = document.createElement("input");
@@ -2335,12 +2364,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateDOInput.style.width = "100%";
           dateDOInput.style.padding =
             window.innerWidth <= 768 ? "2px 4px" : "6px 8px";
-          dateDOInput.style.border = "1.5px solid #d1d5db";
+          dateDOInput.style.border = isDark
+            ? "1.5px solid #ffd600"
+            : "1.5px solid #d1d5db";
           dateDOInput.style.borderRadius = "4px";
           dateDOInput.style.fontSize =
             window.innerWidth <= 768 ? "0.8em" : "0.95em";
           dateDOInput.style.marginBottom = "0";
-          dateDOInput.style.background = "#fff";
+          dateDOInput.style.background = isDark ? "#1e293b" : "#fff";
+          dateDOInput.style.color = isDark ? "#fff" : "#222";
 
           // Récupérer la valeur sauvée temporairement ou depuis la BDD
           const tempKeyDO = `temp_date_do_${delivery.id}`;
@@ -2367,6 +2399,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateBADTLabel.style.fontWeight = "500";
           dateBADTLabel.style.fontSize =
             window.innerWidth <= 768 ? "0.78em" : "0.92em";
+          if (isDark) dateBADTLabel.style.color = "#fff";
           dateBADTGroup.appendChild(dateBADTLabel);
 
           const dateBADTInput = document.createElement("input");
@@ -2375,12 +2408,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateBADTInput.style.width = "100%";
           dateBADTInput.style.padding =
             window.innerWidth <= 768 ? "2px 4px" : "6px 8px";
-          dateBADTInput.style.border = "1.5px solid #d1d5db";
+          dateBADTInput.style.border = isDark
+            ? "1.5px solid #ffd600"
+            : "1.5px solid #d1d5db";
           dateBADTInput.style.borderRadius = "4px";
           dateBADTInput.style.fontSize =
             window.innerWidth <= 768 ? "0.8em" : "0.95em";
           dateBADTInput.style.marginBottom = "0";
-          dateBADTInput.style.background = "#fff";
+          dateBADTInput.style.background = isDark ? "#1e293b" : "#fff";
+          dateBADTInput.style.color = isDark ? "#fff" : "#222";
 
           // Récupérer la valeur sauvée temporairement ou depuis la BDD
           const tempKeyBADT = `temp_date_badt_${delivery.id}`;
@@ -2407,6 +2443,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateEchangeBLLabel.style.fontWeight = "500";
           dateEchangeBLLabel.style.fontSize =
             window.innerWidth <= 768 ? "0.78em" : "0.92em";
+          if (isDark) dateEchangeBLLabel.style.color = "#fff";
           dateEchangeBLGroup.appendChild(dateEchangeBLLabel);
 
           const dateEchangeBLInput = document.createElement("input");
@@ -2415,14 +2452,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateEchangeBLInput.style.width = "100%";
           dateEchangeBLInput.style.padding =
             window.innerWidth <= 768 ? "2px 4px" : "6px 8px";
-          dateEchangeBLInput.style.border = "1.5px solid #d1d5db";
+          dateEchangeBLInput.style.border = isDark
+            ? "1.5px solid #ffd600"
+            : "1.5px solid #d1d5db";
           dateEchangeBLInput.style.borderRadius = "4px";
           dateEchangeBLInput.style.fontSize =
             window.innerWidth <= 768 ? "0.8em" : "0.95em";
           dateEchangeBLInput.style.marginBottom = "0";
-          dateEchangeBLInput.style.background = "#f3f4f6"; // Gris pour indiquer lecture seule
-          dateEchangeBLInput.style.color = "#6b7280";
-          dateEchangeBLInput.readOnly = true; // Lecture seule
+          dateEchangeBLInput.style.background = isDark ? "#232f43" : "#f3f4f6";
+          dateEchangeBLInput.style.color = isDark ? "#ffd600" : "#6b7280";
+          dateEchangeBLInput.readOnly = true;
           dateEchangeBLInput.style.cursor = "not-allowed";
 
           // Récupérer la date d'échange BL depuis la base de données (générée automatiquement)
