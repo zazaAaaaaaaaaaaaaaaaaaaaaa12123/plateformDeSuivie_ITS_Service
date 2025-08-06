@@ -1410,7 +1410,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
 
         // Style spécial pour les colonnes de dates
         if (
-          col.id === "date_echange" ||
           col.id === "date_echange_bl" ||
           col.id === "date_do" ||
           col.id === "date_badt"
@@ -1454,7 +1453,6 @@ const AGENT_TABLE_COLUMNS = [
   { id: "ship_name", label: "Nom du Navire" },
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
-  { id: "date_echange", label: "Date d'échange" },
   { id: "date_echange_bl", label: "Date d'échange BL" },
   { id: "date_do", label: "Date de DO" },
   { id: "date_badt", label: "Date de BADT" },
@@ -2238,7 +2236,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.innerHTML = "";
         }
       } else if (
-        col.id === "date_echange" ||
         col.id === "date_echange_bl" ||
         col.id === "date_do" ||
         col.id === "date_badt"
