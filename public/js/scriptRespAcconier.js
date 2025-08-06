@@ -2374,7 +2374,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateBADTGroup.appendChild(dateBADTInput);
           fieldsContainer.appendChild(dateBADTGroup);
 
-          // 4. Date d'échange BL (lecture seule - vient du formulaire employé)
+          // 4. Date d'échange BL (lecture seule - générée automatiquement lors de l'enregistrement)
           const dateEchangeBLGroup = document.createElement("div");
 
           const dateEchangeBLLabel = document.createElement("label");
@@ -2402,14 +2402,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateEchangeBLInput.readOnly = true; // Lecture seule
           dateEchangeBLInput.style.cursor = "not-allowed";
 
-          // Récupérer la date d'échange BL depuis la base de données (remplie par le formulaire employé)
+          // Récupérer la date d'échange BL depuis la base de données (générée automatiquement)
           dateEchangeBLInput.value = delivery.date_echange_bl
             ? new Date(delivery.date_echange_bl).toISOString().split("T")[0]
             : "";
 
-          // Ajouter un tooltip pour expliquer que c'est en lecture seule
+          // Ajouter un tooltip pour expliquer que c'est généré automatiquement
           dateEchangeBLInput.title =
-            "Cette date est renseignée dans le formulaire employé et ne peut pas être modifiée ici";
+            "Cette date est générée automatiquement lors de l'enregistrement de l'ordre de livraison";
 
           dateEchangeBLGroup.appendChild(dateEchangeBLInput);
           fieldsContainer.appendChild(dateEchangeBLGroup);
