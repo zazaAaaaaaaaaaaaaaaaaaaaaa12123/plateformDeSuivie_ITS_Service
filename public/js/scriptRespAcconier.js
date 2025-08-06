@@ -1582,7 +1582,10 @@ function createEditInput(columnId, currentValue) {
   input.style.padding = "6px 8px";
   input.style.fontSize = "0.9rem";
   input.style.fontFamily = "inherit";
-  input.style.backgroundColor = "#fff";
+  // Adaptation du fond et couleur texte selon le mode sombre
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  input.style.backgroundColor = isDark ? "#232f43" : "#fff";
+  input.style.color = isDark ? "#fff" : "#222";
 
   return input;
 }
