@@ -2972,7 +2972,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // Correction : si le statut acconier est 'en attente de paiement', on affiche toujours 'En attente de paiement'
         if (delivery.delivery_status_acconier === "en attente de paiement") {
           td.innerHTML =
-            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+            '<span style="display:inline-flex;align-items:center;gap:6px;color:#e53935;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#e53935;"></i> En attente de paiement</span>';
         } else {
           let blList = [];
           if (Array.isArray(delivery.bl_number)) {
@@ -2993,7 +2993,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
           } else {
             td.innerHTML =
-              '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+              '<span style="display:inline-flex;align-items:center;gap:6px;color:#e53935;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#e53935;"></i> En attente de paiement</span>';
           }
         }
       } else {
