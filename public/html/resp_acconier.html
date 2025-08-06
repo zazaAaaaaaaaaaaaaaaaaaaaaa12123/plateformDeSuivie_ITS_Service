@@ -21,6 +21,13 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
+      /* Couleurs titre et sous-titre en mode sombre */
+      [data-theme="dark"] .main-title-acconier {
+        color: #ffd600 !important;
+      }
+      [data-theme="dark"] .main-subtitle-acconier {
+        color: #3b82f6 !important;
+      }
       /* Variables CSS pour les thèmes */
       :root {
         /* Mode Clair (par défaut) */
@@ -902,7 +909,7 @@
         >
           <div style="min-width: 0; flex: 1 1 0">
             <h1
-              class="mb-1"
+              class="mb-1 main-title-acconier"
               style="
                 font-size: 1.7em;
                 font-weight: 700;
@@ -913,6 +920,7 @@
               Tableau - Responsable Acconier
             </h1>
             <div
+              class="main-subtitle-acconier"
               style="
                 font-size: 1.13em;
                 color: var(--text-secondary);
