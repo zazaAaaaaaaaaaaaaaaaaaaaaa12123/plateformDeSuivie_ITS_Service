@@ -1537,15 +1537,17 @@ function createEditInput(columnId, currentValue) {
     input = document.createElement("textarea");
     input.style.minHeight = "60px";
     input.style.resize = "vertical";
-    // Fond adapté au mode sombre, texte blanc en mode sombre
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
     input.style.backgroundColor = isDark ? "#232f43" : "#fff";
-    input.style.color = isDark ? "#fff" : "#111";
-    // S'assurer que la couleur reste blanche même après la saisie en mode sombre
+    // Couleur du texte : noir pendant la saisie, blanc après en mode sombre
+    input.style.color = isDark ? "#111" : "#111";
     if (isDark) {
       input.addEventListener("focus", function () {
-        this.style.color = "#fff";
+        this.style.color = "#111";
+      });
+      input.addEventListener("input", function () {
+        if (document.activeElement === this) this.style.color = "#111";
       });
       input.addEventListener("blur", function () {
         this.style.color = "#fff";
