@@ -2167,8 +2167,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           content.style.overflowY = "auto";
           // Assurer que le contenu peut défiler pour voir le bouton
           content.style.minHeight = "0";
+          // Bloc Numéro du conteneur (TC)
+          const tcNum = document.createElement("div");
+          if (window.innerWidth <= 768) {
+            tcNum.style.fontSize = "0.9em";
+            tcNum.style.marginBottom = "4px";
+          } else {
+            tcNum.style.fontSize = "1.2em";
+            tcNum.style.marginBottom = "12px";
+          }
+          tcNum.style.fontWeight = "bold";
+          tcNum.style.textAlign = "center";
+          tcNum.style.background = isDark ? "#232f43" : "#f8fafc";
+          tcNum.style.borderRadius = "8px";
+          tcNum.style.padding = "6px 0 6px 0";
+          tcNum.innerHTML = `<span style='color:#111;font-weight:700;'>Numéro du conteneur :</span> <span style='color:${
+            isDark ? "#ffd600" : "#2563eb"
+          };'>${delivery.container_number || "-"}</span>`;
+          content.appendChild(tcNum);
+
+          // Bloc Numéro BL (déjà existant)
           const blNum = document.createElement("div");
-          // Adaptation responsive de la taille de police - compact horizontal
           if (window.innerWidth <= 768) {
             blNum.style.fontSize = "0.9em";
             blNum.style.marginBottom = "4px";
