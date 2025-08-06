@@ -1539,11 +1539,11 @@ function createEditInput(columnId, currentValue) {
     input.style.resize = "vertical";
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
-    input.style.backgroundColor = isDark ? "#232f43" : "#fff";
+    input.style.backgroundColor = isDark ? "#0e274e" : "#fff";
     // Couleur du texte : noir pendant la saisie, blanc après en mode sombre
     if (isDark) {
       input.style.color = "#fff";
-      input.style.backgroundColor = "#232f43";
+      input.style.backgroundColor = "#0e274e";
       input.addEventListener("focus", function () {
         this.style.color = "#fff";
         this.style.backgroundColor = "#0e274e";
@@ -1556,7 +1556,7 @@ function createEditInput(columnId, currentValue) {
       });
       input.addEventListener("blur", function () {
         this.style.color = "#fff";
-        this.style.backgroundColor = "#232f43";
+        this.style.backgroundColor = "#0e274e";
       });
     } else {
       input.style.color = "#111";
