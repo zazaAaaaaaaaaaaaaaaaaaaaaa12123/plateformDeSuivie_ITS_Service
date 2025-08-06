@@ -1543,14 +1543,20 @@ function createEditInput(columnId, currentValue) {
     // Couleur du texte : noir pendant la saisie, blanc après en mode sombre
     if (isDark) {
       input.style.color = "#fff";
+      input.style.backgroundColor = "#232f43";
       input.addEventListener("focus", function () {
-        this.style.color = "#111";
+        this.style.color = "#fff";
+        this.style.backgroundColor = "#0e274e";
       });
       input.addEventListener("input", function () {
-        if (document.activeElement === this) this.style.color = "#111";
+        if (document.activeElement === this) {
+          this.style.color = "#fff";
+          this.style.backgroundColor = "#0e274e";
+        }
       });
       input.addEventListener("blur", function () {
         this.style.color = "#fff";
+        this.style.backgroundColor = "#232f43";
       });
     } else {
       input.style.color = "#111";
