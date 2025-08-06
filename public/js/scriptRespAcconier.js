@@ -1540,7 +1540,7 @@ function createEditInput(columnId, currentValue) {
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
     input.style.backgroundColor = isDark ? "#0e274e" : "#fff";
-    // Couleur du texte : noir pendant la saisie, blanc après en mode sombre
+    // Couleur du texte : noir pendant la saidbhjsie, blanc après en mode sombre
     if (isDark) {
       input.style.color = "#fff";
       input.style.backgroundColor = "#0e274e";
