@@ -1511,15 +1511,18 @@ function updateTableEditMode() {
   if (!table) return;
 
   const cells = table.querySelectorAll("td[data-editable]");
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
   cells.forEach((cell) => {
     if (isTableEditMode) {
       cell.style.cursor = "pointer";
-      cell.style.backgroundColor = "#f8fafc";
+      cell.style.backgroundColor = isDark ? "#232f43" : "#f8fafc";
+      cell.style.color = isDark ? "#fff" : "";
       cell.title = "Cliquez pour modifier";
       cell.classList.add("editable-cell");
     } else {
       cell.style.cursor = "default";
       cell.style.backgroundColor = "";
+      cell.style.color = "";
       cell.title = "";
       cell.classList.remove("editable-cell");
     }
