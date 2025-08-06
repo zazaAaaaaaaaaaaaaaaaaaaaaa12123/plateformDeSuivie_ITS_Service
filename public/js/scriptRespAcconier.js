@@ -1537,11 +1537,11 @@ function createEditInput(columnId, currentValue) {
     input = document.createElement("textarea");
     input.style.minHeight = "60px";
     input.style.resize = "vertical";
-    // Adaptation du fond et couleur texte selon le mode sombre pour textarea
+    // Fond adapté au mode sombre, mais texte toujours noir pour la saisie
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
     input.style.backgroundColor = isDark ? "#232f43" : "#fff";
-    input.style.color = isDark ? "#fff" : "#222";
+    input.style.color = "#111";
   } else if (columnId === "circuit") {
     input = document.createElement("select");
     const options = ["", "VAD", "VAQ", "BAE", "SCANNER"];
