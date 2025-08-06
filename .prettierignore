@@ -1,6 +1,0 @@
-# Ignorer temporairement le serveur principal
-serverITS.js
-
-# Autres fichiers à ignorer si nécessaire
-node_modules/
-*.log

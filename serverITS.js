@@ -1,4 +1,3 @@
-// prettier-ignore-start
 const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
@@ -2649,7 +2648,7 @@ app.post(
           container_foot_types_map
             ? JSON.stringify(container_foot_types_map)
             : null,
-          new Date() // DERNIER ELEMENT - PAS DE VIRGULE
+          new Date(), // DERNIER ELEMENT - PAS DE VIRGULE
         ];
       } else if (hasJsonColumns) {
         // Si seules les colonnes JSON existent (sans date_echange)
@@ -2666,7 +2665,7 @@ app.post(
             delivery_status_acconier,
             container_statuses, container_numbers_list, container_foot_types_map
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
           RETURNING *;
         `;
         values = [
