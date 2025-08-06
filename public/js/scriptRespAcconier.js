@@ -1537,11 +1537,20 @@ function createEditInput(columnId, currentValue) {
     input = document.createElement("textarea");
     input.style.minHeight = "60px";
     input.style.resize = "vertical";
-    // Fond adapté au mode sombre, mais texte toujours noir pour la saisie
+    // Fond adapté au mode sombre, texte blanc en mode sombre
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
     input.style.backgroundColor = isDark ? "#232f43" : "#fff";
-    input.style.color = "#111";
+    input.style.color = isDark ? "#fff" : "#111";
+    // S'assurer que la couleur reste blanche même après la saisie en mode sombre
+    if (isDark) {
+      input.addEventListener("focus", function () {
+        this.style.color = "#fff";
+      });
+      input.addEventListener("blur", function () {
+        this.style.color = "#fff";
+      });
+    }
   } else if (columnId === "circuit") {
     input = document.createElement("select");
     const options = ["", "VAD", "VAQ", "BAE", "SCANNER"];
