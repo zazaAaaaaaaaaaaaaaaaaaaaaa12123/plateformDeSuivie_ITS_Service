@@ -5131,9 +5131,9 @@ function mapStatus(status) {
     }
     const COLS_AGENT = [
       2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-    ]; // Colonnes Agent Acconier (sans Statut Dossier qui est maintenant dans RESP)
-    const COLS_RESP = [19, 20, 21, 22, 23, 24]; // 19=Statut Dossier, 20=Date échange BL, 21=Date Paiement Acconage, 22=Date DO, 23=Date BADT, 24=Observation
-    const COLS_LIVRAISON = [25, 26, 27, 28, 29, 30, 31, 32, 33, 34]; // Colonnes Responsable de livraison
+    ]; // Colonnes Agent Acconier (avec Date d'échange BL maintenant à la position 18)
+    const COLS_RESP = [19, 20, 21, 22, 23]; // 19=Statut Dossier, 20=Date Paiement Acconage, 21=Date DO, 22=Date BADT, 23=Observation
+    const COLS_LIVRAISON = [24, 25, 26, 27, 28, 29, 30, 31, 32]; // Colonnes Responsable de livraison (avec Nom agent visiteur à la position 24)
     function flashCells(colIndexes, flashClass) {
       const rows = table.tBodies[0]?.rows;
       if (!rows) return;
