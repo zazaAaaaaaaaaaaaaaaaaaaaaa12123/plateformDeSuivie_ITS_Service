@@ -1537,6 +1537,11 @@ function createEditInput(columnId, currentValue) {
     input = document.createElement("textarea");
     input.style.minHeight = "60px";
     input.style.resize = "vertical";
+    // Adaptation du fond et couleur texte selon le mode sombre pour textarea
+    const isDark =
+      document.documentElement.getAttribute("data-theme") === "dark";
+    input.style.backgroundColor = isDark ? "#232f43" : "#fff";
+    input.style.color = isDark ? "#fff" : "#222";
   } else if (columnId === "circuit") {
     input = document.createElement("select");
     const options = ["", "VAD", "VAQ", "BAE", "SCANNER"];
@@ -1582,10 +1587,15 @@ function createEditInput(columnId, currentValue) {
   input.style.padding = "6px 8px";
   input.style.fontSize = "0.9rem";
   input.style.fontFamily = "inherit";
-  // Adaptation du fond et couleur texte selon le mode sombre
-  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-  input.style.backgroundColor = isDark ? "#232f43" : "#fff";
-  input.style.color = isDark ? "#fff" : "#222";
+  // Pour tous les inputs sauf textarea déjà stylé ci-dessus
+  if (
+    !(columnId === "container_type_and_content" || columnId === "observation")
+  ) {
+    const isDark =
+      document.documentElement.getAttribute("data-theme") === "dark";
+    input.style.backgroundColor = isDark ? "#232f43" : "#fff";
+    input.style.color = isDark ? "#fff" : "#222";
+  }
 
   return input;
 }
