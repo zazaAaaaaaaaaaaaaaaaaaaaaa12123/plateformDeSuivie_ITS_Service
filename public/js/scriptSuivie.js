@@ -3104,10 +3104,6 @@ function mapStatus(status) {
             // Ensure delivery_date is a Date object if it exists
             delivery.delivery_date = new Date(delivery.delivery_date);
           }
-          if (delivery.date_echange) {
-            // Ensure date_echange is a Date object if it exists
-            delivery.date_echange = new Date(delivery.date_echange);
-          }
           if (delivery.date_echange_bl) {
             // Ensure date_echange_bl is a Date object if it exists
             delivery.date_echange_bl = new Date(delivery.date_echange_bl);
@@ -4298,8 +4294,6 @@ function mapStatus(status) {
           }
         } else if (value instanceof Date && fieldName === "delivery_date") {
           displayValue = value.toLocaleDateString("fr-FR");
-        } else if (value instanceof Date && fieldName === "date_echange") {
-          displayValue = value.toLocaleDateString("fr-FR");
         } else if (value instanceof Date && fieldName === "date_echange_bl") {
           displayValue = value.toLocaleDateString("fr-FR");
         } else if (value instanceof Date && fieldName === "date_do") {
@@ -4799,9 +4793,8 @@ function mapStatus(status) {
       createCell(delivery.ship_name, "ship_name"); // Nom du navire
       createCell(delivery.circuit, "circuit"); // Circuit
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
-      createCell(delivery.date_echange, "date_echange", "date", {}); // Date d'échange
-      createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
       createCell(delivery.date_echange_bl, "date_echange_bl", "date", {}); // Date d'échange BL
+      createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
       createCell(delivery.date_do, "date_do", "date", {}); // Date de DO
       createCell(delivery.date_badt, "date_badt", "date", {}); // Date de BADT
       createCell(
