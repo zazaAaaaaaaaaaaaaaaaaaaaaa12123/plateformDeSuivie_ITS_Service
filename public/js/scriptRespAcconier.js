@@ -3283,14 +3283,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         overlay.style.width = "100vw";
         overlay.style.height = "100vh";
         overlay.style.background = "rgba(30,41,59,0.45)";
+        // Mode sombre : overlay plus foncé
+        const isDark =
+          document.documentElement.getAttribute("data-theme") === "dark";
+        overlay.style.background = isDark
+          ? "rgba(15,23,42,0.75)"
+          : "rgba(30,41,59,0.45)";
         overlay.style.zIndex = 9999;
         overlay.style.display = "flex";
         overlay.style.alignItems = "center";
         overlay.style.justifyContent = "center";
         const box = document.createElement("div");
-        box.style.background = "#fff";
+        box.style.background = isDark ? "#1e293b" : "#fff";
         box.style.borderRadius = window.innerWidth <= 600 ? "10px" : "16px";
-        box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+        box.style.boxShadow = isDark
+          ? "0 12px 40px rgba(59,130,246,0.13)"
+          : "0 12px 40px rgba(30,41,59,0.22)";
         box.style.maxWidth = window.innerWidth <= 600 ? "98vw" : "420px";
         box.style.width = window.innerWidth <= 600 ? "98vw" : "96vw";
         box.style.maxHeight = window.innerWidth <= 600 ? "96vh" : "92vh";
@@ -3300,8 +3308,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         box.style.display = "flex";
         box.style.flexDirection = "column";
         const header = document.createElement("div");
-        header.style.background = "#2563eb";
-        header.style.color = "#fff";
+        header.style.background = isDark ? "#ffd600" : "#2563eb";
+        header.style.color = isDark ? "#1e293b" : "#fff";
         header.style.padding =
           window.innerWidth <= 600
             ? "12px 12px 8px 12px"
@@ -3350,7 +3358,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           window.innerWidth <= 600
             ? "14px 10px 14px 10px"
             : "24px 24px 24px 24px";
-        content.style.background = "#f8fafc";
+        content.style.background = isDark ? "#232f43" : "#f8fafc";
         content.style.flex = "1 1 auto";
         content.style.overflowY = "auto";
         const tcNum = document.createElement("div");
@@ -3358,7 +3366,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         tcNum.style.fontWeight = "bold";
         tcNum.style.marginBottom = window.innerWidth <= 600 ? "10px" : "18px";
         tcNum.style.textAlign = "center";
-        tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${containerNumber}</span>`;
+        tcNum.innerHTML = `Numéro du conteneur : <span style='color:${
+          isDark ? "#ffd600" : "#2563eb"
+        };'>${containerNumber}</span>`;
         content.appendChild(tcNum);
         box.appendChild(content);
         overlay.appendChild(box);
