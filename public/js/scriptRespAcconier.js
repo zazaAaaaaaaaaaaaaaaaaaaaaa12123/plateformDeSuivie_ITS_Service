@@ -2246,17 +2246,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             // Layout horizontal sur tablette et mobile pour optimiser l'espace
             fieldsContainer.style.display = "grid";
             if (window.innerWidth <= 480) {
-              // Mobile : 2 colonnes compactes
+              // Mobile : 2 colonnes compactes sur 2 lignes (4 champs au total)
               fieldsContainer.style.gridTemplateColumns = "1fr 1fr";
               fieldsContainer.style.gap = "4px 8px";
             } else {
-              // Tablette : 3 colonnes pour maximiser l'horizontal
-              fieldsContainer.style.gridTemplateColumns = "1fr 1fr 1fr";
-              fieldsContainer.style.gap = "6px 12px";
+              // Tablette : 2 colonnes sur 2 lignes pour bien voir tous les champs
+              fieldsContainer.style.gridTemplateColumns = "1fr 1fr";
+              fieldsContainer.style.gap = "8px 12px";
             }
             fieldsContainer.style.marginBottom = "8px";
           } else {
-            // Desktop : layout classique en 2 colonnes
+            // Desktop : layout en 2 colonnes sur 2 lignes pour les 4 champs
             fieldsContainer.style.display = "grid";
             fieldsContainer.style.gridTemplateColumns = "1fr 1fr";
             fieldsContainer.style.gap = "12px 16px";
