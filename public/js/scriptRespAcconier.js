@@ -2374,6 +2374,46 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateBADTGroup.appendChild(dateBADTInput);
           fieldsContainer.appendChild(dateBADTGroup);
 
+          // 4. Date d'échange BL (lecture seule - vient du formulaire employé)
+          const dateEchangeBLGroup = document.createElement("div");
+
+          const dateEchangeBLLabel = document.createElement("label");
+          dateEchangeBLLabel.textContent = "📅 Date d'échange BL :";
+          dateEchangeBLLabel.style.display = "block";
+          dateEchangeBLLabel.style.marginBottom = "2px";
+          dateEchangeBLLabel.style.fontWeight = "500";
+          dateEchangeBLLabel.style.fontSize =
+            window.innerWidth <= 768 ? "0.78em" : "0.92em";
+          dateEchangeBLGroup.appendChild(dateEchangeBLLabel);
+
+          const dateEchangeBLInput = document.createElement("input");
+          dateEchangeBLInput.type = "date";
+          dateEchangeBLInput.id = "dateEchangeBL";
+          dateEchangeBLInput.style.width = "100%";
+          dateEchangeBLInput.style.padding =
+            window.innerWidth <= 768 ? "2px 4px" : "6px 8px";
+          dateEchangeBLInput.style.border = "1.5px solid #d1d5db";
+          dateEchangeBLInput.style.borderRadius = "4px";
+          dateEchangeBLInput.style.fontSize =
+            window.innerWidth <= 768 ? "0.8em" : "0.95em";
+          dateEchangeBLInput.style.marginBottom = "0";
+          dateEchangeBLInput.style.background = "#f3f4f6"; // Gris pour indiquer lecture seule
+          dateEchangeBLInput.style.color = "#6b7280";
+          dateEchangeBLInput.readOnly = true; // Lecture seule
+          dateEchangeBLInput.style.cursor = "not-allowed";
+
+          // Récupérer la date d'échange BL depuis la base de données (remplie par le formulaire employé)
+          dateEchangeBLInput.value = delivery.date_echange_bl
+            ? new Date(delivery.date_echange_bl).toISOString().split("T")[0]
+            : "";
+
+          // Ajouter un tooltip pour expliquer que c'est en lecture seule
+          dateEchangeBLInput.title =
+            "Cette date est renseignée dans le formulaire employé et ne peut pas être modifiée ici";
+
+          dateEchangeBLGroup.appendChild(dateEchangeBLInput);
+          fieldsContainer.appendChild(dateEchangeBLGroup);
+
           // Espacement avant le bouton - optimisé pour layout horizontal
           const buttonSpacer = document.createElement("div");
           if (window.innerWidth <= 768) {
