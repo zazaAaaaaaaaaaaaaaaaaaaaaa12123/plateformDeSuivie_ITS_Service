@@ -1289,7 +1289,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-// Colonnes strictes pour Agent Acconier
+// Colonnes strictes pour Agent Acconiershv
 const AGENT_TABLE_COLUMNS = [
   { id: "select_row", label: "" }, // Colonne pour la sélection
   { id: "row_number", label: "N°" },
@@ -3333,7 +3333,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             Client : <span style='color:#111;font-weight:600;'>${
               delivery.client_name || "-"
             }</span><br>
-            Dossier : <span style='color:#eab308;'>${
+            Dossier : <span style='color:#111;font-weight:600;'>${
               delivery.dossier_number || "-"
             }</span>  
           </div>
