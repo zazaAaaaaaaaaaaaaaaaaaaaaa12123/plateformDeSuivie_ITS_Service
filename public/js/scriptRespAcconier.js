@@ -2801,21 +2801,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   "mise-en-livraison-success-alert"
                 );
                 if (oldAlert) oldAlert.remove();
-                const alert = document.createElement("div");
-                alert.id = "mise-en-livraison-success-alert";
-                alert.textContent =
-                  "Vous avez mis un dossier en mise en livraison";
-                alert.style.position = "fixed";
-                alert.style.top = "80px";
-                alert.style.left = "50%";
-                alert.style.transform = "translateX(-50%)";
-                alert.style.background =
-                  "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)";
-                alert.style.color = "#fff";
-                alert.style.fontWeight = "bold";
-                alert.style.fontSize = "1.12em";
-                alert.style.padding = "18px 38px";
-                alert.style.borderRadius = "16px";
+                // (Bloc Numéro du conteneur retiré à la demande de l'utilisateur)
                 alert.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
                 alert.style.zIndex = 99999;
                 alert.style.opacity = "0";
