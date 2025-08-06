@@ -2819,6 +2819,49 @@ app.post(
         console.log(
           `[WebSocket] new_delivery_notification envoyé à ${clientCount} client(s) sur ${wss.clients.size} connecté(s).`
         );
+
+        // --- ENVOI WEBSOCKET SPÉCIFIQUE POUR LA DATE D'ÉCHANGE BL ---
+        if (date_echange_bl && newDelivery.id) {
+          const dateEchangeBlPayload = {
+            type: "date_echange_bl_update",
+            deliveryId: newDelivery.id,
+            dateEchangeBl: date_echange_bl,
+            timestamp: new Date().toISOString(),
+          };
+          const datePayload = JSON.stringify(dateEchangeBlPayload);
+          let dateClientCount = 0;
+          wss.clients.forEach((client, idx) => {
+            try {
+              if (client.readyState === require("ws").OPEN) {
+                client.send(datePayload);
+                let clientInfo = "";
+                if (client._socket && client._socket.remoteAddress) {
+                  clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
+                }
+                console.log(
+                  `[WebSocket] date_echange_bl_update envoyé au client #${
+                    idx + 1
+                  }${clientInfo}`
+                );
+                dateClientCount++;
+              }
+            } catch (e) {
+              let clientInfo = "";
+              if (client._socket && client._socket.remoteAddress) {
+                clientInfo = ` [${client._socket.remoteAddress}:${client._socket.remotePort}]`;
+              }
+              console.error(
+                `[WebSocket] Erreur lors de l'envoi date_echange_bl_update à client #${
+                  idx + 1
+                }${clientInfo} :`,
+                e
+              );
+            }
+          });
+          console.log(
+            `[WebSocket] date_echange_bl_update envoyé à ${dateClientCount} client(s) sur ${wss.clients.size} connecté(s).`
+          );
+        }
       }
 
       // RETIRÉ : L'envoi de la liste des agents n'est plus déclenché ici

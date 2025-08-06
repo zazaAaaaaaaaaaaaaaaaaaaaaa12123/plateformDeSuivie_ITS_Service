@@ -1193,6 +1193,71 @@ function mapStatus(status) {
   }
 
   /**
+   * Gère la mise à jour en temps réel des dates d'échange BL depuis le formulaire employé
+   * SYNCHRONISATION UNIDIRECTIONNELLE : formulaire employé → tableauDeBord.html
+   * @param {Object} data - Données de mise à jour: {deliveryId, dateEchangeBl, timestamp}
+   */
+  function handleDateEchangeBlUpdate(data) {
+    try {
+      console.log(
+        "[SYNC] Mise à jour date échange BL reçue depuis formulaire employé:",
+        data
+      );
+
+      if (!data.deliveryId) {
+        console.warn(
+          "[SYNC] Données incomplètes pour la mise à jour de la date d'échange BL"
+        );
+        return;
+      }
+
+      // 1. Mettre à jour les données locales dans tous les tableaux correspondants
+      const deliveryIndex = deliveries.findIndex(
+        (d) => d.id === data.deliveryId
+      );
+      if (deliveryIndex !== -1) {
+        deliveries[deliveryIndex].date_echange_bl = data.dateEchangeBl
+          ? new Date(data.dateEchangeBl)
+          : null;
+        console.log(
+          `[SYNC] Date échange BL mise à jour localement: ${data.deliveryId} = ${data.dateEchangeBl}`
+        );
+      }
+
+      // Mettre à jour aussi dans allDeliveries pour les vues historiques
+      const allDeliveryIndex = allDeliveries.findIndex(
+        (d) => d.id === data.deliveryId
+      );
+      if (allDeliveryIndex !== -1) {
+        allDeliveries[allDeliveryIndex].date_echange_bl = data.dateEchangeBl
+          ? new Date(data.dateEchangeBl)
+          : null;
+      }
+
+      // 2. Mettre à jour l'affichage spécifique de la cellule date_echange_bl dans le tableau
+      updateDateEchangeBlDisplay(data.deliveryId, data.dateEchangeBl);
+
+      // 3. Afficher une notification discrète
+      showCustomAlert(
+        `Date d'échange BL mise à jour pour le dossier ${data.deliveryId}`,
+        "success",
+        2500
+      );
+
+      // 4. Forcer la mise à jour des filtres si nécessaire
+      setTimeout(() => {
+        const event = new Event("bl_status_update");
+        document.dispatchEvent(event);
+      }, 100);
+    } catch (error) {
+      console.error(
+        "[SYNC] Erreur lors de la mise à jour de la date d'échange BL:",
+        error
+      );
+    }
+  }
+
+  /**
    * Force la synchronisation d'une livraison pour reconstruire les données tronquées
    * @param {Object} delivery - Objet livraison
    * @returns {Object|null} - Données synchronisées ou null si aucune reconstruction nécessaire
@@ -1328,6 +1393,104 @@ function mapStatus(status) {
     } catch (error) {
       console.error(
         "[SYNC] Erreur lors de la mise à jour de l'affichage:",
+        error
+      );
+    }
+  }
+
+  /**
+   * Met à jour l'affichage de la date d'échange BL pour une livraison spécifique
+   * @param {string} deliveryId - ID de la livraison
+   * @param {string|null} dateEchangeBl - Nouvelle date d'échange BL (format ISO ou null)
+   */
+  function updateDateEchangeBlDisplay(deliveryId, dateEchangeBl) {
+    try {
+      console.log(
+        `[SYNC] Mise à jour affichage date échange BL pour delivery ${deliveryId}, date ${dateEchangeBl}`
+      );
+
+      // Trouve toutes les lignes concernées par cette livraison dans le tableau principal
+      const tableBody = document.getElementById("deliveriesTableBody");
+      if (tableBody) {
+        const rows = tableBody.querySelectorAll("tr[data-delivery-id]");
+        rows.forEach((row) => {
+          const rowDeliveryId = row.getAttribute("data-delivery-id");
+          if (rowDeliveryId === deliveryId) {
+            // Trouve la cellule date_echange_bl dans cette ligne
+            const dateCell = row.querySelector(
+              'td[data-field-name="date_echange_bl"]'
+            );
+            if (dateCell) {
+              // Mettre à jour le contenu de la cellule
+              if (dateEchangeBl) {
+                const formattedDate = new Date(
+                  dateEchangeBl
+                ).toLocaleDateString("fr-FR");
+                dateCell.innerHTML = `<span style="color: #059669; font-weight: 500;">${formattedDate}</span>`;
+              } else {
+                dateCell.innerHTML = '<span style="color: #6b7280;">-</span>';
+              }
+              console.log(
+                `[SYNC] Cellule date échange BL mise à jour pour delivery ${deliveryId}`
+              );
+            }
+          }
+        });
+      }
+
+      // Mettre à jour aussi dans la vue agent si elle est ouverte
+      const agentTableBody = document.getElementById(
+        "agentDailyDeliveriesTableBody"
+      );
+      if (agentTableBody) {
+        const agentRows = agentTableBody.querySelectorAll("tr");
+        agentRows.forEach((row) => {
+          const cells = row.querySelectorAll("td");
+          // Vérifie si cette ligne correspond à la livraison modifiée
+          if (cells.length > 0) {
+            // Recherche la cellule qui contient l'ID de la livraison pour vérification
+            const hasMatchingDelivery = Array.from(cells).some(
+              (cell) =>
+                cell.textContent && cell.textContent.includes(deliveryId)
+            );
+            if (hasMatchingDelivery) {
+              // Trouve la cellule date_echange_bl dans la vue agent
+              const dateCell = row.querySelector(
+                'td[data-field-name="date_echange_bl"]'
+              );
+              if (dateCell) {
+                if (dateEchangeBl) {
+                  const formattedDate = new Date(
+                    dateEchangeBl
+                  ).toLocaleDateString("fr-FR");
+                  dateCell.innerHTML = `<span style="color: #059669; font-weight: 500;">${formattedDate}</span>`;
+                } else {
+                  dateCell.innerHTML = '<span style="color: #6b7280;">-</span>';
+                }
+              }
+              console.log(
+                `[SYNC] Vue agent date échange BL mise à jour pour delivery ${deliveryId}`
+              );
+            }
+          }
+        });
+      }
+
+      // Mettre à jour les vues historiques si elles sont ouvertes
+      const historyCards = document.querySelectorAll(".delivery-card");
+      historyCards.forEach((card) => {
+        const cardDeliveryId = card.getAttribute("data-delivery-id");
+        if (cardDeliveryId === deliveryId) {
+          // Déclencher un événement pour forcer la mise à jour de la carte
+          const updateEvent = new CustomEvent("updateDeliveryCard", {
+            detail: { deliveryId, dateEchangeBl },
+          });
+          card.dispatchEvent(updateEvent);
+        }
+      });
+    } catch (error) {
+      console.error(
+        "[SYNC] Erreur lors de la mise à jour de l'affichage date échange BL:",
         error
       );
     }
@@ -1477,12 +1640,19 @@ function mapStatus(status) {
             "container_status_update",
             "delivery_deletion_alert",
             "new_delivery_notification",
+            "date_echange_bl_update",
           ];
           if (data && data.type && typesToRefresh.includes(data.type)) {
             // === TRAITEMENT SPÉCIFIQUE POUR LES STATUTS DE CONTENEURS ===
             if (data.type === "container_status_update") {
               handleContainerStatusUpdate(data);
               return; // Ne pas recharger toutes les données pour un simple statut
+            }
+
+            // === TRAITEMENT SPÉCIFIQUE POUR LES DATES D'ÉCHANGE BL ===
+            if (data.type === "date_echange_bl_update") {
+              handleDateEchangeBlUpdate(data);
+              return; // Ne pas recharger toutes les données pour une simple date
             }
 
             loadDeliveries().then(() => {
