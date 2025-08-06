@@ -2607,7 +2607,7 @@ app.post(
             container_statuses, container_numbers_list, container_foot_types_map,
             date_echange_bl
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, CURRENT_DATE)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, CURRENT_DATE)
           RETURNING *;
         `;
         values = [
@@ -2908,11 +2908,11 @@ app.post(
         );
 
         // --- ENVOI WEBSOCKET SPÉCIFIQUE POUR LA DATE D'ÉCHANGE BL ---
-        if (date_echange_bl && newDelivery.id) {
+        if (newDelivery.date_echange_bl && newDelivery.id) {
           const dateEchangeBlPayload = {
             type: "date_echange_bl_update",
             deliveryId: newDelivery.id,
-            dateEchangeBl: date_echange_bl,
+            dateEchangeBl: newDelivery.date_echange_bl,
             timestamp: new Date().toISOString(),
           };
           const datePayload = JSON.stringify(dateEchangeBlPayload);
