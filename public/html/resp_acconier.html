@@ -21,6 +21,226 @@
     <link rel="stylesheet" href="../css/style.css" />
 
     <style>
+      /* Variables CSS pour les thèmes */
+      :root {
+        /* Mode Clair (par défaut) */
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8fafc;
+        --bg-card: #ffffff;
+        --bg-table: #ffffff;
+        --bg-dropdown: #ffffff;
+        --bg-header: #ffffff;
+        --bg-filter: #f8fafc;
+        --bg-button: #2563eb;
+        --bg-button-hover: #1d4ed8;
+        --bg-accent: #e0e7ef;
+        --bg-floating: #1666e7;
+
+        --text-primary: #0e274e;
+        --text-secondary: #64748b;
+        --text-muted: #64748b;
+        --text-white: #ffffff;
+        --text-button: #ffffff;
+
+        --border-color: #e5e7eb;
+        --border-input: #2563eb;
+        --border-table: #e9ecef;
+
+        --shadow-card: 0 4px 24px rgba(30, 41, 59, 0.07);
+        --shadow-dropdown: 0 8px 32px rgba(30, 41, 59, 0.18);
+        --shadow-table: 0 8px 32px rgba(37, 99, 235, 0.1);
+        --shadow-filter: 0 2px 8px #2563eb11;
+
+        --gradient-header: linear-gradient(90deg, #2563eb 0%, #1e293b 100%);
+        --gradient-avatar: linear-gradient(135deg, #2563eb 60%, #1e293b 100%);
+      }
+
+      /* Mode Sombre */
+      [data-theme="dark"] {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-card: #1e293b;
+        --bg-table: #1e293b;
+        --bg-dropdown: #1e293b;
+        --bg-header: #1e293b;
+        --bg-filter: #334155;
+        --bg-button: #3b82f6;
+        --bg-button-hover: #2563eb;
+        --bg-accent: #334155;
+        --bg-floating: #0f172a;
+
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --text-white: #ffffff;
+        --text-button: #ffffff;
+
+        --border-color: #334155;
+        --border-input: #3b82f6;
+        --border-table: #334155;
+
+        --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+        --shadow-dropdown: 0 8px 32px rgba(0, 0, 0, 0.4);
+        --shadow-table: 0 8px 32px rgba(59, 130, 246, 0.2);
+        --shadow-filter: 0 2px 8px rgba(59, 130, 246, 0.1);
+
+        --gradient-header: linear-gradient(90deg, #3b82f6 0%, #1e293b 100%);
+        --gradient-avatar: linear-gradient(135deg, #3b82f6 60%, #1e293b 100%);
+      }
+
+      /* Application des variables aux éléments */
+      body {
+        background: var(--bg-primary) !important;
+        color: var(--text-primary) !important;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      .container-fluid {
+        background: var(--bg-primary) !important;
+      }
+
+      /* Sélecteur de thème */
+      .theme-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0;
+        padding: 8px 0;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .theme-toggle {
+        display: flex;
+        align-items: center;
+        background: var(--bg-accent);
+        border-radius: 20px;
+        padding: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        width: 100%;
+        position: relative;
+      }
+
+      .theme-option {
+        flex: 1;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 0.85em;
+        font-weight: 600;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: transparent;
+        color: var(--text-secondary);
+        border: none;
+        cursor: pointer;
+      }
+
+      .theme-option.active {
+        background: var(--bg-button);
+        color: var(--text-white);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+      }
+
+      .theme-icon {
+        font-size: 0.9em;
+        margin-right: 4px;
+      }
+
+      /* Styles spécifiques pour le mode sombre */
+      [data-theme="dark"] .sticky-col {
+        background-color: var(--bg-secondary) !important;
+      }
+
+      [data-theme="dark"] .table {
+        background-color: var(--bg-table);
+        color: var(--text-primary);
+      }
+
+      [data-theme="dark"] .table th,
+      [data-theme="dark"] .table td {
+        border-color: var(--border-table);
+        background-color: var(--bg-table);
+        color: var(--text-primary);
+      }
+
+      [data-theme="dark"] .table tbody tr:hover {
+        background-color: var(--bg-secondary) !important;
+      }
+
+      [data-theme="dark"] .btn-primary {
+        background-color: var(--bg-button);
+        border-color: var(--bg-button);
+      }
+
+      [data-theme="dark"] .btn-primary:hover {
+        background-color: var(--bg-button-hover);
+        border-color: var(--bg-button-hover);
+      }
+
+      [data-theme="dark"] input[type="date"],
+      [data-theme="dark"] input[type="search"] {
+        background-color: var(--bg-card);
+        color: var(--text-primary);
+        border-color: var(--border-input);
+      }
+
+      [data-theme="dark"] input[type="date"]:focus,
+      [data-theme="dark"] input[type="search"]:focus {
+        border-color: var(--bg-button);
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+      }
+
+      [data-theme="dark"] .pagination .page-link {
+        background-color: var(--bg-card);
+        border-color: var(--border-color);
+        color: var(--text-primary);
+      }
+
+      [data-theme="dark"] .pagination .page-link:hover {
+        background-color: var(--bg-secondary);
+        border-color: var(--border-input);
+        color: var(--text-primary);
+      }
+
+      [data-theme="dark"] .pagination .page-item.active .page-link {
+        background-color: var(--bg-button);
+        border-color: var(--bg-button);
+      }
+
+      /* Styles spécifiques pour le mode sombre - Overlays et loading */
+      [data-theme="dark"] .loading-overlay {
+        background-color: rgba(0, 0, 0, 0.8);
+      }
+
+      [data-theme="dark"] .loading-overlay-content {
+        color: var(--text-white);
+      }
+
+      [data-theme="dark"] .custom-alert {
+        border: 1px solid var(--border-color);
+      }
+
+      /* Application du thème aux en-têtes de tableau */
+      [data-theme="dark"] .table thead tr:first-child th {
+        background: var(--gradient-header) !important;
+      }
+
+      [data-theme="dark"] .table thead tr:first-child th:nth-child(1) {
+        background-color: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      [data-theme="dark"] .table thead tr:nth-child(2) th {
+        background-color: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      [data-theme="dark"] .table thead tr:nth-child(2) .sticky-col {
+        background-color: var(--bg-secondary) !important;
+      }
+
       /* Responsive pour Numéro TC(s), Lieus et Statut sur tablette/mobile */
       /* Responsive Numéro TC(s) : retour à la ligne optimal tablette/mobile */
       @media (max-width: 900px) and (min-width: 660px) {
@@ -299,7 +519,7 @@
         color: #721c24; /* Default text color for error */
         padding: 15px 20px;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-card);
         display: flex;
         align-items: center;
         gap: 10px;
@@ -361,20 +581,22 @@
         z-index: 1000; /* Ensure it's on top of other content */
       }
       .confirm-box {
-        background-color: white;
+        background-color: var(--bg-card);
+        color: var(--text-primary);
         padding: 30px;
         border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        box-shadow: var(--shadow-dropdown);
         text-align: center;
         max-width: 400px;
         width: 90%; /* Responsive width */
         display: flex;
         flex-direction: column;
         gap: 20px;
+        border: 1px solid var(--border-color);
       }
       .confirm-box p {
         font-size: 1.1rem;
-        color: #333;
+        color: var(--text-primary);
         margin-bottom: 15px;
       }
       .confirm-box button {
@@ -671,10 +893,10 @@
         <div
           class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
           style="
-            background: #fff;
+            background: var(--bg-card);
             border-radius: 18px;
             padding: 24px 32px 18px 32px;
-            box-shadow: 0 4px 24px rgba(30, 41, 59, 0.07);
+            box-shadow: var(--shadow-card);
             position: relative;
           "
         >
@@ -684,13 +906,19 @@
               style="
                 font-size: 1.7em;
                 font-weight: 700;
-                color: #0e274e;
+                color: var(--text-primary);
                 letter-spacing: -1px;
               "
             >
               Tableau - Responsable Acconier
             </h1>
-            <div style="font-size: 1.13em; color: #64748b; font-weight: 500">
+            <div
+              style="
+                font-size: 1.13em;
+                color: var(--text-secondary);
+                font-weight: 500;
+              "
+            >
               Paiement de l'acconage des conteneurs
             </div>
             <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
@@ -759,11 +987,12 @@
                 top: 76px;
                 right: 0;
                 min-width: 220px;
-                background: #fff;
+                background: var(--bg-dropdown);
                 border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(30, 41, 59, 0.18);
+                box-shadow: var(--shadow-dropdown);
                 padding: 18px 20px;
                 z-index: 1001;
+                border: 1px solid var(--border-color);
               "
             >
               <div
@@ -851,18 +1080,38 @@
               </div>
               <div
                 id="profileName"
-                style="font-weight: 600; font-size: 1.08em; color: #0e274e"
+                style="
+                  font-weight: 600;
+                  font-size: 1.08em;
+                  color: var(--text-primary);
+                "
               >
                 Nom de l'utilisateur
               </div>
-              <div id="profileEmail" style="font-size: 0.98em; color: #64748b">
+              <div
+                id="profileEmail"
+                style="font-size: 0.98em; color: var(--text-secondary)"
+              >
                 email@exemple.com
               </div>
+
+              <!-- Sélecteur de thème -->
+              <div class="theme-selector">
+                <div class="theme-toggle" id="themeToggle">
+                  <button class="theme-option active" id="lightTheme">
+                    <i class="fas fa-sun theme-icon"></i>Clair
+                  </button>
+                  <button class="theme-option" id="darkTheme">
+                    <i class="fas fa-moon theme-icon"></i>Sombre
+                  </button>
+                </div>
+              </div>
+
               <hr
                 style="
                   margin: 12px 0 10px 0;
                   border: 0;
-                  border-top: 1.5px solid #e5e7eb;
+                  border-top: 1.5px solid var(--border-color);
                 "
               />
               <button
@@ -888,6 +1137,50 @@
             const removePhotoBtn = document.getElementById("removePhotoBtn");
             const mainAvatarPhoto = document.getElementById("mainAvatarPhoto");
             const mainAvatarIcon = document.getElementById("mainAvatarIcon");
+
+            // === GESTION DU THÈME ===
+            const lightThemeBtn = document.getElementById("lightTheme");
+            const darkThemeBtn = document.getElementById("darkTheme");
+
+            // Fonction pour appliquer le thème
+            function applyTheme(theme) {
+              if (theme === "dark") {
+                document.documentElement.setAttribute("data-theme", "dark");
+                lightThemeBtn.classList.remove("active");
+                darkThemeBtn.classList.add("active");
+                // Mettre à jour le fond flottant
+                const floatingBg = document.getElementById("floatingBlueBg");
+                if (floatingBg) {
+                  floatingBg.style.background = "var(--bg-floating)";
+                }
+              } else {
+                document.documentElement.removeAttribute("data-theme");
+                darkThemeBtn.classList.remove("active");
+                lightThemeBtn.classList.add("active");
+                // Mettre à jour le fond flottant
+                const floatingBg = document.getElementById("floatingBlueBg");
+                if (floatingBg) {
+                  floatingBg.style.background = "#1666e7";
+                }
+              }
+              // Sauvegarder le thème dans localStorage
+              localStorage.setItem("theme", theme);
+            }
+
+            // Charger le thème sauvegardé ou utiliser le thème clair par défaut
+            const savedTheme = localStorage.getItem("theme") || "light";
+            applyTheme(savedTheme);
+
+            // Gestionnaires d'événements pour les boutons de thème
+            if (lightThemeBtn) {
+              lightThemeBtn.addEventListener("click", () =>
+                applyTheme("light")
+              );
+            }
+            if (darkThemeBtn) {
+              darkThemeBtn.addEventListener("click", () => applyTheme("dark"));
+            }
+
             // Affichage du menu profil
             if (avatar && dropdown) {
               avatar.onclick = function (e) {
@@ -1044,17 +1337,22 @@
         <div
           class="d-flex justify-content-center align-items-center mb-3 flex-wrap gap-2"
           style="
-            background: #f8fafc;
+            background: var(--bg-filter);
             border-radius: 12px;
             padding: 18px 18px 10px 18px;
-            box-shadow: 0 2px 8px #2563eb11;
+            box-shadow: var(--shadow-filter);
           "
         >
           <div
             class="d-flex align-items-center gap-2 flex-wrap"
             style="flex: 1 1 220px; min-width: 120px"
           >
-            <span style="font-weight: 600; color: #0e274e; font-size: 1.08em"
+            <span
+              style="
+                font-weight: 600;
+                color: var(--text-primary);
+                font-size: 1.08em;
+              "
               >Filtrer du</span
             >
             <input
@@ -1063,13 +1361,20 @@
               style="
                 padding: 6px 14px;
                 border-radius: 8px;
-                border: 1.5px solid #2563eb;
+                border: 1.5px solid var(--border-input);
                 font-size: 1em;
                 min-width: 80px;
                 max-width: 100%;
+                background: var(--bg-card);
+                color: var(--text-primary);
               "
             />
-            <span style="font-weight: 600; color: #0e274e; font-size: 1.08em"
+            <span
+              style="
+                font-weight: 600;
+                color: var(--text-primary);
+                font-size: 1.08em;
+              "
               >au</span
             >
             <input
@@ -1078,10 +1383,12 @@
               style="
                 padding: 6px 14px;
                 border-radius: 8px;
-                border: 1.5px solid #2563eb;
+                border: 1.5px solid var(--border-input);
                 font-size: 1em;
                 min-width: 80px;
                 max-width: 100%;
+                background: var(--bg-card);
+                color: var(--text-primary);
               "
             />
           </div>
@@ -1105,8 +1412,10 @@
                 max-width: 100%;
                 padding: 6px 12px;
                 border-radius: 8px;
-                border: 1.5px solid #2563eb;
+                border: 1.5px solid var(--border-input);
                 font-size: 1em;
+                background: var(--bg-card);
+                color: var(--text-primary);
               "
             />
             <button
@@ -1117,7 +1426,8 @@
                 font-size: 1em;
                 padding: 6px 22px;
                 border-radius: 8px;
-                background: #2563eb;
+                background: var(--bg-button);
+                border-color: var(--bg-button);
               "
             >
               Rechercher
@@ -1130,8 +1440,8 @@
           class="table-responsive overflow-x-auto"
           style="
             border-radius: 18px;
-            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.1);
-            background: #fff;
+            box-shadow: var(--shadow-table);
+            background: var(--bg-table);
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
@@ -1158,12 +1468,8 @@
                   style="
                     font-size: 1.25em;
                     font-weight: 700;
-                    background: linear-gradient(
-                      90deg,
-                      #2563eb 0%,
-                      #1e293b 100%
-                    );
-                    color: #fff;
+                    background: var(--gradient-header);
+                    color: var(--text-white);
                     border-radius: 18px 18px 0 0;
                     letter-spacing: 1px;
                   "
@@ -1267,8 +1573,9 @@
         width: 100vw;
         height: 100vh;
         z-index: 1;
-        background: #1666e7;
+        background: var(--bg-floating);
         pointer-events: none;
+        transition: background-color 0.3s ease;
       }
       @media (max-width: 900px) {
         #floatingBlueBg {
