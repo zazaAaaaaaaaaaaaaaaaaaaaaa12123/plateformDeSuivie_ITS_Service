@@ -1453,7 +1453,6 @@ const AGENT_TABLE_COLUMNS = [
   { id: "ship_name", label: "Nom du Navire" },
   { id: "circuit", label: "Circuit" },
   { id: "transporter_mode", label: "Mode de Transport" },
-  { id: "date_echange_bl", label: "Date d'échange BL" },
   { id: "date_do", label: "Date de DO" },
   { id: "date_badt", label: "Date de BADT" },
   { id: "visitor_agent_name", label: "NOM Agent visiteurs" },
