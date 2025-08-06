@@ -2801,7 +2801,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   "mise-en-livraison-success-alert"
                 );
                 if (oldAlert) oldAlert.remove();
-                // (Bloc Numéro du conteneur retiré à la demande de l'utilisateur)
+                // (Aucun bloc Numéro du conteneur dans la pop-up BL)
                 alert.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
                 alert.style.zIndex = 99999;
                 alert.style.opacity = "0";
