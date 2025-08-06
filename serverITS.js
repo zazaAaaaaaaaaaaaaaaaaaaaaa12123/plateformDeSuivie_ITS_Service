@@ -2607,7 +2607,7 @@ app.post(
             container_statuses, container_numbers_list, container_foot_types_map,
             date_echange_bl
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, CURRENT_DATE)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
           RETURNING *;
         `;
         values = [
@@ -2648,6 +2648,7 @@ app.post(
           container_foot_types_map
             ? JSON.stringify(container_foot_types_map)
             : null,
+          new Date(), // Pour date_echange_bl ($33)
         ];
       } else if (hasJsonColumns) {
         // Si seules les colonnes JSON existent (sans date_echange)
