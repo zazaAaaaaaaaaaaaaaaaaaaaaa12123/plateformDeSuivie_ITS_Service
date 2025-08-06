@@ -1784,11 +1784,56 @@ async function ensureExchangeFieldsTable() {
     // Ajout des nouveaux champs pour l'échange de données
     await pool.query(`
       ALTER TABLE livraison_conteneur 
-      ADD COLUMN IF NOT EXISTS paiement_acconage TEXT,
+      ADD COLUMN IF NOT EXISTS paiement_acconage DATE,
       ADD COLUMN IF NOT EXISTS date_echange_bl DATE,
       ADD COLUMN IF NOT EXISTS date_do DATE,
       ADD COLUMN IF NOT EXISTS date_badt DATE
     `);
+
+    // Migration pour changer le type de paiement_acconage de TEXT vers DATE
+    try {
+      // Vérifier d'abord si la colonne existe et son type
+      const result = await pool.query(`
+        SELECT data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'livraison_conteneur' 
+        AND column_name = 'paiement_acconage'
+      `);
+
+      if (result.rows.length > 0 && result.rows[0].data_type === "text") {
+        console.log(
+          "🔄 Migration: Changement du type paiement_acconage de TEXT vers DATE..."
+        );
+
+        // Sauvegarder les données TEXT qui peuvent être converties
+        await pool.query(`
+          UPDATE livraison_conteneur 
+          SET paiement_acconage = NULL 
+          WHERE paiement_acconage IS NOT NULL 
+          AND paiement_acconage !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+        `);
+
+        // Changer le type de colonne
+        await pool.query(`
+          ALTER TABLE livraison_conteneur 
+          ALTER COLUMN paiement_acconage TYPE DATE 
+          USING CASE 
+            WHEN paiement_acconage ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' 
+            THEN paiement_acconage::DATE 
+            ELSE NULL 
+          END
+        `);
+
+        console.log(
+          "✅ Migration terminée: paiement_acconage est maintenant de type DATE"
+        );
+      }
+    } catch (migrationErr) {
+      console.log(
+        "ℹ️ Paiement_acconage est déjà de type DATE ou migration non nécessaire"
+      );
+    }
+
     console.log("✅ Colonnes d'échange de données vérifiées/créées");
   } catch (err) {
     console.error("❌ Erreur lors de la création des colonnes d'échange:", err);
@@ -2268,7 +2313,6 @@ app.post(
       nom_agent_visiteur,
       inspecteur,
       agent_en_douanes,
-      date_echange_bl,
       delivery_status_acconier,
     } = req.body || {};
 
@@ -2311,7 +2355,6 @@ app.post(
     console.log("   dossier_number:", dossier_number);
     console.log("   bl_number:", bl_number);
     console.log("   shipping_company:", shipping_company);
-    console.log("   date_echange_bl:", date_echange_bl);
     console.log("   delivery_status_acconier:", delivery_status_acconier);
     // *** FIN DÉBOGAGE BASIC FIELDS ***
 
@@ -2503,7 +2546,7 @@ app.post(
       let query, values;
 
       if (hasJsonColumns && hasDateEchangeBL) {
-        // Si les colonnes JSON et date_echange_bl existent, les inclure dans l'INSERT
+        // Si les colonnes JSON existent, les inclure dans l'INSERT (date_echange_bl sera automatiquement créée)
         query = `
           INSERT INTO livraison_conteneur (
             employee_name, delivery_date, delivery_time, client_name, client_phone, 
@@ -2518,7 +2561,7 @@ app.post(
             container_statuses, container_numbers_list, container_foot_types_map,
             date_echange_bl
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, CURRENT_DATE)
           RETURNING *;
         `;
         values = [
@@ -2559,7 +2602,6 @@ app.post(
           container_foot_types_map
             ? JSON.stringify(container_foot_types_map)
             : null,
-          date_echange_bl || null,
         ];
       } else if (hasJsonColumns) {
         // Si seules les colonnes JSON existent (sans date_echange)
@@ -2634,7 +2676,7 @@ app.post(
             container_statuses,
             date_echange_bl
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, CURRENT_DATE)
           RETURNING *;
         `;
         values = [
@@ -2669,7 +2711,6 @@ app.post(
           is_eir_received,
           delivery_status_acconier || usedStatus,
           container_statuses ? JSON.stringify(container_statuses) : null,
-          date_echange_bl || null,
         ];
       } else {
         // Si ni les colonnes JSON ni date_echange_bl n'existent, utiliser l'ancienne requête
@@ -5029,8 +5070,8 @@ LECTURE (tous les GET):
 - id, dossier_number, bl_number, client_name, delivery_date, created_at
 
 ÉCRITURE (PUT/POST):
-- paiement_acconage (TEXT)
-- date_echange_bl (DATE format YYYY-MM-DD)
+- paiement_acconage (DATE format YYYY-MM-DD)
+- date_echange_bl (DATE format YYYY-MM-DD) - AUTOMATIQUE
 - date_do (DATE format YYYY-MM-DD)  
 - date_badt (DATE format YYYY-MM-DD)
 
