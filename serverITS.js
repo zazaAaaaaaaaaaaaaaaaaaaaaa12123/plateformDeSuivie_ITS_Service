@@ -2488,7 +2488,7 @@ app.post(
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'livraison_conteneur' 
-        AND column_name IN ('container_numbers_list', 'container_foot_types_map', 'date_echange')
+        AND column_name IN ('container_numbers_list', 'container_foot_types_map', 'date_echange_bl')
       `);
 
       const hasJsonColumns = columnsCheck.rows.some((row) =>
