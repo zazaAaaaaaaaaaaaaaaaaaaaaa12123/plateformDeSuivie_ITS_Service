@@ -3330,7 +3330,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             }</span>
           </div>
           <div style='font-size:0.98em;font-weight:400;'>
-            Client : <span style='color:#eab308;'>${
+            Client : <span style='color:#111;font-weight:600;'>${
               delivery.client_name || "-"
             }</span><br>
             Dossier : <span style='color:#eab308;'>${
