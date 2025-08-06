@@ -2178,9 +2178,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
           blNum.style.fontWeight = "bold";
           blNum.style.textAlign = "center";
-          blNum.innerHTML = `N° BL : <span style='color:#2563eb;'>${blNumber}</span>`;
-          // Mode sombre : numéro BL en jaune vif
-          blNum.innerHTML = `N° BL : <span style='color:${
+          blNum.innerHTML = `<span style='color:#111;font-weight:700;'>N° BL :</span> <span style='color:${
             isDark ? "#ffd600" : "#2563eb"
           };'>${blNumber}</span>`;
           content.appendChild(blNum);
@@ -2192,7 +2190,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           label.style.marginBottom = "3px";
           label.style.fontWeight = "500";
           label.style.fontSize = window.innerWidth <= 768 ? "0.8em" : "0.95em";
-          if (isDark) label.style.color = "#fff";
+          if (isDark) label.style.color = "#111";
           content.appendChild(label);
 
           const select = document.createElement("select");
@@ -2299,7 +2297,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           paiementLabel.style.fontWeight = "500";
           paiementLabel.style.fontSize =
             window.innerWidth <= 768 ? "0.78em" : "0.92em";
-          if (isDark) paiementLabel.style.color = "#fff";
+          if (isDark) paiementLabel.style.color = "#111";
           paiementGroup.appendChild(paiementLabel);
 
           const paiementInput = document.createElement("input");
@@ -2355,7 +2353,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateDOLabel.style.fontWeight = "500";
           dateDOLabel.style.fontSize =
             window.innerWidth <= 768 ? "0.78em" : "0.92em";
-          if (isDark) dateDOLabel.style.color = "#fff";
+          if (isDark) dateDOLabel.style.color = "#111";
           dateDOGroup.appendChild(dateDOLabel);
 
           const dateDOInput = document.createElement("input");
@@ -2399,7 +2397,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateBADTLabel.style.fontWeight = "500";
           dateBADTLabel.style.fontSize =
             window.innerWidth <= 768 ? "0.78em" : "0.92em";
-          if (isDark) dateBADTLabel.style.color = "#fff";
+          if (isDark) dateBADTLabel.style.color = "#111";
           dateBADTGroup.appendChild(dateBADTLabel);
 
           const dateBADTInput = document.createElement("input");
@@ -2443,7 +2441,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateEchangeBLLabel.style.fontWeight = "500";
           dateEchangeBLLabel.style.fontSize =
             window.innerWidth <= 768 ? "0.78em" : "0.92em";
-          if (isDark) dateEchangeBLLabel.style.color = "#fff";
+          if (isDark) dateEchangeBLLabel.style.color = "#111";
           dateEchangeBLGroup.appendChild(dateEchangeBLLabel);
 
           const dateEchangeBLInput = document.createElement("input");
