@@ -1539,14 +1539,26 @@ function createEditInput(columnId, currentValue) {
     input.style.resize = "vertical";
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
-    if (isDark && columnId === "observation") {
+    input.style.backgroundColor = isDark ? "#0e274e" : "#fff";
+    // Couleur du texte : noir pendantzsudh la saidbhjsie, blanc après en mode sombre
+    if (isDark) {
+      input.style.color = "#fff";
       input.style.backgroundColor = "#0e274e";
-      input.style.color = "#fff";
-    } else if (isDark) {
-      input.style.backgroundColor = "#232f43";
-      input.style.color = "#fff";
+      input.addEventListener("focus", function () {
+        this.style.color = "#fff";
+        this.style.backgroundColor = "#0e274e";
+      });
+      input.addEventListener("input", function () {
+        if (document.activeElement === this) {
+          this.style.color = "#fff";
+          this.style.backgroundColor = "#0e274e";
+        }
+      });
+      input.addEventListener("blur", function () {
+        this.style.color = "#fff";
+        this.style.backgroundColor = "#0e274e";
+      });
     } else {
-      input.style.backgroundColor = "#fff";
       input.style.color = "#111";
     }
   } else if (columnId === "circuit") {
