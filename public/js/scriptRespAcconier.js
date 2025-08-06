@@ -1541,8 +1541,8 @@ function createEditInput(columnId, currentValue) {
       document.documentElement.getAttribute("data-theme") === "dark";
     input.style.backgroundColor = isDark ? "#232f43" : "#fff";
     // Couleur du texte : noir pendant la saisie, blanc après en mode sombre
-    input.style.color = isDark ? "#111" : "#111";
     if (isDark) {
+      input.style.color = "#fff";
       input.addEventListener("focus", function () {
         this.style.color = "#111";
       });
@@ -1552,6 +1552,8 @@ function createEditInput(columnId, currentValue) {
       input.addEventListener("blur", function () {
         this.style.color = "#fff";
       });
+    } else {
+      input.style.color = "#111";
     }
   } else if (columnId === "circuit") {
     input = document.createElement("select");
