@@ -2269,7 +2269,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           // Toujours prendre une seule cellule pour s'asygdsjjapter au grid
 
           const paiementLabel = document.createElement("label");
-          paiementLabel.textContent = "Paiement Acconage :";
+          paiementLabel.textContent = "📅 Date Paiement Acconage :";
           paiementLabel.style.display = "block";
           paiementLabel.style.marginBottom = "2px";
           paiementLabel.style.fontWeight = "500";
@@ -2278,7 +2278,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           paiementGroup.appendChild(paiementLabel);
 
           const paiementInput = document.createElement("input");
-          paiementInput.type = "text";
+          paiementInput.type = "date";
           paiementInput.id = "paiementAcconage";
           paiementInput.style.width = "100%";
           paiementInput.style.padding =
@@ -2289,8 +2289,25 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             window.innerWidth <= 768 ? "0.8em" : "0.95em";
           paiementInput.style.marginBottom = "0";
           paiementInput.style.background = "#fff";
-          paiementInput.placeholder = "Payé, En attente...";
-          paiementInput.value = delivery.paiement_acconage || "";
+
+          // Récupérer la valeur de date depuis la base de données et la convertir au format YYYY-MM-DD
+          const tempKeyPaiement = `temp_paiement_acconage_${delivery.id}`;
+          const tempValuePaiement = localStorage.getItem(tempKeyPaiement);
+
+          if (tempValuePaiement) {
+            paiementInput.value = tempValuePaiement;
+          } else {
+            paiementInput.value = delivery.paiement_acconage
+              ? new Date(delivery.paiement_acconage).toISOString().split("T")[0]
+              : "";
+          }
+
+          // Sauvegarde automatique lors de la modification
+          paiementInput.addEventListener("change", function () {
+            localStorage.setItem(tempKeyPaiement, this.value);
+            // Synchronisation automatique vers le tableau de suivi
+            syncToTableauSuivie(delivery.id, "paiement_acconage", this.value);
+          });
           paiementGroup.appendChild(paiementInput);
           fieldsContainer.appendChild(paiementGroup);
 
@@ -3543,6 +3560,7 @@ function clearTempDatesFromStorage(deliveryId) {
   try {
     localStorage.removeItem(`temp_date_do_${deliveryId}`);
     localStorage.removeItem(`temp_date_badt_${deliveryId}`);
+    localStorage.removeItem(`temp_paiement_acconage_${deliveryId}`);
     console.log(
       `Nettoyage localStorage temporaire pour livraison ${deliveryId}`
     );
