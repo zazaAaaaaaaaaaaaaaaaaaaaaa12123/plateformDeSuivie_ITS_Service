@@ -248,14 +248,24 @@ tbody td:first-child {
   background: #555;
 }
 
-/* En-tête sticky */
-#tableScrollContainer thead th {
+/* En-tête sticky - Configuration pour les deux lignes d'en-tête */
+#tableScrollContainer thead tr:first-child th {
   position: sticky;
   top: 0;
-  /* Cette couleur unie est maintenue car elle est déjà plus fiable */
-  background-color: #003366; /* Couleur de fond unie pour l'en-tête sticky */
+  z-index: 103; /* Première ligne (sections) au plus haut niveau */
+  background-color: inherit; /* Garde la couleur spécifique de chaque section */
+  height: 45px; /* Hauteur fixe pour la première ligne */
+  vertical-align: middle;
+}
+
+#tableScrollContainer thead tr:nth-child(2) th {
+  position: sticky;
+  top: 45px; /* Position exactement en dessous de la première ligne */
+  background-color: #003366; /* Couleur de fond unie pour l'en-tête des colonnes */
   color: #ffffff;
-  z-index: 102; /* Plus élevé que les cellules du corps */
+  z-index: 102; /* Deuxième ligne (colonnes) */
+  height: 40px; /* Hauteur fixe pour la deuxième ligne */
+  vertical-align: middle;
 }
 
 /* Nouveau style pour wrapper recherche icône + input */

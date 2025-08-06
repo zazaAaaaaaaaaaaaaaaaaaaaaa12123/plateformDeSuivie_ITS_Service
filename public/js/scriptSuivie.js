@@ -4186,8 +4186,8 @@ function mapStatus(status) {
     }
     deliveriesTableBody.innerHTML = "";
 
-    // Total columns: 29 original + 1 (Date d'échange) + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) + 3 (nouvelles dates) = 35
-    const ACTUAL_COLUMN_COUNT = 35;
+    // Total columns: 29 original + 1 (Date d'échange) + 1 (Statut de livraison Acc.) + 1 (Observation Acc.) + 1 (Date Paiement Acconage) + 3 (nouvelles dates) = 36
+    const ACTUAL_COLUMN_COUNT = 36;
 
     if (deliveriesToRender.length === 0) {
       deliveriesTableBody.innerHTML = `
@@ -4465,6 +4465,8 @@ function mapStatus(status) {
         } else if (value instanceof Date && fieldName === "delivery_date") {
           displayValue = value.toLocaleDateString("fr-FR");
         } else if (value instanceof Date && fieldName === "date_echange_bl") {
+          displayValue = value.toLocaleDateString("fr-FR");
+        } else if (value instanceof Date && fieldName === "paiement_acconage") {
           displayValue = value.toLocaleDateString("fr-FR");
         } else if (value instanceof Date && fieldName === "date_do") {
           displayValue = value.toLocaleDateString("fr-FR");
@@ -4772,6 +4774,29 @@ function mapStatus(status) {
                 input.value = "";
               }
             } else if (
+              fieldName === "paiement_acconage" ||
+              fieldName === "date_echange_bl" ||
+              fieldName === "date_do" ||
+              fieldName === "date_badt"
+            ) {
+              // Gestion des champs de date du responsable acconier
+              input = document.createElement("input");
+              input.type = "date";
+              if (value instanceof Date && !isNaN(value.getTime())) {
+                // Format Date object to yyyy-mm-dd
+                const year = value.getFullYear();
+                const month = String(value.getMonth() + 1).padStart(2, "0");
+                const day = String(value.getDate()).padStart(2, "0");
+                input.value = `${year}-${month}-${day}`;
+              } else if (
+                typeof value === "string" &&
+                value.match(/^\d{4}-\d{2}-\d{2}$/)
+              ) {
+                input.value = value;
+              } else {
+                input.value = "";
+              }
+            } else if (
               fieldName === "delivery_notes" ||
               fieldName === "observation_acconier"
             ) {
@@ -4965,6 +4990,7 @@ function mapStatus(status) {
       createCell(delivery.transporter_mode, "transporter_mode"); // Mode de Transport
       createCell(delivery.date_echange_bl, "date_echange_bl", "date", {}); // Date d'échange BL
       createCell(delivery.delivery_status_acconier, "delivery_status_acconier"); // Statut de livraison (Resp. Aconiés)
+      createCell(delivery.paiement_acconage, "paiement_acconage", "date", {}); // Date Paiement Acconage
       createCell(delivery.date_do, "date_do", "date", {}); // Date de DO
       createCell(delivery.date_badt, "date_badt", "date", {}); // Date de BADT
       createCell(
@@ -5106,8 +5132,8 @@ function mapStatus(status) {
     const COLS_AGENT = [
       2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
     ]; // Colonnes Agent Acconier (sans Statut Dossier qui est maintenant dans RESP)
-    const COLS_RESP = [19, 20, 21, 22, 23]; // 19=Statut Dossier, 20=Date échange BL, 21=Date DO, 22=Date BADT, 23=Observation
-    const COLS_LIVRAISON = [24, 25, 26, 27, 28, 29, 30, 31, 32, 33]; // Colonnes Responsable de livraison
+    const COLS_RESP = [19, 20, 21, 22, 23, 24]; // 19=Statut Dossier, 20=Date échange BL, 21=Date Paiement Acconage, 22=Date DO, 23=Date BADT, 24=Observation
+    const COLS_LIVRAISON = [25, 26, 27, 28, 29, 30, 31, 32, 33, 34]; // Colonnes Responsable de livraison
     function flashCells(colIndexes, flashClass) {
       const rows = table.tBodies[0]?.rows;
       if (!rows) return;

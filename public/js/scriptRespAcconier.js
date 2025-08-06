@@ -2307,6 +2307,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             localStorage.setItem(tempKeyPaiement, this.value);
             // Synchronisation automatique vers le tableau de suivi
             syncToTableauSuivie(delivery.id, "paiement_acconage", this.value);
+            // Synchronisation compatible avec scriptSuivie.js
+            const syncKey = `sync_${delivery.id}_paiement_acconage`;
+            localStorage.setItem(
+              syncKey,
+              JSON.stringify({ value: this.value, timestamp: Date.now() })
+            );
           });
           paiementGroup.appendChild(paiementInput);
           fieldsContainer.appendChild(paiementGroup);
@@ -2675,6 +2681,37 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                         body: JSON.stringify(exchangeData),
                       })
                         .then(() => {
+                          // Synchronisation finale vers scriptSuivie.js après sauvegarde réussie
+                          if (paiementAcconage) {
+                            const syncKey = `sync_${delivery.id}_paiement_acconage`;
+                            localStorage.setItem(
+                              syncKey,
+                              JSON.stringify({
+                                value: paiementAcconage,
+                                timestamp: Date.now(),
+                              })
+                            );
+                          }
+                          if (dateDO) {
+                            const syncKeyDO = `sync_${delivery.id}_date_do`;
+                            localStorage.setItem(
+                              syncKeyDO,
+                              JSON.stringify({
+                                value: dateDO,
+                                timestamp: Date.now(),
+                              })
+                            );
+                          }
+                          if (dateBADT) {
+                            const syncKeyBADT = `sync_${delivery.id}_date_badt`;
+                            localStorage.setItem(
+                              syncKeyBADT,
+                              JSON.stringify({
+                                value: dateBADT,
+                                timestamp: Date.now(),
+                              })
+                            );
+                          }
                           // Nettoyer le localStorage temporaire après sauvegarde réussie
                           clearTempDatesFromStorage(delivery.id);
                         })
@@ -2836,6 +2873,32 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     errData.message
                   );
                   // Ne pas arrêter le processus si seules les données d'échange échouent
+                } else {
+                  // Synchronisation vers scriptSuivie.js après sauvegarde réussie
+                  if (paiementAcconage) {
+                    const syncKey = `sync_${delivery.id}_paiement_acconage`;
+                    localStorage.setItem(
+                      syncKey,
+                      JSON.stringify({
+                        value: paiementAcconage,
+                        timestamp: Date.now(),
+                      })
+                    );
+                  }
+                  if (dateDO) {
+                    const syncKeyDO = `sync_${delivery.id}_date_do`;
+                    localStorage.setItem(
+                      syncKeyDO,
+                      JSON.stringify({ value: dateDO, timestamp: Date.now() })
+                    );
+                  }
+                  if (dateBADT) {
+                    const syncKeyBADT = `sync_${delivery.id}_date_badt`;
+                    localStorage.setItem(
+                      syncKeyBADT,
+                      JSON.stringify({ value: dateBADT, timestamp: Date.now() })
+                    );
+                  }
                 }
               }
 
