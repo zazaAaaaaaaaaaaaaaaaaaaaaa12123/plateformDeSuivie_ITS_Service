@@ -2266,7 +2266,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
           // 1. Paiement Acconage
           const paiementGroup = document.createElement("div");
-          // Toujours prendre une seule cellule pour s'adapter au grid
+          // Toujours prendre une seule cellule pour s'adsjjapter au grid
 
           const paiementLabel = document.createElement("label");
           paiementLabel.textContent = "Paiement Acconage :";
