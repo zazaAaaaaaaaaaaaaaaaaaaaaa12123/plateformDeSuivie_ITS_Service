@@ -1,0 +1,189 @@
+/* Styles pour le mode admin (visualisation uniquement) */
+
+/* Classe appliquée au body en mode admin */
+.admin-view-mode {
+  position: relative;
+}
+
+/* Overlay subtil pour indiquer le mode lecture seule */
+.admin-view-mode::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 49%,
+    rgba(37, 99, 235, 0.02) 49%,
+    rgba(37, 99, 235, 0.02) 51%,
+    transparent 51%
+  );
+  background-size: 20px 20px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Indicateur de mode admin */
+#admin-mode-indicator {
+  animation: adminPulse 2s ease-in-out infinite;
+}
+
+@keyframes adminPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+/* Message d'information admin */
+#admin-mode-message {
+  animation: adminSlideDown 0.5s ease-out;
+}
+
+@keyframes adminSlideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Styles pour les éléments désactivés en mode admin */
+.admin-view-mode input:disabled,
+.admin-view-mode select:disabled,
+.admin-view-mode textarea:disabled,
+.admin-view-mode button:disabled {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+  position: relative;
+}
+
+/* Effet de survol pour les éléments désactivés */
+.admin-view-mode input:disabled:hover,
+.admin-view-mode select:disabled:hover,
+.admin-view-mode textarea:disabled:hover,
+.admin-view-mode button:disabled:hover {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Style pour les tableaux en mode admin */
+.admin-view-mode table {
+  border: 2px solid rgba(37, 99, 235, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-view-mode th {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
+  color: #1d4ed8 !important;
+  font-weight: 600;
+}
+
+.admin-view-mode td {
+  border-bottom: 1px solid rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Style pour les cartes/widgets en mode admin */
+.admin-view-mode .card,
+.admin-view-mode .widget,
+.admin-view-mode .panel {
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+}
+
+/* Animation pour attirer l'attention sur les données importantes */
+.admin-view-highlight {
+  animation: adminHighlight 3s ease-in-out;
+}
+
+@keyframes adminHighlight {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(37, 99, 235, 0.1);
+  }
+}
+
+/* Responsive pour mobile */
+@media (max-width: 768px) {
+  #admin-mode-indicator {
+    top: 5px;
+    right: 5px;
+    font-size: 0.8em;
+    padding: 6px 12px;
+  }
+
+  #admin-mode-message {
+    margin: 5px;
+    padding: 12px;
+    font-size: 0.9em;
+  }
+}
+
+/* Style pour les tooltips d'information en mode admin */
+.admin-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.admin-tooltip::after {
+  content: "🔒 Mode visualisation";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  z-index: 1000;
+}
+
+.admin-tooltip:hover::after {
+  opacity: 1;
+}
+
+/* Effet de focus pour les éléments en lecture seule */
+.admin-view-mode *:focus {
+  outline: 2px solid rgba(37, 99, 235, 0.3) !important;
+  outline-offset: 2px;
+}
+
+/* Cache les boutons d'action sensibles en mode admin */
+.admin-view-mode .btn-danger,
+.admin-view-mode .btn-delete,
+.admin-view-mode .btn-edit,
+.admin-view-mode .btn-save,
+.admin-view-mode button[data-action="delete"],
+.admin-view-mode button[data-action="edit"],
+.admin-view-mode button[data-action="save"] {
+  display: none !important;
+}
+
+/* Montre seulement les boutons de navigation autorisés */
+.admin-view-mode button[data-allow-admin],
+.admin-view-mode .btn-cancel,
+.admin-view-mode .btn-close,
+.admin-view-mode .btn-back {
+  display: inline-block !important;
+  opacity: 1 !important;
+}

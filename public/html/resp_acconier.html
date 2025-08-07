@@ -20,6 +20,9 @@
     <link rel="stylesheet" href="../css/styledeTabBord.css" />
     <link rel="stylesheet" href="../css/style.css" />
 
+    <!-- CSS pour le mode admin (visualisation uniquement) -->
+    <link rel="stylesheet" href="../css/adminMode.css" />
+
     <style>
       /* Couleurs titre et sous-titre en mode sombre */
       [data-theme="dark"] .main-title-acconier {
@@ -1571,6 +1574,10 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script de gestion du mode admin (doit être chargé AVANT le script principal) -->
+    <script src="../js/adminModeManager.js"></script>
+
     <script src="../js/scriptRespAcconier.js"></script>
     <style>
       /* Fond bleu flottant responsive, occupe le bas du body */

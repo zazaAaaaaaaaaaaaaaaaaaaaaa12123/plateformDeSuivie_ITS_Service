@@ -19,6 +19,9 @@
     <link rel="stylesheet" href="../css/styleDeSuivie.css" />
     <link rel="stylesheet" href="../css/styledeTabBord.css" />
     <link rel="stylesheet" href="../css/style.css" />
+    
+    <!-- CSS pour le mode admin (visualisation uniquement) -->
+    <link rel="stylesheet" href="../css/adminMode.css" />
 
     <style>
       /* Alignement amélioré des filtres date sur tablette */
@@ -895,7 +898,11 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-      <script src="../js/scriptRespLiv.js"></script>
+    
+    <!-- Script de gestion du mode admin (doit être chargé AVANT le script principal) -->
+    <script src="../js/adminModeManager.js"></script>
+    
+    <script src="../js/scriptRespLiv.js"></script>
     <script>
       // Injection du nom et email dans l'avatar et le dropdown profil après connexion
       document.addEventListener('DOMContentLoaded', function() {

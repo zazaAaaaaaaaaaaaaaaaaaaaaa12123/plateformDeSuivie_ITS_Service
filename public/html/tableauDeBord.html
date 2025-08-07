@@ -2744,6 +2744,29 @@
         <script>
           // Message de bienvenue animé (typewriter)
           document.addEventListener("DOMContentLoaded", function () {
+            // === MARQUER LA SESSION ADMIN POUR LES REDIRECTIONS ===
+            // Marquer cette session comme étant une session administrateur
+            // pour que les pages responsables sachent qu'elles sont accédées en mode visualisation
+            const adminUser = localStorage.getItem("user");
+            if (adminUser) {
+              try {
+                const user = JSON.parse(adminUser);
+                if (user && user.role === "admin") {
+                  // Marquer la session admin pour les redirections
+                  localStorage.setItem("adminViewMode", "true");
+                  localStorage.setItem(
+                    "adminViewTimestamp",
+                    Date.now().toString()
+                  );
+                }
+              } catch (e) {
+                console.log(
+                  "Erreur lors de la vérification de la session admin:",
+                  e
+                );
+              }
+            }
+
             // --- WebSocket notification temps réel dossier mis en livraison ---
             try {
               const wsUrl =
@@ -3240,28 +3263,102 @@
               document.getElementById("iconRespLivraison");
             if (iconRespLivraison) {
               iconRespLivraison.addEventListener("click", function () {
-                // Rediriger uniquement si la session respLivUser existe
-                if (localStorage.getItem("respLivUser")) {
-                  window.location.href = "resp_liv.html";
-                } else {
-                  // Rediriger vers la page de login livraison si pas de session
-                  window.location.href = "resp_liv.html";
-                }
+                redirectToResponsablePage("livraison");
               });
             }
             const iconRespAcconier =
               document.getElementById("iconRespAcconier");
             if (iconRespAcconier) {
               iconRespAcconier.addEventListener("click", function () {
-                // Rediriger uniquement si la session respAcconierUser existe
-                if (localStorage.getItem("respAcconierUser")) {
-                  window.location.href = "resp_acconier.html";
-                } else {
-                  // Rediriger vers la page de login acconier si pas de session
-                  window.location.href = "resp_acconier.html";
-                }
+                redirectToResponsablePage("acconier");
               });
             }
+
+            // === NETTOYAGE DE LA SESSION ADMIN ===
+            // Nettoyer les marqueurs de session admin s'ils sont trop anciens (plus de 2 heures)
+            function cleanupAdminSession() {
+              const adminTimestamp = localStorage.getItem("adminViewTimestamp");
+              if (adminTimestamp) {
+                const timeDiff = Date.now() - parseInt(adminTimestamp);
+                const twoHoursInMs = 2 * 60 * 60 * 1000; // 2 heures
+
+                if (timeDiff > twoHoursInMs) {
+                  localStorage.removeItem("adminViewMode");
+                  localStorage.removeItem("adminViewTimestamp");
+                  console.log("Session admin expirée - nettoyage effectué");
+                }
+              }
+            }
+
+            // Appeler le nettoyage à l'initialisation
+            cleanupAdminSession();
+
+            // Nettoyer périodiquement (toutes les 30 minutes)
+            setInterval(cleanupAdminSession, 30 * 60 * 1000);
+
+            // === FONCTION UTILITAIRE POUR LA REDIRECTION RESPONSABLES ===
+            function redirectToResponsablePage(pageType) {
+              const adminUser = localStorage.getItem("user");
+              let isAdmin = false;
+
+              try {
+                if (adminUser) {
+                  const user = JSON.parse(adminUser);
+                  isAdmin = user && user.role === "admin";
+                }
+              } catch (e) {
+                console.log(
+                  "Erreur lors de la vérification de la session admin:",
+                  e
+                );
+              }
+
+              let targetUrl;
+
+              if (pageType === "acconier") {
+                if (isAdmin) {
+                  // Redirection en mode admin (visualisation uniquement)
+                  targetUrl =
+                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?mode=admin";
+                  // Marquer la session pour la page cible
+                  localStorage.setItem("adminViewMode", "true");
+                  localStorage.setItem(
+                    "adminViewTimestamp",
+                    Date.now().toString()
+                  );
+                  localStorage.setItem("adminViewTarget", "acconier");
+                } else {
+                  // Redirection normale pour les responsables
+                  targetUrl = "resp_acconier.html";
+                }
+              } else if (pageType === "livraison") {
+                if (isAdmin) {
+                  // Redirection en mode admin (visualisation uniquement)
+                  targetUrl =
+                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?mode=admin";
+                  // Marquer la session pour la page cible
+                  localStorage.setItem("adminViewMode", "true");
+                  localStorage.setItem(
+                    "adminViewTimestamp",
+                    Date.now().toString()
+                  );
+                  localStorage.setItem("adminViewTarget", "livraison");
+                } else {
+                  // Redirection normale pour les responsables
+                  targetUrl = "resp_liv.html";
+                }
+              }
+
+              if (targetUrl) {
+                console.log(
+                  `Redirection vers ${targetUrl} - Mode: ${
+                    isAdmin ? "Admin (Visualisation)" : "Responsable"
+                  }`
+                );
+                window.location.href = targetUrl;
+              }
+            }
+
             // --- Gestion du popup de modification du code entreprise ---
             const btnEditSidebar = document.getElementById("btnEditSidebar");
             const popupEditCompanyCode = document.getElementById(
