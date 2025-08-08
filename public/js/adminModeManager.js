@@ -1505,9 +1505,32 @@ class AdminModeManager {
         historyBtn.style.opacity = "1";
         historyBtn.style.cursor = "pointer";
         historyBtn.style.pointerEvents = "auto";
+        historyBtn.style.display = "inline-block";
+        historyBtn.style.visibility = "visible";
+        historyBtn.style.transform = "none";
+        historyBtn.style.filter = "none";
+        historyBtn.style.background = "#10B981"; // vert
+        historyBtn.style.color = "#ffffff";
+        historyBtn.style.border = "1px solid #059669";
+        historyBtn.style.boxShadow = "0 2px 8px rgba(16,185,129,0.25)";
+        historyBtn.style.fontWeight = "700";
+        historyBtn.style.padding = "8px 16px";
+        historyBtn.style.borderRadius = "8px";
+        historyBtn.textContent = historyBtn.textContent?.trim() || "Historique";
+        historyBtn.classList.remove("admin-disabled-no-icon");
         historyBtn.title = "Historique - Accessible en mode admin";
         historyBtn.setAttribute("data-allow-admin", "true");
         historyBtn.classList.add("admin-allowed-button");
+
+        // Hover
+        historyBtn.addEventListener("mouseenter", () => {
+          historyBtn.style.background = "#059669";
+          historyBtn.style.borderColor = "#047857";
+        });
+        historyBtn.addEventListener("mouseleave", () => {
+          historyBtn.style.background = "#10B981";
+          historyBtn.style.borderColor = "#059669";
+        });
       }
 
       // Générer PDF
@@ -1517,9 +1540,32 @@ class AdminModeManager {
         pdfBtn.style.opacity = "1";
         pdfBtn.style.cursor = "pointer";
         pdfBtn.style.pointerEvents = "auto";
+        pdfBtn.style.display = "inline-block";
+        pdfBtn.style.visibility = "visible";
+        pdfBtn.style.transform = "none";
+        pdfBtn.style.filter = "none";
+        pdfBtn.style.background = "#10B981"; // vert
+        pdfBtn.style.color = "#ffffff";
+        pdfBtn.style.border = "1px solid #059669";
+        pdfBtn.style.boxShadow = "0 2px 8px rgba(16,185,129,0.25)";
+        pdfBtn.style.fontWeight = "700";
+        pdfBtn.style.padding = "8px 16px";
+        pdfBtn.style.borderRadius = "8px";
+        pdfBtn.textContent = pdfBtn.textContent?.trim() || "Générer PDF";
+        pdfBtn.classList.remove("admin-disabled-no-icon");
         pdfBtn.title = "Générer PDF - Accessible en mode admin";
         pdfBtn.setAttribute("data-allow-admin", "true");
         pdfBtn.classList.add("admin-allowed-button");
+
+        // Hover
+        pdfBtn.addEventListener("mouseenter", () => {
+          pdfBtn.style.background = "#059669";
+          pdfBtn.style.borderColor = "#047857";
+        });
+        pdfBtn.addEventListener("mouseleave", () => {
+          pdfBtn.style.background = "#10B981";
+          pdfBtn.style.borderColor = "#059669";
+        });
       }
     } catch (e) {
       console.warn("⚠️ enableAdminAllowedFieldsLivraison: ", e);
