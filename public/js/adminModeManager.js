@@ -230,10 +230,12 @@ class AdminModeManager {
         buttonText.includes("sombre") ||
         buttonText.includes("dark") ||
         buttonText.includes("light") ||
+        buttonText.includes("actualiser") ||
         element.classList.contains("close") ||
         element.classList.contains("theme-toggle") ||
         element.classList.contains("theme-btn") ||
         element.classList.contains("theme-switch") ||
+        element.classList.contains("admin-refresh-btn") ||
         element.id.includes("close") ||
         element.id.includes("theme") ||
         element.id === "darkModeToggle" ||
@@ -361,10 +363,12 @@ class AdminModeManager {
             buttonText.includes("sombre") ||
             buttonText.includes("dark") ||
             buttonText.includes("light") ||
+            buttonText.includes("actualiser") ||
             button.classList.contains("close") ||
             button.classList.contains("theme-toggle") ||
             button.classList.contains("theme-btn") ||
             button.classList.contains("theme-switch") ||
+            button.classList.contains("admin-refresh-btn") ||
             button.id.includes("close") ||
             button.id.includes("theme") ||
             button.id === "darkModeToggle" ||
@@ -508,7 +512,7 @@ class AdminModeManager {
         <div style="
           display: inline-block;
           padding-left: 100%;
-          animation: scroll-left 15s linear infinite;
+          animation: scroll-left 25s linear infinite;
         ">
           🔒 MODE ADMINISTRATEUR - Visualisation uniquement - Données du responsable connecté - Aucune modification possible
         </div>
@@ -861,24 +865,25 @@ class AdminModeManager {
     refreshBtn.className = "admin-refresh-btn";
     refreshBtn.innerHTML = '<i class="fas fa-redo-alt"></i>';
     refreshBtn.title = "Actualiser la page";
+    refreshBtn.setAttribute("data-allow-admin", "true");
     refreshBtn.style.cssText = `
       background: linear-gradient(135deg, #007bff, #0056b3);
       color: white;
       border: none;
-      padding: 14px 18px;
-      border-radius: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 24px;
+      font-size: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 10px auto;
-      box-shadow: 0 4px 12px rgba(0,123,255,0.25);
+      margin: 5px auto;
+      box-shadow: 0 2px 8px rgba(0,123,255,0.25);
       transition: all 0.3s ease;
       position: relative;
       z-index: 10001;
-      min-width: 50px;
-      min-height: 50px;
+      min-width: 32px;
+      min-height: 32px;
     `;
 
     // Centrer le bouton dans le conteneur des dates
@@ -900,18 +905,19 @@ class AdminModeManager {
     // Animation et effet hover
     refreshBtn.addEventListener("mouseenter", () => {
       refreshBtn.style.background = "linear-gradient(135deg, #0056b3, #004085)";
-      refreshBtn.style.transform = "scale(1.1) rotate(15deg)";
-      refreshBtn.style.boxShadow = "0 6px 20px rgba(0,123,255,0.4)";
+      refreshBtn.style.transform = "scale(1.05) rotate(10deg)";
+      refreshBtn.style.boxShadow = "0 4px 15px rgba(0,123,255,0.4)";
     });
     refreshBtn.addEventListener("mouseleave", () => {
       refreshBtn.style.background = "linear-gradient(135deg, #007bff, #0056b3)";
       refreshBtn.style.transform = "scale(1) rotate(0deg)";
-      refreshBtn.style.boxShadow = "0 4px 12px rgba(0,123,255,0.25)";
+      refreshBtn.style.boxShadow = "0 2px 8px rgba(0,123,255,0.25)";
     });
 
     // Action : recharge la page avec l'URL spécifique
     refreshBtn.addEventListener("click", (e) => {
       e.preventDefault();
+      e.stopPropagation();
       this.refreshPageToAdminMode();
     });
     console.log("✅ Bouton d'actualisation unique ajouté");
@@ -1742,7 +1748,7 @@ class AdminModeManager {
         .admin-view-mode input[placeholder*='recherche'],
         .admin-view-mode input[placeholder*='Recherche'] {
           color: #28a745 !important;
-          font-weight: 500 !important;
+          font-weight: 600 !important;
         }
         
         /* Champ de recherche en mode clair - placeholder vert */
@@ -1751,7 +1757,39 @@ class AdminModeManager {
         .admin-view-mode input[placeholder*='recherche']::placeholder,
         .admin-view-mode input[placeholder*='Recherche']::placeholder {
           color: #198754 !important;
-          opacity: 0.7 !important;
+          opacity: 0.8 !important;
+        }
+        
+        /* Amélioration des boutons de thème - Mode Clair */
+        .admin-view-mode button[onclick*="lightMode"],
+        .admin-view-mode button[onclick*="setTheme('light')"],
+        .admin-view-mode .light-mode-btn,
+        .admin-view-mode [class*="light"] {
+          color: #007bff !important;
+          font-weight: 600 !important;
+        }
+        
+        .admin-view-mode button[onclick*="lightMode"] i,
+        .admin-view-mode button[onclick*="setTheme('light')"] i,
+        .admin-view-mode .light-mode-btn i,
+        .admin-view-mode [class*="light"] i {
+          color: #007bff !important;
+        }
+        
+        /* Amélioration des boutons de thème - Mode Sombre */
+        .admin-view-mode button[onclick*="darkMode"],
+        .admin-view-mode button[onclick*="setTheme('dark')"],
+        .admin-view-mode .dark-mode-btn,
+        .admin-view-mode [class*="dark"] {
+          color: #ffffff !important;
+          font-weight: 600 !important;
+        }
+        
+        .admin-view-mode button[onclick*="darkMode"] i,
+        .admin-view-mode button[onclick*="setTheme('dark')"] i,
+        .admin-view-mode .dark-mode-btn i,
+        .admin-view-mode [class*="dark"] i {
+          color: #ffffff !important;
         }
 
         /* Mode sombre - En-têtes de colonnes en blanc */
