@@ -1524,10 +1524,10 @@ class AdminModeManager {
         historyBtn.style.visibility = "visible";
         historyBtn.style.transform = "none";
         historyBtn.style.filter = "none";
-        historyBtn.style.background = "#10B981"; // vert
+        historyBtn.style.background = "#FFA500"; // Orange
         historyBtn.style.color = "#ffffff";
-        historyBtn.style.border = "1px solid #059669";
-        historyBtn.style.boxShadow = "0 2px 8px rgba(16,185,129,0.25)";
+        historyBtn.style.border = "1px solid #cc8400";
+        historyBtn.style.boxShadow = "0 2px 8px rgba(255,165,0,0.25)";
         historyBtn.style.fontWeight = "700";
         historyBtn.style.padding = "8px 16px";
         historyBtn.style.borderRadius = "8px";
@@ -1539,12 +1539,12 @@ class AdminModeManager {
 
         // Hover
         historyBtn.addEventListener("mouseenter", () => {
-          historyBtn.style.background = "#059669";
-          historyBtn.style.borderColor = "#047857";
+          historyBtn.style.background = "#cc8400";
+          historyBtn.style.borderColor = "#a36a00";
         });
         historyBtn.addEventListener("mouseleave", () => {
-          historyBtn.style.background = "#10B981";
-          historyBtn.style.borderColor = "#059669";
+          historyBtn.style.background = "#FFA500";
+          historyBtn.style.borderColor = "#cc8400";
         });
       }
 
@@ -1559,10 +1559,10 @@ class AdminModeManager {
         pdfBtn.style.visibility = "visible";
         pdfBtn.style.transform = "none";
         pdfBtn.style.filter = "none";
-        pdfBtn.style.background = "#10B981"; // vert
+        pdfBtn.style.background = "#dc3545"; // Rouge
         pdfBtn.style.color = "#ffffff";
-        pdfBtn.style.border = "1px solid #059669";
-        pdfBtn.style.boxShadow = "0 2px 8px rgba(16,185,129,0.25)";
+        pdfBtn.style.border = "1px solid #b02a37";
+        pdfBtn.style.boxShadow = "0 2px 8px rgba(220,53,69,0.25)";
         pdfBtn.style.fontWeight = "700";
         pdfBtn.style.padding = "8px 16px";
         pdfBtn.style.borderRadius = "8px";
@@ -1574,12 +1574,12 @@ class AdminModeManager {
 
         // Hover
         pdfBtn.addEventListener("mouseenter", () => {
-          pdfBtn.style.background = "#059669";
-          pdfBtn.style.borderColor = "#047857";
+          pdfBtn.style.background = "#b02a37";
+          pdfBtn.style.borderColor = "#8c222c";
         });
         pdfBtn.addEventListener("mouseleave", () => {
-          pdfBtn.style.background = "#10B981";
-          pdfBtn.style.borderColor = "#059669";
+          pdfBtn.style.background = "#dc3545";
+          pdfBtn.style.borderColor = "#b02a37";
         });
       }
     } catch (e) {
