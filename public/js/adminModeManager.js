@@ -159,16 +159,30 @@ class AdminModeManager {
       const isLogout =
         text.includes("se deconnecter") ||
         text.includes("déconnecter") ||
-        text.includes("logout");
+        text.includes("logout") ||
+        text.includes("se connecter") ||
+        text.includes("connecter");
       const isLogoutClass =
         btn.classList.contains("logout-btn") ||
         btn.classList.contains("deconnexion") ||
-        btn.id === "logout";
+        btn.classList.contains("login-btn") ||
+        btn.id === "logout" ||
+        btn.id === "login";
       const isLogoutOnClick =
         btn.getAttribute("onclick") &&
         (btn.getAttribute("onclick").toLowerCase().includes("logout") ||
-          btn.getAttribute("onclick").toLowerCase().includes("deconnect"));
-      if (isLogout || isLogoutClass || isLogoutOnClick) {
+          btn.getAttribute("onclick").toLowerCase().includes("deconnect") ||
+          btn.getAttribute("onclick").toLowerCase().includes("login"));
+
+      // Ne pas bloquer les boutons de thème
+      const isThemeButton =
+        btn.classList.contains("theme-toggle") ||
+        btn.id.includes("theme") ||
+        btn.closest(".theme-switcher") ||
+        text.includes("thème") ||
+        text.includes("theme");
+
+      if ((isLogout || isLogoutClass || isLogoutOnClick) && !isThemeButton) {
         this.disableLogoutButton(btn);
       }
     });
@@ -203,11 +217,13 @@ class AdminModeManager {
         element.id.includes("theme") ||
         element.closest(".theme-switcher");
 
-      // Bloquer explicitement les boutons de déconnexion
+      // Bloquer explicitement les boutons de déconnexion/connexion
       const isLogoutButton =
         buttonText.includes("se deconnecter") ||
         buttonText.includes("déconnecter") ||
-        buttonText.includes("logout");
+        buttonText.includes("logout") ||
+        buttonText.includes("se connecter") ||
+        buttonText.includes("connecter");
 
       if ((!isNavigationButton && !isThemeElement) || isLogoutButton) {
         element.disabled = true;
@@ -298,11 +314,13 @@ class AdminModeManager {
               button.classList.contains("tc-link") ||
               button.closest("td:nth-child(3)"));
 
-          // Bloquer explicitement les boutons de déconnexion
+          // Bloquer explicitement les boutons de déconnexion/connexion
           const isLogoutButton =
             buttonText.includes("se deconnecter") ||
             buttonText.includes("déconnecter") ||
-            buttonText.includes("logout");
+            buttonText.includes("logout") ||
+            buttonText.includes("se connecter") ||
+            buttonText.includes("connecter");
 
           if ((!isNavigationButton && !isTcElement) || isLogoutButton) {
             e.preventDefault();
@@ -407,7 +425,7 @@ class AdminModeManager {
   }
 
   /**
-   * Ajoute un message d'information comsdyupact sur le mode admin
+   * Ajoute un message d'information compact sur le mode admin
    */
   addCompactAdminModeMessage() {
     const message = document.createElement("div");
@@ -549,8 +567,136 @@ class AdminModeManager {
       link.title = "Non modifiable en mode admin";
     });
 
+    // Verrouiller la colonne Observations
+    this.lockObservationsColumn();
+
     // Configurer les N° TC comme informatifs uniquement
     this.setupAcconierTcDisplay();
+
+    // Ajouter le bouton de rafraîchissement
+    this.addRefreshButton();
+  }
+
+  /**
+   * Verrouille la colonne Observations en lecture seule
+   */
+  lockObservationsColumn() {
+    const table = document.querySelector("table");
+    if (table) {
+      const headers = table.querySelectorAll("th");
+      let observationsColumnIndex = -1;
+
+      // Trouver l'index de la colonne Observations
+      headers.forEach((header, index) => {
+        const headerText = header.textContent.trim().toLowerCase();
+        if (headerText.includes("observation")) {
+          observationsColumnIndex = index;
+          console.log(`🔒 Colonne Observations trouvée: index ${index}`);
+        }
+      });
+
+      // Verrouiller toutes les cellules de la colonne Observations
+      if (observationsColumnIndex !== -1) {
+        const rows = table.querySelectorAll("tbody tr");
+        rows.forEach((row) => {
+          const cells = row.querySelectorAll("td");
+          if (cells[observationsColumnIndex]) {
+            this.lockTableCell(
+              cells[observationsColumnIndex],
+              "Colonne Observations - Lecture seule en mode admin"
+            );
+          }
+        });
+      }
+    }
+  }
+
+  /**
+   * Ajoute un bouton de rafraîchissement après les champs de dates
+   */
+  addRefreshButton() {
+    // Chercher les champs de dates
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    if (dateInputs.length >= 2) {
+      const lastDateInput = dateInputs[dateInputs.length - 1];
+      const container = lastDateInput.parentElement;
+
+      // Créer le bouton de rafraîchissement
+      const refreshBtn = document.createElement("button");
+      refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+      refreshBtn.title = "Actualiser les données";
+      refreshBtn.style.cssText = `
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-left: 10px;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      `;
+
+      // Ajouter l'événement de clic
+      refreshBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.refreshPageData();
+      });
+
+      // Effet hover
+      refreshBtn.addEventListener("mouseenter", () => {
+        refreshBtn.style.background = "#218838";
+        refreshBtn.style.transform = "scale(1.05)";
+      });
+
+      refreshBtn.addEventListener("mouseleave", () => {
+        refreshBtn.style.background = "#28a745";
+        refreshBtn.style.transform = "scale(1)";
+      });
+
+      // Insérer le bouton après le dernier champ de date
+      container.insertBefore(refreshBtn, lastDateInput.nextSibling);
+
+      console.log("✅ Bouton de rafraîchissement ajouté");
+    }
+  }
+
+  /**
+   * Rafraîchit les données de la page
+   */
+  refreshPageData() {
+    console.log("🔄 Rafraîchissement des données...");
+
+    // Afficher un indicateur de chargement
+    const refreshIndicator = document.createElement("div");
+    refreshIndicator.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(40, 167, 69, 0.9);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 8px;
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    `;
+    refreshIndicator.innerHTML = `
+      <i class="fas fa-sync-alt fa-spin"></i>
+      Actualisation en cours...
+    `;
+    document.body.appendChild(refreshIndicator);
+
+    // Simuler le rafraîchissement et recharger la page
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   }
 
   /**
@@ -720,9 +866,9 @@ class AdminModeManager {
    * Configure l'affichage informatif des N° TC
    */
   setupTcInformationalDisplay() {
-    // Sélectionner toutes les cellules contenant des N° TC
+    // Sélectionner toutes les cellules contenant des N° TC (sans utiliser :contains)
     const tcCells = document.querySelectorAll(
-      'td[data-field*="tc"], .tc-column, .numero-tc, td:contains("TC")'
+      'td[data-field*="tc"], .tc-column, .numero-tc'
     );
 
     // Chercher aussi par contenu de cellule
@@ -811,10 +957,30 @@ class AdminModeManager {
       max-height: 70vh;
       overflow-y: auto;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      position: relative;
     `;
 
     content.innerHTML = `
-      <h3 style="margin-top: 0; color: #2563eb;">
+      <button class="close-modal-btn" style="
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        z-index: 10003;
+      " title="Fermer">
+        ×
+      </button>
+      <h3 style="margin-top: 0; color: #2563eb; padding-right: 40px;">
         <i class="fas fa-info-circle"></i> Numéros TC
       </h3>
       <p style="margin: 10px 0; color: #6b7280; font-size: 0.9em;">
@@ -837,7 +1003,7 @@ class AdminModeManager {
           )
           .join("")}
       </ul>
-      <button onclick="this.closest('.modal').remove()" style="
+      <button class="close-modal-bottom-btn" style="
         background: #2563eb;
         color: white;
         border: none;
@@ -846,6 +1012,7 @@ class AdminModeManager {
         cursor: pointer;
         font-weight: 600;
         margin-top: 15px;
+        width: 100%;
       ">
         Fermer
       </button>
@@ -855,12 +1022,34 @@ class AdminModeManager {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
+    // Fonction pour fermer la modal
+    const closeModal = () => {
+      modal.remove();
+    };
+
     // Fermer en cliquant à l'extérieur
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
-        modal.remove();
+        closeModal();
       }
     });
+
+    // Fermer avec le bouton X
+    const closeBtn = content.querySelector(".close-modal-btn");
+    closeBtn.addEventListener("click", closeModal);
+
+    // Fermer avec le bouton Fermer
+    const closeBtnBottom = content.querySelector(".close-modal-bottom-btn");
+    closeBtnBottom.addEventListener("click", closeModal);
+
+    // Fermer avec la touche Escape
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        closeModal();
+        document.removeEventListener("keydown", handleKeyDown);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
   }
 
   /**
@@ -986,10 +1175,48 @@ class AdminModeManager {
 
         /* Optimisation des boutons thème en mode admin */
         .admin-view-mode .theme-toggle,
-        .admin-view-mode [class*="theme"] {
+        .admin-view-mode [class*="theme"],
+        .admin-view-mode [id*="theme"] {
           opacity: 1 !important;
           pointer-events: auto !important;
           cursor: pointer !important;
+          background: inherit !important;
+        }
+
+        /* Assurer que les boutons de thème restent actifs */
+        .admin-view-mode button[class*="theme"]:not(.close-modal-btn),
+        .admin-view-mode button[id*="theme"]:not(.close-modal-btn) {
+          disabled: false !important;
+          pointer-events: auto !important;
+          opacity: 1 !important;
+        }
+
+        /* Modal TC - Compatibilité thème sombre */
+        [data-theme="dark"] .modal .close-modal-btn {
+          background: #dc3545 !important;
+        }
+
+        [data-theme="dark"] .modal div[style*="background: white"] {
+          background: #374151 !important;
+          color: #e5e7eb !important;
+        }
+
+        [data-theme="dark"] .modal h3 {
+          color: #60a5fa !important;
+        }
+
+        [data-theme="dark"] .modal li {
+          background: #4b5563 !important;
+          color: #e5e7eb !important;
+        }
+
+        /* Bouton de rafraîchissement - Thème sombre */
+        [data-theme="dark"] button[title="Actualiser les données"] {
+          background: #059669 !important;
+        }
+
+        [data-theme="dark"] button[title="Actualiser les données"]:hover {
+          background: #047857 !important;
         }
 
         /* Amélioration de la visibilité du message défilant */
