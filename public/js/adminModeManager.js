@@ -59,19 +59,40 @@ class AdminModeManager {
    * Applique effectivement le mode admin
    */
   applyAdminMode() {
+    console.log("🎭 Application du mode admin...");
+
     // Ajouter une classe CSS pour identifier le mode admin
     document.body.classList.add("admin-view-mode");
 
-    // Ajouter un indicateur visuel
+    // 1. Ajouter le thème et les styles
+    this.optimizeThemeCompatibility();
+
+    // 2. Ajouter un indicateur visuel
     this.addAdminModeIndicator();
 
-    // Désactiver les formulaires et boutons d'édition
+    // 3. Ajouter un message d'information défilant
+    this.addScrollingAdminMessage();
+
+    // 4. Ajouter un message d'information compact
+    this.addCompactAdminModeMessage();
+
+    // 5. Optimiser l'affichage du tableau
+    this.optimizeTableDisplay();
+
+    // 6. Obtenir la page cible et appliquer les optimisations spécifiques
+    const targetPage = localStorage.getItem("adminViewTarget");
+    console.log(`📄 Page cible: ${targetPage}`);
+
+    if (targetPage === "acconier") {
+      this.optimizeAcconierPage();
+    } else if (targetPage === "livraison") {
+      this.optimizeLivraisonPage();
+    }
+
+    // 7. Désactiver les formulaires et boutons d'édition
     this.disableEditingFeatures();
 
-    // Ajouter un message d'information
-    this.addAdminModeMessage();
-
-    // Charger les données du responsable connecté
+    // 8. Charger les données du responsable connecté
     this.loadResponsableData();
 
     // Appliquer toutes les 500ms pendant 5 secondes pour être sûr
@@ -79,9 +100,21 @@ class AdminModeManager {
     const maxAttempts = 10;
     const applyInterval = setInterval(() => {
       this.disableEditingFeatures();
+      this.optimizeTableDisplay();
+
+      // Réappliquer les optimisations spécifiques
+      if (targetPage === "acconier") {
+        this.optimizeAcconierPage();
+      } else if (targetPage === "livraison") {
+        this.optimizeLivraisonPage();
+      }
+
       attempts++;
       if (attempts >= maxAttempts) {
         clearInterval(applyInterval);
+        console.log(
+          "✅ Mode admin complètement appliqué avec toutes les optimisations"
+        );
       }
     }, 500);
   }
@@ -119,6 +152,8 @@ class AdminModeManager {
   disableEditingFeatures() {
     console.log("🔒 Désactivation des fonctionnalités d'édition...");
 
+    const targetPage = localStorage.getItem("adminViewTarget");
+
     // Désactiver TOUS les inputs, selects et textareas de façon plus agressive
     const editableElements = document.querySelectorAll(
       'input, select, textarea, button[type="submit"], button:not([data-allow-admin])'
@@ -135,11 +170,21 @@ class AdminModeManager {
         buttonText.includes("fermer") ||
         buttonText.includes("annuler") ||
         buttonText.includes("close") ||
+        buttonText.includes("thème") ||
+        buttonText.includes("theme") ||
         element.classList.contains("close") ||
+        element.classList.contains("theme-toggle") ||
         element.id.includes("close") ||
+        element.id.includes("theme") ||
         element.getAttribute("data-allow-admin") === "true";
 
-      if (!isNavigationButton) {
+      // Autoriser les interactions avec les thèmes
+      const isThemeElement =
+        element.classList.contains("theme-toggle") ||
+        element.id.includes("theme") ||
+        element.closest(".theme-switcher");
+
+      if (!isNavigationButton && !isThemeElement) {
         element.disabled = true;
         element.readOnly = true;
         element.style.opacity = "0.5";
@@ -147,23 +192,31 @@ class AdminModeManager {
         element.style.pointerEvents = "none";
         element.title = "Modification non autorisée en mode admin";
 
-        // Empêcher tous les événements
-        ["click", "input", "change", "keydown", "keyup", "focus"].forEach(
-          (eventType) => {
-            element.addEventListener(
-              eventType,
-              (e) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                this.showAdminModeAlert(
-                  "Modification non autorisée en mode visualisation admin"
-                );
-                return false;
-              },
-              true
-            );
-          }
-        );
+        // Empêcher tous les événements sauf pour les N° TC en mode acconier
+        const isTcElement =
+          targetPage === "acconier" &&
+          (element.closest(".tc-link") ||
+            element.closest("td:nth-child(3)") ||
+            element.classList.contains("tc-link"));
+
+        if (!isTcElement) {
+          ["click", "input", "change", "keydown", "keyup", "focus"].forEach(
+            (eventType) => {
+              element.addEventListener(
+                eventType,
+                (e) => {
+                  e.preventDefault();
+                  e.stopImmediatePropagation();
+                  this.showAdminModeAlert(
+                    "Modification non autorisée en mode visualisation admin"
+                  );
+                  return false;
+                },
+                true
+              );
+            }
+          );
+        }
       }
     });
 
@@ -201,11 +254,22 @@ class AdminModeManager {
             buttonText.includes("fermer") ||
             buttonText.includes("annuler") ||
             buttonText.includes("close") ||
+            buttonText.includes("thème") ||
+            buttonText.includes("theme") ||
             button.classList.contains("close") ||
+            button.classList.contains("theme-toggle") ||
             button.id.includes("close") ||
+            button.id.includes("theme") ||
             button.getAttribute("data-allow-admin") === "true";
 
-          if (!isNavigationButton) {
+          // Vérifier si c'est un élément TC autorisé
+          const isTcElement =
+            targetPage === "acconier" &&
+            (button.closest(".tc-link") ||
+              button.classList.contains("tc-link") ||
+              button.closest("td:nth-child(3)"));
+
+          if (!isNavigationButton && !isTcElement) {
             e.preventDefault();
             e.stopImmediatePropagation();
             this.showAdminModeAlert(
@@ -220,28 +284,80 @@ class AdminModeManager {
   }
 
   /**
-   * Ajoute un message d'information sur le mode admin
+   * Ajoute un message défilant en haut de page
    */
-  addAdminModeMessage() {
+  addScrollingAdminMessage() {
+    const scrollingMessage = document.createElement("div");
+    scrollingMessage.id = "admin-scrolling-message";
+    scrollingMessage.innerHTML = `
+      <div style="
+        background: linear-gradient(90deg, #2563eb, #1d4ed8, #2563eb);
+        color: white;
+        padding: 8px 0;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9em;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        overflow: hidden;
+        white-space: nowrap;
+      ">
+        <div style="
+          display: inline-block;
+          padding-left: 100%;
+          animation: scroll-left 15s linear infinite;
+        ">
+          🔒 MODE ADMINISTRATEUR - Visualisation uniquement - Données du responsable connecté - Aucune modification possible
+        </div>
+      </div>
+    `;
+
+    // Ajouter l'animation CSS
+    if (!document.getElementById("scrolling-animation-style")) {
+      const style = document.createElement("style");
+      style.id = "scrolling-animation-style";
+      style.textContent = `
+        @keyframes scroll-left {
+          0% { transform: translate3d(100%, 0, 0); }
+          100% { transform: translate3d(-100%, 0, 0); }
+        }
+        
+        /* Ajuster le padding du body pour compenser le message défilant */
+        .admin-view-mode {
+          padding-top: 40px !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    document.body.appendChild(scrollingMessage);
+  }
+
+  /**
+   * Ajoute un message d'information compact sur le mode admin
+   */
+  addCompactAdminModeMessage() {
     const message = document.createElement("div");
     message.id = "admin-mode-message";
     message.innerHTML = `
       <div style="
         background: linear-gradient(135deg, #eff6ff, #dbeafe);
         border: 2px solid #2563eb;
-        border-radius: 12px;
-        padding: 16px;
+        border-radius: 8px;
+        padding: 10px 16px;
         margin: 10px;
         text-align: center;
         font-weight: 600;
         color: #1d4ed8;
+        font-size: 0.9em;
+        max-width: 600px;
+        margin: 10px auto;
       ">
         <i class="fas fa-info-circle"></i>
-        Vous consultez cette page en mode administrateur. Aucune modification n'est possible.
-        <br>
-        <small style="font-weight: normal; color: #374151;">
-          Les données affichées correspondent au responsable actuellement connecté sur cette interface.
-        </small>
+        Mode administrateur - Visualisation des données du responsable connecté
       </div>
     `;
 
@@ -250,6 +366,223 @@ class AdminModeManager {
       document.querySelector("main, .main-content, .container") ||
       document.body;
     mainContent.insertBefore(message, mainContent.firstChild);
+  }
+
+  /**
+   * Optimise l'affichage du tableau en mode admin
+   */
+  optimizeTableDisplay() {
+    const targetPage = localStorage.getItem("adminViewTarget");
+
+    // Supprimer les cartes au-dessus du tableau
+    const cardsToRemove = document.querySelectorAll(
+      ".card, .widget, .alert, .info-card"
+    );
+    cardsToRemove.forEach((card) => {
+      const cardText = card.textContent?.toLowerCase() || "";
+      if (
+        !cardText.includes("mode administrateur") &&
+        !cardText.includes("visualisation")
+      ) {
+        card.style.display = "none";
+      }
+    });
+
+    // Remonter le tableau
+    const table = document.querySelector(
+      "table, .table-container, #deliveriesTable"
+    );
+    if (table) {
+      const tableContainer =
+        table.closest(".container, .table-responsive, .content") ||
+        table.parentElement;
+      if (tableContainer) {
+        tableContainer.style.marginTop = "20px";
+        tableContainer.style.paddingTop = "0";
+      }
+    }
+
+    // Spécifique à resp_acconier.html
+    if (targetPage === "acconier") {
+      this.optimizeAcconierPage();
+    }
+
+    // Spécifique à resp_liv.html
+    if (targetPage === "livraison") {
+      this.optimizeLivraisonPage();
+    }
+
+    // Optimiser les thèmes sombre/clair
+    this.optimizeThemeCompatibility();
+  }
+
+  /**
+   * Optimisations spécifiques à la page acconier
+   */
+  optimizeAcconierPage() {
+    // Désactiver les clics sur N° BL
+    const blLinks = document.querySelectorAll(
+      'a[href*="bl"], .bl-link, td:nth-child(2) a'
+    );
+    blLinks.forEach((link) => {
+      link.style.pointerEvents = "none";
+      link.style.color = "#6b7280";
+      link.style.textDecoration = "none";
+      link.style.cursor = "default";
+      link.removeAttribute("href");
+
+      // Ajouter un tooltip explicatif
+      link.title = "Non modifiable en mode admin";
+    });
+
+    // Garder les N° TC cliquables mais informatifs
+    const tcLinks = document.querySelectorAll(".tc-link, td:nth-child(3) a");
+    tcLinks.forEach((link) => {
+      link.style.color = "#2563eb";
+      link.style.cursor = "pointer";
+      link.title = "Information TC (lecture seule)";
+    });
+  }
+
+  /**
+   * Optimisations spécifiques à la page livraison
+   */
+  optimizeLivraisonPage() {
+    // Colonnes à verrouiller en lecture seule
+    const readOnlyColumns = [
+      "NOM",
+      "Agent visiteurs",
+      "TRANSPORTEUR",
+      "INSPECTEUR",
+      "AGENT EN DOUANES",
+      "CHAUFFEUR",
+      "TEL CHAUFFEUR",
+      "DATE LIVRAISON",
+      "Observations",
+      "Numéro TC(s)",
+    ];
+
+    // Identifier et verrouiller les colonnes
+    const table = document.querySelector("table");
+    if (table) {
+      const headers = table.querySelectorAll("th");
+      const columnIndexes = [];
+
+      // Trouver les index des colonnes à verrouiller
+      headers.forEach((header, index) => {
+        const headerText = header.textContent.trim();
+        if (readOnlyColumns.some((col) => headerText.includes(col))) {
+          columnIndexes.push(index);
+        }
+      });
+
+      // Verrouiller les cellules correspondantes
+      const rows = table.querySelectorAll("tbody tr");
+      rows.forEach((row) => {
+        const cells = row.querySelectorAll("td");
+        columnIndexes.forEach((colIndex) => {
+          if (cells[colIndex]) {
+            const inputs = cells[colIndex].querySelectorAll(
+              "input, select, textarea"
+            );
+            inputs.forEach((input) => {
+              input.readOnly = true;
+              input.disabled = true;
+              input.style.background = "#f5f5f5";
+              input.style.cursor = "not-allowed";
+              input.title = "Colonne non modifiable en mode admin";
+            });
+          }
+        });
+      });
+    }
+
+    // Verrouiller spécifiquement les N° TC
+    const tcCells = document.querySelectorAll(
+      'td[data-field="tc"], .tc-column, .numero-tc'
+    );
+    tcCells.forEach((cell) => {
+      const inputs = cell.querySelectorAll("input, textarea");
+      inputs.forEach((input) => {
+        input.readOnly = true;
+        input.disabled = true;
+        input.style.background = "#f5f5f5";
+        input.style.cursor = "not-allowed";
+        input.title = "N° TC non modifiable";
+      });
+    });
+  }
+
+  /**
+   * Optimise la compatibilité avec les thèmes sombre/clair
+   */
+  optimizeThemeCompatibility() {
+    // Ajouter des styles pour le mode sombre
+    if (!document.getElementById("admin-theme-compatibility")) {
+      const style = document.createElement("style");
+      style.id = "admin-theme-compatibility";
+      style.textContent = `
+        /* Mode sombre - En-têtes de colonnes en blanc */
+        [data-theme="dark"] .admin-view-mode th,
+        [data-theme="dark"] .admin-view-mode .table-header {
+          color: #ffffff !important;
+          background-color: #374151 !important;
+        }
+
+        /* Mode sombre - Cellules du tableau */
+        [data-theme="dark"] .admin-view-mode td {
+          color: #e5e7eb !important;
+          border-color: #4b5563 !important;
+        }
+
+        /* Mode sombre - Inputs désactivés */
+        [data-theme="dark"] .admin-view-mode input:disabled,
+        [data-theme="dark"] .admin-view-mode select:disabled,
+        [data-theme="dark"] .admin-view-mode textarea:disabled {
+          background-color: #374151 !important;
+          color: #9ca3af !important;
+          border-color: #4b5563 !important;
+        }
+
+        /* Mode clair - Assurer la lisibilité */
+        .admin-view-mode th {
+          background-color: #f8fafc !important;
+          color: #1f2937 !important;
+          font-weight: 600 !important;
+        }
+
+        /* Responsive - Mobile et tablette */
+        @media (max-width: 768px) {
+          #admin-mode-message {
+            margin: 5px;
+            padding: 8px 12px;
+            font-size: 0.8em;
+          }
+          
+          #admin-scrolling-message {
+            font-size: 0.8em;
+            padding: 6px 0;
+          }
+          
+          .admin-view-mode {
+            padding-top: 35px !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  /**
+   * Ajoute un message d'information sur le mode admin
+   */
+  /**
+   * Ancienne fonction remplacée par addCompactAdminModeMessage
+   */
+  addAdminModeMessage() {
+    // Cette fonction est maintenant remplacée par addCompactAdminModeMessage
+    // Garder pour compatibilité mais ne fait rien
+    console.log("addAdminModeMessage remplacée par addCompactAdminModeMessage");
   }
 
   /**
