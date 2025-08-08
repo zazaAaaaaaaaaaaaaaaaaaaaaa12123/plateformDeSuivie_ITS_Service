@@ -3731,21 +3731,22 @@ function showPdfFilterModal() {
   const validateBtn = document.createElement("button");
   validateBtn.textContent = "📄 Générer PDF";
   validateBtn.style.cssText = `
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    color: #ffffff;
-    font-weight: 600;
-    border: none;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    border: 2px solid #2563eb;
     cursor: pointer;
     border-radius: 12px;
     padding: 16px 32px;
     font-size: 1.1em;
-    min-width: 180px;
+    min-width: 200px;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    opacity: 1 !important;
   `;
   // Marquer comme autorisé pour le mode admin
   validateBtn.setAttribute("data-allow-admin", "true");
@@ -3753,17 +3754,15 @@ function showPdfFilterModal() {
 
   // Effets hover et focus pour le bouton
   validateBtn.addEventListener("mouseenter", () => {
-    validateBtn.style.background =
-      "linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)";
+    validateBtn.style.background = "#1d4ed8 !important";
     validateBtn.style.transform = "translateY(-2px)";
-    validateBtn.style.boxShadow = "0 6px 16px rgba(37, 99, 235, 0.4)";
+    validateBtn.style.boxShadow = "0 6px 20px rgba(29, 78, 216, 0.5)";
   });
 
   validateBtn.addEventListener("mouseleave", () => {
-    validateBtn.style.background =
-      "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)";
+    validateBtn.style.background = "#2563eb !important";
     validateBtn.style.transform = "translateY(0)";
-    validateBtn.style.boxShadow = "0 4px 12px rgba(37, 99, 235, 0.3)";
+    validateBtn.style.boxShadow = "0 4px 16px rgba(37, 99, 235, 0.4)";
   });
 
   validateBtn.addEventListener("focus", () => {
