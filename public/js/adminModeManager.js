@@ -1240,23 +1240,29 @@ class AdminModeManager {
       e.stopPropagation();
     });
 
-    // Fermer avec le bouton X - événement renforcé
+    // Fermer avec le bouton X - événement renforcé et prioritaire
     const closeBtn = content.querySelector(".close-modal-btn");
     if (closeBtn) {
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        closeModal();
+      // Supprimer tout eventListener existant pour éviter les blocages
+      const newCloseBtn = closeBtn.cloneNode(true);
+      closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+      newCloseBtn.addEventListener(
+        "click",
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          closeModal();
+        },
+        { capture: true }
+      );
+      // Effet hover
+      newCloseBtn.addEventListener("mouseenter", () => {
+        newCloseBtn.style.background = "#c82333";
+        newCloseBtn.style.transform = "scale(1.1)";
       });
-
-      // Ajouter un effet hover
-      closeBtn.addEventListener("mouseenter", () => {
-        closeBtn.style.background = "#c82333";
-        closeBtn.style.transform = "scale(1.1)";
-      });
-      closeBtn.addEventListener("mouseleave", () => {
-        closeBtn.style.background = "#dc3545";
-        closeBtn.style.transform = "scale(1)";
+      newCloseBtn.addEventListener("mouseleave", () => {
+        newCloseBtn.style.background = "#dc3545";
+        newCloseBtn.style.transform = "scale(1)";
       });
     }
 
