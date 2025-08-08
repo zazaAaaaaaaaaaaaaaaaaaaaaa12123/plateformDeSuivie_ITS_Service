@@ -116,8 +116,59 @@ class AdminModeManager {
         console.log(
           "✅ Mode admin complètement appliqué avec toutes les optimisations"
         );
+
+        // Application finale renforcée des styles de recherche
+        this.forceSearchFieldStyles();
       }
     }, 500);
+
+    // Application immédiate supplémentaire après 2 secondes
+    setTimeout(() => {
+      this.forceSearchFieldStyles();
+    }, 2000);
+  }
+
+  /**
+   * Force spécifiquement les styles du champ de recherche
+   */
+  forceSearchFieldStyles() {
+    console.log("🎯 Application forcée spécifique du style de recherche...");
+
+    // Chercher TOUS les champs de recherche possibles
+    const searchElements = document.querySelectorAll(`
+      #searchInput,
+      .search-input,
+      input[placeholder*="recherche"],
+      input[placeholder*="Recherche"],
+      input[placeholder*="rechercher"],
+      input[placeholder*="Rechercher"],
+      input[type="search"],
+      input[type="text"]
+    `);
+
+    searchElements.forEach((element, index) => {
+      console.log(`🔍 Élément trouvé ${index + 1}:`, element);
+
+      // Application ULTRA-FORCÉE des styles
+      element.style.cssText += `
+        color: #28a745 !important;
+        font-weight: 600 !important;
+        -webkit-text-fill-color: #28a745 !important;
+        text-shadow: none !important;
+      `;
+
+      // Vérification après application
+      const computedStyle = getComputedStyle(element);
+      console.log(`🎨 Style après application pour élément ${index + 1}:`, {
+        color: computedStyle.color,
+        fontWeight: computedStyle.fontWeight,
+        webkitTextFillColor: computedStyle.webkitTextFillColor,
+      });
+    });
+
+    console.log(
+      "✅ Application forcée spécifique du style de recherche terminée"
+    );
   }
 
   /**
@@ -1755,9 +1806,56 @@ class AdminModeManager {
         .admin-view-mode input[placeholder*='Rechercher'],
         .admin-view-mode input[type="text"],
         .admin-view-mode input[type="search"],
-        .admin-view-mode input.form-control {
+        .admin-view-mode input.form-control,
+        body.admin-view-mode #searchInput,
+        body.admin-view-mode .search-input,
+        body.admin-view-mode input[placeholder*='recherche'],
+        body.admin-view-mode input[placeholder*='Recherche'] {
           color: #28a745 !important;
           font-weight: 600 !important;
+          -webkit-text-fill-color: #28a745 !important;
+          text-shadow: none !important;
+          --text-primary: #28a745 !important;
+          --input-text-color: #28a745 !important;
+          --search-text-color: #28a745 !important;
+          border: 2px solid #28a745 !important;
+          box-shadow: 0 0 5px rgba(40, 167, 69, 0.3) !important;
+        }
+        
+        /* ÉCRASEMENT COMPLET DES VARIABLES CSS */
+        body.admin-view-mode {
+          --text-primary: #28a745 !important;
+          --text-secondary: #6c757d !important;
+          --bg-card: #ffffff !important;
+          --border-color: #28a745 !important;
+          --input-bg: #ffffff !important;
+          --input-border: #28a745 !important;
+          --input-text: #28a745 !important;
+          --placeholder-color: #198754 !important;
+        }
+        
+        /* SÉLECTEURS ULTRA-SPÉCIFIQUES POUR LE CHAMP DE RECHERCHE */
+        body.admin-view-mode input#searchInput,
+        body.admin-view-mode input[placeholder="Rechercher une livraison..."] {
+          color: #28a745 !important;
+          background-color: #ffffff !important;
+          border: 2px solid #28a745 !important;
+          font-weight: 600 !important;
+          -webkit-text-fill-color: #28a745 !important;
+          caret-color: #28a745 !important;
+        }
+        
+        /* FORCER TOUS LES ÉTATS POSSIBLES */
+        body.admin-view-mode input#searchInput:focus,
+        body.admin-view-mode input#searchInput:active,
+        body.admin-view-mode input#searchInput:not(:disabled),
+        body.admin-view-mode input[placeholder="Rechercher une livraison..."]:focus,
+        body.admin-view-mode input[placeholder="Rechercher une livraison..."]:active,
+        body.admin-view-mode input[placeholder="Rechercher une livraison..."]:not(:disabled) {
+          color: #28a745 !important;
+          -webkit-text-fill-color: #28a745 !important;
+          background-color: #ffffff !important;
+          border-color: #28a745 !important;
         }
         
         /* Champ de recherche en mode clair - placeholder vert - SÉLECTEURS ÉTENDUS */
@@ -1769,7 +1867,31 @@ class AdminModeManager {
         .admin-view-mode input[placeholder*='Rechercher']::placeholder,
         .admin-view-mode input[type="text"]::placeholder,
         .admin-view-mode input[type="search"]::placeholder,
-        .admin-view-mode input.form-control::placeholder {
+        .admin-view-mode input.form-control::placeholder,
+        body.admin-view-mode #searchInput::placeholder,
+        body.admin-view-mode .search-input::placeholder,
+        body.admin-view-mode input[placeholder*='recherche']::placeholder,
+        body.admin-view-mode input[placeholder*='Recherche']::placeholder {
+          color: #198754 !important;
+          opacity: 0.8 !important;
+          -webkit-text-fill-color: #198754 !important;
+        }
+        
+        /* Sélecteurs WebKit pour les placeholders */
+        .admin-view-mode #searchInput::-webkit-input-placeholder,
+        .admin-view-mode .search-input::-webkit-input-placeholder,
+        body.admin-view-mode #searchInput::-webkit-input-placeholder,
+        body.admin-view-mode .search-input::-webkit-input-placeholder {
+          color: #198754 !important;
+          opacity: 0.8 !important;
+          -webkit-text-fill-color: #198754 !important;
+        }
+        
+        /* Sélecteurs Mozilla pour les placeholders */
+        .admin-view-mode #searchInput::-moz-placeholder,
+        .admin-view-mode .search-input::-moz-placeholder,
+        body.admin-view-mode #searchInput::-moz-placeholder,
+        body.admin-view-mode .search-input::-moz-placeholder {
           color: #198754 !important;
           opacity: 0.8 !important;
         }
@@ -2164,63 +2286,29 @@ class AdminModeManager {
    * Force l'application des styles critiques avec JavaScript direct
    */
   forceStyleApplication() {
-    // Attendre que les éléments soient présents dans le DOM
+    // Application IMMÉDIATE sans délai
+    this.applyCriticalStyles();
+
+    // Application avec délai court pour contrer les scripts qui se chargent après
     setTimeout(() => {
-      // Force le style des champs de recherche en vert
-      const searchSelectors = [
-        'input[type="text"]',
-        'input[type="search"]',
-        'input[placeholder*="recherche"]',
-        'input[placeholder*="Recherche"]',
-        'input[placeholder*="rechercher"]',
-        'input[placeholder*="Rechercher"]',
-        "#searchInput",
-        ".search-input",
-        "input.form-control",
-      ];
+      this.applyCriticalStyles();
+    }, 50);
 
-      searchSelectors.forEach((selector) => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach((element) => {
-          element.style.setProperty("color", "#28a745", "important");
-          element.style.setProperty("font-weight", "600", "important");
-        });
-      });
+    // Application avec délai moyen pour contrer scriptRespAcconier.js
+    setTimeout(() => {
+      this.applyCriticalStyles();
+    }, 200);
 
-      // Force le style des boutons "Clair" en bleu
-      const lightButtonSelectors = [
-        'button[onclick*="light"]',
-        'button[onclick*="clair"]',
-        'button[onclick*="Clair"]',
-        'button[onclick*="Light"]',
-        ".light-mode-btn",
-        ".btn-light",
-        '[class*="light"]',
-        '[id*="light"]',
-        '[data-theme="light"]',
-      ];
-
-      lightButtonSelectors.forEach((selector) => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach((element) => {
-          element.style.setProperty("color", "#007bff", "important");
-          element.style.setProperty("font-weight", "600", "important");
-
-          // Appliquer aussi aux icônes à l'intérieur
-          const icons = element.querySelectorAll("i, span, .icon");
-          icons.forEach((icon) => {
-            icon.style.setProperty("color", "#007bff", "important");
-          });
-        });
-      });
-
-      console.log("✅ Application forcée des styles admin terminée");
-    }, 100);
+    // Application avec délai long pour s'assurer que tout est appliqué
+    setTimeout(() => {
+      this.applyCriticalStyles();
+    }, 500);
 
     // Observer les changements DOM pour maintenir les styles
     if (!this.styleObserver) {
       this.styleObserver = new MutationObserver(() => {
-        this.forceStyleApplication();
+        // Réappliquer immédiatement sans délai pour les changements DOM
+        this.applyCriticalStyles();
       });
 
       this.styleObserver.observe(document.body, {
@@ -2230,6 +2318,187 @@ class AdminModeManager {
         attributeFilter: ["class", "style"],
       });
     }
+  }
+
+  /**
+   * Applique les styles critiques avec force maximale
+   */
+  applyCriticalStyles() {
+    // Créer un style CSS ultra-prioritaire pour écraser les variables CSS
+    let ultraPriorityStyle = document.getElementById(
+      "ultra-priority-admin-styles"
+    );
+    if (!ultraPriorityStyle) {
+      ultraPriorityStyle = document.createElement("style");
+      ultraPriorityStyle.id = "ultra-priority-admin-styles";
+      document.head.appendChild(ultraPriorityStyle);
+    }
+
+    // CSS ULTRA-PRIORITAIRE qui écrase TOUT
+    ultraPriorityStyle.textContent = `
+      /* ===== ÉCRASEMENT TOTAL DES VARIABLES CSS ===== */
+      html body.admin-view-mode {
+        --text-primary: #28a745 !important;
+        --text-secondary: #6c757d !important;
+        --bg-card: #ffffff !important;
+        --border-color: #28a745 !important;
+        --input-bg: #ffffff !important;
+        --input-border: #28a745 !important;
+        --input-text: #28a745 !important;
+        --placeholder-color: #198754 !important;
+        --border-input: #28a745 !important;
+        --bg-button: #007bff !important;
+      }
+      
+      /* ===== SÉLECTEURS ULTRA-SPÉCIFIQUES POUR LE CHAMP DE RECHERCHE ===== */
+      html body.admin-view-mode input#searchInput,
+      html body.admin-view-mode input.search-input,
+      html body.admin-view-mode input[placeholder="Rechercher une livraison."] {
+        color: #28a745 !important;
+        background-color: #ffffff !important;
+        border: 2px solid #28a745 !important;
+        font-weight: 600 !important;
+        -webkit-text-fill-color: #28a745 !important;
+        caret-color: #28a745 !important;
+        text-shadow: none !important;
+        box-shadow: 0 0 8px rgba(40, 167, 69, 0.3) !important;
+      }
+      
+      /* ===== TOUS LES ÉTATS DU CHAMP DE RECHERCHE ===== */
+      html body.admin-view-mode input#searchInput:focus,
+      html body.admin-view-mode input#searchInput:active,
+      html body.admin-view-mode input#searchInput:hover,
+      html body.admin-view-mode input#searchInput:not(:disabled),
+      html body.admin-view-mode input.search-input:focus,
+      html body.admin-view-mode input.search-input:active,
+      html body.admin-view-mode input.search-input:hover,
+      html body.admin-view-mode input.search-input:not(:disabled) {
+        color: #28a745 !important;
+        -webkit-text-fill-color: #28a745 !important;
+        background-color: #ffffff !important;
+        border-color: #28a745 !important;
+        outline: 2px solid rgba(40, 167, 69, 0.5) !important;
+      }
+      
+      /* ===== PLACEHOLDER DU CHAMP DE RECHERCHE ===== */
+      html body.admin-view-mode input#searchInput::placeholder,
+      html body.admin-view-mode input.search-input::placeholder {
+        color: #198754 !important;
+        opacity: 0.8 !important;
+        -webkit-text-fill-color: #198754 !important;
+      }
+      
+      /* ===== BOUTONS THÈME "CLAIR" EN BLEU ===== */
+      html body.admin-view-mode button[onclick*="light" i],
+      html body.admin-view-mode button[onclick*="clair" i] {
+        color: #007bff !important;
+        font-weight: 600 !important;
+        border-color: #007bff !important;
+        background-color: rgba(0, 123, 255, 0.1) !important;
+      }
+      
+      html body.admin-view-mode button[onclick*="light" i] i,
+      html body.admin-view-mode button[onclick*="clair" i] i {
+        color: #007bff !important;
+      }
+    `;
+
+    // Force le style des champs de recherche en vert - PRIORITÉ MAXIMALE
+    const searchSelectors = [
+      'input[type="text"]',
+      'input[type="search"]',
+      'input[placeholder*="recherche"]',
+      'input[placeholder*="Recherche"]',
+      'input[placeholder*="rechercher"]',
+      'input[placeholder*="Rechercher"]',
+      "#searchInput",
+      ".search-input",
+      "input.form-control",
+    ];
+
+    searchSelectors.forEach((selector) => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach((element) => {
+        // Application FORCÉE avec tous les moyens disponibles
+        element.style.setProperty("color", "#28a745", "important");
+        element.style.setProperty("font-weight", "600", "important");
+        element.style.setProperty(
+          "-webkit-text-fill-color",
+          "#28a745",
+          "important"
+        );
+        element.style.setProperty("text-shadow", "none", "important");
+
+        // NOUVEAU : Écraser les variables CSS qui peuvent causer le problème
+        element.style.setProperty("color", "#28a745", "important");
+        element.style.cssText +=
+          "; color: #28a745 !important; -webkit-text-fill-color: #28a745 !important;";
+
+        // Forcer l'attribut style directement
+        const currentStyle = element.getAttribute("style") || "";
+        const newStyle =
+          currentStyle +
+          "; color: #28a745 !important; -webkit-text-fill-color: #28a745 !important; font-weight: 600 !important;";
+        element.setAttribute("style", newStyle);
+
+        // Créer une règle CSS spécifique pour cet élément
+        if (element.id) {
+          let elementStyle = document.getElementById(`style-for-${element.id}`);
+          if (!elementStyle) {
+            elementStyle = document.createElement("style");
+            elementStyle.id = `style-for-${element.id}`;
+            elementStyle.textContent = `
+              #${element.id} {
+                color: #28a745 !important;
+                font-weight: 600 !important;
+                -webkit-text-fill-color: #28a745 !important;
+              }
+              #${element.id}::placeholder {
+                color: #198754 !important;
+                opacity: 0.8 !important;
+                -webkit-text-fill-color: #198754 !important;
+              }
+            `;
+            document.head.appendChild(elementStyle);
+          }
+        }
+
+        console.log(
+          `✅ Style vert appliqué à:`,
+          element,
+          `Couleur actuelle: ${getComputedStyle(element).color}`
+        );
+      });
+    });
+
+    // Force le style des boutons "Clair" en bleu
+    const lightButtonSelectors = [
+      'button[onclick*="light"]',
+      'button[onclick*="clair"]',
+      'button[onclick*="Clair"]',
+      'button[onclick*="Light"]',
+      ".light-mode-btn",
+      ".btn-light",
+      '[class*="light"]',
+      '[id*="light"]',
+      '[data-theme="light"]',
+    ];
+
+    lightButtonSelectors.forEach((selector) => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach((element) => {
+        element.style.setProperty("color", "#007bff", "important");
+        element.style.setProperty("font-weight", "600", "important");
+
+        // Appliquer aussi aux icônes à l'intérieur
+        const icons = element.querySelectorAll("i, span, .icon");
+        icons.forEach((icon) => {
+          icon.style.setProperty("color", "#007bff", "important");
+        });
+      });
+    });
+
+    console.log("✅ Application forcée des styles admin terminée");
   }
 
   /**
