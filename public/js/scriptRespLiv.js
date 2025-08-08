@@ -3222,28 +3222,57 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // --- AJOUT : Bouton Générer PDF et logique associée ---
-// Création du bouton Générer PDF
+// Création du bouton Générer PDF (forcé en vert + texte visible)
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
 pdfBtn.textContent = "Générer PDF";
-pdfBtn.style.background = "#2563eb";
-pdfBtn.style.color = "#fff";
-pdfBtn.style.fontWeight = "bold";
-pdfBtn.style.border = "none";
-pdfBtn.style.cursor = "pointer";
-pdfBtn.style.borderRadius = "7px";
-pdfBtn.style.padding = "4px 12px";
-pdfBtn.style.fontSize = "0.97em";
-pdfBtn.style.margin = "0 0 0 12px";
-pdfBtn.style.height = "32px";
-pdfBtn.style.minWidth = "0";
-pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
-pdfBtn.style.verticalAlign = "middle";
+// Style vert par défaut (inline fort pour éviter les overrides)
+pdfBtn.classList.remove("admin-disabled-no-icon");
+pdfBtn.style.cssText = `
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(90deg,#10B981 0%,#059669 100%) !important;
+  color: #ffffff !important; font-weight: 700; border: 1px solid #059669;
+  cursor: pointer; border-radius: 8px; padding: 6px 14px; font-size: 0.95em;
+  margin: 0 0 0 12px; height: 32px; min-width: 110px; white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.25); vertical-align: middle;
+`;
+// Marquer explicitement comme autorisé en mode admin (dès la création)
+pdfBtn.setAttribute("data-allow-admin", "true");
+pdfBtn.classList.add("admin-allowed-button");
+pdfBtn.disabled = false;
+pdfBtn.style.opacity = "1";
+pdfBtn.style.pointerEvents = "auto";
+pdfBtn.onmouseenter = () => {
+  pdfBtn.style.background = "#059669";
+  pdfBtn.style.borderColor = "#047857";
+};
+pdfBtn.onmouseleave = () => {
+  pdfBtn.style.background = "linear-gradient(90deg,#10B981 0%,#059669 100%)";
+  pdfBtn.style.borderColor = "#059669";
+};
 
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
   // Créer le bouton historique immédiatement
   checkAndShowHistoryButton();
+  // Renforcer le style vert et le libellé si un autre script a écrasé
+  setTimeout(() => {
+    const btn = document.getElementById("generatePdfBtn");
+    if (btn) {
+      btn.textContent = btn.textContent?.trim() || "Générer PDF";
+      btn.style.minWidth = "110px";
+      btn.style.whiteSpace = "nowrap";
+      btn.style.background = "linear-gradient(90deg,#10B981 0%,#059669 100%)";
+      btn.style.color = "#ffffff";
+      btn.style.border = "1px solid #059669";
+      // Renforcer le statut autorisé admin
+      btn.setAttribute("data-allow-admin", "true");
+      btn.classList.add("admin-allowed-button");
+      btn.disabled = false;
+      btn.style.opacity = "1";
+      btn.style.pointerEvents = "auto";
+    }
+  }, 0);
 
   // Configurer le conteneur et ajouter le bouton PDF
   const searchInput = document.querySelector(
@@ -3265,13 +3294,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Ajouter le bouton PDF à la fin
     parentContainer.appendChild(pdfBtn);
+
+    // Attacher le gestionnaire d'événement après l'ajout au DOM
+    setTimeout(() => attachPdfButtonHandler(), 0);
   } else {
     // Fallback : au-dessus du tableau si champ non trouvé
     const mainTable = document.getElementById("deliveriesTable");
     if (mainTable && mainTable.parentNode) {
       mainTable.parentNode.insertBefore(pdfBtn, mainTable);
+      // Attacher le gestionnaire d'événement après l'ajout au DOM
+      setTimeout(() => attachPdfButtonHandler(), 0);
     }
   }
+
+  // Attacher également le gestionnaire avec un délai plus long au cas où
+  setTimeout(() => attachPdfButtonHandler(), 100);
+  setTimeout(() => attachPdfButtonHandler(), 500);
 });
 
 // Variable pour stocker les dossiers livrés
@@ -3303,6 +3341,10 @@ function updateDeliveredForPdf() {
   });
 }
 
+// Exposer les fonctions globalement pour le mode admin
+window.updateDeliveredForPdf = updateDeliveredForPdf;
+window.deliveredForPdf = deliveredForPdf;
+
 // Met à jour la liste à chaque chargement ou modification
 if (window.allDeliveries) updateDeliveredForPdf();
 window.addEventListener("allDeliveriesUpdated", updateDeliveredForPdf);
@@ -3323,120 +3365,492 @@ function showPdfFilterModal() {
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";
   overlay.style.justifyContent = "center";
+  // Marquer la modal comme autorisée pour le mode admin
+  overlay.setAttribute("data-allow-admin", "true");
+  overlay.classList.add("admin-allowed-modal");
   const box = document.createElement("div");
-  box.style.background = "#fff";
-  box.style.borderRadius = "16px";
-  box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-  box.style.maxWidth = "420px";
+  box.style.background = "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)";
+  box.style.borderRadius = "20px";
+  box.style.boxShadow =
+    "0 20px 60px rgba(30,41,59,0.15), 0 8px 25px rgba(30,41,59,0.08)";
+  box.style.border = "1px solid rgba(226,232,240,0.8)";
+  box.style.maxWidth = "480px";
   box.style.width = "96vw";
-  box.style.maxHeight = "92vh";
+  box.style.maxHeight = "90vh";
   box.style.overflowY = "auto";
   box.style.padding = "0";
+  box.style.position = "relative";
+  box.style.transform = "scale(0.95)";
+  box.style.transition = "transform 0.2s ease-out";
+  box.style.animation = "modalSlideIn 0.3s ease-out";
+
+  // Animation CSS pour la modal
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes modalSlideIn {
+      0% { 
+        opacity: 0; 
+        transform: scale(0.9) translateY(-20px); 
+      }
+      100% { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  setTimeout(() => {
+    box.style.transform = "scale(1)";
+  }, 10);
   box.style.position = "relative";
   box.style.display = "flex";
   box.style.flexDirection = "column";
   const header = document.createElement("div");
-  header.style.background = "#2563eb";
-  header.style.color = "#fff";
-  header.style.padding = "18px 28px 12px 28px";
-  header.style.fontWeight = "bold";
-  header.style.fontSize = "1.15rem";
+  header.style.background =
+    "linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)";
+  header.style.color = "#ffffff";
+  header.style.padding = "24px 32px 18px 32px";
+  header.style.fontWeight = "600";
+  header.style.fontSize = "1.2rem";
   header.style.display = "flex";
   header.style.flexDirection = "column";
-  header.style.borderTopLeftRadius = "16px";
-  header.style.borderTopRightRadius = "16px";
-  header.innerHTML = `<span style='font-size:1.08em;'>Génération PDF - État des sorties de conteneurs</span>`;
+  header.style.borderTopLeftRadius = "20px";
+  header.style.borderTopRightRadius = "20px";
+  header.style.position = "relative";
+  header.style.boxShadow = "0 2px 8px rgba(59,130,246,0.15)";
+  header.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="
+        width: 24px; 
+        height: 24px; 
+        background: rgba(255,255,255,0.2); 
+        border-radius: 6px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        font-size: 14px;
+      ">📄</div>
+      <span style='font-size: 1.1em; letter-spacing: -0.015em;'>Génération PDF</span>
+    </div>
+    <span style='font-size: 0.85em; opacity: 0.9; margin-top: 4px; font-weight: 400;'>État des sorties de conteneurs</span>
+  `;
+
   const closeBtn = document.createElement("button");
-  closeBtn.innerHTML = "&times;";
-  closeBtn.style.background = "none";
-  closeBtn.style.border = "none";
-  closeBtn.style.color = "#fff";
-  closeBtn.style.fontSize = "2.1rem";
+  closeBtn.innerHTML = "✕";
+  closeBtn.style.background = "rgba(255,255,255,0.15)";
+  closeBtn.style.border = "1px solid rgba(255,255,255,0.2)";
+  closeBtn.style.color = "#ffffff";
+  closeBtn.style.fontSize = "16px";
   closeBtn.style.cursor = "pointer";
   closeBtn.style.position = "absolute";
-  closeBtn.style.top = "10px";
-  closeBtn.style.right = "18px";
+  closeBtn.style.top = "20px";
+  closeBtn.style.right = "24px";
+  closeBtn.style.width = "32px";
+  closeBtn.style.height = "32px";
+  closeBtn.style.borderRadius = "8px";
+  closeBtn.style.display = "flex";
+  closeBtn.style.alignItems = "center";
+  closeBtn.style.justifyContent = "center";
+  closeBtn.style.transition = "all 0.2s ease";
   closeBtn.setAttribute("aria-label", "Fermer");
+
+  closeBtn.onmouseenter = function () {
+    this.style.background = "rgba(255,255,255,0.25)";
+    this.style.transform = "scale(1.05)";
+  };
+  closeBtn.onmouseleave = function () {
+    this.style.background = "rgba(255,255,255,0.15)";
+    this.style.transform = "scale(1)";
+  };
   closeBtn.onclick = () => overlay.remove();
   header.appendChild(closeBtn);
   box.appendChild(header);
   const content = document.createElement("div");
-  content.style.padding = "24px 24px 24px 24px";
-  content.style.background = "#f8fafc";
-  content.style.flex = "1 1 auto";
-  content.style.overflowY = "auto";
-  content.innerHTML = `<div style='margin-bottom:18px;font-weight:600;'>Souhaitez-vous filtrer l'état des sorties de conteneurs par :</div>`;
-  const radioSingle = document.createElement("input");
-  radioSingle.type = "radio";
-  radioSingle.name = "pdfDateFilter";
-  radioSingle.id = "pdfFilterSingle";
-  radioSingle.checked = true;
-  const labelSingle = document.createElement("label");
-  labelSingle.textContent = "Une seule date";
-  labelSingle.htmlFor = "pdfFilterSingle";
-  labelSingle.style.marginRight = "18px";
-  const radioRange = document.createElement("input");
-  radioRange.type = "radio";
-  radioRange.name = "pdfDateFilter";
-  radioRange.id = "pdfFilterRange";
-  const labelRange = document.createElement("label");
-  labelRange.textContent = "Intervalle de dates";
-  labelRange.htmlFor = "pdfFilterRange";
-  content.appendChild(radioSingle);
-  content.appendChild(labelSingle);
-  content.appendChild(radioRange);
-  content.appendChild(labelRange);
+  content.style.cssText = `
+    padding: 32px;
+    background: #ffffff;
+    flex: 1 1 auto;
+    overflow-y: auto;
+  `;
+
+  // Ajouter du CSS personnalisé pour le scrollbar
+  const scrollbarStyle = document.createElement("style");
+  scrollbarStyle.textContent = `
+    .modal-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    .modal-content::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    .modal-content::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+      border-radius: 3px;
+    }
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #94a3b8, #64748b);
+    }
+  `;
+  document.head.appendChild(scrollbarStyle);
+  content.classList.add("modal-content");
+
+  // Titre de section avec style amélioré
+  const sectionTitle = document.createElement("div");
+  sectionTitle.style.cssText = `
+    margin-bottom: 24px;
+    font-weight: 600;
+    font-size: 1.1em;
+    color: #1f2937;
+    text-align: center;
+  `;
+  sectionTitle.textContent =
+    "Souhaitez-vous filtrer l'état des sorties de conteneurs par :";
+  content.appendChild(sectionTitle);
+
+  // Container pour les options radio avec style moderne
+  const radioContainer = document.createElement("div");
+  radioContainer.style.cssText = `
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  `;
+
+  // Créer des boutons radio stylisés directement
+  const singleOptionDiv = document.createElement("div");
+  singleOptionDiv.style.cssText = `
+    cursor: pointer;
+    font-weight: 600;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 14px 24px;
+    border: 2px solid #2563eb;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: #2563eb;
+    min-width: 160px;
+    justify-content: center;
+    font-size: 15px;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+  `;
+  singleOptionDiv.textContent = "Une seule date";
+  singleOptionDiv.setAttribute("data-allow-admin", "true");
+  singleOptionDiv.setAttribute("data-option", "single");
+
+  const rangeOptionDiv = document.createElement("div");
+  rangeOptionDiv.style.cssText = `
+    cursor: pointer;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    padding: 14px 24px;
+    border: 2px solid #d1d5db;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    min-width: 160px;
+    justify-content: center;
+    font-size: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  `;
+  rangeOptionDiv.textContent = "Intervalle de dates";
+  rangeOptionDiv.setAttribute("data-allow-admin", "true");
+  rangeOptionDiv.setAttribute("data-option", "range");
+
+  // Variable pour suivre la sélection
+  let selectedOption = "single";
+
+  // Fonction pour mettre à jour les styles
+  const updateOptionStyles = () => {
+    if (selectedOption === "single") {
+      singleOptionDiv.style.background = "#2563eb";
+      singleOptionDiv.style.color = "#ffffff";
+      singleOptionDiv.style.borderColor = "#2563eb";
+      singleOptionDiv.style.boxShadow = "0 4px 12px rgba(37,99,235,0.3)";
+
+      rangeOptionDiv.style.background = "#ffffff";
+      rangeOptionDiv.style.color = "#1f2937";
+      rangeOptionDiv.style.borderColor = "#d1d5db";
+      rangeOptionDiv.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+    } else {
+      rangeOptionDiv.style.background = "#2563eb";
+      rangeOptionDiv.style.color = "#ffffff";
+      rangeOptionDiv.style.borderColor = "#2563eb";
+      rangeOptionDiv.style.boxShadow = "0 4px 12px rgba(37,99,235,0.3)";
+
+      singleOptionDiv.style.background = "#ffffff";
+      singleOptionDiv.style.color = "#1f2937";
+      singleOptionDiv.style.borderColor = "#d1d5db";
+      singleOptionDiv.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+    }
+  };
+
+  // Événements de clic
+  singleOptionDiv.onclick = () => {
+    selectedOption = "single";
+    updateOptionStyles();
+    renderSingleDateInput();
+  };
+
+  rangeOptionDiv.onclick = () => {
+    selectedOption = "range";
+    updateOptionStyles();
+    renderRangeDateInputs();
+  };
+
+  radioContainer.appendChild(singleOptionDiv);
+  radioContainer.appendChild(rangeOptionDiv);
+  content.appendChild(radioContainer);
+
+  // Initialiser l'affichage par défaut
+  updateOptionStyles();
+
   const dateZone = document.createElement("div");
-  dateZone.style.marginTop = "18px";
+  dateZone.style.cssText = `
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  `;
   content.appendChild(dateZone);
   function renderSingleDateInput() {
     dateZone.innerHTML = "";
+
+    const dateContainer = document.createElement("div");
+    dateContainer.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    `;
+
+    const dateLabel = document.createElement("label");
+    dateLabel.textContent = "Sélectionnez la date :";
+    dateLabel.style.cssText = `
+      font-weight: 500;
+      color: #374151;
+      font-size: 1em;
+    `;
+
     const dateInput = document.createElement("input");
     dateInput.type = "date";
     dateInput.id = "pdfSingleDateInput";
-    dateInput.style.padding = "8px 18px";
-    dateInput.style.borderRadius = "8px";
-    dateInput.style.border = "1.5px solid #2563eb";
-    dateInput.style.fontSize = "1.08em";
-    dateInput.style.marginRight = "12px";
-    dateZone.appendChild(dateInput);
+    dateInput.style.cssText = `
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: 2px solid #d1d5db;
+      font-size: 1.05em;
+      background: #ffffff;
+      color: #374151;
+      min-width: 200px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    `;
+    // Marquer comme autorisé pour le mode admin
+    dateInput.setAttribute("data-allow-admin", "true");
+    dateInput.classList.add("admin-allowed-field");
+
+    // Effet focus
+    dateInput.addEventListener("focus", () => {
+      dateInput.style.borderColor = "#2563eb";
+      dateInput.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
+    });
+
+    dateInput.addEventListener("blur", () => {
+      dateInput.style.borderColor = "#d1d5db";
+      dateInput.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+    });
+
+    dateContainer.appendChild(dateLabel);
+    dateContainer.appendChild(dateInput);
+    dateZone.appendChild(dateContainer);
   }
+
   function renderRangeDateInputs() {
     dateZone.innerHTML = "";
+
+    const rangeContainer = document.createElement("div");
+    rangeContainer.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    `;
+
+    const rangeLabel = document.createElement("label");
+    rangeLabel.textContent = "Sélectionnez la période :";
+    rangeLabel.style.cssText = `
+      font-weight: 500;
+      color: #374151;
+      font-size: 1em;
+    `;
+
+    const datesContainer = document.createElement("div");
+    datesContainer.style.cssText = `
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    `;
+
     const dateStart = document.createElement("input");
     dateStart.type = "date";
     dateStart.id = "pdfRangeDateStart";
-    dateStart.style.padding = "8px 18px";
-    dateStart.style.borderRadius = "8px";
-    dateStart.style.border = "1.5px solid #2563eb";
-    dateStart.style.fontSize = "1.08em";
-    dateStart.style.marginRight = "12px";
+    dateStart.style.cssText = `
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: 2px solid #d1d5db;
+      font-size: 1.05em;
+      background: #ffffff;
+      color: #374151;
+      min-width: 180px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    `;
+    // Marquer comme autorisé pour le mode admin
+    dateStart.setAttribute("data-allow-admin", "true");
+    dateStart.classList.add("admin-allowed-field");
+
+    const dateSeparator = document.createElement("span");
+    dateSeparator.textContent = "à";
+    dateSeparator.style.cssText = `
+      font-weight: 500;
+      color: #6b7280;
+      font-size: 1.1em;
+    `;
+
     const dateEnd = document.createElement("input");
     dateEnd.type = "date";
     dateEnd.id = "pdfRangeDateEnd";
-    dateEnd.style.padding = "8px 18px";
-    dateEnd.style.borderRadius = "8px";
-    dateEnd.style.border = "1.5px solid #2563eb";
-    dateEnd.style.fontSize = "1.08em";
-    dateZone.appendChild(dateStart);
-    dateZone.appendChild(dateEnd);
+    dateEnd.style.cssText = `
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: 2px solid #d1d5db;
+      font-size: 1.05em;
+      background: #ffffff;
+      color: #374151;
+      min-width: 180px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    `;
+    // Marquer comme autorisé pour le mode admin
+    dateEnd.setAttribute("data-allow-admin", "true");
+    dateEnd.classList.add("admin-allowed-field");
+
+    // Effets focus pour les deux inputs
+    [dateStart, dateEnd].forEach((input) => {
+      input.addEventListener("focus", () => {
+        input.style.borderColor = "#2563eb";
+        input.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
+      });
+
+      input.addEventListener("blur", () => {
+        input.style.borderColor = "#d1d5db";
+        input.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+      });
+    });
+
+    datesContainer.appendChild(dateStart);
+    datesContainer.appendChild(dateSeparator);
+    datesContainer.appendChild(dateEnd);
+
+    rangeContainer.appendChild(rangeLabel);
+    rangeContainer.appendChild(datesContainer);
+    dateZone.appendChild(rangeContainer);
   }
   renderSingleDateInput();
-  radioSingle.onchange = renderSingleDateInput;
-  radioRange.onchange = renderRangeDateInputs;
+
+  // Container pour le bouton avec style moderne
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.cssText = `
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+  `;
+
   const validateBtn = document.createElement("button");
-  validateBtn.textContent = "Générer PDF";
-  validateBtn.style.background = "#2563eb";
-  validateBtn.style.color = "#fff";
-  validateBtn.style.fontWeight = "bold";
-  validateBtn.style.border = "none";
-  validateBtn.style.cursor = "pointer";
-  validateBtn.style.borderRadius = "8px";
-  validateBtn.style.padding = "10px 28px";
-  validateBtn.style.fontSize = "1.08em";
-  validateBtn.style.marginTop = "24px";
+  validateBtn.textContent = "📄 Générer PDF";
+  validateBtn.style.cssText = `
+    background: #2563eb !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    border: 2px solid #2563eb;
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 1.1em;
+    min-width: 200px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 1 !important;
+  `;
+  // Marquer comme autorisé pour le mode admin
+  validateBtn.setAttribute("data-allow-admin", "true");
+  validateBtn.classList.add("admin-allowed-button");
+
+  // Effets hover et focus pour le bouton
+  validateBtn.addEventListener("mouseenter", () => {
+    validateBtn.style.background = "#1d4ed8 !important";
+    validateBtn.style.transform = "translateY(-2px)";
+    validateBtn.style.boxShadow = "0 6px 20px rgba(29, 78, 216, 0.5)";
+  });
+
+  validateBtn.addEventListener("mouseleave", () => {
+    validateBtn.style.background = "#2563eb !important";
+    validateBtn.style.transform = "translateY(0)";
+    validateBtn.style.boxShadow = "0 4px 16px rgba(37, 99, 235, 0.4)";
+  });
+
+  validateBtn.addEventListener("focus", () => {
+    validateBtn.style.outline = "3px solid rgba(37, 99, 235, 0.3)";
+    validateBtn.style.outlineOffset = "2px";
+  });
+
+  validateBtn.addEventListener("blur", () => {
+    validateBtn.style.outline = "none";
+  });
+
+  // Aussi marquer le bouton de fermeture et améliorer son style
+  closeBtn.setAttribute("data-allow-admin", "true");
+  closeBtn.classList.add("admin-allowed-button");
+  closeBtn.style.cssText += `
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  // Effets hover pour le bouton de fermeture
+  closeBtn.addEventListener("mouseenter", () => {
+    closeBtn.style.background = "rgba(255, 255, 255, 0.2)";
+    closeBtn.style.transform = "scale(1.1)";
+  });
+
+  closeBtn.addEventListener("mouseleave", () => {
+    closeBtn.style.background = "none";
+    closeBtn.style.transform = "scale(1)";
+  });
+
+  buttonContainer.appendChild(validateBtn);
+  content.appendChild(buttonContainer);
   validateBtn.onclick = function () {
-    let filterType = radioSingle.checked ? "single" : "range";
+    let filterType = selectedOption; // Utiliser notre nouvelle variable
     let date1 = null,
       date2 = null;
     if (filterType === "single") {
@@ -3481,16 +3895,65 @@ function showPdfFilterModal() {
     generateEtatSortiePdf(filtered, date1, date2);
     overlay.remove();
   };
-  content.appendChild(validateBtn);
   box.appendChild(content);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
+
+  // Réactiver les éléments de la modal pour le mode admin
+  if (typeof window.enableModalElementsForAdmin === "function") {
+    setTimeout(() => {
+      window.enableModalElementsForAdmin("pdfFilterModal");
+    }, 0);
+  }
+
+  // Double sécurité: réactiver après un court délai
+  setTimeout(() => {
+    const modalElements = overlay.querySelectorAll(
+      "input, button, select, textarea, label"
+    );
+    modalElements.forEach((element) => {
+      element.disabled = false;
+      element.readOnly = false;
+      element.style.opacity = "1";
+      element.style.cursor = "pointer";
+      element.style.pointerEvents = "auto";
+      element.setAttribute("data-allow-admin", "true");
+      console.log(
+        "🔓 Élément modal PDF réactivé:",
+        element.tagName,
+        element.id
+      );
+    });
+  }, 100);
 }
 
-pdfBtn.onclick = function () {
-  updateDeliveredForPdf();
-  showPdfFilterModal();
-};
+// Exposer la fonction showPdfFilterModal globalement pour le mode admin
+window.showPdfFilterModal = showPdfFilterModal;
+
+// Le gestionnaire d'événement sera ajouté après que le bouton soit dans le DOM
+function attachPdfButtonHandler() {
+  const pdfButton = document.getElementById("generatePdfBtn");
+  if (pdfButton) {
+    // Supprimer d'abord tout gestionnaire existant
+    pdfButton.onclick = null;
+
+    // Ajouter le nouveau gestionnaire
+    pdfButton.onclick = function (e) {
+      console.log("🔵 Clic sur le bouton PDF détecté");
+      e.preventDefault();
+      e.stopPropagation();
+      updateDeliveredForPdf();
+      showPdfFilterModal();
+    };
+
+    console.log("🔵 Gestionnaire PDF attaché avec succès");
+  } else {
+    console.warn("🔵 Bouton PDF non trouvé pour attacher le gestionnaire");
+  }
+}
+
+// Exposer la fonction globalement
+window.attachPdfButtonHandler = attachPdfButtonHandler;
 
 function generateEtatSortiePdf(rows, date1, date2) {
   if (!rows || rows.length === 0) {
@@ -3771,29 +4234,35 @@ function showHistoryButtonIfNeeded() {
     historyBtn.innerHTML = "📋 Historique";
     historyBtn.title =
       "Consulter l'historique professionnel des conteneurs livrés";
-    historyBtn.style.background =
-      "linear-gradient(90deg,#059669 0%,#047857 100%)";
-    historyBtn.style.color = "#fff";
-    historyBtn.style.fontWeight = "bold";
-    historyBtn.style.border = "none";
-    historyBtn.style.cursor = "pointer";
-    historyBtn.style.borderRadius = "8px";
-    historyBtn.style.padding = "8px 16px";
-    historyBtn.style.fontSize = "0.95em";
-    historyBtn.style.margin = "0 8px 0 0"; // Margin à droite seulement
-    historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
-    historyBtn.style.transition = "all 0.2s ease";
-    historyBtn.style.height = "32px"; // Même hauteur que les autres boutons
-    historyBtn.style.verticalAlign = "middle";
+    // Style vert renforcé
+    historyBtn.style.cssText = `
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(90deg,#10B981 0%,#059669 100%) !important;
+      color: #ffffff !important; font-weight: 700; border: 1px solid #059669;
+      cursor: pointer; border-radius: 8px; padding: 6px 14px; font-size: 0.95em;
+      margin: 0 8px 0 0; height: 32px; min-width: 100px; white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(16,185,129,0.25); vertical-align: middle;
+    `;
+    // Marquer explicitement comme autorisé en mode admin (dès la création)
+    historyBtn.setAttribute("data-allow-admin", "true");
+    historyBtn.classList.add("admin-allowed-button");
+    historyBtn.disabled = false;
+    historyBtn.style.opacity = "1";
+    historyBtn.style.pointerEvents = "auto";
 
     // Effet de survol
     historyBtn.onmouseenter = () => {
       historyBtn.style.transform = "translateY(-2px)";
-      historyBtn.style.boxShadow = "0 4px 16px rgba(5,150,105,0.4)";
+      historyBtn.style.boxShadow = "0 4px 16px rgba(16,185,129,0.4)";
+      historyBtn.style.background = "#059669";
+      historyBtn.style.borderColor = "#047857";
     };
     historyBtn.onmouseleave = () => {
       historyBtn.style.transform = "translateY(0)";
-      historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
+      historyBtn.style.boxShadow = "0 2px 8px rgba(16,185,129,0.25)";
+      historyBtn.style.background =
+        "linear-gradient(90deg,#10B981 0%,#059669 100%)";
+      historyBtn.style.borderColor = "#059669";
     };
 
     // Événement de clic
@@ -3888,7 +4357,31 @@ function showHistoryButtonIfNeeded() {
   historyBtn.style.display = "inline-block"; // Changed from "block" to "inline-block"
   historyBtn.style.opacity = "1";
   historyBtn.style.transform = "scale(1)";
+  historyBtn.style.whiteSpace = "nowrap";
 }
+
+// Renforcer de nouveau après chargement pour éviter que d'autres scripts n'écrasent les styles
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    const hb = document.getElementById("professionalHistoryBtn");
+    if (hb) {
+      hb.innerHTML = hb.innerHTML?.includes("Historique")
+        ? hb.innerHTML
+        : "📋 Historique";
+      hb.style.background = "linear-gradient(90deg,#10B981 0%,#059669 100%)";
+      hb.style.color = "#ffffff";
+      hb.style.border = "1px solid #059669";
+      hb.style.minWidth = "100px";
+      hb.style.whiteSpace = "nowrap";
+      // Renforcer le statut autorisé admin
+      hb.setAttribute("data-allow-admin", "true");
+      hb.classList.add("admin-allowed-button");
+      hb.disabled = false;
+      hb.style.opacity = "1";
+      hb.style.pointerEvents = "auto";
+    }
+  }, 0);
+});
 
 /**
  * Affiche la modal de l'historique professionnel
@@ -4180,5 +4673,14 @@ window.showHistoryEntryDetail = function (entryId) {
 };
 
 // ========================================================================
+<<<<<<< HEAD
 // === FIN HISTORIQUE PROFESSIONNEL ====
 // ======================================================================
+=======
+// === FIN HISTORIQUE PROFESSIONNEL ===
+// =========================================================================
+
+// Exposer les fonctions globalement pour le mode admin
+window.generateEtatSortiePdf = generateEtatSortiePdf;
+window.showProfessionalHistoryModal = showProfessionalHistoryModal;
+>>>>>>> e00f5802ab0a752e5d6835471352f97244fe0579
