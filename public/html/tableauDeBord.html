@@ -3304,7 +3304,9 @@
               try {
                 if (adminUser) {
                   const user = JSON.parse(adminUser);
-                  isAdmin = user && user.role === "admin";
+                  // TOUTE personne avec une session "user" depuis index.html est considérée comme admin
+                  isAdmin =
+                    user && (user.role === "admin" || user.nom || user.email);
                 }
               } catch (e) {
                 console.log(
@@ -3312,6 +3314,9 @@
                   e
                 );
               }
+
+              // Forcer le mode admin si on vient du tableau de bord
+              isAdmin = true; // FORCE ADMIN MODE pour tous les utilisateurs du tableau de bord
 
               let targetUrl;
 
@@ -3350,6 +3355,16 @@
               }
 
               if (targetUrl) {
+                console.log("🔧 [DEBUG] Redirection Details:", {
+                  pageType,
+                  isAdmin,
+                  targetUrl,
+                  userInStorage: !!localStorage.getItem("user"),
+                  adminViewMode: localStorage.getItem("adminViewMode"),
+                  adminViewTimestamp:
+                    localStorage.getItem("adminViewTimestamp"),
+                  adminViewTarget: localStorage.getItem("adminViewTarget"),
+                });
                 console.log(
                   `Redirection vers ${targetUrl} - Mode: ${
                     isAdmin ? "Admin (Visualisation)" : "Responsable"
