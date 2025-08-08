@@ -11,7 +11,7 @@ class AdminModeManager {
   }
 
   /**
-   * Détecte si la page est accédée en mode admin sv
+   * Détecte si la page est accédée en mode admin svsygu
    */
   detectAdminMode() {
     // Vérifier les paramètres URL
