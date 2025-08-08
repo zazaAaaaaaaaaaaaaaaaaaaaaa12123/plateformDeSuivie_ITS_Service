@@ -1497,7 +1497,7 @@ class AdminModeManager {
     // Ajouter la classe CSS pour le style
     cell.classList.add("locked-cell");
 
-    // Verrouiller tous les éléments interactifs dans la cellule
+    // Verrouiller tous les éléments interactifs dans la cellulfgne
     const interactiveElements = cell.querySelectorAll(
       "input, select, textarea, button, a"
     );
