@@ -1235,8 +1235,17 @@ class AdminModeManager {
       }
     });
 
-    // Empêcher la propagation des clics sur le contenu
+    // Rendre la popup accessible : seul le bouton fermer est interactif, le reste est lecture seule
     content.addEventListener("click", (e) => {
+      // Si on clique sur le bouton fermer, laisser passer
+      if (
+        e.target.classList.contains("close-modal-btn") ||
+        e.target.classList.contains("close-modal-bottom-btn")
+      ) {
+        return;
+      }
+      // Sinon, empêcher toute interaction (lecture seule)
+      e.preventDefault();
       e.stopPropagation();
     });
 
