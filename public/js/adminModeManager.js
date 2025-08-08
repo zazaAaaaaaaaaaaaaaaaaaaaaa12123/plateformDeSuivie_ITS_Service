@@ -772,53 +772,66 @@ class AdminModeManager {
    * Ajoute un bouton de rafraîchissement après les champs de dates
    */
   addRefreshButton() {
-    // Chercher les champs de dates
+    // Supprimer tout bouton d'actualisation existant
+    document
+      .querySelectorAll(".admin-refresh-btn")
+      .forEach((btn) => btn.remove());
+
+    // Créer le bouton unique
+    const refreshBtn = document.createElement("button");
+    refreshBtn.className = "admin-refresh-btn";
+    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+    refreshBtn.title = "Actualiser les données";
+    refreshBtn.style.cssText = `
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      box-shadow: 0 2px 8px rgba(40,167,69,0.15);
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 10001;
+    `;
+
+    // Centrer le bouton dans le conteneur des dates
     const dateInputs = document.querySelectorAll('input[type="date"]');
     if (dateInputs.length >= 2) {
-      const lastDateInput = dateInputs[dateInputs.length - 1];
-      const container = lastDateInput.parentElement;
-
-      // Créer le bouton de rafraîchissement
-      const refreshBtn = document.createElement("button");
-      refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
-      refreshBtn.title = "Actualiser les données";
-      refreshBtn.style.cssText = `
-        background: #28a745;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        margin-left: 10px;
-        font-size: 14px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-      `;
-
-      // Ajouter l'événement de clic
-      refreshBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        this.refreshPageData();
-      });
-
-      // Effet hover
-      refreshBtn.addEventListener("mouseenter", () => {
-        refreshBtn.style.background = "#218838";
-        refreshBtn.style.transform = "scale(1.05)";
-      });
-
-      refreshBtn.addEventListener("mouseleave", () => {
-        refreshBtn.style.background = "#28a745";
-        refreshBtn.style.transform = "scale(1)";
-      });
-
-      // Insérer le bouton après le dernier champ de date
-      container.insertBefore(refreshBtn, lastDateInput.nextSibling);
-
-      console.log("✅ Bouton de rafraîchissement ajouté");
+      const parent =
+        dateInputs[0].parentElement.parentElement ||
+        dateInputs[0].parentElement;
+      // Insérer le bouton au centre sous les dates
+      parent.appendChild(refreshBtn);
+    } else {
+      // Si pas de dates, ajouter en haut du contenu principal
+      const mainContent =
+        document.querySelector("main, .main-content, .container") ||
+        document.body;
+      mainContent.insertBefore(refreshBtn, mainContent.firstChild);
     }
+
+    // Animation et effet hover
+    refreshBtn.addEventListener("mouseenter", () => {
+      refreshBtn.style.background = "#218838";
+      refreshBtn.style.transform = "scale(1.12) rotate(10deg)";
+    });
+    refreshBtn.addEventListener("mouseleave", () => {
+      refreshBtn.style.background = "#28a745";
+      refreshBtn.style.transform = "scale(1) rotate(0deg)";
+    });
+
+    // Action : recharge la page
+    refreshBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.refreshPageData();
+    });
+    console.log("✅ Bouton d'actualisation unique ajouté");
   }
 
   /**
