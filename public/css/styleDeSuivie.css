@@ -1320,6 +1320,14 @@ tbody td:first-child {
   font-size: 0.85rem;
 }
 
+/* Styles pour le textarea d'observation en mode sombre */
+[data-theme="dark"] .editable-textarea,
+[data-theme="dark"] textarea {
+  background-color: #ffeb3b !important;
+  color: #000 !important;
+  border: 1px solid #fbc02d !important;
+}
+
 /* Overlay léger pour la boîte flottante de l'agent */
 #agentActivityBox::before {
   content: "";

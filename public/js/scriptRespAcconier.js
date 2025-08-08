@@ -1539,24 +1539,24 @@ function createEditInput(columnId, currentValue) {
     input.style.resize = "vertical";
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
-    input.style.backgroundColor = isDark ? "#0e274e" : "#fff";
-    // Couleur du texte : noir pendantzsudh la saidbhjsie, blanc après en mode sombre
+    input.style.backgroundColor = isDark ? "#ffeb3b" : "#fff";
+    // Couleur du texte : noir pendant la saisie en mode sombre avec fond jaune
     if (isDark) {
-      input.style.color = "#fff";
-      input.style.backgroundColor = "#0e274e";
+      input.style.color = "#000";
+      input.style.backgroundColor = "#ffeb3b";
       input.addEventListener("focus", function () {
-        this.style.color = "#fff";
-        this.style.backgroundColor = "#0e274e";
+        this.style.color = "#000";
+        this.style.backgroundColor = "#ffeb3b";
       });
       input.addEventListener("input", function () {
         if (document.activeElement === this) {
-          this.style.color = "#fff";
-          this.style.backgroundColor = "#0e274e";
+          this.style.color = "#000";
+          this.style.backgroundColor = "#ffeb3b";
         }
       });
       input.addEventListener("blur", function () {
-        this.style.color = "#fff";
-        this.style.backgroundColor = "#0e274e";
+        this.style.color = "#000";
+        this.style.backgroundColor = "#ffeb3b";
       });
     } else {
       input.style.color = "#111";
@@ -3254,6 +3254,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             textarea.style.width = "100%";
             textarea.style.fontSize = "1em";
             textarea.style.padding = "2px 4px";
+
+            // Gestion du mode sombre pour le textarea d'observation
+            const isDark =
+              document.documentElement.getAttribute("data-theme") === "dark";
+            if (isDark) {
+              textarea.style.backgroundColor = "#ffeb3b";
+              textarea.style.color = "#000";
+            }
             async function saveObservation(val) {
               td.textContent = val || "-";
               td.dataset.edited = "true";
