@@ -152,27 +152,25 @@ class AdminModeManager {
     const targetPage = localStorage.getItem("adminViewTarget");
 
     // Désactiver spécifiquement le bouton de déconnexion
-    const logoutButtons = document.querySelectorAll(
-      'button:contains("se deconnecter"), button:contains("déconnecter"), ' +
-        'a:contains("se deconnecter"), a:contains("déconnecter"), ' +
-        '.logout-btn, #logout, .deconnexion, [onclick*="logout"], [onclick*="deconnect"]'
-    );
-
-    // Chercher aussi par texte
+    // On ne peut pas utiliser :contains, donc on cherche par texte et par classes/id standards
     const allButtons = document.querySelectorAll("button, a");
     allButtons.forEach((btn) => {
-      const text = btn.textContent.toLowerCase();
-      if (
+      const text = btn.textContent ? btn.textContent.toLowerCase() : "";
+      const isLogout =
         text.includes("se deconnecter") ||
         text.includes("déconnecter") ||
-        text.includes("logout")
-      ) {
+        text.includes("logout");
+      const isLogoutClass =
+        btn.classList.contains("logout-btn") ||
+        btn.classList.contains("deconnexion") ||
+        btn.id === "logout";
+      const isLogoutOnClick =
+        btn.getAttribute("onclick") &&
+        (btn.getAttribute("onclick").toLowerCase().includes("logout") ||
+          btn.getAttribute("onclick").toLowerCase().includes("deconnect"));
+      if (isLogout || isLogoutClass || isLogoutOnClick) {
         this.disableLogoutButton(btn);
       }
-    });
-
-    logoutButtons.forEach((btn) => {
-      this.disableLogoutButton(btn);
     });
 
     // Désactiver TOUS les inputs, selects et textareas de façon plus agressive
