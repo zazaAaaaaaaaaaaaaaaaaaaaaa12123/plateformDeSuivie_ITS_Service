@@ -95,6 +95,14 @@ class AdminModeManager {
     // 7. Charger les données du responsable connecté
     this.loadResponsableData();
 
+    // 8. Forcer l'exposition des fonctions nécessaires pour le mode admin
+    setTimeout(() => {
+      if (typeof window.forceExposeAdminFunctions === "function") {
+        const exposed = window.forceExposeAdminFunctions();
+        console.log("🔧 Fonctions exposées au démarrage:", exposed);
+      }
+    }, 100);
+
     // Appliquer toutes les 500ms pendant 5 secondes pour être sûr
     let attempts = 0;
     const maxAttempts = 10;
@@ -1468,6 +1476,47 @@ class AdminModeManager {
    */
   enableAdminAllowedFieldsLivraison() {
     try {
+      // Vérification et chargement des fonctions nécessaires
+      console.log(
+        "🔍 Vérification des fonctions disponibles pour le mode admin..."
+      );
+
+      // Vérifier les fonctions PDF
+      const pdfFunctionsAvailable = [
+        typeof window.showPdfFilterModal === "function",
+        typeof window.updateDeliveredForPdf === "function",
+        typeof window.generateEtatSortiePdf === "function",
+        typeof window.attachPdfButtonHandler === "function",
+      ];
+      console.log("📄 Fonctions PDF disponibles:", pdfFunctionsAvailable);
+
+      // Vérifier la fonction historique
+      const historyFunctionAvailable =
+        typeof window.showProfessionalHistoryModal === "function";
+      console.log(
+        "📚 Fonction historique disponible:",
+        historyFunctionAvailable
+      );
+
+      // Si les fonctions ne sont pas disponibles, essayer de les réexposer
+      if (!pdfFunctionsAvailable.every(Boolean) || !historyFunctionAvailable) {
+        console.log(
+          "⚠️ Certaines fonctions manquent, tentative de récupération..."
+        );
+
+        // Forcer l'exposition des fonctions
+        const exposedFunctions = window.forceExposeAdminFunctions();
+        console.log("🔧 Résultat de l'exposition forcée:", exposedFunctions);
+
+        // Essayer de forcer le rechargement des fonctions avec un délai
+        setTimeout(() => {
+          if (typeof window.attachPdfButtonHandler === "function") {
+            window.attachPdfButtonHandler();
+            console.log("🔄 Gestionnaire PDF réattaché");
+          }
+        }, 500);
+      }
+
       // Dates
       const dateInputs = [
         document.getElementById("mainTableDateStartFilter"),
@@ -1529,11 +1578,48 @@ class AdminModeManager {
           color: #ffffff !important;
           border-color: #cc8400 !important;
         `;
-        historyBtn.addEventListener("mouseenter", () => {
-          historyBtn.style.background = "#cc8400 !important";
+
+        // Supprimer les anciens gestionnaires en clonant le bouton
+        const newHistoryBtn = historyBtn.cloneNode(true);
+        historyBtn.parentNode.replaceChild(newHistoryBtn, historyBtn);
+
+        // Réappliquons les styles
+        newHistoryBtn.disabled = false;
+        newHistoryBtn.style.opacity = "1";
+        newHistoryBtn.style.cursor = "pointer";
+        newHistoryBtn.style.pointerEvents = "auto";
+        newHistoryBtn.style.cssText += `
+          background: #FFA500 !important;
+          color: #ffffff !important;
+          border-color: #cc8400 !important;
+        `;
+
+        // Ajoutons les gestionnaires de survol sans perturbation
+        newHistoryBtn.addEventListener("mouseenter", () => {
+          newHistoryBtn.style.background = "#cc8400 !important";
         });
-        historyBtn.addEventListener("mouseleave", () => {
-          historyBtn.style.background = "#FFA500 !important";
+        newHistoryBtn.addEventListener("mouseleave", () => {
+          newHistoryBtn.style.background = "#FFA500 !important";
+        });
+
+        // Préserver la fonctionnalité originale du bouton historique
+        newHistoryBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Appeler la fonction d'historique si elle existe
+          if (typeof window.showProfessionalHistoryModal === "function") {
+            window.showProfessionalHistoryModal();
+          } else if (typeof showProfessionalHistoryModal === "function") {
+            showProfessionalHistoryModal();
+          } else {
+            console.log("Ouverture de l'historique professionnel...");
+            // Déclencher l'événement click original si possible
+            const originalClick = newHistoryBtn.getAttribute("onclick");
+            if (originalClick) {
+              eval(originalClick);
+            }
+          }
         });
       }
 
@@ -1585,42 +1671,90 @@ class AdminModeManager {
 
           console.log("🔴 Clic sur le bouton PDF détecté en mode admin");
 
-          // Mettre à jour les données avant d'ouvrir la modal
-          if (typeof window.updateDeliveredForPdf === "function") {
-            console.log("🔴 Mise à jour des données PDF...");
-            window.updateDeliveredForPdf();
+          // Fonction d'essai multiple pour s'assurer que la modal s'ouvre
+          function tryOpenPdfModal() {
+            // Mettre à jour les données avant d'ouvrir la modal
+            if (typeof window.updateDeliveredForPdf === "function") {
+              console.log("🔴 Mise à jour des données PDF...");
+              window.updateDeliveredForPdf();
+            }
+
+            // Appeler la fonction de modal PDF
+            if (typeof window.showPdfFilterModal === "function") {
+              console.log("🔴 Ouverture de la modal PDF...");
+              window.showPdfFilterModal();
+              return true;
+            } else if (typeof showPdfFilterModal === "function") {
+              console.log("🔴 Ouverture de la modal PDF (fonction locale)...");
+              showPdfFilterModal();
+              return true;
+            }
+            return false;
           }
 
-          // Appeler la fonction de modal PDF
-          if (typeof window.showPdfFilterModal === "function") {
-            console.log("🔴 Ouverture de la modal PDF...");
-            window.showPdfFilterModal();
-          } else if (typeof showPdfFilterModal === "function") {
-            console.log("🔴 Ouverture de la modal PDF (fonction locale)...");
-            showPdfFilterModal();
-          } else {
-            console.error("🔴 Fonction showPdfFilterModal non trouvée !");
+          // Première tentative immédiate
+          if (tryOpenPdfModal()) {
+            return;
+          }
 
-            // Fallback: essayer de réattacher le gestionnaire original
-            if (typeof window.attachPdfButtonHandler === "function") {
+          console.warn(
+            "🔴 Première tentative échouée, essai de récupération..."
+          );
+
+          // Fallback: essayer de réattacher le gestionnaire original
+          if (typeof window.attachPdfButtonHandler === "function") {
+            console.log(
+              "🔴 Tentative de réattachement du gestionnaire PDF original..."
+            );
+            window.attachPdfButtonHandler();
+
+            // Essayer à nouveau après un court délai
+            setTimeout(() => {
+              if (tryOpenPdfModal()) {
+                return;
+              }
+
+              // Dernière tentative: forcer le rechargement des scripts
               console.log(
-                "🔴 Tentative de réattachement du gestionnaire PDF original..."
+                "🔴 Dernière tentative: rechargement des fonctions PDF..."
               );
-              window.attachPdfButtonHandler();
-              // Essayer de déclencher à nouveau après un court délai
+
+              // Essayer de déclencher manuellement la logique de la modal
               setTimeout(() => {
-                if (typeof window.showPdfFilterModal === "function") {
-                  window.showPdfFilterModal();
-                } else {
-                  alert(
-                    "Erreur: La fonction de génération PDF n'est pas disponible. Veuillez actualiser la page."
-                  );
-                }
+                // Créer une modal de base si tout échoue
+                const fallbackModal = document.createElement("div");
+                fallbackModal.id = "fallbackPdfModal";
+                fallbackModal.style.cssText = `
+                  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                  background: rgba(0,0,0,0.5); z-index: 100000; display: flex;
+                  align-items: center; justify-content: center;
+                `;
+
+                fallbackModal.innerHTML = `
+                  <div style="background: white; padding: 20px; border-radius: 8px; max-width: 400px;">
+                    <h3>Génération PDF - État des sorties de conteneurs</h3>
+                    <p>Fonctionnalité temporairement indisponible en mode admin.</p>
+                    <p>Veuillez actualiser la page et réessayer.</p>
+                    <button onclick="location.reload()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                      Actualiser la page
+                    </button>
+                    <button onclick="this.closest('#fallbackPdfModal').remove()" style="background: #6b7280; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                      Fermer
+                    </button>
+                  </div>
+                `;
+
+                document.body.appendChild(fallbackModal);
               }, 100);
-            } else {
-              alert(
-                "Erreur: La fonction de génération PDF n'est pas disponible. Veuillez actualiser la page."
-              );
+            }, 200);
+          } else {
+            // Si rien ne fonctionne, proposer l'actualisation
+            const confirmReload = confirm(
+              "La fonction de génération PDF n'est pas disponible en mode admin.\n" +
+                "Voulez-vous actualiser la page pour résoudre le problème ?"
+            );
+            if (confirmReload) {
+              location.reload();
             }
           }
         });
@@ -2771,6 +2905,76 @@ window.adminModeManager = adminModeManager;
 
 // Fonction utilitaire globale pour vérifier le mode admin
 window.isAdminMode = () => adminModeManager.isInAdminMode();
+
+// Fonction utilitaire pour forcer l'exposition des fonctions nécessaires
+window.forceExposeAdminFunctions = function () {
+  console.log("🔧 Forçage de l'exposition des fonctions pour le mode admin...");
+
+  // Essayer de récupérer les fonctions depuis les scripts déjà chargés
+  const scripts = document.querySelectorAll('script[src*="scriptRespLiv"]');
+  if (scripts.length > 0) {
+    console.log(
+      "📜 Script responsable livraison trouvé, fonctions disponibles normalement"
+    );
+  }
+
+  // Vérifier et exposer les fonctions PDF si elles existent localement
+  if (
+    typeof showPdfFilterModal !== "undefined" &&
+    typeof window.showPdfFilterModal === "undefined"
+  ) {
+    window.showPdfFilterModal = showPdfFilterModal;
+    console.log("✅ showPdfFilterModal exposée globalement");
+  }
+
+  if (
+    typeof updateDeliveredForPdf !== "undefined" &&
+    typeof window.updateDeliveredForPdf === "undefined"
+  ) {
+    window.updateDeliveredForPdf = updateDeliveredForPdf;
+    console.log("✅ updateDeliveredForPdf exposée globalement");
+  }
+
+  if (
+    typeof generateEtatSortiePdf !== "undefined" &&
+    typeof window.generateEtatSortiePdf === "undefined"
+  ) {
+    window.generateEtatSortiePdf = generateEtatSortiePdf;
+    console.log("✅ generateEtatSortiePdf exposée globalement");
+  }
+
+  if (
+    typeof attachPdfButtonHandler !== "undefined" &&
+    typeof window.attachPdfButtonHandler === "undefined"
+  ) {
+    window.attachPdfButtonHandler = attachPdfButtonHandler;
+    console.log("✅ attachPdfButtonHandler exposée globalement");
+  }
+
+  // Vérifier et exposer la fonction historique
+  if (
+    typeof showProfessionalHistoryModal !== "undefined" &&
+    typeof window.showProfessionalHistoryModal === "undefined"
+  ) {
+    window.showProfessionalHistoryModal = showProfessionalHistoryModal;
+    console.log("✅ showProfessionalHistoryModal exposée globalement");
+  }
+
+  // Retourner le statut des fonctions
+  return {
+    pdf: {
+      showPdfFilterModal: typeof window.showPdfFilterModal === "function",
+      updateDeliveredForPdf: typeof window.updateDeliveredForPdf === "function",
+      generateEtatSortiePdf: typeof window.generateEtatSortiePdf === "function",
+      attachPdfButtonHandler:
+        typeof window.attachPdfButtonHandler === "function",
+    },
+    history: {
+      showProfessionalHistoryModal:
+        typeof window.showProfessionalHistoryModal === "function",
+    },
+  };
+};
 
 console.log("🔧 Gestionnaire de mode admin initialisé");
 

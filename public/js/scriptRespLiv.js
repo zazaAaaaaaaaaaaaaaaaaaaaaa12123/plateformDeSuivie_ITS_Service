@@ -4229,5 +4229,6 @@ window.showHistoryEntryDetail = function (entryId) {
 // === FIN HISTORIQUE PROFESSIONNEL ===
 // ========================================================================
 
-// Exposer la fonction generateEtatSortiePdf globalement pour le mode admin
+// Exposer les fonctions globalement pour le mode admin
 window.generateEtatSortiePdf = generateEtatSortiePdf;
+window.showProfessionalHistoryModal = showProfessionalHistoryModal;
