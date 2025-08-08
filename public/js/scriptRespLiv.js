@@ -3245,13 +3245,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Ajouter le bouton PDF à la fin
     parentContainer.appendChild(pdfBtn);
+
+    // Attacher le gestionnaire d'événement après l'ajout au DOM
+    setTimeout(() => attachPdfButtonHandler(), 0);
   } else {
     // Fallback : au-dessus du tableau si champ non trouvé
     const mainTable = document.getElementById("deliveriesTable");
     if (mainTable && mainTable.parentNode) {
       mainTable.parentNode.insertBefore(pdfBtn, mainTable);
+      // Attacher le gestionnaire d'événement après l'ajout au DOM
+      setTimeout(() => attachPdfButtonHandler(), 0);
     }
   }
+
+  // Attacher également le gestionnaire avec un délai plus long au cas où
+  setTimeout(() => attachPdfButtonHandler(), 100);
+  setTimeout(() => attachPdfButtonHandler(), 500);
 });
 
 // Variable pour stocker les dossiers livrés
@@ -3282,6 +3291,10 @@ function updateDeliveredForPdf() {
     return allTcLivres || globalLivree;
   });
 }
+
+// Exposer les fonctions globalement pour le mode admin
+window.updateDeliveredForPdf = updateDeliveredForPdf;
+window.deliveredForPdf = deliveredForPdf;
 
 // Met à jour la liste à chaque chargement ou modification
 if (window.allDeliveries) updateDeliveredForPdf();
@@ -3467,10 +3480,33 @@ function showPdfFilterModal() {
   document.body.appendChild(overlay);
 }
 
-pdfBtn.onclick = function () {
-  updateDeliveredForPdf();
-  showPdfFilterModal();
-};
+// Exposer la fonction showPdfFilterModal globalement pour le mode admin
+window.showPdfFilterModal = showPdfFilterModal;
+
+// Le gestionnaire d'événement sera ajouté après que le bouton soit dans le DOM
+function attachPdfButtonHandler() {
+  const pdfButton = document.getElementById("generatePdfBtn");
+  if (pdfButton) {
+    // Supprimer d'abord tout gestionnaire existant
+    pdfButton.onclick = null;
+
+    // Ajouter le nouveau gestionnaire
+    pdfButton.onclick = function (e) {
+      console.log("🔵 Clic sur le bouton PDF détecté");
+      e.preventDefault();
+      e.stopPropagation();
+      updateDeliveredForPdf();
+      showPdfFilterModal();
+    };
+
+    console.log("🔵 Gestionnaire PDF attaché avec succès");
+  } else {
+    console.warn("🔵 Bouton PDF non trouvé pour attacher le gestionnaire");
+  }
+}
+
+// Exposer la fonction globalement
+window.attachPdfButtonHandler = attachPdfButtonHandler;
 
 function generateEtatSortiePdf(rows, date1, date2) {
   if (!rows || rows.length === 0) {
@@ -4192,3 +4228,6 @@ window.showHistoryEntryDetail = function (entryId) {
 // ========================================================================
 // === FIN HISTORIQUE PROFESSIONNEL ===
 // ========================================================================
+
+// Exposer la fonction generateEtatSortiePdf globalement pour le mode admin
+window.generateEtatSortiePdf = generateEtatSortiePdf;

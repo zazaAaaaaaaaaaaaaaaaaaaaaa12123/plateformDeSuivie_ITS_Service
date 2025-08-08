@@ -1553,11 +1553,76 @@ class AdminModeManager {
           color: #ffffff !important;
           border-color: #b02a37 !important;
         `;
-        pdfBtn.addEventListener("mouseenter", () => {
-          pdfBtn.style.background = "#b02a37 !important";
+
+        // Assurons-nous que le gestionnaire d'événement click fonctionne
+        // Supprimons d'abord tous les gestionnaires existants
+        const newPdfBtn = pdfBtn.cloneNode(true);
+        pdfBtn.parentNode.replaceChild(newPdfBtn, pdfBtn);
+
+        // Réappliquons les styles
+        newPdfBtn.disabled = false;
+        newPdfBtn.style.opacity = "1";
+        newPdfBtn.style.cursor = "pointer";
+        newPdfBtn.style.pointerEvents = "auto";
+        newPdfBtn.style.cssText += `
+          background: #dc3545 !important;
+          color: #ffffff !important;
+          border-color: #b02a37 !important;
+        `;
+
+        // Ajoutons les gestionnaires de survol
+        newPdfBtn.addEventListener("mouseenter", () => {
+          newPdfBtn.style.background = "#b02a37 !important";
         });
-        pdfBtn.addEventListener("mouseleave", () => {
-          pdfBtn.style.background = "#dc3545 !important";
+        newPdfBtn.addEventListener("mouseleave", () => {
+          newPdfBtn.style.background = "#dc3545 !important";
+        });
+
+        // Ajoutons le gestionnaire de clic pour la modal PDF
+        newPdfBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          console.log("🔴 Clic sur le bouton PDF détecté en mode admin");
+
+          // Mettre à jour les données avant d'ouvrir la modal
+          if (typeof window.updateDeliveredForPdf === "function") {
+            console.log("🔴 Mise à jour des données PDF...");
+            window.updateDeliveredForPdf();
+          }
+
+          // Appeler la fonction de modal PDF
+          if (typeof window.showPdfFilterModal === "function") {
+            console.log("🔴 Ouverture de la modal PDF...");
+            window.showPdfFilterModal();
+          } else if (typeof showPdfFilterModal === "function") {
+            console.log("🔴 Ouverture de la modal PDF (fonction locale)...");
+            showPdfFilterModal();
+          } else {
+            console.error("🔴 Fonction showPdfFilterModal non trouvée !");
+
+            // Fallback: essayer de réattacher le gestionnaire original
+            if (typeof window.attachPdfButtonHandler === "function") {
+              console.log(
+                "🔴 Tentative de réattachement du gestionnaire PDF original..."
+              );
+              window.attachPdfButtonHandler();
+              // Essayer de déclencher à nouveau après un court délai
+              setTimeout(() => {
+                if (typeof window.showPdfFilterModal === "function") {
+                  window.showPdfFilterModal();
+                } else {
+                  alert(
+                    "Erreur: La fonction de génération PDF n'est pas disponible. Veuillez actualiser la page."
+                  );
+                }
+              }, 100);
+            } else {
+              alert(
+                "Erreur: La fonction de génération PDF n'est pas disponible. Veuillez actualiser la page."
+              );
+            }
+          }
         });
       }
     } catch (e) {
