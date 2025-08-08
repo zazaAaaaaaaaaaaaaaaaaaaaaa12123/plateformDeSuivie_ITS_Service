@@ -978,7 +978,10 @@ class AdminModeManager {
     const searchButton = document.querySelector(
       "#searchButton, .search-button, button[type='submit']"
     );
-    if (searchButton) {
+    if (
+      searchButton &&
+      !searchButton.textContent.toLowerCase().includes("enregistrer")
+    ) {
       searchButton.disabled = false;
       searchButton.style.opacity = "1";
       searchButton.style.cursor = "pointer";
@@ -991,7 +994,7 @@ class AdminModeManager {
 
     // 3. Activer tous les éléments Numéro TC(s) comme interactifs
     const tcElements = document.querySelectorAll(
-      '.tc-link, .numero-tc, td:nth-child(3), [data-field*="tc"]'
+      '.tc-link, .numero-tc, td:nth-child(3), [data-field*="tc"], td:nth-child(3) a, td:nth-child(3) input, td:nth-child(3) textarea'
     );
     tcElements.forEach((element) => {
       element.style.pointerEvents = "auto";
@@ -1011,6 +1014,7 @@ class AdminModeManager {
         input.style.pointerEvents = "auto";
         input.style.background = "";
         input.setAttribute("data-allow-admin", "true");
+        input.classList.add("admin-allowed-field");
       });
     });
 
@@ -1069,29 +1073,52 @@ class AdminModeManager {
   adaptModalForAdminMode(modal) {
     console.log("🔧 Adaptation de la modal pour le mode admin...");
 
-    // 1. Rendre le bouton de fermeture X circulaire et accessible
-    const closeBtn = modal.querySelector(
-      '.close, .close-btn, [data-dismiss="modal"], .btn-close'
-    );
-    if (closeBtn) {
-      closeBtn.disabled = false;
-      closeBtn.style.pointerEvents = "auto";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.style.opacity = "1";
-      closeBtn.style.borderRadius = "50%";
-      closeBtn.style.width = "35px";
-      closeBtn.style.height = "35px";
-      closeBtn.style.display = "flex";
-      closeBtn.style.alignItems = "center";
-      closeBtn.style.justifyContent = "center";
-      closeBtn.style.background = "#dc3545";
-      closeBtn.style.color = "white";
-      closeBtn.style.border = "none";
-      closeBtn.style.fontSize = "18px";
-      closeBtn.style.fontWeight = "bold";
-      closeBtn.setAttribute("data-allow-admin", "true");
-      closeBtn.title = "Fermer la popup";
-    }
+    // 1. Rendre TOUS les boutons de fermeture accessibles et circulaires
+    const closeBtnSelectors = [
+      ".close",
+      ".close-btn",
+      '[data-dismiss="modal"]',
+      ".btn-close",
+      ".modal-close",
+      'button[onclick*="close"]',
+      'button[onclick*="fermer"]',
+      '[aria-label*="Close"]',
+      '[aria-label*="Fermer"]',
+    ];
+
+    closeBtnSelectors.forEach((selector) => {
+      const closeBtns = modal.querySelectorAll(selector);
+      closeBtns.forEach((closeBtn) => {
+        closeBtn.disabled = false;
+        closeBtn.style.pointerEvents = "auto";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.style.opacity = "1";
+        closeBtn.style.borderRadius = "50%";
+        closeBtn.style.width = "35px";
+        closeBtn.style.height = "35px";
+        closeBtn.style.display = "flex";
+        closeBtn.style.alignItems = "center";
+        closeBtn.style.justifyContent = "center";
+        closeBtn.style.background = "#dc3545";
+        closeBtn.style.color = "white";
+        closeBtn.style.border = "none";
+        closeBtn.style.fontSize = "18px";
+        closeBtn.style.fontWeight = "bold";
+        closeBtn.style.transition = "all 0.2s ease";
+        closeBtn.setAttribute("data-allow-admin", "true");
+        closeBtn.title = "Fermer la popup";
+
+        // Ajouter effet hover
+        closeBtn.addEventListener("mouseenter", () => {
+          closeBtn.style.background = "#c82333";
+          closeBtn.style.transform = "scale(1.1)";
+        });
+        closeBtn.addEventListener("mouseleave", () => {
+          closeBtn.style.background = "#dc3545";
+          closeBtn.style.transform = "scale(1)";
+        });
+      });
+    });
 
     // 2. Activer les champs de date dans la modal
     const modalDateInputs = modal.querySelectorAll('input[type="date"]');
@@ -1107,7 +1134,7 @@ class AdminModeManager {
 
     // 3. Activer les champs Numéro TC(s) dans la modal
     const modalTcInputs = modal.querySelectorAll(
-      'input[placeholder*="TC"], input[name*="tc"], textarea[placeholder*="TC"], textarea[name*="tc"]'
+      'input[placeholder*="TC"], input[name*="tc"], textarea[placeholder*="TC"], textarea[name*="tc"], input[id*="tc"], textarea[id*="tc"], .tc-input, .numero-tc input, .numero-tc textarea'
     );
     modalTcInputs.forEach((input) => {
       input.disabled = false;
@@ -1117,6 +1144,7 @@ class AdminModeManager {
       input.style.pointerEvents = "auto";
       input.style.background = "";
       input.setAttribute("data-allow-admin", "true");
+      input.classList.add("admin-allowed-field");
     });
 
     // 4. Désactiver spécifiquement le bouton "Enregistrer" et similaires
@@ -1182,7 +1210,7 @@ class AdminModeManager {
    * Configure l'affichage informatif des N° TC pour la page acconier
    */
   setupAcconierTcDisplay() {
-    // Chercher les liens/éléments TC dans la 3ème colonne et autres sélecteurs
+    // Rendre les liens/éléments TC accessibles pour ouvrir leurs popups
     const tcSelectors = [
       ".tc-link",
       "td:nth-child(3) a",
@@ -1194,7 +1222,7 @@ class AdminModeManager {
     tcSelectors.forEach((selector) => {
       const tcElements = document.querySelectorAll(selector);
       tcElements.forEach((element) => {
-        this.convertTcToInformational(element);
+        this.makeAccessibleTcElement(element);
       });
     });
 
@@ -1205,10 +1233,30 @@ class AdminModeManager {
       if (cellText.includes("tc") && cellText.match(/\d/)) {
         const links = cell.querySelectorAll("a");
         links.forEach((link) => {
-          this.convertTcToInformational(link);
+          this.makeAccessibleTcElement(link);
         });
       }
     });
+  }
+
+  /**
+   * Rend un élément TC accessible pour ouvrir sa popup
+   */
+  makeAccessibleTcElement(element) {
+    // Maintenir l'apparence et la fonctionnalité du lien TC
+    element.style.pointerEvents = "auto";
+    element.style.color = "#2563eb";
+    element.style.cursor = "pointer";
+    element.style.textDecoration = "underline";
+    element.style.fontWeight = "500";
+    element.style.opacity = "1";
+    element.title = "Cliquez pour voir les détails TC (lecture seule)";
+    element.setAttribute("data-allow-admin", "true");
+    element.classList.add("admin-allowed-tc");
+
+    // Garder le href original pour permettre l'ouverture de la popup
+    // Ne pas supprimer le href, juste s'assurer qu'il est accessible
+    console.log("🔓 Élément TC rendu accessible:", element);
   }
 
   /**
@@ -1868,6 +1916,31 @@ class AdminModeManager {
           top: -2px;
           font-size: 0.8em;
           opacity: 0.7;
+        }
+
+        /* Indicateur visuel pour les éléments TC autorisés */
+        .admin-view-mode .admin-allowed-tc {
+          color: #2563eb !important;
+          text-decoration: underline !important;
+          font-weight: 500 !important;
+          position: relative !important;
+        }
+
+        .admin-view-mode .admin-allowed-tc::after {
+          content: "🔗";
+          position: absolute;
+          right: -18px;
+          top: -2px;
+          font-size: 0.8em;
+          opacity: 0.7;
+        }
+
+        /* Styles pour les champs TC dans les cellules du tableau */
+        .admin-view-mode td:nth-child(3) .admin-allowed-tc,
+        .admin-view-mode .tc-link.admin-allowed-tc {
+          background: rgba(37, 99, 235, 0.1) !important;
+          padding: 2px 4px !important;
+          border-radius: 4px !important;
         }
 
         /* Styles pour les modales adaptées en mode admin */
