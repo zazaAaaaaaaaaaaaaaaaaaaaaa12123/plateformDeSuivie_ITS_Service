@@ -1079,22 +1079,7 @@ class AdminModeManager {
    * Configure l'accès aux popups en mode admin
    */
   setupAdminPopupAccess() {
-    // Intercepter l'ouverture des popups pour les modifier en mode lecture
-    document.addEventListener("DOMNodeInserted", (e) => {
-      if (e.target.nodeType === 1) {
-        // Element node
-        const modal =
-          e.target.querySelector?.(".modal") ||
-          (e.target.classList?.contains("modal") ? e.target : null);
-        if (modal) {
-          setTimeout(() => {
-            this.adaptModalForAdminMode(modal);
-          }, 100);
-        }
-      }
-    });
-
-    // Observer pour les modales ajoutées dynamiquement
+    // Observer pour les modales ajoutées dynamiquement (méthode moderne)
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
