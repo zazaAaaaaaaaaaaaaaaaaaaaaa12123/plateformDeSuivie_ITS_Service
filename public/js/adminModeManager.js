@@ -67,6 +67,9 @@ class AdminModeManager {
     // 1. Ajouter le thème et les styles
     this.optimizeThemeCompatibility();
 
+    // 1.5. Appliquer les styles bleus personnalisés
+    this.applyBlueCustomStyles();
+
     // 2. Ajouter un indicateur visuel
     this.addAdminModeIndicator();
 
@@ -98,6 +101,7 @@ class AdminModeManager {
     const applyInterval = setInterval(() => {
       this.disableEditingFeatures();
       this.optimizeTableDisplay();
+      this.applyBlueCustomStyles();
 
       // Réappliquer les optimisations spécifiques
       if (targetPage === "acconier") {
@@ -1043,7 +1047,9 @@ class AdminModeManager {
       searchButton.style.opacity = "1";
       searchButton.style.cursor = "pointer";
       searchButton.style.pointerEvents = "auto";
-      searchButton.style.background = "";
+      searchButton.style.background = "#007bff";
+      searchButton.style.color = "#ffffff";
+      searchButton.style.border = "1px solid #007bff";
       searchButton.title = "Bouton rechercher - Accessible en mode admin";
       searchButton.setAttribute("data-allow-admin", "true");
       searchButton.classList.add("admin-allowed-button");
@@ -1776,6 +1782,33 @@ class AdminModeManager {
           color: #007bff !important;
         }
         
+        /* Texte "Claire" en bleu dans l'avatar et les boutons de thème */
+        .admin-view-mode button:contains("Claire"),
+        .admin-view-mode span:contains("Claire"),
+        .admin-view-mode [onclick*="claire"],
+        .admin-view-mode [onclick*="Claire"],
+        .admin-view-mode .dropdown-item:contains("Claire") {
+          color: #007bff !important;
+          font-weight: 600 !important;
+        }
+        
+        /* Bouton de recherche en bleu */
+        .admin-view-mode #searchButton,
+        .admin-view-mode .search-button,
+        .admin-view-mode button[type='submit']:not([onclick*="enregistrer"]) {
+          background-color: #007bff !important;
+          color: #ffffff !important;
+          border: 1px solid #007bff !important;
+          font-weight: 500 !important;
+        }
+        
+        .admin-view-mode #searchButton:hover,
+        .admin-view-mode .search-button:hover,
+        .admin-view-mode button[type='submit']:not([onclick*="enregistrer"]):hover {
+          background-color: #0056b3 !important;
+          border-color: #0056b3 !important;
+        }
+        
         /* Amélioration des boutons de thème - Mode Sombre */
         .admin-view-mode button[onclick*="darkMode"],
         .admin-view-mode button[onclick*="setTheme('dark')"],
@@ -2390,6 +2423,100 @@ class AdminModeManager {
         }
       }
     }
+  }
+
+  /**
+   * Applique les styles bleus personnalisés pour le bouton rechercher et le texte "Claire"
+   */
+  applyBlueCustomStyles() {
+    // 1. Styliser le bouton de recherche en bleu
+    const searchButtons = document.querySelectorAll(
+      "#searchButton, .search-button, button[type='submit']"
+    );
+
+    searchButtons.forEach((btn) => {
+      if (btn && !btn.textContent.toLowerCase().includes("enregistrer")) {
+        btn.style.backgroundColor = "#007bff";
+        btn.style.color = "#ffffff";
+        btn.style.border = "1px solid #007bff";
+        btn.style.fontWeight = "500";
+
+        // Ajouter l'effet hover
+        btn.addEventListener("mouseenter", function () {
+          this.style.backgroundColor = "#0056b3";
+          this.style.borderColor = "#0056b3";
+        });
+
+        btn.addEventListener("mouseleave", function () {
+          this.style.backgroundColor = "#007bff";
+          this.style.borderColor = "#007bff";
+        });
+      }
+    });
+
+    // 2. Styliser tous les éléments contenant "Claire" en bleu
+    const allElements = document.querySelectorAll("*");
+    allElements.forEach((element) => {
+      if (
+        element.textContent &&
+        (element.textContent.trim() === "Claire" ||
+          element.textContent.includes("Claire"))
+      ) {
+        // Éviter de modifier les éléments déjà traités
+        if (!element.hasAttribute("data-blue-styled")) {
+          element.style.color = "#007bff";
+          element.style.fontWeight = "600";
+          element.setAttribute("data-blue-styled", "true");
+        }
+      }
+    });
+
+    // 3. Spécifiquement cibler les éléments de dropdown et profile
+    const dropdownItems = document.querySelectorAll(
+      ".dropdown-item, .dropdown-menu span, .profile-menu span, .user-menu span"
+    );
+
+    dropdownItems.forEach((item) => {
+      if (item.textContent && item.textContent.includes("Claire")) {
+        item.style.color = "#007bff";
+        item.style.fontWeight = "600";
+      }
+    });
+
+    // 4. Observer les changements dans le DOM pour appliquer les styles aux nouveaux éléments
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            // Rechercher les nouveaux boutons de recherche
+            if (
+              node.matches &&
+              node.matches(
+                "#searchButton, .search-button, button[type='submit']"
+              )
+            ) {
+              if (!node.textContent.toLowerCase().includes("enregistrer")) {
+                node.style.backgroundColor = "#007bff";
+                node.style.color = "#ffffff";
+                node.style.border = "1px solid #007bff";
+              }
+            }
+
+            // Rechercher les nouveaux éléments "Claire"
+            if (node.textContent && node.textContent.includes("Claire")) {
+              node.style.color = "#007bff";
+              node.style.fontWeight = "600";
+            }
+          }
+        });
+      });
+    });
+
+    // Démarrer l'observation
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
   }
 }
 
