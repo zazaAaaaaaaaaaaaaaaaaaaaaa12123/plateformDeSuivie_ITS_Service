@@ -67,7 +67,10 @@ class AdminModeManager {
     // 1. Ajouter le thème et les styles
     this.optimizeThemeCompatibility();
 
-    // 2. Ajouter un indicateur visuel
+    // 2. Forcer l'application des styles critiques
+    this.forceStyleApplication();
+
+    // 3. Ajouter un indicateur visuel
     this.addAdminModeIndicator();
 
     // 3. Ajouter un message d'information défilant
@@ -98,6 +101,7 @@ class AdminModeManager {
     const applyInterval = setInterval(() => {
       this.disableEditingFeatures();
       this.optimizeTableDisplay();
+      this.forceStyleApplication(); // Réappliquer les styles critiques
 
       // Réappliquer les optimisations spécifiques
       if (targetPage === "acconier") {
@@ -1742,37 +1746,63 @@ class AdminModeManager {
           content: none !important;
         }
         
-        /* Champ de recherche en mode clair - texte vert pour bonne lisibilité */
+        /* Champ de recherche en mode clair - texte vert pour bonne lisibilité - SÉLECTEURS ÉTENDUS */
         .admin-view-mode #searchInput,
         .admin-view-mode .search-input,
         .admin-view-mode input[placeholder*='recherche'],
-        .admin-view-mode input[placeholder*='Recherche'] {
+        .admin-view-mode input[placeholder*='Recherche'],
+        .admin-view-mode input[placeholder*='rechercher'],
+        .admin-view-mode input[placeholder*='Rechercher'],
+        .admin-view-mode input[type="text"],
+        .admin-view-mode input[type="search"],
+        .admin-view-mode input.form-control {
           color: #28a745 !important;
           font-weight: 600 !important;
         }
         
-        /* Champ de recherche en mode clair - placeholder vert */
+        /* Champ de recherche en mode clair - placeholder vert - SÉLECTEURS ÉTENDUS */
         .admin-view-mode #searchInput::placeholder,
         .admin-view-mode .search-input::placeholder,
         .admin-view-mode input[placeholder*='recherche']::placeholder,
-        .admin-view-mode input[placeholder*='Recherche']::placeholder {
+        .admin-view-mode input[placeholder*='Recherche']::placeholder,
+        .admin-view-mode input[placeholder*='rechercher']::placeholder,
+        .admin-view-mode input[placeholder*='Rechercher']::placeholder,
+        .admin-view-mode input[type="text"]::placeholder,
+        .admin-view-mode input[type="search"]::placeholder,
+        .admin-view-mode input.form-control::placeholder {
           color: #198754 !important;
           opacity: 0.8 !important;
         }
         
-        /* Amélioration des boutons de thème - Mode Clair */
+        /* Amélioration des boutons de thème - Mode Clair - SÉLECTEURS ÉTENDUS */
         .admin-view-mode button[onclick*="lightMode"],
         .admin-view-mode button[onclick*="setTheme('light')"],
+        .admin-view-mode button[onclick*="Light"],
+        .admin-view-mode button[onclick*="clair"],
+        .admin-view-mode button[onclick*="Clair"],
         .admin-view-mode .light-mode-btn,
-        .admin-view-mode [class*="light"] {
+        .admin-view-mode .btn-light,
+        .admin-view-mode [class*="light"],
+        .admin-view-mode [id*="light"],
+        .admin-view-mode [data-theme="light"],
+        body .admin-view-mode button:contains("Clair"),
+        body .admin-view-mode button:contains("clair"),
+        body .admin-view-mode *[onclick*="light"] {
           color: #007bff !important;
           font-weight: 600 !important;
         }
         
         .admin-view-mode button[onclick*="lightMode"] i,
         .admin-view-mode button[onclick*="setTheme('light')"] i,
+        .admin-view-mode button[onclick*="Light"] i,
+        .admin-view-mode button[onclick*="clair"] i,
+        .admin-view-mode button[onclick*="Clair"] i,
         .admin-view-mode .light-mode-btn i,
-        .admin-view-mode [class*="light"] i {
+        .admin-view-mode .btn-light i,
+        .admin-view-mode [class*="light"] i,
+        .admin-view-mode [id*="light"] i,
+        .admin-view-mode [data-theme="light"] i,
+        body .admin-view-mode *[onclick*="light"] i {
           color: #007bff !important;
         }
         
@@ -2124,6 +2154,81 @@ class AdminModeManager {
         }
       `;
       document.head.appendChild(style);
+
+      // Appliquer les styles de manière forcée avec JavaScript
+      this.forceStyleApplication();
+    }
+  }
+
+  /**
+   * Force l'application des styles critiques avec JavaScript direct
+   */
+  forceStyleApplication() {
+    // Attendre que les éléments soient présents dans le DOM
+    setTimeout(() => {
+      // Force le style des champs de recherche en vert
+      const searchSelectors = [
+        'input[type="text"]',
+        'input[type="search"]',
+        'input[placeholder*="recherche"]',
+        'input[placeholder*="Recherche"]',
+        'input[placeholder*="rechercher"]',
+        'input[placeholder*="Rechercher"]',
+        "#searchInput",
+        ".search-input",
+        "input.form-control",
+      ];
+
+      searchSelectors.forEach((selector) => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((element) => {
+          element.style.setProperty("color", "#28a745", "important");
+          element.style.setProperty("font-weight", "600", "important");
+        });
+      });
+
+      // Force le style des boutons "Clair" en bleu
+      const lightButtonSelectors = [
+        'button[onclick*="light"]',
+        'button[onclick*="clair"]',
+        'button[onclick*="Clair"]',
+        'button[onclick*="Light"]',
+        ".light-mode-btn",
+        ".btn-light",
+        '[class*="light"]',
+        '[id*="light"]',
+        '[data-theme="light"]',
+      ];
+
+      lightButtonSelectors.forEach((selector) => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((element) => {
+          element.style.setProperty("color", "#007bff", "important");
+          element.style.setProperty("font-weight", "600", "important");
+
+          // Appliquer aussi aux icônes à l'intérieur
+          const icons = element.querySelectorAll("i, span, .icon");
+          icons.forEach((icon) => {
+            icon.style.setProperty("color", "#007bff", "important");
+          });
+        });
+      });
+
+      console.log("✅ Application forcée des styles admin terminée");
+    }, 100);
+
+    // Observer les changements DOM pour maintenir les styles
+    if (!this.styleObserver) {
+      this.styleObserver = new MutationObserver(() => {
+        this.forceStyleApplication();
+      });
+
+      this.styleObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["class", "style"],
+      });
     }
   }
 
