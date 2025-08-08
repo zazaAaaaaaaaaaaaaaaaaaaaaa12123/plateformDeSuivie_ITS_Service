@@ -3173,28 +3173,45 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // --- AJOUT : Bouton Générer PDF et logique associée ---
-// Création du bouton Générer PDF
+// Création du bouton Générer PDF (forcé en vert + texte visible)
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
 pdfBtn.textContent = "Générer PDF";
-pdfBtn.style.background = "#2563eb";
-pdfBtn.style.color = "#fff";
-pdfBtn.style.fontWeight = "bold";
-pdfBtn.style.border = "none";
-pdfBtn.style.cursor = "pointer";
-pdfBtn.style.borderRadius = "7px";
-pdfBtn.style.padding = "4px 12px";
-pdfBtn.style.fontSize = "0.97em";
-pdfBtn.style.margin = "0 0 0 12px";
-pdfBtn.style.height = "32px";
-pdfBtn.style.minWidth = "0";
-pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
-pdfBtn.style.verticalAlign = "middle";
+// Style vert par défaut (inline fort pour éviter les overrides)
+pdfBtn.classList.remove("admin-disabled-no-icon");
+pdfBtn.style.cssText = `
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(90deg,#10B981 0%,#059669 100%) !important;
+  color: #ffffff !important; font-weight: 700; border: 1px solid #059669;
+  cursor: pointer; border-radius: 8px; padding: 6px 14px; font-size: 0.95em;
+  margin: 0 0 0 12px; height: 32px; min-width: 110px; white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.25); vertical-align: middle;
+`;
+pdfBtn.onmouseenter = () => {
+  pdfBtn.style.background = "#059669";
+  pdfBtn.style.borderColor = "#047857";
+};
+pdfBtn.onmouseleave = () => {
+  pdfBtn.style.background = "linear-gradient(90deg,#10B981 0%,#059669 100%)";
+  pdfBtn.style.borderColor = "#059669";
+};
 
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
   // Créer le bouton historique immédiatement
   checkAndShowHistoryButton();
+  // Renforcer le style vert et le libellé si un autre script a écrasé
+  setTimeout(() => {
+    const btn = document.getElementById("generatePdfBtn");
+    if (btn) {
+      btn.textContent = btn.textContent?.trim() || "Générer PDF";
+      btn.style.minWidth = "110px";
+      btn.style.whiteSpace = "nowrap";
+      btn.style.background = "linear-gradient(90deg,#10B981 0%,#059669 100%)";
+      btn.style.color = "#ffffff";
+      btn.style.border = "1px solid #059669";
+    }
+  }, 0);
 
   // Configurer le conteneur et ajouter le bouton PDF
   const searchInput = document.querySelector(
@@ -3722,29 +3739,29 @@ function showHistoryButtonIfNeeded() {
     historyBtn.innerHTML = "📋 Historique";
     historyBtn.title =
       "Consulter l'historique professionnel des conteneurs livrés";
-    historyBtn.style.background =
-      "linear-gradient(90deg,#059669 0%,#047857 100%)";
-    historyBtn.style.color = "#fff";
-    historyBtn.style.fontWeight = "bold";
-    historyBtn.style.border = "none";
-    historyBtn.style.cursor = "pointer";
-    historyBtn.style.borderRadius = "8px";
-    historyBtn.style.padding = "8px 16px";
-    historyBtn.style.fontSize = "0.95em";
-    historyBtn.style.margin = "0 8px 0 0"; // Margin à droite seulement
-    historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
-    historyBtn.style.transition = "all 0.2s ease";
-    historyBtn.style.height = "32px"; // Même hauteur que les autres boutons
-    historyBtn.style.verticalAlign = "middle";
+    // Style vert renforcé
+    historyBtn.style.cssText = `
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(90deg,#10B981 0%,#059669 100%) !important;
+      color: #ffffff !important; font-weight: 700; border: 1px solid #059669;
+      cursor: pointer; border-radius: 8px; padding: 6px 14px; font-size: 0.95em;
+      margin: 0 8px 0 0; height: 32px; min-width: 100px; white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(16,185,129,0.25); vertical-align: middle;
+    `;
 
     // Effet de survol
     historyBtn.onmouseenter = () => {
       historyBtn.style.transform = "translateY(-2px)";
-      historyBtn.style.boxShadow = "0 4px 16px rgba(5,150,105,0.4)";
+      historyBtn.style.boxShadow = "0 4px 16px rgba(16,185,129,0.4)";
+      historyBtn.style.background = "#059669";
+      historyBtn.style.borderColor = "#047857";
     };
     historyBtn.onmouseleave = () => {
       historyBtn.style.transform = "translateY(0)";
-      historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
+      historyBtn.style.boxShadow = "0 2px 8px rgba(16,185,129,0.25)";
+      historyBtn.style.background =
+        "linear-gradient(90deg,#10B981 0%,#059669 100%)";
+      historyBtn.style.borderColor = "#059669";
     };
 
     // Événement de clic
@@ -3839,7 +3856,25 @@ function showHistoryButtonIfNeeded() {
   historyBtn.style.display = "inline-block"; // Changed from "block" to "inline-block"
   historyBtn.style.opacity = "1";
   historyBtn.style.transform = "scale(1)";
+  historyBtn.style.whiteSpace = "nowrap";
 }
+
+// Renforcer de nouveau après chargement pour éviter que d'autres scripts n'écrasent les styles
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    const hb = document.getElementById("professionalHistoryBtn");
+    if (hb) {
+      hb.innerHTML = hb.innerHTML?.includes("Historique")
+        ? hb.innerHTML
+        : "📋 Historique";
+      hb.style.background = "linear-gradient(90deg,#10B981 0%,#059669 100%)";
+      hb.style.color = "#ffffff";
+      hb.style.border = "1px solid #059669";
+      hb.style.minWidth = "100px";
+      hb.style.whiteSpace = "nowrap";
+    }
+  }, 0);
+});
 
 /**
  * Affiche la modal de l'historique professionnel
