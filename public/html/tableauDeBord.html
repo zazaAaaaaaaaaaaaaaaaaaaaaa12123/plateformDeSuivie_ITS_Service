@@ -1022,9 +1022,9 @@
 
       /* === FIN STYLES CARTES ET BADGES === */
 
-      /* === ANIMATIONS DE LIAISON DES CARTES SYNCHRONISÉES === */
+      /* === ANIMATIONS SIMPLES ET PROFESSIONNELLES === */
 
-      /* Conteneur pour les lignes de connexion */
+      /* Conteneur pour les connexions simples */
       .card-connections {
         position: absolute;
         top: 0;
@@ -1036,616 +1036,19 @@
         overflow: hidden;
       }
 
-      /* Lignes de connexion animées avec transitions de couleurs fluides */
-      .connection-line {
-        position: absolute;
-        height: 3px;
-        background: linear-gradient(
-          90deg,
-          transparent 0%,
-          var(--connection-color-1) 20%,
-          var(--connection-color-2) 40%,
-          var(--connection-color-3) 60%,
-          var(--connection-color-1) 80%,
-          transparent 100%
-        );
-        --connection-color-1: #3b82f6;
-        --connection-color-2: #06b6d4;
-        --connection-color-3: #8b5cf6;
-        opacity: 0.7;
-        transform-origin: left center;
-        animation: connectionPulse 4s ease-in-out infinite,
-          connectionColorShift 6s ease-in-out infinite;
-        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
-      }
-
-      .connection-line::before {
-        content: "";
-        position: absolute;
-        top: -2px;
-        left: 0;
-        width: 100%;
-        height: 7px;
-        background: linear-gradient(
-          90deg,
-          transparent 0%,
-          rgba(59, 130, 246, 0.3) 25%,
-          rgba(6, 182, 212, 0.4) 50%,
-          rgba(139, 92, 246, 0.3) 75%,
-          transparent 100%
-        );
-        filter: blur(3px);
-        animation: connectionGlow 3s ease-in-out infinite;
-      }
-
-      .connection-line::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 0;
-        width: 12px;
-        height: 12px;
-        background: radial-gradient(
-          circle,
-          rgba(255, 255, 255, 0.9) 0%,
-          var(--connection-color-2) 50%,
-          transparent 100%
-        );
-        border-radius: 50%;
-        transform: translateY(-50%);
-        animation: sparkleTravel 4s linear infinite;
-      }
-
-      @keyframes connectionPulse {
-        0%,
-        100% {
-          opacity: 0.4;
-          transform: scaleX(0.8) scaleY(1);
-          filter: brightness(1) drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
-        }
-        50% {
-          opacity: 0.9;
-          transform: scaleX(1.2) scaleY(1.5);
-          filter: brightness(1.8) drop-shadow(0 0 15px rgba(59, 130, 246, 0.8));
-        }
-      }
-
-      @keyframes connectionColorShift {
-        0% {
-          --connection-color-1: #3b82f6;
-          --connection-color-2: #06b6d4;
-          --connection-color-3: #8b5cf6;
-        }
-        25% {
-          --connection-color-1: #06b6d4;
-          --connection-color-2: #8b5cf6;
-          --connection-color-3: #ec4899;
-        }
-        50% {
-          --connection-color-1: #8b5cf6;
-          --connection-color-2: #ec4899;
-          --connection-color-3: #f59e0b;
-        }
-        75% {
-          --connection-color-1: #ec4899;
-          --connection-color-2: #f59e0b;
-          --connection-color-3: #10b981;
-        }
-        100% {
-          --connection-color-1: #3b82f6;
-          --connection-color-2: #06b6d4;
-          --connection-color-3: #8b5cf6;
-        }
-      }
-
-      @keyframes connectionGlow {
-        0%,
-        100% {
-          opacity: 0.3;
-          filter: blur(3px) hue-rotate(0deg);
-        }
-        50% {
-          opacity: 0.8;
-          filter: blur(6px) hue-rotate(90deg);
-        }
-      }
-
-      @keyframes sparkleTravel {
-        0% {
-          left: -6px;
-          opacity: 0;
-          background: radial-gradient(
-            circle,
-            rgba(255, 255, 255, 0.9) 0%,
-            #3b82f6 50%,
-            transparent 100%
-          );
-        }
-        10% {
-          opacity: 1;
-        }
-        25% {
-          background: radial-gradient(
-            circle,
-            rgba(255, 255, 255, 0.9) 0%,
-            #06b6d4 50%,
-            transparent 100%
-          );
-        }
-        50% {
-          background: radial-gradient(
-            circle,
-            rgba(255, 255, 255, 0.9) 0%,
-            #8b5cf6 50%,
-            transparent 100%
-          );
-        }
-        75% {
-          background: radial-gradient(
-            circle,
-            rgba(255, 255, 255, 0.9) 0%,
-            #ec4899 50%,
-            transparent 100%
-          );
-        }
-        90% {
-          opacity: 1;
-        }
-        100% {
-          left: calc(100% + 6px);
-          opacity: 0;
-          background: radial-gradient(
-            circle,
-            rgba(255, 255, 255, 0.9) 0%,
-            #3b82f6 50%,
-            transparent 100%
-          );
-        }
-      }
-
-      /* Particules voyageuses avec couleurs fluides */
-      .connection-particle {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background: radial-gradient(
-          circle,
-          rgba(255, 255, 255, 0.9) 0%,
-          var(--particle-color-primary) 40%,
-          var(--particle-color-secondary) 100%
-        );
-        --particle-color-primary: #06b6d4;
-        --particle-color-secondary: #3b82f6;
-        border-radius: 50%;
-        box-shadow: 0 0 15px var(--particle-color-primary),
-          0 0 30px rgba(6, 182, 212, 0.6),
-          inset 0 0 5px rgba(255, 255, 255, 0.8);
-        z-index: 2;
-        animation: particleColorCycle 5s ease-in-out infinite;
-        filter: brightness(1.2);
-      }
-
-      .connection-particle::before {
-        content: "";
-        position: absolute;
-        top: -3px;
-        left: -3px;
-        width: 16px;
-        height: 16px;
-        background: radial-gradient(
-          circle,
-          transparent 40%,
-          var(--particle-color-primary) 60%,
-          transparent 100%
-        );
-        border-radius: 50%;
-        filter: blur(2px);
-        animation: particleAura 3s ease-in-out infinite;
-      }
-
-      @keyframes particleColorCycle {
-        0% {
-          --particle-color-primary: #06b6d4;
-          --particle-color-secondary: #3b82f6;
-        }
-        20% {
-          --particle-color-primary: #3b82f6;
-          --particle-color-secondary: #8b5cf6;
-        }
-        40% {
-          --particle-color-primary: #8b5cf6;
-          --particle-color-secondary: #ec4899;
-        }
-        60% {
-          --particle-color-primary: #ec4899;
-          --particle-color-secondary: #f59e0b;
-        }
-        80% {
-          --particle-color-primary: #f59e0b;
-          --particle-color-secondary: #10b981;
-        }
-        100% {
-          --particle-color-primary: #06b6d4;
-          --particle-color-secondary: #3b82f6;
-        }
-      }
-
-      @keyframes particleAura {
-        0%,
-        100% {
-          opacity: 0.3;
-          transform: scale(0.8);
-        }
-        50% {
-          opacity: 0.8;
-          transform: scale(1.4);
-        }
-      }
-
-      /* Animation des particules avec transitions de couleurs fluides */
-      @keyframes particleTravel1 {
-        0% {
-          left: 20%;
-          top: 50%;
-          opacity: 0;
-          transform: scale(0);
-          --particle-color-primary: #3b82f6;
-          --particle-color-secondary: #06b6d4;
-          filter: brightness(1) hue-rotate(0deg);
-        }
-        10% {
-          opacity: 1;
-          transform: scale(1.2);
-          filter: brightness(1.3) hue-rotate(30deg);
-        }
-        25% {
-          --particle-color-primary: #06b6d4;
-          --particle-color-secondary: #8b5cf6;
-          filter: brightness(1.5) hue-rotate(60deg);
-        }
-        50% {
-          left: 50%;
-          top: 45%;
-          opacity: 1;
-          transform: scale(1);
-          --particle-color-primary: #8b5cf6;
-          --particle-color-secondary: #ec4899;
-          filter: brightness(1.8) hue-rotate(90deg);
-        }
-        75% {
-          --particle-color-primary: #ec4899;
-          --particle-color-secondary: #f59e0b;
-          filter: brightness(1.5) hue-rotate(120deg);
-        }
-        90% {
-          opacity: 1;
-          transform: scale(1.2);
-          filter: brightness(1.3) hue-rotate(150deg);
-        }
-        100% {
-          left: 80%;
-          top: 50%;
-          opacity: 0;
-          transform: scale(0);
-          --particle-color-primary: #10b981;
-          --particle-color-secondary: #3b82f6;
-          filter: brightness(1) hue-rotate(180deg);
-        }
-      }
-
-      @keyframes particleTravel2 {
-        0% {
-          left: 50%;
-          top: 45%;
-          opacity: 0;
-          transform: scale(0);
-          --particle-color-primary: #8b5cf6;
-          --particle-color-secondary: #ec4899;
-          filter: brightness(1) hue-rotate(60deg);
-        }
-        10% {
-          opacity: 1;
-          transform: scale(1.2);
-          filter: brightness(1.4) hue-rotate(90deg);
-        }
-        25% {
-          --particle-color-primary: #ec4899;
-          --particle-color-secondary: #f59e0b;
-          filter: brightness(1.6) hue-rotate(120deg);
-        }
-        50% {
-          left: 75%;
-          top: 70%;
-          opacity: 1;
-          transform: scale(1);
-          --particle-color-primary: #f59e0b;
-          --particle-color-secondary: #10b981;
-          filter: brightness(1.9) hue-rotate(150deg);
-        }
-        75% {
-          --particle-color-primary: #10b981;
-          --particle-color-secondary: #06b6d4;
-          filter: brightness(1.6) hue-rotate(180deg);
-        }
-        90% {
-          opacity: 1;
-          transform: scale(1.2);
-          filter: brightness(1.4) hue-rotate(210deg);
-        }
-        100% {
-          left: 100%;
-          top: 95%;
-          opacity: 0;
-          transform: scale(0);
-          --particle-color-primary: #06b6d4;
-          --particle-color-secondary: #3b82f6;
-          filter: brightness(1) hue-rotate(240deg);
-        }
-      }
-
-      @keyframes particleTravel3 {
-        0% {
-          left: 80%;
-          top: 50%;
-          opacity: 0;
-          transform: scale(0);
-          --particle-color-primary: #f59e0b;
-          --particle-color-secondary: #10b981;
-          filter: brightness(1) hue-rotate(120deg);
-        }
-        10% {
-          opacity: 1;
-          transform: scale(1.2);
-          filter: brightness(1.5) hue-rotate(150deg);
-        }
-        25% {
-          --particle-color-primary: #10b981;
-          --particle-color-secondary: #06b6d4;
-          filter: brightness(1.7) hue-rotate(180deg);
-        }
-        50% {
-          left: 50%;
-          top: 75%;
-          opacity: 1;
-          transform: scale(1);
-          --particle-color-primary: #06b6d4;
-          --particle-color-secondary: #3b82f6;
-          filter: brightness(2) hue-rotate(210deg);
-        }
-        75% {
-          --particle-color-primary: #3b82f6;
-          --particle-color-secondary: #8b5cf6;
-          filter: brightness(1.7) hue-rotate(240deg);
-        }
-        90% {
-          opacity: 1;
-          transform: scale(1.2);
-          filter: brightness(1.5) hue-rotate(270deg);
-        }
-        100% {
-          left: 20%;
-          top: 50%;
-          opacity: 0;
-          transform: scale(0);
-          --particle-color-primary: #8b5cf6;
-          --particle-color-secondary: #ec4899;
-          filter: brightness(1) hue-rotate(300deg);
-        }
-      }
-
-      /* Effet de synchronisation globale avec couleurs fluides */
-      .cards-synchronized {
-        animation: syncPulse 2s ease-in-out, syncColorWave 3s ease-in-out;
-        filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
-      }
-
-      @keyframes syncPulse {
-        0% {
-          transform: scale(1);
-          filter: brightness(1) saturate(1) hue-rotate(0deg);
-        }
-        25% {
-          transform: scale(1.015);
-          filter: brightness(1.2) saturate(1.3) hue-rotate(30deg);
-        }
-        50% {
-          transform: scale(1.03);
-          filter: brightness(1.4) saturate(1.6) hue-rotate(60deg);
-        }
-        75% {
-          transform: scale(1.015);
-          filter: brightness(1.2) saturate(1.3) hue-rotate(30deg);
-        }
-        100% {
-          transform: scale(1);
-          filter: brightness(1) saturate(1) hue-rotate(0deg);
-        }
-      }
-
-      @keyframes syncColorWave {
-        0% {
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.3),
-            0 0 40px rgba(59, 130, 246, 0.2);
-        }
-        20% {
-          box-shadow: 0 0 25px rgba(6, 182, 212, 0.4),
-            0 0 50px rgba(6, 182, 212, 0.3);
-        }
-        40% {
-          box-shadow: 0 0 30px rgba(139, 92, 246, 0.5),
-            0 0 60px rgba(139, 92, 246, 0.4);
-        }
-        60% {
-          box-shadow: 0 0 25px rgba(236, 72, 153, 0.4),
-            0 0 50px rgba(236, 72, 153, 0.3);
-        }
-        80% {
-          box-shadow: 0 0 30px rgba(245, 158, 11, 0.5),
-            0 0 60px rgba(245, 158, 11, 0.4);
-        }
-        100% {
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.3),
-            0 0 40px rgba(59, 130, 246, 0.2);
-        }
-      }
-
-      /* Onde d'énergie entre les cartes avec couleurs fluides */
-      .energy-wave {
-        position: absolute;
-        width: 120px;
-        height: 120px;
-        border: 3px solid var(--wave-color);
-        --wave-color: #06b6d4;
-        border-radius: 50%;
-        opacity: 0;
-        pointer-events: none;
-        z-index: 2;
-        background: radial-gradient(
-          circle,
-          transparent 40%,
-          rgba(6, 182, 212, 0.1) 60%,
-          transparent 100%
-        );
-        box-shadow: 0 0 30px var(--wave-color),
-          inset 0 0 20px rgba(255, 255, 255, 0.1);
-      }
-
-      .energy-wave::before {
-        content: "";
-        position: absolute;
-        top: -10px;
-        left: -10px;
-        width: calc(100% + 20px);
-        height: calc(100% + 20px);
-        border: 1px solid var(--wave-color);
-        border-radius: 50%;
-        background: radial-gradient(
-          circle,
-          transparent 50%,
-          rgba(6, 182, 212, 0.05) 70%,
-          transparent 100%
-        );
-        filter: blur(2px);
-      }
-
-      @keyframes energyWave {
-        0% {
-          transform: scale(0.1);
-          opacity: 0.9;
-          border-width: 4px;
-          --wave-color: #3b82f6;
-          filter: brightness(1.5) saturate(1.5) hue-rotate(0deg);
-        }
-        20% {
-          --wave-color: #06b6d4;
-          filter: brightness(1.8) saturate(1.8) hue-rotate(60deg);
-        }
-        40% {
-          --wave-color: #8b5cf6;
-          filter: brightness(2) saturate(2) hue-rotate(120deg);
-        }
-        50% {
-          transform: scale(2.5);
-          opacity: 0.6;
-          border-width: 2px;
-          --wave-color: #ec4899;
-          filter: brightness(2.2) saturate(2.2) hue-rotate(180deg);
-        }
-        70% {
-          --wave-color: #f59e0b;
-          filter: brightness(2) saturate(1.8) hue-rotate(240deg);
-        }
-        90% {
-          --wave-color: #10b981;
-          filter: brightness(1.5) saturate(1.5) hue-rotate(300deg);
-        }
-        100% {
-          transform: scale(5);
-          opacity: 0;
-          border-width: 0px;
-          --wave-color: #06b6d4;
-          filter: brightness(1) saturate(1) hue-rotate(360deg);
-        }
-      }
-
-      /* === AMÉLIORATION DU FOND WELCOME SECTION AVEC COULEURS FLUIDES === */
+      /* === ANIMATION SIMPLE ET PROFESSIONNELLE POUR WELCOME SECTION === */
 
       #welcomeSection {
         background: linear-gradient(
           135deg,
-          var(--bg-color-1) 0%,
-          var(--bg-color-2) 25%,
-          var(--bg-color-3) 50%,
-          var(--bg-color-4) 75%,
-          var(--bg-color-1) 100%
+          #f8fafc 0%,
+          #f1f5f9 100%
         ) !important;
-        --bg-color-1: #f8fafc;
-        --bg-color-2: #e2e8f0;
-        --bg-color-3: #f1f5f9;
-        --bg-color-4: #e8f4f8;
-        background-size: 400% 400%;
-        animation: gradientShift 12s ease-in-out infinite,
-          backgroundColorCycle 20s ease-in-out infinite;
         position: relative;
         overflow: hidden;
-        filter: brightness(1.02);
       }
 
-      /* Animation du gradient de fond avec couleurs changeantes */
-      @keyframes gradientShift {
-        0%,
-        100% {
-          background-position: 0% 50%;
-          filter: brightness(1.02) saturate(1.05);
-        }
-        25% {
-          background-position: 100% 50%;
-          filter: brightness(1.05) saturate(1.1);
-        }
-        50% {
-          background-position: 100% 100%;
-          filter: brightness(1.08) saturate(1.15);
-        }
-        75% {
-          background-position: 0% 100%;
-          filter: brightness(1.05) saturate(1.1);
-        }
-      }
-
-      @keyframes backgroundColorCycle {
-        0% {
-          --bg-color-1: #f8fafc;
-          --bg-color-2: #e2e8f0;
-          --bg-color-3: #f1f5f9;
-          --bg-color-4: #e8f4f8;
-        }
-        25% {
-          --bg-color-1: #f0f9ff;
-          --bg-color-2: #e0f2fe;
-          --bg-color-3: #f0f4ff;
-          --bg-color-4: #eff6ff;
-        }
-        50% {
-          --bg-color-1: #fdf4ff;
-          --bg-color-2: #fae8ff;
-          --bg-color-3: #f3e8ff;
-          --bg-color-4: #f9f0ff;
-        }
-        75% {
-          --bg-color-1: #fffbeb;
-          --bg-color-2: #fef3c7;
-          --bg-color-3: #fff7ed;
-          --bg-color-4: #fef5e7;
-        }
-        100% {
-          --bg-color-1: #f8fafc;
-          --bg-color-2: #e2e8f0;
-          --bg-color-3: #f1f5f9;
-          --bg-color-4: #e8f4f8;
-        }
-      }
-
-      /* Motifs géométriques en arrière-plan avec couleurs fluides */
+      /* Motif géométrique subtil et professionnel */
       #welcomeSection::before {
         content: "";
         position: absolute;
@@ -1653,185 +1056,95 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-image: radial-gradient(
-            circle at 20% 20%,
-            var(--pattern-color-1) 0%,
-            transparent 50%
+        background-image: linear-gradient(
+            90deg,
+            rgba(71, 85, 105, 0.03) 1px,
+            transparent 1px
           ),
-          radial-gradient(
-            circle at 80% 80%,
-            var(--pattern-color-2) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 40% 70%,
-            var(--pattern-color-3) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 60% 30%,
-            var(--pattern-color-4) 0%,
-            transparent 40%
-          ),
-          radial-gradient(
-            circle at 10% 90%,
-            var(--pattern-color-5) 0%,
-            transparent 45%
-          );
-        --pattern-color-1: rgba(59, 130, 246, 0.08);
-        --pattern-color-2: rgba(6, 182, 212, 0.08);
-        --pattern-color-3: rgba(16, 185, 129, 0.06);
-        --pattern-color-4: rgba(139, 92, 246, 0.06);
-        --pattern-color-5: rgba(236, 72, 153, 0.05);
-        background-size: 300px 300px, 250px 250px, 400px 400px, 350px 350px,
-          280px 280px;
-        background-position: 0 0, 100px 100px, 200px 50px, 50px 200px,
-          300px 150px;
-        animation: floatingPatterns 15s linear infinite,
-          patternColorCycle 25s ease-in-out infinite;
+          linear-gradient(180deg, rgba(71, 85, 105, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        background-position: 0 0, 0 0;
+        animation: subtleGridMove 20s linear infinite;
         z-index: 0;
-        filter: blur(0.5px);
       }
 
-      @keyframes floatingPatterns {
+      /* Animation subtile de grille */
+      @keyframes subtileGridMove {
         0% {
-          transform: translate(0, 0) rotate(0deg);
-          background-position: 0 0, 100px 100px, 200px 50px, 50px 200px,
-            300px 150px;
-        }
-        25% {
-          transform: translate(-15px, -10px) rotate(90deg);
-          background-position: 20px 10px, 120px 110px, 220px 60px, 70px 210px,
-            320px 160px;
-        }
-        50% {
-          transform: translate(10px, -15px) rotate(180deg);
-          background-position: -10px 20px, 110px 90px, 210px 70px, 60px 190px,
-            310px 140px;
-        }
-        75% {
-          transform: translate(15px, 10px) rotate(270deg);
-          background-position: 15px -5px, 115px 105px, 215px 45px, 55px 205px,
-            315px 155px;
+          background-position: 0 0, 0 0;
         }
         100% {
-          transform: translate(0, 0) rotate(360deg);
-          background-position: 0 0, 100px 100px, 200px 50px, 50px 200px,
-            300px 150px;
+          background-position: 40px 40px, 40px 40px;
         }
       }
 
-      @keyframes patternColorCycle {
-        0% {
-          --pattern-color-1: rgba(59, 130, 246, 0.08);
-          --pattern-color-2: rgba(6, 182, 212, 0.08);
-          --pattern-color-3: rgba(16, 185, 129, 0.06);
-          --pattern-color-4: rgba(139, 92, 246, 0.06);
-          --pattern-color-5: rgba(236, 72, 153, 0.05);
-        }
-        20% {
-          --pattern-color-1: rgba(6, 182, 212, 0.09);
-          --pattern-color-2: rgba(139, 92, 246, 0.09);
-          --pattern-color-3: rgba(236, 72, 153, 0.07);
-          --pattern-color-4: rgba(245, 158, 11, 0.07);
-          --pattern-color-5: rgba(16, 185, 129, 0.06);
-        }
-        40% {
-          --pattern-color-1: rgba(139, 92, 246, 0.1);
-          --pattern-color-2: rgba(236, 72, 153, 0.1);
-          --pattern-color-3: rgba(245, 158, 11, 0.08);
-          --pattern-color-4: rgba(16, 185, 129, 0.08);
-          --pattern-color-5: rgba(59, 130, 246, 0.07);
-        }
-        60% {
-          --pattern-color-1: rgba(236, 72, 153, 0.09);
-          --pattern-color-2: rgba(245, 158, 11, 0.09);
-          --pattern-color-3: rgba(16, 185, 129, 0.07);
-          --pattern-color-4: rgba(59, 130, 246, 0.07);
-          --pattern-color-5: rgba(6, 182, 212, 0.06);
-        }
-        80% {
-          --pattern-color-1: rgba(245, 158, 11, 0.08);
-          --pattern-color-2: rgba(16, 185, 129, 0.08);
-          --pattern-color-3: rgba(59, 130, 246, 0.06);
-          --pattern-color-4: rgba(6, 182, 212, 0.06);
-          --pattern-color-5: rgba(139, 92, 246, 0.05);
-        }
-        100% {
-          --pattern-color-1: rgba(59, 130, 246, 0.08);
-          --pattern-color-2: rgba(6, 182, 212, 0.08);
-          --pattern-color-3: rgba(16, 185, 129, 0.06);
-          --pattern-color-4: rgba(139, 92, 246, 0.06);
-          --pattern-color-5: rgba(236, 72, 153, 0.05);
-        }
-      }
-
-      /* Effet glassmorphism sur les cartes avec couleurs fluides */
+      /* Effet glassmorphism simple et professionnel sur les cartes */
       .etat-card {
-        backdrop-filter: blur(12px) saturate(200%);
-        background: linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.85) 0%,
-          rgba(255, 255, 255, 0.75) 100%
-        ) !important;
-        border: 1px solid rgba(255, 255, 255, 0.4) !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
-          0 2px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6),
-          0 0 20px var(--card-glow-color) !important;
-        --card-glow-color: rgba(59, 130, 246, 0.1);
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(71, 85, 105, 0.1) !important;
+        box-shadow: 0 4px 20px rgba(71, 85, 105, 0.08),
+          0 1px 4px rgba(71, 85, 105, 0.04) !important;
         position: relative;
         z-index: 2;
-        animation: cardGlowCycle 8s ease-in-out infinite;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      .dossier-attente.etat-card {
-        --card-glow-color: rgba(245, 158, 11, 0.12);
+      /* Hover effect simple et professionnel */
+      .etat-card:hover {
+        background: rgba(255, 255, 255, 0.95) !important;
+        box-shadow: 0 8px 30px rgba(71, 85, 105, 0.12),
+          0 2px 8px rgba(71, 85, 105, 0.06) !important;
+        transform: translateY(-4px);
       }
 
-      .dossier-mise-livraison.etat-card {
-        --card-glow-color: rgba(14, 165, 233, 0.12);
+      /* Lignes de connexion simples et professionnelles */
+      .connection-line {
+        position: absolute;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(71, 85, 105, 0.15) 10%,
+          rgba(71, 85, 105, 0.3) 50%,
+          rgba(71, 85, 105, 0.15) 90%,
+          transparent 100%
+        );
+        animation: subtleFlow 4s ease-in-out infinite;
+        z-index: 1;
       }
 
-      .dossier-livre.etat-card {
-        --card-glow-color: rgba(16, 185, 129, 0.12);
-      }
-
-      .dossier-retard.etat-card {
-        --card-glow-color: rgba(220, 53, 69, 0.12);
-      }
-
-      @keyframes cardGlowCycle {
+      @keyframes subtleFlow {
         0%,
         100% {
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
-            0 2px 16px rgba(0, 0, 0, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6),
-            0 0 20px var(--card-glow-color);
-          filter: brightness(1) saturate(1);
+          opacity: 0.3;
         }
         50% {
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12),
-            0 4px 20px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.7),
-            0 0 30px var(--card-glow-color);
-          filter: brightness(1.05) saturate(1.1);
+          opacity: 0.6;
         }
       }
 
-      /* Amélioration hover avec glassmorphism et couleurs fluides */
-      .etat-card:hover {
-        backdrop-filter: blur(16px) saturate(250%);
-        background: linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.92) 0%,
-          rgba(255, 255, 255, 0.88) 100%
-        ) !important;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
-          0 8px 30px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8),
-          0 0 40px var(--card-glow-color) !important;
-        transform: translateY(-12px) scale(1.04) rotate(-1.5deg);
-        filter: brightness(1.08) saturate(1.2);
+      /* Points de connexion subtils */
+      .connection-dot {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: rgba(71, 85, 105, 0.4);
+        animation: subtilePulse 3s ease-in-out infinite;
+        z-index: 2;
+      }
+
+      @keyframes subtilePulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.4;
+        }
+        50% {
+          transform: scale(1.5);
+          opacity: 0.8;
+        }
       }
 
       /* === FIN ANIMATIONS DE LIAISON === */
@@ -3285,121 +2598,122 @@
               });
             }
 
-            function positionConnectionLine(line, fromCard, toCard) {
-              const fromRect = fromCard.getBoundingClientRect();
-              const toRect = toCard.getBoundingClientRect();
-              const containerRect = document
-                .getElementById("welcomeSection")
-                .getBoundingClientRect();
+            // Système de connexions simple et professionnel
+            const connectionsContainer = document.createElement("div");
+            connectionsContainer.className = "card-connections";
 
-              const fromX =
-                fromRect.left + fromRect.width / 2 - containerRect.left;
-              const fromY =
-                fromRect.top + fromRect.height / 2 - containerRect.top;
-              const toX = toRect.left + toRect.width / 2 - containerRect.left;
-              const toY = toRect.top + toRect.height / 2 - containerRect.top;
+            // Créer 3 lignes de connexion simples
+            const connections = [
+              { from: 0, to: 1 }, // Dossier soumis -> Mise en livraison
+              { from: 1, to: 2 }, // Mise en livraison -> Livré
+              { from: 0, to: 2 }, // Dossier soumis -> Livré (connexion directe)
+            ];
 
-              const length = Math.sqrt(
-                Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2)
-              );
-              const angle =
-                (Math.atan2(toY - fromY, toX - fromX) * 180) / Math.PI;
+            connections.forEach((connection, index) => {
+              const line = document.createElement("div");
+              line.className = "connection-line";
+              line.style.animationDelay = `${index * 1.3}s`;
+              connectionsContainer.appendChild(line);
 
-              line.style.left = fromX + "px";
-              line.style.top = fromY + "px";
-              line.style.width = length + "px";
-              line.style.transform = `rotate(${angle}deg)`;
-            }
+              // Ajouter des points de connexion
+              const dot1 = document.createElement("div");
+              dot1.className = "connection-dot";
+              dot1.style.animationDelay = `${index * 0.5}s`;
+              connectionsContainer.appendChild(dot1);
 
-            function createFloatingParticles() {
-              const container = document.querySelector(".card-connections");
-              if (!container) return;
+              const dot2 = document.createElement("div");
+              dot2.className = "connection-dot";
+              dot2.style.animationDelay = `${index * 0.5 + 1.5}s`;
+              connectionsContainer.appendChild(dot2);
+            });
 
-              for (let i = 0; i < 6; i++) {
-                const particle = document.createElement("div");
-                particle.className = "connection-particle";
+            function positionSimpleConnections() {
+              const cards = [
+                document.getElementById("carteAttentePaiement"),
+                document.getElementById("carteMiseLivraison"),
+                document.getElementById("carteLivre"),
+              ];
 
-                const animationName = `particleTravel${(i % 3) + 1}`;
-                particle.style.animation = `${animationName} ${
-                  4 + Math.random() * 2
-                }s linear infinite`;
-                particle.style.animationDelay = `${Math.random() * 3}s`;
+              const lines = document.querySelectorAll(".connection-line");
+              const dots = document.querySelectorAll(".connection-dot");
 
-                container.appendChild(particle);
-              }
-            }
+              connections.forEach((connection, index) => {
+                const fromCard = cards[connection.from];
+                const toCard = cards[connection.to];
+                const line = lines[index];
 
-            function startSynchronizationEffects() {
-              // Effet de synchronisation toutes les 8 secondes
-              setInterval(() => {
-                const cards = document.querySelectorAll(".etat-card");
-                cards.forEach((card, index) => {
-                  setTimeout(() => {
-                    card.classList.add("cards-synchronized");
-                    setTimeout(() => {
-                      card.classList.remove("cards-synchronized");
-                    }, 2000);
-                  }, index * 200);
-                });
-              }, 8000);
-            }
-
-            // Fonction pour déclencher l'effet de synchronisation lors des mises à jour
-            window.triggerCardSyncEffect = function () {
-              const cards = document.querySelectorAll(".etat-card");
-
-              // Effet d'onde d'énergie
-              cards.forEach((card, index) => {
-                setTimeout(() => {
-                  const wave = document.createElement("div");
-                  wave.className = "energy-wave";
-
-                  const rect = card.getBoundingClientRect();
-                  const welcomeRect = document
+                if (fromCard && toCard && line) {
+                  const fromRect = fromCard.getBoundingClientRect();
+                  const toRect = toCard.getBoundingClientRect();
+                  const containerRect = document
                     .getElementById("welcomeSection")
                     .getBoundingClientRect();
 
-                  wave.style.left =
-                    rect.left + rect.width / 2 - welcomeRect.left - 50 + "px";
-                  wave.style.top =
-                    rect.top + rect.height / 2 - welcomeRect.top - 50 + "px";
-                  wave.style.animation = "energyWave 1.5s ease-out forwards";
+                  const fromX =
+                    fromRect.left + fromRect.width / 2 - containerRect.left;
+                  const fromY =
+                    fromRect.top + fromRect.height / 2 - containerRect.top;
+                  const toX =
+                    toRect.left + toRect.width / 2 - containerRect.left;
+                  const toY =
+                    toRect.top + toRect.height / 2 - containerRect.top;
 
-                  document.querySelector(".card-connections").appendChild(wave);
+                  const length = Math.sqrt(
+                    Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2)
+                  );
+                  const angle =
+                    (Math.atan2(toY - fromY, toX - fromX) * 180) / Math.PI;
 
-                  setTimeout(() => wave.remove(), 1500);
-                }, index * 150);
+                  line.style.left = fromX + "px";
+                  line.style.top = fromY + "px";
+                  line.style.width = length + "px";
+                  line.style.transform = `rotate(${angle}deg)`;
+
+                  // Positionner les points
+                  const dot1 = dots[index * 2];
+                  const dot2 = dots[index * 2 + 1];
+
+                  if (dot1) {
+                    dot1.style.left = fromX - 2 + "px";
+                    dot1.style.top = fromY - 2 + "px";
+                  }
+
+                  if (dot2) {
+                    dot2.style.left = toX - 2 + "px";
+                    dot2.style.top = toY - 2 + "px";
+                  }
+                }
               });
+            }
 
-              // Effet de pulsation synchronisée
-              setTimeout(() => {
-                cards.forEach((card) => {
-                  card.classList.add("cards-synchronized");
+            const welcomeSection = document.getElementById("welcomeSection");
+            if (!welcomeSection) return;
+
+            welcomeSection.appendChild(connectionsContainer);
+
+            // Positionner les connexions
+            setTimeout(() => {
+              positionSimpleConnections();
+            }, 100);
+
+            // Fonction simple pour la synchronisation lors des mises à jour
+            window.triggerCardSyncEffect = function () {
+              const cards = document.querySelectorAll(".etat-card");
+              cards.forEach((card, index) => {
+                setTimeout(() => {
+                  card.style.transform = "translateY(-2px)";
                   setTimeout(() => {
-                    card.classList.remove("cards-synchronized");
-                  }, 2000);
-                });
-              }, 500);
+                    card.style.transform = "translateY(0)";
+                  }, 200);
+                }, index * 100);
+              });
             };
 
-            // Recalculer les positions des lignes lors du redimensionnement
+            // Recalculer les positions lors du redimensionnement
             window.addEventListener(
               "resize",
               debounce(() => {
-                const lines = document.querySelectorAll(".connection-line");
-                const cards = [
-                  document.getElementById("carteAttentePaiement"),
-                  document.getElementById("carteMiseLivraison"),
-                  document.getElementById("carteLivre"),
-                ];
-
-                lines.forEach((line, index) => {
-                  const fromCard = cards[index];
-                  const toCard = cards[(index + 1) % cards.length];
-                  if (fromCard && toCard) {
-                    positionConnectionLine(line, fromCard, toCard);
-                  }
-                });
+                positionSimpleConnections();
               }, 250)
             );
 
