@@ -246,6 +246,21 @@ class AdminModeManager {
         element.classList.contains("admin-allowed-tc") ||
         element.classList.contains("admin-allowed-bl-link");
 
+      // Vérifier si l'élément fait partie d'une modal autorisée (PDF ou Historique)
+      const isInAllowedModal =
+        element.closest("#pdfFilterModal") ||
+        element.closest("#professionalHistoryModal") ||
+        element.closest("#historyDetailModal") ||
+        element.closest("#fallbackPdfModal") ||
+        element.id === "pdfFilterSingle" ||
+        element.id === "pdfFilterRange" ||
+        element.id === "pdfSingleDateInput" ||
+        element.id === "pdfRangeDateStart" ||
+        element.id === "pdfRangeDateEnd" ||
+        element.closest('[id*="pdf"]') ||
+        element.closest('[id*="history"]') ||
+        element.closest('[id*="History"]');
+
       const isNavigationButton =
         buttonText.includes("retour") ||
         buttonText.includes("fermer") ||
@@ -290,9 +305,12 @@ class AdminModeManager {
         buttonText.includes("se connecter") ||
         buttonText.includes("connecter");
 
-      // Ne pas désactiver si l'élément est autorisé en mode admin
+      // Ne pas désactiver si l'élément est autorisé en mode admin ou dans une modal autorisée
       if (
-        (!isNavigationButton && !isThemeElement && !isAdminAllowed) ||
+        (!isNavigationButton &&
+          !isThemeElement &&
+          !isAdminAllowed &&
+          !isInAllowedModal) ||
         isLogoutButton
       ) {
         element.disabled = true;
@@ -2974,6 +2992,45 @@ window.forceExposeAdminFunctions = function () {
         typeof window.showProfessionalHistoryModal === "function",
     },
   };
+};
+
+// Fonction utilitaire pour réactiver les éléments d'une modal spécifique
+window.enableModalElementsForAdmin = function (modalId) {
+  console.log(`🔓 Réactivation des éléments de la modal: ${modalId}`);
+
+  const modal = document.getElementById(modalId);
+  if (!modal) {
+    console.warn(`⚠️ Modal ${modalId} non trouvée`);
+    return;
+  }
+
+  // Réactiver tous les éléments interactifs dans la modal
+  const modalElements = modal.querySelectorAll(
+    "input, button, select, textarea, label"
+  );
+  modalElements.forEach((element) => {
+    element.disabled = false;
+    element.readOnly = false;
+    element.style.opacity = "1";
+    element.style.cursor = "pointer";
+    element.style.pointerEvents = "auto";
+    element.setAttribute("data-allow-admin", "true");
+    element.classList.add("admin-allowed-field");
+    element.classList.remove("admin-disabled-no-icon");
+    element.title = "";
+
+    console.log(
+      `✅ Élément réactivé:`,
+      element.tagName,
+      element.id || element.className
+    );
+  });
+
+  // Marquer la modal elle-même comme autorisée
+  modal.setAttribute("data-allow-admin", "true");
+  modal.classList.add("admin-allowed-modal");
+
+  console.log(`✅ Modal ${modalId} complètement réactivée pour le mode admin`);
 };
 
 console.log("🔧 Gestionnaire de mode admin initialisé");

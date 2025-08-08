@@ -3316,6 +3316,9 @@ function showPdfFilterModal() {
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";
   overlay.style.justifyContent = "center";
+  // Marquer la modal comme autorisée pour le mode admin
+  overlay.setAttribute("data-allow-admin", "true");
+  overlay.classList.add("admin-allowed-modal");
   const box = document.createElement("div");
   box.style.background = "#fff";
   box.style.borderRadius = "16px";
@@ -3364,17 +3367,30 @@ function showPdfFilterModal() {
   radioSingle.name = "pdfDateFilter";
   radioSingle.id = "pdfFilterSingle";
   radioSingle.checked = true;
+  // Marquer comme autorisé pour le mode admin
+  radioSingle.setAttribute("data-allow-admin", "true");
+  radioSingle.classList.add("admin-allowed-field");
+
   const labelSingle = document.createElement("label");
   labelSingle.textContent = "Une seule date";
   labelSingle.htmlFor = "pdfFilterSingle";
   labelSingle.style.marginRight = "18px";
+  labelSingle.style.cursor = "pointer";
+  labelSingle.setAttribute("data-allow-admin", "true");
+
   const radioRange = document.createElement("input");
   radioRange.type = "radio";
   radioRange.name = "pdfDateFilter";
   radioRange.id = "pdfFilterRange";
+  // Marquer comme autorisé pour le mode admin
+  radioRange.setAttribute("data-allow-admin", "true");
+  radioRange.classList.add("admin-allowed-field");
+
   const labelRange = document.createElement("label");
   labelRange.textContent = "Intervalle de dates";
   labelRange.htmlFor = "pdfFilterRange";
+  labelRange.style.cursor = "pointer";
+  labelRange.setAttribute("data-allow-admin", "true");
   content.appendChild(radioSingle);
   content.appendChild(labelSingle);
   content.appendChild(radioRange);
@@ -3392,6 +3408,9 @@ function showPdfFilterModal() {
     dateInput.style.border = "1.5px solid #2563eb";
     dateInput.style.fontSize = "1.08em";
     dateInput.style.marginRight = "12px";
+    // Marquer comme autorisé pour le mode admin
+    dateInput.setAttribute("data-allow-admin", "true");
+    dateInput.classList.add("admin-allowed-field");
     dateZone.appendChild(dateInput);
   }
   function renderRangeDateInputs() {
@@ -3404,6 +3423,10 @@ function showPdfFilterModal() {
     dateStart.style.border = "1.5px solid #2563eb";
     dateStart.style.fontSize = "1.08em";
     dateStart.style.marginRight = "12px";
+    // Marquer comme autorisé pour le mode admin
+    dateStart.setAttribute("data-allow-admin", "true");
+    dateStart.classList.add("admin-allowed-field");
+
     const dateEnd = document.createElement("input");
     dateEnd.type = "date";
     dateEnd.id = "pdfRangeDateEnd";
@@ -3411,6 +3434,10 @@ function showPdfFilterModal() {
     dateEnd.style.borderRadius = "8px";
     dateEnd.style.border = "1.5px solid #2563eb";
     dateEnd.style.fontSize = "1.08em";
+    // Marquer comme autorisé pour le mode admin
+    dateEnd.setAttribute("data-allow-admin", "true");
+    dateEnd.classList.add("admin-allowed-field");
+
     dateZone.appendChild(dateStart);
     dateZone.appendChild(dateEnd);
   }
@@ -3428,6 +3455,13 @@ function showPdfFilterModal() {
   validateBtn.style.padding = "10px 28px";
   validateBtn.style.fontSize = "1.08em";
   validateBtn.style.marginTop = "24px";
+  // Marquer comme autorisé pour le mode admin
+  validateBtn.setAttribute("data-allow-admin", "true");
+  validateBtn.classList.add("admin-allowed-button");
+
+  // Aussi marquer le bouton de fermeture
+  closeBtn.setAttribute("data-allow-admin", "true");
+  closeBtn.classList.add("admin-allowed-button");
   validateBtn.onclick = function () {
     let filterType = radioSingle.checked ? "single" : "range";
     let date1 = null,
@@ -3478,6 +3512,33 @@ function showPdfFilterModal() {
   box.appendChild(content);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
+
+  // Réactiver les éléments de la modal pour le mode admin
+  if (typeof window.enableModalElementsForAdmin === "function") {
+    setTimeout(() => {
+      window.enableModalElementsForAdmin("pdfFilterModal");
+    }, 0);
+  }
+
+  // Double sécurité: réactiver après un court délai
+  setTimeout(() => {
+    const modalElements = overlay.querySelectorAll(
+      "input, button, select, textarea, label"
+    );
+    modalElements.forEach((element) => {
+      element.disabled = false;
+      element.readOnly = false;
+      element.style.opacity = "1";
+      element.style.cursor = "pointer";
+      element.style.pointerEvents = "auto";
+      element.setAttribute("data-allow-admin", "true");
+      console.log(
+        "🔓 Élément modal PDF réactivé:",
+        element.tagName,
+        element.id
+      );
+    });
+  }, 100);
 }
 
 // Exposer la fonction showPdfFilterModal globalement pour le mode admin
@@ -4227,7 +4288,7 @@ window.showHistoryEntryDetail = function (entryId) {
 
 // ========================================================================
 // === FIN HISTORIQUE PROFESSIONNEL ===
-// ========================================================================
+// =========================================================================
 
 // Exposer les fonctions globalement pour le mode admin
 window.generateEtatSortiePdf = generateEtatSortiePdf;
