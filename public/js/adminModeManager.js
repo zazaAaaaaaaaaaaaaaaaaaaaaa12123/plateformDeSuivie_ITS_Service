@@ -1406,6 +1406,42 @@ class AdminModeManager {
     // Traitement spécial pour les N° TC - affichage informatif uniquement
     // L'utilisateur ne demande pas à verrouiller les TC ici, donc on laisse actif
     // this.setupTcInformationalDisplay();
+
+    // 3) S'assurer que le tableau n'est pas caché par un filtre résiduel
+    this.ensureLivraisonTableVisibility();
+  }
+
+  /**
+   * En mode admin livraison, si aucune ligne visible après chargement,
+   * on nettoie un filtre de recherche éventuel et on recharge.
+   */
+  ensureLivraisonTableVisibility() {
+    setTimeout(() => {
+      const tbody = document.querySelector("#deliveriesTableBody");
+      if (!tbody) return;
+
+      const visibleRows = Array.from(tbody.querySelectorAll("tr")).filter(
+        (tr) =>
+          tr.querySelector("td") &&
+          tr.style.display !== "none" &&
+          !tr.textContent.includes("Chargement des livraisons")
+      );
+
+      if (visibleRows.length === 0) {
+        const searchInput = document.querySelector(
+          "#searchInput, .search-input"
+        );
+        if (searchInput && searchInput.value.trim() !== "") {
+          searchInput.value = "";
+          searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        if (typeof window.loadDeliveries === "function") {
+          window.loadDeliveries();
+        } else if (typeof window.chargerDonnees === "function") {
+          window.chargerDonnees();
+        }
+      }
+    }, 1200);
   }
 
   /**
@@ -2481,19 +2517,23 @@ class AdminModeManager {
       window.chargerDonnees();
     }
 
-    // Ajouter un filtre automatique sur le nom de l'employé
-    setTimeout(() => {
-      const searchInput = document.querySelector("#searchInput, .search-input");
-      if (searchInput && userData.nom) {
-        searchInput.value = userData.nom;
+    // Ajouter un filtre automatique sur le nom de l'employé UNIQUEMENT pour la page acconier
+    if (type === "acconier") {
+      setTimeout(() => {
+        const searchInput = document.querySelector(
+          "#searchInput, .search-input"
+        );
+        if (searchInput && userData.nom) {
+          searchInput.value = userData.nom;
 
-        // Déclencher la recherche
-        const searchEvent = new Event("input", { bubbles: true });
-        searchInput.dispatchEvent(searchEvent);
+          // Déclencher la recherche
+          const searchEvent = new Event("input", { bubbles: true });
+          searchInput.dispatchEvent(searchEvent);
 
-        console.log(`🔍 Filtre appliqué sur: ${userData.nom}`);
-      }
-    }, 1000);
+          console.log(`🔍 Filtre appliqué (acconier) sur: ${userData.nom}`);
+        }
+      }, 1000);
+    }
   }
 
   /**
