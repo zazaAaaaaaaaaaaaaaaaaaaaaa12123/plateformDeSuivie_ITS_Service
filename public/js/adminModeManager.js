@@ -1340,18 +1340,29 @@ class AdminModeManager {
    * Optimisations spécifiques à la page livraison
    */
   optimizeLivraisonPage() {
-    // Colonnes exactes à verrouiller en lecture seule
+    // 1) Activer les champs autorisés (dates, historique, recherche, PDF)
+    this.enableAdminAllowedFieldsLivraison();
+
+    // 2) Colonnes exactes à verrouiller en lecture seule (conformes à la demande)
     const readOnlyColumns = [
-      "NOM",
-      "Agent visiteurs",
+      // N.B.: On ne verrouille PAS "Numéro TC(s)" ici
+      "Agent visiteurs", // tolère pluriel
+      "Agent Visiteur", // et singulier
       "TRANSPORTEUR",
+      "Transporteur",
       "INSPECTEUR",
+      "Inspecteur",
       "AGENT EN DOUANES",
+      "Agent en Douanes",
       "CHAUFFEUR",
+      "Chauffeur",
       "TEL CHAUFFEUR",
+      "Tel Chauffeur",
       "DATE LIVRAISON",
+      "Date de livraison",
+      "OBSERVATION",
       "Observations",
-      "Numéro TC(s)",
+      "Observation",
     ];
 
     console.log("🔒 Verrouillage des colonnes livraison:", readOnlyColumns);
@@ -1366,11 +1377,11 @@ class AdminModeManager {
       headers.forEach((header, index) => {
         const headerText = header.textContent.trim();
         if (
-          readOnlyColumns.some(
-            (col) =>
-              headerText.toUpperCase().includes(col.toUpperCase()) ||
-              col.toUpperCase().includes(headerText.toUpperCase())
-          )
+          readOnlyColumns.some((col) => {
+            const ht = headerText.toUpperCase();
+            const ct = col.toUpperCase();
+            return ht.includes(ct) || ct.includes(ht);
+          })
         ) {
           columnIndexes.push(index);
           console.log(`🔒 Colonne verrouillée: ${headerText} (index ${index})`);
@@ -1393,7 +1404,90 @@ class AdminModeManager {
     }
 
     // Traitement spécial pour les N° TC - affichage informatif uniquement
-    this.setupTcInformationalDisplay();
+    // L'utilisateur ne demande pas à verrouiller les TC ici, donc on laisse actif
+    // this.setupTcInformationalDisplay();
+  }
+
+  /**
+   * Active les champs autorisés en mode admin pour la page livraison
+   * - Dates: #mainTableDateStartFilter, #mainTableDateEndFilter
+   * - Bouton Historique: #professionalHistoryBtn
+   * - Recherche: #searchInput, #searchButton
+   * - PDF: #generatePdfBtn
+   */
+  enableAdminAllowedFieldsLivraison() {
+    try {
+      // Dates
+      const dateInputs = [
+        document.getElementById("mainTableDateStartFilter"),
+        document.getElementById("mainTableDateEndFilter"),
+      ].filter(Boolean);
+      dateInputs.forEach((input) => {
+        input.disabled = false;
+        input.readOnly = false;
+        input.style.opacity = "1";
+        input.style.cursor = "pointer";
+        input.style.pointerEvents = "auto";
+        input.style.background = "";
+        input.title = "Champ de date - Accessible en mode admin";
+        input.setAttribute("data-allow-admin", "true");
+        input.classList.add("admin-allowed-field");
+      });
+
+      // Recherche (champ + bouton)
+      const searchInput = document.querySelector(
+        "#searchInput, .search-input, input[placeholder*='recherche'], input[placeholder*='Recherche']"
+      );
+      if (searchInput) {
+        searchInput.disabled = false;
+        searchInput.readOnly = false;
+        searchInput.style.opacity = "1";
+        searchInput.style.cursor = "text";
+        searchInput.style.pointerEvents = "auto";
+        searchInput.style.background = "";
+        searchInput.title = "Champ de recherche - Accessible en mode admin";
+        searchInput.setAttribute("data-allow-admin", "true");
+        searchInput.classList.add("admin-allowed-field");
+      }
+      const searchButton = document.querySelector(
+        "#searchButton, .search-button, button[type='submit']"
+      );
+      if (searchButton) {
+        searchButton.disabled = false;
+        searchButton.style.opacity = "1";
+        searchButton.style.cursor = "pointer";
+        searchButton.style.pointerEvents = "auto";
+        searchButton.title = "Bouton rechercher - Accessible en mode admin";
+        searchButton.setAttribute("data-allow-admin", "true");
+        searchButton.classList.add("admin-allowed-button");
+      }
+
+      // Historique
+      const historyBtn = document.getElementById("professionalHistoryBtn");
+      if (historyBtn) {
+        historyBtn.disabled = false;
+        historyBtn.style.opacity = "1";
+        historyBtn.style.cursor = "pointer";
+        historyBtn.style.pointerEvents = "auto";
+        historyBtn.title = "Historique - Accessible en mode admin";
+        historyBtn.setAttribute("data-allow-admin", "true");
+        historyBtn.classList.add("admin-allowed-button");
+      }
+
+      // Générer PDF
+      const pdfBtn = document.getElementById("generatePdfBtn");
+      if (pdfBtn) {
+        pdfBtn.disabled = false;
+        pdfBtn.style.opacity = "1";
+        pdfBtn.style.cursor = "pointer";
+        pdfBtn.style.pointerEvents = "auto";
+        pdfBtn.title = "Générer PDF - Accessible en mode admin";
+        pdfBtn.setAttribute("data-allow-admin", "true");
+        pdfBtn.classList.add("admin-allowed-button");
+      }
+    } catch (e) {
+      console.warn("⚠️ enableAdminAllowedFieldsLivraison: ", e);
+    }
   }
 
   /**
