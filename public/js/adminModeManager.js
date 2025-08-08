@@ -1524,27 +1524,16 @@ class AdminModeManager {
         historyBtn.style.visibility = "visible";
         historyBtn.style.transform = "none";
         historyBtn.style.filter = "none";
-        historyBtn.style.background = "#FFA500"; // Orange
-        historyBtn.style.color = "#ffffff";
-        historyBtn.style.border = "1px solid #cc8400";
-        historyBtn.style.boxShadow = "0 2px 8px rgba(255,165,0,0.25)";
-        historyBtn.style.fontWeight = "700";
-        historyBtn.style.padding = "8px 16px";
-        historyBtn.style.borderRadius = "8px";
-        historyBtn.textContent = historyBtn.textContent?.trim() || "Historique";
-        historyBtn.classList.remove("admin-disabled-no-icon");
-        historyBtn.title = "Historique - Accessible en mode admin";
-        historyBtn.setAttribute("data-allow-admin", "true");
-        historyBtn.classList.add("admin-allowed-button");
-
-        // Hover
+        historyBtn.style.cssText += `
+          background: #FFA500 !important;
+          color: #ffffff !important;
+          border-color: #cc8400 !important;
+        `;
         historyBtn.addEventListener("mouseenter", () => {
-          historyBtn.style.background = "#cc8400";
-          historyBtn.style.borderColor = "#a36a00";
+          historyBtn.style.background = "#cc8400 !important";
         });
         historyBtn.addEventListener("mouseleave", () => {
-          historyBtn.style.background = "#FFA500";
-          historyBtn.style.borderColor = "#cc8400";
+          historyBtn.style.background = "#FFA500 !important";
         });
       }
 
@@ -1559,27 +1548,16 @@ class AdminModeManager {
         pdfBtn.style.visibility = "visible";
         pdfBtn.style.transform = "none";
         pdfBtn.style.filter = "none";
-        pdfBtn.style.background = "#dc3545"; // Rouge
-        pdfBtn.style.color = "#ffffff";
-        pdfBtn.style.border = "1px solid #b02a37";
-        pdfBtn.style.boxShadow = "0 2px 8px rgba(220,53,69,0.25)";
-        pdfBtn.style.fontWeight = "700";
-        pdfBtn.style.padding = "8px 16px";
-        pdfBtn.style.borderRadius = "8px";
-        pdfBtn.textContent = pdfBtn.textContent?.trim() || "Générer PDF";
-        pdfBtn.classList.remove("admin-disabled-no-icon");
-        pdfBtn.title = "Générer PDF - Accessible en mode admin";
-        pdfBtn.setAttribute("data-allow-admin", "true");
-        pdfBtn.classList.add("admin-allowed-button");
-
-        // Hover
+        pdfBtn.style.cssText += `
+          background: #dc3545 !important;
+          color: #ffffff !important;
+          border-color: #b02a37 !important;
+        `;
         pdfBtn.addEventListener("mouseenter", () => {
-          pdfBtn.style.background = "#b02a37";
-          pdfBtn.style.borderColor = "#8c222c";
+          pdfBtn.style.background = "#b02a37 !important";
         });
         pdfBtn.addEventListener("mouseleave", () => {
-          pdfBtn.style.background = "#dc3545";
-          pdfBtn.style.borderColor = "#b02a37";
+          pdfBtn.style.background = "#dc3545 !important";
         });
       }
     } catch (e) {
