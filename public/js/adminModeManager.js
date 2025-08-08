@@ -275,6 +275,13 @@ class AdminModeManager {
           ? "Déconnexion non autorisée en mode admin"
           : "Modification non autorisée en mode admin";
 
+        // Retirer l'icône d'accessibilité barrée
+        element.style.position = "relative";
+        element.style.overflow = "hidden";
+
+        // Ajouter une classe pour identifier les éléments désactivés sans icône
+        element.classList.add("admin-disabled-no-icon");
+
         // Empêcher tous les événements sauf pour les N° TC en mode acconier
         const isTcElement =
           targetPage === "acconier" &&
@@ -451,6 +458,7 @@ class AdminModeManager {
     button.style.cursor = "not-allowed";
     button.style.pointerEvents = "none";
     button.title = "Déconnexion non autorisée en mode admin";
+    button.classList.add("admin-disabled-no-icon");
 
     // Supprimer tous les événements onclick
     button.removeAttribute("onclick");
@@ -769,6 +777,7 @@ class AdminModeManager {
       element.style.opacity = "0.7";
       element.title = tooltipMessage;
       element.setAttribute("data-locked", "true");
+      element.classList.add("admin-disabled-no-icon");
 
       // Empêcher tous les événements de modification
       ["click", "input", "change", "keydown", "keyup", "focus", "blur"].forEach(
@@ -850,24 +859,26 @@ class AdminModeManager {
     // Créer le bouton unique
     const refreshBtn = document.createElement("button");
     refreshBtn.className = "admin-refresh-btn";
-    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
-    refreshBtn.title = "Actualiser les données";
+    refreshBtn.innerHTML = '<i class="fas fa-redo-alt"></i>';
+    refreshBtn.title = "Actualiser la page";
     refreshBtn.style.cssText = `
-      background: #28a745;
+      background: linear-gradient(135deg, #007bff, #0056b3);
       color: white;
       border: none;
-      padding: 12px 16px;
-      border-radius: 50%;
+      padding: 14px 18px;
+      border-radius: 12px;
       cursor: pointer;
-      font-size: 22px;
+      font-size: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto;
-      box-shadow: 0 2px 8px rgba(40,167,69,0.15);
+      margin: 10px auto;
+      box-shadow: 0 4px 12px rgba(0,123,255,0.25);
       transition: all 0.3s ease;
       position: relative;
       z-index: 10001;
+      min-width: 50px;
+      min-height: 50px;
     `;
 
     // Centrer le bouton dans le conteneur des dates
@@ -888,24 +899,64 @@ class AdminModeManager {
 
     // Animation et effet hover
     refreshBtn.addEventListener("mouseenter", () => {
-      refreshBtn.style.background = "#218838";
-      refreshBtn.style.transform = "scale(1.12) rotate(10deg)";
+      refreshBtn.style.background = "linear-gradient(135deg, #0056b3, #004085)";
+      refreshBtn.style.transform = "scale(1.1) rotate(15deg)";
+      refreshBtn.style.boxShadow = "0 6px 20px rgba(0,123,255,0.4)";
     });
     refreshBtn.addEventListener("mouseleave", () => {
-      refreshBtn.style.background = "#28a745";
+      refreshBtn.style.background = "linear-gradient(135deg, #007bff, #0056b3)";
       refreshBtn.style.transform = "scale(1) rotate(0deg)";
+      refreshBtn.style.boxShadow = "0 4px 12px rgba(0,123,255,0.25)";
     });
 
-    // Action : recharge la page
+    // Action : recharge la page avec l'URL spécifique
     refreshBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      this.refreshPageData();
+      this.refreshPageToAdminMode();
     });
     console.log("✅ Bouton d'actualisation unique ajouté");
   }
 
   /**
-   * Rafraîchit les données de la page
+   * Rafraîchit la page en mode admin avec l'URL spécifique
+   */
+  refreshPageToAdminMode() {
+    console.log("🔄 Rafraîchissement vers le mode admin...");
+
+    // Afficher un indicateur de chargement
+    const refreshIndicator = document.createElement("div");
+    refreshIndicator.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 123, 255, 0.95);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      z-index: 10002;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 8px 25px rgba(0,123,255,0.3);
+    `;
+    refreshIndicator.innerHTML = `
+      <i class="fas fa-redo-alt fa-spin"></i>
+      Actualisation de la page...
+    `;
+    document.body.appendChild(refreshIndicator);
+
+    // Rediriger vers l'URL spécifique après un délai
+    setTimeout(() => {
+      window.location.href =
+        "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?mode=admin";
+    }, 1200);
+  }
+
+  /**
+   * Rafraîchit les données de la page (méthode de fallback)
    */
   refreshPageData() {
     console.log("🔄 Rafraîchissement des données...");
@@ -1163,6 +1214,7 @@ class AdminModeManager {
         btn.style.cursor = "not-allowed";
         btn.style.pointerEvents = "none";
         btn.title = "Enregistrement non autorisé en mode admin";
+        btn.classList.add("admin-disabled-no-icon");
 
         // Bloquer tous les événements
         ["click", "mousedown", "mouseup"].forEach((eventType) => {
@@ -1366,6 +1418,7 @@ class AdminModeManager {
       element.style.cursor = "not-allowed";
       element.style.opacity = "0.7";
       element.title = tooltipMessage;
+      element.classList.add("admin-disabled-no-icon");
 
       // Empêcher tous les événements
       ["click", "input", "change", "keydown", "keyup", "focus"].forEach(
@@ -1448,6 +1501,7 @@ class AdminModeManager {
         input.style.background = "#f8f9fa";
         input.style.cursor = "not-allowed";
         input.title = "N° TC - Information uniquement";
+        input.classList.add("admin-disabled-no-icon");
       }
     });
   }
@@ -1678,6 +1732,43 @@ class AdminModeManager {
       const style = document.createElement("style");
       style.id = "admin-theme-compatibility";
       style.textContent = `
+        /* Retirer les icônes d'accessibilité barrée des éléments désactivés */
+        .admin-disabled-no-icon::before,
+        .admin-disabled-no-icon::after {
+          display: none !important;
+        }
+        
+        /* Masquer toutes les icônes d'accessibilité sur les éléments désactivés */
+        .admin-view-mode input:disabled::before,
+        .admin-view-mode input:disabled::after,
+        .admin-view-mode button:disabled::before,
+        .admin-view-mode button:disabled::after,
+        .admin-view-mode select:disabled::before,
+        .admin-view-mode select:disabled::after,
+        .admin-view-mode textarea:disabled::before,
+        .admin-view-mode textarea:disabled::after {
+          display: none !important;
+          content: none !important;
+        }
+        
+        /* Champ de recherche en mode clair - texte vert pour bonne lisibilité */
+        .admin-view-mode #searchInput,
+        .admin-view-mode .search-input,
+        .admin-view-mode input[placeholder*='recherche'],
+        .admin-view-mode input[placeholder*='Recherche'] {
+          color: #28a745 !important;
+          font-weight: 500 !important;
+        }
+        
+        /* Champ de recherche en mode clair - placeholder vert */
+        .admin-view-mode #searchInput::placeholder,
+        .admin-view-mode .search-input::placeholder,
+        .admin-view-mode input[placeholder*='recherche']::placeholder,
+        .admin-view-mode input[placeholder*='Recherche']::placeholder {
+          color: #198754 !important;
+          opacity: 0.7 !important;
+        }
+
         /* Mode sombre - En-têtes de colonnes en blanc */
         [data-theme="dark"] .admin-view-mode th,
         [data-theme="dark"] .admin-view-mode .table-header {
@@ -1698,6 +1789,23 @@ class AdminModeManager {
           background-color: #374151 !important;
           color: #9ca3af !important;
           border-color: #4b5563 !important;
+        }
+        
+        /* Mode sombre - Champ de recherche */
+        [data-theme="dark"] .admin-view-mode #searchInput,
+        [data-theme="dark"] .admin-view-mode .search-input,
+        [data-theme="dark"] .admin-view-mode input[placeholder*='recherche'],
+        [data-theme="dark"] .admin-view-mode input[placeholder*='Recherche'] {
+          color: #60a5fa !important;
+          font-weight: 500 !important;
+        }
+        
+        [data-theme="dark"] .admin-view-mode #searchInput::placeholder,
+        [data-theme="dark"] .admin-view-mode .search-input::placeholder,
+        [data-theme="dark"] .admin-view-mode input[placeholder*='recherche']::placeholder,
+        [data-theme="dark"] .admin-view-mode input[placeholder*='Recherche']::placeholder {
+          color: #93c5fd !important;
+          opacity: 0.7 !important;
         }
 
         /* Mode clair - Assurer la lisibilité */
