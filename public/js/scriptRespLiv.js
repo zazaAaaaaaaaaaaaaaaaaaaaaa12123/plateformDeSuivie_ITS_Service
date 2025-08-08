@@ -1529,8 +1529,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     if (delivery.id) {
       tr.setAttribute("data-delivery-id", delivery.id);
     }
-    // Champs facultatifs pour ce delivery (plus d'obligation)
-    const optionalFields = [
+
+    // Gestion dynamique du message d'accès
+    let lastAccessState = null;
+    let confirmationShown = false;
+
+    // Génère une clé unique pour chaque cellule éditable (par livraison et colonne)
+    function getCellStorageKey(delivery, colId) {
+      return `deliverycell_${
+        delivery.id || delivery.dossier_number || i
+      }_${colId}`;
+    }
+
+    // Champs obligatoires pour ce delivery
+    const requiredFields = [
       "visitor_agent_name",
       "transporter",
       "inspector",
@@ -1539,14 +1551,27 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       "driver_phone",
       "delivery_date",
     ];
-    // Fonction pour vérifier si tous les champs sont remplis (maintenant facultatif - toujours autorisé)
+    // Fonction pour vérifier si tous les champs obligatoires sont remplis
     function isAllRequiredFilled() {
-      // Les champs sont maintenant facultatifs, donc toujours autorisé
-      return true;
+      return requiredFields.every((fieldId) => {
+        // Vérifier d'abord dans localStorage (valeurs éditées)
+        const storageKey = getCellStorageKey(delivery, fieldId);
+        const savedValue = localStorage.getItem(storageKey);
+
+        if (savedValue && savedValue.trim() !== "" && savedValue !== "-") {
+          return true;
+        }
+
+        // Vérifier dans les données originales de la livraison
+        const originalValue = delivery[fieldId];
+        return (
+          originalValue &&
+          originalValue.toString().trim() !== "" &&
+          originalValue !== "-"
+        );
+      });
     }
-    // Gestion dynamique du message d'accès
-    let lastAccessState = null;
-    let confirmationShown = false;
+
     AGENT_TABLE_COLUMNS.forEach((col, idx) => {
       // Colonne sélection : case à cocher
       if (col.id === "select_row") {
@@ -1771,7 +1796,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 ev.stopPropagation();
                 popup.style.display = "none";
 
-                // 🔧 MODIFICATION AMÉLIORÉE : Permettre la modification une fois que la livraison a été "activée"
+                // 🔧 MODIFICATION AMÉLIORÉE : Vérifier les champs obligatoires avant modification
                 let canModify = isAllRequiredFilled();
 
                 // Vérifier si cette livraison a déjà été "activée" pour les modifications
@@ -1802,8 +1827,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   }
                 }
 
-                // Permettre la modification maintenant que les champs sont facultatifs
-                // Accès libre pour tous les utilisateurs
+                // Bloquer la modification si les champs obligatoires ne sont pas remplis ET la livraison n'a pas d'historique de statuts
+                if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
+                  showAccessMessage(
+                    "⚠️ Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                    "red"
+                  );
+                  return;
+                }
+
+                // Permettre la modification si les conditions sont remplies
                 showContainerDetailPopup(delivery, item.textContent);
               };
             });
@@ -1815,7 +1848,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               ev.stopPropagation();
               popup.style.display = "none";
 
-              // Les champs sont maintenant facultatifs - plus de vérification
+              // Vérifier les champs obligatoires avant modification globale
+              if (!isAllRequiredFilled()) {
+                showAccessMessage(
+                  "⚠️ Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                  "red"
+                );
+                return;
+              }
 
               if (
                 !confirm(
@@ -1860,6 +1900,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             unmarkAllBtn.onclick = async (ev) => {
               ev.stopPropagation();
               popup.style.display = "none";
+
+              // Vérifier les champs obligatoires avant modification globale
+              if (!isAllRequiredFilled()) {
+                showAccessMessage(
+                  "⚠️ Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                  "red"
+                );
+                return;
+              }
 
               if (
                 !confirm(
@@ -4132,4 +4181,4 @@ window.showHistoryEntryDetail = function (entryId) {
 
 // ========================================================================
 // === FIN HISTORIQUE PROFESSIONNEL ===
-// ========================================================================
+// =========================================================================
