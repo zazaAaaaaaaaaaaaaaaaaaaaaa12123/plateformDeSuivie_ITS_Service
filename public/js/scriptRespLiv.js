@@ -4671,16 +4671,4 @@ window.showHistoryEntryDetail = function (entryId) {
     if (e.target === modal) modal.remove();
   };
 };
-
-// ========================================================================
-<<<<<<< HEAD
-// === FIN HISTORIQUE PROFESSIONNEL ====
-// ======================================================================
-=======
-// === FIN HISTORIQUE PROFESSIONNEL ===
-// =========================================================================
-
-// Exposer les fonctions globalement pour le mode admin
-window.generateEtatSortiePdf = generateEtatSortiePdf;
-window.showProfessionalHistoryModal = showProfessionalHistoryModal;
->>>>>>> e00f5802ab0a752e5d6835471352f97244fe0579
+/*****fdgx */
