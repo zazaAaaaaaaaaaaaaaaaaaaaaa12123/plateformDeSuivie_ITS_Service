@@ -1229,15 +1229,8 @@ class AdminModeManager {
     }, 10);
 
     // Fermer en cliquant à l'extérieur du contenu
-    // Fermer en cliquant n'importe où sauf le contenu
-    modal.addEventListener("click", (e) => {
-      // Si on clique sur le fond (modal) ou en dehors du contenu, fermer
-      if (e.target === modal || !content.contains(e.target)) {
-        closeModal();
-        return;
-      }
-      // Sinon, ne rien faire (le reste est géré par le handler du contenu)
-    });
+    // Fermer uniquement avec les boutons dédiés, pas en cliquant sur le fond
+    // (ne rien faire ici, la fermeture est gérée par les boutons)
 
     // Rendre la popup accessible : seul le boutongvh fermer est interactif, le reste est lecture seule
     content.addEventListener("click", (e) => {
