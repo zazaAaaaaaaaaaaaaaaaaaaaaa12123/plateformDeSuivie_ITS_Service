@@ -2862,15 +2862,42 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   "mise-en-livraison-success-alert"
                 );
                 if (oldAlert) oldAlert.remove();
-                // (Aucun bloc Numéro du conteneur dans la pop-up BL)
-                alert.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
-                alert.style.zIndex = 99999;
-                alert.style.opacity = "0";
-                alert.style.transition = "opacity 0.3s";
+
+                // Créer l'élément d'alerte de succès
+                const alert = document.createElement("div");
+                alert.id = "mise-en-livraison-success-alert";
+                alert.innerHTML = `
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <i class="fas fa-check-circle" style="color:#22c55e;font-size:1.3em;"></i>
+                    <span style="font-weight:600;color:#16a34a;">Dossier mise en livraison effectué</span>
+                  </div>
+                `;
+                alert.style.cssText = `
+                  position: fixed;
+                  top: 20px;
+                  right: 20px;
+                  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+                  color: #16a34a;
+                  padding: 16px 24px;
+                  border-radius: 12px;
+                  border: 2px solid #22c55e;
+                  font-size: 1em;
+                  font-family: 'Segoe UI', sans-serif;
+                  box-shadow: 0 6px 32px rgba(34,197,94,0.18);
+                  z-index: 99999;
+                  opacity: 0;
+                  transition: opacity 0.3s ease;
+                  min-width: 280px;
+                `;
+
                 document.body.appendChild(alert);
+
+                // Animation d'apparition
                 setTimeout(() => {
                   alert.style.opacity = "1";
                 }, 10);
+
+                // Animation de disparition
                 setTimeout(() => {
                   alert.style.opacity = "0";
                   setTimeout(() => alert.remove(), 400);
