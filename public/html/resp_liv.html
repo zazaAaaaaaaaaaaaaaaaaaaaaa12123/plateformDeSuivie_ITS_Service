@@ -772,6 +772,43 @@
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
+
+      /* ===== Optimisations spécifiques au mode admin (colle tout en haut) ===== */
+      /* Cache l'entête décoratif pour remonter immédiatement les filtres */
+      body.admin-view-mode .card-section > .d-flex.align-items-center.justify-content-between.flex-wrap.gap-3.mb-4 {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Rend la barre de filtres sticky sous la bannière admin fixe */
+      body.admin-view-mode .d-flex.justify-content-center.align-items-center.flex-wrap.gap-2.mb-3 {
+        position: sticky !important;
+        top: 0 !important; /* le body reçoit déjà un padding-top par adminMode pour la bannière */
+        z-index: 30 !important;
+        margin: 0 0 6px 0 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        background: #f8fafc !important;
+      }
+      /* Assure une zone de scroll confortable pour voir le bas du tableau */
+      body.admin-view-mode #tableScrollContainer {
+        height: calc(100vh - 140px) !important; /* espace pour la barre sticky + pagination */
+        max-height: calc(100vh - 140px) !important;
+        margin: 0 auto !important;
+      }
+
+      /* Ajuste la pagination pour qu'elle reste visible et proche du tableau */
+      body.admin-view-mode nav[aria-label="Pagination livraisons"] {
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+      }
+
+      @media (max-width: 600px) {
+        body.admin-view-mode #tableScrollContainer {
+          height: calc(100vh - 160px) !important; /* un peu plus d'espace sur mobile */
+          max-height: calc(100vh - 160px) !important;
+        }
+      }
     </style>  
     </head>
 
