@@ -174,13 +174,25 @@ class AdminModeManager {
           btn.getAttribute("onclick").toLowerCase().includes("deconnect") ||
           btn.getAttribute("onclick").toLowerCase().includes("login"));
 
-      // Ne pas bloquer les boutons de thème
+      // Ne pas bloquer les boutons de thème - détection améliorée
       const isThemeButton =
         btn.classList.contains("theme-toggle") ||
+        btn.classList.contains("theme-btn") ||
+        btn.classList.contains("theme-switch") ||
         btn.id.includes("theme") ||
+        btn.id === "darkModeToggle" ||
+        btn.id === "lightModeToggle" ||
         btn.closest(".theme-switcher") ||
+        btn.closest(".theme-toggle") ||
+        btn.closest("[class*='theme']") ||
         text.includes("thème") ||
-        text.includes("theme");
+        text.includes("theme") ||
+        text.includes("clair") ||
+        text.includes("sombre") ||
+        text.includes("dark") ||
+        text.includes("light") ||
+        btn.getAttribute("onclick")?.includes("theme") ||
+        btn.getAttribute("onclick")?.includes("Mode");
 
       if ((isLogout || isLogoutClass || isLogoutOnClick) && !isThemeButton) {
         this.disableLogoutButton(btn);
@@ -205,17 +217,33 @@ class AdminModeManager {
         buttonText.includes("close") ||
         buttonText.includes("thème") ||
         buttonText.includes("theme") ||
+        buttonText.includes("clair") ||
+        buttonText.includes("sombre") ||
+        buttonText.includes("dark") ||
+        buttonText.includes("light") ||
         element.classList.contains("close") ||
         element.classList.contains("theme-toggle") ||
+        element.classList.contains("theme-btn") ||
+        element.classList.contains("theme-switch") ||
         element.id.includes("close") ||
         element.id.includes("theme") ||
+        element.id === "darkModeToggle" ||
+        element.id === "lightModeToggle" ||
         element.getAttribute("data-allow-admin") === "true";
 
-      // Autoriser les interactions avec les thèmes
+      // Autoriser les interactions avec les thèmes - détection améliorée
       const isThemeElement =
         element.classList.contains("theme-toggle") ||
+        element.classList.contains("theme-btn") ||
+        element.classList.contains("theme-switch") ||
         element.id.includes("theme") ||
-        element.closest(".theme-switcher");
+        element.id === "darkModeToggle" ||
+        element.id === "lightModeToggle" ||
+        element.closest(".theme-switcher") ||
+        element.closest(".theme-toggle") ||
+        element.closest("[class*='theme']") ||
+        element.getAttribute("onclick")?.includes("theme") ||
+        element.getAttribute("onclick")?.includes("Mode");
 
       // Bloquer explicitement les boutons de déconnexion/connexion
       const isLogoutButton =
@@ -301,11 +329,24 @@ class AdminModeManager {
             buttonText.includes("close") ||
             buttonText.includes("thème") ||
             buttonText.includes("theme") ||
+            buttonText.includes("clair") ||
+            buttonText.includes("sombre") ||
+            buttonText.includes("dark") ||
+            buttonText.includes("light") ||
             button.classList.contains("close") ||
             button.classList.contains("theme-toggle") ||
+            button.classList.contains("theme-btn") ||
+            button.classList.contains("theme-switch") ||
             button.id.includes("close") ||
             button.id.includes("theme") ||
-            button.getAttribute("data-allow-admin") === "true";
+            button.id === "darkModeToggle" ||
+            button.id === "lightModeToggle" ||
+            button.closest(".theme-switcher") ||
+            button.closest(".theme-toggle") ||
+            button.closest("[class*='theme']") ||
+            button.getAttribute("data-allow-admin") === "true" ||
+            button.getAttribute("onclick")?.includes("theme") ||
+            button.getAttribute("onclick")?.includes("Mode");
 
           // Vérifier si c'est un élément TC autorisé
           const isTcElement =
@@ -586,10 +627,14 @@ class AdminModeManager {
       const headers = table.querySelectorAll("th");
       let observationsColumnIndex = -1;
 
-      // Trouver l'index de la colonne Observations
+      // Trouver l'index de la colonne Observations avec une recherche plus flexible
       headers.forEach((header, index) => {
         const headerText = header.textContent.trim().toLowerCase();
-        if (headerText.includes("observation")) {
+        if (
+          headerText.includes("observation") ||
+          headerText.includes("obs") ||
+          headerText === "observations"
+        ) {
           observationsColumnIndex = index;
           console.log(`🔒 Colonne Observations trouvée: index ${index}`);
         }
@@ -601,14 +646,126 @@ class AdminModeManager {
         rows.forEach((row) => {
           const cells = row.querySelectorAll("td");
           if (cells[observationsColumnIndex]) {
-            this.lockTableCell(
+            this.lockObservationCell(
               cells[observationsColumnIndex],
               "Colonne Observations - Lecture seule en mode admin"
             );
           }
         });
+
+        // Ajouter un style spécial pour indiquer que c'est une colonne en lecture seule
+        if (headers[observationsColumnIndex]) {
+          headers[observationsColumnIndex].style.background = "#f8f9fa";
+          headers[observationsColumnIndex].style.position = "relative";
+          headers[observationsColumnIndex].innerHTML +=
+            ' <i class="fas fa-lock" style="color: #6c757d; font-size: 0.8em;" title="Lecture seule"></i>';
+        }
       }
     }
+
+    // Empêcher aussi toute modification via les événements globaux sur les observations
+    setTimeout(() => {
+      this.preventObservationEditing();
+    }, 1000);
+  }
+
+  /**
+   * Verrouille spécifiquement une cellule d'observation
+   */
+  lockObservationCell(cell, tooltipMessage) {
+    // Marquer la cellule comme étant une observation
+    cell.setAttribute("data-observation-cell", "true");
+
+    // Ajouter la classe CSS pour le style
+    cell.classList.add("locked-observation-cell");
+
+    // Style visuel pour indiquer la lecture seule
+    cell.style.backgroundColor = "#f8f9fa";
+    cell.style.opacity = "0.9";
+    cell.style.border = "1px solid #dee2e6";
+    cell.style.position = "relative";
+    cell.title = tooltipMessage;
+
+    // Verrouiller tous les éléments interactifs dans la cellule
+    const interactiveElements = cell.querySelectorAll(
+      "input, select, textarea, button, a"
+    );
+
+    interactiveElements.forEach((element) => {
+      element.readOnly = true;
+      element.disabled = true;
+      element.style.background = "#f8f9fa";
+      element.style.cursor = "not-allowed";
+      element.style.opacity = "0.7";
+      element.title = tooltipMessage;
+      element.setAttribute("data-locked", "true");
+
+      // Empêcher tous les événements de modification
+      ["click", "input", "change", "keydown", "keyup", "focus", "blur"].forEach(
+        (eventType) => {
+          element.addEventListener(
+            eventType,
+            (e) => {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+              this.showAdminModeAlert(
+                "Modification des observations non autorisée en mode admin"
+              );
+              return false;
+            },
+            true
+          );
+        }
+      );
+    });
+
+    // Si la cellule contient du texte directement, l'afficher proprement
+    if (cell.textContent && !interactiveElements.length) {
+      const content = cell.textContent.trim();
+      cell.innerHTML = `<span style="color: #495057; font-style: italic;">${
+        content || "Aucune observation"
+      }</span>`;
+    }
+  }
+
+  /**
+   * Empêche toute modification des observations de façon globale
+   */
+  preventObservationEditing() {
+    // Intercepter tous les clics sur les cellules d'observations
+    document.addEventListener(
+      "click",
+      (e) => {
+        const observationCell = e.target.closest(
+          '[data-observation-cell="true"]'
+        );
+        if (observationCell) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          this.showAdminModeAlert(
+            "Les observations sont en lecture seule en mode admin"
+          );
+          return false;
+        }
+      },
+      true
+    );
+
+    // Empêcher le double-clic sur les observations
+    document.addEventListener(
+      "dblclick",
+      (e) => {
+        const observationCell = e.target.closest(
+          '[data-observation-cell="true"]'
+        );
+        if (observationCell) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return false;
+        }
+      },
+      true
+    );
   }
 
   /**
@@ -934,6 +1091,18 @@ class AdminModeManager {
       .map((tc) => tc.trim())
       .filter((tc) => tc);
 
+    // Détecter le thème actuel
+    const isDarkMode =
+      document.documentElement.getAttribute("data-theme") === "dark" ||
+      document.body.classList.contains("dark-theme") ||
+      document.body.classList.contains("dark-mode");
+
+    const backgroundColor = isDarkMode ? "#374151" : "white";
+    const textColor = isDarkMode ? "#e5e7eb" : "#374151";
+    const headerColor = isDarkMode ? "#60a5fa" : "#2563eb";
+    const listItemBg = isDarkMode ? "#4b5563" : "#f8fafc";
+    const borderColor = isDarkMode ? "#60a5fa" : "#2563eb";
+
     const modal = document.createElement("div");
     modal.style.cssText = `
       position: fixed;
@@ -941,7 +1110,7 @@ class AdminModeManager {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.6);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -950,14 +1119,16 @@ class AdminModeManager {
 
     const content = document.createElement("div");
     content.style.cssText = `
-      background: white;
+      background: ${backgroundColor};
+      color: ${textColor};
       padding: 20px;
       border-radius: 10px;
       max-width: 400px;
       max-height: 70vh;
       overflow-y: auto;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
       position: relative;
+      border: 2px solid ${borderColor};
     `;
 
     content.innerHTML = `
@@ -977,13 +1148,16 @@ class AdminModeManager {
         justify-content: center;
         font-size: 16px;
         z-index: 10003;
+        transition: all 0.2s ease;
       " title="Fermer">
         ×
       </button>
-      <h3 style="margin-top: 0; color: #2563eb; padding-right: 40px;">
+      <h3 style="margin-top: 0; color: ${headerColor}; padding-right: 40px;">
         <i class="fas fa-info-circle"></i> Numéros TC
       </h3>
-      <p style="margin: 10px 0; color: #6b7280; font-size: 0.9em;">
+      <p style="margin: 10px 0; color: ${
+        isDarkMode ? "#9ca3af" : "#6b7280"
+      }; font-size: 0.9em;">
         Informations en lecture seule
       </p>
       <ul style="list-style: none; padding: 0;">
@@ -993,9 +1167,10 @@ class AdminModeManager {
           <li style="
             padding: 8px 12px;
             margin: 5px 0;
-            background: #f8fafc;
-            border-left: 3px solid #2563eb;
+            background: ${listItemBg};
+            border-left: 3px solid ${borderColor};
             border-radius: 4px;
+            color: ${textColor};
           ">
             ${tc}
           </li>
@@ -1004,7 +1179,7 @@ class AdminModeManager {
           .join("")}
       </ul>
       <button class="close-modal-bottom-btn" style="
-        background: #2563eb;
+        background: ${borderColor};
         color: white;
         border: none;
         padding: 8px 16px;
@@ -1013,34 +1188,84 @@ class AdminModeManager {
         font-weight: 600;
         margin-top: 15px;
         width: 100%;
+        transition: all 0.2s ease;
       ">
         Fermer
       </button>
     `;
 
-    modal.className = "modal";
+    modal.className = "modal admin-tc-modal";
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    // Fonction pour fermer la modal
+    // Fonction pour fermer la modal avec animation
     const closeModal = () => {
-      modal.remove();
+      modal.style.opacity = "0";
+      setTimeout(() => {
+        if (modal.parentNode) {
+          modal.remove();
+        }
+      }, 200);
     };
 
-    // Fermer en cliquant à l'extérieur
+    // Animation d'ouverture
+    modal.style.opacity = "0";
+    modal.style.transition = "opacity 0.2s ease";
+    setTimeout(() => {
+      modal.style.opacity = "1";
+    }, 10);
+
+    // Fermer en cliquant à l'extérieur du contenu
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
         closeModal();
       }
     });
 
-    // Fermer avec le bouton X
-    const closeBtn = content.querySelector(".close-modal-btn");
-    closeBtn.addEventListener("click", closeModal);
+    // Empêcher la propagation des clics sur le contenu
+    content.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
 
-    // Fermer avec le bouton Fermer
+    // Fermer avec le bouton X - événement renforcé
+    const closeBtn = content.querySelector(".close-modal-btn");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal();
+      });
+
+      // Ajouter un effet hover
+      closeBtn.addEventListener("mouseenter", () => {
+        closeBtn.style.background = "#c82333";
+        closeBtn.style.transform = "scale(1.1)";
+      });
+      closeBtn.addEventListener("mouseleave", () => {
+        closeBtn.style.background = "#dc3545";
+        closeBtn.style.transform = "scale(1)";
+      });
+    }
+
+    // Fermer avec le bouton Fermer du bas
     const closeBtnBottom = content.querySelector(".close-modal-bottom-btn");
-    closeBtnBottom.addEventListener("click", closeModal);
+    if (closeBtnBottom) {
+      closeBtnBottom.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal();
+      });
+
+      // Ajouter des effets hover pour le bouton du bas
+      closeBtnBottom.addEventListener("mouseenter", () => {
+        closeBtnBottom.style.background = isDarkMode ? "#1d4ed8" : "#1d4ed8";
+        closeBtnBottom.style.transform = "scale(1.02)";
+      });
+      closeBtnBottom.addEventListener("mouseleave", () => {
+        closeBtnBottom.style.background = borderColor;
+        closeBtnBottom.style.transform = "scale(1)";
+      });
+    }
 
     // Fermer avec la touche Escape
     const handleKeyDown = (e) => {
@@ -1191,17 +1416,47 @@ class AdminModeManager {
           opacity: 1 !important;
         }
 
+        /* Styles pour les cellules d'observations verrouillées */
+        .locked-observation-cell {
+          background-color: #f8f9fa !important;
+          opacity: 0.9 !important;
+          border: 1px solid #dee2e6 !important;
+          position: relative !important;
+        }
+
+        [data-theme="dark"] .locked-observation-cell {
+          background-color: #2d3748 !important;
+          border-color: #4a5568 !important;
+          color: #e2e8f0 !important;
+        }
+
+        .locked-observation-cell input,
+        .locked-observation-cell textarea,
+        .locked-observation-cell select {
+          background-color: #f8f9fa !important;
+          cursor: not-allowed !important;
+          opacity: 0.7 !important;
+        }
+
+        [data-theme="dark"] .locked-observation-cell input,
+        [data-theme="dark"] .locked-observation-cell textarea,
+        [data-theme="dark"] .locked-observation-cell select {
+          background-color: #2d3748 !important;
+          color: #e2e8f0 !important;
+          border-color: #4a5568 !important;
+        }
+
         /* Modal TC - Compatibilité thème sombre */
-        [data-theme="dark"] .modal .close-modal-btn {
+        [data-theme="dark"] .admin-tc-modal .close-modal-btn {
           background: #dc3545 !important;
         }
 
-        [data-theme="dark"] .modal div[style*="background: white"] {
+        [data-theme="dark"] .admin-tc-modal div[style*="background: white"] {
           background: #374151 !important;
           color: #e5e7eb !important;
         }
 
-        [data-theme="dark"] .modal h3 {
+        [data-theme="dark"] .admin-tc-modal h3 {
           color: #60a5fa !important;
         }
 
@@ -1257,51 +1512,119 @@ class AdminModeManager {
    * Affiche une alerte personnalisée pour le mode admin
    */
   showAdminModeAlert(message) {
-    // Créer une alerte personnalisée
+    // Créer une alerte personnalisée avec support du thème sombre
     const alert = document.createElement("div");
+    alert.className = "admin-alert-modal";
+
+    // Détecter le thème actuel
+    const isDarkMode =
+      document.documentElement.getAttribute("data-theme") === "dark" ||
+      document.body.classList.contains("dark-theme") ||
+      document.body.classList.contains("dark-mode");
+
+    const backgroundColor = isDarkMode ? "#374151" : "white";
+    const textColor = isDarkMode ? "#e5e7eb" : "#374151";
+    const borderColor = "#dc3545";
+
     alert.style.cssText = `
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: white;
-      border: 3px solid #dc3545;
+      background: ${backgroundColor};
+      border: 3px solid ${borderColor};
       border-radius: 12px;
       padding: 20px;
       z-index: 10001;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
       max-width: 400px;
       text-align: center;
+      animation: alertFadeIn 0.3s ease;
     `;
 
     alert.innerHTML = `
-      <div style="color: #dc3545; font-size: 1.2em; margin-bottom: 10px;">
+      <div style="color: ${borderColor}; font-size: 1.2em; margin-bottom: 10px;">
         <i class="fas fa-exclamation-triangle"></i>
       </div>
-      <div style="color: #374151; font-weight: 600; margin-bottom: 15px;">
+      <div style="color: ${textColor}; font-weight: 600; margin-bottom: 15px;">
         ${message}
       </div>
-      <button onclick="this.parentElement.remove()" style="
-        background: #dc3545;
+      <button class="alert-ok-btn" style="
+        background: ${borderColor};
         color: white;
         border: none;
         padding: 8px 16px;
         border-radius: 6px;
         cursor: pointer;
         font-weight: 600;
+        transition: all 0.2s ease;
       ">
         OK
       </button>
     `;
 
+    // Ajouter l'animation CSS si elle n'existe pas
+    if (!document.getElementById("admin-alert-animation")) {
+      const style = document.createElement("style");
+      style.id = "admin-alert-animation";
+      style.textContent = `
+        @keyframes alertFadeIn {
+          from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+          to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
     document.body.appendChild(alert);
 
-    // Supprimer automatiquement après 3 secondes
+    // Fonction pour fermer l'alerte
+    const closeAlert = () => {
+      alert.style.opacity = "0";
+      alert.style.transform = "translate(-50%, -50%) scale(0.8)";
+      setTimeout(() => {
+        if (alert.parentElement) {
+          alert.remove();
+        }
+      }, 200);
+    };
+
+    // Event listeners pour fermer
+    const okBtn = alert.querySelector(".alert-ok-btn");
+    okBtn.addEventListener("click", closeAlert);
+
+    // Effet hover sur le bouton
+    okBtn.addEventListener("mouseenter", () => {
+      okBtn.style.background = "#c82333";
+      okBtn.style.transform = "scale(1.05)";
+    });
+    okBtn.addEventListener("mouseleave", () => {
+      okBtn.style.background = borderColor;
+      okBtn.style.transform = "scale(1)";
+    });
+
+    // Fermer avec Escape
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        closeAlert();
+        document.removeEventListener("keydown", handleKeyDown);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Fermer en cliquant à l'extérieur
+    alert.addEventListener("click", (e) => {
+      if (e.target === alert) {
+        closeAlert();
+      }
+    });
+
+    // Supprimer automatiquement après 5 secondes
     setTimeout(() => {
       if (alert.parentElement) {
-        alert.remove();
+        closeAlert();
       }
-    }, 3000);
+    }, 5000);
   }
 
   /**
