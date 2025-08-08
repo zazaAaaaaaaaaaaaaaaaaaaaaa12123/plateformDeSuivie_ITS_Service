@@ -407,7 +407,7 @@ class AdminModeManager {
   }
 
   /**
-   * Ajoute un message d'information compact sur le mode admin
+   * Ajoute un message d'information comsdyupact sur le mode admin
    */
   addCompactAdminModeMessage() {
     const message = document.createElement("div");
