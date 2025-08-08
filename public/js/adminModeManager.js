@@ -210,6 +210,15 @@ class AdminModeManager {
       const buttonText = element.textContent
         ? element.textContent.toLowerCase()
         : "";
+
+      // Vérifier si l'élément est explicitement autorisé en mode admin
+      const isAdminAllowed =
+        element.getAttribute("data-allow-admin") === "true" ||
+        element.classList.contains("admin-allowed-field") ||
+        element.classList.contains("admin-allowed-button") ||
+        element.classList.contains("admin-allowed-tc") ||
+        element.classList.contains("admin-allowed-bl-link");
+
       const isNavigationButton =
         buttonText.includes("retour") ||
         buttonText.includes("fermer") ||
@@ -228,8 +237,7 @@ class AdminModeManager {
         element.id.includes("close") ||
         element.id.includes("theme") ||
         element.id === "darkModeToggle" ||
-        element.id === "lightModeToggle" ||
-        element.getAttribute("data-allow-admin") === "true";
+        element.id === "lightModeToggle";
 
       // Autoriser les interactions avec les thèmes - détection améliorée
       const isThemeElement =
@@ -253,7 +261,11 @@ class AdminModeManager {
         buttonText.includes("se connecter") ||
         buttonText.includes("connecter");
 
-      if ((!isNavigationButton && !isThemeElement) || isLogoutButton) {
+      // Ne pas désactiver si l'élément est autorisé en mode admin
+      if (
+        (!isNavigationButton && !isThemeElement && !isAdminAllowed) ||
+        isLogoutButton
+      ) {
         element.disabled = true;
         element.readOnly = true;
         element.style.opacity = "0.5";
@@ -322,6 +334,15 @@ class AdminModeManager {
               ? e.target
               : e.target.closest("button");
           const buttonText = button.textContent.toLowerCase();
+
+          // Vérifier si l'élément est explicitement autorisé en mode admin
+          const isAdminAllowed =
+            button.getAttribute("data-allow-admin") === "true" ||
+            button.classList.contains("admin-allowed-field") ||
+            button.classList.contains("admin-allowed-button") ||
+            button.classList.contains("admin-allowed-tc") ||
+            button.classList.contains("admin-allowed-bl-link");
+
           const isNavigationButton =
             buttonText.includes("retour") ||
             buttonText.includes("fermer") ||
@@ -344,7 +365,6 @@ class AdminModeManager {
             button.closest(".theme-switcher") ||
             button.closest(".theme-toggle") ||
             button.closest("[class*='theme']") ||
-            button.getAttribute("data-allow-admin") === "true" ||
             button.getAttribute("onclick")?.includes("theme") ||
             button.getAttribute("onclick")?.includes("Mode");
 
@@ -363,13 +383,56 @@ class AdminModeManager {
             buttonText.includes("se connecter") ||
             buttonText.includes("connecter");
 
-          if ((!isNavigationButton && !isTcElement) || isLogoutButton) {
+          if (
+            (!isNavigationButton && !isTcElement && !isAdminAllowed) ||
+            isLogoutButton
+          ) {
             e.preventDefault();
             e.stopImmediatePropagation();
             this.showAdminModeAlert(
               isLogoutButton
                 ? "Déconnexion non autorisée en mode visualisation admin"
                 : "Action non autorisée en mode visualisation admin"
+            );
+            return false;
+          }
+        }
+      },
+      true
+    );
+
+    // Gestionnaire spécial pour les liens BL autorisés
+    document.addEventListener(
+      "click",
+      (e) => {
+        if (e.target.tagName === "A" || e.target.closest("a")) {
+          const link =
+            e.target.tagName === "A" ? e.target : e.target.closest("a");
+
+          // Vérifier si c'est un lien BL autorisé
+          const isBlLink =
+            link.classList.contains("admin-allowed-bl-link") ||
+            link.getAttribute("data-allow-admin") === "true" ||
+            link.href?.includes("bl") ||
+            link.classList.contains("bl-link");
+
+          // Si c'est un lien BL autorisé, laisser l'événement se propager normalement
+          if (isBlLink && targetPage === "acconier") {
+            // Ne rien faire, laisser le lien fonctionner normalement
+            console.log("🔗 Lien BL autorisé cliqué:", link);
+            return;
+          }
+
+          // Pour les autres liens non autorisés, bloquer
+          const isThemeLink =
+            link.classList.contains("theme-toggle") ||
+            link.getAttribute("onclick")?.includes("theme");
+
+          if (!isThemeLink && !isBlLink) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            this.showAdminModeAlert(
+              "Lien non autorisé en mode visualisation admin"
             );
             return false;
           }
@@ -595,17 +658,21 @@ class AdminModeManager {
    * Optimisations spécifiques à la page acconier
    */
   optimizeAcconierPage() {
-    // Désactiver complètement les clics sur N° BL
+    // Rendre les N° BL accessibles pour ouvrir les popups en mode lecture
     const blLinks = document.querySelectorAll(
       'a[href*="bl"], .bl-link, td:nth-child(2) a'
     );
     blLinks.forEach((link) => {
-      link.style.pointerEvents = "none";
-      link.style.color = "#6b7280";
-      link.style.textDecoration = "none";
-      link.style.cursor = "default";
-      link.removeAttribute("href");
-      link.title = "Non modifiable en mode admin";
+      // Maintenir l'apparence et la fonctionnalité du lien
+      link.style.pointerEvents = "auto";
+      link.style.color = "#2563eb";
+      link.style.textDecoration = "underline";
+      link.style.cursor = "pointer";
+      link.title = "Cliquez pour voir les détails (lecture seule)";
+      link.setAttribute("data-allow-admin", "true");
+
+      // Ajouter un attribut pour identifier ces liens comme autorisés
+      link.classList.add("admin-allowed-bl-link");
     });
 
     // Verrouiller la colonne Observations
@@ -613,6 +680,9 @@ class AdminModeManager {
 
     // Configurer les N° TC comme informatifs uniquement
     this.setupAcconierTcDisplay();
+
+    // Activer les champs de dates et recherche
+    this.enableAdminAllowedFields();
 
     // Ajouter le bouton de rafraîchissement
     this.addRefreshButton();
@@ -867,6 +937,245 @@ class AdminModeManager {
     setTimeout(() => {
       window.location.reload();
     }, 1000);
+  }
+
+  /**
+   * Active les champs autorisés en mode admin pour la page acconier
+   */
+  enableAdminAllowedFields() {
+    console.log("🔓 Activation des champs autorisés en mode admin...");
+
+    // 1. Activer les champs de dates
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach((input) => {
+      input.disabled = false;
+      input.readOnly = false;
+      input.style.opacity = "1";
+      input.style.cursor = "pointer";
+      input.style.pointerEvents = "auto";
+      input.style.background = "";
+      input.title = "Champ de date - Accessible en mode admin";
+      input.setAttribute("data-allow-admin", "true");
+      input.classList.add("admin-allowed-field");
+    });
+
+    // 2. Activer le champ de recherche et son bouton
+    const searchInput = document.querySelector(
+      "#searchInput, .search-input, input[placeholder*='recherche'], input[placeholder*='Recherche']"
+    );
+    if (searchInput) {
+      searchInput.disabled = false;
+      searchInput.readOnly = false;
+      searchInput.style.opacity = "1";
+      searchInput.style.cursor = "text";
+      searchInput.style.pointerEvents = "auto";
+      searchInput.style.background = "";
+      searchInput.title = "Champ de recherche - Accessible en mode admin";
+      searchInput.setAttribute("data-allow-admin", "true");
+      searchInput.classList.add("admin-allowed-field");
+    }
+
+    const searchButton = document.querySelector(
+      "#searchButton, .search-button, button[type='submit']"
+    );
+    if (searchButton) {
+      searchButton.disabled = false;
+      searchButton.style.opacity = "1";
+      searchButton.style.cursor = "pointer";
+      searchButton.style.pointerEvents = "auto";
+      searchButton.style.background = "";
+      searchButton.title = "Bouton rechercher - Accessible en mode admin";
+      searchButton.setAttribute("data-allow-admin", "true");
+      searchButton.classList.add("admin-allowed-button");
+    }
+
+    // 3. Activer tous les éléments Numéro TC(s) comme interactifs
+    const tcElements = document.querySelectorAll(
+      '.tc-link, .numero-tc, td:nth-child(3), [data-field*="tc"]'
+    );
+    tcElements.forEach((element) => {
+      element.style.pointerEvents = "auto";
+      element.style.cursor = "pointer";
+      element.style.opacity = "1";
+      element.title = "Numéro TC - Accessible en mode admin";
+      element.setAttribute("data-allow-admin", "true");
+      element.classList.add("admin-allowed-tc");
+
+      // Si c'est un input dans une cellule TC
+      const tcInputs = element.querySelectorAll("input, textarea");
+      tcInputs.forEach((input) => {
+        input.disabled = false;
+        input.readOnly = false;
+        input.style.opacity = "1";
+        input.style.cursor = "text";
+        input.style.pointerEvents = "auto";
+        input.style.background = "";
+        input.setAttribute("data-allow-admin", "true");
+      });
+    });
+
+    // 4. Gérer les popups et modales - rendre accessibles avec restrictions
+    this.setupAdminPopupAccess();
+
+    console.log("✅ Champs autorisés activés en mode admin");
+  }
+
+  /**
+   * Configure l'accès aux popups en mode admin
+   */
+  setupAdminPopupAccess() {
+    // Intercepter l'ouverture des popups pour les modifier en mode lecture
+    document.addEventListener("DOMNodeInserted", (e) => {
+      if (e.target.nodeType === 1) {
+        // Element node
+        const modal =
+          e.target.querySelector?.(".modal") ||
+          (e.target.classList?.contains("modal") ? e.target : null);
+        if (modal) {
+          setTimeout(() => {
+            this.adaptModalForAdminMode(modal);
+          }, 100);
+        }
+      }
+    });
+
+    // Observer pour les modales ajoutées dynamiquement
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) {
+            const modal =
+              node.querySelector?.(".modal") ||
+              (node.classList?.contains("modal") ? node : null);
+            if (modal) {
+              setTimeout(() => {
+                this.adaptModalForAdminMode(modal);
+              }, 100);
+            }
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  /**
+   * Adapte une modal pour le mode admin
+   */
+  adaptModalForAdminMode(modal) {
+    console.log("🔧 Adaptation de la modal pour le mode admin...");
+
+    // 1. Rendre le bouton de fermeture X circulaire et accessible
+    const closeBtn = modal.querySelector(
+      '.close, .close-btn, [data-dismiss="modal"], .btn-close'
+    );
+    if (closeBtn) {
+      closeBtn.disabled = false;
+      closeBtn.style.pointerEvents = "auto";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.style.opacity = "1";
+      closeBtn.style.borderRadius = "50%";
+      closeBtn.style.width = "35px";
+      closeBtn.style.height = "35px";
+      closeBtn.style.display = "flex";
+      closeBtn.style.alignItems = "center";
+      closeBtn.style.justifyContent = "center";
+      closeBtn.style.background = "#dc3545";
+      closeBtn.style.color = "white";
+      closeBtn.style.border = "none";
+      closeBtn.style.fontSize = "18px";
+      closeBtn.style.fontWeight = "bold";
+      closeBtn.setAttribute("data-allow-admin", "true");
+      closeBtn.title = "Fermer la popup";
+    }
+
+    // 2. Activer les champs de date dans la modal
+    const modalDateInputs = modal.querySelectorAll('input[type="date"]');
+    modalDateInputs.forEach((input) => {
+      input.disabled = false;
+      input.readOnly = false;
+      input.style.opacity = "1";
+      input.style.cursor = "pointer";
+      input.style.pointerEvents = "auto";
+      input.style.background = "";
+      input.setAttribute("data-allow-admin", "true");
+    });
+
+    // 3. Activer les champs Numéro TC(s) dans la modal
+    const modalTcInputs = modal.querySelectorAll(
+      'input[placeholder*="TC"], input[name*="tc"], textarea[placeholder*="TC"], textarea[name*="tc"]'
+    );
+    modalTcInputs.forEach((input) => {
+      input.disabled = false;
+      input.readOnly = false;
+      input.style.opacity = "1";
+      input.style.cursor = "text";
+      input.style.pointerEvents = "auto";
+      input.style.background = "";
+      input.setAttribute("data-allow-admin", "true");
+    });
+
+    // 4. Désactiver spécifiquement le bouton "Enregistrer" et similaires
+    const saveButtons = modal.querySelectorAll(
+      'button[type="submit"], .btn-primary, .save-btn, .enregistrer-btn'
+    );
+    saveButtons.forEach((btn) => {
+      const btnText = btn.textContent.toLowerCase();
+      if (
+        btnText.includes("enregistrer") ||
+        btnText.includes("sauvegarder") ||
+        btnText.includes("save")
+      ) {
+        btn.disabled = true;
+        btn.style.opacity = "0.3";
+        btn.style.cursor = "not-allowed";
+        btn.style.pointerEvents = "none";
+        btn.title = "Enregistrement non autorisé en mode admin";
+
+        // Bloquer tous les événements
+        ["click", "mousedown", "mouseup"].forEach((eventType) => {
+          btn.addEventListener(
+            eventType,
+            (e) => {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+              this.showAdminModeAlert(
+                "Enregistrement non autorisé en mode visualisation admin"
+              );
+              return false;
+            },
+            true
+          );
+        });
+      }
+    });
+
+    // 5. Ajouter un indicateur visuel à la modal
+    if (!modal.querySelector(".admin-modal-indicator")) {
+      const indicator = document.createElement("div");
+      indicator.className = "admin-modal-indicator";
+      indicator.style.cssText = `
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #2563eb;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75em;
+        font-weight: 600;
+        z-index: 1001;
+      `;
+      indicator.innerHTML = '<i class="fas fa-eye"></i> Mode Lecture';
+      modal.style.position = "relative";
+      modal.appendChild(indicator);
+    }
+
+    console.log("✅ Modal adaptée pour le mode admin");
   }
 
   /**
@@ -1232,22 +1541,29 @@ class AdminModeManager {
     // Fermer uniquement avec les boutons dédiés, pas en cliquant sur le fond
     // (ne rien faire ici, la fermeture est gérée par les boutons)
 
-    // Rendre la popup accessible : seul le boutongvh fermer est interactif, le reste est lecture seule
-    content.addEventListener("click", (e) => {
-      // Si on clique sur le bouton fermer, laisser passer et fermer la popup
-      if (
-        e.target.classList.contains("close-modal-btn") ||
-        e.target.classList.contains("close-modal-bottom-btn")
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-        closeModal();
-        return;
-      }
-      // Sinon, empêcher toute interaction (lecture seule)
-      e.preventDefault();
-      e.stopPropagation();
-    });
+    // Rendre la popup accessible : permet l'interaction avec les éléments de fermeture et autorisés
+    content.addEventListener(
+      "click",
+      (e) => {
+        // Vérifier si l'élément cliqué est autorisé en mode admin
+        const isAllowedElement =
+          e.target.classList.contains("close-modal-btn") ||
+          e.target.classList.contains("close-modal-bottom-btn") ||
+          e.target.closest(".close-modal-btn") ||
+          e.target.closest(".close-modal-bottom-btn") ||
+          e.target.getAttribute("data-allow-admin") === "true" ||
+          e.target.closest("[data-allow-admin='true']");
+
+        // Si ce n'est PAS un élément autorisé, bloquer l'interaction
+        if (!isAllowedElement) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+        // Si c'est un élément autorisé, laisser l'événement se propager normalement
+      },
+      true
+    ); // Utiliser la phase de capture pour intercepter le clic avant tout autre script
 
     // Fermer avec le bouton X - événement renforcé et prioritaire
     const closeBtn = content.querySelector(".close-modal-btn");
@@ -1518,6 +1834,89 @@ class AdminModeManager {
         [data-theme="dark"] .admin-view-mode .locked-cell {
           background-color: #374151 !important;
           border: 1px dashed #4b5563 !important;
+        }
+
+        /* Styles pour les éléments autorisés en mode admin */
+        .admin-view-mode .admin-allowed-field,
+        .admin-view-mode .admin-allowed-button,
+        .admin-view-mode .admin-allowed-tc,
+        .admin-view-mode .admin-allowed-bl-link {
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          cursor: pointer !important;
+          background: inherit !important;
+          border: 2px solid #10b981 !important;
+          box-shadow: 0 0 5px rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .admin-view-mode input.admin-allowed-field {
+          cursor: text !important;
+        }
+
+        /* Indicateur visuel pour les liens BL autorisés */
+        .admin-view-mode .admin-allowed-bl-link {
+          color: #2563eb !important;
+          text-decoration: underline !important;
+          font-weight: 500 !important;
+          position: relative !important;
+        }
+
+        .admin-view-mode .admin-allowed-bl-link::after {
+          content: "📝";
+          position: absolute;
+          right: -20px;
+          top: -2px;
+          font-size: 0.8em;
+          opacity: 0.7;
+        }
+
+        /* Styles pour les modales adaptées en mode admin */
+        .admin-modal-indicator {
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.7; }
+          100% { opacity: 1; }
+        }
+
+        /* Boutons de fermeture circulaires dans les modales */
+        .admin-view-mode .modal .close,
+        .admin-view-mode .modal .close-btn,
+        .admin-view-mode .modal [data-dismiss="modal"] {
+          border-radius: 50% !important;
+          width: 35px !important;
+          height: 35px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          background: #dc3545 !important;
+          color: white !important;
+          border: none !important;
+          font-size: 18px !important;
+          font-weight: bold !important;
+          transition: all 0.2s ease !important;
+        }
+
+        .admin-view-mode .modal .close:hover,
+        .admin-view-mode .modal .close-btn:hover,
+        .admin-view-mode .modal [data-dismiss="modal"]:hover {
+          background: #c82333 !important;
+          transform: scale(1.1) !important;
+        }
+
+        /* Thème sombre pour les éléments autorisés */
+        [data-theme="dark"] .admin-view-mode .admin-allowed-field,
+        [data-theme="dark"] .admin-view-mode .admin-allowed-button,
+        [data-theme="dark"] .admin-view-mode .admin-allowed-tc,
+        [data-theme="dark"] .admin-view-mode .admin-allowed-bl-link {
+          border-color: #10b981 !important;
+          box-shadow: 0 0 5px rgba(16, 185, 129, 0.5) !important;
+        }
+
+        [data-theme="dark"] .admin-view-mode .admin-allowed-bl-link {
+          color: #60a5fa !important;
         }
       `;
       document.head.appendChild(style);
