@@ -3320,53 +3320,165 @@ function showPdfFilterModal() {
   overlay.setAttribute("data-allow-admin", "true");
   overlay.classList.add("admin-allowed-modal");
   const box = document.createElement("div");
-  box.style.background = "#fff";
-  box.style.borderRadius = "16px";
-  box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-  box.style.maxWidth = "420px";
+  box.style.background = "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)";
+  box.style.borderRadius = "20px";
+  box.style.boxShadow =
+    "0 20px 60px rgba(30,41,59,0.15), 0 8px 25px rgba(30,41,59,0.08)";
+  box.style.border = "1px solid rgba(226,232,240,0.8)";
+  box.style.maxWidth = "480px";
   box.style.width = "96vw";
-  box.style.maxHeight = "92vh";
+  box.style.maxHeight = "90vh";
   box.style.overflowY = "auto";
   box.style.padding = "0";
+  box.style.position = "relative";
+  box.style.transform = "scale(0.95)";
+  box.style.transition = "transform 0.2s ease-out";
+  box.style.animation = "modalSlideIn 0.3s ease-out";
+
+  // Animation CSS pour la modal
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes modalSlideIn {
+      0% { 
+        opacity: 0; 
+        transform: scale(0.9) translateY(-20px); 
+      }
+      100% { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  setTimeout(() => {
+    box.style.transform = "scale(1)";
+  }, 10);
   box.style.position = "relative";
   box.style.display = "flex";
   box.style.flexDirection = "column";
   const header = document.createElement("div");
-  header.style.background = "#2563eb";
-  header.style.color = "#fff";
-  header.style.padding = "18px 28px 12px 28px";
-  header.style.fontWeight = "bold";
-  header.style.fontSize = "1.15rem";
+  header.style.background =
+    "linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)";
+  header.style.color = "#ffffff";
+  header.style.padding = "24px 32px 18px 32px";
+  header.style.fontWeight = "600";
+  header.style.fontSize = "1.2rem";
   header.style.display = "flex";
   header.style.flexDirection = "column";
-  header.style.borderTopLeftRadius = "16px";
-  header.style.borderTopRightRadius = "16px";
-  header.innerHTML = `<span style='font-size:1.08em;'>Génération PDF - État des sorties de conteneurs</span>`;
+  header.style.borderTopLeftRadius = "20px";
+  header.style.borderTopRightRadius = "20px";
+  header.style.position = "relative";
+  header.style.boxShadow = "0 2px 8px rgba(59,130,246,0.15)";
+  header.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="
+        width: 24px; 
+        height: 24px; 
+        background: rgba(255,255,255,0.2); 
+        border-radius: 6px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        font-size: 14px;
+      ">📄</div>
+      <span style='font-size: 1.1em; letter-spacing: -0.015em;'>Génération PDF</span>
+    </div>
+    <span style='font-size: 0.85em; opacity: 0.9; margin-top: 4px; font-weight: 400;'>État des sorties de conteneurs</span>
+  `;
+
   const closeBtn = document.createElement("button");
-  closeBtn.innerHTML = "&times;";
-  closeBtn.style.background = "none";
-  closeBtn.style.border = "none";
-  closeBtn.style.color = "#fff";
-  closeBtn.style.fontSize = "2.1rem";
+  closeBtn.innerHTML = "✕";
+  closeBtn.style.background = "rgba(255,255,255,0.15)";
+  closeBtn.style.border = "1px solid rgba(255,255,255,0.2)";
+  closeBtn.style.color = "#ffffff";
+  closeBtn.style.fontSize = "16px";
   closeBtn.style.cursor = "pointer";
   closeBtn.style.position = "absolute";
-  closeBtn.style.top = "10px";
-  closeBtn.style.right = "18px";
+  closeBtn.style.top = "20px";
+  closeBtn.style.right = "24px";
+  closeBtn.style.width = "32px";
+  closeBtn.style.height = "32px";
+  closeBtn.style.borderRadius = "8px";
+  closeBtn.style.display = "flex";
+  closeBtn.style.alignItems = "center";
+  closeBtn.style.justifyContent = "center";
+  closeBtn.style.transition = "all 0.2s ease";
   closeBtn.setAttribute("aria-label", "Fermer");
+
+  closeBtn.onmouseenter = function () {
+    this.style.background = "rgba(255,255,255,0.25)";
+    this.style.transform = "scale(1.05)";
+  };
+  closeBtn.onmouseleave = function () {
+    this.style.background = "rgba(255,255,255,0.15)";
+    this.style.transform = "scale(1)";
+  };
   closeBtn.onclick = () => overlay.remove();
   header.appendChild(closeBtn);
   box.appendChild(header);
   const content = document.createElement("div");
-  content.style.padding = "24px 24px 24px 24px";
-  content.style.background = "#f8fafc";
-  content.style.flex = "1 1 auto";
-  content.style.overflowY = "auto";
-  content.innerHTML = `<div style='margin-bottom:18px;font-weight:600;'>Souhaitez-vous filtrer l'état des sorties de conteneurs par :</div>`;
+  content.style.cssText = `
+    padding: 32px;
+    background: #ffffff;
+    flex: 1 1 auto;
+    overflow-y: auto;
+  `;
+
+  // Ajouter du CSS personnalisé pour le scrollbar
+  const scrollbarStyle = document.createElement("style");
+  scrollbarStyle.textContent = `
+    .modal-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    .modal-content::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    .modal-content::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+      border-radius: 3px;
+    }
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #94a3b8, #64748b);
+    }
+  `;
+  document.head.appendChild(scrollbarStyle);
+  content.classList.add("modal-content");
+
+  // Titre de section avec style amélioré
+  const sectionTitle = document.createElement("div");
+  sectionTitle.style.cssText = `
+    margin-bottom: 24px;
+    font-weight: 600;
+    font-size: 1.1em;
+    color: #1f2937;
+    text-align: center;
+  `;
+  sectionTitle.textContent =
+    "Souhaitez-vous filtrer l'état des sorties de conteneurs par :";
+  content.appendChild(sectionTitle);
+
+  // Container pour les options radio avec style moderne
+  const radioContainer = document.createElement("div");
+  radioContainer.style.cssText = `
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  `;
+
   const radioSingle = document.createElement("input");
   radioSingle.type = "radio";
   radioSingle.name = "pdfDateFilter";
   radioSingle.id = "pdfFilterSingle";
   radioSingle.checked = true;
+  radioSingle.style.cssText = `
+    margin-right: 8px;
+    transform: scale(1.2);
+    accent-color: #2563eb;
+  `;
   // Marquer comme autorisé pour le mode admin
   radioSingle.setAttribute("data-allow-admin", "true");
   radioSingle.classList.add("admin-allowed-field");
@@ -3374,14 +3486,31 @@ function showPdfFilterModal() {
   const labelSingle = document.createElement("label");
   labelSingle.textContent = "Une seule date";
   labelSingle.htmlFor = "pdfFilterSingle";
-  labelSingle.style.marginRight = "18px";
-  labelSingle.style.cursor = "pointer";
+  labelSingle.style.cssText = `
+    cursor: pointer;
+    font-weight: 500;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: #f9fafb;
+    min-width: 140px;
+    justify-content: center;
+  `;
   labelSingle.setAttribute("data-allow-admin", "true");
 
   const radioRange = document.createElement("input");
   radioRange.type = "radio";
   radioRange.name = "pdfDateFilter";
   radioRange.id = "pdfFilterRange";
+  radioRange.style.cssText = `
+    margin-right: 8px;
+    transform: scale(1.2);
+    accent-color: #2563eb;
+  `;
   // Marquer comme autorisé pour le mode admin
   radioRange.setAttribute("data-allow-admin", "true");
   radioRange.classList.add("admin-allowed-field");
@@ -3389,79 +3518,310 @@ function showPdfFilterModal() {
   const labelRange = document.createElement("label");
   labelRange.textContent = "Intervalle de dates";
   labelRange.htmlFor = "pdfFilterRange";
-  labelRange.style.cursor = "pointer";
+  labelRange.style.cssText = `
+    cursor: pointer;
+    font-weight: 500;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: #f9fafb;
+    min-width: 140px;
+    justify-content: center;
+  `;
   labelRange.setAttribute("data-allow-admin", "true");
-  content.appendChild(radioSingle);
-  content.appendChild(labelSingle);
-  content.appendChild(radioRange);
-  content.appendChild(labelRange);
+
+  // Créer des conteneurs pour chaque option radio
+  const singleContainer = document.createElement("div");
+  singleContainer.style.cssText = `display: flex; align-items: center;`;
+  singleContainer.appendChild(radioSingle);
+  singleContainer.appendChild(labelSingle);
+
+  const rangeContainer = document.createElement("div");
+  rangeContainer.style.cssText = `display: flex; align-items: center;`;
+  rangeContainer.appendChild(radioRange);
+  rangeContainer.appendChild(labelRange);
+
+  radioContainer.appendChild(singleContainer);
+  radioContainer.appendChild(rangeContainer);
+  content.appendChild(radioContainer);
+
+  // Effet hover pour les labels
+  const updateLabelStyles = () => {
+    if (radioSingle.checked) {
+      labelSingle.style.background = "#2563eb";
+      labelSingle.style.color = "#ffffff";
+      labelSingle.style.borderColor = "#2563eb";
+      labelRange.style.background = "#f9fafb";
+      labelRange.style.color = "#374151";
+      labelRange.style.borderColor = "#e5e7eb";
+    } else {
+      labelRange.style.background = "#2563eb";
+      labelRange.style.color = "#ffffff";
+      labelRange.style.borderColor = "#2563eb";
+      labelSingle.style.background = "#f9fafb";
+      labelSingle.style.color = "#374151";
+      labelSingle.style.borderColor = "#e5e7eb";
+    }
+  };
+
+  // Initialiser les styles
+  updateLabelStyles();
+
   const dateZone = document.createElement("div");
-  dateZone.style.marginTop = "18px";
+  dateZone.style.cssText = `
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  `;
   content.appendChild(dateZone);
   function renderSingleDateInput() {
     dateZone.innerHTML = "";
+
+    const dateContainer = document.createElement("div");
+    dateContainer.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    `;
+
+    const dateLabel = document.createElement("label");
+    dateLabel.textContent = "Sélectionnez la date :";
+    dateLabel.style.cssText = `
+      font-weight: 500;
+      color: #374151;
+      font-size: 1em;
+    `;
+
     const dateInput = document.createElement("input");
     dateInput.type = "date";
     dateInput.id = "pdfSingleDateInput";
-    dateInput.style.padding = "8px 18px";
-    dateInput.style.borderRadius = "8px";
-    dateInput.style.border = "1.5px solid #2563eb";
-    dateInput.style.fontSize = "1.08em";
-    dateInput.style.marginRight = "12px";
+    dateInput.style.cssText = `
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: 2px solid #d1d5db;
+      font-size: 1.05em;
+      background: #ffffff;
+      color: #374151;
+      min-width: 200px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    `;
     // Marquer comme autorisé pour le mode admin
     dateInput.setAttribute("data-allow-admin", "true");
     dateInput.classList.add("admin-allowed-field");
-    dateZone.appendChild(dateInput);
+
+    // Effet focus
+    dateInput.addEventListener("focus", () => {
+      dateInput.style.borderColor = "#2563eb";
+      dateInput.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
+    });
+
+    dateInput.addEventListener("blur", () => {
+      dateInput.style.borderColor = "#d1d5db";
+      dateInput.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+    });
+
+    dateContainer.appendChild(dateLabel);
+    dateContainer.appendChild(dateInput);
+    dateZone.appendChild(dateContainer);
   }
+
   function renderRangeDateInputs() {
     dateZone.innerHTML = "";
+
+    const rangeContainer = document.createElement("div");
+    rangeContainer.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    `;
+
+    const rangeLabel = document.createElement("label");
+    rangeLabel.textContent = "Sélectionnez la période :";
+    rangeLabel.style.cssText = `
+      font-weight: 500;
+      color: #374151;
+      font-size: 1em;
+    `;
+
+    const datesContainer = document.createElement("div");
+    datesContainer.style.cssText = `
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    `;
+
     const dateStart = document.createElement("input");
     dateStart.type = "date";
     dateStart.id = "pdfRangeDateStart";
-    dateStart.style.padding = "8px 18px";
-    dateStart.style.borderRadius = "8px";
-    dateStart.style.border = "1.5px solid #2563eb";
-    dateStart.style.fontSize = "1.08em";
-    dateStart.style.marginRight = "12px";
+    dateStart.style.cssText = `
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: 2px solid #d1d5db;
+      font-size: 1.05em;
+      background: #ffffff;
+      color: #374151;
+      min-width: 180px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    `;
     // Marquer comme autorisé pour le mode admin
     dateStart.setAttribute("data-allow-admin", "true");
     dateStart.classList.add("admin-allowed-field");
 
+    const dateSeparator = document.createElement("span");
+    dateSeparator.textContent = "à";
+    dateSeparator.style.cssText = `
+      font-weight: 500;
+      color: #6b7280;
+      font-size: 1.1em;
+    `;
+
     const dateEnd = document.createElement("input");
     dateEnd.type = "date";
     dateEnd.id = "pdfRangeDateEnd";
-    dateEnd.style.padding = "8px 18px";
-    dateEnd.style.borderRadius = "8px";
-    dateEnd.style.border = "1.5px solid #2563eb";
-    dateEnd.style.fontSize = "1.08em";
+    dateEnd.style.cssText = `
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: 2px solid #d1d5db;
+      font-size: 1.05em;
+      background: #ffffff;
+      color: #374151;
+      min-width: 180px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    `;
     // Marquer comme autorisé pour le mode admin
     dateEnd.setAttribute("data-allow-admin", "true");
     dateEnd.classList.add("admin-allowed-field");
 
-    dateZone.appendChild(dateStart);
-    dateZone.appendChild(dateEnd);
+    // Effets focus pour les deux inputs
+    [dateStart, dateEnd].forEach((input) => {
+      input.addEventListener("focus", () => {
+        input.style.borderColor = "#2563eb";
+        input.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
+      });
+
+      input.addEventListener("blur", () => {
+        input.style.borderColor = "#d1d5db";
+        input.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+      });
+    });
+
+    datesContainer.appendChild(dateStart);
+    datesContainer.appendChild(dateSeparator);
+    datesContainer.appendChild(dateEnd);
+
+    rangeContainer.appendChild(rangeLabel);
+    rangeContainer.appendChild(datesContainer);
+    dateZone.appendChild(rangeContainer);
   }
   renderSingleDateInput();
-  radioSingle.onchange = renderSingleDateInput;
-  radioRange.onchange = renderRangeDateInputs;
+
+  // Gestionnaires d'événements avec mise à jour des styles
+  radioSingle.onchange = () => {
+    renderSingleDateInput();
+    updateLabelStyles();
+  };
+  radioRange.onchange = () => {
+    renderRangeDateInputs();
+    updateLabelStyles();
+  };
+
+  // Container pour le bouton avec style moderne
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.cssText = `
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+  `;
+
   const validateBtn = document.createElement("button");
-  validateBtn.textContent = "Générer PDF";
-  validateBtn.style.background = "#2563eb";
-  validateBtn.style.color = "#fff";
-  validateBtn.style.fontWeight = "bold";
-  validateBtn.style.border = "none";
-  validateBtn.style.cursor = "pointer";
-  validateBtn.style.borderRadius = "8px";
-  validateBtn.style.padding = "10px 28px";
-  validateBtn.style.fontSize = "1.08em";
-  validateBtn.style.marginTop = "24px";
+  validateBtn.textContent = "📄 Générer PDF";
+  validateBtn.style.cssText = `
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 1.1em;
+    min-width: 180px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  `;
   // Marquer comme autorisé pour le mode admin
   validateBtn.setAttribute("data-allow-admin", "true");
   validateBtn.classList.add("admin-allowed-button");
 
-  // Aussi marquer le bouton de fermeture
+  // Effets hover et focus pour le bouton
+  validateBtn.addEventListener("mouseenter", () => {
+    validateBtn.style.background =
+      "linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)";
+    validateBtn.style.transform = "translateY(-2px)";
+    validateBtn.style.boxShadow = "0 6px 16px rgba(37, 99, 235, 0.4)";
+  });
+
+  validateBtn.addEventListener("mouseleave", () => {
+    validateBtn.style.background =
+      "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)";
+    validateBtn.style.transform = "translateY(0)";
+    validateBtn.style.boxShadow = "0 4px 12px rgba(37, 99, 235, 0.3)";
+  });
+
+  validateBtn.addEventListener("focus", () => {
+    validateBtn.style.outline = "3px solid rgba(37, 99, 235, 0.3)";
+    validateBtn.style.outlineOffset = "2px";
+  });
+
+  validateBtn.addEventListener("blur", () => {
+    validateBtn.style.outline = "none";
+  });
+
+  // Aussi marquer le bouton de fermeture et améliorer son style
   closeBtn.setAttribute("data-allow-admin", "true");
   closeBtn.classList.add("admin-allowed-button");
+  closeBtn.style.cssText += `
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  // Effets hover pour le bouton de fermeture
+  closeBtn.addEventListener("mouseenter", () => {
+    closeBtn.style.background = "rgba(255, 255, 255, 0.2)";
+    closeBtn.style.transform = "scale(1.1)";
+  });
+
+  closeBtn.addEventListener("mouseleave", () => {
+    closeBtn.style.background = "none";
+    closeBtn.style.transform = "scale(1)";
+  });
+
+  buttonContainer.appendChild(validateBtn);
+  content.appendChild(buttonContainer);
   validateBtn.onclick = function () {
     let filterType = radioSingle.checked ? "single" : "range";
     let date1 = null,
@@ -3508,7 +3868,6 @@ function showPdfFilterModal() {
     generateEtatSortiePdf(filtered, date1, date2);
     overlay.remove();
   };
-  content.appendChild(validateBtn);
   box.appendChild(content);
   overlay.appendChild(box);
   document.body.appendChild(overlay);
