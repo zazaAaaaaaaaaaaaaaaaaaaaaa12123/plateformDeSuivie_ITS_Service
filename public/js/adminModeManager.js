@@ -155,6 +155,21 @@ class AdminModeManager {
 
     const targetPage = localStorage.getItem("adminViewTarget");
 
+    // Protection explicite: ne jamais désactiver ces boutons clés
+    const safeIds = ["generatePdfBtn", "professionalHistoryBtn"];
+    safeIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.disabled = false;
+        el.readOnly = false;
+        el.style.opacity = "1";
+        el.style.pointerEvents = "auto";
+        el.style.cursor = "pointer";
+        el.setAttribute("data-allow-admin", "true");
+        el.classList.add("admin-allowed-button");
+      }
+    });
+
     // Désactiver spécifiquement le bouton de déconnexion
     // On ne peut pas utiliser :contains, donc on cherche par texte et par classes/id standards
     const allButtons = document.querySelectorAll("button, a");

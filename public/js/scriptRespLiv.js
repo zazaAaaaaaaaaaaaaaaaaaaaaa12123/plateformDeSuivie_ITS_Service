@@ -3187,6 +3187,12 @@ pdfBtn.style.cssText = `
   margin: 0 0 0 12px; height: 32px; min-width: 110px; white-space: nowrap;
   box-shadow: 0 2px 8px rgba(16,185,129,0.25); vertical-align: middle;
 `;
+// Marquer explicitement comme autorisé en mode admin (dès la création)
+pdfBtn.setAttribute("data-allow-admin", "true");
+pdfBtn.classList.add("admin-allowed-button");
+pdfBtn.disabled = false;
+pdfBtn.style.opacity = "1";
+pdfBtn.style.pointerEvents = "auto";
 pdfBtn.onmouseenter = () => {
   pdfBtn.style.background = "#059669";
   pdfBtn.style.borderColor = "#047857";
@@ -3210,6 +3216,12 @@ document.addEventListener("DOMContentLoaded", function () {
       btn.style.background = "linear-gradient(90deg,#10B981 0%,#059669 100%)";
       btn.style.color = "#ffffff";
       btn.style.border = "1px solid #059669";
+      // Renforcer le statut autorisé admin
+      btn.setAttribute("data-allow-admin", "true");
+      btn.classList.add("admin-allowed-button");
+      btn.disabled = false;
+      btn.style.opacity = "1";
+      btn.style.pointerEvents = "auto";
     }
   }, 0);
 
@@ -3748,6 +3760,12 @@ function showHistoryButtonIfNeeded() {
       margin: 0 8px 0 0; height: 32px; min-width: 100px; white-space: nowrap;
       box-shadow: 0 2px 8px rgba(16,185,129,0.25); vertical-align: middle;
     `;
+    // Marquer explicitement comme autorisé en mode admin (dès la création)
+    historyBtn.setAttribute("data-allow-admin", "true");
+    historyBtn.classList.add("admin-allowed-button");
+    historyBtn.disabled = false;
+    historyBtn.style.opacity = "1";
+    historyBtn.style.pointerEvents = "auto";
 
     // Effet de survol
     historyBtn.onmouseenter = () => {
@@ -3872,6 +3890,12 @@ document.addEventListener("DOMContentLoaded", () => {
       hb.style.border = "1px solid #059669";
       hb.style.minWidth = "100px";
       hb.style.whiteSpace = "nowrap";
+      // Renforcer le statut autorisé admin
+      hb.setAttribute("data-allow-admin", "true");
+      hb.classList.add("admin-allowed-button");
+      hb.disabled = false;
+      hb.style.opacity = "1";
+      hb.style.pointerEvents = "auto";
     }
   }, 0);
 });
