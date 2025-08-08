@@ -1833,6 +1833,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const btn = document.createElement("button");
           btn.className = "tc-tags-btn";
           btn.type = "button";
+          btn.setAttribute("data-allow-admin", "true");
+          btn.classList.add("admin-allowed-tc");
           btn.innerHTML =
             tcList
               .slice(0, 2)
@@ -1847,13 +1849,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const popup = document.createElement("div");
           popup.className = "tc-popup";
           popup.style.display = "none";
+          popup.setAttribute("data-allow-admin", "true");
           // Responsive popup width
           popup.style.minWidth = window.innerWidth <= 600 ? "90px" : "120px";
           popup.style.fontSize = window.innerWidth <= 600 ? "0.97em" : "1.05em";
           popup.innerHTML = tcList
             .map(
               (tc) =>
-                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${tc}</div>`
+                `<div class="tc-popup-item admin-allowed-tc" data-allow-admin="true" style='cursor:pointer;'>${tc}</div>`
             )
             .join("");
           btn.onclick = (e) => {
@@ -1870,6 +1873,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               popup.style.display = "none";
               showContainerDetailPopup(delivery, item.textContent);
             };
+            item.setAttribute("data-allow-admin", "true");
+            item.classList.add("admin-allowed-tc");
           });
           // Fermer le popup au toucher/clic hors du bouton sur mobile
           document.addEventListener("click", function hidePopup(e) {
@@ -1882,6 +1887,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           tag.className = "tc-tag";
           tag.textContent = tcList[0];
           tag.style.cursor = "pointer";
+          tag.setAttribute("data-allow-admin", "true");
+          tag.classList.add("admin-allowed-tc");
           tag.onclick = (e) => {
             e.stopPropagation();
             showContainerDetailPopup(delivery, tcList[0]);
@@ -1903,6 +1910,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const btn = document.createElement("button");
           btn.className = "tc-tags-btn";
           btn.type = "button";
+          btn.setAttribute("data-allow-admin", "true");
+          btn.classList.add("admin-allowed-bl-link");
           btn.innerHTML =
             blList
               .slice(0, 2)
@@ -1917,10 +1926,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           const popup = document.createElement("div");
           popup.className = "tc-popup";
           popup.style.display = "none";
+          popup.setAttribute("data-allow-admin", "true");
           popup.innerHTML = blList
             .map(
               (bl) =>
-                `<div class=\"tc-popup-item\" style='cursor:pointer;'>${bl}</div>`
+                `<div class="tc-popup-item admin-allowed-tc" data-allow-admin="true" style='cursor:pointer;'>${bl}</div>`
             )
             .join("");
           btn.onclick = (e) => {
@@ -1948,6 +1958,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           tag.className = "tc-tag";
           tag.textContent = blList[0];
           tag.style.cursor = "pointer";
+          tag.setAttribute("data-allow-admin", "true");
+          tag.classList.add("admin-allowed-bl-link");
+          tag.onclick = (e) => {
+            e.stopPropagation();
+            showBLDetailPopup(delivery, blList[0]);
+          };
+          td.appendChild(tag);
           tag.onclick = (e) => {
             e.stopPropagation();
             showBLDetailPopup(delivery, blList[0]);
@@ -2167,9 +2184,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           `;
           const closeBtn = document.createElement("button");
           closeBtn.innerHTML = "&times;";
-          closeBtn.style.background = "none";
+          closeBtn.style.background = "#dc3545";
           closeBtn.style.border = "none";
           closeBtn.style.color = "#fff";
+          closeBtn.style.borderRadius = "50%";
+          closeBtn.style.width = "35px";
+          closeBtn.style.height = "35px";
+          closeBtn.style.display = "flex";
+          closeBtn.style.alignItems = "center";
+          closeBtn.style.justifyContent = "center";
+          closeBtn.style.transition = "all 0.2s ease";
           // Adaptation responsive du bouton fermer - plus compact
           if (window.innerWidth <= 768) {
             closeBtn.style.fontSize = "1.5rem";
@@ -2182,8 +2206,26 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
           closeBtn.style.cursor = "pointer";
           closeBtn.style.position = "absolute";
+          closeBtn.style.zIndex = "10001";
           closeBtn.setAttribute("aria-label", "Fermer");
-          closeBtn.onclick = () => overlay.remove();
+          closeBtn.setAttribute("data-allow-admin", "true");
+          closeBtn.classList.add("admin-allowed-button");
+
+          // Effet hover
+          closeBtn.addEventListener("mouseenter", () => {
+            closeBtn.style.background = "#c82333";
+            closeBtn.style.transform = "scale(1.1)";
+          });
+          closeBtn.addEventListener("mouseleave", () => {
+            closeBtn.style.background = "#dc3545";
+            closeBtn.style.transform = "scale(1)";
+          });
+
+          closeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            overlay.remove();
+          };
           header.appendChild(closeBtn);
           box.appendChild(header);
           const content = document.createElement("div");
@@ -3375,17 +3417,42 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         `;
         const closeBtn = document.createElement("button");
         closeBtn.innerHTML = "&times;";
-        closeBtn.style.background = "none";
+        closeBtn.style.background = "#dc3545";
         closeBtn.style.border = "none";
         closeBtn.style.color = "#fff";
+        closeBtn.style.borderRadius = "50%";
+        closeBtn.style.width = "35px";
+        closeBtn.style.height = "35px";
+        closeBtn.style.display = "flex";
+        closeBtn.style.alignItems = "center";
+        closeBtn.style.justifyContent = "center";
+        closeBtn.style.transition = "all 0.2s ease";
         closeBtn.style.fontSize =
           window.innerWidth <= 600 ? "1.5rem" : "2.1rem";
         closeBtn.style.cursor = "pointer";
         closeBtn.style.position = "absolute";
         closeBtn.style.top = window.innerWidth <= 600 ? "4px" : "10px";
         closeBtn.style.right = window.innerWidth <= 600 ? "8px" : "18px";
+        closeBtn.style.zIndex = "10001";
         closeBtn.setAttribute("aria-label", "Fermer");
-        closeBtn.onclick = () => overlay.remove();
+        closeBtn.setAttribute("data-allow-admin", "true");
+        closeBtn.classList.add("admin-allowed-button");
+
+        // Effet hover
+        closeBtn.addEventListener("mouseenter", () => {
+          closeBtn.style.background = "#c82333";
+          closeBtn.style.transform = "scale(1.1)";
+        });
+        closeBtn.addEventListener("mouseleave", () => {
+          closeBtn.style.background = "#dc3545";
+          closeBtn.style.transform = "scale(1)";
+        });
+
+        closeBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          overlay.remove();
+        };
         header.appendChild(closeBtn);
         box.appendChild(header);
         const content = document.createElement("div");
