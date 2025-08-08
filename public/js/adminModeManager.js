@@ -1239,7 +1239,7 @@ class AdminModeManager {
       // Sinon, ne rien faire (le reste est géré par le handler du contenu)
     });
 
-    // Rendre la popup accessible : seul le bouton fermer est interactif, le reste est lecture seule
+    // Rendre la popup accessible : seul le boutongvh fermer est interactif, le reste est lecture seule
     content.addEventListener("click", (e) => {
       // Si on clique sur le bouton fermer, laisser passer et fermer la popup
       if (
