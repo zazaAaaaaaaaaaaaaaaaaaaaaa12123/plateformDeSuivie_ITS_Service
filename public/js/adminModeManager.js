@@ -1237,11 +1237,14 @@ class AdminModeManager {
 
     // Rendre la popup accessible : seul le bouton fermer est interactif, le reste est lecture seule
     content.addEventListener("click", (e) => {
-      // Si on clique sur le bouton fermer, laisser passer
+      // Si on clique sur le bouton fermer, laisser passer et fermer la popup
       if (
         e.target.classList.contains("close-modal-btn") ||
         e.target.classList.contains("close-modal-bottom-btn")
       ) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal();
         return;
       }
       // Sinon, empêcher toute interaction (lecture seule)
