@@ -3488,17 +3488,19 @@ function showPdfFilterModal() {
   labelSingle.htmlFor = "pdfFilterSingle";
   labelSingle.style.cssText = `
     cursor: pointer;
-    font-weight: 500;
-    color: #374151;
+    font-weight: 600;
+    color: #1f2937;
     display: flex;
     align-items: center;
-    padding: 12px 20px;
-    border: 2px solid #e5e7eb;
+    padding: 14px 24px;
+    border: 2px solid #d1d5db;
     border-radius: 12px;
     transition: all 0.3s ease;
-    background: #f9fafb;
-    min-width: 140px;
+    background: #ffffff;
+    min-width: 160px;
     justify-content: center;
+    font-size: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   `;
   labelSingle.setAttribute("data-allow-admin", "true");
 
@@ -3520,17 +3522,19 @@ function showPdfFilterModal() {
   labelRange.htmlFor = "pdfFilterRange";
   labelRange.style.cssText = `
     cursor: pointer;
-    font-weight: 500;
-    color: #374151;
+    font-weight: 600;
+    color: #1f2937;
     display: flex;
     align-items: center;
-    padding: 12px 20px;
-    border: 2px solid #e5e7eb;
+    padding: 14px 24px;
+    border: 2px solid #d1d5db;
     border-radius: 12px;
     transition: all 0.3s ease;
-    background: #f9fafb;
-    min-width: 140px;
+    background: #ffffff;
+    min-width: 160px;
     justify-content: center;
+    font-size: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   `;
   labelRange.setAttribute("data-allow-admin", "true");
 
@@ -3555,21 +3559,60 @@ function showPdfFilterModal() {
       labelSingle.style.background = "#2563eb";
       labelSingle.style.color = "#ffffff";
       labelSingle.style.borderColor = "#2563eb";
-      labelRange.style.background = "#f9fafb";
-      labelRange.style.color = "#374151";
-      labelRange.style.borderColor = "#e5e7eb";
+      labelSingle.style.fontWeight = "700";
+      labelSingle.style.boxShadow = "0 4px 12px rgba(37,99,235,0.3)";
+      labelRange.style.background = "#ffffff";
+      labelRange.style.color = "#1f2937";
+      labelRange.style.borderColor = "#d1d5db";
+      labelRange.style.fontWeight = "600";
+      labelRange.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
     } else {
       labelRange.style.background = "#2563eb";
       labelRange.style.color = "#ffffff";
       labelRange.style.borderColor = "#2563eb";
-      labelSingle.style.background = "#f9fafb";
-      labelSingle.style.color = "#374151";
-      labelSingle.style.borderColor = "#e5e7eb";
+      labelRange.style.fontWeight = "700";
+      labelRange.style.boxShadow = "0 4px 12px rgba(37,99,235,0.3)";
+      labelSingle.style.background = "#ffffff";
+      labelSingle.style.color = "#1f2937";
+      labelSingle.style.borderColor = "#d1d5db";
+      labelSingle.style.fontWeight = "600";
+      labelSingle.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
     }
   };
 
   // Initialiser les styles
   updateLabelStyles();
+
+  // Ajouter des effets hover pour les labels
+  labelSingle.onmouseenter = function () {
+    if (!radioSingle.checked) {
+      this.style.background = "#f3f4f6";
+      this.style.borderColor = "#9ca3af";
+    }
+  };
+  labelSingle.onmouseleave = function () {
+    if (!radioSingle.checked) {
+      this.style.background = "#ffffff";
+      this.style.borderColor = "#d1d5db";
+    }
+  };
+
+  labelRange.onmouseenter = function () {
+    if (!radioRange.checked) {
+      this.style.background = "#f3f4f6";
+      this.style.borderColor = "#9ca3af";
+    }
+  };
+  labelRange.onmouseleave = function () {
+    if (!radioRange.checked) {
+      this.style.background = "#ffffff";
+      this.style.borderColor = "#d1d5db";
+    }
+  };
+
+  // Événements de changement pour les radios
+  radioSingle.onchange = updateLabelStyles;
+  radioRange.onchange = updateLabelStyles;
 
   const dateZone = document.createElement("div");
   dateZone.style.cssText = `
