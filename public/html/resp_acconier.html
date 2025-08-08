@@ -153,6 +153,37 @@
         box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
       }
 
+      /* Personnalisation demandée */
+      /* 1) Bouton Rechercher en bleu (forcé) */
+      #searchButton {
+        background-color: #2563eb !important; /* Bleu */
+        border-color: #2563eb !important;
+        color: #ffffff !important;
+      }
+      #searchButton:hover,
+      #searchButton:focus {
+        background-color: #1d4ed8 !important; /* Bleu plus foncé au hover */
+        border-color: #1d4ed8 !important;
+      }
+      #searchButton:active {
+        background-color: #1e40af !important;
+        border-color: #1e40af !important;
+      }
+
+      /* 2) Dans le profil (avatar), rendre le texte "Clair" en bleu */
+      #themeToggle #lightTheme {
+        color: #2563eb !important; /* texte et icône bleus */
+      }
+      #themeToggle #lightTheme .theme-icon {
+        color: inherit !important;
+      }
+      /* Quand "Clair" est actif, garder un fond très clair pour la lisibilité et le texte bleu */
+      #themeToggle #lightTheme.theme-option.active {
+        background: #eaf2ff !important; /* bleu très pâle */
+        color: #2563eb !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+      }
+
       .theme-icon {
         font-size: 0.9em;
         margin-right: 4px;
@@ -1423,7 +1454,7 @@
               type="search"
               id="searchInput"
               class="search-input"
-              placeholder="Rechercher une livraison."
+              placeholder="Recherche de Dossier..."
               aria-label="Recherche"
               style="
                 flex: 1 1 80px;
