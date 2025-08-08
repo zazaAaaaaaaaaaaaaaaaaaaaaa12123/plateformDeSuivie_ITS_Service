@@ -3469,24 +3469,30 @@ function showPdfFilterModal() {
     flex-wrap: wrap;
   `;
 
-  const radioSingle = document.createElement("input");
-  radioSingle.type = "radio";
-  radioSingle.name = "pdfDateFilter";
-  radioSingle.id = "pdfFilterSingle";
-  radioSingle.checked = true;
-  radioSingle.style.cssText = `
-    margin-right: 8px;
-    transform: scale(1.2);
-    accent-color: #2563eb;
+  // Créer des boutons radio stylisés directement
+  const singleOptionDiv = document.createElement("div");
+  singleOptionDiv.style.cssText = `
+    cursor: pointer;
+    font-weight: 600;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 14px 24px;
+    border: 2px solid #2563eb;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: #2563eb;
+    min-width: 160px;
+    justify-content: center;
+    font-size: 15px;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
   `;
-  // Marquer comme autorisé pour le mode admin
-  radioSingle.setAttribute("data-allow-admin", "true");
-  radioSingle.classList.add("admin-allowed-field");
+  singleOptionDiv.textContent = "Une seule date";
+  singleOptionDiv.setAttribute("data-allow-admin", "true");
+  singleOptionDiv.setAttribute("data-option", "single");
 
-  const labelSingle = document.createElement("label");
-  labelSingle.textContent = "Une seule date";
-  labelSingle.htmlFor = "pdfFilterSingle";
-  labelSingle.style.cssText = `
+  const rangeOptionDiv = document.createElement("div");
+  rangeOptionDiv.style.cssText = `
     cursor: pointer;
     font-weight: 600;
     color: #1f2937;
@@ -3502,117 +3508,57 @@ function showPdfFilterModal() {
     font-size: 15px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   `;
-  labelSingle.setAttribute("data-allow-admin", "true");
+  rangeOptionDiv.textContent = "Intervalle de dates";
+  rangeOptionDiv.setAttribute("data-allow-admin", "true");
+  rangeOptionDiv.setAttribute("data-option", "range");
 
-  const radioRange = document.createElement("input");
-  radioRange.type = "radio";
-  radioRange.name = "pdfDateFilter";
-  radioRange.id = "pdfFilterRange";
-  radioRange.style.cssText = `
-    margin-right: 8px;
-    transform: scale(1.2);
-    accent-color: #2563eb;
-  `;
-  // Marquer comme autorisé pour le mode admin
-  radioRange.setAttribute("data-allow-admin", "true");
-  radioRange.classList.add("admin-allowed-field");
+  // Variable pour suivre la sélection
+  let selectedOption = "single";
 
-  const labelRange = document.createElement("label");
-  labelRange.textContent = "Intervalle de dates";
-  labelRange.htmlFor = "pdfFilterRange";
-  labelRange.style.cssText = `
-    cursor: pointer;
-    font-weight: 600;
-    color: #1f2937;
-    display: flex;
-    align-items: center;
-    padding: 14px 24px;
-    border: 2px solid #d1d5db;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    background: #ffffff;
-    min-width: 160px;
-    justify-content: center;
-    font-size: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  `;
-  labelRange.setAttribute("data-allow-admin", "true");
+  // Fonction pour mettre à jour les styles
+  const updateOptionStyles = () => {
+    if (selectedOption === "single") {
+      singleOptionDiv.style.background = "#2563eb";
+      singleOptionDiv.style.color = "#ffffff";
+      singleOptionDiv.style.borderColor = "#2563eb";
+      singleOptionDiv.style.boxShadow = "0 4px 12px rgba(37,99,235,0.3)";
 
-  // Créer des conteneurs pour chaque option radio
-  const singleContainer = document.createElement("div");
-  singleContainer.style.cssText = `display: flex; align-items: center;`;
-  singleContainer.appendChild(radioSingle);
-  singleContainer.appendChild(labelSingle);
+      rangeOptionDiv.style.background = "#ffffff";
+      rangeOptionDiv.style.color = "#1f2937";
+      rangeOptionDiv.style.borderColor = "#d1d5db";
+      rangeOptionDiv.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+    } else {
+      rangeOptionDiv.style.background = "#2563eb";
+      rangeOptionDiv.style.color = "#ffffff";
+      rangeOptionDiv.style.borderColor = "#2563eb";
+      rangeOptionDiv.style.boxShadow = "0 4px 12px rgba(37,99,235,0.3)";
 
-  const rangeContainer = document.createElement("div");
-  rangeContainer.style.cssText = `display: flex; align-items: center;`;
-  rangeContainer.appendChild(radioRange);
-  rangeContainer.appendChild(labelRange);
+      singleOptionDiv.style.background = "#ffffff";
+      singleOptionDiv.style.color = "#1f2937";
+      singleOptionDiv.style.borderColor = "#d1d5db";
+      singleOptionDiv.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+    }
+  };
 
-  radioContainer.appendChild(singleContainer);
-  radioContainer.appendChild(rangeContainer);
+  // Événements de clic
+  singleOptionDiv.onclick = () => {
+    selectedOption = "single";
+    updateOptionStyles();
+    renderSingleDateInput();
+  };
+
+  rangeOptionDiv.onclick = () => {
+    selectedOption = "range";
+    updateOptionStyles();
+    renderRangeDateInputs();
+  };
+
+  radioContainer.appendChild(singleOptionDiv);
+  radioContainer.appendChild(rangeOptionDiv);
   content.appendChild(radioContainer);
 
-  // Effet hover pour les labels
-  const updateLabelStyles = () => {
-    if (radioSingle.checked) {
-      labelSingle.style.background = "#2563eb";
-      labelSingle.style.color = "#ffffff";
-      labelSingle.style.borderColor = "#2563eb";
-      labelSingle.style.fontWeight = "700";
-      labelSingle.style.boxShadow = "0 4px 12px rgba(37,99,235,0.3)";
-      labelRange.style.background = "#ffffff";
-      labelRange.style.color = "#1f2937";
-      labelRange.style.borderColor = "#d1d5db";
-      labelRange.style.fontWeight = "600";
-      labelRange.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-    } else {
-      labelRange.style.background = "#2563eb";
-      labelRange.style.color = "#ffffff";
-      labelRange.style.borderColor = "#2563eb";
-      labelRange.style.fontWeight = "700";
-      labelRange.style.boxShadow = "0 4px 12px rgba(37,99,235,0.3)";
-      labelSingle.style.background = "#ffffff";
-      labelSingle.style.color = "#1f2937";
-      labelSingle.style.borderColor = "#d1d5db";
-      labelSingle.style.fontWeight = "600";
-      labelSingle.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-    }
-  };
-
-  // Initialiser les styles
-  updateLabelStyles();
-
-  // Ajouter des effets hover pour les labels
-  labelSingle.onmouseenter = function () {
-    if (!radioSingle.checked) {
-      this.style.background = "#f3f4f6";
-      this.style.borderColor = "#9ca3af";
-    }
-  };
-  labelSingle.onmouseleave = function () {
-    if (!radioSingle.checked) {
-      this.style.background = "#ffffff";
-      this.style.borderColor = "#d1d5db";
-    }
-  };
-
-  labelRange.onmouseenter = function () {
-    if (!radioRange.checked) {
-      this.style.background = "#f3f4f6";
-      this.style.borderColor = "#9ca3af";
-    }
-  };
-  labelRange.onmouseleave = function () {
-    if (!radioRange.checked) {
-      this.style.background = "#ffffff";
-      this.style.borderColor = "#d1d5db";
-    }
-  };
-
-  // Événements de changement pour les radios
-  radioSingle.onchange = updateLabelStyles;
-  radioRange.onchange = updateLabelStyles;
+  // Initialiser l'affichage par défaut
+  updateOptionStyles();
 
   const dateZone = document.createElement("div");
   dateZone.style.cssText = `
@@ -3771,16 +3717,6 @@ function showPdfFilterModal() {
   }
   renderSingleDateInput();
 
-  // Gestionnaires d'événements avec mise à jour des styles
-  radioSingle.onchange = () => {
-    renderSingleDateInput();
-    updateLabelStyles();
-  };
-  radioRange.onchange = () => {
-    renderRangeDateInputs();
-    updateLabelStyles();
-  };
-
   // Container pour le bouton avec style moderne
   const buttonContainer = document.createElement("div");
   buttonContainer.style.cssText = `
@@ -3866,7 +3802,7 @@ function showPdfFilterModal() {
   buttonContainer.appendChild(validateBtn);
   content.appendChild(buttonContainer);
   validateBtn.onclick = function () {
-    let filterType = radioSingle.checked ? "single" : "range";
+    let filterType = selectedOption; // Utiliser notre nouvelle variable
     let date1 = null,
       date2 = null;
     if (filterType === "single") {
