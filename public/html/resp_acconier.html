@@ -215,6 +215,14 @@
       }
 
       [data-theme="dark"] .pagination .page-item.active .page-link {
+        /* Champ de recherche en vert en mode admin */
+        body.admin-view-mode #searchInput,
+        body.admin-view-mode .search-input,
+        body.admin-view-mode input[placeholder*="Recherche"],
+        body.admin-view-mode input[placeholder*="recherche"] {
+          color: #28a745 !important;
+          font-weight: 600 !important;
+        }
         background-color: var(--bg-button);
         border-color: var(--bg-button);
       }
