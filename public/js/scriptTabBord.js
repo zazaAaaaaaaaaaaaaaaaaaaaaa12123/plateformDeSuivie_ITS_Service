@@ -1342,20 +1342,11 @@ styleDashboardCards.innerHTML = `
                 }
               }
               
-              /* Fix pour empêcher la disparition des cartes etat-card au survol */
-              .etat-card:hover {
-                opacity: 1 !important;
-                visibility: visible !important;
-                display: block !important;
-                transform: translateY(-5px) scale(1.02) !important;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-              }
-              
+              /* Protection minimale contre la disparition des cartes sans bloquer les animations */
               .etat-card {
-                opacity: 1 !important;
-                visibility: visible !important;
-                display: block !important;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                opacity: 1;
+                visibility: visible;
+                display: block;
               }
             `;
 document.head.appendChild(styleDashboardCards);
