@@ -12,6 +12,73 @@
     window.WS_BASE_HOST = window.location.host;
   }
 })();
+
+// === ANIMATION D'ENTREPRISE PROFESSIONNELLE ===
+(function initEnterpriseAnimation() {
+  document.addEventListener("DOMContentLoaded", function () {
+    const enterpriseIntro = document.getElementById("enterpriseIntro");
+
+    if (!enterpriseIntro) return;
+
+    // Vérifier si l'animation a déjà été vue dans cette session
+    const hasSeenAnimation = sessionStorage.getItem(
+      "hasSeenEnterpriseAnimation"
+    );
+
+    if (hasSeenAnimation) {
+      // Masquer immédiatement l'animation si déjà vue
+      enterpriseIntro.style.display = "none";
+      return;
+    }
+
+    // Marquer l'animation comme vue
+    sessionStorage.setItem("hasSeenEnterpriseAnimation", "true");
+
+    // Supprimer l'animation après sa fin
+    setTimeout(() => {
+      if (enterpriseIntro) {
+        enterpriseIntro.remove();
+      }
+    }, 4500);
+
+    // Effet de typed.js pour le titre
+    setTimeout(() => {
+      const title = document.querySelector(".enterprise-title");
+      if (title) {
+        const originalText = title.textContent;
+        title.textContent = "";
+
+        let i = 0;
+        const typeInterval = setInterval(() => {
+          title.textContent += originalText[i];
+          i++;
+          if (i >= originalText.length) {
+            clearInterval(typeInterval);
+          }
+        }, 50);
+      }
+    }, 1200);
+
+    // Effet de typing pour le sous-titre
+    setTimeout(() => {
+      const subtitle = document.querySelector(".enterprise-subtitle");
+      if (subtitle) {
+        const originalText = subtitle.textContent;
+        subtitle.textContent = "";
+
+        let i = 0;
+        const typeInterval = setInterval(() => {
+          subtitle.textContent += originalText[i];
+          i++;
+          if (i >= originalText.length) {
+            clearInterval(typeInterval);
+          }
+        }, 30);
+      }
+    }, 2000);
+  });
+})();
+
 // Redirection automatique vers le tableau de bord après connexion réussie
 (function () {
   if (window.location.pathname.endsWith("tableauDeBord.html")) {
