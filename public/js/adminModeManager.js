@@ -113,7 +113,7 @@ class AdminModeManager {
       this.disableEditingFeatures();
       this.optimizeTableDisplay();
       this.applyBlueCustomStyles();
-      this.forceButtonColorsAggressively(); // AJOUT: Forcer les couleurs à chaque fois
+      // SUPPRIMÉ: this.forceButtonColorsAggressively(); // AJOUT: Forcer les couleurs à chaque fois
       this.enablePdfModalElements(); // AJOUT: Forcer l'activation des éléments PDF
 
       // Réappliquer les optimisations spécifiques
@@ -179,7 +179,7 @@ class AdminModeManager {
       "professionalHistoryModal",
       "showHistoryDetailBtn",
       "showContainersListBtn",
-      "showGroupDetailBtn"
+      "showGroupDetailBtn",
     ];
     safeIds.forEach((id) => {
       const el = document.getElementById(id);
@@ -3037,7 +3037,11 @@ class AdminModeManager {
         btn.style.setProperty("font-weight", "600", "important");
         btn.style.setProperty("border-radius", "6px", "important");
         btn.style.setProperty("padding", "8px 16px", "important");
-        btn.style.setProperty("box-shadow", "0 2px 8px rgba(16, 185, 129, 0.4)", "important");
+        btn.style.setProperty(
+          "box-shadow",
+          "0 2px 8px rgba(16, 185, 129, 0.4)",
+          "important"
+        );
         btn.disabled = false;
         btn.setAttribute("data-allow-admin", "true");
         console.log("✅ Bouton action trouvé par texte:", btn);
@@ -3125,11 +3129,19 @@ class AdminModeManager {
                 ) {
                   btn.style.setProperty("background", "#10b981", "important");
                   btn.style.setProperty("color", "#ffffff", "important");
-                  btn.style.setProperty("border", "2px solid #059669", "important");
+                  btn.style.setProperty(
+                    "border",
+                    "2px solid #059669",
+                    "important"
+                  );
                   btn.style.setProperty("font-weight", "600", "important");
                   btn.style.setProperty("border-radius", "6px", "important");
                   btn.style.setProperty("padding", "8px 16px", "important");
-                  btn.style.setProperty("box-shadow", "0 2px 8px rgba(16, 185, 129, 0.4)", "important");
+                  btn.style.setProperty(
+                    "box-shadow",
+                    "0 2px 8px rgba(16, 185, 129, 0.4)",
+                    "important"
+                  );
                   btn.disabled = false;
                   btn.setAttribute("data-allow-admin", "true");
                   console.log(
@@ -3200,6 +3212,21 @@ class AdminModeManager {
                 setTimeout(() => {
                   this.enablePdfModalElements();
                 }, 100);
+              }
+
+              // **NOUVEAU: Vérifier si une modal d'historique a été ajoutée**
+              if (
+                node.id === "professionalHistoryModal" ||
+                node.id === "historyDetailModal" ||
+                (node.classList && node.classList.contains("history-modal"))
+              ) {
+                console.log(
+                  "📋 Modal d'historique détectée, correction du style..."
+                );
+                setTimeout(() => {
+                  this.fixHistoryModalStyle();
+                  this.enablePdfModalElements(); // Activer aussi les boutons
+                }, 50);
               }
 
               // Vérifier si des éléments PDF ont été ajoutés
@@ -3316,7 +3343,7 @@ class AdminModeManager {
 
     // **NOUVEAU: ACTIVER LES BOUTONS D'HISTORIQUE "VOIR PLUS" ET "DÉTAILS"**
     console.log("📋 ACTIVATION BOUTONS HISTORIQUE...");
-    
+
     // ACTIVER TOUS LES BOUTONS DANS LES MODALS D'HISTORIQUE
     const historyModalButtons = document.querySelectorAll(`
       #professionalHistoryModal button,
@@ -3343,10 +3370,10 @@ class AdminModeManager {
     });
 
     // ACTIVER SPÉCIFIQUEMENT LES BOUTONS "VOIR PLUS" ET "DÉTAILS" PAR TEXTE
-    const actionButtons = document.querySelectorAll('button');
+    const actionButtons = document.querySelectorAll("button");
     actionButtons.forEach((button) => {
       const buttonText = button.textContent || button.innerText || "";
-      
+
       if (
         buttonText.toLowerCase().includes("voir plus") ||
         buttonText.toLowerCase().includes("détails") ||
@@ -3366,7 +3393,11 @@ class AdminModeManager {
         button.style.setProperty("font-weight", "600", "important");
         button.style.setProperty("border-radius", "6px", "important");
         button.style.setProperty("padding", "8px 16px", "important");
-        button.style.setProperty("box-shadow", "0 2px 8px rgba(16, 185, 129, 0.4)", "important");
+        button.style.setProperty(
+          "box-shadow",
+          "0 2px 8px rgba(16, 185, 129, 0.4)",
+          "important"
+        );
         button.setAttribute("data-allow-admin", "true");
         button.classList.add("admin-allowed-button");
         console.log("✅ Bouton action historique activé:", button);
@@ -3375,7 +3406,24 @@ class AdminModeManager {
 
     console.log("📋 BOUTONS HISTORIQUE ACTIVÉS");
 
+    // **NOUVEAU: CORRIGER LE STYLE DE LA MODAL D'HISTORIQUE EN MODE ADMIN**
+    this.fixHistoryModalStyle();
+
     console.log("📄 MODAL PDF ENTIÈREMENT ACTIVÉE");
+  }
+
+  /**
+   * Corrige le style de la modal d'historique pour éviter le fond bleu
+   */
+  fixHistoryModalStyle() {
+    const historyModal = document.getElementById("professionalHistoryModal");
+    if (historyModal) {
+      // Supprimer le fond bleu et le blur en mode admin
+      historyModal.style.setProperty("background", "transparent", "important");
+      historyModal.style.setProperty("backdrop-filter", "none", "important");
+      historyModal.style.setProperty("background-color", "transparent", "important");
+      console.log("✅ Style de la modal d'historique corrigé pour le mode admin");
+    }
   }
 }
 
