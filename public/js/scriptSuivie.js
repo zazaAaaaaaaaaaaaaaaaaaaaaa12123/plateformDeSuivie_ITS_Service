@@ -815,8 +815,67 @@ setInterval(() => {
     "[ALERTE RETARD] Vérification automatique des conteneurs non livrés (toutes les 20 secondes)"
   );
 }, 20000); // 20 000 ms = 20 secondes
+
+// === Mise à jour automatique de la date du jour ===
+function updateTodayDate() {
+  const today = new Date();
+  const todayISO = today.toISOString().split("T")[0]; // Format YYYY-MM-DD
+
+  // Mettre à jour les champs de filtre de date s'ils existent
+  const startDateFilter = document.getElementById("mainTableDateStartFilter");
+  const endDateFilter = document.getElementById("mainTableDateEndFilter");
+
+  if (endDateFilter) {
+    endDateFilter.value = todayISO;
+  }
+
+  if (startDateFilter && !startDateFilter.value) {
+    startDateFilter.value = todayISO;
+  }
+
+  // Rafraîchir les données pour montrer les livraisons d'aujourd'hui
+  if (typeof applyCombinedFilters === "function") {
+    applyCombinedFilters();
+  } else if (typeof loadDeliveries === "function") {
+    loadDeliveries();
+  }
+
+  console.log(
+    `[DATE AUTO] Date du jour mise à jour: ${today.toLocaleDateString("fr-FR")}`
+  );
+}
+
+// Mettre à jour la date toutes les heures (au cas où l'application reste ouverte la nuit)
+setInterval(() => {
+  updateTodayDate();
+}, 3600000); // 1 heure = 3 600 000 ms
+
+// Vérification spéciale à minuit pour le changement de jour
+function checkMidnightUpdate() {
+  const now = new Date();
+  const secondsUntilMidnight =
+    24 * 60 * 60 -
+    (now.getHours() * 60 * 60 + now.getMinutes() * 60 + now.getSeconds());
+
+  setTimeout(() => {
+    updateTodayDate();
+    console.log(
+      "[MIDNIGHT UPDATE] Nouveau jour détecté - mise à jour automatique des dates"
+    );
+
+    // Programmer la prochaine vérification à minuit (dans 24h)
+    setInterval(() => {
+      updateTodayDate();
+    }, 24 * 60 * 60 * 1000); // 24 heures
+  }, secondsUntilMidnight * 1000);
+}
+
 // Appel initial au chargement
-window.addEventListener("DOMContentLoaded", checkLateContainers);
+window.addEventListener("DOMContentLoaded", () => {
+  checkLateContainers();
+  updateTodayDate(); // Mettre à jour la date dès le chargement
+  checkMidnightUpdate(); // Programmer la vérification à minuit
+});
 
 // --- WebSocket temps réel pour les nouvelles livraisons (ordre de livraison créé) ---
 window.wsLivraison = null;
@@ -1094,7 +1153,7 @@ function mapStatus(status) {
           lastDeliveriesCount = window.deliveries.length;
         }
       });
-    }, 15000); // 15s
+    }, 10000); // 10s - Intervalle réduit pour une meilleure mise à jour des dates
     console.warn("[Polling] Fallback AJAX activé pour la synchro livraisons");
   }
   function stopPollingDeliveries() {
@@ -4696,7 +4755,23 @@ function mapStatus(status) {
             ? overrideStatusText
             : getStatusInfo(displayStatus).text;
         } else {
-          displayValue = value || "-"; // Changed from "N/A" to "-"
+          // Formatage spécial pour les dates
+          if (type === "date" && value) {
+            try {
+              const dateObj = new Date(value);
+              if (!isNaN(dateObj.getTime())) {
+                displayValue = dateObj.toLocaleDateString("fr-FR");
+              } else {
+                displayValue = value || "-";
+              }
+            } catch (e) {
+              displayValue = value || "-";
+            }
+          } else if (type === "datetime-local" && value instanceof Date) {
+            displayValue = value.toLocaleString("fr-FR");
+          } else {
+            displayValue = value || "-"; // Changed from "N/A" to "-"
+          }
         }
 
         // Set initial text content for non-dropdown cells (if not already set by specific logic above)
@@ -8888,6 +8963,47 @@ function mapStatus(status) {
       this.style.boxShadow = "none";
     });
   }
+
+  // === MISE À JOUR AUTOMATIQUE DE LA DATE DU JOUR ===
+  function setTodayDateInFilters() {
+    const today = new Date();
+    const todayISO = today.toISOString().split("T")[0]; // Format YYYY-MM-DD
+
+    // Mettre à jour les filtres de date avec la date d'aujourd'hui
+    if (mainTableDateEndFilter) {
+      mainTableDateEndFilter.value = todayISO;
+      console.log(
+        `[AUTO DATE] Date de fin mise à jour: ${today.toLocaleDateString(
+          "fr-FR"
+        )}`
+      );
+    }
+
+    // Si le filtre de début n'a pas de valeur, mettre la date d'aujourd'hui aussi
+    if (mainTableDateStartFilter && !mainTableDateStartFilter.value) {
+      mainTableDateStartFilter.value = todayISO;
+      console.log(
+        `[AUTO DATE] Date de début mise à jour: ${today.toLocaleDateString(
+          "fr-FR"
+        )}`
+      );
+    }
+
+    // Déclencher le rafraîchissement du tableau avec les nouvelles dates
+    if (typeof applyCombinedFilters === "function") {
+      applyCombinedFilters();
+    }
+  }
+
+  // Mettre à jour la date toutes les heures (au cas où l'application reste ouverte la nuit)
+  setInterval(() => {
+    setTodayDateInFilters();
+  }, 3600000); // 1 heure = 3 600 000 ms
+
+  // Mettre à jour la date dès que les filtres sont disponibles
+  setTimeout(() => {
+    setTodayDateInFilters();
+  }, 1000); // Petit délai pour s'assurer que les éléments sont chargés
 
   // Fonction principale pour afficher les livraisons filtrées par date
   function updateTableForDateRange(dateStartStr, dateEndStr) {
