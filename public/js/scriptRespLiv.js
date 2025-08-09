@@ -556,6 +556,34 @@ document.addEventListener("DOMContentLoaded", function () {
   const dateStartInput = document.getElementById("mainTableDateStartFilter");
   const dateEndInput = document.getElementById("mainTableDateEndFilter");
 
+  // Marquer les champs de date comme accessibles en mode admin
+  if (dateStartInput) {
+    dateStartInput.setAttribute("data-allow-admin", "true");
+    dateStartInput.classList.add("admin-allowed-field");
+  }
+  if (dateEndInput) {
+    dateEndInput.setAttribute("data-allow-admin", "true");
+    dateEndInput.classList.add("admin-allowed-field");
+  }
+
+  // Marquer le champ de recherche comme accessible en mode admin
+  const searchInput = document.querySelector(
+    "input[placeholder*='Rechercher'], input[placeholder*='rechercher']"
+  );
+  if (searchInput) {
+    searchInput.setAttribute("data-allow-admin", "true");
+    searchInput.classList.add("admin-allowed-field");
+    // Appliquer des styles vifs immédiatement
+    searchInput.style.background = "#E1F5FE !important";
+    searchInput.style.border = "3px solid #2196F3 !important";
+    searchInput.style.color = "#1976D2 !important";
+    searchInput.style.fontWeight = "bold !important";
+    searchInput.style.boxShadow =
+      "0 3px 10px rgba(33, 150, 243, 0.4) !important";
+    searchInput.style.borderRadius = "6px !important";
+    searchInput.style.padding = "6px 12px !important";
+  }
+
   // On charge toutes les livraisons une seule fois au chargement
   // On rend allDeliveries accessible globalement pour le tooltip Statut
   window.allDeliveries = [];
@@ -3172,29 +3200,135 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// --- AJOUT : Bouton Générer PDF et logique associée ---
-// Création du bouton Générer PDF
+// ========================================================================
+// === HISTORIQUE PROFESSIONNEL DES CONTENEURS LIVRÉS ===
+// ========================================================================
+// Création du bouton Générer PDF avec couleurs très vives et FORÇAGE AGRESSIF
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
 pdfBtn.textContent = "Générer PDF";
-pdfBtn.style.background = "#2563eb";
-pdfBtn.style.color = "#fff";
-pdfBtn.style.fontWeight = "bold";
-pdfBtn.style.border = "none";
-pdfBtn.style.cursor = "pointer";
-pdfBtn.style.borderRadius = "7px";
-pdfBtn.style.padding = "4px 12px";
-pdfBtn.style.fontSize = "0.97em";
-pdfBtn.style.margin = "0 0 0 12px";
-pdfBtn.style.height = "32px";
-pdfBtn.style.minWidth = "0";
-pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
-pdfBtn.style.verticalAlign = "middle";
+
+// FORCER LES COULEURS IMMÉDIATEMENT ET DE MANIÈRE AGRESSIVE
+pdfBtn.style.setProperty(
+  "background",
+  "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
+  "important"
+);
+pdfBtn.style.setProperty("color", "#fff", "important");
+pdfBtn.style.setProperty("font-weight", "bold", "important");
+pdfBtn.style.setProperty("border", "3px solid #F57C00", "important");
+pdfBtn.style.setProperty("cursor", "pointer", "important");
+pdfBtn.style.setProperty("border-radius", "8px", "important");
+pdfBtn.style.setProperty("padding", "6px 12px", "important");
+pdfBtn.style.setProperty("font-size", "0.97em", "important");
+pdfBtn.style.setProperty("margin", "0 0 0 12px", "important");
+pdfBtn.style.setProperty("height", "32px", "important");
+pdfBtn.style.setProperty("min-width", "0", "important");
+pdfBtn.style.setProperty(
+  "box-shadow",
+  "0 4px 15px rgba(255, 152, 0, 0.6)",
+  "important"
+);
+pdfBtn.style.setProperty("vertical-align", "middle", "important");
+pdfBtn.style.setProperty("transition", "all 0.2s ease", "important");
+pdfBtn.style.setProperty("display", "inline-block", "important");
+pdfBtn.style.setProperty("visibility", "visible", "important");
+pdfBtn.style.setProperty("opacity", "1", "important");
+
+// Marquer comme accessible en mode admin
+pdfBtn.setAttribute("data-allow-admin", "true");
+pdfBtn.classList.add("admin-allowed-button");
+
+// Effet de survol pour le bouton PDF avec forçage
+pdfBtn.onmouseenter = () => {
+  pdfBtn.style.setProperty("transform", "translateY(-2px)", "important");
+  pdfBtn.style.setProperty(
+    "box-shadow",
+    "0 6px 20px rgba(255, 152, 0, 0.8)",
+    "important"
+  );
+  pdfBtn.style.setProperty(
+    "background",
+    "linear-gradient(90deg,#F57C00 0%,#E65100 100%)",
+    "important"
+  );
+};
+pdfBtn.onmouseleave = () => {
+  pdfBtn.style.setProperty("transform", "translateY(0)", "important");
+  pdfBtn.style.setProperty(
+    "box-shadow",
+    "0 4px 15px rgba(255, 152, 0, 0.6)",
+    "important"
+  );
+  pdfBtn.style.setProperty(
+    "background",
+    "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
+    "important"
+  );
+};
 
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
   // Créer le bouton historique immédiatement
   checkAndShowHistoryButton();
+
+  // FONCTION DE FORÇAGE STABLE DES COULEURS - UNE SEULE FOIS AU CHARGEMENT
+  function forceColorsStably() {
+    console.log("🎨 APPLICATION STABLE DES COULEURS SCRIPTRESPLIVJS...");
+
+    // FORCER BOUTON HISTORIQUE
+    const historyBtn = document.getElementById("professionalHistoryBtn");
+    if (historyBtn && !historyBtn.hasAttribute("data-styled-respLiv")) {
+      historyBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
+        "important"
+      );
+      historyBtn.style.setProperty("color", "#ffffff", "important");
+      historyBtn.style.setProperty("border", "3px solid #C62828", "important");
+      historyBtn.style.setProperty("font-weight", "bold", "important");
+      historyBtn.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(255, 23, 68, 0.6)",
+        "important"
+      );
+      historyBtn.style.setProperty("display", "inline-block", "important");
+      historyBtn.style.setProperty("visibility", "visible", "important");
+      historyBtn.style.setProperty("opacity", "1", "important");
+      historyBtn.disabled = false;
+      historyBtn.setAttribute("data-styled-respLiv", "true");
+      console.log("✅ Bouton historique stylé une seule fois");
+    }
+
+    // FORCER BOUTON PDF
+    const pdfBtn = document.getElementById("generatePdfBtn");
+    if (pdfBtn && !pdfBtn.hasAttribute("data-styled-respLiv")) {
+      pdfBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
+        "important"
+      );
+      pdfBtn.style.setProperty("color", "#ffffff", "important");
+      pdfBtn.style.setProperty("border", "3px solid #F57C00", "important");
+      pdfBtn.style.setProperty("font-weight", "bold", "important");
+      pdfBtn.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(255, 152, 0, 0.6)",
+        "important"
+      );
+      pdfBtn.style.setProperty("display", "inline-block", "important");
+      pdfBtn.style.setProperty("visibility", "visible", "important");
+      pdfBtn.style.setProperty("opacity", "1", "important");
+      pdfBtn.disabled = false;
+      pdfBtn.setAttribute("data-styled-respLiv", "true");
+      console.log("✅ Bouton PDF stylé une seule fois");
+    }
+  }
+
+  // Appliquer les couleurs une seule fois au chargement
+  forceColorsStably();
+
+  // SUPPRIMÉ : Le setInterval qui causait le clignotement toutes les secondes
 
   // Configurer le conteneur et ajouter le bouton PDF
   const searchInput = document.querySelector(
@@ -3214,6 +3348,15 @@ document.addEventListener("DOMContentLoaded", function () {
     searchInput.style.maxWidth = "280px";
     searchInput.style.flex = "0 1 auto";
 
+    // Forcer l'agressivité des couleurs du bouton PDF pour le mode admin
+    if (window.adminModeManager) {
+      pdfBtn.style.setProperty("background", "#2563eb", "important");
+      pdfBtn.style.setProperty("color", "#fff", "important");
+      pdfBtn.style.setProperty("border", "none", "important");
+      pdfBtn.style.setProperty("cursor", "pointer", "important");
+      pdfBtn.style.setProperty("font-weight", "bold", "important");
+    }
+
     // Ajouter le bouton PDF à la fin
     parentContainer.appendChild(pdfBtn);
   } else {
@@ -3222,6 +3365,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (mainTable && mainTable.parentNode) {
       mainTable.parentNode.insertBefore(pdfBtn, mainTable);
     }
+  }
+
+  // Activer le modal PDF pour l'admin si nécessaire
+  if (window.adminModeManager && window.enablePdfModalForAdmin) {
+    setTimeout(() => {
+      window.enablePdfModalForAdmin();
+    }, 1000);
   }
 });
 
@@ -3269,15 +3419,16 @@ function showPdfFilterModal() {
   overlay.style.left = 0;
   overlay.style.width = "100vw";
   overlay.style.height = "100vh";
-  overlay.style.background = "rgba(30,41,59,0.45)";
+  overlay.style.background = "rgba(0,0,0,0.5)"; // Fond noir semi-transparent plus neutre
   overlay.style.zIndex = 100000;
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";
   overlay.style.justifyContent = "center";
+  overlay.style.backdropFilter = "blur(2px)"; // Effet de flou léger
   const box = document.createElement("div");
   box.style.background = "#fff";
   box.style.borderRadius = "16px";
-  box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+  box.style.boxShadow = "0 12px 40px rgba(0,0,0,0.3)";
   box.style.maxWidth = "420px";
   box.style.width = "96vw";
   box.style.maxHeight = "92vh";
@@ -3321,6 +3472,7 @@ function showPdfFilterModal() {
   radioSingle.type = "radio";
   radioSingle.name = "pdfDateFilter";
   radioSingle.id = "pdfFilterSingle";
+  radioSingle.className = "pdfModalRadio"; // Classe pour l'admin
   radioSingle.checked = true;
   const labelSingle = document.createElement("label");
   labelSingle.textContent = "Une seule date";
@@ -3330,6 +3482,7 @@ function showPdfFilterModal() {
   radioRange.type = "radio";
   radioRange.name = "pdfDateFilter";
   radioRange.id = "pdfFilterRange";
+  radioRange.className = "pdfModalRadio"; // Classe pour l'admin
   const labelRange = document.createElement("label");
   labelRange.textContent = "Intervalle de dates";
   labelRange.htmlFor = "pdfFilterRange";
@@ -3345,6 +3498,7 @@ function showPdfFilterModal() {
     const dateInput = document.createElement("input");
     dateInput.type = "date";
     dateInput.id = "pdfSingleDateInput";
+    dateInput.className = "pdfModalDateInput"; // Classe pour l'admin
     dateInput.style.padding = "8px 18px";
     dateInput.style.borderRadius = "8px";
     dateInput.style.border = "1.5px solid #2563eb";
@@ -3357,6 +3511,7 @@ function showPdfFilterModal() {
     const dateStart = document.createElement("input");
     dateStart.type = "date";
     dateStart.id = "pdfRangeDateStart";
+    dateStart.className = "pdfModalDateInput"; // Classe pour l'admin
     dateStart.style.padding = "8px 18px";
     dateStart.style.borderRadius = "8px";
     dateStart.style.border = "1.5px solid #2563eb";
@@ -3365,6 +3520,7 @@ function showPdfFilterModal() {
     const dateEnd = document.createElement("input");
     dateEnd.type = "date";
     dateEnd.id = "pdfRangeDateEnd";
+    dateEnd.className = "pdfModalDateInput"; // Classe pour l'admin
     dateEnd.style.padding = "8px 18px";
     dateEnd.style.borderRadius = "8px";
     dateEnd.style.border = "1.5px solid #2563eb";
@@ -3376,6 +3532,7 @@ function showPdfFilterModal() {
   radioSingle.onchange = renderSingleDateInput;
   radioRange.onchange = renderRangeDateInputs;
   const validateBtn = document.createElement("button");
+  validateBtn.id = "pdfModalGenerateBtn"; // ID pour l'admin
   validateBtn.textContent = "Générer PDF";
   validateBtn.style.background = "#2563eb";
   validateBtn.style.color = "#fff";
@@ -3435,12 +3592,32 @@ function showPdfFilterModal() {
   content.appendChild(validateBtn);
   box.appendChild(content);
   overlay.appendChild(box);
+
+  // Fermer la modal en cliquant à l'extérieur
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) {
+      overlay.remove();
+    }
+  });
+
+  // Empêcher la propagation du clic à l'intérieur de la modal
+  box.addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
+
   document.body.appendChild(overlay);
 }
 
 pdfBtn.onclick = function () {
   updateDeliveredForPdf();
   showPdfFilterModal();
+
+  // Activer immédiatement les éléments du modal pour l'admin
+  if (window.adminModeManager && window.enablePdfModalForAdmin) {
+    setTimeout(() => {
+      window.enablePdfModalForAdmin();
+    }, 100);
+  }
 };
 
 function generateEtatSortiePdf(rows, date1, date2) {
@@ -3630,6 +3807,70 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
     );
 
+    // Récupère les données actuelles depuis le tableau (les valeurs éditées)
+    const row = document.querySelector(
+      `#deliveriesTableBody tr[data-delivery-id='${delivery.id}']`
+    );
+
+    // Utilise les noms de colonnes de la base de données
+    let visitor_agent_name =
+      delivery.nom_agent_visiteur || delivery.visitor_agent_name || "";
+    let transporter = delivery.transporter || "";
+    let inspector = delivery.inspecteur || delivery.inspector || "";
+    let customs_agent =
+      delivery.agent_en_douanes || delivery.customs_agent || "";
+    let driver = delivery.driver_name || delivery.driver || "";
+    let driver_phone = delivery.driver_phone || "";
+    let delivery_date = delivery.delivery_date || "";
+    let observation = delivery.delivery_notes || delivery.observation || "";
+
+    // Si la ligne existe dans le tableau, récupère les valeurs éditées
+    if (row) {
+      const visitorCell = row.querySelector(
+        "td[data-col-id='visitor_agent_name']"
+      );
+      const transporterCell = row.querySelector(
+        "td[data-col-id='transporter']"
+      );
+      const inspectorCell = row.querySelector("td[data-col-id='inspector']");
+      const customsCell = row.querySelector("td[data-col-id='customs_agent']");
+      const driverCell = row.querySelector("td[data-col-id='driver']");
+      const driverPhoneCell = row.querySelector(
+        "td[data-col-id='driver_phone']"
+      );
+      const deliveryDateCell = row.querySelector(
+        "td[data-col-id='delivery_date']"
+      );
+      const observationCell = row.querySelector(
+        "td[data-col-id='observation']"
+      );
+
+      if (visitorCell && visitorCell.textContent.trim() !== "-") {
+        visitor_agent_name = visitorCell.textContent.trim();
+      }
+      if (transporterCell && transporterCell.textContent.trim() !== "-") {
+        transporter = transporterCell.textContent.trim();
+      }
+      if (inspectorCell && inspectorCell.textContent.trim() !== "-") {
+        inspector = inspectorCell.textContent.trim();
+      }
+      if (customsCell && customsCell.textContent.trim() !== "-") {
+        customs_agent = customsCell.textContent.trim();
+      }
+      if (driverCell && driverCell.textContent.trim() !== "-") {
+        driver = driverCell.textContent.trim();
+      }
+      if (driverPhoneCell && driverPhoneCell.textContent.trim() !== "-") {
+        driver_phone = driverPhoneCell.textContent.trim();
+      }
+      if (deliveryDateCell && deliveryDateCell.textContent.trim() !== "-") {
+        delivery_date = deliveryDateCell.textContent.trim();
+      }
+      if (observationCell && observationCell.textContent.trim() !== "-") {
+        observation = observationCell.textContent.trim();
+      }
+    }
+
     // Crée un enregistrement unique pour ce conteneur
     const historyEntry = {
       id: Date.now() + Math.random(), // ID unique
@@ -3642,19 +3883,20 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       employee_name: delivery.employee_name,
       circuit: delivery.circuit,
       shipping_company: delivery.shipping_company,
-      visitor_agent_name: delivery.visitor_agent_name,
-      transporter: delivery.transporter,
-      inspector: delivery.inspector,
-      customs_agent: delivery.customs_agent,
-      driver: delivery.driver,
-      driver_phone: delivery.driver_phone,
+      visitor_agent_name: visitor_agent_name,
+      transporter: transporter,
+      inspector: inspector,
+      customs_agent: customs_agent,
+      driver: driver,
+      driver_phone: driver_phone,
       container_foot_type: delivery.container_foot_type,
       weight: delivery.weight,
       ship_name: delivery.ship_name,
-      delivery_date: delivery.delivery_date,
-      observation: delivery.observation,
+      delivery_date: delivery_date,
+      observation: observation,
       delivered_at: new Date().toISOString(), // Horodatage de livraison
-      delivered_by: localStorage.getItem("user_nom") || "Inconnu",
+      delivered_by:
+        visitor_agent_name || localStorage.getItem("user_nom") || "-",
     };
 
     // Vérifie si ce conteneur n'est pas déjà dans l'historique
@@ -3716,35 +3958,73 @@ function showHistoryButtonIfNeeded() {
   let historyBtn = document.getElementById("professionalHistoryBtn");
 
   if (!historyBtn) {
-    // Crée le bouton historique professionnel
+    // Crée le bouton historique professionnel avec couleurs très vives
     historyBtn = document.createElement("button");
     historyBtn.id = "professionalHistoryBtn";
     historyBtn.innerHTML = "📋 Historique";
     historyBtn.title =
       "Consulter l'historique professionnel des conteneurs livrés";
-    historyBtn.style.background =
-      "linear-gradient(90deg,#059669 0%,#047857 100%)";
-    historyBtn.style.color = "#fff";
-    historyBtn.style.fontWeight = "bold";
-    historyBtn.style.border = "none";
-    historyBtn.style.cursor = "pointer";
-    historyBtn.style.borderRadius = "8px";
-    historyBtn.style.padding = "8px 16px";
-    historyBtn.style.fontSize = "0.95em";
-    historyBtn.style.margin = "0 8px 0 0"; // Margin à droite seulement
-    historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
-    historyBtn.style.transition = "all 0.2s ease";
-    historyBtn.style.height = "32px"; // Même hauteur que les autres boutons
-    historyBtn.style.verticalAlign = "middle";
 
-    // Effet de survol
+    // FORCER LES COULEURS IMMÉDIATEMENT ET DE MANIÈRE AGRESSIVE
+    historyBtn.style.setProperty(
+      "background",
+      "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
+      "important"
+    );
+    historyBtn.style.setProperty("color", "#fff", "important");
+    historyBtn.style.setProperty("font-weight", "bold", "important");
+    historyBtn.style.setProperty("border", "3px solid #C62828", "important");
+    historyBtn.style.setProperty("cursor", "pointer", "important");
+    historyBtn.style.setProperty("border-radius", "8px", "important");
+    historyBtn.style.setProperty("padding", "8px 16px", "important");
+    historyBtn.style.setProperty("font-size", "0.95em", "important");
+    historyBtn.style.setProperty("margin", "0 8px 0 0", "important");
+    historyBtn.style.setProperty(
+      "box-shadow",
+      "0 4px 15px rgba(255, 23, 68, 0.6)",
+      "important"
+    );
+    historyBtn.style.setProperty("transition", "all 0.2s ease", "important");
+    historyBtn.style.setProperty("height", "32px", "important");
+    historyBtn.style.setProperty("vertical-align", "middle", "important");
+    historyBtn.style.setProperty("display", "inline-block", "important");
+    historyBtn.style.setProperty("visibility", "visible", "important");
+    historyBtn.style.setProperty("opacity", "1", "important");
+
+    // Marquer comme accessible en mode admin
+    historyBtn.setAttribute("data-allow-admin", "true");
+    historyBtn.classList.add("admin-allowed-button");
+
+    // Effet de survol amélioré
     historyBtn.onmouseenter = () => {
-      historyBtn.style.transform = "translateY(-2px)";
-      historyBtn.style.boxShadow = "0 4px 16px rgba(5,150,105,0.4)";
+      historyBtn.style.setProperty(
+        "transform",
+        "translateY(-2px)",
+        "important"
+      );
+      historyBtn.style.setProperty(
+        "box-shadow",
+        "0 6px 25px rgba(255, 23, 68, 0.8)",
+        "important"
+      );
+      historyBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#C62828 0%,#B71C1C 100%)",
+        "important"
+      );
     };
     historyBtn.onmouseleave = () => {
-      historyBtn.style.transform = "translateY(0)";
-      historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
+      historyBtn.style.setProperty("transform", "translateY(0)", "important");
+      historyBtn.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(255, 23, 68, 0.6)",
+        "important"
+      );
+      historyBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
+        "important"
+      );
     };
 
     // Événement de clic
@@ -3842,6 +4122,32 @@ function showHistoryButtonIfNeeded() {
 }
 
 /**
+ * Groupe les conteneurs par dossier et date pour optimiser l'affichage
+ */
+function groupContainersByDossierAndDate(history) {
+  const grouped = {};
+
+  history.forEach((entry) => {
+    const date = new Date(entry.delivered_at).toDateString();
+    const dossier = entry.dossier_number || "SANS_DOSSIER";
+    const key = `${dossier}_${date}`;
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        ...entry, // Copie les propriétés de la première entrée
+        containers: [],
+        containerCount: 0,
+      };
+    }
+
+    grouped[key].containers.push(entry.container_number);
+    grouped[key].containerCount++;
+  });
+
+  return Object.values(grouped);
+}
+
+/**
  * Affiche la modal de l'historique professionnel
  */
 function showProfessionalHistoryModal() {
@@ -3849,6 +4155,9 @@ function showProfessionalHistoryModal() {
   const history = JSON.parse(
     localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
   );
+
+  // **NOUVEAUTÉ : Groupe les conteneurs par dossier et date**
+  const groupedHistory = groupContainersByDossierAndDate(history);
 
   // Supprime la modal existante si elle existe
   const existingModal = document.getElementById("professionalHistoryModal");
@@ -3922,8 +4231,19 @@ function showProfessionalHistoryModal() {
   stats.style.padding = "15px 30px";
   stats.style.background = "#f8fafc";
   stats.style.borderBottom = "1px solid #e5e7eb";
+
+  // Calculer la première livraison (la plus ancienne)
+  const firstDelivery =
+    history.length > 0
+      ? history.reduce((oldest, current) =>
+          new Date(current.delivered_at) < new Date(oldest.delivered_at)
+            ? current
+            : oldest
+        )
+      : null;
+
   stats.innerHTML = `
-    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+    <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 15px;">
       <div style="color: #059669; font-weight: bold;">
         📦 Total conteneurs livrés: <span style="color: #047857;">${
           history.length
@@ -3936,6 +4256,34 @@ function showProfessionalHistoryModal() {
             : "Aucune"
         }</span>
       </div>
+      <div style="color: #059669; font-weight: bold;">
+        📆 Ancienne livraison: <span style="color: #047857;">${
+          firstDelivery
+            ? new Date(firstDelivery.delivered_at).toLocaleDateString("fr-FR")
+            : "Aucune"
+        }</span>
+      </div>
+    </div>
+    
+    <!-- Barre de recherche et contrôles -->
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+      <div style="flex: 1; min-width: 300px;">
+        <input type="text" id="historySearchInput" placeholder="🔍 Rechercher par conteneur, dossier, client, agent, transporteur..." 
+          style="width: 100%; padding: 8px 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 0.9em; outline: none; transition: border-color 0.2s;"
+          oninput="filterHistoryTable()" 
+          onfocus="this.style.borderColor='#059669'" 
+          onblur="this.style.borderColor='#d1d5db'">
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button id="selectAllHistoryBtn" onclick="toggleSelectAllHistory()" 
+          style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
+          ✓ Tout sélectionner
+        </button>
+        <button id="deleteSelectedHistoryBtn" onclick="deleteSelectedHistory()" disabled
+          style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: not-allowed; font-size: 0.9em; white-space: nowrap; opacity: 0.5;">
+          🗑️ Supprimer sélection
+        </button>
+      </div>
     </div>
   `;
   container.appendChild(stats);
@@ -3947,7 +4295,7 @@ function showProfessionalHistoryModal() {
   content.style.overflowY = "auto";
   content.style.background = "#fff";
 
-  if (history.length === 0) {
+  if (groupedHistory.length === 0) {
     content.innerHTML = `
       <div style="text-align: center; padding: 50px 20px; color: #6b7280;">
         <div style="font-size: 3em; margin-bottom: 20px;">📋</div>
@@ -3956,8 +4304,9 @@ function showProfessionalHistoryModal() {
       </div>
     `;
   } else {
-    // Tableau de l'historique
+    // Tableau de l'historique avec conteneurs groupés
     const table = document.createElement("table");
+    table.id = "historyTable";
     table.style.width = "100%";
     table.style.borderCollapse = "collapse";
     table.style.fontSize = "0.9em";
@@ -3966,8 +4315,12 @@ function showProfessionalHistoryModal() {
     table.innerHTML = `
       <thead>
         <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+          <th style="padding: 12px 8px; text-align: center; font-weight: bold; color: #374151; width: 40px;">
+            <input type="checkbox" id="selectAllHistoryCheckbox" onchange="toggleSelectAllHistory()" 
+              style="cursor: pointer; transform: scale(1.1);">
+          </th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Date/Heure</th>
-          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Conteneur</th>
+          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Conteneurs</th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Dossier</th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Client</th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Agent</th>
@@ -3976,13 +4329,21 @@ function showProfessionalHistoryModal() {
           <th style="padding: 12px 8px; text-align: center; font-weight: bold; color: #374151;">Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="historyTableBody">
         ${history
           .map(
             (entry, index) => `
-          <tr style="border-bottom: 1px solid #f3f4f6; ${
-            index % 2 === 0 ? "background: #fafafa;" : ""
-          }">
+          <tr class="history-row" data-entry-id="${
+            entry.id
+          }" style="border-bottom: 1px solid #f3f4f6; ${
+              index % 2 === 0 ? "background: #fafafa;" : ""
+            }">
+            <td style="padding: 10px 8px; text-align: center;">
+              <input type="checkbox" class="history-checkbox" value="${
+                entry.id
+              }" onchange="updateDeleteButtonState()" 
+                style="cursor: pointer; transform: scale(1.1);">
+            </td>
             <td style="padding: 10px 8px; color: #4b5563;">
               ${new Date(entry.delivered_at).toLocaleDateString("fr-FR")}<br>
               <small style="color: #9ca3af;">${new Date(
@@ -4034,6 +4395,105 @@ function showProfessionalHistoryModal() {
 }
 
 /**
+ * Affiche la liste flottante des conteneurs pour un groupe
+ */
+window.showContainersList = function (dossierNumber, groupIndex) {
+  const history = JSON.parse(
+    localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+  );
+  const groupedHistory = groupContainersByDossierAndDate(history);
+  const group = groupedHistory[groupIndex];
+
+  if (!group) return;
+
+  // Supprimer toute fenêtre flottante existante
+  const existingFloater = document.getElementById("containersFloater");
+  if (existingFloater) existingFloater.remove();
+
+  // Créer la fenêtre flottante
+  const floater = document.createElement("div");
+  floater.id = "containersFloater";
+  floater.style.position = "fixed";
+  floater.style.top = "50%";
+  floater.style.left = "50%";
+  floater.style.transform = "translate(-50%, -50%)";
+  floater.style.background = "#ffffff";
+  floater.style.border = "2px solid #3b82f6";
+  floater.style.borderRadius = "12px";
+  floater.style.boxShadow = "0 10px 25px rgba(59, 130, 246, 0.3)";
+  floater.style.padding = "20px";
+  floater.style.zIndex = "100400";
+  floater.style.maxWidth = "400px";
+  floater.style.maxHeight = "300px";
+  floater.style.overflowY = "auto";
+
+  floater.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">
+      <h4 style="margin: 0; color: #3b82f6; font-size: 1.1em;">
+        📦 Conteneurs du dossier ${dossierNumber}
+      </h4>
+      <button onclick="document.getElementById('containersFloater').remove()" 
+        style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">
+        ✕
+      </button>
+    </div>
+    <div style="display: grid; gap: 8px;">
+      ${group.containers
+        .map(
+          (container, index) => `
+        <div style="background: #f0f9ff; border: 1px solid #3b82f6; border-radius: 6px; padding: 8px 12px; font-weight: 500; color: #1e40af;">
+          ${index + 1}. ${container}
+        </div>
+      `
+        )
+        .join("")}
+    </div>
+    <div style="margin-top: 15px; text-align: center; font-size: 0.85em; color: #6b7280;">
+      Total: ${group.containerCount} conteneur(s)
+    </div>
+  `;
+
+  document.body.appendChild(floater);
+
+  // Fermer en cliquant en dehors
+  setTimeout(() => {
+    document.addEventListener("click", function closeFloater(e) {
+      if (!floater.contains(e.target)) {
+        floater.remove();
+        document.removeEventListener("click", closeFloater);
+      }
+    });
+  }, 100);
+};
+
+/**
+ * Affiche les détails d'un groupe de conteneurs
+ */
+window.showGroupDetail = function (dossierNumber, groupIndex) {
+  const history = JSON.parse(
+    localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+  );
+  const groupedHistory = groupContainersByDossierAndDate(history);
+  const group = groupedHistory[groupIndex];
+
+  if (!group) {
+    alert("Groupe non trouvé dans l'historique.");
+    return;
+  }
+
+  // Utiliser le premier conteneur pour les détails (ils partagent les mêmes infos de dossier)
+  const firstEntry = history.find(
+    (entry) =>
+      entry.dossier_number === group.dossier_number &&
+      entry.container_number === group.containers[0]
+  );
+
+  if (firstEntry) {
+    showHistoryEntryDetail(firstEntry.id);
+  }
+};
+
+/**
  * Affiche les détails d'une entrée de l'historique
  */
 window.showHistoryEntryDetail = function (entryId) {
@@ -4067,57 +4527,193 @@ window.showHistoryEntryDetail = function (entryId) {
 
   const container = document.createElement("div");
   container.style.background = "#fff";
-  container.style.borderRadius = "12px";
-  container.style.boxShadow = "0 15px 40px rgba(0,0,0,0.2)";
-  container.style.maxWidth = "90vw";
-  container.style.width = "500px";
-  container.style.maxHeight = "80vh";
+  container.style.borderRadius = "16px";
+  container.style.boxShadow = "0 20px 50px rgba(0,0,0,0.15)";
+  container.style.maxWidth = "95vw";
+  container.style.width = "700px";
+  container.style.maxHeight = "85vh";
   container.style.overflowY = "auto";
   container.style.padding = "25px";
 
   container.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">
-      <h3 style="margin: 0; color: #059669; font-size: 1.3em;">📦 Détails du Conteneur ${
-        entry.container_number
-      }</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 3px solid #059669; padding-bottom: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); margin: -25px -25px 25px -25px; padding: 20px 25px;">
+      <h3 style="margin: 0; color: #059669; font-size: 1.4em; font-weight: bold;">
+          Détails du Dossier ${entry.dossier_number || "N/A"}
+      </h3>
       <button onclick="document.getElementById('historyDetailModal').remove()" 
-        style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
-        Fermer
+        style="background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);">
+        ✕ Fermer
       </button>
     </div>
-    <div style="display: grid; gap: 12px;">
-      <div><strong>Conteneur:</strong> ${entry.container_number}</div>
-      <div><strong>Dossier:</strong> ${entry.dossier_number || "-"}</div>
-      <div><strong>BL:</strong> ${entry.bl_number || "-"}</div>
-      <div><strong>Client:</strong> ${entry.client_name || "-"}</div>
-      <div><strong>Téléphone client:</strong> ${entry.client_phone || "-"}</div>
-      <div><strong>Circuit:</strong> ${entry.circuit || "-"}</div>
-      <div><strong>Compagnie maritime:</strong> ${
-        entry.shipping_company || "-"
-      }</div>
-      <div><strong>Agent visiteur:</strong> ${
-        entry.visitor_agent_name || "-"
-      }</div>
-      <div><strong>Transporteur:</strong> ${entry.transporter || "-"}</div>
-      <div><strong>Inspecteur:</strong> ${entry.inspector || "-"}</div>
-      <div><strong>Agent en douanes:</strong> ${
-        entry.customs_agent || "-"
-      }</div>
-      <div><strong>Chauffeur:</strong> ${entry.driver || "-"}</div>
-      <div><strong>Tél. chauffeur:</strong> ${entry.driver_phone || "-"}</div>
-      <div><strong>Type conteneur:</strong> ${
-        entry.container_foot_type || "-"
-      }</div>
-      <div><strong>Poids:</strong> ${entry.weight || "-"}</div>
-      <div><strong>Nom navire:</strong> ${entry.ship_name || "-"}</div>
-      <div><strong>Date livraison:</strong> ${entry.delivery_date || "-"}</div>
-      <div><strong>Observations:</strong> ${entry.observation || "-"}</div>
-      <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px; background: #f9fafb; padding: 10px; border-radius: 6px;">
-        <div><strong>Livré le:</strong> ${new Date(
-          entry.delivered_at
-        ).toLocaleString("fr-FR")}</div>
-        <div><strong>Livré par:</strong> ${entry.delivered_by}</div>
+    
+    <div style="display: grid; gap: 16px;">
+      <!-- Informations principales avec style amélioré -->
+      <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #3b82f6; font-size: 1.1em;">📋 Informations du dossier</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Numéro de dossier:</span>
+            <span style="color: #1e293b; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.dossier_number || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">BL:</span>
+            <span style="color: #1e293b; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.bl_number || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Circuit:</span>
+            <span style="color: #1e293b; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.circuit || "-"
+            }</span>
+          </div>
+        </div>
       </div>
+
+      <!-- Informations conteneur -->
+      <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #059669; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #059669; font-size: 1.1em;">📦 Conteneur livré</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Numéro conteneur:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #059669;">${
+              entry.container_number
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Type conteneur:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.container_foot_type || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Poids:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.weight || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations client -->
+      <div style="background: linear-gradient(135deg, #fef7ff 0%, #faf5ff 100%); border-left: 4px solid #a855f7; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #a855f7; font-size: 1.1em;">👤 Informations client</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Nom du client:</span>
+            <span style="color: #1e293b; background: #f3e8ff; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.client_name || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Téléphone:</span>
+            <span style="color: #1e293b; background: #f3e8ff; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.client_phone || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations logistiques -->
+      <div style="background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%); border-left: 4px solid #ea580c; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #ea580c; font-size: 1.1em;">🚛 Informations logistiques</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Compagnie maritime:</span>
+            <span style="color: #1e293b; background: #fed7aa; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.shipping_company || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Nom navire:</span>
+            <span style="color: #1e293b; background: #fed7aa; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.ship_name || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Agent visiteur:</span>
+            <span style="color: #1e293b; background: #fed7aa; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.visitor_agent_name || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Transporteur:</span>
+            <span style="color: #1e293b; background: #fed7aa; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.transporter || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations équipe -->
+      <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #f59e0b; font-size: 1.1em;">👥 Équipe</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Inspecteur:</span>
+            <span style="color: #1e293b; background: #fef3c7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.inspector || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Agent en douanes:</span>
+            <span style="color: #1e293b; background: #fef3c7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.customs_agent || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Chauffeur:</span>
+            <span style="color: #1e293b; background: #fef3c7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.driver || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Tél. chauffeur:</span>
+            <span style="color: #1e293b; background: #fef3c7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.driver_phone || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations de livraison -->
+      <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 4px solid #16a34a; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #16a34a; font-size: 1.1em;">✅ Livraison effectuée</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Livré par:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #16a34a;">${
+              entry.delivered_by
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Date et heure:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${new Date(
+              entry.delivered_at
+            ).toLocaleString("fr-FR")}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Date prévue:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.delivery_date || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Observations -->
+      ${
+        entry.observation
+          ? `
+      <div style="background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-left: 4px solid #6b7280; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #6b7280; font-size: 1.1em;">📝 Observations</h4>
+        <p style="margin: 0; color: #374151; background: #f9fafb; padding: 8px 12px; border-radius: 4px; font-style: italic;">${entry.observation}</p>
+      </div>
+      `
+          : ""
+      }
     </div>
   `;
 
@@ -4133,3 +4729,147 @@ window.showHistoryEntryDetail = function (entryId) {
 // ========================================================================
 // === FIN HISTORIQUE PROFESSIONNEL ===
 // ========================================================================
+
+// ========================================================================
+// === FONCTIONS POUR HISTORIQUE : RECHERCHE ET SUPPRESSION ===
+// ========================================================================
+
+/**
+ * Filtre le tableau de l'historique selon la recherche
+ */
+window.filterHistoryTable = function () {
+  const searchInput = document.getElementById("historySearchInput");
+  const table = document.getElementById("historyTable");
+
+  if (!searchInput || !table) return;
+
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  const rows = table.querySelectorAll("tbody tr.history-row");
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll("td");
+    let shouldShow = false;
+
+    // Recherche dans les colonnes : Conteneur, Dossier, Client, Agent, Transporteur, Livré par
+    const searchableColumns = [2, 3, 4, 5, 6, 7]; // Index des colonnes à rechercher
+
+    for (let i of searchableColumns) {
+      if (cells[i] && cells[i].textContent.toLowerCase().includes(searchTerm)) {
+        shouldShow = true;
+        break;
+      }
+    }
+
+    row.style.display = shouldShow ? "" : "none";
+  });
+
+  // Mettre à jour l'état de sélection si des éléments sont cachés
+  updateDeleteButtonState();
+};
+
+/**
+ * Bascule la sélection de toutes les entrées visibles
+ */
+window.toggleSelectAllHistory = function () {
+  const selectAllCheckbox = document.getElementById("selectAllHistoryCheckbox");
+  const checkboxes = document.querySelectorAll(".history-checkbox");
+  const isChecked = selectAllCheckbox ? selectAllCheckbox.checked : false;
+
+  checkboxes.forEach((checkbox) => {
+    // Ne sélectionner que les éléments visibles
+    const row = checkbox.closest("tr");
+    if (row && row.style.display !== "none") {
+      checkbox.checked = isChecked;
+    }
+  });
+
+  updateDeleteButtonState();
+};
+
+/**
+ * Met à jour l'état du bouton de suppression selon les sélections
+ */
+window.updateDeleteButtonState = function () {
+  const checkboxes = document.querySelectorAll(".history-checkbox:checked");
+  const deleteBtn = document.getElementById("deleteSelectedHistoryBtn");
+  const selectAllCheckbox = document.getElementById("selectAllHistoryCheckbox");
+
+  if (deleteBtn) {
+    const hasSelection = checkboxes.length > 0;
+    deleteBtn.disabled = !hasSelection;
+    deleteBtn.style.opacity = hasSelection ? "1" : "0.5";
+    deleteBtn.style.cursor = hasSelection ? "pointer" : "not-allowed";
+    deleteBtn.textContent = hasSelection
+      ? `🗑️ Supprimer (${checkboxes.length})`
+      : "🗑️ Supprimer sélection";
+  }
+
+  // Mettre à jour la case "tout sélectionner"
+  if (selectAllCheckbox) {
+    const visibleCheckboxes = Array.from(
+      document.querySelectorAll(".history-checkbox")
+    ).filter((cb) => {
+      const row = cb.closest("tr");
+      return row && row.style.display !== "none";
+    });
+    const checkedVisibleBoxes = visibleCheckboxes.filter((cb) => cb.checked);
+
+    selectAllCheckbox.checked =
+      visibleCheckboxes.length > 0 &&
+      checkedVisibleBoxes.length === visibleCheckboxes.length;
+    selectAllCheckbox.indeterminate =
+      checkedVisibleBoxes.length > 0 &&
+      checkedVisibleBoxes.length < visibleCheckboxes.length;
+  }
+};
+
+/**
+ * Supprime les entrées sélectionnées de l'historique
+ */
+window.deleteSelectedHistory = function () {
+  const checkboxes = document.querySelectorAll(".history-checkbox:checked");
+
+  if (checkboxes.length === 0) {
+    alert("Aucune entrée sélectionnée.");
+    return;
+  }
+
+  const selectedIds = Array.from(checkboxes).map((cb) => cb.value);
+  const message = `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} entrée(s) de l'historique ?\n\nCette action est irréversible.`;
+
+  if (!confirm(message)) {
+    return;
+  }
+
+  try {
+    // Récupérer l'historique actuel
+    let history = JSON.parse(
+      localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+    );
+
+    // Filtrer pour retirer les entrées sélectionnées
+    const originalLength = history.length;
+    history = history.filter((entry) => !selectedIds.includes(entry.id));
+
+    // Sauvegarder le nouvel historique
+    localStorage.setItem(DELIVERY_HISTORY_KEY, JSON.stringify(history));
+
+    // Afficher un message de confirmation
+    const deletedCount = originalLength - history.length;
+    alert(`✅ ${deletedCount} entrée(s) supprimée(s) avec succès.`);
+
+    // Fermer la modal actuelle et la rouvrir pour rafraîchir
+    const currentModal = document.getElementById("historyModal");
+    if (currentModal) {
+      currentModal.remove();
+      showDeliveryHistory(); // Rouvrir l'historique avec les données mises à jour
+    }
+  } catch (error) {
+    console.error("Erreur lors de la suppression:", error);
+    alert("❌ Erreur lors de la suppression. Veuillez réessayer.");
+  }
+};
+
+// ========================================================================
+// === FIN FONCTIONS HISTORIQUE ===
+// ==========================================================================
