@@ -1681,6 +1681,115 @@ async function createTables() {
     );
     process.exit(1);
   }
+
+  // FORCER LA MISE À JOUR DU TYPE DE COLONNE container_statuses SI NÉCESSAIRE
+  try {
+    // Vérifier le type actuel de la colonne container_statuses
+    const columnTypeCheck = await pool.query(`
+      SELECT data_type, character_maximum_length 
+      FROM information_schema.columns 
+      WHERE table_name = 'livraison_conteneur' 
+      AND column_name = 'container_statuses'
+    `);
+
+    if (columnTypeCheck.rows.length > 0) {
+      const currentType = columnTypeCheck.rows[0].data_type;
+      const maxLength = columnTypeCheck.rows[0].character_maximum_length;
+
+      console.log(
+        `🔍 Type actuel de container_statuses: ${currentType}${
+          maxLength ? `(${maxLength})` : ""
+        }`
+      );
+
+      // Si ce n'est pas JSONB, on force la conversion
+      if (currentType !== "jsonb") {
+        console.log("🔧 Conversion de container_statuses vers JSONB...");
+
+        // Étape 1: Créer une colonne temporaire JSONB
+        await pool.query(`
+          ALTER TABLE livraison_conteneur 
+          ADD COLUMN IF NOT EXISTS container_statuses_temp JSONB
+        `);
+
+        // Étape 2: Convertir les données existantes
+        await pool.query(`
+          UPDATE livraison_conteneur 
+          SET container_statuses_temp = 
+            CASE 
+              WHEN container_statuses IS NULL THEN NULL
+              WHEN container_statuses = '' THEN NULL
+              ELSE container_statuses::jsonb
+            END
+          WHERE container_statuses_temp IS NULL
+        `);
+
+        // Étape 3: Supprimer l'ancienne colonne
+        await pool.query(`
+          ALTER TABLE livraison_conteneur DROP COLUMN container_statuses
+        `);
+
+        // Étape 4: Renommer la nouvelle colonne
+        await pool.query(`
+          ALTER TABLE livraison_conteneur 
+          RENAME COLUMN container_statuses_temp TO container_statuses
+        `);
+
+        console.log("✅ container_statuses converti vers JSONB avec succès!");
+      } else {
+        console.log("✅ container_statuses est déjà en JSONB");
+      }
+    }
+  } catch (conversionErr) {
+    console.error(
+      "⚠️  Erreur lors de la conversion container_statuses:",
+      conversionErr.message
+    );
+    // Ne pas arrêter le serveur pour cette erreur
+  }
+
+  // FORCER L'AGRANDISSEMENT DE LA COLONNE container_number POUR SUPPORTER PLUSIEURS CONTENEURS
+  try {
+    // Vérifier la taille actuelle de la colonne container_number
+    const containerNumberCheck = await pool.query(`
+      SELECT character_maximum_length 
+      FROM information_schema.columns 
+      WHERE table_name = 'livraison_conteneur' 
+      AND column_name = 'container_number'
+    `);
+
+    if (containerNumberCheck.rows.length > 0) {
+      const maxLength = containerNumberCheck.rows[0].character_maximum_length;
+
+      console.log(
+        `🔍 Taille actuelle de container_number: VARCHAR(${maxLength})`
+      );
+
+      // Si c'est 100 ou moins, on l'agrandit à 500 caractères
+      if (maxLength <= 100) {
+        console.log(
+          "🔧 Agrandissement de container_number vers VARCHAR(500)..."
+        );
+
+        await pool.query(`
+          ALTER TABLE livraison_conteneur 
+          ALTER COLUMN container_number TYPE VARCHAR(500)
+        `);
+
+        console.log("✅ container_number agrandi à VARCHAR(500) avec succès!");
+      } else {
+        console.log(
+          `✅ container_number est déjà assez grand: VARCHAR(${maxLength})`
+        );
+      }
+    }
+  } catch (conversionErr) {
+    console.error(
+      "⚠️  Erreur lors de l'agrandissement container_number:",
+      conversionErr.message
+    );
+    // Ne pas arrêter le serveur pour cette erreur
+  }
 }
 createTables();
 
