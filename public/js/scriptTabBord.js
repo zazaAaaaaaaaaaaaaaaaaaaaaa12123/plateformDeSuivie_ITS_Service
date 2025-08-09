@@ -13,70 +13,93 @@
   }
 })();
 
-// === ANIMATION D'ENTREPRISE PROFESSIONNELLE ===
-(function initEnterpriseAnimation() {
-  document.addEventListener("DOMContentLoaded", function () {
+// === ANIMATION D'ENTREPRISE PROFESSIONNELLE - PRIORITÉ ABSOLUE ===
+(function initEnterpriseAnimationImmediate() {
+  // Initialiser immédiatement sans attendre le DOM
+  function showEnterpriseAnimation() {
     const enterpriseIntro = document.getElementById("enterpriseIntro");
+    const mainLayout = document.querySelector(".layout");
 
-    if (!enterpriseIntro) return;
+    if (enterpriseIntro) {
+      // Masquer le contenu principal au début
+      if (mainLayout) {
+        mainLayout.style.opacity = "0";
+        mainLayout.style.visibility = "hidden";
+      }
 
-    // Vérifier si l'animation a déjà été vue dans cette session
-    const hasSeenAnimation = sessionStorage.getItem(
-      "hasSeenEnterpriseAnimation"
-    );
+      // Toujours afficher l'animation au chargement de la page
+      enterpriseIntro.style.display = "flex";
+      enterpriseIntro.style.opacity = "1";
+      enterpriseIntro.style.visibility = "visible";
 
-    if (hasSeenAnimation) {
-      // Masquer immédiatement l'animation si déjà vue
-      enterpriseIntro.style.display = "none";
-      return;
+      // Supprimer l'animation et afficher le contenu principal après sa fin
+      setTimeout(() => {
+        if (enterpriseIntro) {
+          enterpriseIntro.style.animation =
+            "enterpriseSlideUp 1s ease-out forwards";
+
+          // Après l'animation de sortie
+          setTimeout(() => {
+            enterpriseIntro.remove();
+
+            // Afficher le contenu principal avec une transition douce
+            if (mainLayout) {
+              mainLayout.style.transition =
+                "opacity 0.5s ease-in-out, visibility 0.5s ease-in-out";
+              mainLayout.style.opacity = "1";
+              mainLayout.style.visibility = "visible";
+            }
+          }, 1000);
+        }
+      }, 3500);
+
+      // Effet de typed.js pour le titre
+      setTimeout(() => {
+        const title = document.querySelector(".enterprise-title");
+        if (title) {
+          const originalText = title.textContent;
+          title.textContent = "";
+
+          let i = 0;
+          const typeInterval = setInterval(() => {
+            title.textContent += originalText[i];
+            i++;
+            if (i >= originalText.length) {
+              clearInterval(typeInterval);
+            }
+          }, 50);
+        }
+      }, 1200);
+
+      // Effet de typing pour le sous-titre
+      setTimeout(() => {
+        const subtitle = document.querySelector(".enterprise-subtitle");
+        if (subtitle) {
+          const originalText = subtitle.textContent;
+          subtitle.textContent = "";
+
+          let i = 0;
+          const typeInterval = setInterval(() => {
+            subtitle.textContent += originalText[i];
+            i++;
+            if (i >= originalText.length) {
+              clearInterval(typeInterval);
+            }
+          }, 30);
+        }
+      }, 2000);
     }
+  }
 
-    // Marquer l'animation comme vue
-    sessionStorage.setItem("hasSeenEnterpriseAnimation", "true");
+  // Essayer immédiatement
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", showEnterpriseAnimation);
+  } else {
+    showEnterpriseAnimation();
+  }
 
-    // Supprimer l'animation après sa fin
-    setTimeout(() => {
-      if (enterpriseIntro) {
-        enterpriseIntro.remove();
-      }
-    }, 4500);
-
-    // Effet de typed.js pour le titre
-    setTimeout(() => {
-      const title = document.querySelector(".enterprise-title");
-      if (title) {
-        const originalText = title.textContent;
-        title.textContent = "";
-
-        let i = 0;
-        const typeInterval = setInterval(() => {
-          title.textContent += originalText[i];
-          i++;
-          if (i >= originalText.length) {
-            clearInterval(typeInterval);
-          }
-        }, 50);
-      }
-    }, 1200);
-
-    // Effet de typing pour le sous-titre
-    setTimeout(() => {
-      const subtitle = document.querySelector(".enterprise-subtitle");
-      if (subtitle) {
-        const originalText = subtitle.textContent;
-        subtitle.textContent = "";
-
-        let i = 0;
-        const typeInterval = setInterval(() => {
-          subtitle.textContent += originalText[i];
-          i++;
-          if (i >= originalText.length) {
-            clearInterval(typeInterval);
-          }
-        }, 30);
-      }
-    }, 2000);
-  });
+  // Également essayer après un court délai pour être sûr
+  setTimeout(showEnterpriseAnimation, 100);
 })();
 
 // Redirection automatique vers le tableau de bord après connexion réussie

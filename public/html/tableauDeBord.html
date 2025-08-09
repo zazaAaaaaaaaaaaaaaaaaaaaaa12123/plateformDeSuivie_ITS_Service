@@ -41,6 +41,14 @@
         padding: 20px;
       }
 
+      /* S'assurer que l'animation d'entreprise est toujours visible en premier */
+      body .enterprise-intro {
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        z-index: 99999 !important;
+      }
+
       .layout {
         display: flex;
         max-width: 100%;
@@ -50,6 +58,8 @@
         background: white;
         transition: all 0.3s ease;
         height: 100vh;
+        opacity: 0;
+        visibility: hidden;
       }
 
       /* --- AMELIORATIONS POUR LA SIDEBAR - Version "Sublimée" --- */
@@ -417,8 +427,8 @@
         align-items: center;
         justify-content: center;
         z-index: 10000;
-        animation: enterpriseSlideUp 1s ease-out 3s forwards;
         opacity: 1;
+        visibility: visible;
       }
 
       /* Logo et branding animés */
@@ -3993,6 +4003,13 @@
             const originalUpdateCardCounters = window.updateCardCounters;
             window.updateCardCounters = function () {
               console.log("[DASHBOARD] 📊 Début mise à jour des compteurs...");
+
+              // Définir les IDs des cartes
+              const cardIds = [
+                "carteAttentePaiement",
+                "carteMiseLivraison", 
+                "carteLivre"
+              ];
 
               // Animations désactivées
               cardIds.forEach((cardId) => {
