@@ -3214,6 +3214,15 @@ document.addEventListener("DOMContentLoaded", function () {
     searchInput.style.maxWidth = "280px";
     searchInput.style.flex = "0 1 auto";
 
+    // Forcer l'agressivité des couleurs du bouton PDF pour le mode admin
+    if (window.adminModeManager) {
+      pdfBtn.style.setProperty("background", "#2563eb", "important");
+      pdfBtn.style.setProperty("color", "#fff", "important");
+      pdfBtn.style.setProperty("border", "none", "important");
+      pdfBtn.style.setProperty("cursor", "pointer", "important");
+      pdfBtn.style.setProperty("font-weight", "bold", "important");
+    }
+
     // Ajouter le bouton PDF à la fin
     parentContainer.appendChild(pdfBtn);
   } else {
@@ -3222,6 +3231,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (mainTable && mainTable.parentNode) {
       mainTable.parentNode.insertBefore(pdfBtn, mainTable);
     }
+  }
+
+  // Activer le modal PDF pour l'admin si nécessaire
+  if (window.adminModeManager && window.enablePdfModalForAdmin) {
+    setTimeout(() => {
+      window.enablePdfModalForAdmin();
+    }, 1000);
   }
 });
 
@@ -3321,6 +3337,7 @@ function showPdfFilterModal() {
   radioSingle.type = "radio";
   radioSingle.name = "pdfDateFilter";
   radioSingle.id = "pdfFilterSingle";
+  radioSingle.className = "pdfModalRadio"; // Classe pour l'admin
   radioSingle.checked = true;
   const labelSingle = document.createElement("label");
   labelSingle.textContent = "Une seule date";
@@ -3330,6 +3347,7 @@ function showPdfFilterModal() {
   radioRange.type = "radio";
   radioRange.name = "pdfDateFilter";
   radioRange.id = "pdfFilterRange";
+  radioRange.className = "pdfModalRadio"; // Classe pour l'admin
   const labelRange = document.createElement("label");
   labelRange.textContent = "Intervalle de dates";
   labelRange.htmlFor = "pdfFilterRange";
@@ -3345,6 +3363,7 @@ function showPdfFilterModal() {
     const dateInput = document.createElement("input");
     dateInput.type = "date";
     dateInput.id = "pdfSingleDateInput";
+    dateInput.className = "pdfModalDateInput"; // Classe pour l'admin
     dateInput.style.padding = "8px 18px";
     dateInput.style.borderRadius = "8px";
     dateInput.style.border = "1.5px solid #2563eb";
@@ -3357,6 +3376,7 @@ function showPdfFilterModal() {
     const dateStart = document.createElement("input");
     dateStart.type = "date";
     dateStart.id = "pdfRangeDateStart";
+    dateStart.className = "pdfModalDateInput"; // Classe pour l'admin
     dateStart.style.padding = "8px 18px";
     dateStart.style.borderRadius = "8px";
     dateStart.style.border = "1.5px solid #2563eb";
@@ -3365,6 +3385,7 @@ function showPdfFilterModal() {
     const dateEnd = document.createElement("input");
     dateEnd.type = "date";
     dateEnd.id = "pdfRangeDateEnd";
+    dateEnd.className = "pdfModalDateInput"; // Classe pour l'admin
     dateEnd.style.padding = "8px 18px";
     dateEnd.style.borderRadius = "8px";
     dateEnd.style.border = "1.5px solid #2563eb";
@@ -3376,6 +3397,7 @@ function showPdfFilterModal() {
   radioSingle.onchange = renderSingleDateInput;
   radioRange.onchange = renderRangeDateInputs;
   const validateBtn = document.createElement("button");
+  validateBtn.id = "pdfModalGenerateBtn"; // ID pour l'admin
   validateBtn.textContent = "Générer PDF";
   validateBtn.style.background = "#2563eb";
   validateBtn.style.color = "#fff";
@@ -3441,6 +3463,13 @@ function showPdfFilterModal() {
 pdfBtn.onclick = function () {
   updateDeliveredForPdf();
   showPdfFilterModal();
+
+  // Activer immédiatement les éléments du modal pour l'admin
+  if (window.adminModeManager && window.enablePdfModalForAdmin) {
+    setTimeout(() => {
+      window.enablePdfModalForAdmin();
+    }, 100);
+  }
 };
 
 function generateEtatSortiePdf(rows, date1, date2) {
