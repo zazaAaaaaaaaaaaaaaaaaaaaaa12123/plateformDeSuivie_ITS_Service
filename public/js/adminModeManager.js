@@ -103,9 +103,6 @@ class AdminModeManager {
       }
     }, 100);
 
-    // 9. Surveiller et protéger les boutons PDF créés dynamiquement
-    this.watchForDynamicPdfButtons();
-
     // Appliquer toutes les 500ms pendant 5 secondes pour être sûr
     let attempts = 0;
     const maxAttempts = 10;
@@ -113,7 +110,6 @@ class AdminModeManager {
       this.disableEditingFeatures();
       this.optimizeTableDisplay();
       this.applyBlueCustomStyles();
-      this.watchForDynamicPdfButtons(); // Réappliquer la protection PDF
 
       // Réappliquer les optimisations spécifiques
       if (targetPage === "acconier") {
@@ -168,7 +164,7 @@ class AdminModeManager {
     const targetPage = localStorage.getItem("adminViewTarget");
 
     // Protection explicite: ne jamais désactiver ces boutons clés
-    const safeIds = ["generatePdfBtn", "professionalHistoryBtn"];
+    const safeIds = ["professionalHistoryBtn"];
     safeIds.forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
@@ -250,18 +246,10 @@ class AdminModeManager {
         element.classList.contains("admin-allowed-tc") ||
         element.classList.contains("admin-allowed-bl-link");
 
-      // Vérifier si l'élément fait partie d'une modal autorisée (PDF ou Historique)
+      // Vérifier si l'élément fait partie d'une modal autorisée (Historique)
       const isInAllowedModal =
-        element.closest("#pdfFilterModal") ||
         element.closest("#professionalHistoryModal") ||
         element.closest("#historyDetailModal") ||
-        element.closest("#fallbackPdfModal") ||
-        element.id === "pdfFilterSingle" ||
-        element.id === "pdfFilterRange" ||
-        element.id === "pdfSingleDateInput" ||
-        element.id === "pdfRangeDateStart" ||
-        element.id === "pdfRangeDateEnd" ||
-        element.closest('[id*="pdf"]') ||
         element.closest('[id*="history"]') ||
         element.closest('[id*="History"]') ||
         element.classList.contains("close") ||
@@ -1396,7 +1384,7 @@ class AdminModeManager {
    * Optimisations spécifiques à la page livraison
    */
   optimizeLivraisonPage() {
-    // 1) Activer les champs autorisés (dates, historique, recherche, PDF)
+    // 1) Activer les champs autorisés (dates, historique, recherche)
     this.enableAdminAllowedFieldsLivraison();
 
     // 2) Colonnes exactes à verrouiller en lecture seule (conformes à la demande)
@@ -1505,7 +1493,6 @@ class AdminModeManager {
    * - Dates: #mainTableDateStartFilter, #mainTableDateEndFilter
    * - Bouton Historique: #professionalHistoryBtn
    * - Recherche: #searchInput, #searchButton
-   * - PDF: #generatePdfBtn
    */
   enableAdminAllowedFieldsLivraison() {
     try {
@@ -1513,15 +1500,6 @@ class AdminModeManager {
       console.log(
         "🔍 Vérification des fonctions disponibles pour le mode admin..."
       );
-
-      // Vérifier les fonctions PDF
-      const pdfFunctionsAvailable = [
-        typeof window.showPdfFilterModal === "function",
-        typeof window.updateDeliveredForPdf === "function",
-        typeof window.generateEtatSortiePdf === "function",
-        typeof window.attachPdfButtonHandler === "function",
-      ];
-      console.log("📄 Fonctions PDF disponibles:", pdfFunctionsAvailable);
 
       // Vérifier la fonction historique
       const historyFunctionAvailable =
@@ -1651,143 +1629,6 @@ class AdminModeManager {
             const originalClick = newHistoryBtn.getAttribute("onclick");
             if (originalClick) {
               eval(originalClick);
-            }
-          }
-        });
-      }
-
-      // Générer PDF
-      const pdfBtn = document.getElementById("generatePdfBtn");
-      if (pdfBtn) {
-        pdfBtn.disabled = false;
-        pdfBtn.style.opacity = "1";
-        pdfBtn.style.cursor = "pointer";
-        pdfBtn.style.pointerEvents = "auto";
-        pdfBtn.style.display = "inline-block";
-        pdfBtn.style.visibility = "visible";
-        pdfBtn.style.transform = "none";
-        pdfBtn.style.filter = "none";
-        pdfBtn.style.cssText += `
-          background: #dc3545 !important;
-          color: #ffffff !important;
-          border-color: #b02a37 !important;
-        `;
-
-        // Assurons-nous que le gestionnaire d'événement click fonctionne
-        // Supprimons d'abord tous les gestionnaires existants
-        const newPdfBtn = pdfBtn.cloneNode(true);
-        pdfBtn.parentNode.replaceChild(newPdfBtn, pdfBtn);
-
-        // Réappliquons les styles
-        newPdfBtn.disabled = false;
-        newPdfBtn.style.opacity = "1";
-        newPdfBtn.style.cursor = "pointer";
-        newPdfBtn.style.pointerEvents = "auto";
-        newPdfBtn.style.cssText += `
-          background: #dc3545 !important;
-          color: #ffffff !important;
-          border-color: #b02a37 !important;
-        `;
-
-        // Ajoutons les gestionnaires de survol
-        newPdfBtn.addEventListener("mouseenter", () => {
-          newPdfBtn.style.background = "#b02a37 !important";
-        });
-        newPdfBtn.addEventListener("mouseleave", () => {
-          newPdfBtn.style.background = "#dc3545 !important";
-        });
-
-        // Ajoutons le gestionnaire de clic pour la modal PDF
-        newPdfBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-
-          console.log("🔴 Clic sur le bouton PDF détecté en mode admin");
-
-          // Fonction d'essai multiple pour s'assurer que la modal s'ouvre
-          function tryOpenPdfModal() {
-            // Mettre à jour les données avant d'ouvrir la modal
-            if (typeof window.updateDeliveredForPdf === "function") {
-              console.log("🔴 Mise à jour des données PDF...");
-              window.updateDeliveredForPdf();
-            }
-
-            // Appeler la fonction de modal PDF
-            if (typeof window.showPdfFilterModal === "function") {
-              console.log("🔴 Ouverture de la modal PDF...");
-              window.showPdfFilterModal();
-              return true;
-            } else if (typeof showPdfFilterModal === "function") {
-              console.log("🔴 Ouverture de la modal PDF (fonction locale)...");
-              showPdfFilterModal();
-              return true;
-            }
-            return false;
-          }
-
-          // Première tentative immédiate
-          if (tryOpenPdfModal()) {
-            return;
-          }
-
-          console.warn(
-            "🔴 Première tentative échouée, essai de récupération..."
-          );
-
-          // Fallback: essayer de réattacher le gestionnaire original
-          if (typeof window.attachPdfButtonHandler === "function") {
-            console.log(
-              "🔴 Tentative de réattachement du gestionnaire PDF original..."
-            );
-            window.attachPdfButtonHandler();
-
-            // Essayer à nouveau après un court délai
-            setTimeout(() => {
-              if (tryOpenPdfModal()) {
-                return;
-              }
-
-              // Dernière tentative: forcer le rechargement des scripts
-              console.log(
-                "🔴 Dernière tentative: rechargement des fonctions PDF..."
-              );
-
-              // Essayer de déclencher manuellement la logique de la modal
-              setTimeout(() => {
-                // Créer une modal de base si tout échoue
-                const fallbackModal = document.createElement("div");
-                fallbackModal.id = "fallbackPdfModal";
-                fallbackModal.style.cssText = `
-                  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                  background: rgba(0,0,0,0.5); z-index: 100000; display: flex;
-                  align-items: center; justify-content: center;
-                `;
-
-                fallbackModal.innerHTML = `
-                  <div style="background: white; padding: 20px; border-radius: 8px; max-width: 400px;">
-                    <h3>Génération PDF - État des sorties de conteneurs</h3>
-                    <p>Fonctionnalité temporairement indisponible en mode admin.</p>
-                    <p>Veuillez actualiser la page et réessayer.</p>
-                    <button onclick="location.reload()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
-                      Actualiser la page
-                    </button>
-                    <button onclick="this.closest('#fallbackPdfModal').remove()" style="background: #6b7280; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
-                      Fermer
-                    </button>
-                  </div>
-                `;
-
-                document.body.appendChild(fallbackModal);
-              }, 100);
-            }, 200);
-          } else {
-            // Si rien ne fonctionne, proposer l'actualisation
-            const confirmReload = confirm(
-              "La fonction de génération PDF n'est pas disponible en mode admin.\n" +
-                "Voulez-vous actualiser la page pour résoudre le problème ?"
-            );
-            if (confirmReload) {
-              location.reload();
             }
           }
         });
@@ -2923,92 +2764,6 @@ class AdminModeManager {
       subtree: true,
     });
   }
-
-  /**
-   * Fonction pour surveiller et protéger les boutons PDF créés dynamiquement
-   */
-  watchForDynamicPdfButtons() {
-    console.log("🔍 Surveillance des boutons PDF dynamiques...");
-
-    // Liste des identifiants et sélecteurs de boutons PDF à protéger
-    const pdfButtonSelectors = [
-      "#generatePdfBtn",
-      'button[id*="pdf"]',
-      'button[onclick*="PDF"]',
-      'button[onclick*="pdf"]',
-      '[id*="pdfFilter"]',
-      '[id*="pdfModal"]',
-    ];
-
-    // Surveillance avec un observer pour les éléments créés dynamiquement
-    if (!this.pdfButtonObserver) {
-      this.pdfButtonObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1) {
-              // Element node
-              // Vérifier si le noeud lui-même est un bouton PDF
-              pdfButtonSelectors.forEach((selector) => {
-                if (node.matches && node.matches(selector)) {
-                  this.protectPdfButton(node);
-                }
-                // Vérifier les enfants du noeud
-                const pdfButtons = node.querySelectorAll
-                  ? node.querySelectorAll(selector)
-                  : [];
-                pdfButtons.forEach((btn) => this.protectPdfButton(btn));
-              });
-            }
-          });
-        });
-      });
-
-      // Démarrer l'observation
-      this.pdfButtonObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    // Protection immédiate des boutons PDF existants
-    pdfButtonSelectors.forEach((selector) => {
-      const buttons = document.querySelectorAll(selector);
-      buttons.forEach((btn) => this.protectPdfButton(btn));
-    });
-  }
-
-  /**
-   * Fonction pour protéger un bouton PDF spécifique
-   */
-  protectPdfButton(button) {
-    if (!button || !this.isAdminMode) return;
-
-    console.log("🛡️  Protection du bouton PDF:", button.id || button.className);
-
-    // Forcer l'activation du bouton
-    button.disabled = false;
-    button.readOnly = false;
-    button.style.opacity = "1";
-    button.style.pointerEvents = "auto";
-    button.style.cursor = "pointer";
-    button.setAttribute("data-allow-admin", "true");
-    button.classList.add("admin-allowed-button");
-
-    // Empêcher les futurs désactivations
-    try {
-      Object.defineProperty(button, "disabled", {
-        get: function () {
-          return false;
-        },
-        set: function () {
-          /* ignore */
-        },
-        configurable: false,
-      });
-    } catch (e) {
-      // Si la propriété n'est pas configurable, ignorer l'erreur
-    }
-  }
 }
 
 // Initialiser le gestionnaire de mode admin
@@ -3037,39 +2792,6 @@ window.forceExposeAdminFunctions = function () {
     );
   }
 
-  // Vérifier et exposer les fonctions PDF si elles existent localement
-  if (
-    typeof showPdfFilterModal !== "undefined" &&
-    typeof window.showPdfFilterModal === "undefined"
-  ) {
-    window.showPdfFilterModal = showPdfFilterModal;
-    console.log("✅ showPdfFilterModal exposée globalement");
-  }
-
-  if (
-    typeof updateDeliveredForPdf !== "undefined" &&
-    typeof window.updateDeliveredForPdf === "undefined"
-  ) {
-    window.updateDeliveredForPdf = updateDeliveredForPdf;
-    console.log("✅ updateDeliveredForPdf exposée globalement");
-  }
-
-  if (
-    typeof generateEtatSortiePdf !== "undefined" &&
-    typeof window.generateEtatSortiePdf === "undefined"
-  ) {
-    window.generateEtatSortiePdf = generateEtatSortiePdf;
-    console.log("✅ generateEtatSortiePdf exposée globalement");
-  }
-
-  if (
-    typeof attachPdfButtonHandler !== "undefined" &&
-    typeof window.attachPdfButtonHandler === "undefined"
-  ) {
-    window.attachPdfButtonHandler = attachPdfButtonHandler;
-    console.log("✅ attachPdfButtonHandler exposée globalement");
-  }
-
   // Vérifier et exposer la fonction historique
   if (
     typeof showProfessionalHistoryModal !== "undefined" &&
@@ -3081,13 +2803,6 @@ window.forceExposeAdminFunctions = function () {
 
   // Retourner le statut des fonctions
   return {
-    pdf: {
-      showPdfFilterModal: typeof window.showPdfFilterModal === "function",
-      updateDeliveredForPdf: typeof window.updateDeliveredForPdf === "function",
-      generateEtatSortiePdf: typeof window.generateEtatSortiePdf === "function",
-      attachPdfButtonHandler:
-        typeof window.attachPdfButtonHandler === "function",
-    },
     history: {
       showProfessionalHistoryModal:
         typeof window.showProfessionalHistoryModal === "function",

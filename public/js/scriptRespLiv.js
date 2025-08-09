@@ -3172,7 +3172,9 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// --- AJOUT : Bouton Générer PDF et logique associée ---
+// ========================================================================
+// === HISTORIQUE PROFESSIONNEL DES CONTENEURS LIVRÉS ===
+// ========================================================================
 // Création du bouton Générer PDF
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
