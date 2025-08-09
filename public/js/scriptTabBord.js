@@ -12,60 +12,6 @@
     window.WS_BASE_HOST = window.location.host;
   }
 })();
-
-// === ANIMATIONS SUBTILES MAIS VISIBLES DES CARTES ===
-// Initialisation des animations des cartes au chargement
-(function initCardAnimations() {
-  document.addEventListener("DOMContentLoaded", function () {
-    const cards = document.querySelectorAll(".etat-card");
-
-    cards.forEach((card, index) => {
-      // Animation de survol améliorée
-      card.addEventListener("mouseenter", function () {
-        this.style.transform = "translateY(-12px) scale(1.05) rotate(1deg)";
-        this.style.zIndex = "10";
-        this.style.boxShadow = "0 25px 70px rgba(0, 0, 0, 0.2)";
-      });
-
-      card.addEventListener("mouseleave", function () {
-        this.style.transform = "";
-        this.style.zIndex = "";
-        this.style.boxShadow = "";
-      });
-
-      // Effet de pulsation des compteurs lors des mises à jour
-      const observer = new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-          if (
-            mutation.type === "childList" ||
-            mutation.type === "characterData"
-          ) {
-            const counter = card.querySelector(".card-counter");
-            if (counter) {
-              counter.style.animation = "none";
-              counter.offsetHeight; // Force reflow
-              counter.style.animation = "badgeBounce 0.8s ease-out";
-            }
-          }
-        });
-      });
-
-      observer.observe(card, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-      });
-    });
-
-    // Forcer le démarrage des animations après un court délai
-    setTimeout(() => {
-      cards.forEach((card) => {
-        card.style.animationPlayState = "running";
-      });
-    }, 300);
-  });
-})();
-
 // Redirection automatique vers le tableau de bord après connexion réussie
 (function () {
   if (window.location.pathname.endsWith("tableauDeBord.html")) {
