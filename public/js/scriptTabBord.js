@@ -1341,13 +1341,6 @@ styleDashboardCards.innerHTML = `
                   gap: 8px;
                 }
               }
-              
-              /* Protection minimale contre la disparition des cartes sans bloquer les animations */
-              .etat-card {
-                opacity: 1;
-                visibility: visible;
-                display: block;
-              }
             `;
 document.head.appendChild(styleDashboardCards);
 
