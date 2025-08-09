@@ -3272,13 +3272,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Créer le bouton historique immédiatement
   checkAndShowHistoryButton();
 
-  // FONCTION DE FORÇAGE AGRESSIF DES COULEURS - À déclencher périodiquement
-  function forceColorsAggressively() {
-    console.log("🎨 FORÇAGE COULEURS SCRIPTRESPLIVJS...");
+  // FONCTION DE FORÇAGE STABLE DES COULEURS - UNE SEULE FOIS AU CHARGEMENT
+  function forceColorsStably() {
+    console.log("🎨 APPLICATION STABLE DES COULEURS SCRIPTRESPLIVJS...");
 
     // FORCER BOUTON HISTORIQUE
     const historyBtn = document.getElementById("professionalHistoryBtn");
-    if (historyBtn) {
+    if (historyBtn && !historyBtn.hasAttribute("data-styled-respLiv")) {
       historyBtn.style.setProperty(
         "background",
         "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
@@ -3296,12 +3296,13 @@ document.addEventListener("DOMContentLoaded", function () {
       historyBtn.style.setProperty("visibility", "visible", "important");
       historyBtn.style.setProperty("opacity", "1", "important");
       historyBtn.disabled = false;
-      console.log("✅ Bouton historique forcé");
+      historyBtn.setAttribute("data-styled-respLiv", "true");
+      console.log("✅ Bouton historique stylé une seule fois");
     }
 
     // FORCER BOUTON PDF
     const pdfBtn = document.getElementById("generatePdfBtn");
-    if (pdfBtn) {
+    if (pdfBtn && !pdfBtn.hasAttribute("data-styled-respLiv")) {
       pdfBtn.style.setProperty(
         "background",
         "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
@@ -3319,23 +3320,15 @@ document.addEventListener("DOMContentLoaded", function () {
       pdfBtn.style.setProperty("visibility", "visible", "important");
       pdfBtn.style.setProperty("opacity", "1", "important");
       pdfBtn.disabled = false;
-      console.log("✅ Bouton PDF forcé");
+      pdfBtn.setAttribute("data-styled-respLiv", "true");
+      console.log("✅ Bouton PDF stylé une seule fois");
     }
   }
 
-  // Forcer les couleurs immédiatement
-  forceColorsAggressively();
+  // Appliquer les couleurs une seule fois au chargement
+  forceColorsStably();
 
-  // Forcer les couleurs toutes les secondes pendant 30 secondes
-  let forceAttempts = 0;
-  const forceInterval = setInterval(() => {
-    forceColorsAggressively();
-    forceAttempts++;
-    if (forceAttempts >= 30) {
-      clearInterval(forceInterval);
-      console.log("🎨 Forçage de couleurs terminé après 30 tentatives");
-    }
-  }, 1000);
+  // SUPPRIMÉ : Le setInterval qui causait le clignotement toutes les secondes
 
   // Configurer le conteneur et ajouter le bouton PDF
   const searchInput = document.querySelector(
