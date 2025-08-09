@@ -3269,15 +3269,16 @@ function showPdfFilterModal() {
   overlay.style.left = 0;
   overlay.style.width = "100vw";
   overlay.style.height = "100vh";
-  overlay.style.background = "rgba(30,41,59,0.45)";
+  overlay.style.background = "rgba(0,0,0,0.5)"; // Fond noir semi-transparent plus neutre
   overlay.style.zIndex = 100000;
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";
   overlay.style.justifyContent = "center";
+  overlay.style.backdropFilter = "blur(2px)"; // Effet de flou léger
   const box = document.createElement("div");
   box.style.background = "#fff";
   box.style.borderRadius = "16px";
-  box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+  box.style.boxShadow = "0 12px 40px rgba(0,0,0,0.3)";
   box.style.maxWidth = "420px";
   box.style.width = "96vw";
   box.style.maxHeight = "92vh";
@@ -3435,6 +3436,19 @@ function showPdfFilterModal() {
   content.appendChild(validateBtn);
   box.appendChild(content);
   overlay.appendChild(box);
+
+  // Fermer la modal en cliquant à l'extérieur
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) {
+      overlay.remove();
+    }
+  });
+
+  // Empêcher la propagation du clic à l'intérieur de la modal
+  box.addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
+
   document.body.appendChild(overlay);
 }
 
