@@ -4538,7 +4538,7 @@ window.showHistoryEntryDetail = function (entryId) {
   container.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 3px solid #059669; padding-bottom: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); margin: -25px -25px 25px -25px; padding: 20px 25px;">
       <h3 style="margin: 0; color: #059669; font-size: 1.4em; font-weight: bold;">
-        � Détails du Dossier ${entry.dossier_number || "N/A"}
+          Détails du Dossier ${entry.dossier_number || "N/A"}
       </h3>
       <button onclick="document.getElementById('historyDetailModal').remove()" 
         style="background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);">
