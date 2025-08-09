@@ -776,9 +776,9 @@
           0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
       }
 
-      /* Animation de mise à jour des cartes */
+      /* Animation de mise à jour des cartes - DÉSACTIVÉE */
       .card-updating {
-        animation: cardPulse 1s ease-in-out;
+        /* animation: cardPulse 1s ease-in-out; */
       }
 
       /* Effet de glow pour les badges actifs */
@@ -1054,10 +1054,10 @@
         }
       }
 
-      /* Effet de synchronisation simplifié */
+      /* Effet de synchronisation - DÉSACTIVÉ */
       .cards-synchronized {
-        animation: syncPulse 2s ease-in-out;
-        filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.4));
+        /* animation: syncPulse 2s ease-in-out; */
+        /* filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.4)); */
       }
 
       @keyframes syncPulse {
@@ -1111,6 +1111,7 @@
         );
       }
 
+      /* Energy wave animation - DÉSACTIVÉE 
       @keyframes energyWave {
         0% {
           transform: scale(0.1);
@@ -1128,6 +1129,7 @@
           border-width: 1px;
         }
       }
+      */
 
       /* === FOND WELCOME SECTION SIMPLIFIÉ === */
 
@@ -2687,6 +2689,9 @@
             }
 
             function startSynchronizationEffects() {
+              // Animations automatiques désactivées
+              console.log("[DASHBOARD] Animations automatiques désactivées");
+              /*
               // Effet de synchronisation plus espacé dans le temps (toutes les 12 secondes)
               setInterval(() => {
                 const cards = document.querySelectorAll(".etat-card");
@@ -2699,48 +2704,13 @@
                   }, index * 300);
                 });
               }, 12000);
+              */
             }
 
-            // Fonction simplifiée pour déclencher l'effet de synchronisation lors des mises à jour
+            // Fonction désactivée - plus d'effets d'explosion
             window.triggerCardSyncEffect = function () {
-              const cards = document.querySelectorAll(".etat-card");
-
-              // Effet d'onde d'énergie simplifié
-              cards.forEach((card, index) => {
-                setTimeout(() => {
-                  const wave = document.createElement("div");
-                  wave.className = "energy-wave";
-
-                  const rect = card.getBoundingClientRect();
-                  const welcomeRect = document
-                    .getElementById("welcomeSection")
-                    .getBoundingClientRect();
-
-                  wave.style.left =
-                    rect.left + rect.width / 2 - welcomeRect.left - 60 + "px";
-                  wave.style.top =
-                    rect.top + rect.height / 2 - welcomeRect.top - 60 + "px";
-
-                  // Animation simplifiée
-                  wave.style.animation = "energyWave 1.2s ease-out forwards";
-
-                  const container = document.querySelector(".card-connections");
-                  if (container) {
-                    container.appendChild(wave);
-                    setTimeout(() => wave.remove(), 1200);
-                  }
-                }, index * 200);
-              });
-
-              // Effet de pulsation synchronisée simplifié
-              setTimeout(() => {
-                cards.forEach((card) => {
-                  card.classList.add("cards-synchronized");
-                  setTimeout(() => {
-                    card.classList.remove("cards-synchronized");
-                  }, 1500);
-                });
-              }, 300);
+              // Fonction désactivée pour enlever les animations d'explosion
+              console.log("[DASHBOARD] Animation d'explosion désactivée");
             };
 
             // Recalculer les positions des lignes lors du redimensionnement
@@ -3655,26 +3625,21 @@
             window.updateCardCounters = function () {
               console.log("[DASHBOARD] 📊 Début mise à jour des compteurs...");
 
-              // Ajouter une classe temporaire pour l'animation de mise à jour simplifiée
-              const cardIds = [
-                "carteAttentePaiement",
-                "carteMiseLivraison",
-                "carteLivre",
-              ];
+              // Animations désactivées
               cardIds.forEach((cardId) => {
                 const card = document.getElementById(cardId);
                 if (card) {
-                  card.classList.add("card-updating");
-                  setTimeout(() => card.classList.remove("card-updating"), 800);
+                  // card.classList.add("card-updating");
+                  // setTimeout(() => card.classList.remove("card-updating"), 800);
                 }
               });
 
-              // Déclencher les animations de liaison simplifiées lors de la synchronisation
-              if (typeof window.triggerCardSyncEffect === "function") {
-                setTimeout(() => {
-                  window.triggerCardSyncEffect();
-                }, 400);
-              }
+              // Animations d'explosion désactivées
+              // if (typeof window.triggerCardSyncEffect === "function") {
+              //   setTimeout(() => {
+              //     window.triggerCardSyncEffect();
+              //   }, 400);
+              // }
 
               // Appeler la fonction originale
               return originalUpdateCardCounters.apply(this, arguments);
