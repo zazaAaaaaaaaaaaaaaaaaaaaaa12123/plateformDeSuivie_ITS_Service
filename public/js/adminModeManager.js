@@ -164,7 +164,12 @@ class AdminModeManager {
     const targetPage = localStorage.getItem("adminViewTarget");
 
     // Protection explicite: ne jamais désactiver ces boutons clés
-    const safeIds = ["professionalHistoryBtn"];
+    const safeIds = [
+      "professionalHistoryBtn",
+      "generatePdfBtn",
+      "mainTableDateStartFilter",
+      "mainTableDateEndFilter",
+    ];
     safeIds.forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
@@ -175,6 +180,17 @@ class AdminModeManager {
         el.style.cursor = "pointer";
         el.setAttribute("data-allow-admin", "true");
         el.classList.add("admin-allowed-button");
+
+        // Styles spéciaux pour le bouton historique
+        if (id === "professionalHistoryBtn") {
+          el.style.background = "#FF6B35 !important";
+          el.style.color = "#ffffff !important";
+          el.style.fontWeight = "bold !important";
+          el.style.border = "2px solid #FF4500 !important";
+          el.style.boxShadow = "0 3px 12px rgba(255, 107, 53, 0.4) !important";
+          el.style.display = "inline-block !important";
+          el.style.visibility = "visible !important";
+        }
       }
     });
 
@@ -238,13 +254,23 @@ class AdminModeManager {
         ? element.textContent.toLowerCase()
         : "";
 
+      // Protection spécifique pour les éléments critiques
+      const isCriticalElement =
+        element.id === "mainTableDateStartFilter" ||
+        element.id === "mainTableDateEndFilter" ||
+        element.id === "professionalHistoryBtn" ||
+        element.id === "generatePdfBtn" ||
+        element.type === "date" ||
+        (element.type === "text" && element.id && element.id.includes("date"));
+
       // Vérifier si l'élément est explicitement autorisé en mode admin
       const isAdminAllowed =
         element.getAttribute("data-allow-admin") === "true" ||
         element.classList.contains("admin-allowed-field") ||
         element.classList.contains("admin-allowed-button") ||
         element.classList.contains("admin-allowed-tc") ||
-        element.classList.contains("admin-allowed-bl-link");
+        element.classList.contains("admin-allowed-bl-link") ||
+        isCriticalElement;
 
       // Vérifier si l'élément fait partie d'une modal autorisée (Historique)
       const isInAllowedModal =
@@ -1585,9 +1611,11 @@ class AdminModeManager {
         historyBtn.style.transform = "none";
         historyBtn.style.filter = "none";
         historyBtn.style.cssText += `
-          background: #FFA500 !important;
+          background: #FF6B35 !important;
           color: #ffffff !important;
-          border-color: #cc8400 !important;
+          border: 2px solid #FF4500 !important;
+          font-weight: bold !important;
+          box-shadow: 0 3px 12px rgba(255, 107, 53, 0.4) !important;
         `;
 
         // Supprimer les anciens gestionnaires en clonant le bouton
@@ -1632,6 +1660,29 @@ class AdminModeManager {
             }
           }
         });
+      }
+
+      // Bouton Générer PDF
+      const pdfBtn = document.getElementById("generatePdfBtn");
+      if (pdfBtn) {
+        pdfBtn.disabled = false;
+        pdfBtn.style.opacity = "1";
+        pdfBtn.style.cursor = "pointer";
+        pdfBtn.style.pointerEvents = "auto";
+        pdfBtn.style.display = "inline-block";
+        pdfBtn.style.visibility = "visible";
+        pdfBtn.setAttribute("data-allow-admin", "true");
+        pdfBtn.classList.add("admin-allowed-button");
+        pdfBtn.title = "Générer PDF - Accessible en mode admin";
+
+        // Améliorer la visibilité du bouton PDF
+        pdfBtn.style.cssText += `
+          background: #2563eb !important;
+          color: #ffffff !important;
+          border: 1px solid #1d4ed8 !important;
+          font-weight: bold !important;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+        `;
       }
     } catch (e) {
       console.warn("⚠️ enableAdminAllowedFieldsLivraison: ", e);

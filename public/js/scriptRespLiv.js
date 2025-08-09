@@ -556,6 +556,16 @@ document.addEventListener("DOMContentLoaded", function () {
   const dateStartInput = document.getElementById("mainTableDateStartFilter");
   const dateEndInput = document.getElementById("mainTableDateEndFilter");
 
+  // Marquer les champs de date comme accessibles en mode admin
+  if (dateStartInput) {
+    dateStartInput.setAttribute("data-allow-admin", "true");
+    dateStartInput.classList.add("admin-allowed-field");
+  }
+  if (dateEndInput) {
+    dateEndInput.setAttribute("data-allow-admin", "true");
+    dateEndInput.classList.add("admin-allowed-field");
+  }
+
   // On charge toutes les livraisons une seule fois au chargement
   // On rend allDeliveries accessible globalement pour le tooltip Statut
   window.allDeliveries = [];
@@ -3192,6 +3202,9 @@ pdfBtn.style.height = "32px";
 pdfBtn.style.minWidth = "0";
 pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
 pdfBtn.style.verticalAlign = "middle";
+// Marquer comme accessible en mode admin
+pdfBtn.setAttribute("data-allow-admin", "true");
+pdfBtn.classList.add("admin-allowed-button");
 
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
@@ -3804,28 +3817,35 @@ function showHistoryButtonIfNeeded() {
     historyBtn.title =
       "Consulter l'historique professionnel des conteneurs livrés";
     historyBtn.style.background =
-      "linear-gradient(90deg,#059669 0%,#047857 100%)";
+      "linear-gradient(90deg,#FF6B35 0%,#FF4500 100%)";
     historyBtn.style.color = "#fff";
     historyBtn.style.fontWeight = "bold";
-    historyBtn.style.border = "none";
+    historyBtn.style.border = "2px solid #FF4500";
     historyBtn.style.cursor = "pointer";
     historyBtn.style.borderRadius = "8px";
     historyBtn.style.padding = "8px 16px";
     historyBtn.style.fontSize = "0.95em";
     historyBtn.style.margin = "0 8px 0 0"; // Margin à droite seulement
-    historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
+    historyBtn.style.boxShadow = "0 3px 12px rgba(255, 107, 53, 0.4)";
     historyBtn.style.transition = "all 0.2s ease";
     historyBtn.style.height = "32px"; // Même hauteur que les autres boutons
     historyBtn.style.verticalAlign = "middle";
+    // Marquer comme accessible en mode admin
+    historyBtn.setAttribute("data-allow-admin", "true");
+    historyBtn.classList.add("admin-allowed-button");
 
     // Effet de survol
     historyBtn.onmouseenter = () => {
       historyBtn.style.transform = "translateY(-2px)";
-      historyBtn.style.boxShadow = "0 4px 16px rgba(5,150,105,0.4)";
+      historyBtn.style.boxShadow = "0 5px 20px rgba(255, 107, 53, 0.5)";
+      historyBtn.style.background =
+        "linear-gradient(90deg,#FF4500 0%,#CC3300 100%)";
     };
     historyBtn.onmouseleave = () => {
       historyBtn.style.transform = "translateY(0)";
-      historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
+      historyBtn.style.boxShadow = "0 3px 12px rgba(255, 107, 53, 0.4)";
+      historyBtn.style.background =
+        "linear-gradient(90deg,#FF6B35 0%,#FF4500 100%)";
     };
 
     // Événement de clic
