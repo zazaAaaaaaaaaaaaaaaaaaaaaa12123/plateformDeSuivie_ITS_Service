@@ -772,6 +772,66 @@
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
+
+      /* ===== Optimisations spécifiques au mode admin (coller en haut) ===== */
+      /* En-tête réactivé mais compact pour laisser de la place au tableau */
+      body.admin-view-mode .card-section > .d-flex.align-items-center.justify-content-between.flex-wrap.gap-3.mb-4 {
+        display: flex !important;
+        background: #ffffff !important;
+        border-radius: 12px !important;
+        box-shadow: 0 2px 8px rgba(30,41,59,0.06) !important;
+        padding: 10px 16px 8px 16px !important;
+        margin: 4px 0 8px 0 !important;
+      }
+      body.admin-view-mode .card-section h1 {
+        font-size: 1.6em !important;
+        font-weight: 800 !important;
+        background: none !important;
+        padding: 0 !important;
+        margin: 0 0 4px 0 !important;
+        box-shadow: none !important;
+        letter-spacing: -0.5px !important;
+        color: #0e274e !important;
+      }
+      body.admin-view-mode .card-section > div > div[style*='font-size:1.13em'] {
+        font-size: 1em !important;
+        background: rgba(255,230,0,0.08) !important;
+        color: #0e274e !important;
+        font-weight: 600 !important;
+        padding: 6px 10px !important;
+        border-radius: 8px !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+      }
+
+      /* Rend la barre de filtres sticky sous la bannière admin fixe */
+      body.admin-view-mode .d-flex.justify-content-center.align-items-center.flex-wrap.gap-2.mb-3 {
+        position: sticky !important;
+        top: 0 !important; /* le body reçoit déjà un padding-top par adminMode pour la bannière */
+        z-index: 30 !important;
+        margin: 0 0 6px 0 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        background: #f8fafc !important;
+      }
+      /* Assure une zone de scroll confortable pour voir le bas du tableau */
+      body.admin-view-mode #tableScrollContainer {
+        height: calc(100vh - 220px) !important; /* bannière admin + entête compact + filtres + pagination */
+        max-height: calc(100vh - 220px) !important;
+        margin: 0 auto !important;
+      }
+
+      /* Ajuste la pagination pour qu'elle reste - visible et proche du tableau */
+      body.admin-view-mode nav[aria-label="Pagination livraisons"] {
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+      }
+
+      @media (max-width: 600px) {
+        body.admin-view-mode #tableScrollContainer {
+          height: calc(100vh - 240px) !important; /* un peu plus d'espace sur mobile */
+          max-height: calc(100vh - 240px) !important;
+        }
+      }
     </style>  
     </head>
 

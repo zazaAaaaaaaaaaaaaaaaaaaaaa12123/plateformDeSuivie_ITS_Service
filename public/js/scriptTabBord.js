@@ -1233,8 +1233,8 @@ styleDashboardCards.innerHTML = `
                 cursor: pointer;
               }
               .dashboard-card:hover {
-                box-shadow: 0 8px 28px #2563eb22, 0 4px 16px #0002;
-                transform: translateY(-3px) scale(1.02);
+                box-shadow: 0 8px 25px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+                transform: translateY(-3px) scale(1.01);
               }
               .dashboard-card .card-title {
                 font-size: 1.08em;
