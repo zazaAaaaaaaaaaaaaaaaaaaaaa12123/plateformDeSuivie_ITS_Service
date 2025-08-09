@@ -67,10 +67,10 @@ class AdminModeManager {
     // 1. Ajouter le thème et les styles
     this.optimizeThemeCompatibility();
 
-    // 2. Forcer l'application des styles critiques
-    this.forceStyleApplication();
+    // 1.5. Appliquer les styles bleus personnalisés
+    this.applyBlueCustomStyles();
 
-    // 3. Ajouter un indicateur visuel
+    // 2. Ajouter un indicateur visuel
     this.addAdminModeIndicator();
 
     // 3. Ajouter un message d'information défilant
@@ -95,13 +95,26 @@ class AdminModeManager {
     // 7. Charger les données du responsable connecté
     this.loadResponsableData();
 
-    // Appliquer toutes les 500ms pendant 5 secondes pour être sûr
+    // 8. Forcer l'exposition des fonctions nécessaires pour le mode admin
+    setTimeout(() => {
+      if (typeof window.forceExposeAdminFunctions === "function") {
+        const exposed = window.forceExposeAdminFunctions();
+        console.log("🔧 Fonctions exposées au démarrage:", exposed);
+      }
+    }, 100);
+
+    // 9. NOUVELLE FONCTION: Forcer les couleurs de manière agressive - UNE SEULE FOIS
+    this.forceButtonColorsAggressively();
+
+    // Appliquer toutes les 1000ms (au lieu de 500ms) et réduire le nombre d'attempts pour réduire le clignotement
     let attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 10; // Réduit de 20 à 10 pour diminuer les modifications répétées
     const applyInterval = setInterval(() => {
       this.disableEditingFeatures();
       this.optimizeTableDisplay();
-      this.forceStyleApplication(); // Réappliquer les styles critiques
+      this.applyBlueCustomStyles();
+      // SUPPRIMÉ le forceButtonColorsAggressively pour éviter le clignotement
+      this.enablePdfModalElements(); // AJOUT: Forcer l'activation des éléments PDF
 
       // Réappliquer les optimisations spécifiques
       if (targetPage === "acconier") {
@@ -116,59 +129,8 @@ class AdminModeManager {
         console.log(
           "✅ Mode admin complètement appliqué avec toutes les optimisations"
         );
-
-        // Application finale renforcée des styles de recherche
-        this.forceSearchFieldStyles();
       }
-    }, 500);
-
-    // Application immédiate supplémentaire après 2 secondes
-    setTimeout(() => {
-      this.forceSearchFieldStyles();
-    }, 2000);
-  }
-
-  /**
-   * Force spécifiquement les styles du champ de recherche
-   */
-  forceSearchFieldStyles() {
-    console.log("🎯 Application forcée spécifique du style de recherche...");
-
-    // Chercher TOUS les champs de recherche possibles
-    const searchElements = document.querySelectorAll(`
-      #searchInput,
-      .search-input,
-      input[placeholder*="recherche"],
-      input[placeholder*="Recherche"],
-      input[placeholder*="rechercher"],
-      input[placeholder*="Rechercher"],
-      input[type="search"],
-      input[type="text"]
-    `);
-
-    searchElements.forEach((element, index) => {
-      console.log(`🔍 Élément trouvé ${index + 1}:`, element);
-
-      // Application ULTRA-FORCÉE des styles
-      element.style.cssText += `
-        color: #28a745 !important;
-        font-weight: 600 !important;
-        -webkit-text-fill-color: #28a745 !important;
-        text-shadow: none !important;
-      `;
-
-      // Vérification après application
-      const computedStyle = getComputedStyle(element);
-      console.log(`🎨 Style après application pour élément ${index + 1}:`, {
-        color: computedStyle.color,
-        fontWeight: computedStyle.fontWeight,
-        webkitTextFillColor: computedStyle.webkitTextFillColor,
-      });
-    });
-
-    console.log(
-      "✅ Application forcée spécifique du style de recherche terminée"
-    );
+    }, 1000); // Changé de 500ms à 1000ms pour réduire la fréquence
   }
 
   /**
@@ -205,6 +167,80 @@ class AdminModeManager {
     console.log("🔒 Désactivation des fonctionnalités d'édition...");
 
     const targetPage = localStorage.getItem("adminViewTarget");
+
+    // Protection explicite: ne jamais désactiver ces boutons clés
+    const safeIds = [
+      "professionalHistoryBtn",
+      "generatePdfBtn",
+      "mainTableDateStartFilter",
+      "mainTableDateEndFilter",
+      "searchInput",
+      "historyDetailModal",
+      "professionalHistoryModal",
+      "showHistoryDetailBtn",
+      "showContainersListBtn",
+      "showGroupDetailBtn",
+    ];
+    safeIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.disabled = false;
+        el.readOnly = false;
+        el.style.opacity = "1";
+        el.style.pointerEvents = "auto";
+        el.style.cursor = "pointer";
+        el.setAttribute("data-allow-admin", "true");
+        el.classList.add("admin-allowed-button");
+
+        // Styles spéciaux pour chaque élément avec des couleurs vives
+        if (id === "professionalHistoryBtn") {
+          el.style.background = "#FF1744 !important"; // Rouge vif
+          el.style.color = "#ffffff !important";
+          el.style.fontWeight = "bold !important";
+          el.style.border = "3px solid #C62828 !important";
+          el.style.boxShadow = "0 4px 15px rgba(255, 23, 68, 0.6) !important";
+          el.style.display = "inline-block !important";
+          el.style.visibility = "visible !important";
+          el.style.borderRadius = "8px !important";
+          el.style.padding = "8px 16px !important";
+        }
+
+        if (id === "generatePdfBtn") {
+          el.style.background = "#FF9800 !important"; // Orange vif
+          el.style.color = "#ffffff !important";
+          el.style.fontWeight = "bold !important";
+          el.style.border = "3px solid #F57C00 !important";
+          el.style.boxShadow = "0 4px 15px rgba(255, 152, 0, 0.6) !important";
+          el.style.display = "inline-block !important";
+          el.style.visibility = "visible !important";
+          el.style.borderRadius = "8px !important";
+          el.style.padding = "6px 12px !important";
+        }
+
+        if (
+          id === "mainTableDateStartFilter" ||
+          id === "mainTableDateEndFilter"
+        ) {
+          el.style.background = "#4CAF50 !important"; // Vert vif
+          el.style.color = "#ffffff !important";
+          el.style.fontWeight = "bold !important";
+          el.style.border = "2px solid #388E3C !important";
+          el.style.boxShadow = "0 3px 10px rgba(76, 175, 80, 0.4) !important";
+          el.style.borderRadius = "6px !important";
+          el.style.padding = "4px 8px !important";
+        }
+
+        if (id === "searchInput") {
+          el.style.background = "#2196F3 !important"; // Bleu vif
+          el.style.color = "#ffffff !important";
+          el.style.fontWeight = "bold !important";
+          el.style.border = "2px solid #1976D2 !important";
+          el.style.boxShadow = "0 3px 10px rgba(33, 150, 243, 0.4) !important";
+          el.style.borderRadius = "6px !important";
+          el.style.padding = "4px 8px !important";
+        }
+      }
+    });
 
     // Désactiver spécifiquement le bouton de déconnexion
     // On ne peut pas utiliser :contains, donc on cherche par texte et par classes/id standards
@@ -266,13 +302,59 @@ class AdminModeManager {
         ? element.textContent.toLowerCase()
         : "";
 
+      // Protection spécifique pour les éléments critiques + MODAL PDF
+      const isCriticalElement =
+        element.id === "mainTableDateStartFilter" ||
+        element.id === "mainTableDateEndFilter" ||
+        element.id === "professionalHistoryBtn" ||
+        element.id === "generatePdfBtn" ||
+        element.id === "searchInput" ||
+        element.id === "searchButton" ||
+        element.type === "date" ||
+        element.type === "search" ||
+        element.type === "radio" || // AJOUT: Boutons radio
+        (element.type === "text" &&
+          element.id &&
+          element.id.includes("date")) ||
+        (element.type === "text" &&
+          element.id &&
+          element.id.includes("search")) ||
+        (element.placeholder &&
+          element.placeholder.toLowerCase().includes("recherch")) ||
+        // AJOUT: Éléments spécifiques à la modal PDF
+        element.closest("#pdfModal") ||
+        element.closest(".pdf-modal") ||
+        element.closest("[id*='pdf']") ||
+        element.closest("[class*='pdf']") ||
+        (element.name && element.name.includes("date")) ||
+        buttonText.includes("pdf") ||
+        buttonText.includes("générer");
+
       // Vérifier si l'élément est explicitement autorisé en mode admin
       const isAdminAllowed =
         element.getAttribute("data-allow-admin") === "true" ||
         element.classList.contains("admin-allowed-field") ||
         element.classList.contains("admin-allowed-button") ||
         element.classList.contains("admin-allowed-tc") ||
-        element.classList.contains("admin-allowed-bl-link");
+        element.classList.contains("admin-allowed-bl-link") ||
+        isCriticalElement;
+
+      // Vérifier si l'élément fait partie d'une modal autorisée (Historique + PDF)
+      const isInAllowedModal =
+        element.closest("#professionalHistoryModal") ||
+        element.closest("#historyDetailModal") ||
+        element.closest('[id*="history"]') ||
+        element.closest('[id*="History"]') ||
+        element.closest("#pdfModal") || // AJOUT: Modal PDF
+        element.closest(".pdf-modal") || // AJOUT: Modal PDF par classe
+        element.closest('[id*="pdf"]') || // AJOUT: Toute modal contenant "pdf"
+        element.closest('[class*="pdf"]') || // AJOUT: Toute modal avec classe "pdf"
+        element.classList.contains("close") ||
+        element.classList.contains("btn-close") ||
+        element.classList.contains("modal-close") ||
+        element.getAttribute("data-bs-dismiss") === "modal" ||
+        (element.innerHTML && element.innerHTML.includes("×")) ||
+        (element.innerHTML && element.innerHTML.includes("&times;"));
 
       const isNavigationButton =
         buttonText.includes("retour") ||
@@ -318,9 +400,12 @@ class AdminModeManager {
         buttonText.includes("se connecter") ||
         buttonText.includes("connecter");
 
-      // Ne pas désactiver si l'élément est autorisé en mode admin
+      // Ne pas désactiver si l'élément est autorisé en mode admin ou dans une modal autorisée
       if (
-        (!isNavigationButton && !isThemeElement && !isAdminAllowed) ||
+        (!isNavigationButton &&
+          !isThemeElement &&
+          !isAdminAllowed &&
+          !isInAllowedModal) ||
         isLogoutButton
       ) {
         element.disabled = true;
@@ -792,10 +877,15 @@ class AdminModeManager {
 
         // Ajouter un style spécial pour indiquer que c'est une colonne en lecture seule
         if (headers[observationsColumnIndex]) {
-          headers[observationsColumnIndex].style.background = "#f8f9fa";
-          headers[observationsColumnIndex].style.position = "relative";
-          headers[observationsColumnIndex].innerHTML +=
-            ' <i class="fas fa-lock" style="color: #6c757d; font-size: 0.8em;" title="Lecture seule"></i>';
+          const header = headers[observationsColumnIndex];
+          header.style.background = "#f8f9fa";
+          header.style.position = "relative";
+
+          // Vérifier si l'icône de cadenas n'existe pas déjà pour éviter la multiplication
+          if (!header.querySelector(".fa-lock")) {
+            header.innerHTML +=
+              ' <i class="fas fa-lock" style="color: #6c757d; font-size: 0.8em;" title="Lecture seule"></i>';
+          }
         }
       }
     }
@@ -1098,7 +1188,9 @@ class AdminModeManager {
       searchButton.style.opacity = "1";
       searchButton.style.cursor = "pointer";
       searchButton.style.pointerEvents = "auto";
-      searchButton.style.background = "";
+      searchButton.style.background = "#007bff";
+      searchButton.style.color = "#ffffff";
+      searchButton.style.border = "1px solid #007bff";
       searchButton.title = "Bouton rechercher - Accessible en mode admin";
       searchButton.setAttribute("data-allow-admin", "true");
       searchButton.classList.add("admin-allowed-button");
@@ -1389,18 +1481,29 @@ class AdminModeManager {
    * Optimisations spécifiques à la page livraison
    */
   optimizeLivraisonPage() {
-    // Colonnes exactes à verrouiller en lecture seule
+    // 1) Activer les champs autorisés (dates, historique, recherche)
+    this.enableAdminAllowedFieldsLivraison();
+
+    // 2) Colonnes exactes à verrouiller en lecture seule (conformes à la demande)
     const readOnlyColumns = [
-      "NOM",
-      "Agent visiteurs",
+      // N.B.: On ne verrouille PAS "Numéro TC(s)" ici
+      "Agent visiteurs", // tolère pluriel
+      "Agent Visiteur", // et singulier
       "TRANSPORTEUR",
+      "Transporteur",
       "INSPECTEUR",
+      "Inspecteur",
       "AGENT EN DOUANES",
+      "Agent en Douanes",
       "CHAUFFEUR",
+      "Chauffeur",
       "TEL CHAUFFEUR",
+      "Tel Chauffeur",
       "DATE LIVRAISON",
+      "Date de livraison",
+      "OBSERVATION",
       "Observations",
-      "Numéro TC(s)",
+      "Observation",
     ];
 
     console.log("🔒 Verrouillage des colonnes livraison:", readOnlyColumns);
@@ -1415,11 +1518,11 @@ class AdminModeManager {
       headers.forEach((header, index) => {
         const headerText = header.textContent.trim();
         if (
-          readOnlyColumns.some(
-            (col) =>
-              headerText.toUpperCase().includes(col.toUpperCase()) ||
-              col.toUpperCase().includes(headerText.toUpperCase())
-          )
+          readOnlyColumns.some((col) => {
+            const ht = headerText.toUpperCase();
+            const ct = col.toUpperCase();
+            return ht.includes(ct) || ct.includes(ht);
+          })
         ) {
           columnIndexes.push(index);
           console.log(`🔒 Colonne verrouillée: ${headerText} (index ${index})`);
@@ -1442,7 +1545,244 @@ class AdminModeManager {
     }
 
     // Traitement spécial pour les N° TC - affichage informatif uniquement
-    this.setupTcInformationalDisplay();
+    // L'utilisateur ne demande pas à verrouiller les TC ici, donc on laisse actif
+    // this.setupTcInformationalDisplay();
+
+    // 3) S'assurer que le tableau n'est pas caché par un filtre résiduel
+    this.ensureLivraisonTableVisibility();
+  }
+
+  /**
+   * En mode admin livraison, si aucune ligne visible après chargement,
+   * on nettoie un filtre de recherche éventuel et on recharge.
+   */
+  ensureLivraisonTableVisibility() {
+    setTimeout(() => {
+      const tbody = document.querySelector("#deliveriesTableBody");
+      if (!tbody) return;
+
+      const visibleRows = Array.from(tbody.querySelectorAll("tr")).filter(
+        (tr) =>
+          tr.querySelector("td") &&
+          tr.style.display !== "none" &&
+          !tr.textContent.includes("Chargement des livraisons")
+      );
+
+      if (visibleRows.length === 0) {
+        const searchInput = document.querySelector(
+          "#searchInput, .search-input"
+        );
+        if (searchInput && searchInput.value.trim() !== "") {
+          searchInput.value = "";
+          searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        if (typeof window.loadDeliveries === "function") {
+          window.loadDeliveries();
+        } else if (typeof window.chargerDonnees === "function") {
+          window.chargerDonnees();
+        }
+      }
+    }, 1200);
+  }
+
+  /**
+   * Active les champs autorisés en mode admin pour la page livraison
+   * - Dates: #mainTableDateStartFilter, #mainTableDateEndFilter
+   * - Bouton Historique: #professionalHistoryBtn
+   * - Recherche: #searchInput, #searchButton
+   */
+  enableAdminAllowedFieldsLivraison() {
+    try {
+      // Vérification et chargement des fonctions nécessaires
+      console.log(
+        "🔍 Vérification des fonctions disponibles pour le mode admin..."
+      );
+
+      // Vérifier la fonction historique
+      const historyFunctionAvailable =
+        typeof window.showProfessionalHistoryModal === "function";
+      console.log(
+        "📚 Fonction historique disponible:",
+        historyFunctionAvailable
+      );
+
+      // Si les fonctions ne sont pas disponibles, essayer de les réexposer
+      if (!pdfFunctionsAvailable.every(Boolean) || !historyFunctionAvailable) {
+        console.log(
+          "⚠️ Certaines fonctions manquent, tentative de récupération..."
+        );
+
+        // Forcer l'exposition des fonctions
+        const exposedFunctions = window.forceExposeAdminFunctions();
+        console.log("🔧 Résultat de l'exposition forcée:", exposedFunctions);
+
+        // Essayer de forcer le rechargement des fonctions avec un délai
+        setTimeout(() => {
+          if (typeof window.attachPdfButtonHandler === "function") {
+            window.attachPdfButtonHandler();
+            console.log("🔄 Gestionnaire PDF réattaché");
+          }
+        }, 500);
+      }
+
+      // Dates - Styles vifs pour meilleure visibilité
+      const dateInputs = [
+        document.getElementById("mainTableDateStartFilter"),
+        document.getElementById("mainTableDateEndFilter"),
+      ].filter(Boolean);
+      dateInputs.forEach((input) => {
+        input.disabled = false;
+        input.readOnly = false;
+        input.style.opacity = "1";
+        input.style.cursor = "pointer";
+        input.style.pointerEvents = "auto";
+        input.style.background = "#E8F5E8 !important"; // Vert clair
+        input.style.border = "3px solid #4CAF50 !important"; // Bordure verte vive
+        input.style.color = "#2E7D32 !important";
+        input.style.fontWeight = "bold !important";
+        input.style.boxShadow = "0 3px 10px rgba(76, 175, 80, 0.4) !important";
+        input.style.borderRadius = "6px !important";
+        input.style.padding = "6px 12px !important";
+        input.title = "Champ de date - Accessible en mode admin";
+        input.setAttribute("data-allow-admin", "true");
+        input.classList.add("admin-allowed-field");
+      });
+
+      // Recherche (champ + bouton) - Styles vifs pour meilleure visibilité
+      const searchInput = document.querySelector(
+        "#searchInput, .search-input, input[placeholder*='recherche'], input[placeholder*='Recherche'], input[placeholder*='Rechercher']"
+      );
+      if (searchInput) {
+        searchInput.disabled = false;
+        searchInput.readOnly = false;
+        searchInput.style.opacity = "1";
+        searchInput.style.cursor = "text";
+        searchInput.style.pointerEvents = "auto";
+        searchInput.style.background = "#E1F5FE !important"; // Bleu clair
+        searchInput.style.border = "3px solid #2196F3 !important"; // Bordure bleue vive
+        searchInput.style.color = "#1976D2 !important";
+        searchInput.style.fontWeight = "bold !important";
+        searchInput.style.boxShadow =
+          "0 3px 10px rgba(33, 150, 243, 0.4) !important";
+        searchInput.style.borderRadius = "6px !important";
+        searchInput.style.padding = "6px 12px !important";
+        searchInput.title = "Champ de recherche - Accessible en mode admin";
+        searchInput.setAttribute("data-allow-admin", "true");
+        searchInput.classList.add("admin-allowed-field");
+      }
+
+      const searchButton = document.querySelector(
+        "#searchButton, .search-button, button[type='submit']"
+      );
+      if (searchButton) {
+        searchButton.disabled = false;
+        searchButton.style.opacity = "1";
+        searchButton.style.cursor = "pointer";
+        searchButton.style.pointerEvents = "auto";
+        searchButton.style.background = "#9C27B0 !important"; // Violet vif
+        searchButton.style.color = "#ffffff !important";
+        searchButton.style.fontWeight = "bold !important";
+        searchButton.style.border = "3px solid #7B1FA2 !important";
+        searchButton.style.boxShadow =
+          "0 4px 15px rgba(156, 39, 176, 0.6) !important";
+        searchButton.style.borderRadius = "8px !important";
+        searchButton.style.padding = "6px 12px !important";
+        searchButton.title = "Bouton rechercher - Accessible en mode admin";
+        searchButton.setAttribute("data-allow-admin", "true");
+        searchButton.classList.add("admin-allowed-button");
+      }
+
+      // Historique
+      const historyBtn = document.getElementById("professionalHistoryBtn");
+      if (historyBtn) {
+        historyBtn.disabled = false;
+        historyBtn.style.opacity = "1";
+        historyBtn.style.cursor = "pointer";
+        historyBtn.style.pointerEvents = "auto";
+        historyBtn.style.display = "inline-block";
+        historyBtn.style.visibility = "visible";
+        historyBtn.style.transform = "none";
+        historyBtn.style.filter = "none";
+        historyBtn.style.cssText += `
+          background: #FF6B35 !important;
+          color: #ffffff !important;
+          border: 2px solid #FF4500 !important;
+          font-weight: bold !important;
+          box-shadow: 0 3px 12px rgba(255, 107, 53, 0.4) !important;
+        `;
+
+        // Supprimer les anciens gestionnaires en clonant le bouton
+        const newHistoryBtn = historyBtn.cloneNode(true);
+        historyBtn.parentNode.replaceChild(newHistoryBtn, historyBtn);
+
+        // Réappliquons les styles
+        newHistoryBtn.disabled = false;
+        newHistoryBtn.style.opacity = "1";
+        newHistoryBtn.style.cursor = "pointer";
+        newHistoryBtn.style.pointerEvents = "auto";
+        newHistoryBtn.style.cssText += `
+          background: #FFA500 !important;
+          color: #ffffff !important;
+          border-color: #cc8400 !important;
+        `;
+
+        // Ajoutons les gestionnaires de survol sans perturbation (seulement si pas déjà ajoutés)
+        if (!newHistoryBtn.hasAttribute("data-hover-added")) {
+          newHistoryBtn.addEventListener("mouseenter", () => {
+            newHistoryBtn.style.background = "#cc8400 !important";
+          });
+          newHistoryBtn.addEventListener("mouseleave", () => {
+            newHistoryBtn.style.background = "#FFA500 !important";
+          });
+          newHistoryBtn.setAttribute("data-hover-added", "true");
+        }
+
+        // Préserver la fonctionnalité originale du bouton historique
+        newHistoryBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Appeler la fonction d'historique si elle existe
+          if (typeof window.showProfessionalHistoryModal === "function") {
+            window.showProfessionalHistoryModal();
+          } else if (typeof showProfessionalHistoryModal === "function") {
+            showProfessionalHistoryModal();
+          } else {
+            console.log("Ouverture de l'historique professionnel...");
+            // Déclencher l'événement click original si possible
+            const originalClick = newHistoryBtn.getAttribute("onclick");
+            if (originalClick) {
+              eval(originalClick);
+            }
+          }
+        });
+      }
+
+      // Bouton Générer PDF
+      const pdfBtn = document.getElementById("generatePdfBtn");
+      if (pdfBtn) {
+        pdfBtn.disabled = false;
+        pdfBtn.style.opacity = "1";
+        pdfBtn.style.cursor = "pointer";
+        pdfBtn.style.pointerEvents = "auto";
+        pdfBtn.style.display = "inline-block";
+        pdfBtn.style.visibility = "visible";
+        pdfBtn.setAttribute("data-allow-admin", "true");
+        pdfBtn.classList.add("admin-allowed-button");
+        pdfBtn.title = "Générer PDF - Accessible en mode admin";
+
+        // Améliorer la visibilité du bouton PDF
+        pdfBtn.style.cssText += `
+          background: #2563eb !important;
+          color: #ffffff !important;
+          border: 1px solid #1d4ed8 !important;
+          font-weight: bold !important;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+        `;
+      }
+    } catch (e) {
+      console.warn("⚠️ enableAdminAllowedFieldsLivraison: ", e);
+    }
   }
 
   /**
@@ -1452,7 +1792,7 @@ class AdminModeManager {
     // Ajouter la classe CSS pour le style
     cell.classList.add("locked-cell");
 
-    // Verrouiller tous les éléments interactifs dans la cellule
+    // Verrouiller tous les éléments interactifs dans la cellulfgne
     const interactiveElements = cell.querySelectorAll(
       "input, select, textarea, button, a"
     );
@@ -1561,7 +1901,7 @@ class AdminModeManager {
       .map((tc) => tc.trim())
       .filter((tc) => tc);
 
-    // Détecter le thème actuel
+    // Détecter le thème actuelucjh,dhjv
     const isDarkMode =
       document.documentElement.getAttribute("data-theme") === "dark" ||
       document.body.classList.contains("dark-theme") ||
@@ -1797,135 +2137,65 @@ class AdminModeManager {
           content: none !important;
         }
         
-        /* Champ de recherche en mode clair - texte vert pour bonne lisibilité - SÉLECTEURS ÉTENDUS */
+        /* Champ de recherche en mode clair - texte vert pour bonne lisibilité */
         .admin-view-mode #searchInput,
         .admin-view-mode .search-input,
         .admin-view-mode input[placeholder*='recherche'],
-        .admin-view-mode input[placeholder*='Recherche'],
-        .admin-view-mode input[placeholder*='rechercher'],
-        .admin-view-mode input[placeholder*='Rechercher'],
-        .admin-view-mode input[type="text"],
-        .admin-view-mode input[type="search"],
-        .admin-view-mode input.form-control,
-        body.admin-view-mode #searchInput,
-        body.admin-view-mode .search-input,
-        body.admin-view-mode input[placeholder*='recherche'],
-        body.admin-view-mode input[placeholder*='Recherche'] {
+        .admin-view-mode input[placeholder*='Recherche'] {
           color: #28a745 !important;
           font-weight: 600 !important;
-          -webkit-text-fill-color: #28a745 !important;
-          text-shadow: none !important;
-          --text-primary: #28a745 !important;
-          --input-text-color: #28a745 !important;
-          --search-text-color: #28a745 !important;
-          border: 2px solid #28a745 !important;
-          box-shadow: 0 0 5px rgba(40, 167, 69, 0.3) !important;
         }
         
-        /* ÉCRASEMENT COMPLET DES VARIABLES CSS */
-        body.admin-view-mode {
-          --text-primary: #28a745 !important;
-          --text-secondary: #6c757d !important;
-          --bg-card: #ffffff !important;
-          --border-color: #28a745 !important;
-          --input-bg: #ffffff !important;
-          --input-border: #28a745 !important;
-          --input-text: #28a745 !important;
-          --placeholder-color: #198754 !important;
-        }
-        
-        /* SÉLECTEURS ULTRA-SPÉCIFIQUES POUR LE CHAMP DE RECHERCHE */
-        body.admin-view-mode input#searchInput,
-        body.admin-view-mode input[placeholder="Rechercher une livraison..."] {
-          color: #28a745 !important;
-          background-color: #ffffff !important;
-          border: 2px solid #28a745 !important;
-          font-weight: 600 !important;
-          -webkit-text-fill-color: #28a745 !important;
-          caret-color: #28a745 !important;
-        }
-        
-        /* FORCER TOUS LES ÉTATS POSSIBLES */
-        body.admin-view-mode input#searchInput:focus,
-        body.admin-view-mode input#searchInput:active,
-        body.admin-view-mode input#searchInput:not(:disabled),
-        body.admin-view-mode input[placeholder="Rechercher une livraison..."]:focus,
-        body.admin-view-mode input[placeholder="Rechercher une livraison..."]:active,
-        body.admin-view-mode input[placeholder="Rechercher une livraison..."]:not(:disabled) {
-          color: #28a745 !important;
-          -webkit-text-fill-color: #28a745 !important;
-          background-color: #ffffff !important;
-          border-color: #28a745 !important;
-        }
-        
-        /* Champ de recherche en mode clair - placeholder vert - SÉLECTEURS ÉTENDUS */
+        /* Champ de recherche en mode clair - placeholder vert */
         .admin-view-mode #searchInput::placeholder,
         .admin-view-mode .search-input::placeholder,
         .admin-view-mode input[placeholder*='recherche']::placeholder,
-        .admin-view-mode input[placeholder*='Recherche']::placeholder,
-        .admin-view-mode input[placeholder*='rechercher']::placeholder,
-        .admin-view-mode input[placeholder*='Rechercher']::placeholder,
-        .admin-view-mode input[type="text"]::placeholder,
-        .admin-view-mode input[type="search"]::placeholder,
-        .admin-view-mode input.form-control::placeholder,
-        body.admin-view-mode #searchInput::placeholder,
-        body.admin-view-mode .search-input::placeholder,
-        body.admin-view-mode input[placeholder*='recherche']::placeholder,
-        body.admin-view-mode input[placeholder*='Recherche']::placeholder {
-          color: #198754 !important;
-          opacity: 0.8 !important;
-          -webkit-text-fill-color: #198754 !important;
-        }
-        
-        /* Sélecteurs WebKit pour les placeholders */
-        .admin-view-mode #searchInput::-webkit-input-placeholder,
-        .admin-view-mode .search-input::-webkit-input-placeholder,
-        body.admin-view-mode #searchInput::-webkit-input-placeholder,
-        body.admin-view-mode .search-input::-webkit-input-placeholder {
-          color: #198754 !important;
-          opacity: 0.8 !important;
-          -webkit-text-fill-color: #198754 !important;
-        }
-        
-        /* Sélecteurs Mozilla pour les placeholders */
-        .admin-view-mode #searchInput::-moz-placeholder,
-        .admin-view-mode .search-input::-moz-placeholder,
-        body.admin-view-mode #searchInput::-moz-placeholder,
-        body.admin-view-mode .search-input::-moz-placeholder {
+        .admin-view-mode input[placeholder*='Recherche']::placeholder {
           color: #198754 !important;
           opacity: 0.8 !important;
         }
         
-        /* Amélioration des boutons de thème - Mode Clair - SÉLECTEURS ÉTENDUS */
+        /* Amélioration des boutons de thème - Mode Clair */
         .admin-view-mode button[onclick*="lightMode"],
         .admin-view-mode button[onclick*="setTheme('light')"],
-        .admin-view-mode button[onclick*="Light"],
-        .admin-view-mode button[onclick*="clair"],
-        .admin-view-mode button[onclick*="Clair"],
         .admin-view-mode .light-mode-btn,
-        .admin-view-mode .btn-light,
-        .admin-view-mode [class*="light"],
-        .admin-view-mode [id*="light"],
-        .admin-view-mode [data-theme="light"],
-        body .admin-view-mode button:contains("Clair"),
-        body .admin-view-mode button:contains("clair"),
-        body .admin-view-mode *[onclick*="light"] {
+        .admin-view-mode [class*="light"] {
           color: #007bff !important;
           font-weight: 600 !important;
         }
         
         .admin-view-mode button[onclick*="lightMode"] i,
         .admin-view-mode button[onclick*="setTheme('light')"] i,
-        .admin-view-mode button[onclick*="Light"] i,
-        .admin-view-mode button[onclick*="clair"] i,
-        .admin-view-mode button[onclick*="Clair"] i,
         .admin-view-mode .light-mode-btn i,
-        .admin-view-mode .btn-light i,
-        .admin-view-mode [class*="light"] i,
-        .admin-view-mode [id*="light"] i,
-        .admin-view-mode [data-theme="light"] i,
-        body .admin-view-mode *[onclick*="light"] i {
+        .admin-view-mode [class*="light"] i {
           color: #007bff !important;
+        }
+        
+        /* Texte "Claire" en bleu dans l'avatar et les boutons de thème */
+        .admin-view-mode button:contains("Claire"),
+        .admin-view-mode span:contains("Claire"),
+        .admin-view-mode [onclick*="claire"],
+        .admin-view-mode [onclick*="Claire"],
+        .admin-view-mode .dropdown-item:contains("Claire") {
+          color: #007bff !important;
+          font-weight: 600 !important;
+        }
+        
+        /* Bouton de recherche en bleu */
+        .admin-view-mode #searchButton,
+        .admin-view-mode .search-button,
+        .admin-view-mode button[type='submit']:not([onclick*="enregistrer"]) {
+          background-color: #007bff !important;
+          color: #ffffff !important;
+          border: 1px solid #007bff !important;
+          font-weight: 500 !important;
+        }
+        
+        .admin-view-mode #searchButton:hover,
+        .admin-view-mode .search-button:hover,
+        .admin-view-mode button[type='submit']:not([onclick*="enregistrer"]):hover {
+          background-color: #0056b3 !important;
+          border-color: #0056b3 !important;
         }
         
         /* Amélioration des boutons de thème - Mode Sombre */
@@ -2276,229 +2546,7 @@ class AdminModeManager {
         }
       `;
       document.head.appendChild(style);
-
-      // Appliquer les styles de manière forcée avec JavaScript
-      this.forceStyleApplication();
     }
-  }
-
-  /**
-   * Force l'application des styles critiques avec JavaScript direct
-   */
-  forceStyleApplication() {
-    // Application IMMÉDIATE sans délai
-    this.applyCriticalStyles();
-
-    // Application avec délai court pour contrer les scripts qui se chargent après
-    setTimeout(() => {
-      this.applyCriticalStyles();
-    }, 50);
-
-    // Application avec délai moyen pour contrer scriptRespAcconier.js
-    setTimeout(() => {
-      this.applyCriticalStyles();
-    }, 200);
-
-    // Application avec délai long pour s'assurer que tout est appliqué
-    setTimeout(() => {
-      this.applyCriticalStyles();
-    }, 500);
-
-    // Observer les changements DOM pour maintenir les styles
-    if (!this.styleObserver) {
-      this.styleObserver = new MutationObserver(() => {
-        // Réappliquer immédiatement sans délai pour les changements DOM
-        this.applyCriticalStyles();
-      });
-
-      this.styleObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ["class", "style"],
-      });
-    }
-  }
-
-  /**
-   * Applique les styles critiques avec force maximale
-   */
-  applyCriticalStyles() {
-    // Créer un style CSS ultra-prioritaire pour écraser les variables CSS
-    let ultraPriorityStyle = document.getElementById(
-      "ultra-priority-admin-styles"
-    );
-    if (!ultraPriorityStyle) {
-      ultraPriorityStyle = document.createElement("style");
-      ultraPriorityStyle.id = "ultra-priority-admin-styles";
-      document.head.appendChild(ultraPriorityStyle);
-    }
-
-    // CSS ULTRA-PRIORITAIRE qui écrase TOUT
-    ultraPriorityStyle.textContent = `
-      /* ===== ÉCRASEMENT TOTAL DES VARIABLES CSS ===== */
-      html body.admin-view-mode {
-        --text-primary: #28a745 !important;
-        --text-secondary: #6c757d !important;
-        --bg-card: #ffffff !important;
-        --border-color: #28a745 !important;
-        --input-bg: #ffffff !important;
-        --input-border: #28a745 !important;
-        --input-text: #28a745 !important;
-        --placeholder-color: #198754 !important;
-        --border-input: #28a745 !important;
-        --bg-button: #007bff !important;
-      }
-      
-      /* ===== SÉLECTEURS ULTRA-SPÉCIFIQUES POUR LE CHAMP DE RECHERCHE ===== */
-      html body.admin-view-mode input#searchInput,
-      html body.admin-view-mode input.search-input,
-      html body.admin-view-mode input[placeholder="Rechercher une livraison."] {
-        color: #28a745 !important;
-        background-color: #ffffff !important;
-        border: 2px solid #28a745 !important;
-        font-weight: 600 !important;
-        -webkit-text-fill-color: #28a745 !important;
-        caret-color: #28a745 !important;
-        text-shadow: none !important;
-        box-shadow: 0 0 8px rgba(40, 167, 69, 0.3) !important;
-      }
-      
-      /* ===== TOUS LES ÉTATS DU CHAMP DE RECHERCHE ===== */
-      html body.admin-view-mode input#searchInput:focus,
-      html body.admin-view-mode input#searchInput:active,
-      html body.admin-view-mode input#searchInput:hover,
-      html body.admin-view-mode input#searchInput:not(:disabled),
-      html body.admin-view-mode input.search-input:focus,
-      html body.admin-view-mode input.search-input:active,
-      html body.admin-view-mode input.search-input:hover,
-      html body.admin-view-mode input.search-input:not(:disabled) {
-        color: #28a745 !important;
-        -webkit-text-fill-color: #28a745 !important;
-        background-color: #ffffff !important;
-        border-color: #28a745 !important;
-        outline: 2px solid rgba(40, 167, 69, 0.5) !important;
-      }
-      
-      /* ===== PLACEHOLDER DU CHAMP DE RECHERCHE ===== */
-      html body.admin-view-mode input#searchInput::placeholder,
-      html body.admin-view-mode input.search-input::placeholder {
-        color: #198754 !important;
-        opacity: 0.8 !important;
-        -webkit-text-fill-color: #198754 !important;
-      }
-      
-      /* ===== BOUTONS THÈME "CLAIR" EN BLEU ===== */
-      html body.admin-view-mode button[onclick*="light" i],
-      html body.admin-view-mode button[onclick*="clair" i] {
-        color: #007bff !important;
-        font-weight: 600 !important;
-        border-color: #007bff !important;
-        background-color: rgba(0, 123, 255, 0.1) !important;
-      }
-      
-      html body.admin-view-mode button[onclick*="light" i] i,
-      html body.admin-view-mode button[onclick*="clair" i] i {
-        color: #007bff !important;
-      }
-    `;
-
-    // Force le style des champs de recherche en vert - PRIORITÉ MAXIMALE
-    const searchSelectors = [
-      'input[type="text"]',
-      'input[type="search"]',
-      'input[placeholder*="recherche"]',
-      'input[placeholder*="Recherche"]',
-      'input[placeholder*="rechercher"]',
-      'input[placeholder*="Rechercher"]',
-      "#searchInput",
-      ".search-input",
-      "input.form-control",
-    ];
-
-    searchSelectors.forEach((selector) => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach((element) => {
-        // Application FORCÉE avec tous les moyens disponibles
-        element.style.setProperty("color", "#28a745", "important");
-        element.style.setProperty("font-weight", "600", "important");
-        element.style.setProperty(
-          "-webkit-text-fill-color",
-          "#28a745",
-          "important"
-        );
-        element.style.setProperty("text-shadow", "none", "important");
-
-        // NOUVEAU : Écraser les variables CSS qui peuvent causer le problème
-        element.style.setProperty("color", "#28a745", "important");
-        element.style.cssText +=
-          "; color: #28a745 !important; -webkit-text-fill-color: #28a745 !important;";
-
-        // Forcer l'attribut style directement
-        const currentStyle = element.getAttribute("style") || "";
-        const newStyle =
-          currentStyle +
-          "; color: #28a745 !important; -webkit-text-fill-color: #28a745 !important; font-weight: 600 !important;";
-        element.setAttribute("style", newStyle);
-
-        // Créer une règle CSS spécifique pour cet élément
-        if (element.id) {
-          let elementStyle = document.getElementById(`style-for-${element.id}`);
-          if (!elementStyle) {
-            elementStyle = document.createElement("style");
-            elementStyle.id = `style-for-${element.id}`;
-            elementStyle.textContent = `
-              #${element.id} {
-                color: #28a745 !important;
-                font-weight: 600 !important;
-                -webkit-text-fill-color: #28a745 !important;
-              }
-              #${element.id}::placeholder {
-                color: #198754 !important;
-                opacity: 0.8 !important;
-                -webkit-text-fill-color: #198754 !important;
-              }
-            `;
-            document.head.appendChild(elementStyle);
-          }
-        }
-
-        console.log(
-          `✅ Style vert appliqué à:`,
-          element,
-          `Couleur actuelle: ${getComputedStyle(element).color}`
-        );
-      });
-    });
-
-    // Force le style des boutons "Clair" en bleu
-    const lightButtonSelectors = [
-      'button[onclick*="light"]',
-      'button[onclick*="clair"]',
-      'button[onclick*="Clair"]',
-      'button[onclick*="Light"]',
-      ".light-mode-btn",
-      ".btn-light",
-      '[class*="light"]',
-      '[id*="light"]',
-      '[data-theme="light"]',
-    ];
-
-    lightButtonSelectors.forEach((selector) => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach((element) => {
-        element.style.setProperty("color", "#007bff", "important");
-        element.style.setProperty("font-weight", "600", "important");
-
-        // Appliquer aussi aux icônes à l'intérieur
-        const icons = element.querySelectorAll("i, span, .icon");
-        icons.forEach((icon) => {
-          icon.style.setProperty("color", "#007bff", "important");
-        });
-      });
-    });
-
-    console.log("✅ Application forcée des styles admin terminée");
   }
 
   /**
@@ -2728,19 +2776,23 @@ class AdminModeManager {
       window.chargerDonnees();
     }
 
-    // Ajouter un filtre automatique sur le nom de l'employé
-    setTimeout(() => {
-      const searchInput = document.querySelector("#searchInput, .search-input");
-      if (searchInput && userData.nom) {
-        searchInput.value = userData.nom;
+    // Ajouter un filtre automatique sur le nom de l'employé UNIQUEMENT pour la page acconier
+    if (type === "acconier") {
+      setTimeout(() => {
+        const searchInput = document.querySelector(
+          "#searchInput, .search-input"
+        );
+        if (searchInput && userData.nom) {
+          searchInput.value = userData.nom;
 
-        // Déclencher la recherche
-        const searchEvent = new Event("input", { bubbles: true });
-        searchInput.dispatchEvent(searchEvent);
+          // Déclencher la recherche
+          const searchEvent = new Event("input", { bubbles: true });
+          searchInput.dispatchEvent(searchEvent);
 
-        console.log(`🔍 Filtre appliqué sur: ${userData.nom}`);
-      }
-    }, 1000);
+          console.log(`🔍 Filtre appliqué (acconier) sur: ${userData.nom}`);
+        }
+      }, 1000);
+    }
   }
 
   /**
@@ -2765,6 +2817,638 @@ class AdminModeManager {
       }
     }
   }
+
+  /**
+   * Applique les styles bleus personnalisés pour le bouton rechercher et le texte "Claire"
+   */
+  applyBlueCustomStyles() {
+    // 1. Styliser le bouton de recherche en bleu
+    const searchButtons = document.querySelectorAll(
+      "#searchButton, .search-button, button[type='submit']"
+    );
+
+    searchButtons.forEach((btn) => {
+      if (btn && !btn.textContent.toLowerCase().includes("enregistrer")) {
+        btn.style.backgroundColor = "#007bff";
+        btn.style.color = "#ffffff";
+        btn.style.border = "1px solid #007bff";
+        btn.style.fontWeight = "500";
+
+        // Ajouter l'effet hover
+        btn.addEventListener("mouseenter", function () {
+          this.style.backgroundColor = "#0056b3";
+          this.style.borderColor = "#0056b3";
+        });
+
+        btn.addEventListener("mouseleave", function () {
+          this.style.backgroundColor = "#007bff";
+          this.style.borderColor = "#007bff";
+        });
+      }
+    });
+
+    // 2. Styliser tous les éléments contenant "Claire" en bleu
+    const allElements = document.querySelectorAll("*");
+    allElements.forEach((element) => {
+      if (
+        element.textContent &&
+        (element.textContent.trim() === "Claire" ||
+          element.textContent.includes("Claire"))
+      ) {
+        // Éviter de modifier les éléments déjà traités
+        if (!element.hasAttribute("data-blue-styled")) {
+          element.style.color = "#007bff";
+          element.style.fontWeight = "600";
+          element.setAttribute("data-blue-styled", "true");
+        }
+      }
+    });
+
+    // 3. Spécifiquement cibler les éléments de dropdown et profile
+    const dropdownItems = document.querySelectorAll(
+      ".dropdown-item, .dropdown-menu span, .profile-menu span, .user-menu span"
+    );
+
+    dropdownItems.forEach((item) => {
+      if (item.textContent && item.textContent.includes("Claire")) {
+        item.style.color = "#007bff";
+        item.style.fontWeight = "600";
+      }
+    });
+
+    // 4. Observer les changements dans le DOM pour appliquer les styles aux nouveaux éléments
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            // Rechercher les nouveaux boutons de recherche
+            if (
+              node.matches &&
+              node.matches(
+                "#searchButton, .search-button, button[type='submit']"
+              )
+            ) {
+              if (!node.textContent.toLowerCase().includes("enregistrer")) {
+                node.style.backgroundColor = "#007bff";
+                node.style.color = "#ffffff";
+                node.style.border = "1px solid #007bff";
+              }
+            }
+
+            // Rechercher les nouveaux éléments "Claire"
+            if (node.textContent && node.textContent.includes("Claire")) {
+              node.style.color = "#007bff";
+              node.style.fontWeight = "600";
+            }
+          }
+        });
+      });
+    });
+
+    // Démarrer l'observation
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  /**
+   * Force les couleurs des boutons de manière stable (une seule fois)
+   * Cette fonction cherche TOUS les boutons possibles et leur applique les couleurs sans clignotement
+   */
+  forceButtonColorsAggressively() {
+    console.log("🎨 APPLICATION STABLE DES COULEURS DES BOUTONS...");
+
+    // BOUTON HISTORIQUE - Chercher par tous les moyens possibles
+    const historySelectors = [
+      "#professionalHistoryBtn",
+      "button[id*='history']",
+      "button[id*='History']",
+      "[onclick*='history']",
+      "[onclick*='History']",
+    ];
+
+    historySelectors.forEach((selector) => {
+      try {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((btn) => {
+          // Vérifier si le bouton n'a pas déjà été stylé pour éviter le clignotement
+          if (!btn.hasAttribute("data-admin-styled")) {
+            btn.style.setProperty("background", "#FF1744", "important");
+            btn.style.setProperty("color", "#ffffff", "important");
+            btn.style.setProperty("border", "3px solid #C62828", "important");
+            btn.style.setProperty("font-weight", "bold", "important");
+            btn.style.setProperty(
+              "box-shadow",
+              "0 4px 15px rgba(255, 23, 68, 0.6)",
+              "important"
+            );
+            btn.style.setProperty("border-radius", "8px", "important");
+            btn.style.setProperty("padding", "8px 16px", "important");
+            btn.style.setProperty("display", "inline-block", "important");
+            btn.style.setProperty("visibility", "visible", "important");
+            btn.style.setProperty("opacity", "1", "important");
+            btn.disabled = false;
+            btn.setAttribute("data-allow-admin", "true");
+            btn.setAttribute("data-admin-styled", "true");
+            console.log("✅ Bouton historique stylé:", btn);
+          }
+        });
+      } catch (e) {
+        console.log("Info: Sélecteur non supporté:", selector);
+      }
+    });
+
+    // BOUTON PDF - Chercher par tous les moyens possibles
+    const pdfSelectors = [
+      "#generatePdfBtn",
+      "button[id*='pdf']",
+      "button[id*='Pdf']",
+      "button[id*='PDF']",
+      "[onclick*='pdf']",
+      "[onclick*='PDF']",
+    ];
+
+    pdfSelectors.forEach((selector) => {
+      try {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((btn) => {
+          if (
+            btn.textContent &&
+            btn.textContent.toLowerCase().includes("pdf") &&
+            !btn.hasAttribute("data-admin-styled")
+          ) {
+            btn.style.setProperty("background", "#FF9800", "important");
+            btn.style.setProperty("color", "#ffffff", "important");
+            btn.style.setProperty("border", "3px solid #F57C00", "important");
+            btn.style.setProperty("font-weight", "bold", "important");
+            btn.style.setProperty(
+              "box-shadow",
+              "0 4px 15px rgba(255, 152, 0, 0.6)",
+              "important"
+            );
+            btn.style.setProperty("border-radius", "8px", "important");
+            btn.style.setProperty("padding", "6px 12px", "important");
+            btn.style.setProperty("display", "inline-block", "important");
+            btn.style.setProperty("visibility", "visible", "important");
+            btn.style.setProperty("opacity", "1", "important");
+            btn.disabled = false;
+            btn.setAttribute("data-allow-admin", "true");
+            btn.setAttribute("data-admin-styled", "true");
+            console.log("✅ Bouton PDF stylé:", btn);
+          }
+        });
+      } catch (e) {
+        console.log("Info: Sélecteur PDF non supporté:", selector);
+      }
+    });
+
+    // Chercher TOUS les boutons qui contiennent du texte spécifique
+    const allButtons = document.querySelectorAll("button");
+    allButtons.forEach((btn) => {
+      const text = btn.textContent || btn.innerText || "";
+
+      if (
+        text.toLowerCase().includes("historique") &&
+        !btn.hasAttribute("data-admin-styled")
+      ) {
+        btn.style.setProperty("background", "#FF1744", "important");
+        btn.style.setProperty("color", "#ffffff", "important");
+        btn.style.setProperty("border", "3px solid #C62828", "important");
+        btn.style.setProperty("font-weight", "bold", "important");
+        btn.style.setProperty(
+          "box-shadow",
+          "0 4px 15px rgba(255, 23, 68, 0.6)",
+          "important"
+        );
+        btn.style.setProperty("border-radius", "8px", "important");
+        btn.style.setProperty("padding", "8px 16px", "important");
+        btn.disabled = false;
+        btn.setAttribute("data-allow-admin", "true");
+        btn.setAttribute("data-admin-styled", "true");
+        console.log("✅ Bouton historique trouvé par texte:", btn);
+      }
+
+      // **NOUVEAU: ACTIVER LES BOUTONS "VOIR PLUS" ET "DÉTAILS"**
+      if (
+        (text.toLowerCase().includes("voir plus") ||
+          text.toLowerCase().includes("détails") ||
+          text.toLowerCase().includes("fermer")) &&
+        !btn.hasAttribute("data-admin-styled")
+      ) {
+        btn.style.setProperty("background", "#10b981", "important");
+        btn.style.setProperty("color", "#ffffff", "important");
+        btn.style.setProperty("border", "2px solid #059669", "important");
+        btn.style.setProperty("font-weight", "600", "important");
+        btn.style.setProperty("border-radius", "6px", "important");
+        btn.style.setProperty("padding", "8px 16px", "important");
+        btn.style.setProperty(
+          "box-shadow",
+          "0 2px 8px rgba(16, 185, 129, 0.4)",
+          "important"
+        );
+        btn.disabled = false;
+        btn.setAttribute("data-allow-admin", "true");
+        btn.setAttribute("data-admin-styled", "true");
+        console.log("✅ Bouton action trouvé par texte:", btn);
+      }
+
+      if (
+        text.toLowerCase().includes("pdf") &&
+        !btn.hasAttribute("data-admin-styled")
+      ) {
+        btn.style.setProperty("background", "#FF9800", "important");
+        btn.style.setProperty("color", "#ffffff", "important");
+        btn.style.setProperty("border", "3px solid #F57C00", "important");
+        btn.style.setProperty("font-weight", "bold", "important");
+        btn.style.setProperty(
+          "box-shadow",
+          "0 4px 15px rgba(255, 152, 0, 0.6)",
+          "important"
+        );
+        btn.style.setProperty("border-radius", "8px", "important");
+        btn.style.setProperty("padding", "6px 12px", "important");
+        btn.disabled = false;
+        btn.setAttribute("data-allow-admin", "true");
+        btn.setAttribute("data-admin-styled", "true");
+        console.log("✅ Bouton PDF trouvé par texte:", btn);
+      }
+    });
+
+    console.log("🎨 APPLICATION STABLE DES COULEURS TERMINÉE");
+
+    // FORÇAGE SPÉCIFIQUE POUR LA MODAL PDF
+    this.enablePdfModalElements();
+
+    // OBSERVATEUR DE MUTATIONS pour les boutons créés dynamiquement (sans modifications répétées)
+    if (!this.colorObserver) {
+      this.colorObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Vérifier si c'est un bouton ou contient des boutons
+              const buttonsToCheck = [];
+
+              if (node.tagName === "BUTTON") {
+                buttonsToCheck.push(node);
+              } else {
+                buttonsToCheck.push(...node.querySelectorAll("button"));
+              }
+
+              buttonsToCheck.forEach((btn) => {
+                // Éviter de styler plusieurs fois le même bouton
+                if (btn.hasAttribute("data-admin-styled")) {
+                  return;
+                }
+
+                const text = btn.textContent || btn.innerText || "";
+                const id = btn.id || "";
+
+                // Appliquer immédiatement les styles aux nouveaux boutons
+                if (
+                  text.toLowerCase().includes("historique") ||
+                  id.includes("history") ||
+                  id.includes("History")
+                ) {
+                  btn.style.setProperty("background", "#FF1744", "important");
+                  btn.style.setProperty("color", "#ffffff", "important");
+                  btn.style.setProperty(
+                    "border",
+                    "3px solid #C62828",
+                    "important"
+                  );
+                  btn.style.setProperty("font-weight", "bold", "important");
+                  btn.style.setProperty(
+                    "box-shadow",
+                    "0 4px 15px rgba(255, 23, 68, 0.6)",
+                    "important"
+                  );
+                  btn.style.setProperty("border-radius", "8px", "important");
+                  btn.style.setProperty("padding", "8px 16px", "important");
+                  btn.disabled = false;
+                  btn.setAttribute("data-allow-admin", "true");
+                  btn.setAttribute("data-admin-styled", "true");
+                  console.log(
+                    "🔄 Nouveau bouton historique stylé automatiquement:",
+                    btn
+                  );
+                }
+
+                // **NOUVEAU: DÉTECTER LES BOUTONS "VOIR PLUS" ET "DÉTAILS"**
+                if (
+                  text.toLowerCase().includes("voir plus") ||
+                  text.toLowerCase().includes("détails") ||
+                  text.toLowerCase().includes("fermer") ||
+                  btn.onclick?.toString().includes("showHistoryEntryDetail") ||
+                  btn.onclick?.toString().includes("showContainersList") ||
+                  btn.onclick?.toString().includes("showGroupDetail")
+                ) {
+                  btn.style.setProperty("background", "#10b981", "important");
+                  btn.style.setProperty("color", "#ffffff", "important");
+                  btn.style.setProperty(
+                    "border",
+                    "2px solid #059669",
+                    "important"
+                  );
+                  btn.style.setProperty("font-weight", "600", "important");
+                  btn.style.setProperty("border-radius", "6px", "important");
+                  btn.style.setProperty("padding", "8px 16px", "important");
+                  btn.style.setProperty(
+                    "box-shadow",
+                    "0 2px 8px rgba(16, 185, 129, 0.4)",
+                    "important"
+                  );
+                  btn.disabled = false;
+                  btn.setAttribute("data-allow-admin", "true");
+                  btn.setAttribute("data-admin-styled", "true");
+                  console.log(
+                    "🔄 Nouveau bouton action stylé automatiquement:",
+                    btn
+                  );
+                }
+
+                if (
+                  text.toLowerCase().includes("pdf") ||
+                  id.includes("pdf") ||
+                  id.includes("PDF")
+                ) {
+                  btn.style.setProperty("background", "#FF9800", "important");
+                  btn.style.setProperty("color", "#ffffff", "important");
+                  btn.style.setProperty(
+                    "border",
+                    "3px solid #F57C00",
+                    "important"
+                  );
+                  btn.style.setProperty("font-weight", "bold", "important");
+                  btn.style.setProperty(
+                    "box-shadow",
+                    "0 4px 15px rgba(255, 152, 0, 0.6)",
+                    "important"
+                  );
+                  btn.style.setProperty("border-radius", "8px", "important");
+                  btn.style.setProperty("padding", "6px 12px", "important");
+                  btn.disabled = false;
+                  btn.setAttribute("data-allow-admin", "true");
+                  btn.setAttribute("data-admin-styled", "true");
+                  console.log(
+                    "🔄 Nouveau bouton PDF stylé automatiquement:",
+                    btn
+                  );
+                }
+              });
+            }
+          });
+        });
+      });
+
+      // Démarrer l'observation pour les couleurs
+      this.colorObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+
+      console.log("👁️ Observateur de couleurs démarré");
+    }
+
+    // OBSERVATEUR SPÉCIFIQUE POUR LES MODALS PDF
+    if (!this.pdfModalObserver) {
+      this.pdfModalObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Vérifier si une modal a été ajoutée
+              if (
+                node.classList &&
+                (node.classList.contains("modal") ||
+                  (node.id && node.id.toLowerCase().includes("pdf")) ||
+                  (node.className &&
+                    node.className.toLowerCase().includes("pdf")))
+              ) {
+                console.log(
+                  "🔍 Nouvelle modal détectée, activation des éléments PDF..."
+                );
+                setTimeout(() => {
+                  this.enablePdfModalElements();
+                }, 100);
+              }
+
+              // **NOUVEAU: Vérifier si une modal d'historique a été ajoutée**
+              if (
+                node.id === "professionalHistoryModal" ||
+                node.id === "historyDetailModal" ||
+                (node.classList && node.classList.contains("history-modal"))
+              ) {
+                console.log(
+                  "📋 Modal d'historique détectée, correction du style..."
+                );
+                setTimeout(() => {
+                  this.fixHistoryModalStyle();
+                  this.enablePdfModalElements(); // Activer aussi les boutons
+                }, 50);
+              }
+
+              // Vérifier si des éléments PDF ont été ajoutés
+              const pdfElements = node.querySelectorAll
+                ? node.querySelectorAll(
+                    'input[type="radio"], input[type="date"], button, label'
+                  )
+                : [];
+              if (pdfElements.length > 0) {
+                console.log(
+                  "🔍 Nouveaux éléments d'interface détectés, activation..."
+                );
+                setTimeout(() => {
+                  this.enablePdfModalElements();
+                }, 50);
+              }
+            }
+          });
+        });
+      });
+
+      this.pdfModalObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+
+      console.log("👁️ Observateur modal PDF démarré");
+    }
+  }
+
+  /**
+   * Active spécifiquement tous les éléments de la modal PDF
+   */
+  enablePdfModalElements() {
+    console.log("📄 ACTIVATION MODAL PDF...");
+
+    // FORCER L'ACTIVATION DE TOUS LES INPUTS DE TYPE RADIO
+    const radioInputs = document.querySelectorAll('input[type="radio"]');
+    radioInputs.forEach((radio) => {
+      radio.disabled = false;
+      radio.style.setProperty("opacity", "1", "important");
+      radio.style.setProperty("pointer-events", "auto", "important");
+      radio.style.setProperty("cursor", "pointer", "important");
+      radio.setAttribute("data-allow-admin", "true");
+      radio.classList.add("admin-allowed-field");
+      console.log("✅ Radio activé:", radio);
+    });
+
+    // FORCER L'ACTIVATION DE TOUS LES INPUTS DE TYPE DATE
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach((dateInput) => {
+      dateInput.disabled = false;
+      dateInput.readOnly = false;
+      dateInput.style.setProperty("opacity", "1", "important");
+      dateInput.style.setProperty("pointer-events", "auto", "important");
+      dateInput.style.setProperty("cursor", "pointer", "important");
+      dateInput.style.setProperty("background", "#E8F5E8", "important");
+      dateInput.style.setProperty("border", "2px solid #4CAF50", "important");
+      dateInput.style.setProperty("color", "#2E7D32", "important");
+      dateInput.style.setProperty("font-weight", "bold", "important");
+      dateInput.setAttribute("data-allow-admin", "true");
+      dateInput.classList.add("admin-allowed-field");
+      console.log("✅ Input date activé:", dateInput);
+    });
+
+    // FORCER TOUS LES BOUTONS QUI CONTIENNENT "PDF" OU "GÉNÉRER"
+    const allElements = document.querySelectorAll("*");
+    allElements.forEach((element) => {
+      const text = element.textContent || element.innerText || "";
+
+      if (
+        text.toLowerCase().includes("générer pdf") ||
+        text.toLowerCase().includes("generer pdf") ||
+        (text.toLowerCase().includes("générer") &&
+          text.toLowerCase().includes("pdf"))
+      ) {
+        if (
+          element.tagName === "BUTTON" ||
+          element.type === "button" ||
+          element.type === "submit"
+        ) {
+          element.disabled = false;
+          element.style.setProperty("opacity", "1", "important");
+          element.style.setProperty("pointer-events", "auto", "important");
+          element.style.setProperty("cursor", "pointer", "important");
+          element.style.setProperty("background", "#FF9800", "important");
+          element.style.setProperty("color", "#ffffff", "important");
+          element.style.setProperty("border", "3px solid #F57C00", "important");
+          element.style.setProperty("font-weight", "bold", "important");
+          element.style.setProperty(
+            "box-shadow",
+            "0 4px 15px rgba(255, 152, 0, 0.6)",
+            "important"
+          );
+          element.style.setProperty("border-radius", "8px", "important");
+          element.style.setProperty("padding", "6px 12px", "important");
+          element.setAttribute("data-allow-admin", "true");
+          element.classList.add("admin-allowed-button");
+          console.log("✅ Bouton Générer PDF forcé:", element);
+        }
+      }
+    });
+
+    // FORCER TOUS LES LABELS (pour les boutons radio)
+    const labels = document.querySelectorAll("label");
+    labels.forEach((label) => {
+      label.style.setProperty("opacity", "1", "important");
+      label.style.setProperty("pointer-events", "auto", "important");
+      label.style.setProperty("cursor", "pointer", "important");
+      label.style.setProperty("color", "#333", "important");
+      label.setAttribute("data-allow-admin", "true");
+      console.log("✅ Label activé:", label);
+    });
+
+    // **NOUVEAU: ACTIVER LES BOUTONS D'HISTORIQUE "VOIR PLUS" ET "DÉTAILS"**
+    console.log("📋 ACTIVATION BOUTONS HISTORIQUE...");
+
+    // ACTIVER TOUS LES BOUTONS DANS LES MODALS D'HISTORIQUE
+    const historyModalButtons = document.querySelectorAll(`
+      #professionalHistoryModal button,
+      #historyDetailModal button,
+      button[onclick*="showHistoryEntryDetail"],
+      button[onclick*="showContainersList"],
+      button[onclick*="showGroupDetail"]
+    `);
+
+    historyModalButtons.forEach((button) => {
+      button.disabled = false;
+      button.style.setProperty("opacity", "1", "important");
+      button.style.setProperty("pointer-events", "auto", "important");
+      button.style.setProperty("cursor", "pointer", "important");
+      button.style.setProperty("background", "#3b82f6", "important");
+      button.style.setProperty("color", "#ffffff", "important");
+      button.style.setProperty("border", "none", "important");
+      button.style.setProperty("font-weight", "500", "important");
+      button.style.setProperty("border-radius", "6px", "important");
+      button.style.setProperty("padding", "6px 12px", "important");
+      button.setAttribute("data-allow-admin", "true");
+      button.classList.add("admin-allowed-button");
+      console.log("✅ Bouton historique modal activé:", button);
+    });
+
+    // ACTIVER SPÉCIFIQUEMENT LES BOUTONS "VOIR PLUS" ET "DÉTAILS" PAR TEXTE
+    const actionButtons = document.querySelectorAll("button");
+    actionButtons.forEach((button) => {
+      const buttonText = button.textContent || button.innerText || "";
+
+      if (
+        buttonText.toLowerCase().includes("voir plus") ||
+        buttonText.toLowerCase().includes("détails") ||
+        buttonText.toLowerCase().includes("fermer") ||
+        buttonText.toLowerCase().includes("historique") ||
+        button.onclick?.toString().includes("showHistoryEntryDetail") ||
+        button.onclick?.toString().includes("showContainersList") ||
+        button.onclick?.toString().includes("showGroupDetail")
+      ) {
+        button.disabled = false;
+        button.style.setProperty("opacity", "1", "important");
+        button.style.setProperty("pointer-events", "auto", "important");
+        button.style.setProperty("cursor", "pointer", "important");
+        button.style.setProperty("background", "#10b981", "important");
+        button.style.setProperty("color", "#ffffff", "important");
+        button.style.setProperty("border", "2px solid #059669", "important");
+        button.style.setProperty("font-weight", "600", "important");
+        button.style.setProperty("border-radius", "6px", "important");
+        button.style.setProperty("padding", "8px 16px", "important");
+        button.style.setProperty(
+          "box-shadow",
+          "0 2px 8px rgba(16, 185, 129, 0.4)",
+          "important"
+        );
+        button.setAttribute("data-allow-admin", "true");
+        button.classList.add("admin-allowed-button");
+        console.log("✅ Bouton action historique activé:", button);
+      }
+    });
+
+    console.log("📋 BOUTONS HISTORIQUE ACTIVÉS");
+
+    // **NOUVEAU: CORRIGER LE STYLE DE LA MODAL D'HISTORIQUE EN MODE ADMIN**
+    this.fixHistoryModalStyle();
+
+    console.log("📄 MODAL PDF ENTIÈREMENT ACTIVÉE");
+  }
+
+  /**
+   * Corrige le style de la modal d'historique pour éviter le fond bleu
+   */
+  fixHistoryModalStyle() {
+    const historyModal = document.getElementById("professionalHistoryModal");
+    if (historyModal) {
+      // Supprimer le fond bleu et le blur en mode admin
+      historyModal.style.setProperty("background", "transparent", "important");
+      historyModal.style.setProperty("backdrop-filter", "none", "important");
+      historyModal.style.setProperty(
+        "background-color",
+        "transparent",
+        "important"
+      );
+      console.log(
+        "✅ Style de la modal d'historique corrigé pour le mode admin"
+      );
+    }
+  }
 }
 
 // Initialiser le gestionnaire de mode admin
@@ -2781,6 +3465,75 @@ window.adminModeManager = adminModeManager;
 // Fonction utilitaire globale pour vérifier le mode admin
 window.isAdminMode = () => adminModeManager.isInAdminMode();
 
+// Fonction utilitaire pour forcer l'exposition des fonctions nécessaires
+window.forceExposeAdminFunctions = function () {
+  console.log("🔧 Forçage de l'exposition des fonctions pour le mode admin...");
+
+  // Essayer de récupérer les fonctions depuis les scripts déjà chargés
+  const scripts = document.querySelectorAll('script[src*="scriptRespLiv"]');
+  if (scripts.length > 0) {
+    console.log(
+      "📜 Script responsable livraison trouvé, fonctions disponibles normalement"
+    );
+  }
+
+  // Vérifier et exposer la fonction historique
+  if (
+    typeof showProfessionalHistoryModal !== "undefined" &&
+    typeof window.showProfessionalHistoryModal === "undefined"
+  ) {
+    window.showProfessionalHistoryModal = showProfessionalHistoryModal;
+    console.log("✅ showProfessionalHistoryModal exposée globalement");
+  }
+
+  // Retourner le statut des fonctions
+  return {
+    history: {
+      showProfessionalHistoryModal:
+        typeof window.showProfessionalHistoryModal === "function",
+    },
+  };
+};
+
+// Fonction utilitaire pour réactiver les éléments d'une modal spécifique
+window.enableModalElementsForAdmin = function (modalId) {
+  console.log(`🔓 Réactivation des éléments de la modal: ${modalId}`);
+
+  const modal = document.getElementById(modalId);
+  if (!modal) {
+    console.warn(`⚠️ Modal ${modalId} non trouvée`);
+    return;
+  }
+
+  // Réactiver tous les éléments interactifs dans la modal
+  const modalElements = modal.querySelectorAll(
+    "input, button, select, textarea, label"
+  );
+  modalElements.forEach((element) => {
+    element.disabled = false;
+    element.readOnly = false;
+    element.style.opacity = "1";
+    element.style.cursor = "pointer";
+    element.style.pointerEvents = "auto";
+    element.setAttribute("data-allow-admin", "true");
+    element.classList.add("admin-allowed-field");
+    element.classList.remove("admin-disabled-no-icon");
+    element.title = "";
+
+    console.log(
+      `✅ Élément réactivé:`,
+      element.tagName,
+      element.id || element.className
+    );
+  });
+
+  // Marquer la modal elle-même comme autorisée
+  modal.setAttribute("data-allow-admin", "true");
+  modal.classList.add("admin-allowed-modal");
+
+  console.log(`✅ Modal ${modalId} complètement réactivée pour le mode admin`);
+};
+
 console.log("🔧 Gestionnaire de mode admin initialisé");
 
 // Debug: Afficher l'état du mode admin dans la console
@@ -2794,3 +3547,81 @@ if (typeof window !== "undefined") {
     isAdminMode: adminModeManager.isInAdminMode(),
   });
 }
+
+// FONCTION GLOBALE POUR ACTIVER LA MODAL PDF EN MODE ADMIN
+window.enablePdfModalForAdmin = function () {
+  console.log("🌍 ACTIVATION GLOBALE MODAL PDF...");
+
+  // Activer tous les boutons radio
+  document.querySelectorAll('input[type="radio"]').forEach((radio) => {
+    radio.disabled = false;
+    radio.style.setProperty("opacity", "1", "important");
+    radio.style.setProperty("pointer-events", "auto", "important");
+    radio.style.setProperty("cursor", "pointer", "important");
+    radio.setAttribute("data-allow-admin", "true");
+    console.log("✅ Radio global activé:", radio);
+  });
+
+  // Activer tous les champs de date
+  document.querySelectorAll('input[type="date"]').forEach((dateInput) => {
+    dateInput.disabled = false;
+    dateInput.readOnly = false;
+    dateInput.style.setProperty("opacity", "1", "important");
+    dateInput.style.setProperty("pointer-events", "auto", "important");
+    dateInput.style.setProperty("cursor", "pointer", "important");
+    dateInput.style.setProperty("background", "#E8F5E8", "important");
+    dateInput.style.setProperty("border", "2px solid #4CAF50", "important");
+    dateInput.setAttribute("data-allow-admin", "true");
+    console.log("✅ Date global activé:", dateInput);
+  });
+
+  // Activer tous les boutons contenant "PDF"
+  document
+    .querySelectorAll('button, input[type="button"], input[type="submit"]')
+    .forEach((btn) => {
+      const text = btn.textContent || btn.value || "";
+      if (
+        text.toLowerCase().includes("générer") ||
+        text.toLowerCase().includes("pdf")
+      ) {
+        btn.disabled = false;
+        btn.style.setProperty("opacity", "1", "important");
+        btn.style.setProperty("pointer-events", "auto", "important");
+        btn.style.setProperty("cursor", "pointer", "important");
+        btn.style.setProperty("background", "#FF9800", "important");
+        btn.style.setProperty("color", "#ffffff", "important");
+        btn.style.setProperty("border", "2px solid #F57C00", "important");
+        btn.setAttribute("data-allow-admin", "true");
+        console.log("✅ Bouton PDF global activé:", btn);
+      }
+    });
+
+  // Activer tous les labels
+  document.querySelectorAll("label").forEach((label) => {
+    label.style.setProperty("opacity", "1", "important");
+    label.style.setProperty("pointer-events", "auto", "important");
+    label.style.setProperty("cursor", "pointer", "important");
+    label.setAttribute("data-allow-admin", "true");
+  });
+
+  console.log("🌍 MODAL PDF GLOBALEMENT ACTIVÉE");
+};
+
+// Activer immédiatement si on est en mode admin
+if (adminModeManager && adminModeManager.isAdminMode) {
+  setTimeout(() => {
+    window.enablePdfModalForAdmin();
+  }, 1000);
+
+  // Répéter toutes les 2 secondes pendant 30 secondes
+  let globalAttempts = 0;
+  const globalInterval = setInterval(() => {
+    window.enablePdfModalForAdmin();
+    globalAttempts++;
+    if (globalAttempts >= 15) {
+      clearInterval(globalInterval);
+    }
+  }, 2000);
+}
+
+/*sdjhsgvjyguodudffsdjhk*/

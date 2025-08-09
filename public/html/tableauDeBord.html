@@ -816,7 +816,7 @@
 
       /* Animation de mise à jour des cartes */
       .card-updating {
-        animation: cardPulse 1s ease-in-out;
+        opacity: 1; /* Propriété pour éviter l'erreur CSS */
       }
 
       /* Effet de glow pour les badges actifs */
@@ -1257,10 +1257,9 @@
         }
       }
 
-      /* Effet de synchronisation globale avec couleurs fluides */
+      /* Effet de synchronisation - DÉSACTIVÉ */
       .cards-synchronized {
-        animation: syncPulse 2s ease-in-out, syncColorWave 3s ease-in-out;
-        filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+        opacity: 1; /* Propriété pour éviter l'erreur CSS */
       }
 
       @keyframes syncPulse {
@@ -2437,10 +2436,18 @@
             align-items: center;
             gap: 38px;
             margin-bottom: 22px;
+            /* Animation subtile des conteneurs de cartes */
+            animation: softPulse 10s ease-in-out infinite;
           }
-          /* Décalage vertical des cartes sous le message de bienvenue */
+
+          /* Délai différent pour chaque ligne de cartes */
           .etat-cards-row:first-of-type {
             margin-top: 18px;
+            animation-delay: 0s;
+          }
+
+          .etat-cards-row:last-of-type {
+            animation-delay: 5s;
           }
           .etat-card {
             border-radius: 18px;
