@@ -556,6 +556,34 @@ document.addEventListener("DOMContentLoaded", function () {
   const dateStartInput = document.getElementById("mainTableDateStartFilter");
   const dateEndInput = document.getElementById("mainTableDateEndFilter");
 
+  // Marquer les champs de date comme accessibles en mode admin
+  if (dateStartInput) {
+    dateStartInput.setAttribute("data-allow-admin", "true");
+    dateStartInput.classList.add("admin-allowed-field");
+  }
+  if (dateEndInput) {
+    dateEndInput.setAttribute("data-allow-admin", "true");
+    dateEndInput.classList.add("admin-allowed-field");
+  }
+
+  // Marquer le champ de recherche comme accessible en mode admin
+  const searchInput = document.querySelector(
+    "input[placeholder*='Rechercher'], input[placeholder*='rechercher']"
+  );
+  if (searchInput) {
+    searchInput.setAttribute("data-allow-admin", "true");
+    searchInput.classList.add("admin-allowed-field");
+    // Appliquer des styles vifs immédiatement
+    searchInput.style.background = "#E1F5FE !important";
+    searchInput.style.border = "3px solid #2196F3 !important";
+    searchInput.style.color = "#1976D2 !important";
+    searchInput.style.fontWeight = "bold !important";
+    searchInput.style.boxShadow =
+      "0 3px 10px rgba(33, 150, 243, 0.4) !important";
+    searchInput.style.borderRadius = "6px !important";
+    searchInput.style.padding = "6px 12px !important";
+  }
+
   // On charge toutes les livraisons une seule fois au chargement
   // On rend allDeliveries accessible globalement pour le tooltip Statut
   window.allDeliveries = [];
@@ -3172,29 +3200,142 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// --- AJOUT : Bouton Générer PDF et logique associée ---
-// Création du bouton Générer PDF
+// ========================================================================
+// === HISTORIQUE PROFESSIONNEL DES CONTENEURS LIVRÉS ===
+// ========================================================================
+// Création du bouton Générer PDF avec couleurs très vives et FORÇAGE AGRESSIF
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
 pdfBtn.textContent = "Générer PDF";
-pdfBtn.style.background = "#2563eb";
-pdfBtn.style.color = "#fff";
-pdfBtn.style.fontWeight = "bold";
-pdfBtn.style.border = "none";
-pdfBtn.style.cursor = "pointer";
-pdfBtn.style.borderRadius = "7px";
-pdfBtn.style.padding = "4px 12px";
-pdfBtn.style.fontSize = "0.97em";
-pdfBtn.style.margin = "0 0 0 12px";
-pdfBtn.style.height = "32px";
-pdfBtn.style.minWidth = "0";
-pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
-pdfBtn.style.verticalAlign = "middle";
+
+// FORCER LES COULEURS IMMÉDIATEMENT ET DE MANIÈRE AGRESSIVE
+pdfBtn.style.setProperty(
+  "background",
+  "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
+  "important"
+);
+pdfBtn.style.setProperty("color", "#fff", "important");
+pdfBtn.style.setProperty("font-weight", "bold", "important");
+pdfBtn.style.setProperty("border", "3px solid #F57C00", "important");
+pdfBtn.style.setProperty("cursor", "pointer", "important");
+pdfBtn.style.setProperty("border-radius", "8px", "important");
+pdfBtn.style.setProperty("padding", "6px 12px", "important");
+pdfBtn.style.setProperty("font-size", "0.97em", "important");
+pdfBtn.style.setProperty("margin", "0 0 0 12px", "important");
+pdfBtn.style.setProperty("height", "32px", "important");
+pdfBtn.style.setProperty("min-width", "0", "important");
+pdfBtn.style.setProperty(
+  "box-shadow",
+  "0 4px 15px rgba(255, 152, 0, 0.6)",
+  "important"
+);
+pdfBtn.style.setProperty("vertical-align", "middle", "important");
+pdfBtn.style.setProperty("transition", "all 0.2s ease", "important");
+pdfBtn.style.setProperty("display", "inline-block", "important");
+pdfBtn.style.setProperty("visibility", "visible", "important");
+pdfBtn.style.setProperty("opacity", "1", "important");
+
+// Marquer comme accessible en mode admin
+pdfBtn.setAttribute("data-allow-admin", "true");
+pdfBtn.classList.add("admin-allowed-button");
+
+// Effet de survol pour le bouton PDF avec forçage
+pdfBtn.onmouseenter = () => {
+  pdfBtn.style.setProperty("transform", "translateY(-2px)", "important");
+  pdfBtn.style.setProperty(
+    "box-shadow",
+    "0 6px 20px rgba(255, 152, 0, 0.8)",
+    "important"
+  );
+  pdfBtn.style.setProperty(
+    "background",
+    "linear-gradient(90deg,#F57C00 0%,#E65100 100%)",
+    "important"
+  );
+};
+pdfBtn.onmouseleave = () => {
+  pdfBtn.style.setProperty("transform", "translateY(0)", "important");
+  pdfBtn.style.setProperty(
+    "box-shadow",
+    "0 4px 15px rgba(255, 152, 0, 0.6)",
+    "important"
+  );
+  pdfBtn.style.setProperty(
+    "background",
+    "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
+    "important"
+  );
+};
 
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
   // Créer le bouton historique immédiatement
   checkAndShowHistoryButton();
+
+  // FONCTION DE FORÇAGE AGRESSIF DES COULEURS - À déclencher périodiquement
+  function forceColorsAggressively() {
+    console.log("🎨 FORÇAGE COULEURS SCRIPTRESPLIVJS...");
+
+    // FORCER BOUTON HISTORIQUE
+    const historyBtn = document.getElementById("professionalHistoryBtn");
+    if (historyBtn) {
+      historyBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
+        "important"
+      );
+      historyBtn.style.setProperty("color", "#ffffff", "important");
+      historyBtn.style.setProperty("border", "3px solid #C62828", "important");
+      historyBtn.style.setProperty("font-weight", "bold", "important");
+      historyBtn.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(255, 23, 68, 0.6)",
+        "important"
+      );
+      historyBtn.style.setProperty("display", "inline-block", "important");
+      historyBtn.style.setProperty("visibility", "visible", "important");
+      historyBtn.style.setProperty("opacity", "1", "important");
+      historyBtn.disabled = false;
+      console.log("✅ Bouton historique forcé");
+    }
+
+    // FORCER BOUTON PDF
+    const pdfBtn = document.getElementById("generatePdfBtn");
+    if (pdfBtn) {
+      pdfBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
+        "important"
+      );
+      pdfBtn.style.setProperty("color", "#ffffff", "important");
+      pdfBtn.style.setProperty("border", "3px solid #F57C00", "important");
+      pdfBtn.style.setProperty("font-weight", "bold", "important");
+      pdfBtn.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(255, 152, 0, 0.6)",
+        "important"
+      );
+      pdfBtn.style.setProperty("display", "inline-block", "important");
+      pdfBtn.style.setProperty("visibility", "visible", "important");
+      pdfBtn.style.setProperty("opacity", "1", "important");
+      pdfBtn.disabled = false;
+      console.log("✅ Bouton PDF forcé");
+    }
+  }
+
+  // Forcer les couleurs immédiatement
+  forceColorsAggressively();
+
+  // Forcer les couleurs toutes les secondes pendant 30 secondes
+  let forceAttempts = 0;
+  const forceInterval = setInterval(() => {
+    forceColorsAggressively();
+    forceAttempts++;
+    if (forceAttempts >= 30) {
+      clearInterval(forceInterval);
+      console.log("🎨 Forçage de couleurs terminé après 30 tentatives");
+    }
+  }, 1000);
 
   // Configurer le conteneur et ajouter le bouton PDF
   const searchInput = document.querySelector(
@@ -3285,15 +3426,16 @@ function showPdfFilterModal() {
   overlay.style.left = 0;
   overlay.style.width = "100vw";
   overlay.style.height = "100vh";
-  overlay.style.background = "rgba(30,41,59,0.45)";
+  overlay.style.background = "rgba(0,0,0,0.5)"; // Fond noir semi-transparent plus neutre
   overlay.style.zIndex = 100000;
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";
   overlay.style.justifyContent = "center";
+  overlay.style.backdropFilter = "blur(2px)"; // Effet de flou léger
   const box = document.createElement("div");
   box.style.background = "#fff";
   box.style.borderRadius = "16px";
-  box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+  box.style.boxShadow = "0 12px 40px rgba(0,0,0,0.3)";
   box.style.maxWidth = "420px";
   box.style.width = "96vw";
   box.style.maxHeight = "92vh";
@@ -3457,6 +3599,19 @@ function showPdfFilterModal() {
   content.appendChild(validateBtn);
   box.appendChild(content);
   overlay.appendChild(box);
+
+  // Fermer la modal en cliquant à l'extérieur
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) {
+      overlay.remove();
+    }
+  });
+
+  // Empêcher la propagation du clic à l'intérieur de la modal
+  box.addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
+
   document.body.appendChild(overlay);
 }
 
@@ -3659,6 +3814,70 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
     );
 
+    // Récupère les données actuelles depuis le tableau (les valeurs éditées)
+    const row = document.querySelector(
+      `#deliveriesTableBody tr[data-delivery-id='${delivery.id}']`
+    );
+
+    // Utilise les noms de colonnes de la base de données
+    let visitor_agent_name =
+      delivery.nom_agent_visiteur || delivery.visitor_agent_name || "";
+    let transporter = delivery.transporter || "";
+    let inspector = delivery.inspecteur || delivery.inspector || "";
+    let customs_agent =
+      delivery.agent_en_douanes || delivery.customs_agent || "";
+    let driver = delivery.driver_name || delivery.driver || "";
+    let driver_phone = delivery.driver_phone || "";
+    let delivery_date = delivery.delivery_date || "";
+    let observation = delivery.delivery_notes || delivery.observation || "";
+
+    // Si la ligne existe dans le tableau, récupère les valeurs éditées
+    if (row) {
+      const visitorCell = row.querySelector(
+        "td[data-col-id='visitor_agent_name']"
+      );
+      const transporterCell = row.querySelector(
+        "td[data-col-id='transporter']"
+      );
+      const inspectorCell = row.querySelector("td[data-col-id='inspector']");
+      const customsCell = row.querySelector("td[data-col-id='customs_agent']");
+      const driverCell = row.querySelector("td[data-col-id='driver']");
+      const driverPhoneCell = row.querySelector(
+        "td[data-col-id='driver_phone']"
+      );
+      const deliveryDateCell = row.querySelector(
+        "td[data-col-id='delivery_date']"
+      );
+      const observationCell = row.querySelector(
+        "td[data-col-id='observation']"
+      );
+
+      if (visitorCell && visitorCell.textContent.trim() !== "-") {
+        visitor_agent_name = visitorCell.textContent.trim();
+      }
+      if (transporterCell && transporterCell.textContent.trim() !== "-") {
+        transporter = transporterCell.textContent.trim();
+      }
+      if (inspectorCell && inspectorCell.textContent.trim() !== "-") {
+        inspector = inspectorCell.textContent.trim();
+      }
+      if (customsCell && customsCell.textContent.trim() !== "-") {
+        customs_agent = customsCell.textContent.trim();
+      }
+      if (driverCell && driverCell.textContent.trim() !== "-") {
+        driver = driverCell.textContent.trim();
+      }
+      if (driverPhoneCell && driverPhoneCell.textContent.trim() !== "-") {
+        driver_phone = driverPhoneCell.textContent.trim();
+      }
+      if (deliveryDateCell && deliveryDateCell.textContent.trim() !== "-") {
+        delivery_date = deliveryDateCell.textContent.trim();
+      }
+      if (observationCell && observationCell.textContent.trim() !== "-") {
+        observation = observationCell.textContent.trim();
+      }
+    }
+
     // Crée un enregistrement unique pour ce conteneur
     const historyEntry = {
       id: Date.now() + Math.random(), // ID unique
@@ -3671,19 +3890,20 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       employee_name: delivery.employee_name,
       circuit: delivery.circuit,
       shipping_company: delivery.shipping_company,
-      visitor_agent_name: delivery.visitor_agent_name,
-      transporter: delivery.transporter,
-      inspector: delivery.inspector,
-      customs_agent: delivery.customs_agent,
-      driver: delivery.driver,
-      driver_phone: delivery.driver_phone,
+      visitor_agent_name: visitor_agent_name,
+      transporter: transporter,
+      inspector: inspector,
+      customs_agent: customs_agent,
+      driver: driver,
+      driver_phone: driver_phone,
       container_foot_type: delivery.container_foot_type,
       weight: delivery.weight,
       ship_name: delivery.ship_name,
-      delivery_date: delivery.delivery_date,
-      observation: delivery.observation,
+      delivery_date: delivery_date,
+      observation: observation,
       delivered_at: new Date().toISOString(), // Horodatage de livraison
-      delivered_by: localStorage.getItem("user_nom") || "Inconnu",
+      delivered_by:
+        visitor_agent_name || localStorage.getItem("user_nom") || "-",
     };
 
     // Vérifie si ce conteneur n'est pas déjà dans l'historique
@@ -3745,35 +3965,73 @@ function showHistoryButtonIfNeeded() {
   let historyBtn = document.getElementById("professionalHistoryBtn");
 
   if (!historyBtn) {
-    // Crée le bouton historique professionnel
+    // Crée le bouton historique professionnel avec couleurs très vives
     historyBtn = document.createElement("button");
     historyBtn.id = "professionalHistoryBtn";
     historyBtn.innerHTML = "📋 Historique";
     historyBtn.title =
       "Consulter l'historique professionnel des conteneurs livrés";
-    historyBtn.style.background =
-      "linear-gradient(90deg,#059669 0%,#047857 100%)";
-    historyBtn.style.color = "#fff";
-    historyBtn.style.fontWeight = "bold";
-    historyBtn.style.border = "none";
-    historyBtn.style.cursor = "pointer";
-    historyBtn.style.borderRadius = "8px";
-    historyBtn.style.padding = "8px 16px";
-    historyBtn.style.fontSize = "0.95em";
-    historyBtn.style.margin = "0 8px 0 0"; // Margin à droite seulement
-    historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
-    historyBtn.style.transition = "all 0.2s ease";
-    historyBtn.style.height = "32px"; // Même hauteur que les autres boutons
-    historyBtn.style.verticalAlign = "middle";
 
-    // Effet de survol
+    // FORCER LES COULEURS IMMÉDIATEMENT ET DE MANIÈRE AGRESSIVE
+    historyBtn.style.setProperty(
+      "background",
+      "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
+      "important"
+    );
+    historyBtn.style.setProperty("color", "#fff", "important");
+    historyBtn.style.setProperty("font-weight", "bold", "important");
+    historyBtn.style.setProperty("border", "3px solid #C62828", "important");
+    historyBtn.style.setProperty("cursor", "pointer", "important");
+    historyBtn.style.setProperty("border-radius", "8px", "important");
+    historyBtn.style.setProperty("padding", "8px 16px", "important");
+    historyBtn.style.setProperty("font-size", "0.95em", "important");
+    historyBtn.style.setProperty("margin", "0 8px 0 0", "important");
+    historyBtn.style.setProperty(
+      "box-shadow",
+      "0 4px 15px rgba(255, 23, 68, 0.6)",
+      "important"
+    );
+    historyBtn.style.setProperty("transition", "all 0.2s ease", "important");
+    historyBtn.style.setProperty("height", "32px", "important");
+    historyBtn.style.setProperty("vertical-align", "middle", "important");
+    historyBtn.style.setProperty("display", "inline-block", "important");
+    historyBtn.style.setProperty("visibility", "visible", "important");
+    historyBtn.style.setProperty("opacity", "1", "important");
+
+    // Marquer comme accessible en mode admin
+    historyBtn.setAttribute("data-allow-admin", "true");
+    historyBtn.classList.add("admin-allowed-button");
+
+    // Effet de survol amélioré
     historyBtn.onmouseenter = () => {
-      historyBtn.style.transform = "translateY(-2px)";
-      historyBtn.style.boxShadow = "0 4px 16px rgba(5,150,105,0.4)";
+      historyBtn.style.setProperty(
+        "transform",
+        "translateY(-2px)",
+        "important"
+      );
+      historyBtn.style.setProperty(
+        "box-shadow",
+        "0 6px 25px rgba(255, 23, 68, 0.8)",
+        "important"
+      );
+      historyBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#C62828 0%,#B71C1C 100%)",
+        "important"
+      );
     };
     historyBtn.onmouseleave = () => {
-      historyBtn.style.transform = "translateY(0)";
-      historyBtn.style.boxShadow = "0 2px 8px rgba(5,150,105,0.3)";
+      historyBtn.style.setProperty("transform", "translateY(0)", "important");
+      historyBtn.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(255, 23, 68, 0.6)",
+        "important"
+      );
+      historyBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
+        "important"
+      );
     };
 
     // Événement de clic
