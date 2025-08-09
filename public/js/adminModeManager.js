@@ -103,13 +103,17 @@ class AdminModeManager {
       }
     }, 100);
 
-    // Appliquer toutes les 500ms pendant 5 secondes pour être sûr
+    // 9. NOUVELLE FONCTION: Forcer les couleurs de manière agressive et répétée
+    this.forceButtonColorsAggressively();
+
+    // Appliquer toutes les 500ms pendant 10 secondes pour être sûr
     let attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 20; // Augmenté pour plus de persistance
     const applyInterval = setInterval(() => {
       this.disableEditingFeatures();
       this.optimizeTableDisplay();
       this.applyBlueCustomStyles();
+      this.forceButtonColorsAggressively(); // AJOUT: Forcer les couleurs à chaque fois
 
       // Réappliquer les optimisations spécifiques
       if (targetPage === "acconier") {
@@ -2884,6 +2888,233 @@ class AdminModeManager {
       childList: true,
       subtree: true,
     });
+  }
+
+  /**
+   * Force les couleurs des boutons de manière agressive et répétée
+   * Cette fonction cherche TOUS les boutons possibles et leur applique les couleurs
+   */
+  forceButtonColorsAggressively() {
+    console.log("🎨 FORÇAGE AGRESSIF DES COULEURS...");
+
+    // BOUTON HISTORIQUE - Chercher par tous les moyens possibles
+    const historySelectors = [
+      "#professionalHistoryBtn",
+      "button[id*='history']",
+      "button[id*='History']",
+      "button:contains('Historique')",
+      "button:contains('historique')",
+      "[onclick*='history']",
+      "[onclick*='History']",
+    ];
+
+    historySelectors.forEach((selector) => {
+      try {
+        const elements = selector.includes("contains")
+          ? Array.from(document.querySelectorAll("button")).filter(
+              (btn) =>
+                btn.textContent &&
+                btn.textContent.toLowerCase().includes("historique")
+            )
+          : document.querySelectorAll(selector);
+
+        elements.forEach((btn) => {
+          btn.style.setProperty("background", "#FF1744", "important");
+          btn.style.setProperty("color", "#ffffff", "important");
+          btn.style.setProperty("border", "3px solid #C62828", "important");
+          btn.style.setProperty("font-weight", "bold", "important");
+          btn.style.setProperty(
+            "box-shadow",
+            "0 4px 15px rgba(255, 23, 68, 0.6)",
+            "important"
+          );
+          btn.style.setProperty("border-radius", "8px", "important");
+          btn.style.setProperty("padding", "8px 16px", "important");
+          btn.style.setProperty("display", "inline-block", "important");
+          btn.style.setProperty("visibility", "visible", "important");
+          btn.style.setProperty("opacity", "1", "important");
+          btn.disabled = false;
+          btn.setAttribute("data-allow-admin", "true");
+          console.log("✅ Bouton historique stylé:", btn);
+        });
+      } catch (e) {
+        console.log("Info: Sélecteur non supporté:", selector);
+      }
+    });
+
+    // BOUTON PDF - Chercher par tous les moyens possibles
+    const pdfSelectors = [
+      "#generatePdfBtn",
+      "button[id*='pdf']",
+      "button[id*='Pdf']",
+      "button[id*='PDF']",
+      "[onclick*='pdf']",
+      "[onclick*='PDF']",
+    ];
+
+    pdfSelectors.forEach((selector) => {
+      try {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((btn) => {
+          if (
+            btn.textContent &&
+            btn.textContent.toLowerCase().includes("pdf")
+          ) {
+            btn.style.setProperty("background", "#FF9800", "important");
+            btn.style.setProperty("color", "#ffffff", "important");
+            btn.style.setProperty("border", "3px solid #F57C00", "important");
+            btn.style.setProperty("font-weight", "bold", "important");
+            btn.style.setProperty(
+              "box-shadow",
+              "0 4px 15px rgba(255, 152, 0, 0.6)",
+              "important"
+            );
+            btn.style.setProperty("border-radius", "8px", "important");
+            btn.style.setProperty("padding", "6px 12px", "important");
+            btn.style.setProperty("display", "inline-block", "important");
+            btn.style.setProperty("visibility", "visible", "important");
+            btn.style.setProperty("opacity", "1", "important");
+            btn.disabled = false;
+            btn.setAttribute("data-allow-admin", "true");
+            console.log("✅ Bouton PDF stylé:", btn);
+          }
+        });
+      } catch (e) {
+        console.log("Info: Sélecteur PDF non supporté:", selector);
+      }
+    });
+
+    // Chercher TOUS les boutons qui contiennent "PDF" dans le texte
+    const allButtons = document.querySelectorAll("button");
+    allButtons.forEach((btn) => {
+      const text = btn.textContent || btn.innerText || "";
+
+      if (text.toLowerCase().includes("historique")) {
+        btn.style.setProperty("background", "#FF1744", "important");
+        btn.style.setProperty("color", "#ffffff", "important");
+        btn.style.setProperty("border", "3px solid #C62828", "important");
+        btn.style.setProperty("font-weight", "bold", "important");
+        btn.style.setProperty(
+          "box-shadow",
+          "0 4px 15px rgba(255, 23, 68, 0.6)",
+          "important"
+        );
+        btn.style.setProperty("border-radius", "8px", "important");
+        btn.style.setProperty("padding", "8px 16px", "important");
+        btn.disabled = false;
+        btn.setAttribute("data-allow-admin", "true");
+        console.log("✅ Bouton historique trouvé par texte:", btn);
+      }
+
+      if (text.toLowerCase().includes("pdf")) {
+        btn.style.setProperty("background", "#FF9800", "important");
+        btn.style.setProperty("color", "#ffffff", "important");
+        btn.style.setProperty("border", "3px solid #F57C00", "important");
+        btn.style.setProperty("font-weight", "bold", "important");
+        btn.style.setProperty(
+          "box-shadow",
+          "0 4px 15px rgba(255, 152, 0, 0.6)",
+          "important"
+        );
+        btn.style.setProperty("border-radius", "8px", "important");
+        btn.style.setProperty("padding", "6px 12px", "important");
+        btn.disabled = false;
+        btn.setAttribute("data-allow-admin", "true");
+        console.log("✅ Bouton PDF trouvé par texte:", btn);
+      }
+    });
+
+    console.log("🎨 FORÇAGE AGRESSIF DES COULEURS TERMINÉ");
+
+    // OBSERVATEUR DE MUTATIONS pour les boutons créés dynamiquement
+    if (!this.colorObserver) {
+      this.colorObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Vérifier si c'est un bouton ou contient des boutons
+              const buttonsToCheck = [];
+
+              if (node.tagName === "BUTTON") {
+                buttonsToCheck.push(node);
+              } else {
+                buttonsToCheck.push(...node.querySelectorAll("button"));
+              }
+
+              buttonsToCheck.forEach((btn) => {
+                const text = btn.textContent || btn.innerText || "";
+                const id = btn.id || "";
+
+                // Appliquer immédiatement les styles aux nouveaux boutons
+                if (
+                  text.toLowerCase().includes("historique") ||
+                  id.includes("history") ||
+                  id.includes("History")
+                ) {
+                  btn.style.setProperty("background", "#FF1744", "important");
+                  btn.style.setProperty("color", "#ffffff", "important");
+                  btn.style.setProperty(
+                    "border",
+                    "3px solid #C62828",
+                    "important"
+                  );
+                  btn.style.setProperty("font-weight", "bold", "important");
+                  btn.style.setProperty(
+                    "box-shadow",
+                    "0 4px 15px rgba(255, 23, 68, 0.6)",
+                    "important"
+                  );
+                  btn.style.setProperty("border-radius", "8px", "important");
+                  btn.style.setProperty("padding", "8px 16px", "important");
+                  btn.disabled = false;
+                  btn.setAttribute("data-allow-admin", "true");
+                  console.log(
+                    "🔄 Nouveau bouton historique stylé automatiquement:",
+                    btn
+                  );
+                }
+
+                if (
+                  text.toLowerCase().includes("pdf") ||
+                  id.includes("pdf") ||
+                  id.includes("PDF")
+                ) {
+                  btn.style.setProperty("background", "#FF9800", "important");
+                  btn.style.setProperty("color", "#ffffff", "important");
+                  btn.style.setProperty(
+                    "border",
+                    "3px solid #F57C00",
+                    "important"
+                  );
+                  btn.style.setProperty("font-weight", "bold", "important");
+                  btn.style.setProperty(
+                    "box-shadow",
+                    "0 4px 15px rgba(255, 152, 0, 0.6)",
+                    "important"
+                  );
+                  btn.style.setProperty("border-radius", "8px", "important");
+                  btn.style.setProperty("padding", "6px 12px", "important");
+                  btn.disabled = false;
+                  btn.setAttribute("data-allow-admin", "true");
+                  console.log(
+                    "🔄 Nouveau bouton PDF stylé automatiquement:",
+                    btn
+                  );
+                }
+              });
+            }
+          });
+        });
+      });
+
+      // Démarrer l'observation pour les couleurs
+      this.colorObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+
+      console.log("👁️ Observateur de couleurs démarré");
+    }
   }
 }
 

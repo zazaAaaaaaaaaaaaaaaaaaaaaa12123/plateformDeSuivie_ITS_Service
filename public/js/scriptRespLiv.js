@@ -3203,44 +3203,139 @@ document.addEventListener("DOMContentLoaded", function () {
 // ========================================================================
 // === HISTORIQUE PROFESSIONNEL DES CONTENEURS LIVRÉS ===
 // ========================================================================
-// Création du bouton Générer PDF avec couleurs très vives
+// Création du bouton Générer PDF avec couleurs très vives et FORÇAGE AGRESSIF
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
 pdfBtn.textContent = "Générer PDF";
-pdfBtn.style.background = "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)"; // Orange très vif
-pdfBtn.style.color = "#fff";
-pdfBtn.style.fontWeight = "bold";
-pdfBtn.style.border = "3px solid #F57C00"; // Bordure orange épaisse
-pdfBtn.style.cursor = "pointer";
-pdfBtn.style.borderRadius = "8px";
-pdfBtn.style.padding = "6px 12px";
-pdfBtn.style.fontSize = "0.97em";
-pdfBtn.style.margin = "0 0 0 12px";
-pdfBtn.style.height = "32px";
-pdfBtn.style.minWidth = "0";
-pdfBtn.style.boxShadow = "0 4px 15px rgba(255, 152, 0, 0.6)"; // Ombre orange prononcée
-pdfBtn.style.verticalAlign = "middle";
-pdfBtn.style.transition = "all 0.2s ease";
+
+// FORCER LES COULEURS IMMÉDIATEMENT ET DE MANIÈRE AGRESSIVE
+pdfBtn.style.setProperty(
+  "background",
+  "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
+  "important"
+);
+pdfBtn.style.setProperty("color", "#fff", "important");
+pdfBtn.style.setProperty("font-weight", "bold", "important");
+pdfBtn.style.setProperty("border", "3px solid #F57C00", "important");
+pdfBtn.style.setProperty("cursor", "pointer", "important");
+pdfBtn.style.setProperty("border-radius", "8px", "important");
+pdfBtn.style.setProperty("padding", "6px 12px", "important");
+pdfBtn.style.setProperty("font-size", "0.97em", "important");
+pdfBtn.style.setProperty("margin", "0 0 0 12px", "important");
+pdfBtn.style.setProperty("height", "32px", "important");
+pdfBtn.style.setProperty("min-width", "0", "important");
+pdfBtn.style.setProperty(
+  "box-shadow",
+  "0 4px 15px rgba(255, 152, 0, 0.6)",
+  "important"
+);
+pdfBtn.style.setProperty("vertical-align", "middle", "important");
+pdfBtn.style.setProperty("transition", "all 0.2s ease", "important");
+pdfBtn.style.setProperty("display", "inline-block", "important");
+pdfBtn.style.setProperty("visibility", "visible", "important");
+pdfBtn.style.setProperty("opacity", "1", "important");
+
 // Marquer comme accessible en mode admin
 pdfBtn.setAttribute("data-allow-admin", "true");
 pdfBtn.classList.add("admin-allowed-button");
 
-// Effet de survol pour le bouton PDF
+// Effet de survol pour le bouton PDF avec forçage
 pdfBtn.onmouseenter = () => {
-  pdfBtn.style.transform = "translateY(-2px)";
-  pdfBtn.style.boxShadow = "0 6px 20px rgba(255, 152, 0, 0.8)";
-  pdfBtn.style.background = "linear-gradient(90deg,#F57C00 0%,#E65100 100%)";
+  pdfBtn.style.setProperty("transform", "translateY(-2px)", "important");
+  pdfBtn.style.setProperty(
+    "box-shadow",
+    "0 6px 20px rgba(255, 152, 0, 0.8)",
+    "important"
+  );
+  pdfBtn.style.setProperty(
+    "background",
+    "linear-gradient(90deg,#F57C00 0%,#E65100 100%)",
+    "important"
+  );
 };
 pdfBtn.onmouseleave = () => {
-  pdfBtn.style.transform = "translateY(0)";
-  pdfBtn.style.boxShadow = "0 4px 15px rgba(255, 152, 0, 0.6)";
-  pdfBtn.style.background = "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)";
+  pdfBtn.style.setProperty("transform", "translateY(0)", "important");
+  pdfBtn.style.setProperty(
+    "box-shadow",
+    "0 4px 15px rgba(255, 152, 0, 0.6)",
+    "important"
+  );
+  pdfBtn.style.setProperty(
+    "background",
+    "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
+    "important"
+  );
 };
 
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
   // Créer le bouton historique immédiatement
   checkAndShowHistoryButton();
+
+  // FONCTION DE FORÇAGE AGRESSIF DES COULEURS - À déclencher périodiquement
+  function forceColorsAggressively() {
+    console.log("🎨 FORÇAGE COULEURS SCRIPTRESPLIVJS...");
+
+    // FORCER BOUTON HISTORIQUE
+    const historyBtn = document.getElementById("professionalHistoryBtn");
+    if (historyBtn) {
+      historyBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
+        "important"
+      );
+      historyBtn.style.setProperty("color", "#ffffff", "important");
+      historyBtn.style.setProperty("border", "3px solid #C62828", "important");
+      historyBtn.style.setProperty("font-weight", "bold", "important");
+      historyBtn.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(255, 23, 68, 0.6)",
+        "important"
+      );
+      historyBtn.style.setProperty("display", "inline-block", "important");
+      historyBtn.style.setProperty("visibility", "visible", "important");
+      historyBtn.style.setProperty("opacity", "1", "important");
+      historyBtn.disabled = false;
+      console.log("✅ Bouton historique forcé");
+    }
+
+    // FORCER BOUTON PDF
+    const pdfBtn = document.getElementById("generatePdfBtn");
+    if (pdfBtn) {
+      pdfBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)",
+        "important"
+      );
+      pdfBtn.style.setProperty("color", "#ffffff", "important");
+      pdfBtn.style.setProperty("border", "3px solid #F57C00", "important");
+      pdfBtn.style.setProperty("font-weight", "bold", "important");
+      pdfBtn.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(255, 152, 0, 0.6)",
+        "important"
+      );
+      pdfBtn.style.setProperty("display", "inline-block", "important");
+      pdfBtn.style.setProperty("visibility", "visible", "important");
+      pdfBtn.style.setProperty("opacity", "1", "important");
+      pdfBtn.disabled = false;
+      console.log("✅ Bouton PDF forcé");
+    }
+  }
+
+  // Forcer les couleurs immédiatement
+  forceColorsAggressively();
+
+  // Forcer les couleurs toutes les secondes pendant 30 secondes
+  let forceAttempts = 0;
+  const forceInterval = setInterval(() => {
+    forceColorsAggressively();
+    forceAttempts++;
+    if (forceAttempts >= 30) {
+      clearInterval(forceInterval);
+      console.log("🎨 Forçage de couleurs terminé après 30 tentatives");
+    }
+  }, 1000);
 
   // Configurer le conteneur et ajouter le bouton PDF
   const searchInput = document.querySelector(
@@ -3847,36 +3942,67 @@ function showHistoryButtonIfNeeded() {
     historyBtn.innerHTML = "📋 Historique";
     historyBtn.title =
       "Consulter l'historique professionnel des conteneurs livrés";
-    historyBtn.style.background =
-      "linear-gradient(90deg,#FF1744 0%,#C62828 100%)"; // Rouge très vif
-    historyBtn.style.color = "#fff";
-    historyBtn.style.fontWeight = "bold";
-    historyBtn.style.border = "3px solid #C62828"; // Bordure plus épaisse
-    historyBtn.style.cursor = "pointer";
-    historyBtn.style.borderRadius = "8px";
-    historyBtn.style.padding = "8px 16px";
-    historyBtn.style.fontSize = "0.95em";
-    historyBtn.style.margin = "0 8px 0 0"; // Margin à droite seulement
-    historyBtn.style.boxShadow = "0 4px 15px rgba(255, 23, 68, 0.6)"; // Ombre plus prononcée
-    historyBtn.style.transition = "all 0.2s ease";
-    historyBtn.style.height = "32px"; // Même hauteur que les autres boutons
-    historyBtn.style.verticalAlign = "middle";
+
+    // FORCER LES COULEURS IMMÉDIATEMENT ET DE MANIÈRE AGRESSIVE
+    historyBtn.style.setProperty(
+      "background",
+      "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
+      "important"
+    );
+    historyBtn.style.setProperty("color", "#fff", "important");
+    historyBtn.style.setProperty("font-weight", "bold", "important");
+    historyBtn.style.setProperty("border", "3px solid #C62828", "important");
+    historyBtn.style.setProperty("cursor", "pointer", "important");
+    historyBtn.style.setProperty("border-radius", "8px", "important");
+    historyBtn.style.setProperty("padding", "8px 16px", "important");
+    historyBtn.style.setProperty("font-size", "0.95em", "important");
+    historyBtn.style.setProperty("margin", "0 8px 0 0", "important");
+    historyBtn.style.setProperty(
+      "box-shadow",
+      "0 4px 15px rgba(255, 23, 68, 0.6)",
+      "important"
+    );
+    historyBtn.style.setProperty("transition", "all 0.2s ease", "important");
+    historyBtn.style.setProperty("height", "32px", "important");
+    historyBtn.style.setProperty("vertical-align", "middle", "important");
+    historyBtn.style.setProperty("display", "inline-block", "important");
+    historyBtn.style.setProperty("visibility", "visible", "important");
+    historyBtn.style.setProperty("opacity", "1", "important");
+
     // Marquer comme accessible en mode admin
     historyBtn.setAttribute("data-allow-admin", "true");
     historyBtn.classList.add("admin-allowed-button");
 
     // Effet de survol amélioré
     historyBtn.onmouseenter = () => {
-      historyBtn.style.transform = "translateY(-2px)";
-      historyBtn.style.boxShadow = "0 6px 25px rgba(255, 23, 68, 0.8)";
-      historyBtn.style.background =
-        "linear-gradient(90deg,#C62828 0%,#B71C1C 100%)"; // Rouge encore plus foncé
+      historyBtn.style.setProperty(
+        "transform",
+        "translateY(-2px)",
+        "important"
+      );
+      historyBtn.style.setProperty(
+        "box-shadow",
+        "0 6px 25px rgba(255, 23, 68, 0.8)",
+        "important"
+      );
+      historyBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#C62828 0%,#B71C1C 100%)",
+        "important"
+      );
     };
     historyBtn.onmouseleave = () => {
-      historyBtn.style.transform = "translateY(0)";
-      historyBtn.style.boxShadow = "0 4px 15px rgba(255, 23, 68, 0.6)";
-      historyBtn.style.background =
-        "linear-gradient(90deg,#FF1744 0%,#C62828 100%)";
+      historyBtn.style.setProperty("transform", "translateY(0)", "important");
+      historyBtn.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(255, 23, 68, 0.6)",
+        "important"
+      );
+      historyBtn.style.setProperty(
+        "background",
+        "linear-gradient(90deg,#FF1744 0%,#C62828 100%)",
+        "important"
+      );
     };
 
     // Événement de clic
