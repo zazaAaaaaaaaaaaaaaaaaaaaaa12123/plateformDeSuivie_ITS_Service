@@ -4068,7 +4068,7 @@ function saveToDeliveryHistory(delivery, containerNumber) {
     const row = document.querySelector(
       `#deliveriesTableBody tr[data-delivery-id='${delivery.id}']`
     );
-    
+
     let visitor_agent_name = delivery.visitor_agent_name || "";
     let transporter = delivery.transporter || "";
     let inspector = delivery.inspector || "";
@@ -4080,14 +4080,24 @@ function saveToDeliveryHistory(delivery, containerNumber) {
 
     // Si la ligne existe dans le tableau, récupère les valeurs éditées
     if (row) {
-      const visitorCell = row.querySelector("td[data-col-id='visitor_agent_name']");
-      const transporterCell = row.querySelector("td[data-col-id='transporter']");
+      const visitorCell = row.querySelector(
+        "td[data-col-id='visitor_agent_name']"
+      );
+      const transporterCell = row.querySelector(
+        "td[data-col-id='transporter']"
+      );
       const inspectorCell = row.querySelector("td[data-col-id='inspector']");
       const customsCell = row.querySelector("td[data-col-id='customs_agent']");
       const driverCell = row.querySelector("td[data-col-id='driver']");
-      const driverPhoneCell = row.querySelector("td[data-col-id='driver_phone']");
-      const deliveryDateCell = row.querySelector("td[data-col-id='delivery_date']");
-      const observationCell = row.querySelector("td[data-col-id='observation']");
+      const driverPhoneCell = row.querySelector(
+        "td[data-col-id='driver_phone']"
+      );
+      const deliveryDateCell = row.querySelector(
+        "td[data-col-id='delivery_date']"
+      );
+      const observationCell = row.querySelector(
+        "td[data-col-id='observation']"
+      );
 
       if (visitorCell) visitor_agent_name = visitorCell.textContent.trim();
       if (transporterCell) transporter = transporterCell.textContent.trim();
@@ -4123,7 +4133,8 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       delivery_date: delivery_date,
       observation: observation,
       delivered_at: new Date().toISOString(), // Horodatage de livraison
-      delivered_by: visitor_agent_name || localStorage.getItem("user_nom") || "-",
+      delivered_by:
+        visitor_agent_name || localStorage.getItem("user_nom") || "-",
     };
 
     // Vérifie si ce conteneur n'est pas déjà dans l'historique
