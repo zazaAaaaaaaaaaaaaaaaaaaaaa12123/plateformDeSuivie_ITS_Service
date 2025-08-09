@@ -2545,13 +2545,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
                   // Met à jour l'affichage du statut
                   if (delivered === total && total > 0) {
-                    // 🆕 AJOUT : Enregistrer dans l'historique professionnel quand livré
-                    saveToDeliveryHistory(
-                      updatedDelivery || delivery,
-                      containerNumber
-                    );
-                    // 🆕 AJOUT : Afficher le bouton historique s'il n'est pas déjà visible
-                    showHistoryButtonIfNeeded();
                     // Tous livrés : bouton vert + icône camion + texte Livré
                     statutCell.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
                       <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
@@ -4071,6 +4064,41 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
     );
 
+    // Récupère les données actuelles depuis le tableau (les valeurs éditées)
+    const row = document.querySelector(
+      `#deliveriesTableBody tr[data-delivery-id='${delivery.id}']`
+    );
+    
+    let visitor_agent_name = delivery.visitor_agent_name || "";
+    let transporter = delivery.transporter || "";
+    let inspector = delivery.inspector || "";
+    let customs_agent = delivery.customs_agent || "";
+    let driver = delivery.driver || "";
+    let driver_phone = delivery.driver_phone || "";
+    let delivery_date = delivery.delivery_date || "";
+    let observation = delivery.observation || "";
+
+    // Si la ligne existe dans le tableau, récupère les valeurs éditées
+    if (row) {
+      const visitorCell = row.querySelector("td[data-col-id='visitor_agent_name']");
+      const transporterCell = row.querySelector("td[data-col-id='transporter']");
+      const inspectorCell = row.querySelector("td[data-col-id='inspector']");
+      const customsCell = row.querySelector("td[data-col-id='customs_agent']");
+      const driverCell = row.querySelector("td[data-col-id='driver']");
+      const driverPhoneCell = row.querySelector("td[data-col-id='driver_phone']");
+      const deliveryDateCell = row.querySelector("td[data-col-id='delivery_date']");
+      const observationCell = row.querySelector("td[data-col-id='observation']");
+
+      if (visitorCell) visitor_agent_name = visitorCell.textContent.trim();
+      if (transporterCell) transporter = transporterCell.textContent.trim();
+      if (inspectorCell) inspector = inspectorCell.textContent.trim();
+      if (customsCell) customs_agent = customsCell.textContent.trim();
+      if (driverCell) driver = driverCell.textContent.trim();
+      if (driverPhoneCell) driver_phone = driverPhoneCell.textContent.trim();
+      if (deliveryDateCell) delivery_date = deliveryDateCell.textContent.trim();
+      if (observationCell) observation = observationCell.textContent.trim();
+    }
+
     // Crée un enregistrement unique pour ce conteneur
     const historyEntry = {
       id: Date.now() + Math.random(), // ID unique
@@ -4083,19 +4111,19 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       employee_name: delivery.employee_name,
       circuit: delivery.circuit,
       shipping_company: delivery.shipping_company,
-      visitor_agent_name: delivery.visitor_agent_name,
-      transporter: delivery.transporter,
-      inspector: delivery.inspector,
-      customs_agent: delivery.customs_agent,
-      driver: delivery.driver,
-      driver_phone: delivery.driver_phone,
+      visitor_agent_name: visitor_agent_name,
+      transporter: transporter,
+      inspector: inspector,
+      customs_agent: customs_agent,
+      driver: driver,
+      driver_phone: driver_phone,
       container_foot_type: delivery.container_foot_type,
       weight: delivery.weight,
       ship_name: delivery.ship_name,
-      delivery_date: delivery.delivery_date,
-      observation: delivery.observation,
+      delivery_date: delivery_date,
+      observation: observation,
       delivered_at: new Date().toISOString(), // Horodatage de livraison
-      delivered_by: delivery.visitor_agent_name || localStorage.getItem("user_nom") || "-",
+      delivered_by: visitor_agent_name || localStorage.getItem("user_nom") || "-",
     };
 
     // Vérifie si ce conteneur n'est pas déjà dans l'historique
