@@ -4095,7 +4095,7 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       delivery_date: delivery.delivery_date,
       observation: delivery.observation,
       delivered_at: new Date().toISOString(), // Horodatage de livraison
-      delivered_by: localStorage.getItem("user_nom") || "Inconnu",
+      delivered_by: delivery.visitor_agent_name || localStorage.getItem("user_nom") || "-",
     };
 
     // Vérifie si ce conteneur n'est pas déjà dans l'historique
