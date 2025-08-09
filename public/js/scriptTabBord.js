@@ -13,28 +13,27 @@
   }
 })();
 
-// === ANIMATIONS SUBTILES DES CARTES ===
+// === ANIMATIONS SUBTILES MAIS VISIBLES DES CARTES ===
 // Initialisation des animations des cartes au chargement
 (function initCardAnimations() {
   document.addEventListener("DOMContentLoaded", function () {
     const cards = document.querySelectorAll(".etat-card");
 
     cards.forEach((card, index) => {
-      // Délai d'animation différent pour chaque carte
-      card.style.animationDelay = `${index * -1.5}s`;
-
       // Animation de survol améliorée
       card.addEventListener("mouseenter", function () {
-        this.style.transform = "translateY(-8px) scale(1.03) rotateZ(0deg)";
+        this.style.transform = "translateY(-12px) scale(1.05) rotate(1deg)";
         this.style.zIndex = "10";
+        this.style.boxShadow = "0 25px 70px rgba(0, 0, 0, 0.2)";
       });
 
       card.addEventListener("mouseleave", function () {
         this.style.transform = "";
         this.style.zIndex = "";
+        this.style.boxShadow = "";
       });
 
-      // Effet de pulsation subtile quand les données sont mises à jour
+      // Effet de pulsation des compteurs lors des mises à jour
       const observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
           if (
@@ -45,7 +44,7 @@
             if (counter) {
               counter.style.animation = "none";
               counter.offsetHeight; // Force reflow
-              counter.style.animation = "badgeBounce 0.6s ease-out";
+              counter.style.animation = "badgeBounce 0.8s ease-out";
             }
           }
         });
@@ -58,15 +57,12 @@
       });
     });
 
-    // Animation d'apparition progressive des cartes
+    // Forcer le démarrage des animations après un court délai
     setTimeout(() => {
-      cards.forEach((card, index) => {
-        setTimeout(() => {
-          card.style.opacity = "1";
-          card.style.transform = "translateY(0)";
-        }, index * 200);
+      cards.forEach((card) => {
+        card.style.animationPlayState = "running";
       });
-    }, 500);
+    }, 300);
   });
 })();
 
