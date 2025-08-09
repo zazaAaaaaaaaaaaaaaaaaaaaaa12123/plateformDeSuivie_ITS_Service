@@ -3842,6 +3842,32 @@ function showHistoryButtonIfNeeded() {
 }
 
 /**
+ * Groupe les conteneurs par dossier et date pour optimiser l'affichage
+ */
+function groupContainersByDossierAndDate(history) {
+  const grouped = {};
+
+  history.forEach((entry) => {
+    const date = new Date(entry.delivered_at).toDateString();
+    const dossier = entry.dossier_number || "SANS_DOSSIER";
+    const key = `${dossier}_${date}`;
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        ...entry, // Copie les propriétés de la première entrée
+        containers: [],
+        containerCount: 0,
+      };
+    }
+
+    grouped[key].containers.push(entry.container_number);
+    grouped[key].containerCount++;
+  });
+
+  return Object.values(grouped);
+}
+
+/**
  * Affiche la modal de l'historique professionnel
  */
 function showProfessionalHistoryModal() {
@@ -3849,6 +3875,9 @@ function showProfessionalHistoryModal() {
   const history = JSON.parse(
     localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
   );
+
+  // **NOUVEAUTÉ : Groupe les conteneurs par dossier et date**
+  const groupedHistory = groupContainersByDossierAndDate(history);
 
   // Supprime la modal existante si elle existe
   const existingModal = document.getElementById("professionalHistoryModal");
@@ -3947,7 +3976,7 @@ function showProfessionalHistoryModal() {
   content.style.overflowY = "auto";
   content.style.background = "#fff";
 
-  if (history.length === 0) {
+  if (groupedHistory.length === 0) {
     content.innerHTML = `
       <div style="text-align: center; padding: 50px 20px; color: #6b7280;">
         <div style="font-size: 3em; margin-bottom: 20px;">📋</div>
@@ -3956,7 +3985,7 @@ function showProfessionalHistoryModal() {
       </div>
     `;
   } else {
-    // Tableau de l'historique
+    // Tableau de l'historique avec conteneurs groupés
     const table = document.createElement("table");
     table.style.width = "100%";
     table.style.borderCollapse = "collapse";
@@ -3967,7 +3996,7 @@ function showProfessionalHistoryModal() {
       <thead>
         <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Date/Heure</th>
-          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Conteneur</th>
+          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Conteneurs</th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Dossier</th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Client</th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Agent</th>
@@ -3977,45 +4006,68 @@ function showProfessionalHistoryModal() {
         </tr>
       </thead>
       <tbody>
-        ${history
-          .map(
-            (entry, index) => `
-          <tr style="border-bottom: 1px solid #f3f4f6; ${
-            index % 2 === 0 ? "background: #fafafa;" : ""
-          }">
-            <td style="padding: 10px 8px; color: #4b5563;">
-              ${new Date(entry.delivered_at).toLocaleDateString("fr-FR")}<br>
-              <small style="color: #9ca3af;">${new Date(
-                entry.delivered_at
-              ).toLocaleTimeString("fr-FR")}</small>
-            </td>
-            <td style="padding: 10px 8px; font-weight: bold; color: #059669;">${
-              entry.container_number
-            }</td>
-            <td style="padding: 10px 8px; color: #4b5563;">${
-              entry.dossier_number || "-"
-            }</td>
-            <td style="padding: 10px 8px; color: #4b5563;">${
-              entry.client_name || "-"
-            }</td>
-            <td style="padding: 10px 8px; color: #4b5563;">${
-              entry.visitor_agent_name || "-"
-            }</td>
-            <td style="padding: 10px 8px; color: #4b5563;">${
-              entry.transporter || "-"
-            }</td>
-            <td style="padding: 10px 8px; color: #047857; font-weight: 500;">${
-              entry.delivered_by
-            }</td>
-            <td style="padding: 10px 8px; text-align: center;">
-              <button onclick="showHistoryEntryDetail('${entry.id}')" 
-                style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">
-                Détails
-              </button>
-            </td>
-          </tr>
-        `
-          )
+        ${groupedHistory
+          .map((group, index) => {
+            // **LOGIQUE "VOIR PLUS" POUR LES CONTENEURS**
+            let containerDisplay;
+            if (group.containerCount === 1) {
+              // Un seul conteneur : affichage direct
+              containerDisplay = `<span style="font-weight: bold; color: #059669;">${group.containers[0]}</span>`;
+            } else {
+              // Plusieurs conteneurs : système "Voir plus"
+              const firstContainer = group.containers[0];
+              containerDisplay = `
+                <div style="position: relative;">
+                  <span style="font-weight: bold; color: #059669;">${firstContainer}</span>
+                  <button onclick="showContainersList('${group.dossier_number}', '${index}')" 
+                    style="background: #3b82f6; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 0.75em; margin-left: 8px;">
+                    Voir plus (${group.containerCount})
+                  </button>
+                </div>
+              `;
+            }
+
+            return `
+              <tr style="border-bottom: 1px solid #f3f4f6; ${
+                index % 2 === 0 ? "background: #fafafa;" : ""
+              }">
+                <td style="padding: 10px 8px; color: #4b5563;">
+                  ${new Date(group.delivered_at).toLocaleDateString(
+                    "fr-FR"
+                  )}<br>
+                  <small style="color: #9ca3af;">${new Date(
+                    group.delivered_at
+                  ).toLocaleTimeString("fr-FR")}</small>
+                </td>
+                <td style="padding: 10px 8px;">
+                  ${containerDisplay}
+                </td>
+                <td style="padding: 10px 8px; color: #4b5563;">${
+                  group.dossier_number || "-"
+                }</td>
+                <td style="padding: 10px 8px; color: #4b5563;">${
+                  group.client_name || "-"
+                }</td>
+                <td style="padding: 10px 8px; color: #4b5563;">${
+                  group.visitor_agent_name || "-"
+                }</td>
+                <td style="padding: 10px 8px; color: #4b5563;">${
+                  group.transporter || "-"
+                }</td>
+                <td style="padding: 10px 8px; color: #047857; font-weight: 500;">${
+                  group.delivered_by
+                }</td>
+                <td style="padding: 10px 8px; text-align: center;">
+                  <button onclick="showGroupDetail('${
+                    group.dossier_number
+                  }', '${index}')" 
+                    style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">
+                    Détails
+                  </button>
+                </td>
+              </tr>
+            `;
+          })
           .join("")}
       </tbody>
     `;
@@ -4032,6 +4084,105 @@ function showProfessionalHistoryModal() {
     if (e.target === modal) modal.remove();
   };
 }
+
+/**
+ * Affiche la liste flottante des conteneurs pour un groupe
+ */
+window.showContainersList = function (dossierNumber, groupIndex) {
+  const history = JSON.parse(
+    localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+  );
+  const groupedHistory = groupContainersByDossierAndDate(history);
+  const group = groupedHistory[groupIndex];
+
+  if (!group) return;
+
+  // Supprimer toute fenêtre flottante existante
+  const existingFloater = document.getElementById("containersFloater");
+  if (existingFloater) existingFloater.remove();
+
+  // Créer la fenêtre flottante
+  const floater = document.createElement("div");
+  floater.id = "containersFloater";
+  floater.style.position = "fixed";
+  floater.style.top = "50%";
+  floater.style.left = "50%";
+  floater.style.transform = "translate(-50%, -50%)";
+  floater.style.background = "#ffffff";
+  floater.style.border = "2px solid #3b82f6";
+  floater.style.borderRadius = "12px";
+  floater.style.boxShadow = "0 10px 25px rgba(59, 130, 246, 0.3)";
+  floater.style.padding = "20px";
+  floater.style.zIndex = "100400";
+  floater.style.maxWidth = "400px";
+  floater.style.maxHeight = "300px";
+  floater.style.overflowY = "auto";
+
+  floater.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">
+      <h4 style="margin: 0; color: #3b82f6; font-size: 1.1em;">
+        📦 Conteneurs du dossier ${dossierNumber}
+      </h4>
+      <button onclick="document.getElementById('containersFloater').remove()" 
+        style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">
+        ✕
+      </button>
+    </div>
+    <div style="display: grid; gap: 8px;">
+      ${group.containers
+        .map(
+          (container, index) => `
+        <div style="background: #f0f9ff; border: 1px solid #3b82f6; border-radius: 6px; padding: 8px 12px; font-weight: 500; color: #1e40af;">
+          ${index + 1}. ${container}
+        </div>
+      `
+        )
+        .join("")}
+    </div>
+    <div style="margin-top: 15px; text-align: center; font-size: 0.85em; color: #6b7280;">
+      Total: ${group.containerCount} conteneur(s)
+    </div>
+  `;
+
+  document.body.appendChild(floater);
+
+  // Fermer en cliquant en dehors
+  setTimeout(() => {
+    document.addEventListener("click", function closeFloater(e) {
+      if (!floater.contains(e.target)) {
+        floater.remove();
+        document.removeEventListener("click", closeFloater);
+      }
+    });
+  }, 100);
+};
+
+/**
+ * Affiche les détails d'un groupe de conteneurs
+ */
+window.showGroupDetail = function (dossierNumber, groupIndex) {
+  const history = JSON.parse(
+    localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+  );
+  const groupedHistory = groupContainersByDossierAndDate(history);
+  const group = groupedHistory[groupIndex];
+
+  if (!group) {
+    alert("Groupe non trouvé dans l'historique.");
+    return;
+  }
+
+  // Utiliser le premier conteneur pour les détails (ils partagent les mêmes infos de dossier)
+  const firstEntry = history.find(
+    (entry) =>
+      entry.dossier_number === group.dossier_number &&
+      entry.container_number === group.containers[0]
+  );
+
+  if (firstEntry) {
+    showHistoryEntryDetail(firstEntry.id);
+  }
+};
 
 /**
  * Affiche les détails d'une entrée de l'historique
@@ -4067,57 +4218,193 @@ window.showHistoryEntryDetail = function (entryId) {
 
   const container = document.createElement("div");
   container.style.background = "#fff";
-  container.style.borderRadius = "12px";
-  container.style.boxShadow = "0 15px 40px rgba(0,0,0,0.2)";
-  container.style.maxWidth = "90vw";
-  container.style.width = "500px";
-  container.style.maxHeight = "80vh";
+  container.style.borderRadius = "16px";
+  container.style.boxShadow = "0 20px 50px rgba(0,0,0,0.15)";
+  container.style.maxWidth = "95vw";
+  container.style.width = "700px";
+  container.style.maxHeight = "85vh";
   container.style.overflowY = "auto";
   container.style.padding = "25px";
 
   container.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">
-      <h3 style="margin: 0; color: #059669; font-size: 1.3em;">📦 Détails du Conteneur ${
-        entry.container_number
-      }</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 3px solid #059669; padding-bottom: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); margin: -25px -25px 25px -25px; padding: 20px 25px;">
+      <h3 style="margin: 0; color: #059669; font-size: 1.4em; font-weight: bold;">
+        � Détails du Dossier ${entry.dossier_number || "N/A"}
+      </h3>
       <button onclick="document.getElementById('historyDetailModal').remove()" 
-        style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
-        Fermer
+        style="background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);">
+        ✕ Fermer
       </button>
     </div>
-    <div style="display: grid; gap: 12px;">
-      <div><strong>Conteneur:</strong> ${entry.container_number}</div>
-      <div><strong>Dossier:</strong> ${entry.dossier_number || "-"}</div>
-      <div><strong>BL:</strong> ${entry.bl_number || "-"}</div>
-      <div><strong>Client:</strong> ${entry.client_name || "-"}</div>
-      <div><strong>Téléphone client:</strong> ${entry.client_phone || "-"}</div>
-      <div><strong>Circuit:</strong> ${entry.circuit || "-"}</div>
-      <div><strong>Compagnie maritime:</strong> ${
-        entry.shipping_company || "-"
-      }</div>
-      <div><strong>Agent visiteur:</strong> ${
-        entry.visitor_agent_name || "-"
-      }</div>
-      <div><strong>Transporteur:</strong> ${entry.transporter || "-"}</div>
-      <div><strong>Inspecteur:</strong> ${entry.inspector || "-"}</div>
-      <div><strong>Agent en douanes:</strong> ${
-        entry.customs_agent || "-"
-      }</div>
-      <div><strong>Chauffeur:</strong> ${entry.driver || "-"}</div>
-      <div><strong>Tél. chauffeur:</strong> ${entry.driver_phone || "-"}</div>
-      <div><strong>Type conteneur:</strong> ${
-        entry.container_foot_type || "-"
-      }</div>
-      <div><strong>Poids:</strong> ${entry.weight || "-"}</div>
-      <div><strong>Nom navire:</strong> ${entry.ship_name || "-"}</div>
-      <div><strong>Date livraison:</strong> ${entry.delivery_date || "-"}</div>
-      <div><strong>Observations:</strong> ${entry.observation || "-"}</div>
-      <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px; background: #f9fafb; padding: 10px; border-radius: 6px;">
-        <div><strong>Livré le:</strong> ${new Date(
-          entry.delivered_at
-        ).toLocaleString("fr-FR")}</div>
-        <div><strong>Livré par:</strong> ${entry.delivered_by}</div>
+    
+    <div style="display: grid; gap: 16px;">
+      <!-- Informations principales avec style amélioré -->
+      <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #3b82f6; font-size: 1.1em;">📋 Informations du dossier</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Numéro de dossier:</span>
+            <span style="color: #1e293b; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.dossier_number || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">BL:</span>
+            <span style="color: #1e293b; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.bl_number || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Circuit:</span>
+            <span style="color: #1e293b; background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.circuit || "-"
+            }</span>
+          </div>
+        </div>
       </div>
+
+      <!-- Informations conteneur -->
+      <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #059669; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #059669; font-size: 1.1em;">📦 Conteneur livré</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Numéro conteneur:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #059669;">${
+              entry.container_number
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Type conteneur:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.container_foot_type || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Poids:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.weight || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations client -->
+      <div style="background: linear-gradient(135deg, #fef7ff 0%, #faf5ff 100%); border-left: 4px solid #a855f7; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #a855f7; font-size: 1.1em;">👤 Informations client</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Nom du client:</span>
+            <span style="color: #1e293b; background: #f3e8ff; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.client_name || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Téléphone:</span>
+            <span style="color: #1e293b; background: #f3e8ff; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.client_phone || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations logistiques -->
+      <div style="background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%); border-left: 4px solid #ea580c; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #ea580c; font-size: 1.1em;">🚛 Informations logistiques</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Compagnie maritime:</span>
+            <span style="color: #1e293b; background: #fed7aa; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.shipping_company || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Nom navire:</span>
+            <span style="color: #1e293b; background: #fed7aa; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.ship_name || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Agent visiteur:</span>
+            <span style="color: #1e293b; background: #fed7aa; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.visitor_agent_name || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Transporteur:</span>
+            <span style="color: #1e293b; background: #fed7aa; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.transporter || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations équipe -->
+      <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #f59e0b; font-size: 1.1em;">👥 Équipe</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Inspecteur:</span>
+            <span style="color: #1e293b; background: #fef3c7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.inspector || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Agent en douanes:</span>
+            <span style="color: #1e293b; background: #fef3c7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.customs_agent || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Chauffeur:</span>
+            <span style="color: #1e293b; background: #fef3c7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.driver || "-"
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Tél. chauffeur:</span>
+            <span style="color: #1e293b; background: #fef3c7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.driver_phone || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations de livraison -->
+      <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 4px solid #16a34a; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #16a34a; font-size: 1.1em;">✅ Livraison effectuée</h4>
+        <div style="display: grid; gap: 8px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Livré par:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #16a34a;">${
+              entry.delivered_by
+            }</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Date et heure:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${new Date(
+              entry.delivered_at
+            ).toLocaleString("fr-FR")}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-weight: 600; color: #475569;">Date prévue:</span>
+            <span style="color: #1e293b; background: #dcfce7; padding: 2px 8px; border-radius: 4px; font-weight: 500;">${
+              entry.delivery_date || "-"
+            }</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Observations -->
+      ${
+        entry.observation
+          ? `
+      <div style="background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-left: 4px solid #6b7280; padding: 16px; border-radius: 8px;">
+        <h4 style="margin: 0 0 12px 0; color: #6b7280; font-size: 1.1em;">📝 Observations</h4>
+        <p style="margin: 0; color: #374151; background: #f9fafb; padding: 8px 12px; border-radius: 4px; font-style: italic;">${entry.observation}</p>
+      </div>
+      `
+          : ""
+      }
     </div>
   `;
 
