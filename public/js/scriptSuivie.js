@@ -3443,10 +3443,10 @@ function mapStatus(status) {
       (a, b) => a.created_at.getTime() - b.created_at.getTime()
     );
     recentHistoricalDeliveries.sort(
-      (a, b) => b.created_at.getTime() - a.created_at.getTime()
+      (a, b) => a.created_at.getTime() - b.created_at.getTime()
     );
     archivedDeliveries.sort(
-      (a, b) => b.created_at.getTime() - a.created_at.getTime()
+      (a, b) => a.created_at.getTime() - b.created_at.getTime()
     );
   }
 
@@ -3857,7 +3857,7 @@ function mapStatus(status) {
     }
 
     deliveriesToRender.sort(
-      (a, b) => b.created_at.getTime() - a.created_at.getTime()
+      (a, b) => a.created_at.getTime() - b.created_at.getTime()
     );
 
     if (deliveriesToRender.length === 0) {
@@ -3923,7 +3923,7 @@ function mapStatus(status) {
         const sortedDeliveriesForDate = dateGroupedContent[
           dateISO
         ].deliveries.sort(
-          (a, b) => b.created_at.getTime() - a.created_at.getTime()
+          (a, b) => a.created_at.getTime() - b.created_at.getTime()
         );
         // Render individual delivery cards for the specific agent
         sortedDeliveriesForDate.forEach((delivery) => {
