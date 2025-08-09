@@ -3172,7 +3172,9 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// --- AJOUT : Bouton Générer PDF et logique associée ---
+// ========================================================================
+// === HISTORIQUE PROFESSIONNEL DES CONTENEURS LIVRÉS ===
+// ========================================================================
 // Création du bouton Générer PDF
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
@@ -3269,15 +3271,16 @@ function showPdfFilterModal() {
   overlay.style.left = 0;
   overlay.style.width = "100vw";
   overlay.style.height = "100vh";
-  overlay.style.background = "rgba(30,41,59,0.45)";
+  overlay.style.background = "rgba(0,0,0,0.5)"; // Fond noir semi-transparent plus neutre
   overlay.style.zIndex = 100000;
   overlay.style.display = "flex";
   overlay.style.alignItems = "center";
   overlay.style.justifyContent = "center";
+  overlay.style.backdropFilter = "blur(2px)"; // Effet de flou léger
   const box = document.createElement("div");
   box.style.background = "#fff";
   box.style.borderRadius = "16px";
-  box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+  box.style.boxShadow = "0 12px 40px rgba(0,0,0,0.3)";
   box.style.maxWidth = "420px";
   box.style.width = "96vw";
   box.style.maxHeight = "92vh";
@@ -3435,6 +3438,19 @@ function showPdfFilterModal() {
   content.appendChild(validateBtn);
   box.appendChild(content);
   overlay.appendChild(box);
+
+  // Fermer la modal en cliquant à l'extérieur
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) {
+      overlay.remove();
+    }
+  });
+
+  // Empêcher la propagation du clic à l'intérieur de la modal
+  box.addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
+
   document.body.appendChild(overlay);
 }
 
@@ -3630,6 +3646,70 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
     );
 
+    // Récupère les données actuelles depuis le tableau (les valeurs éditées)
+    const row = document.querySelector(
+      `#deliveriesTableBody tr[data-delivery-id='${delivery.id}']`
+    );
+
+    // Utilise les noms de colonnes de la base de données
+    let visitor_agent_name =
+      delivery.nom_agent_visiteur || delivery.visitor_agent_name || "";
+    let transporter = delivery.transporter || "";
+    let inspector = delivery.inspecteur || delivery.inspector || "";
+    let customs_agent =
+      delivery.agent_en_douanes || delivery.customs_agent || "";
+    let driver = delivery.driver_name || delivery.driver || "";
+    let driver_phone = delivery.driver_phone || "";
+    let delivery_date = delivery.delivery_date || "";
+    let observation = delivery.delivery_notes || delivery.observation || "";
+
+    // Si la ligne existe dans le tableau, récupère les valeurs éditées
+    if (row) {
+      const visitorCell = row.querySelector(
+        "td[data-col-id='visitor_agent_name']"
+      );
+      const transporterCell = row.querySelector(
+        "td[data-col-id='transporter']"
+      );
+      const inspectorCell = row.querySelector("td[data-col-id='inspector']");
+      const customsCell = row.querySelector("td[data-col-id='customs_agent']");
+      const driverCell = row.querySelector("td[data-col-id='driver']");
+      const driverPhoneCell = row.querySelector(
+        "td[data-col-id='driver_phone']"
+      );
+      const deliveryDateCell = row.querySelector(
+        "td[data-col-id='delivery_date']"
+      );
+      const observationCell = row.querySelector(
+        "td[data-col-id='observation']"
+      );
+
+      if (visitorCell && visitorCell.textContent.trim() !== "-") {
+        visitor_agent_name = visitorCell.textContent.trim();
+      }
+      if (transporterCell && transporterCell.textContent.trim() !== "-") {
+        transporter = transporterCell.textContent.trim();
+      }
+      if (inspectorCell && inspectorCell.textContent.trim() !== "-") {
+        inspector = inspectorCell.textContent.trim();
+      }
+      if (customsCell && customsCell.textContent.trim() !== "-") {
+        customs_agent = customsCell.textContent.trim();
+      }
+      if (driverCell && driverCell.textContent.trim() !== "-") {
+        driver = driverCell.textContent.trim();
+      }
+      if (driverPhoneCell && driverPhoneCell.textContent.trim() !== "-") {
+        driver_phone = driverPhoneCell.textContent.trim();
+      }
+      if (deliveryDateCell && deliveryDateCell.textContent.trim() !== "-") {
+        delivery_date = deliveryDateCell.textContent.trim();
+      }
+      if (observationCell && observationCell.textContent.trim() !== "-") {
+        observation = observationCell.textContent.trim();
+      }
+    }
+
     // Crée un enregistrement unique pour ce conteneur
     const historyEntry = {
       id: Date.now() + Math.random(), // ID unique
@@ -3642,19 +3722,20 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       employee_name: delivery.employee_name,
       circuit: delivery.circuit,
       shipping_company: delivery.shipping_company,
-      visitor_agent_name: delivery.visitor_agent_name,
-      transporter: delivery.transporter,
-      inspector: delivery.inspector,
-      customs_agent: delivery.customs_agent,
-      driver: delivery.driver,
-      driver_phone: delivery.driver_phone,
+      visitor_agent_name: visitor_agent_name,
+      transporter: transporter,
+      inspector: inspector,
+      customs_agent: customs_agent,
+      driver: driver,
+      driver_phone: driver_phone,
       container_foot_type: delivery.container_foot_type,
       weight: delivery.weight,
       ship_name: delivery.ship_name,
-      delivery_date: delivery.delivery_date,
-      observation: delivery.observation,
+      delivery_date: delivery_date,
+      observation: observation,
       delivered_at: new Date().toISOString(), // Horodatage de livraison
-      delivered_by: localStorage.getItem("user_nom") || "Inconnu",
+      delivered_by:
+        visitor_agent_name || localStorage.getItem("user_nom") || "-",
     };
 
     // Vérifie si ce conteneur n'est pas déjà dans l'historique
