@@ -3421,8 +3421,14 @@ class AdminModeManager {
       // Supprimer le fond bleu et le blur en mode admin
       historyModal.style.setProperty("background", "transparent", "important");
       historyModal.style.setProperty("backdrop-filter", "none", "important");
-      historyModal.style.setProperty("background-color", "transparent", "important");
-      console.log("✅ Style de la modal d'historique corrigé pour le mode admin");
+      historyModal.style.setProperty(
+        "background-color",
+        "transparent",
+        "important"
+      );
+      console.log(
+        "✅ Style de la modal d'historique corrigé pour le mode admin"
+      );
     }
   }
 }
