@@ -678,22 +678,6 @@
         }
       }
 
-      /* Animation de particules flottantes */
-      @keyframes floatingParticle {
-        0% {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-        50% {
-          opacity: 0.7;
-          transform: translateY(-20px) scale(1.2);
-        }
-        100% {
-          opacity: 0;
-          transform: translateY(-40px) scale(0);
-        }
-      }
-
       /* Styles pour les cartes avec effet glassmorphism */
       .etat-card {
         position: relative;
@@ -960,46 +944,6 @@
             transparent 100%
           );
         }
-      }
-
-      /* Particules voyageuses avec couleurs fluides */
-      .connection-particle {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background: radial-gradient(
-          circle,
-          rgba(255, 255, 255, 0.9) 0%,
-          var(--particle-color-primary) 40%,
-          var(--particle-color-secondary) 100%
-        );
-        --particle-color-primary: #06b6d4;
-        --particle-color-secondary: #3b82f6;
-        border-radius: 50%;
-        box-shadow: 0 0 15px var(--particle-color-primary),
-          0 0 30px rgba(6, 182, 212, 0.6),
-          inset 0 0 5px rgba(255, 255, 255, 0.8);
-        z-index: 2;
-        animation: particleColorCycle 5s ease-in-out infinite;
-        filter: brightness(1.2);
-      }
-
-      .connection-particle::before {
-        content: "";
-        position: absolute;
-        top: -3px;
-        left: -3px;
-        width: 16px;
-        height: 16px;
-        background: radial-gradient(
-          circle,
-          transparent 40%,
-          var(--particle-color-primary) 60%,
-          transparent 100%
-        );
-        border-radius: 50%;
-        filter: blur(2px);
-        animation: particleAura 3s ease-in-out infinite;
       }
 
       @keyframes particleColorCycle {
@@ -2686,7 +2630,6 @@
               // Attendre que les cartes soient bien positionnées
               setTimeout(() => {
                 createConnectionLines();
-                createFloatingParticles();
                 startSynchronizationEffects();
               }, 1000);
             }
@@ -2741,25 +2684,6 @@
               line.style.top = fromY + "px";
               line.style.width = length + "px";
               line.style.transform = `rotate(${angle}deg)`;
-            }
-
-            function createFloatingParticles() {
-              const container = document.querySelector(".card-connections");
-              if (!container) return;
-
-              // Réduire le nombre de particules pour un effet plus subtil
-              for (let i = 0; i < 3; i++) {
-                const particle = document.createElement("div");
-                particle.className = "connection-particle";
-
-                // Utiliser seulement une animation simple
-                particle.style.animation = `particleTravel1 ${
-                  5 + Math.random() * 2
-                }s linear infinite`;
-                particle.style.animationDelay = `${Math.random() * 4}s`;
-
-                container.appendChild(particle);
-              }
             }
 
             function startSynchronizationEffects() {
@@ -3656,9 +3580,6 @@
                     counterElement.style.boxShadow =
                       "0 4px 12px rgba(16, 185, 129, 0.3)";
                     counterElement.style.transform = "scale(1.2)";
-
-                    // Effet de particules réduit
-                    createSuccessParticles(counterElement);
                   } else if (count < oldValue) {
                     // Diminution - Animation rouge simple
                     counterElement.style.background = "#ef4444";
@@ -3727,52 +3648,6 @@
                   shadowColor: "rgba(107, 114, 128, 0.3)",
                 }
               );
-            }
-
-            // Fonction simplifiée pour créer des particules de succès
-            function createSuccessParticles(element) {
-              const particleCount = 4; // Réduire le nombre de particules
-              const rect = element.getBoundingClientRect();
-
-              for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement("div");
-                particle.style.cssText = `
-                  position: fixed;
-                  width: 3px;
-                  height: 3px;
-                  background: #10b981;
-                  border-radius: 50%;
-                  pointer-events: none;
-                  z-index: 9999;
-                  left: ${rect.left + rect.width / 2}px;
-                  top: ${rect.top + rect.height / 2}px;
-                `;
-
-                document.body.appendChild(particle);
-
-                const angle = (i / particleCount) * Math.PI * 2;
-                const distance = 20 + Math.random() * 15; // Distance réduite
-                const duration = 500 + Math.random() * 150; // Durée réduite
-
-                particle.animate(
-                  [
-                    {
-                      transform: "translate(0, 0) scale(1)",
-                      opacity: 1,
-                    },
-                    {
-                      transform: `translate(${Math.cos(angle) * distance}px, ${
-                        Math.sin(angle) * distance
-                      }px) scale(0)`,
-                      opacity: 0,
-                    },
-                  ],
-                  {
-                    duration: duration,
-                    easing: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-                  }
-                ).onfinish = () => particle.remove();
-              }
             }
 
             // Amélioration de la fonction updateCardCounters avec effets visuels
