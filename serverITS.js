@@ -4259,7 +4259,7 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
           return {};
         }
       }
-      // Sinon, retourne objet vide    jznsk
+      // Sinon, retourne objet vider
       return {};
     }
 
