@@ -12,6 +12,64 @@
     window.WS_BASE_HOST = window.location.host;
   }
 })();
+
+// === ANIMATIONS SUBTILES DES CARTES ===
+// Initialisation des animations des cartes au chargement
+(function initCardAnimations() {
+  document.addEventListener("DOMContentLoaded", function () {
+    const cards = document.querySelectorAll(".etat-card");
+
+    cards.forEach((card, index) => {
+      // Délai d'animation différent pour chaque carte
+      card.style.animationDelay = `${index * -1.5}s`;
+
+      // Animation de survol améliorée
+      card.addEventListener("mouseenter", function () {
+        this.style.transform = "translateY(-8px) scale(1.03) rotateZ(0deg)";
+        this.style.zIndex = "10";
+      });
+
+      card.addEventListener("mouseleave", function () {
+        this.style.transform = "";
+        this.style.zIndex = "";
+      });
+
+      // Effet de pulsation subtile quand les données sont mises à jour
+      const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          if (
+            mutation.type === "childList" ||
+            mutation.type === "characterData"
+          ) {
+            const counter = card.querySelector(".card-counter");
+            if (counter) {
+              counter.style.animation = "none";
+              counter.offsetHeight; // Force reflow
+              counter.style.animation = "badgeBounce 0.6s ease-out";
+            }
+          }
+        });
+      });
+
+      observer.observe(card, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    });
+
+    // Animation d'apparition progressive des cartes
+    setTimeout(() => {
+      cards.forEach((card, index) => {
+        setTimeout(() => {
+          card.style.opacity = "1";
+          card.style.transform = "translateY(0)";
+        }, index * 200);
+      });
+    }, 500);
+  });
+})();
+
 // Redirection automatique vers le tableau de bord après connexion réussie
 (function () {
   if (window.location.pathname.endsWith("tableauDeBord.html")) {
