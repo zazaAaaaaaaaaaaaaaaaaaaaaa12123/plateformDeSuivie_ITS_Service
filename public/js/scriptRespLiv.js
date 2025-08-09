@@ -566,6 +566,24 @@ document.addEventListener("DOMContentLoaded", function () {
     dateEndInput.classList.add("admin-allowed-field");
   }
 
+  // Marquer le champ de recherche comme accessible en mode admin
+  const searchInput = document.querySelector(
+    "input[placeholder*='Rechercher'], input[placeholder*='rechercher']"
+  );
+  if (searchInput) {
+    searchInput.setAttribute("data-allow-admin", "true");
+    searchInput.classList.add("admin-allowed-field");
+    // Appliquer des styles vifs immédiatement
+    searchInput.style.background = "#E1F5FE !important";
+    searchInput.style.border = "3px solid #2196F3 !important";
+    searchInput.style.color = "#1976D2 !important";
+    searchInput.style.fontWeight = "bold !important";
+    searchInput.style.boxShadow =
+      "0 3px 10px rgba(33, 150, 243, 0.4) !important";
+    searchInput.style.borderRadius = "6px !important";
+    searchInput.style.padding = "6px 12px !important";
+  }
+
   // On charge toutes les livraisons une seule fois au chargement
   // On rend allDeliveries accessible globalement pour le tooltip Statut
   window.allDeliveries = [];
@@ -3185,26 +3203,39 @@ document.addEventListener("DOMContentLoaded", function () {
 // ========================================================================
 // === HISTORIQUE PROFESSIONNEL DES CONTENEURS LIVRÉS ===
 // ========================================================================
-// Création du bouton Générer PDF
+// Création du bouton Générer PDF avec couleurs très vives
 const pdfBtn = document.createElement("button");
 pdfBtn.id = "generatePdfBtn";
 pdfBtn.textContent = "Générer PDF";
-pdfBtn.style.background = "#2563eb";
+pdfBtn.style.background = "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)"; // Orange très vif
 pdfBtn.style.color = "#fff";
 pdfBtn.style.fontWeight = "bold";
-pdfBtn.style.border = "none";
+pdfBtn.style.border = "3px solid #F57C00"; // Bordure orange épaisse
 pdfBtn.style.cursor = "pointer";
-pdfBtn.style.borderRadius = "7px";
-pdfBtn.style.padding = "4px 12px";
+pdfBtn.style.borderRadius = "8px";
+pdfBtn.style.padding = "6px 12px";
 pdfBtn.style.fontSize = "0.97em";
 pdfBtn.style.margin = "0 0 0 12px";
 pdfBtn.style.height = "32px";
 pdfBtn.style.minWidth = "0";
-pdfBtn.style.boxShadow = "0 1px 4px #2563eb22";
+pdfBtn.style.boxShadow = "0 4px 15px rgba(255, 152, 0, 0.6)"; // Ombre orange prononcée
 pdfBtn.style.verticalAlign = "middle";
+pdfBtn.style.transition = "all 0.2s ease";
 // Marquer comme accessible en mode admin
 pdfBtn.setAttribute("data-allow-admin", "true");
 pdfBtn.classList.add("admin-allowed-button");
+
+// Effet de survol pour le bouton PDF
+pdfBtn.onmouseenter = () => {
+  pdfBtn.style.transform = "translateY(-2px)";
+  pdfBtn.style.boxShadow = "0 6px 20px rgba(255, 152, 0, 0.8)";
+  pdfBtn.style.background = "linear-gradient(90deg,#F57C00 0%,#E65100 100%)";
+};
+pdfBtn.onmouseleave = () => {
+  pdfBtn.style.transform = "translateY(0)";
+  pdfBtn.style.boxShadow = "0 4px 15px rgba(255, 152, 0, 0.6)";
+  pdfBtn.style.background = "linear-gradient(90deg,#FF9800 0%,#F57C00 100%)";
+};
 
 // Placement à côté du champ de recherche
 document.addEventListener("DOMContentLoaded", function () {
@@ -3810,23 +3841,23 @@ function showHistoryButtonIfNeeded() {
   let historyBtn = document.getElementById("professionalHistoryBtn");
 
   if (!historyBtn) {
-    // Crée le bouton historique professionnel
+    // Crée le bouton historique professionnel avec couleurs très vives
     historyBtn = document.createElement("button");
     historyBtn.id = "professionalHistoryBtn";
     historyBtn.innerHTML = "📋 Historique";
     historyBtn.title =
       "Consulter l'historique professionnel des conteneurs livrés";
     historyBtn.style.background =
-      "linear-gradient(90deg,#FF6B35 0%,#FF4500 100%)";
+      "linear-gradient(90deg,#FF1744 0%,#C62828 100%)"; // Rouge très vif
     historyBtn.style.color = "#fff";
     historyBtn.style.fontWeight = "bold";
-    historyBtn.style.border = "2px solid #FF4500";
+    historyBtn.style.border = "3px solid #C62828"; // Bordure plus épaisse
     historyBtn.style.cursor = "pointer";
     historyBtn.style.borderRadius = "8px";
     historyBtn.style.padding = "8px 16px";
     historyBtn.style.fontSize = "0.95em";
     historyBtn.style.margin = "0 8px 0 0"; // Margin à droite seulement
-    historyBtn.style.boxShadow = "0 3px 12px rgba(255, 107, 53, 0.4)";
+    historyBtn.style.boxShadow = "0 4px 15px rgba(255, 23, 68, 0.6)"; // Ombre plus prononcée
     historyBtn.style.transition = "all 0.2s ease";
     historyBtn.style.height = "32px"; // Même hauteur que les autres boutons
     historyBtn.style.verticalAlign = "middle";
@@ -3834,18 +3865,18 @@ function showHistoryButtonIfNeeded() {
     historyBtn.setAttribute("data-allow-admin", "true");
     historyBtn.classList.add("admin-allowed-button");
 
-    // Effet de survol
+    // Effet de survol amélioré
     historyBtn.onmouseenter = () => {
       historyBtn.style.transform = "translateY(-2px)";
-      historyBtn.style.boxShadow = "0 5px 20px rgba(255, 107, 53, 0.5)";
+      historyBtn.style.boxShadow = "0 6px 25px rgba(255, 23, 68, 0.8)";
       historyBtn.style.background =
-        "linear-gradient(90deg,#FF4500 0%,#CC3300 100%)";
+        "linear-gradient(90deg,#C62828 0%,#B71C1C 100%)"; // Rouge encore plus foncé
     };
     historyBtn.onmouseleave = () => {
       historyBtn.style.transform = "translateY(0)";
-      historyBtn.style.boxShadow = "0 3px 12px rgba(255, 107, 53, 0.4)";
+      historyBtn.style.boxShadow = "0 4px 15px rgba(255, 23, 68, 0.6)";
       historyBtn.style.background =
-        "linear-gradient(90deg,#FF6B35 0%,#FF4500 100%)";
+        "linear-gradient(90deg,#FF1744 0%,#C62828 100%)";
     };
 
     // Événement de clic

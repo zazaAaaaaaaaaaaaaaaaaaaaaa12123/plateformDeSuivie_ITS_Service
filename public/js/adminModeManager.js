@@ -169,6 +169,7 @@ class AdminModeManager {
       "generatePdfBtn",
       "mainTableDateStartFilter",
       "mainTableDateEndFilter",
+      "searchInput",
     ];
     safeIds.forEach((id) => {
       const el = document.getElementById(id);
@@ -181,15 +182,52 @@ class AdminModeManager {
         el.setAttribute("data-allow-admin", "true");
         el.classList.add("admin-allowed-button");
 
-        // Styles spéciaux pour le bouton historique
+        // Styles spéciaux pour chaque élément avec des couleurs vives
         if (id === "professionalHistoryBtn") {
-          el.style.background = "#FF6B35 !important";
+          el.style.background = "#FF1744 !important"; // Rouge vif
           el.style.color = "#ffffff !important";
           el.style.fontWeight = "bold !important";
-          el.style.border = "2px solid #FF4500 !important";
-          el.style.boxShadow = "0 3px 12px rgba(255, 107, 53, 0.4) !important";
+          el.style.border = "3px solid #C62828 !important";
+          el.style.boxShadow = "0 4px 15px rgba(255, 23, 68, 0.6) !important";
           el.style.display = "inline-block !important";
           el.style.visibility = "visible !important";
+          el.style.borderRadius = "8px !important";
+          el.style.padding = "8px 16px !important";
+        }
+
+        if (id === "generatePdfBtn") {
+          el.style.background = "#FF9800 !important"; // Orange vif
+          el.style.color = "#ffffff !important";
+          el.style.fontWeight = "bold !important";
+          el.style.border = "3px solid #F57C00 !important";
+          el.style.boxShadow = "0 4px 15px rgba(255, 152, 0, 0.6) !important";
+          el.style.display = "inline-block !important";
+          el.style.visibility = "visible !important";
+          el.style.borderRadius = "8px !important";
+          el.style.padding = "6px 12px !important";
+        }
+
+        if (
+          id === "mainTableDateStartFilter" ||
+          id === "mainTableDateEndFilter"
+        ) {
+          el.style.background = "#4CAF50 !important"; // Vert vif
+          el.style.color = "#ffffff !important";
+          el.style.fontWeight = "bold !important";
+          el.style.border = "2px solid #388E3C !important";
+          el.style.boxShadow = "0 3px 10px rgba(76, 175, 80, 0.4) !important";
+          el.style.borderRadius = "6px !important";
+          el.style.padding = "4px 8px !important";
+        }
+
+        if (id === "searchInput") {
+          el.style.background = "#2196F3 !important"; // Bleu vif
+          el.style.color = "#ffffff !important";
+          el.style.fontWeight = "bold !important";
+          el.style.border = "2px solid #1976D2 !important";
+          el.style.boxShadow = "0 3px 10px rgba(33, 150, 243, 0.4) !important";
+          el.style.borderRadius = "6px !important";
+          el.style.padding = "4px 8px !important";
         }
       }
     });
@@ -260,8 +298,18 @@ class AdminModeManager {
         element.id === "mainTableDateEndFilter" ||
         element.id === "professionalHistoryBtn" ||
         element.id === "generatePdfBtn" ||
+        element.id === "searchInput" ||
+        element.id === "searchButton" ||
         element.type === "date" ||
-        (element.type === "text" && element.id && element.id.includes("date"));
+        element.type === "search" ||
+        (element.type === "text" &&
+          element.id &&
+          element.id.includes("date")) ||
+        (element.type === "text" &&
+          element.id &&
+          element.id.includes("search")) ||
+        (element.placeholder &&
+          element.placeholder.toLowerCase().includes("recherch"));
 
       // Vérifier si l'élément est explicitement autorisé en mode admin
       const isAdminAllowed =
@@ -1554,7 +1602,7 @@ class AdminModeManager {
         }, 500);
       }
 
-      // Dates
+      // Dates - Styles vifs pour meilleure visibilité
       const dateInputs = [
         document.getElementById("mainTableDateStartFilter"),
         document.getElementById("mainTableDateEndFilter"),
@@ -1565,15 +1613,21 @@ class AdminModeManager {
         input.style.opacity = "1";
         input.style.cursor = "pointer";
         input.style.pointerEvents = "auto";
-        input.style.background = "";
+        input.style.background = "#E8F5E8 !important"; // Vert clair
+        input.style.border = "3px solid #4CAF50 !important"; // Bordure verte vive
+        input.style.color = "#2E7D32 !important";
+        input.style.fontWeight = "bold !important";
+        input.style.boxShadow = "0 3px 10px rgba(76, 175, 80, 0.4) !important";
+        input.style.borderRadius = "6px !important";
+        input.style.padding = "6px 12px !important";
         input.title = "Champ de date - Accessible en mode admin";
         input.setAttribute("data-allow-admin", "true");
         input.classList.add("admin-allowed-field");
       });
 
-      // Recherche (champ + bouton)
+      // Recherche (champ + bouton) - Styles vifs pour meilleure visibilité
       const searchInput = document.querySelector(
-        "#searchInput, .search-input, input[placeholder*='recherche'], input[placeholder*='Recherche']"
+        "#searchInput, .search-input, input[placeholder*='recherche'], input[placeholder*='Recherche'], input[placeholder*='Rechercher']"
       );
       if (searchInput) {
         searchInput.disabled = false;
@@ -1581,11 +1635,19 @@ class AdminModeManager {
         searchInput.style.opacity = "1";
         searchInput.style.cursor = "text";
         searchInput.style.pointerEvents = "auto";
-        searchInput.style.background = "";
+        searchInput.style.background = "#E1F5FE !important"; // Bleu clair
+        searchInput.style.border = "3px solid #2196F3 !important"; // Bordure bleue vive
+        searchInput.style.color = "#1976D2 !important";
+        searchInput.style.fontWeight = "bold !important";
+        searchInput.style.boxShadow =
+          "0 3px 10px rgba(33, 150, 243, 0.4) !important";
+        searchInput.style.borderRadius = "6px !important";
+        searchInput.style.padding = "6px 12px !important";
         searchInput.title = "Champ de recherche - Accessible en mode admin";
         searchInput.setAttribute("data-allow-admin", "true");
         searchInput.classList.add("admin-allowed-field");
       }
+
       const searchButton = document.querySelector(
         "#searchButton, .search-button, button[type='submit']"
       );
@@ -1594,6 +1656,14 @@ class AdminModeManager {
         searchButton.style.opacity = "1";
         searchButton.style.cursor = "pointer";
         searchButton.style.pointerEvents = "auto";
+        searchButton.style.background = "#9C27B0 !important"; // Violet vif
+        searchButton.style.color = "#ffffff !important";
+        searchButton.style.fontWeight = "bold !important";
+        searchButton.style.border = "3px solid #7B1FA2 !important";
+        searchButton.style.boxShadow =
+          "0 4px 15px rgba(156, 39, 176, 0.6) !important";
+        searchButton.style.borderRadius = "8px !important";
+        searchButton.style.padding = "6px 12px !important";
         searchButton.title = "Bouton rechercher - Accessible en mode admin";
         searchButton.setAttribute("data-allow-admin", "true");
         searchButton.classList.add("admin-allowed-button");
