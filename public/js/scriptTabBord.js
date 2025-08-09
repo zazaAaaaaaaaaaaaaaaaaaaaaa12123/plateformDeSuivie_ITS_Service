@@ -1233,8 +1233,8 @@ styleDashboardCards.innerHTML = `
                 cursor: pointer;
               }
               .dashboard-card:hover {
-                box-shadow: 0 8px 28px #2563eb22, 0 4px 16px #0002;
-                transform: translateY(-3px) scale(1.02);
+                box-shadow: 0 8px 25px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+                transform: translateY(-3px) scale(1.01);
               }
               .dashboard-card .card-title {
                 font-size: 1.08em;
@@ -1340,6 +1340,22 @@ styleDashboardCards.innerHTML = `
                 .dashboard-cards-row {
                   gap: 8px;
                 }
+              }
+              
+              /* Fix pour empêcher la disparition des cartes etat-card au survol */
+              .etat-card:hover {
+                opacity: 1 !important;
+                visibility: visible !important;
+                display: block !important;
+                transform: translateY(-5px) scale(1.02) !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+              }
+              
+              .etat-card {
+                opacity: 1 !important;
+                visibility: visible !important;
+                display: block !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
               }
             `;
 document.head.appendChild(styleDashboardCards);
