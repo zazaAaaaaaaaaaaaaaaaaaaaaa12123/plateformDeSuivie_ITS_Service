@@ -4197,7 +4197,7 @@ function mapStatus(status) {
       return;
     }
     deliveriesToRender.forEach((delivery, index) => {
-      const row = deliveriesTableBody.insertRow();
+      const row = deliveriesTableBody.insertRow(-1);
       row.id = `delivery-row-${delivery.id}`;
       row.dataset.deliveryId = delivery.id;
 
@@ -6083,7 +6083,7 @@ function mapStatus(status) {
                             `;
       } else {
         agentDailyDeliveries.forEach((delivery, idx) => {
-          const row = agentDailyDeliveriesTableBody.insertRow();
+          const row = agentDailyDeliveriesTableBody.insertRow(-1);
           // Populate cells based on AGENT_TABLE_COLUMNS definition
           AGENT_TABLE_COLUMNS.forEach((col) => {
             const cell = row.insertCell();
