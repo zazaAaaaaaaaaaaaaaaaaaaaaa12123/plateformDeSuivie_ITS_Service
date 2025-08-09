@@ -3922,8 +3922,19 @@ function showProfessionalHistoryModal() {
   stats.style.padding = "15px 30px";
   stats.style.background = "#f8fafc";
   stats.style.borderBottom = "1px solid #e5e7eb";
+
+  // Calculer la première livraison (la plus ancienne)
+  const firstDelivery =
+    history.length > 0
+      ? history.reduce((oldest, current) =>
+          new Date(current.delivered_at) < new Date(oldest.delivered_at)
+            ? current
+            : oldest
+        )
+      : null;
+
   stats.innerHTML = `
-    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+    <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 15px;">
       <div style="color: #059669; font-weight: bold;">
         📦 Total conteneurs livrés: <span style="color: #047857;">${
           history.length
@@ -3935,6 +3946,34 @@ function showProfessionalHistoryModal() {
             ? new Date(history[0].delivered_at).toLocaleDateString("fr-FR")
             : "Aucune"
         }</span>
+      </div>
+      <div style="color: #059669; font-weight: bold;">
+        📆 Ancienne livraison: <span style="color: #047857;">${
+          firstDelivery
+            ? new Date(firstDelivery.delivered_at).toLocaleDateString("fr-FR")
+            : "Aucune"
+        }</span>
+      </div>
+    </div>
+    
+    <!-- Barre de recherche et contrôles -->
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+      <div style="flex: 1; min-width: 300px;">
+        <input type="text" id="historySearchInput" placeholder="🔍 Rechercher par conteneur, dossier, client, agent, transporteur..." 
+          style="width: 100%; padding: 8px 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 0.9em; outline: none; transition: border-color 0.2s;"
+          oninput="filterHistoryTable()" 
+          onfocus="this.style.borderColor='#059669'" 
+          onblur="this.style.borderColor='#d1d5db'">
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button id="selectAllHistoryBtn" onclick="toggleSelectAllHistory()" 
+          style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em; white-space: nowrap;">
+          ✓ Tout sélectionner
+        </button>
+        <button id="deleteSelectedHistoryBtn" onclick="deleteSelectedHistory()" disabled
+          style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: not-allowed; font-size: 0.9em; white-space: nowrap; opacity: 0.5;">
+          🗑️ Supprimer sélection
+        </button>
       </div>
     </div>
   `;
@@ -3958,6 +3997,7 @@ function showProfessionalHistoryModal() {
   } else {
     // Tableau de l'historique
     const table = document.createElement("table");
+    table.id = "historyTable";
     table.style.width = "100%";
     table.style.borderCollapse = "collapse";
     table.style.fontSize = "0.9em";
@@ -3966,6 +4006,10 @@ function showProfessionalHistoryModal() {
     table.innerHTML = `
       <thead>
         <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+          <th style="padding: 12px 8px; text-align: center; font-weight: bold; color: #374151; width: 40px;">
+            <input type="checkbox" id="selectAllHistoryCheckbox" onchange="toggleSelectAllHistory()" 
+              style="cursor: pointer; transform: scale(1.1);">
+          </th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Date/Heure</th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Conteneur</th>
           <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Dossier</th>
@@ -3976,13 +4020,21 @@ function showProfessionalHistoryModal() {
           <th style="padding: 12px 8px; text-align: center; font-weight: bold; color: #374151;">Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="historyTableBody">
         ${history
           .map(
             (entry, index) => `
-          <tr style="border-bottom: 1px solid #f3f4f6; ${
-            index % 2 === 0 ? "background: #fafafa;" : ""
-          }">
+          <tr class="history-row" data-entry-id="${
+            entry.id
+          }" style="border-bottom: 1px solid #f3f4f6; ${
+              index % 2 === 0 ? "background: #fafafa;" : ""
+            }">
+            <td style="padding: 10px 8px; text-align: center;">
+              <input type="checkbox" class="history-checkbox" value="${
+                entry.id
+              }" onchange="updateDeleteButtonState()" 
+                style="cursor: pointer; transform: scale(1.1);">
+            </td>
             <td style="padding: 10px 8px; color: #4b5563;">
               ${new Date(entry.delivered_at).toLocaleDateString("fr-FR")}<br>
               <small style="color: #9ca3af;">${new Date(
@@ -4132,4 +4184,148 @@ window.showHistoryEntryDetail = function (entryId) {
 
 // ========================================================================
 // === FIN HISTORIQUE PROFESSIONNEL ===
+// ========================================================================
+
+// ========================================================================
+// === FONCTIONS POUR HISTORIQUE : RECHERCHE ET SUPPRESSION ===
+// ========================================================================
+
+/**
+ * Filtre le tableau de l'historique selon la recherche
+ */
+window.filterHistoryTable = function () {
+  const searchInput = document.getElementById("historySearchInput");
+  const table = document.getElementById("historyTable");
+
+  if (!searchInput || !table) return;
+
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  const rows = table.querySelectorAll("tbody tr.history-row");
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll("td");
+    let shouldShow = false;
+
+    // Recherche dans les colonnes : Conteneur, Dossier, Client, Agent, Transporteur, Livré par
+    const searchableColumns = [2, 3, 4, 5, 6, 7]; // Index des colonnes à rechercher
+
+    for (let i of searchableColumns) {
+      if (cells[i] && cells[i].textContent.toLowerCase().includes(searchTerm)) {
+        shouldShow = true;
+        break;
+      }
+    }
+
+    row.style.display = shouldShow ? "" : "none";
+  });
+
+  // Mettre à jour l'état de sélection si des éléments sont cachés
+  updateDeleteButtonState();
+};
+
+/**
+ * Bascule la sélection de toutes les entrées visibles
+ */
+window.toggleSelectAllHistory = function () {
+  const selectAllCheckbox = document.getElementById("selectAllHistoryCheckbox");
+  const checkboxes = document.querySelectorAll(".history-checkbox");
+  const isChecked = selectAllCheckbox ? selectAllCheckbox.checked : false;
+
+  checkboxes.forEach((checkbox) => {
+    // Ne sélectionner que les éléments visibles
+    const row = checkbox.closest("tr");
+    if (row && row.style.display !== "none") {
+      checkbox.checked = isChecked;
+    }
+  });
+
+  updateDeleteButtonState();
+};
+
+/**
+ * Met à jour l'état du bouton de suppression selon les sélections
+ */
+window.updateDeleteButtonState = function () {
+  const checkboxes = document.querySelectorAll(".history-checkbox:checked");
+  const deleteBtn = document.getElementById("deleteSelectedHistoryBtn");
+  const selectAllCheckbox = document.getElementById("selectAllHistoryCheckbox");
+
+  if (deleteBtn) {
+    const hasSelection = checkboxes.length > 0;
+    deleteBtn.disabled = !hasSelection;
+    deleteBtn.style.opacity = hasSelection ? "1" : "0.5";
+    deleteBtn.style.cursor = hasSelection ? "pointer" : "not-allowed";
+    deleteBtn.textContent = hasSelection
+      ? `🗑️ Supprimer (${checkboxes.length})`
+      : "🗑️ Supprimer sélection";
+  }
+
+  // Mettre à jour la case "tout sélectionner"
+  if (selectAllCheckbox) {
+    const visibleCheckboxes = Array.from(
+      document.querySelectorAll(".history-checkbox")
+    ).filter((cb) => {
+      const row = cb.closest("tr");
+      return row && row.style.display !== "none";
+    });
+    const checkedVisibleBoxes = visibleCheckboxes.filter((cb) => cb.checked);
+
+    selectAllCheckbox.checked =
+      visibleCheckboxes.length > 0 &&
+      checkedVisibleBoxes.length === visibleCheckboxes.length;
+    selectAllCheckbox.indeterminate =
+      checkedVisibleBoxes.length > 0 &&
+      checkedVisibleBoxes.length < visibleCheckboxes.length;
+  }
+};
+
+/**
+ * Supprime les entrées sélectionnées de l'historique
+ */
+window.deleteSelectedHistory = function () {
+  const checkboxes = document.querySelectorAll(".history-checkbox:checked");
+
+  if (checkboxes.length === 0) {
+    alert("Aucune entrée sélectionnée.");
+    return;
+  }
+
+  const selectedIds = Array.from(checkboxes).map((cb) => cb.value);
+  const message = `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} entrée(s) de l'historique ?\n\nCette action est irréversible.`;
+
+  if (!confirm(message)) {
+    return;
+  }
+
+  try {
+    // Récupérer l'historique actuel
+    let history = JSON.parse(
+      localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+    );
+
+    // Filtrer pour retirer les entrées sélectionnées
+    const originalLength = history.length;
+    history = history.filter((entry) => !selectedIds.includes(entry.id));
+
+    // Sauvegarder le nouvel historique
+    localStorage.setItem(DELIVERY_HISTORY_KEY, JSON.stringify(history));
+
+    // Afficher un message de confirmation
+    const deletedCount = originalLength - history.length;
+    alert(`✅ ${deletedCount} entrée(s) supprimée(s) avec succès.`);
+
+    // Fermer la modal actuelle et la rouvrir pour rafraîchir
+    const currentModal = document.getElementById("historyModal");
+    if (currentModal) {
+      currentModal.remove();
+      showDeliveryHistory(); // Rouvrir l'historique avec les données mises à jour
+    }
+  } catch (error) {
+    console.error("Erreur lors de la suppression:", error);
+    alert("❌ Erreur lors de la suppression. Veuillez réessayer.");
+  }
+};
+
+// ========================================================================
+// === FIN FONCTIONS HISTORIQUE ===
 // ========================================================================
