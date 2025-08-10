@@ -51,7 +51,7 @@
             }
           }, 1000);
         }
-      }, 3500);
+      }, 5000);
 
       // Effet de typed.js pour le titre
       setTimeout(() => {
