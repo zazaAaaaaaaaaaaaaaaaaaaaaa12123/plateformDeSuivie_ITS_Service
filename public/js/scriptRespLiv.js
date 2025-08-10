@@ -3610,7 +3610,155 @@ function showPdfFilterModal() {
 
 pdfBtn.onclick = function () {
   updateDeliveredForPdf();
-  showPdfFilterModal();
+
+  // Afficher la modal de confirmation pour la conservation des livraisons
+  showDeliveryRetentionModal();
+};
+
+// Fonction pour afficher la modal de confirmation de conservation des livraisons
+function showDeliveryRetentionModal() {
+  const oldModal = document.getElementById("deliveryRetentionModal");
+  if (oldModal) oldModal.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "deliveryRetentionModal";
+  overlay.style.position = "fixed";
+  overlay.style.top = 0;
+  overlay.style.left = 0;
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  overlay.style.background = "rgba(0,0,0,0.6)";
+  overlay.style.zIndex = 100001;
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  overlay.style.backdropFilter = "blur(3px)";
+
+  const box = document.createElement("div");
+  box.style.background = "#fff";
+  box.style.borderRadius = "16px";
+  box.style.boxShadow = "0 12px 40px rgba(0,0,0,0.3)";
+  box.style.maxWidth = "480px";
+  box.style.width = "90vw";
+  box.style.padding = "0";
+  box.style.position = "relative";
+  box.style.display = "flex";
+  box.style.flexDirection = "column";
+
+  const header = document.createElement("div");
+  header.style.background = "linear-gradient(90deg, #FF9800, #F57C00)";
+  header.style.color = "#fff";
+  header.style.padding = "20px 28px";
+  header.style.fontWeight = "bold";
+  header.style.fontSize = "1.2rem";
+  header.style.borderTopLeftRadius = "16px";
+  header.style.borderTopRightRadius = "16px";
+  header.style.textAlign = "center";
+  header.innerHTML = "🗂️ Conservation des livraisons";
+
+  const content = document.createElement("div");
+  content.style.padding = "30px 28px";
+  content.style.textAlign = "center";
+  content.style.lineHeight = "1.6";
+
+  const question = document.createElement("p");
+  question.style.fontSize = "1.1rem";
+  question.style.marginBottom = "25px";
+  question.style.color = "#333";
+  question.style.fontWeight = "500";
+  question.textContent = "Voulez-vous garder les livraisons dans le tableau ?";
+
+  const buttonsContainer = document.createElement("div");
+  buttonsContainer.style.display = "flex";
+  buttonsContainer.style.gap = "15px";
+  buttonsContainer.style.justifyContent = "center";
+
+  const yesBtn = document.createElement("button");
+  yesBtn.textContent = "Oui";
+  yesBtn.style.background = "linear-gradient(90deg, #4CAF50, #45a049)";
+  yesBtn.style.color = "#fff";
+  yesBtn.style.border = "none";
+  yesBtn.style.padding = "12px 25px";
+  yesBtn.style.borderRadius = "8px";
+  yesBtn.style.fontSize = "1rem";
+  yesBtn.style.fontWeight = "bold";
+  yesBtn.style.cursor = "pointer";
+  yesBtn.style.transition = "all 0.3s ease";
+  yesBtn.style.boxShadow = "0 4px 15px rgba(76, 175, 80, 0.3)";
+
+  const noBtn = document.createElement("button");
+  noBtn.textContent = "Non";
+  noBtn.style.background = "linear-gradient(90deg, #f44336, #d32f2f)";
+  noBtn.style.color = "#fff";
+  noBtn.style.border = "none";
+  noBtn.style.padding = "12px 25px";
+  noBtn.style.borderRadius = "8px";
+  noBtn.style.fontSize = "1rem";
+  noBtn.style.fontWeight = "bold";
+  noBtn.style.cursor = "pointer";
+  noBtn.style.transition = "all 0.3s ease";
+  noBtn.style.boxShadow = "0 4px 15px rgba(244, 67, 54, 0.3)";
+
+  // Effets de survol
+  yesBtn.onmouseenter = () => {
+    yesBtn.style.transform = "translateY(-2px)";
+    yesBtn.style.boxShadow = "0 6px 20px rgba(76, 175, 80, 0.4)";
+  };
+  yesBtn.onmouseleave = () => {
+    yesBtn.style.transform = "translateY(0)";
+    yesBtn.style.boxShadow = "0 4px 15px rgba(76, 175, 80, 0.3)";
+  };
+
+  noBtn.onmouseenter = () => {
+    noBtn.style.transform = "translateY(-2px)";
+    noBtn.style.boxShadow = "0 6px 20px rgba(244, 67, 54, 0.4)";
+  };
+  noBtn.onmouseleave = () => {
+    noBtn.style.transform = "translateY(0)";
+    noBtn.style.boxShadow = "0 4px 15px rgba(244, 67, 54, 0.3)";
+  };
+
+  // Gestion des clics
+  yesBtn.onclick = () => {
+    overlay.remove();
+    showSuccessMessage(
+      "La livraison restera tant que vous ne la retirez pas manuellement."
+    );
+    // Marquer les livraisons comme permanentes
+    markDeliveriesAsPermanent();
+    // Continuer avec la génération du PDF
+    showPdfFilterModal();
+  };
+
+  noBtn.onclick = () => {
+    overlay.remove();
+    showInfoMessage("La ligne disparaîtra après 2 jours.");
+    // Marquer les livraisons pour suppression automatique
+    scheduleDeliveryRemoval();
+    // Continuer avec la génération du PDF
+    showPdfFilterModal();
+  };
+
+  // Fermer en cliquant à l'extérieur
+  overlay.onclick = (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+    }
+  };
+
+  // Empêcher la propagation du clic à l'intérieur de la modal
+  box.onclick = (e) => {
+    e.stopPropagation();
+  };
+
+  buttonsContainer.appendChild(yesBtn);
+  buttonsContainer.appendChild(noBtn);
+  content.appendChild(question);
+  content.appendChild(buttonsContainer);
+  box.appendChild(header);
+  box.appendChild(content);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
 
   // Activer immédiatement les éléments du modal pour l'admin
   if (window.adminModeManager && window.enablePdfModalForAdmin) {
@@ -3618,7 +3766,226 @@ pdfBtn.onclick = function () {
       window.enablePdfModalForAdmin();
     }, 100);
   }
-};
+}
+
+// Fonction pour afficher un message de succès
+function showSuccessMessage(message) {
+  const toast = document.createElement("div");
+  toast.style.position = "fixed";
+  toast.style.top = "20px";
+  toast.style.right = "20px";
+  toast.style.background = "linear-gradient(90deg, #4CAF50, #45a049)";
+  toast.style.color = "#fff";
+  toast.style.padding = "15px 20px";
+  toast.style.borderRadius = "8px";
+  toast.style.fontSize = "1rem";
+  toast.style.fontWeight = "500";
+  toast.style.zIndex = 100002;
+  toast.style.boxShadow = "0 4px 20px rgba(76, 175, 80, 0.3)";
+  toast.style.maxWidth = "400px";
+  toast.style.wordWrap = "break-word";
+  toast.innerHTML = `✅ ${message}`;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(100%)";
+    toast.style.transition = "all 0.3s ease";
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// Fonction pour afficher un message d'information
+function showInfoMessage(message) {
+  const toast = document.createElement("div");
+  toast.style.position = "fixed";
+  toast.style.top = "20px";
+  toast.style.right = "20px";
+  toast.style.background = "linear-gradient(90deg, #2196F3, #1976D2)";
+  toast.style.color = "#fff";
+  toast.style.padding = "15px 20px";
+  toast.style.borderRadius = "8px";
+  toast.style.fontSize = "1rem";
+  toast.style.fontWeight = "500";
+  toast.style.zIndex = 100002;
+  toast.style.boxShadow = "0 4px 20px rgba(33, 150, 243, 0.3)";
+  toast.style.maxWidth = "400px";
+  toast.style.wordWrap = "break-word";
+  toast.innerHTML = `ℹ️ ${message}`;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(100%)";
+    toast.style.transition = "all 0.3s ease";
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// Fonction pour marquer les livraisons comme permanentes
+function markDeliveriesAsPermanent() {
+  try {
+    const deliveredIds = deliveredForPdf.map((d) => d.id);
+    let permanentDeliveries = JSON.parse(
+      localStorage.getItem("permanentDeliveries") || "[]"
+    );
+
+    deliveredIds.forEach((id) => {
+      if (!permanentDeliveries.includes(id)) {
+        permanentDeliveries.push(id);
+      }
+    });
+
+    localStorage.setItem(
+      "permanentDeliveries",
+      JSON.stringify(permanentDeliveries)
+    );
+    console.log(
+      "[PERMANENT] Livraisons marquées comme permanentes:",
+      deliveredIds
+    );
+  } catch (error) {
+    console.error("[PERMANENT] Erreur lors du marquage:", error);
+  }
+}
+
+// Fonction pour programmer la suppression automatique
+function scheduleDeliveryRemoval() {
+  try {
+    const deliveredIds = deliveredForPdf.map((d) => d.id);
+    const removalDate = new Date();
+    removalDate.setDate(removalDate.getDate() + 2); // 2 jours à partir d'aujourd'hui
+
+    let scheduledRemovals = JSON.parse(
+      localStorage.getItem("scheduledRemovals") || "[]"
+    );
+
+    deliveredIds.forEach((id) => {
+      // Vérifier si ce dossier n'est pas déjà programmé
+      const existingIndex = scheduledRemovals.findIndex(
+        (item) => item.deliveryId === id
+      );
+      if (existingIndex === -1) {
+        scheduledRemovals.push({
+          deliveryId: id,
+          removalDate: removalDate.toISOString(),
+          createdAt: new Date().toISOString(),
+        });
+      }
+    });
+
+    localStorage.setItem(
+      "scheduledRemovals",
+      JSON.stringify(scheduledRemovals)
+    );
+    console.log(
+      "[SCHEDULED] Livraisons programmées pour suppression:",
+      deliveredIds
+    );
+
+    // Démarrer le processus de vérification périodique si pas déjà actif
+    startRemovalChecker();
+  } catch (error) {
+    console.error("[SCHEDULED] Erreur lors de la programmation:", error);
+  }
+}
+
+// Fonction pour démarrer le vérificateur de suppression automatique
+function startRemovalChecker() {
+  // Vérifier s'il y a déjà un checker actif
+  if (window.removalCheckerInterval) {
+    return;
+  }
+
+  // Vérifier toutes les heures
+  window.removalCheckerInterval = setInterval(() => {
+    checkAndRemoveExpiredDeliveries();
+  }, 60 * 60 * 1000); // 1 heure
+
+  // Vérification immédiate
+  checkAndRemoveExpiredDeliveries();
+}
+
+// Fonction pour vérifier et supprimer les livraisons expirées
+function checkAndRemoveExpiredDeliveries() {
+  try {
+    const scheduledRemovals = JSON.parse(
+      localStorage.getItem("scheduledRemovals") || "[]"
+    );
+    const permanentDeliveries = JSON.parse(
+      localStorage.getItem("permanentDeliveries") || "[]"
+    );
+    const now = new Date();
+
+    let removalsToProcess = [];
+    let remainingRemovals = [];
+
+    scheduledRemovals.forEach((item) => {
+      const removalDate = new Date(item.removalDate);
+
+      // Si la date de suppression est passée et que la livraison n'est pas marquée comme permanente
+      if (
+        now >= removalDate &&
+        !permanentDeliveries.includes(item.deliveryId)
+      ) {
+        removalsToProcess.push(item.deliveryId);
+      } else {
+        remainingRemovals.push(item);
+      }
+    });
+
+    if (removalsToProcess.length > 0) {
+      // Supprimer les livraisons expirées du tableau et des données
+      removeDeliveriesFromTable(removalsToProcess);
+
+      // Mettre à jour la liste des suppressions programmées
+      localStorage.setItem(
+        "scheduledRemovals",
+        JSON.stringify(remainingRemovals)
+      );
+
+      console.log(
+        "[REMOVAL] Livraisons supprimées automatiquement:",
+        removalsToProcess
+      );
+    }
+  } catch (error) {
+    console.error("[REMOVAL] Erreur lors de la vérification:", error);
+  }
+}
+
+// Fonction pour supprimer les livraisons du tableau
+function removeDeliveriesFromTable(deliveryIds) {
+  try {
+    if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+      // Filtrer les livraisons pour supprimer celles expirées
+      window.allDeliveries = window.allDeliveries.filter(
+        (delivery) => !deliveryIds.includes(delivery.id)
+      );
+
+      // Rafraîchir l'affichage du tableau
+      if (typeof window.refreshDeliveriesTable === "function") {
+        window.refreshDeliveriesTable();
+      } else if (typeof refreshTable === "function") {
+        refreshTable();
+      }
+
+      // Déclencher l'événement de mise à jour
+      window.dispatchEvent(new Event("allDeliveriesUpdated"));
+    }
+  } catch (error) {
+    console.error("[REMOVAL] Erreur lors de la suppression du tableau:", error);
+  }
+}
+
+// Initialiser le vérificateur au chargement de la page
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    startRemovalChecker();
+  }, 2000);
+});
 
 function generateEtatSortiePdf(rows, date1, date2) {
   if (!rows || rows.length === 0) {
