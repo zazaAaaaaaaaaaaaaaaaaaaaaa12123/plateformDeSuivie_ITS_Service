@@ -695,11 +695,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
         window.allDeliveries = filteredDeliveries;
       } else {
-        window.allDeliveries = [];
+        // En cas de données vides, ne vider que si c'est le premier chargement
+        if (!window.allDeliveries || window.allDeliveries.length === 0) {
+          window.allDeliveries = [];
+        }
       }
     } catch (e) {
       console.error("Erreur lors du chargement des livraisons :", e);
-      window.allDeliveries = [];
+      // Ne pas vider les données existantes en cas d'erreur de réseau temporaire
+      if (!window.allDeliveries || window.allDeliveries.length === 0) {
+        window.allDeliveries = [];
+      } else {
+        console.log(
+          "⚠️ Conservation des données existantes après erreur de chargement"
+        );
+      }
     }
   }
 
@@ -872,8 +882,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 targetUser
               )}`
             );
+
+            // Sauvegarder l'état actuel du tableau pour éviter qu'il disparaisse
+            const currentData = window.allDeliveries
+              ? [...window.allDeliveries]
+              : [];
+
             await loadAllDeliveries();
-            updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+
+            // Ne mettre à jour le tableau que si nous avons effectivement des données
+            if (window.allDeliveries && window.allDeliveries.length > 0) {
+              updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+            } else if (currentData.length > 0) {
+              // Si le chargement échoue, restaurer les données précédentes
+              window.allDeliveries = currentData;
+              console.log(
+                `⚠️ [AUTO-REFRESH LIVREUR] Données restaurées après échec du chargement`
+              );
+            }
 
             // Afficher une petite notification discrète
             const refreshIndicator = document.getElementById(
@@ -891,7 +917,7 @@ document.addEventListener("DOMContentLoaded", function () {
               error
             );
           }
-        }, 5000); // 5 secondes
+        }, 10000); // 10 secondes pour éviter la surcharge
 
         // Créer un indicateur de rafraîchissement
         const refreshIndicator = document.createElement("div");
