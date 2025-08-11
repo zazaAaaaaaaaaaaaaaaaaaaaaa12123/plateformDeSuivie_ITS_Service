@@ -122,6 +122,108 @@ function broadcastObservationUpdate(deliveryId, observation) {
 }
 
 // ===============================
+// SYSTÈME DE SUIVI DES UTILISATEURS ACTIFS
+// ===============================
+const activeUsers = {};
+
+// Nettoyage automatique des utilisateurs inactifs (après 3 minutes)
+setInterval(() => {
+  const now = Date.now();
+  const timeoutThreshold = 3 * 60 * 1000; // 3 minutes
+
+  Object.keys(activeUsers).forEach((userId) => {
+    if (now - activeUsers[userId].lastActivity > timeoutThreshold) {
+      console.log(
+        `🧹 Nettoyage utilisateur inactif: ${userId} (${activeUsers[userId].username})`
+      );
+      delete activeUsers[userId];
+    }
+  });
+}, 60000); // Vérification toutes les minutes
+
+// Route pour enregistrer le heartbeat des utilisateurs
+app.post("/api/active-users/heartbeat", (req, res) => {
+  const { page, userId, username, nom } = req.body;
+
+  if (!page || !userId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Page et userId requis" });
+  }
+
+  const now = Date.now();
+  const userKey = `${userId}_${page}`;
+
+  activeUsers[userKey] = {
+    userId,
+    username: username || nom || "Utilisateur",
+    nom: nom || username || "Utilisateur",
+    page,
+    lastActivity: now,
+    connectedSince: activeUsers[userKey]?.connectedSince || now,
+  };
+
+  console.log(`💓 Heartbeat reçu: ${nom || username} sur ${page}`);
+  res.json({ success: true, message: "Heartbeat enregistré" });
+});
+
+// Route pour obtenir les statistiques des utilisateurs actifs
+app.get("/api/active-users/stats", (req, res) => {
+  const now = Date.now();
+  const pageStats = {};
+
+  // Grouper les utilisateurs par page
+  Object.values(activeUsers).forEach((user) => {
+    if (!pageStats[user.page]) {
+      pageStats[user.page] = {
+        count: 0,
+        users: [],
+      };
+    }
+
+    const timeConnected = Math.floor((now - user.connectedSince) / 1000);
+    pageStats[user.page].count++;
+    pageStats[user.page].users.push({
+      userId: user.userId,
+      username: user.username,
+      nom: user.nom,
+      timeConnected,
+    });
+  });
+
+  const totalConnectedUsers = Object.keys(activeUsers).length;
+
+  console.log(`📊 Stats demandées: ${totalConnectedUsers} utilisateurs total`);
+
+  res.json({
+    success: true,
+    totalConnectedUsers,
+    pageStats,
+  });
+});
+
+// Route pour déconnecter un utilisateur
+app.post("/api/active-users/disconnect", (req, res) => {
+  const { userId, page } = req.body;
+
+  if (!userId || !page) {
+    return res
+      .status(400)
+      .json({ success: false, message: "userId et page requis" });
+  }
+
+  const userKey = `${userId}_${page}`;
+
+  if (activeUsers[userKey]) {
+    console.log(`👋 Déconnexion: ${activeUsers[userKey].nom} de ${page}`);
+    delete activeUsers[userKey];
+    res.json({ success: true, message: "Utilisateur déconnecté" });
+  } else {
+    res.json({ success: false, message: "Utilisateur non trouvé" });
+  }
+});
+
+// ===============================
 // ROUTE : PATCH statut BL (bl_statuses) pour une livraison
 // ===============================
 
@@ -5101,57 +5203,7 @@ app.get("/api/deliveries/:id", async (req, res) => {
   }
 });
 
-// ===============================
-// 📋 DOCUMENTATION API POUR COLLÈGUE PHP
-// ===============================
-/*
-🔗 URL DE BASE: https://plateformdesuivie-its-service-1cjx.onrender.com
-
-📊 ENDPOINTS DISPONIBLES:
-1. GET  /api/exchange/data           - Récupérer toutes les données
-2. PUT  /api/exchange/update/:id     - Mettre à jour une livraison
-3. POST /api/exchange/bulk-update    - Mettre à jour plusieurs livraisons
-
-📋 CHAMPS DISPONIBLES:
-LECTURE (tous les GET):
-- id, dossier_number, bl_number, client_name, delivery_date, created_at
-
-ÉCRITURE (PUT/POST):
-- paiement_acconage (DATE format YYYY-MM-DD)
-- date_echange_bl (DATE format YYYY-MM-DD) - AUTOMATIQUE
-- date_do (DATE format YYYY-MM-DD)  
-- date_badt (DATE format YYYY-MM-DD)
-
-🔍 EXEMPLES PHP:
-// 1. Récupérer toutes les données
-$response = file_get_contents('https://plateformdesuivie-its-service-1cjx.onrender.com/api/exchange/data');
-$data = json_decode($response, true);
-
-// 2. Filtrer par dossier
-$response = file_get_contents('https://plateformdesuivie-its-service-1cjx.onrender.com/api/exchange/data?dossier_number=DOS123');
-
-// 3. Mettre à jour une livraison
-$livraison_id = 123;
-$update_data = [
-    'paiement_acconage' => 'Payé',
-    'date_echange_bl' => '2025-08-05'
-];
-$options = [
-    'http' => [
-        'method' => 'PUT',
-        'header' => 'Content-Type: application/json',
-        'content' => json_encode($update_data)
-    ]
-];
-$context = stream_context_create($options);
-$result = file_get_contents("https://plateformdesuivie-its-service-1cjx.onrender.com/api/exchange/update/$livraison_id", false, $context);
-*/
-
-// ===============================
-// ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
-// ===============================
-// Cette route doit être TOUT EN BAS, après toutes les routes API !
-// (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
+/***** JESUS AU DESSUS DE TOUT */
