@@ -44,114 +44,6 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
 });
 
-// ===============================
-// SYSTÈME DE SUIVI DES UTILISATEURS ACTIFS
-// ===============================
-const activeUsers = {};
-
-// Fonction de nettoyage automatique des utilisateurs inactifs (toutes les 3 minutes)
-setInterval(() => {
-  const now = Date.now();
-  const timeoutDuration = 3 * 60 * 1000; // 3 minutes
-
-  Object.keys(activeUsers).forEach((userId) => {
-    if (now - activeUsers[userId].lastSeen > timeoutDuration) {
-      delete activeUsers[userId];
-    }
-  });
-}, 60000); // Vérification toutes les minutes
-
-// Route pour recevoir les heartbeats des utilisateurs
-app.post("/api/active-users/heartbeat", (req, res) => {
-  try {
-    const { page, userId, username, nom } = req.body;
-
-    if (!page || !userId) {
-      return res.status(400).json({ error: "Page et userId requis" });
-    }
-
-    const now = Date.now();
-
-    activeUsers[userId] = {
-      page,
-      username: username || nom || "Utilisateur",
-      nom: nom || username || "Utilisateur",
-      lastSeen: now,
-      connectedAt: activeUsers[userId]?.connectedAt || now,
-    };
-
-    res.json({
-      success: true,
-      message: "Heartbeat reçu",
-      activeCount: Object.keys(activeUsers).length,
-    });
-  } catch (error) {
-    console.error("Erreur heartbeat:", error);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
-
-// Route pour obtenir les statistiques des utilisateurs actifssdjghjs
-app.get("/api/active-users/stats", (req, res) => {
-  try {
-    const now = Date.now();
-    const pageStats = {};
-    let totalConnectedUsers = 0;
-
-    Object.keys(activeUsers).forEach((userId) => {
-      const user = activeUsers[userId];
-      const timeConnected = Math.floor((now - user.connectedAt) / 1000);
-
-      if (!pageStats[user.page]) {
-        pageStats[user.page] = {
-          count: 0,
-          users: [],
-        };
-      }
-
-      pageStats[user.page].count++;
-      pageStats[user.page].users.push({
-        userId: userId,
-        username: user.username,
-        nom: user.nom,
-        timeConnected,
-      });
-
-      totalConnectedUsers++;
-    });
-
-    res.json({
-      totalConnectedUsers,
-      pageStats,
-      timestamp: now,
-    });
-  } catch (error) {
-    console.error("Erreur stats:", error);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
-
-// Route pour déconnecter un utilisateur
-app.post("/api/active-users/disconnect", (req, res) => {
-  try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId requis" });
-    }
-
-    if (activeUsers[userId]) {
-      delete activeUsers[userId];
-      res.json({ success: true, message: "Utilisateur déconnecté" });
-    } else {
-      res.json({ success: false, message: "Utilisateur non trouvé" });
-    }
-  } catch (error) {
-    console.error("Erreur disconnect:", error);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
-
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs"); // Import unique ici
@@ -3157,8 +3049,7 @@ app.get("/deliveries/search", async (req, res) => {
   }
 });
 
-// PATCH GET /deliveries/status - SUPPRIMÉ car dupliqué (utilise le premier endpoint ligne 1955)
-/*
+// PATCH GET /deliveries/status
 app.get("/deliveries/status", async (req, res) => {
   try {
     const query = `
@@ -3259,7 +3150,6 @@ app.get("/deliveries/status", async (req, res) => {
     });
   }
 });
-*/
 
 // PUT deliveries/:id (Mise à jour générale)
 app.put("/deliveries/:id", async (req, res) => {
@@ -5265,4 +5155,3 @@ $result = file_get_contents("https://plateformdesuivie-its-service-1cjx.onrender
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
-/*JESUS EST SEIGNEUR*/
