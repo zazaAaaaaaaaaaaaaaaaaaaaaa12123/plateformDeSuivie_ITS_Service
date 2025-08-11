@@ -30,7 +30,20 @@ const port = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
+// Configuration CORS pour permettre l'accès depuis localhost et le domaine distant
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://plateformdesuivie-its-service-1cjx.onrender.com",
+      "https://plateformdesuivie-its-service.onrender.com",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // ===============================
 // CONFIGURATION DES FICHIERS STATIQUES (HTML, CSS, JS, images...)
