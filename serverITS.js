@@ -4930,7 +4930,7 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
       ) {
         counts.mise_en_livraison++;
         console.log(
-          `[COUNTS] � Dossier mis en livraison: ${delivery.dossier_number}`
+          `[COUNTS]   Dossier mis en livraison: ${delivery.dossier_number}`
         );
       }
       // PRIORITÉ 3: Dossier visible dans resp_acconier (en attente de paiement)
