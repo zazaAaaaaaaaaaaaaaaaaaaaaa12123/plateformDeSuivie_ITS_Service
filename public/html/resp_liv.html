@@ -1151,8 +1151,8 @@
             }
           }
 
-          // Afficher les informations SEULEMENT si on vient du tableau de bord ET qu'on a des infos valides
-          if (fromDashboard === 'true' && targetUser && userInfo && userInfo.redirectTime) {
+          // Afficher les informations SEULEMENT si on vient du tableau de bord (index.html)
+          if (fromDashboard === 'true' && (targetUser || userInfo)) {
             const displayName = userInfo?.userName || targetUser || 'Utilisateur inconnu';
             const displayUserId = userInfo?.userId || userId || 'ID non disponible';
             const pageType = userInfo?.pageType || 'Responsable de Livraison';
