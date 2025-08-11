@@ -3050,7 +3050,7 @@ app.get("/deliveries/search", async (req, res) => {
 });
 
 // SUPPRESSION DE LA ROUTE DUPLIQUÉE - Cette route était en conflit avec la première route /deliveries/status
-// La première route (ligne 1847) est conservée car elle inclut les champs JSON nécessaires
+// La première route (ligne 1847) est conservée car 11elle inclut les champs JSON nécessaires
 // PATCH GET /deliveries/status
 /*
 app.get("/deliveries/status", async (req, res) => {
@@ -5152,123 +5152,6 @@ $result = file_get_contents("https://plateformdesuivie-its-service-1cjx.onrender
 */
 
 // ===============================
-// SYSTÈME DE SUIVI DES UTILISATEURS CONNECTÉS
-// ===============================
-
-// Stockage des utilisateurs actifs en mémoire
-let activeUsers = new Map();
-
-// Nettoyer automatiquement les utilisateurs inactifs (plus de 60 secondes)
-setInterval(() => {
-  const now = Date.now();
-  for (const [userId, user] of activeUsers.entries()) {
-    if (now - user.lastSeen > 60000) {
-      // 60 secondes
-      activeUsers.delete(userId);
-      console.log(
-        `🗑️ [CLEANUP] Utilisateur inactif supprimé: ${
-          user.nom || user.username
-        }`
-      );
-    }
-  }
-}, 30000); // Vérifier toutes les 30 secondes
-
-// Route pour recevoir les heartbeats des utilisateurs
-app.post("/api/active-users/heartbeat", (req, res) => {
-  try {
-    const { page, userId, username, nom } = req.body;
-
-    if (!page || !userId) {
-      return res.status(400).json({
-        success: false,
-        error: "Page et userId requis",
-      });
-    }
-
-    const now = Date.now();
-    const userKey = `${page}:${userId}`;
-
-    // Mettre à jour ou créer l'utilisateur
-    const existingUser = activeUsers.get(userKey);
-    const user = {
-      userId,
-      username: username || nom || "Utilisateur",
-      nom: nom || username || "Utilisateur",
-      page,
-      lastSeen: now,
-      timeConnected: existingUser
-        ? existingUser.timeConnected
-        : Math.floor((now - (existingUser?.firstSeen || now)) / 1000),
-      firstSeen: existingUser?.firstSeen || now,
-    };
-
-    activeUsers.set(userKey, user);
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error("❌ [HEARTBEAT] Erreur:", error);
-    res.status(500).json({ success: false, error: "Erreur serveur" });
-  }
-});
-
-// Route pour obtenir les statistiques des utilisateurs connectés
-app.get("/api/active-users/stats", (req, res) => {
-  try {
-    const now = Date.now();
-    const activeUsersArray = Array.from(activeUsers.values());
-
-    // Filtrer les utilisateurs encore actifs (moins de 60 secondes)
-    const currentlyActive = activeUsersArray.filter((user) => {
-      const timeSinceLastSeen = now - user.lastSeen;
-      return timeSinceLastSeen < 60000; // 60 secondes
-    });
-
-    // Grouper par page
-    const pageStats = {};
-    currentlyActive.forEach((user) => {
-      if (!pageStats[user.page]) {
-        pageStats[user.page] = {
-          count: 0,
-          users: [],
-        };
-      }
-
-      pageStats[user.page].count++;
-      pageStats[user.page].users.push({
-        userId: user.userId,
-        username: user.username,
-        nom: user.nom,
-        timeConnected: Math.floor((now - user.firstSeen) / 1000),
-      });
-    });
-
-    const totalConnectedUsers = currentlyActive.length;
-
-    console.log(
-      `📊 [STATS] ${totalConnectedUsers} utilisateurs connectés:`,
-      pageStats
-    );
-
-    res.json({
-      success: true,
-      totalConnectedUsers,
-      pageStats,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("❌ [STATS] Erreur:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur serveur",
-      totalConnectedUsers: 0,
-      pageStats: {},
-      timestamp: new Date().toISOString(),
-    });
-  }
-});
-
-// ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
 // Cette route doit être TOUT EN BAS, après toutes les routes API !
@@ -5276,4 +5159,3 @@ app.get("/api/active-users/stats", (req, res) => {
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
-/****dnjhk */
