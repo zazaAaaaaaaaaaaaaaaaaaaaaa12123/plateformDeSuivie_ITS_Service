@@ -1639,10 +1639,11 @@
         left: 0;
         bottom: 0;
         width: 100vw;
-        height: 100vh;
-        z-index: 1;
+        height: 0;
+        z-index: -1;
         background: #1666e7;
         pointer-events: none;
+        display: none;
       "
     ></div>
 
@@ -1666,17 +1667,18 @@
 
     <script src="../js/scriptRespAcconier.js"></script>
     <style>
-      /* Fond bleu flottant responsive, occupe le bas du body */
+      /* Fond bleu flottant responsive, désactivé pour éviter de cacher le contenu */
       #floatingBlueBg {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100vw;
-        height: 100vh;
-        z-index: 1;
+        height: 0;
+        z-index: -1;
         background: var(--bg-floating);
         pointer-events: none;
         transition: background-color 0.3s ease;
+        display: none;
       }
       @media (max-width: 900px) {
         #floatingBlueBg {
