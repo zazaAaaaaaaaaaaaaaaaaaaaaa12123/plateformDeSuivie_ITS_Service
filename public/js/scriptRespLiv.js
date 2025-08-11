@@ -658,6 +658,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const isAdminMode = getUrlParameter("mode") === "admin";
         const targetUser =
           getUrlParameter("targetUser") || getUrlParameter("user");
+        const targetUserId = getUrlParameter("userId"); // Récupérer aussi l'userId
 
         // On ne garde que les livraisons dont le statut acconier est 'mise_en_livraison_acconier'
         let filteredDeliveries = data.deliveries.filter((delivery) => {
@@ -668,6 +669,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Filtrage pour le mode admin : ne montrer que les livraisons de l'utilisateur ciblé
         if (isAdminMode && targetUser) {
+          console.log(
+            `🔍 [DEBUG FILTRAGE LIVREUR] Recherche pour l'utilisateur "${targetUser}"`
+          );
+          console.log(
+            `🔍 [DEBUG] Nombre total de livraisons avant filtrage: ${filteredDeliveries.length}`
+          );
+
+          // Afficher quelques exemples de données pour comprendre la structure
+          if (filteredDeliveries.length > 0) {
+            console.log(`🔍 [DEBUG] Exemple de livraison:`, {
+              nom_agent_visiteur: filteredDeliveries[0].nom_agent_visiteur,
+              employee_name: filteredDeliveries[0].employee_name,
+              driver_name: filteredDeliveries[0].driver_name,
+              responsible_livreur: filteredDeliveries[0].responsible_livreur,
+              resp_livreur: filteredDeliveries[0].resp_livreur,
+              assigned_to: filteredDeliveries[0].assigned_to,
+              created_by: filteredDeliveries[0].created_by,
+              updated_by: filteredDeliveries[0].updated_by,
+              transporteur: filteredDeliveries[0].transporteur,
+              inspecteur: filteredDeliveries[0].inspecteur,
+              agent_douanes: filteredDeliveries[0].agent_douanes,
+              chauffeur: filteredDeliveries[0].chauffeur,
+            });
+          }
+
           filteredDeliveries = filteredDeliveries.filter((delivery) => {
             // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
             // Pour les responsables de livraison, vérifier principalement les champs liés aux livreurs
@@ -680,17 +706,67 @@ document.addEventListener("DOMContentLoaded", function () {
               delivery.assigned_to, // Assigné à
               delivery.created_by, // Créé par
               delivery.updated_by, // Mis à jour par
+              // Ajouter plus de champs possibles
+              delivery.transporteur,
+              delivery.inspecteur,
+              delivery.agent_douanes,
+              delivery.chauffeur,
+              delivery.responsible_acconier,
+              delivery.resp_acconier,
             ];
 
-            return userFields.some(
+            const found = userFields.some(
               (field) =>
                 field && field.toLowerCase().includes(targetUser.toLowerCase())
             );
+
+            // Aussi chercher par userId si disponible
+            const foundByUserId =
+              targetUserId &&
+              userFields.some(
+                (field) =>
+                  field &&
+                  field.toLowerCase().includes(targetUserId.toLowerCase())
+              );
+
+            const finalFound = found || foundByUserId;
+
+            if (finalFound) {
+              console.log(
+                `✅ [DEBUG LIVREUR] Livraison trouvée pour ${targetUser}:`,
+                delivery.id,
+                userFields.filter(
+                  (f) =>
+                    f &&
+                    (f.toLowerCase().includes(targetUser.toLowerCase()) ||
+                      (targetUserId &&
+                        f.toLowerCase().includes(targetUserId.toLowerCase())))
+                )
+              );
+            }
+
+            return finalFound;
           });
 
           console.log(
             `[MODE ADMIN LIVREUR] Filtrage pour l'utilisateur "${targetUser}": ${filteredDeliveries.length} livraisons trouvées`
           );
+
+          // Si aucune livraison trouvée, afficher toutes les livraisons pour debug
+          if (filteredDeliveries.length === 0) {
+            console.log(
+              `⚠️ [DEBUG LIVREUR] Aucune livraison trouvée pour "${targetUser}". Affichage de toutes les livraisons pour debug.`
+            );
+            // Recharger toutes les livraisons sans filtre de statut pour voir si des données existent
+            const response = await fetch("/deliveries/status");
+            const data = await response.json();
+            if (data.success && Array.isArray(data.deliveries)) {
+              filteredDeliveries = data.deliveries; // Afficher toutes les livraisons sans filtre
+              console.log(
+                `📊 [DEBUG] Nombre total de livraisons dans la DB: ${filteredDeliveries.length}`
+              );
+            }
+          }
         }
 
         window.allDeliveries = filteredDeliveries;

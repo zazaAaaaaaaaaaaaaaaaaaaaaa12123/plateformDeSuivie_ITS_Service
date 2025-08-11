@@ -1070,6 +1070,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const isAdminMode = getUrlParameter("mode") === "admin";
         const targetUser =
           getUrlParameter("targetUser") || getUrlParameter("user");
+        const targetUserId = getUrlParameter("userId"); // Récupérer aussi l'userId
 
         let processedDeliveries = data.deliveries.map((delivery) => {
           // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
@@ -1134,6 +1135,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Filtrage pour le mode admin : ne montrer que les livraisons de l'utilisateur ciblé
         if (isAdminMode && targetUser) {
+          console.log(
+            `🔍 [DEBUG FILTRAGE] Recherche pour l'utilisateur "${targetUser}"`
+          );
+          console.log(
+            `🔍 [DEBUG] Nombre total de livraisons avant filtrage: ${processedDeliveries.length}`
+          );
+
+          // Afficher quelques exemples de données pour comprendre la structure
+          if (processedDeliveries.length > 0) {
+            console.log(`🔍 [DEBUG] Exemple de livraison:`, {
+              responsible_acconier: processedDeliveries[0].responsible_acconier,
+              resp_acconier: processedDeliveries[0].resp_acconier,
+              responsible_livreur: processedDeliveries[0].responsible_livreur,
+              resp_livreur: processedDeliveries[0].resp_livreur,
+              assigned_to: processedDeliveries[0].assigned_to,
+              created_by: processedDeliveries[0].created_by,
+              updated_by: processedDeliveries[0].updated_by,
+              nom_agent_visiteur: processedDeliveries[0].nom_agent_visiteur,
+              employee_name: processedDeliveries[0].employee_name,
+              driver_name: processedDeliveries[0].driver_name,
+            });
+          }
+
           processedDeliveries = processedDeliveries.filter((delivery) => {
             // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
             const userFields = [
@@ -1144,17 +1168,60 @@ document.addEventListener("DOMContentLoaded", function () {
               delivery.assigned_to,
               delivery.created_by,
               delivery.updated_by,
+              // Ajouter plus de champs possibles
+              delivery.nom_agent_visiteur,
+              delivery.employee_name,
+              delivery.driver_name,
+              delivery.transporteur,
+              delivery.inspecteur,
+              delivery.agent_douanes,
+              delivery.chauffeur,
             ];
 
-            return userFields.some(
+            const found = userFields.some(
               (field) =>
                 field && field.toLowerCase().includes(targetUser.toLowerCase())
             );
+
+            // Aussi chercher par userId si disponible
+            const foundByUserId =
+              targetUserId &&
+              userFields.some(
+                (field) =>
+                  field &&
+                  field.toLowerCase().includes(targetUserId.toLowerCase())
+              );
+
+            const finalFound = found || foundByUserId;
+
+            if (finalFound) {
+              console.log(
+                `✅ [DEBUG] Livraison trouvée pour ${targetUser}:`,
+                delivery.id,
+                userFields.filter(
+                  (f) =>
+                    f &&
+                    (f.toLowerCase().includes(targetUser.toLowerCase()) ||
+                      (targetUserId &&
+                        f.toLowerCase().includes(targetUserId.toLowerCase())))
+                )
+              );
+            }
+
+            return finalFound;
           });
 
           console.log(
             `[MODE ADMIN] Filtrage pour l'utilisateur "${targetUser}": ${processedDeliveries.length} livraisons trouvées`
           );
+
+          // Si aucune livraison trouvée, afficher toutes les livraisons pour debug
+          if (processedDeliveries.length === 0) {
+            console.log(
+              `⚠️ [DEBUG] Aucune livraison trouvée pour "${targetUser}". Affichage de toutes les livraisons pour debug.`
+            );
+            processedDeliveries = allDeliveries || []; // Afficher toutes les livraisons
+          }
         }
 
         allDeliveries = processedDeliveries;
