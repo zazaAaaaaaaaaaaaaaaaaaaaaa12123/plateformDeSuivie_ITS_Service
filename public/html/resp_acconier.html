@@ -1966,6 +1966,7 @@
           const fromDashboard = urlParams.get("fromDashboard");
           const targetUser = urlParams.get("targetUser");
           const userId = urlParams.get("userId");
+          const adminMode = urlParams.get("mode");
 
           // Vérifier localStorage
           const targetUserInfo = localStorage.getItem("targetUserInfo");
@@ -1984,13 +1985,16 @@
             }
           }
 
-          // Afficher les informations SEULEMENT si on vient du tableau de bord (index.html)
-          if (fromDashboard === "true" && (targetUser || userInfo)) {
+          // Afficher les informations si on vient du tableau de bord OU si on est en mode admin
+          if ((fromDashboard === "true" || adminMode === "admin") && (targetUser || userInfo)) {
             const displayName =
               userInfo?.userName || targetUser || "Utilisateur inconnu";
             const displayUserId =
               userInfo?.userId || userId || "ID non disponible";
             const pageType = userInfo?.pageType || "Responsable Acconier";
+            
+            // Message différent selon le mode
+            const modeText = adminMode === "admin" ? "👑 Mode Admin" : "📋";
 
             detailsDiv.innerHTML = `
               <span><strong>Page de l'utilisateur connecté</strong></span>
@@ -1999,7 +2003,7 @@
               <span style="color: #1976d2;">•</span>
               <span><strong>🆔</strong> ${displayUserId}</span>
               <span style="color: #1976d2;">•</span>
-              <span><strong>📋</strong> ${pageType}</span>
+              <span><strong>${modeText}</strong> ${pageType}</span>
             `;
 
             banner.style.display = "flex";

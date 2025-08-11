@@ -5533,7 +5533,7 @@
               : "Responsable Livraison";
           const confirmed = confirm(
             `Voulez-vous aller à la page de ${userName} (${pageType}) ?\n\n` +
-              `Vous allez être redirigé vers la page correspondante.`
+              `Vous allez être redirigé vers la page correspondante en mode admin.`
           );
 
           if (confirmed) {
@@ -5551,15 +5551,29 @@
               JSON.stringify(targetUserInfo)
             );
 
+            // Déterminer l'URL complète avec le domaine Render et le mode admin
+            const baseUrl =
+              "https://plateformdesuivie-its-service-1cjx.onrender.com";
+            const fullPageUrl =
+              pageName === "resp_acconier.html"
+                ? `${baseUrl}/html/resp_acconier.html`
+                : `${baseUrl}/html/resp_liv.html`;
+
             // Créer une URL avec les paramètres pour plus de clarté
             const urlParams = new URLSearchParams({
+              mode: "admin",
               fromDashboard: "true",
               targetUser: userName,
               userId: userId || "",
               timestamp: Date.now(),
             });
 
-            const finalUrl = `${pageUrl}?${urlParams.toString()}`;
+            const finalUrl = `${fullPageUrl}?${urlParams.toString()}`;
+
+            console.log(`🎯 [ADMIN REDIRECT] Redirection vers: ${finalUrl}`);
+            console.log(
+              `👤 [ADMIN REDIRECT] Utilisateur ciblé: ${userName} (${pageType})`
+            );
 
             // Redirection dans la même fenêtre pour assurer la transmission des paramètres
             window.location.href = finalUrl;
