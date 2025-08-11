@@ -91,7 +91,7 @@ app.post("/api/active-users/heartbeat", (req, res) => {
   }
 });
 
-// Route pour obtenir les statistiques des utilisateurs actifs
+// Route pour obtenir les statistiques des utilisateurs actifssdjghjs
 app.get("/api/active-users/stats", (req, res) => {
   try {
     const now = Date.now();
