@@ -83,30 +83,6 @@ async function initializeJsonColumns() {
 
 // Initialiser les colonnes au démarrage
 initializeJsonColumns();
-
-// === SYSTÈME DE TRACKING DES UTILISATEURS CONNECTÉS ===
-let activeUsers = {}; // Structure: { 'page.html': { 'userId': { username, nom, lastSeen } } }
-
-// Nettoyage automatique des utilisateurs inactifs (plus de 3 minutes)
-const INACTIVE_TIMEOUT = 3 * 60 * 1000; // 3 minutes en millisecondes
-setInterval(() => {
-  const now = Date.now();
-  Object.keys(activeUsers).forEach((page) => {
-    Object.keys(activeUsers[page]).forEach((userId) => {
-      if (now - activeUsers[page][userId].lastSeen > INACTIVE_TIMEOUT) {
-        delete activeUsers[page][userId];
-        console.log(
-          `🧹 [CLEANUP] Utilisateur inactif supprimé: ${userId} de ${page}`
-        );
-      }
-    });
-    // Supprimer la page si elle n'a plus d'utilisateurs
-    if (Object.keys(activeUsers[page]).length === 0) {
-      delete activeUsers[page];
-    }
-  });
-}, 60000); // Nettoyage toutes les minutes
-
 // --- WebSocket Server pour notifications temps réel ---
 const wss = new WebSocket.Server({ server });
 let wsClients = [];
@@ -1071,7 +1047,6 @@ app.post("/acconier/login", async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Connexion réussie.",
-      id: user.id,
       nom: user.nom,
       email: user.email,
     });
@@ -2287,7 +2262,6 @@ app.post("/api/login", async (req, res) => {
     console.log("[LOGIN][API] Connexion réussie pour:", email);
     return res.status(200).json({
       success: true,
-      id: user.id,
       nom: user.name, // renvoie le nom sous la clé 'nom' pour compatibilité frontend
       email: user.email,
     });
@@ -5122,133 +5096,6 @@ app.get("/api/deliveries/:id", async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Erreur serveur lors de la récupération des données",
-      code: 500,
-    });
-  }
-});
-
-// GET /api/active-users - Récupère les utilisateurs actifs sur une page spécifique
-app.get("/api/active-users", async (req, res) => {
-  try {
-    const page = req.query.page;
-
-    if (!page) {
-      return res.status(400).json({
-        success: false,
-        error:
-          "Paramètre 'page' requis (ex: resp_acconier.html ou resp_liv.html)",
-        code: 400,
-      });
-    }
-
-    // Vérifier si la page est trackée
-    if (!activeUsers[page]) {
-      return res.json({
-        success: true,
-        users: [],
-        count: 0,
-        page: page,
-      });
-    }
-
-    // Convertir l'objet des utilisateurs actifs en tableau
-    const users = Object.values(activeUsers[page]).map((user) => ({
-      username: user.username,
-      nom: user.nom,
-      lastSeen: user.lastSeen,
-      timeConnected: Math.floor((Date.now() - user.lastSeen) / 1000), // en secondes
-    }));
-
-    res.json({
-      success: true,
-      users: users,
-      count: users.length,
-      page: page,
-    });
-  } catch (error) {
-    console.error(
-      "Erreur lors de la récupération des utilisateurs actifs:",
-      error
-    );
-    res.status(500).json({
-      success: false,
-      error: "Erreur serveur lors de la récupération des utilisateurs actifs",
-      code: 500,
-    });
-  }
-});
-
-// POST /api/active-users/heartbeat - Permet aux pages de signaler la présence d'un utilisateur
-app.post("/api/active-users/heartbeat", async (req, res) => {
-  try {
-    const { page, userId, username, nom } = req.body;
-
-    if (!page || !userId) {
-      return res.status(400).json({
-        success: false,
-        error: "Paramètres 'page' et 'userId' requis",
-        code: 400,
-      });
-    }
-
-    // Initialiser la page si elle n'existe pas
-    if (!activeUsers[page]) {
-      activeUsers[page] = {};
-    }
-
-    // Mettre à jour ou ajouter l'utilisateur
-    activeUsers[page][userId] = {
-      username: username || userId,
-      nom: nom || username || userId,
-      lastSeen: Date.now(),
-    };
-
-    res.json({
-      success: true,
-      message: "Heartbeat enregistré",
-      activeCount: Object.keys(activeUsers[page]).length,
-    });
-  } catch (error) {
-    console.error("Erreur lors de l'enregistrement du heartbeat:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur serveur lors de l'enregistrement du heartbeat",
-      code: 500,
-    });
-  }
-});
-
-// GET /api/active-users/stats - Récupère le nombre total d'utilisateurs connectés par page
-app.get("/api/active-users/stats", async (req, res) => {
-  try {
-    const stats = {};
-    let totalUsers = 0;
-
-    Object.keys(activeUsers).forEach((page) => {
-      const userCount = Object.keys(activeUsers[page]).length;
-      stats[page] = {
-        count: userCount,
-        users: Object.values(activeUsers[page]).map((user) => ({
-          username: user.username,
-          nom: user.nom,
-          lastSeen: user.lastSeen,
-          timeConnected: Math.floor((Date.now() - user.lastSeen) / 1000),
-        })),
-      };
-      totalUsers += userCount;
-    });
-
-    res.json({
-      success: true,
-      totalConnectedUsers: totalUsers,
-      pageStats: stats,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Erreur lors de la récupération des statistiques:", error);
-    res.status(500).json({
-      success: false,
-      error: "Erreur serveur lors de la récupération des statistiques",
       code: 500,
     });
   }
