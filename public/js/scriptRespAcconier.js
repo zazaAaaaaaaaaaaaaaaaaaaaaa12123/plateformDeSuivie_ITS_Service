@@ -614,17 +614,22 @@ document.addEventListener("DOMContentLoaded", function () {
         updateTableForDateRange(dateStartInput.value, dateEndInput.value);
         return;
       }
-      // Filtrer sur N° Dossier ou N° BL
+      // Filtrer sur N° Dossier, N° BL ou Nom du navire
       let deliveriesSource = window.allDeliveries || [];
       let filtered = deliveriesSource.filter((delivery) => {
         let dossier = String(delivery.dossier_number || "").toLowerCase();
+        let shipName = String(delivery.ship_name || "").toLowerCase();
         let bls = [];
         if (Array.isArray(delivery.bl_number)) {
           bls = delivery.bl_number.map((b) => String(b).toLowerCase());
         } else if (typeof delivery.bl_number === "string") {
           bls = delivery.bl_number.split(/[,;\s]+/).map((b) => b.toLowerCase());
         }
-        return dossier.includes(query) || bls.some((b) => b.includes(query));
+        return (
+          dossier.includes(query) ||
+          bls.some((b) => b.includes(query)) ||
+          shipName.includes(query)
+        );
       });
       // Tri du plus ancien au plus récent
       filtered.sort((a, b) => {
@@ -1362,6 +1367,7 @@ const EDITABLE_COLUMNS = [
   "client_name",
   "client_phone",
   "lieu",
+  "container_number",
   "container_foot_type",
   "container_type_and_content",
   "declaration_number",
