@@ -2,11 +2,7 @@ const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
 const { Pool } = require("pg");
-const cors = require("cors");
-const path = require("path");
-const WebSocket = require("ws");
 const app = express();
-const port = 3000;
 // Redirection automatique vers le domaine -1cjx si on accède au domaine principal
 app.use((req, res, next) => {
   if (
@@ -24,24 +20,17 @@ app.use((req, res, next) => {
   next();
 });
 
+const cors = require("cors");
+const path = require("path");
+const WebSocket = require("ws");
+// const bcrypt = require("bcryptjs"); // SUPPRIMÉ doublon, voir plus bas
+const port = 3000;
+
 // Middleware pour parser les requêtes JSON et URL-encodées
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuration CORS pour permettre l'accès depuis localhost et le domaine distant
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-      "https://plateformdesuivie-its-service-1cjx.onrender.com",
-      "https://plateformdesuivie-its-service.onrender.com",
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
 
 // ===============================
 // CONFIGURATION DES FICHIERS STATIQUES (HTML, CSS, JS, images...)
@@ -97,24 +86,6 @@ initializeJsonColumns();
 // --- WebSocket Server pour notifications temps réel ---
 const wss = new WebSocket.Server({ server });
 let wsClients = [];
-
-// ===============================
-// SYSTÈME DE SUIVI DES UTILISATEURS ACTIFS
-// ===============================
-let activeUsers = {};
-
-// Nettoyage automatique des utilisateurs inactifs (toutes les 30 secondes)
-setInterval(() => {
-  const now = Date.now();
-  const timeoutMs = 3 * 60 * 1000; // 3 minutes timeout
-
-  Object.keys(activeUsers).forEach((userId) => {
-    if (now - activeUsers[userId].lastSeen > timeoutMs) {
-      delete activeUsers[userId];
-    }
-  });
-}, 30000);
-
 wss.on("connection", (ws) => {
   wsClients.push(ws);
 
@@ -178,85 +149,6 @@ app.patch("/deliveries/:id/observation", async (req, res) => {
     console.error("Erreur lors de la mise à jour de l'observation:", err);
     res.status(500).json({ success: false, message: "Erreur serveur." });
   }
-});
-
-// ===============================
-// ROUTES API POUR LE SUIVI DES UTILISATEURS ACTIFS
-// ===============================
-
-// ROUTE : Heartbeat pour maintenir la session active
-app.post("/api/active-users/heartbeat", (req, res) => {
-  const { page, userId, username, nom } = req.body;
-
-  if (!page || !userId) {
-    return res.status(400).json({
-      success: false,
-      message: "Paramètres manquants: page et userId requis",
-    });
-  }
-
-  // Mise à jour de l'utilisateur actif
-  activeUsers[userId] = {
-    page,
-    username: username || "Utilisateur",
-    nom: nom || username || "Utilisateur",
-    lastSeen: Date.now(),
-    timeConnected: activeUsers[userId]
-      ? Math.floor((Date.now() - activeUsers[userId].firstConnection) / 1000)
-      : 0,
-    firstConnection: activeUsers[userId]?.firstConnection || Date.now(),
-  };
-
-  // Calculer le temps de connexion
-  activeUsers[userId].timeConnected = Math.floor(
-    (Date.now() - activeUsers[userId].firstConnection) / 1000
-  );
-
-  res.json({ success: true, message: "Heartbeat enregistré" });
-});
-
-// ROUTE : Statistiques des utilisateurs actifs
-app.get("/api/active-users/stats", (req, res) => {
-  const now = Date.now();
-  const stats = {
-    totalConnectedUsers: 0,
-    pageStats: {
-      "resp_acconier.html": { count: 0, users: [] },
-      "resp_liv.html": { count: 0, users: [] },
-    },
-  };
-
-  // Grouper les utilisateurs par page
-  Object.keys(activeUsers).forEach((userId) => {
-    const user = activeUsers[userId];
-    if (user.page && stats.pageStats[user.page]) {
-      stats.pageStats[user.page].count++;
-      stats.pageStats[user.page].users.push({
-        userId,
-        username: user.username,
-        nom: user.nom,
-        timeConnected: user.timeConnected,
-      });
-      stats.totalConnectedUsers++;
-    }
-  });
-
-  res.json(stats);
-});
-
-// ROUTE : Déconnexion d'un utilisateur
-app.post("/api/active-users/disconnect", (req, res) => {
-  const { userId } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({
-      success: false,
-      message: "Paramètre manquant: userId",
-    });
-  }
-
-  delete activeUsers[userId];
-  res.json({ success: true, message: "Utilisateur déconnecté" });
 });
 
 // ===============================

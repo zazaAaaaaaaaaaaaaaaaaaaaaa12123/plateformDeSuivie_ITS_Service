@@ -5477,7 +5477,8 @@
           return `${hours}h ${minutes % 60}m`;
         }
 
-        function toggleUsersDetails() {
+        // Fonction accessible globalement pour le toggle
+        window.toggleUsersDetails = function () {
           const section = document.getElementById("detailedUsersSection");
           const list = document.getElementById("usersDetailsList");
           if (list.style.display === "none") {
@@ -5487,7 +5488,7 @@
             list.style.display = "none";
             section.style.maxHeight = "40px";
           }
-        }
+        };
 
         // Fonction de test pour simuler des utilisateurs connectés (à supprimer en production)
         window.testActiveUsers = function () {
