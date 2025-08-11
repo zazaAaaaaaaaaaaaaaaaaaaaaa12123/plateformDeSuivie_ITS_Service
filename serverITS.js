@@ -159,6 +159,24 @@ app.post("/api/active-users/track", (req, res) => {
   res.json({ success: true, totalActive: Object.keys(activeUsers).length });
 });
 
+// Route alternative pour heartbeat (utilisée par les pages)
+app.post("/api/active-users/heartbeat", (req, res) => {
+  const { page, userId, username, nom } = req.body;
+
+  if (!userId || !page) {
+    return res.status(400).json({ error: "userId et page requis" });
+  }
+
+  activeUsers[userId] = {
+    currentPage: page,
+    username: username || "Utilisateur",
+    nom: nom || username || "Utilisateur",
+    lastActivity: Date.now(),
+  };
+
+  res.json({ success: true, totalActive: Object.keys(activeUsers).length });
+});
+
 // Route pour obtenir les statistiques des utilisateurs actifs
 app.get("/api/active-users/stats", (req, res) => {
   cleanupInactiveUsers(); // Nettoyer avant de retourner les stats
