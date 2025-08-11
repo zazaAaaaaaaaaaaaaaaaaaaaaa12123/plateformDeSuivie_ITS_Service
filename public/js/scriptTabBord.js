@@ -13,10 +13,9 @@
   }
 })();
 
-// === ANIMATION D'ENTREPRISE PROFESSIONNELLE - PRIORITÉ ABSOLUE ===
-(function initEnterpriseAnimationImmediate() {
-  // Initialiser immédiatement sans attendre le DOM
-  function showEnterpriseAnimation() {
+// === ANIMATION D'ENTREPRISE PROFESSIONNELLE - VERSION SOBRE ===
+(function initProfessionalEnterpriseAnimation() {
+  function showProfessionalAnimation() {
     const enterpriseIntro = document.getElementById("enterpriseIntro");
     const mainLayout = document.querySelector(".layout");
 
@@ -32,7 +31,7 @@
       enterpriseIntro.style.opacity = "1";
       enterpriseIntro.style.visibility = "visible";
 
-      // Supprimer l'animation et afficher le contenu principal après sa fin
+      // Animation sobre et professionnelle
       setTimeout(() => {
         if (enterpriseIntro) {
           enterpriseIntro.style.animation =
@@ -45,15 +44,15 @@
             // Afficher le contenu principal avec une transition douce
             if (mainLayout) {
               mainLayout.style.transition =
-                "opacity 0.5s ease-in-out, visibility 0.5s ease-in-out";
+                "opacity 0.8s ease-in-out, visibility 0.8s ease-in-out";
               mainLayout.style.opacity = "1";
               mainLayout.style.visibility = "visible";
             }
           }, 1000);
         }
-      }, 5000);
+      }, 4500); // Durée totale réduite pour plus de professionnalisme
 
-      // Effet de typed.js pour le titre
+      // Effet de typing sobre pour le titre
       setTimeout(() => {
         const title = document.querySelector(".enterprise-title");
         if (title) {
@@ -67,7 +66,7 @@
             if (i >= originalText.length) {
               clearInterval(typeInterval);
             }
-          }, 50);
+          }, 80); // Plus lent pour plus de professionnalisme
         }
       }, 1200);
 
@@ -85,21 +84,21 @@
             if (i >= originalText.length) {
               clearInterval(typeInterval);
             }
-          }, 30);
+          }, 60); // Plus lent et plus sobre
         }
-      }, 2000);
+      }, 2200);
     }
   }
 
   // Essayer immédiatement
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", showEnterpriseAnimation);
+    document.addEventListener("DOMContentLoaded", showProfessionalAnimation);
   } else {
-    showEnterpriseAnimation();
+    showProfessionalAnimation();
   }
 
   // Également essayer après un court délai pour être sûr
-  setTimeout(showEnterpriseAnimation, 100);
+  setTimeout(showProfessionalAnimation, 100);
 })();
 
 // Redirection automatique vers le tableau de bord après connexion réussie
