@@ -1845,78 +1845,77 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           };
         }
       } else if (col.id === "container_number") {
-        // En mode édition, utiliser un input texte simple
-        if (isTableEditMode && EDITABLE_COLUMNS.includes(col.id)) {
-          td.onclick = () => {
-            if (!isTableEditMode) return;
+        // TOUJOURS ajouter le gestionnaire onclick pour permettre l'édition
+        td.onclick = () => {
+          // Vérifier si on est en mode édition ET que la colonne est éditable
+          if (!isTableEditMode || !EDITABLE_COLUMNS.includes(col.id)) return;
 
-            let currentValue = "";
-            // Récupérer la valeur actuelle depuis les données
-            if (delivery.container_numbers_list) {
-              try {
-                let tcList = [];
-                if (typeof delivery.container_numbers_list === "string") {
-                  tcList = JSON.parse(delivery.container_numbers_list);
-                } else if (Array.isArray(delivery.container_numbers_list)) {
-                  tcList = delivery.container_numbers_list;
-                }
-                currentValue = tcList.filter(Boolean).join(", ");
-              } catch (e) {
-                currentValue = delivery.container_number || "";
+          let currentValue = "";
+          // Récupérer la valeur actuelle depuis les données
+          if (delivery.container_numbers_list) {
+            try {
+              let tcList = [];
+              if (typeof delivery.container_numbers_list === "string") {
+                tcList = JSON.parse(delivery.container_numbers_list);
+              } else if (Array.isArray(delivery.container_numbers_list)) {
+                tcList = delivery.container_numbers_list;
               }
-            } else if (Array.isArray(delivery.container_number)) {
-              currentValue = delivery.container_number
-                .filter(Boolean)
-                .join(", ");
-            } else if (typeof delivery.container_number === "string") {
-              currentValue = delivery.container_number;
+              currentValue = tcList.filter(Boolean).join(", ");
+            } catch (e) {
+              currentValue = delivery.container_number || "";
             }
+          } else if (Array.isArray(delivery.container_number)) {
+            currentValue = delivery.container_number
+              .filter(Boolean)
+              .join(", ");
+          } else if (typeof delivery.container_number === "string") {
+            currentValue = delivery.container_number;
+          }
 
-            const input = document.createElement("input");
-            input.type = "text";
-            input.value = currentValue;
-            input.style.width = "100%";
-            input.style.border = "2px solid #2563eb";
-            input.style.borderRadius = "4px";
-            input.style.padding = "6px 8px";
-            input.style.fontSize = "0.9rem";
-            input.style.fontFamily = "inherit";
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = currentValue;
+          input.style.width = "100%";
+          input.style.border = "2px solid #2563eb";
+          input.style.borderRadius = "4px";
+          input.style.padding = "6px 8px";
+          input.style.fontSize = "0.9rem";
+          input.style.fontFamily = "inherit";
 
-            const isDark =
-              document.documentElement.getAttribute("data-theme") === "dark";
-            input.style.backgroundColor = isDark ? "#232f43" : "#fff";
-            input.style.color = isDark ? "#fff" : "#222";
+          const isDark =
+            document.documentElement.getAttribute("data-theme") === "dark";
+          input.style.backgroundColor = isDark ? "#232f43" : "#fff";
+          input.style.color = isDark ? "#fff" : "#222";
 
-            td.textContent = "";
-            td.appendChild(input);
+          td.textContent = "";
+          td.appendChild(input);
 
-            const saveEdit = () => {
-              const newValue = input.value.trim();
-              if (!editedCellsData[delivery.id]) {
-                editedCellsData[delivery.id] = {};
-              }
-              editedCellsData[delivery.id][col.id] = newValue;
-              td.textContent = newValue || "-";
-            };
-
-            input.addEventListener("blur", saveEdit);
-            input.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                saveEdit();
-              } else if (e.key === "Escape") {
-                td.textContent = currentValue || "-";
-              }
-            });
-
-            input.focus();
-            if (input.setSelectionRange) {
-              input.setSelectionRange(0, input.value.length);
+          const saveEdit = () => {
+            const newValue = input.value.trim();
+            if (!editedCellsData[delivery.id]) {
+              editedCellsData[delivery.id] = {};
             }
+            editedCellsData[delivery.id][col.id] = newValue;
+            td.textContent = newValue || "-";
           };
-        }
 
-        // Rendu normal (non-édition) : logique existante avec badge/tag et menu déroulant statut
+          input.addEventListener("blur", saveEdit);
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              saveEdit();
+            } else if (e.key === "Escape") {
+              td.textContent = currentValue || "-";
+            }
+          });
+
+          input.focus();
+          if (input.setSelectionRange) {
+            input.setSelectionRange(0, input.value.length);
+          }
+        };
+
+        // Rendu normal : logique existante avec badge/tag et menu déroulant statut
         let tcList = [];
 
         // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
@@ -2012,62 +2011,61 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "-";
         }
       } else if (col.id === "bl_number") {
-        // En mode édition, utiliser un input texte simple
-        if (isTableEditMode && EDITABLE_COLUMNS.includes(col.id)) {
-          td.onclick = () => {
-            if (!isTableEditMode) return;
+        // TOUJOURS ajouter le gestionnaire onclick pour permettre l'édition
+        td.onclick = () => {
+          // Vérifier si on est en mode édition ET que la colonne est éditable
+          if (!isTableEditMode || !EDITABLE_COLUMNS.includes(col.id)) return;
 
-            let currentValue = "";
-            // Récupérer la valeur actuelle depuis les données
-            if (Array.isArray(delivery.bl_number)) {
-              currentValue = delivery.bl_number.filter(Boolean).join(", ");
-            } else if (typeof delivery.bl_number === "string") {
-              currentValue = delivery.bl_number;
+          let currentValue = "";
+          // Récupérer la valeur actuelle depuis les données
+          if (Array.isArray(delivery.bl_number)) {
+            currentValue = delivery.bl_number.filter(Boolean).join(", ");
+          } else if (typeof delivery.bl_number === "string") {
+            currentValue = delivery.bl_number;
+          }
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = currentValue;
+          input.style.width = "100%";
+          input.style.border = "2px solid #2563eb";
+          input.style.borderRadius = "4px";
+          input.style.padding = "6px 8px";
+          input.style.fontSize = "0.9rem";
+          input.style.fontFamily = "inherit";
+
+          const isDark =
+            document.documentElement.getAttribute("data-theme") === "dark";
+          input.style.backgroundColor = isDark ? "#232f43" : "#fff";
+          input.style.color = isDark ? "#fff" : "#222";
+
+          td.textContent = "";
+          td.appendChild(input);
+
+          const saveEdit = () => {
+            const newValue = input.value.trim();
+            if (!editedCellsData[delivery.id]) {
+              editedCellsData[delivery.id] = {};
             }
-
-            const input = document.createElement("input");
-            input.type = "text";
-            input.value = currentValue;
-            input.style.width = "100%";
-            input.style.border = "2px solid #2563eb";
-            input.style.borderRadius = "4px";
-            input.style.padding = "6px 8px";
-            input.style.fontSize = "0.9rem";
-            input.style.fontFamily = "inherit";
-
-            const isDark =
-              document.documentElement.getAttribute("data-theme") === "dark";
-            input.style.backgroundColor = isDark ? "#232f43" : "#fff";
-            input.style.color = isDark ? "#fff" : "#222";
-
-            td.textContent = "";
-            td.appendChild(input);
-
-            const saveEdit = () => {
-              const newValue = input.value.trim();
-              if (!editedCellsData[delivery.id]) {
-                editedCellsData[delivery.id] = {};
-              }
-              editedCellsData[delivery.id][col.id] = newValue;
-              td.textContent = newValue || "-";
-            };
-
-            input.addEventListener("blur", saveEdit);
-            input.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                saveEdit();
-              } else if (e.key === "Escape") {
-                td.textContent = currentValue || "-";
-              }
-            });
-
-            input.focus();
-            if (input.setSelectionRange) {
-              input.setSelectionRange(0, input.value.length);
-            }
+            editedCellsData[delivery.id][col.id] = newValue;
+            td.textContent = newValue || "-";
           };
-        }
+
+          input.addEventListener("blur", saveEdit);
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              saveEdit();
+            } else if (e.key === "Escape") {
+              td.textContent = currentValue || "-";
+            }
+          });
+
+          input.focus();
+          if (input.setSelectionRange) {
+            input.setSelectionRange(0, input.value.length);
+          }
+        };
 
         // Rendu normal (non-édition) : logique existante avec badge/tag et menu déroulant popup
         let blList = [];
