@@ -1711,7 +1711,7 @@
         <div
           id="sidebarUserProfile"
           style="
-            margin-top: 16px;
+            margin-top: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -2704,6 +2704,31 @@
         </div>
 
         <script>
+          // === CONFIGURATION API GLOBALE ===
+          // Configuration de l'URL de l'API pour les environnements local et distant
+          window.API_BASE_URL = (function () {
+            const isLocal = ["localhost", "127.0.0.1"].includes(
+              window.location.hostname
+            );
+
+            // Option 1: Mode local - utilise le serveur local
+            if (isLocal) {
+              return "http://localhost:3000";
+            }
+
+            // Option 2: Mode distant - utilise le serveur Render
+            // Mode production : essaie d'abord le serveur actuel, puis le serveur distant
+            return window.location.origin ===
+              "https://plateformdesuivie-its-service-1cjx.onrender.com"
+              ? window.location.origin
+              : "https://plateformdesuivie-its-service-1cjx.onrender.com";
+          })();
+
+          console.log(
+            "🔗 [API CONFIG] URL de base de l'API:",
+            window.API_BASE_URL
+          );
+
           // Message de bienvenue animé (typewriter)
           document.addEventListener("DOMContentLoaded", function () {
             // === MARQUER LA SESSION ADMIN POUR LES REDIRECTIONS ===
@@ -5419,6 +5444,99 @@
         console.log(
           "🧪 [TEST] Utilisez window.testActiveUsers() pour tester les indicateurs"
         );
+        console.log(
+          "🔍 [DIAGNOSTIC] Utilisez window.diagnosisConnectedUsers() pour diagnostiquer les problèmes"
+        );
+
+        // === FONCTION DE DIAGNOSTIC AVANCÉE ===
+        window.diagnosisConnectedUsers = async function () {
+          console.log(
+            "🔍 [DIAGNOSTIC] Début du diagnostic des utilisateurs connectés..."
+          );
+
+          const localUrl = "http://localhost:3000";
+          const remoteUrl =
+            "https://plateformdesuivie-its-service-1cjx.onrender.com";
+
+          console.log(
+            "📍 [DIAGNOSTIC] URL de l'API actuelle:",
+            window.API_BASE_URL
+          );
+
+          // Test du serveur local
+          try {
+            console.log("🔄 [DIAGNOSTIC] Test du serveur local...");
+            const localResponse = await fetch(
+              `${localUrl}/api/active-users/stats`
+            );
+            const localData = await localResponse.json();
+            console.log("✅ [DIAGNOSTIC] Serveur local - Réponse:", localData);
+          } catch (error) {
+            console.warn(
+              "⚠️ [DIAGNOSTIC] Serveur local - Erreur:",
+              error.message
+            );
+          }
+
+          // Test du serveur distant
+          try {
+            console.log("🔄 [DIAGNOSTIC] Test du serveur distant...");
+            const remoteResponse = await fetch(
+              `${remoteUrl}/api/active-users/stats`
+            );
+            const remoteData = await remoteResponse.json();
+            console.log(
+              "✅ [DIAGNOSTIC] Serveur distant - Réponse:",
+              remoteData
+            );
+          } catch (error) {
+            console.warn(
+              "⚠️ [DIAGNOSTIC] Serveur distant - Erreur:",
+              error.message
+            );
+          }
+
+          // Test de l'API configurée
+          try {
+            console.log("🔄 [DIAGNOSTIC] Test de l'API configurée...");
+            const configResponse = await fetch(
+              `${window.API_BASE_URL}/api/active-users/stats`
+            );
+            const configData = await configResponse.json();
+            console.log(
+              "✅ [DIAGNOSTIC] API configurée - Réponse:",
+              configData
+            );
+
+            // Analyse des données
+            if (configData.totalConnectedUsers === 0) {
+              console.warn(
+                "⚠️ [DIAGNOSTIC] Aucun utilisateur connecté détecté!"
+              );
+              console.log("💡 [DIAGNOSTIC] Solutions possibles:");
+              console.log(
+                "   1. Vérifiez que des utilisateurs sont connectés sur les pages resp_acconier.html ou resp_liv.html"
+              );
+              console.log(
+                "   2. Vérifiez la console des pages utilisateurs pour les erreurs de heartbeat"
+              );
+              console.log(
+                "   3. Assurez-vous que les heartbeats sont envoyés vers le bon serveur"
+              );
+            } else {
+              console.log(
+                `🎉 [DIAGNOSTIC] ${configData.totalConnectedUsers} utilisateur(s) connecté(s) détecté(s)`
+              );
+            }
+          } catch (error) {
+            console.error(
+              "❌ [DIAGNOSTIC] API configurée - Erreur:",
+              error.message
+            );
+          }
+
+          console.log("🏁 [DIAGNOSTIC] Diagnostic terminé");
+        };
       })();
     </script>
   </body>
