@@ -1063,14 +1063,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function loadAllDeliveries() {
     try {
+      console.log("🔄 [DEBUG] Début du chargement des livraisons...");
       const response = await fetch("/deliveries/status");
+      console.log(
+        "🔄 [DEBUG] Réponse reçue:",
+        response.status,
+        response.statusText
+      );
       const data = await response.json();
+      console.log(
+        "🔄 [DEBUG] Données reçues:",
+        data.success,
+        "Nombre de livraisons:",
+        data.deliveries?.length
+      );
+
       if (data.success && Array.isArray(data.deliveries)) {
         // Récupération des paramètres pour le mode admin
         const isAdminMode = getUrlParameter("mode") === "admin";
         const targetUser =
           getUrlParameter("targetUser") || getUrlParameter("user");
         const targetUserId = getUrlParameter("userId"); // Récupérer aussi l'userId
+
+        console.log(
+          "🔄 [DEBUG] Mode admin:",
+          isAdminMode,
+          "Target user:",
+          targetUser,
+          "Target userId:",
+          targetUserId
+        );
 
         let processedDeliveries = data.deliveries.map((delivery) => {
           // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
@@ -1220,7 +1242,64 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log(
               `⚠️ [DEBUG] Aucune livraison trouvée pour "${targetUser}". Affichage de toutes les livraisons pour debug.`
             );
-            processedDeliveries = allDeliveries || []; // Afficher toutes les livraisons
+            // Utiliser les données originales de la réponse API
+            processedDeliveries = data.deliveries.map((delivery) => {
+              // Appliquer la même normalisation que précédemment
+              let tcList = [];
+              if (delivery.container_numbers_list) {
+                try {
+                  if (typeof delivery.container_numbers_list === "string") {
+                    tcList = JSON.parse(delivery.container_numbers_list);
+                  } else if (Array.isArray(delivery.container_numbers_list)) {
+                    tcList = delivery.container_numbers_list;
+                  }
+                  tcList = tcList.filter(Boolean);
+                } catch (e) {
+                  console.warn("Erreur parsing container_numbers_list:", e);
+                  tcList = [];
+                }
+              }
+              if (tcList.length === 0) {
+                if (Array.isArray(delivery.container_number)) {
+                  tcList = delivery.container_number.filter(Boolean);
+                } else if (typeof delivery.container_number === "string") {
+                  tcList = delivery.container_number
+                    .split(/[,;\s]+/)
+                    .filter(Boolean);
+                }
+              }
+              if (
+                !delivery.container_statuses ||
+                typeof delivery.container_statuses !== "object"
+              ) {
+                delivery.container_statuses = {};
+              }
+              tcList.forEach((tc) => {
+                if (!delivery.container_statuses[tc]) {
+                  delivery.container_statuses[tc] = "attente_paiement";
+                }
+              });
+              if (
+                delivery.bl_statuses &&
+                typeof delivery.bl_statuses === "string"
+              ) {
+                try {
+                  delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+                } catch {
+                  delivery.bl_statuses = {};
+                }
+              }
+              if (
+                !delivery.bl_statuses ||
+                typeof delivery.bl_statuses !== "object"
+              ) {
+                delivery.bl_statuses = {};
+              }
+              return delivery;
+            });
+            console.log(
+              `📊 [DEBUG] Affichage de ${processedDeliveries.length} livraisons totales pour debug`
+            );
           }
         }
 
