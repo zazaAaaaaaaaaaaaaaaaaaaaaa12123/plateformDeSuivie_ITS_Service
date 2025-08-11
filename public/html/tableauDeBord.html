@@ -1659,10 +1659,254 @@
       }
 
       /* === FIN ANIMATIONS DE LIAISON === */
+
+      /* === ANIMATION D'ENTREPRISE PROFESSIONNELLE - VERSION CORRIGÉE === */
+      .enterprise-intro {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(
+          135deg,
+          #ffffff 0%,
+          #f8fafc 15%,
+          #ede9fe 30%,
+          #e0e7ff 45%,
+          #c7d2fe 60%,
+          #e0e7ff 75%,
+          #f8fafc 90%,
+          #ffffff 100%
+        );
+        background-size: 400% 400%;
+        animation: enterpriseBgShift 8s ease-in-out infinite;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        opacity: 1;
+        visibility: visible;
+        transition: all 0.8s ease;
+      }
+
+      @keyframes enterpriseBgShift {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      .enterprise-logo {
+        margin-bottom: 40px;
+        position: relative;
+      }
+
+      .logo-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .logo-symbol {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #fcd34d, #f59e0b, #d97706);
+        border-radius: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 48px;
+        color: white;
+        box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4),
+          0 0 20px rgba(252, 211, 77, 0.3);
+        animation: logoGlow 2s ease-in-out;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .logo-symbol::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent
+        );
+        animation: logoShine 3s ease-in-out 0.5s;
+      }
+
+      .loading-bar {
+        width: 200px;
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .loading-progress {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #7c3aed, #8b5cf6, #a78bfa);
+        border-radius: 2px;
+        animation: loadingProgress 4s ease-out;
+      }
+
+      .enterprise-title {
+        font-size: 2.5em;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 10px;
+        text-align: center;
+        letter-spacing: 1px;
+        opacity: 1;
+        white-space: nowrap;
+      }
+
+      .enterprise-subtitle {
+        font-size: 1.2em;
+        font-weight: 400;
+        color: #6b7280;
+        text-align: center;
+        opacity: 1;
+        margin-bottom: 40px;
+        white-space: nowrap;
+      }
+
+      .enterprise-dots {
+        display: flex;
+        gap: 8px;
+        opacity: 0;
+        animation: dotsFadeIn 1s ease-out 2.5s forwards;
+      }
+
+      .enterprise-dots span {
+        width: 8px;
+        height: 8px;
+        background: #9ca3af;
+        border-radius: 50%;
+        animation: dotsBlinking 1.5s ease-in-out infinite;
+      }
+
+      .enterprise-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .enterprise-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      /* Animations professionnelles */
+      @keyframes logoGlow {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
+          box-shadow: 0 10px 30px rgba(245, 158, 11, 0),
+            0 0 20px rgba(252, 211, 77, 0);
+        }
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 15px 40px rgba(245, 158, 11, 0.5),
+            0 0 25px rgba(252, 211, 77, 0.4);
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+          box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4),
+            0 0 20px rgba(252, 211, 77, 0.3);
+        }
+      }
+
+      @keyframes logoShine {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      @keyframes loadingProgress {
+        0% {
+          width: 0%;
+        }
+        100% {
+          width: 100%;
+        }
+      }
+
+      @keyframes dotsFadeIn {
+        0% {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes dotsBlinking {
+        0%,
+        100% {
+          background: #9ca3af;
+          transform: scale(1);
+        }
+        50% {
+          background: #7c3aed;
+          transform: scale(1.2);
+        }
+      }
+
+      @keyframes enterpriseSlideUp {
+        0% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-100vh);
+        }
+      }
+
+      /* === FIN ANIMATION D'ENTREPRISE === */
+
+      /* === FIN ANIMATIONS DE LIAISON === */
     </style>
   </head>
 
   <body class="sidebar-expanded">
+    <!-- Animation d'introduction professionnelle -->
+    <div id="enterpriseIntro" class="enterprise-intro">
+      <div class="enterprise-logo">
+        <div class="logo-container">
+          <div class="logo-symbol">
+            <i class="fas fa-shipping-fast"></i>
+          </div>
+          <div class="loading-bar">
+            <div class="loading-progress"></div>
+          </div>
+        </div>
+      </div>
+      <h1 class="enterprise-title">Suivi de Dossier</h1>
+      <p class="enterprise-subtitle">Plateforme de suivi de dossier</p>
+      <div class="enterprise-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
     <div class="layout">
       <aside class="sidebar">
         <h2 id="sidebarTitle" style="position: relative">

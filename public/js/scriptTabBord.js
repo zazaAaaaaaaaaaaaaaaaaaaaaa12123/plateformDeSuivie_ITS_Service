@@ -12,6 +12,58 @@
     window.WS_BASE_HOST = window.location.host;
   }
 })();
+// === ANIMATION D'ENTREPRISE PROFESSIONNELLE - VERSION CORRIGÉE ===
+(function initProfessionalEnterpriseAnimation() {
+  function showProfessionalAnimation() {
+    const enterpriseIntro = document.getElementById("enterpriseIntro");
+    const mainLayout = document.querySelector(".layout");
+
+    if (enterpriseIntro) {
+      // Masquer le contenu principal au début
+      if (mainLayout) {
+        mainLayout.style.opacity = "0";
+        mainLayout.style.visibility = "hidden";
+      }
+
+      // Toujours afficher l'animation au chargement de la page
+      enterpriseIntro.style.display = "flex";
+      enterpriseIntro.style.opacity = "1";
+      enterpriseIntro.style.visibility = "visible";
+
+      // Animation sobre et professionnelle - SANS typing pour éviter les incohérences
+      setTimeout(() => {
+        if (enterpriseIntro) {
+          enterpriseIntro.style.animation =
+            "enterpriseSlideUp 1s ease-out forwards";
+
+          // Après l'animation de sortie
+          setTimeout(() => {
+            enterpriseIntro.remove();
+
+            // Afficher le contenu principal avec une transition douce
+            if (mainLayout) {
+              mainLayout.style.transition =
+                "opacity 0.8s ease-in-out, visibility 0.8s ease-in-out";
+              mainLayout.style.opacity = "1";
+              mainLayout.style.visibility = "visible";
+            }
+          }, 1000);
+        }
+      }, 4000); // Durée réduite et sans typing
+    }
+  }
+
+  // Essayer immédiatement
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", showProfessionalAnimation);
+  } else {
+    showProfessionalAnimation();
+  }
+
+  // Également essayer après un court délai pour être sûr
+  setTimeout(showProfessionalAnimation, 100);
+})();
+
 // Redirection automatique vers le tableau de bord après connexion réussie
 (function () {
   if (window.location.pathname.endsWith("tableauDeBord.html")) {
