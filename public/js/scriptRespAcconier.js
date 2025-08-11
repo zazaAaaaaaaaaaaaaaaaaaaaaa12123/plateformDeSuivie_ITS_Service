@@ -1849,7 +1849,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (isTableEditMode && EDITABLE_COLUMNS.includes(col.id)) {
           td.onclick = () => {
             if (!isTableEditMode) return;
-            
+
             let currentValue = "";
             // Récupérer la valeur actuelle depuis les données
             if (delivery.container_numbers_list) {
@@ -1865,7 +1865,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 currentValue = delivery.container_number || "";
               }
             } else if (Array.isArray(delivery.container_number)) {
-              currentValue = delivery.container_number.filter(Boolean).join(", ");
+              currentValue = delivery.container_number
+                .filter(Boolean)
+                .join(", ");
             } else if (typeof delivery.container_number === "string") {
               currentValue = delivery.container_number;
             }
@@ -1879,8 +1881,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             input.style.padding = "6px 8px";
             input.style.fontSize = "0.9rem";
             input.style.fontFamily = "inherit";
-            
-            const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
+            const isDark =
+              document.documentElement.getAttribute("data-theme") === "dark";
             input.style.backgroundColor = isDark ? "#232f43" : "#fff";
             input.style.color = isDark ? "#fff" : "#222";
 
@@ -1912,7 +1915,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             }
           };
         }
-        
+
         // Rendu normal (non-édition) : logique existante avec badge/tag et menu déroulant statut
         let tcList = [];
 
@@ -2013,7 +2016,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (isTableEditMode && EDITABLE_COLUMNS.includes(col.id)) {
           td.onclick = () => {
             if (!isTableEditMode) return;
-            
+
             let currentValue = "";
             // Récupérer la valeur actuelle depuis les données
             if (Array.isArray(delivery.bl_number)) {
@@ -2031,8 +2034,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             input.style.padding = "6px 8px";
             input.style.fontSize = "0.9rem";
             input.style.fontFamily = "inherit";
-            
-            const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
+            const isDark =
+              document.documentElement.getAttribute("data-theme") === "dark";
             input.style.backgroundColor = isDark ? "#232f43" : "#fff";
             input.style.color = isDark ? "#fff" : "#222";
 
@@ -2064,7 +2068,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             }
           };
         }
-        
+
         // Rendu normal (non-édition) : logique existante avec badge/tag et menu déroulant popup
         let blList = [];
         if (Array.isArray(delivery.bl_number)) {
