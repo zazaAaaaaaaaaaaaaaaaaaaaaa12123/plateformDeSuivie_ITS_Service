@@ -4504,6 +4504,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 0);
     });
   }
-  // Masquer la section statistiques au chargement
+  // Masquer la section statistiques au chargementhjsvj
   if (sectionStats) sectionStats.style.display = "none";
 });
