@@ -12,6 +12,64 @@
     window.WS_BASE_HOST = window.location.host;
   }
 })();
+
+// === ANIMATION D'ENTREPRISE PROFESSIONNELLE - VERSION CORRIGÉE ===
+
+// === ANIMATION D'ENTREPRISE PROFESSIONNELLE - VERSION SOBRE ===
+(function initProfessionalEnterpriseAnimation() {
+  function showProfessionalAnimation() {
+    const enterpriseIntro = document.getElementById("enterpriseIntro");
+    const mainLayout = document.querySelector(".layout");
+
+    if (enterpriseIntro) {
+      // Masquer le contenu principal au début
+      if (mainLayout) {
+        mainLayout.style.opacity = "0";
+        mainLayout.style.visibility = "hidden";
+      }
+
+      // Toujours afficher l'animation au chargement de la page
+      enterpriseIntro.style.display = "flex";
+      enterpriseIntro.style.opacity = "1";
+      enterpriseIntro.style.visibility = "visible";
+
+      // Animation sobre et professionnelle - SANS typing pour éviter les incohérences
+
+      // Animation sobre et professionnelle
+
+      setTimeout(() => {
+        if (enterpriseIntro) {
+          enterpriseIntro.style.animation =
+            "enterpriseSlideUp 1s ease-out forwards";
+
+          // Après l'animation de sortie
+          setTimeout(() => {
+            enterpriseIntro.remove();
+
+            // Afficher le contenu principal avec une transition douce
+            if (mainLayout) {
+              mainLayout.style.transition =
+                "opacity 0.8s ease-in-out, visibility 0.8s ease-in-out";
+              mainLayout.style.opacity = "1";
+              mainLayout.style.visibility = "visible";
+            }
+          }, 1000);
+        }
+      }, 4000); // Durée réduite et sans typing
+    }
+  }
+
+  // Essayer immédiatement
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", showProfessionalAnimation);
+  } else {
+    showProfessionalAnimation();
+  }
+
+  // Également essayer après un court délai pour être sûr
+  setTimeout(showProfessionalAnimation, 100);
+})();
+
 // Redirection automatique vers le tableau de bord après connexion réussie
 (function () {
   if (window.location.pathname.endsWith("tableauDeBord.html")) {
@@ -965,12 +1023,10 @@ function masquerToutesSectionsDynamiques() {
   const historiqueAgentsContainer = document.getElementById(
     "historiqueAgentsContainer"
   );
-  const statistiquesSection = document.getElementById("statistiquesSection");
   if (messagerieContainer) messagerieContainer.style.display = "none";
   if (suiviContainer) suiviContainer.style.display = "none";
   if (historiqueAgentsContainer)
     historiqueAgentsContainer.style.display = "none";
-  if (statistiquesSection) statistiquesSection.style.display = "none";
 }
 
 window.afficherMessage = async () => {
@@ -1059,9 +1115,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "historiqueAgentsContainer"
   );
 
-  const statistiquesSection = document.getElementById("statistiquesSection");
-  const lienStatistiques = document.getElementById("lienStatistiques");
-
   // Affichage du message de bienvenue avec l'e-mail du responsable acconier
   if (respacconierUser && respacconierUser.email && bienvenue) {
     bienvenue.textContent = `Bienvenue, ${respacconierUser.email} !`;
@@ -1114,7 +1167,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (lienAcceuil) {
     lienAcceuil.addEventListener("click", (e) => {
       e.preventDefault();
-      masquerToutesSectionsDynamiques(); // Masque toutes les sections dynamiques (dont statistiques)
+      masquerToutesSectionsDynamiques(); // Masque toutes les sections dynamiques
       showDashboardSections(); // Réaffiche les sections du tableau de bord par défaut
     });
   }
@@ -1127,33 +1180,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // GESTION DU LIEN "Statistiques"
-  if (lienStatistiques && statistiquesSection) {
-    lienStatistiques.addEventListener("click", (e) => {
-      e.preventDefault();
-      // Masquer toutes les autres sections dynamiques et l'accueil
-      if (messagerieContainer) messagerieContainer.style.display = "none";
-      if (suiviContainer) suiviContainer.style.display = "none";
-      if (historiqueAgentsContainer)
-        historiqueAgentsContainer.style.display = "none";
-      const welcome = document.getElementById("welcomeSection");
-      const buttons = document.getElementById("bottomButtons");
-      if (welcome) welcome.style.display = "none";
-      if (buttons) buttons.style.display = "none";
-      // Afficher la section statistiques
-      statistiquesSection.style.display = "block";
-    });
-  }
-
   // --- Sidebar repliable ---
   if (sidebarTitle && body) {
     sidebarTitle.addEventListener("click", function () {
       body.classList.toggle("sidebar-collapsed");
     });
   }
-
-  // Masquer la section statistiques au chargement
-  if (statistiquesSection) statistiquesSection.style.display = "none";
 
   // --- Gestion de l'état de la connexion Internet ---
   const connectionStatusIcon = document.getElementById("connectionStatusIcon");
@@ -3285,6 +3317,7 @@ window.AGENT_TABLE_COLUMNS = [
       }
     });
 })();
+
 // --- Statistiques par acteur (Agent Acconier, Responsable Acconier, Responsable de Livraison) --- //
 function chargerStatistiquesActeurs() {
   const section = document.getElementById("statistiquesSection");
@@ -4414,6 +4447,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 0);
     });
   }
-  // Masquer la section statistiques au chargement
+  // Masquer la section statistiques au chargementhjsvj
   if (sectionStats) sectionStats.style.display = "none";
 });
