@@ -122,6 +122,76 @@ function broadcastObservationUpdate(deliveryId, observation) {
 }
 
 // ===============================
+// SYSTÈME DE SUIVI DES UTILISATEURS ACTIFS
+// ===============================
+
+// Objet pour stocker les utilisateurs actifs avec leur timestamp
+const activeUsers = {};
+
+// Fonction pour nettoyer les utilisateurs inactifs (plus de 3 minutes)
+function cleanupInactiveUsers() {
+  const now = Date.now();
+  const timeout = 3 * 60 * 1000; // 3 minutes en millisecondes
+
+  Object.keys(activeUsers).forEach((userId) => {
+    if (now - activeUsers[userId].lastActivity > timeout) {
+      delete activeUsers[userId];
+    }
+  });
+}
+
+// Nettoyer les utilisateurs inactifs toutes les minutes
+setInterval(cleanupInactiveUsers, 60000);
+
+// Route pour enregistrer/mettre à jour un utilisateur actif
+app.post("/api/active-users/track", (req, res) => {
+  const { userId, userInfo } = req.body;
+
+  if (!userId || !userInfo) {
+    return res.status(400).json({ error: "userId et userInfo requis" });
+  }
+
+  activeUsers[userId] = {
+    ...userInfo,
+    lastActivity: Date.now(),
+  };
+
+  res.json({ success: true, totalActive: Object.keys(activeUsers).length });
+});
+
+// Route pour obtenir les statistiques des utilisateurs actifs
+app.get("/api/active-users/stats", (req, res) => {
+  cleanupInactiveUsers(); // Nettoyer avant de retourner les stats
+
+  const users = Object.values(activeUsers);
+  const pageStats = {};
+
+  // Compter les utilisateurs par page
+  users.forEach((user) => {
+    if (user.currentPage) {
+      pageStats[user.currentPage] = (pageStats[user.currentPage] || 0) + 1;
+    }
+  });
+
+  res.json({
+    totalConnectedUsers: users.length,
+    connectedUsers: users,
+    pageStats: pageStats,
+  });
+});
+
+// Route pour supprimer un utilisateur actif (déconnexion)
+app.delete("/api/active-users/:userId", (req, res) => {
+  const { userId } = req.params;
+
+  if (activeUsers[userId]) {
+    delete activeUsers[userId];
+  }
+
+  res.json({ success: true, totalActive: Object.keys(activeUsers).length });
+});
+
+// ===============================
 // ROUTE : PATCH statut BL (bl_statuses) pour une livraison
 // ===============================
 
