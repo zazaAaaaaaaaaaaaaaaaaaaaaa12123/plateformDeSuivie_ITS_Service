@@ -3317,8 +3317,7 @@ window.AGENT_TABLE_COLUMNS = [
       }
     });
 })();
-<<<<<<< HEAD
-=======
+
 // --- Statistiques par acteur (Agent Acconier, Responsable Acconier, Responsable de Livraison) --- //
 function chargerStatistiquesActeurs() {
   const section = document.getElementById("statistiquesSection");
@@ -4451,4 +4450,3 @@ document.addEventListener("DOMContentLoaded", () => {
   // Masquer la section statistiques au chargementhjsvj
   if (sectionStats) sectionStats.style.display = "none";
 });
->>>>>>> 338dfb444ed14c21de8f00e75e4a9b3582b7bed2
