@@ -1718,6 +1718,92 @@
         }
       });
     </script>
+
+    <!-- === SYSTÈME DE TRACKING DES UTILISATEURS CONNECTÉS === -->
+    <script>
+      (function () {
+        // Détection automatique de l'URL backend
+        function getApiBaseUrl() {
+          const isLocal = ["localhost", "127.0.0.1"].includes(
+            window.location.hostname
+          );
+          if (isLocal) {
+            return "http://localhost:3000";
+          } else {
+            return window.location.origin;
+          }
+        }
+
+        const API_BASE_URL = getApiBaseUrl();
+
+        // Récupérer les informations utilisateur depuis localStorage
+        function getUserInfo() {
+          const userName = localStorage.getItem("userName") || "Utilisateur";
+          const userEmail = localStorage.getItem("userEmail") || "";
+          const userId = userEmail || "user_" + Date.now();
+
+          return {
+            userId: userId,
+            username: userName,
+            nom: userName,
+          };
+        }
+
+        // Envoyer un heartbeat au serveur
+        function sendHeartbeat() {
+          const userInfo = getUserInfo();
+
+          fetch(`${API_BASE_URL}/api/active-users/heartbeat`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              page: "resp_acconier.html",
+              userId: userInfo.userId,
+              username: userInfo.username,
+              nom: userInfo.nom,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                console.log(
+                  "✅ [HEARTBEAT] Utilisateur enregistré comme actif sur resp_acconier.html"
+                );
+              }
+            })
+            .catch((error) => {
+              console.warn(
+                "⚠️ [HEARTBEAT] Erreur lors de l'envoi du heartbeat:",
+                error
+              );
+            });
+        }
+
+        // Envoyer un heartbeat immédiatement au chargement de la page
+        setTimeout(sendHeartbeat, 2000);
+
+        // Envoyer un heartbeat toutes les 30 secondes
+        setInterval(sendHeartbeat, 30000);
+
+        // Envoyer un heartbeat quand l'utilisateur devient actif
+        ["click", "keypress", "mousemove", "scroll"].forEach((eventType) => {
+          document.addEventListener(
+            eventType,
+            () => {
+              clearTimeout(window.heartbeatTimeout);
+              window.heartbeatTimeout = setTimeout(sendHeartbeat, 1000);
+            },
+            { passive: true }
+          );
+        });
+
+        console.log(
+          "✅ [TRACKING] Système de tracking utilisateur initialisé pour resp_acconier.html"
+        );
+      })();
+    </script>
   </body>
 </html>
 <!--djkhfbzqjd-->
