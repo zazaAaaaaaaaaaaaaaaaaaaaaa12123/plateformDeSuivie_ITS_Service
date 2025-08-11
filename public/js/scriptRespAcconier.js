@@ -1894,7 +1894,78 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               editedCellsData[delivery.id] = {};
             }
             editedCellsData[delivery.id][col.id] = newValue;
-            td.textContent = newValue || "-";
+
+            // Mettre à jour les données de livraison avec la nouvelle valeur
+            if (newValue) {
+              // Convertir la chaîne en array si elle contient des virgules
+              const newTcList = newValue.split(/[,;\s]+/).filter(Boolean);
+              delivery.container_number = newTcList;
+              delivery.container_numbers_list = newTcList;
+            } else {
+              delivery.container_number = [];
+              delivery.container_numbers_list = [];
+            }
+
+            // Vider la cellule et re-rendre avec l'affichage normal (badges/cartes)
+            td.innerHTML = "";
+            td.classList.remove("tc-multi-cell");
+
+            // Re-exécuter la logique de rendu normal
+            let tcList = [];
+            if (delivery.container_numbers_list) {
+              try {
+                if (typeof delivery.container_numbers_list === "string") {
+                  tcList = JSON.parse(delivery.container_numbers_list);
+                } else if (Array.isArray(delivery.container_numbers_list)) {
+                  tcList = delivery.container_numbers_list;
+                }
+                tcList = tcList.filter(Boolean);
+              } catch (e) {
+                tcList = [];
+              }
+            }
+            if (
+              tcList.length === 0 &&
+              Array.isArray(delivery.container_number)
+            ) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (
+              tcList.length === 0 &&
+              typeof delivery.container_number === "string"
+            ) {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
+
+            // Rendu des badges/cartes
+            if (tcList.length > 1) {
+              td.classList.add("tc-multi-cell");
+              const btn = document.createElement("button");
+              btn.className = "tc-tags-btn";
+              btn.type = "button";
+              btn.setAttribute("data-allow-admin", "true");
+              btn.classList.add("admin-allowed-tc");
+              btn.innerHTML =
+                tcList
+                  .slice(0, 2)
+                  .map((tc) => `<span class="tc-tag">${tc}</span>`)
+                  .join("") +
+                (tcList.length > 2
+                  ? ` <span class="tc-tag tc-tag-more">+${
+                      tcList.length - 2
+                    }</span>`
+                  : "") +
+                ' <i class="fas fa-chevron-down tc-chevron"></i>';
+              td.appendChild(btn);
+            } else if (tcList.length === 1) {
+              const tag = document.createElement("span");
+              tag.className = "tc-tag";
+              tag.textContent = tcList[0];
+              td.appendChild(tag);
+            } else {
+              td.textContent = "-";
+            }
           };
 
           input.addEventListener("blur", saveEdit);
@@ -2046,7 +2117,56 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               editedCellsData[delivery.id] = {};
             }
             editedCellsData[delivery.id][col.id] = newValue;
-            td.textContent = newValue || "-";
+
+            // Mettre à jour les données de livraison avec la nouvelle valeur
+            if (newValue) {
+              // Convertir la chaîne en array si elle contient des virgules
+              const newBlList = newValue.split(/[,;\s]+/).filter(Boolean);
+              delivery.bl_number = newBlList;
+            } else {
+              delivery.bl_number = [];
+            }
+
+            // Vider la cellule et re-rendre avec l'affichage normal (badges/cartes)
+            td.innerHTML = "";
+            td.classList.remove("tc-multi-cell");
+
+            // Re-exécuter la logique de rendu normal pour bl_number
+            let blList = [];
+            if (Array.isArray(delivery.bl_number)) {
+              blList = delivery.bl_number.filter(Boolean);
+            } else if (typeof delivery.bl_number === "string") {
+              blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+            }
+
+            // Rendu des badges/cartes pour BL
+            if (blList.length > 1) {
+              td.classList.add("tc-multi-cell");
+              const btn = document.createElement("button");
+              btn.className = "tc-tags-btn";
+              btn.type = "button";
+              btn.setAttribute("data-allow-admin", "true");
+              btn.classList.add("admin-allowed-bl-link");
+              btn.innerHTML =
+                blList
+                  .slice(0, 2)
+                  .map((bl) => `<span class="tc-tag">${bl}</span>`)
+                  .join("") +
+                (blList.length > 2
+                  ? ` <span class="tc-tag tc-tag-more">+${
+                      blList.length - 2
+                    }</span>`
+                  : "") +
+                ' <i class="fas fa-chevron-down tc-chevron"></i>';
+              td.appendChild(btn);
+            } else if (blList.length === 1) {
+              const tag = document.createElement("span");
+              tag.className = "tc-tag";
+              tag.textContent = blList[0];
+              td.appendChild(tag);
+            } else {
+              td.textContent = "-";
+            }
           };
 
           input.addEventListener("blur", saveEdit);
