@@ -5455,9 +5455,15 @@
                       margin-bottom: 2px;
                       border-left: 2px solid #10b981;
                       font-size: 0.8em;
-                      cursor: default;
+                      cursor: pointer;
+                      transition: background-color 0.2s ease;
                     "
-                    title="Utilisateur connecté: ${
+                    onmouseover="this.style.backgroundColor='#f3f4f6'"
+                    onmouseout="this.style.backgroundColor='#f9fafb'"
+                    onclick="redirectToUserPage('${fullUrl}', '${
+                  user.nom || user.username || "Utilisateur"
+                }', '${pageName}', '${user.userId}')"
+                    title="Cliquer pour aller sur la page de ${
                       user.nom || user.username || "cet utilisateur"
                     }"
                   >
