@@ -4495,7 +4495,7 @@ app.post("/notify-agent", async (req, res) => {
   }
 });
 // ===============================
-// ROUTE NOTIFICATION DOSSIER EN RETARD (copie de /notify-agent)
+// ROUTE NOTIFICATION DOSSIER EN RETARD (copie de /notify-agent)123
 // ===============================
 app.post("/notify-late-dossier", async (req, res) => {
   const { agent, dossier } = req.body || {};
@@ -4934,7 +4934,7 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
       ) {
         counts.mise_en_livraison++;
         console.log(
-          `[COUNTS] � Dossier mis en livraison: ${delivery.dossier_number}`
+          `[COUNTS]   Dossier mis en livraison: ${delivery.dossier_number}`
         );
       }
       // PRIORITÉ 3: Dossier visible dans resp_acconier (en attente de paiement)
