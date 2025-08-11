@@ -1967,29 +1967,20 @@
       (function () {
         // Fonction pour afficher les informations de l'utilisateur ciblé
         function showTargetUserInfo() {
-          console.log("🔍 [DEBUG] Démarrage showTargetUserInfo");
-          
           const banner = document.getElementById("targetUserInfoBanner");
           const detailsDiv = document.getElementById("targetUserDetails");
 
-          if (!banner || !detailsDiv) {
-            console.log("❌ [DEBUG] Banner ou detailsDiv non trouvé");
-            return;
-          }
+          if (!banner || !detailsDiv) return;
 
           // Vérifier les paramètres URL
           const urlParams = new URLSearchParams(window.location.search);
           const fromDashboard = urlParams.get("fromDashboard");
           const targetUser = urlParams.get("targetUser");
           const userId = urlParams.get("userId");
-          
-          console.log("🔍 [DEBUG] Paramètres URL:", { fromDashboard, targetUser, userId });
 
           // Vérifier localStorage
           const targetUserInfo = localStorage.getItem("targetUserInfo");
           let userInfo = null;
-          
-          console.log("🔍 [DEBUG] localStorage targetUserInfo:", targetUserInfo);
 
           if (targetUserInfo) {
             try {
@@ -2005,16 +1996,7 @@
           }
 
           // Afficher les informations SEULEMENT si on vient du tableau de bord (index.html)
-          console.log("🔍 [DEBUG] Test condition:", { 
-            fromDashboard, 
-            targetUser, 
-            userInfo: !!userInfo,
-            condition: fromDashboard === "true" && (targetUser || userInfo)
-          });
-          
           if (fromDashboard === "true" && (targetUser || userInfo)) {
-            console.log("✅ [DEBUG] Condition remplie, affichage du bandeau");
-            
             const displayName =
               userInfo?.userName || targetUser || "Utilisateur inconnu";
             const displayUserId =
@@ -2046,8 +2028,6 @@
             setTimeout(() => {
               banner.style.display = "none";
             }, 15000);
-          } else {
-            console.log("❌ [DEBUG] Condition non remplie, pas d'affichage");
           }
         }
 

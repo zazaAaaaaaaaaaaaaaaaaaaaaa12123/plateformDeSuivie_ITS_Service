@@ -5438,11 +5438,8 @@
                     ? "/html/resp_acconier.html"
                     : "/html/resp_liv.html";
 
-                // Créer un paramètre pour identifier l'utilisateur (optionnel)
-                const userParam = user.userId
-                  ? `?userId=${encodeURIComponent(user.userId)}`
-                  : "";
-                const fullUrl = `${targetPageUrl}${userParam}`;
+                // Ne pas ajouter de paramètres ici, on les ajoutera dans redirectToUserPage
+                const fullUrl = targetPageUrl;
 
                 html += `
                   <div 
@@ -5527,10 +5524,6 @@
           pageName,
           userId
         ) {
-          console.log(
-            `🔗 [REDIRECT] Redirection vers la page de ${userName} (${pageName})`
-          );
-
           // Confirmation optionnelle
           const pageType =
             pageName === "resp_acconier.html"
@@ -5568,8 +5561,6 @@
 
             // Redirection dans la même fenêtre pour assurer la transmission des paramètres
             window.location.href = finalUrl;
-
-            console.log(`✅ [REDIRECT] Redirection effectuée vers ${finalUrl}`);
 
             // Nettoyer les informations après 30 secondes
             setTimeout(() => {
