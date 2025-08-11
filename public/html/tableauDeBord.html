@@ -5448,7 +5448,7 @@
                   <div 
                     onclick="window.redirectToUserPage('${fullUrl}', '${
                   user.nom || user.username || "Utilisateur"
-                }', '${pageName}', '${user.userId || ''}')"
+                }', '${pageName}', '${user.userId || ""}')"
                     style="
                       display: flex;
                       align-items: center;
@@ -5521,7 +5521,12 @@
         };
 
         // Fonction de redirection vers la page spécifique de l'utilisateur
-        window.redirectToUserPage = function (pageUrl, userName, pageName, userId) {
+        window.redirectToUserPage = function (
+          pageUrl,
+          userName,
+          pageName,
+          userId
+        ) {
           console.log(
             `🔗 [REDIRECT] Redirection vers la page de ${userName} (${pageName})`
           );
@@ -5543,21 +5548,24 @@
               userId: userId,
               pageType: pageType,
               redirectTime: Date.now(),
-              isRedirectedFromDashboard: true
+              isRedirectedFromDashboard: true,
             };
-            
-            localStorage.setItem('targetUserInfo', JSON.stringify(targetUserInfo));
-            
+
+            localStorage.setItem(
+              "targetUserInfo",
+              JSON.stringify(targetUserInfo)
+            );
+
             // Créer une URL avec les paramètres pour plus de clarté
             const urlParams = new URLSearchParams({
-              fromDashboard: 'true',
+              fromDashboard: "true",
               targetUser: userName,
-              userId: userId || '',
-              timestamp: Date.now()
+              userId: userId || "",
+              timestamp: Date.now(),
             });
-            
+
             const finalUrl = `${pageUrl}?${urlParams.toString()}`;
-            
+
             // Ouvrir dans un nouvel onglet pour ne pas perdre le tableau de bord
             window.open(finalUrl, "_blank");
 
@@ -5565,10 +5573,10 @@
             // window.location.href = finalUrl;
 
             console.log(`✅ [REDIRECT] Redirection effectuée vers ${finalUrl}`);
-            
+
             // Nettoyer les informations après 30 secondes
             setTimeout(() => {
-              localStorage.removeItem('targetUserInfo');
+              localStorage.removeItem("targetUserInfo");
             }, 30000);
           } else {
             console.log(`❌ [REDIRECT] Redirection annulée par l'utilisateur`);
