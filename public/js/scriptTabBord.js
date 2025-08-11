@@ -12,7 +12,10 @@
     window.WS_BASE_HOST = window.location.host;
   }
 })();
+
 // === ANIMATION D'ENTREPRISE PROFESSIONNELLE - VERSION CORRIGÉE ===
+
+// === ANIMATION D'ENTREPRISE PROFESSIONNELLE - VERSION SOBRE ===
 (function initProfessionalEnterpriseAnimation() {
   function showProfessionalAnimation() {
     const enterpriseIntro = document.getElementById("enterpriseIntro");
@@ -31,6 +34,9 @@
       enterpriseIntro.style.visibility = "visible";
 
       // Animation sobre et professionnelle - SANS typing pour éviter les incohérences
+
+      // Animation sobre et professionnelle
+
       setTimeout(() => {
         if (enterpriseIntro) {
           enterpriseIntro.style.animation =
@@ -4466,6 +4472,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 0);
     });
   }
-  // Masquer la section statistiques au chargement
+  // Masquer la section statistiques au chargementhjsvj
   if (sectionStats) sectionStats.style.display = "none";
 });
