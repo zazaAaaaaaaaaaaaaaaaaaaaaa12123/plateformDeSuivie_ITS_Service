@@ -5431,19 +5431,49 @@
 
               pageData.users.forEach((user) => {
                 const timeAgo = formatTimeAgo(user.timeConnected || 0);
+
+                // Déterminer l'URL de la page spécifique
+                const targetPageUrl =
+                  pageName === "resp_acconier.html"
+                    ? "/html/resp_acconier.html"
+                    : "/html/resp_liv.html";
+
+                // Créer un paramètre pour identifier l'utilisateur (optionnel)
+                const userParam = user.userId
+                  ? `?userId=${encodeURIComponent(user.userId)}`
+                  : "";
+                const fullUrl = `${targetPageUrl}${userParam}`;
+
                 html += `
-                  <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 3px 6px;
-                    background: #f9fafb;
-                    border-radius: 4px;
-                    margin-bottom: 2px;
-                    border-left: 2px solid #10b981;
-                    font-size: 0.8em;
-                  ">
-                    <div style="overflow: hidden;">
+                  <div 
+                    onclick="window.redirectToUserPage('${fullUrl}', '${
+                  user.nom || user.username || "Utilisateur"
+                }', '${pageName}')"
+                    style="
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      padding: 3px 6px;
+                      background: #f9fafb;
+                      border-radius: 4px;
+                      margin-bottom: 2px;
+                      border-left: 2px solid #10b981;
+                      font-size: 0.8em;
+                      cursor: pointer;
+                      transition: all 0.2s ease;
+                    "
+                    onmouseover="this.style.background='#e5f6f3'; this.style.transform='translateX(2px)'"
+                    onmouseout="this.style.background='#f9fafb'; this.style.transform='translateX(0px)'"
+                    title="Cliquer pour aller à la page de ${
+                      user.nom || user.username || "cet utilisateur"
+                    }"
+                  >
+                    <div style="overflow: hidden; display: flex; align-items: center;">
+                      <span style="
+                        font-size: 0.9em; 
+                        margin-right: 6px;
+                        color: #10b981;
+                      ">🔗</span>
                       <div style="font-weight: 500; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                         ${user.nom || user.username || "Utilisateur"}
                       </div>
@@ -5487,6 +5517,35 @@
           } else {
             list.style.display = "none";
             section.style.maxHeight = "40px";
+          }
+        };
+
+        // Fonction de redirection vers la page spécifique de l'utilisateur
+        window.redirectToUserPage = function (pageUrl, userName, pageName) {
+          console.log(
+            `🔗 [REDIRECT] Redirection vers la page de ${userName} (${pageName})`
+          );
+
+          // Confirmation optionnelle
+          const pageType =
+            pageName === "resp_acconier.html"
+              ? "Responsable Acconier"
+              : "Responsable Livraison";
+          const confirmed = confirm(
+            `Voulez-vous aller à la page de ${userName} (${pageType}) ?\n\n` +
+              `Vous allez être redirigé vers la page correspondante.`
+          );
+
+          if (confirmed) {
+            // Ouvrir dans un nouvel onglet pour ne pas perdre le tableau de bord
+            window.open(pageUrl, "_blank");
+
+            // Alternative : redirection dans la même fenêtre
+            // window.location.href = pageUrl;
+
+            console.log(`✅ [REDIRECT] Redirection effectuée vers ${pageUrl}`);
+          } else {
+            console.log(`❌ [REDIRECT] Redirection annulée par l'utilisateur`);
           }
         };
 

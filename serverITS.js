@@ -98,7 +98,8 @@ app.get("/api/active-users/stats", (req, res) => {
     const pageStats = {};
     let totalConnectedUsers = 0;
 
-    Object.values(activeUsers).forEach((user) => {
+    Object.keys(activeUsers).forEach((userId) => {
+      const user = activeUsers[userId];
       const timeConnected = Math.floor((now - user.connectedAt) / 1000);
 
       if (!pageStats[user.page]) {
@@ -110,6 +111,7 @@ app.get("/api/active-users/stats", (req, res) => {
 
       pageStats[user.page].count++;
       pageStats[user.page].users.push({
+        userId: userId,
         username: user.username,
         nom: user.nom,
         timeConnected,
