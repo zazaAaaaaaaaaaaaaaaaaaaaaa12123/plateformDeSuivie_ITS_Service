@@ -3049,7 +3049,10 @@ app.get("/deliveries/search", async (req, res) => {
   }
 });
 
+// SUPPRESSION DE LA ROUTE DUPLIQUÉE - Cette route était en conflit avec la première route /deliveries/status
+// La première route (ligne 1847) est conservée car elle inclut les champs JSON nécessaires
 // PATCH GET /deliveries/status
+/*
 app.get("/deliveries/status", async (req, res) => {
   try {
     const query = `
@@ -3150,6 +3153,7 @@ app.get("/deliveries/status", async (req, res) => {
     });
   }
 });
+*/
 
 // PUT deliveries/:id (Mise à jour générale)
 app.put("/deliveries/:id", async (req, res) => {
