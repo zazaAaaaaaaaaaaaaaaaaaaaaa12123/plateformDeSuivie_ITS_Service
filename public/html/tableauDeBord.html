@@ -1785,56 +1785,119 @@
           >
             Se déconnecter
           </button>
-          <!-- Icônes responsables sous l'avatar -->
+          <!-- Icônes responsables sous l'avatar avec indicateurs de connexion -->
           <div
             style="
               display: flex;
-              flex-direction: row;
+              flex-direction: column;
               align-items: center;
-              gap: 18px;
+              gap: 15px;
               margin-top: 8px;
             "
           >
-            <span
-              id="iconRespAcconier"
-              title="Responsable Acconier"
+            <!-- Responsable Acconier -->
+            <div
               style="
                 display: flex;
+                flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                background: #fff7e3;
-                border-radius: 50%;
-                width: 38px;
-                height: 38px;
-                box-shadow: 0 2px 8px #f59e0b22;
-                cursor: pointer;
+                gap: 4px;
               "
             >
-              <i
-                class="fas fa-user-shield"
-                style="font-size: 1.45em; color: #f59e0b"
-              ></i>
-            </span>
-            <span
-              id="iconRespLivraison"
-              title="Responsable Livraison"
+              <span
+                id="iconRespAcconier"
+                title="Responsable Acconier"
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background: #fff7e3;
+                  border-radius: 50%;
+                  width: 38px;
+                  height: 38px;
+                  box-shadow: 0 2px 8px #f59e0b22;
+                  cursor: pointer;
+                "
+              >
+                <i
+                  class="fas fa-user-shield"
+                  style="font-size: 1.45em; color: #f59e0b"
+                ></i>
+              </span>
+              <!-- Indicateur de connexion Acconier -->
+              <div
+                id="acconiersConnected"
+                style="
+                  font-size: 10px;
+                  color: #6b7280;
+                  text-align: center;
+                  min-height: 12px;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  max-width: 80px;
+                "
+                title="Utilisateurs connectés sur resp_acconier.html"
+              >
+                <i
+                  class="fas fa-circle"
+                  style="color: #dc2626; font-size: 6px; margin-right: 2px"
+                ></i
+                >0 connecté(s)
+              </div>
+            </div>
+
+            <!-- Responsable Livraison -->
+            <div
               style="
                 display: flex;
+                flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                background: #e3ffe3;
-                border-radius: 50%;
-                width: 38px;
-                height: 38px;
-                box-shadow: 0 2px 8px #05966922;
-                cursor: pointer;
+                gap: 4px;
               "
             >
-              <i
-                class="fas fa-user-check"
-                style="font-size: 1.45em; color: #059669"
-              ></i>
-            </span>
+              <span
+                id="iconRespLivraison"
+                title="Responsable Livraison"
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  background: #e3ffe3;
+                  border-radius: 50%;
+                  width: 38px;
+                  height: 38px;
+                  box-shadow: 0 2px 8px #05966922;
+                  cursor: pointer;
+                "
+              >
+                <i
+                  class="fas fa-user-check"
+                  style="font-size: 1.45em; color: #059669"
+                ></i>
+              </span>
+              <!-- Indicateur de connexion Livraison -->
+              <div
+                id="livraisonsConnected"
+                style="
+                  font-size: 10px;
+                  color: #6b7280;
+                  text-align: center;
+                  min-height: 12px;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  max-width: 80px;
+                "
+                title="Utilisateurs connectés sur resp_liv.html"
+              >
+                <i
+                  class="fas fa-circle"
+                  style="color: #dc2626; font-size: 6px; margin-right: 2px"
+                ></i
+                >0 connecté(s)
+              </div>
+            </div>
           </div>
         </div>
         <!-- Popup modification code entreprise -->
@@ -5067,6 +5130,134 @@
           console.log("🔧 [MANUAL FIX] Correction manuelle des compteurs...");
           window.updateCardCounters();
         };
+
+        // === SYSTÈME DE SURVEILLANCE DES UTILISATEURS CONNECTÉS ===
+        function updateConnectedUsers() {
+          // Récupérer les utilisateurs connectés sur resp_acconier.html
+          fetch(
+            `${window.API_BASE_URL}/api/active-users?page=resp_acconier.html`
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              const acconiersDiv =
+                document.getElementById("acconiersConnected");
+              if (acconiersDiv && data.success) {
+                const count = data.count || 0;
+                const circleColor = count > 0 ? "#10b981" : "#dc2626";
+                const usersList = data.users
+                  ? data.users
+                      .map((user) => user.nom || user.username || "Utilisateur")
+                      .join(", ")
+                  : "";
+
+                acconiersDiv.innerHTML = `
+                  <i class="fas fa-circle" style="color: ${circleColor}; font-size: 6px; margin-right: 2px;"></i>${count} connecté(s)
+                `;
+                acconiersDiv.title =
+                  count > 0
+                    ? `Connectés: ${usersList}`
+                    : "Aucun utilisateur connecté sur resp_acconier.html";
+              }
+            })
+            .catch((error) => {
+              console.warn(
+                "Erreur lors de la récupération des utilisateurs connectés resp_acconier:",
+                error
+              );
+              const acconiersDiv =
+                document.getElementById("acconiersConnected");
+              if (acconiersDiv) {
+                acconiersDiv.innerHTML =
+                  '<i class="fas fa-circle" style="color: #dc2626; font-size: 6px; margin-right: 2px;"></i>N/A';
+                acconiersDiv.title = "Erreur de connexion";
+              }
+            });
+
+          // Récupérer les utilisateurs connectés sur resp_liv.html
+          fetch(`${window.API_BASE_URL}/api/active-users?page=resp_liv.html`)
+            .then((response) => response.json())
+            .then((data) => {
+              const livraisonsDiv = document.getElementById(
+                "livraisonsConnected"
+              );
+              if (livraisonsDiv && data.success) {
+                const count = data.count || 0;
+                const circleColor = count > 0 ? "#10b981" : "#dc2626";
+                const usersList = data.users
+                  ? data.users
+                      .map((user) => user.nom || user.username || "Utilisateur")
+                      .join(", ")
+                  : "";
+
+                livraisonsDiv.innerHTML = `
+                  <i class="fas fa-circle" style="color: ${circleColor}; font-size: 6px; margin-right: 2px;"></i>${count} connecté(s)
+                `;
+                livraisonsDiv.title =
+                  count > 0
+                    ? `Connectés: ${usersList}`
+                    : "Aucun utilisateur connecté sur resp_liv.html";
+              }
+            })
+            .catch((error) => {
+              console.warn(
+                "Erreur lors de la récupération des utilisateurs connectés resp_liv:",
+                error
+              );
+              const livraisonsDiv = document.getElementById(
+                "livraisonsConnected"
+              );
+              if (livraisonsDiv) {
+                livraisonsDiv.innerHTML =
+                  '<i class="fas fa-circle" style="color: #dc2626; font-size: 6px; margin-right: 2px;"></i>N/A';
+                livraisonsDiv.title = "Erreur de connexion";
+              }
+            });
+        }
+
+        // Fonction de test pour simuler des utilisateurs connectés (à supprimer en production)
+        window.testActiveUsers = function () {
+          // Simuler un utilisateur sur resp_acconier.html
+          fetch(`${window.API_BASE_URL}/api/active-users/heartbeat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              page: "resp_acconier.html",
+              userId: "test_acconier_1",
+              username: "TestAcconier",
+              nom: "Agent Acconier Test",
+            }),
+          });
+
+          // Simuler un utilisateur sur resp_liv.html
+          fetch(`${window.API_BASE_URL}/api/active-users/heartbeat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              page: "resp_liv.html",
+              userId: "test_liv_1",
+              username: "TestLivraison",
+              nom: "Agent Livraison Test",
+            }),
+          });
+
+          console.log(
+            "✅ Utilisateurs de test ajoutés ! Attendez 3 secondes et regardez les indicateurs."
+          );
+          setTimeout(updateConnectedUsers, 3000);
+        };
+
+        // Mettre à jour les utilisateurs connectés toutes les 15 secondes
+        setInterval(updateConnectedUsers, 15000);
+
+        // Première mise à jour après 3 secondes (pour laisser le temps à la page de se charger)
+        setTimeout(updateConnectedUsers, 3000);
+
+        console.log(
+          "✅ [CONNECTED USERS] Système de surveillance des utilisateurs connectés initialisé"
+        );
+        console.log(
+          "🧪 [TEST] Utilisez window.testActiveUsers() pour tester les indicateurs"
+        );
       })();
     </script>
   </body>

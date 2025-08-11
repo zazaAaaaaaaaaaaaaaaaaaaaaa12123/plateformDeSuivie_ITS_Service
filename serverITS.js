@@ -5101,6 +5101,93 @@ app.get("/api/deliveries/:id", async (req, res) => {
   }
 });
 
+// GET /api/active-users - Récupère les utilisateurs actifs sur une page spécifique
+app.get("/api/active-users", async (req, res) => {
+  try {
+    const page = req.query.page;
+    
+    if (!page) {
+      return res.status(400).json({
+        success: false,
+        error: "Paramètre 'page' requis (ex: resp_acconier.html ou resp_liv.html)",
+        code: 400,
+      });
+    }
+
+    // Vérifier si la page est trackée
+    if (!activeUsers[page]) {
+      return res.json({
+        success: true,
+        users: [],
+        count: 0,
+        page: page
+      });
+    }
+
+    // Convertir l'objet des utilisateurs actifs en tableau
+    const users = Object.values(activeUsers[page]).map(user => ({
+      username: user.username,
+      nom: user.nom,
+      lastSeen: user.lastSeen,
+      timeConnected: Math.floor((Date.now() - user.lastSeen) / 1000) // en secondes
+    }));
+
+    res.json({
+      success: true,
+      users: users,
+      count: users.length,
+      page: page
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs actifs:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur lors de la récupération des utilisateurs actifs",
+      code: 500,
+    });
+  }
+});
+
+// POST /api/active-users/heartbeat - Permet aux pages de signaler la présence d'un utilisateur
+app.post("/api/active-users/heartbeat", async (req, res) => {
+  try {
+    const { page, userId, username, nom } = req.body;
+    
+    if (!page || !userId) {
+      return res.status(400).json({
+        success: false,
+        error: "Paramètres 'page' et 'userId' requis",
+        code: 400,
+      });
+    }
+
+    // Initialiser la page si elle n'existe pas
+    if (!activeUsers[page]) {
+      activeUsers[page] = {};
+    }
+
+    // Mettre à jour ou ajouter l'utilisateur
+    activeUsers[page][userId] = {
+      username: username || userId,
+      nom: nom || username || userId,
+      lastSeen: Date.now()
+    };
+
+    res.json({
+      success: true,
+      message: "Heartbeat enregistré",
+      activeCount: Object.keys(activeUsers[page]).length
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement du heartbeat:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur serveur lors de l'enregistrement du heartbeat",
+      code: 500,
+    });
+  }
+});
+
 // ===============================
 // 📋 DOCUMENTATION API POUR COLLÈGUE PHP
 // ===============================
