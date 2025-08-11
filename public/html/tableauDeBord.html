@@ -1818,7 +1818,7 @@
                   width: 28px;
                   height: 28px;
                   box-shadow: 0 2px 8px #f59e0b22;
-                  cursor: pointer;
+                  cursor: default;
                 "
               >
                 <i
@@ -1867,7 +1867,7 @@
                   width: 28px;
                   height: 28px;
                   box-shadow: 0 2px 8px #05966922;
-                  cursor: pointer;
+                  cursor: default;
                 "
               >
                 <i
@@ -3285,20 +3285,22 @@
               document.body.appendChild(livFrame);
             }
             autoConnectResponsableInterfaces();
-            // Redirection au clic sur les icônes responsables
+            // Redirection au clic sur les icônes responsables - DÉSACTIVÉE
             const iconRespLivraison =
               document.getElementById("iconRespLivraison");
             if (iconRespLivraison) {
-              iconRespLivraison.addEventListener("click", function () {
-                redirectToResponsablePage("livraison");
-              });
+              // iconRespLivraison.addEventListener("click", function () {
+              //   redirectToResponsablePage("livraison");
+              // });
+              iconRespLivraison.style.cursor = "default"; // Cursor par défaut
             }
             const iconRespAcconier =
               document.getElementById("iconRespAcconier");
             if (iconRespAcconier) {
-              iconRespAcconier.addEventListener("click", function () {
-                redirectToResponsablePage("acconier");
-              });
+              // iconRespAcconier.addEventListener("click", function () {
+              //   redirectToResponsablePage("acconier");
+              // });
+              iconRespAcconier.style.cursor = "default"; // Cursor par défaut
             }
 
             // === NETTOYAGE DE LA SESSION ADMIN ===
