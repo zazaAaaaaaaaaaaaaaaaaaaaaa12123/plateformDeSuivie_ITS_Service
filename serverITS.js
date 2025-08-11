@@ -3154,7 +3154,9 @@ app.get("/deliveries/status", async (req, res) => {
   }
 });
 */
+
 /****Mon affaire */
+
 // PUT deliveries/:id (Mise à jour générale)
 app.put("/deliveries/:id", async (req, res) => {
   const { id } = req.params;

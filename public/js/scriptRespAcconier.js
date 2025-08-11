@@ -1,3 +1,9 @@
+// Fonction utilitaire pour récupérer les paramètres URL
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
 // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
@@ -608,17 +614,22 @@ document.addEventListener("DOMContentLoaded", function () {
         updateTableForDateRange(dateStartInput.value, dateEndInput.value);
         return;
       }
-      // Filtrer sur N° Dossier ou N° BL
+      // Filtrer sur N° Dossier, N° BL ou Nom du navire
       let deliveriesSource = window.allDeliveries || [];
       let filtered = deliveriesSource.filter((delivery) => {
         let dossier = String(delivery.dossier_number || "").toLowerCase();
+        let shipName = String(delivery.ship_name || "").toLowerCase();
         let bls = [];
         if (Array.isArray(delivery.bl_number)) {
           bls = delivery.bl_number.map((b) => String(b).toLowerCase());
         } else if (typeof delivery.bl_number === "string") {
           bls = delivery.bl_number.split(/[,;\s]+/).map((b) => b.toLowerCase());
         }
-        return dossier.includes(query) || bls.some((b) => b.includes(query));
+        return (
+          dossier.includes(query) ||
+          bls.some((b) => b.includes(query)) ||
+          shipName.includes(query)
+        );
       });
       // Tri du plus ancien au plus récent
       filtered.sort((a, b) => {
@@ -1000,7 +1011,11 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
-        allDeliveries = data.deliveries.map((delivery) => {
+        // Récupération des paramètres pour le mode admin
+        const isAdminMode = getUrlParameter("mode") === "admin";
+        const targetUser = getUrlParameter("user");
+
+        let processedDeliveries = data.deliveries.map((delivery) => {
           // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
           // Initialisation des statuts conteneurs si absent
           let tcList = [];
@@ -1060,6 +1075,33 @@ document.addEventListener("DOMContentLoaded", function () {
           }
           return delivery;
         });
+
+        // Filtrage pour le mode admin : ne montrer que les livraisons de l'utilisateur ciblé
+        if (isAdminMode && targetUser) {
+          processedDeliveries = processedDeliveries.filter((delivery) => {
+            // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
+            const userFields = [
+              delivery.responsible_acconier,
+              delivery.resp_acconier,
+              delivery.responsible_livreur,
+              delivery.resp_livreur,
+              delivery.assigned_to,
+              delivery.created_by,
+              delivery.updated_by,
+            ];
+
+            return userFields.some(
+              (field) =>
+                field && field.toLowerCase().includes(targetUser.toLowerCase())
+            );
+          });
+
+          console.log(
+            `[MODE ADMIN] Filtrage pour l'utilisateur "${targetUser}": ${processedDeliveries.length} livraisons trouvées`
+          );
+        }
+
+        allDeliveries = processedDeliveries;
         // Synchronisation avec la variable globale utilisée dans renderAgentTableFull
         window.allDeliveries = allDeliveries;
       } else {
@@ -1325,6 +1367,7 @@ const EDITABLE_COLUMNS = [
   "client_name",
   "client_phone",
   "lieu",
+  "container_number",
   "container_foot_type",
   "container_type_and_content",
   "declaration_number",
@@ -1802,7 +1845,146 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           };
         }
       } else if (col.id === "container_number") {
-        // Rendu avancé pour Numéro TC(s) avec badge/tag et menu déroulant statut
+        // TOUJOURS ajouter le gestionnaire onclick pour permettre l'édition
+        td.onclick = () => {
+          // Vérifier si on est en mode édition ET que la colonne est éditable
+          if (!isTableEditMode || !EDITABLE_COLUMNS.includes(col.id)) return;
+
+          let currentValue = "";
+          // Récupérer la valeur actuelle depuis les données
+          if (delivery.container_numbers_list) {
+            try {
+              let tcList = [];
+              if (typeof delivery.container_numbers_list === "string") {
+                tcList = JSON.parse(delivery.container_numbers_list);
+              } else if (Array.isArray(delivery.container_numbers_list)) {
+                tcList = delivery.container_numbers_list;
+              }
+              currentValue = tcList.filter(Boolean).join(", ");
+            } catch (e) {
+              currentValue = delivery.container_number || "";
+            }
+          } else if (Array.isArray(delivery.container_number)) {
+            currentValue = delivery.container_number.filter(Boolean).join(", ");
+          } else if (typeof delivery.container_number === "string") {
+            currentValue = delivery.container_number;
+          }
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = currentValue;
+          input.style.width = "100%";
+          input.style.border = "2px solid #2563eb";
+          input.style.borderRadius = "4px";
+          input.style.padding = "6px 8px";
+          input.style.fontSize = "0.9rem";
+          input.style.fontFamily = "inherit";
+
+          const isDark =
+            document.documentElement.getAttribute("data-theme") === "dark";
+          input.style.backgroundColor = isDark ? "#232f43" : "#fff";
+          input.style.color = isDark ? "#fff" : "#222";
+
+          td.textContent = "";
+          td.appendChild(input);
+
+          const saveEdit = () => {
+            const newValue = input.value.trim();
+            if (!editedCellsData[delivery.id]) {
+              editedCellsData[delivery.id] = {};
+            }
+            editedCellsData[delivery.id][col.id] = newValue;
+
+            // Mettre à jour les données de livraison avec la nouvelle valeur
+            if (newValue) {
+              // Convertir la chaîne en array si elle contient des virgules
+              const newTcList = newValue.split(/[,;\s]+/).filter(Boolean);
+              delivery.container_number = newTcList;
+              delivery.container_numbers_list = newTcList;
+            } else {
+              delivery.container_number = [];
+              delivery.container_numbers_list = [];
+            }
+
+            // Vider la cellule et re-rendre avec l'affichage normal (badges/cartes)
+            td.innerHTML = "";
+            td.classList.remove("tc-multi-cell");
+
+            // Re-exécuter la logique de rendu normal
+            let tcList = [];
+            if (delivery.container_numbers_list) {
+              try {
+                if (typeof delivery.container_numbers_list === "string") {
+                  tcList = JSON.parse(delivery.container_numbers_list);
+                } else if (Array.isArray(delivery.container_numbers_list)) {
+                  tcList = delivery.container_numbers_list;
+                }
+                tcList = tcList.filter(Boolean);
+              } catch (e) {
+                tcList = [];
+              }
+            }
+            if (
+              tcList.length === 0 &&
+              Array.isArray(delivery.container_number)
+            ) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (
+              tcList.length === 0 &&
+              typeof delivery.container_number === "string"
+            ) {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
+
+            // Rendu des badges/cartes
+            if (tcList.length > 1) {
+              td.classList.add("tc-multi-cell");
+              const btn = document.createElement("button");
+              btn.className = "tc-tags-btn";
+              btn.type = "button";
+              btn.setAttribute("data-allow-admin", "true");
+              btn.classList.add("admin-allowed-tc");
+              btn.innerHTML =
+                tcList
+                  .slice(0, 2)
+                  .map((tc) => `<span class="tc-tag">${tc}</span>`)
+                  .join("") +
+                (tcList.length > 2
+                  ? ` <span class="tc-tag tc-tag-more">+${
+                      tcList.length - 2
+                    }</span>`
+                  : "") +
+                ' <i class="fas fa-chevron-down tc-chevron"></i>';
+              td.appendChild(btn);
+            } else if (tcList.length === 1) {
+              const tag = document.createElement("span");
+              tag.className = "tc-tag";
+              tag.textContent = tcList[0];
+              td.appendChild(tag);
+            } else {
+              td.textContent = "-";
+            }
+          };
+
+          input.addEventListener("blur", saveEdit);
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              saveEdit();
+            } else if (e.key === "Escape") {
+              td.textContent = currentValue || "-";
+            }
+          });
+
+          input.focus();
+          if (input.setSelectionRange) {
+            input.setSelectionRange(0, input.value.length);
+          }
+        };
+
+        // Rendu normal : logique existante avec badge/tag et menu déroulant statut
         let tcList = [];
 
         // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
@@ -1898,7 +2080,112 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = "-";
         }
       } else if (col.id === "bl_number") {
-        // Rendu avancé pour N° BL : badge/tag  et menu déroulant popup
+        // TOUJOURS ajouter le gestionnaire onclick pour permettre l'édition
+        td.onclick = () => {
+          // Vérifier si on est en mode édition ET que la colonne est éditable
+          if (!isTableEditMode || !EDITABLE_COLUMNS.includes(col.id)) return;
+
+          let currentValue = "";
+          // Récupérer la valeur actuelle depuis les données
+          if (Array.isArray(delivery.bl_number)) {
+            currentValue = delivery.bl_number.filter(Boolean).join(", ");
+          } else if (typeof delivery.bl_number === "string") {
+            currentValue = delivery.bl_number;
+          }
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = currentValue;
+          input.style.width = "100%";
+          input.style.border = "2px solid #2563eb";
+          input.style.borderRadius = "4px";
+          input.style.padding = "6px 8px";
+          input.style.fontSize = "0.9rem";
+          input.style.fontFamily = "inherit";
+
+          const isDark =
+            document.documentElement.getAttribute("data-theme") === "dark";
+          input.style.backgroundColor = isDark ? "#232f43" : "#fff";
+          input.style.color = isDark ? "#fff" : "#222";
+
+          td.textContent = "";
+          td.appendChild(input);
+
+          const saveEdit = () => {
+            const newValue = input.value.trim();
+            if (!editedCellsData[delivery.id]) {
+              editedCellsData[delivery.id] = {};
+            }
+            editedCellsData[delivery.id][col.id] = newValue;
+
+            // Mettre à jour les données de livraison avec la nouvelle valeur
+            if (newValue) {
+              // Convertir la chaîne en array si elle contient des virgules
+              const newBlList = newValue.split(/[,;\s]+/).filter(Boolean);
+              delivery.bl_number = newBlList;
+            } else {
+              delivery.bl_number = [];
+            }
+
+            // Vider la cellule et re-rendre avec l'affichage normal (badges/cartes)
+            td.innerHTML = "";
+            td.classList.remove("tc-multi-cell");
+
+            // Re-exécuter la logique de rendu normal pour bl_number
+            let blList = [];
+            if (Array.isArray(delivery.bl_number)) {
+              blList = delivery.bl_number.filter(Boolean);
+            } else if (typeof delivery.bl_number === "string") {
+              blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+            }
+
+            // Rendu des badges/cartes pour BL
+            if (blList.length > 1) {
+              td.classList.add("tc-multi-cell");
+              const btn = document.createElement("button");
+              btn.className = "tc-tags-btn";
+              btn.type = "button";
+              btn.setAttribute("data-allow-admin", "true");
+              btn.classList.add("admin-allowed-bl-link");
+              btn.innerHTML =
+                blList
+                  .slice(0, 2)
+                  .map((bl) => `<span class="tc-tag">${bl}</span>`)
+                  .join("") +
+                (blList.length > 2
+                  ? ` <span class="tc-tag tc-tag-more">+${
+                      blList.length - 2
+                    }</span>`
+                  : "") +
+                ' <i class="fas fa-chevron-down tc-chevron"></i>';
+              td.appendChild(btn);
+            } else if (blList.length === 1) {
+              const tag = document.createElement("span");
+              tag.className = "tc-tag";
+              tag.textContent = blList[0];
+              td.appendChild(tag);
+            } else {
+              td.textContent = "-";
+            }
+          };
+
+          input.addEventListener("blur", saveEdit);
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              saveEdit();
+            } else if (e.key === "Escape") {
+              td.textContent = currentValue || "-";
+            }
+          });
+
+          input.focus();
+          if (input.setSelectionRange) {
+            input.setSelectionRange(0, input.value.length);
+          }
+        };
+
+        // Rendu normal (non-édition) : logique existante avec badge/tag et menu déroulant popup
         let blList = [];
         if (Array.isArray(delivery.bl_number)) {
           blList = delivery.bl_number.filter(Boolean);
