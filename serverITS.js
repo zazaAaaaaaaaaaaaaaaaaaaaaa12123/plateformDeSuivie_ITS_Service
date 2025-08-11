@@ -2,7 +2,11 @@ const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
 const { Pool } = require("pg");
+const cors = require("cors");
+const path = require("path");
+const WebSocket = require("ws");
 const app = express();
+const port = 3000;
 // Redirection automatique vers le domaine -1cjx si on accède au domaine principal
 app.use((req, res, next) => {
   if (
@@ -19,12 +23,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-const cors = require("cors");
-const path = require("path");
-const WebSocket = require("ws");
-// const bcrypt = require("bcryptjs"); // SUPPRIMÉ doublon, voir plus bas
-const port = 3000;
 
 // Middleware pour parser les requêtes JSON et URL-encodées
 app.use(express.json());
