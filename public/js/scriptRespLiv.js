@@ -1,3 +1,9 @@
+// Fonction utilitaire pour récupérer les paramètres URL
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
 // --- Info-bulle personnalisée pour la colonne Statut (Numéro TC + statut avec icônes) ---
 function createStatutTooltip() {
   let tooltip = document.getElementById("statutTableTooltip");
@@ -593,12 +599,45 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
+        // Récupération des paramètres pour le mode admin
+        const isAdminMode = getUrlParameter("mode") === "admin";
+        const targetUser = getUrlParameter("user");
+
         // On ne garde que les livraisons dont le statut acconier est 'mise_en_livraison_acconier'
-        window.allDeliveries = data.deliveries.filter((delivery) => {
+        let filteredDeliveries = data.deliveries.filter((delivery) => {
           return (
             delivery.delivery_status_acconier === "mise_en_livraison_acconier"
           );
         });
+
+        // Filtrage pour le mode admin : ne montrer que les livraisons de l'utilisateur ciblé
+        if (isAdminMode && targetUser) {
+          filteredDeliveries = filteredDeliveries.filter((delivery) => {
+            // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
+            // Pour les responsables de livraison, vérifier principalement les champs liés aux livreurs
+            const userFields = [
+              delivery.nom_agent_visiteur,          // Champ principal pour les agents visiteurs
+              delivery.employee_name,               // Nom de l'employé qui a créé l'entrée
+              delivery.driver_name,                 // Nom du chauffeur
+              delivery.responsible_livreur,         // Responsable livreur général
+              delivery.resp_livreur,               // Responsable livreur (alias)
+              delivery.assigned_to,                // Assigné à
+              delivery.created_by,                 // Créé par
+              delivery.updated_by                  // Mis à jour par
+            ];
+            
+            return userFields.some(
+              (field) =>
+                field && field.toLowerCase().includes(targetUser.toLowerCase())
+            );
+          });
+
+          console.log(
+            `[MODE ADMIN LIVREUR] Filtrage pour l'utilisateur "${targetUser}": ${filteredDeliveries.length} livraisons trouvées`
+          );
+        }
+
+        window.allDeliveries = filteredDeliveries;
       } else {
         window.allDeliveries = [];
       }

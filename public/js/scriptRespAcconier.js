@@ -1,3 +1,9 @@
+// Fonction utilitaire pour récupérer les paramètres URL
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
 // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
@@ -1000,7 +1006,11 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch("/deliveries/status");
       const data = await response.json();
       if (data.success && Array.isArray(data.deliveries)) {
-        allDeliveries = data.deliveries.map((delivery) => {
+        // Récupération des paramètres pour le mode admin
+        const isAdminMode = getUrlParameter("mode") === "admin";
+        const targetUser = getUrlParameter("user");
+
+        let processedDeliveries = data.deliveries.map((delivery) => {
           // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
           // Initialisation des statuts conteneurs si absent
           let tcList = [];
@@ -1060,6 +1070,33 @@ document.addEventListener("DOMContentLoaded", function () {
           }
           return delivery;
         });
+
+        // Filtrage pour le mode admin : ne montrer que les livraisons de l'utilisateur ciblé
+        if (isAdminMode && targetUser) {
+          processedDeliveries = processedDeliveries.filter((delivery) => {
+            // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
+            const userFields = [
+              delivery.responsible_acconier,
+              delivery.resp_acconier,
+              delivery.responsible_livreur,
+              delivery.resp_livreur,
+              delivery.assigned_to,
+              delivery.created_by,
+              delivery.updated_by,
+            ];
+
+            return userFields.some(
+              (field) =>
+                field && field.toLowerCase().includes(targetUser.toLowerCase())
+            );
+          });
+
+          console.log(
+            `[MODE ADMIN] Filtrage pour l'utilisateur "${targetUser}": ${processedDeliveries.length} livraisons trouvées`
+          );
+        }
+
+        allDeliveries = processedDeliveries;
         // Synchronisation avec la variable globale utilisée dans renderAgentTableFull
         window.allDeliveries = allDeliveries;
       } else {
