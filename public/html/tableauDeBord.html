@@ -2704,177 +2704,91 @@
         </div>
 
         <script>
-          // === CONFIGURATION API GLOBALE ===
-          // Configuration de l'URL de l'API pour les environnements local et distant
-          window.API_BASE_URL = (function () {
-            const isLocal = ["localhost", "127.0.0.1"].includes(
-              window.location.hostname
-            );
+          // === SOLUTION DÉFINITIVE POUR LES UTILISATEURS CONNECTÉS ===
+          window.API_BASE_URL =
+            "https://plateformdesuivie-its-service-1cjx.onrender.com";
 
-            // Option 1: Mode local - utilise le serveur local
-            if (isLocal) {
-              return "http://localhost:3000";
-            }
+          function updateConnectedUsersNow() {
+            fetch(`${window.API_BASE_URL}/api/active-users/stats`)
+              .then((response) => response.json())
+              .then((data) => {
+                // Acconiers
+                const acconiersDiv =
+                  document.getElementById("acconiersConnected");
+                if (acconiersDiv) {
+                  const count =
+                    data.pageStats && data.pageStats["resp_acconier.html"]
+                      ? data.pageStats["resp_acconier.html"].count
+                      : 0;
+                  const color = count > 0 ? "#10b981" : "#dc2626";
+                  acconiersDiv.innerHTML = `<i class="fas fa-circle" style="color: ${color}; font-size: 6px; margin-right: 2px;"></i>${count} connecté(s)`;
+                }
 
-            // Option 2: Mode distant - utilise le serveur Render
-            // Mode production : essaie d'abord le serveur actuel, puis le serveur distant
-            return window.location.origin ===
-              "https://plateformdesuivie-its-service-1cjx.onrender.com"
-              ? window.location.origin
-              : "https://plateformdesuivie-its-service-1cjx.onrender.com";
-          })();
-
-          console.log(
-            "🔗 [API CONFIG] URL de base de l'API:",
-            window.API_BASE_URL
-          );
-
-          // === FONCTION DE DIAGNOSTIC SIMPLE ===
-          window.diagnosisConnectedUsers = async function () {
-            console.log(
-              "🔍 [DIAGNOSTIC] Début du diagnostic des utilisateurs connectés..."
-            );
-
-            const localUrl = "http://localhost:3000";
-            const remoteUrl =
-              "https://plateformdesuivie-its-service-1cjx.onrender.com";
-
-            console.log(
-              "📍 [DIAGNOSTIC] URL de l'API actuelle:",
-              window.API_BASE_URL
-            );
-
-            // Test du serveur local
-            try {
-              console.log("🔄 [DIAGNOSTIC] Test du serveur local...");
-              const localResponse = await fetch(
-                `${localUrl}/api/active-users/stats`
-              );
-              const localData = await localResponse.json();
-              console.log(
-                "✅ [DIAGNOSTIC] Serveur local - Réponse:",
-                localData
-              );
-            } catch (error) {
-              console.warn(
-                "⚠️ [DIAGNOSTIC] Serveur local - Erreur:",
-                error.message
-              );
-            }
-
-            // Test du serveur distant
-            try {
-              console.log("🔄 [DIAGNOSTIC] Test du serveur distant...");
-              const remoteResponse = await fetch(
-                `${remoteUrl}/api/active-users/stats`
-              );
-              const remoteData = await remoteResponse.json();
-              console.log(
-                "✅ [DIAGNOSTIC] Serveur distant - Réponse:",
-                remoteData
-              );
-            } catch (error) {
-              console.warn(
-                "⚠️ [DIAGNOSTIC] Serveur distant - Erreur:",
-                error.message
-              );
-            }
-
-            // Test de l'API configurée
-            try {
-              console.log("🔄 [DIAGNOSTIC] Test de l'API configurée...");
-              const configResponse = await fetch(
-                `${window.API_BASE_URL}/api/active-users/stats`
-              );
-              const configData = await configResponse.json();
-              console.log(
-                "✅ [DIAGNOSTIC] API configurée - Réponse:",
-                configData
-              );
-
-              // Analyse des données
-              if (configData.totalConnectedUsers === 0) {
-                console.warn(
-                  "⚠️ [DIAGNOSTIC] Aucun utilisateur connecté détecté!"
+                // Livraisons
+                const livraisonsDiv = document.getElementById(
+                  "livraisonsConnected"
                 );
-                console.log("💡 [DIAGNOSTIC] Solutions possibles:");
-                console.log(
-                  "   1. Vérifiez que des utilisateurs sont connectés sur les pages resp_acconier.html ou resp_liv.html"
-                );
-                console.log(
-                  "   2. Vérifiez la console des pages utilisateurs pour les erreurs de heartbeat"
-                );
-                console.log(
-                  "   3. Assurez-vous que les heartbeats sont envoyés vers le bon serveur"
-                );
-              } else {
-                console.log(
-                  `🎉 [DIAGNOSTIC] ${configData.totalConnectedUsers} utilisateur(s) connecté(s) détecté(s)`
-                );
-              }
-            } catch (error) {
-              console.error(
-                "❌ [DIAGNOSTIC] API configurée - Erreur:",
-                error.message
-              );
-            }
+                if (livraisonsDiv) {
+                  const count =
+                    data.pageStats && data.pageStats["resp_liv.html"]
+                      ? data.pageStats["resp_liv.html"].count
+                      : 0;
+                  const color = count > 0 ? "#10b981" : "#dc2626";
+                  livraisonsDiv.innerHTML = `<i class="fas fa-circle" style="color: ${color}; font-size: 6px; margin-right: 2px;"></i>${count} connecté(s)`;
+                }
 
-            console.log("🏁 [DIAGNOSTIC] Diagnostic terminé");
-          };
+                // Total
+                const totalDiv = document.getElementById("totalUsersCount");
+                if (totalDiv) {
+                  totalDiv.textContent = `${
+                    data.totalConnectedUsers || 0
+                  } total`;
+                }
 
-          // === FONCTION DE TEST DES UTILISATEURS ACTIFS ===
-          window.testActiveUsers = function () {
-            console.log("🧪 [TEST] Simulation d'utilisateurs connectés...");
+                // Liste détaillée
+                const listDiv = document.getElementById("usersDetailsList");
+                if (listDiv) {
+                  if (data.totalConnectedUsers === 0) {
+                    listDiv.innerHTML = `<div style="text-align: center; color: #6b7280; font-style: italic; padding: 8px 0; font-size: 0.8em;">Aucun utilisateur connecté</div>`;
+                  } else {
+                    let html = "";
+                    Object.keys(data.pageStats || {}).forEach((pageName) => {
+                      const pageData = data.pageStats[pageName];
+                      if (pageData.count > 0) {
+                        const title =
+                          pageName === "resp_acconier.html"
+                            ? "🛡️ Acconiers"
+                            : "📦 Livraisons";
+                        html += `<div style="margin-bottom: 8px;"><div style="font-weight: 600; color: #374151; font-size: 0.85em; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;"><span>${title}</span><span style="background: #10b981; color: white; font-size: 0.7em; padding: 1px 4px; border-radius: 6px;">${pageData.count}</span></div>`;
+                        pageData.users.forEach((user) => {
+                          html += `<div style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; background: #f9fafb; border-radius: 4px; margin-bottom: 2px; border-left: 2px solid #10b981; font-size: 0.8em;"><div>${
+                            user.nom || user.username || "Utilisateur"
+                          }</div></div>`;
+                        });
+                        html += "</div>";
+                      }
+                    });
+                    listDiv.innerHTML = html;
+                  }
+                }
+              })
+              .catch(() => {
+                // En cas d'erreur, afficher 0
+                const elements = ["acconiersConnected", "livraisonsConnected"];
+                elements.forEach((id) => {
+                  const el = document.getElementById(id);
+                  if (el)
+                    el.innerHTML = `<i class="fas fa-circle" style="color: #dc2626; font-size: 6px; margin-right: 2px;"></i>0 connecté(s)`;
+                });
+              });
+          }
 
-            // Simuler un utilisateur sur resp_acconier.html
-            fetch(`${window.API_BASE_URL}/api/active-users/heartbeat`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                page: "resp_acconier.html",
-                userId: "test_acconier_1",
-                username: "TestAcconier",
-                nom: "Agent Acconier Test",
-              }),
-            });
+          // Démarrer dès que possible
+          setTimeout(updateConnectedUsersNow, 1000);
+          setInterval(updateConnectedUsersNow, 10000);
 
-            // Simuler un utilisateur sur resp_liv.html
-            fetch(`${window.API_BASE_URL}/api/active-users/heartbeat`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                page: "resp_liv.html",
-                userId: "test_liv_1",
-                username: "TestLivraison",
-                nom: "Agent Livraison Test",
-              }),
-            });
-
-            console.log(
-              "✅ [TEST] Utilisateurs de test envoyés, attendez 3 secondes puis vérifiez la sidebar"
-            );
-            setTimeout(() => {
-              console.log("🔄 [TEST] Exécution du diagnostic...");
-              window.diagnosisConnectedUsers();
-            }, 3000);
-          };
-
-          console.log("✅ [DIAGNOSTIC] Fonctions de test chargées:");
-          console.log(
-            "   - window.diagnosisConnectedUsers() - Diagnostic complet"
-          );
-          console.log(
-            "   - window.testActiveUsers() - Test avec utilisateurs simulés"
-          );
-          console.log(
-            "   - window.forceUpdateConnectedUsers() - Force la mise à jour de la sidebar"
-          );
-
-          // === FONCTION DE MISE À JOUR MANUELLE ===
-          window.forceUpdateConnectedUsers = function () {
-            console.log("🔄 [FORCE UPDATE] Mise à jour forcée des utilisateurs connectés...");
-            updateConnectedUsers();
-          };
+          // Fonction pour forcer la mise à jour
+          window.updateUsers = updateConnectedUsersNow;
 
           // Message de bienvenue animé (typewriter)
           document.addEventListener("DOMContentLoaded", function () {
@@ -5373,7 +5287,10 @@
             .then((data) => {
               console.log("📊 [UPDATE] Données reçues:", data);
               // L'API retourne directement les données, pas d'objet avec success
-              if (data && (data.totalConnectedUsers !== undefined || data.pageStats)) {
+              if (
+                data &&
+                (data.totalConnectedUsers !== undefined || data.pageStats)
+              ) {
                 updateSidebarIndicators(data);
                 updateDetailedUsersList(data);
                 console.log("✅ [UPDATE] Indicateurs mis à jour avec succès");
@@ -5452,12 +5369,17 @@
         }
 
         function updateDetailedUsersList(data) {
-          console.log("📝 [DETAILS] Mise à jour de la liste détaillée avec:", data);
+          console.log(
+            "📝 [DETAILS] Mise à jour de la liste détaillée avec:",
+            data
+          );
           const totalUsersDiv = document.getElementById("totalUsersCount");
           const usersListDiv = document.getElementById("usersDetailsList");
 
           if (!totalUsersDiv || !usersListDiv) {
-            console.warn("⚠️ [DETAILS] Éléments totalUsersCount ou usersDetailsList non trouvés");
+            console.warn(
+              "⚠️ [DETAILS] Éléments totalUsersCount ou usersDetailsList non trouvés"
+            );
             return;
           }
 
