@@ -409,6 +409,61 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
         }
+
+        // ===== NOUVEAU : Traitement des mises à jour d'observations =====
+        if (
+          data.type === "observation_update" &&
+          data.deliveryId &&
+          data.hasOwnProperty("observation")
+        ) {
+          console.log(
+            `🔄 [WebSocket LIVREUR] Mise à jour observation reçue pour livraison ${data.deliveryId}:`,
+            data.observation
+          );
+
+          // Mettre à jour la livraison dans les données globales
+          if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+            const deliveryIndex = window.allDeliveries.findIndex(
+              (d) => d.id === data.deliveryId
+            );
+            if (deliveryIndex !== -1) {
+              window.allDeliveries[deliveryIndex].observation =
+                data.observation;
+              console.log(
+                `✅ [WebSocket LIVREUR] Observation mise à jour dans les données globales`
+              );
+            }
+          }
+
+          // Mettre à jour l'affichage si la cellule est visible
+          const observationCell = document.querySelector(
+            `[data-delivery-id="${data.deliveryId}"][data-field="observation"]`
+          );
+          if (observationCell) {
+            observationCell.textContent = data.observation || "-";
+            observationCell.dataset.edited = "true";
+            console.log(
+              `✅ [WebSocket LIVREUR] Cellule observation mise à jour dans le DOM`
+            );
+          }
+
+          // Rafraîchir le tableau pour être sûr
+          const dateStartInput = document.getElementById(
+            "mainTableDateStartFilter"
+          );
+          const dateEndInput = document.getElementById(
+            "mainTableDateEndFilter"
+          );
+          if (typeof updateTableForDateRange === "function") {
+            updateTableForDateRange(
+              dateStartInput ? dateStartInput.value : "",
+              dateEndInput ? dateEndInput.value : ""
+            );
+            console.log(
+              `🔄 [WebSocket LIVREUR] Tableau rafraîchi après mise à jour observation`
+            );
+          }
+        }
       } catch (e) {
         //console.error("Erreur WebSocket BL (liv):", e);
       }
@@ -601,7 +656,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if (data.success && Array.isArray(data.deliveries)) {
         // Récupération des paramètres pour le mode admin
         const isAdminMode = getUrlParameter("mode") === "admin";
-        const targetUser = getUrlParameter("user");
+        const targetUser =
+          getUrlParameter("targetUser") || getUrlParameter("user");
 
         // On ne garde que les livraisons dont le statut acconier est 'mise_en_livraison_acconier'
         let filteredDeliveries = data.deliveries.filter((delivery) => {
@@ -796,6 +852,68 @@ document.addEventListener("DOMContentLoaded", function () {
         dateEndInput.value = today;
       }
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+
+      // ===== RAFRAÎCHISSEMENT AUTOMATIQUE EN MODE ADMIN =====
+      const isAdminMode = getUrlParameter("mode") === "admin";
+      const targetUser = getUrlParameter("targetUser");
+
+      if (isAdminMode && targetUser) {
+        console.log(
+          `🔄 [MODE ADMIN LIVREUR] Rafraîchissement automatique activé pour l'utilisateur: ${decodeURIComponent(
+            targetUser
+          )}`
+        );
+
+        // Rafraîchir les données toutes les 5 secondes en mode admin
+        setInterval(async () => {
+          try {
+            console.log(
+              `🔄 [AUTO-REFRESH LIVREUR] Rechargement des données pour ${decodeURIComponent(
+                targetUser
+              )}`
+            );
+            await loadAllDeliveries();
+            updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+
+            // Afficher une petite notification discrète
+            const refreshIndicator = document.getElementById(
+              "refresh-indicator-livreur"
+            );
+            if (refreshIndicator) {
+              refreshIndicator.style.opacity = "1";
+              setTimeout(() => {
+                refreshIndicator.style.opacity = "0";
+              }, 1000);
+            }
+          } catch (error) {
+            console.error(
+              "Erreur lors du rafraîchissement automatique livreur:",
+              error
+            );
+          }
+        }, 5000); // 5 secondes
+
+        // Créer un indicateur de rafraîchissement
+        const refreshIndicator = document.createElement("div");
+        refreshIndicator.id = "refresh-indicator-livreur";
+        refreshIndicator.innerHTML = "🚚 Synchronisation livraisons...";
+        refreshIndicator.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 500;
+          z-index: 10000;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        `;
+        document.body.appendChild(refreshIndicator);
+      }
     });
     dateStartInput.addEventListener("change", () => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
@@ -2139,6 +2257,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
         if (col.id === "observation") {
           td.classList.add("observation-col");
+          // Ajouter les attributs pour la synchronisation WebSocket
+          td.setAttribute("data-delivery-id", delivery.id);
+          td.setAttribute("data-field", "observation");
         }
       } else if (editableCols.includes(col.id)) {
         // Cellule éditable texte avec sauvegarde/restauration
@@ -2242,6 +2363,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         };
         if (col.id === "observation") {
           td.classList.add("observation-col");
+          // Ajouter les attributs pour la synchronisation WebSocket
+          td.setAttribute("data-delivery-id", delivery.id);
+          td.setAttribute("data-field", "observation");
         }
       } else if (col.id === "statut") {
         // Affichage du modèle "x sur y livré" dans chaque cellule de la colonne Statut uniquement si au moins un conteneur est livré
@@ -2341,6 +2465,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.textContent = value;
         if (col.id === "observation") {
           td.classList.add("observation-col");
+          // Ajouter les attributs pour la synchronisation WebSocket
+          td.setAttribute("data-delivery-id", delivery.id);
+          td.setAttribute("data-field", "observation");
         }
       }
       tr.appendChild(td);

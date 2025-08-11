@@ -963,6 +963,61 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 2600);
           }
         }
+
+        // ===== NOUVEAU : Traitement des mises à jour d'observations =====
+        if (
+          data.type === "observation_update" &&
+          data.deliveryId &&
+          data.hasOwnProperty("observation")
+        ) {
+          console.log(
+            `🔄 [WebSocket] Mise à jour observation reçue pour livraison ${data.deliveryId}:`,
+            data.observation
+          );
+
+          // Mettre à jour la livraison dans les données globales
+          if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+            const deliveryIndex = window.allDeliveries.findIndex(
+              (d) => d.id === data.deliveryId
+            );
+            if (deliveryIndex !== -1) {
+              window.allDeliveries[deliveryIndex].observation =
+                data.observation;
+              console.log(
+                `✅ [WebSocket] Observation mise à jour dans les données globales`
+              );
+            }
+          }
+
+          // Mettre à jour l'affichage si la cellule est visible
+          const observationCell = document.querySelector(
+            `[data-delivery-id="${data.deliveryId}"][data-field="observation"]`
+          );
+          if (observationCell) {
+            observationCell.textContent = data.observation || "-";
+            observationCell.dataset.edited = "true";
+            console.log(
+              `✅ [WebSocket] Cellule observation mise à jour dans le DOM`
+            );
+          }
+
+          // Rafraîchir le tableau pour être sûr
+          const dateStartInput = document.getElementById(
+            "mainTableDateStartFilter"
+          );
+          const dateEndInput = document.getElementById(
+            "mainTableDateEndFilter"
+          );
+          if (typeof updateTableForDateRange === "function") {
+            updateTableForDateRange(
+              dateStartInput ? dateStartInput.value : "",
+              dateEndInput ? dateEndInput.value : ""
+            );
+            console.log(
+              `🔄 [WebSocket] Tableau rafraîchi après mise à jour observation`
+            );
+          }
+        }
       } catch (e) {
         console.error("WebSocket BL error:", e);
       }
@@ -1013,7 +1068,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if (data.success && Array.isArray(data.deliveries)) {
         // Récupération des paramètres pour le mode admin
         const isAdminMode = getUrlParameter("mode") === "admin";
-        const targetUser = getUrlParameter("user");
+        const targetUser =
+          getUrlParameter("targetUser") || getUrlParameter("user");
 
         let processedDeliveries = data.deliveries.map((delivery) => {
           // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
@@ -1272,6 +1328,68 @@ document.addEventListener("DOMContentLoaded", function () {
       dateStartInput.value = minDateStr;
       dateEndInput.value = todayStr;
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+
+      // ===== RAFRAÎCHISSEMENT AUTOMATIQUE EN MODE ADMIN =====
+      const isAdminMode = getUrlParameter("mode") === "admin";
+      const targetUser = getUrlParameter("targetUser");
+
+      if (isAdminMode && targetUser) {
+        console.log(
+          `🔄 [MODE ADMIN] Rafraîchissement automatique activé pour l'utilisateur: ${decodeURIComponent(
+            targetUser
+          )}`
+        );
+
+        // Rafraîchir les données toutes les 5 secondes en mode admin
+        setInterval(async () => {
+          try {
+            console.log(
+              `🔄 [AUTO-REFRESH] Rechargement des données pour ${decodeURIComponent(
+                targetUser
+              )}`
+            );
+            await loadAllDeliveries();
+            updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+
+            // Afficher une petite notification discrète
+            const refreshIndicator =
+              document.getElementById("refresh-indicator");
+            if (refreshIndicator) {
+              refreshIndicator.style.opacity = "1";
+              setTimeout(() => {
+                refreshIndicator.style.opacity = "0";
+              }, 1000);
+            }
+          } catch (error) {
+            console.error(
+              "Erreur lors du rafraîchissement automatique:",
+              error
+            );
+          }
+        }, 5000); // 5 secondes
+
+        // Créer un indicateur de rafraîchissement
+        const refreshIndicator = document.createElement("div");
+        refreshIndicator.id = "refresh-indicator";
+        refreshIndicator.innerHTML = "🔄 Synchronisation en cours...";
+        refreshIndicator.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 500;
+          z-index: 10000;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        `;
+        document.body.appendChild(refreshIndicator);
+      }
+
       // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui ne sont PAS en livraison
       function getLateDeliveries() {
         const now = new Date();
@@ -3472,6 +3590,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (col.id === "observation") {
           td.classList.add("observation-col");
           td.style.cursor = "pointer";
+          // Ajouter les attributs pour la synchronisation WebSocket
+          td.setAttribute("data-delivery-id", delivery.id);
+          td.setAttribute("data-field", "observation");
+
           let localKey = `obs_${delivery.id}`;
           let localObs = localStorage.getItem(localKey);
           let displayValue = value;
