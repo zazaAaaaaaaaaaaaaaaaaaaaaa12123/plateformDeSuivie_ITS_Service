@@ -2002,6 +2002,71 @@
             </form>
           </div>
         </div>
+
+        <!-- Section détaillée des utilisateurs connectés -->
+        <div
+          id="detailedUsersSection"
+          style="
+            margin-top: 20px;
+            background: rgba(37, 99, 235, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(37, 99, 235, 0.15);
+            max-height: 300px;
+            overflow-y: auto;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 12px;
+              cursor: pointer;
+            "
+            onclick="toggleUsersDetails()"
+          >
+            <h4
+              style="
+                font-size: 0.95em;
+                color: #2563eb;
+                margin: 0;
+                font-weight: 600;
+              "
+            >
+              👥 Utilisateurs Connectés
+            </h4>
+            <div
+              id="totalUsersCount"
+              style="
+                font-size: 0.85em;
+                color: #6b7280;
+                background: #f3f4f6;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-weight: 600;
+              "
+            >
+              0 total
+            </div>
+          </div>
+
+          <div
+            id="usersDetailsList"
+            style="font-size: 0.85em; color: #374151; line-height: 1.4"
+          >
+            <div
+              style="
+                text-align: center;
+                color: #6b7280;
+                font-style: italic;
+                padding: 20px 0;
+              "
+            >
+              Aucun utilisateur connecté
+            </div>
+          </div>
+        </div>
       </aside>
 
       <main class="main-content">
@@ -5133,85 +5198,185 @@
 
         // === SYSTÈME DE SURVEILLANCE DES UTILISATEURS CONNECTÉS ===
         function updateConnectedUsers() {
-          // Récupérer les utilisateurs connectés sur resp_acconier.html
-          fetch(
-            `${window.API_BASE_URL}/api/active-users?page=resp_acconier.html`
-          )
+          // Utiliser la nouvelle API de statistiques globales
+          fetch(`${window.API_BASE_URL}/api/active-users/stats`)
             .then((response) => response.json())
             .then((data) => {
-              const acconiersDiv =
-                document.getElementById("acconiersConnected");
-              if (acconiersDiv && data.success) {
-                const count = data.count || 0;
-                const circleColor = count > 0 ? "#10b981" : "#dc2626";
-                const usersList = data.users
-                  ? data.users
-                      .map((user) => user.nom || user.username || "Utilisateur")
-                      .join(", ")
-                  : "";
-
-                acconiersDiv.innerHTML = `
-                  <i class="fas fa-circle" style="color: ${circleColor}; font-size: 6px; margin-right: 2px;"></i>${count} connecté(s)
-                `;
-                acconiersDiv.title =
-                  count > 0
-                    ? `Connectés: ${usersList}`
-                    : "Aucun utilisateur connecté sur resp_acconier.html";
+              if (data.success) {
+                updateSidebarIndicators(data);
+                updateDetailedUsersList(data);
               }
             })
             .catch((error) => {
               console.warn(
-                "Erreur lors de la récupération des utilisateurs connectés resp_acconier:",
+                "Erreur lors de la récupération des statistiques utilisateurs:",
                 error
               );
-              const acconiersDiv =
-                document.getElementById("acconiersConnected");
-              if (acconiersDiv) {
-                acconiersDiv.innerHTML =
-                  '<i class="fas fa-circle" style="color: #dc2626; font-size: 6px; margin-right: 2px;"></i>N/A';
-                acconiersDiv.title = "Erreur de connexion";
-              }
+              updateSidebarIndicators({ pageStats: {} });
+              updateDetailedUsersList({
+                totalConnectedUsers: 0,
+                pageStats: {},
+              });
             });
+        }
 
-          // Récupérer les utilisateurs connectés sur resp_liv.html
-          fetch(`${window.API_BASE_URL}/api/active-users?page=resp_liv.html`)
-            .then((response) => response.json())
-            .then((data) => {
-              const livraisonsDiv = document.getElementById(
-                "livraisonsConnected"
-              );
-              if (livraisonsDiv && data.success) {
-                const count = data.count || 0;
-                const circleColor = count > 0 ? "#10b981" : "#dc2626";
-                const usersList = data.users
-                  ? data.users
-                      .map((user) => user.nom || user.username || "Utilisateur")
-                      .join(", ")
-                  : "";
+        function updateSidebarIndicators(data) {
+          const pageStats = data.pageStats || {};
 
-                livraisonsDiv.innerHTML = `
-                  <i class="fas fa-circle" style="color: ${circleColor}; font-size: 6px; margin-right: 2px;"></i>${count} connecté(s)
+          // Mettre à jour l'indicateur Acconier
+          const acconiersDiv = document.getElementById("acconiersConnected");
+          if (acconiersDiv) {
+            const acconiersData = pageStats["resp_acconier.html"] || {
+              count: 0,
+              users: [],
+            };
+            const count = acconiersData.count;
+            const circleColor = count > 0 ? "#10b981" : "#dc2626";
+            const usersList = acconiersData.users
+              .map((user) => user.nom || user.username || "Utilisateur")
+              .join(", ");
+
+            acconiersDiv.innerHTML = `
+              <i class="fas fa-circle" style="color: ${circleColor}; font-size: 6px; margin-right: 2px;"></i>${count} connecté(s)
+            `;
+            acconiersDiv.title =
+              count > 0
+                ? `Connectés: ${usersList}`
+                : "Aucun utilisateur connecté sur resp_acconier.html";
+          }
+
+          // Mettre à jour l'indicateur Livraison
+          const livraisonsDiv = document.getElementById("livraisonsConnected");
+          if (livraisonsDiv) {
+            const livraisonsData = pageStats["resp_liv.html"] || {
+              count: 0,
+              users: [],
+            };
+            const count = livraisonsData.count;
+            const circleColor = count > 0 ? "#10b981" : "#dc2626";
+            const usersList = livraisonsData.users
+              .map((user) => user.nom || user.username || "Utilisateur")
+              .join(", ");
+
+            livraisonsDiv.innerHTML = `
+              <i class="fas fa-circle" style="color: ${circleColor}; font-size: 6px; margin-right: 2px;"></i>${count} connecté(s)
+            `;
+            livraisonsDiv.title =
+              count > 0
+                ? `Connectés: ${usersList}`
+                : "Aucun utilisateur connecté sur resp_liv.html";
+          }
+        }
+
+        function updateDetailedUsersList(data) {
+          const totalUsersDiv = document.getElementById("totalUsersCount");
+          const usersListDiv = document.getElementById("usersDetailsList");
+
+          if (!totalUsersDiv || !usersListDiv) return;
+
+          const totalUsers = data.totalConnectedUsers || 0;
+          totalUsersDiv.textContent = `${totalUsers} total`;
+
+          if (totalUsers === 0) {
+            usersListDiv.innerHTML = `
+              <div style="text-align: center; color: #6b7280; font-style: italic; padding: 20px 0;">
+                Aucun utilisateur connecté
+              </div>
+            `;
+            return;
+          }
+
+          let html = "";
+          const pageStats = data.pageStats || {};
+
+          Object.keys(pageStats).forEach((pageName) => {
+            const pageData = pageStats[pageName];
+            if (pageData.count > 0) {
+              const pageDisplayName =
+                pageName === "resp_acconier.html"
+                  ? "🛡️ Acconiers"
+                  : "📦 Responsables Livraison";
+
+              html += `
+                <div style="margin-bottom: 16px;">
+                  <div style="
+                    font-weight: 600; 
+                    color: #374151; 
+                    margin-bottom: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                  ">
+                    <span>${pageDisplayName}</span>
+                    <span style="
+                      background: ${pageData.count > 0 ? "#10b981" : "#dc2626"};
+                      color: white;
+                      font-size: 0.75em;
+                      padding: 2px 6px;
+                      border-radius: 8px;
+                    ">${pageData.count}</span>
+                  </div>
+              `;
+
+              pageData.users.forEach((user) => {
+                const timeAgo = formatTimeAgo(user.timeConnected || 0);
+                html += `
+                  <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 6px 8px;
+                    background: #f9fafb;
+                    border-radius: 6px;
+                    margin-bottom: 4px;
+                    border-left: 3px solid #10b981;
+                  ">
+                    <div>
+                      <div style="font-weight: 500; color: #1f2937;">
+                        ${user.nom || user.username || "Utilisateur"}
+                      </div>
+                      <div style="font-size: 0.75em; color: #6b7280;">
+                        ${user.username !== user.nom ? user.username : ""}
+                      </div>
+                    </div>
+                    <div style="
+                      font-size: 0.7em;
+                      color: #059669;
+                      background: #d1fae5;
+                      padding: 2px 6px;
+                      border-radius: 4px;
+                    ">
+                      ${timeAgo}
+                    </div>
+                  </div>
                 `;
-                livraisonsDiv.title =
-                  count > 0
-                    ? `Connectés: ${usersList}`
-                    : "Aucun utilisateur connecté sur resp_liv.html";
-              }
-            })
-            .catch((error) => {
-              console.warn(
-                "Erreur lors de la récupération des utilisateurs connectés resp_liv:",
-                error
-              );
-              const livraisonsDiv = document.getElementById(
-                "livraisonsConnected"
-              );
-              if (livraisonsDiv) {
-                livraisonsDiv.innerHTML =
-                  '<i class="fas fa-circle" style="color: #dc2626; font-size: 6px; margin-right: 2px;"></i>N/A';
-                livraisonsDiv.title = "Erreur de connexion";
-              }
-            });
+              });
+
+              html += "</div>";
+            }
+          });
+
+          usersListDiv.innerHTML = html;
+        }
+
+        function formatTimeAgo(seconds) {
+          if (seconds < 60) return `${seconds}s`;
+          const minutes = Math.floor(seconds / 60);
+          if (minutes < 60) return `${minutes}m`;
+          const hours = Math.floor(minutes / 60);
+          return `${hours}h ${minutes % 60}m`;
+        }
+
+        function toggleUsersDetails() {
+          const section = document.getElementById("detailedUsersSection");
+          const list = document.getElementById("usersDetailsList");
+          if (list.style.display === "none") {
+            list.style.display = "block";
+            section.style.maxHeight = "300px";
+          } else {
+            list.style.display = "none";
+            section.style.maxHeight = "50px";
+          }
         }
 
         // Fonction de test pour simuler des utilisateurs connectés (à supprimer en production)

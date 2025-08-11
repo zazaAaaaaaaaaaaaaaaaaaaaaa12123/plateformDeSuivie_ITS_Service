@@ -987,9 +987,10 @@
 
         // Récupérer les informations utilisateur depuis localStorage
         function getUserInfo() {
-          const userName = localStorage.getItem("userName") || "Utilisateur";
-          const userEmail = localStorage.getItem("userEmail") || "";
-          const userId = userEmail || "user_" + Date.now();
+          // Priorité aux nouvelles clés, puis aux anciennes pour compatibilité
+          const userName = localStorage.getItem("userName") || localStorage.getItem("user_nom") || "Utilisateur";
+          const userEmail = localStorage.getItem("userEmail") || localStorage.getItem("user_email") || "";
+          const userId = localStorage.getItem("userId") || userEmail || "user_" + Date.now();
           
           return {
             userId: userId,
