@@ -1986,13 +1986,16 @@
           }
 
           // Afficher les informations si on vient du tableau de bord OU si on est en mode admin
-          if ((fromDashboard === "true" || adminMode === "admin") && (targetUser || userInfo)) {
+          if (
+            (fromDashboard === "true" || adminMode === "admin") &&
+            (targetUser || userInfo)
+          ) {
             const displayName =
               userInfo?.userName || targetUser || "Utilisateur inconnu";
             const displayUserId =
               userInfo?.userId || userId || "ID non disponible";
             const pageType = userInfo?.pageType || "Responsable Acconier";
-            
+
             // Message différent selon le mode
             const modeText = adminMode === "admin" ? "👑 Mode Admin" : "📋";
 

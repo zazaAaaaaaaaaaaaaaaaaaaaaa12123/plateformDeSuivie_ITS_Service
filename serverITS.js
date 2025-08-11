@@ -3157,7 +3157,8 @@ app.get("/deliveries/search", async (req, res) => {
   }
 });
 
-// PATCH GET /deliveries/status
+// PATCH GET /deliveries/status - SUPPRIMÉ car dupliqué (utilise le premier endpoint ligne 1955)
+/*
 app.get("/deliveries/status", async (req, res) => {
   try {
     const query = `
@@ -3258,6 +3259,7 @@ app.get("/deliveries/status", async (req, res) => {
     });
   }
 });
+*/
 
 // PUT deliveries/:id (Mise à jour générale)
 app.put("/deliveries/:id", async (req, res) => {
