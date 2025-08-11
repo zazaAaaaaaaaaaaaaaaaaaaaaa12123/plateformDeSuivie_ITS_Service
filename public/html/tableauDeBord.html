@@ -5443,9 +5443,6 @@
 
                 html += `
                   <div 
-                    onclick="window.redirectToUserPage('${fullUrl}', '${
-                  user.nom || user.username || "Utilisateur"
-                }', '${pageName}', '${user.userId || ""}')"
                     style="
                       display: flex;
                       align-items: center;
@@ -5456,12 +5453,9 @@
                       margin-bottom: 2px;
                       border-left: 2px solid #10b981;
                       font-size: 0.8em;
-                      cursor: pointer;
-                      transition: all 0.2s ease;
+                      cursor: default;
                     "
-                    onmouseover="this.style.background='#e5f6f3'; this.style.transform='translateX(2px)'"
-                    onmouseout="this.style.background='#f9fafb'; this.style.transform='translateX(0px)'"
-                    title="Cliquer pour aller à la page de ${
+                    title="Utilisateur connecté: ${
                       user.nom || user.username || "cet utilisateur"
                     }"
                   >
