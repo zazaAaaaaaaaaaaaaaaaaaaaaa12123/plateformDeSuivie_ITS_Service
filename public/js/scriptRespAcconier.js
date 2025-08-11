@@ -1865,9 +1865,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               currentValue = delivery.container_number || "";
             }
           } else if (Array.isArray(delivery.container_number)) {
-            currentValue = delivery.container_number
-              .filter(Boolean)
-              .join(", ");
+            currentValue = delivery.container_number.filter(Boolean).join(", ");
           } else if (typeof delivery.container_number === "string") {
             currentValue = delivery.container_number;
           }
