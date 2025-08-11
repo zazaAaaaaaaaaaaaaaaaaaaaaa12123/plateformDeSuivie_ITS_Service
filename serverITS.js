@@ -5152,6 +5152,139 @@ $result = file_get_contents("https://plateformdesuivie-its-service-1cjx.onrender
 */
 
 // ===============================
+// GESTION DES UTILISATEURS CONNECTÉS EN TEMPS RÉEL
+// ===============================
+
+// Structure pour stocker les utilisateurs actifs
+let activeUsers = new Map();
+
+// Route POST : Enregistrer un heartbeat utilisateur
+app.post("/api/active-users/heartbeat", (req, res) => {
+  try {
+    const { page, userId, username, nom } = req.body;
+
+    if (!page || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Page et userId sont requis",
+      });
+    }
+
+    const now = Date.now();
+    const userKey = `${page}_${userId}`;
+
+    // Enregistrer ou mettre à jour l'utilisateur
+    activeUsers.set(userKey, {
+      page,
+      userId,
+      username: username || nom || "Utilisateur",
+      nom: nom || username || "Utilisateur",
+      lastSeen: now,
+      connectedAt: activeUsers.has(userKey)
+        ? activeUsers.get(userKey).connectedAt
+        : now,
+    });
+
+    console.log(
+      `🔄 [HEARTBEAT] Utilisateur ${username || nom} actif sur ${page}`
+    );
+
+    res.json({
+      success: true,
+      message: "Heartbeat enregistré",
+      timestamp: now,
+    });
+  } catch (error) {
+    console.error("Erreur heartbeat:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+    });
+  }
+});
+
+// Route GET : Obtenir les statistiques des utilisateurs connectés
+app.get("/api/active-users/stats", (req, res) => {
+  try {
+    const now = Date.now();
+    const TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes de timeout
+
+    // Nettoyer les utilisateurs inactifs
+    for (const [key, user] of activeUsers.entries()) {
+      if (now - user.lastSeen > TIMEOUT_MS) {
+        activeUsers.delete(key);
+      }
+    }
+
+    // Grouper par page
+    const pageStats = {};
+    let totalConnectedUsers = 0;
+
+    for (const [key, user] of activeUsers.entries()) {
+      const { page, userId, username, nom, lastSeen, connectedAt } = user;
+
+      if (!pageStats[page]) {
+        pageStats[page] = {
+          count: 0,
+          users: [],
+        };
+      }
+
+      const timeConnected = Math.floor((now - connectedAt) / 1000); // en secondes
+
+      pageStats[page].users.push({
+        userId,
+        username,
+        nom,
+        timeConnected,
+        lastSeen,
+      });
+
+      pageStats[page].count++;
+      totalConnectedUsers++;
+    }
+
+    console.log(
+      `📊 [STATS] ${totalConnectedUsers} utilisateurs connectés sur ${
+        Object.keys(pageStats).length
+      } pages`
+    );
+
+    res.json({
+      success: true,
+      totalConnectedUsers,
+      pageStats,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Erreur stats utilisateurs:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+      error: error.message,
+    });
+  }
+});
+
+// Nettoyage périodique des utilisateurs inactifs (toutes les 5 minutes)
+setInterval(() => {
+  const now = Date.now();
+  const TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+  let cleanedCount = 0;
+
+  for (const [key, user] of activeUsers.entries()) {
+    if (now - user.lastSeen > TIMEOUT_MS) {
+      activeUsers.delete(key);
+      cleanedCount++;
+    }
+  }
+
+  if (cleanedCount > 0) {
+    console.log(`🧹 [CLEANUP] ${cleanedCount} utilisateurs inactifs supprimés`);
+  }
+}, 5 * 60 * 1000); // 5 minutes
+
+// ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
 // Cette route doit être TOUT EN BAS, après toutes les routes API !
