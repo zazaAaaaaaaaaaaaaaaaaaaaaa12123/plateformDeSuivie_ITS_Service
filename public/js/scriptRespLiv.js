@@ -616,16 +616,16 @@ document.addEventListener("DOMContentLoaded", function () {
             // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
             // Pour les responsables de livraison, vérifier principalement les champs liés aux livreurs
             const userFields = [
-              delivery.nom_agent_visiteur,          // Champ principal pour les agents visiteurs
-              delivery.employee_name,               // Nom de l'employé qui a créé l'entrée
-              delivery.driver_name,                 // Nom du chauffeur
-              delivery.responsible_livreur,         // Responsable livreur général
-              delivery.resp_livreur,               // Responsable livreur (alias)
-              delivery.assigned_to,                // Assigné à
-              delivery.created_by,                 // Créé par
-              delivery.updated_by                  // Mis à jour par
+              delivery.nom_agent_visiteur, // Champ principal pour les agents visiteurs
+              delivery.employee_name, // Nom de l'employé qui a créé l'entrée
+              delivery.driver_name, // Nom du chauffeur
+              delivery.responsible_livreur, // Responsable livreur général
+              delivery.resp_livreur, // Responsable livreur (alias)
+              delivery.assigned_to, // Assigné à
+              delivery.created_by, // Créé par
+              delivery.updated_by, // Mis à jour par
             ];
-            
+
             return userFields.some(
               (field) =>
                 field && field.toLowerCase().includes(targetUser.toLowerCase())
