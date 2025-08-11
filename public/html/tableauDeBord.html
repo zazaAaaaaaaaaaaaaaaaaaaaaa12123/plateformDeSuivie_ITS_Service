@@ -2866,6 +2866,15 @@
           console.log(
             "   - window.testActiveUsers() - Test avec utilisateurs simulés"
           );
+          console.log(
+            "   - window.forceUpdateConnectedUsers() - Force la mise à jour de la sidebar"
+          );
+
+          // === FONCTION DE MISE À JOUR MANUELLE ===
+          window.forceUpdateConnectedUsers = function () {
+            console.log("🔄 [FORCE UPDATE] Mise à jour forcée des utilisateurs connectés...");
+            updateConnectedUsers();
+          };
 
           // Message de bienvenue animé (typewriter)
           document.addEventListener("DOMContentLoaded", function () {
@@ -5357,18 +5366,24 @@
 
         // === SYSTÈME DE SURVEILLANCE DES UTILISATEURS CONNECTÉS ===
         function updateConnectedUsers() {
+          console.log("🔄 [UPDATE] Mise à jour des utilisateurs connectés...");
           // Utiliser la nouvelle API de statistiques globales
           fetch(`${window.API_BASE_URL}/api/active-users/stats`)
             .then((response) => response.json())
             .then((data) => {
-              if (data.success) {
+              console.log("📊 [UPDATE] Données reçues:", data);
+              // L'API retourne directement les données, pas d'objet avec success
+              if (data && (data.totalConnectedUsers !== undefined || data.pageStats)) {
                 updateSidebarIndicators(data);
                 updateDetailedUsersList(data);
+                console.log("✅ [UPDATE] Indicateurs mis à jour avec succès");
+              } else {
+                console.warn("⚠️ [UPDATE] Format de données inattendu:", data);
               }
             })
             .catch((error) => {
               console.warn(
-                "Erreur lors de la récupération des statistiques utilisateurs:",
+                "❌ [UPDATE] Erreur lors de la récupération des statistiques utilisateurs:",
                 error
               );
               updateSidebarIndicators({ pageStats: {} });
@@ -5380,7 +5395,9 @@
         }
 
         function updateSidebarIndicators(data) {
+          console.log("🎯 [SIDEBAR] Mise à jour des indicateurs avec:", data);
           const pageStats = data.pageStats || {};
+          console.log("📈 [SIDEBAR] pageStats:", pageStats);
 
           // Mettre à jour l'indicateur Acconier
           const acconiersDiv = document.getElementById("acconiersConnected");
@@ -5390,6 +5407,7 @@
               users: [],
             };
             const count = acconiersData.count;
+            console.log("🛡️ [SIDEBAR] Acconiers connectés:", count);
             const circleColor = count > 0 ? "#10b981" : "#dc2626";
             const usersList = acconiersData.users
               .map((user) => user.nom || user.username || "Utilisateur")
@@ -5402,6 +5420,8 @@
               count > 0
                 ? `Connectés: ${usersList}`
                 : "Aucun utilisateur connecté sur resp_acconier.html";
+          } else {
+            console.warn("⚠️ [SIDEBAR] Element acconiersConnected non trouvé");
           }
 
           // Mettre à jour l'indicateur Livraison
@@ -5412,6 +5432,8 @@
               users: [],
             };
             const count = livraisonsData.count;
+            console.log("📦 [SIDEBAR] Livraisons connectées:", count);
+            console.log("📦 [SIDEBAR] Livraisons connectées:", count);
             const circleColor = count > 0 ? "#10b981" : "#dc2626";
             const usersList = livraisonsData.users
               .map((user) => user.nom || user.username || "Utilisateur")
@@ -5424,16 +5446,23 @@
               count > 0
                 ? `Connectés: ${usersList}`
                 : "Aucun utilisateur connecté sur resp_liv.html";
+          } else {
+            console.warn("⚠️ [SIDEBAR] Element livraisonsConnected non trouvé");
           }
         }
 
         function updateDetailedUsersList(data) {
+          console.log("📝 [DETAILS] Mise à jour de la liste détaillée avec:", data);
           const totalUsersDiv = document.getElementById("totalUsersCount");
           const usersListDiv = document.getElementById("usersDetailsList");
 
-          if (!totalUsersDiv || !usersListDiv) return;
+          if (!totalUsersDiv || !usersListDiv) {
+            console.warn("⚠️ [DETAILS] Éléments totalUsersCount ou usersDetailsList non trouvés");
+            return;
+          }
 
           const totalUsers = data.totalConnectedUsers || 0;
+          console.log("👥 [DETAILS] Total utilisateurs:", totalUsers);
           totalUsersDiv.textContent = `${totalUsers} total`;
 
           if (totalUsers === 0) {
