@@ -12,6 +12,96 @@
     window.WS_BASE_HOST = window.location.host;
   }
 })();
+
+// === ANIMATION D'ENTREPRISE PROFESSIONNELLE - PRIORITÉ ABSOLUE ===
+(function initEnterpriseAnimationImmediate() {
+  // Initialiser immédiatement sans attendre le DOM
+  function showEnterpriseAnimation() {
+    const enterpriseIntro = document.getElementById("enterpriseIntro");
+    const mainLayout = document.querySelector(".layout");
+
+    if (enterpriseIntro) {
+      // Masquer le contenu principal au début
+      if (mainLayout) {
+        mainLayout.style.opacity = "0";
+        mainLayout.style.visibility = "hidden";
+      }
+
+      // Toujours afficher l'animation au chargement de la page
+      enterpriseIntro.style.display = "flex";
+      enterpriseIntro.style.opacity = "1";
+      enterpriseIntro.style.visibility = "visible";
+
+      // Supprimer l'animation et afficher le contenu principal après sa fin
+      setTimeout(() => {
+        if (enterpriseIntro) {
+          enterpriseIntro.style.animation =
+            "enterpriseSlideUp 1s ease-out forwards";
+
+          // Après l'animation de sortie
+          setTimeout(() => {
+            enterpriseIntro.remove();
+
+            // Afficher le contenu principal avec une transition douce
+            if (mainLayout) {
+              mainLayout.style.transition =
+                "opacity 0.5s ease-in-out, visibility 0.5s ease-in-out";
+              mainLayout.style.opacity = "1";
+              mainLayout.style.visibility = "visible";
+            }
+          }, 1000);
+        }
+      }, 5000);
+
+      // Effet de typed.js pour le titre
+      setTimeout(() => {
+        const title = document.querySelector(".enterprise-title");
+        if (title) {
+          const originalText = title.textContent;
+          title.textContent = "";
+
+          let i = 0;
+          const typeInterval = setInterval(() => {
+            title.textContent += originalText[i];
+            i++;
+            if (i >= originalText.length) {
+              clearInterval(typeInterval);
+            }
+          }, 50);
+        }
+      }, 1200);
+
+      // Effet de typing pour le sous-titre
+      setTimeout(() => {
+        const subtitle = document.querySelector(".enterprise-subtitle");
+        if (subtitle) {
+          const originalText = subtitle.textContent;
+          subtitle.textContent = "";
+
+          let i = 0;
+          const typeInterval = setInterval(() => {
+            subtitle.textContent += originalText[i];
+            i++;
+            if (i >= originalText.length) {
+              clearInterval(typeInterval);
+            }
+          }, 30);
+        }
+      }, 2000);
+    }
+  }
+
+  // Essayer immédiatement
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", showEnterpriseAnimation);
+  } else {
+    showEnterpriseAnimation();
+  }
+
+  // Également essayer après un court délai pour être sûr
+  setTimeout(showEnterpriseAnimation, 100);
+})();
+
 // Redirection automatique vers le tableau de bord après connexion réussie
 (function () {
   if (window.location.pathname.endsWith("tableauDeBord.html")) {
