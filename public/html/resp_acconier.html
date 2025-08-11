@@ -905,17 +905,18 @@
     >
       <section
         class="card-section"
-        style="width: 100%; max-width: 1200px; margin: 0 auto"
+        style="width: 100%; max-width: 1200px; margin: 0 auto; padding-top: 10px;"
       >
         <!-- EN-TÊTE MODERNE AVEC AVATAR À DROITE -->
         <div
-          class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1"
+          class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-2"
           style="
             background: var(--bg-card);
             border-radius: 12px;
-            padding: 8px 14px 6px 14px;
+            padding: 6px 14px 4px 14px;
             box-shadow: var(--shadow-card);
             position: relative;
+            margin-top: -5px;
           "
         >
           <div style="min-width: 0; flex: 1 1 0">
@@ -1432,11 +1433,12 @@
         </script>
 
         <div
-          class="d-flex justify-content-center align-items-center mb-2 flex-wrap gap-2"
+          class="d-flex justify-content-center align-items-center mb-1 flex-wrap gap-2"
           style="
             background: var(--bg-filter);
             border-radius: 10px;
-            padding: 8px 12px 6px 12px;
+            padding: 6px 12px 4px 12px;
+            margin-top: -8px;
             box-shadow: var(--shadow-filter);
           "
         >
@@ -1536,6 +1538,7 @@
           id="tableScrollContainer"
           class="table-responsive overflow-x-auto"
           style="
+            margin-top: -5px;
             border-radius: 18px;
             box-shadow: var(--shadow-table);
             background: var(--bg-table);
@@ -1992,8 +1995,8 @@
             }
           }
 
-          // Afficher les informations si disponibles
-          if ((fromDashboard === "true" && targetUser) || userInfo) {
+          // Afficher les informations SEULEMENT si on vient du tableau de bord ET qu'on a des infos valides
+          if (fromDashboard === "true" && targetUser && userInfo && userInfo.redirectTime) {
             const displayName =
               userInfo?.userName || targetUser || "Utilisateur inconnu";
             const displayUserId =
