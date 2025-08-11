@@ -5566,11 +5566,8 @@
 
             const finalUrl = `${pageUrl}?${urlParams.toString()}`;
 
-            // Ouvrir dans un nouvel onglet pour ne pas perdre le tableau de bord
-            window.open(finalUrl, "_blank");
-
-            // Alternative : redirection dans la même fenêtre
-            // window.location.href = finalUrl;
+            // Redirection dans la même fenêtre pour assurer la transmission des paramètres
+            window.location.href = finalUrl;
 
             console.log(`✅ [REDIRECT] Redirection effectuée vers ${finalUrl}`);
 
