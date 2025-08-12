@@ -615,6 +615,14 @@ document.addEventListener("DOMContentLoaded", () => {
         window.showOrderDetailPopup(order);
       });
     }
+
+    // Ajouter les événements sur les cases à cocher
+    var checkboxes = listDiv.querySelectorAll(".order-checkbox");
+    for (var k = 0; k < checkboxes.length; k++) {
+      checkboxes[k].addEventListener("change", function () {
+        updateSelectionUI();
+      });
+    }
   };
 
   // Fonction pour gérer la sélection multiple
@@ -625,8 +633,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!selectAllCheckbox || !deleteSelectedBtn || !selectedCountSpan) return;
 
-    // Fonction pour mettre à jour le compteur et le bouton
-    function updateSelectionUI() {
+    // Fonction globale pour mettre à jour le compteur et le bouton
+    window.updateSelectionUI = function () {
       const checkboxes = document.querySelectorAll(".order-checkbox");
       const checkedBoxes = document.querySelectorAll(".order-checkbox:checked");
       const count = checkedBoxes.length;
@@ -637,7 +645,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (count > 0) {
         deleteSelectedBtn.style.display = "block";
-        deleteSelectedBtn.textContent = `Supprimer (${count})`;
+        deleteSelectedBtn.innerHTML = `<i class='fas fa-trash' style='margin-right:4px;'></i>Supprimer (${count})`;
       } else {
         deleteSelectedBtn.style.display = "none";
       }
@@ -652,7 +660,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         selectAllCheckbox.indeterminate = true;
       }
-    }
+    };
 
     // Gestionnaire pour "Sélectionner tout"
     selectAllCheckbox.addEventListener("change", function () {
@@ -660,13 +668,13 @@ document.addEventListener("DOMContentLoaded", () => {
       checkboxes.forEach((checkbox) => {
         checkbox.checked = this.checked;
       });
-      updateSelectionUI();
+      window.updateSelectionUI();
     });
 
     // Gestionnaire pour les cases individuelles
     document.addEventListener("change", function (e) {
       if (e.target.classList.contains("order-checkbox")) {
-        updateSelectionUI();
+        window.updateSelectionUI();
       }
     });
 
@@ -781,7 +789,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Initialiser l'UI
-    updateSelectionUI();
+    window.updateSelectionUI();
   };
 
   // Fonction de recherche pour la sidebar
