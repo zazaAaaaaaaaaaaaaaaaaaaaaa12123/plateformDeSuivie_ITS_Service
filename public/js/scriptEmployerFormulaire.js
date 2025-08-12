@@ -386,11 +386,36 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.style.flexDirection = "column";
     sidebar.style.padding = "0";
     sidebar.innerHTML = `
-      <div style='display:flex;align-items:center;justify-content:space-between;padding:18px 22px 10px 22px;border-bottom:1.5px solid #e0e7ff;'>
-        <span style='font-weight:700;font-size:1.13em;color:#2563eb;letter-spacing:0.5px;'>Historique des ordres de livraison</span>
-        <button id='closeHistorySidebarBtn' style='background:none;border:none;font-size:1.5em;color:#2563eb;cursor:pointer;'><i class='fas fa-times'></i></button>
+      <!-- En-tête avec titre et bouton fermer -->
+      <div style='display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px 18px;border-bottom:1px solid #e2e8f0;background:linear-gradient(135deg, #1e293b 0%, #334155 100%);'>
+        <h3 style='margin:0;font-weight:700;font-size:1em;color:#ffffff;letter-spacing:-0.3px;'>📋 Historique ordres</h3>
+        <button id='closeHistorySidebarBtn' style='background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;cursor:pointer;padding:6px;border-radius:4px;width:28px;height:28px;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;' title="Fermer">
+          <i class='fas fa-times'></i>
+        </button>
       </div>
-      <div id='historySidebarList' style='flex:1;overflow-y:auto;padding:18px 22px 18px 22px;'></div>
+      
+      <!-- Champ de recherche compact -->
+      <div style='padding:12px 16px 8px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;'>
+        <div style='position:relative;'>
+          <i class='fas fa-search' style='position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:0.8em;z-index:1;'></i>
+          <input type='text' id='historySearchInput' placeholder='Rechercher...' style='width:100%;padding:8px 12px 8px 32px;border:1px solid #d1d5db;border-radius:6px;font-size:0.85em;background:#ffffff;outline:none;transition:border-color 0.2s ease;box-sizing:border-box;'>
+        </div>
+      </div>
+      
+      <!-- Statistiques rapides -->
+      <div style='padding:8px 16px;background:#ffffff;border-bottom:1px solid #f1f5f9;display:grid;grid-template-columns:1fr 1fr;gap:8px;'>
+        <div style='text-align:center;padding:6px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;'>
+          <div style='font-size:1em;font-weight:700;color:#3b82f6;' id="totalOrdersCount">0</div>
+          <div style='font-size:0.65em;color:#64748b;'>Total ordres</div>
+        </div>
+        <div style='text-align:center;padding:6px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;'>
+          <div style='font-size:1em;font-weight:700;color:#10b981;'>${new Date().getDate()}</div>
+          <div style='font-size:0.65em;color:#64748b;'>Aujourd\\'hui</div>
+        </div>
+      </div>
+      
+      <!-- Liste des ordres -->
+      <div id='historySidebarList' style='flex:1;overflow-y:auto;padding:12px 16px;background:#ffffff;'></div>
     `;
     document.body.appendChild(sidebar);
   }
@@ -416,6 +441,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     sidebar.style.right = "0";
     renderHistorySidebarList();
+
+    // Initialise la recherche après le rendu
+    setTimeout(() => {
+      setupHistorySearch();
+      // Met à jour le compteur total
+      const totalOrdersCount = document.getElementById("totalOrdersCount");
+      const items = document.querySelectorAll(
+        "#historySidebarList .history-order-item"
+      );
+      if (totalOrdersCount) {
+        totalOrdersCount.textContent = items.length;
+      }
+    }, 100);
   }
   function closeSidebarHistory() {
     sidebar.style.right = "-420px";
@@ -697,6 +735,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // Fonction de recherche pour la sidebar
+  window.setupHistorySearch = function () {
+    const searchInput = document.getElementById("historySearchInput");
+    const totalOrdersCount = document.getElementById("totalOrdersCount");
+
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        const searchTerm = this.value.toLowerCase().trim();
+        const listDiv = document.getElementById("historySidebarList");
+        const items = listDiv.querySelectorAll(".history-order-item");
+        let visibleCount = 0;
+
+        items.forEach((item) => {
+          const text = item.textContent.toLowerCase();
+          if (text.includes(searchTerm)) {
+            item.style.display = "block";
+            visibleCount++;
+          } else {
+            item.style.display = "none";
+          }
+        });
+
+        // Mise à jour du compteur
+        if (totalOrdersCount) {
+          totalOrdersCount.textContent = visibleCount;
+        }
+      });
+    }
+  };
+
   // Fonction pour afficher le pop-up détaillé d'un ordre de livraison
   window.showOrderDetailPopup = function (order) {
     // Supprime l'ancien pop-up s'il existe
@@ -780,15 +848,17 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.remove("overflow-hidden");
     };
     modalBox.appendChild(closeBtn);
-    // Titre principal
+    // Titre principal avec amélioration légère
     var title = document.createElement("div");
-    title.textContent = "Détail de l'ordre de livraison";
-    title.style.color = "#2563eb";
+    title.innerHTML = `<i class='fas fa-clipboard-list' style='color:#3b82f6;margin-right:8px;'></i>Détail de l'ordre de livraison`;
+    title.style.color = "#1e293b";
     title.style.fontWeight = "bold";
-    title.style.fontSize = isMobile ? "1.08em" : "1.18em";
-    title.style.marginBottom = isMobile ? "18px" : "16px";
-    title.style.marginTop = isMobile ? "18px" : "0";
+    title.style.fontSize = isMobile ? "1.1em" : "1.2em";
+    title.style.marginBottom = isMobile ? "20px" : "18px";
+    title.style.marginTop = isMobile ? "20px" : "0";
     title.style.textAlign = "center";
+    title.style.borderBottom = "2px solid #e2e8f0";
+    title.style.paddingBottom = "12px";
     modalBox.appendChild(title);
 
     // Contenu détaillé ou message d'erreur si data absent
@@ -798,45 +868,84 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       var d = order.data;
       html = `<div class="order-detail-main" style="display:flex;flex-direction:column;gap:${
-        isMobile ? "10px" : "16px"
-      };font-size:${isMobile ? "0.99em" : "1.07em"};line-height:1.7;">
+        isMobile ? "12px" : "18px"
+      };font-size:${isMobile ? "0.99em" : "1.07em"};line-height:1.6;">
+        <!-- Informations principales avec icônes -->
         <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Date</span><br><span style='font-weight:700;color:#2563eb;'>${
+          isMobile ? "8px" : "18px"
+        };justify-content:space-between;align-items:center;background:linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);padding:${
+        isMobile ? "12px 10px" : "14px 18px"
+      };border-radius:12px;border-left:4px solid #3b82f6;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-calendar-alt' style='color:#3b82f6;'></i>Date</span><br><span style='font-weight:700;color:#2563eb;'>${
             order.date || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Agent</span><br><span style='font-weight:700;'>${
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-user-tie' style='color:#3b82f6;'></i>Agent</span><br><span style='font-weight:700;'>${
             d.employeeName || "-"
           }</span></div>
         </div>
+        <!-- Informations client -->
         <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Client</span><br><span style='font-weight:700;'>${
+          isMobile ? "8px" : "18px"
+        };justify-content:space-between;align-items:center;background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);padding:${
+        isMobile ? "12px 10px" : "14px 18px"
+      };border-radius:12px;border-left:4px solid #10b981;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-user-circle' style='color:#10b981;'></i>Client</span><br><span style='font-weight:700;'>${
             d.clientName || "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Téléphone</span><br><span style='font-weight:700;'>${
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-phone' style='color:#10b981;'></i>Téléphone</span><br><span style='font-weight:700;'>${
             d.clientPhone || "-"
           }</span></div>
         </div>
+        <!-- Informations conteneurs avec logique améliorée -->
         <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Conteneur(s)</span><br><span style='font-weight:700;'>${
-            Array.isArray(d.containerNumbers)
-              ? d.containerNumbers.join(", ")
-              : d.containerNumbers || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Type(s) de pied</span><br><span style='font-weight:700;'>${
-            d.containerFootType || "-"
-          }</span></div>
+          isMobile ? "8px" : "18px"
+        };justify-content:space-between;align-items:stretch;background:linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);padding:${
+        isMobile ? "12px 10px" : "14px 18px"
+      };border-radius:12px;border-left:4px solid #f59e0b;">
+          ${(() => {
+            const containers = Array.isArray(d.containerNumbers)
+              ? d.containerNumbers
+              : d.containerNumbers
+              ? [d.containerNumbers]
+              : [];
+            const isMultiple = containers.length > 1;
+
+            return `<div style="flex:1;min-width:120px;">
+              <span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-shipping-fast' style='color:#f59e0b;'></i>Conteneur(s)</span><br>
+              ${
+                isMultiple
+                  ? `<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px;margin-top:6px;cursor:pointer;transition:all 0.2s ease;" 
+                     onclick="toggleContainerList(this)" 
+                     data-containers='${JSON.stringify(containers)}'
+                     onmouseover="this.style.backgroundColor='#fde68a'"
+                     onmouseout="this.style.backgroundColor='#fef3c7'">
+                   <div style="display:flex;align-items:center;justify-content:space-between;">
+                     <span style='font-weight:700;color:#d97706;'>${
+                       containers.length
+                     } conteneurs</span>
+                     <i class='fas fa-chevron-down' style="color:#d97706;font-size:0.8em;transition:transform 0.3s ease;"></i>
+                   </div>
+                   <div class="container-list" style="display:none;margin-top:10px;border-top:1px solid #d97706;padding-top:8px;">
+                     ${containers
+                       .map(
+                         (container) =>
+                           `<div style="padding:4px 0;color:#92400e;font-weight:600;font-size:0.9em;border-bottom:1px solid rgba(217,119,6,0.2);margin-bottom:4px;">${container}</div>`
+                       )
+                       .join("")}
+                   </div>
+                 </div>`
+                  : `<span style='font-weight:700;color:#d97706;'>${
+                      containers[0] || "-"
+                    }</span>`
+              }
+            </div>
+            <div style="flex:1;min-width:120px;">
+              <span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-cogs' style='color:#f59e0b;'></i>Type(s) de pied</span><br>
+              <span style='font-weight:700;color:#d97706;'>${
+                isMultiple ? "Multiples types" : d.containerFootType || "-"
+              }</span>
+            </div>`;
+          })()}
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:${
           isMobile ? "7px" : "18px"
@@ -945,6 +1054,20 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.classList.remove("overflow-hidden");
       }
     });
+  };
+
+  // Fonction pour gérer le menu déroulant des conteneurs
+  window.toggleContainerList = function (element) {
+    const containerList = element.querySelector(".container-list");
+    const chevron = element.querySelector(".fas");
+
+    if (containerList.style.display === "none") {
+      containerList.style.display = "block";
+      chevron.style.transform = "rotate(180deg)";
+    } else {
+      containerList.style.display = "none";
+      chevron.style.transform = "rotate(0deg)";
+    }
   };
 
   // --- Observer la visibilité du formulaire pour afficher/masquer l'icône ---
