@@ -819,6 +819,11 @@ document.addEventListener("DOMContentLoaded", function () {
               window.allDeliveries[idx] = data.delivery;
               updateDeliveredForPdf();
             }
+
+            // 🔄 Synchronisation automatique après mise à jour WebSocket
+            setTimeout(() => {
+              syncDeliveredContainersToHistory();
+            }, 200);
           } else {
             // Retire la livraison si elle n'est plus éligible
             if (idx !== -1) {
@@ -1429,6 +1434,16 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         window.allDeliveries = filteredDeliveries;
+
+        // 🔄 Synchronisation automatique des conteneurs livrés vers l'historique
+        setTimeout(() => {
+          const syncCount = syncDeliveredContainersToHistory();
+          if (syncCount > 0) {
+            console.log(
+              `[AUTO-SYNC] 📦 ${syncCount} conteneur(s) livré(s) ajouté(s) à l'historique`
+            );
+          }
+        }, 500);
       } else {
         window.allDeliveries = [];
       }
@@ -4499,6 +4514,72 @@ function generateEtatSortiePdf(rows, date1, date2) {
 const DELIVERY_HISTORY_KEY = "professional_delivery_history";
 
 /**
+ * Duplique automatiquement toutes les livraisons livrées du tableau principal vers l'historique
+ */
+function syncDeliveredContainersToHistory() {
+  try {
+    if (!window.allDeliveries || window.allDeliveries.length === 0) {
+      console.log("[SYNC HISTORIQUE] Aucune livraison chargée");
+      return;
+    }
+
+    let addedCount = 0;
+    const currentUser = localStorage.getItem("user_nom") || "Inconnu";
+
+    // Parcourir toutes les livraisons
+    window.allDeliveries.forEach((delivery) => {
+      if (
+        !delivery.container_statuses ||
+        typeof delivery.container_statuses !== "object"
+      ) {
+        return;
+      }
+
+      // Vérifier chaque conteneur de la livraison
+      Object.entries(delivery.container_statuses).forEach(
+        ([containerNumber, status]) => {
+          if (status === "livre" || status === "livré") {
+            // Vérifier si ce conteneur n'est pas déjà dans l'historique
+            const history = JSON.parse(
+              localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+            );
+            const exists = history.some(
+              (entry) =>
+                entry.delivery_id === delivery.id &&
+                entry.container_number === containerNumber
+            );
+
+            if (!exists) {
+              // Ajouter à l'historique
+              saveToDeliveryHistory(delivery, containerNumber);
+              addedCount++;
+              console.log(
+                `[SYNC HISTORIQUE] ✅ Conteneur ${containerNumber} ajouté automatiquement`
+              );
+            }
+          }
+        }
+      );
+    });
+
+    if (addedCount > 0) {
+      console.log(
+        `[SYNC HISTORIQUE] 🔄 ${addedCount} conteneur(s) livré(s) synchronisé(s) vers l'historique`
+      );
+      showHistoryButtonIfNeeded();
+    }
+
+    return addedCount;
+  } catch (error) {
+    console.error(
+      "[SYNC HISTORIQUE] ❌ Erreur lors de la synchronisation:",
+      error
+    );
+    return 0;
+  }
+}
+
+/**
  * Enregistre un conteneur livré dans l'historique professionnel
  * @param {Object} delivery - Livraison complète
  * @param {string} containerNumber - Numéro du conteneur livré
@@ -4725,6 +4806,15 @@ function showHistoryButtonIfNeeded() {
  * Affiche la modal de l'historique professionnel avec fonctionnalités avancées
  */
 function showProfessionalHistoryModal() {
+  // 🔄 Synchronisation complète avant l'affichage
+  console.log("[HISTORIQUE] 🔄 Synchronisation des conteneurs livrés...");
+  const syncCount = syncDeliveredContainersToHistory();
+  if (syncCount > 0) {
+    console.log(
+      `[HISTORIQUE] ✅ ${syncCount} nouveau(x) conteneur(s) ajouté(s) à l'historique`
+    );
+  }
+
   // Injecter les styles CSS
   injectHistoryStyles();
 
@@ -4817,24 +4907,26 @@ function showProfessionalHistoryModal() {
   stats.style.padding = "15px 30px";
   stats.style.background = "#f8fafc";
   stats.style.borderBottom = "1px solid #e5e7eb";
+
+  // Calcul de la date de dernière livraison (la plus récente)
+  const sortedHistory = [...history].sort(
+    (a, b) => new Date(b.delivered_at) - new Date(a.delivered_at)
+  );
+  const lastDeliveryDate =
+    sortedHistory.length > 0
+      ? new Date(sortedHistory[0].delivered_at).toLocaleDateString("fr-FR")
+      : "Aucune";
+
   stats.innerHTML = `
     <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: center;">
       <div style="color: #059669; font-weight: bold;">
-        📦 Total conteneurs livrés: <span style="color: #047857;">${
-          history.length
-        }</span>
+        📦 Total conteneurs livrés: <span style="color: #047857;">${history.length}</span>
       </div>
       <div style="color: #059669; font-weight: bold;">
-        📋 Groupes de livraison: <span style="color: #047857;">${
-          groupedHistory.length
-        }</span>
+        📋 Groupes de livraison: <span style="color: #047857;">${groupedHistory.length}</span>
       </div>
       <div style="color: #059669; font-weight: bold;">
-        📅 Dernière livraison: <span style="color: #047857;">${
-          history.length > 0
-            ? new Date(history[0].delivered_at).toLocaleDateString("fr-FR")
-            : "Aucune"
-        }</span>
+        📅 Dernière livraison: <span style="color: #047857;">${lastDeliveryDate}</span>
       </div>
     </div>
   `;
