@@ -99,12 +99,12 @@ window.displayAgentHistory = function (agentKey = "Agent Acconier") {
   }
   let html = '<ul style="list-style:none;padding:0;margin:0;">';
   agentHistory.forEach((item) => {
-    html += `<li style="background:#f1f5f9;margin-bottom:2px;padding:2px 4px;border-radius:4px;box-shadow:0 1px 1px #2563eb11;display:flex;align-items:center;gap:4px;">
-      <span style="background:#2563eb;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.65em;">${item.date.slice(
+    html += `<li style="background:#f1f5f9;margin-bottom:10px;padding:10px 14px;border-radius:8px;box-shadow:0 1px 4px #2563eb11;display:flex;align-items:center;gap:10px;">
+      <span style="background:#2563eb;color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1.1em;">${item.date.slice(
         5,
         10
       )}</span>
-      <span style="flex:1;font-size:0.75em;">${item.details}</span>
+      <span style="flex:1;">${item.details}</span>
     </li>`;
   });
   html += "</ul>";
@@ -373,144 +373,24 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!sidebar) {
     sidebar = document.createElement("div");
     sidebar.id = "historySidebarFormulaire";
-
-    // Détection mobile pour adaptation responsive
-    const isMobile = window.innerWidth <= 768;
-    const sidebarWidth = isMobile ? "100vw" : "370px";
-    const sidebarRight = isMobile ? "-100vw" : "-420px";
-
     sidebar.style.position = "fixed";
-    sidebar.style.top = "5vh";
-    sidebar.style.right = sidebarRight;
-    sidebar.style.width = sidebarWidth;
-    sidebar.style.height = "90vh";
+    sidebar.style.top = "0";
+    sidebar.style.right = "-420px";
+    sidebar.style.width = "370px";
+    sidebar.style.height = "100vh";
     sidebar.style.background = "#fff";
-    sidebar.style.boxShadow = isMobile ? "none" : "-4px 0 24px #2563eb22";
+    sidebar.style.boxShadow = "-4px 0 24px #2563eb22";
     sidebar.style.zIndex = "2000";
     sidebar.style.transition = "right 0.32s cubic-bezier(.4,1.3,.5,1)";
     sidebar.style.display = "flex";
     sidebar.style.flexDirection = "column";
     sidebar.style.padding = "0";
-    sidebar.style.borderRadius = isMobile ? "0" : "12px 0 0 12px";
     sidebar.innerHTML = `
-      <!-- En-tête professionnel avec gradient (version ultra-compacte) -->
-      <div style='
-        display:flex;align-items:center;justify-content:space-between;
-        padding:${isMobile ? "6px 10px" : "8px 12px"};
-        background:linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border-bottom:1px solid #334155;
-      '>
-        <div style="flex:1;">
-          <h3 style='margin:0;font-weight:700;font-size:${
-            isMobile ? "0.85em" : "0.95em"
-          };color:#ffffff;letter-spacing:-0.5px;line-height:1.1;'>
-            📋 ${isMobile ? "Historique ordres" : "Historique des ordres"}
-          </h3>
-          <p style='margin:1px 0 0 0;color:#cbd5e1;font-size:${
-            isMobile ? "0.65em" : "0.7em"
-          };line-height:1;'>
-            Gestion des livraisons
-          </p>
-        </div>
-        <button id='closeHistorySidebarBtn' style='
-          background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
-          font-size:${
-            isMobile ? "0.8em" : "0.85em"
-          };color:#e2e8f0;cursor:pointer;
-          padding:${isMobile ? "4px" : "3px"};
-          border-radius:4px;width:${isMobile ? "24px" : "22px"};height:${
-      isMobile ? "24px" : "22px"
-    };
-          transition:all 0.2s ease;backdrop-filter:blur(10px);
-          touch-action:manipulation;display:flex;align-items:center;justify-content:center;
-        ' title="Fermer">
-          <i class='fas fa-times'></i>
-        </button>
+      <div style='display:flex;align-items:center;justify-content:space-between;padding:18px 22px 10px 22px;border-bottom:1.5px solid #e0e7ff;'>
+        <span style='font-weight:700;font-size:1.13em;color:#2563eb;letter-spacing:0.5px;'>Historique des ordres de livraison</span>
+        <button id='closeHistorySidebarBtn' style='background:none;border:none;font-size:1.5em;color:#2563eb;cursor:pointer;'><i class='fas fa-times'></i></button>
       </div>
-      
-      <!-- Section de recherche avec style moderne (version mobile-optimized) -->
-      <div style='
-        padding:${isMobile ? "10px 12px" : "12px 16px"};
-        background:linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-        border-bottom:1px solid #e2e8f0;
-      '>
-        <div style='position:relative;margin-bottom:${
-          isMobile ? "8px" : "10px"
-        };'>
-          <div style="position:relative;">
-            <i class='fas fa-search' style='
-              position:absolute;left:${
-                isMobile ? "8px" : "10px"
-              };top:50%;transform:translateY(-50%);
-              color:#9ca3af;font-size:${
-                isMobile ? "0.75em" : "0.8em"
-              };z-index:1;
-            '></i>
-            <input type='text' id='historySearchInput' 
-              placeholder='${
-                isMobile
-                  ? "Rechercher..."
-                  : "Rechercher par client, conteneur, BL..."
-              }' 
-              style='
-                width:100%;padding:${
-                  isMobile ? "10px 12px 10px 28px" : "8px 12px 8px 32px"
-                };
-                border:1px solid #d1d5db;border-radius:6px;
-                font-size:${
-                  isMobile ? "16px" : "0.85em"
-                };background:#ffffff;outline:none;
-                transition:all 0.2s ease;box-sizing:border-box;
-                box-shadow:0 1px 2px rgba(0,0,0,0.05);
-                touch-action:manipulation;
-              '>
-          </div>
-        </div>
-        
-        <!-- Statistiques en petit (version mobile-optimized) -->
-        <div style='
-          display:grid;grid-template-columns:1fr 1fr;gap:${
-            isMobile ? "6px" : "8px"
-          };
-        '>
-          <div style='
-            background:#ffffff;padding:${
-              isMobile ? "10px 6px" : "8px"
-            };border-radius:6px;
-            border:1px solid #e2e8f0;text-align:center;
-            box-shadow:0 1px 2px rgba(0,0,0,0.03);
-          '>
-            <div style='font-size:${
-              isMobile ? "1.1em" : "1em"
-            };font-weight:700;color:#3b82f6;' id="totalOrdersCount">0</div>
-            <div style='font-size:${
-              isMobile ? "0.6em" : "0.65em"
-            };color:#64748b;margin-top:1px;'>Total ordres</div>
-          </div>
-          <div style='
-            background:#ffffff;padding:${
-              isMobile ? "10px 6px" : "8px"
-            };border-radius:6px;
-            border:1px solid #e2e8f0;text-align:center;
-            box-shadow:0 1px 2px rgba(0,0,0,0.03);
-          '>
-            <div style='font-size:${
-              isMobile ? "1.1em" : "1em"
-            };font-weight:700;color:#10b981;'>${new Date().getDate()}</div>
-            <div style='font-size:${
-              isMobile ? "0.6em" : "0.65em"
-            };color:#64748b;margin-top:1px;'>Aujourd\\'hui</div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Liste des ordres avec scrolling optimisé (mobile-friendly) -->
-      <div id='historySidebarList' style='
-        flex:1;overflow-y:auto;padding:${isMobile ? "8px" : "12px"};
-        background:#ffffff;
-        scrollbar-width:thin;scrollbar-color:#cbd5e1 #f1f5f9;
-        -webkit-overflow-scrolling:touch;
-      '></div>
+      <div id='historySidebarList' style='flex:1;overflow-y:auto;padding:18px 22px 18px 22px;'></div>
     `;
     document.body.appendChild(sidebar);
   }
@@ -521,9 +401,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Affichage de la sidebar au clic sur l'icône ---
   let historyBtn = document.getElementById("historySidebarBtn");
   function openSidebarHistory() {
-    // Redétection mobile lors de l'ouverture
-    const isMobile = window.innerWidth <= 768;
-
     // Place l'overlay juste avant la sidebar dans le DOM pour garantir l'empilement
     if (sidebarOverlay && sidebar) {
       if (sidebarOverlay.nextSibling !== sidebar) {
@@ -537,28 +414,11 @@ document.addEventListener("DOMContentLoaded", () => {
       sidebarOverlay.style.pointerEvents = "auto";
       sidebar.style.pointerEvents = "auto";
     }
-
-    // Ajuste la position selon la taille d'écran
     sidebar.style.right = "0";
-
-    // Prévient le scroll du body sur mobile
-    if (isMobile) {
-      document.body.style.overflow = "hidden";
-    }
-
     renderHistorySidebarList();
   }
   function closeSidebarHistory() {
-    const isMobile = window.innerWidth <= 768;
-    const sidebarRight = isMobile ? "-100vw" : "-420px";
-
-    sidebar.style.right = sidebarRight;
-
-    // Restaure le scroll du body sur mobile
-    if (isMobile) {
-      document.body.style.overflow = "auto";
-    }
-
+    sidebar.style.right = "-420px";
     if (sidebarOverlay) {
       sidebarOverlay.style.display = "none";
       sidebarOverlay.style.pointerEvents = "none";
@@ -571,123 +431,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = sidebar.querySelector("#closeHistorySidebarBtn");
   if (closeBtn) {
     closeBtn.onclick = closeSidebarHistory;
-
-    // Gestion tactile améliorée pour mobile
-    closeBtn.addEventListener("touchstart", function (e) {
-      e.preventDefault(); // Évite le double-tap
-      this.style.background = "rgba(255,255,255,0.2)";
-      this.style.transform = "scale(0.95)";
-    });
-
-    closeBtn.addEventListener("touchend", function (e) {
-      e.preventDefault();
-      this.style.background = "rgba(255,255,255,0.1)";
-      this.style.transform = "scale(1)";
-      closeSidebarHistory();
-    });
-
-    // Ajouter des effets hover professionnels (desktop seulement)
-    if (!window.matchMedia("(hover: none)").matches) {
-      closeBtn.addEventListener("mouseenter", function () {
-        this.style.background = "rgba(255,255,255,0.2)";
-        this.style.borderColor = "rgba(255,255,255,0.3)";
-        this.style.color = "#ffffff";
-        this.style.transform = "scale(1.05)";
-      });
-      closeBtn.addEventListener("mouseleave", function () {
-        this.style.background = "rgba(255,255,255,0.1)";
-        this.style.borderColor = "rgba(255,255,255,0.2)";
-        this.style.color = "#e2e8f0";
-        this.style.transform = "scale(1)";
-      });
-    }
   }
-
-  // --- Gestion du swipe pour fermer sur mobile ---
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let isSwiping = false;
-
-  sidebar.addEventListener("touchstart", function (e) {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    isSwiping = false;
-  });
-
-  sidebar.addEventListener("touchmove", function (e) {
-    if (!touchStartX) return;
-
-    const touchCurrentX = e.touches[0].clientX;
-    const touchCurrentY = e.touches[0].clientY;
-    const diffX = touchStartX - touchCurrentX;
-    const diffY = touchStartY - touchCurrentY;
-
-    // Détecte un swipe horizontal vers la droite pour fermer
-    if (Math.abs(diffX) > Math.abs(diffY) && diffX < -50) {
-      isSwiping = true;
-      // Ajoute un feedback visuel pendant le swipe
-      const opacity = Math.max(0.3, 1 - Math.abs(diffX) / 200);
-      sidebar.style.opacity = opacity;
-    }
-  });
-
-  sidebar.addEventListener("touchend", function (e) {
-    if (isSwiping) {
-      closeSidebarHistory();
-    }
-    // Restaure l'opacité
-    sidebar.style.opacity = "1";
-    touchStartX = 0;
-    touchStartY = 0;
-    isSwiping = false;
-  });
-
-  // --- Gestion du redimensionnement pour adaptation responsive ---
-  window.addEventListener("resize", function () {
-    const isMobile = window.innerWidth <= 768;
-    const sidebarWidth = isMobile ? "100vw" : "370px";
-    const isOpen = sidebar.style.right === "0";
-
-    // Met à jour la largeur de la sidebar
-    sidebar.style.width = sidebarWidth;
-
-    // Si la sidebar est fermée, ajuste sa position
-    if (!isOpen) {
-      const sidebarRight = isMobile ? "-100vw" : "-420px";
-      sidebar.style.right = sidebarRight;
-    }
-
-    // Met à jour le shadow selon le type d'écran
-    sidebar.style.boxShadow = isMobile ? "none" : "-4px 0 24px #2563eb22";
-
-    // Met à jour le contenu avec les nouvelles tailles
-    const title = sidebar.querySelector("h3");
-    const subtitle = sidebar.querySelector("p");
-    const closeBtn = sidebar.querySelector("#closeHistorySidebarBtn");
-    const searchInput = sidebar.querySelector("#historySearchInput");
-
-    if (title) {
-      title.style.fontSize = isMobile ? "0.85em" : "0.95em";
-      title.textContent = isMobile
-        ? "📋 Historique ordres"
-        : "📋 Historique des ordres";
-    }
-    if (subtitle) {
-      subtitle.style.fontSize = isMobile ? "0.65em" : "0.7em";
-    }
-    if (closeBtn) {
-      closeBtn.style.width = isMobile ? "24px" : "22px";
-      closeBtn.style.height = isMobile ? "24px" : "22px";
-      closeBtn.style.fontSize = isMobile ? "0.8em" : "0.85em";
-      closeBtn.style.padding = isMobile ? "4px" : "3px";
-    }
-    if (searchInput) {
-      searchInput.style.fontSize = isMobile ? "16px" : "0.85em";
-      searchInput.placeholder = isMobile
-        ? "Rechercher..."
-        : "Rechercher par client, conteneur, BL...";
-    }
-  });
   // Ferme la sidebar si on clique sur l'overlay
   if (sidebarOverlay) {
     // On utilise click au lieu de mousedown pour éviter les conflits focus
@@ -716,25 +460,22 @@ document.addEventListener("DOMContentLoaded", () => {
   window.renderHistorySidebarList = function () {
     const listDiv = document.getElementById("historySidebarList");
     if (!listDiv) return;
-
     // Récupère l'historique local
     const historyKey = "simulatedHistoryData";
     let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
     let agentHistory = historyData["Agent Acconier"] || [];
-
     if (agentHistory.length === 0) {
-      listDiv.innerHTML = `<div style='color:#94a3b8;text-align:center;margin-top:40px;font-size:0.95em;'>Aucun ordre de livraison enregistré</div>`;
+      listDiv.innerHTML = `<div style='color:#64748b;text-align:center;margin-top:30px;'>Aucun ordre de livraison enregistré.</div>`;
       return;
     }
-
     // Filtrer pour ne garder que les ordres avec un champ 'data' valide (vraies données)
     let filteredHistory = agentHistory.filter(
       (item) => item && item.data && typeof item.data === "object"
     );
-
-    // Supprimer les doublons par id ET par contenu principal
+    // Supprimer les doublons par id ET par contenu principal (clientName, containerNumbers, date, etc.)
     const seenKeys = new Set();
     filteredHistory = filteredHistory.filter((item) => {
+      // On construit une clé unique sur les infos principales (clientName, containerNumbers, containerFootType, date, etc.)
       const key = [
         item.id || "",
         item.data ? item.data.clientName : "",
@@ -758,906 +499,470 @@ document.addEventListener("DOMContentLoaded", () => {
       seenKeys.add(key);
       return true;
     });
-
     if (filteredHistory.length === 0) {
-      listDiv.innerHTML = `<div style='color:#94a3b8;text-align:center;margin-top:40px;font-size:0.95em;'>Aucun ordre de livraison valide</div>`;
-      // Mettre à jour le compteur
-      const totalOrdersCountEl = document.getElementById("totalOrdersCount");
-      if (totalOrdersCountEl) {
-        totalOrdersCountEl.textContent = "0";
-      }
+      listDiv.innerHTML = `<div style='color:#64748b;text-align:center;margin-top:30px;'>Aucun ordre de livraison enregistré.</div>`;
       return;
     }
-
-    // Mettre à jour le compteur total des ordres
-    const totalOrdersCountEl = document.getElementById("totalOrdersCount");
-    if (totalOrdersCountEl) {
-      totalOrdersCountEl.textContent = filteredHistory.length;
-    }
-
-    // Fonction de recherche
-    function renderFilteredHistory(searchTerm = "") {
-      let displayHistory = filteredHistory;
-
-      if (searchTerm.trim()) {
-        const term = searchTerm.toLowerCase();
-        displayHistory = filteredHistory.filter((item) => {
-          const data = item.data || {};
-          const searchableFields = [
-            data.clientName,
-            data.blNumber,
-            data.dossierNumber,
-            data.declarationNumber,
-            data.containerNumbers
-              ? Array.isArray(data.containerNumbers)
-                ? data.containerNumbers.join(" ")
-                : data.containerNumbers
-              : "",
-            data.shipName,
-            data.shippingCompany,
-            data.lieu,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
-
-          return searchableFields.includes(term);
-        });
+    // Regrouper les ordres par date (format YYYY-MM-DD)
+    const ordersByDate = {};
+    filteredHistory.forEach((item) => {
+      const dateKey = item.date ? item.date.slice(0, 10) : "?";
+      if (!ordersByDate[dateKey]) ordersByDate[dateKey] = [];
+      ordersByDate[dateKey].push(item);
+    });
+    // Trier les dates décroissantes
+    const sortedDates = Object.keys(ordersByDate).sort((a, b) =>
+      b.localeCompare(a)
+    );
+    let html = '<div style="padding-bottom:10px;">';
+    let globalIdx = 0;
+    sortedDates.forEach((dateKey) => {
+      // Titre de date (sécurité sur le format)
+      let yyyy = "",
+        mm = "",
+        dd = "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+        [yyyy, mm, dd] = dateKey.split("-");
       }
-
-      if (displayHistory.length === 0) {
-        listDiv.innerHTML = `<div style='color:#94a3b8;text-align:center;margin-top:40px;font-size:0.95em;'>Aucun résultat trouvé</div>`;
-        return;
+      let dateAffichee =
+        dd && mm && yyyy
+          ? `${dd}/${mm}/${yyyy}`
+          : dateKey !== "?"
+          ? dateKey
+          : "Date inconnue";
+      // Récupère le nom du client du premier ordre de la date
+      let clientName = "Client inconnu";
+      if (
+        ordersByDate[dateKey][0] &&
+        ordersByDate[dateKey][0].data &&
+        ordersByDate[dateKey][0].data.clientName
+      ) {
+        clientName = ordersByDate[dateKey][0].data.clientName;
       }
-
-      // Trier par date décroissante
-      displayHistory.sort((a, b) => {
-        const dateA = new Date(a.date || 0);
-        const dateB = new Date(b.date || 0);
-        return dateB - dateA;
-      });
-
-      let html = "";
-
-      displayHistory.forEach((item, index) => {
-        const data = item.data || {};
-        const formatDate = (dateStr) => {
-          if (!dateStr) return "--/--/----";
-          try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString("fr-FR");
-          } catch {
-            return "--/--/----";
-          }
-        };
-
-        const containers = data.containerNumbers
-          ? Array.isArray(data.containerNumbers)
-            ? data.containerNumbers.join(", ")
-            : data.containerNumbers
-          : "-";
-
-        html += `
-          <div class="history-order-item" data-history-idx="${index}" style="
-            background:linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-            border:1px solid #e2e8f0;
-            border-radius:10px;
-            padding:16px;
-            margin-bottom:12px;
-            cursor:pointer;
-            transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position:relative;
-            overflow:hidden;
-            box-shadow:0 3px 6px rgba(0,0,0,0.12);
-          ">
-            <!-- Indicateur de statut -->
-            <div style="
-              position:absolute;top:0;left:0;width:3px;height:100%;
-              background:linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
-            "></div>
-            
-            <!-- En-tête avec client et actions -->
-            <div style="
-              display:flex;justify-content:space-between;align-items:flex-start;
-              margin-bottom:12px;
-            ">
-              <div style="flex:1;min-width:0;">
-                <div style="
-                  font-weight:700;color:#1e293b;font-size:1.1em;
-                  margin-bottom:5px;letter-spacing:-0.3px;
-                  display:flex;align-items:center;gap:8px;
-                ">
-                  <i class='fas fa-user-circle' style="color:#3b82f6;font-size:0.85em;"></i>
-                  ${data.clientName || "Client inconnu"}
-                </div>
-                <div style="
-                  font-size:0.9em;color:#64748b;
-                  display:flex;align-items:center;gap:6px;
-                ">
-                  <i class='fas fa-calendar-alt' style="color:#9ca3af;font-size:0.8em;"></i>
-                  ${formatDate(item.date)}
-                </div>
-              </div>
-              
-              <div style="display:flex;gap:8px;align-items:center;">
-                <span style="
-                  background:#dbeafe;color:#1e40af;
-                  padding:4px 12px;border-radius:16px;
-                  font-size:0.7em;font-weight:600;
-                  letter-spacing:0.3px;
-                ">LIVRAISON</span>
-                <button class="delete-history-btn" data-history-idx="${index}" 
-                  style="
-                    background:#f1f5f9;border:1px solid #e2e8f0;
-                    color:#64748b;font-size:0.75em;padding:6px 7px;
-                    border-radius:6px;cursor:pointer;
-                    transition:all 0.2s ease;
-                  "
-                  title="Supprimer cet ordre">
-                  <i class='fas fa-trash'></i>
-                </button>
-              </div>
-            </div>
-            
-            <!-- Informations principales en grille -->
-            <div style="
-              display:grid;grid-template-columns:1fr 1fr;gap:10px;
-              margin-bottom:10px;
-            ">
-              <div style="
-                background:#f8fafc;padding:10px;border-radius:8px;
-                border-left:4px solid #06b6d4;
-              ">
-                <div style="
-                  font-size:0.7em;color:#64748b;font-weight:600;
-                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
-                ">Conteneur(s)</div>
-                <div style="
-                  color:#1e293b;font-weight:600;font-size:0.85em;
-                  word-break:break-all;
-                ">${containers}</div>
-              </div>
-              
-              <div style="
-                background:#f8fafc;padding:10px;border-radius:8px;
-                border-left:4px solid #8b5cf6;
-              ">
-                <div style="
-                  font-size:0.7em;color:#64748b;font-weight:600;
-                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
-                ">N° BL</div>
-                <div style="
-                  color:#1e293b;font-weight:600;font-size:0.85em;
-                ">${data.blNumber || "-"}</div>
-              </div>
-            </div>
-            
-            <!-- Informations supplémentaires si disponibles -->
-            ${
-              data.lieu
-                ? `
-              <div style="
-                background:#f0f9ff;padding:8px 10px;border-radius:6px;
-                border:1px solid #e0f2fe;
-                display:flex;align-items:center;gap:6px;
-              ">
-                <i class='fas fa-map-marker-alt' style="color:#0891b2;font-size:0.75em;"></i>
-                <span style="font-size:0.8em;color:#0f172a;font-weight:500;">
-                  ${data.lieu}
-                </span>
-              </div>
-            `
-                : ""
-            }
-            
-            <!-- Indicateur hover -->
-            <div style="
-              position:absolute;bottom:0;left:0;right:0;height:2px;
-              background:linear-gradient(90deg, #3b82f6, #8b5cf6);
-              transform:scaleX(0);transition:transform 0.3s ease;
-              transform-origin:left;
-            " class="hover-indicator"></div>
+      // Suppression de la carte "Serge JJ/MM/AAAA" en haut de chaque date
+      html += '<ul style="list-style:none;padding:0;margin:0;">';
+      ordersByDate[dateKey].forEach((item, idx) => {
+        // Génère la carte de l'ordre
+        let liHtml = `<li class="history-order-item" data-history-idx="${globalIdx}" style="background:linear-gradient(90deg,#f1f5f9 80%,#e0e7ff 100%);margin-bottom:7px;padding:18px 18px 16px 18px;border-radius:14px;box-shadow:0 2px 10px #2563eb13;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:box-shadow 0.18s;position:relative;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+            <span style="background:#2563eb;color:#fff;border-radius:8px 18px 18px 8px;width:auto;min-width:70px;padding:4px 14px 4px 10px;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:1em;box-shadow:0 1px 4px #2563eb11;letter-spacing:0.5px;">${
+              item.date
+                ? item.date.slice(0, 10).split("-").reverse().join("/")
+                : "--/--/----"
+            }</span>
+            <span style="color:#64748b;font-size:0.98em;font-weight:500;">${
+              item.data && item.data.clientName
+                ? item.data.clientName
+                : "Client inconnu"
+            }</span>
           </div>
-        `;
+          <div style="color:#1e293b;font-size:1.04em;font-weight:500;">${
+            item.details
+          }</div>
+          <button class="delete-history-btn desktop-in mobile-out" data-history-idx="${globalIdx}" title="Supprimer cet ordre"><i class='fas fa-trash'></i></button>
+        </li>`;
+        html += liHtml;
+        globalIdx++;
       });
+      html += "</ul>";
+    });
+    html += "</div>";
+    listDiv.innerHTML = html;
 
-      listDiv.innerHTML = html;
-
-      // Ajouter les événements
-      const items = listDiv.querySelectorAll(".history-order-item");
-      items.forEach((item) => {
-        item.addEventListener("click", function (e) {
-          if (e.target.closest(".delete-history-btn")) return;
-          const idx = parseInt(this.getAttribute("data-history-idx"));
-          const order = displayHistory[idx];
-          window.showOrderDetailPopup(order);
-        });
-
-        // Effet hover professionnel
-        item.addEventListener("mouseenter", function () {
-          this.style.background =
-            "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)";
-          this.style.borderColor = "#3b82f6";
-          this.style.transform = "translateY(-2px) scale(1.01)";
-          this.style.boxShadow = "0 8px 25px rgba(59, 130, 246, 0.15)";
-
-          // Animer l'indicateur hover
-          const hoverIndicator = this.querySelector(".hover-indicator");
-          if (hoverIndicator) {
-            hoverIndicator.style.transform = "scaleX(1)";
-          }
-        });
-
-        item.addEventListener("mouseleave", function () {
-          this.style.background =
-            "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)";
-          this.style.borderColor = "#e2e8f0";
-          this.style.transform = "translateY(0) scale(1)";
-          this.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
-
-          // Réinitialiser l'indicateur hover
-          const hoverIndicator = this.querySelector(".hover-indicator");
-          if (hoverIndicator) {
-            hoverIndicator.style.transform = "scaleX(0)";
-          }
-        });
-      });
-
-      // Événements de suppression avec style professionnel
-      const deleteBtns = listDiv.querySelectorAll(".delete-history-btn");
-      deleteBtns.forEach((btn) => {
-        btn.addEventListener("mouseenter", function () {
-          this.style.background = "#fef2f2";
-          this.style.borderColor = "#fecaca";
-          this.style.color = "#dc2626";
-          this.style.transform = "scale(1.05)";
-        });
-        btn.addEventListener("mouseleave", function () {
-          this.style.background = "#f1f5f9";
-          this.style.borderColor = "#e2e8f0";
-          this.style.color = "#64748b";
-          this.style.transform = "scale(1)";
-        });
-
-        btn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          const idx = parseInt(this.getAttribute("data-history-idx"));
-          const orderToDelete = displayHistory[idx];
-          showDeleteConfirmation(orderToDelete);
-        });
+    // Ajoute l'écouteur sur chaque item pour afficher le détail en pop-up
+    var items = listDiv.querySelectorAll(".history-order-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].addEventListener("click", function (e) {
+        // Ne pas ouvrir le détail si clic sur le bouton suppression
+        if (e.target.closest(".delete-history-btn")) return;
+        var idx = parseInt(this.getAttribute("data-history-idx"));
+        var order = filteredHistory[idx];
+        window.showOrderDetailPopup(order);
       });
     }
 
-    // Fonction de confirmation de suppression
-    function showDeleteConfirmation(orderToDelete) {
-      if (document.getElementById("confirmDeletePopup")) return;
-
-      const popupBg = document.createElement("div");
-      popupBg.id = "confirmDeletePopup";
-      popupBg.style.cssText = `
-        position:fixed;top:0;left:0;width:100vw;height:100vh;
-        background:rgba(0,0,0,0.4);z-index:6000;
-        display:flex;align-items:center;justify-content:center;
-      `;
-
-      const popupBox = document.createElement("div");
-      popupBox.style.cssText = `
-        background:#fff;border-radius:12px;padding:24px;
-        max-width:400px;width:90%;text-align:center;
-        box-shadow:0 8px 32px rgba(0,0,0,0.15);
-      `;
-
-      popupBox.innerHTML = `
-        <div style="font-weight:600;font-size:1.1em;color:#374151;margin-bottom:16px;">
-          Confirmer la suppression
-        </div>
-        <div style="color:#64748b;margin-bottom:24px;line-height:1.5;">
-          Voulez-vous vraiment supprimer cet ordre de livraison ?
-        </div>
-        <div style="display:flex;gap:12px;justify-content:center;">
-          <button id="cancelDelete" style="
-            background:#f1f5f9;color:#374151;border:none;padding:10px 20px;
-            border-radius:6px;font-weight:500;cursor:pointer;
-          ">Annuler</button>
-          <button id="confirmDelete" style="
-            background:#dc2626;color:#fff;border:none;padding:10px 20px;
-            border-radius:6px;font-weight:500;cursor:pointer;
-          ">Supprimer</button>
-        </div>
-      `;
-
-      popupBg.appendChild(popupBox);
-      document.body.appendChild(popupBg);
-
-      // Événements
-      document.getElementById("cancelDelete").onclick = () => popupBg.remove();
-      popupBg.onclick = (e) => {
-        if (e.target === popupBg) popupBg.remove();
-      };
-
-      document.getElementById("confirmDelete").onclick = () => {
-        popupBg.remove();
-        const historyKey = "simulatedHistoryData";
-        let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
-        let agentHistory = historyData["Agent Acconier"] || [];
-
-        historyData["Agent Acconier"] = agentHistory.filter((item) => {
-          if (orderToDelete.id && item.id && item.id === orderToDelete.id)
-            return false;
-          if (!orderToDelete.id) {
-            return (
-              JSON.stringify(item.data) !== JSON.stringify(orderToDelete.data)
-            );
-          }
-          return true;
-        });
-
-        localStorage.setItem(historyKey, JSON.stringify(historyData));
-        window.renderHistorySidebarList();
-      };
+    // Ajoute l'écouteur sur chaque bouton de suppression
+    var deleteBtns = listDiv.querySelectorAll(".delete-history-btn");
+    for (var j = 0; j < deleteBtns.length; j++) {
+      deleteBtns[j].addEventListener("click", function (e) {
+        e.stopPropagation();
+        var idx = parseInt(this.getAttribute("data-history-idx"));
+        var orderToDelete = filteredHistory[idx];
+        // Pop-up de confirmation personnalisée
+        if (document.getElementById("confirmDeletePopup")) return; // évite doublon
+        var popupBg = document.createElement("div");
+        popupBg.id = "confirmDeletePopup";
+        popupBg.style.position = "fixed";
+        popupBg.style.top = "0";
+        popupBg.style.left = "0";
+        popupBg.style.width = "100vw";
+        popupBg.style.height = "100vh";
+        popupBg.style.background = "rgba(30,41,59,0.32)";
+        popupBg.style.zIndex = "6000";
+        popupBg.style.display = "flex";
+        popupBg.style.alignItems = "center";
+        popupBg.style.justifyContent = "center";
+        // Boîte
+        var popupBox = document.createElement("div");
+        // Responsive styles for popupBox
+        var isMobile =
+          window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
+        popupBox.style.background = "#fff";
+        popupBox.style.borderRadius = isMobile ? "13px" : "16px";
+        popupBox.style.boxShadow = isMobile
+          ? "0 2px 16px #2563eb22"
+          : "0 4px 24px #2563eb22";
+        popupBox.style.padding = isMobile
+          ? "18px 7vw 14px 7vw"
+          : "28px 22px 18px 22px";
+        popupBox.style.maxWidth = isMobile ? "98vw" : "95vw";
+        popupBox.style.width = isMobile ? "98vw" : "340px";
+        popupBox.style.textAlign = "center";
+        popupBox.style.position = "relative";
+        popupBox.style.margin = isMobile ? "0 1vw" : "";
+        // Message
+        var msg = document.createElement("div");
+        msg.textContent =
+          "Voulez-vous vraiment supprimer cet ordre de livraison ?";
+        msg.style.fontWeight = "600";
+        msg.style.fontSize = isMobile ? "1em" : "1.08em";
+        msg.style.color = "#1e293b";
+        msg.style.marginBottom = isMobile ? "13px" : "18px";
+        msg.style.lineHeight = isMobile ? "1.35" : "1.2";
+        popupBox.appendChild(msg);
+        // Boutons
+        var btns = document.createElement("div");
+        btns.style.display = "flex";
+        btns.style.justifyContent = "center";
+        btns.style.gap = isMobile ? "10px" : "18px";
+        btns.style.flexDirection = isMobile ? "column" : "row";
+        btns.style.alignItems = "center";
+        // Confirmer
+        var confirmBtn = document.createElement("button");
+        confirmBtn.textContent = "Supprimer";
+        confirmBtn.style.background = "#dc2626";
+        confirmBtn.style.color = "#fff";
+        confirmBtn.style.border = "none";
+        confirmBtn.style.borderRadius = isMobile ? "7px" : "8px";
+        confirmBtn.style.padding = isMobile ? "10px 0" : "8px 22px";
+        confirmBtn.style.fontWeight = "700";
+        confirmBtn.style.fontSize = isMobile ? "1.04em" : "1em";
+        confirmBtn.style.cursor = "pointer";
+        confirmBtn.style.width = isMobile ? "100%" : "auto";
+        // Annuler
+        var cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Annuler";
+        cancelBtn.style.background = "#f1f5f9";
+        cancelBtn.style.color = "#2563eb";
+        cancelBtn.style.border = "none";
+        cancelBtn.style.borderRadius = isMobile ? "7px" : "8px";
+        cancelBtn.style.padding = isMobile ? "10px 0" : "8px 22px";
+        cancelBtn.style.fontWeight = "700";
+        cancelBtn.style.fontSize = isMobile ? "1.04em" : "1em";
+        cancelBtn.style.cursor = "pointer";
+        cancelBtn.style.width = isMobile ? "100%" : "auto";
+        cancelBtn.style.marginTop = isMobile ? "7px" : "0";
+        btns.appendChild(confirmBtn);
+        btns.appendChild(cancelBtn);
+        popupBox.appendChild(btns);
+        // Fermer au clic sur Annuler ou fond
+        cancelBtn.onclick = function () {
+          popupBg.remove();
+        };
+        popupBg.onclick = function (e) {
+          if (e.target === popupBg) popupBg.remove();
+        };
+        // Action suppression réelle
+        confirmBtn.onclick = function () {
+          popupBg.remove();
+          const historyKey = "simulatedHistoryData";
+          let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
+          let agentHistory = historyData["Agent Acconier"] || [];
+          historyData["Agent Acconier"] = agentHistory.filter((item) => {
+            if (orderToDelete.id && item.id && item.id === orderToDelete.id)
+              return false;
+            if (!orderToDelete.id) {
+              return (
+                JSON.stringify(item.data) !== JSON.stringify(orderToDelete.data)
+              );
+            }
+            return true;
+          });
+          localStorage.setItem(historyKey, JSON.stringify(historyData));
+          window.renderHistorySidebarList();
+        };
+        popupBg.appendChild(popupBox);
+        document.body.appendChild(popupBg);
+      });
     }
-
-    // Rendu initial
-    renderFilteredHistory();
-
-    // Configurer la recherche avec styles professionnels
-    setTimeout(() => {
-      const searchInput = document.getElementById("historySearchInput");
-      if (searchInput) {
-        // Ajouter des styles dynamiques pour le focus avec effet professionnel
-        searchInput.addEventListener("focus", function () {
-          this.style.borderColor = "#3b82f6";
-          this.style.boxShadow =
-            "0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 6px rgba(0, 0, 0, 0.05)";
-          this.style.transform = "translateY(-1px)";
-        });
-
-        searchInput.addEventListener("blur", function () {
-          this.style.borderColor = "#d1d5db";
-          this.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
-          this.style.transform = "translateY(0)";
-        });
-
-        // Effet hover pour le champ de recherche
-        searchInput.addEventListener("mouseenter", function () {
-          if (this !== document.activeElement) {
-            this.style.borderColor = "#9ca3af";
-            this.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-          }
-        });
-
-        searchInput.addEventListener("mouseleave", function () {
-          if (this !== document.activeElement) {
-            this.style.borderColor = "#d1d5db";
-            this.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
-          }
-        });
-
-        searchInput.addEventListener("input", (e) => {
-          renderFilteredHistory(e.target.value);
-        });
-
-        searchInput.focus();
-      }
-    }, 100);
   };
 
-  // Fonction pour afficher le pop-up détaillé d'un ordre de livraison - Version Professionnelle
+  // Fonction pour afficher le pop-up détaillé d'un ordre de livraison
   window.showOrderDetailPopup = function (order) {
     // Supprime l'ancien pop-up s'il existe
     var oldModal = document.getElementById("orderDetailModal");
     if (oldModal) oldModal.remove();
-
-    // Crée le fond avec une transition douce
+    // Crée le fond
     var modalBg = document.createElement("div");
     modalBg.id = "orderDetailModal";
-    modalBg.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(8px);
-      z-index: 5000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    `;
-
+    modalBg.style.position = "fixed";
+    modalBg.style.top = "0";
+    modalBg.style.left = "0";
+    modalBg.style.width = "100vw";
+    modalBg.style.height = "100vh";
+    modalBg.style.background = "rgba(30,41,59,0.32)";
+    modalBg.style.zIndex = "5000";
+    modalBg.style.display = "flex";
+    modalBg.style.alignItems = "center";
+    modalBg.style.justifyContent = "center";
     // Désactive le scroll de la page derrière la popup
     document.body.classList.add("overflow-hidden");
-
-    // Crée la boîte modale avec style professionnel
+    // Crée la boîte
     var modalBox = document.createElement("div");
+    // Responsive styles
     var isMobile =
       window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
-
-    modalBox.style.cssText = `
-      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-      border-radius: ${isMobile ? "12px" : "16px"};
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-      padding: 0;
-      max-width: ${isMobile ? "95vw" : "600px"};
-      width: ${isMobile ? "95vw" : "600px"};
-      max-height: ${isMobile ? "95vh" : "90vh"};
-      overflow: hidden;
-      position: relative;
-      transform: scale(0.9) translateY(20px);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid #e2e8f0;
-    `;
-
-    // En-tête avec gradient professionnel
-    var header = document.createElement("div");
-    header.style.cssText = `
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      padding: ${isMobile ? "16px 20px" : "24px 30px"};
-      position: relative;
-      overflow: hidden;
-    `;
-
-    // Décoration subtile en arrière-plan
-    var decoration = document.createElement("div");
-    decoration.style.cssText = `
-      position: absolute;
-      top: -50%;
-      right: -10%;
-      width: 200px;
-      height: 200px;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-      border-radius: 50%;
-    `;
-    header.appendChild(decoration);
-
-    // Titre principal avec icône
-    var title = document.createElement("div");
-    title.innerHTML = `
-      <div style="
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        position: relative;
-        z-index: 1;
-      ">
-        <div style="
-          background: rgba(59, 130, 246, 0.2);
-          border-radius: 10px;
-          padding: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        ">
-          <i class='fas fa-file-alt' style="color: #3b82f6; font-size: 1.2em;"></i>
-        </div>
-        <div>
-          <h3 style="
-            margin: 0;
-            color: #ffffff;
-            font-weight: 700;
-            font-size: ${isMobile ? "1.2em" : "1.4em"};
-            letter-spacing: -0.5px;
-          ">Détails de la livraison</h3>
-          <p style="
-            margin: 2px 0 0 0;
-            color: #cbd5e1;
-            font-size: 0.9em;
-          ">Informations complètes de l'ordre</p>
-        </div>
-      </div>
-    `;
-    header.appendChild(title);
-
-    // Bouton fermer moderne
+    modalBox.style.background = "#fff";
+    modalBox.style.borderRadius = isMobile ? "13px" : "18px";
+    modalBox.style.boxShadow = isMobile
+      ? "0 2px 16px #2563eb22"
+      : "0 8px 32px #2563eb33";
+    modalBox.style.padding = isMobile
+      ? "18px 7vw 14px 7vw"
+      : "28px 22px 18px 22px";
+    modalBox.style.maxWidth = isMobile ? "98vw" : "98vw";
+    modalBox.style.width = isMobile ? "98vw" : "410px";
+    modalBox.style.maxHeight = isMobile ? "95vh" : "90vh";
+    modalBox.style.overflowY = "auto";
+    modalBox.style.position = "relative";
+    // Bouton fermer responsive
     var closeBtn = document.createElement("button");
-    closeBtn.innerHTML = `<i class='fas fa-times'></i>`;
-    closeBtn.style.cssText = `
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 40px;
-      height: 40px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 10px;
-      font-size: 14px;
-      color: #e2e8f0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      z-index: 2;
-    `;
-
-    closeBtn.onmouseover = function () {
-      closeBtn.style.background = "rgba(255, 255, 255, 0.2)";
-      closeBtn.style.borderColor = "rgba(255, 255, 255, 0.3)";
-      closeBtn.style.color = "#ffffff";
-      closeBtn.style.transform = "scale(1.05)";
-    };
-    closeBtn.onmouseout = function () {
-      closeBtn.style.background = "rgba(255, 255, 255, 0.1)";
-      closeBtn.style.borderColor = "rgba(255, 255, 255, 0.2)";
-      closeBtn.style.color = "#e2e8f0";
-      closeBtn.style.transform = "scale(1)";
-    };
-
+    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    closeBtn.setAttribute("aria-label", "Fermer");
+    closeBtn.style.position = "absolute";
+    if (isMobile) {
+      closeBtn.style.top = "-14px";
+      closeBtn.style.right = "-10px";
+      closeBtn.style.width = "38px";
+      closeBtn.style.height = "38px";
+      closeBtn.style.fontSize = "1.25em";
+      closeBtn.style.background = "#f1f5f9";
+      closeBtn.style.borderRadius = "50%";
+      closeBtn.style.display = "flex";
+      closeBtn.style.alignItems = "center";
+      closeBtn.style.justifyContent = "center";
+      closeBtn.style.boxShadow = "0 1px 6px #2563eb11";
+      closeBtn.style.border = "none";
+      closeBtn.style.zIndex = "10";
+      closeBtn.style.padding = "0";
+      closeBtn.style.color = "#2563eb";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.onmouseover = function () {
+        closeBtn.style.background = "#e0e7ff";
+      };
+      closeBtn.onmouseout = function () {
+        closeBtn.style.background = "#f1f5f9";
+      };
+    } else {
+      closeBtn.style.top = "18px";
+      closeBtn.style.right = "22px";
+      closeBtn.style.width = "44px";
+      closeBtn.style.height = "44px";
+      closeBtn.style.fontSize = "1.5em";
+      closeBtn.style.background = "none";
+      closeBtn.style.border = "none";
+      closeBtn.style.color = "#2563eb";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.style.padding = "0";
+    }
     closeBtn.onclick = function () {
-      modalBg.style.opacity = "0";
-      modalBox.style.transform = "scale(0.9) translateY(20px)";
-      setTimeout(() => {
-        modalBg.remove();
-        document.body.classList.remove("overflow-hidden");
-      }, 300);
+      modalBg.remove();
+      document.body.classList.remove("overflow-hidden");
     };
+    modalBox.appendChild(closeBtn);
+    // Titre principal
+    var title = document.createElement("div");
+    title.textContent = "Détail de l'ordre de livraison";
+    title.style.color = "#2563eb";
+    title.style.fontWeight = "bold";
+    title.style.fontSize = isMobile ? "1.08em" : "1.18em";
+    title.style.marginBottom = isMobile ? "18px" : "16px";
+    title.style.marginTop = isMobile ? "18px" : "0";
+    title.style.textAlign = "center";
+    modalBox.appendChild(title);
 
-    header.appendChild(closeBtn);
-    modalBox.appendChild(header);
-
-    // Corps du contenu avec style épuré
-    var contentDiv = document.createElement("div");
-    contentDiv.style.cssText = `
-      padding: ${isMobile ? "6px" : "8px"};
-      background: #ffffff;
-      max-height: calc(${isMobile ? "95vh" : "90vh"} - ${
-      isMobile ? "80px" : "100px"
-    });
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: #cbd5e1 #f1f5f9;
-    `;
-
-    // Contenu détaillé avec un design très propre
+    // Contenu détaillé ou message d'erreur si data absent
     var html = "";
     if (!order || !order.data) {
-      html = `
-        <div style="
-          color: #dc2626;
-          background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-          padding: 24px;
-          border-radius: 12px;
-          text-align: center;
-          font-weight: 500;
-          border: 1px solid #f87171;
-        ">
-          <i class='fas fa-exclamation-triangle' style="font-size: 2em; margin-bottom: 12px; display: block;"></i>
-          Aucune donnée disponible pour cet ordre
-        </div>
-      `;
+      html = `<div style='color:#dc2626;font-weight:bold;padding:18px 0;text-align:center;'>Aucune donnée détaillée à afficher pour cet ordre.<br>Vérifiez la sauvegarde de l'historique.</div>`;
     } else {
       var d = order.data;
-
-      // Fonction helper pour créer une section d'information
-      function createSection(title, items, color = "#3b82f6") {
-        let sectionHtml = `
-          <div style="
-            margin-bottom: ${isMobile ? "4px" : "6px"};
-            background: #f8fafc;
-            border-radius: ${isMobile ? "4px" : "6px"};
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-          ">
-            <div style="
-              background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);
-              color: white;
-              padding: ${isMobile ? "3px 4px" : "4px 6px"};
-              font-weight: 600;
-              font-size: ${isMobile ? "0.65em" : "0.75em"};
-              letter-spacing: 0.3px;
-              display: flex;
-              align-items: center;
-              gap: ${isMobile ? "2px" : "3px"};
-            ">
-              <i class='fas fa-folder-open' style="font-size: ${
-                isMobile ? "0.6em" : "0.7em"
-              };"></i>
-              ${title}
-            </div>
-            <div style="padding: ${isMobile ? "4px" : "6px"};">
-        `;
-
-        items.forEach((item) => {
-          if (item.value) {
-            sectionHtml += `
-              <div style="
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                padding: ${isMobile ? "2px 0" : "3px 0"};
-                border-bottom: 1px solid #f1f5f9;
-              ">
-                <span style="
-                  color: #64748b;
-                  font-weight: 500;
-                  font-size: ${isMobile ? "0.6em" : "0.7em"};
-                  min-width: 40%;
-                ">${item.label}:</span>
-                <span style="
-                  color: #1e293b;
-                  font-weight: 600;
-                  text-align: right;
-                  flex: 1;
-                  font-size: ${isMobile ? "0.6em" : "0.7em"};
-                  word-break: break-word;
-                ">${item.value}</span>
-              </div>
-            `;
-          }
-        });
-
-        sectionHtml += `</div></div>`;
-        return sectionHtml;
-        // Sections d'informations avec style professionnel
-        const clientInfo = [
-          { label: "Client", value: d.clientName },
-          { label: "Téléphone", value: d.clientPhone },
-          {
-            label: "Date de création",
-            value: order.date
-              ? new Date(order.date).toLocaleDateString("fr-FR")
-              : "-",
-          },
-        ];
-
-        const containerInfo = [
-          {
-            label: "Conteneur(s)",
-            value: Array.isArray(d.containerNumbers)
+      html = `<div class="order-detail-main" style="display:flex;flex-direction:column;gap:${
+        isMobile ? "10px" : "16px"
+      };font-size:${isMobile ? "0.99em" : "1.07em"};line-height:1.7;">
+        <div style="display:flex;flex-wrap:wrap;gap:${
+          isMobile ? "7px" : "18px"
+        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
+        isMobile ? "10px 8px" : "12px 18px"
+      };border-radius:12px;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Date</span><br><span style='font-weight:700;color:#2563eb;'>${
+            order.date || "-"
+          }</span></div>
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Agent</span><br><span style='font-weight:700;'>${
+            d.employeeName || "-"
+          }</span></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:${
+          isMobile ? "7px" : "18px"
+        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
+        isMobile ? "10px 8px" : "12px 18px"
+      };border-radius:12px;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Client</span><br><span style='font-weight:700;'>${
+            d.clientName || "-"
+          }</span></div>
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Téléphone</span><br><span style='font-weight:700;'>${
+            d.clientPhone || "-"
+          }</span></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:${
+          isMobile ? "7px" : "18px"
+        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
+        isMobile ? "10px 8px" : "12px 18px"
+      };border-radius:12px;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Conteneur(s)</span><br><span style='font-weight:700;'>${
+            Array.isArray(d.containerNumbers)
               ? d.containerNumbers.join(", ")
-              : d.containerNumbers,
-          },
-          { label: "Nombre de conteneurs", value: d.numberOfContainers },
-          { label: "Type de pied", value: d.containerFootType },
-          { label: "Poids", value: d.weight },
-          { label: "Contenu", value: d.containerTypeAndContent },
-        ];
-
-        const documentInfo = [
-          { label: "N° BL", value: d.blNumber },
-          { label: "N° Dossier", value: d.dossierNumber },
-          { label: "N° Déclaration", value: d.declarationNumber },
-        ];
-
-        const transportInfo = [
-          { label: "Compagnie maritime", value: d.shippingCompany },
-          { label: "Navire", value: d.shipName },
-          { label: "Circuit", value: d.circuit },
-          { label: "Mode de transport", value: d.transporterMode },
-          { label: "Lieu", value: d.lieu },
-        ];
-
-        html = `
-        ${createSection("Informations Client", clientInfo, "#10b981")}
-        ${createSection("Informations Conteneur", containerInfo, "#3b82f6")}
-        ${createSection("Documents", documentInfo, "#8b5cf6")}
-        ${createSection("Transport & Logistique", transportInfo, "#f59e0b")}
-      `;
-
-        // Section spéciale pour les numéros TC avec carte compacte et menu déroulant
-        if (
-          Array.isArray(d.containerFootTypesData) &&
-          d.containerFootTypesData.length > 0
-        ) {
-          html += `
-          <div style="
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-radius: ${isMobile ? "4px" : "6px"};
-            overflow: hidden;
-            border: 1px solid #0891b2;
-            margin-bottom: ${isMobile ? "4px" : "6px"};
-          ">
-            <div style="
-              background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-              color: white;
-              padding: ${isMobile ? "3px 4px" : "4px 6px"};
-              font-weight: 600;
-              font-size: ${isMobile ? "0.65em" : "0.75em"};
-              letter-spacing: 0.3px;
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              cursor: pointer;
-              min-height: ${isMobile ? "20px" : "25px"};
-            " onclick="toggleTCDetails()" id="tcCardHeader">
-              <div style="display: flex; align-items: center; gap: ${
-                isMobile ? "2px" : "3px"
-              };">
-                <i class='fas fa-shipping-fast' style="font-size: ${
-                  isMobile ? "0.6em" : "0.7em"
-                };"></i>
-                Numéros TC (${d.containerFootTypesData.length})
-              </div>
-              <i class='fas fa-chevron-down' id="tcChevron" style="
-                transition: transform 0.3s ease;
-                font-size: ${isMobile ? "0.6em" : "0.7em"};
-              "></i>
-            </div>
-            
-            <div id="tcDetailsContent" style="
-              max-height: 0;
-              overflow: hidden;
-              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-              background: #ffffff;
-            ">
-              <div style="padding: ${isMobile ? "3px" : "4px"};">
-                <div style="
-                  display: grid;
-                  gap: ${isMobile ? "2px" : "3px"};
-                  grid-template-columns: ${
-                    isMobile ? "1fr" : "repeat(auto-fit, minmax(250px, 1fr))"
-                  };
-                ">`;
-
-          for (var i = 0; i < d.containerFootTypesData.length; i++) {
-            var obj = d.containerFootTypesData[i];
-            html += `
-                  <div style="
-                    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-                    border: 1px solid #e2e8f0;
-                    border-radius: ${isMobile ? "3px" : "4px"};
-                    padding: ${isMobile ? "3px" : "4px"};
-                    transition: all 0.2s ease;
-                    position: relative;
-                    overflow: hidden;
-                  " class="tc-item" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(8, 145, 178, 0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                    
-                    <div style="
-                      position: absolute;
-                      top: 0;
-                      left: 0;
-                      right: 0;
-                      height: 3px;
-                      background: linear-gradient(90deg, #0891b2, #06b6d4);
-                    "></div>
-                    
-                    <div style="
-                      display: flex;
-                      align-items: center;
-                      gap: ${isMobile ? "8px" : "10px"};
-                      margin-bottom: ${isMobile ? "8px" : "12px"};
-                    ">
-                      <div style="
-                        background: #0891b2;
-                        color: white;
-                        width: ${isMobile ? "24px" : "32px"};
-                        height: ${isMobile ? "24px" : "32px"};
-                        border-radius: ${isMobile ? "6px" : "8px"};
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: 700;
-                        font-size: ${isMobile ? "0.7em" : "0.8em"};
-                      ">${i + 1}</div>
-                      <div style="
-                        font-weight: 700;
-                        color: #1e293b;
-                        font-size: ${isMobile ? "0.95em" : "1.1em"};
-                        letter-spacing: -0.3px;
-                      ">${obj.tc || "TC-" + (i + 1)}</div>
-                    </div>
-                    
-                    <div style="
-                      display: grid;
-                      grid-template-columns: 1fr 1fr;
-                      gap: ${isMobile ? "6px" : "8px"};
-                      font-size: ${isMobile ? "0.75em" : "0.85em"};
-                    ">
-                      <div style="
-                        background: rgba(8, 145, 178, 0.1);
-                        padding: ${isMobile ? "6px 8px" : "8px 10px"};
-                        border-radius: ${isMobile ? "4px" : "6px"};
-                        text-align: center;
-                      ">
-                        <div style="color: #64748b; font-size: 0.7em; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Type</div>
-                        <div style="color: #0891b2; font-weight: 700;">${
-                          obj.pied || "-"
-                        }</div>
-                      </div>
-                      <div style="
-                        background: rgba(8, 145, 178, 0.1);
-                        padding: ${isMobile ? "6px 8px" : "8px 10px"};
-                        border-radius: ${isMobile ? "4px" : "6px"};
-                        text-align: center;
-                      ">
-                        <div style="color: #64748b; font-size: 0.7em; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Poids</div>
-                        <div style="color: #0891b2; font-weight: 700;">${
-                          obj.poids || "-"
-                        } kg</div>
-                      </div>
-                    </div>
-                  </div>`;
-          }
-
-          html += `
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <script>
-            function toggleTCDetails() {
-              const content = document.getElementById('tcDetailsContent');
-              const chevron = document.getElementById('tcChevron');
-              
-              if (content.style.maxHeight === '0px' || !content.style.maxHeight) {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                chevron.style.transform = 'rotate(180deg)';
-              } else {
-                content.style.maxHeight = '0px';
-                chevron.style.transform = 'rotate(0deg)';
-              }
-            }
-          </script>
-        `;
+              : d.containerNumbers || "-"
+          }</span></div>
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Type(s) de pied</span><br><span style='font-weight:700;'>${
+            d.containerFootType || "-"
+          }</span></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:${
+          isMobile ? "7px" : "18px"
+        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
+        isMobile ? "10px 8px" : "12px 18px"
+      };border-radius:12px;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Poids</span><br><span style='font-weight:700;'>${
+            d.weight || "-"
+          }</span></div>
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Contenu</span><br><span style='font-weight:700;'>${
+            d.containerTypeAndContent || "-"
+          }</span></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:${
+          isMobile ? "7px" : "18px"
+        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
+        isMobile ? "10px 8px" : "12px 18px"
+      };border-radius:12px;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Lieu</span><br><span style='font-weight:700;'>${
+            d.lieu || "-"
+          }</span></div>
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Déclaration</span><br><span style='font-weight:700;'>${
+            d.declarationNumber || "-"
+          }</span></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:${
+          isMobile ? "7px" : "18px"
+        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
+        isMobile ? "10px 8px" : "12px 18px"
+      };border-radius:12px;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Nombre de conteneurs</span><br><span style='font-weight:700;'>${
+            d.numberOfContainers || "-"
+          }</span></div>
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>BL</span><br><span style='font-weight:700;'>${
+            d.blNumber || "-"
+          }</span></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:${
+          isMobile ? "7px" : "18px"
+        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
+        isMobile ? "10px 8px" : "12px 18px"
+      };border-radius:12px;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Dossier</span><br><span style='font-weight:700;'>${
+            d.dossierNumber || "-"
+          }</span></div>
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Compagnie maritime</span><br><span style='font-weight:700;'>${
+            d.shippingCompany || "-"
+          }</span></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:${
+          isMobile ? "7px" : "18px"
+        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
+        isMobile ? "10px 8px" : "12px 18px"
+      };border-radius:12px;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Navire</span><br><span style='font-weight:700;'>${
+            d.shipName || "-"
+          }</span></div>
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Circuit</span><br><span style='font-weight:700;'>${
+            d.circuit || "-"
+          }</span></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:${
+          isMobile ? "7px" : "18px"
+        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
+        isMobile ? "10px 8px" : "12px 18px"
+      };border-radius:12px;">
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Mode de transport</span><br><span style='font-weight:700;'>${
+            d.transporterMode || "-"
+          }</span></div>
+        </div>
+      </div>`;
+      // Si mapping TC/type de pied détaillé
+      if (
+        Array.isArray(d.containerFootTypesData) &&
+        d.containerFootTypesData.length > 0
+      ) {
+        html += `<div style='margin-top:${
+          isMobile ? "12px" : "18px"
+        };background:#f8fafc;padding:${
+          isMobile ? "10px 8px" : "12px 18px"
+        };border-radius:12px;'>
+          <div style='font-weight:700;color:#2563eb;margin-bottom:7px;'>Détail TC / Type de pied / Poids</div>
+          <ul style='padding-left:0;margin:0;list-style:none;'>`;
+        for (var i = 0; i < d.containerFootTypesData.length; i++) {
+          var obj = d.containerFootTypesData[i];
+          html += `<li style='margin-bottom:4px;'><span style='font-weight:bold;color:#1e293b;'>${
+            obj.tc
+          }</span> : <span style='color:#2563eb;'>${
+            obj.pied || "-"
+          }</span> / <span style='color:#334155;'>${
+            obj.poids || "-"
+          }</span> kg</li>`;
         }
+        html += "</ul></div>";
       }
-
-      contentDiv.innerHTML = html;
-      modalBox.appendChild(contentDiv);
-      modalBg.appendChild(modalBox);
-      document.body.appendChild(modalBg);
-
-      // Animation d'entrée fluide
-      setTimeout(() => {
-        modalBg.style.opacity = "1";
-        modalBox.style.transform = "scale(1) translateY(0)";
-      }, 10);
-
-      // Fermeture au clic sur l'arrière-plan
-      modalBg.onclick = function (e) {
-        if (e.target === modalBg) {
-          closeBtn.onclick();
-        }
-      };
-
-      // Fermeture avec Échap
-      const handleEscape = function (e) {
-        if (e.key === "Escape") {
-          closeBtn.onclick();
-          document.removeEventListener("keydown", handleEscape);
-        }
-      };
-      document.addEventListener("keydown", handleEscape);
-
-      // Animation d'entrée
-      setTimeout(() => {
-        modalBox.style.transform = "scale(1)";
-      }, 10);
-
-      // Fermer au clic sur le fond (overlay)
-      modalBg.addEventListener("click", function (e) {
-        if (e.target === modalBg) {
-          modalBg.style.opacity = "0";
-          modalBox.style.transform = "scale(0.9)";
-          setTimeout(() => {
-            modalBg.remove();
-            document.body.classList.remove("overflow-hidden");
-          }, 300);
-        }
-      });
     }
-
-    // --- Observer la visibilité du formulaire pour afficher/masquer l'icône ---
-    const observer = new MutationObserver(updateHistoryBtnVisibility);
-    if (deliveryFormSection) {
-      observer.observe(deliveryFormSection, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-    }
-    if (codeEntrySection) {
-      observer.observe(codeEntrySection, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-    }
-    // Appel initial
-    updateHistoryBtnVisibility();
+    var contentDiv = document.createElement("div");
+    contentDiv.innerHTML = html;
+    modalBox.appendChild(contentDiv);
+    modalBg.appendChild(modalBox);
+    document.body.appendChild(modalBg);
+    // Fermer au clic sur le fond (overlay)
+    modalBg.addEventListener("click", function (e) {
+      if (e.target === modalBg) {
+        modalBg.remove();
+        document.body.classList.remove("overflow-hidden");
+      }
+    });
   };
+
+  // --- Observer la visibilité du formulaire pour afficher/masquer l'icône ---
+  const observer = new MutationObserver(updateHistoryBtnVisibility);
+  if (deliveryFormSection) {
+    observer.observe(deliveryFormSection, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  }
+  if (codeEntrySection) {
+    observer.observe(codeEntrySection, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  }
+  // Appel initial
+  updateHistoryBtnVisibility();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -2763,4 +2068,5 @@ async function submitDeliveryForm(status) {
 // ont été retirées de ce script car elles ne sont pas liées directement
 // au formulaire de validation de livraison et sont supposées être gérées
 // par d'autres scripts (par exemple, un script pour le panneau d'administration).
-// Ce script se consnjsdbjsydgjshdtfdyhgtre dxhjbsésormaidhjs uniquement sur le formulaire employé.
+// Ce script se consnjsdbjsydgjshdtre dxhjbsésormaidhjs uniquement sur le formulaire employé.
+/***djh*/
