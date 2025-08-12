@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Utilisateurs Connectés - Admin</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #2563eb;
+      }
+      .stats-summary {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+      }
+      .stat-card {
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        min-width: 150px;
+        margin: 10px;
+      }
+      .stat-number {
+        font-size: 2em;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .stat-label {
+        font-size: 0.9em;
+        opacity: 0.9;
+      }
+      .page-section {
+        margin-bottom: 30px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .page-header {
+        background: #f8fafc;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: bold;
+        color: #374151;
+      }
+      .users-list {
+        padding: 20px;
+      }
+      .user-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f3f4f6;
+      }
+      .user-item:last-child {
+        border-bottom: none;
+      }
+      .user-info {
+        flex: 1;
+      }
+      .user-name {
+        font-weight: bold;
+        color: #1f2937;
+      }
+      .user-email {
+        color: #6b7280;
+        font-size: 0.9em;
+      }
+      .user-status {
+        background: #10b981;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+      }
+      .refresh-btn {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-bottom: 20px;
+      }
+      .refresh-btn:hover {
+        background: #1d4ed8;
+      }
+      .no-users {
+        text-align: center;
+        color: #6b7280;
+        font-style: italic;
+        padding: 40px;
+      }
+      .timestamp {
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.9em;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>👥 Utilisateurs Connectés</h1>
+        <p>Suivi en temps réel des connexions actives</p>
+      </div>
+
+      <button class="refresh-btn" onclick="loadUserStats()">
+        🔄 Actualiser
+      </button>
+
+      <div class="stats-summary" id="statsSummary">
+        <!-- Les statistiques seront chargées ici -->
+      </div>
+
+      <div id="pageStats">
+        <!-- Les détails par page seront chargés ici -->
+      </div>
+
+      <div class="timestamp" id="timestamp"></div>
+    </div>
+
+    <script>
+      const API_BASE_URL =
+        "https://plateformdesuivie-its-service-1cjx.onrender.com";
+
+      function formatTimeAgo(seconds) {
+        if (seconds < 60) return `${seconds}s`;
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m`;
+        const hours = Math.floor(minutes / 60);
+        return `${hours}h ${minutes % 60}m`;
+      }
+
+      function loadUserStats() {
+        fetch(`${API_BASE_URL}/api/active-users/stats`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              displayStats(data);
+            } else {
+              console.error("Erreur:", data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Erreur réseau:", error);
+          });
+      }
+
+      function displayStats(data) {
+        // Afficher le résumé
+        const statsSummary = document.getElementById("statsSummary");
+        statsSummary.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${data.totalConnectedUsers}</div>
+                    <div class="stat-label">Total Connectés</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${
+                      Object.keys(data.pageStats).length
+                    }</div>
+                    <div class="stat-label">Pages Actives</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${
+                      data.pageStats["resp_acconier.html"]?.count || 0
+                    }</div>
+                    <div class="stat-label">Acconiers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${
+                      data.pageStats["resp_liv.html"]?.count || 0
+                    }</div>
+                    <div class="stat-label">Resp. Livraison</div>
+                </div>
+            `;
+
+        // Afficher les détails par page
+        const pageStats = document.getElementById("pageStats");
+        let pageStatsHtml = "";
+
+        Object.keys(data.pageStats).forEach((page) => {
+          const pageData = data.pageStats[page];
+          pageStatsHtml += `
+                    <div class="page-section">
+                        <div class="page-header">
+                            📄 ${page} - ${pageData.count} utilisateur(s) connecté(s)
+                        </div>
+                        <div class="users-list">
+                `;
+
+          if (pageData.users.length === 0) {
+            pageStatsHtml +=
+              '<div class="no-users">Aucun utilisateur connecté</div>';
+          } else {
+            pageData.users.forEach((user) => {
+              pageStatsHtml += `
+                            <div class="user-item">
+                                <div class="user-info">
+                                    <div class="user-name">${
+                                      user.nom || user.username
+                                    }</div>
+                                    <div class="user-email">${
+                                      user.username
+                                    }</div>
+                                </div>
+                                <div class="user-status">
+                                    Actif depuis ${formatTimeAgo(
+                                      user.timeConnected
+                                    )}
+                                </div>
+                            </div>
+                        `;
+            });
+          }
+
+          pageStatsHtml += `
+                        </div>
+                    </div>
+                `;
+        });
+
+        pageStats.innerHTML = pageStatsHtml;
+
+        // Afficher le timestamp
+        const timestamp = document.getElementById("timestamp");
+        timestamp.textContent = `Dernière mise à jour : ${new Date(
+          data.timestamp
+        ).toLocaleString("fr-FR")}`;
+      }
+
+      // Charger les statistiques au chargement de la page
+      loadUserStats();
+
+      // Actualiser automatiquement toutes les 30 secondes
+      setInterval(loadUserStats, 30000);
+    </script>
+  </body>
+</html>
