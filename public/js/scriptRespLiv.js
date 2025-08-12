@@ -6085,82 +6085,247 @@ window.showHistoryEntryDetail = async function (entryId) {
   container.style.background = "#fff";
   container.style.borderRadius = "12px";
   container.style.boxShadow = "0 15px 40px rgba(0,0,0,0.2)";
-  container.style.maxWidth = "90vw";
-  container.style.width = "650px";
-  container.style.maxHeight = "85vh";
+  container.style.maxWidth = "95vw";
+  container.style.width = "800px";
+  container.style.maxHeight = "90vh";
   container.style.overflowY = "auto";
-  container.style.padding = "25px";
+  container.style.padding = "30px";
 
   container.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 3px solid #059669; padding-bottom: 20px;">
       <h3 style="margin: 0; color: #059669; font-size: 1.3em;">� Détails du Dossier ${
         enrichedEntry.dossier_number ||
         enrichedEntry.file_number ||
         enrichedEntry.container_number
       }</h3>
       <button onclick="document.getElementById('historyDetailModal').remove()" 
-        style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
-        Fermer
+        style="background: #ef4444; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+        ✕ Fermer
       </button>
     </div>
-    <div style="display: grid; gap: 12px;">
-      <div><strong>Conteneur:</strong> ${enrichedEntry.container_number}</div>
-      <div><strong>Dossier:</strong> ${
-        enrichedEntry.dossier_number || "-"
-      }</div>
-      <div><strong>BL:</strong> ${enrichedEntry.bl_number || "-"}</div>
-      <div><strong>Client:</strong> ${enrichedEntry.client_name || "-"}</div>
-      <div><strong>Téléphone client:</strong> ${
-        enrichedEntry.client_phone || "-"
-      }</div>
-      <div><strong>Circuit:</strong> ${enrichedEntry.circuit || "-"}</div>
-      <div><strong>Compagnie maritime:</strong> ${
-        enrichedEntry.shipping_company || "-"
-      }</div>
-      <div><strong>Agent visiteur:</strong> ${
-        enrichedEntry.nom_agent_visiteur ||
-        enrichedEntry.visitor_agent_name ||
-        "-"
-      }</div>
-      <div><strong>Transporteur:</strong> ${
-        enrichedEntry.transporter || "-"
-      }</div>
-      <div><strong>Inspecteur:</strong> ${
-        enrichedEntry.inspector || enrichedEntry.inspecteur || "-"
-      }</div>
-      <div><strong>Agent en douanes:</strong> ${
-        enrichedEntry.customs_agent || enrichedEntry.agent_en_douanes || "-"
-      }</div>
-      <div><strong>Chauffeur:</strong> ${
-        enrichedEntry.driver || enrichedEntry.driver_name || "-"
-      }</div>
-      <div><strong>Tél. chauffeur:</strong> ${
-        enrichedEntry.driver_phone || "-"
-      }</div>
-      <div><strong>Type conteneur:</strong> ${
-        enrichedEntry.container_foot_type ||
-        enrichedEntry.container_type_and_content ||
-        "-"
-      }</div>
-      <div><strong>Poids:</strong> ${enrichedEntry.weight || "-"}</div>
-      <div><strong>Nom navire:</strong> ${enrichedEntry.ship_name || "-"}</div>
-      <div><strong>Date livraison:</strong> ${
-        enrichedEntry.delivery_date || "-"
-      }</div>
-      <div><strong>Observations:</strong> ${
-        enrichedEntry.observation ||
-        enrichedEntry.delivery_notes ||
-        enrichedEntry.observation_acconier ||
-        "-"
-      }</div>
-      <div><strong>Responsable:</strong> ${
-        enrichedEntry.employee_name || "-"
-      }</div>
-      <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px; background: #f9fafb; padding: 10px; border-radius: 6px;">
-        <div><strong>Livré le:</strong> ${new Date(
-          enrichedEntry.delivered_at
-        ).toLocaleString("fr-FR")}</div>
-        <div><strong>Livré par:</strong> ${enrichedEntry.delivered_by}</div>
+    
+    <!-- Section Identification -->
+    <div style="background: linear-gradient(135deg, #f0f9f4 0%, #e6f7ed 100%); border-left: 4px solid #059669; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+      <h4 style="margin: 0 0 15px 0; color: #059669; font-size: 1.1em; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        🆔 Identification
+      </h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Conteneur:</strong> 
+          <span style="color: #059669; font-weight: 600;">${
+            enrichedEntry.container_number
+          }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Dossier:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.dossier_number || "-"
+          }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">BL:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.bl_number || "-"
+          }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Circuit:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.circuit || "-"
+          }</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Client -->
+    <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 4px solid #2563eb; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+      <h4 style="margin: 0 0 15px 0; color: #2563eb; font-size: 1.1em; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        👤 Informations Client
+      </h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Client:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.client_name || "-"
+          }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Téléphone client:</strong> 
+          <span style="color: ${
+            enrichedEntry.client_phone && enrichedEntry.client_phone !== "-"
+              ? "#059669"
+              : "#9ca3af"
+          }; font-weight: 600;">${enrichedEntry.client_phone || "-"}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Personnel -->
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+      <h4 style="margin: 0 0 15px 0; color: #f59e0b; font-size: 1.1em; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        👥 Personnel & Intervenants
+      </h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Agent visiteur:</strong> 
+          <span style="color: ${
+            (enrichedEntry.nom_agent_visiteur ||
+              enrichedEntry.visitor_agent_name) &&
+            (enrichedEntry.nom_agent_visiteur ||
+              enrichedEntry.visitor_agent_name) !== "-"
+              ? "#059669"
+              : "#ef4444"
+          }; font-weight: 600;">${
+    enrichedEntry.nom_agent_visiteur ||
+    enrichedEntry.visitor_agent_name ||
+    "Non défini"
+  }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Transporteur:</strong> 
+          <span style="color: ${
+            enrichedEntry.transporter && enrichedEntry.transporter !== "-"
+              ? "#059669"
+              : "#ef4444"
+          }; font-weight: 600;">${
+    enrichedEntry.transporter || "Non défini"
+  }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Inspecteur:</strong> 
+          <span style="color: ${
+            (enrichedEntry.inspector || enrichedEntry.inspecteur) &&
+            (enrichedEntry.inspector || enrichedEntry.inspecteur) !== "-"
+              ? "#059669"
+              : "#ef4444"
+          }; font-weight: 600;">${
+    enrichedEntry.inspector || enrichedEntry.inspecteur || "Non défini"
+  }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Agent en douanes:</strong> 
+          <span style="color: ${
+            (enrichedEntry.customs_agent || enrichedEntry.agent_en_douanes) &&
+            (enrichedEntry.customs_agent || enrichedEntry.agent_en_douanes) !==
+              "-"
+              ? "#059669"
+              : "#ef4444"
+          }; font-weight: 600;">${
+    enrichedEntry.customs_agent ||
+    enrichedEntry.agent_en_douanes ||
+    "Non défini"
+  }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Chauffeur:</strong> 
+          <span style="color: ${
+            (enrichedEntry.driver || enrichedEntry.driver_name) &&
+            (enrichedEntry.driver || enrichedEntry.driver_name) !== "-"
+              ? "#059669"
+              : "#ef4444"
+          }; font-weight: 600;">${
+    enrichedEntry.driver || enrichedEntry.driver_name || "Non défini"
+  }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Tél. chauffeur:</strong> 
+          <span style="color: ${
+            enrichedEntry.driver_phone && enrichedEntry.driver_phone !== "-"
+              ? "#059669"
+              : "#ef4444"
+          }; font-weight: 600;">${
+    enrichedEntry.driver_phone || "Non défini"
+  }</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Technique -->
+    <div style="background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); border-left: 4px solid #8b5cf6; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+      <h4 style="margin: 0 0 15px 0; color: #8b5cf6; font-size: 1.1em; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        ⚙️ Informations Techniques
+      </h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Type conteneur:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.container_foot_type ||
+            enrichedEntry.container_type_and_content ||
+            "-"
+          }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Poids:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.weight || "-"
+          }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Nom navire:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.ship_name || "-"
+          }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Compagnie maritime:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.shipping_company || "-"
+          }</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Livraison -->
+    <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); border-left: 4px solid #ef4444; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+      <h4 style="margin: 0 0 15px 0; color: #ef4444; font-size: 1.1em; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        🚚 Informations de Livraison
+      </h4>
+      <div style="display: grid; gap: 12px;">
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Date livraison:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.delivery_date || "-"
+          }</span>
+        </div>
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Responsable:</strong> 
+          <span style="color: #1f2937; font-weight: 600;">${
+            enrichedEntry.employee_name || "-"
+          }</span>
+        </div>
+        ${
+          enrichedEntry.observation ||
+          enrichedEntry.delivery_notes ||
+          enrichedEntry.observation_acconier
+            ? `
+        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <strong style="color: #374151;">Observations:</strong><br>
+          <span style="color: #1f2937; font-weight: 500; font-style: italic; display: block; margin-top: 8px; padding: 8px; background: #f9fafb; border-radius: 6px;">${
+            enrichedEntry.observation ||
+            enrichedEntry.delivery_notes ||
+            enrichedEntry.observation_acconier
+          }</span>
+        </div>
+        `
+            : ""
+        }
+      </div>
+    </div>
+
+    <!-- Section Statut de Livraison -->
+    <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+      <h4 style="margin: 0 0 15px 0; font-size: 1.2em; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        ✅ Statut de Livraison
+      </h4>
+      <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+        <div style="font-size: 1.1em; font-weight: 600; margin-bottom: 8px;">
+          <strong>Livré le:</strong> ${new Date(
+            enrichedEntry.delivered_at
+          ).toLocaleString("fr-FR")}
+        </div>
+        <div style="font-size: 1.1em; font-weight: 600;">
+          <strong>Livré par:</strong> ${enrichedEntry.delivered_by}
+        </div>
       </div>
     </div>
   `;
