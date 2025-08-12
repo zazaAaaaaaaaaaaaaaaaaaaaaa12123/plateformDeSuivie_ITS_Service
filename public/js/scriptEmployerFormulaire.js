@@ -380,10 +380,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const sidebarRight = isMobile ? "-100vw" : "-420px";
 
     sidebar.style.position = "fixed";
-    sidebar.style.top = "10vh";
+    sidebar.style.top = "5vh";
     sidebar.style.right = sidebarRight;
     sidebar.style.width = sidebarWidth;
-    sidebar.style.height = "80vh";
+    sidebar.style.height = "90vh";
     sidebar.style.background = "#fff";
     sidebar.style.boxShadow = isMobile ? "none" : "-4px 0 24px #2563eb22";
     sidebar.style.zIndex = "2000";
@@ -391,7 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.style.display = "flex";
     sidebar.style.flexDirection = "column";
     sidebar.style.padding = "0";
-    sidebar.style.borderRadius = isMobile ? "0" : "8px 0 0 8px";
+    sidebar.style.borderRadius = isMobile ? "0" : "12px 0 0 12px";
     sidebar.innerHTML = `
       <!-- En-tête professionnel avec gradient (version ultra-compacte) -->
       <div style='
@@ -841,14 +841,14 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="history-order-item" data-history-idx="${index}" style="
             background:linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
             border:1px solid #e2e8f0;
-            border-radius:8px;
-            padding:12px;
-            margin-bottom:8px;
+            border-radius:10px;
+            padding:16px;
+            margin-bottom:12px;
             cursor:pointer;
             transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position:relative;
             overflow:hidden;
-            box-shadow:0 2px 4px rgba(0,0,0,0.1);
+            box-shadow:0 3px 6px rgba(0,0,0,0.12);
           ">
             <!-- Indicateur de statut -->
             <div style="
@@ -859,38 +859,38 @@ document.addEventListener("DOMContentLoaded", () => {
             <!-- En-tête avec client et actions -->
             <div style="
               display:flex;justify-content:space-between;align-items:flex-start;
-              margin-bottom:8px;
+              margin-bottom:12px;
             ">
               <div style="flex:1;min-width:0;">
                 <div style="
-                  font-weight:700;color:#1e293b;font-size:1em;
-                  margin-bottom:4px;letter-spacing:-0.3px;
-                  display:flex;align-items:center;gap:6px;
+                  font-weight:700;color:#1e293b;font-size:1.1em;
+                  margin-bottom:5px;letter-spacing:-0.3px;
+                  display:flex;align-items:center;gap:8px;
                 ">
-                  <i class='fas fa-user-circle' style="color:#3b82f6;font-size:0.8em;"></i>
+                  <i class='fas fa-user-circle' style="color:#3b82f6;font-size:0.85em;"></i>
                   ${data.clientName || "Client inconnu"}
                 </div>
                 <div style="
-                  font-size:0.85em;color:#64748b;
-                  display:flex;align-items:center;gap:5px;
+                  font-size:0.9em;color:#64748b;
+                  display:flex;align-items:center;gap:6px;
                 ">
-                  <i class='fas fa-calendar-alt' style="color:#9ca3af;font-size:0.75em;"></i>
+                  <i class='fas fa-calendar-alt' style="color:#9ca3af;font-size:0.8em;"></i>
                   ${formatDate(item.date)}
                 </div>
               </div>
               
-              <div style="display:flex;gap:6px;align-items:center;">
+              <div style="display:flex;gap:8px;align-items:center;">
                 <span style="
                   background:#dbeafe;color:#1e40af;
-                  padding:3px 10px;border-radius:14px;
-                  font-size:0.65em;font-weight:600;
+                  padding:4px 12px;border-radius:16px;
+                  font-size:0.7em;font-weight:600;
                   letter-spacing:0.3px;
                 ">LIVRAISON</span>
                 <button class="delete-history-btn" data-history-idx="${index}" 
                   style="
                     background:#f1f5f9;border:1px solid #e2e8f0;
-                    color:#64748b;font-size:0.7em;padding:5px 6px;
-                    border-radius:5px;cursor:pointer;
+                    color:#64748b;font-size:0.75em;padding:6px 7px;
+                    border-radius:6px;cursor:pointer;
                     transition:all 0.2s ease;
                   "
                   title="Supprimer cet ordre">
@@ -901,33 +901,33 @@ document.addEventListener("DOMContentLoaded", () => {
             
             <!-- Informations principales en grille -->
             <div style="
-              display:grid;grid-template-columns:1fr 1fr;gap:8px;
-              margin-bottom:8px;
+              display:grid;grid-template-columns:1fr 1fr;gap:10px;
+              margin-bottom:10px;
             ">
               <div style="
-                background:#f8fafc;padding:8px;border-radius:6px;
-                border-left:3px solid #06b6d4;
+                background:#f8fafc;padding:10px;border-radius:8px;
+                border-left:4px solid #06b6d4;
               ">
                 <div style="
-                  font-size:0.65em;color:#64748b;font-weight:600;
-                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;
+                  font-size:0.7em;color:#64748b;font-weight:600;
+                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
                 ">Conteneur(s)</div>
                 <div style="
-                  color:#1e293b;font-weight:600;font-size:0.8em;
+                  color:#1e293b;font-weight:600;font-size:0.85em;
                   word-break:break-all;
                 ">${containers}</div>
               </div>
               
               <div style="
-                background:#f8fafc;padding:8px;border-radius:6px;
-                border-left:3px solid #8b5cf6;
+                background:#f8fafc;padding:10px;border-radius:8px;
+                border-left:4px solid #8b5cf6;
               ">
                 <div style="
-                  font-size:0.65em;color:#64748b;font-weight:600;
-                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;
+                  font-size:0.7em;color:#64748b;font-weight:600;
+                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
                 ">N° BL</div>
                 <div style="
-                  color:#1e293b;font-weight:600;font-size:0.8em;
+                  color:#1e293b;font-weight:600;font-size:0.85em;
                 ">${data.blNumber || "-"}</div>
               </div>
             </div>
@@ -937,12 +937,12 @@ document.addEventListener("DOMContentLoaded", () => {
               data.lieu
                 ? `
               <div style="
-                background:#f0f9ff;padding:6px 8px;border-radius:5px;
+                background:#f0f9ff;padding:8px 10px;border-radius:6px;
                 border:1px solid #e0f2fe;
-                display:flex;align-items:center;gap:5px;
+                display:flex;align-items:center;gap:6px;
               ">
-                <i class='fas fa-map-marker-alt' style="color:#0891b2;font-size:0.7em;"></i>
-                <span style="font-size:0.75em;color:#0f172a;font-weight:500;">
+                <i class='fas fa-map-marker-alt' style="color:#0891b2;font-size:0.75em;"></i>
+                <span style="font-size:0.8em;color:#0f172a;font-weight:500;">
                   ${data.lieu}
                 </span>
               </div>
