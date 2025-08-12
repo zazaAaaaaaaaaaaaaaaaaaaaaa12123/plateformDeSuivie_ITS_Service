@@ -623,6 +623,14 @@ document.addEventListener("DOMContentLoaded", () => {
         updateSelectionUI();
       });
     }
+
+    // Ajout : synchronise les contrôles multi-sélection et le bouton suppression
+    if (typeof window.setupMultiSelectControls === "function") {
+      window.setupMultiSelectControls();
+    }
+    if (typeof window.updateSelectionUI === "function") {
+      window.updateSelectionUI();
+    }
   };
 
   // Fonction pour gérer la sélection multiple
