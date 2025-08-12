@@ -336,28 +336,31 @@ function injectHistoryStyles() {
     /* Styles pour le système de compte à rebours */
     .countdown-container {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 60px;
+      left: 0;
+      right: 0;
+      width: 100%;
       background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
       color: white;
-      padding: 20px 25px;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4);
+      padding: 12px 20px;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
       z-index: 999999;
       font-weight: 600;
-      font-size: 1em;
+      font-size: 0.95em;
       cursor: pointer;
       transition: all 0.3s ease;
-      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-bottom: 3px solid rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
       text-align: center;
-      min-width: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
     }
     
     .countdown-container:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+      box-shadow: 0 6px 25px rgba(245, 158, 11, 0.5);
+      transform: none;
     }
     
     .countdown-timer {
@@ -4854,16 +4857,43 @@ function getTableCellValue(deliveryId, fieldId) {
     }
   }
 
-  // Si pas trouvé dans le DOM, vérifier localStorage
+  // Si pas trouvé dans le DOM, vérifier localStorage avec la bonne clé
   if (fieldId === "visitor_agent_name") {
-    const agentStorageKey = `agent_visiteur_${deliveryId}`;
-    const agentSavedValue = localStorage.getItem(agentStorageKey);
-    if (
-      agentSavedValue &&
-      agentSavedValue.trim() !== "" &&
-      agentSavedValue !== "-"
-    ) {
-      return agentSavedValue.trim();
+    // Debug: lister toutes les clés localStorage liées aux agents
+    console.log(`[DEBUG AGENT] Recherche pour deliveryId: ${deliveryId}`);
+    const allKeys = Object.keys(localStorage);
+    const agentKeys = allKeys.filter(
+      (key) =>
+        key.includes("agent") ||
+        key.includes("visitor") ||
+        key.includes(`_${deliveryId}_`) ||
+        key.includes(`${deliveryId}_`)
+    );
+    console.log(`[DEBUG AGENT] Clés trouvées:`, agentKeys);
+    agentKeys.forEach((key) => {
+      console.log(`[DEBUG AGENT] ${key} = "${localStorage.getItem(key)}"`);
+    });
+
+    // Essayer différentes clés possibles
+    const keys = [
+      `deliverycell_${deliveryId}_visitor_agent_name`,
+      `agent_visiteur_${deliveryId}`,
+      `deliverycell_${deliveryId}_nom_agent_visiteur`,
+    ];
+
+    for (const key of keys) {
+      const savedValue = localStorage.getItem(key);
+      if (
+        savedValue &&
+        savedValue.trim() !== "" &&
+        savedValue !== "-" &&
+        savedValue !== "Agent inconnu"
+      ) {
+        console.log(
+          `[DEBUG AGENT] Trouvé nom agent avec clé "${key}": "${savedValue}"`
+        );
+        return savedValue.trim();
+      }
     }
   }
 
