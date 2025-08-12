@@ -586,6 +586,64 @@ app.get("/api/sync-resplivraison/:deliveryId", async (req, res) => {
   }
 });
 
+// ROUTE : Récupération complète des détails d'une livraison
+app.post("/api/get-delivery-details", async (req, res) => {
+  const { delivery_id } = req.body;
+
+  if (!delivery_id) {
+    return res.status(400).json({
+      success: false,
+      message: "ID de livraison requis",
+    });
+  }
+
+  try {
+    console.log(
+      `[DETAIL API] Récupération des détails pour delivery_id: ${delivery_id}`
+    );
+
+    const result = await pool.query(
+      `SELECT id, dossier_number, container_number, bl_number, client_name, client_phone,
+              circuit, shipping_company, nom_agent_visiteur, transporter, inspecteur, 
+              agent_en_douanes, driver_name, driver_phone, delivery_date, delivery_notes,
+              observation_acconier, employee_name, container_foot_type, weight, ship_name,
+              container_type_and_content, created_at, updated_at
+       FROM livraison_conteneur 
+       WHERE id = $1`,
+      [delivery_id]
+    );
+
+    if (result.rows.length === 0) {
+      console.log(
+        `[DETAIL API] Aucune livraison trouvée pour ID: ${delivery_id}`
+      );
+      return res.status(404).json({
+        success: false,
+        message: "Livraison non trouvée",
+      });
+    }
+
+    const delivery = result.rows[0];
+    console.log(`[DETAIL API] Données trouvées:`, {
+      id: delivery.id,
+      nom_agent_visiteur: delivery.nom_agent_visiteur,
+      dossier_number: delivery.dossier_number,
+      container_number: delivery.container_number,
+    });
+
+    res.json({
+      success: true,
+      delivery: delivery,
+    });
+  } catch (err) {
+    console.error("Erreur récupération détails livraison:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération",
+    });
+  }
+});
+
 // ROUTE : Mise à jour en lot des champs synchronisés
 app.put("/api/sync-resplivraison/batch", async (req, res) => {
   const { updates } = req.body || {};

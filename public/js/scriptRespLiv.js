@@ -4986,7 +4986,7 @@ function saveToDeliveryHistory(delivery, containerNumber) {
     const realTransporter =
       delivery.transporter ||
       getTableCellValue(delivery.id, "transporter") ||
-      "Transporteur Logistique";
+      "-";
 
     // Crée un enregistrement unique pour ce conteneur
     const historyEntry = {
@@ -5906,9 +5906,30 @@ function groupHistoryByDelivery(history) {
 }
 
 /**
+ * Récupère les données complètes depuis le serveur
+ */
+async function fetchDeliveryFromServer(deliveryId) {
+  try {
+    const response = await fetch("/api/get-delivery-details", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ delivery_id: deliveryId }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.delivery || null;
+    }
+  } catch (error) {
+    console.error("[FETCH ERROR] Erreur lors de la récupération:", error);
+  }
+  return null;
+}
+
+/**
  * Affiche les détails d'une entrée de l'historique
  */
-window.showHistoryEntryDetail = function (entryId) {
+window.showHistoryEntryDetail = async function (entryId) {
   const history = JSON.parse(
     localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
   );
@@ -5918,6 +5939,23 @@ window.showHistoryEntryDetail = function (entryId) {
     alert("Entrée non trouvée dans l'historique.");
     return;
   }
+
+  // Récupérer les données fraîches depuis le serveur
+  console.log(
+    `[DETAIL] Récupération des données serveur pour delivery_id: ${entry.delivery_id}`
+  );
+  const serverData = await fetchDeliveryFromServer(entry.delivery_id);
+
+  // Fusionner les données serveur avec l'historique local
+  const enrichedEntry = {
+    ...entry,
+    ...(serverData || {}), // Les données serveur écrasent les données locales
+    // Garder les métadonnées de livraison locales
+    delivered_at: entry.delivered_at,
+    delivered_by: entry.delivered_by,
+  };
+
+  console.log("[DETAIL] Données enrichies:", enrichedEntry);
 
   // Supprime la modal de détail existante
   const existingDetail = document.getElementById("historyDetailModal");
@@ -5950,7 +5988,9 @@ window.showHistoryEntryDetail = function (entryId) {
   container.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">
       <h3 style="margin: 0; color: #059669; font-size: 1.3em;">� Détails du Dossier ${
-        entry.file_number || entry.container_number
+        enrichedEntry.dossier_number ||
+        enrichedEntry.file_number ||
+        enrichedEntry.container_number
       }</h3>
       <button onclick="document.getElementById('historyDetailModal').remove()" 
         style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
@@ -5958,45 +5998,63 @@ window.showHistoryEntryDetail = function (entryId) {
       </button>
     </div>
     <div style="display: grid; gap: 12px;">
-      <div><strong>Conteneur:</strong> ${entry.container_number}</div>
-      <div><strong>Dossier:</strong> ${entry.dossier_number || "-"}</div>
-      <div><strong>BL:</strong> ${entry.bl_number || "-"}</div>
-      <div><strong>Client:</strong> ${entry.client_name || "-"}</div>
-      <div><strong>Téléphone client:</strong> ${entry.client_phone || "-"}</div>
-      <div><strong>Circuit:</strong> ${entry.circuit || "-"}</div>
+      <div><strong>Conteneur:</strong> ${enrichedEntry.container_number}</div>
+      <div><strong>Dossier:</strong> ${
+        enrichedEntry.dossier_number || "-"
+      }</div>
+      <div><strong>BL:</strong> ${enrichedEntry.bl_number || "-"}</div>
+      <div><strong>Client:</strong> ${enrichedEntry.client_name || "-"}</div>
+      <div><strong>Téléphone client:</strong> ${
+        enrichedEntry.client_phone || "-"
+      }</div>
+      <div><strong>Circuit:</strong> ${enrichedEntry.circuit || "-"}</div>
       <div><strong>Compagnie maritime:</strong> ${
-        entry.shipping_company || "-"
+        enrichedEntry.shipping_company || "-"
       }</div>
       <div><strong>Agent visiteur:</strong> ${
-        entry.nom_agent_visiteur || entry.visitor_agent_name || "-"
-      }</div>
-      <div><strong>Transporteur:</strong> ${entry.transporter || "-"}</div>
-      <div><strong>Inspecteur:</strong> ${entry.inspector || "-"}</div>
-      <div><strong>Agent en douanes:</strong> ${
-        entry.customs_agent || entry.agent_en_douanes || "-"
-      }</div>
-      <div><strong>Chauffeur:</strong> ${
-        entry.driver || entry.driver_name || "-"
-      }</div>
-      <div><strong>Tél. chauffeur:</strong> ${entry.driver_phone || "-"}</div>
-      <div><strong>Type conteneur:</strong> ${
-        entry.container_foot_type || entry.container_type_and_content || "-"
-      }</div>
-      <div><strong>Poids:</strong> ${entry.weight || "-"}</div>
-      <div><strong>Nom navire:</strong> ${entry.ship_name || "-"}</div>
-      <div><strong>Date livraison:</strong> ${entry.delivery_date || "-"}</div>
-      <div><strong>Observations:</strong> ${
-        entry.observation ||
-        entry.delivery_notes ||
-        entry.observation_acconier ||
+        enrichedEntry.nom_agent_visiteur ||
+        enrichedEntry.visitor_agent_name ||
         "-"
       }</div>
-      <div><strong>Responsable:</strong> ${entry.employee_name || "-"}</div>
+      <div><strong>Transporteur:</strong> ${
+        enrichedEntry.transporter || "-"
+      }</div>
+      <div><strong>Inspecteur:</strong> ${
+        enrichedEntry.inspector || enrichedEntry.inspecteur || "-"
+      }</div>
+      <div><strong>Agent en douanes:</strong> ${
+        enrichedEntry.customs_agent || enrichedEntry.agent_en_douanes || "-"
+      }</div>
+      <div><strong>Chauffeur:</strong> ${
+        enrichedEntry.driver || enrichedEntry.driver_name || "-"
+      }</div>
+      <div><strong>Tél. chauffeur:</strong> ${
+        enrichedEntry.driver_phone || "-"
+      }</div>
+      <div><strong>Type conteneur:</strong> ${
+        enrichedEntry.container_foot_type ||
+        enrichedEntry.container_type_and_content ||
+        "-"
+      }</div>
+      <div><strong>Poids:</strong> ${enrichedEntry.weight || "-"}</div>
+      <div><strong>Nom navire:</strong> ${enrichedEntry.ship_name || "-"}</div>
+      <div><strong>Date livraison:</strong> ${
+        enrichedEntry.delivery_date || "-"
+      }</div>
+      <div><strong>Observations:</strong> ${
+        enrichedEntry.observation ||
+        enrichedEntry.delivery_notes ||
+        enrichedEntry.observation_acconier ||
+        "-"
+      }</div>
+      <div><strong>Responsable:</strong> ${
+        enrichedEntry.employee_name || "-"
+      }</div>
       <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px; background: #f9fafb; padding: 10px; border-radius: 6px;">
         <div><strong>Livré le:</strong> ${new Date(
-          entry.delivered_at
+          enrichedEntry.delivered_at
         ).toLocaleString("fr-FR")}</div>
-        <div><strong>Livré par:</strong> ${entry.delivered_by}</div>
+        <div><strong>Livré par:</strong> ${enrichedEntry.delivered_by}</div>
       </div>
     </div>
   `;
