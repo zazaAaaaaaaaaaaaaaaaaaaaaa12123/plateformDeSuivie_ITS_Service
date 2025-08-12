@@ -386,79 +386,79 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.style.flexDirection = "column";
     sidebar.style.padding = "0";
     sidebar.innerHTML = `
-      <!-- En-tête professionnel avec gradient -->
+      <!-- En-tête professionnel avec gradient (version compacte) -->
       <div style='
         display:flex;align-items:center;justify-content:space-between;
-        padding:24px;background:linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        padding:12px 16px;background:linear-gradient(135deg, #1e293b 0%, #334155 100%);
         border-bottom:1px solid #334155;
       '>
         <div style="flex:1;">
-          <h3 style='margin:0;font-weight:700;font-size:1.3em;color:#ffffff;letter-spacing:-0.5px;'>
-            📋 Historique des ordres
+          <h3 style='margin:0;font-weight:700;font-size:1.1em;color:#ffffff;letter-spacing:-0.5px;'>
+            📋 Historique des ordres de Livraison 
           </h3>
-          <p style='margin:4px 0 0 0;color:#cbd5e1;font-size:0.9em;'>
+          <p style='margin:2px 0 0 0;color:#cbd5e1;font-size:0.8em;'>
             Gestion des livraisons
           </p>
         </div>
         <button id='closeHistorySidebarBtn' style='
           background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
-          font-size:1.1em;color:#e2e8f0;cursor:pointer;padding:8px;
-          border-radius:8px;width:36px;height:36px;
+          font-size:1em;color:#e2e8f0;cursor:pointer;padding:6px;
+          border-radius:6px;width:28px;height:28px;
           transition:all 0.2s ease;backdrop-filter:blur(10px);
         ' title="Fermer">
           <i class='fas fa-times'></i>
         </button>
       </div>
       
-      <!-- Section de recherche avec style moderne -->
+      <!-- Section de recherche avec style moderne (version compacte) -->
       <div style='
-        padding:20px;background:linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        padding:12px 16px;background:linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
         border-bottom:1px solid #e2e8f0;
       '>
-        <div style='position:relative;margin-bottom:16px;'>
+        <div style='position:relative;margin-bottom:10px;'>
           <div style="position:relative;">
             <i class='fas fa-search' style='
-              position:absolute;left:14px;top:50%;transform:translateY(-50%);
-              color:#9ca3af;font-size:0.9em;z-index:1;
+              position:absolute;left:10px;top:50%;transform:translateY(-50%);
+              color:#9ca3af;font-size:0.8em;z-index:1;
             '></i>
             <input type='text' id='historySearchInput' 
               placeholder='Rechercher par client, conteneur, BL...' 
               style='
-                width:100%;padding:12px 16px 12px 42px;
-                border:1px solid #d1d5db;border-radius:10px;
-                font-size:0.95em;background:#ffffff;outline:none;
+                width:100%;padding:8px 12px 8px 32px;
+                border:1px solid #d1d5db;border-radius:6px;
+                font-size:0.85em;background:#ffffff;outline:none;
                 transition:all 0.2s ease;box-sizing:border-box;
-                box-shadow:0 1px 3px rgba(0,0,0,0.1);
+                box-shadow:0 1px 2px rgba(0,0,0,0.05);
               '>
           </div>
         </div>
         
-        <!-- Statistiques en petit -->
+        <!-- Statistiques en petit (version ultra compacte) -->
         <div style='
-          display:grid;grid-template-columns:1fr 1fr;gap:12px;
+          display:grid;grid-template-columns:1fr 1fr;gap:8px;
         '>
           <div style='
-            background:#ffffff;padding:12px;border-radius:8px;
+            background:#ffffff;padding:8px;border-radius:6px;
             border:1px solid #e2e8f0;text-align:center;
-            box-shadow:0 1px 3px rgba(0,0,0,0.05);
+            box-shadow:0 1px 2px rgba(0,0,0,0.03);
           '>
-            <div style='font-size:1.2em;font-weight:700;color:#3b82f6;' id="totalOrdersCount">0</div>
-            <div style='font-size:0.75em;color:#64748b;margin-top:2px;'>Total ordres</div>
+            <div style='font-size:1em;font-weight:700;color:#3b82f6;' id="totalOrdersCount">0</div>
+            <div style='font-size:0.65em;color:#64748b;margin-top:1px;'>Total ordres</div>
           </div>
           <div style='
-            background:#ffffff;padding:12px;border-radius:8px;
+            background:#ffffff;padding:8px;border-radius:6px;
             border:1px solid #e2e8f0;text-align:center;
-            box-shadow:0 1px 3px rgba(0,0,0,0.05);
+            box-shadow:0 1px 2px rgba(0,0,0,0.03);
           '>
-            <div style='font-size:1.2em;font-weight:700;color:#10b981;'>${new Date().getDate()}</div>
-            <div style='font-size:0.75em;color:#64748b;margin-top:2px;'>Aujourd\\'hui</div>
+            <div style='font-size:1em;font-weight:700;color:#10b981;'>${new Date().getDate()}</div>
+            <div style='font-size:0.65em;color:#64748b;margin-top:1px;'>Aujourd\\'hui</div>
           </div>
         </div>
       </div>
       
-      <!-- Liste des ordres avec scrolling optimisé -->
+      <!-- Liste des ordres avec scrolling optimisé (padding réduit) -->
       <div id='historySidebarList' style='
-        flex:1;overflow-y:auto;padding:20px;
+        flex:1;overflow-y:auto;padding:12px;
         background:#ffffff;
         scrollbar-width:thin;scrollbar-color:#cbd5e1 #f1f5f9;
       '></div>
