@@ -6426,42 +6426,7 @@ window.showHistoryEntryDetail = async function (entryId) {
       </div>
     </div>
 
-    <!-- Section Livraison -->
-    <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); border-left: 4px solid #ef4444; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-      <h4 style="margin: 0 0 15px 0; color: #ef4444; font-size: 1.1em; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-        🚚 Informations de Livraison
-      </h4>
-      <div style="display: grid; gap: 12px;">
-        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-          <strong style="color: #374151;">Date livraison:</strong> 
-          <span style="color: #1f2937; font-weight: 600;">${
-            enrichedEntry.delivery_date || "-"
-          }</span>
-        </div>
-        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-          <strong style="color: #374151;">Responsable:</strong> 
-          <span style="color: #1f2937; font-weight: 600;">${
-            enrichedEntry.delivered_by || "-"
-          }</span>
-        </div>
-        ${
-          enrichedEntry.observation ||
-          enrichedEntry.delivery_notes ||
-          enrichedEntry.observation_acconier
-            ? `
-        <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-          <strong style="color: #374151;">Observations:</strong><br>
-          <span style="color: #1f2937; font-weight: 500; font-style: italic; display: block; margin-top: 8px; padding: 8px; background: #f9fafb; border-radius: 6px;">${
-            enrichedEntry.observation ||
-            enrichedEntry.delivery_notes ||
-            enrichedEntry.observation_acconier
-          }</span>
-        </div>
-        `
-            : ""
-        }
-      </div>
-    </div>
+
 
     <!-- Section Statut de Livraison -->
     <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
