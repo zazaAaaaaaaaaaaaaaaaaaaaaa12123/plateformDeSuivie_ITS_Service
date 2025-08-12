@@ -386,11 +386,17 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.style.flexDirection = "column";
     sidebar.style.padding = "0";
     sidebar.innerHTML = `
-      <div style='display:flex;align-items:center;justify-content:space-between;padding:18px 22px 10px 22px;border-bottom:1.5px solid #e0e7ff;'>
-        <span style='font-weight:700;font-size:1.13em;color:#2563eb;letter-spacing:0.5px;'>Historique des ordres de livraison</span>
-        <button id='closeHistorySidebarBtn' style='background:none;border:none;font-size:1.5em;color:#2563eb;cursor:pointer;'><i class='fas fa-times'></i></button>
+      <div style='display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:#fafafa;'>
+        <span style='font-weight:600;font-size:1.1em;color:#334155;'>Historique des ordres</span>
+        <button id='closeHistorySidebarBtn' style='background:none;border:none;font-size:1.4em;color:#64748b;cursor:pointer;padding:4px;border-radius:4px;transition:all 0.2s;'><i class='fas fa-times'></i></button>
       </div>
-      <div id='historySidebarList' style='flex:1;overflow-y:auto;padding:18px 22px 18px 22px;'></div>
+      <div style='padding:16px 20px 12px 20px;border-bottom:1px solid #e2e8f0;background:#fafafa;'>
+        <div style='position:relative;'>
+          <input type='text' id='historySearchInput' placeholder='Rechercher un client, numéro...' style='width:100%;padding:10px 12px 10px 40px;border:1px solid #d1d5db;border-radius:8px;font-size:0.95em;background:#fff;outline:none;transition:border-color 0.2s;box-sizing:border-box;'>
+          <i class='fas fa-search' style='position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:0.9em;'></i>
+        </div>
+      </div>
+      <div id='historySidebarList' style='flex:1;overflow-y:auto;padding:16px 20px;background:#fff;'></div>
     `;
     document.body.appendChild(sidebar);
   }
@@ -431,6 +437,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = sidebar.querySelector("#closeHistorySidebarBtn");
   if (closeBtn) {
     closeBtn.onclick = closeSidebarHistory;
+    // Ajouter des effets hover
+    closeBtn.addEventListener("mouseenter", function () {
+      this.style.background = "#f1f5f9";
+      this.style.color = "#374151";
+    });
+    closeBtn.addEventListener("mouseleave", function () {
+      this.style.background = "none";
+      this.style.color = "#64748b";
+    });
   }
   // Ferme la sidebar si on clique sur l'overlay
   if (sidebarOverlay) {
@@ -460,22 +475,25 @@ document.addEventListener("DOMContentLoaded", () => {
   window.renderHistorySidebarList = function () {
     const listDiv = document.getElementById("historySidebarList");
     if (!listDiv) return;
+
     // Récupère l'historique local
     const historyKey = "simulatedHistoryData";
     let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
     let agentHistory = historyData["Agent Acconier"] || [];
+
     if (agentHistory.length === 0) {
-      listDiv.innerHTML = `<div style='color:#64748b;text-align:center;margin-top:30px;'>Aucun ordre de livraison enregistré.</div>`;
+      listDiv.innerHTML = `<div style='color:#94a3b8;text-align:center;margin-top:40px;font-size:0.95em;'>Aucun ordre de livraison enregistré</div>`;
       return;
     }
+
     // Filtrer pour ne garder que les ordres avec un champ 'data' valide (vraies données)
     let filteredHistory = agentHistory.filter(
       (item) => item && item.data && typeof item.data === "object"
     );
-    // Supprimer les doublons par id ET par contenu principal (clientName, containerNumbers, date, etc.)
+
+    // Supprimer les doublons par id ET par contenu principal
     const seenKeys = new Set();
     filteredHistory = filteredHistory.filter((item) => {
-      // On construit une clé unique sur les infos principales (clientName, containerNumbers, containerFootType, date, etc.)
       const key = [
         item.id || "",
         item.data ? item.data.clientName : "",
@@ -499,202 +517,269 @@ document.addEventListener("DOMContentLoaded", () => {
       seenKeys.add(key);
       return true;
     });
+
     if (filteredHistory.length === 0) {
-      listDiv.innerHTML = `<div style='color:#64748b;text-align:center;margin-top:30px;'>Aucun ordre de livraison enregistré.</div>`;
+      listDiv.innerHTML = `<div style='color:#94a3b8;text-align:center;margin-top:40px;font-size:0.95em;'>Aucun ordre de livraison valide</div>`;
       return;
     }
-    // Regrouper les ordres par date (format YYYY-MM-DD)
-    const ordersByDate = {};
-    filteredHistory.forEach((item) => {
-      const dateKey = item.date ? item.date.slice(0, 10) : "?";
-      if (!ordersByDate[dateKey]) ordersByDate[dateKey] = [];
-      ordersByDate[dateKey].push(item);
-    });
-    // Trier les dates décroissantes
-    const sortedDates = Object.keys(ordersByDate).sort((a, b) =>
-      b.localeCompare(a)
-    );
-    let html = '<div style="padding-bottom:10px;">';
-    let globalIdx = 0;
-    sortedDates.forEach((dateKey) => {
-      // Titre de date (sécurité sur le format)
-      let yyyy = "",
-        mm = "",
-        dd = "";
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
-        [yyyy, mm, dd] = dateKey.split("-");
-      }
-      let dateAffichee =
-        dd && mm && yyyy
-          ? `${dd}/${mm}/${yyyy}`
-          : dateKey !== "?"
-          ? dateKey
-          : "Date inconnue";
-      // Récupère le nom du client du premier ordre de la date
-      let clientName = "Client inconnu";
-      if (
-        ordersByDate[dateKey][0] &&
-        ordersByDate[dateKey][0].data &&
-        ordersByDate[dateKey][0].data.clientName
-      ) {
-        clientName = ordersByDate[dateKey][0].data.clientName;
-      }
-      // Suppression de la carte "Serge JJ/MM/AAAA" en haut de chaque date
-      html += '<ul style="list-style:none;padding:0;margin:0;">';
-      ordersByDate[dateKey].forEach((item, idx) => {
-        // Génère la carte de l'ordre
-        let liHtml = `<li class="history-order-item" data-history-idx="${globalIdx}" style="background:linear-gradient(90deg,#f1f5f9 80%,#e0e7ff 100%);margin-bottom:7px;padding:18px 18px 16px 18px;border-radius:14px;box-shadow:0 2px 10px #2563eb13;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:box-shadow 0.18s;position:relative;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
-            <span style="background:#2563eb;color:#fff;border-radius:8px 18px 18px 8px;width:auto;min-width:70px;padding:4px 14px 4px 10px;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:1em;box-shadow:0 1px 4px #2563eb11;letter-spacing:0.5px;">${
-              item.date
-                ? item.date.slice(0, 10).split("-").reverse().join("/")
-                : "--/--/----"
-            }</span>
-            <span style="color:#64748b;font-size:0.98em;font-weight:500;">${
-              item.data && item.data.clientName
-                ? item.data.clientName
-                : "Client inconnu"
-            }</span>
-          </div>
-          <div style="color:#1e293b;font-size:1.04em;font-weight:500;">${
-            item.details
-          }</div>
-          <button class="delete-history-btn desktop-in mobile-out" data-history-idx="${globalIdx}" title="Supprimer cet ordre"><i class='fas fa-trash'></i></button>
-        </li>`;
-        html += liHtml;
-        globalIdx++;
-      });
-      html += "</ul>";
-    });
-    html += "</div>";
-    listDiv.innerHTML = html;
 
-    // Ajoute l'écouteur sur chaque item pour afficher le détail en pop-up
-    var items = listDiv.querySelectorAll(".history-order-item");
-    for (var i = 0; i < items.length; i++) {
-      items[i].addEventListener("click", function (e) {
-        // Ne pas ouvrir le détail si clic sur le bouton suppression
-        if (e.target.closest(".delete-history-btn")) return;
-        var idx = parseInt(this.getAttribute("data-history-idx"));
-        var order = filteredHistory[idx];
-        window.showOrderDetailPopup(order);
-      });
-    }
+    // Fonction de recherche
+    function renderFilteredHistory(searchTerm = "") {
+      let displayHistory = filteredHistory;
 
-    // Ajoute l'écouteur sur chaque bouton de suppression
-    var deleteBtns = listDiv.querySelectorAll(".delete-history-btn");
-    for (var j = 0; j < deleteBtns.length; j++) {
-      deleteBtns[j].addEventListener("click", function (e) {
-        e.stopPropagation();
-        var idx = parseInt(this.getAttribute("data-history-idx"));
-        var orderToDelete = filteredHistory[idx];
-        // Pop-up de confirmation personnalisée
-        if (document.getElementById("confirmDeletePopup")) return; // évite doublon
-        var popupBg = document.createElement("div");
-        popupBg.id = "confirmDeletePopup";
-        popupBg.style.position = "fixed";
-        popupBg.style.top = "0";
-        popupBg.style.left = "0";
-        popupBg.style.width = "100vw";
-        popupBg.style.height = "100vh";
-        popupBg.style.background = "rgba(30,41,59,0.32)";
-        popupBg.style.zIndex = "6000";
-        popupBg.style.display = "flex";
-        popupBg.style.alignItems = "center";
-        popupBg.style.justifyContent = "center";
-        // Boîte
-        var popupBox = document.createElement("div");
-        // Responsive styles for popupBox
-        var isMobile =
-          window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
-        popupBox.style.background = "#fff";
-        popupBox.style.borderRadius = isMobile ? "13px" : "16px";
-        popupBox.style.boxShadow = isMobile
-          ? "0 2px 16px #2563eb22"
-          : "0 4px 24px #2563eb22";
-        popupBox.style.padding = isMobile
-          ? "18px 7vw 14px 7vw"
-          : "28px 22px 18px 22px";
-        popupBox.style.maxWidth = isMobile ? "98vw" : "95vw";
-        popupBox.style.width = isMobile ? "98vw" : "340px";
-        popupBox.style.textAlign = "center";
-        popupBox.style.position = "relative";
-        popupBox.style.margin = isMobile ? "0 1vw" : "";
-        // Message
-        var msg = document.createElement("div");
-        msg.textContent =
-          "Voulez-vous vraiment supprimer cet ordre de livraison ?";
-        msg.style.fontWeight = "600";
-        msg.style.fontSize = isMobile ? "1em" : "1.08em";
-        msg.style.color = "#1e293b";
-        msg.style.marginBottom = isMobile ? "13px" : "18px";
-        msg.style.lineHeight = isMobile ? "1.35" : "1.2";
-        popupBox.appendChild(msg);
-        // Boutons
-        var btns = document.createElement("div");
-        btns.style.display = "flex";
-        btns.style.justifyContent = "center";
-        btns.style.gap = isMobile ? "10px" : "18px";
-        btns.style.flexDirection = isMobile ? "column" : "row";
-        btns.style.alignItems = "center";
-        // Confirmer
-        var confirmBtn = document.createElement("button");
-        confirmBtn.textContent = "Supprimer";
-        confirmBtn.style.background = "#dc2626";
-        confirmBtn.style.color = "#fff";
-        confirmBtn.style.border = "none";
-        confirmBtn.style.borderRadius = isMobile ? "7px" : "8px";
-        confirmBtn.style.padding = isMobile ? "10px 0" : "8px 22px";
-        confirmBtn.style.fontWeight = "700";
-        confirmBtn.style.fontSize = isMobile ? "1.04em" : "1em";
-        confirmBtn.style.cursor = "pointer";
-        confirmBtn.style.width = isMobile ? "100%" : "auto";
-        // Annuler
-        var cancelBtn = document.createElement("button");
-        cancelBtn.textContent = "Annuler";
-        cancelBtn.style.background = "#f1f5f9";
-        cancelBtn.style.color = "#2563eb";
-        cancelBtn.style.border = "none";
-        cancelBtn.style.borderRadius = isMobile ? "7px" : "8px";
-        cancelBtn.style.padding = isMobile ? "10px 0" : "8px 22px";
-        cancelBtn.style.fontWeight = "700";
-        cancelBtn.style.fontSize = isMobile ? "1.04em" : "1em";
-        cancelBtn.style.cursor = "pointer";
-        cancelBtn.style.width = isMobile ? "100%" : "auto";
-        cancelBtn.style.marginTop = isMobile ? "7px" : "0";
-        btns.appendChild(confirmBtn);
-        btns.appendChild(cancelBtn);
-        popupBox.appendChild(btns);
-        // Fermer au clic sur Annuler ou fond
-        cancelBtn.onclick = function () {
-          popupBg.remove();
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase();
+        displayHistory = filteredHistory.filter((item) => {
+          const data = item.data || {};
+          const searchableFields = [
+            data.clientName,
+            data.blNumber,
+            data.dossierNumber,
+            data.declarationNumber,
+            data.containerNumbers
+              ? Array.isArray(data.containerNumbers)
+                ? data.containerNumbers.join(" ")
+                : data.containerNumbers
+              : "",
+            data.shipName,
+            data.shippingCompany,
+            data.lieu,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+          return searchableFields.includes(term);
+        });
+      }
+
+      if (displayHistory.length === 0) {
+        listDiv.innerHTML = `<div style='color:#94a3b8;text-align:center;margin-top:40px;font-size:0.95em;'>Aucun résultat trouvé</div>`;
+        return;
+      }
+
+      // Trier par date décroissante
+      displayHistory.sort((a, b) => {
+        const dateA = new Date(a.date || 0);
+        const dateB = new Date(b.date || 0);
+        return dateB - dateA;
+      });
+
+      let html = "";
+
+      displayHistory.forEach((item, index) => {
+        const data = item.data || {};
+        const formatDate = (dateStr) => {
+          if (!dateStr) return "--/--/----";
+          try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString("fr-FR");
+          } catch {
+            return "--/--/----";
+          }
         };
-        popupBg.onclick = function (e) {
-          if (e.target === popupBg) popupBg.remove();
-        };
-        // Action suppression réelle
-        confirmBtn.onclick = function () {
-          popupBg.remove();
-          const historyKey = "simulatedHistoryData";
-          let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
-          let agentHistory = historyData["Agent Acconier"] || [];
-          historyData["Agent Acconier"] = agentHistory.filter((item) => {
-            if (orderToDelete.id && item.id && item.id === orderToDelete.id)
-              return false;
-            if (!orderToDelete.id) {
-              return (
-                JSON.stringify(item.data) !== JSON.stringify(orderToDelete.data)
-              );
+
+        const containers = data.containerNumbers
+          ? Array.isArray(data.containerNumbers)
+            ? data.containerNumbers.join(", ")
+            : data.containerNumbers
+          : "-";
+
+        html += `
+          <div class="history-order-item" data-history-idx="${index}" style="
+            background:#f8fafc;
+            border:1px solid #e2e8f0;
+            border-radius:8px;
+            padding:16px;
+            margin-bottom:12px;
+            cursor:pointer;
+            transition:all 0.2s ease;
+            position:relative;
+          ">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+              <div style="flex:1;">
+                <div style="font-weight:600;color:#1e293b;font-size:0.95em;margin-bottom:4px;">
+                  ${data.clientName || "Client inconnu"}
+                </div>
+                <div style="font-size:0.85em;color:#64748b;">
+                  ${formatDate(item.date)}
+                </div>
+              </div>
+              <button class="delete-history-btn" data-history-idx="${index}" 
+                style="background:none;border:none;color:#94a3b8;font-size:0.9em;padding:4px;border-radius:4px;cursor:pointer;transition:color 0.2s;"
+                title="Supprimer cet ordre">
+                <i class='fas fa-trash'></i>
+              </button>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.85em;">
+              <div>
+                <span style="color:#64748b;">Conteneur(s):</span><br>
+                <span style="color:#374151;font-weight:500;">${containers}</span>
+              </div>
+              <div>
+                <span style="color:#64748b;">N° BL:</span><br>
+                <span style="color:#374151;font-weight:500;">${
+                  data.blNumber || "-"
+                }</span>
+              </div>
+            </div>
+            
+            ${
+              data.lieu
+                ? `
+              <div style="margin-top:8px;font-size:0.85em;">
+                <span style="color:#64748b;">Lieu:</span>
+                <span style="color:#374151;font-weight:500;margin-left:4px;">${data.lieu}</span>
+              </div>
+            `
+                : ""
             }
-            return true;
-          });
-          localStorage.setItem(historyKey, JSON.stringify(historyData));
-          window.renderHistorySidebarList();
-        };
-        popupBg.appendChild(popupBox);
-        document.body.appendChild(popupBg);
+          </div>
+        `;
+      });
+
+      listDiv.innerHTML = html;
+
+      // Ajouter les événements
+      const items = listDiv.querySelectorAll(".history-order-item");
+      items.forEach((item) => {
+        item.addEventListener("click", function (e) {
+          if (e.target.closest(".delete-history-btn")) return;
+          const idx = parseInt(this.getAttribute("data-history-idx"));
+          const order = displayHistory[idx];
+          window.showOrderDetailPopup(order);
+        });
+
+        // Effet hover
+        item.addEventListener("mouseenter", function () {
+          this.style.background = "#f1f5f9";
+          this.style.borderColor = "#cbd5e1";
+          this.style.transform = "translateY(-1px)";
+          this.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
+        });
+
+        item.addEventListener("mouseleave", function () {
+          this.style.background = "#f8fafc";
+          this.style.borderColor = "#e2e8f0";
+          this.style.transform = "translateY(0)";
+          this.style.boxShadow = "none";
+        });
+      });
+
+      // Événements de suppression
+      const deleteBtns = listDiv.querySelectorAll(".delete-history-btn");
+      deleteBtns.forEach((btn) => {
+        btn.addEventListener("mouseenter", function () {
+          this.style.color = "#dc2626";
+        });
+        btn.addEventListener("mouseleave", function () {
+          this.style.color = "#94a3b8";
+        });
+
+        btn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const idx = parseInt(this.getAttribute("data-history-idx"));
+          const orderToDelete = displayHistory[idx];
+          showDeleteConfirmation(orderToDelete);
+        });
       });
     }
+
+    // Fonction de confirmation de suppression
+    function showDeleteConfirmation(orderToDelete) {
+      if (document.getElementById("confirmDeletePopup")) return;
+
+      const popupBg = document.createElement("div");
+      popupBg.id = "confirmDeletePopup";
+      popupBg.style.cssText = `
+        position:fixed;top:0;left:0;width:100vw;height:100vh;
+        background:rgba(0,0,0,0.4);z-index:6000;
+        display:flex;align-items:center;justify-content:center;
+      `;
+
+      const popupBox = document.createElement("div");
+      popupBox.style.cssText = `
+        background:#fff;border-radius:12px;padding:24px;
+        max-width:400px;width:90%;text-align:center;
+        box-shadow:0 8px 32px rgba(0,0,0,0.15);
+      `;
+
+      popupBox.innerHTML = `
+        <div style="font-weight:600;font-size:1.1em;color:#374151;margin-bottom:16px;">
+          Confirmer la suppression
+        </div>
+        <div style="color:#64748b;margin-bottom:24px;line-height:1.5;">
+          Voulez-vous vraiment supprimer cet ordre de livraison ?
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <button id="cancelDelete" style="
+            background:#f1f5f9;color:#374151;border:none;padding:10px 20px;
+            border-radius:6px;font-weight:500;cursor:pointer;
+          ">Annuler</button>
+          <button id="confirmDelete" style="
+            background:#dc2626;color:#fff;border:none;padding:10px 20px;
+            border-radius:6px;font-weight:500;cursor:pointer;
+          ">Supprimer</button>
+        </div>
+      `;
+
+      popupBg.appendChild(popupBox);
+      document.body.appendChild(popupBg);
+
+      // Événements
+      document.getElementById("cancelDelete").onclick = () => popupBg.remove();
+      popupBg.onclick = (e) => {
+        if (e.target === popupBg) popupBg.remove();
+      };
+
+      document.getElementById("confirmDelete").onclick = () => {
+        popupBg.remove();
+        const historyKey = "simulatedHistoryData";
+        let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
+        let agentHistory = historyData["Agent Acconier"] || [];
+
+        historyData["Agent Acconier"] = agentHistory.filter((item) => {
+          if (orderToDelete.id && item.id && item.id === orderToDelete.id)
+            return false;
+          if (!orderToDelete.id) {
+            return (
+              JSON.stringify(item.data) !== JSON.stringify(orderToDelete.data)
+            );
+          }
+          return true;
+        });
+
+        localStorage.setItem(historyKey, JSON.stringify(historyData));
+        window.renderHistorySidebarList();
+      };
+    }
+
+    // Rendu initial
+    renderFilteredHistory();
+
+    // Configurer la recherche
+    setTimeout(() => {
+      const searchInput = document.getElementById("historySearchInput");
+      if (searchInput) {
+        // Ajouter des styles dynamiques pour le focus
+        searchInput.addEventListener("focus", function () {
+          this.style.borderColor = "#3b82f6";
+          this.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+        });
+
+        searchInput.addEventListener("blur", function () {
+          this.style.borderColor = "#d1d5db";
+          this.style.boxShadow = "none";
+        });
+
+        searchInput.addEventListener("input", (e) => {
+          renderFilteredHistory(e.target.value);
+        });
+
+        searchInput.focus();
+      }
+    }, 100);
   };
 
   // Fonction pour afficher le pop-up détaillé d'un ordre de livraison
