@@ -4449,9 +4449,4 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   // Masquer la section statistiques au chargementhjsvj
   if (sectionStats) sectionStats.style.display = "none";
-});   
-
-
-
-
-
+});
