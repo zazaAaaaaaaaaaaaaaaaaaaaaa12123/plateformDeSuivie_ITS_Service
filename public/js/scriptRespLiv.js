@@ -46,6 +46,9 @@ async function loadUserDeliveryData(targetUser, targetUserId) {
           }
         });
 
+        // 🔧 Forcer le re-rendu du tableau en mode admin après chargement des données
+        setTimeout(() => refreshTableInAdminModeRespLiv(), 100);
+
         return data.deliveryData;
       }
     } else if (response.status === 404) {
@@ -99,6 +102,9 @@ async function loadUserDeliveryData(targetUser, targetUserId) {
       console.warn(`⚠️ [DELIVERY DATA] Erreur recherche locale:`, localError);
     }
   }
+
+  // 🔧 Forcer le re-rendu du tableau en mode admin après chargement des données
+  setTimeout(() => refreshTableInAdminModeRespLiv(), 100);
 
   return [];
 }
@@ -855,6 +861,40 @@ document.addEventListener("DOMContentLoaded", function () {
                   ),
                 }
               );
+
+              // 🔧 STOCKAGE IMMÉDIAT des données trouvées dans localStorage
+              const fieldsToStore = [
+                {
+                  key: "visitor_agent_name",
+                  value: delivery.nom_agent_visiteur,
+                },
+                { key: "transporter", value: delivery.transporter },
+                { key: "inspector", value: delivery.inspecteur },
+                { key: "customs_agent", value: delivery.agent_en_douanes },
+                { key: "driver", value: delivery.driver_name },
+                { key: "driver_phone", value: delivery.driver_phone },
+                { key: "delivery_date", value: delivery.delivery_date },
+                {
+                  key: "observation",
+                  value:
+                    delivery.delivery_notes || delivery.observation_acconier,
+                },
+              ];
+
+              fieldsToStore.forEach((field) => {
+                if (
+                  field.value &&
+                  field.value.toString().trim() !== "" &&
+                  field.value !== "-"
+                ) {
+                  const storageKey = `deliverycell_${delivery.id}_${field.key}`;
+                  localStorage.setItem(storageKey, field.value);
+                  console.log(
+                    `📝 [ADMIN STORAGE] Donnée stockée ${field.key} pour livraison ${delivery.id}:`,
+                    field.value
+                  );
+                }
+              });
             }
 
             return finalFound;
@@ -2463,6 +2503,31 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // Affiche la valeur sauvegardée si elle existe
         let displayValue =
           savedValue !== null && savedValue !== "" ? savedValue : value;
+
+        // 🔧 CORRECTION MODE ADMIN : Priorité aux données de l'utilisateur ciblé
+        const isAdminMode =
+          new URLSearchParams(window.location.search).get("mode") === "admin" ||
+          window.location.search.includes("targetUser") ||
+          document.body.dataset.adminMode === "true";
+        const targetUser = new URLSearchParams(window.location.search).get(
+          "targetUser"
+        );
+
+        if (
+          isAdminMode &&
+          targetUser &&
+          savedValue &&
+          savedValue.trim() !== "" &&
+          savedValue !== "-"
+        ) {
+          // En mode admin, prioriser les données de l'utilisateur ciblé
+          displayValue = savedValue;
+          console.log(
+            `📝 [ADMIN MODE RESP LIV] Donnée affichée pour livraison ${delivery.id}, champ ${col.id}:`,
+            displayValue
+          );
+        }
+
         td.textContent = displayValue;
         // Style joli et gras pour les cellules éditables
         td.style.fontWeight = "bold";
@@ -4497,6 +4562,26 @@ window.showHistoryEntryDetail = function (entryId) {
       </div>
     </div>
   `;
+
+  // 🔧 Fonction utilitaire pour forcer le re-rendu du tableau en mode admin (resp_liv)
+  function refreshTableInAdminModeRespLiv() {
+    const isAdminMode =
+      new URLSearchParams(window.location.search).get("mode") === "admin" ||
+      window.location.search.includes("targetUser") ||
+      document.body.dataset.adminMode === "true";
+    if (isAdminMode) {
+      console.log(`📝 [ADMIN MODE RESP LIV] Re-rendu du tableau demandé`);
+      // Forcer un rechargement des données d'affichage
+      setTimeout(() => {
+        if (typeof loadAllDeliveries === "function") {
+          console.log(
+            `📝 [ADMIN MODE RESP LIV] Rechargement des livraisons...`
+          );
+          loadAllDeliveries();
+        }
+      }, 200);
+    }
+  }
 
   modal.appendChild(container);
   document.body.appendChild(modal);
