@@ -4213,22 +4213,64 @@ document.addEventListener("DOMContentLoaded", function () {
             <span style='font-size:0.98em;color:#64748b;margin-left:auto;'>${dateLivAff}</span>
           </div>
           <div style='font-size:1.08em;font-weight:700;color:#0e274e;margin-bottom:4px;'>${
-            delivery.visitor_agent_name || "-"
+            delivery.nom_agent_visiteur ||
+            delivery.visitor_agent_name ||
+            localStorage.getItem(`agent_visiteur_${delivery.id}`) ||
+            localStorage.getItem(
+              `deliverycell_${delivery.id}_visitor_agent_name`
+            ) ||
+            "-"
           }</div>
           <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Transporteur :</b> ${
-            delivery.transporter || "-"
+            delivery.transporter ||
+            localStorage.getItem(`transporteur_${delivery.id}`) ||
+            localStorage.getItem(`deliverycell_${delivery.id}_transporter`) ||
+            "-"
           }</div>
           <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Inspecteur :</b> ${
-            delivery.inspector || "-"
+            delivery.inspecteur ||
+            delivery.inspector ||
+            localStorage.getItem(`inspecteur_${delivery.id}`) ||
+            localStorage.getItem(`deliverycell_${delivery.id}_inspector`) ||
+            "-"
           }</div>
           <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Agent en douanes :</b> ${
-            delivery.customs_agent || "-"
+            delivery.agent_en_douanes ||
+            delivery.customs_agent ||
+            localStorage.getItem(`agent_douanes_${delivery.id}`) ||
+            localStorage.getItem(`deliverycell_${delivery.id}_customs_agent`) ||
+            "-"
           }</div>
           <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Chauffeur :</b> ${
-            delivery.driver || "-"
+            delivery.chauffeur ||
+            delivery.driver_name ||
+            delivery.driver ||
+            localStorage.getItem(`chauffeur_${delivery.id}`) ||
+            localStorage.getItem(`deliverycell_${delivery.id}_driver`) ||
+            "-"
           }</div>
           <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Tél chauffeur :</b> ${
-            delivery.driver_phone || "-"
+            delivery.tel_chauffeur ||
+            delivery.driver_phone ||
+            localStorage.getItem(`tel_chauffeur_${delivery.id}`) ||
+            localStorage.getItem(`deliverycell_${delivery.id}_driver_phone`) ||
+            "-"
+          }</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Agent visiteur :</b> ${
+            delivery.nom_agent_visiteur ||
+            delivery.visitor_agent_name ||
+            localStorage.getItem(`agent_visiteur_${delivery.id}`) ||
+            localStorage.getItem(
+              `deliverycell_${delivery.id}_visitor_agent_name`
+            ) ||
+            "-"
+          }</div>
+          <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Téléphone client :</b> ${
+            delivery.client_phone ||
+            delivery.telephone_client ||
+            localStorage.getItem(`client_phone_${delivery.id}`) ||
+            localStorage.getItem(`deliverycell_${delivery.id}_client_phone`) ||
+            "-"
           }</div>
           <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>N° TC :</b> ${tcStr}</div>
           <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>N° Dossier :</b> ${dossier}</div>
@@ -4290,22 +4332,70 @@ document.addEventListener("DOMContentLoaded", function () {
           // Contenu détaillé
           detailBox.innerHTML += `
             <div style='font-size:1.08em;font-weight:700;color:#0e274e;margin-bottom:8px;'>${
-              delivery.visitor_agent_name || "-"
+              delivery.nom_agent_visiteur ||
+              delivery.visitor_agent_name ||
+              localStorage.getItem(`agent_visiteur_${delivery.id}`) ||
+              localStorage.getItem(
+                `deliverycell_${delivery.id}_visitor_agent_name`
+              ) ||
+              "-"
             }</div>
             <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Transporteur :</b> ${
-              delivery.transporter || "-"
+              delivery.transporter ||
+              localStorage.getItem(`transporteur_${delivery.id}`) ||
+              localStorage.getItem(`deliverycell_${delivery.id}_transporter`) ||
+              "-"
             }</div>
             <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Inspecteur :</b> ${
-              delivery.inspector || "-"
+              delivery.inspecteur ||
+              delivery.inspector ||
+              localStorage.getItem(`inspecteur_${delivery.id}`) ||
+              localStorage.getItem(`deliverycell_${delivery.id}_inspector`) ||
+              "-"
             }</div>
             <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Agent en douanes :</b> ${
-              delivery.customs_agent || "-"
+              delivery.agent_en_douanes ||
+              delivery.customs_agent ||
+              localStorage.getItem(`agent_douanes_${delivery.id}`) ||
+              localStorage.getItem(
+                `deliverycell_${delivery.id}_customs_agent`
+              ) ||
+              "-"
             }</div>
             <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Chauffeur :</b> ${
-              delivery.driver || "-"
+              delivery.chauffeur ||
+              delivery.driver_name ||
+              delivery.driver ||
+              localStorage.getItem(`chauffeur_${delivery.id}`) ||
+              localStorage.getItem(`deliverycell_${delivery.id}_driver`) ||
+              "-"
             }</div>
             <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Tél chauffeur :</b> ${
-              delivery.driver_phone || "-"
+              delivery.tel_chauffeur ||
+              delivery.driver_phone ||
+              localStorage.getItem(`tel_chauffeur_${delivery.id}`) ||
+              localStorage.getItem(
+                `deliverycell_${delivery.id}_driver_phone`
+              ) ||
+              "-"
+            }</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Agent visiteur :</b> ${
+              delivery.nom_agent_visiteur ||
+              delivery.visitor_agent_name ||
+              localStorage.getItem(`agent_visiteur_${delivery.id}`) ||
+              localStorage.getItem(
+                `deliverycell_${delivery.id}_visitor_agent_name`
+              ) ||
+              "-"
+            }</div>
+            <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>Téléphone client :</b> ${
+              delivery.client_phone ||
+              delivery.telephone_client ||
+              localStorage.getItem(`client_phone_${delivery.id}`) ||
+              localStorage.getItem(
+                `deliverycell_${delivery.id}_client_phone`
+              ) ||
+              "-"
             }</div>
             <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>N° TC :</b> ${tcStr}</div>
             <div style='font-size:0.97em;color:#1e293b;margin-bottom:2px;'><b>N° Dossier :</b> ${dossier}</div>
@@ -5503,7 +5593,19 @@ function showProfessionalHistoryModal() {
             group.agent.trim() !== "" &&
             group.agent !== "Agent inconnu"
               ? group.agent
-              : "Agent Visiteur ITS"
+              : group.containers &&
+                group.containers.length > 0 &&
+                group.containers[0]
+              ? group.containers[0].nom_agent_visiteur ||
+                group.containers[0].visitor_agent_name ||
+                localStorage.getItem(
+                  `agent_visiteur_${group.containers[0].id}`
+                ) ||
+                localStorage.getItem(
+                  `deliverycell_${group.containers[0].id}_visitor_agent_name`
+                ) ||
+                "Agent non défini"
+              : "Agent non défini"
           }</span>
           <span>🚛 ${
             group.transporter && group.transporter.trim() !== ""
@@ -5590,7 +5692,11 @@ function showProfessionalHistoryModal() {
               <td style="padding: 12px 15px; color: #4b5563;">${
                 container.nom_agent_visiteur ||
                 container.visitor_agent_name ||
-                "Agent Visiteur ITS"
+                localStorage.getItem(`agent_visiteur_${container.id}`) ||
+                localStorage.getItem(
+                  `deliverycell_${container.id}_visitor_agent_name`
+                ) ||
+                "Agent non défini"
               }</td>
               <td style="padding: 12px 15px; color: #4b5563;">${
                 container.transporter || "-"
