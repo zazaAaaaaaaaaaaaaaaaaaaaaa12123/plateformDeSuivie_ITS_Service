@@ -151,6 +151,133 @@ app.patch("/deliveries/:id/observation", async (req, res) => {
   }
 });
 
+// Route pour récupérer les observations d'un utilisateur spécifique (mode admin)
+app.get("/api/user-observations", async (req, res) => {
+  const { user, userId } = req.query;
+
+  if (!user) {
+    return res.status(400).json({
+      success: false,
+      message: "Paramètre 'user' requis",
+    });
+  }
+
+  try {
+    console.log(
+      `📝 [API] Recherche des observations pour l'utilisateur: ${user}`
+    );
+
+    // Recherche plus exhaustive dans tous les champs possibles
+    const query = `
+      SELECT 
+        id as delivery_id,
+        observation_acconier as observation,
+        employee_name,
+        client_name,
+        delivery_date,
+        created_at,
+        updated_at
+      FROM livraison_conteneur 
+      WHERE 
+        (observation_acconier IS NOT NULL AND observation_acconier != '' AND observation_acconier != '-') 
+        AND (
+          LOWER(employee_name) LIKE LOWER($1) OR
+          LOWER(responsible_acconier) LIKE LOWER($1) OR
+          LOWER(resp_acconier) LIKE LOWER($1) OR
+          LOWER(created_by) LIKE LOWER($1) OR
+          LOWER(updated_by) LIKE LOWER($1) OR
+          LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
+          LOWER(assigned_to) LIKE LOWER($1) OR
+          ($2 IS NOT NULL AND (
+            LOWER(employee_name) LIKE LOWER($2) OR
+            LOWER(responsible_acconier) LIKE LOWER($2) OR
+            LOWER(resp_acconier) LIKE LOWER($2) OR
+            LOWER(created_by) LIKE LOWER($2) OR
+            LOWER(updated_by) LIKE LOWER($2)
+          ))
+        )
+      ORDER BY updated_at DESC, created_at DESC
+      LIMIT 100;
+    `;
+
+    const userPattern = `%${user}%`;
+    const userIdPattern = userId ? `%${userId}%` : null;
+
+    const result = await pool.query(query, [userPattern, userIdPattern]);
+
+    console.log(
+      `📝 [API] ${result.rows.length} observations trouvées pour ${user}`
+    );
+
+    // Ajouter aussi une recherche dans les livraisons récemment modifiées par cet utilisateur
+    const recentQuery = `
+      SELECT 
+        id as delivery_id,
+        observation_acconier as observation,
+        employee_name,
+        client_name,
+        delivery_date,
+        created_at,
+        updated_at
+      FROM livraison_conteneur 
+      WHERE 
+        (
+          LOWER(employee_name) LIKE LOWER($1) OR
+          LOWER(responsible_acconier) LIKE LOWER($1) OR
+          LOWER(resp_acconier) LIKE LOWER($1) OR
+          LOWER(created_by) LIKE LOWER($1) OR
+          LOWER(updated_by) LIKE LOWER($1) OR
+          LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
+          LOWER(assigned_to) LIKE LOWER($1) OR
+          ($2 IS NOT NULL AND (
+            LOWER(employee_name) LIKE LOWER($2) OR
+            LOWER(responsible_acconier) LIKE LOWER($2) OR
+            LOWER(resp_acconier) LIKE LOWER($2) OR
+            LOWER(created_by) LIKE LOWER($2) OR
+            LOWER(updated_by) LIKE LOWER($2)
+          ))
+        )
+        AND updated_at >= NOW() - INTERVAL '30 days'
+      ORDER BY updated_at DESC, created_at DESC
+      LIMIT 50;
+    `;
+
+    const recentResult = await pool.query(recentQuery, [
+      userPattern,
+      userIdPattern,
+    ]);
+
+    // Combiner les résultats et supprimer les doublons
+    const allObservations = [...result.rows];
+    recentResult.rows.forEach((row) => {
+      if (!allObservations.find((obs) => obs.delivery_id === row.delivery_id)) {
+        allObservations.push(row);
+      }
+    });
+
+    console.log(
+      `📝 [API] Total après fusion: ${allObservations.length} observations`
+    );
+
+    res.json({
+      success: true,
+      observations: allObservations,
+      user: user,
+      count: allObservations.length,
+    });
+  } catch (err) {
+    console.error(
+      "Erreur lors de la récupération des observations utilisateur:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération des observations.",
+      error: err.message,
+    });
+  }
+});
+
 // ===============================
 // ROUTES API POUR LA SYNCHRONISATION RESPLIVRAISON ↔ SUIVIE
 // ===============================

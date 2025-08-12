@@ -1164,6 +1164,9 @@ document.addEventListener("DOMContentLoaded", function () {
             `🔍 [DEBUG] Nombre total de livraisons avant filtrage: ${processedDeliveries.length}`
           );
 
+          // Charger les observations de l'utilisateur ciblé
+          await loadUserObservations(targetUser, targetUserId);
+
           // Afficher quelques exemples de données pour comprendre la structure
           if (processedDeliveries.length > 0) {
             console.log(`🔍 [DEBUG] Exemple de livraison:`, {
@@ -1198,35 +1201,140 @@ document.addEventListener("DOMContentLoaded", function () {
               delivery.inspecteur,
               delivery.agent_douanes,
               delivery.chauffeur,
+              // Champs supplémentaires pour les observations et activités
+              delivery.agent_email,
+              delivery.user_email,
+              delivery.created_by_email,
+              delivery.observation_acconier_author,
+              delivery.observation_author,
+              delivery.modified_by,
+              delivery.last_modified_by,
             ];
 
-            const found = userFields.some(
-              (field) =>
-                field && field.toLowerCase().includes(targetUser.toLowerCase())
-            );
+            // Recherche par nom d'utilisateur avec différentes variantes
+            const targetUserLower = targetUser.toLowerCase();
+            const targetUserIdLower = targetUserId
+              ? targetUserId.toLowerCase()
+              : "";
+
+            const foundByName = userFields.some((field) => {
+              if (!field) return false;
+              const fieldLower = field.toString().toLowerCase();
+
+              // Recherche exacte
+              if (fieldLower === targetUserLower) return true;
+
+              // Recherche partielle (contient le nom)
+              if (fieldLower.includes(targetUserLower)) return true;
+
+              // Recherche inverse (le nom contient le champ)
+              if (targetUserLower.includes(fieldLower)) return true;
+
+              return false;
+            });
 
             // Aussi chercher par userId si disponible
             const foundByUserId =
-              targetUserId &&
-              userFields.some(
-                (field) =>
-                  field &&
-                  field.toLowerCase().includes(targetUserId.toLowerCase())
-              );
+              targetUserIdLower &&
+              userFields.some((field) => {
+                if (!field) return false;
+                const fieldLower = field.toString().toLowerCase();
+                return (
+                  fieldLower.includes(targetUserIdLower) ||
+                  targetUserIdLower.includes(fieldLower)
+                );
+              });
 
-            const finalFound = found || foundByUserId;
+            // Recherche spéciale dans les observations stockées localement
+            let foundInObservations = false;
+            try {
+              // Vérifier les observations stockées dans localStorage avec différentes clés possibles
+              const observationKeys = [
+                `observation_${delivery.id}`,
+                `obs_${delivery.id}`,
+                `observationAcconier_${delivery.id}`,
+                `observation_acconier_${delivery.id}`,
+              ];
+
+              for (const key of observationKeys) {
+                const storedObservation = localStorage.getItem(key);
+                if (storedObservation && storedObservation.trim() !== "") {
+                  foundInObservations = true;
+                  console.log(
+                    `📝 [DEBUG] Observation trouvée avec clé ${key} pour livraison ${delivery.id}:`,
+                    storedObservation
+                  );
+
+                  // Mettre à jour la livraison avec l'observation trouvée
+                  if (
+                    !delivery.observation_acconier ||
+                    delivery.observation_acconier.trim() === ""
+                  ) {
+                    delivery.observation_acconier = storedObservation;
+                  }
+                  break;
+                }
+              }
+
+              // Vérifier les champs d'observation de la livraison elle-même
+              if (
+                delivery.observation_acconier &&
+                delivery.observation_acconier.trim() !== ""
+              ) {
+                foundInObservations = true;
+                console.log(
+                  `📝 [DEBUG] Observation BD trouvée pour livraison ${delivery.id}:`,
+                  delivery.observation_acconier
+                );
+              }
+
+              // Vérifier les autres champs d'observation possibles
+              const observationFields = [
+                delivery.observation,
+                delivery.observations,
+                delivery.observation_acconier,
+                delivery.delivery_notes,
+                delivery.notes,
+                delivery.comments,
+                delivery.remarques,
+              ];
+
+              for (const obsField of observationFields) {
+                if (
+                  obsField &&
+                  obsField.toString().trim() !== "" &&
+                  obsField !== "-"
+                ) {
+                  foundInObservations = true;
+                  console.log(
+                    `📝 [DEBUG] Observation trouvée dans champ pour livraison ${delivery.id}:`,
+                    obsField
+                  );
+                  break;
+                }
+              }
+            } catch (e) {
+              // Ignorer les erreurs de parsing
+            }
+
+            const finalFound =
+              foundByName || foundByUserId || foundInObservations;
 
             if (finalFound) {
               console.log(
                 `✅ [DEBUG] Livraison trouvée pour ${targetUser}:`,
                 delivery.id,
-                userFields.filter(
-                  (f) =>
-                    f &&
-                    (f.toLowerCase().includes(targetUser.toLowerCase()) ||
-                      (targetUserId &&
-                        f.toLowerCase().includes(targetUserId.toLowerCase())))
-                )
+                {
+                  foundByName,
+                  foundByUserId,
+                  foundInObservations,
+                  observation: delivery.observation_acconier || "Aucune",
+                  employee_name: delivery.employee_name,
+                  matchingFields: userFields.filter(
+                    (f) =>
+                      f && f.toString().toLowerCase().includes(targetUserLower)
+                  ),
+                }
               );
             }
 
@@ -1237,13 +1345,14 @@ document.addEventListener("DOMContentLoaded", function () {
             `[MODE ADMIN] Filtrage pour l'utilisateur "${targetUser}": ${processedDeliveries.length} livraisons trouvées`
           );
 
-          // Si aucune livraison trouvée, afficher toutes les livraisons pour debug
+          // Si aucune livraison trouvée, essayer une recherche plus large
           if (processedDeliveries.length === 0) {
             console.log(
-              `⚠️ [DEBUG] Aucune livraison trouvée pour "${targetUser}". Affichage de toutes les livraisons pour debug.`
+              `⚠️ [DEBUG] Aucune livraison trouvée pour "${targetUser}". Tentative de recherche élargie...`
             );
-            // Utiliser les données originales de la réponse API
-            processedDeliveries = data.deliveries.map((delivery) => {
+
+            // Recherche élargie : toutes les livraisons avec des observations ou modifications récentes
+            processedDeliveries = data.deliveries.filter((delivery) => {
               // Appliquer la même normalisation que précédemment
               let tcList = [];
               if (delivery.container_numbers_list) {
@@ -1295,11 +1404,154 @@ document.addEventListener("DOMContentLoaded", function () {
               ) {
                 delivery.bl_statuses = {};
               }
-              return delivery;
+
+              // Recherche élargie : livraisons avec observations ou activité récente
+              let hasUserActivity = false;
+
+              // 1. Vérifier les observations stockées localement
+              try {
+                const observationKey = `observation_${delivery.id}`;
+                const storedObservation = localStorage.getItem(observationKey);
+                if (storedObservation && storedObservation.trim() !== "") {
+                  hasUserActivity = true;
+                  console.log(
+                    `📝 [RECHERCHE ÉLARGIE] Observation locale trouvée pour ${delivery.id}:`,
+                    storedObservation
+                  );
+                }
+              } catch (e) {}
+
+              // 2. Vérifier les observations en base de données
+              if (
+                delivery.observation_acconier &&
+                delivery.observation_acconier.trim() !== ""
+              ) {
+                hasUserActivity = true;
+                console.log(
+                  `📝 [RECHERCHE ÉLARGIE] Observation BD trouvée pour ${delivery.id}:`,
+                  delivery.observation_acconier
+                );
+              }
+
+              // 3. Vérifier l'activité récente (livraisons modifiées dans les 7 derniers jours)
+              if (delivery.updated_at) {
+                const updatedDate = new Date(delivery.updated_at);
+                const now = new Date();
+                const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
+                if (daysDiff <= 7) {
+                  hasUserActivity = true;
+                  console.log(
+                    `⏰ [RECHERCHE ÉLARGIE] Activité récente pour ${
+                      delivery.id
+                    } (${daysDiff.toFixed(1)} jours)`
+                  );
+                }
+              }
+
+              // 4. Recherche dans tous les champs texte pour des traces d'activité
+              const allTextFields = [
+                delivery.employee_name,
+                delivery.client_name,
+                delivery.delivery_notes,
+                delivery.observation_acconier,
+                delivery.status,
+                delivery.container_status,
+                delivery.transporter,
+                delivery.driver_name,
+              ].filter(Boolean);
+
+              const hasTextActivity = allTextFields.some((field) => {
+                const fieldStr = field.toString().toLowerCase();
+                return (
+                  fieldStr.includes(targetUser.toLowerCase()) ||
+                  fieldStr.includes("observation") ||
+                  fieldStr.includes("modifié") ||
+                  fieldStr.includes("mis à jour")
+                );
+              });
+
+              if (hasTextActivity) {
+                hasUserActivity = true;
+                console.log(
+                  `📝 [RECHERCHE ÉLARGIE] Activité textuelle trouvée pour ${delivery.id}`
+                );
+              }
+
+              return hasUserActivity;
             });
+
             console.log(
-              `📊 [DEBUG] Affichage de ${processedDeliveries.length} livraisons totales pour debug`
+              `📊 [RECHERCHE ÉLARGIE] ${processedDeliveries.length} livraisons trouvées avec activité ou observations`
             );
+
+            // Si toujours aucune livraison, afficher les plus récentes pour debug
+            if (processedDeliveries.length === 0) {
+              console.log(
+                `🔍 [DEBUG FINAL] Affichage des 10 livraisons les plus récentes pour debug`
+              );
+              processedDeliveries = data.deliveries
+                .sort(
+                  (a, b) =>
+                    new Date(b.created_at || b.delivery_date) -
+                    new Date(a.created_at || a.delivery_date)
+                )
+                .slice(0, 10)
+                .map((delivery) => {
+                  // Normaliser pour l'affichage
+                  let tcList = [];
+                  if (delivery.container_numbers_list) {
+                    try {
+                      if (typeof delivery.container_numbers_list === "string") {
+                        tcList = JSON.parse(delivery.container_numbers_list);
+                      } else if (
+                        Array.isArray(delivery.container_numbers_list)
+                      ) {
+                        tcList = delivery.container_numbers_list;
+                      }
+                      tcList = tcList.filter(Boolean);
+                    } catch (e) {
+                      tcList = [];
+                    }
+                  }
+                  if (tcList.length === 0) {
+                    if (Array.isArray(delivery.container_number)) {
+                      tcList = delivery.container_number.filter(Boolean);
+                    } else if (typeof delivery.container_number === "string") {
+                      tcList = delivery.container_number
+                        .split(/[,;\s]+/)
+                        .filter(Boolean);
+                    }
+                  }
+                  if (
+                    !delivery.container_statuses ||
+                    typeof delivery.container_statuses !== "object"
+                  ) {
+                    delivery.container_statuses = {};
+                  }
+                  tcList.forEach((tc) => {
+                    if (!delivery.container_statuses[tc]) {
+                      delivery.container_statuses[tc] = "attente_paiement";
+                    }
+                  });
+                  if (
+                    delivery.bl_statuses &&
+                    typeof delivery.bl_statuses === "string"
+                  ) {
+                    try {
+                      delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+                    } catch {
+                      delivery.bl_statuses = {};
+                    }
+                  }
+                  if (
+                    !delivery.bl_statuses ||
+                    typeof delivery.bl_statuses !== "object"
+                  ) {
+                    delivery.bl_statuses = {};
+                  }
+                  return delivery;
+                });
+            }
           }
         }
 
@@ -1422,6 +1674,103 @@ document.addEventListener("DOMContentLoaded", function () {
       });
       tableBody.appendChild(row);
     });
+  }
+
+  // Fonction pour charger les observations d'un utilisateur en mode admin
+  async function loadUserObservations(targetUser, targetUserId) {
+    if (!targetUser) return;
+
+    try {
+      console.log(
+        `📝 [OBSERVATIONS] Chargement des observations pour l'utilisateur: ${targetUser}`
+      );
+
+      // Appel API pour récupérer les observations de l'utilisateur
+      const response = await fetch(
+        `/api/user-observations?user=${encodeURIComponent(
+          targetUser
+        )}&userId=${encodeURIComponent(targetUserId || "")}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.success && data.observations) {
+          console.log(
+            `📝 [OBSERVATIONS] ${data.observations.length} observations trouvées pour ${targetUser}`
+          );
+
+          // Mettre à jour le localStorage avec les observations de l'utilisateur
+          data.observations.forEach((obs) => {
+            if (
+              obs.delivery_id &&
+              obs.observation &&
+              obs.observation.trim() !== ""
+            ) {
+              const keys = [
+                `obs_${obs.delivery_id}`,
+                `observation_${obs.delivery_id}`,
+                `observationAcconier_${obs.delivery_id}`,
+              ];
+
+              // Utiliser la clé standard
+              const mainKey = `obs_${obs.delivery_id}`;
+              localStorage.setItem(mainKey, obs.observation);
+
+              console.log(
+                `📝 [OBSERVATIONS] Observation chargée pour livraison ${obs.delivery_id}:`,
+                obs.observation
+              );
+            }
+          });
+
+          return data.observations;
+        }
+      } else if (response.status === 404) {
+        console.log(`📝 [OBSERVATIONS] API non disponible pour le moment`);
+      } else {
+        console.warn(`⚠️ [OBSERVATIONS] Erreur API: ${response.status}`);
+      }
+    } catch (error) {
+      // En cas d'erreur réseau ou API non disponible, essayer une approche locale
+      console.warn(
+        `⚠️ [OBSERVATIONS] API non disponible, recherche locale:`,
+        error.message
+      );
+
+      // Recherche dans le localStorage pour toutes les observations existantes
+      try {
+        let localObservations = [];
+        const targetUserLower = targetUser.toLowerCase();
+
+        // Parcourir toutes les clés du localStorage
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (
+            key &&
+            (key.startsWith("obs_") || key.startsWith("observation_"))
+          ) {
+            const value = localStorage.getItem(key);
+            if (value && value.trim() !== "") {
+              localObservations.push({
+                key: key,
+                value: value,
+                deliveryId: key.replace(/^(obs_|observation_)/, ""),
+              });
+            }
+          }
+        }
+
+        console.log(
+          `📝 [OBSERVATIONS LOCAL] ${localObservations.length} observations trouvées dans le localStorage`
+        );
+        return localObservations;
+      } catch (localError) {
+        console.warn(`⚠️ [OBSERVATIONS] Erreur recherche locale:`, localError);
+      }
+    }
+
+    return [];
   }
 
   // Fonction principale pour charger et afficher selon la plage de dates
