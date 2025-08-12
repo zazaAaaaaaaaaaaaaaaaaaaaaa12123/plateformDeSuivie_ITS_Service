@@ -5599,6 +5599,7 @@ function showProfessionalHistoryModal() {
               ? group.containers[0].nom_agent_visiteur ||
                 group.containers[0].visitor_agent_name ||
                 group.containers[0].agent_visiteur ||
+                localStorage.getItem("NOM Agent visiteurs") ||
                 localStorage.getItem(
                   `agent_visiteur_${group.containers[0].id}`
                 ) ||
@@ -5608,8 +5609,8 @@ function showProfessionalHistoryModal() {
                 localStorage.getItem(
                   `deliverycell_${group.containers[0].id}_nom_agent_visiteur`
                 ) ||
-                "Agent Visiteur ITS"
-              : "Agent Visiteur ITS"
+                "Agent non défini"
+              : "Agent non défini"
           }</span>
           <span>🚛 ${
             group.transporter && group.transporter.trim() !== ""
@@ -5697,6 +5698,7 @@ function showProfessionalHistoryModal() {
                 container.nom_agent_visiteur ||
                 container.visitor_agent_name ||
                 container.agent_visiteur ||
+                localStorage.getItem("NOM Agent visiteurs") ||
                 localStorage.getItem(`agent_visiteur_${container.id}`) ||
                 localStorage.getItem(
                   `deliverycell_${container.id}_visitor_agent_name`
@@ -5704,7 +5706,7 @@ function showProfessionalHistoryModal() {
                 localStorage.getItem(
                   `deliverycell_${container.id}_nom_agent_visiteur`
                 ) ||
-                "Agent Visiteur ITS"
+                "Agent non défini"
               }</td>
               <td style="padding: 12px 15px; color: #4b5563;">${
                 container.transporter || "-"
@@ -6217,28 +6219,40 @@ window.showHistoryEntryDetail = async function (entryId) {
           <span style="color: ${
             (enrichedEntry.nom_agent_visiteur ||
               enrichedEntry.visitor_agent_name ||
+              localStorage.getItem("NOM Agent visiteurs") ||
               localStorage.getItem(
                 `agent_visiteur_${enrichedEntry.delivery_id}`
               ) ||
               localStorage.getItem(
                 `deliverycell_${enrichedEntry.delivery_id}_visitor_agent_name`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_nom_agent_visiteur`
               )) &&
             (enrichedEntry.nom_agent_visiteur ||
               enrichedEntry.visitor_agent_name ||
+              localStorage.getItem("NOM Agent visiteurs") ||
               localStorage.getItem(
                 `agent_visiteur_${enrichedEntry.delivery_id}`
               ) ||
               localStorage.getItem(
                 `deliverycell_${enrichedEntry.delivery_id}_visitor_agent_name`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_nom_agent_visiteur`
               )) !== "-"
               ? "#059669"
               : "#ef4444"
           }; font-weight: 600;">${
     enrichedEntry.nom_agent_visiteur ||
     enrichedEntry.visitor_agent_name ||
+    localStorage.getItem("NOM Agent visiteurs") ||
     localStorage.getItem(`agent_visiteur_${enrichedEntry.delivery_id}`) ||
     localStorage.getItem(
       `deliverycell_${enrichedEntry.delivery_id}_visitor_agent_name`
+    ) ||
+    localStorage.getItem(
+      `deliverycell_${enrichedEntry.delivery_id}_nom_agent_visiteur`
     ) ||
     "Non défini"
   }</span>
@@ -6449,7 +6463,21 @@ window.showHistoryEntryDetail = async function (entryId) {
         </div>
         <div style="font-size: 1.1em; font-weight: 600;">
           <strong>Livré par:</strong> ${
-            enrichedEntry.employee_name || enrichedEntry.delivered_by || "-"
+            enrichedEntry.employee_name ||
+            enrichedEntry.delivered_by ||
+            enrichedEntry.nom_agent_visiteur ||
+            enrichedEntry.visitor_agent_name ||
+            localStorage.getItem("NOM Agent visiteurs") ||
+            localStorage.getItem(
+              `agent_visiteur_${enrichedEntry.delivery_id}`
+            ) ||
+            localStorage.getItem(
+              `deliverycell_${enrichedEntry.delivery_id}_visitor_agent_name`
+            ) ||
+            localStorage.getItem(
+              `deliverycell_${enrichedEntry.delivery_id}_nom_agent_visiteur`
+            ) ||
+            "-"
           }
         </div>
       </div>
