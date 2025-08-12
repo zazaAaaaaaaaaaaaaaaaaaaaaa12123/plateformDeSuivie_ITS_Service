@@ -278,6 +278,170 @@ app.get("/api/user-observations", async (req, res) => {
   }
 });
 
+// Route pour récupérer les données de livraison d'un utilisateur spécifique (mode admin)
+app.get("/api/user-delivery-data", async (req, res) => {
+  const { user, userId } = req.query;
+
+  if (!user) {
+    return res.status(400).json({
+      success: false,
+      message: "Paramètre 'user' requis",
+    });
+  }
+
+  try {
+    console.log(
+      `📝 [API] Recherche des données de livraison pour l'utilisateur: ${user}`
+    );
+
+    // Recherche exhaustive dans tous les champs de livraison
+    const query = `
+      SELECT 
+        id as delivery_id,
+        nom_agent_visiteur,
+        transporter,
+        inspecteur,
+        agent_en_douanes,
+        driver_name,
+        driver_phone,
+        delivery_date,
+        delivery_notes,
+        observation_acconier,
+        employee_name,
+        client_name,
+        created_at,
+        updated_at
+      FROM livraison_conteneur 
+      WHERE 
+        delivery_status_acconier = 'mise_en_livraison_acconier'
+        AND (
+          LOWER(employee_name) LIKE LOWER($1) OR
+          LOWER(responsible_livreur) LIKE LOWER($1) OR
+          LOWER(resp_livreur) LIKE LOWER($1) OR
+          LOWER(created_by) LIKE LOWER($1) OR
+          LOWER(updated_by) LIKE LOWER($1) OR
+          LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
+          LOWER(driver_name) LIKE LOWER($1) OR
+          LOWER(transporter) LIKE LOWER($1) OR
+          LOWER(inspecteur) LIKE LOWER($1) OR
+          LOWER(agent_en_douanes) LIKE LOWER($1) OR
+          LOWER(assigned_to) LIKE LOWER($1) OR
+          ($2 IS NOT NULL AND (
+            LOWER(employee_name) LIKE LOWER($2) OR
+            LOWER(responsible_livreur) LIKE LOWER($2) OR
+            LOWER(resp_livreur) LIKE LOWER($2) OR
+            LOWER(created_by) LIKE LOWER($2) OR
+            LOWER(updated_by) LIKE LOWER($2) OR
+            LOWER(nom_agent_visiteur) LIKE LOWER($2) OR
+            LOWER(driver_name) LIKE LOWER($2)
+          ))
+        )
+        AND (
+          (nom_agent_visiteur IS NOT NULL AND nom_agent_visiteur != '' AND nom_agent_visiteur != '-') OR
+          (transporter IS NOT NULL AND transporter != '' AND transporter != '-') OR
+          (inspecteur IS NOT NULL AND inspecteur != '' AND inspecteur != '-') OR
+          (agent_en_douanes IS NOT NULL AND agent_en_douanes != '' AND agent_en_douanes != '-') OR
+          (driver_name IS NOT NULL AND driver_name != '' AND driver_name != '-') OR
+          (driver_phone IS NOT NULL AND driver_phone != '' AND driver_phone != '-') OR
+          (delivery_notes IS NOT NULL AND delivery_notes != '' AND delivery_notes != '-') OR
+          (observation_acconier IS NOT NULL AND observation_acconier != '' AND observation_acconier != '-')
+        )
+      ORDER BY updated_at DESC, created_at DESC
+      LIMIT 100;
+    `;
+
+    const userPattern = `%${user}%`;
+    const userIdPattern = userId ? `%${userId}%` : null;
+
+    const result = await pool.query(query, [userPattern, userIdPattern]);
+
+    console.log(
+      `📝 [API] ${result.rows.length} données de livraison trouvées pour ${user}`
+    );
+
+    // Transformer les résultats en format de données détaillées
+    const deliveryData = [];
+
+    result.rows.forEach((row) => {
+      const fields = [
+        {
+          name: "nom_agent_visiteur",
+          value: row.nom_agent_visiteur,
+          label: "Agent Visiteur",
+        },
+        { name: "transporter", value: row.transporter, label: "Transporteur" },
+        { name: "inspecteur", value: row.inspecteur, label: "Inspecteur" },
+        {
+          name: "agent_en_douanes",
+          value: row.agent_en_douanes,
+          label: "Agent en Douanes",
+        },
+        { name: "driver_name", value: row.driver_name, label: "Chauffeur" },
+        {
+          name: "driver_phone",
+          value: row.driver_phone,
+          label: "Tel Chauffeur",
+        },
+        {
+          name: "delivery_date",
+          value: row.delivery_date,
+          label: "Date Livraison",
+        },
+        {
+          name: "delivery_notes",
+          value: row.delivery_notes,
+          label: "Observations",
+        },
+        {
+          name: "observation_acconier",
+          value: row.observation_acconier,
+          label: "Observation Acconier",
+        },
+      ];
+
+      fields.forEach((field) => {
+        if (
+          field.value &&
+          field.value.toString().trim() !== "" &&
+          field.value !== "-"
+        ) {
+          deliveryData.push({
+            delivery_id: row.delivery_id,
+            field_name: field.name,
+            field_value: field.value,
+            field_label: field.label,
+            client_name: row.client_name,
+            employee_name: row.employee_name,
+            updated_at: row.updated_at,
+          });
+        }
+      });
+    });
+
+    console.log(
+      `📝 [API] Total de données de livraison formatées: ${deliveryData.length}`
+    );
+
+    res.json({
+      success: true,
+      deliveryData: deliveryData,
+      user: user,
+      count: deliveryData.length,
+    });
+  } catch (err) {
+    console.error(
+      "Erreur lors de la récupération des données de livraison utilisateur:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message:
+        "Erreur serveur lors de la récupération des données de livraison.",
+      error: err.message,
+    });
+  }
+});
+
 // ===============================
 // ROUTES API POUR LA SYNCHRONISATION RESPLIVRAISON ↔ SUIVIE
 // ===============================

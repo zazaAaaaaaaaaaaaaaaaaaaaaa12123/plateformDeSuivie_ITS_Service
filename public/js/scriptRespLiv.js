@@ -1,3 +1,108 @@
+// Fonction utilitaire pour récupérer les paramètres URL
+function getUrlParameter(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
+// Fonction pour charger les données de livraison d'un utilisateur en mode admin
+async function loadUserDeliveryData(targetUser, targetUserId) {
+  if (!targetUser) return;
+
+  try {
+    console.log(
+      `📝 [DELIVERY DATA] Chargement des données de livraison pour l'utilisateur: ${targetUser}`
+    );
+
+    // Appel API pour récupérer les données de l'utilisateur
+    const response = await fetch(
+      `/api/user-delivery-data?user=${encodeURIComponent(
+        targetUser
+      )}&userId=${encodeURIComponent(targetUserId || "")}`
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.success && data.deliveryData) {
+        console.log(
+          `📝 [DELIVERY DATA] ${data.deliveryData.length} données trouvées pour ${targetUser}`
+        );
+
+        // Mettre à jour le localStorage avec les données de l'utilisateur
+        data.deliveryData.forEach((item) => {
+          if (
+            item.delivery_id &&
+            item.field_name &&
+            item.field_value &&
+            item.field_value.trim() !== ""
+          ) {
+            const key = `${item.field_name}_${item.delivery_id}`;
+            localStorage.setItem(key, item.field_value);
+
+            console.log(
+              `📝 [DELIVERY DATA] Donnée chargée pour livraison ${item.delivery_id}, champ ${item.field_name}:`,
+              item.field_value
+            );
+          }
+        });
+
+        return data.deliveryData;
+      }
+    } else if (response.status === 404) {
+      console.log(`📝 [DELIVERY DATA] API non disponible pour le moment`);
+    } else {
+      console.warn(`⚠️ [DELIVERY DATA] Erreur API: ${response.status}`);
+    }
+  } catch (error) {
+    // En cas d'erreur réseau ou API non disponible, essayer une approche locale
+    console.warn(
+      `⚠️ [DELIVERY DATA] API non disponible, recherche locale:`,
+      error.message
+    );
+
+    // Recherche dans le localStorage pour toutes les données existantes
+    try {
+      let localData = [];
+      const targetUserLower = targetUser.toLowerCase();
+
+      // Parcourir toutes les clés du localStorage pour les données de livraison
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (
+          key &&
+          (key.includes("agent_visiteur_") ||
+            key.includes("transporteur_") ||
+            key.includes("inspecteur_") ||
+            key.includes("agent_douanes_") ||
+            key.includes("chauffeur_") ||
+            key.includes("tel_chauffeur_") ||
+            key.includes("date_livraison_") ||
+            key.includes("observations_") ||
+            key.includes("delivery_notes_"))
+        ) {
+          const value = localStorage.getItem(key);
+          if (value && value.trim() !== "") {
+            localData.push({
+              key: key,
+              value: value,
+              deliveryId: key.split("_").pop(),
+            });
+          }
+        }
+      }
+
+      console.log(
+        `📝 [DELIVERY DATA LOCAL] ${localData.length} données trouvées dans le localStorage`
+      );
+      return localData;
+    } catch (localError) {
+      console.warn(`⚠️ [DELIVERY DATA] Erreur recherche locale:`, localError);
+    }
+  }
+
+  return [];
+}
+
 // --- Info-bulle personnalisée pour la colonne Statut (Numéro TC + statut avec icônes) ---
 function createStatutTooltip() {
   let tooltip = document.getElementById("statutTableTooltip");
@@ -562,15 +667,287 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function loadAllDeliveries() {
     try {
+      console.log("🔄 [DEBUG RESP LIV] Début du chargement des livraisons...");
       const response = await fetch("/deliveries/status");
+      console.log(
+        "🔄 [DEBUG RESP LIV] Réponse reçue:",
+        response.status,
+        response.statusText
+      );
       const data = await response.json();
+      console.log(
+        "🔄 [DEBUG RESP LIV] Données reçues:",
+        data.success,
+        "Nombre de livraisons:",
+        data.deliveries?.length
+      );
+
       if (data.success && Array.isArray(data.deliveries)) {
-        // On ne garde que les livraisons dont le statut acconier est 'mise_en_livraison_acconier'
-        window.allDeliveries = data.deliveries.filter((delivery) => {
+        // Récupération des paramètres pour le mode admin
+        const isAdminMode = getUrlParameter("mode") === "admin";
+        const targetUser =
+          getUrlParameter("targetUser") || getUrlParameter("user");
+        const targetUserId = getUrlParameter("userId");
+
+        console.log(
+          "🔄 [DEBUG RESP LIV] Mode admin:",
+          isAdminMode,
+          "Target user:",
+          targetUser,
+          "Target userId:",
+          targetUserId
+        );
+
+        let filteredDeliveries = data.deliveries.filter((delivery) => {
           return (
             delivery.delivery_status_acconier === "mise_en_livraison_acconier"
           );
         });
+
+        // Filtrage pour le mode admin : ne montrer que les livraisons de l'utilisateur ciblé
+        if (isAdminMode && targetUser) {
+          console.log(
+            `🔍 [DEBUG RESP LIV FILTRAGE] Recherche pour l'utilisateur "${targetUser}"`
+          );
+          console.log(
+            `🔍 [DEBUG RESP LIV] Nombre total de livraisons avant filtrage: ${filteredDeliveries.length}`
+          );
+
+          // Charger les observations/données de l'utilisateur ciblé
+          await loadUserDeliveryData(targetUser, targetUserId);
+
+          filteredDeliveries = filteredDeliveries.filter((delivery) => {
+            // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
+            const userFields = [
+              delivery.responsible_livreur,
+              delivery.resp_livreur,
+              delivery.responsible_acconier,
+              delivery.resp_acconier,
+              delivery.assigned_to,
+              delivery.created_by,
+              delivery.updated_by,
+              // Champs spécifiques à la livraison
+              delivery.nom_agent_visiteur,
+              delivery.driver_name,
+              delivery.transporter,
+              delivery.inspecteur,
+              delivery.agent_en_douanes,
+              delivery.chauffeur,
+              delivery.employee_name,
+              // Champs email
+              delivery.agent_email,
+              delivery.user_email,
+              delivery.created_by_email,
+              // Champs d'observation et notes
+              delivery.delivery_notes,
+              delivery.observation,
+              delivery.observations,
+              delivery.modified_by,
+              delivery.last_modified_by,
+            ];
+
+            // Recherche par nom d'utilisateur avec différentes variantes
+            const targetUserLower = targetUser.toLowerCase();
+            const targetUserIdLower = targetUserId
+              ? targetUserId.toLowerCase()
+              : "";
+
+            const foundByName = userFields.some((field) => {
+              if (!field) return false;
+              const fieldLower = field.toString().toLowerCase();
+
+              // Recherche exacte
+              if (fieldLower === targetUserLower) return true;
+
+              // Recherche partielle (contient le nom)
+              if (fieldLower.includes(targetUserLower)) return true;
+
+              // Recherche inverse (le nom contient le champ)
+              if (targetUserLower.includes(fieldLower)) return true;
+
+              return false;
+            });
+
+            // Recherche par userId si disponible
+            const foundByUserId =
+              targetUserIdLower &&
+              userFields.some((field) => {
+                if (!field) return false;
+                const fieldLower = field.toString().toLowerCase();
+                return (
+                  fieldLower.includes(targetUserIdLower) ||
+                  targetUserIdLower.includes(fieldLower)
+                );
+              });
+
+            // Recherche dans les données locales sauvegardées
+            let foundInLocalData = false;
+            try {
+              // Vérifier les données spécifiques aux livraisons stockées localement
+              const deliveryKeys = [
+                `delivery_data_${delivery.id}`,
+                `delivery_notes_${delivery.id}`,
+                `agent_visiteur_${delivery.id}`,
+                `transporteur_${delivery.id}`,
+                `inspecteur_${delivery.id}`,
+                `agent_douanes_${delivery.id}`,
+                `chauffeur_${delivery.id}`,
+                `tel_chauffeur_${delivery.id}`,
+                `date_livraison_${delivery.id}`,
+                `observations_${delivery.id}`,
+              ];
+
+              for (const key of deliveryKeys) {
+                const storedValue = localStorage.getItem(key);
+                if (storedValue && storedValue.trim() !== "") {
+                  foundInLocalData = true;
+                  console.log(
+                    `📝 [DEBUG RESP LIV] Donnée trouvée avec clé ${key} pour livraison ${delivery.id}:`,
+                    storedValue
+                  );
+                  break;
+                }
+              }
+
+              // Vérifier aussi les champs de livraison directement
+              const deliveryDataFields = [
+                delivery.nom_agent_visiteur,
+                delivery.transporter,
+                delivery.inspecteur,
+                delivery.agent_en_douanes,
+                delivery.driver_name,
+                delivery.driver_phone,
+                delivery.delivery_date,
+                delivery.delivery_notes,
+                delivery.observation,
+              ];
+
+              for (const field of deliveryDataFields) {
+                if (field && field.toString().trim() !== "" && field !== "-") {
+                  foundInLocalData = true;
+                  console.log(
+                    `📝 [DEBUG RESP LIV] Donnée trouvée dans champ pour livraison ${delivery.id}:`,
+                    field
+                  );
+                  break;
+                }
+              }
+            } catch (e) {
+              // Ignorer les erreurs de parsing
+            }
+
+            const finalFound = foundByName || foundByUserId || foundInLocalData;
+
+            if (finalFound) {
+              console.log(
+                `✅ [DEBUG RESP LIV] Livraison trouvée pour ${targetUser}:`,
+                delivery.id,
+                {
+                  foundByName,
+                  foundByUserId,
+                  foundInLocalData,
+                  nom_agent_visiteur: delivery.nom_agent_visiteur,
+                  transporter: delivery.transporter,
+                  delivery_notes: delivery.delivery_notes,
+                  matchingFields: userFields.filter(
+                    (f) =>
+                      f && f.toString().toLowerCase().includes(targetUserLower)
+                  ),
+                }
+              );
+            }
+
+            return finalFound;
+          });
+
+          console.log(
+            `[MODE ADMIN RESP LIV] Filtrage pour l'utilisateur "${targetUser}": ${filteredDeliveries.length} livraisons trouvées`
+          );
+
+          // Si aucune livraison trouvée, essayer une recherche plus large
+          if (filteredDeliveries.length === 0) {
+            console.log(
+              `⚠️ [DEBUG RESP LIV] Aucune livraison trouvée pour "${targetUser}". Tentative de recherche élargie...`
+            );
+
+            // Recherche élargie : livraisons avec activité récente ou données remplies
+            filteredDeliveries = data.deliveries.filter((delivery) => {
+              if (
+                delivery.delivery_status_acconier !==
+                "mise_en_livraison_acconier"
+              ) {
+                return false;
+              }
+
+              // Recherche des livraisons avec des données remplies ou activité récente
+              let hasUserActivity = false;
+
+              // 1. Vérifier les données dans les champs de livraison
+              const filledFields = [
+                delivery.nom_agent_visiteur,
+                delivery.transporter,
+                delivery.inspecteur,
+                delivery.agent_en_douanes,
+                delivery.driver_name,
+                delivery.driver_phone,
+                delivery.delivery_notes,
+                delivery.observation,
+              ].filter(
+                (field) =>
+                  field && field.toString().trim() !== "" && field !== "-"
+              );
+
+              if (filledFields.length > 0) {
+                hasUserActivity = true;
+                console.log(
+                  `📝 [RECHERCHE ÉLARGIE RESP LIV] Données trouvées pour ${delivery.id}:`,
+                  filledFields
+                );
+              }
+
+              // 2. Vérifier l'activité récente (livraisons modifiées dans les 7 derniers jours)
+              if (delivery.updated_at) {
+                const updatedDate = new Date(delivery.updated_at);
+                const now = new Date();
+                const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
+                if (daysDiff <= 7) {
+                  hasUserActivity = true;
+                  console.log(
+                    `⏰ [RECHERCHE ÉLARGIE RESP LIV] Activité récente pour ${
+                      delivery.id
+                    } (${daysDiff.toFixed(1)} jours)`
+                  );
+                }
+              }
+
+              return hasUserActivity;
+            });
+
+            console.log(
+              `📊 [RECHERCHE ÉLARGIE RESP LIV] ${filteredDeliveries.length} livraisons trouvées avec activité ou données`
+            );
+
+            // Si toujours aucune livraison, afficher les plus récentes pour debug
+            if (filteredDeliveries.length === 0) {
+              console.log(
+                `🔍 [DEBUG FINAL RESP LIV] Affichage des 10 livraisons les plus récentes pour debug`
+              );
+              filteredDeliveries = data.deliveries
+                .filter(
+                  (d) =>
+                    d.delivery_status_acconier === "mise_en_livraison_acconier"
+                )
+                .sort(
+                  (a, b) =>
+                    new Date(b.created_at || b.delivery_date) -
+                    new Date(a.created_at || a.delivery_date)
+                )
+                .slice(0, 10);
+            }
+          }
+        }
+
+        window.allDeliveries = filteredDeliveries;
       } else {
         window.allDeliveries = [];
       }
