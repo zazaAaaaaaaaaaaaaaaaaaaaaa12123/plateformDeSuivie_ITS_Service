@@ -6063,6 +6063,36 @@ window.showHistoryEntryDetail = async function (entryId) {
 
   console.log("[DETAIL] Données enrichies:", enrichedEntry);
 
+  // Debug : Vérifier les données dans localStorage
+  console.log(
+    "[DEBUG DETAIL] Vérification localStorage pour delivery_id:",
+    enrichedEntry.delivery_id
+  );
+  console.log(
+    "[DEBUG DETAIL] Agent visiteur localStorage:",
+    localStorage.getItem(`agent_visiteur_${enrichedEntry.delivery_id}`)
+  );
+  console.log(
+    "[DEBUG DETAIL] Transporteur localStorage:",
+    localStorage.getItem(`transporteur_${enrichedEntry.delivery_id}`)
+  );
+  console.log(
+    "[DEBUG DETAIL] Inspecteur localStorage:",
+    localStorage.getItem(`inspecteur_${enrichedEntry.delivery_id}`)
+  );
+  console.log(
+    "[DEBUG DETAIL] Agent douanes localStorage:",
+    localStorage.getItem(`agent_douanes_${enrichedEntry.delivery_id}`)
+  );
+  console.log(
+    "[DEBUG DETAIL] Chauffeur localStorage:",
+    localStorage.getItem(`chauffeur_${enrichedEntry.delivery_id}`)
+  );
+  console.log(
+    "[DEBUG DETAIL] Tel chauffeur localStorage:",
+    localStorage.getItem(`tel_chauffeur_${enrichedEntry.delivery_id}`)
+  );
+
   // Supprime la modal de détail existante
   const existingDetail = document.getElementById("historyDetailModal");
   if (existingDetail) existingDetail.remove();
@@ -6152,10 +6182,18 @@ window.showHistoryEntryDetail = async function (entryId) {
         <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
           <strong style="color: #374151;">Téléphone client:</strong> 
           <span style="color: ${
-            enrichedEntry.client_phone && enrichedEntry.client_phone !== "-"
+            enrichedEntry.client_phone &&
+            enrichedEntry.client_phone !== "-" &&
+            enrichedEntry.client_phone !== ""
               ? "#059669"
               : "#9ca3af"
-          }; font-weight: 600;">${enrichedEntry.client_phone || "-"}</span>
+          }; font-weight: 600;">${
+    enrichedEntry.client_phone &&
+    enrichedEntry.client_phone !== "" &&
+    enrichedEntry.client_phone !== "-"
+      ? enrichedEntry.client_phone
+      : "-"
+  }</span>
         </div>
       </div>
     </div>
@@ -6170,71 +6208,184 @@ window.showHistoryEntryDetail = async function (entryId) {
           <strong style="color: #374151;">Agent visiteur:</strong> 
           <span style="color: ${
             (enrichedEntry.nom_agent_visiteur ||
-              enrichedEntry.visitor_agent_name) &&
+              enrichedEntry.visitor_agent_name ||
+              localStorage.getItem(
+                `agent_visiteur_${enrichedEntry.delivery_id}`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_visitor_agent_name`
+              )) &&
             (enrichedEntry.nom_agent_visiteur ||
-              enrichedEntry.visitor_agent_name) !== "-"
+              enrichedEntry.visitor_agent_name ||
+              localStorage.getItem(
+                `agent_visiteur_${enrichedEntry.delivery_id}`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_visitor_agent_name`
+              )) !== "-"
               ? "#059669"
               : "#ef4444"
           }; font-weight: 600;">${
     enrichedEntry.nom_agent_visiteur ||
     enrichedEntry.visitor_agent_name ||
+    localStorage.getItem(`agent_visiteur_${enrichedEntry.delivery_id}`) ||
+    localStorage.getItem(
+      `deliverycell_${enrichedEntry.delivery_id}_visitor_agent_name`
+    ) ||
     "Non défini"
   }</span>
         </div>
         <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
           <strong style="color: #374151;">Transporteur:</strong> 
           <span style="color: ${
-            enrichedEntry.transporter && enrichedEntry.transporter !== "-"
+            (enrichedEntry.transporter ||
+              localStorage.getItem(
+                `transporteur_${enrichedEntry.delivery_id}`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_transporter`
+              )) &&
+            (enrichedEntry.transporter ||
+              localStorage.getItem(
+                `transporteur_${enrichedEntry.delivery_id}`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_transporter`
+              )) !== "-"
               ? "#059669"
               : "#ef4444"
           }; font-weight: 600;">${
-    enrichedEntry.transporter || "Non défini"
+    enrichedEntry.transporter ||
+    localStorage.getItem(`transporteur_${enrichedEntry.delivery_id}`) ||
+    localStorage.getItem(
+      `deliverycell_${enrichedEntry.delivery_id}_transporter`
+    ) ||
+    "Non défini"
   }</span>
         </div>
         <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
           <strong style="color: #374151;">Inspecteur:</strong> 
           <span style="color: ${
-            (enrichedEntry.inspector || enrichedEntry.inspecteur) &&
-            (enrichedEntry.inspector || enrichedEntry.inspecteur) !== "-"
+            (enrichedEntry.inspector ||
+              enrichedEntry.inspecteur ||
+              localStorage.getItem(`inspecteur_${enrichedEntry.delivery_id}`) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_inspector`
+              )) &&
+            (enrichedEntry.inspector ||
+              enrichedEntry.inspecteur ||
+              localStorage.getItem(`inspecteur_${enrichedEntry.delivery_id}`) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_inspector`
+              )) !== "-"
               ? "#059669"
               : "#ef4444"
           }; font-weight: 600;">${
-    enrichedEntry.inspector || enrichedEntry.inspecteur || "Non défini"
+    enrichedEntry.inspector ||
+    enrichedEntry.inspecteur ||
+    localStorage.getItem(`inspecteur_${enrichedEntry.delivery_id}`) ||
+    localStorage.getItem(
+      `deliverycell_${enrichedEntry.delivery_id}_inspector`
+    ) ||
+    "Non défini"
   }</span>
         </div>
         <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
           <strong style="color: #374151;">Agent en douanes:</strong> 
           <span style="color: ${
-            (enrichedEntry.customs_agent || enrichedEntry.agent_en_douanes) &&
-            (enrichedEntry.customs_agent || enrichedEntry.agent_en_douanes) !==
-              "-"
+            (enrichedEntry.customs_agent ||
+              enrichedEntry.agent_en_douanes ||
+              localStorage.getItem(
+                `agent_douanes_${enrichedEntry.delivery_id}`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_customs_agent`
+              )) &&
+            (enrichedEntry.customs_agent ||
+              enrichedEntry.agent_en_douanes ||
+              localStorage.getItem(
+                `agent_douanes_${enrichedEntry.delivery_id}`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_customs_agent`
+              )) !== "-"
               ? "#059669"
               : "#ef4444"
           }; font-weight: 600;">${
     enrichedEntry.customs_agent ||
     enrichedEntry.agent_en_douanes ||
+    localStorage.getItem(`agent_douanes_${enrichedEntry.delivery_id}`) ||
+    localStorage.getItem(
+      `deliverycell_${enrichedEntry.delivery_id}_customs_agent`
+    ) ||
     "Non défini"
   }</span>
         </div>
         <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
           <strong style="color: #374151;">Chauffeur:</strong> 
           <span style="color: ${
-            (enrichedEntry.driver || enrichedEntry.driver_name) &&
-            (enrichedEntry.driver || enrichedEntry.driver_name) !== "-"
+            (enrichedEntry.driver ||
+              enrichedEntry.driver_name ||
+              enrichedEntry.chauffeur ||
+              localStorage.getItem(`chauffeur_${enrichedEntry.delivery_id}`) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_driver`
+              )) &&
+            (enrichedEntry.driver ||
+              enrichedEntry.driver_name ||
+              enrichedEntry.chauffeur ||
+              localStorage.getItem(`chauffeur_${enrichedEntry.delivery_id}`) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_driver`
+              )) !== "-"
               ? "#059669"
               : "#ef4444"
           }; font-weight: 600;">${
-    enrichedEntry.driver || enrichedEntry.driver_name || "Non défini"
+    enrichedEntry.driver ||
+    enrichedEntry.driver_name ||
+    enrichedEntry.chauffeur ||
+    localStorage.getItem(`chauffeur_${enrichedEntry.delivery_id}`) ||
+    localStorage.getItem(`deliverycell_${enrichedEntry.delivery_id}_driver`) ||
+    "Non défini"
   }</span>
         </div>
         <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
           <strong style="color: #374151;">Tél. chauffeur:</strong> 
           <span style="color: ${
-            enrichedEntry.driver_phone && enrichedEntry.driver_phone !== "-"
+            (enrichedEntry.driver_phone ||
+              enrichedEntry.tel_chauffeur ||
+              localStorage.getItem(
+                `tel_chauffeur_${enrichedEntry.delivery_id}`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_driver_phone`
+              )) &&
+            (enrichedEntry.driver_phone ||
+              enrichedEntry.tel_chauffeur ||
+              localStorage.getItem(
+                `tel_chauffeur_${enrichedEntry.delivery_id}`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_driver_phone`
+              )) !== "-" &&
+            (enrichedEntry.driver_phone ||
+              enrichedEntry.tel_chauffeur ||
+              localStorage.getItem(
+                `tel_chauffeur_${enrichedEntry.delivery_id}`
+              ) ||
+              localStorage.getItem(
+                `deliverycell_${enrichedEntry.delivery_id}_driver_phone`
+              )) !== ""
               ? "#059669"
               : "#ef4444"
           }; font-weight: 600;">${
-    enrichedEntry.driver_phone || "Non défini"
+    enrichedEntry.driver_phone ||
+    enrichedEntry.tel_chauffeur ||
+    localStorage.getItem(`tel_chauffeur_${enrichedEntry.delivery_id}`) ||
+    localStorage.getItem(
+      `deliverycell_${enrichedEntry.delivery_id}_driver_phone`
+    ) ||
+    "Non défini"
   }</span>
         </div>
       </div>
