@@ -782,254 +782,261 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 100);
   };
 
-  // Fonction pour afficher le pop-up détaillé d'un ordre de livraison
+  // Fonction pour afficher le pop-up détaillé d'un ordre de livraison - Version améliorée
   window.showOrderDetailPopup = function (order) {
     // Supprime l'ancien pop-up s'il existe
     var oldModal = document.getElementById("orderDetailModal");
     if (oldModal) oldModal.remove();
-    // Crée le fond
+
+    // Crée le fond avec une transition douce
     var modalBg = document.createElement("div");
     modalBg.id = "orderDetailModal";
-    modalBg.style.position = "fixed";
-    modalBg.style.top = "0";
-    modalBg.style.left = "0";
-    modalBg.style.width = "100vw";
-    modalBg.style.height = "100vh";
-    modalBg.style.background = "rgba(30,41,59,0.32)";
-    modalBg.style.zIndex = "5000";
-    modalBg.style.display = "flex";
-    modalBg.style.alignItems = "center";
-    modalBg.style.justifyContent = "center";
+    modalBg.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 5000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    `;
+
     // Désactive le scroll de la page derrière la popup
     document.body.classList.add("overflow-hidden");
-    // Crée la boîte
+
+    // Crée la boîte modale
     var modalBox = document.createElement("div");
-    // Responsive styles
     var isMobile =
       window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
-    modalBox.style.background = "#fff";
-    modalBox.style.borderRadius = isMobile ? "13px" : "18px";
-    modalBox.style.boxShadow = isMobile
-      ? "0 2px 16px #2563eb22"
-      : "0 8px 32px #2563eb33";
-    modalBox.style.padding = isMobile
-      ? "18px 7vw 14px 7vw"
-      : "28px 22px 18px 22px";
-    modalBox.style.maxWidth = isMobile ? "98vw" : "98vw";
-    modalBox.style.width = isMobile ? "98vw" : "410px";
-    modalBox.style.maxHeight = isMobile ? "95vh" : "90vh";
-    modalBox.style.overflowY = "auto";
-    modalBox.style.position = "relative";
-    // Bouton fermer responsive
+
+    modalBox.style.cssText = `
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      padding: ${isMobile ? "20px" : "30px"};
+      max-width: ${isMobile ? "90vw" : "500px"};
+      width: ${isMobile ? "90vw" : "500px"};
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    `;
+
+    // Bouton fermer élégant
     var closeBtn = document.createElement("button");
-    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-    closeBtn.setAttribute("aria-label", "Fermer");
-    closeBtn.style.position = "absolute";
-    if (isMobile) {
-      closeBtn.style.top = "-14px";
-      closeBtn.style.right = "-10px";
-      closeBtn.style.width = "38px";
-      closeBtn.style.height = "38px";
-      closeBtn.style.fontSize = "1.25em";
-      closeBtn.style.background = "#f1f5f9";
-      closeBtn.style.borderRadius = "50%";
-      closeBtn.style.display = "flex";
-      closeBtn.style.alignItems = "center";
-      closeBtn.style.justifyContent = "center";
-      closeBtn.style.boxShadow = "0 1px 6px #2563eb11";
-      closeBtn.style.border = "none";
-      closeBtn.style.zIndex = "10";
-      closeBtn.style.padding = "0";
-      closeBtn.style.color = "#2563eb";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.onmouseover = function () {
-        closeBtn.style.background = "#e0e7ff";
-      };
-      closeBtn.onmouseout = function () {
-        closeBtn.style.background = "#f1f5f9";
-      };
-    } else {
-      closeBtn.style.top = "18px";
-      closeBtn.style.right = "22px";
-      closeBtn.style.width = "44px";
-      closeBtn.style.height = "44px";
-      closeBtn.style.fontSize = "1.5em";
-      closeBtn.style.background = "none";
-      closeBtn.style.border = "none";
-      closeBtn.style.color = "#2563eb";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.style.padding = "0";
-    }
-    closeBtn.onclick = function () {
-      modalBg.remove();
-      document.body.classList.remove("overflow-hidden");
+    closeBtn.innerHTML = "×";
+    closeBtn.style.cssText = `
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 35px;
+      height: 35px;
+      border: none;
+      background: #f8f9fa;
+      border-radius: 50%;
+      font-size: 20px;
+      font-weight: bold;
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    `;
+
+    closeBtn.onmouseover = function () {
+      closeBtn.style.background = "#e5e7eb";
+      closeBtn.style.color = "#374151";
     };
+    closeBtn.onmouseout = function () {
+      closeBtn.style.background = "#f8f9fa";
+      closeBtn.style.color = "#6b7280";
+    };
+
+    closeBtn.onclick = function () {
+      modalBg.style.opacity = "0";
+      modalBox.style.transform = "scale(0.9)";
+      setTimeout(() => {
+        modalBg.remove();
+        document.body.classList.remove("overflow-hidden");
+      }, 300);
+    };
+
     modalBox.appendChild(closeBtn);
-    // Titre principal
+
+    // Titre principal simple et élégant
     var title = document.createElement("div");
-    title.textContent = "Détail de l'ordre de livraison";
-    title.style.color = "#2563eb";
-    title.style.fontWeight = "bold";
-    title.style.fontSize = isMobile ? "1.08em" : "1.18em";
-    title.style.marginBottom = isMobile ? "18px" : "16px";
-    title.style.marginTop = isMobile ? "18px" : "0";
-    title.style.textAlign = "center";
+    title.textContent = "Détails de la livraison";
+    title.style.cssText = `
+      color: #1f2937;
+      font-weight: 600;
+      font-size: ${isMobile ? "18px" : "20px"};
+      margin-bottom: 25px;
+      padding-right: 40px;
+      line-height: 1.3;
+    `;
     modalBox.appendChild(title);
 
-    // Contenu détaillé ou message d'erreur si data absent
+    // Contenu détaillé avec un design simplifié
     var html = "";
     if (!order || !order.data) {
-      html = `<div style='color:#dc2626;font-weight:bold;padding:18px 0;text-align:center;'>Aucune donnée détaillée à afficher pour cet ordre.<br>Vérifiez la sauvegarde de l'historique.</div>`;
+      html = `
+        <div style="
+          color: #dc2626;
+          background: #fee2e2;
+          padding: 20px;
+          border-radius: 8px;
+          text-align: center;
+          font-weight: 500;
+        ">
+          Aucune donnée disponible pour cet ordre
+        </div>
+      `;
     } else {
       var d = order.data;
-      html = `<div class="order-detail-main" style="display:flex;flex-direction:column;gap:${
-        isMobile ? "10px" : "16px"
-      };font-size:${isMobile ? "0.99em" : "1.07em"};line-height:1.7;">
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Date</span><br><span style='font-weight:700;color:#2563eb;'>${
-            order.date || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Agent</span><br><span style='font-weight:700;'>${
-            d.employeeName || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Client</span><br><span style='font-weight:700;'>${
-            d.clientName || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Téléphone</span><br><span style='font-weight:700;'>${
-            d.clientPhone || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Conteneur(s)</span><br><span style='font-weight:700;'>${
+
+      // Fonction helper pour créer une ligne d'information
+      function createInfoRow(label, value, isHighlight = false) {
+        const bgColor = isHighlight ? "#f8fafc" : "#ffffff";
+        return `
+          <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: ${bgColor};
+            border-radius: 6px;
+            border-left: 3px solid ${isHighlight ? "#3b82f6" : "#e5e7eb"};
+          ">
+            <span style="color: #6b7280; font-weight: 500; font-size: 14px;">${label}</span>
+            <span style="color: #1f2937; font-weight: 600; text-align: right; max-width: 60%;">${
+              value || "-"
+            }</span>
+          </div>
+        `;
+      }
+
+      html = `
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          ${createInfoRow("Date", order.date || "-", true)}
+          ${createInfoRow("Agent", d.employeeName || "-")}
+          ${createInfoRow("Client", d.clientName || "-", true)}
+          ${createInfoRow("Téléphone", d.clientPhone || "-")}
+          ${createInfoRow(
+            "Conteneur(s)",
             Array.isArray(d.containerNumbers)
               ? d.containerNumbers.join(", ")
-              : d.containerNumbers || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Type(s) de pied</span><br><span style='font-weight:700;'>${
-            d.containerFootType || "-"
-          }</span></div>
+              : d.containerNumbers || "-",
+            true
+          )}
+          ${createInfoRow("Type de pied", d.containerFootType || "-")}
+          ${createInfoRow("Poids", d.weight || "-", true)}
+          ${createInfoRow("Contenu", d.containerTypeAndContent || "-")}
+          ${createInfoRow("Lieu", d.lieu || "-", true)}
+          ${createInfoRow("N° Déclaration", d.declarationNumber || "-")}
+          ${createInfoRow("Nb conteneurs", d.numberOfContainers || "-", true)}
+          ${createInfoRow("N° BL", d.blNumber || "-")}
+          ${createInfoRow("N° Dossier", d.dossierNumber || "-", true)}
+          ${createInfoRow("Compagnie maritime", d.shippingCompany || "-")}
+          ${createInfoRow("Navire", d.shipName || "-", true)}
+          ${createInfoRow("Circuit", d.circuit || "-")}
+          ${createInfoRow("Mode transport", d.transporterMode || "-", true)}
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Poids</span><br><span style='font-weight:700;'>${
-            d.weight || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Contenu</span><br><span style='font-weight:700;'>${
-            d.containerTypeAndContent || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Lieu</span><br><span style='font-weight:700;'>${
-            d.lieu || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Déclaration</span><br><span style='font-weight:700;'>${
-            d.declarationNumber || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Nombre de conteneurs</span><br><span style='font-weight:700;'>${
-            d.numberOfContainers || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>BL</span><br><span style='font-weight:700;'>${
-            d.blNumber || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Dossier</span><br><span style='font-weight:700;'>${
-            d.dossierNumber || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Compagnie maritime</span><br><span style='font-weight:700;'>${
-            d.shippingCompany || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Navire</span><br><span style='font-weight:700;'>${
-            d.shipName || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Circuit</span><br><span style='font-weight:700;'>${
-            d.circuit || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Mode de transport</span><br><span style='font-weight:700;'>${
-            d.transporterMode || "-"
-          }</span></div>
-        </div>
-      </div>`;
-      // Si mapping TC/type de pied détaillé
+      `;
+
+      // Section détaillée pour le mapping TC/pied/poids si disponible
       if (
         Array.isArray(d.containerFootTypesData) &&
         d.containerFootTypesData.length > 0
       ) {
-        html += `<div style='margin-top:${
-          isMobile ? "12px" : "18px"
-        };background:#f8fafc;padding:${
-          isMobile ? "10px 8px" : "12px 18px"
-        };border-radius:12px;'>
-          <div style='font-weight:700;color:#2563eb;margin-bottom:7px;'>Détail TC / Type de pied / Poids</div>
-          <ul style='padding-left:0;margin:0;list-style:none;'>`;
+        html += `
+          <div style="
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 3px solid #3b82f6;
+          ">
+            <div style="
+              font-weight: 600;
+              color: #1f2937;
+              margin-bottom: 12px;
+              font-size: 15px;
+            ">
+              Détail conteneurs
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+        `;
+
         for (var i = 0; i < d.containerFootTypesData.length; i++) {
           var obj = d.containerFootTypesData[i];
-          html += `<li style='margin-bottom:4px;'><span style='font-weight:bold;color:#1e293b;'>${
-            obj.tc
-          }</span> : <span style='color:#2563eb;'>${
-            obj.pied || "-"
-          }</span> / <span style='color:#334155;'>${
+          html += `
+            <div style="
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 12px;
+              background: white;
+              border-radius: 4px;
+              font-size: 14px;
+            ">
+              <span style="font-weight: 600; color: #1f2937;">${obj.tc}</span>
+              <span style="color: #6b7280;">${obj.pied || "-"} / ${
             obj.poids || "-"
-          }</span> kg</li>`;
+          } kg</span>
+            </div>
+          `;
         }
-        html += "</ul></div>";
+
+        html += `
+            </div>
+          </div>
+        `;
       }
     }
+
     var contentDiv = document.createElement("div");
     contentDiv.innerHTML = html;
     modalBox.appendChild(contentDiv);
     modalBg.appendChild(modalBox);
     document.body.appendChild(modalBg);
+
+    // Animation d'entrée
+    setTimeout(() => {
+      modalBg.style.opacity = "1";
+      modalBox.style.transform = "scale(1)";
+    }, 10);
+
     // Fermer au clic sur le fond (overlay)
     modalBg.addEventListener("click", function (e) {
       if (e.target === modalBg) {
-        modalBg.remove();
-        document.body.classList.remove("overflow-hidden");
+        modalBg.style.opacity = "0";
+        modalBox.style.transform = "scale(0.9)";
+        setTimeout(() => {
+          modalBg.remove();
+          document.body.classList.remove("overflow-hidden");
+        }, 300);
       }
     });
+
+    // Fermer avec la touche Escape
+    function handleEscape(e) {
+      if (e.key === "Escape") {
+        modalBg.style.opacity = "0";
+        modalBox.style.transform = "scale(0.9)";
+        setTimeout(() => {
+          modalBg.remove();
+          document.body.classList.remove("overflow-hidden");
+        }, 300);
+        document.removeEventListener("keydown", handleEscape);
+      }
+    }
+    document.addEventListener("keydown", handleEscape);
   };
 
   // --- Observer la visibilité du formulaire pour afficher/masquer l'icône ---
