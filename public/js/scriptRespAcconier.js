@@ -1336,6 +1336,19 @@ document.addEventListener("DOMContentLoaded", function () {
                   ),
                 }
               );
+
+              // 🔧 CORRECTION CRITIQUE : Stocker l'observation dans localStorage immédiatement
+              if (
+                delivery.observation_acconier &&
+                delivery.observation_acconier.trim() !== "" &&
+                delivery.observation_acconier !== "-"
+              ) {
+                const localKey = `obs_${delivery.id}`;
+                localStorage.setItem(localKey, delivery.observation_acconier);
+                console.log(
+                  `💾 [STOCK OBSERVATION] Livraison ${delivery.id}: "${delivery.observation_acconier}" stockée dans localStorage`
+                );
+              }
             }
 
             return finalFound;
@@ -4199,28 +4212,32 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           });
 
           // 🔧 CORRECTION MODE ADMIN : Priorité aux observations de l'utilisateur ciblé
-          const isAdminMode =
-            new URLSearchParams(window.location.search).get("mode") === "admin";
-          const targetUser = new URLSearchParams(window.location.search).get(
-            "targetUser"
-          );
+          const urlParams = new URLSearchParams(window.location.search);
+          const isAdminMode = urlParams.get("mode") === "admin";
+          const targetUser = urlParams.get("targetUser");
+
+          // 🔧 DÉTECTION ALTERNATIVE DU MODE ADMIN
+          const isAdminContext =
+            isAdminMode ||
+            window.location.href.includes("mode=admin") ||
+            window.location.href.includes("targetUser=");
 
           console.log(`🔍 [DEBUG MODE] Pour livraison ${delivery.id}:`, {
+            currentUrl: window.location.href,
             isAdminMode,
+            isAdminContext,
             targetUser,
             hasLocalObs: !!localObs,
             localObsTrimmed: localObs ? localObs.trim() : null,
             willUseLocalObs:
-              isAdminMode &&
-              targetUser &&
+              (isAdminMode || isAdminContext) &&
               localObs &&
               localObs.trim() !== "" &&
               localObs !== "-",
           });
 
           if (
-            isAdminMode &&
-            targetUser &&
+            (isAdminMode || isAdminContext) &&
             localObs &&
             localObs.trim() !== "" &&
             localObs !== "-"
@@ -4245,7 +4262,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           td.textContent = displayValue;
           if (localObs && value && value !== "-" && value !== localObs) {
             // En mode admin, ne pas supprimer les observations de l'utilisateur ciblé
-            if (!isAdminMode || !targetUser) {
+            if (!(isAdminMode || isAdminContext)) {
               localStorage.removeItem(localKey);
             }
           }
