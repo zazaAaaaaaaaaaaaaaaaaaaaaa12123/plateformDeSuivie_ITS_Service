@@ -107,6 +107,47 @@ function injectHistoryStyles() {
       }
     }
     
+    /* Styles pour le scroll horizontal du tableau de l'historique */
+    .history-group-content {
+      overflow-x: auto;
+      max-width: 100%;
+    }
+    
+    .history-table {
+      min-width: 900px; /* Force une largeur minimale pour afficher toutes les colonnes */
+      white-space: nowrap;
+    }
+    
+    .history-table th,
+    .history-table td {
+      white-space: nowrap;
+      min-width: 120px; /* Largeur minimale pour chaque cellule */
+    }
+    
+    .history-table th:first-child,
+    .history-table td:first-child {
+      min-width: 60px; /* Colonne de sélection plus petite */
+    }
+    
+    /* Scrollbar personnalisée pour un meilleur design */
+    .history-group-content::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    .history-group-content::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    
+    .history-group-content::-webkit-scrollbar-thumb {
+      background: #059669;
+      border-radius: 4px;
+    }
+    
+    .history-group-content::-webkit-scrollbar-thumb:hover {
+      background: #047857;
+    }
+    
     /* Styles pour les badges de statut */
     .history-status-badge {
       display: inline-flex;
@@ -3239,10 +3280,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               td.title = input.value;
               td.dataset.edited = "true";
               // Sauvegarde dans localStorage
-              localStorage.setItem(
-                getCellStorageKey(delivery, col.id),
-                input.value
-              );
+              const storageKey = getCellStorageKey(delivery, col.id);
+              localStorage.setItem(storageKey, input.value);
+
+              // Debug spécifique pour les agents
+              if (col.id === "visitor_agent_name") {
+                console.log(
+                  `[DEBUG SAVE AGENT] Livraison ${delivery.id}, sauvegardé avec clé "${storageKey}" = "${input.value}"`
+                );
+              }
+
               // === SYNCHRONISATION VERS SUIVIE ===
               syncDataToSuivie(delivery, col.id, input.value);
               // Plus de vérification des champs - accès libre
@@ -3257,10 +3304,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             td.title = input.value;
             td.dataset.edited = "true";
             // Sauvegarde dans localStorage
-            localStorage.setItem(
-              getCellStorageKey(delivery, col.id),
-              input.value
-            );
+            const storageKey = getCellStorageKey(delivery, col.id);
+            localStorage.setItem(storageKey, input.value);
+
+            // Debug spécifique pour les agents
+            if (col.id === "visitor_agent_name") {
+              console.log(
+                `[DEBUG SAVE AGENT BLUR] Livraison ${delivery.id}, sauvegardé avec clé "${storageKey}" = "${input.value}"`
+              );
+            }
+
             // === SYNCHRONISATION VERS SUIVIE ===
             syncDataToSuivie(delivery, col.id, input.value);
             setTimeout(() => {
@@ -4874,12 +4927,23 @@ function getTableCellValue(deliveryId, fieldId) {
       console.log(`[DEBUG AGENT] ${key} = "${localStorage.getItem(key)}"`);
     });
 
-    // Essayer différentes clés possibles
+    // Essayer différentes clés possibles avec pattern comme getCellStorageKey
     const keys = [
       `deliverycell_${deliveryId}_visitor_agent_name`,
       `agent_visiteur_${deliveryId}`,
       `deliverycell_${deliveryId}_nom_agent_visiteur`,
     ];
+
+    // Ajouter toutes les clés qui contiennent deliveryId et visitor_agent_name
+    const dynamicKeys = allKeys.filter(
+      (key) =>
+        (key.includes(`${deliveryId}_visitor_agent_name`) ||
+          (key.includes(`visitor_agent_name`) && key.includes(deliveryId))) &&
+        !keys.includes(key)
+    );
+    keys.push(...dynamicKeys);
+
+    console.log(`[DEBUG AGENT] Clés testées:`, keys);
 
     for (const key of keys) {
       const savedValue = localStorage.getItem(key);
