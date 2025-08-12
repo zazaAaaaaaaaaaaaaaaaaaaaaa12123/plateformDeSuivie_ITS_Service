@@ -2140,24 +2140,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           // Vérifier si on est en mode édition ET que la colonne est éditable
           if (!isTableEditMode || !EDITABLE_COLUMNS.includes(col.id)) return;
 
-          let currentValue = "";
-          // Récupérer la valeur actuelle depuis les données
-          if (delivery.container_numbers_list) {
-            try {
-              let tcList = [];
-              if (typeof delivery.container_numbers_list === "string") {
-                tcList = JSON.parse(delivery.container_numbers_list);
-              } else if (Array.isArray(delivery.container_numbers_list)) {
-                tcList = delivery.container_numbers_list;
-              }
-              currentValue = tcList.filter(Boolean).join(", ");
-            } catch (e) {
-              currentValue = delivery.container_number || "";
-            }
-          } else if (Array.isArray(delivery.container_number)) {
-            currentValue = delivery.container_number.filter(Boolean).join(", ");
-          } else if (typeof delivery.container_number === "string") {
-            currentValue = delivery.container_number;
+          // Récupérer la valeur actuelle depuis les données sauvegardées ou originales
+          let currentValue = getCellValue(delivery, col.id);
+
+          // Si getCellValue retourne "-", utiliser une chaîne vide pour l'édition
+          if (currentValue === "-") {
+            currentValue = "";
+          }
+
+          // Si c'est un array, le convertir en chaîne avec virgules
+          if (Array.isArray(currentValue)) {
+            currentValue = currentValue.filter(Boolean).join(", ");
           }
 
           const input = document.createElement("input");
@@ -2180,10 +2173,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
           const saveEdit = () => {
             const newValue = input.value.trim();
-            if (!editedCellsData[delivery.id]) {
-              editedCellsData[delivery.id] = {};
-            }
-            editedCellsData[delivery.id][col.id] = newValue;
+
+            // Sauvegarder la modification avec synchronisation serveur
+            saveCellValue(delivery.id, col.id, newValue);
 
             // Mettre à jour les données de livraison avec la nouvelle valeur
             if (newValue) {
@@ -2277,27 +2269,41 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // Rendu normal : logique existante avec badge/tag et menu déroulant statut
         let tcList = [];
 
-        // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
-        if (delivery.container_numbers_list) {
-          try {
-            if (typeof delivery.container_numbers_list === "string") {
-              tcList = JSON.parse(delivery.container_numbers_list);
-            } else if (Array.isArray(delivery.container_numbers_list)) {
-              tcList = delivery.container_numbers_list;
-            }
-            tcList = tcList.filter(Boolean); // Supprimer les valeurs vides
-          } catch (e) {
-            console.warn("Erreur parsing container_numbers_list:", e);
-            tcList = [];
-          }
-        }
+        // Récupérer la valeur éditée s'il y en a une
+        const editedValue = getCellValue(delivery, col.id);
 
-        // PRIORITÉ 2 : Si pas de données JSON, utiliser le champ classique
-        if (tcList.length === 0) {
-          if (Array.isArray(delivery.container_number)) {
-            tcList = delivery.container_number.filter(Boolean);
-          } else if (typeof delivery.container_number === "string") {
-            tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        if (editedValue && editedValue !== "-") {
+          // Utiliser la valeur éditée
+          if (typeof editedValue === "string") {
+            tcList = editedValue.split(/[,;\s]+/).filter(Boolean);
+          } else if (Array.isArray(editedValue)) {
+            tcList = editedValue.filter(Boolean);
+          }
+        } else {
+          // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
+          if (delivery.container_numbers_list) {
+            try {
+              if (typeof delivery.container_numbers_list === "string") {
+                tcList = JSON.parse(delivery.container_numbers_list);
+              } else if (Array.isArray(delivery.container_numbers_list)) {
+                tcList = delivery.container_numbers_list;
+              }
+              tcList = tcList.filter(Boolean); // Supprimer les valeurs vides
+            } catch (e) {
+              console.warn("Erreur parsing container_numbers_list:", e);
+              tcList = [];
+            }
+          }
+
+          // PRIORITÉ 2 : Si pas de données JSON, utiliser le champ classique
+          if (tcList.length === 0) {
+            if (Array.isArray(delivery.container_number)) {
+              tcList = delivery.container_number.filter(Boolean);
+            } else if (typeof delivery.container_number === "string") {
+              tcList = delivery.container_number
+                .split(/[,;\s]+/)
+                .filter(Boolean);
+            }
           }
         }
         if (tcList.length > 1) {
@@ -2375,12 +2381,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           // Vérifier si on est en mode édition ET que la colonne est éditable
           if (!isTableEditMode || !EDITABLE_COLUMNS.includes(col.id)) return;
 
-          let currentValue = "";
-          // Récupérer la valeur actuelle depuis les données
-          if (Array.isArray(delivery.bl_number)) {
-            currentValue = delivery.bl_number.filter(Boolean).join(", ");
-          } else if (typeof delivery.bl_number === "string") {
-            currentValue = delivery.bl_number;
+          // Récupérer la valeur actuelle depuis les données sauvegardées ou originales
+          let currentValue = getCellValue(delivery, col.id);
+
+          // Si getCellValue retourne "-", utiliser une chaîne vide pour l'édition
+          if (currentValue === "-") {
+            currentValue = "";
+          }
+
+          // Si c'est un array, le convertir en chaîne avec virgules
+          if (Array.isArray(currentValue)) {
+            currentValue = currentValue.filter(Boolean).join(", ");
           }
 
           const input = document.createElement("input");
@@ -2403,10 +2414,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
           const saveEdit = () => {
             const newValue = input.value.trim();
-            if (!editedCellsData[delivery.id]) {
-              editedCellsData[delivery.id] = {};
-            }
-            editedCellsData[delivery.id][col.id] = newValue;
+
+            // Sauvegarder la modification avec synchronisation serveur
+            saveCellValue(delivery.id, col.id, newValue);
 
             // Mettre à jour les données de livraison avec la nouvelle valeur
             if (newValue) {
@@ -2477,10 +2487,24 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
         // Rendu normal (non-édition) : logique existante avec badge/tag et menu déroulant popup
         let blList = [];
-        if (Array.isArray(delivery.bl_number)) {
-          blList = delivery.bl_number.filter(Boolean);
-        } else if (typeof delivery.bl_number === "string") {
-          blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+
+        // Récupérer la valeur éditée s'il y en a une
+        const editedValue = getCellValue(delivery, col.id);
+
+        if (editedValue && editedValue !== "-") {
+          // Utiliser la valeur éditée
+          if (typeof editedValue === "string") {
+            blList = editedValue.split(/[,;\s]+/).filter(Boolean);
+          } else if (Array.isArray(editedValue)) {
+            blList = editedValue.filter(Boolean);
+          }
+        } else {
+          // Utiliser les données originales
+          if (Array.isArray(delivery.bl_number)) {
+            blList = delivery.bl_number.filter(Boolean);
+          } else if (typeof delivery.bl_number === "string") {
+            blList = delivery.bl_number.split(/[,;\s]+/).filter(Boolean);
+          }
         }
         if (blList.length > 1) {
           td.classList.add("tc-multi-cell");
@@ -3439,11 +3463,31 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   "mise-en-livraison-success-alert"
                 );
                 if (oldAlert) oldAlert.remove();
-                // (Aucun bloc Numéro du conteneur dans la pop-up BL)
+
+                // Créer la nouvelle alerte
+                const alert = document.createElement("div");
+                alert.id = "mise-en-livraison-success-alert";
+                alert.style.position = "fixed";
+                alert.style.top = "20px";
+                alert.style.left = "50%";
+                alert.style.transform = "translateX(-50%)";
+                alert.style.background =
+                  "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
+                alert.style.color = "#fff";
+                alert.style.fontWeight = "bold";
+                alert.style.fontSize = "1.1em";
+                alert.style.padding = "15px 30px";
+                alert.style.borderRadius = "12px";
                 alert.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
                 alert.style.zIndex = 99999;
                 alert.style.opacity = "0";
                 alert.style.transition = "opacity 0.3s";
+                alert.style.display = "flex";
+                alert.style.alignItems = "center";
+                alert.style.gap = "10px";
+                alert.innerHTML =
+                  '<i class="fas fa-check-circle" style="font-size:1.2em;"></i> Mise en livraison effectuée';
+
                 document.body.appendChild(alert);
                 setTimeout(() => {
                   alert.style.opacity = "1";
@@ -3451,7 +3495,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 setTimeout(() => {
                   alert.style.opacity = "0";
                   setTimeout(() => alert.remove(), 400);
-                }, 2600);
+                }, 3000);
               }
             }
             // 1. MAJ locale immédiate du statut BL
@@ -3681,8 +3725,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
         // Utiliser la valeur éditée si disponible
         value =
-          getCellValue(delivery.id, col.id) !== "-"
-            ? getCellValue(delivery.id, col.id)
+          getCellValue(delivery, col.id) !== "-"
+            ? getCellValue(delivery, col.id)
             : value;
 
         // Traitement spécial pour les colonnes éditables
@@ -4384,3 +4428,4 @@ if (bodyElement) {
     subtree: true,
   });
 }
+/***MON JESUS EST LE SEUL DIEU */
