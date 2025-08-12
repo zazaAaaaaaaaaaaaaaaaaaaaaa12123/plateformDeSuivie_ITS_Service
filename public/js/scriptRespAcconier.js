@@ -4189,12 +4189,34 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           let localObs = localStorage.getItem(localKey);
           let displayValue = value;
 
+          // 🔧 DEBUG INTENSIF : Vérifier exactement ce qui se passe
+          console.log(`🔍 [DEBUG OBSERVATION] Livraison ${delivery.id}:`, {
+            localKey,
+            localObs,
+            value,
+            hasLocalObs: !!localObs,
+            localObsLength: localObs ? localObs.length : 0,
+          });
+
           // 🔧 CORRECTION MODE ADMIN : Priorité aux observations de l'utilisateur ciblé
           const isAdminMode =
             new URLSearchParams(window.location.search).get("mode") === "admin";
           const targetUser = new URLSearchParams(window.location.search).get(
             "targetUser"
           );
+
+          console.log(`🔍 [DEBUG MODE] Pour livraison ${delivery.id}:`, {
+            isAdminMode,
+            targetUser,
+            hasLocalObs: !!localObs,
+            localObsTrimmed: localObs ? localObs.trim() : null,
+            willUseLocalObs:
+              isAdminMode &&
+              targetUser &&
+              localObs &&
+              localObs.trim() !== "" &&
+              localObs !== "-",
+          });
 
           if (
             isAdminMode &&
@@ -4206,12 +4228,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             // En mode admin, prioriser les observations de l'utilisateur ciblé
             displayValue = localObs;
             console.log(
-              `📝 [ADMIN MODE] Observation affichée pour livraison ${delivery.id}:`,
-              displayValue
+              `📝 [ADMIN MODE] ✅ Observation affichée pour livraison ${delivery.id}: "${displayValue}"`
             );
           } else if (value === "-" && localObs) {
             // Mode normal : afficher localObs seulement si value est "-"
             displayValue = localObs;
+            console.log(
+              `📝 [MODE NORMAL] Observation affichée pour livraison ${delivery.id}: "${displayValue}"`
+            );
+          } else {
+            console.log(
+              `📝 [PAS D'OBSERVATION] Livraison ${delivery.id}: Aucune observation à afficher (value: "${value}", localObs: "${localObs}")`
+            );
           }
 
           td.textContent = displayValue;
