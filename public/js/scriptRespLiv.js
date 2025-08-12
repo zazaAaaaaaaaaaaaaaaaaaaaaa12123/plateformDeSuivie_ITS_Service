@@ -336,20 +336,23 @@ function injectHistoryStyles() {
     /* Styles pour le système de compte à rebours */
     .countdown-container {
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
       color: white;
-      padding: 12px 16px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      padding: 20px 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4);
       z-index: 100000;
       font-weight: 600;
-      font-size: 0.9em;
+      font-size: 1em;
       cursor: pointer;
       transition: all 0.3s ease;
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      border: 3px solid rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
+      text-align: center;
+      min-width: 280px;
     }
     
     .countdown-container:hover {
@@ -487,6 +490,35 @@ function injectHistoryStyles() {
     }
   `;
   document.head.appendChild(style);
+}
+
+// Fonction globale pour afficher des notifications
+function showNotification(message, type = "success") {
+  const notification = document.createElement("div");
+  notification.className = "history-notification";
+  notification.style.position = "fixed";
+  notification.style.top = "20px";
+  notification.style.right = "20px";
+  notification.style.background = type === "success" ? "#059669" : "#ef4444";
+  notification.style.color = "white";
+  notification.style.padding = "12px 20px";
+  notification.style.borderRadius = "8px";
+  notification.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+  notification.style.zIndex = "100500";
+  notification.style.transform = "translateX(100%)";
+  notification.style.transition = "transform 0.3s ease";
+  notification.textContent = message;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.transform = "translateX(0)";
+  }, 100);
+
+  setTimeout(() => {
+    notification.style.transform = "translateX(100%)";
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
 }
 
 // Fonction utilitaire pour récupérer les paramètres URL
@@ -4799,6 +4831,7 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       circuit: delivery.circuit,
       shipping_company: delivery.shipping_company,
       visitor_agent_name: delivery.visitor_agent_name,
+      nom_agent_visiteur: delivery.nom_agent_visiteur,
       transporter: delivery.transporter,
       inspector: delivery.inspector,
       customs_agent: delivery.customs_agent,
@@ -5222,6 +5255,10 @@ function showProfessionalHistoryModal() {
               container.visitor_agent_name
                 .toLowerCase()
                 .includes(searchTerm)) ||
+            (container.nom_agent_visiteur &&
+              container.nom_agent_visiteur
+                .toLowerCase()
+                .includes(searchTerm)) ||
             (container.transporter &&
               container.transporter.toLowerCase().includes(searchTerm))
         );
@@ -5377,7 +5414,9 @@ function showProfessionalHistoryModal() {
                 container.client_name || "-"
               }</td>
               <td style="padding: 12px 15px; color: #4b5563;">${
-                container.visitor_agent_name || "-"
+                container.nom_agent_visiteur ||
+                container.visitor_agent_name ||
+                "Agent inconnu"
               }</td>
               <td style="padding: 12px 15px; color: #4b5563;">${
                 container.transporter || "-"
@@ -5486,23 +5525,6 @@ function showProfessionalHistoryModal() {
     } else {
       deleteBtn.style.animation = "none";
     }
-  }
-
-  // Fonction pour afficher une notification
-  function showNotification(message, type = "success") {
-    const notification = document.createElement("div");
-    notification.className = "history-notification";
-    notification.style.background = type === "success" ? "#059669" : "#ef4444";
-    notification.textContent = message;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => notification.classList.add("show"), 100);
-
-    setTimeout(() => {
-      notification.classList.remove("show");
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
   }
 
   // Événements des boutons
@@ -5684,7 +5706,8 @@ function groupHistoryByDelivery(history) {
     // Clé de groupement basée sur dossier, date de livraison et agent
     const date = new Date(entry.delivered_at).toDateString();
     const dossier = entry.dossier_number || "UNKNOWN";
-    const agent = entry.visitor_agent_name || "UNKNOWN";
+    const agent =
+      entry.nom_agent_visiteur || entry.visitor_agent_name || "UNKNOWN";
     const transporter = entry.transporter || "UNKNOWN";
 
     const groupKey = `${dossier}-${date}-${agent}-${transporter}`;
@@ -5693,7 +5716,7 @@ function groupHistoryByDelivery(history) {
       groups.set(groupKey, {
         dossier: entry.dossier_number,
         date: entry.delivered_at,
-        agent: entry.visitor_agent_name,
+        agent: entry.nom_agent_visiteur || entry.visitor_agent_name,
         transporter: entry.transporter,
         containers: [],
       });
