@@ -1724,6 +1724,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           });
 
+          // 🔧 Forcer le re-rendu du tableau en mode admin après chargement des observations
+          setTimeout(() => refreshTableInAdminMode(), 100);
+
           return data.observations;
         }
       } else if (response.status === 404) {
@@ -1764,6 +1767,10 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(
           `📝 [OBSERVATIONS LOCAL] ${localObservations.length} observations trouvées dans le localStorage`
         );
+
+        // 🔧 Forcer le re-rendu du tableau en mode admin après chargement des observations
+        setTimeout(() => refreshTableInAdminMode(), 100);
+
         return localObservations;
       } catch (localError) {
         console.warn(`⚠️ [OBSERVATIONS] Erreur recherche locale:`, localError);
@@ -1771,6 +1778,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     return [];
+  }
+
+  // 🔧 Fonction utilitaire pour forcer le re-rendu du tableau en mode admin
+  function refreshTableInAdminMode() {
+    const isAdminMode =
+      new URLSearchParams(window.location.search).get("mode") === "admin";
+    if (
+      isAdminMode &&
+      window.allDeliveries &&
+      window.allDeliveries.length > 0
+    ) {
+      const tableBody = document.getElementById("deliveriesTableBody");
+      if (tableBody) {
+        console.log(
+          `📝 [ADMIN MODE] Re-rendu du tableau avec ${window.allDeliveries.length} livraisons`
+        );
+        renderAgentTableFull(window.allDeliveries, tableBody);
+      }
+    }
   }
 
   // Fonction principale pour charger et afficher selon la plage de dates
@@ -4162,12 +4188,38 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           let localKey = `obs_${delivery.id}`;
           let localObs = localStorage.getItem(localKey);
           let displayValue = value;
-          if (value === "-" && localObs) {
+
+          // 🔧 CORRECTION MODE ADMIN : Priorité aux observations de l'utilisateur ciblé
+          const isAdminMode =
+            new URLSearchParams(window.location.search).get("mode") === "admin";
+          const targetUser = new URLSearchParams(window.location.search).get(
+            "targetUser"
+          );
+
+          if (
+            isAdminMode &&
+            targetUser &&
+            localObs &&
+            localObs.trim() !== "" &&
+            localObs !== "-"
+          ) {
+            // En mode admin, prioriser les observations de l'utilisateur ciblé
+            displayValue = localObs;
+            console.log(
+              `📝 [ADMIN MODE] Observation affichée pour livraison ${delivery.id}:`,
+              displayValue
+            );
+          } else if (value === "-" && localObs) {
+            // Mode normal : afficher localObs seulement si value est "-"
             displayValue = localObs;
           }
+
           td.textContent = displayValue;
           if (localObs && value && value !== "-" && value !== localObs) {
-            localStorage.removeItem(localKey);
+            // En mode admin, ne pas supprimer les observations de l'utilisateur ciblé
+            if (!isAdminMode || !targetUser) {
+              localStorage.removeItem(localKey);
+            }
           }
           // Tooltip custom au survol si texte tronqué
           td.addEventListener("mouseenter", function (e) {
