@@ -1005,12 +1005,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     modalBox.style.cssText = `
       background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-      border-radius: 16px;
+      border-radius: ${isMobile ? "12px" : "16px"};
       box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
       padding: 0;
-      max-width: ${isMobile ? "90vw" : "600px"};
-      width: ${isMobile ? "90vw" : "600px"};
-      max-height: 90vh;
+      max-width: ${isMobile ? "95vw" : "600px"};
+      width: ${isMobile ? "95vw" : "600px"};
+      max-height: ${isMobile ? "95vh" : "90vh"};
       overflow: hidden;
       position: relative;
       transform: scale(0.9) translateY(20px);
@@ -1022,7 +1022,7 @@ document.addEventListener("DOMContentLoaded", () => {
     var header = document.createElement("div");
     header.style.cssText = `
       background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      padding: 24px 30px;
+      padding: ${isMobile ? "16px 20px" : "24px 30px"};
       position: relative;
       overflow: hidden;
     `;
@@ -1129,9 +1129,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Corps du contenu avec style épuré
     var contentDiv = document.createElement("div");
     contentDiv.style.cssText = `
-      padding: 30px;
+      padding: ${isMobile ? "20px" : "30px"};
       background: #ffffff;
-      max-height: calc(90vh - 100px);
+      max-height: calc(${isMobile ? "95vh" : "90vh"} - ${
+      isMobile ? "80px" : "100px"
+    });
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: #cbd5e1 #f1f5f9;
@@ -1161,27 +1163,29 @@ document.addEventListener("DOMContentLoaded", () => {
       function createSection(title, items, color = "#3b82f6") {
         let sectionHtml = `
           <div style="
-            margin-bottom: 24px;
+            margin-bottom: ${isMobile ? "16px" : "24px"};
             background: #f8fafc;
-            border-radius: 12px;
+            border-radius: ${isMobile ? "8px" : "12px"};
             overflow: hidden;
             border: 1px solid #e2e8f0;
           ">
             <div style="
               background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);
               color: white;
-              padding: 16px 20px;
+              padding: ${isMobile ? "12px 16px" : "16px 20px"};
               font-weight: 600;
-              font-size: 0.95em;
+              font-size: ${isMobile ? "0.85em" : "0.95em"};
               letter-spacing: 0.3px;
               display: flex;
               align-items: center;
-              gap: 8px;
+              gap: ${isMobile ? "6px" : "8px"};
             ">
-              <i class='fas fa-folder-open' style="font-size: 0.9em;"></i>
+              <i class='fas fa-folder-open' style="font-size: ${
+                isMobile ? "0.8em" : "0.9em"
+              };"></i>
               ${title}
             </div>
-            <div style="padding: 20px;">
+            <div style="padding: ${isMobile ? "16px" : "20px"};">
         `;
 
         items.forEach((item) => {
@@ -1191,13 +1195,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 display: flex;
                 justify-content: space-between;
                 align-items: flex-start;
-                padding: 12px 0;
+                padding: ${isMobile ? "8px 0" : "12px 0"};
                 border-bottom: 1px solid #f1f5f9;
               ">
                 <span style="
                   color: #64748b;
                   font-weight: 500;
-                  font-size: 0.9em;
+                  font-size: ${isMobile ? "0.8em" : "0.9em"};
                   min-width: 40%;
                 ">${item.label}:</span>
                 <span style="
@@ -1205,7 +1209,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   font-weight: 600;
                   text-align: right;
                   flex: 1;
-                  font-size: 0.9em;
+                  font-size: ${isMobile ? "0.8em" : "0.9em"};
                   word-break: break-word;
                 ">${item.value}</span>
               </div>
@@ -1261,7 +1265,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ${createSection("Transport & Logistique", transportInfo, "#f59e0b")}
       `;
 
-        // Section spéciale pour les numéros TC avec carte et menu déroulant (Point 3)
+        // Section spéciale pour les numéros TC avec carte compacte et menu déroulant
         if (
           Array.isArray(d.containerFootTypesData) &&
           d.containerFootTypesData.length > 0
@@ -1269,28 +1273,36 @@ document.addEventListener("DOMContentLoaded", () => {
           html += `
           <div style="
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-radius: 12px;
+            border-radius: ${isMobile ? "8px" : "12px"};
             overflow: hidden;
             border: 1px solid #0891b2;
-            margin-bottom: 24px;
+            margin-bottom: ${isMobile ? "16px" : "24px"};
           ">
             <div style="
               background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
               color: white;
-              padding: 16px 20px;
+              padding: ${isMobile ? "12px 16px" : "16px 20px"};
               font-weight: 600;
-              font-size: 0.95em;
+              font-size: ${isMobile ? "0.85em" : "0.95em"};
               letter-spacing: 0.3px;
               display: flex;
               align-items: center;
               justify-content: space-between;
               cursor: pointer;
+              min-height: ${isMobile ? "40px" : "50px"};
             " onclick="toggleTCDetails()" id="tcCardHeader">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <i class='fas fa-shipping-fast' style="font-size: 0.9em;"></i>
+              <div style="display: flex; align-items: center; gap: ${
+                isMobile ? "6px" : "8px"
+              };">
+                <i class='fas fa-shipping-fast' style="font-size: ${
+                  isMobile ? "0.8em" : "0.9em"
+                };"></i>
                 Numéros TC (${d.containerFootTypesData.length})
               </div>
-              <i class='fas fa-chevron-down' id="tcChevron" style="transition: transform 0.3s ease;"></i>
+              <i class='fas fa-chevron-down' id="tcChevron" style="
+                transition: transform 0.3s ease;
+                font-size: ${isMobile ? "0.8em" : "0.9em"};
+              "></i>
             </div>
             
             <div id="tcDetailsContent" style="
@@ -1299,11 +1311,13 @@ document.addEventListener("DOMContentLoaded", () => {
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
               background: #ffffff;
             ">
-              <div style="padding: 20px;">
+              <div style="padding: ${isMobile ? "12px" : "20px"};">
                 <div style="
                   display: grid;
-                  gap: 12px;
-                  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                  gap: ${isMobile ? "8px" : "12px"};
+                  grid-template-columns: ${
+                    isMobile ? "1fr" : "repeat(auto-fit, minmax(250px, 1fr))"
+                  };
                 ">`;
 
           for (var i = 0; i < d.containerFootTypesData.length; i++) {
@@ -1312,8 +1326,8 @@ document.addEventListener("DOMContentLoaded", () => {
                   <div style="
                     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
                     border: 1px solid #e2e8f0;
-                    border-radius: 10px;
-                    padding: 16px;
+                    border-radius: ${isMobile ? "6px" : "10px"};
+                    padding: ${isMobile ? "12px" : "16px"};
                     transition: all 0.2s ease;
                     position: relative;
                     overflow: hidden;
@@ -1331,25 +1345,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div style="
                       display: flex;
                       align-items: center;
-                      gap: 10px;
-                      margin-bottom: 12px;
+                      gap: ${isMobile ? "8px" : "10px"};
+                      margin-bottom: ${isMobile ? "8px" : "12px"};
                     ">
                       <div style="
                         background: #0891b2;
                         color: white;
-                        width: 32px;
-                        height: 32px;
-                        border-radius: 8px;
+                        width: ${isMobile ? "24px" : "32px"};
+                        height: ${isMobile ? "24px" : "32px"};
+                        border-radius: ${isMobile ? "6px" : "8px"};
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         font-weight: 700;
-                        font-size: 0.8em;
+                        font-size: ${isMobile ? "0.7em" : "0.8em"};
                       ">${i + 1}</div>
                       <div style="
                         font-weight: 700;
                         color: #1e293b;
-                        font-size: 1.1em;
+                        font-size: ${isMobile ? "0.95em" : "1.1em"};
                         letter-spacing: -0.3px;
                       ">${obj.tc || "TC-" + (i + 1)}</div>
                     </div>
@@ -1357,13 +1371,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div style="
                       display: grid;
                       grid-template-columns: 1fr 1fr;
-                      gap: 8px;
-                      font-size: 0.85em;
+                      gap: ${isMobile ? "6px" : "8px"};
+                      font-size: ${isMobile ? "0.75em" : "0.85em"};
                     ">
                       <div style="
                         background: rgba(8, 145, 178, 0.1);
-                        padding: 8px 10px;
-                        border-radius: 6px;
+                        padding: ${isMobile ? "6px 8px" : "8px 10px"};
+                        border-radius: ${isMobile ? "4px" : "6px"};
                         text-align: center;
                       ">
                         <div style="color: #64748b; font-size: 0.7em; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Type</div>
@@ -1373,8 +1387,8 @@ document.addEventListener("DOMContentLoaded", () => {
                       </div>
                       <div style="
                         background: rgba(8, 145, 178, 0.1);
-                        padding: 8px 10px;
-                        border-radius: 6px;
+                        padding: ${isMobile ? "6px 8px" : "8px 10px"};
+                        border-radius: ${isMobile ? "4px" : "6px"};
                         text-align: center;
                       ">
                         <div style="color: #64748b; font-size: 0.7em; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Poids</div>
