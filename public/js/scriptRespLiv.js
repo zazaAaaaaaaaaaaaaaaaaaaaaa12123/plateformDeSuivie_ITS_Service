@@ -4593,7 +4593,7 @@ function saveToDeliveryHistory(delivery, containerNumber) {
 
     // Crée un enregistrement unique pour ce conteneur
     const historyEntry = {
-      id: Date.now() + Math.random(), // ID unique
+      id: `hist_${Date.now()}_${Math.floor(Math.random() * 10000)}`, // ID unique string
       delivery_id: delivery.id,
       container_number: containerNumber,
       dossier_number: delivery.dossier_number,
@@ -5160,9 +5160,9 @@ function showProfessionalHistoryModal() {
               (container, containerIndex) => `
             <tr class="history-table-row" style="border-bottom: 1px solid #e2e8f0;">
               <td style="padding: 12px 15px; text-align: center;">
-                <input type="checkbox" class="container-checkbox" data-container-id="${
+                <input type="checkbox" class="container-checkbox" data-container-id="${String(
                   container.id
-                }" style="transform: scale(1.2); cursor: pointer; accent-color: #059669;">
+                )}" style="transform: scale(1.2); cursor: pointer; accent-color: #059669;">
               </td>
               <td style="padding: 12px 15px; font-weight: bold; color: #059669;">${
                 container.container_number
@@ -5180,7 +5180,9 @@ function showProfessionalHistoryModal() {
                 container.transporter || "-"
               }</td>
               <td style="padding: 12px 15px; text-align: center;">
-                <button onclick="showHistoryEntryDetail('${container.id}')" 
+                <button onclick="showHistoryEntryDetail('${String(
+                  container.id
+                )}')" 
                   class="history-action-btn"
                   style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 500;">
                   📄 Détails
@@ -5330,32 +5332,120 @@ function showProfessionalHistoryModal() {
   });
 
   deleteBtn.addEventListener("click", () => {
-    if (selectedItems.size === 0) return;
+    if (selectedItems.size === 0) {
+      showNotification("Aucun élément sélectionné", "error");
+      return;
+    }
+
+    console.log(
+      "🗑️ [DELETE] Éléments sélectionnés:",
+      Array.from(selectedItems)
+    );
 
     if (
       confirm(
         `⚠️ Êtes-vous sûr de vouloir supprimer définitivement ${selectedItems.size} conteneur(s) de l'historique ?\n\nCette action est irréversible.`
       )
     ) {
-      const currentHistory = JSON.parse(
-        localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
-      );
-      const updatedHistory = currentHistory.filter(
-        (entry) => !selectedItems.has(entry.id)
-      );
-      localStorage.setItem(
-        DELIVERY_HISTORY_KEY,
-        JSON.stringify(updatedHistory)
-      );
+      try {
+        const currentHistory = JSON.parse(
+          localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+        );
 
-      showNotification(
-        `${selectedItems.size} conteneur(s) supprimé(s) de l'historique`
-      );
+        console.log(
+          "🗑️ [DELETE] Historique avant suppression:",
+          currentHistory.length,
+          "entrées"
+        );
+        console.log(
+          "🗑️ [DELETE] IDs dans l'historique:",
+          currentHistory.map((entry) => entry.id)
+        );
 
-      // Rechargement de la modal avec une animation
-      setTimeout(() => {
-        showProfessionalHistoryModal();
-      }, 1000);
+        const updatedHistory = currentHistory.filter((entry) => {
+          // Conversion en string pour assurer la comparaison
+          const entryId = String(entry.id);
+          const shouldKeep = !selectedItems.has(entryId);
+          if (!shouldKeep) {
+            console.log(
+              "🗑️ [DELETE] Suppression de l'entrée:",
+              entryId,
+              entry.container_number
+            );
+          }
+          return shouldKeep;
+        });
+
+        console.log(
+          "🗑️ [DELETE] Historique après suppression:",
+          updatedHistory.length,
+          "entrées"
+        );
+
+        // Sauvegarder le nouvel historique
+        localStorage.setItem(
+          DELIVERY_HISTORY_KEY,
+          JSON.stringify(updatedHistory)
+        );
+
+        // Vérifier que la sauvegarde a fonctionné
+        const verification = JSON.parse(
+          localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+        );
+        console.log(
+          "🗑️ [DELETE] Vérification sauvegarde:",
+          verification.length,
+          "entrées"
+        );
+
+        showNotification(
+          `${selectedItems.size} conteneur(s) supprimé(s) de l'historique`
+        );
+
+        // Réinitialiser la sélection
+        selectedItems.clear();
+
+        // Rechargement immédiat du contenu
+        const newGroupedHistory = groupHistoryByDelivery(updatedHistory);
+        filteredData = [...newGroupedHistory];
+
+        // Mettre à jour les statistiques
+        const stats = container.querySelector(
+          'div[style*="padding: 15px 30px"]'
+        );
+        if (stats) {
+          const lastDeliveryDate =
+            updatedHistory.length > 0
+              ? new Date(
+                  Math.max(
+                    ...updatedHistory.map((entry) =>
+                      new Date(entry.delivered_at).getTime()
+                    )
+                  )
+                ).toLocaleDateString("fr-FR")
+              : "Aucune";
+
+          stats.innerHTML = `
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: center;">
+              <div style="color: #059669; font-weight: bold;">
+                📦 Total conteneurs livrés: <span style="color: #047857;">${updatedHistory.length}</span>
+              </div>
+              <div style="color: #059669; font-weight: bold;">
+                📋 Groupes de livraison: <span style="color: #047857;">${newGroupedHistory.length}</span>
+              </div>
+              <div style="color: #059669; font-weight: bold;">
+                📅 Dernière livraison: <span style="color: #047857;">${lastDeliveryDate}</span>
+              </div>
+            </div>
+          `;
+        }
+
+        // Re-render le contenu
+        renderHistoryContent();
+      } catch (error) {
+        console.error("🗑️ [DELETE] Erreur lors de la suppression:", error);
+        showNotification("Erreur lors de la suppression", "error");
+      }
     }
   });
 
