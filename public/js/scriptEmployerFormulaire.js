@@ -395,11 +395,25 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       
       <!-- Champ de recherche compact -->
-      <div style='padding:12px 16px 16px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;'>
+      <div style='padding:12px 16px 8px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;'>
         <div style='position:relative;'>
           <i class='fas fa-search' style='position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:0.8em;z-index:1;'></i>
           <input type='text' id='historySearchInput' placeholder='Rechercher...' style='width:100%;padding:8px 12px 8px 32px;border:1px solid #d1d5db;border-radius:6px;font-size:0.85em;background:#ffffff;outline:none;transition:border-color 0.2s ease;box-sizing:border-box;'>
         </div>
+      </div>
+      
+      <!-- Contrôles de sélection -->
+      <div style='padding:8px 16px;background:#ffffff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:8px;'>
+        <div style='display:flex;align-items:center;gap:8px;'>
+          <label style='display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85em;color:#374151;'>
+            <input type='checkbox' id='selectAllOrders' style='accent-color:#3b82f6;'>
+            <span>Sélectionner tout</span>
+          </label>
+          <span id='selectedCount' style='font-size:0.75em;color:#6b7280;font-weight:500;'>(0 sélectionné)</span>
+        </div>
+        <button id='deleteSelectedBtn' style='background:#ef4444;color:#ffffff;border:none;padding:6px 12px;border-radius:5px;font-size:0.75em;font-weight:600;cursor:pointer;transition:background 0.2s ease;display:none;' title='Supprimer la sélection'>
+          <i class='fas fa-trash' style='margin-right:4px;'></i>Supprimer
+        </button>
       </div>
       
       <!-- Liste des ordres -->
@@ -430,9 +444,10 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.style.right = "0";
     renderHistorySidebarList();
 
-    // Initialise la recherche après le rendu
+    // Initialise la recherche et la sélection multiple après le rendu
     setTimeout(() => {
       setupHistorySearch();
+      setupMultiSelectControls();
     }, 100);
   }
   function closeSidebarHistory() {
@@ -560,9 +575,12 @@ document.addEventListener("DOMContentLoaded", () => {
       // Suppression de la carte "Serge JJ/MM/AAAA" en haut de chaque date
       html += '<ul style="list-style:none;padding:0;margin:0;">';
       ordersByDate[dateKey].forEach((item, idx) => {
-        // Génère la carte de l'ordre
-        let liHtml = `<li class="history-order-item" data-history-idx="${globalIdx}" style="background:linear-gradient(90deg,#f1f5f9 80%,#e0e7ff 100%);margin-bottom:7px;padding:18px 18px 16px 18px;border-radius:14px;box-shadow:0 2px 10px #2563eb13;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:box-shadow 0.18s;position:relative;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+        // Génère la carte de l'ordre avec case à cocher
+        let liHtml = `<li class="history-order-item" data-history-idx="${globalIdx}" style="background:linear-gradient(90deg,#f1f5f9 80%,#e0e7ff 100%);margin-bottom:7px;padding:18px 18px 16px 18px;border-radius:14px;box-shadow:0 2px 10px #2563eb13;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:all 0.18s;position:relative;">
+          <!-- Case à cocher en haut à droite -->
+          <input type="checkbox" class="order-checkbox" data-order-idx="${globalIdx}" style="position:absolute;top:12px;right:12px;width:16px;height:16px;accent-color:#3b82f6;cursor:pointer;z-index:10;" onclick="event.stopPropagation();">
+          
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;margin-right:25px;">
             <span style="background:#2563eb;color:#fff;border-radius:8px 18px 18px 8px;width:auto;min-width:70px;padding:4px 14px 4px 10px;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:1em;box-shadow:0 1px 4px #2563eb11;letter-spacing:0.5px;">${
               item.date
                 ? item.date.slice(0, 10).split("-").reverse().join("/")
@@ -574,10 +592,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 : "Client inconnu"
             }</span>
           </div>
-          <div style="color:#1e293b;font-size:1.04em;font-weight:500;">${
+          <div style="color:#1e293b;font-size:1.04em;font-weight:500;margin-right:25px;">${
             item.details
           }</div>
-          <button class="delete-history-btn desktop-in mobile-out" data-history-idx="${globalIdx}" title="Supprimer cet ordre"><i class='fas fa-trash'></i></button>
         </li>`;
         html += liHtml;
         globalIdx++;
@@ -591,128 +608,180 @@ document.addEventListener("DOMContentLoaded", () => {
     var items = listDiv.querySelectorAll(".history-order-item");
     for (var i = 0; i < items.length; i++) {
       items[i].addEventListener("click", function (e) {
-        // Ne pas ouvrir le détail si clic sur le bouton suppression
-        if (e.target.closest(".delete-history-btn")) return;
+        // Ne pas ouvrir le détail si clic sur la case à cocher
+        if (e.target.classList.contains("order-checkbox")) return;
         var idx = parseInt(this.getAttribute("data-history-idx"));
         var order = filteredHistory[idx];
         window.showOrderDetailPopup(order);
       });
     }
+  };
 
-    // Ajoute l'écouteur sur chaque bouton de suppression
-    var deleteBtns = listDiv.querySelectorAll(".delete-history-btn");
-    for (var j = 0; j < deleteBtns.length; j++) {
-      deleteBtns[j].addEventListener("click", function (e) {
-        e.stopPropagation();
-        var idx = parseInt(this.getAttribute("data-history-idx"));
-        var orderToDelete = filteredHistory[idx];
-        // Pop-up de confirmation personnalisée
-        if (document.getElementById("confirmDeletePopup")) return; // évite doublon
-        var popupBg = document.createElement("div");
-        popupBg.id = "confirmDeletePopup";
-        popupBg.style.position = "fixed";
-        popupBg.style.top = "0";
-        popupBg.style.left = "0";
-        popupBg.style.width = "100vw";
-        popupBg.style.height = "100vh";
-        popupBg.style.background = "rgba(30,41,59,0.32)";
-        popupBg.style.zIndex = "6000";
-        popupBg.style.display = "flex";
-        popupBg.style.alignItems = "center";
-        popupBg.style.justifyContent = "center";
-        // Boîte
-        var popupBox = document.createElement("div");
-        // Responsive styles for popupBox
-        var isMobile =
-          window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
-        popupBox.style.background = "#fff";
-        popupBox.style.borderRadius = isMobile ? "13px" : "16px";
-        popupBox.style.boxShadow = isMobile
-          ? "0 2px 16px #2563eb22"
-          : "0 4px 24px #2563eb22";
-        popupBox.style.padding = isMobile
-          ? "18px 7vw 14px 7vw"
-          : "28px 22px 18px 22px";
-        popupBox.style.maxWidth = isMobile ? "98vw" : "95vw";
-        popupBox.style.width = isMobile ? "98vw" : "340px";
-        popupBox.style.textAlign = "center";
-        popupBox.style.position = "relative";
-        popupBox.style.margin = isMobile ? "0 1vw" : "";
-        // Message
-        var msg = document.createElement("div");
-        msg.textContent =
-          "Voulez-vous vraiment supprimer cet ordre de livraison ?";
-        msg.style.fontWeight = "600";
-        msg.style.fontSize = isMobile ? "1em" : "1.08em";
-        msg.style.color = "#1e293b";
-        msg.style.marginBottom = isMobile ? "13px" : "18px";
-        msg.style.lineHeight = isMobile ? "1.35" : "1.2";
-        popupBox.appendChild(msg);
-        // Boutons
-        var btns = document.createElement("div");
-        btns.style.display = "flex";
-        btns.style.justifyContent = "center";
-        btns.style.gap = isMobile ? "10px" : "18px";
-        btns.style.flexDirection = isMobile ? "column" : "row";
-        btns.style.alignItems = "center";
-        // Confirmer
-        var confirmBtn = document.createElement("button");
-        confirmBtn.textContent = "Supprimer";
-        confirmBtn.style.background = "#dc2626";
-        confirmBtn.style.color = "#fff";
-        confirmBtn.style.border = "none";
-        confirmBtn.style.borderRadius = isMobile ? "7px" : "8px";
-        confirmBtn.style.padding = isMobile ? "10px 0" : "8px 22px";
-        confirmBtn.style.fontWeight = "700";
-        confirmBtn.style.fontSize = isMobile ? "1.04em" : "1em";
-        confirmBtn.style.cursor = "pointer";
-        confirmBtn.style.width = isMobile ? "100%" : "auto";
-        // Annuler
-        var cancelBtn = document.createElement("button");
-        cancelBtn.textContent = "Annuler";
-        cancelBtn.style.background = "#f1f5f9";
-        cancelBtn.style.color = "#2563eb";
-        cancelBtn.style.border = "none";
-        cancelBtn.style.borderRadius = isMobile ? "7px" : "8px";
-        cancelBtn.style.padding = isMobile ? "10px 0" : "8px 22px";
-        cancelBtn.style.fontWeight = "700";
-        cancelBtn.style.fontSize = isMobile ? "1.04em" : "1em";
-        cancelBtn.style.cursor = "pointer";
-        cancelBtn.style.width = isMobile ? "100%" : "auto";
-        cancelBtn.style.marginTop = isMobile ? "7px" : "0";
-        btns.appendChild(confirmBtn);
-        btns.appendChild(cancelBtn);
-        popupBox.appendChild(btns);
-        // Fermer au clic sur Annuler ou fond
-        cancelBtn.onclick = function () {
-          popupBg.remove();
-        };
-        popupBg.onclick = function (e) {
-          if (e.target === popupBg) popupBg.remove();
-        };
-        // Action suppression réelle
-        confirmBtn.onclick = function () {
-          popupBg.remove();
-          const historyKey = "simulatedHistoryData";
-          let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
-          let agentHistory = historyData["Agent Acconier"] || [];
-          historyData["Agent Acconier"] = agentHistory.filter((item) => {
-            if (orderToDelete.id && item.id && item.id === orderToDelete.id)
-              return false;
-            if (!orderToDelete.id) {
-              return (
-                JSON.stringify(item.data) !== JSON.stringify(orderToDelete.data)
-              );
-            }
-            return true;
-          });
-          localStorage.setItem(historyKey, JSON.stringify(historyData));
-          window.renderHistorySidebarList();
-        };
-        popupBg.appendChild(popupBox);
-        document.body.appendChild(popupBg);
-      });
+  // Fonction pour gérer la sélection multiple
+  window.setupMultiSelectControls = function () {
+    const selectAllCheckbox = document.getElementById("selectAllOrders");
+    const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
+    const selectedCountSpan = document.getElementById("selectedCount");
+
+    if (!selectAllCheckbox || !deleteSelectedBtn || !selectedCountSpan) return;
+
+    // Fonction pour mettre à jour le compteur et le bouton
+    function updateSelectionUI() {
+      const checkboxes = document.querySelectorAll(".order-checkbox");
+      const checkedBoxes = document.querySelectorAll(".order-checkbox:checked");
+      const count = checkedBoxes.length;
+
+      selectedCountSpan.textContent = `(${count} sélectionné${
+        count > 1 ? "s" : ""
+      })`;
+
+      if (count > 0) {
+        deleteSelectedBtn.style.display = "block";
+        deleteSelectedBtn.textContent = `Supprimer (${count})`;
+      } else {
+        deleteSelectedBtn.style.display = "none";
+      }
+
+      // Mettre à jour l'état du "Sélectionner tout"
+      if (count === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+      } else if (count === checkboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+      } else {
+        selectAllCheckbox.indeterminate = true;
+      }
     }
+
+    // Gestionnaire pour "Sélectionner tout"
+    selectAllCheckbox.addEventListener("change", function () {
+      const checkboxes = document.querySelectorAll(".order-checkbox");
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = this.checked;
+      });
+      updateSelectionUI();
+    });
+
+    // Gestionnaire pour les cases individuelles
+    document.addEventListener("change", function (e) {
+      if (e.target.classList.contains("order-checkbox")) {
+        updateSelectionUI();
+      }
+    });
+
+    // Gestionnaire pour le bouton supprimer
+    deleteSelectedBtn.addEventListener("click", function () {
+      const checkedBoxes = document.querySelectorAll(".order-checkbox:checked");
+      if (checkedBoxes.length === 0) return;
+
+      // Créer popup de confirmation
+      const confirmModal = document.createElement("div");
+      confirmModal.style.position = "fixed";
+      confirmModal.style.top = "0";
+      confirmModal.style.left = "0";
+      confirmModal.style.width = "100vw";
+      confirmModal.style.height = "100vh";
+      confirmModal.style.background = "rgba(30,41,59,0.4)";
+      confirmModal.style.zIndex = "6000";
+      confirmModal.style.display = "flex";
+      confirmModal.style.alignItems = "center";
+      confirmModal.style.justifyContent = "center";
+
+      const confirmBox = document.createElement("div");
+      confirmBox.style.background = "#fff";
+      confirmBox.style.borderRadius = "12px";
+      confirmBox.style.padding = "24px";
+      confirmBox.style.maxWidth = "400px";
+      confirmBox.style.margin = "0 20px";
+      confirmBox.style.textAlign = "center";
+      confirmBox.style.boxShadow = "0 8px 32px rgba(0,0,0,0.2)";
+
+      confirmBox.innerHTML =
+        '<div style="color:#dc2626;font-size:2em;margin-bottom:12px;">' +
+        '<i class="fas fa-exclamation-triangle"></i>' +
+        "</div>" +
+        '<h3 style="margin:0 0 12px 0;color:#1f2937;">Supprimer ' +
+        checkedBoxes.length +
+        " ordre" +
+        (checkedBoxes.length > 1 ? "s" : "") +
+        " ?</h3>" +
+        '<p style="margin:0 0 20px 0;color:#6b7280;">Cette action est irréversible.</p>' +
+        '<div style="display:flex;gap:12px;justify-content:center;">' +
+        '<button id="confirmMultiDelete" style="background:#dc2626;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:600;cursor:pointer;">' +
+        "Supprimer" +
+        "</button>" +
+        '<button id="cancelMultiDelete" style="background:#f3f4f6;color:#374151;border:none;padding:10px 20px;border-radius:6px;font-weight:600;cursor:pointer;">' +
+        "Annuler" +
+        "</button>" +
+        "</div>";
+
+      confirmModal.appendChild(confirmBox);
+      document.body.appendChild(confirmModal);
+
+      // Gestionnaires de la popup
+      document.getElementById("cancelMultiDelete").onclick = () =>
+        confirmModal.remove();
+      confirmModal.onclick = (e) => {
+        if (e.target === confirmModal) confirmModal.remove();
+      };
+
+      document.getElementById("confirmMultiDelete").onclick = function () {
+        // Récupérer les indices des ordres sélectionnés
+        const indicesToDelete = Array.from(checkedBoxes).map((cb) =>
+          parseInt(cb.dataset.orderIdx)
+        );
+
+        // Supprimer de localStorage
+        const historyKey = "simulatedHistoryData";
+        let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
+        let agentHistory = historyData["Agent Acconier"] || [];
+
+        // Filtrer pour ne garder que les ordres non sélectionnés
+        let filteredHistory = agentHistory.filter(
+          (item) => item && item.data && typeof item.data === "object"
+        );
+
+        // Supprimer les doublons et construire la liste finale
+        const seenKeys = new Set();
+        filteredHistory = filteredHistory.filter((item, index) => {
+          if (indicesToDelete.includes(index)) return false;
+
+          const key = [
+            item.id || "",
+            item.data ? item.data.clientName : "",
+            item.data
+              ? Array.isArray(item.data.containerNumbers)
+                ? item.data.containerNumbers.join(",")
+                : item.data.containerNumbers
+              : "",
+            item.data ? item.data.containerFootType : "",
+            item.data ? item.data.declarationNumber : "",
+            item.data ? item.data.numberOfContainers : "",
+            item.data ? item.data.weight : "",
+            item.data ? item.data.shipName : "",
+            item.data ? item.data.circuit : "",
+            item.data ? item.data.shippingCompany : "",
+            item.data ? item.data.transporterMode : "",
+            item.data ? item.data.status : "",
+            item.date || "",
+          ].join("|");
+
+          if (seenKeys.has(key)) return false;
+          seenKeys.add(key);
+          return true;
+        });
+
+        historyData["Agent Acconier"] = filteredHistory;
+        localStorage.setItem(historyKey, JSON.stringify(historyData));
+
+        confirmModal.remove();
+        window.renderHistorySidebarList();
+      };
+    });
+
+    // Initialiser l'UI
+    updateSelectionUI();
   };
 
   // Fonction de recherche pour la sidebar
