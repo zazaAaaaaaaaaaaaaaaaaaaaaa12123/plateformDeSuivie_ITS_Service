@@ -669,9 +669,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="history-order-item" data-history-idx="${index}" style="
             background:linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
             border:1px solid #e2e8f0;
-            border-radius:12px;
-            padding:20px;
-            margin-bottom:16px;
+            border-radius:8px;
+            padding:10px;
+            margin-bottom:8px;
             cursor:pointer;
             transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position:relative;
@@ -680,44 +680,44 @@ document.addEventListener("DOMContentLoaded", () => {
           ">
             <!-- Indicateur de statut -->
             <div style="
-              position:absolute;top:0;left:0;width:4px;height:100%;
+              position:absolute;top:0;left:0;width:3px;height:100%;
               background:linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
             "></div>
             
             <!-- En-tête avec client et actions -->
             <div style="
               display:flex;justify-content:space-between;align-items:flex-start;
-              margin-bottom:16px;
+              margin-bottom:8px;
             ">
               <div style="flex:1;min-width:0;">
                 <div style="
-                  font-weight:700;color:#1e293b;font-size:1.05em;
-                  margin-bottom:6px;letter-spacing:-0.3px;
-                  display:flex;align-items:center;gap:8px;
+                  font-weight:700;color:#1e293b;font-size:0.95em;
+                  margin-bottom:3px;letter-spacing:-0.3px;
+                  display:flex;align-items:center;gap:6px;
                 ">
-                  <i class='fas fa-user-circle' style="color:#3b82f6;font-size:0.9em;"></i>
+                  <i class='fas fa-user-circle' style="color:#3b82f6;font-size:0.8em;"></i>
                   ${data.clientName || "Client inconnu"}
                 </div>
                 <div style="
-                  font-size:0.85em;color:#64748b;
-                  display:flex;align-items:center;gap:6px;
+                  font-size:0.75em;color:#64748b;
+                  display:flex;align-items:center;gap:4px;
                 ">
-                  <i class='fas fa-calendar-alt' style="color:#9ca3af;font-size:0.8em;"></i>
+                  <i class='fas fa-calendar-alt' style="color:#9ca3af;font-size:0.7em;"></i>
                   ${formatDate(item.date)}
                 </div>
               </div>
               
-              <div style="display:flex;gap:8px;align-items:center;">
+              <div style="display:flex;gap:6px;align-items:center;">
                 <span style="
                   background:#dbeafe;color:#1e40af;
-                  padding:4px 12px;border-radius:20px;
-                  font-size:0.75em;font-weight:600;
+                  padding:2px 8px;border-radius:16px;
+                  font-size:0.65em;font-weight:600;
                   letter-spacing:0.3px;
                 ">LIVRAISON</span>
                 <button class="delete-history-btn" data-history-idx="${index}" 
                   style="
                     background:#f1f5f9;border:1px solid #e2e8f0;
-                    color:#64748b;font-size:0.8em;padding:6px 8px;
+                    color:#64748b;font-size:0.7em;padding:4px 6px;
                     border-radius:6px;cursor:pointer;
                     transition:all 0.2s ease;
                   "
@@ -729,33 +729,33 @@ document.addEventListener("DOMContentLoaded", () => {
             
             <!-- Informations principales en grille -->
             <div style="
-              display:grid;grid-template-columns:1fr 1fr;gap:16px;
-              margin-bottom:16px;
+              display:grid;grid-template-columns:1fr 1fr;gap:8px;
+              margin-bottom:8px;
             ">
               <div style="
-                background:#f8fafc;padding:12px;border-radius:8px;
-                border-left:3px solid #06b6d4;
+                background:#f8fafc;padding:6px;border-radius:6px;
+                border-left:2px solid #06b6d4;
               ">
                 <div style="
-                  font-size:0.75em;color:#64748b;font-weight:600;
-                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
+                  font-size:0.65em;color:#64748b;font-weight:600;
+                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;
                 ">Conteneur(s)</div>
                 <div style="
-                  color:#1e293b;font-weight:600;font-size:0.9em;
+                  color:#1e293b;font-weight:600;font-size:0.8em;
                   word-break:break-all;
                 ">${containers}</div>
               </div>
               
               <div style="
-                background:#f8fafc;padding:12px;border-radius:8px;
-                border-left:3px solid #8b5cf6;
+                background:#f8fafc;padding:6px;border-radius:6px;
+                border-left:2px solid #8b5cf6;
               ">
                 <div style="
-                  font-size:0.75em;color:#64748b;font-weight:600;
-                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
+                  font-size:0.65em;color:#64748b;font-weight:600;
+                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;
                 ">N° BL</div>
                 <div style="
-                  color:#1e293b;font-weight:600;font-size:0.9em;
+                  color:#1e293b;font-weight:600;font-size:0.8em;
                 ">${data.blNumber || "-"}</div>
               </div>
             </div>
@@ -765,12 +765,12 @@ document.addEventListener("DOMContentLoaded", () => {
               data.lieu
                 ? `
               <div style="
-                background:#f0f9ff;padding:10px 12px;border-radius:6px;
+                background:#f0f9ff;padding:6px 8px;border-radius:4px;
                 border:1px solid #e0f2fe;
-                display:flex;align-items:center;gap:8px;
+                display:flex;align-items:center;gap:6px;
               ">
-                <i class='fas fa-map-marker-alt' style="color:#0891b2;font-size:0.8em;"></i>
-                <span style="font-size:0.85em;color:#0f172a;font-weight:500;">
+                <i class='fas fa-map-marker-alt' style="color:#0891b2;font-size:0.7em;"></i>
+                <span style="font-size:0.75em;color:#0f172a;font-weight:500;">
                   ${data.lieu}
                 </span>
               </div>

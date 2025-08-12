@@ -73,7 +73,7 @@
   font-weight: 700;
   font-size: 1.08em;
   color: #2563eb;
-  margin: 18px 0 7px 0;
+  margin: 15px 0 5px 0; /* Réduit les marges */
   letter-spacing: 0.5px;
 }
 .history-date-user .history-date {
@@ -89,13 +89,28 @@
 .delete-history-btn.mobile-out {
   color: #dc2626 !important;
 }
+
+/* Nouvelles règles pour réduire la hauteur des cartes d'historique */
+.history-order-item {
+  margin-bottom: 8px !important; /* Force une marge réduite */
+  padding: 8px !important; /* Force un padding réduit */
+  min-height: auto !important; /* Évite les hauteurs minimales fixes */
+}
+
+.history-order-item > div {
+  margin-bottom: 6px !important; /* Réduit l'espacement entre les sections */
+}
+
+.history-order-item:last-child {
+  margin-bottom: 0 !important; /* Supprime la marge du dernier élément */
+}
 @media (max-width: 600px) {
   .history-date-user {
     background: #f1f5f9;
-    border-radius: 10px;
-    padding: 7px 7px 5px 7px;
-    margin: 10px 0 5px 0;
-    font-size: 0.99em;
+    border-radius: 8px; /* Réduit le border-radius */
+    padding: 5px 5px 3px 5px; /* Réduit le padding */
+    margin: 8px 0 3px 0; /* Réduit les marges */
+    font-size: 0.95em; /* Réduit la taille de police */
     box-shadow: 0 1px 6px #2563eb11;
     width: 100%;
     box-sizing: border-box;
@@ -103,22 +118,22 @@
   .history-date-user {
     flex-direction: column;
     align-items: flex-start;
-    gap: 2px;
-    font-size: 1em;
-    margin: 13px 0 5px 0;
+    gap: 1px; /* Réduit l'espacement */
+    font-size: 0.95em; /* Réduit la taille de police */
+    margin: 10px 0 3px 0; /* Réduit les marges */
   }
   .history-date-user .history-date {
-    font-size: 0.98em;
+    font-size: 0.95em; /* Réduit la taille de police */
   }
   .history-date-user .history-user {
     color: #111 !important;
     font-weight: 700;
   }
   .history-order-item {
-    padding: 4px 4px 3px 4px !important;
-    border-radius: 6px !important;
-    margin-bottom: 3px !important;
-    font-size: 0.85em !important;
+    padding: 3px 3px 2px 3px !important; /* Réduit le padding */
+    border-radius: 4px !important; /* Réduit le border-radius */
+    margin-bottom: 2px !important; /* Réduit la marge */
+    font-size: 0.8em !important; /* Réduit la taille de police */
     box-shadow: 0 1px 2px #2563eb11 !important;
     gap: 1px !important;
   }
@@ -128,7 +143,7 @@
     gap: 1px !important;
   }
   .history-order-item span {
-    font-size: 0.82em !important;
+    font-size: 0.8em !important; /* Réduit la taille de police */
   }
 }
 
@@ -177,45 +192,45 @@
 
 /* Réduction de la taille des cartes d'historique globalement */
 .history-card {
-  padding: 4px !important;
-  gap: 1px !important;
-  font-size: 0.78em !important;
+  padding: 2px !important; /* Réduit de 4px à 2px */
+  gap: 0px !important; /* Réduit de 1px à 0px */
+  font-size: 0.75em !important; /* Réduit de 0.78em à 0.75em */
 }
 
 .history-card .history-info-group strong {
-  font-size: 0.68em !important;
+  font-size: 0.65em !important; /* Réduit de 0.68em à 0.65em */
   margin-bottom: 0px !important;
 }
 
 .history-card .history-info-group span {
-  font-size: 0.7em !important;
-  line-height: 1.1 !important;
+  font-size: 0.68em !important; /* Réduit de 0.7em à 0.68em */
+  line-height: 1 !important; /* Réduit de 1.1 à 1.0 */
 }
 
 .history-card .status-badge {
-  padding: 1px 3px !important;
-  font-size: 0.58em !important;
-  top: 4px !important;
-  right: 4px !important;
+  padding: 1px 2px !important; /* Réduit le padding horizontal de 3px à 2px */
+  font-size: 0.55em !important; /* Réduit de 0.58em à 0.55em */
+  top: 2px !important; /* Réduit de 4px à 2px */
+  right: 2px !important; /* Réduit de 4px à 2px */
 }
 
 /* Ajustements spécifiques pour le contenu de la modal d'historique */
 #professionalHistoryModal .history-group-content {
-  gap: 4px !important;
+  gap: 2px !important; /* Réduit de 4px à 2px */
 }
 
 /* Styles responsive pour optimiser l'espace */
 @media (max-width: 600px) {
   .history-card {
-    padding: 3px !important;
-    font-size: 0.75em !important;
+    padding: 2px !important; /* Réduit de 3px à 2px */
+    font-size: 0.72em !important; /* Réduit de 0.75em à 0.72em */
   }
 
   .history-card .history-info-group strong {
-    font-size: 0.65em !important;
+    font-size: 0.62em !important; /* Réduit de 0.65em à 0.62em */
   }
 
   .history-card .history-info-group span {
-    font-size: 0.68em !important;
+    font-size: 0.65em !important; /* Réduit de 0.68em à 0.65em */
   }
 }
