@@ -373,94 +373,144 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!sidebar) {
     sidebar = document.createElement("div");
     sidebar.id = "historySidebarFormulaire";
+
+    // Détection mobile pour adaptation responsive
+    const isMobile = window.innerWidth <= 768;
+    const sidebarWidth = isMobile ? "100vw" : "370px";
+    const sidebarRight = isMobile ? "-100vw" : "-420px";
+
     sidebar.style.position = "fixed";
     sidebar.style.top = "0";
-    sidebar.style.right = "-420px";
-    sidebar.style.width = "370px";
+    sidebar.style.right = sidebarRight;
+    sidebar.style.width = sidebarWidth;
     sidebar.style.height = "100vh";
     sidebar.style.background = "#fff";
-    sidebar.style.boxShadow = "-4px 0 24px #2563eb22";
+    sidebar.style.boxShadow = isMobile ? "none" : "-4px 0 24px #2563eb22";
     sidebar.style.zIndex = "2000";
     sidebar.style.transition = "right 0.32s cubic-bezier(.4,1.3,.5,1)";
     sidebar.style.display = "flex";
     sidebar.style.flexDirection = "column";
     sidebar.style.padding = "0";
     sidebar.innerHTML = `
-      <!-- En-tête professionnel avec gradient (version compacte) -->
+      <!-- En-tête professionnel avec gradient (version mobile-friendly) -->
       <div style='
         display:flex;align-items:center;justify-content:space-between;
-        padding:12px 16px;background:linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        padding:${isMobile ? "10px 12px" : "12px 16px"};
+        background:linear-gradient(135deg, #1e293b 0%, #334155 100%);
         border-bottom:1px solid #334155;
       '>
         <div style="flex:1;">
-          <h3 style='margin:0;font-weight:700;font-size:1.1em;color:#ffffff;letter-spacing:-0.5px;'>
-            📋 Historique des ordres de Livraison 
+          <h3 style='margin:0;font-weight:700;font-size:${
+            isMobile ? "0.95em" : "1.1em"
+          };color:#ffffff;letter-spacing:-0.5px;line-height:1.2;'>
+            📋 ${
+              isMobile
+                ? "Historique ordres"
+                : "Historique des ordres de Livraison"
+            }
           </h3>
-          <p style='margin:2px 0 0 0;color:#cbd5e1;font-size:0.8em;'>
+          <p style='margin:2px 0 0 0;color:#cbd5e1;font-size:${
+            isMobile ? "0.7em" : "0.8em"
+          };'>
             Gestion des livraisons
           </p>
         </div>
         <button id='closeHistorySidebarBtn' style='
           background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
-          font-size:1em;color:#e2e8f0;cursor:pointer;padding:6px;
-          border-radius:6px;width:28px;height:28px;
+          font-size:${isMobile ? "0.9em" : "1em"};color:#e2e8f0;cursor:pointer;
+          padding:${isMobile ? "8px" : "6px"};
+          border-radius:6px;width:${isMobile ? "32px" : "28px"};height:${
+      isMobile ? "32px" : "28px"
+    };
           transition:all 0.2s ease;backdrop-filter:blur(10px);
+          touch-action:manipulation;
         ' title="Fermer">
           <i class='fas fa-times'></i>
         </button>
       </div>
       
-      <!-- Section de recherche avec style moderne (version compacte) -->
+      <!-- Section de recherche avec style moderne (version mobile-optimized) -->
       <div style='
-        padding:12px 16px;background:linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        padding:${isMobile ? "10px 12px" : "12px 16px"};
+        background:linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
         border-bottom:1px solid #e2e8f0;
       '>
-        <div style='position:relative;margin-bottom:10px;'>
+        <div style='position:relative;margin-bottom:${
+          isMobile ? "8px" : "10px"
+        };'>
           <div style="position:relative;">
             <i class='fas fa-search' style='
-              position:absolute;left:10px;top:50%;transform:translateY(-50%);
-              color:#9ca3af;font-size:0.8em;z-index:1;
+              position:absolute;left:${
+                isMobile ? "8px" : "10px"
+              };top:50%;transform:translateY(-50%);
+              color:#9ca3af;font-size:${
+                isMobile ? "0.75em" : "0.8em"
+              };z-index:1;
             '></i>
             <input type='text' id='historySearchInput' 
-              placeholder='Rechercher par client, conteneur, BL...' 
+              placeholder='${
+                isMobile
+                  ? "Rechercher..."
+                  : "Rechercher par client, conteneur, BL..."
+              }' 
               style='
-                width:100%;padding:8px 12px 8px 32px;
+                width:100%;padding:${
+                  isMobile ? "10px 12px 10px 28px" : "8px 12px 8px 32px"
+                };
                 border:1px solid #d1d5db;border-radius:6px;
-                font-size:0.85em;background:#ffffff;outline:none;
+                font-size:${
+                  isMobile ? "16px" : "0.85em"
+                };background:#ffffff;outline:none;
                 transition:all 0.2s ease;box-sizing:border-box;
                 box-shadow:0 1px 2px rgba(0,0,0,0.05);
+                touch-action:manipulation;
               '>
           </div>
         </div>
         
-        <!-- Statistiques en petit (version ultra compacte) -->
+        <!-- Statistiques en petit (version mobile-optimized) -->
         <div style='
-          display:grid;grid-template-columns:1fr 1fr;gap:8px;
+          display:grid;grid-template-columns:1fr 1fr;gap:${
+            isMobile ? "6px" : "8px"
+          };
         '>
           <div style='
-            background:#ffffff;padding:8px;border-radius:6px;
+            background:#ffffff;padding:${
+              isMobile ? "10px 6px" : "8px"
+            };border-radius:6px;
             border:1px solid #e2e8f0;text-align:center;
             box-shadow:0 1px 2px rgba(0,0,0,0.03);
           '>
-            <div style='font-size:1em;font-weight:700;color:#3b82f6;' id="totalOrdersCount">0</div>
-            <div style='font-size:0.65em;color:#64748b;margin-top:1px;'>Total ordres</div>
+            <div style='font-size:${
+              isMobile ? "1.1em" : "1em"
+            };font-weight:700;color:#3b82f6;' id="totalOrdersCount">0</div>
+            <div style='font-size:${
+              isMobile ? "0.6em" : "0.65em"
+            };color:#64748b;margin-top:1px;'>Total ordres</div>
           </div>
           <div style='
-            background:#ffffff;padding:8px;border-radius:6px;
+            background:#ffffff;padding:${
+              isMobile ? "10px 6px" : "8px"
+            };border-radius:6px;
             border:1px solid #e2e8f0;text-align:center;
             box-shadow:0 1px 2px rgba(0,0,0,0.03);
           '>
-            <div style='font-size:1em;font-weight:700;color:#10b981;'>${new Date().getDate()}</div>
-            <div style='font-size:0.65em;color:#64748b;margin-top:1px;'>Aujourd\\'hui</div>
+            <div style='font-size:${
+              isMobile ? "1.1em" : "1em"
+            };font-weight:700;color:#10b981;'>${new Date().getDate()}</div>
+            <div style='font-size:${
+              isMobile ? "0.6em" : "0.65em"
+            };color:#64748b;margin-top:1px;'>Aujourd\\'hui</div>
           </div>
         </div>
       </div>
       
-      <!-- Liste des ordres avec scrolling optimisé (padding réduit) -->
+      <!-- Liste des ordres avec scrolling optimisé (mobile-friendly) -->
       <div id='historySidebarList' style='
-        flex:1;overflow-y:auto;padding:12px;
+        flex:1;overflow-y:auto;padding:${isMobile ? "8px" : "12px"};
         background:#ffffff;
         scrollbar-width:thin;scrollbar-color:#cbd5e1 #f1f5f9;
+        -webkit-overflow-scrolling:touch;
       '></div>
     `;
     document.body.appendChild(sidebar);
@@ -472,6 +522,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Affichage de la sidebar au clic sur l'icône ---
   let historyBtn = document.getElementById("historySidebarBtn");
   function openSidebarHistory() {
+    // Redétection mobile lors de l'ouverture
+    const isMobile = window.innerWidth <= 768;
+
     // Place l'overlay juste avant la sidebar dans le DOM pour garantir l'empilement
     if (sidebarOverlay && sidebar) {
       if (sidebarOverlay.nextSibling !== sidebar) {
@@ -485,11 +538,28 @@ document.addEventListener("DOMContentLoaded", () => {
       sidebarOverlay.style.pointerEvents = "auto";
       sidebar.style.pointerEvents = "auto";
     }
+
+    // Ajuste la position selon la taille d'écran
     sidebar.style.right = "0";
+
+    // Prévient le scroll du body sur mobile
+    if (isMobile) {
+      document.body.style.overflow = "hidden";
+    }
+
     renderHistorySidebarList();
   }
   function closeSidebarHistory() {
-    sidebar.style.right = "-420px";
+    const isMobile = window.innerWidth <= 768;
+    const sidebarRight = isMobile ? "-100vw" : "-420px";
+
+    sidebar.style.right = sidebarRight;
+
+    // Restaure le scroll du body sur mobile
+    if (isMobile) {
+      document.body.style.overflow = "auto";
+    }
+
     if (sidebarOverlay) {
       sidebarOverlay.style.display = "none";
       sidebarOverlay.style.pointerEvents = "none";
@@ -502,20 +572,123 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = sidebar.querySelector("#closeHistorySidebarBtn");
   if (closeBtn) {
     closeBtn.onclick = closeSidebarHistory;
-    // Ajouter des effets hover professionnels
-    closeBtn.addEventListener("mouseenter", function () {
+
+    // Gestion tactile améliorée pour mobile
+    closeBtn.addEventListener("touchstart", function (e) {
+      e.preventDefault(); // Évite le double-tap
       this.style.background = "rgba(255,255,255,0.2)";
-      this.style.borderColor = "rgba(255,255,255,0.3)";
-      this.style.color = "#ffffff";
-      this.style.transform = "scale(1.05)";
+      this.style.transform = "scale(0.95)";
     });
-    closeBtn.addEventListener("mouseleave", function () {
+
+    closeBtn.addEventListener("touchend", function (e) {
+      e.preventDefault();
       this.style.background = "rgba(255,255,255,0.1)";
-      this.style.borderColor = "rgba(255,255,255,0.2)";
-      this.style.color = "#e2e8f0";
       this.style.transform = "scale(1)";
+      closeSidebarHistory();
     });
+
+    // Ajouter des effets hover professionnels (desktop seulement)
+    if (!window.matchMedia("(hover: none)").matches) {
+      closeBtn.addEventListener("mouseenter", function () {
+        this.style.background = "rgba(255,255,255,0.2)";
+        this.style.borderColor = "rgba(255,255,255,0.3)";
+        this.style.color = "#ffffff";
+        this.style.transform = "scale(1.05)";
+      });
+      closeBtn.addEventListener("mouseleave", function () {
+        this.style.background = "rgba(255,255,255,0.1)";
+        this.style.borderColor = "rgba(255,255,255,0.2)";
+        this.style.color = "#e2e8f0";
+        this.style.transform = "scale(1)";
+      });
+    }
   }
+
+  // --- Gestion du swipe pour fermer sur mobile ---
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isSwiping = false;
+
+  sidebar.addEventListener("touchstart", function (e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isSwiping = false;
+  });
+
+  sidebar.addEventListener("touchmove", function (e) {
+    if (!touchStartX) return;
+
+    const touchCurrentX = e.touches[0].clientX;
+    const touchCurrentY = e.touches[0].clientY;
+    const diffX = touchStartX - touchCurrentX;
+    const diffY = touchStartY - touchCurrentY;
+
+    // Détecte un swipe horizontal vers la droite pour fermer
+    if (Math.abs(diffX) > Math.abs(diffY) && diffX < -50) {
+      isSwiping = true;
+      // Ajoute un feedback visuel pendant le swipe
+      const opacity = Math.max(0.3, 1 - Math.abs(diffX) / 200);
+      sidebar.style.opacity = opacity;
+    }
+  });
+
+  sidebar.addEventListener("touchend", function (e) {
+    if (isSwiping) {
+      closeSidebarHistory();
+    }
+    // Restaure l'opacité
+    sidebar.style.opacity = "1";
+    touchStartX = 0;
+    touchStartY = 0;
+    isSwiping = false;
+  });
+
+  // --- Gestion du redimensionnement pour adaptation responsive ---
+  window.addEventListener("resize", function () {
+    const isMobile = window.innerWidth <= 768;
+    const sidebarWidth = isMobile ? "100vw" : "370px";
+    const isOpen = sidebar.style.right === "0";
+
+    // Met à jour la largeur de la sidebar
+    sidebar.style.width = sidebarWidth;
+
+    // Si la sidebar est fermée, ajuste sa position
+    if (!isOpen) {
+      const sidebarRight = isMobile ? "-100vw" : "-420px";
+      sidebar.style.right = sidebarRight;
+    }
+
+    // Met à jour le shadow selon le type d'écran
+    sidebar.style.boxShadow = isMobile ? "none" : "-4px 0 24px #2563eb22";
+
+    // Met à jour le contenu avec les nouvelles tailles
+    const title = sidebar.querySelector("h3");
+    const subtitle = sidebar.querySelector("p");
+    const closeBtn = sidebar.querySelector("#closeHistorySidebarBtn");
+    const searchInput = sidebar.querySelector("#historySearchInput");
+
+    if (title) {
+      title.style.fontSize = isMobile ? "0.95em" : "1.1em";
+      title.textContent = isMobile
+        ? "📋 Historique ordres"
+        : "📋 Historique des ordres de Livraison";
+    }
+    if (subtitle) {
+      subtitle.style.fontSize = isMobile ? "0.7em" : "0.8em";
+    }
+    if (closeBtn) {
+      closeBtn.style.width = isMobile ? "32px" : "28px";
+      closeBtn.style.height = isMobile ? "32px" : "28px";
+      closeBtn.style.fontSize = isMobile ? "0.9em" : "1em";
+      closeBtn.style.padding = isMobile ? "8px" : "6px";
+    }
+    if (searchInput) {
+      searchInput.style.fontSize = isMobile ? "16px" : "0.85em";
+      searchInput.placeholder = isMobile
+        ? "Rechercher..."
+        : "Rechercher par client, conteneur, BL...";
+    }
+  });
   // Ferme la sidebar si on clique sur l'overlay
   if (sidebarOverlay) {
     // On utilise click au lieu de mousedown pour éviter les conflits focus
