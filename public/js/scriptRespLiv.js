@@ -4976,17 +4976,17 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
     );
 
-    // Récupère les valeurs réelles depuis le tableau DOM
+    // Récupère les valeurs réelles depuis le tableau DOM ET depuis delivery
     const realAgentName =
-      getTableCellValue(delivery.id, "visitor_agent_name") ||
       delivery.nom_agent_visiteur ||
+      getTableCellValue(delivery.id, "visitor_agent_name") ||
       delivery.visitor_agent_name ||
-      "Agent inconnu";
+      "-";
 
     const realTransporter =
-      getTableCellValue(delivery.id, "transporter") ||
       delivery.transporter ||
-      "Transporteur inconnu";
+      getTableCellValue(delivery.id, "transporter") ||
+      "Transporteur Logistique";
 
     // Crée un enregistrement unique pour ce conteneur
     const historyEntry = {
@@ -5499,7 +5499,11 @@ function showProfessionalHistoryModal() {
         <div style="font-size: 0.9em; color: #64748b; display: flex; gap: 20px; flex-wrap: wrap;">
           <span>📅 ${new Date(group.date).toLocaleDateString("fr-FR")}</span>
           <span>👤 ${
-            group.agent && group.agent.trim() !== "" ? group.agent : "-"
+            group.agent &&
+            group.agent.trim() !== "" &&
+            group.agent !== "Agent inconnu"
+              ? group.agent
+              : "Agent Visiteur ITS"
           }</span>
           <span>🚛 ${
             group.transporter && group.transporter.trim() !== ""
@@ -5586,7 +5590,7 @@ function showProfessionalHistoryModal() {
               <td style="padding: 12px 15px; color: #4b5563;">${
                 container.nom_agent_visiteur ||
                 container.visitor_agent_name ||
-                "Agent inconnu"
+                "Agent Visiteur ITS"
               }</td>
               <td style="padding: 12px 15px; color: #4b5563;">${
                 container.transporter || "-"
@@ -5945,8 +5949,8 @@ window.showHistoryEntryDetail = function (entryId) {
 
   container.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">
-      <h3 style="margin: 0; color: #059669; font-size: 1.3em;">📦 Détails du Conteneur ${
-        entry.container_number
+      <h3 style="margin: 0; color: #059669; font-size: 1.3em;">� Détails du Dossier ${
+        entry.file_number || entry.container_number
       }</h3>
       <button onclick="document.getElementById('historyDetailModal').remove()" 
         style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
