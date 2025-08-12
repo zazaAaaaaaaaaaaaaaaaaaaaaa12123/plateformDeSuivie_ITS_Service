@@ -92,22 +92,163 @@ window.displayAgentHistory = function (agentKey = "Agent Acconier") {
   const historyKey = "simulatedHistoryData";
   let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
   let agentHistory = historyData[agentKey] || [];
+
   if (agentHistory.length === 0) {
-    historyContainer.innerHTML =
-      '<div class="text-gray-500" style="padding:12px;">Aucun ordre de livraison enregistré pour le moment.</div>';
+    historyContainer.innerHTML = `
+      <div style="
+        text-align: center;
+        padding: 40px 20px;
+        color: #64748b;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        font-size: 15px;
+      ">
+        <div style="
+          width: 64px;
+          height: 64px;
+          margin: 0 auto 16px;
+          background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+        ">📋</div>
+        <div style="font-weight: 500; margin-bottom: 8px;">Aucun ordre de livraison</div>
+        <div style="font-size: 13px; opacity: 0.8;">Les ordres traités apparaîtront ici</div>
+      </div>
+    `;
     return;
   }
-  let html = '<ul style="list-style:none;padding:0;margin:0;">';
-  agentHistory.forEach((item) => {
-    html += `<li style="background:#f1f5f9;margin-bottom:10px;padding:10px 14px;border-radius:8px;box-shadow:0 1px 4px #2563eb11;display:flex;align-items:center;gap:10px;">
-      <span style="background:#2563eb;color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1.1em;">${item.date.slice(
-        5,
-        10
-      )}</span>
-      <span style="flex:1;">${item.details}</span>
-    </li>`;
+
+  let html = `
+    <div style="
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    ">
+      <div style="
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        padding: 16px 20px;
+        font-weight: 600;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      ">
+        <span style="font-size: 18px;">📋</span>
+        Historique des livraisons (${agentHistory.length})
+      </div>
+      <div style="padding: 0;">
+  `;
+
+  agentHistory.forEach((item, index) => {
+    const isLast = index === agentHistory.length - 1;
+    const date = new Date(item.date);
+    const formattedDate = date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+    const formattedTime = date.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    html += `
+      <div style="
+        padding: 18px 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        transition: background-color 0.15s ease;
+        ${!isLast ? "border-bottom: 1px solid #f1f5f9;" : ""}
+        position: relative;
+      " onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
+        
+        <div style="
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          border-radius: 12px;
+          width: 48px;
+          height: 48px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 11px;
+          line-height: 1.1;
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+          flex-shrink: 0;
+        ">
+          <div style="font-size: 14px; font-weight: 700;">${date.getDate()}</div>
+          <div style="font-size: 10px; opacity: 0.9; text-transform: uppercase;">${date.toLocaleDateString(
+            "fr-FR",
+            { month: "short" }
+          )}</div>
+        </div>
+        
+        <div style="flex: 1; min-width: 0;">
+          <div style="
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 15px;
+            line-height: 1.4;
+            margin-bottom: 6px;
+          ">${item.details}</div>
+          
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #64748b;
+          ">
+            <span style="
+              display: flex;
+              align-items: center;
+              gap: 4px;
+            ">
+              <span style="font-size: 12px;">🕐</span>
+              ${formattedTime}
+            </span>
+            <span style="
+              background: #f1f5f9;
+              color: #475569;
+              padding: 2px 8px;
+              border-radius: 6px;
+              font-size: 12px;
+              font-weight: 500;
+            ">${formattedDate}</span>
+          </div>
+        </div>
+        
+        <div style="
+          background: #10b981;
+          color: white;
+          border-radius: 8px;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          flex-shrink: 0;
+        ">✓</div>
+      </div>
+    `;
   });
-  html += "</ul>";
+
+  html += `
+      </div>
+    </div>
+  `;
+
   historyContainer.innerHTML = html;
 };
 
