@@ -130,14 +130,13 @@ if (loginForm) {
       const data = await res.json();
       if (data.success) {
         // Stocke le nom et l'email dans le localStorage pour la page profil
-        if (data.user && data.user.nom && data.user.email) {
-          localStorage.setItem("userName", data.user.nom);
-          localStorage.setItem("userEmail", data.user.email);
-        } else {
-          // Pour compatibilité si l'API ne renvoie pas user, on stocke ce qu'on a
-          localStorage.setItem("userName", data.nom || "");
-          localStorage.setItem("userEmail", data.email || email);
-        }
+        localStorage.setItem("userName", data.nom || "");
+        localStorage.setItem("userEmail", data.email || email);
+        localStorage.setItem(
+          "userId",
+          data.id || data.email || "user_" + Date.now()
+        );
+
         showMessage(loginMessage, "Connexion réussie ! Redirection...", true);
         setTimeout(() => {
           window.location.href =
