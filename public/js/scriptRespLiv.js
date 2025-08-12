@@ -1,3 +1,341 @@
+// Injection des styles CSS pour l'historique amélioré
+function injectHistoryStyles() {
+  if (document.getElementById("historyEnhancedStyles")) return;
+
+  const style = document.createElement("style");
+  style.id = "historyEnhancedStyles";
+  style.textContent = `
+    /* Styles pour l'historique amélioré */
+    .history-group-card {
+      transition: all 0.3s ease;
+    }
+    
+    .history-group-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+    
+    .history-group-header {
+      transition: background-color 0.2s ease;
+    }
+    
+    .history-group-header:hover {
+      background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%) !important;
+    }
+    
+    .container-checkbox:checked {
+      accent-color: #059669;
+    }
+    
+    .history-search-input {
+      transition: all 0.3s ease;
+    }
+    
+    .history-search-input:focus {
+      outline: none;
+      border-color: #059669 !important;
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+    
+    .history-toolbar-btn {
+      transition: all 0.2s ease;
+    }
+    
+    .history-toolbar-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .history-toolbar-btn:active {
+      transform: translateY(0);
+    }
+    
+    .history-expand-icon {
+      transition: transform 0.3s ease;
+    }
+    
+    .history-table-row {
+      transition: background-color 0.2s ease;
+    }
+    
+    .history-table-row:hover {
+      background-color: #f8fafc !important;
+    }
+    
+    /* Animations pour l'expansion des groupes */
+    .history-group-content {
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    
+    /* Effet de sélection */
+    .history-selected-item {
+      background-color: #ecfdf5 !important;
+      border-left: 4px solid #059669 !important;
+    }
+    
+    /* Responsive pour mobile */
+    @media (max-width: 768px) {
+      .history-toolbar {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
+      
+      .history-search-input {
+        width: 100% !important;
+        min-width: unset !important;
+      }
+      
+      .history-toolbar-btn {
+        width: 100%;
+        text-align: center;
+      }
+      
+      .history-group-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+      }
+      
+      .history-table {
+        font-size: 0.8em !important;
+      }
+      
+      .history-table th,
+      .history-table td {
+        padding: 6px 4px !important;
+      }
+    }
+    
+    /* Styles pour les badges de statut */
+    .history-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: 600;
+    }
+    
+    .history-status-delivered {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    
+    .history-status-partial {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+    
+    /* Animation de chargement */
+    .history-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: #6b7280;
+    }
+    
+    .history-loading::after {
+      content: '';
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #059669;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    /* Effet pour les boutons d'action */
+    .history-action-btn {
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .history-action-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      transform: translate(-50%, -50%);
+    }
+    
+    .history-action-btn:hover::before {
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Styles pour les notifications */
+    .history-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #059669;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 100500;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .history-notification.show {
+      transform: translateX(0);
+    }
+    
+    /* Styles pour les checkboxes personnalisées */
+    .history-custom-checkbox {
+      position: relative;
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+    }
+    
+    .history-custom-checkbox input {
+      opacity: 0;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+    
+    .history-custom-checkbox .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 18px;
+      width: 18px;
+      background-color: #fff;
+      border: 2px solid #d1d5db;
+      border-radius: 3px;
+      transition: all 0.2s ease;
+    }
+    
+    .history-custom-checkbox input:checked ~ .checkmark {
+      background-color: #059669;
+      border-color: #059669;
+    }
+    
+    .history-custom-checkbox .checkmark::after {
+      content: '';
+      position: absolute;
+      display: none;
+      left: 5px;
+      top: 2px;
+      width: 4px;
+      height: 8px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    
+    .history-custom-checkbox input:checked ~ .checkmark::after {
+      display: block;
+    }
+    
+    /* Animation pulse pour le bouton de suppression */
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+    }
+    
+    /* Effet de survol pour les cartes de groupe */
+    .history-group-card:hover .history-expand-icon {
+      color: #059669 !important;
+      transform: scale(1.1);
+    }
+    
+    /* Style pour les lignes sélectionnées */
+    .history-table-row.history-selected-item {
+      background: linear-gradient(90deg, #ecfdf5 0%, #d1fae5 100%) !important;
+      border-left: 4px solid #059669 !important;
+    }
+    
+    /* Amélioration des tooltips */
+    [title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      white-space: nowrap;
+      z-index: 1000;
+    }
+    
+    /* Animation d'apparition des groupes */
+    .history-group-card {
+      animation: slideInUp 0.3s ease-out;
+    }
+    
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Amélioration de l'accessibilité */
+    .history-action-btn:focus,
+    .history-toolbar-btn:focus,
+    .history-search-input:focus {
+      outline: 2px solid #059669;
+      outline-offset: 2px;
+    }
+    
+    /* Style pour les messages d'état */
+    .history-empty-state {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 2px dashed #0284c7;
+      border-radius: 12px;
+      text-align: center;
+      padding: 40px 20px;
+      margin: 20px 0;
+    }
+    
+    .history-empty-state h3 {
+      color: #0369a1;
+      margin-bottom: 10px;
+    }
+    
+    .history-empty-state p {
+      color: #64748b;
+      margin: 0;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // Fonction utilitaire pour récupérer les paramètres URL
 function getUrlParameter(name) {
   const urlParams = new URLSearchParams(window.location.search);
@@ -124,6 +462,85 @@ function refreshTableInAdminModeRespLiv() {
         loadAllDeliveries();
       }
     }, 200);
+  }
+}
+
+// 🔧 Fonction pour charger l'historique de livraison d'un utilisateur en mode admin
+function loadUserDeliveryHistory(targetUser) {
+  if (!targetUser) return;
+
+  const isAdminMode =
+    new URLSearchParams(window.location.search).get("mode") === "admin" ||
+    window.location.search.includes("targetUser") ||
+    document.body.dataset.adminMode === "true";
+
+  if (!isAdminMode) return;
+
+  console.log(
+    `📦 [HISTORIQUE ADMIN] Chargement de l'historique pour: ${targetUser}`
+  );
+
+  // Chercher dans les livraisons déjà chargées les conteneurs livrés par cet utilisateur
+  if (window.allDeliveries && window.allDeliveries.length > 0) {
+    const targetUserLower = targetUser.toLowerCase();
+    let addedToHistory = 0;
+
+    window.allDeliveries.forEach((delivery) => {
+      // Vérifier si cette livraison appartient à l'utilisateur ciblé
+      const userFields = [
+        delivery.responsible_livreur,
+        delivery.resp_livreur,
+        delivery.employee_name,
+        delivery.nom_agent_visiteur,
+        delivery.driver_name,
+        delivery.assigned_to,
+        delivery.created_by,
+        delivery.updated_by,
+      ];
+
+      const belongsToUser = userFields.some(
+        (field) =>
+          field && field.toString().toLowerCase().includes(targetUserLower)
+      );
+
+      if (belongsToUser && delivery.container_statuses) {
+        // Parcourir les statuts des conteneurs
+        Object.entries(delivery.container_statuses).forEach(
+          ([containerNumber, status]) => {
+            if (status === "livre" || status === "livré") {
+              // Vérifier si ce conteneur n'est pas déjà dans l'historique
+              const currentHistory = JSON.parse(
+                localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+              );
+              const exists = currentHistory.some(
+                (entry) =>
+                  entry.delivery_id === delivery.id &&
+                  entry.container_number === containerNumber
+              );
+
+              if (!exists) {
+                saveToDeliveryHistory(delivery, containerNumber);
+                addedToHistory++;
+                console.log(
+                  `📦 [HISTORIQUE ADMIN] Conteneur ${containerNumber} ajouté à l'historique pour ${targetUser}`
+                );
+              }
+            }
+          }
+        );
+      }
+    });
+
+    if (addedToHistory > 0) {
+      console.log(
+        `📦 [HISTORIQUE ADMIN] ${addedToHistory} conteneurs ajoutés à l'historique pour ${targetUser}`
+      );
+      showHistoryButtonIfNeeded();
+    } else {
+      console.log(
+        `📦 [HISTORIQUE ADMIN] Aucun nouveau conteneur à ajouter à l'historique pour ${targetUser}`
+      );
+    }
   }
 }
 
@@ -353,7 +770,10 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
-  // 🆕 AJOUT : Vérification de l'historique professionnel au chargement
+  // � INJECTION DES STYLES CSS pour l'historique amélioré
+  injectHistoryStyles();
+
+  // �🆕 AJOUT : Vérification de l'historique professionnel au chargement
   // Création immédiate du bouton historique
   checkAndShowHistoryButton();
 
@@ -739,6 +1159,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
           // Charger les observations/données de l'utilisateur ciblé
           await loadUserDeliveryData(targetUser, targetUserId);
+
+          // Charger l'historique des livraisons de l'utilisateur ciblé
+          await loadUserDeliveryHistory(targetUser);
 
           filteredDeliveries = filteredDeliveries.filter((delivery) => {
             // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
@@ -1284,6 +1707,16 @@ async function propagateStatusToAllTCs(deliveryId, newStatus) {
               }
               window.allDeliveries[idx].container_statuses[tcNumber] =
                 newStatus;
+
+              // 🆕 AJOUT : Enregistrer automatiquement dans l'historique si le statut devient "livré"
+              if (newStatus === "livre" || newStatus === "livré") {
+                console.log(
+                  `[DELIVERY HISTORY] 📦 Ajout automatique du conteneur ${tcNumber} à l'historique`
+                );
+                saveToDeliveryHistory(delivery, tcNumber);
+                // Afficher le bouton historique s'il n'est pas déjà visible
+                showHistoryButtonIfNeeded();
+              }
             }
           }
         } else {
@@ -1333,15 +1766,6 @@ async function propagateStatusToAllTCs(deliveryId, newStatus) {
 
           // Met à jour l'affichage du statut
           if (delivered === total && total > 0) {
-            // 🆕 AJOUT : Enregistrer tous les conteneurs livrés dans l'historique
-            if (newStatus === "livre" || newStatus === "livré") {
-              tcNumbers.forEach((tcNumber) => {
-                saveToDeliveryHistory(delivery, tcNumber);
-              });
-              // 🆕 AJOUT : Afficher le bouton historique s'il n'est pas déjà visible
-              showHistoryButtonIfNeeded();
-            }
-
             // Tous livrés : bouton vert + icône camion + texte Livré
             statutCell.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
               <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
@@ -3018,6 +3442,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
                   // 🆕 AJOUT : Enregistrer le conteneur individuel dans l'historique s'il vient d'être livré
                   if (select.value === "livre" || select.value === "livré") {
+                    console.log(
+                      `[DELIVERY HISTORY] 📦 Ajout automatique du conteneur ${containerNumber} à l'historique (mise à jour individuelle)`
+                    );
                     saveToDeliveryHistory(
                       updatedDelivery || delivery,
                       containerNumber
@@ -3027,13 +3454,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
                   // Met à jour l'affichage du statut
                   if (delivered === total && total > 0) {
-                    // 🆕 AJOUT : Enregistrer dans l'historique professionnel quand livré
-                    saveToDeliveryHistory(
-                      updatedDelivery || delivery,
-                      containerNumber
-                    );
-                    // 🆕 AJOUT : Afficher le bouton historique s'il n'est pas déjà visible
-                    showHistoryButtonIfNeeded();
                     // Tous livrés : bouton vert + icône camion + texte Livré
                     statutCell.innerHTML = `<button style="display:flex;align-items:center;gap:8px;font-size:1em;font-weight:600;padding:2px 16px;border-radius:10px;border:1.5px solid #22c55e;background:#e6fff5;color:#22c55e;">
                       <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' style='vertical-align:middle;'><rect x='2' y='7' width='15' height='8' rx='2' fill='#22c55e'/><path d='M17 10h2.382a2 2 0 0 1 1.789 1.106l1.382 2.764A1 1 0 0 1 22 15h-2v-2a1 1 0 0 0-1-1h-2v-2z' fill='#22c55e'/><circle cx='7' cy='18' r='2' fill='#22c55e'/><circle cx='17' cy='18' r='2' fill='#22c55e'/></svg>
@@ -4302,9 +4722,12 @@ function showHistoryButtonIfNeeded() {
 }
 
 /**
- * Affiche la modal de l'historique professionnel
+ * Affiche la modal de l'historique professionnel avec fonctionnalités avancées
  */
 function showProfessionalHistoryModal() {
+  // Injecter les styles CSS
+  injectHistoryStyles();
+
   // Récupère l'historique
   const history = JSON.parse(
     localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
@@ -4313,6 +4736,13 @@ function showProfessionalHistoryModal() {
   // Supprime la modal existante si elle existe
   const existingModal = document.getElementById("professionalHistoryModal");
   if (existingModal) existingModal.remove();
+
+  // Regroupe les conteneurs par dossier et date de livraison
+  const groupedHistory = groupHistoryByDelivery(history);
+
+  // Variables globales pour la modal
+  let filteredData = [...groupedHistory];
+  let selectedItems = new Set();
 
   // Crée la modal
   const modal = document.createElement("div");
@@ -4329,13 +4759,13 @@ function showProfessionalHistoryModal() {
   modal.style.justifyContent = "center";
   modal.style.backdropFilter = "blur(4px)";
 
-  // Conteneur principalfx
+  // Conteneur principal
   const container = document.createElement("div");
   container.style.background = "#fff";
   container.style.borderRadius = "16px";
   container.style.boxShadow = "0 20px 60px rgba(0,0,0,0.3)";
   container.style.maxWidth = "95vw";
-  container.style.width = "1100px";
+  container.style.width = "1200px";
   container.style.maxHeight = "90vh";
   container.style.display = "flex";
   container.style.flexDirection = "column";
@@ -4371,6 +4801,11 @@ function showProfessionalHistoryModal() {
   closeBtn.style.display = "flex";
   closeBtn.style.alignItems = "center";
   closeBtn.style.justifyContent = "center";
+  closeBtn.style.transition = "all 0.2s ease";
+  closeBtn.onmouseover = () =>
+    (closeBtn.style.background = "rgba(255,255,255,0.3)");
+  closeBtn.onmouseout = () =>
+    (closeBtn.style.background = "rgba(255,255,255,0.2)");
   closeBtn.onclick = () => modal.remove();
 
   header.appendChild(title);
@@ -4383,10 +4818,15 @@ function showProfessionalHistoryModal() {
   stats.style.background = "#f8fafc";
   stats.style.borderBottom = "1px solid #e5e7eb";
   stats.innerHTML = `
-    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+    <div style="display: flex; gap: 30px; flex-wrap: wrap; align-items: center;">
       <div style="color: #059669; font-weight: bold;">
         📦 Total conteneurs livrés: <span style="color: #047857;">${
           history.length
+        }</span>
+      </div>
+      <div style="color: #059669; font-weight: bold;">
+        📋 Groupes de livraison: <span style="color: #047857;">${
+          groupedHistory.length
         }</span>
       </div>
       <div style="color: #059669; font-weight: bold;">
@@ -4400,90 +4840,436 @@ function showProfessionalHistoryModal() {
   `;
   container.appendChild(stats);
 
+  // Barre d'outils avec recherche et actions
+  const toolbar = document.createElement("div");
+  toolbar.className = "history-toolbar";
+  toolbar.style.padding = "15px 30px";
+  toolbar.style.background = "#f8fafc";
+  toolbar.style.borderBottom = "1px solid #e5e7eb";
+  toolbar.style.display = "flex";
+  toolbar.style.gap = "15px";
+  toolbar.style.alignItems = "center";
+  toolbar.style.flexWrap = "wrap";
+
+  // Champ de recherche
+  const searchInput = document.createElement("input");
+  searchInput.type = "text";
+  searchInput.className = "history-search-input";
+  searchInput.placeholder =
+    "🔍 Rechercher par conteneur, dossier, client, agent ou transporteur...";
+  searchInput.style.flex = "1";
+  searchInput.style.minWidth = "250px";
+  searchInput.style.padding = "10px 15px";
+  searchInput.style.border = "2px solid #d1d5db";
+  searchInput.style.borderRadius = "8px";
+  searchInput.style.fontSize = "0.9em";
+  searchInput.style.outline = "none";
+
+  // Boutons d'action
+  const selectAllBtn = document.createElement("button");
+  selectAllBtn.textContent = "✓ Tout sélectionner";
+  selectAllBtn.className = "history-toolbar-btn";
+  selectAllBtn.style.background = "#3b82f6";
+  selectAllBtn.style.color = "white";
+  selectAllBtn.style.border = "none";
+  selectAllBtn.style.padding = "10px 15px";
+  selectAllBtn.style.borderRadius = "8px";
+  selectAllBtn.style.cursor = "pointer";
+  selectAllBtn.style.fontSize = "0.85em";
+  selectAllBtn.style.fontWeight = "600";
+
+  const deselectAllBtn = document.createElement("button");
+  deselectAllBtn.textContent = "✗ Tout désélectionner";
+  deselectAllBtn.className = "history-toolbar-btn";
+  deselectAllBtn.style.background = "#6b7280";
+  deselectAllBtn.style.color = "white";
+  deselectAllBtn.style.border = "none";
+  deselectAllBtn.style.padding = "10px 15px";
+  deselectAllBtn.style.borderRadius = "8px";
+  deselectAllBtn.style.cursor = "pointer";
+  deselectAllBtn.style.fontSize = "0.85em";
+  deselectAllBtn.style.fontWeight = "600";
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "🗑️ Supprimer sélection";
+  deleteBtn.className = "history-toolbar-btn";
+  deleteBtn.style.background = "#ef4444";
+  deleteBtn.style.color = "white";
+  deleteBtn.style.border = "none";
+  deleteBtn.style.padding = "10px 15px";
+  deleteBtn.style.borderRadius = "8px";
+  deleteBtn.style.cursor = "pointer";
+  deleteBtn.style.fontSize = "0.85em";
+  deleteBtn.style.fontWeight = "600";
+  deleteBtn.style.display = "none";
+
+  toolbar.appendChild(searchInput);
+  toolbar.appendChild(selectAllBtn);
+  toolbar.appendChild(deselectAllBtn);
+  toolbar.appendChild(deleteBtn);
+  container.appendChild(toolbar);
+
   // Zone de contenu avec scroll
   const content = document.createElement("div");
   content.style.flex = "1";
   content.style.padding = "20px 30px";
   content.style.overflowY = "auto";
   content.style.background = "#fff";
+  container.appendChild(content);
 
-  if (history.length === 0) {
-    content.innerHTML = `
-      <div style="text-align: center; padding: 50px 20px; color: #6b7280;">
-        <div style="font-size: 3em; margin-bottom: 20px;">📋</div>
-        <h3 style="color: #374151; margin-bottom: 10px;">Aucun historique pour le moment</h3>
-        <p>Les conteneurs marqués comme "Livrés" apparaîtront ici automatiquement.</p>
-      </div>
-    `;
-  } else {
-    // Tableau de l'historique
-    const table = document.createElement("table");
-    table.style.width = "100%";
-    table.style.borderCollapse = "collapse";
-    table.style.fontSize = "0.9em";
-
-    // En-tête du tableau
-    table.innerHTML = `
-      <thead>
-        <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
-          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Date/Heure</th>
-          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Conteneur</th>
-          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Dossier</th>
-          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Client</th>
-          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Agent</th>
-          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Transporteur</th>
-          <th style="padding: 12px 8px; text-align: left; font-weight: bold; color: #374151;">Livré par</th>
-          <th style="padding: 12px 8px; text-align: center; font-weight: bold; color: #374151;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${history
-          .map(
-            (entry, index) => `
-          <tr style="border-bottom: 1px solid #f3f4f6; ${
-            index % 2 === 0 ? "background: #fafafa;" : ""
-          }">
-            <td style="padding: 10px 8px; color: #4b5563;">
-              ${new Date(entry.delivered_at).toLocaleDateString("fr-FR")}<br>
-              <small style="color: #9ca3af;">${new Date(
-                entry.delivered_at
-              ).toLocaleTimeString("fr-FR")}</small>
-            </td>
-            <td style="padding: 10px 8px; font-weight: bold; color: #059669;">${
-              entry.container_number
-            }</td>
-            <td style="padding: 10px 8px; color: #4b5563;">${
-              entry.dossier_number || "-"
-            }</td>
-            <td style="padding: 10px 8px; color: #4b5563;">${
-              entry.client_name || "-"
-            }</td>
-            <td style="padding: 10px 8px; color: #4b5563;">${
-              entry.visitor_agent_name || "-"
-            }</td>
-            <td style="padding: 10px 8px; color: #4b5563;">${
-              entry.transporter || "-"
-            }</td>
-            <td style="padding: 10px 8px; color: #047857; font-weight: 500;">${
-              entry.delivered_by
-            }</td>
-            <td style="padding: 10px 8px; text-align: center;">
-              <button onclick="showHistoryEntryDetail('${entry.id}')" 
-                style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">
-                Détails
-              </button>
-            </td>
-          </tr>
-        `
-          )
-          .join("")}
-      </tbody>
-    `;
-
-    content.appendChild(table);
+  // Fonction pour filtrer les données
+  function filterData() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    if (!searchTerm) {
+      filteredData = [...groupedHistory];
+    } else {
+      filteredData = groupedHistory.filter((group) => {
+        return group.containers.some(
+          (container) =>
+            container.container_number.toLowerCase().includes(searchTerm) ||
+            (container.dossier_number &&
+              container.dossier_number.toLowerCase().includes(searchTerm)) ||
+            (container.client_name &&
+              container.client_name.toLowerCase().includes(searchTerm)) ||
+            (container.visitor_agent_name &&
+              container.visitor_agent_name
+                .toLowerCase()
+                .includes(searchTerm)) ||
+            (container.transporter &&
+              container.transporter.toLowerCase().includes(searchTerm))
+        );
+      });
+    }
+    renderHistoryContent();
   }
 
-  container.appendChild(content);
+  // Fonction pour rendre le contenu
+  function renderHistoryContent() {
+    content.innerHTML = "";
+
+    if (filteredData.length === 0) {
+      content.innerHTML = `
+        <div style="text-align: center; padding: 50px 20px; color: #6b7280;">
+          <div style="font-size: 3em; margin-bottom: 20px;">📋</div>
+          <h3 style="color: #374151; margin-bottom: 10px;">Aucun historique trouvé</h3>
+          <p>Aucune livraison ne correspond à votre recherche ou il n'y a pas encore d'historique.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Affichage des groupes de livraisons
+    filteredData.forEach((group, groupIndex) => {
+      const groupCard = document.createElement("div");
+      groupCard.className = "history-group-card";
+      groupCard.style.marginBottom = "20px";
+      groupCard.style.border = "2px solid #e5e7eb";
+      groupCard.style.borderRadius = "16px";
+      groupCard.style.overflow = "hidden";
+      groupCard.style.background = "#fff";
+      groupCard.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+
+      // En-tête du groupe (cliquable pour déplier/replier)
+      const groupHeader = document.createElement("div");
+      groupHeader.className = "history-group-header";
+      groupHeader.style.background =
+        "linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%)";
+      groupHeader.style.padding = "18px 25px";
+      groupHeader.style.cursor = "pointer";
+      groupHeader.style.display = "flex";
+      groupHeader.style.alignItems = "center";
+      groupHeader.style.justifyContent = "space-between";
+      groupHeader.style.borderBottom = "1px solid #e5e7eb";
+
+      const groupInfo = document.createElement("div");
+      groupInfo.style.display = "flex";
+      groupInfo.style.alignItems = "center";
+      groupInfo.style.gap = "20px";
+
+      // Checkbox pour sélectionner tout le groupe
+      const groupCheckbox = document.createElement("input");
+      groupCheckbox.type = "checkbox";
+      groupCheckbox.style.transform = "scale(1.3)";
+      groupCheckbox.style.cursor = "pointer";
+      groupCheckbox.style.accentColor = "#059669";
+
+      const groupText = document.createElement("div");
+      groupText.innerHTML = `
+        <div style="font-weight: bold; color: #0369a1; margin-bottom: 5px; font-size: 1.1em;">
+          📦 ${group.containers.length} conteneur(s) - ${
+        group.dossier || "Dossier inconnu"
+      }
+        </div>
+        <div style="font-size: 0.9em; color: #64748b; display: flex; gap: 20px; flex-wrap: wrap;">
+          <span>📅 ${new Date(group.date).toLocaleDateString("fr-FR")}</span>
+          <span>👤 ${group.agent || "Agent inconnu"}</span>
+          <span>🚛 ${group.transporter || "Transporteur inconnu"}</span>
+        </div>
+      `;
+
+      const expandArea = document.createElement("div");
+      expandArea.style.display = "flex";
+      expandArea.style.alignItems = "center";
+      expandArea.style.gap = "15px";
+
+      const containerCount = document.createElement("span");
+      containerCount.textContent = `${group.containers.length} TC`;
+      containerCount.style.background = "#059669";
+      containerCount.style.color = "white";
+      containerCount.style.padding = "4px 10px";
+      containerCount.style.borderRadius = "12px";
+      containerCount.style.fontSize = "0.8em";
+      containerCount.style.fontWeight = "600";
+
+      const expandIcon = document.createElement("span");
+      expandIcon.innerHTML = "▼";
+      expandIcon.className = "history-expand-icon";
+      expandIcon.style.color = "#6b7280";
+      expandIcon.style.fontSize = "1.4em";
+      expandIcon.style.fontWeight = "bold";
+
+      expandArea.appendChild(containerCount);
+      expandArea.appendChild(expandIcon);
+
+      groupInfo.appendChild(groupCheckbox);
+      groupInfo.appendChild(groupText);
+      groupHeader.appendChild(groupInfo);
+      groupHeader.appendChild(expandArea);
+
+      // Contenu détaillé du groupe (masqué par défaut)
+      const groupContent = document.createElement("div");
+      groupContent.className = "history-group-content";
+      groupContent.style.display = "none";
+      groupContent.style.padding = "0";
+      groupContent.style.background = "#fafbfc";
+
+      // Table des conteneurs
+      const table = document.createElement("table");
+      table.className = "history-table";
+      table.style.width = "100%";
+      table.style.borderCollapse = "collapse";
+      table.style.fontSize = "0.9em";
+
+      table.innerHTML = `
+        <thead>
+          <tr style="background: #f1f5f9;">
+            <th style="padding: 12px 15px; text-align: left; font-weight: bold; color: #374151; width: 60px;">Sél.</th>
+            <th style="padding: 12px 15px; text-align: left; font-weight: bold; color: #374151;">Conteneur</th>
+            <th style="padding: 12px 15px; text-align: left; font-weight: bold; color: #374151;">Dossier</th>
+            <th style="padding: 12px 15px; text-align: left; font-weight: bold; color: #374151;">Client</th>
+            <th style="padding: 12px 15px; text-align: left; font-weight: bold; color: #374151;">Agent</th>
+            <th style="padding: 12px 15px; text-align: left; font-weight: bold; color: #374151;">Transporteur</th>
+            <th style="padding: 12px 15px; text-align: center; font-weight: bold; color: #374151;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${group.containers
+            .map(
+              (container, containerIndex) => `
+            <tr class="history-table-row" style="border-bottom: 1px solid #e2e8f0;">
+              <td style="padding: 12px 15px; text-align: center;">
+                <input type="checkbox" class="container-checkbox" data-container-id="${
+                  container.id
+                }" style="transform: scale(1.2); cursor: pointer; accent-color: #059669;">
+              </td>
+              <td style="padding: 12px 15px; font-weight: bold; color: #059669;">${
+                container.container_number
+              }</td>
+              <td style="padding: 12px 15px; color: #4b5563;">${
+                container.dossier_number || "-"
+              }</td>
+              <td style="padding: 12px 15px; color: #4b5563;">${
+                container.client_name || "-"
+              }</td>
+              <td style="padding: 12px 15px; color: #4b5563;">${
+                container.visitor_agent_name || "-"
+              }</td>
+              <td style="padding: 12px 15px; color: #4b5563;">${
+                container.transporter || "-"
+              }</td>
+              <td style="padding: 12px 15px; text-align: center;">
+                <button onclick="showHistoryEntryDetail('${container.id}')" 
+                  class="history-action-btn"
+                  style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 500;">
+                  📄 Détails
+                </button>
+              </td>
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      `;
+
+      groupContent.appendChild(table);
+      groupCard.appendChild(groupHeader);
+      groupCard.appendChild(groupContent);
+      content.appendChild(groupCard);
+
+      // Gestion du clic sur l'en-tête du groupe
+      groupHeader.addEventListener("click", (e) => {
+        if (e.target.type !== "checkbox") {
+          const isExpanded = groupContent.style.display !== "none";
+          groupContent.style.display = isExpanded ? "none" : "block";
+          expandIcon.style.transform = isExpanded
+            ? "rotate(0deg)"
+            : "rotate(180deg)";
+
+          // Animation d'expansion
+          if (!isExpanded) {
+            groupContent.style.opacity = "0";
+            groupContent.style.transform = "translateY(-10px)";
+            setTimeout(() => {
+              groupContent.style.transition = "all 0.3s ease";
+              groupContent.style.opacity = "1";
+              groupContent.style.transform = "translateY(0)";
+            }, 10);
+          }
+        }
+      });
+
+      // Gestion de la sélection du groupe
+      groupCheckbox.addEventListener("change", () => {
+        const containerCheckboxes = groupContent.querySelectorAll(
+          ".container-checkbox"
+        );
+        containerCheckboxes.forEach((cb) => {
+          cb.checked = groupCheckbox.checked;
+          const row = cb.closest("tr");
+          if (groupCheckbox.checked) {
+            selectedItems.add(cb.dataset.containerId);
+            row.classList.add("history-selected-item");
+          } else {
+            selectedItems.delete(cb.dataset.containerId);
+            row.classList.remove("history-selected-item");
+          }
+        });
+        updateSelectionUI();
+      });
+
+      // Gestion de la sélection des conteneurs individuels
+      const containerCheckboxes = groupContent.querySelectorAll(
+        ".container-checkbox"
+      );
+      containerCheckboxes.forEach((cb) => {
+        cb.addEventListener("change", () => {
+          const row = cb.closest("tr");
+          if (cb.checked) {
+            selectedItems.add(cb.dataset.containerId);
+            row.classList.add("history-selected-item");
+          } else {
+            selectedItems.delete(cb.dataset.containerId);
+            row.classList.remove("history-selected-item");
+          }
+
+          // Mise à jour du checkbox du groupe
+          const allChecked = [...containerCheckboxes].every(
+            (checkbox) => checkbox.checked
+          );
+          const someChecked = [...containerCheckboxes].some(
+            (checkbox) => checkbox.checked
+          );
+          groupCheckbox.checked = allChecked;
+          groupCheckbox.indeterminate = !allChecked && someChecked;
+
+          updateSelectionUI();
+        });
+      });
+    });
+  }
+
+  // Fonction pour mettre à jour l'interface de sélection
+  function updateSelectionUI() {
+    deleteBtn.style.display = selectedItems.size > 0 ? "block" : "none";
+    deleteBtn.textContent = `🗑️ Supprimer sélection (${selectedItems.size})`;
+
+    // Animation du bouton de suppression
+    if (selectedItems.size > 0) {
+      deleteBtn.style.animation = "pulse 2s infinite";
+    } else {
+      deleteBtn.style.animation = "none";
+    }
+  }
+
+  // Fonction pour afficher une notification
+  function showNotification(message, type = "success") {
+    const notification = document.createElement("div");
+    notification.className = "history-notification";
+    notification.style.background = type === "success" ? "#059669" : "#ef4444";
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.classList.add("show"), 100);
+
+    setTimeout(() => {
+      notification.classList.remove("show");
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  // Événements des boutons
+  searchInput.addEventListener("input", filterData);
+
+  selectAllBtn.addEventListener("click", () => {
+    document.querySelectorAll(".container-checkbox").forEach((cb) => {
+      cb.checked = true;
+      selectedItems.add(cb.dataset.containerId);
+      cb.closest("tr").classList.add("history-selected-item");
+    });
+    document.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+      if (cb !== searchInput) cb.checked = true;
+    });
+    updateSelectionUI();
+    showNotification(`${selectedItems.size} conteneur(s) sélectionné(s)`);
+  });
+
+  deselectAllBtn.addEventListener("click", () => {
+    document.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+      cb.checked = false;
+      cb.indeterminate = false;
+    });
+    document.querySelectorAll(".history-selected-item").forEach((row) => {
+      row.classList.remove("history-selected-item");
+    });
+    selectedItems.clear();
+    updateSelectionUI();
+    showNotification("Sélection effacée", "success");
+  });
+
+  deleteBtn.addEventListener("click", () => {
+    if (selectedItems.size === 0) return;
+
+    if (
+      confirm(
+        `⚠️ Êtes-vous sûr de vouloir supprimer définitivement ${selectedItems.size} conteneur(s) de l'historique ?\n\nCette action est irréversible.`
+      )
+    ) {
+      const currentHistory = JSON.parse(
+        localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+      );
+      const updatedHistory = currentHistory.filter(
+        (entry) => !selectedItems.has(entry.id)
+      );
+      localStorage.setItem(
+        DELIVERY_HISTORY_KEY,
+        JSON.stringify(updatedHistory)
+      );
+
+      showNotification(
+        `${selectedItems.size} conteneur(s) supprimé(s) de l'historique`
+      );
+
+      // Rechargement de la modal avec une animation
+      setTimeout(() => {
+        showProfessionalHistoryModal();
+      }, 1000);
+    }
+  });
+
+  // Rendu initial
+  renderHistoryContent();
+
   modal.appendChild(container);
   document.body.appendChild(modal);
 
@@ -4491,6 +5277,50 @@ function showProfessionalHistoryModal() {
   modal.onclick = (e) => {
     if (e.target === modal) modal.remove();
   };
+
+  // Ajout d'une animation d'entrée
+  modal.style.opacity = "0";
+  container.style.transform = "scale(0.9)";
+  setTimeout(() => {
+    modal.style.transition = "opacity 0.3s ease";
+    container.style.transition = "transform 0.3s ease";
+    modal.style.opacity = "1";
+    container.style.transform = "scale(1)";
+  }, 10);
+}
+
+/**
+ * Groupe l'historique par livraison (même dossier, même date, même agent)
+ */
+function groupHistoryByDelivery(history) {
+  const groups = new Map();
+
+  history.forEach((entry) => {
+    // Clé de groupement basée sur dossier, date de livraison et agent
+    const date = new Date(entry.delivered_at).toDateString();
+    const dossier = entry.dossier_number || "UNKNOWN";
+    const agent = entry.visitor_agent_name || "UNKNOWN";
+    const transporter = entry.transporter || "UNKNOWN";
+
+    const groupKey = `${dossier}-${date}-${agent}-${transporter}`;
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        dossier: entry.dossier_number,
+        date: entry.delivered_at,
+        agent: entry.visitor_agent_name,
+        transporter: entry.transporter,
+        containers: [],
+      });
+    }
+
+    groups.get(groupKey).containers.push(entry);
+  });
+
+  // Convertir en tableau et trier par date (plus récent en premier)
+  return Array.from(groups.values()).sort(
+    (a, b) => new Date(b.date) - new Date(a.date)
+  );
 }
 
 /**
