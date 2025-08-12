@@ -392,38 +392,36 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.style.flexDirection = "column";
     sidebar.style.padding = "0";
     sidebar.innerHTML = `
-      <!-- En-tête professionnel avec gradient (version mobile-friendly) -->
+      <!-- En-tête professionnel avec gradient (version ultra-compacte) -->
       <div style='
         display:flex;align-items:center;justify-content:space-between;
-        padding:${isMobile ? "10px 12px" : "12px 16px"};
+        padding:${isMobile ? "6px 10px" : "8px 12px"};
         background:linear-gradient(135deg, #1e293b 0%, #334155 100%);
         border-bottom:1px solid #334155;
       '>
         <div style="flex:1;">
           <h3 style='margin:0;font-weight:700;font-size:${
-            isMobile ? "0.95em" : "1.1em"
-          };color:#ffffff;letter-spacing:-0.5px;line-height:1.2;'>
-            📋 ${
-              isMobile
-                ? "Historique ordres"
-                : "Historique des ordres de Livraison"
-            }
+            isMobile ? "0.85em" : "0.95em"
+          };color:#ffffff;letter-spacing:-0.5px;line-height:1.1;'>
+            📋 ${isMobile ? "Historique ordres" : "Historique des ordres"}
           </h3>
-          <p style='margin:2px 0 0 0;color:#cbd5e1;font-size:${
-            isMobile ? "0.7em" : "0.8em"
-          };'>
+          <p style='margin:1px 0 0 0;color:#cbd5e1;font-size:${
+            isMobile ? "0.65em" : "0.7em"
+          };line-height:1;'>
             Gestion des livraisons
           </p>
         </div>
         <button id='closeHistorySidebarBtn' style='
           background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
-          font-size:${isMobile ? "0.9em" : "1em"};color:#e2e8f0;cursor:pointer;
-          padding:${isMobile ? "8px" : "6px"};
-          border-radius:6px;width:${isMobile ? "32px" : "28px"};height:${
-      isMobile ? "32px" : "28px"
+          font-size:${
+            isMobile ? "0.8em" : "0.85em"
+          };color:#e2e8f0;cursor:pointer;
+          padding:${isMobile ? "4px" : "3px"};
+          border-radius:4px;width:${isMobile ? "24px" : "22px"};height:${
+      isMobile ? "24px" : "22px"
     };
           transition:all 0.2s ease;backdrop-filter:blur(10px);
-          touch-action:manipulation;
+          touch-action:manipulation;display:flex;align-items:center;justify-content:center;
         ' title="Fermer">
           <i class='fas fa-times'></i>
         </button>
@@ -668,19 +666,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = sidebar.querySelector("#historySearchInput");
 
     if (title) {
-      title.style.fontSize = isMobile ? "0.95em" : "1.1em";
+      title.style.fontSize = isMobile ? "0.85em" : "0.95em";
       title.textContent = isMobile
         ? "📋 Historique ordres"
-        : "📋 Historique des ordres de Livraison";
+        : "📋 Historique des ordres";
     }
     if (subtitle) {
-      subtitle.style.fontSize = isMobile ? "0.7em" : "0.8em";
+      subtitle.style.fontSize = isMobile ? "0.65em" : "0.7em";
     }
     if (closeBtn) {
-      closeBtn.style.width = isMobile ? "32px" : "28px";
-      closeBtn.style.height = isMobile ? "32px" : "28px";
-      closeBtn.style.fontSize = isMobile ? "0.9em" : "1em";
-      closeBtn.style.padding = isMobile ? "8px" : "6px";
+      closeBtn.style.width = isMobile ? "24px" : "22px";
+      closeBtn.style.height = isMobile ? "24px" : "22px";
+      closeBtn.style.fontSize = isMobile ? "0.8em" : "0.85em";
+      closeBtn.style.padding = isMobile ? "4px" : "3px";
     }
     if (searchInput) {
       searchInput.style.fontSize = isMobile ? "16px" : "0.85em";
