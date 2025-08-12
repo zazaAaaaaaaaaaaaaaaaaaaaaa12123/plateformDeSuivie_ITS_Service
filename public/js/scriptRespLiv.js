@@ -5942,8 +5942,8 @@ window.showHistoryEntryDetail = function (entryId) {
   container.style.borderRadius = "12px";
   container.style.boxShadow = "0 15px 40px rgba(0,0,0,0.2)";
   container.style.maxWidth = "90vw";
-  container.style.width = "500px";
-  container.style.maxHeight = "80vh";
+  container.style.width = "650px";
+  container.style.maxHeight = "85vh";
   container.style.overflowY = "auto";
   container.style.padding = "25px";
 
@@ -5968,22 +5968,30 @@ window.showHistoryEntryDetail = function (entryId) {
         entry.shipping_company || "-"
       }</div>
       <div><strong>Agent visiteur:</strong> ${
-        entry.visitor_agent_name || "-"
+        entry.nom_agent_visiteur || entry.visitor_agent_name || "-"
       }</div>
       <div><strong>Transporteur:</strong> ${entry.transporter || "-"}</div>
       <div><strong>Inspecteur:</strong> ${entry.inspector || "-"}</div>
       <div><strong>Agent en douanes:</strong> ${
-        entry.customs_agent || "-"
+        entry.customs_agent || entry.agent_en_douanes || "-"
       }</div>
-      <div><strong>Chauffeur:</strong> ${entry.driver || "-"}</div>
+      <div><strong>Chauffeur:</strong> ${
+        entry.driver || entry.driver_name || "-"
+      }</div>
       <div><strong>Tél. chauffeur:</strong> ${entry.driver_phone || "-"}</div>
       <div><strong>Type conteneur:</strong> ${
-        entry.container_foot_type || "-"
+        entry.container_foot_type || entry.container_type_and_content || "-"
       }</div>
       <div><strong>Poids:</strong> ${entry.weight || "-"}</div>
       <div><strong>Nom navire:</strong> ${entry.ship_name || "-"}</div>
       <div><strong>Date livraison:</strong> ${entry.delivery_date || "-"}</div>
-      <div><strong>Observations:</strong> ${entry.observation || "-"}</div>
+      <div><strong>Observations:</strong> ${
+        entry.observation ||
+        entry.delivery_notes ||
+        entry.observation_acconier ||
+        "-"
+      }</div>
+      <div><strong>Responsable:</strong> ${entry.employee_name || "-"}</div>
       <div style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px; background: #f9fafb; padding: 10px; border-radius: 6px;">
         <div><strong>Livré le:</strong> ${new Date(
           entry.delivered_at
