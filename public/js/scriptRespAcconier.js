@@ -989,34 +989,36 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
 
-          // Mettre à jour l'affichage si la cellule est visible
+          // Mettre à jour l'affichage si la cellule est visible ET qu'elle n'est pas en cours d'édition
           const observationCell = document.querySelector(
             `[data-delivery-id="${data.deliveryId}"][data-field="observation"]`
           );
-          if (observationCell) {
+          if (
+            observationCell &&
+            !observationCell.querySelector("textarea") &&
+            !observationCell.hasAttribute("data-saving")
+          ) {
+            // Ne mettre à jour que si la cellule n'est pas en cours d'édition ou de sauvegarde
             observationCell.textContent = data.observation || "-";
             observationCell.dataset.edited = "true";
             console.log(
               `✅ [WebSocket] Cellule observation mise à jour dans le DOM`
             );
+          } else if (
+            observationCell &&
+            (observationCell.querySelector("textarea") ||
+              observationCell.hasAttribute("data-saving"))
+          ) {
+            console.log(
+              `⚠️ [WebSocket] Cellule observation en cours d'édition/sauvegarde - mise à jour ignorée pour éviter la perte de données`
+            );
           }
 
-          // Rafraîchir le tableau pour être sûr
-          const dateStartInput = document.getElementById(
-            "mainTableDateStartFilter"
+          // SUPPRIMÉ: Le rafraîchissement automatique du tableau qui causait la perte des données
+          // On laisse l'utilisateur terminer sa saisie avant de rafraîchir
+          console.log(
+            `✅ [WebSocket] Observation mise à jour sans rafraîchissement du tableau (préservation des données en cours de saisie)`
           );
-          const dateEndInput = document.getElementById(
-            "mainTableDateEndFilter"
-          );
-          if (typeof updateTableForDateRange === "function") {
-            updateTableForDateRange(
-              dateStartInput ? dateStartInput.value : "",
-              dateEndInput ? dateEndInput.value : ""
-            );
-            console.log(
-              `🔄 [WebSocket] Tableau rafraîchi après mise à jour observation`
-            );
-          }
         }
       } catch (e) {
         console.error("WebSocket BL error:", e);
@@ -4326,6 +4328,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             textarea.style.fontSize = "1em";
             textarea.style.padding = "2px 4px";
             async function saveObservation(val) {
+              // Marquer temporairement la cellule comme en cours de sauvegarde
+              td.setAttribute("data-saving", "true");
+
               td.textContent = val || "-";
               td.dataset.edited = "true";
               if (val && val.trim() !== "") {
@@ -4351,6 +4356,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }
               } catch (err) {
                 console.error("Erreur sauvegarde observation", err);
+              } finally {
+                // Retirer le marqueur de sauvegarde
+                td.removeAttribute("data-saving");
               }
             }
             textarea.onkeydown = function (ev) {

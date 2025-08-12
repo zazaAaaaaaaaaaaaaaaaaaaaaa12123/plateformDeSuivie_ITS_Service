@@ -500,7 +500,27 @@ document.addEventListener("DOMContentLoaded", () => {
       return true;
     });
     if (filteredHistory.length === 0) {
-      listDiv.innerHTML = `<div style='color:#64748b;text-align:center;margin-top:30px;'>Aucun ordre de livraison enregistré.</div>`;
+      listDiv.innerHTML = `<div style='
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        border: 2px dashed rgba(99, 102, 241, 0.3);
+        border-radius: 20px;
+        padding: 40px 20px;
+        text-align: center;
+        margin-top: 30px;
+        position: relative;
+        overflow: hidden;
+      '>
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(99, 102, 241, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 2;">
+          <i class="fas fa-clipboard-list" style="font-size: 3em; color: #6366f1; margin-bottom: 16px; opacity: 0.7;"></i>
+          <div style="color: #1e293b; font-size: 1.2em; font-weight: 700; margin-bottom: 8px;">
+            Aucun ordre de livraison
+          </div>
+          <div style="color: #64748b; font-size: 1em; font-weight: 500;">
+            Aucun ordre de livraison n'a encore été enregistré
+          </div>
+        </div>
+      </div>`;
       return;
     }
     // Regrouper les ordres par date (format YYYY-MM-DD)
@@ -539,27 +559,264 @@ document.addEventListener("DOMContentLoaded", () => {
       ) {
         clientName = ordersByDate[dateKey][0].data.clientName;
       }
-      // Suppression de la carte "Serge JJ/MM/AAAA" en haut de chaque date
-      html += '<ul style="list-style:none;padding:0;margin:0;">';
-      ordersByDate[dateKey].forEach((item, idx) => {
-        // Génère la carte de l'ordre
-        let liHtml = `<li class="history-order-item" data-history-idx="${globalIdx}" style="background:linear-gradient(90deg,#f1f5f9 80%,#e0e7ff 100%);margin-bottom:7px;padding:18px 18px 16px 18px;border-radius:14px;box-shadow:0 2px 10px #2563eb13;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:box-shadow 0.18s;position:relative;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
-            <span style="background:#2563eb;color:#fff;border-radius:8px 18px 18px 8px;width:auto;min-width:70px;padding:4px 14px 4px 10px;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:1em;box-shadow:0 1px 4px #2563eb11;letter-spacing:0.5px;">${
-              item.date
-                ? item.date.slice(0, 10).split("-").reverse().join("/")
-                : "--/--/----"
-            }</span>
-            <span style="color:#64748b;font-size:0.98em;font-weight:500;">${
-              item.data && item.data.clientName
-                ? item.data.clientName
-                : "Client inconnu"
-            }</span>
+      // En-tête de date avec design moderne
+      html += `<div class="date-section-header" style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 20px 20px 8px 8px;
+        margin: 28px 0 0 0;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+      ">
+        <div style="position: absolute; top: -50%; right: -10%; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border-radius: 50%; transform: rotate(45deg);"></div>
+        <div style="position: relative; z-index: 2;">
+          <div style="font-size: 1.3em; font-weight: 700; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            📅 ${dateAffichee}
           </div>
-          <div style="color:#1e293b;font-size:1.04em;font-weight:500;">${
-            item.details
-          }</div>
-          <button class="delete-history-btn desktop-in mobile-out" data-history-idx="${globalIdx}" title="Supprimer cet ordre"><i class='fas fa-trash'></i></button>
+          <div style="font-size: 0.95em; opacity: 0.9; font-weight: 500;">
+            👤 ${clientName} • ${ordersByDate[dateKey].length} commande${
+        ordersByDate[dateKey].length > 1 ? "s" : ""
+      }
+          </div>
+        </div>
+      </div>`;
+
+      html += '<ul style="list-style:none;padding:0;margin:0 0 20px 0;">';
+      ordersByDate[dateKey].forEach((item, idx) => {
+        // Génère la carte de l'ordre avec un design ultra moderne
+        let liHtml = `<li class="history-order-item" data-history-idx="${globalIdx}" style="
+          background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+          margin: 12px 0;
+          padding: 24px;
+          border-radius: 20px;
+          box-shadow: 
+            0 10px 40px rgba(30, 41, 59, 0.08),
+            0 4px 16px rgba(30, 41, 59, 0.04),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          cursor: pointer;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          overflow: hidden;
+        " onmouseover="
+          this.style.transform = 'translateY(-4px) scale(1.02)';
+          this.style.boxShadow = '0 20px 60px rgba(30, 41, 59, 0.15), 0 8px 32px rgba(30, 41, 59, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)';
+          this.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+        " onmouseout="
+          this.style.transform = 'translateY(0) scale(1)';
+          this.style.boxShadow = '0 10px 40px rgba(30, 41, 59, 0.08), 0 4px 16px rgba(30, 41, 59, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)';
+          this.style.borderColor = 'rgba(226, 232, 240, 0.8)';
+        ">
+          
+          <!-- Élément décoratif en arrière-plan -->
+          <div style="
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-radius: 50%;
+            z-index: 1;
+          "></div>
+          
+          <!-- En-tête de la carte -->
+          <div style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            position: relative;
+            z-index: 2;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 12px;
+                padding: 8px 16px;
+                font-weight: 700;
+                font-size: 0.9em;
+                box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+                letter-spacing: 0.5px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              ">
+                <i class="fas fa-calendar-day" style="font-size: 0.8em;"></i>
+                ${
+                  item.date
+                    ? item.date.slice(0, 10).split("-").reverse().join("/")
+                    : "--/--/----"
+                }
+              </div>
+              
+              <div style="
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                color: white;
+                border-radius: 25px;
+                padding: 6px 14px;
+                font-weight: 600;
+                font-size: 0.85em;
+                box-shadow: 0 3px 12px rgba(240, 147, 251, 0.4);
+              ">
+                Ordre #${globalIdx + 1}
+              </div>
+            </div>
+            
+            <div style="
+              color: #64748b;
+              font-size: 0.9em;
+              font-weight: 600;
+              background: rgba(100, 116, 139, 0.1);
+              padding: 6px 12px;
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            ">
+              <i class="fas fa-user" style="font-size: 0.8em;"></i>
+              ${
+                item.data && item.data.clientName
+                  ? item.data.clientName
+                  : "Client inconnu"
+              }
+            </div>
+          </div>
+          
+          <!-- Contenu principal -->
+          <div style="
+            color: #1e293b;
+            font-size: 1.05em;
+            font-weight: 500;
+            line-height: 1.6;
+            position: relative;
+            z-index: 2;
+            background: rgba(248, 250, 252, 0.8);
+            padding: 16px 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+          ">
+            ${item.details}
+          </div>
+          
+          <!-- Informations complémentaires -->
+          ${
+            item.data
+              ? `
+          <div style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            position: relative;
+            z-index: 2;
+            margin-top: 8px;
+          ">
+            ${
+              item.data.containerNumbers
+                ? `
+            <div style="
+              background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(101, 163, 13, 0.1) 100%);
+              padding: 12px 16px;
+              border-radius: 10px;
+              border: 1px solid rgba(34, 197, 94, 0.2);
+            ">
+              <div style="color: #22c55e; font-weight: 700; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                <i class="fas fa-shipping-fast" style="margin-right: 6px;"></i>Conteneurs
+              </div>
+              <div style="color: #1e293b; font-weight: 600; font-size: 0.9em;">
+                ${
+                  Array.isArray(item.data.containerNumbers)
+                    ? item.data.containerNumbers.join(", ")
+                    : item.data.containerNumbers
+                }
+              </div>
+            </div>
+            `
+                : ""
+            }
+            
+            ${
+              item.data.dossierNumber
+                ? `
+            <div style="
+              background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+              padding: 12px 16px;
+              border-radius: 10px;
+              border: 1px solid rgba(59, 130, 246, 0.2);
+            ">
+              <div style="color: #3b82f6; font-weight: 700; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                <i class="fas fa-folder-open" style="margin-right: 6px;"></i>Dossier
+              </div>
+              <div style="color: #1e293b; font-weight: 600; font-size: 0.9em;">
+                ${item.data.dossierNumber}
+              </div>
+            </div>
+            `
+                : ""
+            }
+            
+            ${
+              item.data.lieu
+                ? `
+            <div style="
+              background: linear-gradient(135deg, rgba(245, 101, 101, 0.1) 0%, rgba(251, 113, 133, 0.1) 100%);
+              padding: 12px 16px;
+              border-radius: 10px;
+              border: 1px solid rgba(245, 101, 101, 0.2);
+            ">
+              <div style="color: #f56565; font-weight: 700; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                <i class="fas fa-map-marker-alt" style="margin-right: 6px;"></i>Lieu
+              </div>
+              <div style="color: #1e293b; font-weight: 600; font-size: 0.9em;">
+                ${item.data.lieu}
+              </div>
+            </div>
+            `
+                : ""
+            }
+          </div>
+          `
+              : ""
+          }
+          
+          <!-- Bouton de suppression stylisé -->
+          <button class="delete-history-btn desktop-in mobile-out" data-history-idx="${globalIdx}" title="Supprimer cet ordre" style="
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #dc2626;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+          " onmouseover="
+            this.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)';
+            this.style.color = 'white';
+            this.style.transform = 'scale(1.1)';
+            this.style.boxShadow = '0 4px 16px rgba(220, 38, 38, 0.4)';
+          " onmouseout="
+            this.style.background = 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)';
+            this.style.color = '#dc2626';
+            this.style.transform = 'scale(1)';
+            this.style.boxShadow = '0 2px 8px rgba(220, 38, 38, 0.2)';
+          ">
+            <i class='fas fa-trash'></i>
+          </button>
         </li>`;
         html += liHtml;
         globalIdx++;
@@ -717,195 +974,314 @@ document.addEventListener("DOMContentLoaded", () => {
     modalBg.style.justifyContent = "center";
     // Désactive le scroll de la page derrière la popup
     document.body.classList.add("overflow-hidden");
-    // Crée la boîte
+    // Crée la boîte avec un design ultra moderne
     var modalBox = document.createElement("div");
     // Responsive styles
     var isMobile =
       window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
-    modalBox.style.background = "#fff";
-    modalBox.style.borderRadius = isMobile ? "13px" : "18px";
+    modalBox.style.background =
+      "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)";
+    modalBox.style.borderRadius = isMobile ? "20px" : "24px";
     modalBox.style.boxShadow = isMobile
-      ? "0 2px 16px #2563eb22"
-      : "0 8px 32px #2563eb33";
-    modalBox.style.padding = isMobile
-      ? "18px 7vw 14px 7vw"
-      : "28px 22px 18px 22px";
-    modalBox.style.maxWidth = isMobile ? "98vw" : "98vw";
-    modalBox.style.width = isMobile ? "98vw" : "410px";
-    modalBox.style.maxHeight = isMobile ? "95vh" : "90vh";
+      ? "0 20px 60px rgba(30, 41, 59, 0.15), 0 8px 32px rgba(99, 102, 241, 0.1)"
+      : "0 30px 80px rgba(30, 41, 59, 0.2), 0 12px 40px rgba(99, 102, 241, 0.15)";
+    modalBox.style.padding = "0";
+    modalBox.style.maxWidth = isMobile ? "95vw" : "600px";
+    modalBox.style.width = isMobile ? "95vw" : "600px";
+    modalBox.style.maxHeight = isMobile ? "90vh" : "85vh";
     modalBox.style.overflowY = "auto";
     modalBox.style.position = "relative";
-    // Bouton fermer responsive
+    modalBox.style.border = "1px solid rgba(226, 232, 240, 0.8)";
+
+    // En-tête avec gradient
+    var headerDiv = document.createElement("div");
+    headerDiv.style.background =
+      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+    headerDiv.style.padding = isMobile ? "24px 20px" : "32px 32px";
+    headerDiv.style.borderRadius = isMobile ? "20px 20px 0 0" : "24px 24px 0 0";
+    headerDiv.style.position = "relative";
+    headerDiv.style.overflow = "hidden";
+
+    // Élément décoratif dans l'en-tête
+    var decorativeElement = document.createElement("div");
+    decorativeElement.style.position = "absolute";
+    decorativeElement.style.top = "-30px";
+    decorativeElement.style.right = "-30px";
+    decorativeElement.style.width = "100px";
+    decorativeElement.style.height = "100px";
+    decorativeElement.style.background = "rgba(255, 255, 255, 0.1)";
+    decorativeElement.style.borderRadius = "50%";
+    decorativeElement.style.transform = "rotate(45deg)";
+    headerDiv.appendChild(decorativeElement);
+    // Bouton fermer ultra moderne
     var closeBtn = document.createElement("button");
     closeBtn.innerHTML = '<i class="fas fa-times"></i>';
     closeBtn.setAttribute("aria-label", "Fermer");
     closeBtn.style.position = "absolute";
-    if (isMobile) {
-      closeBtn.style.top = "-14px";
-      closeBtn.style.right = "-10px";
-      closeBtn.style.width = "38px";
-      closeBtn.style.height = "38px";
-      closeBtn.style.fontSize = "1.25em";
-      closeBtn.style.background = "#f1f5f9";
-      closeBtn.style.borderRadius = "50%";
-      closeBtn.style.display = "flex";
-      closeBtn.style.alignItems = "center";
-      closeBtn.style.justifyContent = "center";
-      closeBtn.style.boxShadow = "0 1px 6px #2563eb11";
-      closeBtn.style.border = "none";
-      closeBtn.style.zIndex = "10";
-      closeBtn.style.padding = "0";
-      closeBtn.style.color = "#2563eb";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.onmouseover = function () {
-        closeBtn.style.background = "#e0e7ff";
-      };
-      closeBtn.onmouseout = function () {
-        closeBtn.style.background = "#f1f5f9";
-      };
-    } else {
-      closeBtn.style.top = "18px";
-      closeBtn.style.right = "22px";
-      closeBtn.style.width = "44px";
-      closeBtn.style.height = "44px";
-      closeBtn.style.fontSize = "1.5em";
-      closeBtn.style.background = "none";
-      closeBtn.style.border = "none";
-      closeBtn.style.color = "#2563eb";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.style.padding = "0";
-    }
+    closeBtn.style.top = isMobile ? "16px" : "20px";
+    closeBtn.style.right = isMobile ? "16px" : "20px";
+    closeBtn.style.width = isMobile ? "44px" : "48px";
+    closeBtn.style.height = isMobile ? "44px" : "48px";
+    closeBtn.style.fontSize = isMobile ? "1.2em" : "1.3em";
+    closeBtn.style.background = "rgba(255, 255, 255, 0.9)";
+    closeBtn.style.color = "#667eea";
+    closeBtn.style.border = "none";
+    closeBtn.style.borderRadius = "50%";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.style.display = "flex";
+    closeBtn.style.alignItems = "center";
+    closeBtn.style.justifyContent = "center";
+    closeBtn.style.zIndex = "100";
+    closeBtn.style.transition = "all 0.3s ease";
+    closeBtn.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.1)";
+
+    closeBtn.onmouseover = function () {
+      closeBtn.style.background = "#667eea";
+      closeBtn.style.color = "white";
+      closeBtn.style.transform = "scale(1.1)";
+    };
+    closeBtn.onmouseout = function () {
+      closeBtn.style.background = "rgba(255, 255, 255, 0.9)";
+      closeBtn.style.color = "#667eea";
+      closeBtn.style.transform = "scale(1)";
+    };
+
     closeBtn.onclick = function () {
       modalBg.remove();
       document.body.classList.remove("overflow-hidden");
     };
-    modalBox.appendChild(closeBtn);
-    // Titre principal
+    headerDiv.appendChild(closeBtn);
+
+    // Titre principal dans l'en-tête
     var title = document.createElement("div");
-    title.textContent = "Détail de l'ordre de livraison";
-    title.style.color = "#2563eb";
-    title.style.fontWeight = "bold";
-    title.style.fontSize = isMobile ? "1.08em" : "1.18em";
-    title.style.marginBottom = isMobile ? "18px" : "16px";
-    title.style.marginTop = isMobile ? "18px" : "0";
-    title.style.textAlign = "center";
-    modalBox.appendChild(title);
+    title.innerHTML =
+      '<i class="fas fa-file-alt" style="margin-right: 12px; font-size: 1.1em;"></i>Détail de l\'ordre de livraison';
+    title.style.color = "white";
+    title.style.fontWeight = "700";
+    title.style.fontSize = isMobile ? "1.3em" : "1.5em";
+    title.style.textShadow = "0 2px 8px rgba(0, 0, 0, 0.2)";
+    title.style.position = "relative";
+    title.style.zIndex = "2";
+    title.style.display = "flex";
+    title.style.alignItems = "center";
+    headerDiv.appendChild(title);
+
+    modalBox.appendChild(headerDiv);
 
     // Contenu détaillé ou message d'erreur si data absent
+    var contentContainer = document.createElement("div");
+    contentContainer.style.padding = isMobile ? "24px 20px" : "32px 32px";
+
     var html = "";
     if (!order || !order.data) {
-      html = `<div style='color:#dc2626;font-weight:bold;padding:18px 0;text-align:center;'>Aucune donnée détaillée à afficher pour cet ordre.<br>Vérifiez la sauvegarde de l'historique.</div>`;
+      html = `<div style='
+        color: #dc2626;
+        font-weight: 600;
+        padding: 40px 0;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(248, 113, 113, 0.1) 100%);
+        border-radius: 16px;
+        border: 1px dashed #dc2626;
+      '>
+        <i class="fas fa-exclamation-triangle" style="font-size: 2em; margin-bottom: 16px; color: #dc2626;"></i><br>
+        Aucune donnée détaillée à afficher pour cet ordre.<br>
+        <span style="font-size: 0.9em; font-weight: 400;">Vérifiez la sauvegarde de l'historique.</span>
+      </div>`;
     } else {
       var d = order.data;
-      html = `<div class="order-detail-main" style="display:flex;flex-direction:column;gap:${
-        isMobile ? "10px" : "16px"
-      };font-size:${isMobile ? "0.99em" : "1.07em"};line-height:1.7;">
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Date</span><br><span style='font-weight:700;color:#2563eb;'>${
-            order.date || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Agent</span><br><span style='font-weight:700;'>${
-            d.employeeName || "-"
-          }</span></div>
+      html = `<div class="order-detail-main" style="
+        display: flex;
+        flex-direction: column;
+        gap: ${isMobile ? "16px" : "20px"};
+        font-size: ${isMobile ? "1em" : "1.05em"};
+        line-height: 1.6;
+      ">
+        
+        <!-- Section principale d'informations -->
+        <div style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 16px;
+          margin-bottom: 8px;
+        ">
+          <div class="info-card" style="
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            position: relative;
+            overflow: hidden;
+          ">
+            <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(99, 102, 241, 0.1); border-radius: 50%;"></div>
+            <div style="color: #6366f1; font-weight: 700; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-calendar-alt"></i>Date
+            </div>
+            <div style="color: #1e293b; font-weight: 700; font-size: 1.1em;">${
+              order.date || "-"
+            }</div>
+          </div>
+          
+          <div class="info-card" style="
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(101, 163, 13, 0.1) 100%);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            position: relative;
+            overflow: hidden;
+          ">
+            <div style="position: absolute; top: -10px; right: -10px; width: 40px; height: 40px; background: rgba(34, 197, 94, 0.1); border-radius: 50%;"></div>
+            <div style="color: #22c55e; font-weight: 700; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-user-tie"></i>Agent
+            </div>
+            <div style="color: #1e293b; font-weight: 700; font-size: 1.1em;">${
+              d.employeeName || "-"
+            }</div>
+          </div>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Client</span><br><span style='font-weight:700;'>${
-            d.clientName || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Téléphone</span><br><span style='font-weight:700;'>${
-            d.clientPhone || "-"
-          }</span></div>
+        
+        <!-- Informations client -->
+        <div style="
+          background: linear-gradient(135deg, rgba(245, 101, 101, 0.1) 0%, rgba(251, 113, 133, 0.1) 100%);
+          padding: 24px;
+          border-radius: 20px;
+          border: 1px solid rgba(245, 101, 101, 0.2);
+          margin-bottom: 8px;
+        ">
+          <div style="color: #f56565; font-weight: 700; font-size: 1.1em; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-user" style="font-size: 1.2em;"></i>Informations Client
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div>
+              <span style="color: #64748b; font-weight: 600; font-size: 0.9em;">Nom du client</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1.05em;">${
+                d.clientName || "-"
+              }</span>
+            </div>
+            <div>
+              <span style="color: #64748b; font-weight: 600; font-size: 0.9em;">Téléphone</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1.05em;">${
+                d.clientPhone || "-"
+              }</span>
+            </div>
+          </div>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Conteneur(s)</span><br><span style='font-weight:700;'>${
-            Array.isArray(d.containerNumbers)
-              ? d.containerNumbers.join(", ")
-              : d.containerNumbers || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Type(s) de pied</span><br><span style='font-weight:700;'>${
-            d.containerFootType || "-"
-          }</span></div>
+        
+        <!-- Détails conteneurs et transport -->
+        <div style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 16px;
+          margin-bottom: 8px;
+        ">
+          <div style="
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+          ">
+            <div style="color: #3b82f6; font-weight: 700; font-size: 0.95em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-shipping-fast"></i>Conteneurs
+            </div>
+            <div style="font-weight: 600; color: #1e293b; margin-bottom: 8px;">
+              ${
+                Array.isArray(d.containerNumbers)
+                  ? d.containerNumbers.join(", ")
+                  : d.containerNumbers || "-"
+              }
+            </div>
+            <div style="font-size: 0.9em; color: #64748b;">
+              Type de pied: <span style="font-weight: 600;">${
+                d.containerFootType || "-"
+              }</span>
+            </div>
+          </div>
+          
+          <div style="
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+          ">
+            <div style="color: #f59e0b; font-weight: 700; font-size: 0.95em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-weight-hanging"></i>Poids & Contenu
+            </div>
+            <div style="font-weight: 600; color: #1e293b; margin-bottom: 8px;">
+              ${d.weight || "-"}
+            </div>
+            <div style="font-size: 0.9em; color: #64748b;">
+              Contenu: <span style="font-weight: 600;">${
+                d.containerTypeAndContent || "-"
+              }</span>
+            </div>
+          </div>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Poids</span><br><span style='font-weight:700;'>${
-            d.weight || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Contenu</span><br><span style='font-weight:700;'>${
-            d.containerTypeAndContent || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Lieu</span><br><span style='font-weight:700;'>${
-            d.lieu || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Déclaration</span><br><span style='font-weight:700;'>${
-            d.declarationNumber || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Nombre de conteneurs</span><br><span style='font-weight:700;'>${
-            d.numberOfContainers || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>BL</span><br><span style='font-weight:700;'>${
-            d.blNumber || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Dossier</span><br><span style='font-weight:700;'>${
-            d.dossierNumber || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Compagnie maritime</span><br><span style='font-weight:700;'>${
-            d.shippingCompany || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f8fafc;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Navire</span><br><span style='font-weight:700;'>${
-            d.shipName || "-"
-          }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Circuit</span><br><span style='font-weight:700;'>${
-            d.circuit || "-"
-          }</span></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:${
-          isMobile ? "7px" : "18px"
-        };justify-content:space-between;align-items:center;background:#f1f5f9;padding:${
-        isMobile ? "10px 8px" : "12px 18px"
-      };border-radius:12px;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:500;'>Mode de transport</span><br><span style='font-weight:700;'>${
-            d.transporterMode || "-"
-          }</span></div>
+        
+        <!-- Informations administratives -->
+        <div style="
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          padding: 24px;
+          border-radius: 20px;
+          border: 1px solid #e2e8f0;
+        ">
+          <div style="color: #475569; font-weight: 700; font-size: 1.1em; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-clipboard-list" style="font-size: 1.2em;"></i>Informations Administratives
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <span style="color: #64748b; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Lieu</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1em;">${
+                d.lieu || "-"
+              }</span>
+            </div>
+            <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <span style="color: #64748b; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Déclaration</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1em;">${
+                d.declarationNumber || "-"
+              }</span>
+            </div>
+            <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <span style="color: #64748b; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Nombre de conteneurs</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1em;">${
+                d.numberOfContainers || "-"
+              }</span>
+            </div>
+            <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <span style="color: #64748b; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">BL</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1em;">${
+                d.blNumber || "-"
+              }</span>
+            </div>
+            <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <span style="color: #64748b; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Dossier</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1em;">${
+                d.dossierNumber || "-"
+              }</span>
+            </div>
+            <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <span style="color: #64748b; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Compagnie maritime</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1em;">${
+                d.shippingCompany || "-"
+              }</span>
+            </div>
+            <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <span style="color: #64748b; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Navire</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1em;">${
+                d.shipName || "-"
+              }</span>
+            </div>
+            <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <span style="color: #64748b; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Circuit</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1em;">${
+                d.circuit || "-"
+              }</span>
+            </div>
+            <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <span style="color: #64748b; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Mode de transport</span><br>
+              <span style="font-weight: 700; color: #1e293b; font-size: 1em;">${
+                d.transporterMode || "-"
+              }</span>
+            </div>
+          </div>
         </div>
       </div>`;
       // Si mapping TC/type de pied détaillé
@@ -913,29 +1289,58 @@ document.addEventListener("DOMContentLoaded", () => {
         Array.isArray(d.containerFootTypesData) &&
         d.containerFootTypesData.length > 0
       ) {
-        html += `<div style='margin-top:${
-          isMobile ? "12px" : "18px"
-        };background:#f8fafc;padding:${
-          isMobile ? "10px 8px" : "12px 18px"
-        };border-radius:12px;'>
-          <div style='font-weight:700;color:#2563eb;margin-bottom:7px;'>Détail TC / Type de pied / Poids</div>
-          <ul style='padding-left:0;margin:0;list-style:none;'>`;
+        html += `<div style='
+          margin-top: 20px;
+          background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+          padding: 24px;
+          border-radius: 20px;
+          border: 1px solid rgba(168, 85, 247, 0.2);
+        '>
+          <div style='
+            font-weight: 700;
+            color: #a855f7;
+            margin-bottom: 16px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          '>
+            <i class="fas fa-list-ul" style="font-size: 1.2em;"></i>Détail TC / Type de pied / Poids
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px;">`;
         for (var i = 0; i < d.containerFootTypesData.length; i++) {
           var obj = d.containerFootTypesData[i];
-          html += `<li style='margin-bottom:4px;'><span style='font-weight:bold;color:#1e293b;'>${
-            obj.tc
-          }</span> : <span style='color:#2563eb;'>${
-            obj.pied || "-"
-          }</span> / <span style='color:#334155;'>${
-            obj.poids || "-"
-          }</span> kg</li>`;
+          html += `<div style='
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(168, 85, 247, 0.1);
+            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.1);
+          '>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <span style='
+                background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+                color: white;
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-weight: 700;
+                font-size: 0.9em;
+              '>${obj.tc}</span>
+              <span style='color: #6366f1; font-weight: 600; font-size: 0.95em;'>${
+                obj.pied || "-"
+              }</span>
+              <span style='color: #059669; font-weight: 600; font-size: 0.95em;'>${
+                obj.poids || "-"
+              } kg</span>
+            </div>
+          </div>`;
         }
-        html += "</ul></div>";
+        html += "</div></div>";
       }
     }
-    var contentDiv = document.createElement("div");
-    contentDiv.innerHTML = html;
-    modalBox.appendChild(contentDiv);
+
+    contentContainer.innerHTML = html;
+    modalBox.appendChild(contentContainer);
     modalBg.appendChild(modalBox);
     document.body.appendChild(modalBg);
     // Fermer au clic sur le fond (overlay)
