@@ -231,26 +231,26 @@
 
 /* Réduction de la taille des cartes d'historique globalement */
 .history-card {
-  padding: 1px !important; /* Réduit encore plus de 2px à 1px */
-  gap: 0px !important;
-  font-size: 0.7em !important; /* Réduit de 0.75em à 0.7em */
+  padding: 2px !important; /* Légèrement agrandi de 1px à 2px pour la lisibilité */
+  gap: 1px !important; /* Légèrement agrandi de 0px à 1px */
+  font-size: 0.72em !important; /* Légèrement agrandi de 0.7em à 0.72em */
 }
 
 .history-card .history-info-group strong {
-  font-size: 0.6em !important; /* Réduit de 0.65em à 0.6em */
+  font-size: 0.62em !important; /* Légèrement agrandi de 0.6em à 0.62em */
   margin-bottom: 0px !important;
 }
 
 .history-card .history-info-group span {
-  font-size: 0.65em !important; /* Réduit de 0.68em à 0.65em */
-  line-height: 0.9 !important; /* Réduit de 1.0 à 0.9 */
+  font-size: 0.67em !important; /* Légèrement agrandi de 0.65em à 0.67em */
+  line-height: 1 !important; /* Légèrement agrandi de 0.9 à 1.0 */
 }
 
 .history-card .status-badge {
-  padding: 0px 1px !important; /* Réduit encore le padding */
-  font-size: 0.5em !important; /* Réduit de 0.55em à 0.5em */
-  top: 1px !important; /* Réduit de 2px à 1px */
-  right: 1px !important; /* Réduit de 2px à 1px */
+  padding: 1px 2px !important; /* Légèrement agrandi le padding */
+  font-size: 0.52em !important; /* Légèrement agrandi de 0.5em à 0.52em */
+  top: 2px !important; /* Légèrement agrandi de 1px à 2px */
+  right: 2px !important; /* Légèrement agrandi de 1px à 2px */
 }
 
 /* Ajustements spécifiques pour le contenu de la modal d'historique */
@@ -272,4 +272,27 @@
   .history-card .history-info-group span {
     font-size: 0.6em !important; /* Réduit de 0.65em à 0.6em */
   }
+}
+
+/* Ajustement spécifique pour la seconde image (modal d'historique) */
+#professionalHistoryModal .history-order-item {
+  margin-bottom: 2px !important; /* Très réduit pour la seconde image */
+  padding: 3px !important; /* Très réduit pour la seconde image */
+  font-size: 0.75em !important; /* Très réduit pour la seconde image */
+}
+
+#professionalHistoryModal .history-order-item > div {
+  margin-bottom: 1px !important; /* Très réduit pour la seconde image */
+}
+
+#professionalHistoryModal .history-order-item .delete-history-btn {
+  font-size: 0.5em !important; /* Très réduit pour la seconde image */
+  padding: 2px 3px !important;
+}
+
+/* Réduction supplémentaire pour les éléments de l'historique dans la modal */
+#professionalHistoryModal .history-card {
+  padding: 1px !important; /* Encore plus réduit pour la modal */
+  font-size: 0.65em !important; /* Encore plus réduit pour la modal */
+  gap: 0px !important;
 }
