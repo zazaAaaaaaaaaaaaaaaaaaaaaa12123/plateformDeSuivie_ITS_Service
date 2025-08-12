@@ -3139,12 +3139,34 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // Cellule éditable texte avec sauvegarde/restauration
         td.classList.add("editable-cell");
         td.style.cursor = "pointer";
-        value =
-          delivery[col.id] !== undefined &&
-          delivery[col.id] !== null &&
-          delivery[col.id] !== ""
-            ? delivery[col.id]
-            : "-";
+
+        // Logique spéciale pour récupérer les noms d'agents depuis localStorage
+        if (col.id === "visitor_agent_name") {
+          // Priorité 1: valeur sauvegardée dans la cellule
+          const cellStorageKey = getCellStorageKey(delivery, col.id);
+          const cellSavedValue = localStorage.getItem(cellStorageKey);
+
+          // Priorité 2: valeur depuis localStorage agent_visiteur_
+          const agentStorageKey = `agent_visiteur_${delivery.id}`;
+          const agentSavedValue = localStorage.getItem(agentStorageKey);
+
+          // Priorité 3: valeur depuis l'objet delivery
+          const deliveryValue = delivery[col.id] || delivery.nom_agent_visiteur;
+
+          value = cellSavedValue || agentSavedValue || deliveryValue || "-";
+
+          console.log(
+            `[DEBUG AGENT] Delivery ${delivery.id}: cellSaved="${cellSavedValue}", agentSaved="${agentSavedValue}", delivery="${deliveryValue}", final="${value}"`
+          );
+        } else {
+          value =
+            delivery[col.id] !== undefined &&
+            delivery[col.id] !== null &&
+            delivery[col.id] !== ""
+              ? delivery[col.id]
+              : "-";
+        }
+
         // Affiche la valeur sauvegardée si elle existe
         let displayValue =
           savedValue !== null && savedValue !== "" ? savedValue : value;
@@ -4820,15 +4842,31 @@ function getTableCellValue(deliveryId, fieldId) {
         return input.value.trim();
       }
       // Sinon récupère le textContent
+      const textContent = td.textContent ? td.textContent.trim() : "";
       if (
-        td.textContent &&
-        td.textContent.trim() !== "-" &&
-        td.textContent.trim() !== ""
+        textContent &&
+        textContent !== "-" &&
+        textContent !== "" &&
+        textContent !== "Agent inconnu"
       ) {
-        return td.textContent.trim();
+        return textContent;
       }
     }
   }
+
+  // Si pas trouvé dans le DOM, vérifier localStorage
+  if (fieldId === "visitor_agent_name") {
+    const agentStorageKey = `agent_visiteur_${deliveryId}`;
+    const agentSavedValue = localStorage.getItem(agentStorageKey);
+    if (
+      agentSavedValue &&
+      agentSavedValue.trim() !== "" &&
+      agentSavedValue !== "-"
+    ) {
+      return agentSavedValue.trim();
+    }
+  }
+
   return null;
 }
 
