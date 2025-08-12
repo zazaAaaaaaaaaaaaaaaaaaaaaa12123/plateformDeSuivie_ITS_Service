@@ -6441,7 +6441,7 @@ window.showHistoryEntryDetail = async function (entryId) {
         <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
           <strong style="color: #374151;">Responsable:</strong> 
           <span style="color: #1f2937; font-weight: 600;">${
-            enrichedEntry.employee_name || "-"
+            enrichedEntry.delivered_by || "-"
           }</span>
         </div>
         ${
@@ -6475,7 +6475,9 @@ window.showHistoryEntryDetail = async function (entryId) {
           ).toLocaleString("fr-FR")}
         </div>
         <div style="font-size: 1.1em; font-weight: 600;">
-          <strong>Livré par:</strong> ${enrichedEntry.delivered_by}
+          <strong>Livré par:</strong> ${
+            enrichedEntry.employee_name || enrichedEntry.delivered_by || "-"
+          }
         </div>
       </div>
     </div>
