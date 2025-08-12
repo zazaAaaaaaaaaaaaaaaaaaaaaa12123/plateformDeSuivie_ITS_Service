@@ -332,6 +332,159 @@ function injectHistoryStyles() {
       color: #64748b;
       margin: 0;
     }
+    
+    /* Styles pour le système de compte à rebours */
+    .countdown-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      z-index: 100000;
+      font-weight: 600;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+    }
+    
+    .countdown-container:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+    
+    .countdown-timer {
+      font-size: 1.1em;
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .countdown-label {
+      font-size: 0.8em;
+      opacity: 0.9;
+      margin-top: 2px;
+    }
+    
+    /* Styles pour la pop-up de confirmation PDF */
+    .pdf-confirmation-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100500;
+      backdrop-filter: blur(5px);
+    }
+    
+    .pdf-confirmation-content {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      position: relative;
+    }
+    
+    .pdf-confirmation-title {
+      font-size: 1.4em;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 15px;
+    }
+    
+    .pdf-confirmation-message {
+      font-size: 1em;
+      color: #4b5563;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+    
+    .pdf-confirmation-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .pdf-confirmation-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9em;
+      min-width: 120px;
+    }
+    
+    .pdf-btn-yes {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+    
+    .pdf-btn-no {
+      background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+      color: white;
+    }
+    
+    .pdf-btn-delay {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
+    
+    .pdf-confirmation-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Animation pour la pop-up de confirmation */
+    .pdf-confirmation-modal {
+      animation: fadeInModal 0.3s ease-out;
+    }
+    
+    .pdf-confirmation-content {
+      animation: slideInUp 0.3s ease-out;
+    }
+    
+    @keyframes fadeInModal {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    /* Pulse animation pour le compte à rebours */
+    .countdown-pulse {
+      animation: countdownPulse 2s infinite;
+    }
+    
+    @keyframes countdownPulse {
+      0%, 100% {
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      }
+      50% {
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+      }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -776,6 +929,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // �🆕 AJOUT : Vérification de l'historique professionnel au chargement
   // Création immédiate du bouton historique
   checkAndShowHistoryButton();
+
+  // ⏰ RESTAURATION du compte à rebours si actif
+  restoreCountdownIfActive();
 
   // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
   let ws;
@@ -4333,10 +4489,49 @@ function showPdfFilterModal() {
   document.body.appendChild(overlay);
 }
 
-pdfBtn.onclick = function () {
+pdfBtn.onclick = async function () {
+  // Afficher la pop-up de confirmation
+  const choice = await showPDFConfirmationModal();
+
+  if (choice === null) {
+    return; // L'utilisateur a annulé
+  }
+
+  // Mettre à jour les données livrées
   updateDeliveredForPdf();
+
+  // Gérer l'action choisie
+  handlePDFAction(choice);
+
+  // Afficher la modal de filtre PDF dans tous les cas
   showPdfFilterModal();
 };
+
+/**
+ * Gère l'action choisie par l'utilisateur pour le PDF
+ */
+function handlePDFAction(choice) {
+  switch (choice) {
+    case "yes":
+      // Supprimer immédiatement les livraisons du tableau
+      removeDeliveredFromMainTable();
+      showNotification(
+        "Livraisons supprimées du tableau (conservées dans l'historique)",
+        "success"
+      );
+      break;
+
+    case "no":
+      // Ne rien faire, garder les livraisons
+      showNotification("Livraisons conservées dans le tableau", "success");
+      break;
+
+    case "delay":
+      // Le compte à rebours a déjà été démarré dans showPDFConfirmationModal
+      showNotification("Compte à rebours de 1 semaine démarré", "success");
+      break;
+  }
+}
 
 function generateEtatSortiePdf(rows, date1, date2) {
   if (!rows || rows.length === 0) {
@@ -5089,13 +5284,21 @@ function showProfessionalHistoryModal() {
       groupText.innerHTML = `
         <div style="font-weight: bold; color: #0369a1; margin-bottom: 5px; font-size: 1.1em;">
           📦 ${group.containers.length} conteneur(s) - ${
-        group.dossier || "Dossier inconnu"
+        group.dossier && group.dossier.trim() !== ""
+          ? group.dossier
+          : "Dossier inconnu"
       }
         </div>
         <div style="font-size: 0.9em; color: #64748b; display: flex; gap: 20px; flex-wrap: wrap;">
           <span>📅 ${new Date(group.date).toLocaleDateString("fr-FR")}</span>
-          <span>👤 ${group.agent || "Agent inconnu"}</span>
-          <span>🚛 ${group.transporter || "Transporteur inconnu"}</span>
+          <span>👤 ${
+            group.agent && group.agent.trim() !== "" ? group.agent : "-"
+          }</span>
+          <span>🚛 ${
+            group.transporter && group.transporter.trim() !== ""
+              ? group.transporter
+              : "-"
+          }</span>
         </div>
       `;
 
@@ -5601,6 +5804,333 @@ window.showHistoryEntryDetail = function (entryId) {
     if (e.target === modal) modal.remove();
   };
 };
+
+// ========================================================================
+// === SYSTÈME DE COMPTE À REBOURS ET GESTION PDF ===
+// ========================================================================
+
+let countdownInterval = null;
+let countdownEndTime = null;
+
+/**
+ * Affiche la pop-up de confirmation pour la génération PDF
+ */
+function showPDFConfirmationModal() {
+  return new Promise((resolve) => {
+    // Supprimer la modal existante si elle existe
+    const existingModal = document.getElementById("pdfConfirmationModal");
+    if (existingModal) existingModal.remove();
+
+    // Créer la modal
+    const modal = document.createElement("div");
+    modal.id = "pdfConfirmationModal";
+    modal.className = "pdf-confirmation-modal";
+
+    const content = document.createElement("div");
+    content.className = "pdf-confirmation-content";
+
+    content.innerHTML = `
+      <div class="pdf-confirmation-title">📄 Génération PDF</div>
+      <div class="pdf-confirmation-message">
+        Voulez-vous garder les dossiers dans le tableau ou les enlever après avoir marqué qu'ils sont livrés ?
+      </div>
+      <div class="pdf-confirmation-buttons">
+        <button class="pdf-confirmation-btn pdf-btn-yes" data-choice="yes">
+          ✅ Oui, enlever
+        </button>
+        <button class="pdf-confirmation-btn pdf-btn-no" data-choice="no">
+          ❌ Non, garder
+        </button>
+        <button class="pdf-confirmation-btn pdf-btn-delay" data-choice="delay">
+          ⏰ Garder pendant un moment
+        </button>
+      </div>
+    `;
+
+    // Gestion des clics
+    content.addEventListener("click", (e) => {
+      if (e.target.classList.contains("pdf-confirmation-btn")) {
+        const choice = e.target.dataset.choice;
+        modal.remove();
+
+        if (choice === "delay") {
+          showDelayConfirmationMessage().then(() => {
+            startCountdown();
+            resolve(choice);
+          });
+        } else {
+          resolve(choice);
+        }
+      }
+    });
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    // Fermer en cliquant à côté
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+        resolve(null);
+      }
+    });
+  });
+}
+
+/**
+ * Affiche le message de confirmation pour le délai d'une semaine
+ */
+function showDelayConfirmationMessage() {
+  return new Promise((resolve) => {
+    const modal = document.createElement("div");
+    modal.className = "pdf-confirmation-modal";
+
+    const content = document.createElement("div");
+    content.className = "pdf-confirmation-content";
+
+    content.innerHTML = `
+      <div class="pdf-confirmation-title">⏰ Délai configuré</div>
+      <div class="pdf-confirmation-message">
+        Les dossiers seront gardés pendant <strong>1 semaine</strong> avant d'être automatiquement supprimés du tableau.
+        <br><br>
+        Un compte à rebours apparaîtra à côté du bouton historique.
+      </div>
+      <div class="pdf-confirmation-buttons">
+        <button class="pdf-confirmation-btn pdf-btn-no" onclick="this.closest('.pdf-confirmation-modal').remove()">
+          ✅ OK, j'ai compris
+        </button>
+      </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    // Auto-fermeture après clic sur OK
+    content.querySelector("button").addEventListener("click", () => {
+      modal.remove();
+      resolve();
+    });
+  });
+}
+
+/**
+ * Démarre le compte à rebours d'une semaine
+ */
+function startCountdown() {
+  const now = new Date();
+  countdownEndTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 jours
+
+  // Sauvegarder dans localStorage
+  localStorage.setItem("countdownEndTime", countdownEndTime.toISOString());
+
+  createCountdownUI();
+  updateCountdown();
+
+  // Mettre à jour chaque seconde
+  countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+/**
+ * Crée l'interface utilisateur du compte à rebours
+ */
+function createCountdownUI() {
+  // Supprimer l'existant
+  const existing = document.getElementById("countdownContainer");
+  if (existing) existing.remove();
+
+  const container = document.createElement("div");
+  container.id = "countdownContainer";
+  container.className = "countdown-container countdown-pulse";
+  container.title = "Cliquez pour annuler le processus";
+
+  container.innerHTML = `
+    <div class="countdown-timer" id="countdownTimer">7j 00h 00m 00s</div>
+    <div class="countdown-label">Suppression auto</div>
+  `;
+
+  // Gestion du clic pour annuler
+  container.addEventListener("click", showCancelCountdownModal);
+
+  document.body.appendChild(container);
+}
+
+/**
+ * Met à jour l'affichage du compte à rebours
+ */
+function updateCountdown() {
+  if (!countdownEndTime) return;
+
+  const now = new Date();
+  const timeLeft = countdownEndTime - now;
+
+  if (timeLeft <= 0) {
+    // Temps écoulé - supprimer automatiquement
+    executeAutoRemoval();
+    return;
+  }
+
+  // Calculer les jours, heures, minutes, secondes
+  const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+  const hours = Math.floor(
+    (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+  );
+  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+  // Mettre à jour l'affichage
+  const timerElement = document.getElementById("countdownTimer");
+  if (timerElement) {
+    timerElement.textContent = `${days}j ${hours
+      .toString()
+      .padStart(2, "0")}h ${minutes.toString().padStart(2, "0")}m ${seconds
+      .toString()
+      .padStart(2, "0")}s`;
+  }
+}
+
+/**
+ * Affiche la modal de confirmation d'annulation
+ */
+function showCancelCountdownModal() {
+  const modal = document.createElement("div");
+  modal.className = "pdf-confirmation-modal";
+
+  const content = document.createElement("div");
+  content.className = "pdf-confirmation-content";
+
+  content.innerHTML = `
+    <div class="pdf-confirmation-title">❓ Annuler le processus</div>
+    <div class="pdf-confirmation-message">
+      Voulez-vous annuler le processus de suppression automatique ?
+      <br><br>
+      Les dossiers resteront dans le tableau indéfiniment.
+    </div>
+    <div class="pdf-confirmation-buttons">
+      <button class="pdf-confirmation-btn pdf-btn-yes" data-action="cancel">
+        ✅ Oui, annuler
+      </button>
+      <button class="pdf-confirmation-btn pdf-btn-no" data-action="continue">
+        ❌ Non, continuer
+      </button>
+    </div>
+  `;
+
+  content.addEventListener("click", (e) => {
+    if (e.target.dataset.action === "cancel") {
+      cancelCountdown();
+      modal.remove();
+    } else if (e.target.dataset.action === "continue") {
+      modal.remove();
+    }
+  });
+
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.remove();
+  });
+}
+
+/**
+ * Annule le compte à rebours
+ */
+function cancelCountdown() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
+  countdownEndTime = null;
+  localStorage.removeItem("countdownEndTime");
+
+  const container = document.getElementById("countdownContainer");
+  if (container) container.remove();
+
+  showNotification("Processus de suppression automatique annulé", "success");
+}
+
+/**
+ * Exécute la suppression automatique après le délai
+ */
+function executeAutoRemoval() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
+  countdownEndTime = null;
+  localStorage.removeItem("countdownEndTime");
+
+  const container = document.getElementById("countdownContainer");
+  if (container) container.remove();
+
+  // Supprimer les livraisons du tableau principal mais garder dans l'historique
+  removeDeliveredFromMainTable();
+
+  showNotification(
+    "Livraisons supprimées automatiquement du tableau (conservées dans l'historique)",
+    "success"
+  );
+}
+
+/**
+ * Supprime les livraisons livrées du tableau principal
+ */
+function removeDeliveredFromMainTable() {
+  if (!window.allDeliveries) return;
+
+  let removedCount = 0;
+
+  // Filtrer pour garder seulement les livraisons non entièrement livrées
+  window.allDeliveries = window.allDeliveries.filter((delivery) => {
+    if (!delivery.container_statuses) return true;
+
+    const statuses = Object.values(delivery.container_statuses);
+    const allDelivered =
+      statuses.length > 0 &&
+      statuses.every((status) => status === "livre" || status === "livré");
+
+    if (allDelivered) {
+      removedCount++;
+      return false; // Supprimer du tableau
+    }
+
+    return true; // Garder dans le tableau
+  });
+
+  // Rafraîchir l'affichage
+  const dateStartInput = document.getElementById("mainTableDateStartFilter");
+  const dateEndInput = document.getElementById("mainTableDateEndFilter");
+  if (dateStartInput && dateEndInput) {
+    updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+  }
+
+  console.log(
+    `[AUTO-REMOVAL] ${removedCount} livraisons supprimées du tableau principal`
+  );
+}
+
+/**
+ * Restaure le compte à rebours si il était en cours lors du rechargement de la page
+ */
+function restoreCountdownIfActive() {
+  const savedEndTime = localStorage.getItem("countdownEndTime");
+  if (savedEndTime) {
+    countdownEndTime = new Date(savedEndTime);
+    const now = new Date();
+
+    if (countdownEndTime > now) {
+      // Le compte à rebours est encore valide
+      createCountdownUI();
+      updateCountdown();
+      countdownInterval = setInterval(updateCountdown, 1000);
+    } else {
+      // Le temps est écoulé, nettoyer
+      localStorage.removeItem("countdownEndTime");
+    }
+  }
+}
 
 // ========================================================================
 // === FIN HISTORIQUE PROFESSIONNEL ===
