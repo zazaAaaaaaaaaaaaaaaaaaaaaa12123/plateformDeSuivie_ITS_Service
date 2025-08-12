@@ -2869,7 +2869,7 @@
                           pageName === "resp_acconier.html"
                             ? "🛡️ Acconiers"
                             : "📦 Livraisons";
-                        html += `<div style="margin-bottom: 8px;"><div style="font-weight: 600; color: #374151; font-size: 0.85em; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;"><span>${title}</span><span style="background: #10b981; color: white; font-size: 0.7em; padding: 1px 4px; border-radius: 6px;">${pageData.count}</span></div>`;
+                        html += `<div style="margin-bottom: 8px;"><div style="font-weight: 600; color: white; font-size: 0.85em; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;"><span>${title}</span><span style="background: #10b981; color: white; font-size: 0.7em; padding: 1px 4px; border-radius: 6px;">${pageData.count}</span></div>`;
                         pageData.users.forEach((user) => {
                           html += `<div style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; background: #f9fafb; border-radius: 4px; margin-bottom: 2px; border-left: 2px solid #10b981; font-size: 0.8em;"><div>${
                             user.nom || user.username || "Utilisateur"
