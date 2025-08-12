@@ -5598,14 +5598,18 @@ function showProfessionalHistoryModal() {
                 group.containers[0]
               ? group.containers[0].nom_agent_visiteur ||
                 group.containers[0].visitor_agent_name ||
+                group.containers[0].agent_visiteur ||
                 localStorage.getItem(
                   `agent_visiteur_${group.containers[0].id}`
                 ) ||
                 localStorage.getItem(
                   `deliverycell_${group.containers[0].id}_visitor_agent_name`
                 ) ||
-                "Agent non défini"
-              : "Agent non défini"
+                localStorage.getItem(
+                  `deliverycell_${group.containers[0].id}_nom_agent_visiteur`
+                ) ||
+                "Agent Visiteur ITS"
+              : "Agent Visiteur ITS"
           }</span>
           <span>🚛 ${
             group.transporter && group.transporter.trim() !== ""
@@ -5692,11 +5696,15 @@ function showProfessionalHistoryModal() {
               <td style="padding: 12px 15px; color: #4b5563;">${
                 container.nom_agent_visiteur ||
                 container.visitor_agent_name ||
+                container.agent_visiteur ||
                 localStorage.getItem(`agent_visiteur_${container.id}`) ||
                 localStorage.getItem(
                   `deliverycell_${container.id}_visitor_agent_name`
                 ) ||
-                "Agent non défini"
+                localStorage.getItem(
+                  `deliverycell_${container.id}_nom_agent_visiteur`
+                ) ||
+                "Agent Visiteur ITS"
               }</td>
               <td style="padding: 12px 15px; color: #4b5563;">${
                 container.transporter || "-"
