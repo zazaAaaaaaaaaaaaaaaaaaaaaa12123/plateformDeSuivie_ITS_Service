@@ -109,6 +109,24 @@ async function loadUserDeliveryData(targetUser, targetUserId) {
   return [];
 }
 
+// 🔧 Fonction utilitaire pour forcer le re-rendu du tableau en mode admin (resp_liv)
+function refreshTableInAdminModeRespLiv() {
+  const isAdminMode =
+    new URLSearchParams(window.location.search).get("mode") === "admin" ||
+    window.location.search.includes("targetUser") ||
+    document.body.dataset.adminMode === "true";
+  if (isAdminMode) {
+    console.log(`📝 [ADMIN MODE RESP LIV] Re-rendu du tableau demandé`);
+    // Forcer un rechargement des données d'affichage
+    setTimeout(() => {
+      if (typeof loadAllDeliveries === "function") {
+        console.log(`📝 [ADMIN MODE RESP LIV] Rechargement des livraisons...`);
+        loadAllDeliveries();
+      }
+    }, 200);
+  }
+}
+
 // --- Info-bulle personnalisée pour la colonne Statut (Numéro TC + statut avec icônes) ---
 function createStatutTooltip() {
   let tooltip = document.getElementById("statutTableTooltip");
@@ -4563,26 +4581,6 @@ window.showHistoryEntryDetail = function (entryId) {
     </div>
   `;
 
-  // 🔧 Fonction utilitaire pour forcer le re-rendu du tableau en mode admin (resp_liv)
-  function refreshTableInAdminModeRespLiv() {
-    const isAdminMode =
-      new URLSearchParams(window.location.search).get("mode") === "admin" ||
-      window.location.search.includes("targetUser") ||
-      document.body.dataset.adminMode === "true";
-    if (isAdminMode) {
-      console.log(`📝 [ADMIN MODE RESP LIV] Re-rendu du tableau demandé`);
-      // Forcer un rechargement des données d'affichage
-      setTimeout(() => {
-        if (typeof loadAllDeliveries === "function") {
-          console.log(
-            `📝 [ADMIN MODE RESP LIV] Rechargement des livraisons...`
-          );
-          loadAllDeliveries();
-        }
-      }, 200);
-    }
-  }
-
   modal.appendChild(container);
   document.body.appendChild(modal);
 
@@ -4595,3 +4593,4 @@ window.showHistoryEntryDetail = function (entryId) {
 // ========================================================================
 // === FIN HISTORIQUE PROFESSIONNEL ===
 // ========================================================================
+/**JESUS MA FORCE  */
