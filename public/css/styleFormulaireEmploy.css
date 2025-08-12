@@ -92,17 +92,56 @@
 
 /* Nouvelles règles pour réduire la hauteur des cartes d'historique */
 .history-order-item {
-  margin-bottom: 8px !important; /* Force une marge réduite */
-  padding: 8px !important; /* Force un padding réduit */
-  min-height: auto !important; /* Évite les hauteurs minimales fixes */
+  margin-bottom: 4px !important; /* Réduit de 8px à 4px */
+  padding: 4px !important; /* Réduit de 8px à 4px */
+  min-height: auto !important;
+  line-height: 1 !important; /* Force une hauteur de ligne compacte */
 }
 
 .history-order-item > div {
-  margin-bottom: 6px !important; /* Réduit l'espacement entre les sections */
+  margin-bottom: 3px !important; /* Réduit de 6px à 3px */
 }
 
 .history-order-item:last-child {
-  margin-bottom: 0 !important; /* Supprime la marge du dernier élément */
+  margin-bottom: 0 !important;
+}
+
+/* Réduction spécifique des cartes du tableau de bord */
+.resume-jour-card {
+  padding: 8px 6px 6px 6px !important; /* Encore plus compact */
+  min-height: auto !important;
+}
+
+.resume-jour-card-date {
+  margin-bottom: 2px !important; /* Réduit à 2px */
+  font-size: 1em !important; /* Réduit la taille de police */
+}
+
+.resume-jour-card-total {
+  margin-bottom: 2px !important; /* Réduit à 2px */
+  font-size: 1.8em !important; /* Réduit de 2.1em à 1.8em */
+}
+
+.resume-jour-card-label {
+  margin-bottom: 2px !important; /* Réduit à 2px */
+  font-size: 0.9em !important; /* Réduit la taille de police */
+}
+
+/* Réduction des cartes de l'image de tableau de bord */
+.card-value,
+.card-title {
+  font-size: 0.85em !important; /* Réduit la taille de police */
+  padding: 4px !important; /* Réduit le padding */
+  margin: 2px !important; /* Réduit les marges */
+}
+
+/* Style pour les cartes statistiques génériques */
+.stat-card,
+.dashboard-card {
+  padding: 6px !important; /* Réduit le padding */
+  margin: 4px !important; /* Réduit les marges */
+  min-height: auto !important;
+  height: auto !important;
 }
 @media (max-width: 600px) {
   .history-date-user {
@@ -192,45 +231,45 @@
 
 /* Réduction de la taille des cartes d'historique globalement */
 .history-card {
-  padding: 2px !important; /* Réduit de 4px à 2px */
-  gap: 0px !important; /* Réduit de 1px à 0px */
-  font-size: 0.75em !important; /* Réduit de 0.78em à 0.75em */
+  padding: 1px !important; /* Réduit encore plus de 2px à 1px */
+  gap: 0px !important;
+  font-size: 0.7em !important; /* Réduit de 0.75em à 0.7em */
 }
 
 .history-card .history-info-group strong {
-  font-size: 0.65em !important; /* Réduit de 0.68em à 0.65em */
+  font-size: 0.6em !important; /* Réduit de 0.65em à 0.6em */
   margin-bottom: 0px !important;
 }
 
 .history-card .history-info-group span {
-  font-size: 0.68em !important; /* Réduit de 0.7em à 0.68em */
-  line-height: 1 !important; /* Réduit de 1.1 à 1.0 */
+  font-size: 0.65em !important; /* Réduit de 0.68em à 0.65em */
+  line-height: 0.9 !important; /* Réduit de 1.0 à 0.9 */
 }
 
 .history-card .status-badge {
-  padding: 1px 2px !important; /* Réduit le padding horizontal de 3px à 2px */
-  font-size: 0.55em !important; /* Réduit de 0.58em à 0.55em */
-  top: 2px !important; /* Réduit de 4px à 2px */
-  right: 2px !important; /* Réduit de 4px à 2px */
+  padding: 0px 1px !important; /* Réduit encore le padding */
+  font-size: 0.5em !important; /* Réduit de 0.55em à 0.5em */
+  top: 1px !important; /* Réduit de 2px à 1px */
+  right: 1px !important; /* Réduit de 2px à 1px */
 }
 
 /* Ajustements spécifiques pour le contenu de la modal d'historique */
 #professionalHistoryModal .history-group-content {
-  gap: 2px !important; /* Réduit de 4px à 2px */
+  gap: 1px !important; /* Réduit de 2px à 1px */
 }
 
 /* Styles responsive pour optimiser l'espace */
 @media (max-width: 600px) {
   .history-card {
-    padding: 2px !important; /* Réduit de 3px à 2px */
-    font-size: 0.72em !important; /* Réduit de 0.75em à 0.72em */
+    padding: 1px !important; /* Réduit de 2px à 1px */
+    font-size: 0.68em !important; /* Réduit de 0.72em à 0.68em */
   }
 
   .history-card .history-info-group strong {
-    font-size: 0.62em !important; /* Réduit de 0.65em à 0.62em */
+    font-size: 0.58em !important; /* Réduit de 0.62em à 0.58em */
   }
 
   .history-card .history-info-group span {
-    font-size: 0.65em !important; /* Réduit de 0.68em à 0.65em */
+    font-size: 0.6em !important; /* Réduit de 0.65em à 0.6em */
   }
 }
