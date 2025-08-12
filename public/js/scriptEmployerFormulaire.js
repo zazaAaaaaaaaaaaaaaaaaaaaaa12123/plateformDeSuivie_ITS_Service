@@ -386,17 +386,82 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.style.flexDirection = "column";
     sidebar.style.padding = "0";
     sidebar.innerHTML = `
-      <div style='display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:#fafafa;'>
-        <span style='font-weight:600;font-size:1.1em;color:#334155;'>Historique des ordres</span>
-        <button id='closeHistorySidebarBtn' style='background:none;border:none;font-size:1.4em;color:#64748b;cursor:pointer;padding:4px;border-radius:4px;transition:all 0.2s;'><i class='fas fa-times'></i></button>
+      <!-- En-tête professionnel avec gradient -->
+      <div style='
+        display:flex;align-items:center;justify-content:space-between;
+        padding:24px;background:linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border-bottom:1px solid #334155;
+      '>
+        <div style="flex:1;">
+          <h3 style='margin:0;font-weight:700;font-size:1.3em;color:#ffffff;letter-spacing:-0.5px;'>
+            📋 Historique des ordres
+          </h3>
+          <p style='margin:4px 0 0 0;color:#cbd5e1;font-size:0.9em;'>
+            Gestion des livraisons
+          </p>
+        </div>
+        <button id='closeHistorySidebarBtn' style='
+          background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+          font-size:1.1em;color:#e2e8f0;cursor:pointer;padding:8px;
+          border-radius:8px;width:36px;height:36px;
+          transition:all 0.2s ease;backdrop-filter:blur(10px);
+        ' title="Fermer">
+          <i class='fas fa-times'></i>
+        </button>
       </div>
-      <div style='padding:16px 20px 12px 20px;border-bottom:1px solid #e2e8f0;background:#fafafa;'>
-        <div style='position:relative;'>
-          <input type='text' id='historySearchInput' placeholder='Rechercher un client, numéro...' style='width:100%;padding:10px 12px 10px 40px;border:1px solid #d1d5db;border-radius:8px;font-size:0.95em;background:#fff;outline:none;transition:border-color 0.2s;box-sizing:border-box;'>
-          <i class='fas fa-search' style='position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:0.9em;'></i>
+      
+      <!-- Section de recherche avec style moderne -->
+      <div style='
+        padding:20px;background:linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom:1px solid #e2e8f0;
+      '>
+        <div style='position:relative;margin-bottom:16px;'>
+          <div style="position:relative;">
+            <i class='fas fa-search' style='
+              position:absolute;left:14px;top:50%;transform:translateY(-50%);
+              color:#9ca3af;font-size:0.9em;z-index:1;
+            '></i>
+            <input type='text' id='historySearchInput' 
+              placeholder='Rechercher par client, conteneur, BL...' 
+              style='
+                width:100%;padding:12px 16px 12px 42px;
+                border:1px solid #d1d5db;border-radius:10px;
+                font-size:0.95em;background:#ffffff;outline:none;
+                transition:all 0.2s ease;box-sizing:border-box;
+                box-shadow:0 1px 3px rgba(0,0,0,0.1);
+              '>
+          </div>
+        </div>
+        
+        <!-- Statistiques en petit -->
+        <div style='
+          display:grid;grid-template-columns:1fr 1fr;gap:12px;
+        '>
+          <div style='
+            background:#ffffff;padding:12px;border-radius:8px;
+            border:1px solid #e2e8f0;text-align:center;
+            box-shadow:0 1px 3px rgba(0,0,0,0.05);
+          '>
+            <div style='font-size:1.2em;font-weight:700;color:#3b82f6;' id="totalOrdersCount">0</div>
+            <div style='font-size:0.75em;color:#64748b;margin-top:2px;'>Total ordres</div>
+          </div>
+          <div style='
+            background:#ffffff;padding:12px;border-radius:8px;
+            border:1px solid #e2e8f0;text-align:center;
+            box-shadow:0 1px 3px rgba(0,0,0,0.05);
+          '>
+            <div style='font-size:1.2em;font-weight:700;color:#10b981;'>${new Date().getDate()}</div>
+            <div style='font-size:0.75em;color:#64748b;margin-top:2px;'>Aujourd\\'hui</div>
+          </div>
         </div>
       </div>
-      <div id='historySidebarList' style='flex:1;overflow-y:auto;padding:16px 20px;background:#fff;'></div>
+      
+      <!-- Liste des ordres avec scrolling optimisé -->
+      <div id='historySidebarList' style='
+        flex:1;overflow-y:auto;padding:20px;
+        background:#ffffff;
+        scrollbar-width:thin;scrollbar-color:#cbd5e1 #f1f5f9;
+      '></div>
     `;
     document.body.appendChild(sidebar);
   }
@@ -437,14 +502,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = sidebar.querySelector("#closeHistorySidebarBtn");
   if (closeBtn) {
     closeBtn.onclick = closeSidebarHistory;
-    // Ajouter des effets hover
+    // Ajouter des effets hover professionnels
     closeBtn.addEventListener("mouseenter", function () {
-      this.style.background = "#f1f5f9";
-      this.style.color = "#374151";
+      this.style.background = "rgba(255,255,255,0.2)";
+      this.style.borderColor = "rgba(255,255,255,0.3)";
+      this.style.color = "#ffffff";
+      this.style.transform = "scale(1.05)";
     });
     closeBtn.addEventListener("mouseleave", function () {
-      this.style.background = "none";
-      this.style.color = "#64748b";
+      this.style.background = "rgba(255,255,255,0.1)";
+      this.style.borderColor = "rgba(255,255,255,0.2)";
+      this.style.color = "#e2e8f0";
+      this.style.transform = "scale(1)";
     });
   }
   // Ferme la sidebar si on clique sur l'overlay
@@ -520,7 +589,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (filteredHistory.length === 0) {
       listDiv.innerHTML = `<div style='color:#94a3b8;text-align:center;margin-top:40px;font-size:0.95em;'>Aucun ordre de livraison valide</div>`;
+      // Mettre à jour le compteur
+      const totalOrdersCountEl = document.getElementById("totalOrdersCount");
+      if (totalOrdersCountEl) {
+        totalOrdersCountEl.textContent = "0";
+      }
       return;
+    }
+
+    // Mettre à jour le compteur total des ordres
+    const totalOrdersCountEl = document.getElementById("totalOrdersCount");
+    if (totalOrdersCountEl) {
+      totalOrdersCountEl.textContent = filteredHistory.length;
     }
 
     // Fonction de recherche
@@ -587,54 +667,124 @@ document.addEventListener("DOMContentLoaded", () => {
 
         html += `
           <div class="history-order-item" data-history-idx="${index}" style="
-            background:#f8fafc;
+            background:linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
             border:1px solid #e2e8f0;
-            border-radius:8px;
-            padding:16px;
-            margin-bottom:12px;
+            border-radius:12px;
+            padding:20px;
+            margin-bottom:16px;
             cursor:pointer;
-            transition:all 0.2s ease;
+            transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position:relative;
+            overflow:hidden;
+            box-shadow:0 1px 3px rgba(0,0,0,0.1);
           ">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-              <div style="flex:1;">
-                <div style="font-weight:600;color:#1e293b;font-size:0.95em;margin-bottom:4px;">
+            <!-- Indicateur de statut -->
+            <div style="
+              position:absolute;top:0;left:0;width:4px;height:100%;
+              background:linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+            "></div>
+            
+            <!-- En-tête avec client et actions -->
+            <div style="
+              display:flex;justify-content:space-between;align-items:flex-start;
+              margin-bottom:16px;
+            ">
+              <div style="flex:1;min-width:0;">
+                <div style="
+                  font-weight:700;color:#1e293b;font-size:1.05em;
+                  margin-bottom:6px;letter-spacing:-0.3px;
+                  display:flex;align-items:center;gap:8px;
+                ">
+                  <i class='fas fa-user-circle' style="color:#3b82f6;font-size:0.9em;"></i>
                   ${data.clientName || "Client inconnu"}
                 </div>
-                <div style="font-size:0.85em;color:#64748b;">
+                <div style="
+                  font-size:0.85em;color:#64748b;
+                  display:flex;align-items:center;gap:6px;
+                ">
+                  <i class='fas fa-calendar-alt' style="color:#9ca3af;font-size:0.8em;"></i>
                   ${formatDate(item.date)}
                 </div>
               </div>
-              <button class="delete-history-btn" data-history-idx="${index}" 
-                style="background:none;border:none;color:#94a3b8;font-size:0.9em;padding:4px;border-radius:4px;cursor:pointer;transition:color 0.2s;"
-                title="Supprimer cet ordre">
-                <i class='fas fa-trash'></i>
-              </button>
+              
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="
+                  background:#dbeafe;color:#1e40af;
+                  padding:4px 12px;border-radius:20px;
+                  font-size:0.75em;font-weight:600;
+                  letter-spacing:0.3px;
+                ">LIVRAISON</span>
+                <button class="delete-history-btn" data-history-idx="${index}" 
+                  style="
+                    background:#f1f5f9;border:1px solid #e2e8f0;
+                    color:#64748b;font-size:0.8em;padding:6px 8px;
+                    border-radius:6px;cursor:pointer;
+                    transition:all 0.2s ease;
+                  "
+                  title="Supprimer cet ordre">
+                  <i class='fas fa-trash'></i>
+                </button>
+              </div>
             </div>
             
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.85em;">
-              <div>
-                <span style="color:#64748b;">Conteneur(s):</span><br>
-                <span style="color:#374151;font-weight:500;">${containers}</span>
+            <!-- Informations principales en grille -->
+            <div style="
+              display:grid;grid-template-columns:1fr 1fr;gap:16px;
+              margin-bottom:16px;
+            ">
+              <div style="
+                background:#f8fafc;padding:12px;border-radius:8px;
+                border-left:3px solid #06b6d4;
+              ">
+                <div style="
+                  font-size:0.75em;color:#64748b;font-weight:600;
+                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
+                ">Conteneur(s)</div>
+                <div style="
+                  color:#1e293b;font-weight:600;font-size:0.9em;
+                  word-break:break-all;
+                ">${containers}</div>
               </div>
-              <div>
-                <span style="color:#64748b;">N° BL:</span><br>
-                <span style="color:#374151;font-weight:500;">${
-                  data.blNumber || "-"
-                }</span>
+              
+              <div style="
+                background:#f8fafc;padding:12px;border-radius:8px;
+                border-left:3px solid #8b5cf6;
+              ">
+                <div style="
+                  font-size:0.75em;color:#64748b;font-weight:600;
+                  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;
+                ">N° BL</div>
+                <div style="
+                  color:#1e293b;font-weight:600;font-size:0.9em;
+                ">${data.blNumber || "-"}</div>
               </div>
             </div>
             
+            <!-- Informations supplémentaires si disponibles -->
             ${
               data.lieu
                 ? `
-              <div style="margin-top:8px;font-size:0.85em;">
-                <span style="color:#64748b;">Lieu:</span>
-                <span style="color:#374151;font-weight:500;margin-left:4px;">${data.lieu}</span>
+              <div style="
+                background:#f0f9ff;padding:10px 12px;border-radius:6px;
+                border:1px solid #e0f2fe;
+                display:flex;align-items:center;gap:8px;
+              ">
+                <i class='fas fa-map-marker-alt' style="color:#0891b2;font-size:0.8em;"></i>
+                <span style="font-size:0.85em;color:#0f172a;font-weight:500;">
+                  ${data.lieu}
+                </span>
               </div>
             `
                 : ""
             }
+            
+            <!-- Indicateur hover -->
+            <div style="
+              position:absolute;bottom:0;left:0;right:0;height:2px;
+              background:linear-gradient(90deg, #3b82f6, #8b5cf6);
+              transform:scaleX(0);transition:transform 0.3s ease;
+              transform-origin:left;
+            " class="hover-indicator"></div>
           </div>
         `;
       });
@@ -651,30 +801,50 @@ document.addEventListener("DOMContentLoaded", () => {
           window.showOrderDetailPopup(order);
         });
 
-        // Effet hover
+        // Effet hover professionnel
         item.addEventListener("mouseenter", function () {
-          this.style.background = "#f1f5f9";
-          this.style.borderColor = "#cbd5e1";
-          this.style.transform = "translateY(-1px)";
-          this.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
+          this.style.background =
+            "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)";
+          this.style.borderColor = "#3b82f6";
+          this.style.transform = "translateY(-2px) scale(1.01)";
+          this.style.boxShadow = "0 8px 25px rgba(59, 130, 246, 0.15)";
+
+          // Animer l'indicateur hover
+          const hoverIndicator = this.querySelector(".hover-indicator");
+          if (hoverIndicator) {
+            hoverIndicator.style.transform = "scaleX(1)";
+          }
         });
 
         item.addEventListener("mouseleave", function () {
-          this.style.background = "#f8fafc";
+          this.style.background =
+            "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)";
           this.style.borderColor = "#e2e8f0";
-          this.style.transform = "translateY(0)";
-          this.style.boxShadow = "none";
+          this.style.transform = "translateY(0) scale(1)";
+          this.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+
+          // Réinitialiser l'indicateur hover
+          const hoverIndicator = this.querySelector(".hover-indicator");
+          if (hoverIndicator) {
+            hoverIndicator.style.transform = "scaleX(0)";
+          }
         });
       });
 
-      // Événements de suppression
+      // Événements de suppression avec style professionnel
       const deleteBtns = listDiv.querySelectorAll(".delete-history-btn");
       deleteBtns.forEach((btn) => {
         btn.addEventListener("mouseenter", function () {
+          this.style.background = "#fef2f2";
+          this.style.borderColor = "#fecaca";
           this.style.color = "#dc2626";
+          this.style.transform = "scale(1.05)";
         });
         btn.addEventListener("mouseleave", function () {
-          this.style.color = "#94a3b8";
+          this.style.background = "#f1f5f9";
+          this.style.borderColor = "#e2e8f0";
+          this.style.color = "#64748b";
+          this.style.transform = "scale(1)";
         });
 
         btn.addEventListener("click", function (e) {
@@ -758,19 +928,37 @@ document.addEventListener("DOMContentLoaded", () => {
     // Rendu initial
     renderFilteredHistory();
 
-    // Configurer la recherche
+    // Configurer la recherche avec styles professionnels
     setTimeout(() => {
       const searchInput = document.getElementById("historySearchInput");
       if (searchInput) {
-        // Ajouter des styles dynamiques pour le focus
+        // Ajouter des styles dynamiques pour le focus avec effet professionnel
         searchInput.addEventListener("focus", function () {
           this.style.borderColor = "#3b82f6";
-          this.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+          this.style.boxShadow =
+            "0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 6px rgba(0, 0, 0, 0.05)";
+          this.style.transform = "translateY(-1px)";
         });
 
         searchInput.addEventListener("blur", function () {
           this.style.borderColor = "#d1d5db";
-          this.style.boxShadow = "none";
+          this.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+          this.style.transform = "translateY(0)";
+        });
+
+        // Effet hover pour le champ de recherche
+        searchInput.addEventListener("mouseenter", function () {
+          if (this !== document.activeElement) {
+            this.style.borderColor = "#9ca3af";
+            this.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+          }
+        });
+
+        searchInput.addEventListener("mouseleave", function () {
+          if (this !== document.activeElement) {
+            this.style.borderColor = "#d1d5db";
+            this.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+          }
         });
 
         searchInput.addEventListener("input", (e) => {
@@ -782,7 +970,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 100);
   };
 
-  // Fonction pour afficher le pop-up détaillé d'un ordre de livraison - Version améliorée
+  // Fonction pour afficher le pop-up détaillé d'un ordre de livraison - Version Professionnelle
   window.showOrderDetailPopup = function (order) {
     // Supprime l'ancien pop-up s'il existe
     var oldModal = document.getElementById("orderDetailModal");
@@ -797,264 +985,493 @@ document.addEventListener("DOMContentLoaded", () => {
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
       z-index: 5000;
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     `;
 
     // Désactive le scroll de la page derrière la popup
     document.body.classList.add("overflow-hidden");
 
-    // Crée la boîte modale
+    // Crée la boîte modale avec style professionnel
     var modalBox = document.createElement("div");
     var isMobile =
       window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
 
     modalBox.style.cssText = `
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-      padding: ${isMobile ? "20px" : "30px"};
-      max-width: ${isMobile ? "90vw" : "500px"};
-      width: ${isMobile ? "90vw" : "500px"};
-      max-height: 85vh;
-      overflow-y: auto;
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      padding: 0;
+      max-width: ${isMobile ? "90vw" : "600px"};
+      width: ${isMobile ? "90vw" : "600px"};
+      max-height: 90vh;
+      overflow: hidden;
       position: relative;
-      transform: scale(0.9);
-      transition: transform 0.3s ease;
+      transform: scale(0.9) translateY(20px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid #e2e8f0;
     `;
 
-    // Bouton fermer élégant
+    // En-tête avec gradient professionnel
+    var header = document.createElement("div");
+    header.style.cssText = `
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      padding: 24px 30px;
+      position: relative;
+      overflow: hidden;
+    `;
+
+    // Décoration subtile en arrière-plan
+    var decoration = document.createElement("div");
+    decoration.style.cssText = `
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+    `;
+    header.appendChild(decoration);
+
+    // Titre principal avec icône
+    var title = document.createElement("div");
+    title.innerHTML = `
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+      ">
+        <div style="
+          background: rgba(59, 130, 246, 0.2);
+          border-radius: 10px;
+          padding: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <i class='fas fa-file-alt' style="color: #3b82f6; font-size: 1.2em;"></i>
+        </div>
+        <div>
+          <h3 style="
+            margin: 0;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: ${isMobile ? "1.2em" : "1.4em"};
+            letter-spacing: -0.5px;
+          ">Détails de la livraison</h3>
+          <p style="
+            margin: 2px 0 0 0;
+            color: #cbd5e1;
+            font-size: 0.9em;
+          ">Informations complètes de l'ordre</p>
+        </div>
+      </div>
+    `;
+    header.appendChild(title);
+
+    // Bouton fermer moderne
     var closeBtn = document.createElement("button");
-    closeBtn.innerHTML = "×";
+    closeBtn.innerHTML = `<i class='fas fa-times'></i>`;
     closeBtn.style.cssText = `
       position: absolute;
-      top: 15px;
-      right: 15px;
-      width: 35px;
-      height: 35px;
-      border: none;
-      background: #f8f9fa;
-      border-radius: 50%;
-      font-size: 20px;
-      font-weight: bold;
-      color: #6b7280;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      font-size: 14px;
+      color: #e2e8f0;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
+      z-index: 2;
     `;
 
     closeBtn.onmouseover = function () {
-      closeBtn.style.background = "#e5e7eb";
-      closeBtn.style.color = "#374151";
+      closeBtn.style.background = "rgba(255, 255, 255, 0.2)";
+      closeBtn.style.borderColor = "rgba(255, 255, 255, 0.3)";
+      closeBtn.style.color = "#ffffff";
+      closeBtn.style.transform = "scale(1.05)";
     };
     closeBtn.onmouseout = function () {
-      closeBtn.style.background = "#f8f9fa";
-      closeBtn.style.color = "#6b7280";
+      closeBtn.style.background = "rgba(255, 255, 255, 0.1)";
+      closeBtn.style.borderColor = "rgba(255, 255, 255, 0.2)";
+      closeBtn.style.color = "#e2e8f0";
+      closeBtn.style.transform = "scale(1)";
     };
 
     closeBtn.onclick = function () {
       modalBg.style.opacity = "0";
-      modalBox.style.transform = "scale(0.9)";
+      modalBox.style.transform = "scale(0.9) translateY(20px)";
       setTimeout(() => {
         modalBg.remove();
         document.body.classList.remove("overflow-hidden");
       }, 300);
     };
 
-    modalBox.appendChild(closeBtn);
+    header.appendChild(closeBtn);
+    modalBox.appendChild(header);
 
-    // Titre principal simple et élégant
-    var title = document.createElement("div");
-    title.textContent = "Détails de la livraison";
-    title.style.cssText = `
-      color: #1f2937;
-      font-weight: 600;
-      font-size: ${isMobile ? "18px" : "20px"};
-      margin-bottom: 25px;
-      padding-right: 40px;
-      line-height: 1.3;
+    // Corps du contenu avec style épuré
+    var contentDiv = document.createElement("div");
+    contentDiv.style.cssText = `
+      padding: 30px;
+      background: #ffffff;
+      max-height: calc(90vh - 100px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
     `;
-    modalBox.appendChild(title);
 
-    // Contenu détaillé avec un design simplifié
+    // Contenu détaillé avec un design très propre
     var html = "";
     if (!order || !order.data) {
       html = `
         <div style="
           color: #dc2626;
-          background: #fee2e2;
-          padding: 20px;
-          border-radius: 8px;
+          background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+          padding: 24px;
+          border-radius: 12px;
           text-align: center;
           font-weight: 500;
+          border: 1px solid #f87171;
         ">
+          <i class='fas fa-exclamation-triangle' style="font-size: 2em; margin-bottom: 12px; display: block;"></i>
           Aucune donnée disponible pour cet ordre
         </div>
       `;
     } else {
       var d = order.data;
 
-      // Fonction helper pour créer une ligne d'information
-      function createInfoRow(label, value, isHighlight = false) {
-        const bgColor = isHighlight ? "#f8fafc" : "#ffffff";
-        return `
+      // Fonction helper pour créer une section d'information
+      function createSection(title, items, color = "#3b82f6") {
+        let sectionHtml = `
           <div style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: ${bgColor};
-            border-radius: 6px;
-            border-left: 3px solid ${isHighlight ? "#3b82f6" : "#e5e7eb"};
+            margin-bottom: 24px;
+            background: #f8fafc;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
           ">
-            <span style="color: #6b7280; font-weight: 500; font-size: 14px;">${label}</span>
-            <span style="color: #1f2937; font-weight: 600; text-align: right; max-width: 60%;">${
-              value || "-"
-            }</span>
-          </div>
+            <div style="
+              background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);
+              color: white;
+              padding: 16px 20px;
+              font-weight: 600;
+              font-size: 0.95em;
+              letter-spacing: 0.3px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            ">
+              <i class='fas fa-folder-open' style="font-size: 0.9em;"></i>
+              ${title}
+            </div>
+            <div style="padding: 20px;">
         `;
-      }
 
-      html = `
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          ${createInfoRow("Date", order.date || "-", true)}
-          ${createInfoRow("Agent", d.employeeName || "-")}
-          ${createInfoRow("Client", d.clientName || "-", true)}
-          ${createInfoRow("Téléphone", d.clientPhone || "-")}
-          ${createInfoRow(
-            "Conteneur(s)",
-            Array.isArray(d.containerNumbers)
+        items.forEach((item) => {
+          if (item.value) {
+            sectionHtml += `
+              <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                padding: 12px 0;
+                border-bottom: 1px solid #f1f5f9;
+              ">
+                <span style="
+                  color: #64748b;
+                  font-weight: 500;
+                  font-size: 0.9em;
+                  min-width: 40%;
+                ">${item.label}:</span>
+                <span style="
+                  color: #1e293b;
+                  font-weight: 600;
+                  text-align: right;
+                  flex: 1;
+                  font-size: 0.9em;
+                  word-break: break-word;
+                ">${item.value}</span>
+              </div>
+            `;
+          }
+        });
+
+        sectionHtml += `</div></div>`;
+        return sectionHtml;
+        // Sections d'informations avec style professionnel
+        const clientInfo = [
+          { label: "Client", value: d.clientName },
+          { label: "Téléphone", value: d.clientPhone },
+          {
+            label: "Date de création",
+            value: order.date
+              ? new Date(order.date).toLocaleDateString("fr-FR")
+              : "-",
+          },
+        ];
+
+        const containerInfo = [
+          {
+            label: "Conteneur(s)",
+            value: Array.isArray(d.containerNumbers)
               ? d.containerNumbers.join(", ")
-              : d.containerNumbers || "-",
-            true
-          )}
-          ${createInfoRow("Type de pied", d.containerFootType || "-")}
-          ${createInfoRow("Poids", d.weight || "-", true)}
-          ${createInfoRow("Contenu", d.containerTypeAndContent || "-")}
-          ${createInfoRow("Lieu", d.lieu || "-", true)}
-          ${createInfoRow("N° Déclaration", d.declarationNumber || "-")}
-          ${createInfoRow("Nb conteneurs", d.numberOfContainers || "-", true)}
-          ${createInfoRow("N° BL", d.blNumber || "-")}
-          ${createInfoRow("N° Dossier", d.dossierNumber || "-", true)}
-          ${createInfoRow("Compagnie maritime", d.shippingCompany || "-")}
-          ${createInfoRow("Navire", d.shipName || "-", true)}
-          ${createInfoRow("Circuit", d.circuit || "-")}
-          ${createInfoRow("Mode transport", d.transporterMode || "-", true)}
-        </div>
+              : d.containerNumbers,
+          },
+          { label: "Nombre de conteneurs", value: d.numberOfContainers },
+          { label: "Type de pied", value: d.containerFootType },
+          { label: "Poids", value: d.weight },
+          { label: "Contenu", value: d.containerTypeAndContent },
+        ];
+
+        const documentInfo = [
+          { label: "N° BL", value: d.blNumber },
+          { label: "N° Dossier", value: d.dossierNumber },
+          { label: "N° Déclaration", value: d.declarationNumber },
+        ];
+
+        const transportInfo = [
+          { label: "Compagnie maritime", value: d.shippingCompany },
+          { label: "Navire", value: d.shipName },
+          { label: "Circuit", value: d.circuit },
+          { label: "Mode de transport", value: d.transporterMode },
+          { label: "Lieu", value: d.lieu },
+        ];
+
+        html = `
+        ${createSection("Informations Client", clientInfo, "#10b981")}
+        ${createSection("Informations Conteneur", containerInfo, "#3b82f6")}
+        ${createSection("Documents", documentInfo, "#8b5cf6")}
+        ${createSection("Transport & Logistique", transportInfo, "#f59e0b")}
       `;
 
-      // Section détaillée pour le mapping TC/pied/poids si disponible
-      if (
-        Array.isArray(d.containerFootTypesData) &&
-        d.containerFootTypesData.length > 0
-      ) {
-        html += `
+        // Section spéciale pour les numéros TC avec carte et menu déroulant (Point 3)
+        if (
+          Array.isArray(d.containerFootTypesData) &&
+          d.containerFootTypesData.length > 0
+        ) {
+          html += `
           <div style="
-            margin-top: 20px;
-            padding: 16px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border-left: 3px solid #3b82f6;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #0891b2;
+            margin-bottom: 24px;
           ">
             <div style="
+              background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+              color: white;
+              padding: 16px 20px;
               font-weight: 600;
-              color: #1f2937;
-              margin-bottom: 12px;
-              font-size: 15px;
-            ">
-              Détail conteneurs
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-        `;
-
-        for (var i = 0; i < d.containerFootTypesData.length; i++) {
-          var obj = d.containerFootTypesData[i];
-          html += `
-            <div style="
+              font-size: 0.95em;
+              letter-spacing: 0.3px;
               display: flex;
+              align-items: center;
               justify-content: space-between;
-              padding: 8px 12px;
-              background: white;
-              border-radius: 4px;
-              font-size: 14px;
-            ">
-              <span style="font-weight: 600; color: #1f2937;">${obj.tc}</span>
-              <span style="color: #6b7280;">${obj.pied || "-"} / ${
-            obj.poids || "-"
-          } kg</span>
+              cursor: pointer;
+            " onclick="toggleTCDetails()" id="tcCardHeader">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class='fas fa-shipping-fast' style="font-size: 0.9em;"></i>
+                Numéros TC (${d.containerFootTypesData.length})
+              </div>
+              <i class='fas fa-chevron-down' id="tcChevron" style="transition: transform 0.3s ease;"></i>
             </div>
-          `;
-        }
+            
+            <div id="tcDetailsContent" style="
+              max-height: 0;
+              overflow: hidden;
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              background: #ffffff;
+            ">
+              <div style="padding: 20px;">
+                <div style="
+                  display: grid;
+                  gap: 12px;
+                  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                ">`;
 
-        html += `
+          for (var i = 0; i < d.containerFootTypesData.length; i++) {
+            var obj = d.containerFootTypesData[i];
+            html += `
+                  <div style="
+                    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                    padding: 16px;
+                    transition: all 0.2s ease;
+                    position: relative;
+                    overflow: hidden;
+                  " class="tc-item" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(8, 145, 178, 0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    
+                    <div style="
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      right: 0;
+                      height: 3px;
+                      background: linear-gradient(90deg, #0891b2, #06b6d4);
+                    "></div>
+                    
+                    <div style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      margin-bottom: 12px;
+                    ">
+                      <div style="
+                        background: #0891b2;
+                        color: white;
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 700;
+                        font-size: 0.8em;
+                      ">${i + 1}</div>
+                      <div style="
+                        font-weight: 700;
+                        color: #1e293b;
+                        font-size: 1.1em;
+                        letter-spacing: -0.3px;
+                      ">${obj.tc || "TC-" + (i + 1)}</div>
+                    </div>
+                    
+                    <div style="
+                      display: grid;
+                      grid-template-columns: 1fr 1fr;
+                      gap: 8px;
+                      font-size: 0.85em;
+                    ">
+                      <div style="
+                        background: rgba(8, 145, 178, 0.1);
+                        padding: 8px 10px;
+                        border-radius: 6px;
+                        text-align: center;
+                      ">
+                        <div style="color: #64748b; font-size: 0.7em; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Type</div>
+                        <div style="color: #0891b2; font-weight: 700;">${
+                          obj.pied || "-"
+                        }</div>
+                      </div>
+                      <div style="
+                        background: rgba(8, 145, 178, 0.1);
+                        padding: 8px 10px;
+                        border-radius: 6px;
+                        text-align: center;
+                      ">
+                        <div style="color: #64748b; font-size: 0.7em; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Poids</div>
+                        <div style="color: #0891b2; font-weight: 700;">${
+                          obj.poids || "-"
+                        } kg</div>
+                      </div>
+                    </div>
+                  </div>`;
+          }
+
+          html += `
+                </div>
+              </div>
             </div>
           </div>
+
+          <script>
+            function toggleTCDetails() {
+              const content = document.getElementById('tcDetailsContent');
+              const chevron = document.getElementById('tcChevron');
+              
+              if (content.style.maxHeight === '0px' || !content.style.maxHeight) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                chevron.style.transform = 'rotate(180deg)';
+              } else {
+                content.style.maxHeight = '0px';
+                chevron.style.transform = 'rotate(0deg)';
+              }
+            }
+          </script>
         `;
+        }
       }
+
+      contentDiv.innerHTML = html;
+      modalBox.appendChild(contentDiv);
+      modalBg.appendChild(modalBox);
+      document.body.appendChild(modalBg);
+
+      // Animation d'entrée fluide
+      setTimeout(() => {
+        modalBg.style.opacity = "1";
+        modalBox.style.transform = "scale(1) translateY(0)";
+      }, 10);
+
+      // Fermeture au clic sur l'arrière-plan
+      modalBg.onclick = function (e) {
+        if (e.target === modalBg) {
+          closeBtn.onclick();
+        }
+      };
+
+      // Fermeture avec Échap
+      const handleEscape = function (e) {
+        if (e.key === "Escape") {
+          closeBtn.onclick();
+          document.removeEventListener("keydown", handleEscape);
+        }
+      };
+      document.addEventListener("keydown", handleEscape);
+
+      // Animation d'entrée
+      setTimeout(() => {
+        modalBox.style.transform = "scale(1)";
+      }, 10);
+
+      // Fermer au clic sur le fond (overlay)
+      modalBg.addEventListener("click", function (e) {
+        if (e.target === modalBg) {
+          modalBg.style.opacity = "0";
+          modalBox.style.transform = "scale(0.9)";
+          setTimeout(() => {
+            modalBg.remove();
+            document.body.classList.remove("overflow-hidden");
+          }, 300);
+        }
+      });
     }
 
-    var contentDiv = document.createElement("div");
-    contentDiv.innerHTML = html;
-    modalBox.appendChild(contentDiv);
-    modalBg.appendChild(modalBox);
-    document.body.appendChild(modalBg);
-
-    // Animation d'entrée
-    setTimeout(() => {
-      modalBg.style.opacity = "1";
-      modalBox.style.transform = "scale(1)";
-    }, 10);
-
-    // Fermer au clic sur le fond (overlay)
-    modalBg.addEventListener("click", function (e) {
-      if (e.target === modalBg) {
-        modalBg.style.opacity = "0";
-        modalBox.style.transform = "scale(0.9)";
-        setTimeout(() => {
-          modalBg.remove();
-          document.body.classList.remove("overflow-hidden");
-        }, 300);
-      }
-    });
-
-    // Fermer avec la touche Escape
-    function handleEscape(e) {
-      if (e.key === "Escape") {
-        modalBg.style.opacity = "0";
-        modalBox.style.transform = "scale(0.9)";
-        setTimeout(() => {
-          modalBg.remove();
-          document.body.classList.remove("overflow-hidden");
-        }, 300);
-        document.removeEventListener("keydown", handleEscape);
-      }
+    // --- Observer la visibilité du formulaire pour afficher/masquer l'icône ---
+    const observer = new MutationObserver(updateHistoryBtnVisibility);
+    if (deliveryFormSection) {
+      observer.observe(deliveryFormSection, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
     }
-    document.addEventListener("keydown", handleEscape);
+    if (codeEntrySection) {
+      observer.observe(codeEntrySection, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    }
+    // Appel initial
+    updateHistoryBtnVisibility();
   };
-
-  // --- Observer la visibilité du formulaire pour afficher/masquer l'icône ---
-  const observer = new MutationObserver(updateHistoryBtnVisibility);
-  if (deliveryFormSection) {
-    observer.observe(deliveryFormSection, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-  }
-  if (codeEntrySection) {
-    observer.observe(codeEntrySection, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-  }
-  // Appel initial
-  updateHistoryBtnVisibility();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
