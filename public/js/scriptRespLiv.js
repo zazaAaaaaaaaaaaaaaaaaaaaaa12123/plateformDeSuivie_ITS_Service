@@ -344,7 +344,7 @@ function injectHistoryStyles() {
       padding: 20px 25px;
       border-radius: 16px;
       box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4);
-      z-index: 100000;
+      z-index: 999999;
       font-weight: 600;
       font-size: 1em;
       cursor: pointer;
@@ -4807,6 +4807,32 @@ function syncDeliveredContainersToHistory() {
 }
 
 /**
+ * Récupère la valeur réelle d'un champ depuis le tableau DOM
+ */
+function getTableCellValue(deliveryId, fieldId) {
+  const tr = document.querySelector(`tr[data-delivery-id='${deliveryId}']`);
+  if (tr) {
+    const td = tr.querySelector(`td[data-col-id='${fieldId}']`);
+    if (td) {
+      // Vérifie d'abord s'il y a un input ou textarea
+      const input = td.querySelector("input,textarea");
+      if (input && input.value && input.value.trim() !== "") {
+        return input.value.trim();
+      }
+      // Sinon récupère le textContent
+      if (
+        td.textContent &&
+        td.textContent.trim() !== "-" &&
+        td.textContent.trim() !== ""
+      ) {
+        return td.textContent.trim();
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Enregistre un conteneur livré dans l'historique professionnel
  * @param {Object} delivery - Livraison complète
  * @param {string} containerNumber - Numéro du conteneur livré
@@ -4817,6 +4843,18 @@ function saveToDeliveryHistory(delivery, containerNumber) {
     let history = JSON.parse(
       localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
     );
+
+    // Récupère les valeurs réelles depuis le tableau DOM
+    const realAgentName =
+      getTableCellValue(delivery.id, "visitor_agent_name") ||
+      delivery.nom_agent_visiteur ||
+      delivery.visitor_agent_name ||
+      "Agent inconnu";
+
+    const realTransporter =
+      getTableCellValue(delivery.id, "transporter") ||
+      delivery.transporter ||
+      "Transporteur inconnu";
 
     // Crée un enregistrement unique pour ce conteneur
     const historyEntry = {
@@ -4830,9 +4868,9 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       employee_name: delivery.employee_name,
       circuit: delivery.circuit,
       shipping_company: delivery.shipping_company,
-      visitor_agent_name: delivery.visitor_agent_name,
-      nom_agent_visiteur: delivery.nom_agent_visiteur,
-      transporter: delivery.transporter,
+      visitor_agent_name: realAgentName,
+      nom_agent_visiteur: realAgentName,
+      transporter: realTransporter,
       inspector: delivery.inspector,
       customs_agent: delivery.customs_agent,
       driver: delivery.driver,
