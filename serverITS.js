@@ -175,8 +175,7 @@ app.get("/api/user-observations", async (req, res) => {
         employee_name,
         client_name,
         delivery_date,
-        created_at,
-        updated_at
+        created_at
       FROM livraison_conteneur 
       WHERE 
         (observation_acconier IS NOT NULL AND observation_acconier != '' AND observation_acconier != '-') 
@@ -185,18 +184,16 @@ app.get("/api/user-observations", async (req, res) => {
           LOWER(responsible_acconier) LIKE LOWER($1) OR
           LOWER(resp_acconier) LIKE LOWER($1) OR
           LOWER(created_by) LIKE LOWER($1) OR
-          LOWER(updated_by) LIKE LOWER($1) OR
           LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
           LOWER(assigned_to) LIKE LOWER($1) OR
           ($2 IS NOT NULL AND (
             LOWER(employee_name) LIKE LOWER($2) OR
             LOWER(responsible_acconier) LIKE LOWER($2) OR
             LOWER(resp_acconier) LIKE LOWER($2) OR
-            LOWER(created_by) LIKE LOWER($2) OR
-            LOWER(updated_by) LIKE LOWER($2)
+            LOWER(created_by) LIKE LOWER($2)
           ))
         )
-      ORDER BY updated_at DESC, created_at DESC
+      ORDER BY created_at DESC
       LIMIT 100;
     `;
 
@@ -217,8 +214,7 @@ app.get("/api/user-observations", async (req, res) => {
         employee_name,
         client_name,
         delivery_date,
-        created_at,
-        updated_at
+        created_at
       FROM livraison_conteneur 
       WHERE 
         (
@@ -226,19 +222,17 @@ app.get("/api/user-observations", async (req, res) => {
           LOWER(responsible_acconier) LIKE LOWER($1) OR
           LOWER(resp_acconier) LIKE LOWER($1) OR
           LOWER(created_by) LIKE LOWER($1) OR
-          LOWER(updated_by) LIKE LOWER($1) OR
           LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
           LOWER(assigned_to) LIKE LOWER($1) OR
           ($2 IS NOT NULL AND (
             LOWER(employee_name) LIKE LOWER($2) OR
             LOWER(responsible_acconier) LIKE LOWER($2) OR
             LOWER(resp_acconier) LIKE LOWER($2) OR
-            LOWER(created_by) LIKE LOWER($2) OR
-            LOWER(updated_by) LIKE LOWER($2)
+            LOWER(created_by) LIKE LOWER($2)
           ))
         )
-        AND updated_at >= NOW() - INTERVAL '30 days'
-      ORDER BY updated_at DESC, created_at DESC
+        AND created_at >= NOW() - INTERVAL '30 days'
+      ORDER BY created_at DESC
       LIMIT 50;
     `;
 
@@ -309,8 +303,7 @@ app.get("/api/user-delivery-data", async (req, res) => {
         observation_acconier,
         employee_name,
         client_name,
-        created_at,
-        updated_at
+        created_at
       FROM livraison_conteneur 
       WHERE 
         delivery_status_acconier = 'mise_en_livraison_acconier'
@@ -319,7 +312,6 @@ app.get("/api/user-delivery-data", async (req, res) => {
           LOWER(responsible_livreur) LIKE LOWER($1) OR
           LOWER(resp_livreur) LIKE LOWER($1) OR
           LOWER(created_by) LIKE LOWER($1) OR
-          LOWER(updated_by) LIKE LOWER($1) OR
           LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
           LOWER(driver_name) LIKE LOWER($1) OR
           LOWER(transporter) LIKE LOWER($1) OR
@@ -331,7 +323,6 @@ app.get("/api/user-delivery-data", async (req, res) => {
             LOWER(responsible_livreur) LIKE LOWER($2) OR
             LOWER(resp_livreur) LIKE LOWER($2) OR
             LOWER(created_by) LIKE LOWER($2) OR
-            LOWER(updated_by) LIKE LOWER($2) OR
             LOWER(nom_agent_visiteur) LIKE LOWER($2) OR
             LOWER(driver_name) LIKE LOWER($2)
           ))
@@ -346,7 +337,7 @@ app.get("/api/user-delivery-data", async (req, res) => {
           (delivery_notes IS NOT NULL AND delivery_notes != '' AND delivery_notes != '-') OR
           (observation_acconier IS NOT NULL AND observation_acconier != '' AND observation_acconier != '-')
         )
-      ORDER BY updated_at DESC, created_at DESC
+      ORDER BY created_at DESC
       LIMIT 100;
     `;
 
@@ -412,7 +403,7 @@ app.get("/api/user-delivery-data", async (req, res) => {
             field_label: field.label,
             client_name: row.client_name,
             employee_name: row.employee_name,
-            updated_at: row.updated_at,
+            created_at: row.created_at,
           });
         }
       });
@@ -607,7 +598,7 @@ app.post("/api/get-delivery-details", async (req, res) => {
               circuit, shipping_company, nom_agent_visiteur, transporter, inspecteur, 
               agent_en_douanes, driver_name, driver_phone, delivery_date, delivery_notes,
               observation_acconier, employee_name, container_foot_type, weight, ship_name,
-              container_type_and_content, created_at, updated_at
+              container_type_and_content, created_at
        FROM livraison_conteneur 
        WHERE id = $1`,
       [delivery_id]
