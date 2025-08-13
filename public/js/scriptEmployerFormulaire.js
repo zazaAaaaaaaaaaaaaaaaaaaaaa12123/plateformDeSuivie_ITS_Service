@@ -20,6 +20,7 @@ window.addEventListener("DOMContentLoaded", function () {
     }, interval);
   }
 });
+/***PLATEFORME D'ORDRE DE LIVRAISON */
 // Toutes les variables liées au code d'entreprise ont été supprimées
 const deliveryFormSection = document.getElementById("deliveryFormSection");
 const deliveryForm = document.getElementById("deliveryForm");
