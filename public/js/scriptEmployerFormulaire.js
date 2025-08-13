@@ -33,12 +33,13 @@ window.addEventListener("DOMContentLoaded", function () {
         window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
       if (isMobile) {
         themeSelector.style.top = historyBtn.style.top
-          ? parseInt(historyBtn.style.top) + 48 + "px"
-          : "60px";
-        themeSelector.style.left = historyBtn.style.left || "16px";
-        themeSelector.style.width = "32px";
-        themeSelector.style.height = "32px";
-        themeSelector.style.fontSize = "1.1em";
+          ? parseInt(historyBtn.style.top) + 40 + "px"
+          : "52px";
+        themeSelector.style.left = historyBtn.style.left || "10px";
+        themeSelector.style.width = "24px";
+        themeSelector.style.height = "24px";
+        themeSelector.style.fontSize = "0.95em";
+        themeSelector.style.padding = "0";
       } else {
         themeSelector.style.top = historyBtn.style.top
           ? parseInt(historyBtn.style.top) + 60 + "px"
@@ -47,6 +48,7 @@ window.addEventListener("DOMContentLoaded", function () {
         themeSelector.style.width = "44px";
         themeSelector.style.height = "44px";
         themeSelector.style.fontSize = "1.35em";
+        themeSelector.style.padding = "0";
       }
       themeSelector.style.zIndex = "3001";
       themeSelector.style.background = "#23232b";
