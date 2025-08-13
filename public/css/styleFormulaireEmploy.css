@@ -274,6 +274,40 @@
   }
 }
 
+/* --- Correction du bouton thème (lune) --- */
+#themeSelectorBtn {
+  position: fixed !important;
+  top: 12px !important;
+  right: 12px !important;
+  width: 38px !important;
+  height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #fff !important;
+  border-radius: 50% !important;
+  box-shadow: 0 2px 8px #2563eb22 !important;
+  z-index: 3000 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+#themeSelectorBtn i.fas.fa-moon {
+  font-size: 1.15em !important;
+  color: #2563eb !important;
+  margin: 0 !important;
+}
+@media (max-width: 600px) {
+  #themeSelectorBtn {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 1.15em !important;
+    padding: 0 !important;
+  }
+  #themeSelectorBtn i.fas.fa-moon {
+    font-size: 1.15em !important;
+  }
+}
+
 /* Ajustement spécifique pour la seconde image (modal d'historique) */
 #professionalHistoryModal .history-order-item {
   margin-bottom: 2px !important; /* Très réduit pour la seconde image */
