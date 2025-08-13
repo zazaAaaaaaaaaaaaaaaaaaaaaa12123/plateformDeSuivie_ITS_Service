@@ -1673,18 +1673,13 @@ document.addEventListener("DOMContentLoaded", function () {
         let value = "-";
         if (col.id === "date_display") {
           let dDate = delivery.delivery_date || delivery.created_at;
-          // Si la date d'échange BL est au format JJ/MM/AAAA (ancienne), on pré-remplit avec la date de la colonne Date
+          // Si la date d'échange BL est au format JJ/MM/AAAA (ancienne), on affiche la date de la colonne Date
           if (
             typeof dDate === "string" &&
             /^\d{2}\/\d{2}\/\d{4}$/.test(dDate) &&
             delivery.date
           ) {
             value = delivery.date;
-          } else if (
-            typeof dDate === "string" &&
-            /\d{2}\/\d{2}\/\d{4}/.test(dDate)
-          ) {
-            value = dDate;
           } else if (dDate) {
             let dateObj = new Date(dDate);
             if (!isNaN(dateObj.getTime())) {
