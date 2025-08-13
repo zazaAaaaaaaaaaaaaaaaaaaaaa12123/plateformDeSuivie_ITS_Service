@@ -3550,9 +3550,44 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateEchangeBLInput.style.cursor = "text";
 
           // Rendre le champ modifiable et prérempli si une date existe
-          dateEchangeBLInput.value = delivery.date_echange_bl
-            ? new Date(delivery.date_echange_bl).toISOString().split("T")[0]
-            : "";
+          const tempKeyEchangeBL = `temp_date_echange_bl_${delivery.id}`;
+          const tempValueEchangeBL = localStorage.getItem(tempKeyEchangeBL);
+          dateEchangeBLInput.value =
+            tempValueEchangeBL ||
+            (delivery.date_echange_bl
+              ? new Date(delivery.date_echange_bl).toISOString().split("T")[0]
+              : "");
+
+          dateEchangeBLInput.title =
+            "Saisissez ou modifiez la date d'échange BL manuellement";
+
+          // Sauvegarde automatique lors de la modification
+          dateEchangeBLInput.addEventListener("change", function () {
+            localStorage.setItem(tempKeyEchangeBL, this.value);
+            // Synchronisation automatique vers le backend
+            fetch(`/api/exchange/update/${delivery.id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ date_echange_bl: this.value }),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.success) {
+                  // Optionnel : afficher une notification de succès
+                  this.style.borderColor = "#22c55e";
+                  setTimeout(() => {
+                    this.style.borderColor = isDark ? "#ffd600" : "#d1d5db";
+                  }, 1200);
+                } else {
+                  this.style.borderColor = "#ef4444";
+                }
+              })
+              .catch(() => {
+                this.style.borderColor = "#ef4444";
+              });
+          });
 
           dateEchangeBLInput.title =
             "Saisissez ou modifiez la date d'échange BL manuellement";
