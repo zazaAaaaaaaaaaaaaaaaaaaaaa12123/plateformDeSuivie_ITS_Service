@@ -1,4 +1,100 @@
 // --- DÉCLARATION DES VARIABLES GLOBALES AVANT TOUTE FONCTION ---
+// --- GESTION DES THÈMES ---
+function applyTheme(theme) {
+  let body = document.body;
+  let app = document.getElementById("appContainer");
+  let h1 = app ? app.querySelector("h1") : null;
+  let submitBtns = app ? app.querySelectorAll('button[type="submit"]') : [];
+  let cancelBtn = app ? app.querySelector("#cancelSubmitBtn") : null;
+  let themeVars = {
+    default: {
+      bg: "linear-gradient(135deg, #e0e7ff 0%, #f0fdfa 100%)",
+      accent: "#2563eb",
+      btn: "#22c55e",
+      btnHover: "#16a34a",
+      h1: "linear-gradient(90deg, #2563eb 0%, #06b6d4 100%)",
+    },
+    vert: {
+      bg: "linear-gradient(135deg, #bbf7d0 0%, #f0fdfa 100%)",
+      accent: "#22c55e",
+      btn: "#22c55e",
+      btnHover: "#16a34a",
+      h1: "linear-gradient(90deg, #22c55e 0%, #06b6d4 100%)",
+    },
+    orange: {
+      bg: "linear-gradient(135deg, #fed7aa 0%, #fff7ed 100%)",
+      accent: "#f97316",
+      btn: "#f97316",
+      btnHover: "#ea580c",
+      h1: "linear-gradient(90deg, #f97316 0%, #fbbf24 100%)",
+    },
+    rose: {
+      bg: "linear-gradient(135deg, #fbcfe8 0%, #fdf2f8 100%)",
+      accent: "#ec4899",
+      btn: "#ec4899",
+      btnHover: "#db2777",
+      h1: "linear-gradient(90deg, #ec4899 0%, #f472b6 100%)",
+    },
+    sombre: {
+      bg: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
+      accent: "#334155",
+      btn: "#334155",
+      btnHover: "#1e293b",
+      h1: "linear-gradient(90deg, #334155 0%, #1e293b 100%)",
+    },
+  };
+  let vars = themeVars[theme] || themeVars.default;
+  body.style.background = vars.bg;
+  if (app) {
+    app.style.background =
+      theme === "sombre" ? "rgba(30,41,59,0.97)" : "rgba(255,255,255,0.95)";
+    app.style.borderColor = vars.accent;
+    app.style.boxShadow =
+      theme === "sombre"
+        ? "0 8px 32px 0 #0f172a"
+        : "0 8px 32px 0 rgba(31,38,135,0.18)";
+  }
+  if (h1) {
+    h1.style.background = vars.h1;
+    h1.style.webkitBackgroundClip = "text";
+    h1.style.webkitTextFillColor = "transparent";
+    h1.style.backgroundClip = "text";
+  }
+  submitBtns.forEach((btn) => {
+    btn.style.background = vars.btn;
+    btn.onmouseover = () => {
+      btn.style.background = vars.btnHover;
+    };
+    btn.onmouseout = () => {
+      btn.style.background = vars.btn;
+    };
+  });
+  if (cancelBtn) {
+    cancelBtn.style.background = theme === "sombre" ? "#64748b" : "#6b7280";
+    cancelBtn.onmouseover = () => {
+      cancelBtn.style.background = theme === "sombre" ? "#334155" : "#374151";
+    };
+    cancelBtn.onmouseout = () => {
+      cancelBtn.style.background = theme === "sombre" ? "#64748b" : "#6b7280";
+    };
+  }
+}
+
+function setupThemeSelector() {
+  const selector = document.getElementById("themeSelector");
+  if (!selector) return;
+  // Applique le thème sauvegardé au chargement
+  let savedTheme = localStorage.getItem("form_theme") || "default";
+  selector.value = savedTheme;
+  applyTheme(savedTheme);
+  selector.onchange = function () {
+    let theme = selector.value;
+    localStorage.setItem("form_theme", theme);
+    applyTheme(theme);
+  };
+}
+
+window.addEventListener("DOMContentLoaded", setupThemeSelector);
 // Toutes les variables liées au code d'entreprise ont été supprimées
 const deliveryFormSection = document.getElementById("deliveryFormSection");
 const deliveryForm = document.getElementById("deliveryForm");
@@ -389,7 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <!-- En-tête avec titre et bouton fermer -->
       <div style='display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px 18px;border-bottom:1px solid #e2e8f0;background:linear-gradient(135deg, #1e293b 0%, #334155 100%);'>
         <h3 style='margin:0;font-weight:700;font-size:1em;color:#ffffff;letter-spacing:-0.3px;'>📋 Historique ordres de livraison</h3>
-        <button id='closeHistorySidebarBtn' style='background:rgba(209, 141, 4, 0.1);border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;cursor:pointer;padding:6px;border-radius:4px;width:28px;height:28px;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;' title="Fermer">
+        <button id='closeHistorySidebarBtn' style='background:rgba(212, 144, 6, 0.1);border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;cursor:pointer;padding:6px;border-radius:4px;width:28px;height:28px;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;' title="Fermer">
           <i class='fas fa-times'></i>
         </button>
       </div>  
