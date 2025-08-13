@@ -1673,7 +1673,10 @@ document.addEventListener("DOMContentLoaded", function () {
         let value = "-";
         if (col.id === "date_display") {
           let dDate = delivery.delivery_date || delivery.created_at;
-          if (dDate) {
+          // Si la date d'origine existe déjà sous forme de string (ex: "13/08/2025 14:32"), on la conserve telle quelle
+          if (typeof dDate === "string" && /\d{2}\/\d{2}\/\d{4}/.test(dDate)) {
+            value = dDate;
+          } else if (dDate) {
             let dateObj = new Date(dDate);
             if (!isNaN(dateObj.getTime())) {
               value = dateObj.toLocaleDateString("fr-FR");
