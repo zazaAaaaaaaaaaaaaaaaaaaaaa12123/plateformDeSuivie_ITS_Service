@@ -3546,17 +3546,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateEchangeBLInput.style.marginBottom = "0";
           dateEchangeBLInput.style.background = isDark ? "#232f43" : "#f3f4f6";
           dateEchangeBLInput.style.color = isDark ? "#ffd600" : "#6b7280";
-          dateEchangeBLInput.readOnly = true;
-          dateEchangeBLInput.style.cursor = "not-allowed";
+          dateEchangeBLInput.readOnly = false;
+          dateEchangeBLInput.style.cursor = "text";
 
-          // Récupérer la date d'échange BL depuis la base de données (générée automatiquement)
+          // Rendre le champ modifiable et prérempli si une date existe
           dateEchangeBLInput.value = delivery.date_echange_bl
             ? new Date(delivery.date_echange_bl).toISOString().split("T")[0]
             : "";
 
-          // Ajouter un tooltip pour expliquer que c'est généré automatiquement
           dateEchangeBLInput.title =
-            "Cette date est générée automatiquement lors de l'enregistrement de l'ordre de livraison";
+            "Saisissez ou modifiez la date d'échange BL manuellement";
 
           dateEchangeBLGroup.appendChild(dateEchangeBLInput);
           fieldsContainer.appendChild(dateEchangeBLGroup);
