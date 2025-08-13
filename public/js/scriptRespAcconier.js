@@ -1673,39 +1673,30 @@ document.addEventListener("DOMContentLoaded", function () {
         let value = "-";
         if (col.id === "date_display") {
           let dDate = delivery.delivery_date || delivery.created_at;
-          // Si la date d'échange BL est au format JJ/MM/AAAA (ancienne), on affiche la date de la colonne Date
-          if (
-            typeof dDate === "string" &&
-            /^\d{2}\/\d{2}\/\d{4}$/.test(dDate) &&
-            delivery.date
-          ) {
-            value = delivery.date;
-          } else if (dDate) {
-            let dateObj = new Date(dDate);
-            if (!isNaN(dateObj.getTime())) {
-              value = dateObj.toLocaleDateString("fr-FR");
-            } else if (typeof dDate === "string") {
+          // Correction : Toujours afficher la date enregistrée si elle existe
+          if (dDate) {
+            // Si la date est au format JJ/MM/AAAA, on l'affiche telle quelle
+            if (
+              typeof dDate === "string" &&
+              /^\d{2}\/\d{2}\/\d{4}$/.test(dDate)
+            ) {
               value = dDate;
+            } else {
+              let dateObj = new Date(dDate);
+              if (!isNaN(dateObj.getTime())) {
+                value = dateObj.toLocaleDateString("fr-FR");
+              } else if (typeof dDate === "string") {
+                value = dDate;
+              }
             }
+          } else {
+            // Si aucune date n'est enregistrée, on laisse le champ vide (jamais JJ/MM/AAAA par défaut)
+            value = "";
           }
-          // Ajout input modifiable pour la date d'échange BL
-          const input = document.createElement("input");
-          input.type = "text";
-          input.value = value;
-          input.className = "date-bl-input";
-          input.style.width = "120px";
-          input.style.textAlign = "center";
-          input.style.border = "1px solid #2563eb";
-          input.style.borderRadius = "6px";
-          input.style.padding = "2px 6px";
-          input.onchange = function () {
-            delivery.delivery_date = input.value;
-          };
-          cell.appendChild(input);
         } else {
           value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
-          cell.textContent = value;
         }
+        cell.textContent = value;
         row.appendChild(cell);
       });
       tableBody.appendChild(row);
