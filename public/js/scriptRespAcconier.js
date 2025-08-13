@@ -1688,10 +1688,24 @@ document.addEventListener("DOMContentLoaded", function () {
               value = dDate;
             }
           }
+          // Ajout input modifiable pour la date d'échange BL
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = value;
+          input.className = "date-bl-input";
+          input.style.width = "120px";
+          input.style.textAlign = "center";
+          input.style.border = "1px solid #2563eb";
+          input.style.borderRadius = "6px";
+          input.style.padding = "2px 6px";
+          input.onchange = function () {
+            delivery.delivery_date = input.value;
+          };
+          cell.appendChild(input);
         } else {
           value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
+          cell.textContent = value;
         }
-        cell.textContent = value;
         row.appendChild(cell);
       });
       tableBody.appendChild(row);
