@@ -389,10 +389,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <!-- En-tête avec titre et bouton fermer -->
       <div style='display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px 18px;border-bottom:1px solid #e2e8f0;background:linear-gradient(135deg, #1e293b 0%, #334155 100%);'>
         <h3 style='margin:0;font-weight:700;font-size:1em;color:#ffffff;letter-spacing:-0.3px;'>📋 Historique ordres de livraison</h3>
-        <button id='closeHistorySidebarBtn' style='background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;cursor:pointer;padding:6px;border-radius:4px;width:28px;height:28px;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;' title="Fermer">
+        <button id='closeHistorySidebarBtn' style='background:rgba(209, 141, 4, 0.1);border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;cursor:pointer;padding:6px;border-radius:4px;width:28px;height:28px;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;' title="Fermer">
           <i class='fas fa-times'></i>
         </button>
-      </div>
+      </div>  
       
       <!-- Champ de recherche compact -->
       <div style='padding:12px 16px 8px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;'>
