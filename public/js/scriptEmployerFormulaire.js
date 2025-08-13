@@ -5,32 +5,59 @@ window.addEventListener("DOMContentLoaded", function () {
   var app = document.getElementById("appContainer");
   var progress = document.getElementById("introProgressBar");
   if (intro && app && progress) {
-    let duration = 5000; // 5 secondes
     let interval = 50;
-    let elapsed = 0;
     let percent = 0;
+    let phase = 0;
+    let elapsed = 0;
     let timer = setInterval(function () {
       elapsed += interval;
-      // 0-3s : progression lente jusqu'à 60%
-      if (elapsed <= 3000) {
-        percent = Math.round((elapsed / 3000) * 60);
+      // Phase 0 : progression jusqu'à 50% sur 2s
+      if (phase === 0) {
+        percent = Math.min(50, Math.round((elapsed / 2000) * 50));
+        if (percent >= 50) {
+          percent = 50;
+          phase = 1;
+          elapsed = 0;
+        }
       }
-      // 3-4s : accélération jusqu'à 90%
-      else if (elapsed <= 4000) {
-        percent = 60 + Math.round(((elapsed - 3000) / 1000) * 30);
+      // Phase 1 : pause 3s à 50%
+      else if (phase === 1) {
+        percent = 50;
+        if (elapsed >= 3000) {
+          phase = 2;
+          elapsed = 0;
+        }
       }
-      // 4-5s : remplissage final jusqu'à 100%
-      else {
-        percent = 90 + Math.round(((elapsed - 4000) / 1000) * 10);
+      // Phase 2 : progression jusqu'à 75% sur 2s
+      else if (phase === 2) {
+        percent = 50 + Math.min(25, Math.round((elapsed / 2000) * 25));
+        if (percent >= 75) {
+          percent = 75;
+          phase = 3;
+          elapsed = 0;
+        }
       }
-      percent = Math.min(100, percent);
+      // Phase 3 : pause 3s à 75%
+      else if (phase === 3) {
+        percent = 75;
+        if (elapsed >= 3000) {
+          phase = 4;
+          elapsed = 0;
+        }
+      }
+      // Phase 4 : progression lente jusqu'à 100% sur 10s
+      else if (phase === 4) {
+        percent = 75 + Math.min(25, Math.round((elapsed / 10000) * 25));
+        if (percent >= 100) {
+          percent = 100;
+          clearInterval(timer);
+          setTimeout(function () {
+            intro.style.display = "none";
+            app.style.display = "";
+          }, 300);
+        }
+      }
       progress.style.width = percent + "%";
-      if (elapsed >= duration) {
-        clearInterval(timer);
-        progress.style.width = "100%";
-        intro.style.display = "none";
-        app.style.display = "";
-      }
     }, interval);
   }
 });
