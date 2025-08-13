@@ -200,9 +200,20 @@
   <body
     class="bg-gray-100 flex items-center justify-center min-h-screen p-2 sm:p-4"
   >
+    <!-- Animation de présentation -->
+    <div id="introAnimation" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:linear-gradient(135deg,#fde047 0%,#fef9c3 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div style="background:#fffde7;border-radius:50%;width:110px;height:110px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 16px #fbbf24a8;margin-bottom:28px;">
+        <i class="fas fa-truck" style="font-size:3.2em;color:#fbbf24;"></i>
+      </div>
+      <h2 style="font-size:2.1em;font-weight:700;color:#b45309;margin-bottom:10px;letter-spacing:1px;text-shadow:0 2px 8px #fbbf24a8;">Plateforme d'Ordre de Livraison</h2>
+      <div style="width:320px;max-width:80vw;height:18px;background:#fffde7;border-radius:12px;overflow:hidden;box-shadow:0 1px 8px #fbbf24a8;margin-top:30px;">
+        <div id="introProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#fbbf24 0%,#fde047 100%);transition:width 0.2s;"></div>
+      </div>
+    </div>
     <div
       id="appContainer"
       class="bg-white p-5 rounded-lg shadow-lg w-full max-w-lg flex flex-col h-auto max-h-[95vh] overflow-y-auto"
+      style="display:none;"
     >
       <h1 class="text-3xl font-bold text-center text-gray-800 mb-4"></h1>
 

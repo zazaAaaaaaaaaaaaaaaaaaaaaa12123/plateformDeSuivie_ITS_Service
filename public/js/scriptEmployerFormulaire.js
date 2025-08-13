@@ -1,4 +1,25 @@
 // --- DÉCLARATION DES VARIABLES GLOBALES AVANT TOUTE FONCTION ---
+// --- Animation d'intro avant le formulaire ---
+window.addEventListener("DOMContentLoaded", function () {
+  var intro = document.getElementById("introAnimation");
+  var app = document.getElementById("appContainer");
+  var progress = document.getElementById("introProgressBar");
+  if (intro && app && progress) {
+    let duration = 5000; // 5 secondes
+    let interval = 50;
+    let elapsed = 0;
+    let timer = setInterval(function () {
+      elapsed += interval;
+      let percent = Math.min(100, Math.round((elapsed / duration) * 100));
+      progress.style.width = percent + "%";
+      if (elapsed >= duration) {
+        clearInterval(timer);
+        intro.style.display = "none";
+        app.style.display = "";
+      }
+    }, interval);
+  }
+});
 // Toutes les variables liées au code d'entreprise ont été supprimées
 const deliveryFormSection = document.getElementById("deliveryFormSection");
 const deliveryForm = document.getElementById("deliveryForm");
