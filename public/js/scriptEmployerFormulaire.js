@@ -1,89 +1,4 @@
 // --- DÉCLARATION DES VARIABLES GLOBALES AVANT TOUTE FONCTION ---
-// --- GESTION DU THÈME SOMBRE/CLAIR ---
-function applyTheme(theme) {
-  if (theme === "dark") {
-    document.body.classList.add("dark-theme");
-  } else {
-    document.body.classList.remove("dark-theme");
-  }
-  // Adapter les messages countdown
-  const formSuccess = document.getElementById("formSuccess");
-  if (formSuccess) {
-    if (theme === "dark") {
-      formSuccess.classList.add("countdown-message");
-    } else {
-      formSuccess.classList.remove("countdown-message");
-    }
-  }
-}
-
-// Ajout du sélecteur de thème à côté de l'icône historique
-window.addEventListener("DOMContentLoaded", function () {
-  let historyBtn = document.getElementById("historySidebarBtn");
-  if (historyBtn) {
-    let themeSelector = document.getElementById("themeSelectorBtn");
-    if (!themeSelector) {
-      themeSelector = document.createElement("button");
-      themeSelector.id = "themeSelectorBtn";
-      themeSelector.innerHTML = '<i class="fas fa-moon"></i>';
-      themeSelector.title = "Changer le thème (sombre/clair)";
-      themeSelector.style.position = "fixed";
-      // Détection mobile
-      const isMobile =
-        window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
-      if (isMobile) {
-        themeSelector.style.top = historyBtn.style.top
-          ? parseInt(historyBtn.style.top) + 40 + "px"
-          : "52px";
-        themeSelector.style.left = historyBtn.style.left || "10px";
-        themeSelector.style.width = "24px";
-        themeSelector.style.height = "24px";
-        themeSelector.style.fontSize = "1em";
-        themeSelector.style.padding = "0";
-      } else {
-        themeSelector.style.top = historyBtn.style.top
-          ? parseInt(historyBtn.style.top) + 60 + "px"
-          : "90px";
-        themeSelector.style.left = historyBtn.style.left || "38px";
-        themeSelector.style.width = "24px";
-        themeSelector.style.height = "24px";
-        themeSelector.style.fontSize = "1em";
-        themeSelector.style.padding = "0";
-      }
-      themeSelector.style.zIndex = "3001";
-      themeSelector.style.background = "#23232b";
-      themeSelector.style.border = "none";
-      themeSelector.style.borderRadius = "50%";
-      themeSelector.style.boxShadow = "0 2px 12px #2563eb22";
-      themeSelector.style.display = "flex";
-      themeSelector.style.alignItems = "center";
-      themeSelector.style.justifyContent = "center";
-      themeSelector.style.color = "#3b82f6";
-      themeSelector.style.cursor = "pointer";
-      themeSelector.style.transition = "filter .18s";
-      themeSelector.style.outline = "none";
-      document.body.appendChild(themeSelector);
-    }
-    // Gestion du clic pour changer le thème
-    themeSelector.onclick = function () {
-      let currentTheme = localStorage.getItem("theme") || "light";
-      let newTheme = currentTheme === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", newTheme);
-      applyTheme(newTheme);
-      themeSelector.innerHTML =
-        newTheme === "dark"
-          ? '<i class="fas fa-sun"></i>'
-          : '<i class="fas fa-moon"></i>';
-    };
-    // Appliquer le thème au chargement11
-    let savedTheme = localStorage.getItem("theme") || "light";
-    applyTheme(savedTheme);
-    themeSelector.innerHTML =
-      savedTheme === "dark"
-        ? '<i class="fas fa-sun"></i>'
-        : '<i class="fas fa-moon"></i>';
-  }
-});
 // --- Animation d'intro avant le formulaire ---
 window.addEventListener("DOMContentLoaded", function () {
   var intro = document.getElementById("introAnimation");
@@ -424,25 +339,47 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(historyBtn);
       }
       // Styles responsive
-      historyBtn.style.position = "fixed";
-      historyBtn.style.top = "12px";
-      historyBtn.style.left = "12px";
-      historyBtn.style.zIndex = "3000";
-      historyBtn.style.background = "#fff";
-      historyBtn.style.border = "none";
-      historyBtn.style.borderRadius = "50%";
-      historyBtn.style.width = "38px";
-      historyBtn.style.height = "38px";
-      historyBtn.style.boxShadow = "0 2px 8px #2563eb22";
+      if (isMobile) {
+        historyBtn.style.position = "fixed";
+        historyBtn.style.top = "12px";
+        historyBtn.style.left = "12px";
+        historyBtn.style.zIndex = "3000";
+        historyBtn.style.background = "#fff";
+        historyBtn.style.border = "none";
+        historyBtn.style.borderRadius = "50%";
+        historyBtn.style.width = "38px";
+        historyBtn.style.height = "38px";
+        historyBtn.style.boxShadow = "0 2px 8px #2563eb22";
+        historyBtn.style.display = "flex";
+        historyBtn.style.alignItems = "center";
+        historyBtn.style.justifyContent = "center";
+        historyBtn.style.fontSize = "1.15em";
+        historyBtn.style.color = "#2563eb";
+        historyBtn.style.cursor = "pointer";
+        historyBtn.style.transition = "filter .18s";
+        historyBtn.style.outline = "none";
+        historyBtn.style.touchAction = "manipulation";
+      } else {
+        historyBtn.style.position = "fixed";
+        historyBtn.style.top = "28px";
+        historyBtn.style.left = "38px";
+        historyBtn.style.zIndex = "3000";
+        historyBtn.style.background = "#fff";
+        historyBtn.style.border = "none";
+        historyBtn.style.borderRadius = "50%";
+        historyBtn.style.width = "48px";
+        historyBtn.style.height = "48px";
+        historyBtn.style.boxShadow = "0 2px 12px #2563eb22";
+        historyBtn.style.display = "flex";
+        historyBtn.style.alignItems = "center";
+        historyBtn.style.justifyContent = "center";
+        historyBtn.style.fontSize = "1.55em";
+        historyBtn.style.color = "#2563eb";
+        historyBtn.style.cursor = "pointer";
+        historyBtn.style.transition = "filter .18s";
+        historyBtn.style.outline = "none";
+      }
       historyBtn.style.display = "flex";
-      historyBtn.style.alignItems = "center";
-      historyBtn.style.justifyContent = "center";
-      historyBtn.style.fontSize = "1.15em";
-      historyBtn.style.color = "#2563eb";
-      historyBtn.style.cursor = "pointer";
-      historyBtn.style.transition = "filter .18s";
-      historyBtn.style.outline = "none";
-      historyBtn.style.touchAction = "manipulation";
       // Toujours attacher l'événement onclick (même si le bouton vient d'être créé)
       if (historyBtn && sidebar) {
         historyBtn.onclick = function () {
@@ -477,8 +414,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.displayProfileAvatar) {
       window.displayProfileAvatar();
     }
-    // Forcer l'affichage du bouton historique
-    updateHistoryBtnVisibility();
   }
 
   // --- Ajout de la sidebar historique cachée (toujours dans le DOM, mais cachée) + overlay ---
@@ -2383,4 +2318,4 @@ async function submitDeliveryForm(status) {
 // au formulaire de validation de livraison et sont supposées être gérées
 // par d'autres scripts (par exemple, un script pour le panneau d'administration).
 // Ce script se consnjsdbjsydgjshdtre dxhjbsésormaidhjs uniquement sur le formulaire employé.
-/***djh*/
+/***djh1*/
