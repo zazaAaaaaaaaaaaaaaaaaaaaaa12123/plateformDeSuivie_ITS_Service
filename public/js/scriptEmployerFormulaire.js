@@ -388,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.innerHTML = `
       <!-- En-tête avec titre et bouton fermer -->
       <div style='display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px 18px;border-bottom:1px solid #e2e8f0;background:linear-gradient(135deg, #1e293b 0%, #334155 100%);'>
-        <h3 style='margin:0;font-weight:700;font-size:1em;color:#ffffff;letter-spacing:-0.3px;'>📋 Historique ordres</h3>
+        <h3 style='margin:0;font-weight:700;font-size:1em;color:#ffffff;letter-spacing:-0.3px;'>📋 Historique ordres de livraison</h3>
         <button id='closeHistorySidebarBtn' style='background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;cursor:pointer;padding:6px;border-radius:4px;width:28px;height:28px;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;' title="Fermer">
           <i class='fas fa-times'></i>
         </button>
@@ -502,9 +502,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     // Filtrer pour ne garder que les ordres avec un champ 'data' valide (vraies données)
-    let filteredHistory = agentHistory.filter(
-      (item) => item && item.data && typeof item.data === "object"
-    );
+    let now = new Date();
+    let filteredHistory = agentHistory.filter((item) => {
+      if (!item || !item.data || typeof item.data !== "object" || !item.date)
+        return false;
+      // Garde uniquement les ordres de moins de 7 jours
+      let orderDate = new Date(item.date);
+      let diffDays = (now - orderDate) / (1000 * 60 * 60 * 24);
+      return diffDays <= 7;
+    });
     // Supprimer les doublons par id ET par contenu principal (clientName, containerNumbers, date, etc.)
     const seenKeys = new Set();
     filteredHistory = filteredHistory.filter((item) => {
