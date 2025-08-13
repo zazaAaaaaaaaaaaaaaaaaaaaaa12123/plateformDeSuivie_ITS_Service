@@ -61,13 +61,38 @@ function applyTheme(theme) {
     h1.style.backgroundClip = "text";
   }
   submitBtns.forEach((btn) => {
-    btn.style.background = vars.btn;
-    btn.onmouseover = () => {
-      btn.style.background = vars.btnHover;
-    };
-    btn.onmouseout = () => {
+    // Bouton "Soumettre la demande" (vert)
+    if (btn.getAttribute("data-status") === "pending_acconier") {
+      btn.style.background = "#22c55e";
+      btn.style.borderColor = "#22c55e";
+      btn.onmouseover = () => {
+        btn.style.background = "#16a34a";
+      };
+      btn.onmouseout = () => {
+        btn.style.background = "#22c55e";
+      };
+    }
+    // Bouton "Rejeter la demande" (rouge)
+    else if (btn.getAttribute("data-status") === "rejected_by_employee") {
+      btn.style.background = "#ef4444";
+      btn.style.borderColor = "#ef4444";
+      btn.onmouseover = () => {
+        btn.style.background = "#dc2626";
+      };
+      btn.onmouseout = () => {
+        btn.style.background = "#ef4444";
+      };
+    }
+    // Autres boutons (utilisent le thème)
+    else {
       btn.style.background = vars.btn;
-    };
+      btn.onmouseover = () => {
+        btn.style.background = vars.btnHover;
+      };
+      btn.onmouseout = () => {
+        btn.style.background = vars.btn;
+      };
+    }
   });
   if (cancelBtn) {
     cancelBtn.style.background = theme === "sombre" ? "#64748b" : "#6b7280";
