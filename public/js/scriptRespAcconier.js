@@ -1672,10 +1672,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const cell = document.createElement("td");
         let value = "-";
         if (col.id === "date_display") {
-          let dDate = delivery.delivery_date || delivery.created_at;
-          // Correction : Toujours afficher la date enregistrée si elle existe
+          // Correction : Toujours afficher la date d'échange BL si elle existe, sinon prendre la date de la colonne 'Date'
+          let dDate =
+            delivery.date_echange_bl ||
+            delivery.delivery_date ||
+            delivery.created_at;
+          if (!dDate && delivery.date) {
+            dDate = delivery.date;
+          }
           if (dDate) {
-            // Si la date est au format JJ/MM/AAAA, on l'affiche telle quelle
             if (
               typeof dDate === "string" &&
               /^\d{2}\/\d{2}\/\d{4}$/.test(dDate)
@@ -1690,7 +1695,6 @@ document.addEventListener("DOMContentLoaded", function () {
               }
             }
           } else {
-            // Si aucune date n'est enregistrée, on laisse le champ vide (jamais JJ/MM/AAAA par défaut)
             value = "";
           }
         } else {
