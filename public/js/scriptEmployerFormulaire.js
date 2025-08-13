@@ -424,47 +424,25 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(historyBtn);
       }
       // Styles responsive
-      if (isMobile) {
-        historyBtn.style.position = "fixed";
-        historyBtn.style.top = "12px";
-        historyBtn.style.left = "12px";
-        historyBtn.style.zIndex = "3000";
-        historyBtn.style.background = "#fff";
-        historyBtn.style.border = "none";
-        historyBtn.style.borderRadius = "50%";
-        historyBtn.style.width = "38px";
-        historyBtn.style.height = "38px";
-        historyBtn.style.boxShadow = "0 2px 8px #2563eb22";
-        historyBtn.style.display = "flex";
-        historyBtn.style.alignItems = "center";
-        historyBtn.style.justifyContent = "center";
-        historyBtn.style.fontSize = "1.15em";
-        historyBtn.style.color = "#2563eb";
-        historyBtn.style.cursor = "pointer";
-        historyBtn.style.transition = "filter .18s";
-        historyBtn.style.outline = "none";
-        historyBtn.style.touchAction = "manipulation";
-      } else {
-        historyBtn.style.position = "fixed";
-        historyBtn.style.top = "28px";
-        historyBtn.style.left = "38px";
-        historyBtn.style.zIndex = "3000";
-        historyBtn.style.background = "#fff";
-        historyBtn.style.border = "none";
-        historyBtn.style.borderRadius = "50%";
-        historyBtn.style.width = "48px";
-        historyBtn.style.height = "48px";
-        historyBtn.style.boxShadow = "0 2px 12px #2563eb22";
-        historyBtn.style.display = "flex";
-        historyBtn.style.alignItems = "center";
-        historyBtn.style.justifyContent = "center";
-        historyBtn.style.fontSize = "1.55em";
-        historyBtn.style.color = "#2563eb";
-        historyBtn.style.cursor = "pointer";
-        historyBtn.style.transition = "filter .18s";
-        historyBtn.style.outline = "none";
-      }
+      historyBtn.style.position = "fixed";
+      historyBtn.style.top = "12px";
+      historyBtn.style.left = "12px";
+      historyBtn.style.zIndex = "3000";
+      historyBtn.style.background = "#fff";
+      historyBtn.style.border = "none";
+      historyBtn.style.borderRadius = "50%";
+      historyBtn.style.width = "38px";
+      historyBtn.style.height = "38px";
+      historyBtn.style.boxShadow = "0 2px 8px #2563eb22";
       historyBtn.style.display = "flex";
+      historyBtn.style.alignItems = "center";
+      historyBtn.style.justifyContent = "center";
+      historyBtn.style.fontSize = "1.15em";
+      historyBtn.style.color = "#2563eb";
+      historyBtn.style.cursor = "pointer";
+      historyBtn.style.transition = "filter .18s";
+      historyBtn.style.outline = "none";
+      historyBtn.style.touchAction = "manipulation";
       // Toujours attacher l'événement onclick (même si le bouton vient d'être créé)
       if (historyBtn && sidebar) {
         historyBtn.onclick = function () {
@@ -499,6 +477,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.displayProfileAvatar) {
       window.displayProfileAvatar();
     }
+    // Forcer l'affichage du bouton historique
+    updateHistoryBtnVisibility();
   }
 
   // --- Ajout de la sidebar historique cachée (toujours dans le DOM, mais cachée) + overlay ---
