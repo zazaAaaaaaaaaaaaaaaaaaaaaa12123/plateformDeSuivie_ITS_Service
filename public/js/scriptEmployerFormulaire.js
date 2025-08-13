@@ -45,9 +45,9 @@ window.addEventListener("DOMContentLoaded", function () {
           ? parseInt(historyBtn.style.top) + 60 + "px"
           : "90px";
         themeSelector.style.left = historyBtn.style.left || "38px";
-        themeSelector.style.width = "44px";
-        themeSelector.style.height = "44px";
-        themeSelector.style.fontSize = "1.35em";
+        themeSelector.style.width = "28px";
+        themeSelector.style.height = "28px";
+        themeSelector.style.fontSize = "1em";
         themeSelector.style.padding = "0";
       }
       themeSelector.style.zIndex = "3001";
