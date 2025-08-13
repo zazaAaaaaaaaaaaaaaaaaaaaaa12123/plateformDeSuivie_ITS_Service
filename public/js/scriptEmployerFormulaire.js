@@ -75,7 +75,7 @@ window.addEventListener("DOMContentLoaded", function () {
           ? '<i class="fas fa-sun"></i>'
           : '<i class="fas fa-moon"></i>';
     };
-    // Appliquer le thème au chargement
+    // Appliquer le thème au chargement11
     let savedTheme = localStorage.getItem("theme") || "light";
     applyTheme(savedTheme);
     themeSelector.innerHTML =
