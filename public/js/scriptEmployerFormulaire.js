@@ -8,12 +8,26 @@ window.addEventListener("DOMContentLoaded", function () {
     let duration = 5000; // 5 secondes
     let interval = 50;
     let elapsed = 0;
+    let percent = 0;
     let timer = setInterval(function () {
       elapsed += interval;
-      let percent = Math.min(100, Math.round((elapsed / duration) * 100));
+      // 0-3s : progression lente jusqu'à 60%
+      if (elapsed <= 3000) {
+        percent = Math.round((elapsed / 3000) * 60);
+      }
+      // 3-4s : accélération jusqu'à 90%
+      else if (elapsed <= 4000) {
+        percent = 60 + Math.round(((elapsed - 3000) / 1000) * 30);
+      }
+      // 4-5s : remplissage final jusqu'à 100%
+      else {
+        percent = 90 + Math.round(((elapsed - 4000) / 1000) * 10);
+      }
+      percent = Math.min(100, percent);
       progress.style.width = percent + "%";
       if (elapsed >= duration) {
         clearInterval(timer);
+        progress.style.width = "100%";
         intro.style.display = "none";
         app.style.display = "";
       }
