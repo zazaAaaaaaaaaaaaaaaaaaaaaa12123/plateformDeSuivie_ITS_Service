@@ -1,4 +1,74 @@
 // --- DÉCLARATION DES VARIABLES GLOBALES AVANT TOUTE FONCTION ---
+// --- GESTION DU THÈME SOMBRE/CLAIR ---
+function applyTheme(theme) {
+  if (theme === "dark") {
+    document.body.classList.add("dark-theme");
+  } else {
+    document.body.classList.remove("dark-theme");
+  }
+  // Adapter les messages countdown
+  const formSuccess = document.getElementById("formSuccess");
+  if (formSuccess) {
+    if (theme === "dark") {
+      formSuccess.classList.add("countdown-message");
+    } else {
+      formSuccess.classList.remove("countdown-message");
+    }
+  }
+}
+
+// Ajout du sélecteur de thème à côté de l'icône historique
+window.addEventListener("DOMContentLoaded", function () {
+  let historyBtn = document.getElementById("historySidebarBtn");
+  if (historyBtn) {
+    let themeSelector = document.getElementById("themeSelectorBtn");
+    if (!themeSelector) {
+      themeSelector = document.createElement("button");
+      themeSelector.id = "themeSelectorBtn";
+      themeSelector.innerHTML = '<i class="fas fa-moon"></i>';
+      themeSelector.title = "Changer le thème (sombre/clair)";
+      themeSelector.style.position = "fixed";
+      themeSelector.style.top = historyBtn.style.top
+        ? parseInt(historyBtn.style.top) + 60 + "px"
+        : "90px";
+      themeSelector.style.left = historyBtn.style.left || "38px";
+      themeSelector.style.zIndex = "3001";
+      themeSelector.style.background = "#23232b";
+      themeSelector.style.border = "none";
+      themeSelector.style.borderRadius = "50%";
+      themeSelector.style.width = "44px";
+      themeSelector.style.height = "44px";
+      themeSelector.style.boxShadow = "0 2px 12px #2563eb22";
+      themeSelector.style.display = "flex";
+      themeSelector.style.alignItems = "center";
+      themeSelector.style.justifyContent = "center";
+      themeSelector.style.fontSize = "1.35em";
+      themeSelector.style.color = "#3b82f6";
+      themeSelector.style.cursor = "pointer";
+      themeSelector.style.transition = "filter .18s";
+      themeSelector.style.outline = "none";
+      document.body.appendChild(themeSelector);
+    }
+    // Gestion du clic pour changer le thème
+    themeSelector.onclick = function () {
+      let currentTheme = localStorage.getItem("theme") || "light";
+      let newTheme = currentTheme === "dark" ? "light" : "dark";
+      localStorage.setItem("theme", newTheme);
+      applyTheme(newTheme);
+      themeSelector.innerHTML =
+        newTheme === "dark"
+          ? '<i class="fas fa-sun"></i>'
+          : '<i class="fas fa-moon"></i>';
+    };
+    // Appliquer le thème au chargement
+    let savedTheme = localStorage.getItem("theme") || "light";
+    applyTheme(savedTheme);
+    themeSelector.innerHTML =
+      savedTheme === "dark"
+        ? '<i class="fas fa-sun"></i>'
+        : '<i class="fas fa-moon"></i>';
+  }
+});
 // --- Animation d'intro avant le formulaire ---
 window.addEventListener("DOMContentLoaded", function () {
   var intro = document.getElementById("introAnimation");
