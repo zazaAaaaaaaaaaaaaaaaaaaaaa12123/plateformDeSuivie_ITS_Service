@@ -38,15 +38,15 @@ window.addEventListener("DOMContentLoaded", function () {
         themeSelector.style.left = historyBtn.style.left || "10px";
         themeSelector.style.width = "24px";
         themeSelector.style.height = "24px";
-        themeSelector.style.fontSize = "0.95em";
+        themeSelector.style.fontSize = "1em";
         themeSelector.style.padding = "0";
       } else {
         themeSelector.style.top = historyBtn.style.top
           ? parseInt(historyBtn.style.top) + 60 + "px"
           : "90px";
         themeSelector.style.left = historyBtn.style.left || "38px";
-        themeSelector.style.width = "28px";
-        themeSelector.style.height = "28px";
+        themeSelector.style.width = "24px";
+        themeSelector.style.height = "24px";
         themeSelector.style.fontSize = "1em";
         themeSelector.style.padding = "0";
       }
