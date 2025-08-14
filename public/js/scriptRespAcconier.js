@@ -138,11 +138,23 @@ document.addEventListener("DOMContentLoaded", function () {
           li.style.border = "2px solid #fee2e2";
           li.style.transition =
             "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
+
+          // Détection date modifiée ancienne (>7 jours)
+          let avatarColor = "linear-gradient(135deg,#ef4444 60%,#fca5a5 100%)"; // rouge par défaut
+          if (d.updated_at) {
+            const updatedDate = new Date(d.updated_at);
+            const now = new Date();
+            const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
+            if (daysDiff > 7) {
+              avatarColor = "linear-gradient(135deg,#fbbf24 60%,#fde68a 100%)"; // jaune
+            }
+          }
+
           li.innerHTML = `
             <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
-              <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#ef4444 60%,#fca5a5 100%);color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #ef444433;'>${
-                idx + 1
-              }</span>
+              <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:${avatarColor};color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #ef444433;'>${
+            idx + 1
+          }</span>
               <span style='color:#ef4444;font-weight:bold;font-size:1.08em;'><i class="fas fa-folder-open" style="margin-right:6px;color:#ef4444;"></i>N° Dossier :</span>
               <span style='color:#b91c1c;font-weight:700;font-size:1.13em;'>${
                 d.dossier_number || "-"
