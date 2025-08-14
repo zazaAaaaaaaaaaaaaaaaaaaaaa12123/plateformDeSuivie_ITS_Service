@@ -181,14 +181,14 @@ app.get("/api/user-observations", async (req, res) => {
         (observation_acconier IS NOT NULL AND observation_acconier != '' AND observation_acconier != '-') 
         AND (
           LOWER(employee_name) LIKE LOWER($1) OR
-          LOWER(responsible_acconier) LIKE LOWER($1) OR
+            LOWER(observation_acconier) LIKE LOWER($1) OR
           LOWER(resp_acconier) LIKE LOWER($1) OR
           LOWER(created_by) LIKE LOWER($1) OR
           LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
           LOWER(assigned_to) LIKE LOWER($1) OR
           ($2 IS NOT NULL AND (
             LOWER(employee_name) LIKE LOWER($2) OR
-            LOWER(responsible_acconier) LIKE LOWER($2) OR
+              LOWER(observation_acconier) LIKE LOWER($2) OR
             LOWER(resp_acconier) LIKE LOWER($2) OR
             LOWER(created_by) LIKE LOWER($2)
           ))
@@ -219,14 +219,14 @@ app.get("/api/user-observations", async (req, res) => {
       WHERE 
         (
           LOWER(employee_name) LIKE LOWER($1) OR
-          LOWER(responsible_acconier) LIKE LOWER($1) OR
+            LOWER(observation_acconier) LIKE LOWER($1) OR
           LOWER(resp_acconier) LIKE LOWER($1) OR
           LOWER(created_by) LIKE LOWER($1) OR
           LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
           LOWER(assigned_to) LIKE LOWER($1) OR
           ($2 IS NOT NULL AND (
             LOWER(employee_name) LIKE LOWER($2) OR
-            LOWER(responsible_acconier) LIKE LOWER($2) OR
+              LOWER(observation_acconier) LIKE LOWER($2) OR
             LOWER(resp_acconier) LIKE LOWER($2) OR
             LOWER(created_by) LIKE LOWER($2)
           ))
