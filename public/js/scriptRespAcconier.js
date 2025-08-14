@@ -4131,6 +4131,40 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           return;
         }
         // ...existing code...
+        // --- Ajout : tri et rafraîchissement du tableau lors de la modification d'une date ---
+        document.addEventListener("change", function (e) {
+          if (
+            e.target &&
+            e.target.type === "date" &&
+            e.target.classList.contains("date-input-table")
+          ) {
+            // Récupère l'id de la livraison modifiée
+            const deliveryId = e.target.getAttribute("data-id");
+            const newDate = e.target.value;
+            // Met à jour la date dans l'objet deliveries (supposé global)
+            if (window.deliveries && deliveryId) {
+              const delivery = window.deliveries.find(
+                (d) => String(d.id) === String(deliveryId)
+              );
+              if (delivery) {
+                delivery.delivery_date = newDate;
+                // Trie les livraisons par date croissante (ancienne en haut)
+                window.deliveries.sort((a, b) => {
+                  const dateA = new Date(a.delivery_date || a.created_at);
+                  const dateB = new Date(b.delivery_date || b.created_at);
+                  return dateA - dateB;
+                });
+                // Rafraîchit le tableau
+                const tableBody = document.getElementById(
+                  "deliveriesTableBody"
+                );
+                if (tableBody) {
+                  renderAgentTableRows(window.deliveries, tableBody);
+                }
+              }
+            }
+          }
+        });
       } else if (col.id === "container_status") {
         // Correction : si le statut acconier est 'en attente de paiement', on affiche toujours 'En attente de paiement'
         if (delivery.delivery_status_acconier === "en attente de paiement") {
