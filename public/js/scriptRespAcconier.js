@@ -2515,11 +2515,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
         }
 
-        // Utiliser la valeur éditée si disponible
-        value =
+        // Utiliser la valeur éditée si disponible et forcer le format JJ/MM/AAAA
+        let rawValue =
           getCellValue(delivery, col.id) !== "-"
             ? getCellValue(delivery, col.id)
             : value;
+        let dateObjEdit = null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+          // AAAA-MM-JJ
+          let parts = rawValue.split("-");
+          dateObjEdit = new Date(rawValue);
+          rawValue = parts[2] + "/" + parts[1] + "/" + parts[0];
+        } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(rawValue)) {
+          // JJ/MM/AAAA
+          dateObjEdit = new Date(rawValue.split("/").reverse().join("-"));
+        }
+        value = rawValue;
         td.textContent = value;
 
         // Système d'édition pour les colonnes modifiables
@@ -2547,7 +2558,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
             // Fonction de sauvegarde
             function saveValue() {
-              const newValue = input.value.trim();
+              let newValue = input.value.trim();
+              // Conversion automatique au format JJ/MM/AAAA
+              let dateObj = null;
+              if (/^\d{4}-\d{2}-\d{2}$/.test(newValue)) {
+                let parts = newValue.split("-");
+                dateObj = new Date(newValue);
+                newValue = parts[2] + "/" + parts[1] + "/" + parts[0];
+              } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(newValue)) {
+                dateObj = new Date(newValue.split("/").reverse().join("-"));
+              }
               saveCellValue(delivery.id, col.id, newValue);
               td.textContent = newValue || "-";
 
