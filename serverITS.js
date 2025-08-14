@@ -205,7 +205,7 @@ app.get("/api/user-observations", async (req, res) => {
       `📝 [API] ${result.rows.length} observations trouvées pour ${user}`
     );
 
-    // Ajouter aussi une recherche dans les livraisons récemment modifiées par cet utilisateur
+    // Ajouter aussi une recherche danshjv les livraisons récemment modifiées par cet utilisateur
     const recentQuery = `
       SELECT 
         id as delivery_id,
