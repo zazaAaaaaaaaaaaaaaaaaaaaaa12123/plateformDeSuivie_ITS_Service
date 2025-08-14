@@ -144,9 +144,13 @@ document.addEventListener("DOMContentLoaded", function () {
           if (d.updated_at) {
             const updatedDate = new Date(d.updated_at);
             const now = new Date();
-            const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
-            if (daysDiff > 7) {
-              avatarColor = "linear-gradient(135deg,#fbbf24 60%,#fde68a 100%)"; // jaune
+            // Si la date modifiée est antérieure à aujourd'hui
+            if (updatedDate < now) {
+              const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
+              if (daysDiff > 7) {
+                avatarColor =
+                  "linear-gradient(135deg,#fbbf24 60%,#fde68a 100%)"; // jaune
+              }
             }
           }
 
@@ -2469,16 +2473,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     let avatarColor = "#2563eb"; // bleu par défaut (récent)
     let avatarBg = "linear-gradient(135deg, #2563eb 60%, #1e293b 100%)";
     let badgeColor = "#2563eb";
-    // Ajout : si la date modifiée est ancienne (>7 jours), avatar jaune
-    if (delivery.updated_at) {
-      const updatedDate = new Date(delivery.updated_at);
-      const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
-      if (daysDiff > 7) {
-        avatarColor = "#eab308";
-        avatarBg = "linear-gradient(135deg, #eab308 60%, #facc15 100%)";
-        badgeColor = "#eab308";
-      }
-    } else if (dateObj && !isNaN(dateObj.getTime())) {
+    if (dateObj && !isNaN(dateObj.getTime())) {
       let diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
       if (diffDays >= 30) {
         avatarColor = "#a3a3a3"; // gris
