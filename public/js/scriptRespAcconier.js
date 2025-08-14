@@ -874,7 +874,7 @@ document.addEventListener("DOMContentLoaded", function () {
           );
           const startVal = dateStartInput ? dateStartInput.value : "";
           const endVal = dateEndInput ? dateEndInput.value : "";
-          // Vérifie si la nouvelle livraison 123est dans la plage de dates
+          // Vérifie si la nouvelle livraison est dans la plage de dates
           let dDate =
             normalizedDelivery.delivery_date || normalizedDelivery.created_at;
           let normalized = "";
@@ -883,8 +883,7 @@ document.addEventListener("DOMContentLoaded", function () {
               const [j, m, a] = dDate.split("/");
               normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
             } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
-              const [a, m, j] = dDate.split("-");
-              normalized = `${j.padStart(2, "0")}/${m.padStart(2, "0")}/${a}`;
+              normalized = dDate;
             } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
               const [j, m, a] = dDate.split("-");
               normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
@@ -1628,8 +1627,7 @@ document.addEventListener("DOMContentLoaded", function () {
           const [j, m, a] = dDate.split("/");
           normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
         } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
-          const [a, m, j] = dDate.split("-");
-          normalized = `${j.padStart(2, "0")}/${m.padStart(2, "0")}/${a}`;
+          normalized = dDate;
         } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
           const [j, m, a] = dDate.split("-");
           normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
@@ -2460,29 +2458,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.classList.add("row-number-col");
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
-        value = "-";
-        if (typeof dDate === "string") {
-          // Si le format est AAAA-MM-JJ, le convertir
-          const match = dDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-          if (match) {
-            value = `${match[3]}/${match[2]}/${match[1]}`;
-          } else {
-            // Essayer de parser la date
-            let dateObj = new Date(dDate);
-            if (!isNaN(dateObj.getTime())) {
-              let day = String(dateObj.getDate()).padStart(2, "0");
-              let month = String(dateObj.getMonth() + 1).padStart(2, "0");
-              let year = dateObj.getFullYear();
-              value = `${day}/${month}/${year}`;
-            } else {
-              value = dDate;
-            }
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            value = dDate;
           }
-        } else if (dDate instanceof Date) {
-          let day = String(dDate.getDate()).padStart(2, "0");
-          let month = String(dDate.getMonth() + 1).padStart(2, "0");
-          let year = dDate.getFullYear();
-          value = `${day}/${month}/${year}`;
         }
 
         // Utiliser la valeur éditée si disponible
