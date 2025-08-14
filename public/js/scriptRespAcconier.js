@@ -2135,6 +2135,21 @@ function saveCellValue(deliveryId, columnId, value) {
   // Si la colonne modifiée est une date, on la formate JJ/MM/AAAA
   if (columnId === "date_display") {
     editedCellsData[deliveryId][columnId] = formatDateToFr(value);
+    // Tri et rafraîchissement du tableau
+    if (window.deliveries && Array.isArray(window.deliveries)) {
+      window.deliveries.sort(function (a, b) {
+        // Prendre la date éditée si dispo, sinon delivery_date ou created_at
+        let dateA = a.date_display || a.delivery_date || a.created_at;
+        let dateB = b.date_display || b.delivery_date || b.created_at;
+        dateA = new Date(dateA);
+        dateB = new Date(dateB);
+        return dateA - dateB; // Ancienne en haut, récente en bas
+      });
+      // Rafraîchir l'affichage si possible
+      if (window.renderAgentTableRows && window.tableBodyElement) {
+        window.renderAgentTableRows(window.deliveries, window.tableBodyElement);
+      }
+    }
   } else {
     editedCellsData[deliveryId][columnId] = value;
   }
@@ -2142,8 +2157,6 @@ function saveCellValue(deliveryId, columnId, value) {
 
   // Envoyer au serveur pour synchronisation
   syncCellToServer(deliveryId, columnId, value);
-
-  // Si la colonne modifiée est la date, on trie et réaffiche le tableau
 }
 
 // Fonction pour synchroniser avec le serveur
