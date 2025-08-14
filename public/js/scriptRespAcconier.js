@@ -2139,7 +2139,15 @@ function saveCellValue(deliveryId, columnId, value) {
             );
             if (!dateCell) return null;
             let txt = dateCell.textContent.trim();
-            let d = txt ? new Date(txt.split("/").reverse().join("-")) : null;
+            let d = null;
+            // Format AAAA-MM-JJ
+            if (/^\d{4}-\d{2}-\d{2}$/.test(txt)) {
+              d = new Date(txt);
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(txt)) {
+              // Format JJ/MM/AAAA
+              let parts = txt.split("/");
+              d = new Date(parts[2] + "-" + parts[1] + "-" + parts[0]);
+            }
             return { row, date: d, txt };
           })
           .filter((d) => d && d.date && !isNaN(d.date.getTime()));
