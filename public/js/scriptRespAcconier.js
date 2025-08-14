@@ -2141,8 +2141,17 @@ function saveCellValue(deliveryId, columnId, value) {
         // Prendre la date éditée si dispo, sinon delivery_date ou created_at
         let dateA = a.date_display || a.delivery_date || a.created_at;
         let dateB = b.date_display || b.delivery_date || b.created_at;
-        dateA = new Date(dateA);
-        dateB = new Date(dateB);
+        // Conversion JJ/MM/AAAA -> Date
+        function parseFrDate(str) {
+          if (!str) return new Date(0);
+          if (typeof str === "string" && str.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            const [day, month, year] = str.split("/");
+            return new Date(year, month - 1, day);
+          }
+          return new Date(str);
+        }
+        dateA = parseFrDate(dateA);
+        dateB = parseFrDate(dateB);
         return dateA - dateB; // Ancienne en haut, récente en bas
       });
       // Rafraîchir l'affichage si possible
