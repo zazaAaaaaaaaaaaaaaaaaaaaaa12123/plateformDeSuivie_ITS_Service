@@ -2138,12 +2138,8 @@ function saveCellValue(deliveryId, columnId, value) {
     saveEditedData();
     syncCellToServer(deliveryId, columnId, value);
     // Tri et réaffichage du tableau selon la règle ancien en haut, récent en bas
-    if (
-      typeof deliveries !== "undefined" &&
-      typeof renderAgentTableRows === "function"
-    ) {
-      // On utilise la valeur éditée si elle existe, sinon delivery_date ou created_at
-      deliveries.sort(function (a, b) {
+    if (window.allDeliveries && typeof renderAgentTableRows === "function") {
+      window.allDeliveries.sort(function (a, b) {
         let dateA =
           editedCellsData[a.id] && editedCellsData[a.id]["date_display"]
             ? editedCellsData[a.id]["date_display"]
@@ -2152,12 +2148,17 @@ function saveCellValue(deliveryId, columnId, value) {
           editedCellsData[b.id] && editedCellsData[b.id]["date_display"]
             ? editedCellsData[b.id]["date_display"]
             : b.delivery_date || b.created_at;
-        dateA = new Date(dateA.split("/").reverse().join("-"));
-        dateB = new Date(dateB.split("/").reverse().join("-"));
+        // Support JJ/MM/AAAA ou format natif
+        if (typeof dateA === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(dateA))
+          dateA = new Date(dateA.split("/").reverse().join("-"));
+        else dateA = new Date(dateA);
+        if (typeof dateB === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(dateB))
+          dateB = new Date(dateB.split("/").reverse().join("-"));
+        else dateB = new Date(dateB);
         return dateA - dateB; // ancien en haut, récent en bas
       });
       const tableBodyElement = document.getElementById("deliveriesTableBody");
-      renderAgentTableRows(deliveries, tableBodyElement);
+      renderAgentTableRows(window.allDeliveries, tableBodyElement);
     }
     return;
   } else {
