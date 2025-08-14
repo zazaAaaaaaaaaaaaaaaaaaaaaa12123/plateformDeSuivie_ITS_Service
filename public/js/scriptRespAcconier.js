@@ -10,14 +10,6 @@ function normalizeDateToMidnight(date) {
   date.setHours(0, 0, 0, 0);
   return date;
 }
-// Fonction utilitaire pour formater une date au format JJ/MM/AAAA
-function formatDateToFr(date) {
-  if (!(date instanceof Date)) date = new Date(date);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
 
 // Fonction principale pour ,  afficher les livraisons filtrées par date
 function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
@@ -33,12 +25,6 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
     return;
   }
-  // Avant d'afficher, formater les dates au format JJ/MM/AAAA
-  filtered.forEach((d) => {
-    if (d.created_at) d.created_at = formatDateToFr(d.created_at);
-    if (d.delivery_date) d.delivery_date = formatDateToFr(d.delivery_date);
-  });
-  // TRIER : ancienne en haut, récente en bas, selon la colonne date_display si éditée, sinon delivery_date ou created_at
   renderAgentTableRows(filtered, tableBodyElement);
 }
 
@@ -2132,41 +2118,11 @@ function saveCellValue(deliveryId, columnId, value) {
   if (!editedCellsData[deliveryId]) {
     editedCellsData[deliveryId] = {};
   }
-  // Si la colonne modifiée est la date, on la formate JJ/MM/AAAA
-  if (columnId === "date_display") {
-    editedCellsData[deliveryId][columnId] = formatDateToFr(value);
-    saveEditedData();
-    syncCellToServer(deliveryId, columnId, value);
-    // Tri et réaffichage du tableau selon la règle ancien en haut, récent en bas
-    if (window.allDeliveries && typeof renderAgentTableRows === "function") {
-      window.allDeliveries.sort(function (a, b) {
-        // On prend la date éditée si elle existe, sinon la date d'origine
-        let dateA =
-          editedCellsData[a.id] && editedCellsData[a.id]["date_display"]
-            ? editedCellsData[a.id]["date_display"]
-            : a.date_display || a.delivery_date || a.created_at;
-        let dateB =
-          editedCellsData[b.id] && editedCellsData[b.id]["date_display"]
-            ? editedCellsData[b.id]["date_display"]
-            : b.date_display || b.delivery_date || b.created_at;
-        // Support JJ/MM/AAAA ou format natif
-        if (typeof dateA === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(dateA))
-          dateA = new Date(dateA.split("/").reverse().join("-"));
-        else dateA = new Date(dateA);
-        if (typeof dateB === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(dateB))
-          dateB = new Date(dateB.split("/").reverse().join("-"));
-        else dateB = new Date(dateB);
-        return dateA - dateB; // ancien en haut, récent en bas
-      });
-      const tableBodyElement = document.getElementById("deliveriesTableBody");
-      renderAgentTableRows(window.allDeliveries, tableBodyElement);
-    }
-    return;
-  } else {
-    editedCellsData[deliveryId][columnId] = value;
-    saveEditedData();
-    syncCellToServer(deliveryId, columnId, value);
-  }
+  editedCellsData[deliveryId][columnId] = value;
+  saveEditedData();
+
+  // Envoyer au serveur pour synchronisation
+  syncCellToServer(deliveryId, columnId, value);
 }
 
 // Fonction pour synchroniser avec le serveur
@@ -2502,12 +2458,21 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.classList.add("row-number-col");
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
-        // Utiliser la valeur éditée si disponible
-        if (getCellValue(delivery, col.id) !== "-") {
-          dDate = getCellValue(delivery, col.id);
+        if (dDate) {
+          let dateObj = new Date(dDate);
+          if (!isNaN(dateObj.getTime())) {
+            value = dateObj.toLocaleDateString("fr-FR");
+          } else if (typeof dDate === "string") {
+            value = dDate;
+          }
         }
-        // Toujours afficher JJ/MM/AAAA
-        td.textContent = formatDateToFr(dDate);
+
+        // Utiliser la valeur éditée si disponible
+        value =
+          getCellValue(delivery, col.id) !== "-"
+            ? getCellValue(delivery, col.id)
+            : value;
+        td.textContent = value;
 
         // Système d'édition pour les colonnes modifiables
         if (EDITABLE_COLUMNS.includes(col.id)) {
@@ -4959,7 +4924,7 @@ const tableObserver = new MutationObserver(function (mutations) {
   });
 });
 
-// Observer le body pour détecter les changements sudisde contenusdhsj
+// Observer le body pour détecter les changements de contenusdhsj1111
 const bodyElement = document.body;
 if (bodyElement) {
   tableObserver.observe(bodyElement, {
