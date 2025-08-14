@@ -1988,14 +1988,14 @@ document.addEventListener("DOMContentLoaded", function () {
       function getLateDeliveries() {
         const now = new Date();
         const deliveries = window.allDeliveries || [];
-        // Filtrage retard (>2 jours)
+        // Filtrage retard (>2 jours, donc signalement à partir de 3 jours)
         let late = deliveries.filter((d) => {
           let dDate = d.delivery_date || d.created_at;
           if (!dDate) return false;
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-          if (diffDays <= 2) return false; // Signalement à partir de 3 jours
+          if (diffDays < 3) return false; // Signalement à partir de 3 jours
           if (d.delivery_status_acconier === "en attente de paiement") {
             return true;
           }
