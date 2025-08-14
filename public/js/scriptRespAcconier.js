@@ -881,7 +881,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (typeof dDate === "string") {
             if (/^\d{2}\/\d{2}\/\d{4}$/.test(dDate)) {
               const [j, m, a] = dDate.split("/");
-              normalized = `${j.padStart(2, "0")}/${m.padStart(2, "0")}/${a}`;
+              normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
             } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
               const [a, m, j] = dDate.split("-");
               normalized = `${j.padStart(2, "0")}/${m.padStart(2, "0")}/${a}`;
@@ -1628,7 +1628,8 @@ document.addEventListener("DOMContentLoaded", function () {
           const [j, m, a] = dDate.split("/");
           normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
         } else if (/^\d{4}-\d{2}-\d{2}$/.test(dDate)) {
-          normalized = dDate;
+          const [a, m, j] = dDate.split("-");
+          normalized = `${j.padStart(2, "0")}/${m.padStart(2, "0")}/${a}`;
         } else if (/^\d{2}-\d{2}-\d{4}$/.test(dDate)) {
           const [j, m, a] = dDate.split("-");
           normalized = `${a}-${m.padStart(2, "0")}-${j.padStart(2, "0")}`;
