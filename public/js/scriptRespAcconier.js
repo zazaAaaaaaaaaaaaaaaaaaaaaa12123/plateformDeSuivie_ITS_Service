@@ -10,6 +10,14 @@ function normalizeDateToMidnight(date) {
   date.setHours(0, 0, 0, 0);
   return date;
 }
+// Fonction utilitaire pour formater une date au format JJ/MM/AAAA
+function formatDateToFr(date) {
+  if (!(date instanceof Date)) date = new Date(date);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 
 // Fonction principale pour ,  afficher les livraisons filtrées par date
 function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
@@ -25,6 +33,11 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
     return;
   }
+  // Avant d'afficher, formater les dates au format JJ/MM/AAAA
+  filtered.forEach((d) => {
+    if (d.created_at) d.created_at = formatDateToFr(d.created_at);
+    if (d.delivery_date) d.delivery_date = formatDateToFr(d.delivery_date);
+  });
   renderAgentTableRows(filtered, tableBodyElement);
 }
 
