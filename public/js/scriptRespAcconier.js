@@ -2140,14 +2140,15 @@ function saveCellValue(deliveryId, columnId, value) {
     // Tri et réaffichage du tableau selon la règle ancien en haut, récent en bas
     if (window.allDeliveries && typeof renderAgentTableRows === "function") {
       window.allDeliveries.sort(function (a, b) {
+        // On prend la date éditée si elle existe, sinon la date d'origine
         let dateA =
           editedCellsData[a.id] && editedCellsData[a.id]["date_display"]
             ? editedCellsData[a.id]["date_display"]
-            : a.delivery_date || a.created_at;
+            : a.date_display || a.delivery_date || a.created_at;
         let dateB =
           editedCellsData[b.id] && editedCellsData[b.id]["date_display"]
             ? editedCellsData[b.id]["date_display"]
-            : b.delivery_date || b.created_at;
+            : b.date_display || b.delivery_date || b.created_at;
         // Support JJ/MM/AAAA ou format natif
         if (typeof dateA === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(dateA))
           dateA = new Date(dateA.split("/").reverse().join("-"));
