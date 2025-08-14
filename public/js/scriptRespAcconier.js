@@ -2403,6 +2403,22 @@ function createEditInput(columnId, currentValue) {
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
+  // Tri par date (ancienne en haut, récente en bas)
+  deliveries.sort(function (a, b) {
+    let dateA = a.date_display || a.delivery_date || a.created_at;
+    let dateB = b.date_display || b.delivery_date || b.created_at;
+    function parseFrDate(str) {
+      if (!str) return new Date(0);
+      if (typeof str === "string" && str.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const [day, month, year] = str.split("/");
+        return new Date(year, month - 1, day);
+      }
+      return new Date(str);
+    }
+    dateA = parseFrDate(dateA);
+    dateB = parseFrDate(dateB);
+    return dateA - dateB;
+  });
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
