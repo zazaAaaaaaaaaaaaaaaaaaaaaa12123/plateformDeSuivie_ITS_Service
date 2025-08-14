@@ -4924,7 +4924,7 @@ const tableObserver = new MutationObserver(function (mutations) {
   });
 });
 
-// Observer le body pour détecter les changements de contenusdhsj
+// Observer le body pour détecter les changements de 1contenusdhsj
 const bodyElement = document.body;
 if (bodyElement) {
   tableObserver.observe(bodyElement, {
