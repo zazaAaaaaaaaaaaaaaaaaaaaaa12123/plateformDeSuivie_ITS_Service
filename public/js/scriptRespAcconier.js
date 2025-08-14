@@ -81,6 +81,36 @@ document.addEventListener("DOMContentLoaded", function () {
       box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
       box.style.maxWidth = "420px";
       box.style.width = "96vw";
+      // --- LOGIQUE DE REMONTÉE SI DATE LA PLUS ANCIENNE ---
+      if (col.id === "date_display" && newValue) {
+        // Récupérer toutes les dates du tableau
+        const rows = tableBodyElement.querySelectorAll("tr");
+        let minDate = new Date(newValue);
+        let isOldest = true;
+        rows.forEach((row) => {
+          if (row !== td.parentNode) {
+            const dateCell = row.querySelector(
+              '[data-column-id="date_display"]'
+            );
+            if (dateCell) {
+              const dateText = dateCell.textContent.trim();
+              if (dateText && dateText !== "-") {
+                const d = new Date(dateText);
+                if (d < minDate) {
+                  isOldest = false;
+                }
+              }
+            }
+          }
+        });
+        // Si c'est la plus ancienne, déplacer la ligne en haut
+        if (isOldest) {
+          tableBodyElement.insertBefore(
+            td.parentNode,
+            tableBodyElement.firstChild
+          );
+        }
+      }
       box.style.maxHeight = "92vh";
       box.style.overflowY = "auto";
       box.style.padding = "0";
@@ -4148,7 +4178,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               );
               if (delivery) {
                 delivery.delivery_date = newDate;
-                // Trie les livraisons par date111 croissante (ancienne en haut)
+                // Trie les livraisons par date croissante (ancienne en haut)
                 window.deliveries.sort((a, b) => {
                   const dateA = new Date(a.delivery_date || a.created_at);
                   const dateB = new Date(b.delivery_date || b.created_at);
