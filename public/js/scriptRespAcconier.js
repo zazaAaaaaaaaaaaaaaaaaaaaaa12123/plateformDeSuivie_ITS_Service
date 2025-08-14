@@ -1995,7 +1995,7 @@ document.addEventListener("DOMContentLoaded", function () {
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-          if (diffDays <= 2) return false;
+          if (diffDays <= 2) return false; // Signalement à partir de 3 jours
           if (d.delivery_status_acconier === "en attente de paiement") {
             return true;
           }
