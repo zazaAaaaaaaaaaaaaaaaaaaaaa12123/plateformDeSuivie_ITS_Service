@@ -2463,9 +2463,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (dDate) {
           let dateObj = new Date(dDate);
           if (!isNaN(dateObj.getTime())) {
-            value = dateObj.toLocaleDateString("fr-FR");
+            // Formatage JJ/MM/AAAA
+            let day = String(dateObj.getDate()).padStart(2, "0");
+            let month = String(dateObj.getMonth() + 1).padStart(2, "0");
+            let year = dateObj.getFullYear();
+            value = `${day}/${month}/${year}`;
           } else if (typeof dDate === "string") {
-            value = dDate;
+            // Si le format est AAAA-MM-JJ, le convertir
+            const match = dDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (match) {
+              value = `${match[3]}/${match[2]}/${match[1]}`;
+            } else {
+              value = dDate;
+            }
           }
         }
 
