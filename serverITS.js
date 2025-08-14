@@ -38,7 +38,7 @@ app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
 app.use(express.static(path.join(__dirname, "public")));
 
 // === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
-// ===============================
+// ======================================================
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
