@@ -43,7 +43,7 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     // Récupère la date à comparer (date_display éditée ou delivery_date ou created_at)
     function getDate(d) {
       let val = d.date_display || d.delivery_date || d.created_at;
-      // format JJ/MM/AAAA ou AAAA-MM-JJ
+      // format JJ/MM/AAAA ou AAAA-MM-JJ1
       if (typeof val === "string" && val.includes("/")) {
         const [j, m, a] = val.split("/");
         return new Date(`${a}-${m}-${j}`);
