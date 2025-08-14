@@ -2121,54 +2121,6 @@ function saveCellValue(deliveryId, columnId, value) {
   editedCellsData[deliveryId][columnId] = value;
   saveEditedData();
 
-  // Si la colonne modifiée est une date, vérifier si elle est la plus ancienne
-  if (
-    columnId === "delivery_date" ||
-    columnId === "created_at" ||
-    columnId === "date_display"
-  ) {
-    setTimeout(() => {
-      try {
-        const tableBody = document.getElementById("deliveriesTableBody");
-        if (!tableBody) return;
-        const rows = Array.from(tableBody.querySelectorAll("tr"));
-        let dates = rows
-          .map((row) => {
-            const dateCell = row.querySelector(
-              '[data-column-id="date_display"]'
-            );
-            if (!dateCell) return null;
-            let txt = dateCell.textContent.trim();
-            let d = null;
-            // Format AAAA-MM-JJ
-            if (/^\d{4}-\d{2}-\d{2}$/.test(txt)) {
-              d = new Date(txt);
-            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(txt)) {
-              // Format JJ/MM/AAAA
-              let parts = txt.split("/");
-              d = new Date(parts[2] + "-" + parts[1] + "-" + parts[0]);
-            }
-            return { row, date: d, txt };
-          })
-          .filter((d) => d && d.date && !isNaN(d.date.getTime()));
-        // Trouver la plus ancienne
-        let minDateObj = dates.reduce(
-          (min, curr) => (curr.date < min.date ? curr : min),
-          dates[0]
-        );
-        // Si la ligne modifiée est la plus ancienne, la mettre en haut
-        let editedRow = rows.find((row) =>
-          row.querySelector('[data-delivery-id="' + deliveryId + '"]')
-        );
-        if (editedRow && minDateObj && editedRow === minDateObj.row) {
-          tableBody.insertBefore(editedRow, tableBody.firstChild);
-        }
-      } catch (e) {
-        console.warn("Tri date modifiée échoué", e);
-      }
-    }, 300);
-  }
-
   // Envoyer au serveur pour synchronisation
   syncCellToServer(deliveryId, columnId, value);
 }
@@ -2408,28 +2360,6 @@ function createEditInput(columnId, currentValue) {
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
-  // Tri des livraisons par date (ancien en haut, récent en bas)
-  deliveries = deliveries.slice().sort((a, b) => {
-    let aDate = a.delivery_date || a.created_at;
-    let bDate = b.delivery_date || b.created_at;
-    let aObj = null,
-      bObj = null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(aDate)) {
-      aObj = new Date(aDate);
-    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(aDate)) {
-      let parts = aDate.split("/");
-      aObj = new Date(parts[2] + "-" + parts[1] + "-" + parts[0]);
-    }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(bDate)) {
-      bObj = new Date(bDate);
-    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(bDate)) {
-      let parts = bDate.split("/");
-      bObj = new Date(parts[2] + "-" + parts[1] + "-" + parts[0]);
-    }
-    if (!aObj || isNaN(aObj.getTime())) return -1;
-    if (!bObj || isNaN(bObj.getTime())) return 1;
-    return aObj - bObj;
-  });
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
@@ -2537,22 +2467,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           }
         }
 
-        // Utiliser la valeur éditée si disponible et forcer le format JJ/MM/AAAA
-        let rawValue =
+        // Utiliser la valeur éditée si disponible
+        value =
           getCellValue(delivery, col.id) !== "-"
             ? getCellValue(delivery, col.id)
             : value;
-        let dateObjEdit = null;
-        if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
-          // AAAA-MM-JJ
-          let parts = rawValue.split("-");
-          dateObjEdit = new Date(rawValue);
-          rawValue = parts[2] + "/" + parts[1] + "/" + parts[0];
-        } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(rawValue)) {
-          // JJ/MM/AAAA
-          dateObjEdit = new Date(rawValue.split("/").reverse().join("-"));
-        }
-        value = rawValue;
         td.textContent = value;
 
         // Système d'édition pour les colonnes modifiables
@@ -2580,16 +2499,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
             // Fonction de sauvegarde
             function saveValue() {
-              let newValue = input.value.trim();
-              // Conversion automatique au format JJ/MM/AAAA
-              let dateObj = null;
-              if (/^\d{4}-\d{2}-\d{2}$/.test(newValue)) {
-                let parts = newValue.split("-");
-                dateObj = new Date(newValue);
-                newValue = parts[2] + "/" + parts[1] + "/" + parts[0];
-              } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(newValue)) {
-                dateObj = new Date(newValue.split("/").reverse().join("-"));
-              }
+              const newValue = input.value.trim();
               saveCellValue(delivery.id, col.id, newValue);
               td.textContent = newValue || "-";
 
