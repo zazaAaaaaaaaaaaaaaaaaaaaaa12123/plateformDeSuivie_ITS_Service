@@ -1466,12 +1466,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 const updatedDate = new Date(delivery.updated_at);
                 const now = new Date();
                 const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
+                // Formater la date modifiée au format JJ/MM/AAAA
+                delivery.updated_at = formatDateToFr(updatedDate);
                 if (daysDiff <= 7) {
                   hasUserActivity = true;
                   console.log(
                     `⏰ [RECHERCHE ÉLARGIE] Activité récente pour ${
                       delivery.id
-                    } (${daysDiff.toFixed(1)} jours)`
+                    } (${daysDiff.toFixed(1)} jours, modifiée le ${
+                      delivery.updated_at
+                    })`
                   );
                 }
               }
