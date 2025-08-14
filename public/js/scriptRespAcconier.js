@@ -2020,25 +2020,7 @@ document.addEventListener("DOMContentLoaded", function () {
           return true;
         });
 
-        // Ajout : inclure la livraison avec la date la plus ancienne (ou modifiée)
-        let minDate = null;
-        let minDelivery = null;
-        deliveries.forEach((d) => {
-          let dDate = d.delivery_date || d.created_at;
-          if (dDate) {
-            let dateObj = new Date(dDate);
-            if (!isNaN(dateObj.getTime())) {
-              if (!minDate || dateObj < minDate) {
-                minDate = dateObj;
-                minDelivery = d;
-              }
-            }
-          }
-        });
-        // Si la livraison la plus ancienne n'est pas déjà dans la liste, on l'ajoute
-        if (minDelivery && !late.includes(minDelivery)) {
-          late.push(minDelivery);
-        }
+        // On ne cible que les dossiers dont la date a dépassé 2 jours, peu importe leur position dans le tableau
         return late;
       }
       showLateDeliveriesToast(getLateDeliveries());
