@@ -38,6 +38,20 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     if (d.created_at) d.created_at = formatDateToFr(d.created_at);
     if (d.delivery_date) d.delivery_date = formatDateToFr(d.delivery_date);
   });
+  // TRIER : ancienne en haut, récente en bas, selon la colonne date_display si éditée, sinon delivery_date ou created_at
+  filtered.sort((a, b) => {
+    // Récupère la date à comparer (date_display éditée ou delivery_date ou created_at)
+    function getDate(d) {
+      let val = d.date_display || d.delivery_date || d.created_at;
+      // format JJ/MM/AAAA ou AAAA-MM-JJ
+      if (typeof val === "string" && val.includes("/")) {
+        const [j, m, a] = val.split("/");
+        return new Date(`${a}-${m}-${j}`);
+      }
+      return new Date(val);
+    }
+    return getDate(a) - getDate(b);
+  });
   renderAgentTableRows(filtered, tableBodyElement);
 }
 
