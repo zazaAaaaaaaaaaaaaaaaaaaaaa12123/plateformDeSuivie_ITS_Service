@@ -2460,23 +2460,29 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.classList.add("row-number-col");
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
-        if (dDate) {
-          let dateObj = new Date(dDate);
-          if (!isNaN(dateObj.getTime())) {
-            // Formatage JJ/MM/AAAA
-            let day = String(dateObj.getDate()).padStart(2, "0");
-            let month = String(dateObj.getMonth() + 1).padStart(2, "0");
-            let year = dateObj.getFullYear();
-            value = `${day}/${month}/${year}`;
-          } else if (typeof dDate === "string") {
-            // Si le format est AAAA-MM-JJ, le convertir
-            const match = dDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-            if (match) {
-              value = `${match[3]}/${match[2]}/${match[1]}`;
+        value = "-";
+        if (typeof dDate === "string") {
+          // Si le format est AAAA-MM-JJ, le convertir
+          const match = dDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          if (match) {
+            value = `${match[3]}/${match[2]}/${match[1]}`;
+          } else {
+            // Essayer de parser la date
+            let dateObj = new Date(dDate);
+            if (!isNaN(dateObj.getTime())) {
+              let day = String(dateObj.getDate()).padStart(2, "0");
+              let month = String(dateObj.getMonth() + 1).padStart(2, "0");
+              let year = dateObj.getFullYear();
+              value = `${day}/${month}/${year}`;
             } else {
               value = dDate;
             }
           }
+        } else if (dDate instanceof Date) {
+          let day = String(dDate.getDate()).padStart(2, "0");
+          let month = String(dDate.getMonth() + 1).padStart(2, "0");
+          let year = dDate.getFullYear();
+          value = `${day}/${month}/${year}`;
         }
 
         // Utiliser la valeur éditée si disponible
