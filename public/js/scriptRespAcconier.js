@@ -2476,21 +2476,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.classList.add("row-number-col");
       } else if (col.id === "date_display") {
         let dDate = delivery.delivery_date || delivery.created_at;
-        if (dDate) {
-          let dateObj = new Date(dDate);
-          if (!isNaN(dateObj.getTime())) {
-            value = dateObj.toLocaleDateString("fr-FR");
-          } else if (typeof dDate === "string") {
-            value = dDate;
-          }
-        }
-
         // Utiliser la valeur éditée si disponible
-        value =
-          getCellValue(delivery, col.id) !== "-"
-            ? getCellValue(delivery, col.id)
-            : value;
-        td.textContent = value;
+        if (getCellValue(delivery, col.id) !== "-") {
+          dDate = getCellValue(delivery, col.id);
+        }
+        // Toujours afficher JJ/MM/AAAA
+        td.textContent = formatDateToFr(dDate);
 
         // Système d'édition pour les colonnes modifiables
         if (EDITABLE_COLUMNS.includes(col.id)) {
