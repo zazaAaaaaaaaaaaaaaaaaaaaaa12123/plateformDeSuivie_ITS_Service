@@ -2135,30 +2135,6 @@ function saveCellValue(deliveryId, columnId, value) {
   // Si la colonne modifiée est une date, on la formate JJ/MM/AAAA
   if (columnId === "date_display") {
     editedCellsData[deliveryId][columnId] = formatDateToFr(value);
-    // Tri et rafraîchissement du tableau
-    if (window.deliveries && Array.isArray(window.deliveries)) {
-      window.deliveries.sort(function (a, b) {
-        // Prendre la date éditée si dispo, sinon delivery_date ou created_at
-        let dateA = a.date_display || a.delivery_date || a.created_at;
-        let dateB = b.date_display || b.delivery_date || b.created_at;
-        // Conversion JJ/MM/AAAA -> Date
-        function parseFrDate(str) {
-          if (!str) return new Date(0);
-          if (typeof str === "string" && str.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-            const [day, month, year] = str.split("/");
-            return new Date(year, month - 1, day);
-          }
-          return new Date(str);
-        }
-        dateA = parseFrDate(dateA);
-        dateB = parseFrDate(dateB);
-        return dateA - dateB; // Ancienne en haut, récente en bas
-      });
-      // Rafraîchir l'affichage si possible
-      if (window.renderAgentTableRows && window.tableBodyElement) {
-        window.renderAgentTableRows(window.deliveries, window.tableBodyElement);
-      }
-    }
   } else {
     editedCellsData[deliveryId][columnId] = value;
   }
@@ -2166,6 +2142,8 @@ function saveCellValue(deliveryId, columnId, value) {
 
   // Envoyer au serveur pour synchronisation
   syncCellToServer(deliveryId, columnId, value);
+
+  // Si la colonne modifiée est la date, on trie et réaffiche le tableau
 }
 
 // Fonction pour synchroniser avec le serveur
@@ -2403,22 +2381,6 @@ function createEditInput(columnId, currentValue) {
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
-  // Tri par date (ancienne en haut, récente en bas)
-  deliveries.sort(function (a, b) {
-    let dateA = a.date_display || a.delivery_date || a.created_at;
-    let dateB = b.date_display || b.delivery_date || b.created_at;
-    function parseFrDate(str) {
-      if (!str) return new Date(0);
-      if (typeof str === "string" && str.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-        const [day, month, year] = str.split("/");
-        return new Date(year, month - 1, day);
-      }
-      return new Date(str);
-    }
-    dateA = parseFrDate(dateA);
-    dateB = parseFrDate(dateB);
-    return dateA - dateB;
-  });
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
@@ -4974,7 +4936,7 @@ const tableObserver = new MutationObserver(function (mutations) {
   });
 });
 
-// Observer le body pour détecter les changements de contenusdhs11j
+// Observer le body pour détecter les changements sudisde contenusdhsj
 const bodyElement = document.body;
 if (bodyElement) {
   tableObserver.observe(bodyElement, {
