@@ -39,19 +39,6 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
     if (d.delivery_date) d.delivery_date = formatDateToFr(d.delivery_date);
   });
   // TRIER : ancienne en haut, récente en bas, selon la colonne date_display si éditée, sinon delivery_date ou created_at
-  filtered.sort((a, b) => {
-    // Récupère la date à comparer (date_display éditée ou delivery_date ou created_at)
-    function getDate(d) {
-      let val = d.date_display || d.delivery_date || d.created_at;
-      // format JJ/MM/AAAA ou AAAA-MM-JJ1
-      if (typeof val === "string" && val.includes("/")) {
-        const [j, m, a] = val.split("/");
-        return new Date(`${a}-${m}-${j}`);
-      }
-      return new Date(val);
-    }
-    return getDate(a) - getDate(b);
-  });
   renderAgentTableRows(filtered, tableBodyElement);
 }
 
@@ -2155,6 +2142,15 @@ function saveCellValue(deliveryId, columnId, value) {
 
   // Envoyer au serveur pour synchronisation
   syncCellToServer(deliveryId, columnId, value);
+
+  // Si la colonne modifiée est la date, on trie et réaffiche le tableau
+  if (columnId === "date_display") {
+    // On suppose que la variable globale window.allDeliveries contient toutes les livraisons
+    const tableBody = document.getElementById("deliveriesTableBody");
+    if (window.allDeliveries && tableBody) {
+      showDeliveriesByDate(window.allDeliveries, null, tableBody);
+    }
+  }
 }
 
 // Fonction pour synchroniser avec le serveur
