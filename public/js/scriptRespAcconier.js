@@ -1672,30 +1672,14 @@ document.addEventListener("DOMContentLoaded", function () {
         const cell = document.createElement("td");
         let value = "-";
         if (col.id === "date_display") {
-          // Correction : Toujours afficher la date d'échange BL si elle existe, sinon prendre la date de la colonne 'Date'
-          let dDate =
-            delivery.date_echange_bl ||
-            delivery.delivery_date ||
-            delivery.created_at;
-          if (!dDate && delivery.date) {
-            dDate = delivery.date;
-          }
+          let dDate = delivery.delivery_date || delivery.created_at;
           if (dDate) {
-            if (
-              typeof dDate === "string" &&
-              /^\d{2}\/\d{2}\/\d{4}$/.test(dDate)
-            ) {
+            let dateObj = new Date(dDate);
+            if (!isNaN(dateObj.getTime())) {
+              value = dateObj.toLocaleDateString("fr-FR");
+            } else if (typeof dDate === "string") {
               value = dDate;
-            } else {
-              let dateObj = new Date(dDate);
-              if (!isNaN(dateObj.getTime())) {
-                value = dateObj.toLocaleDateString("fr-FR");
-              } else if (typeof dDate === "string") {
-                value = dDate;
-              }
             }
-          } else {
-            value = "";
           }
         } else {
           value = delivery[col.id] !== undefined ? delivery[col.id] : "-";
@@ -3546,51 +3530,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           dateEchangeBLInput.style.marginBottom = "0";
           dateEchangeBLInput.style.background = isDark ? "#232f43" : "#f3f4f6";
           dateEchangeBLInput.style.color = isDark ? "#ffd600" : "#6b7280";
-          dateEchangeBLInput.readOnly = false;
-          dateEchangeBLInput.style.cursor = "text";
+          dateEchangeBLInput.readOnly = true;
+          dateEchangeBLInput.style.cursor = "not-allowed";
 
-          // Rendre le champ modifiable et prérempli si une date existe
-          const tempKeyEchangeBL = `temp_date_echange_bl_${delivery.id}`;
-          const tempValueEchangeBL = localStorage.getItem(tempKeyEchangeBL);
-          dateEchangeBLInput.value =
-            tempValueEchangeBL ||
-            (delivery.date_echange_bl
-              ? new Date(delivery.date_echange_bl).toISOString().split("T")[0]
-              : "");
+          // Récupérer la date d'échange BL depuis la base de données (générée automatiquement)
+          dateEchangeBLInput.value = delivery.date_echange_bl
+            ? new Date(delivery.date_echange_bl).toISOString().split("T")[0]
+            : "";
 
+          // Ajouter un tooltip pour expliquer que c'est généré automatiquement
           dateEchangeBLInput.title =
-            "Saisissez ou modifiez la date d'échange BL manuellement";
-
-          // Sauvegarde automatique lors de la modification
-          dateEchangeBLInput.addEventListener("change", function () {
-            localStorage.setItem(tempKeyEchangeBL, this.value);
-            // Synchronisation automatique vers le backend
-            fetch(`/api/exchange/update/${delivery.id}`, {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ date_echange_bl: this.value }),
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                if (data.success) {
-                  // Optionnel : afficher une notification de succès
-                  this.style.borderColor = "#22c55e";
-                  setTimeout(() => {
-                    this.style.borderColor = isDark ? "#ffd600" : "#d1d5db";
-                  }, 1200);
-                } else {
-                  this.style.borderColor = "#ef4444";
-                }
-              })
-              .catch(() => {
-                this.style.borderColor = "#ef4444";
-              });
-          });
-
-          dateEchangeBLInput.title =
-            "Saisissez ou modifiez la date d'échange BL manuellement";
+            "Cette date est générée automatiquement lors de l'enregistrement de l'ordre de livraison";
 
           dateEchangeBLGroup.appendChild(dateEchangeBLInput);
           fieldsContainer.appendChild(dateEchangeBLGroup);
@@ -4924,7 +4874,7 @@ const tableObserver = new MutationObserver(function (mutations) {
   });
 });
 
-// Observer le body pour détecter les changements de 1contenusdhsj
+// Observer le body pour détecter les changements de contenusdhsj
 const bodyElement = document.body;
 if (bodyElement) {
   tableObserver.observe(bodyElement, {
