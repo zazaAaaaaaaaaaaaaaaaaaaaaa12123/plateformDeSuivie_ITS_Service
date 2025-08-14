@@ -2132,18 +2132,39 @@ function saveCellValue(deliveryId, columnId, value) {
   if (!editedCellsData[deliveryId]) {
     editedCellsData[deliveryId] = {};
   }
-  // Si la colonne modifiée est une date, on la formate JJ/MM/AAAA
+  // Si la colonne modifiée est la date, on la formate JJ/MM/AAAA
   if (columnId === "date_display") {
     editedCellsData[deliveryId][columnId] = formatDateToFr(value);
+    saveEditedData();
+    syncCellToServer(deliveryId, columnId, value);
+    // Tri et réaffichage du tableau selon la règle ancien en haut, récent en bas
+    if (
+      typeof deliveries !== "undefined" &&
+      typeof renderAgentTableRows === "function"
+    ) {
+      // On utilise la valeur éditée si elle existe, sinon delivery_date ou created_at
+      deliveries.sort(function (a, b) {
+        let dateA =
+          editedCellsData[a.id] && editedCellsData[a.id]["date_display"]
+            ? editedCellsData[a.id]["date_display"]
+            : a.delivery_date || a.created_at;
+        let dateB =
+          editedCellsData[b.id] && editedCellsData[b.id]["date_display"]
+            ? editedCellsData[b.id]["date_display"]
+            : b.delivery_date || b.created_at;
+        dateA = new Date(dateA.split("/").reverse().join("-"));
+        dateB = new Date(dateB.split("/").reverse().join("-"));
+        return dateA - dateB; // ancien en haut, récent en bas
+      });
+      const tableBodyElement = document.getElementById("deliveriesTableBody");
+      renderAgentTableRows(deliveries, tableBodyElement);
+    }
+    return;
   } else {
     editedCellsData[deliveryId][columnId] = value;
+    saveEditedData();
+    syncCellToServer(deliveryId, columnId, value);
   }
-  saveEditedData();
-
-  // Envoyer au serveur pour synchronisation
-  syncCellToServer(deliveryId, columnId, value);
-
-  // Si la colonne modifiée est la date, on trie et réaffiche le tableau
 }
 
 // Fonction pour synchroniser avec le serveur
