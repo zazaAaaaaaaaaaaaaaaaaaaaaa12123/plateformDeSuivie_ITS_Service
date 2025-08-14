@@ -2408,6 +2408,28 @@ function createEditInput(columnId, currentValue) {
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
+  // Tri des livraisons par date (ancien en haut, récent en bas)
+  deliveries = deliveries.slice().sort((a, b) => {
+    let aDate = a.delivery_date || a.created_at;
+    let bDate = b.delivery_date || b.created_at;
+    let aObj = null,
+      bObj = null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(aDate)) {
+      aObj = new Date(aDate);
+    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(aDate)) {
+      let parts = aDate.split("/");
+      aObj = new Date(parts[2] + "-" + parts[1] + "-" + parts[0]);
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(bDate)) {
+      bObj = new Date(bDate);
+    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(bDate)) {
+      let parts = bDate.split("/");
+      bObj = new Date(parts[2] + "-" + parts[1] + "-" + parts[0]);
+    }
+    if (!aObj || isNaN(aObj.getTime())) return -1;
+    if (!bObj || isNaN(bObj.getTime())) return 1;
+    return aObj - bObj;
+  });
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
