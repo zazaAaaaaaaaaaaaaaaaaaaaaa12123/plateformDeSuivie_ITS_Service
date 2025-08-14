@@ -24,7 +24,6 @@ const cors = require("cors");
 const path = require("path");
 const WebSocket = require("ws");
 // const bcrypt = require("bcryptjs"); // SUPPRIMÉ doublon, voir plus bas
-const port = 3000;
 
 // Middleware pour parser les requêtes JSON et URL-encodées
 app.use(express.json());
