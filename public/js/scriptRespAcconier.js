@@ -4148,7 +4148,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               );
               if (delivery) {
                 delivery.delivery_date = newDate;
-                // Trie les livraisons par date croissante (ancienne en haut)
+                // Trie les livraisons par date111 croissante (ancienne en haut)
                 window.deliveries.sort((a, b) => {
                   const dateA = new Date(a.delivery_date || a.created_at);
                   const dateB = new Date(b.delivery_date || b.created_at);
