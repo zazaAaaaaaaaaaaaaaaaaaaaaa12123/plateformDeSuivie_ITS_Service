@@ -138,27 +138,11 @@ document.addEventListener("DOMContentLoaded", function () {
           li.style.border = "2px solid #fee2e2";
           li.style.transition =
             "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
-
-          // Détection date modifiée ancienne (>7 jours)
-          let avatarColor = "linear-gradient(135deg,#ef4444 60%,#fca5a5 100%)"; // rouge par défaut
-          if (d.updated_at) {
-            const updatedDate = new Date(d.updated_at);
-            const now = new Date();
-            // Si la date modifiée est antérieure à aujourd'hui
-            if (updatedDate < now) {
-              const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
-              if (daysDiff > 7) {
-                avatarColor =
-                  "linear-gradient(135deg,#fbbf24 60%,#fde68a 100%)"; // jaune
-              }
-            }
-          }
-
           li.innerHTML = `
             <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
-              <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:${avatarColor};color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #ef444433;'>${
-            idx + 1
-          }</span>
+              <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#ef4444 60%,#fca5a5 100%);color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #ef444433;'>${
+                idx + 1
+              }</span>
               <span style='color:#ef4444;font-weight:bold;font-size:1.08em;'><i class="fas fa-folder-open" style="margin-right:6px;color:#ef4444;"></i>N° Dossier :</span>
               <span style='color:#b91c1c;font-weight:700;font-size:1.13em;'>${
                 d.dossier_number || "-"
@@ -1987,18 +1971,20 @@ document.addEventListener("DOMContentLoaded", function () {
       // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui ne sont PAS en livraison
       function getLateDeliveries() {
         const now = new Date();
-        const deliveries = window.allDeliveries || [];
-        // Filtrage retard (>2 jours, donc signalement à partir de 3 jours)
-        let late = deliveries.filter((d) => {
+        // Appliquer le même filtrage que le tableau principal
+        return (window.allDeliveries || []).filter((d) => {
           let dDate = d.delivery_date || d.created_at;
           if (!dDate) return false;
           let dateObj = new Date(dDate);
           if (isNaN(dateObj.getTime())) return false;
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
-          if (diffDays < 3) return false; // Signalement à partir de 3 jours
+          if (diffDays <= 2) return false;
+          // Même logique que renderAgentTableFull :
+          // Affiche TOUS les dossiers dont le statut shjacconier est 'en attente de paiement'
           if (d.delivery_status_acconier === "en attente de paiement") {
             return true;
           }
+          // Sinon, on garde l'ancien filtrage BL
           let blList = [];
           if (Array.isArray(d.bl_number)) {
             blList = d.bl_number.filter(Boolean);
@@ -2008,20 +1994,19 @@ document.addEventListener("DOMContentLoaded", function () {
           let blStatuses = blList.map((bl) =>
             d.bl_statuses && d.bl_statuses[bl] ? d.bl_statuses[bl] : "aucun"
           );
+          // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas
           if (
             blStatuses.length > 0 &&
             blStatuses.every((s) => s === "mise_en_livraison")
           ) {
             return false;
           }
+          // Exclure aussi si statut acconier est 'mise_en_livraison_acconier'
           if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
             return false;
           }
           return true;
         });
-
-        // On ne cible que les dossiers dont la date a dépassé 2 jours, peu importe leur position dans le tableau
-        return late;
       }
       showLateDeliveriesToast(getLateDeliveries());
       // Affichage toutes les 40 secondes
