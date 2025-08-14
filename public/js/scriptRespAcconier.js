@@ -2144,13 +2144,6 @@ function saveCellValue(deliveryId, columnId, value) {
   syncCellToServer(deliveryId, columnId, value);
 
   // Si la colonne modifiée est la date, on trie et réaffiche le tableau
-  if (columnId === "date_display") {
-    // On suppose que la variable globale window.allDeliveries contient toutes les livraisons
-    const tableBody = document.getElementById("deliveriesTableBody");
-    if (window.allDeliveries && tableBody) {
-      showDeliveriesByDate(window.allDeliveries, null, tableBody);
-    }
-  }
 }
 
 // Fonction pour synchroniser avec le serveur
@@ -2388,21 +2381,8 @@ function createEditInput(columnId, currentValue) {
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
-    // TRIER : ancienne en haut, récente en bas, selon la colonne date_display si éditée, sinon delivery_date ou created_at
-    deliveries.sort((a, b) => {
-      function getDate(d) {
-        let val = d.date_display || d.delivery_date || d.created_at;
-        // format JJ/MM/AAAA ou AAAA-MM-JJ
-        if (typeof val === "string" && val.includes("/")) {
-          const [j, m, a] = val.split("/");
-          return new Date(`${a}-${m}-${j}`);
-        }
-        return new Date(val);
-      }
-      return getDate(a) - getDate(b);
-    });
-    tableBodyElement.innerHTML = "";
-    deliveries.forEach((delivery, i) => {
+  tableBodyElement.innerHTML = "";
+  deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
     // Détermination de la couleur de l'avatar selon l'ancienneté
     let dDate = delivery.delivery_date || delivery.created_at;
@@ -4956,7 +4936,7 @@ const tableObserver = new MutationObserver(function (mutations) {
   });
 });
 
-// Observer le body pour détecter les changements de contenusdhsj
+// Observer le body pour détecter les changements de 11contenusdhsj
 const bodyElement = document.body;
 if (bodyElement) {
   tableObserver.observe(bodyElement, {
