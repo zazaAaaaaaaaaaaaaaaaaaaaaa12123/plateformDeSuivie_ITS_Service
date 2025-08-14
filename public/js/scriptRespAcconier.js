@@ -81,36 +81,6 @@ document.addEventListener("DOMContentLoaded", function () {
       box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
       box.style.maxWidth = "420px";
       box.style.width = "96vw";
-      // --- LOGIQUE DE REMONTÉE SI DATE LA PLUS ANCIENNE ---
-      if (col.id === "date_display" && newValue) {
-        // Récupérer toutes les dates du tableau
-        const rows = tableBodyElement.querySelectorAll("tr");
-        let minDate = new Date(newValue);
-        let isOldest = true;
-        rows.forEach((row) => {
-          if (row !== td.parentNode) {
-            const dateCell = row.querySelector(
-              '[data-column-id="date_display"]'
-            );
-            if (dateCell) {
-              const dateText = dateCell.textContent.trim();
-              if (dateText && dateText !== "-") {
-                const d = new Date(dateText);
-                if (d < minDate) {
-                  isOldest = false;
-                }
-              }
-            }
-          }
-        });
-        // Si c'est la plus ancienne, déplacer la ligne en haut
-        if (isOldest) {
-          tableBodyElement.insertBefore(
-            td.parentNode,
-            tableBodyElement.firstChild
-          );
-        }
-      }
       box.style.maxHeight = "92vh";
       box.style.overflowY = "auto";
       box.style.padding = "0";
@@ -2151,6 +2121,46 @@ function saveCellValue(deliveryId, columnId, value) {
   editedCellsData[deliveryId][columnId] = value;
   saveEditedData();
 
+  // Si la colonne modifiée est une date, vérifier si elle est la plus ancienne
+  if (
+    columnId === "delivery_date" ||
+    columnId === "created_at" ||
+    columnId === "date_display"
+  ) {
+    setTimeout(() => {
+      try {
+        const tableBody = document.getElementById("deliveriesTableBody");
+        if (!tableBody) return;
+        const rows = Array.from(tableBody.querySelectorAll("tr"));
+        let dates = rows
+          .map((row) => {
+            const dateCell = row.querySelector(
+              '[data-column-id="date_display"]'
+            );
+            if (!dateCell) return null;
+            let txt = dateCell.textContent.trim();
+            let d = txt ? new Date(txt.split("/").reverse().join("-")) : null;
+            return { row, date: d, txt };
+          })
+          .filter((d) => d && d.date && !isNaN(d.date.getTime()));
+        // Trouver la plus ancienne
+        let minDateObj = dates.reduce(
+          (min, curr) => (curr.date < min.date ? curr : min),
+          dates[0]
+        );
+        // Si la ligne modifiée est la plus ancienne, la mettre en haut
+        let editedRow = rows.find((row) =>
+          row.querySelector('[data-delivery-id="' + deliveryId + '"]')
+        );
+        if (editedRow && minDateObj && editedRow === minDateObj.row) {
+          tableBody.insertBefore(editedRow, tableBody.firstChild);
+        }
+      } catch (e) {
+        console.warn("Tri date modifiée échoué", e);
+      }
+    }, 300);
+  }
+
   // Envoyer au serveur pour synchronisation
   syncCellToServer(deliveryId, columnId, value);
 }
@@ -4161,40 +4171,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           return;
         }
         // ...existing code...
-        // --- Ajout : tri et rafraîchissement du tableau lors de la modification d'une date ---
-        document.addEventListener("change", function (e) {
-          if (
-            e.target &&
-            e.target.type === "date" &&
-            e.target.classList.contains("date-input-table")
-          ) {
-            // Récupère l'id de la livraison modifiée
-            const deliveryId = e.target.getAttribute("data-id");
-            const newDate = e.target.value;
-            // Met à jour la date dans l'objet deliveries (supposé global)
-            if (window.deliveries && deliveryId) {
-              const delivery = window.deliveries.find(
-                (d) => String(d.id) === String(deliveryId)
-              );
-              if (delivery) {
-                delivery.delivery_date = newDate;
-                // Trie les livraisons par date croissante (ancienne en haut)
-                window.deliveries.sort((a, b) => {
-                  const dateA = new Date(a.delivery_date || a.created_at);
-                  const dateB = new Date(b.delivery_date || b.created_at);
-                  return dateA - dateB;
-                });
-                // Rafraîchit le tableau
-                const tableBody = document.getElementById(
-                  "deliveriesTableBody"
-                );
-                if (tableBody) {
-                  renderAgentTableRows(window.deliveries, tableBody);
-                }
-              }
-            }
-          }
-        });
       } else if (col.id === "container_status") {
         // Correction : si le statut acconier est 'en attente de paiement', on affiche toujours 'En attente de paiement'
         if (delivery.delivery_status_acconier === "en attente de paiement") {
