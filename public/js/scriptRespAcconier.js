@@ -2388,8 +2388,21 @@ function createEditInput(columnId, currentValue) {
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
-  tableBodyElement.innerHTML = "";
-  deliveries.forEach((delivery, i) => {
+    // TRIER : ancienne en haut, récente en bas, selon la colonne date_display si éditée, sinon delivery_date ou created_at
+    deliveries.sort((a, b) => {
+      function getDate(d) {
+        let val = d.date_display || d.delivery_date || d.created_at;
+        // format JJ/MM/AAAA ou AAAA-MM-JJ
+        if (typeof val === "string" && val.includes("/")) {
+          const [j, m, a] = val.split("/");
+          return new Date(`${a}-${m}-${j}`);
+        }
+        return new Date(val);
+      }
+      return getDate(a) - getDate(b);
+    });
+    tableBodyElement.innerHTML = "";
+    deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
     // Détermination de la couleur de l'avatar selon l'ancienneté
     let dDate = delivery.delivery_date || delivery.created_at;
