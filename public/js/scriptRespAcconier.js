@@ -2566,6 +2566,13 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               saveValue();
             };
 
+            // Amélioration : tri et réaffichage dès modification de la date en mode édition
+            if (col.id === "date_display") {
+              input.addEventListener("change", function () {
+                saveValue();
+              });
+            }
+
             // Remplacer le contenu de la cellule par l'input
             td.textContent = "";
             td.appendChild(input);
