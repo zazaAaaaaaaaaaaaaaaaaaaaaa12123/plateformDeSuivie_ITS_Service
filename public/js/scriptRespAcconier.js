@@ -2318,6 +2318,36 @@ function createEditInput(columnId, currentValue) {
       option.value = opt;
       option.textContent = opt || "Sélectionner...";
       if (opt === currentValue) option.selected = true;
+      // Synchronisation du nom d'agent avec le backend
+      if (col.id === "employee_name" && window.allDeliveries) {
+        const idx = window.allDeliveries.findIndex((d) => d.id === delivery.id);
+        if (idx !== -1) {
+          window.allDeliveries[idx].employee_name = newValue;
+          // Envoi au backend
+          fetch(`/deliveries/${delivery.id}/agent`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ employee_name: newValue }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.success) {
+                // Optionnel : feedback visuel ou console
+                // On peut aussi recharger la ligne depuis le backend si besoin
+              } else {
+                alert(
+                  "Erreur lors de la sauvegarde du nom d'agent côté serveur : " +
+                    (data.message || "")
+                );
+              }
+            })
+            .catch((err) => {
+              alert("Erreur réseau lors de la sauvegarde du nom d'agent");
+            });
+        }
+      }
       input.appendChild(option);
     });
   } else if (columnId === "client_phone") {

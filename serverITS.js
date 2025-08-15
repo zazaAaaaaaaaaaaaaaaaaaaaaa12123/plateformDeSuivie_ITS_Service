@@ -152,6 +152,34 @@ function broadcastObservationUpdate(deliveryId, observation) {
 // ROUTE : PATCH statut BL (bl_statuses) pour une livraison
 // ===============================
 
+// ===============================
+// ROUTE : PATCH nom d'agent (employee_name) pour une livraison
+// ===============================
+
+app.patch("/deliveries/:id/agent", async (req, res) => {
+  const { id } = req.params;
+  const { employee_name } = req.body;
+  if (!employee_name) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Nom d'agent manquant." });
+  }
+  try {
+    const result = await pool.query(
+      "UPDATE livraison_conteneur SET employee_name = $1 WHERE id = $2 RETURNING id, employee_name",
+      [employee_name, id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+    res.json({ success: true, delivery: result.rows[0] });
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour du nom d'agent:", err);
+    res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
 app.patch("/deliveries/:id/observation", async (req, res) => {
   const { id } = req.params;
   const { observation } = req.body;
