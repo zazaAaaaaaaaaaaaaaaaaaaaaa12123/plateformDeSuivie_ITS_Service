@@ -2468,10 +2468,18 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }
 
         // Utiliser la valeur éditée si disponible
-        value =
-          getCellValue(delivery, col.id) !== "-"
-            ? getCellValue(delivery, col.id)
-            : value;
+        let cellValue = getCellValue(delivery, col.id);
+        if (col.id === "date_display" && cellValue !== "-") {
+          // Si la valeur est au format AAAA-MM-JJ, on la reformate en JJ/MM/AAAA
+          if (/^\d{4}-\d{2}-\d{2}$/.test(cellValue)) {
+            const [y, m, d] = cellValue.split("-");
+            value = `${d}/${m}/${y}`;
+          } else {
+            value = cellValue;
+          }
+        } else if (cellValue !== "-") {
+          value = cellValue;
+        }
         td.textContent = value;
 
         // Système d'édition pour les colonnes modifiables
