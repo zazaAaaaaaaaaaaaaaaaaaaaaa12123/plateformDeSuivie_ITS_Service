@@ -2360,6 +2360,21 @@ function createEditInput(columnId, currentValue) {
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
+  // Tri des livraisons par date (ancienne en haut, récente en bas)
+  deliveries.sort((a, b) => {
+    let dateA = a.delivery_date || a.created_at;
+    let dateB = b.delivery_date || b.created_at;
+    // Si la date est au format JJ/MM/AAAA, la convertir en Date
+    if (dateA && /^\d{2}\/\d{2}\/\d{4}$/.test(dateA)) {
+      const [d, m, y] = dateA.split("/");
+      dateA = `${y}-${m}-${d}`;
+    }
+    if (dateB && /^\d{2}\/\d{2}\/\d{4}$/.test(dateB)) {
+      const [d, m, y] = dateB.split("/");
+      dateB = `${y}-${m}-${d}`;
+    }
+    return new Date(dateA) - new Date(dateB);
+  });
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
     const tr = document.createElement("tr");
