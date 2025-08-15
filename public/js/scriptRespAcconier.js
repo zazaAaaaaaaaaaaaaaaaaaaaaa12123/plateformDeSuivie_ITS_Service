@@ -2128,11 +2128,19 @@ function saveCellValue(deliveryId, columnId, value) {
 // Fonction pour synchroniser avec le serveur
 async function syncCellToServer(deliveryId, columnId, value) {
   try {
-    await fetch(`/deliveries/${deliveryId}/cell-update`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [columnId]: value }),
-    });
+    if (columnId === "employee_name") {
+      await fetch(`/deliveries/${deliveryId}/agent`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employee_name: value }),
+      });
+    } else {
+      await fetch(`/deliveries/${deliveryId}/cell-update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [columnId]: value }),
+      });
+    }
   } catch (error) {
     console.warn(`Erreur lors de la synchronisation de ${columnId}:`, error);
   }
