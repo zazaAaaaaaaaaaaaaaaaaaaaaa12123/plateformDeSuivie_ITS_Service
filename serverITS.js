@@ -196,7 +196,7 @@ app.get("/api/user-observations", async (req, res) => {
     `;
 
     const userPattern = `%${user}%`;
-    const userIdPattern = userId ? `%${userId}%` : null;
+    const userIdPattern = userId ? `%${userId}%` : "";
 
     const result = await pool.query(query, [userPattern, userIdPattern]);
 
