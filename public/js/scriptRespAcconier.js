@@ -2538,7 +2538,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 td.style.border = "";
               }, 2000);
 
-              // Rafraîchir le tableau pour appliquer le tri après modification de la date
+              // Rafraîchir le tableau pour appliquer le tri sur toutes les données après modification de la date
               if (
                 col.id === "date_display" &&
                 window.allDeliveries &&
@@ -2547,7 +2547,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 const tableBody = document.getElementById(
                   "deliveriesTableBody"
                 );
-                renderAgentTableRows(window.allDeliveries, tableBody);
+                // On force le tri sur toutes les données, pas seulement le filtre courant
+                renderAgentTableRows([...window.allDeliveries], tableBody);
               }
             }
 
