@@ -184,7 +184,6 @@ app.get("/api/user-observations", async (req, res) => {
             LOWER(observation_acconier) LIKE LOWER($1) OR
           LOWER(created_by) LIKE LOWER($1) OR
           LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
-          LOWER(assigned_to) LIKE LOWER($1) OR
           ($2 IS NOT NULL AND (
             LOWER(employee_name) LIKE LOWER($2) OR
               LOWER(observation_acconier) LIKE LOWER($2) OR
@@ -222,7 +221,6 @@ app.get("/api/user-observations", async (req, res) => {
             LOWER(observation_acconier) LIKE LOWER($1) OR
           LOWER(created_by) LIKE LOWER($1) OR
           LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
-          LOWER(assigned_to) LIKE LOWER($1) OR
           ($2 IS NOT NULL AND (
             LOWER(employee_name) LIKE LOWER($2) OR
               LOWER(observation_acconier) LIKE LOWER($2) OR
@@ -316,7 +314,6 @@ app.get("/api/user-delivery-data", async (req, res) => {
           LOWER(transporter) LIKE LOWER($1) OR
           LOWER(inspecteur) LIKE LOWER($1) OR
           LOWER(agent_en_douanes) LIKE LOWER($1) OR
-          LOWER(assigned_to) LIKE LOWER($1) OR
           ($2 IS NOT NULL AND (
             LOWER(employee_name) LIKE LOWER($2) OR
             LOWER(responsible_livreur) LIKE LOWER($2) OR
