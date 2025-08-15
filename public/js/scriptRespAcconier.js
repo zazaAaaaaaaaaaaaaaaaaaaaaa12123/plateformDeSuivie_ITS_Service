@@ -2177,7 +2177,7 @@ function createEditModeButton() {
   buttonContainer.style.alignItems = "center";
   buttonContainer.style.gap = "8px";
 
-  // Créer le bouton
+  // Créer le bouton1
   const editBtn = document.createElement("button");
   editBtn.id = "tableEditModeBtn";
   editBtn.innerHTML = '<i class="fas fa-edit"></i> Modifier';
