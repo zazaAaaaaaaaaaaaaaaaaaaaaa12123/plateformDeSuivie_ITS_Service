@@ -167,76 +167,119 @@ app.get("/api/user-observations", async (req, res) => {
     );
 
     // Recherche plus exhaustive dans tous les champs possibles
-    const query = `
-      SELECT 
-        id as delivery_id,
-        observation_acconier as observation,
-        employee_name,
-        client_name,
-        delivery_date,
-        created_at
-      FROM livraison_conteneur 
-      WHERE 
-        (observation_acconier IS NOT NULL AND observation_acconier != '' AND observation_acconier != '-') 
-        AND (
-          LOWER(employee_name) LIKE LOWER($1) OR
-            LOWER(observation_acconier) LIKE LOWER($1) OR
-            LOWER(observation_acconier) LIKE LOWER($1) OR
-          LOWER(created_by) LIKE LOWER($1) OR
-          LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
-          ($2 IS NOT NULL AND (
+    let query;
+    const userPattern = `%${user}%`;
+    let params = [userPattern];
+    if (userId) {
+      query = `
+        SELECT 
+          id as delivery_id,
+          observation_acconier as observation,
+          employee_name,
+          client_name,
+          delivery_date,
+          created_at
+        FROM livraison_conteneur 
+        WHERE 
+          (observation_acconier IS NOT NULL AND observation_acconier != '' AND observation_acconier != '-') 
+          AND (
+            LOWER(employee_name) LIKE LOWER($1) OR
+              LOWER(observation_acconier) LIKE LOWER($1) OR
+              LOWER(observation_acconier) LIKE LOWER($1) OR
+            LOWER(created_by) LIKE LOWER($1) OR
+            LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
             LOWER(employee_name) LIKE LOWER($2) OR
               LOWER(observation_acconier) LIKE LOWER($2) OR
               LOWER(observation_acconier) LIKE LOWER($2) OR
             LOWER(created_by) LIKE LOWER($2)
-          ))
-        )
-      ORDER BY created_at DESC
-      LIMIT 100;
-    `;
-
-    const userPattern = `%${user}%`;
-    const userIdPattern = userId ? `%${userId}%` : "";
-
-    const result = await pool.query(query, [userPattern, userIdPattern]);
+          )
+        ORDER BY created_at DESC
+        LIMIT 100;
+      `;
+      params.push(`%${userId}%`);
+    } else {
+      query = `
+        SELECT 
+          id as delivery_id,
+          observation_acconier as observation,
+          employee_name,
+          client_name,
+          delivery_date,
+          created_at
+        FROM livraison_conteneur 
+        WHERE 
+          (observation_acconier IS NOT NULL AND observation_acconier != '' AND observation_acconier != '-') 
+          AND (
+            LOWER(employee_name) LIKE LOWER($1) OR
+              LOWER(observation_acconier) LIKE LOWER($1) OR
+              LOWER(observation_acconier) LIKE LOWER($1) OR
+            LOWER(created_by) LIKE LOWER($1) OR
+            LOWER(nom_agent_visiteur) LIKE LOWER($1)
+          )
+        ORDER BY created_at DESC
+        LIMIT 100;
+      `;
+    }
+    const result = await pool.query(query, params);
 
     console.log(
       `📝 [API] ${result.rows.length} observations trouvées pour ${user}`
     );
 
     // Ajouter aussi une recherche danshjv les livraisons récemment modifiées par cet utilisateur
-    const recentQuery = `
-      SELECT 
-        id as delivery_id,
-        observation_acconier as observation,
-        employee_name,
-        client_name,
-        delivery_date,
-        created_at
-      FROM livraison_conteneur 
-      WHERE 
-        (
-          LOWER(employee_name) LIKE LOWER($1) OR
-            LOWER(observation_acconier) LIKE LOWER($1) OR
-            LOWER(observation_acconier) LIKE LOWER($1) OR
-          LOWER(created_by) LIKE LOWER($1) OR
-          LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
-          ($2 IS NOT NULL AND (
+    let recentQuery;
+    let recentParams = [userPattern];
+    if (userId) {
+      recentQuery = `
+        SELECT 
+          id as delivery_id,
+          observation_acconier as observation,
+          employee_name,
+          client_name,
+          delivery_date,
+          created_at
+        FROM livraison_conteneur 
+        WHERE 
+          (
+            LOWER(employee_name) LIKE LOWER($1) OR
+              LOWER(observation_acconier) LIKE LOWER($1) OR
+              LOWER(observation_acconier) LIKE LOWER($1) OR
+            LOWER(created_by) LIKE LOWER($1) OR
+            LOWER(nom_agent_visiteur) LIKE LOWER($1) OR
             LOWER(employee_name) LIKE LOWER($2) OR
               LOWER(observation_acconier) LIKE LOWER($2) OR
               LOWER(observation_acconier) LIKE LOWER($2) OR
             LOWER(created_by) LIKE LOWER($2)
-          ))
-        )
-        AND created_at >= NOW() - INTERVAL '30 days'
-      ORDER BY created_at DESC
-      LIMIT 50;
-    `;
-
-    const recentResult = await pool.query(recentQuery, [
-      userPattern,
-      userIdPattern,
-    ]);
+          )
+          AND created_at >= NOW() - INTERVAL '30 days'
+        ORDER BY created_at DESC
+        LIMIT 50;
+      `;
+      recentParams.push(`%${userId}%`);
+    } else {
+      recentQuery = `
+        SELECT 
+          id as delivery_id,
+          observation_acconier as observation,
+          employee_name,
+          client_name,
+          delivery_date,
+          created_at
+        FROM livraison_conteneur 
+        WHERE 
+          (
+            LOWER(employee_name) LIKE LOWER($1) OR
+              LOWER(observation_acconier) LIKE LOWER($1) OR
+              LOWER(observation_acconier) LIKE LOWER($1) OR
+            LOWER(created_by) LIKE LOWER($1) OR
+            LOWER(nom_agent_visiteur) LIKE LOWER($1)
+          )
+          AND created_at >= NOW() - INTERVAL '30 days'
+        ORDER BY created_at DESC
+        LIMIT 50;
+      `;
+    }
+    const recentResult = await pool.query(recentQuery, recentParams);
 
     // Combiner les résultats et supprimer les doublons
     const allObservations = [...result.rows];
