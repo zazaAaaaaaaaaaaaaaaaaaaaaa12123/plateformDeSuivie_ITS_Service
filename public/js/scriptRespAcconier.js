@@ -2544,7 +2544,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 window.allDeliveries &&
                 Array.isArray(window.allDeliveries)
               ) {
-                const tableBody = td.parentNode.parentNode;
+                const tableBody = document.getElementById(
+                  "deliveriesTableBody"
+                );
                 renderAgentTableRows(window.allDeliveries, tableBody);
               }
             }
