@@ -2537,6 +2537,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }
                 td.style.border = "";
               }, 2000);
+
+              // Rafraîchir le tableau pour appliquer le tri après modification de la date
+              if (
+                col.id === "date_display" &&
+                window.allDeliveries &&
+                Array.isArray(window.allDeliveries)
+              ) {
+                const tableBody = td.parentNode.parentNode;
+                renderAgentTableRows(window.allDeliveries, tableBody);
+              }
             }
 
             // Gestionnaires d'événements
