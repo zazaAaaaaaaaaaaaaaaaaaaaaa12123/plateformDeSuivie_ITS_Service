@@ -1,3 +1,4 @@
+console.log("[DEBUG] Script serverITS.js lancé !");
 const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
