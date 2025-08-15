@@ -2181,7 +2181,7 @@ function createEditModeButton() {
   const editBtn = document.createElement("button");
   editBtn.id = "tableEditModeBtn";
   editBtn.innerHTML = '<i class="fas fa-edit"></i> Modifier';
-  editBtn.style.background = "linear-gradient(90deg, #2563eb 0%, #1e293b 100%)";
+  editBtn.style.background = "linear-gradient(90deg, #ef4444 0%, #b91c1c 100%)"; // rouge vif à foncé
   editBtn.style.color = "#fff";
   editBtn.style.border = "none";
   editBtn.style.borderRadius = "6px";
