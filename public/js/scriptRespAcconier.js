@@ -2525,6 +2525,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               const newValue = input.value.trim();
               saveCellValue(delivery.id, col.id, newValue);
               td.textContent = newValue || "-";
+              // Correction : mettre à jour la date dans window.allDeliveries
+              if (col.id === "date_display" && window.allDeliveries) {
+                const idx = window.allDeliveries.findIndex(
+                  (d) => d.id === delivery.id
+                );
+                if (idx !== -1) {
+                  // On met à jour la date dans l'objet global
+                  window.allDeliveries[idx].delivery_date = newValue;
+                }
+              }
 
               // Feedback visuel
               td.style.backgroundColor = "#dcfce7";
