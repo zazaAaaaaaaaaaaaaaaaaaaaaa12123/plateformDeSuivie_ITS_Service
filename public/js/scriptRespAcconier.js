@@ -2533,6 +2533,29 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 if (idx !== -1) {
                   // On met à jour la date dans l'objet global
                   window.allDeliveries[idx].delivery_date = newValue;
+                  // Envoi au backend
+                  fetch(`/deliveries/${delivery.id}/date`, {
+                    method: "PATCH",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ date: newValue }),
+                  })
+                    .then((res) => res.json())
+                    .then((data) => {
+                      if (data.success) {
+                        // Optionnel : feedback visuel ou console
+                        // On peut aussi recharger la ligne depuis le backend si besoin
+                      } else {
+                        alert(
+                          "Erreur lors de la sauvegarde de la date côté serveur : " +
+                            (data.message || "")
+                        );
+                      }
+                    })
+                    .catch((err) => {
+                      alert("Erreur réseau lors de la sauvegarde de la date");
+                    });
                 }
               }
 
@@ -2580,6 +2603,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             if (col.id === "date_display") {
               input.addEventListener("change", function () {
                 saveValue();
+                // Après modification, on trie et on réaffiche le tableau pour replacer la ligne
+                setTimeout(() => {
+                  if (window.allDeliveries && tableBody) {
+                    renderAgentTableRows([...window.allDeliveries], tableBody);
+                  }
+                }, 100); // petit délai pour laisser le temps à saveValue de finir
               });
             }
 

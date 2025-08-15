@@ -32,6 +32,34 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors()); // Assurez-vous que CORS est appliqué avant vos routes
 
 // ===============================
+// ROUTE : PATCH date de livraison pour une livraison
+// ===============================
+
+app.patch("/deliveries/:id/date", async (req, res) => {
+  const { id } = req.params;
+  const { date } = req.body;
+  if (!date) {
+    return res.status(400).json({ success: false, message: "Date manquante." });
+  }
+  try {
+    const result = await pool.query(
+      "UPDATE livraison_conteneur SET delivery_date = $1 WHERE id = $2 RETURNING id, delivery_date",
+      [date, id]
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Livraison non trouvée." });
+    }
+    res.json({ success: true, delivery: result.rows[0] });
+  } catch (err) {
+    console.error(
+      "Erreur lors de la mise à jour de la date de livraison:",
+      err
+    );
+    res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+});
 // CONFIGURATION DES FICHIERS STATIQUES (HTML, CSS, JS, images...)
 // Sert tous les fichiers statiques du dossier public (y compris /html, /css, /js...)
 app.use(express.static(path.join(__dirname, "public")));
