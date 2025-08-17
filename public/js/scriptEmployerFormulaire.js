@@ -156,8 +156,23 @@ window.displayAgentHistory = function (agentKey = "Agent Acconier") {
   let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
   let agentHistory = historyData[agentKey] || [];
   if (agentHistory.length === 0) {
+    // DEBUG : forcer l'ajout d'un exemple si aucun historique
     historyContainer.innerHTML =
-      '<div class="text-gray-500" style="padding:12px;">Aucun ordre de livraison enregistré pour le moment.</div>';
+      '<div class="text-gray-500" style="padding:12px;">Aucun ordre de livraison enregistré pour le moment.<br><span style="color:red;font-size:12px;">(Debug: Historique vide, vérifiez la sauvegarde dans localStorage ou validez un ordre.)</span></div>';
+    // Pour test, ajouter un exemple si aucun historique (à retirer en prod)
+    /*
+    let historyKey = "simulatedHistoryData";
+    let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
+    if (!historyData[agentKey]) historyData[agentKey] = [];
+    historyData[agentKey].unshift({
+      id: "debug-1",
+      date: new Date().toLocaleDateString("fr-FR") + " " + new Date().toLocaleTimeString("fr-FR", {hour: "2-digit", minute: "2-digit"}),
+      details: "Exemple debug - Test affichage",
+      data: {}
+    });
+    localStorage.setItem(historyKey, JSON.stringify(historyData));
+    setTimeout(function(){ window.displayAgentHistory(agentKey); }, 500);
+    */
     return;
   }
   let html = '<ul style="list-style:none;padding:0;margin:0;">';
