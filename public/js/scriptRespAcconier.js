@@ -2142,7 +2142,7 @@ async function syncCellToServer(deliveryId, columnId, value) {
       });
     }
   } catch (error) {
-    console.warn(`Erreur lors de la synchronisation de ${columnId}:`, error);
+    console.warn(`Erreur lors de la synchronisation de $  {columnId}:`, error);
   }
 }
 

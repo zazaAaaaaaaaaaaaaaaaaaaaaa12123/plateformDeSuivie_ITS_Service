@@ -2245,13 +2245,19 @@ async function submitDeliveryForm(status) {
       }
       // --- FIN AJOUT HISTORIQUE ---
       // --- Mise à jour immédiate de l'affichage historique (sidebar et liste) ---
-      if (typeof window.renderHistorySidebarList === "function") {
-        window.renderHistorySidebarList();
-      }
-      if (window.displayAgentHistory) {
-        window.displayAgentHistory("Agent Acconier");
-      }
-      // --- FIN MISE À JOUR ---
+      // Correction : on force le rafraîchissement de l'historique et on s'assure que le conteneur est visible
+      setTimeout(function () {
+        if (typeof window.renderHistorySidebarList === "function") {
+          window.renderHistorySidebarList();
+        }
+        if (window.displayAgentHistory) {
+          window.displayAgentHistory("Agent Acconier");
+        }
+        var historyContainer = document.getElementById("agentHistoryContainer");
+        if (historyContainer) {
+          historyContainer.style.display = "";
+        }
+      }, 200);
       deliveryForm.reset();
       // Après le reset, remettre le nom de l'agent connecté dans le champ même s'il est disabled
       let acconier = JSON.parse(localStorage.getItem("acconier_user")) || {};
