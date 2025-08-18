@@ -2202,7 +2202,9 @@ async function submitDeliveryForm(status) {
       try {
         const historyKey = "simulatedHistoryData";
         let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
-        if (!historyData["Agent Acconier"]) historyData["Agent Acconier"] = [];
+        // Correction : toujours utiliser la clé 'Agent Acconier' pour l'historique
+        const historyAgentKey = "Agent Acconier";
+        if (!historyData[historyAgentKey]) historyData[historyAgentKey] = [];
         const now = new Date();
         const dateStr =
           now.toLocaleDateString("fr-FR") +
@@ -2240,7 +2242,8 @@ async function submitDeliveryForm(status) {
             dossierNumber: finalDossierNumber,
           },
         };
-        historyData["Agent Acconier"].unshift(newOperation);
+        historyData[historyAgentKey].unshift(newOperation);
+        localStorage.setItem(historyKey, JSON.stringify(historyData));
         localStorage.setItem(historyKey, JSON.stringify(historyData));
       } catch (e) {
         console.warn("Impossible d'ajouter à l'historique Agent Acconier :", e);
