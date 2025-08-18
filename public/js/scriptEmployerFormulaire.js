@@ -2268,9 +2268,16 @@ async function submitDeliveryForm(status) {
         if (window.displayAgentHistory) {
           window.displayAgentHistory("Agent Acconier");
         }
-        var historyContainer = document.getElementById("agentHistoryContainer");
+        // Ajout : forcer l'affichage du conteneur historique si masqué
+        let historyContainer = document.getElementById("agentHistoryContainer");
         if (historyContainer) {
           historyContainer.style.display = "";
+          historyContainer.classList.remove("hidden");
+        } else {
+          // Si le conteneur n'existe pas, afficher une alerte pour debug
+          alert(
+            "Le conteneur d'historique des ordres de livraison (agentHistoryContainer) est introuvable ! Veuillez vérifier le HTML."
+          );
         }
       }, 200);
       deliveryForm.reset();
