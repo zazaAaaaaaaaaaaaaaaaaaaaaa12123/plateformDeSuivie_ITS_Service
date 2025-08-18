@@ -159,20 +159,7 @@ window.displayAgentHistory = function (agentKey = "Agent Acconier") {
     // DEBUG : forcer l'ajout d'un exemple si aucun historique
     historyContainer.innerHTML =
       '<div class="text-gray-500" style="padding:12px;">Aucun ordre de livraison enregistré pour le moment.<br><span style="color:red;font-size:12px;">(Debug: Historique vide, vérifiez la sauvegarde dans localStorage ou validez un ordre.)</span></div>';
-    // Pour test, ajouter un exemple si aucun historique (à retirer en prod)
-    /*
-    let historyKey = "simulatedHistoryData";
-    let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
-    if (!historyData[agentKey]) historyData[agentKey] = [];
-    historyData[agentKey].unshift({
-      id: "debug-1",
-      date: new Date().toLocaleDateString("fr-FR") + " " + new Date().toLocaleTimeString("fr-FR", {hour: "2-digit", minute: "2-digit"}),
-      details: "Exemple debug - Test affichage",
-      data: {}
-    });
-    localStorage.setItem(historyKey, JSON.stringify(historyData));
-    setTimeout(function(){ window.displayAgentHistory(agentKey); }, 500);
-    */
+
     return;
   }
   let html = '<ul style="list-style:none;padding:0;margin:0;">';
@@ -2269,15 +2256,10 @@ async function submitDeliveryForm(status) {
           window.displayAgentHistory("Agent Acconier");
         }
         // Ajout : forcer l'affichage du conteneur historique si masqué
-        let historyContainer = document.getElementById("agentHistoryContainer");
+        let historyContainer = document.getElementById("historySidebarList");
         if (historyContainer) {
           historyContainer.style.display = "";
           historyContainer.classList.remove("hidden");
-        } else {
-          // Si le conteneur n'existe pas, afficher une alerte pour debug
-          alert(
-            "Le conteneur d'historique des ordres de livraison (agentHistoryContainer) est introuvable ! Veuillez vérifier le HTML."
-          );
         }
       }, 200);
       deliveryForm.reset();
