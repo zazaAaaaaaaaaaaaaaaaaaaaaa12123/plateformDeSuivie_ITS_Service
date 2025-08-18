@@ -156,23 +156,29 @@ window.displayAgentHistory = function (agentKey = "Agent Acconier") {
   let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
   let agentHistory = historyData[agentKey] || [];
   if (agentHistory.length === 0) {
-    // DEBUG : forcer l'ajout d'un exemple si aucun historique
     historyContainer.innerHTML =
-      '<div class="text-gray-500" style="padding:12px;">Aucun ordre de livraison enregistré pour le moment.<br><span style="color:red;font-size:12px;">(Debug: Historique vide, vérifiez la sauvegarde dans localStorage ou validez un ordre.)</span></div>';
-
+      '<div class="text-gray-500" style="padding:32px 0;text-align:center;font-size:1.15em;">Aucun ordre de livraison enregistré.</div>';
     return;
   }
-  let html = '<ul style="list-style:none;padding:0;margin:0;">';
+  let html = "";
   agentHistory.forEach((item) => {
-    html += `<li style="background:#f1f5f9;margin-bottom:10px;padding:10px 14px;border-radius:8px;box-shadow:0 1px 4px #2563eb11;display:flex;align-items:center;gap:10px;">
-      <span style="background:#2563eb;color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1.1em;">${item.date.slice(
-        5,
-        10
-      )}</span>
-      <span style="flex:1;">${item.details}</span>
-    </li>`;
+    html += `<div style="background:#f1f5f9;margin-bottom:12px;padding:14px 18px;border-radius:10px;box-shadow:0 1px 6px #2563eb11;">
+        <div style="font-weight:600;color:#2563eb;font-size:1.08em;margin-bottom:2px;">${
+          item.data.clientName || "-"
+        } <span style="color:#334155;font-weight:400;font-size:0.98em;">(${
+      item.data.containerNumbers ? item.data.containerNumbers.join(", ") : "-"
+    })</span></div>
+        <div style="font-size:0.97em;color:#334155;">${
+          item.data.lieu || "-"
+        } | ${item.date || "-"} </div>
+        <div style="font-size:0.93em;color:#64748b;margin-top:2px;">BL: ${
+          item.data.blNumber || "-"
+        } | Déclaration: ${item.data.declarationNumber || "-"} | Mode: ${
+      item.data.transporterMode || "-"
+    } </div>
+      </div>`;
   });
-  html += "</ul>";
+  historyContainer.innerHTML = html;
   historyContainer.innerHTML = html;
 };
 
