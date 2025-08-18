@@ -2246,6 +2246,11 @@ async function submitDeliveryForm(status) {
         console.warn("Impossible d'ajouter à l'historique Agent Acconier :", e);
       }
       // --- FIN AJOUT HISTORIQUE ---
+      // DEBUG : Affiche le contenu du localStorage juste après ajout
+      console.log(
+        "DEBUG localStorage.simulatedHistoryData =",
+        localStorage.getItem("simulatedHistoryData")
+      );
       // --- Mise à jour immédiate de l'affichage historique (sidebar et liste) ---
       // Correction : on force le rafraîchissement de l'historique et on s'assure que le conteneur est visible
       setTimeout(function () {
