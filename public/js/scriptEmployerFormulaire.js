@@ -150,7 +150,7 @@ function resetUsedBLNumbers() {
  * @param {string} agentKey - Le nom de l'agent (ex: "Agent Acconier")
  */
 window.displayAgentHistory = function (agentKey = "Agent Acconier") {
-  const historyContainer = document.getElementById("agentHistoryContainer");
+  const historyContainer = document.getElementById("historySidebarList");
   if (!historyContainer) return;
   const historyKey = "simulatedHistoryData";
   let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
