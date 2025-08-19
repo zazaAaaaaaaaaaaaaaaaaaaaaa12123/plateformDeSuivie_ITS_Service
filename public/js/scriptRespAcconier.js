@@ -15,11 +15,15 @@ function normalizeDateToMidnight(date) {
 function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
   const dateToCompare = normalizeDateToMidnight(selectedDate);
   // Filtre les livraisons par date (champ created_at ou delivery_date)
+  // Exclure les dossiers mis en livraison
   const filtered = deliveries.filter((d) => {
     let dDate = d.created_at || d.delivery_date;
     if (!dDate) return false;
     dDate = normalizeDateToMidnight(new Date(dDate));
-    return dDate.getTime() === dateToCompare.getTime();
+    // Exclure si présent dans miseEnLivList
+    const isMiseEnLiv =
+      window.miseEnLivList && window.miseEnLivList.some((m) => m.id === d.id);
+    return dDate.getTime() === dateToCompare.getTime() && !isMiseEnLiv;
   });
   if (filtered.length === 0) {
     tableBodyElement.innerHTML = `<tr><td colspan="${AGENT_TABLE_COLUMNS.length}" class="text-center text-muted">Aucune opération à cette date.</td></tr>`;
