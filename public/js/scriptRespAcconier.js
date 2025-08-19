@@ -831,8 +831,16 @@ document.addEventListener("DOMContentLoaded", function () {
             // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
             if (delivery.container_numbers_list) {
               try {
-                // Ajout : duplique le dossier dans la modal Mise en Liv
-                ajouterDossierMiseEnLiv(normalizedDelivery);
+                // Ajout : duplique le dossier dans la modal Mise en Liv uniquement si le statut est correct
+                if (
+                  delivery.status === "mis_en_livraison" ||
+                  delivery.statut === "mis_en_livraison" ||
+                  (delivery.bl_statuses &&
+                    (delivery.bl_statuses.global === "mis_en_livraison" ||
+                      delivery.bl_statuses.global === "livraison"))
+                ) {
+                  ajouterDossierMiseEnLiv(normalizedDelivery);
+                }
                 if (typeof delivery.container_numbers_list === "string") {
                   tcList = JSON.parse(delivery.container_numbers_list);
                 } else if (Array.isArray(delivery.container_numbers_list)) {
