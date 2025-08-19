@@ -1451,7 +1451,7 @@ app.post("/acconier/register", async (req, res) => {
 app.post("/acconier/login", async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
-    return res
+    return ress
       .status(400)
       .json({ success: false, message: "Tous les champs sont requis." });
   }

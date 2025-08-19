@@ -297,8 +297,36 @@ window.displayProfileAvatar = function () {
 // Exemple d'appel à placer après validation du login sur acconier_auth.html :
 //   saveAcconierUserToLocalStorage({ nom: 'Nom Prénom', email: 'email@exemple.com', avatar: 'url_ou_base64' });
 window.saveAcconierUserToLocalStorage = function (acconier) {
-  if (!acconier || !acconier.nom || !acconier.email) return;
-  localStorage.setItem("acconier_user", JSON.stringify(acconier));
+  if (!acconier) return;
+  // Accepte nom, name, username
+  let nom = "";
+  if (
+    acconier.nom &&
+    typeof acconier.nom === "string" &&
+    acconier.nom.trim().length > 0
+  ) {
+    nom = acconier.nom.trim();
+  } else if (
+    acconier.name &&
+    typeof acconier.name === "string" &&
+    acconier.name.trim().length > 0
+  ) {
+    nom = acconier.name.trim();
+  } else if (
+    acconier.username &&
+    typeof acconier.username === "string" &&
+    acconier.username.trim().length > 0
+  ) {
+    nom = acconier.username.trim();
+  }
+  if (!nom || !acconier.email) return;
+  // On sauvegarde toujours sous la clé "nom"
+  const acconierToSave = {
+    nom: nom,
+    email: acconier.email,
+    avatar: acconier.avatar || "",
+  };
+  localStorage.setItem("acconier_user", JSON.stringify(acconierToSave));
   // Redirection directe vers l'ordre de livraison après connexion
   window.location.href =
     "https://plateformdesuivie-its-service-1cjx.onrender.com/html/interfaceFormulaireEmployer.html";
