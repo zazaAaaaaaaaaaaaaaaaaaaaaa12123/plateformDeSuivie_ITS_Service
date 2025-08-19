@@ -696,6 +696,109 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // On charge toutes les livraisons une seule fois au chargement
   let allDeliveries = [];
+  // Liste des dossiers mis en livraison
+  let miseEnLivList = [];
+
+  // Fonction pour dupliquer un dossier dans la liste Mise en Liv
+  function ajouterDossierMiseEnLiv(dossier) {
+    if (!dossier || !dossier.id) return;
+    if (!miseEnLivList.some((d) => d.id === dossier.id)) {
+      miseEnLivList.push(dossier);
+      renderMiseEnLivList();
+    }
+  }
+
+  // Fonction pour afficher la liste dans le modal
+  function renderMiseEnLivList(filter = "") {
+    const ul = document.getElementById("miseEnLivList");
+    if (!ul) return;
+    ul.innerHTML = "";
+    let filtered = miseEnLivList;
+    if (filter) {
+      const f = filter.trim().toLowerCase();
+      filtered = miseEnLivList.filter(
+        (d) =>
+          String(d.dossier_number || "")
+            .toLowerCase()
+            .includes(f) ||
+          String(d.employee_name || "")
+            .toLowerCase()
+            .includes(f) ||
+          String(d.ship_name || "")
+            .toLowerCase()
+            .includes(f)
+      );
+    }
+    if (filtered.length === 0) {
+      ul.innerHTML =
+        "<li style='text-align:center;color:#b91c1c;'>Aucun dossier mis en livraison.</li>";
+      return;
+    }
+    filtered.forEach((d) => {
+      const li = document.createElement("li");
+      li.className = "mise-en-liv-item";
+      li.style.marginBottom = "14px";
+      li.style.cursor = "pointer";
+      li.style.borderRadius = "12px";
+      li.style.padding = "14px 14px 10px 14px";
+      li.style.background = "#fff";
+      li.style.boxShadow = "0 2px 8px #eab30833";
+      li.style.border = "2px solid #fde68a";
+      li.innerHTML = `
+          <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
+            <span style='display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#eab308;color:#fff;font-weight:bold;font-size:1em;border-radius:50%;box-shadow:0 2px 8px #eab30833;'>${
+              d.dossier_number || "-"
+            }</span>
+            <span style='color:#eab308;font-weight:bold;font-size:1.08em;'><i class="fas fa-user"></i> ${
+              d.employee_name || "-"
+            }</span>
+          </div>
+          <div style='font-size:0.98em;margin-left:38px;'>
+            <span style='color:#2563eb;font-weight:600;'>Navire :</span>
+            <span style='color:#0e274e;font-weight:600;'>${
+              d.ship_name || "-"
+            }</span>
+          </div>
+        `;
+      li.onclick = function (e) {
+        e.stopPropagation();
+        // Affiche les infos du dossier dans une popup
+        alert(
+          `Dossier n°${d.dossier_number}\nAgent: ${d.employee_name}\nNavire: ${d.ship_name}`
+        );
+      };
+      ul.appendChild(li);
+    });
+  }
+
+  // Gestion du bouton et du modal Mise en Liv
+  document.addEventListener("DOMContentLoaded", function () {
+    const miseEnLivBtn = document.getElementById("miseEnLivBtn");
+    const miseEnLivModal = document.getElementById("miseEnLivModal");
+    const closeMiseEnLivModal = document.getElementById("closeMiseEnLivModal");
+    const miseEnLivSearch = document.getElementById("miseEnLivSearch");
+    if (miseEnLivBtn && miseEnLivModal && closeMiseEnLivModal) {
+      miseEnLivBtn.onclick = function () {
+        miseEnLivModal.style.display = "flex";
+        renderMiseEnLivList();
+      };
+      closeMiseEnLivModal.onclick = function () {
+        miseEnLivModal.style.display = "none";
+      };
+      miseEnLivModal.onclick = function (e) {
+        if (e.target === miseEnLivModal) miseEnLivModal.style.display = "none";
+      };
+      if (miseEnLivSearch) {
+        miseEnLivSearch.oninput = function () {
+          renderMiseEnLivList(miseEnLivSearch.value);
+        };
+      }
+    }
+  });
+
+  // Exemple d'intégration :
+  // Quand un dossier est mis en livraison (à adapter selon votre logique existante)
+  // ajouterDossierMiseEnLiv(dossier);
 
   // --- Connexion WebSocket pour maj temps réel BL et suppression instantanée ---
   let ws;
@@ -728,6 +831,8 @@ document.addEventListener("DOMContentLoaded", function () {
             // PRIORITÉ 1 : Utiliser les données JSON complètes si disponibles
             if (delivery.container_numbers_list) {
               try {
+                // Ajout : duplique le dossier dans la modal Mise en Liv
+                ajouterDossierMiseEnLiv(normalizedDelivery);
                 if (typeof delivery.container_numbers_list === "string") {
                   tcList = JSON.parse(delivery.container_numbers_list);
                 } else if (Array.isArray(delivery.container_numbers_list)) {
