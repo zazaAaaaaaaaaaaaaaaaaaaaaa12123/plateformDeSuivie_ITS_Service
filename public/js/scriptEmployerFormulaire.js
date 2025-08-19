@@ -191,13 +191,20 @@ window.displayProfileAvatar = function () {
   if (!avatarContainer) return;
   let acconier = JSON.parse(localStorage.getItem("acconier_user")) || {};
   let initials = "?";
-  if (acconier.nom) {
-    initials = acconier.nom
-      .split(" ")
+  if (
+    acconier.nom &&
+    typeof acconier.nom === "string" &&
+    acconier.nom.trim().length > 0
+  ) {
+    const parts = acconier.nom.trim().split(/\s+/);
+    initials = parts
       .map((n) => n[0])
       .join("")
       .slice(0, 2)
       .toUpperCase();
+    if (!initials || initials === "") {
+      initials = acconier.nom.trim()[0].toUpperCase();
+    }
   }
   // Responsive
   const isMobile =
@@ -902,10 +909,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Fonction pour afficher le pop-up détaillé d'un ordre de livraison
   window.showOrderDetailPopup = function (order) {
     // Supprime l'ancien pop-up s'il existe
-    var oldModal = document.getElementById("orderDetailModal");
+    let oldModal = document.getElementById("orderDetailModal");
     if (oldModal) oldModal.remove();
     // Crée le fond
-    var modalBg = document.createElement("div");
+    let modalBg = document.createElement("div");
     modalBg.id = "orderDetailModal";
     modalBg.style.position = "fixed";
     modalBg.style.top = "0";
@@ -920,9 +927,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Désactive le scroll de la page derrière la popup
     document.body.classList.add("overflow-hidden");
     // Crée la boîte
-    var modalBox = document.createElement("div");
+    let modalBox = document.createElement("div");
     // Responsive styles
-    var isMobile =
+    let isMobile =
       window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
     modalBox.style.background = "#fff";
     modalBox.style.borderRadius = isMobile ? "13px" : "18px";
@@ -938,7 +945,7 @@ document.addEventListener("DOMContentLoaded", () => {
     modalBox.style.overflowY = "auto";
     modalBox.style.position = "relative";
     // Bouton fermer responsive
-    var closeBtn = document.createElement("button");
+    let closeBtn = document.createElement("button");
     closeBtn.innerHTML = '<i class="fas fa-times"></i>';
     closeBtn.setAttribute("aria-label", "Fermer");
     closeBtn.style.position = "absolute";
@@ -983,7 +990,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     modalBox.appendChild(closeBtn);
     // Titre principal avec amélioration légère
-    var title = document.createElement("div");
+    let title = document.createElement("div");
     title.innerHTML = `<i class='fas fa-clipboard-list' style='color:#3b82f6;margin-right:8px;'></i>Détail de l'ordre de livraison`;
     title.style.color = "#1e293b";
     title.style.fontWeight = "bold";
@@ -996,11 +1003,11 @@ document.addEventListener("DOMContentLoaded", () => {
     modalBox.appendChild(title);
 
     // Contenu détaillé ou message d'erreur si data absent
-    var html = "";
+    let html = "";
     if (!order || !order.data) {
       html = `<div style='color:#dc2626;font-weight:bold;padding:18px 0;text-align:center;'>Aucune donnée détaillée à afficher pour cet ordre.<br>Vérifiez la sauvegarde de l'historique.</div>`;
     } else {
-      var d = order.data;
+      let d = order.data;
       html = `<div class="order-detail-main" style="display:flex;flex-direction:column;gap:${
         isMobile ? "12px" : "18px"
       };font-size:${isMobile ? "0.99em" : "1.07em"};line-height:1.6;">
@@ -1163,8 +1170,8 @@ document.addEventListener("DOMContentLoaded", () => {
         };border-radius:12px;'>
           <div style='font-weight:700;color:#2563eb;margin-bottom:7px;'>Détail TC / Type de pied / Poids</div>
           <ul style='padding-left:0;margin:0;list-style:none;'>`;
-        for (var i = 0; i < d.containerFootTypesData.length; i++) {
-          var obj = d.containerFootTypesData[i];
+        for (let i = 0; i < d.containerFootTypesData.length; i++) {
+          let obj = d.containerFootTypesData[i];
           html += `<li style='margin-bottom:4px;'><span style='font-weight:bold;color:#1e293b;'>${
             obj.tc
           }</span> : <span style='color:#2563eb;'>${
@@ -1176,7 +1183,7 @@ document.addEventListener("DOMContentLoaded", () => {
         html += "</ul></div>";
       }
     }
-    var contentDiv = document.createElement("div");
+    let contentDiv = document.createElement("div");
     contentDiv.innerHTML = html;
     modalBox.appendChild(contentDiv);
     modalBg.appendChild(modalBox);
