@@ -14,6 +14,26 @@ function saveDossiersMisEnLiv(dossiers) {
 // Fonction pour supprimer les dossiers sélectionnés
 function supprimerDossiersSelectionnes() {
   const dossiers = getDossiersMisEnLiv();
+  // Vérifier s'il y a des dossiers sélectionnés
+  const dossiersSelectionnes = dossiers.filter((_, index) => {
+    const checkbox = document.getElementById(`dossier-checkbox-${index}`);
+    return checkbox && checkbox.checked;
+  });
+
+  if (dossiersSelectionnes.length === 0) {
+    alert("Veuillez sélectionner au moins un dossier à supprimer.");
+    return;
+  }
+
+  // Demander confirmation
+  if (
+    !confirm(
+      `Êtes-vous sûr de vouloir supprimer ${dossiersSelectionnes.length} dossier(s) ?`
+    )
+  ) {
+    return;
+  }
+
   const nouveauxDossiers = dossiers.filter((_, index) => {
     const checkbox = document.getElementById(`dossier-checkbox-${index}`);
     return !checkbox || !checkbox.checked;
@@ -363,10 +383,16 @@ function refreshMiseEnLivList() {
     }
   };
 
+  // Suppression des anciens boutons de suppression
+  const existingButtons = miseEnLivList.parentNode.querySelectorAll(
+    ".delete-button-container"
+  );
+  existingButtons.forEach((button) => button.remove());
+
   // Ajout du bouton de suppression
   if (filteredDossiers.length > 0) {
     const buttonContainer = document.createElement("div");
-    buttonContainer.className = "mb-3";
+    buttonContainer.className = "mb-3 delete-button-container";
     buttonContainer.innerHTML = `
       <button class="btn btn-danger" onclick="supprimerDossiersSelectionnes()">
         <i class="fas fa-trash me-2"></i>Supprimer les dossiers sélectionnés
