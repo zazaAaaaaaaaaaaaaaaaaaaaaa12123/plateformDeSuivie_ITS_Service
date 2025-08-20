@@ -33,6 +33,7 @@ function afficherDetailsDossier(dossier) {
     bl_number: "Numéro de BL",
     bl_numbers: "Numéros de BL",
     container_numbers_list: "Liste des numéros de conteneurs",
+    "Container Numbers List": "Liste des numéros de conteneurs",
     shipping_company: "Compagnie maritime",
     declaration_number: "Numéro de déclaration",
     circuit: "Circuit",
@@ -352,7 +353,7 @@ function voirDetailsDossier(dossier) {
       "Container Type And Content": "Type et Contenu du Conteneur",
       "Container Foot Type": "Type de Conteneur (pieds)",
       "Number Of Containers": "Nombre de Conteneurs",
-      "Container Numbers List": "Liste des Numéros de Conteneurs",
+      "Container Numbers List": "Liste des numéros de conteneurs",
       "Container Number": "Numéro de Conteneur",
       "Container Numbers": "Numéros de Conteneurs",
       "N° Conteneur": "Numéro de Conteneur",
@@ -398,7 +399,7 @@ function voirDetailsDossier(dossier) {
       "Created At": "Date de Création",
       "Créé le": "Date de Création",
       created_at: "Date de Création",
-      "Container Numbers List": "Numéros de Conteneur",
+      List: "Liste",
       delivery_status_acconier: "Statut de Livraison",
       delivery_date: "Date de Livraison",
       observation: "Observation",
@@ -446,7 +447,7 @@ function voirDetailsDossier(dossier) {
   const detailsModal = document.createElement("div");
   detailsModal.className = "modal fade";
   detailsModal.innerHTML = `
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 460px;">
       <div class="modal-content border-0 shadow-sm">
         <div class="modal-header py-2 bg-primary bg-opacity-10 border-bottom-0">
           <div>
@@ -461,7 +462,7 @@ function voirDetailsDossier(dossier) {
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body p-0" style="max-height: 65vh; overflow-y: auto;">
+        <div class="modal-body p-0" style="max-height: 80vh; overflow-y: auto;">
           <div class="p-3">
             ${detailsHTML}
           </div>
