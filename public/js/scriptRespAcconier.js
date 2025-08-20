@@ -209,38 +209,9 @@ function refreshMiseEnLivList() {
             (dossier) => `
       <div class="list-group-item">
         <div class="d-flex justify-content-between align-items-center">
-          <h6 class="mb-1">
-            ${(() => {
-              const containers = dossier.container_numbers_list || [
-                dossier.container_number || dossier.ref_conteneur || "N/A",
-              ];
-              if (!Array.isArray(containers)) {
-                return containers || "N/A";
-              }
-              if (containers.length === 1) {
-                return containers[0];
-              }
-              return `
-                <div class="dropdown">
-                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownContainer_${
-                    dossier.dossier_number
-                  }" data-bs-toggle="dropdown" aria-expanded="false">
-                    ${containers.length} Conteneurs
-                  </button>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownContainer_${
-                    dossier.dossier_number
-                  }">
-                    ${containers
-                      .map(
-                        (container) =>
-                          `<li><a class="dropdown-item" href="#">${container}</a></li>`
-                      )
-                      .join("")}
-                  </ul>
-                </div>
-              `;
-            })()}
-          </h6>
+          <h6 class="mb-1">${
+            dossier.container_number || dossier.ref_conteneur || "N/A"
+          }</h6>
           <div>
             <small class="text-muted">Date BL: ${new Date(
               dossier.date_mise_en_liv
