@@ -455,28 +455,44 @@ function refreshMiseEnLivList() {
                   return `
                     <div class="position-relative d-inline-block">
                       <button onclick="toggleContainerList('${dropdownId}')"
-                              class="btn btn-link d-inline-flex align-items-center gap-2 p-0 text-decoration-none" 
+                              class="btn d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill" 
                               type="button" 
-                              style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">
+                              style="font-size: 0.95rem; font-weight: 600; background: var(--bg-accent); color: var(--text-primary); border: none;">
+                        <i class="fas fa-boxes text-primary"></i>
                         <span>${displayCount} Conteneurs</span>
-                        <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                        <i class="fas fa-chevron-down ms-1" style="font-size: 0.8rem;"></i>
                       </button>
                       <div id="${dropdownId}" 
-                           class="position-absolute start-0 mt-1 shadow-sm bg-white rounded-3 p-2 d-none"
-                           style="z-index: 1000; max-height: 300px; overflow-y: auto; min-width: 250px;">
-                        <div class="border-bottom mb-2 py-2 fw-medium" style="color: var(--text-primary);">
-                          Liste des conteneurs
-                        </div>
-                        ${containerNumbers
-                          .map(
-                            (num) => `
-                          <div class="px-3 py-2 rounded-2 hover-bg-light">
-                            <i class="fas fa-box me-2 text-primary"></i>
-                            <span class="fw-medium">${num.trim()}</span>
+                           class="position-absolute start-0 mt-2 shadow-lg bg-white rounded-3 d-none"
+                           style="z-index: 1000; max-height: 300px; overflow-y: auto; min-width: 300px; border: 1px solid var(--border-subtle);">
+                        <div class="p-3 border-bottom bg-light">
+                          <div class="d-flex align-items-center gap-2">
+                            <i class="fas fa-list-ul text-primary"></i>
+                            <span class="fw-semibold" style="color: var(--text-primary);">Liste des conteneurs</span>
                           </div>
-                        `
-                          )
-                          .join("")}
+                          <div class="mt-1 small text-muted">Total: ${displayCount} conteneurs</div>
+                        </div>
+                        <div class="p-2">
+                          ${containerNumbers
+                            .map(
+                              (num, i) => `
+                            <div class="d-flex align-items-center p-2 rounded-3 hover-bg-light border-subtle mb-1" 
+                                 style="transition: all 0.2s ease;">
+                              <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10"
+                                   style="width: 32px; height: 32px;">
+                                <i class="fas fa-box text-primary"></i>
+                              </div>
+                              <div class="ms-3">
+                                <div class="fw-medium" style="color: var(--text-primary);">${num.trim()}</div>
+                                <div class="small text-muted">Conteneur ${
+                                  i + 1
+                                }/${displayCount}</div>
+                              </div>
+                            </div>
+                          `
+                            )
+                            .join("")}
+                        </div>
                       </div>
                     </div>`;
                 }
