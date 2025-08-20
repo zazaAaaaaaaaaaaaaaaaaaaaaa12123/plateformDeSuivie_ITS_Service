@@ -22,13 +22,35 @@ function ajouterDossierMiseEnLiv(dossier) {
 
 // Fonction pour afficher un dossier dans la modal
 function afficherDetailsDossier(dossier) {
+  // Mapping des clés en anglais vers le français
+  const keyTranslations = {
+    container_number: "Numéro de conteneur",
+    client_name: "Nom du client",
+    client: "Client",
+    status: "Statut",
+    date_mise_en_liv: "Date de mise en livraison",
+    dossier_number: "Numéro de dossier",
+    bl_number: "Numéro de BL",
+    shipping_company: "Compagnie maritime",
+    declaration_number: "Numéro de déclaration",
+    circuit: "Circuit",
+    employee_name: "Nom de l'employé",
+    observation: "Observation",
+    delivery_date: "Date de livraison",
+    driver_name: "Nom du chauffeur",
+    driver_phone: "Téléphone du chauffeur",
+    transporter: "Transporteur",
+    weight: "Poids",
+    delivery_status_acconier: "Statut de livraison",
+  };
+
   const html = `
     <div class="modal-body">
       <dl class="row">
         ${Object.entries(dossier)
           .map(
             ([key, value]) => `
-          <dt class="col-sm-4">${key}</dt>
+          <dt class="col-sm-4">${keyTranslations[key] || key}</dt>
           <dd class="col-sm-8">${value}</dd>
         `
           )
