@@ -11,6 +11,17 @@ function saveDossiersMisEnLiv(dossiers) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dossiers));
 }
 
+// Fonction pour supprimer les dossiers sélectionnés
+function supprimerDossiersSelectionnes() {
+  const dossiers = getDossiersMisEnLiv();
+  const nouveauxDossiers = dossiers.filter((_, index) => {
+    const checkbox = document.getElementById(`dossier-checkbox-${index}`);
+    return !checkbox || !checkbox.checked;
+  });
+  saveDossiersMisEnLiv(nouveauxDossiers);
+  refreshMiseEnLivList();
+}
+
 // Fonction pour ajouter un dossier à la liste des mises en livraison
 function ajouterDossierMiseEnLiv(dossier) {
   console.log("Dossier reçu:", dossier); // Debug
@@ -352,16 +363,31 @@ function refreshMiseEnLivList() {
     }
   };
 
+  // Ajout du bouton de suppression
+  if (filteredDossiers.length > 0) {
+    const buttonContainer = document.createElement("div");
+    buttonContainer.className = "mb-3";
+    buttonContainer.innerHTML = `
+      <button class="btn btn-danger" onclick="supprimerDossiersSelectionnes()">
+        <i class="fas fa-trash me-2"></i>Supprimer les dossiers sélectionnés
+      </button>
+    `;
+    miseEnLivList.parentNode.insertBefore(buttonContainer, miseEnLivList);
+  }
+
   miseEnLivList.innerHTML =
     filteredDossiers.length === 0
       ? '<div class="list-group-item py-4 text-center text-muted">Aucun dossier trouvé</div>'
       : filteredDossiers
           .map(
-            (dossier) => `
+            (dossier, index) => `
       <div class="list-group-item py-3 border-start-0 border-end-0 hover-bg-light">
         <div class="d-flex justify-content-between align-items-start">
           <div class="me-3">
             <div class="d-flex align-items-center gap-2 mb-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="dossier-checkbox-${index}">
+              </div>
               <div class="d-flex align-items-center justify-content-center" 
                    style="width: 32px; height: 32px; background: var(--bg-accent); border-radius: 50%;">
                 <i class="fas fa-truck text-primary"></i>
@@ -5833,7 +5859,7 @@ const tableObserver = new MutationObserver(function (mutations) {
   });
 });
 
-// Observer le body pour détecter les 123445 changements 1de SUI1coghchntenusdhsj1
+// Observer le body pour détecter les 12344 changements 1de SUI1coghchntenusdhsj1
 const bodyElement = document.body;
 if (bodyElement) {
   tableObserver.observe(bodyElement, {
