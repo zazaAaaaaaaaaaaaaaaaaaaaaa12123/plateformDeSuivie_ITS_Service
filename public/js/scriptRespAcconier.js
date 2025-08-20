@@ -383,24 +383,6 @@ function refreshMiseEnLivList() {
     }
   };
 
-  // Suppression des anciens boutons de suppression
-  const existingButtons = miseEnLivList.parentNode.querySelectorAll(
-    ".delete-button-container"
-  );
-  existingButtons.forEach((button) => button.remove());
-
-  // Ajout du bouton de suppression
-  if (filteredDossiers.length > 0) {
-    const buttonContainer = document.createElement("div");
-    buttonContainer.className = "mb-3 delete-button-container";
-    buttonContainer.innerHTML = `
-      <button class="btn btn-danger" onclick="supprimerDossiersSelectionnes()">
-        <i class="fas fa-trash me-2"></i>Supprimer les dossiers sélectionnés
-      </button>
-    `;
-    miseEnLivList.parentNode.insertBefore(buttonContainer, miseEnLivList);
-  }
-
   miseEnLivList.innerHTML =
     filteredDossiers.length === 0
       ? '<div class="list-group-item py-4 text-center text-muted">Aucun dossier trouvé</div>'
