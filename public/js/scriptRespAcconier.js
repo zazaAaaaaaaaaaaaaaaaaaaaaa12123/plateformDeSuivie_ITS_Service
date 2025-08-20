@@ -1,3 +1,36 @@
+// Fonction pour gérer l'affichage des listes de conteneurs
+function toggleContainerList(dropdownId) {
+  const dropdown = document.getElementById(dropdownId);
+  const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
+
+  // Fermer tous les autres dropdowns
+  allDropdowns.forEach((d) => {
+    if (d.id !== dropdownId) {
+      d.classList.add("d-none");
+    }
+  });
+
+  // Basculer le dropdown actuel
+  dropdown.classList.toggle("d-none");
+
+  // Gestionnaire de clic en dehors pour fermer
+  const closeDropdown = (e) => {
+    if (
+      !dropdown.contains(e.target) &&
+      !e.target.closest(`button[onclick*="${dropdownId}"]`)
+    ) {
+      dropdown.classList.add("d-none");
+      document.removeEventListener("click", closeDropdown);
+    }
+  };
+
+  if (!dropdown.classList.contains("d-none")) {
+    setTimeout(() => {
+      document.addEventListener("click", closeDropdown);
+    }, 0);
+  }
+}
+
 // Stockage local pour les dossiers mis en livraison
 const STORAGE_KEY = "dossiersMisEnLiv";
 
@@ -416,26 +449,28 @@ function refreshMiseEnLivList() {
                   </h6>`;
                 } else {
                   const displayCount = containerNumbers.length;
+                  const dropdownId = `dropdown-${Math.random()
+                    .toString(36)
+                    .substr(2, 9)}`;
                   return `
-                    <div class="dropdown d-inline-block">
-                      <button class="btn btn-link d-inline-flex align-items-center gap-2 p-0 text-decoration-none" 
+                    <div class="position-relative d-inline-block">
+                      <button onclick="toggleContainerList('${dropdownId}')"
+                              class="btn btn-link d-inline-flex align-items-center gap-2 p-0 text-decoration-none" 
                               type="button" 
-                              data-bs-toggle="dropdown" 
-                              data-bs-auto-close="outside"
-                              aria-expanded="false"
                               style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">
                         <span>${displayCount} Conteneurs</span>
                         <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
                       </button>
-                      <div class="dropdown-menu shadow-sm border-0 p-2" 
-                           style="max-height: 300px; overflow-y: auto; min-width: 250px; border-radius: 8px;">
-                        <div class="dropdown-header border-bottom mb-2 py-2" style="color: var(--text-primary);">
+                      <div id="${dropdownId}" 
+                           class="position-absolute start-0 mt-1 shadow-sm bg-white rounded-3 p-2 d-none"
+                           style="z-index: 1000; max-height: 300px; overflow-y: auto; min-width: 250px;">
+                        <div class="border-bottom mb-2 py-2 fw-medium" style="color: var(--text-primary);">
                           Liste des conteneurs
                         </div>
                         ${containerNumbers
                           .map(
                             (num) => `
-                          <div class="dropdown-item rounded-2 px-3 py-2">
+                          <div class="px-3 py-2 rounded-2 hover-bg-light">
                             <i class="fas fa-box me-2 text-primary"></i>
                             <span class="fw-medium">${num.trim()}</span>
                           </div>
