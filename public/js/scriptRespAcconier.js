@@ -398,7 +398,7 @@ function voirDetailsDossier(dossier) {
       "Created At": "Date de Création",
       "Créé le": "Date de Création",
       created_at: "Date de Création",
-      List: "Liste",
+      "Container Numbers List": "Numéros de Conteneur",
       delivery_status_acconier: "Statut de Livraison",
       delivery_date: "Date de Livraison",
       observation: "Observation",
