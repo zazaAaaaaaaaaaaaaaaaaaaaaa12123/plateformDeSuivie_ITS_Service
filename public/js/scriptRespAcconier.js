@@ -320,24 +320,10 @@ function ajouterDossierMiseEnLiv(dossier) {
   }
 }
 
-// Fonction pour supprimer un dossier de la liste des mises en livraison
-function supprimerDossierMiseEnLiv(index) {
-  const dossiers = getDossiersMisEnLiv();
-  dossiers.splice(index, 1);
-  saveDossiersMisEnLiv(dossiers);
-  refreshMiseEnLivList();
-}
-
 // Fonction pour rafraîchir la liste des dossiers dans la modal
 function refreshMiseEnLivList() {
   const miseEnLivList = document.getElementById("miseEnLivList");
   if (!miseEnLivList) return;
-
-  // Ajouter l'icône de suppression dans le titre
-  const miseEnLivTitle = document.querySelector(".modal-title");
-  if (miseEnLivTitle) {
-    miseEnLivTitle.innerHTML = `Dossiers Mis en Livraison <i class="fas fa-trash-alt text-danger" style="cursor: pointer; margin-left: 10px;" onclick="if(confirm('Voulez-vous vraiment supprimer tous les dossiers ?')) { localStorage.removeItem('${STORAGE_KEY}'); refreshMiseEnLivList(); }"></i>`;
-  }
 
   const dossiers = getDossiersMisEnLiv();
   console.log("Dossiers chargés:", dossiers); // Debug
@@ -371,7 +357,7 @@ function refreshMiseEnLivList() {
       ? '<div class="list-group-item py-4 text-center text-muted">Aucun dossier trouvé</div>'
       : filteredDossiers
           .map(
-            (dossier, index) => `
+            (dossier) => `
       <div class="list-group-item py-3 border-start-0 border-end-0 hover-bg-light">
         <div class="d-flex justify-content-between align-items-start">
           <div class="me-3">
@@ -380,11 +366,9 @@ function refreshMiseEnLivList() {
                    style="width: 32px; height: 32px; background: var(--bg-accent); border-radius: 50%;">
                 <i class="fas fa-truck text-primary"></i>
               </div>
-              <h6 class="mb-0" style="font-size: 0.95rem; font-weight: 600;">
-                ${dossier.container_number || dossier.ref_conteneur || "N/A"}
-                <i class="fas fa-trash-alt text-danger ms-2" style="cursor: pointer; font-size: 0.9rem;" 
-                   onclick="if(confirm('Voulez-vous vraiment supprimer ce dossier ?')) { supprimerDossierMiseEnLiv(${index}); }"></i>
-              </h6>
+              <h6 class="mb-0" style="font-size: 0.95rem; font-weight: 600;">${
+                dossier.container_number || dossier.ref_conteneur || "N/A"
+              }</h6>
             </div>
             <p class="mb-1" style="font-size: 0.85rem; color: var(--text-secondary);">
               <i class="fas fa-user me-2 text-secondary"></i>
@@ -5849,7 +5833,7 @@ const tableObserver = new MutationObserver(function (mutations) {
   });
 });
 
-// Observer le body pour détecter les 12344 changements 1de SUI1coghchntenusdhsj1
+// Observer le body pour détecter les 123445 changements 1de SUI1coghchntenusdhsj1
 const bodyElement = document.body;
 if (bodyElement) {
   tableObserver.observe(bodyElement, {
