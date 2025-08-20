@@ -11,7 +11,7 @@ function saveDossiersMisEnLiv(dossiers) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dossiers));
 }
 
-// Fonction pour ajouter un dossier à la liste des mises en livraison
+// Fonction pour ajouter un dossier à la liste des mises en livraison1
 function ajouterDossierMiseEnLiv(dossier) {
   const dossiers = getDossiersMisEnLiv();
   dossier.date_mise_en_liv = new Date().toISOString();
@@ -59,26 +59,10 @@ function afficherDetailsDossier(dossier) {
     container_type_and_content: "Type et contenu du conteneur",
   };
 
-  // Liste des champs obligatoires à afficher
-  const requiredFields = [
-    "paiement_acconage",
-    "date_echange_bl",
-    "date_do",
-    "date_badt",
-  ];
-
-  // Création d'un nouvel objet avec les champs obligatoires
-  const displayData = { ...dossier };
-  requiredFields.forEach((field) => {
-    if (!(field in displayData)) {
-      displayData[field] = "-";
-    }
-  });
-
   const html = `
     <div class="modal-body">
       <dl class="row">
-        ${Object.entries(displayData)
+        ${Object.entries(dossier)
           .map(
             ([key, value]) => `
           <dt class="col-sm-4">${keyTranslations[key] || key}</dt>
