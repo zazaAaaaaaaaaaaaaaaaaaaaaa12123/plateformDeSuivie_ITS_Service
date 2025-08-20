@@ -154,7 +154,6 @@ function afficherDetailsDossier(dossier) {
     driver_phone: "Téléphone du chauffeur",
     transporter: "Transporteur",
     weight: "Poids",
-    delivery_status_acconier: "Statut de livraison",
     ship_name: "Nom du navire",
     number_of_containers: "Nombre de conteneurs",
     container_foot_type: "Type de conteneur (pieds)",
