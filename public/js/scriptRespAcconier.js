@@ -24,7 +24,7 @@ function ajouterDossierMiseEnLiv(dossier) {
 function afficherDetailsDossier(dossier) {
   // Mapping des clés en anglais vers le français
   const keyTranslations = {
-    container_number: "Numéro de conteneur",
+    container_number: "Numéro TC",
     client_name: "Nom du client",
     client: "Client",
     status: "Statut",
@@ -32,13 +32,17 @@ function afficherDetailsDossier(dossier) {
     dossier_number: "Numéro de dossier",
     bl_number: "Numéro de BL",
     bl_numbers: "Numéros de BL",
+    paiement_acconage: "Paiement Acconage",
+    date_echange_bl: "Date d'Échange BL",
+    date_do: "Date Do",
+    date_badt: "Date Badt",
     container_numbers_list: "Liste des numéros de conteneurs",
     "Container Numbers List": "Liste des numéros de conteneurs",
     shipping_company: "Compagnie maritime",
     declaration_number: "Numéro de déclaration",
     circuit: "Circuit",
     employee_name: "Nom de l'employé",
-    observation: "Observation",
+    observation_acconier: "Observation",
     delivery_date: "Date de livraison",
     driver_name: "Nom du chauffeur",
     driver_phone: "Téléphone du chauffeur",
@@ -48,6 +52,10 @@ function afficherDetailsDossier(dossier) {
     ship_name: "Nom du navire",
     number_of_containers: "Nombre de conteneurs",
     container_foot_type: "Type de conteneur (pieds)",
+    container_type_and_content: "Type et contenu du conteneur",
+    lieu: "Lieu",
+    created_at: "Date de création",
+    transporter_mode: "Mode de transport",
     container_type_and_content: "Type et contenu du conteneur",
   };
 
@@ -316,23 +324,30 @@ function voirDetailsDossier(dossier) {
     "client_name",
   ];
 
-  // Filtrer et trier les propriétés à afficher
+  // Filtrer et trier les propriétés à afficher dans un ordre logique
   const priorityOrder = [
-    "numeroDossier",
-    "nomClient",
-    "modeTransport",
-    "statut",
-    "statutLivraison",
-    "observation",
-    "numeroConteneur",
-    "typeEtContenuConteneur",
-    "typePiedConteneur",
-    "dateEchangeBL",
-    "numeroBL",
-    "numeroDeclaration",
-    "agentResponsable",
-    "lieu",
-    "dateCreation",
+    "dossier_number", // Numéro de dossier
+    "employee_name", // Agent
+    "client_name", // Client
+    "statut", // Statut
+    "delivery_status_acconier", // Statut de livraison
+    "container_number", // Numéro TC
+    "container_type_and_content", // Type et contenu
+    "container_foot_type", // Type de conteneur
+    "lieu", // Lieu
+    "paiement_acconage", // Paiement Acconage
+    "date_echange_bl", // Date d'échange BL
+    "date_do", // Date DO
+    "date_badt", // Date BADT
+    "bl_number", // Numéro BL
+    "declaration_number", // Numéro déclaration
+    "weight", // Poids
+    "shipping_company", // Compagnie maritime
+    "ship_name", // Nom du navire
+    "circuit", // Circuit
+    "transporter_mode", // Mode de transport
+    "observation_acconier", // Observation
+    "created_at", // Date de création
   ];
 
   const sortedEntries = Object.entries(dossier)
