@@ -178,6 +178,18 @@ function afficherDetailsDossier(dossier) {
     }
   };
 
+  // Liste des champs à exclure explicitement
+  const excludedFields = [
+    "date_mise_en_liv",
+    "container_statuses",
+    "bl_statuses",
+    "container_foot_types_map",
+    "container_type_and_content",
+    "Types de conteneurs",
+    "Statuts BL",
+    "Statuts des conteneurs",
+  ];
+
   // Filtrer et ordonner les champs que nous voulons afficher
   const fieldsToShow = [
     "dossier_number",
@@ -192,7 +204,6 @@ function afficherDetailsDossier(dossier) {
     "shipping_company",
     "declaration_number",
     "lieu",
-    "container_numbers_list",
     "transporter_mode",
     "observation_acconier",
   ];
@@ -205,7 +216,9 @@ function afficherDetailsDossier(dossier) {
             (key) =>
               dossier.hasOwnProperty(key) &&
               dossier[key] !== null &&
-              dossier[key] !== undefined
+              dossier[key] !== undefined &&
+              !excludedFields.includes(key) &&
+              !excludedFields.includes(keyTranslations[key])
           )
           .map((key) => {
             const translatedKey = keyTranslations[key] || key;
