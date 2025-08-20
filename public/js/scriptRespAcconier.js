@@ -694,7 +694,7 @@ function voirDetailsDossier(dossier) {
         }
       }
 
-      // Valeur par défaut si vide
+      // Valeur par défaut si vided
       if (
         !displayValue ||
         displayValue === "undefined" ||
