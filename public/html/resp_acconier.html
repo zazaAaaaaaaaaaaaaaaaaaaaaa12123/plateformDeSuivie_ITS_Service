@@ -1479,6 +1479,25 @@
                 color: var(--text-primary);
               "
             />
+            <button
+              id="btnMiseEnLiv"
+              class="btn btn-primary ms-2"
+              style="
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 1em;
+                background: var(--bg-button);
+                color: var(--text-button);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              "
+              data-bs-toggle="modal"
+              data-bs-target="#modalMiseEnLiv"
+            >
+              <i class="fas fa-truck"></i>
+              Mise en Liv
+            </button>
           </div>
           <div
             class="d-flex align-items-center gap-2 flex-wrap"
@@ -2038,6 +2057,44 @@
         }
       })();
     </script>
+
+    <!-- Modal pour Mise en Liv -->
+    <div class="modal fade" id="modalMiseEnLiv" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Dossiers Mis en Livraison</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <div class="input-group">
+                <span class="input-group-text"
+                  ><i class="fas fa-search"></i
+                ></span>
+                <input
+                  type="text"
+                  id="searchMiseEnLiv"
+                  class="form-control"
+                  placeholder="Rechercher un dossier..."
+                />
+              </div>
+            </div>
+            <div id="miseEnLivList" class="list-group">
+              <!-- Les dossiers seront ajoutés ici dynamiquement -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap Bundle avec Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
 <!--djkhfbzqjd-->

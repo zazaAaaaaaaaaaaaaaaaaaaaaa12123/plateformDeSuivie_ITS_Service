@@ -1,3 +1,112 @@
+// Stockage local pour les dossiers mis en livraison
+const STORAGE_KEY = "dossiersMisEnLiv";
+
+// Fonction pour récupérer les dossiers mis en livraison
+function getDossiersMisEnLiv() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+}
+
+// Fonction pour sauvegarder les dossiers mis en livraison
+function saveDossiersMisEnLiv(dossiers) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(dossiers));
+}
+
+// Fonction pour ajouter un dossier à la liste des mises en livraison
+function ajouterDossierMiseEnLiv(dossier) {
+  const dossiers = getDossiersMisEnLiv();
+  dossier.date_mise_en_liv = new Date().toISOString();
+  dossiers.push(dossier);
+  saveDossiersMisEnLiv(dossiers);
+  refreshMiseEnLivList();
+}
+
+// Fonction pour afficher un dossier dans la modal
+function afficherDetailsDossier(dossier) {
+  const html = `
+    <div class="modal-body">
+      <dl class="row">
+        ${Object.entries(dossier)
+          .map(
+            ([key, value]) => `
+          <dt class="col-sm-4">${key}</dt>
+          <dd class="col-sm-8">${value}</dd>
+        `
+          )
+          .join("")}
+      </dl>
+    </div>
+  `;
+
+  // Créer une nouvelle modal pour les détails
+  const detailsModal = document.createElement("div");
+  detailsModal.className = "modal fade";
+  detailsModal.innerHTML = `
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Détails du dossier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        ${html}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(detailsModal);
+  const modal = new bootstrap.Modal(detailsModal);
+  modal.show();
+
+  detailsModal.addEventListener("hidden.bs.modal", () => {
+    document.body.removeChild(detailsModal);
+  });
+}
+
+// Fonction pour rafraîchir la liste des dossiers mis en livraison
+function refreshMiseEnLivList() {
+  const miseEnLivList = document.getElementById("miseEnLivList");
+  const dossiers = getDossiersMisEnLiv();
+  const searchTerm =
+    document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
+
+  const filteredDossiers = searchTerm
+    ? dossiers.filter((dossier) =>
+        Object.values(dossier).some((value) =>
+          String(value).toLowerCase().includes(searchTerm)
+        )
+      )
+    : dossiers;
+
+  miseEnLivList.innerHTML =
+    filteredDossiers.length === 0
+      ? '<div class="list-group-item text-center text-muted">Aucun dossier trouvé</div>'
+      : filteredDossiers
+          .map(
+            (dossier) => `
+      <div class="list-group-item">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-1">${
+            dossier.container_number || dossier.ref_conteneur || "N/A"
+          }</h6>
+          <small class="text-muted">${new Date(
+            dossier.date_mise_en_liv
+          ).toLocaleDateString()}</small>
+        </div>
+        <p class="mb-1">Client: ${
+          dossier.client_name || dossier.client || "N/A"
+        }</p>
+        <small>Status: ${dossier.status || "Mis en livraison"}</small>
+        <button onclick="afficherDetailsDossier(${JSON.stringify(
+          dossier
+        ).replace(/"/g, "&quot;")})" 
+                class="btn btn-sm btn-info mt-2">
+          Voir détails
+        </button>
+      </div>
+    `
+          )
+          .join("");
+}
+
 // Fonction utilitaire pour récupérer les paramètres URL
 function getUrlParameter(name) {
   const urlParams = new URLSearchParams(window.location.search);
@@ -30,6 +139,22 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // Initialisation de la recherche dans la modal Mise en Liv
+  const searchMiseEnLiv = document.getElementById("searchMiseEnLiv");
+  if (searchMiseEnLiv) {
+    searchMiseEnLiv.addEventListener("input", () => {
+      refreshMiseEnLivList();
+    });
+  }
+
+  // Initialisation de la modal Mise en Liv
+  const modalMiseEnLiv = document.getElementById("modalMiseEnLiv");
+  if (modalMiseEnLiv) {
+    modalMiseEnLiv.addEventListener("show.bs.modal", () => {
+      refreshMiseEnLivList();
+    });
+  }
+
   // --- Toast dossiers en retard (>2 jours) ---
   function showLateDeliveriesToast(lateDeliveries) {
     // Supprimer tout toast existant
@@ -3762,6 +3887,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               select.value === "aucun" ? "aucun" : select.value;
             // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
             if (statutToSend === "mise_en_livraison") {
+              // Ajouter le dossier à la liste des mises en livraison
+              const dossierToSave = {
+                ...delivery,
+                container_number: delivery.container_number || "",
+                client_name: delivery.client_name || delivery.client || "",
+                status: "Mis en livraison",
+                date_mise_en_liv: new Date().toISOString(),
+              };
+              ajouterDossierMiseEnLiv(dossierToSave);
+
               // Popup de confirmation personnalisée
               const confirmOverlay = document.createElement("div");
               confirmOverlay.style.position = "fixed";
@@ -5044,7 +5179,7 @@ const tableObserver = new MutationObserver(function (mutations) {
   });
 });
 
-// Observer le body pour détecter les changements 1de 1contenusdhsj1
+// Observer le body pour détecter les changements 1de 1coghchntenusdhsj1
 const bodyElement = document.body;
 if (bodyElement) {
   tableObserver.observe(bodyElement, {
