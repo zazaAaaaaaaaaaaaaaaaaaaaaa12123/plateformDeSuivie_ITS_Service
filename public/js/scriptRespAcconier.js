@@ -5745,11 +5745,6 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
 // Fonction de synchronisation vers le tableau de suivi
 function syncToTableauSuivie(deliveryId, dateField, dateValue) {
   try {
-    // Mettre à jour les dates dans le stockage des mises en livraison
-    if (typeof updateDossierMiseEnLivDates === "function") {
-      updateDossierMiseEnLivDates(deliveryId, dateField, dateValue);
-    }
-
     // Vérifier si on est dans la page de tableau de suivi
     if (typeof window.parent !== "undefined" && window.parent !== window) {
       // Communication avec la fenêtre parent si on est dans un iframe
@@ -5778,9 +5773,6 @@ function syncToTableauSuivie(deliveryId, dateField, dateValue) {
                 break;
               case "date_badt":
                 columnIndex = 33; // Index de la colonne Date de BADT
-                break;
-              case "date_paiement_acconage":
-                columnIndex = 34; // Index de la colonne Date Paiement Acconage
                 break;
             }
 
