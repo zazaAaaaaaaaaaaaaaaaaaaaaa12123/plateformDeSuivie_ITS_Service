@@ -187,27 +187,39 @@ function saveDossiersMisEnLiv(dossiers) {
 function ajouterDossierMiseEnLiv(dossier) {
   const dossiers = getDossiersMisEnLiv();
 
+  // Fonction utilitaire pour récupérer et convertir une date
+  function getDateValue(selector) {
+    const input = document.querySelector(selector);
+    if (input && input.value) {
+      try {
+        return new Date(input.value).toISOString();
+      } catch (e) {
+        console.error("Erreur de conversion de date:", e);
+        return null;
+      }
+    }
+    return null;
+  }
+
   // Sauvegarder toutes les dates importantes
   dossier.date_mise_en_liv = new Date().toISOString();
 
-  // Vérifier si les dates sont présentes dans le formulaire et les ajouter au dossier
-  const dateEchangeBL = document.querySelector(
-    'input[name="date_echange_bl"]'
-  )?.value;
-  const dateDO = document.querySelector('input[name="date_do"]')?.value;
-  const datePaiementAcconage = document.querySelector(
-    'input[name="date_paiement_acconage"]'
-  )?.value;
-  const dateBADT = document.querySelector('input[name="date_badt"]')?.value;
+  // Récupérer les dates depuis le formulaire avec tous les sélecteurs possibles
+  const dateEchangeBL = getDateValue(
+    'input[name="date_echange_bl"], #date_echange_bl'
+  );
+  const dateDO = getDateValue('input[name="date_do"], #date_do');
+  const datePaiementAcconage = getDateValue(
+    'input[name="date_paiement_acconage"], #date_paiement_acconage'
+  );
+  const dateBADT = getDateValue('input[name="date_badt"], #date_badt');
 
-  if (dateEchangeBL)
-    dossier.date_echange_bl = new Date(dateEchangeBL).toISOString();
-  if (dateDO) dossier.date_do = new Date(dateDO).toISOString();
+  // Assigner les dates au dossier si elles existent
+  if (dateEchangeBL) dossier.date_echange_bl = dateEchangeBL;
+  if (dateDO) dossier.date_do = dateDO;
   if (datePaiementAcconage)
-    dossier.date_paiement_acconage = new Date(
-      datePaiementAcconage
-    ).toISOString();
-  if (dateBADT) dossier.date_badt = new Date(dateBADT).toISOString();
+    dossier.date_paiement_acconage = datePaiementAcconage;
+  if (dateBADT) dossier.date_badt = dateBADT;
 
   // Vérifier si le dossier n'existe pas déjà
   const existe = dossiers.some(
@@ -261,15 +273,46 @@ function refreshMiseEnLivList() {
               <i class="fas fa-user me-2 text-secondary"></i>
               ${dossier.client_name || dossier.client || "N/A"}
             </p>
-            <div class="d-flex align-items-center">
-              <span class="badge bg-success-subtle text-success rounded-pill">
-                <i class="fas fa-check-circle me-1"></i>
-                Mis en livraison
-              </span>
-              <small class="text-muted ms-2" style="font-size: 0.8rem;">
-                <i class="far fa-calendar-alt me-1"></i>
-                ${new Date(dossier.date_mise_en_liv).toLocaleDateString()}
-              </small>
+            <div class="d-flex flex-column">
+              <div class="d-flex align-items-center mb-1">
+                <span class="badge bg-success-subtle text-success rounded-pill">
+                  <i class="fas fa-check-circle me-1"></i>
+                  Mis en livraison
+                </span>
+                <small class="text-muted ms-2" style="font-size: 0.8rem;">
+                  <i class="far fa-calendar-alt me-1"></i>
+                  ${new Date(dossier.date_mise_en_liv).toLocaleDateString()}
+                </small>
+              </div>
+              ${
+                dossier.date_do
+                  ? `
+              <small class="text-muted" style="font-size: 0.8rem;">
+                <i class="far fa-calendar-check me-1"></i>
+                DO: ${new Date(dossier.date_do).toLocaleDateString()}
+              </small>`
+                  : ""
+              }
+              ${
+                dossier.date_paiement_acconage
+                  ? `
+              <small class="text-muted" style="font-size: 0.8rem;">
+                <i class="far fa-money-bill-alt me-1"></i>
+                Paiement Acconage: ${new Date(
+                  dossier.date_paiement_acconage
+                ).toLocaleDateString()}
+              </small>`
+                  : ""
+              }
+              ${
+                dossier.date_badt
+                  ? `
+              <small class="text-muted" style="font-size: 0.8rem;">
+                <i class="far fa-file-alt me-1"></i>
+                BADT: ${new Date(dossier.date_badt).toLocaleDateString()}
+              </small>`
+                  : ""
+              }
             </div>
           </div>
           <div>
