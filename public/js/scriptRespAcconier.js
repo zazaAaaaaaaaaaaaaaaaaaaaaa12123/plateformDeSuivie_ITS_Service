@@ -187,83 +187,11 @@ function afficherDetailsDossier(dossier) {
 }
 
 // Fonction pour rafraîchir la liste des dossiers mis en livraison
-// Fonction pour supprimer les dossiers sélectionnés
-function supprimerDossiersMisEnLiv() {
-  const dossiers = getDossiersMisEnLiv();
-  const dossiersSelectionnes = document.querySelectorAll(
-    ".dossier-checkbox:checked"
-  );
-
-  if (dossiersSelectionnes.length === 0) {
-    Swal.fire({
-      icon: "warning",
-      title: "Attention",
-      text: "Veuillez sélectionner au moins un dossier à supprimer",
-      confirmButtonText: "OK",
-    });
-    return;
-  }
-
-  Swal.fire({
-    title: "Confirmation",
-    text: `Voulez-vous vraiment supprimer ${dossiersSelectionnes.length} dossier(s) ?`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Oui, supprimer",
-    cancelButtonText: "Annuler",
-    confirmButtonColor: "#dc3545",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      const idsASupprimer = Array.from(dossiersSelectionnes).map(
-        (cb) => cb.value
-      );
-      const nouveauxDossiers = dossiers.filter(
-        (d) => !idsASupprimer.includes(d.id.toString())
-      );
-
-      saveDossiersMisEnLiv(nouveauxDossiers);
-      refreshMiseEnLivList();
-
-      Swal.fire({
-        icon: "success",
-        title: "Suppression réussie",
-        text: `${dossiersSelectionnes.length} dossier(s) ont été supprimé(s)`,
-        confirmButtonText: "OK",
-      });
-    }
-  });
-}
-
 function refreshMiseEnLivList() {
   const miseEnLivList = document.getElementById("miseEnLivList");
   const dossiers = getDossiersMisEnLiv();
   const searchTerm =
     document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
-
-  // Créer le conteneur pour le bouton de suppression et la barre de recherche
-  let headerHtml = `
-    <div class="d-flex flex-column gap-3 mb-4">
-      <div class="d-flex align-items-center">
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0">
-            <i class="fas fa-search text-primary"></i>
-          </span>
-          <input
-            type="text"
-            id="searchMiseEnLiv"
-            class="form-control border-start-0 ps-0"
-            placeholder="Rechercher par numéro de conteneur, BL ou client..."
-            value="${searchTerm}"
-          />
-        </div>
-        <button class="btn btn-danger ms-3 d-flex align-items-center gap-2" onclick="supprimerDossiersMisEnLiv()">
-          <i class="fas fa-trash-alt"></i>
-          <span>Supprimer</span>
-        </button>
-      </div>
-      <div class="border-bottom"></div>
-    </div>
-  `;
 
   const filteredDossiers = searchTerm
     ? dossiers.filter((dossier) =>
@@ -281,38 +209,9 @@ function refreshMiseEnLivList() {
             (dossier) => `
       <div class="list-group-item">
         <div class="d-flex justify-content-between align-items-center">
-          <h6 class="mb-1">
-            ${(() => {
-              const containers = dossier.container_numbers_list || [
-                dossier.container_number || dossier.ref_conteneur || "N/A",
-              ];
-              if (!Array.isArray(containers)) {
-                return containers || "N/A";
-              }
-              if (containers.length === 1) {
-                return containers[0];
-              }
-              return `
-                <div class="dropdown">
-                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownContainer_${
-                    dossier.dossier_number
-                  }" data-bs-toggle="dropdown" aria-expanded="false">
-                    ${containers.length} Conteneurs
-                  </button>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownContainer_${
-                    dossier.dossier_number
-                  }">
-                    ${containers
-                      .map(
-                        (container) =>
-                          `<li><a class="dropdown-item" href="#">${container}</a></li>`
-                      )
-                      .join("")}
-                  </ul>
-                </div>
-              `;
-            })()}
-          </h6>
+          <h6 class="mb-1">${
+            dossier.container_number || dossier.ref_conteneur || "N/A"
+          }</h6>
           <div>
             <small class="text-muted">Date BL: ${new Date(
               dossier.date_mise_en_liv
@@ -459,83 +358,31 @@ function refreshMiseEnLivList() {
       : filteredDossiers
           .map(
             (dossier) => `
-      <div class="list-group-item hover-bg-light p-3">
-        <div class="d-flex align-items-center gap-3">
-          <!-- Checkbox -->
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input dossier-checkbox" value="${
-              dossier.id
-            }" id="checkbox-${dossier.id}">
-          </div>
-
-          <!-- Icon -->
-          <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style="width: 48px; height: 48px; flex-shrink: 0;">
-            <i class="fas fa-truck text-primary fs-5"></i>
-          </div>
-
-          <!-- Main Content -->
-          <div class="d-flex justify-content-between align-items-start flex-grow-1">
-            <!-- Left Column -->
-            <div class="d-flex flex-column gap-2">
-              <!-- Container Info -->
-              <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                  <h6 class="mb-0 fw-bold" style="font-size: 1.1rem;">
-                    ${
-                      dossier.container_number || dossier.ref_conteneur || "N/A"
-                    }
-                  </h6>
-                  <span class="badge bg-success-subtle text-success px-2 py-1">
-                    <i class="fas fa-check-circle me-1"></i>
-                    Mis en livraison
-                  </span>
-                </div>
-                <div class="text-muted">
-                  <small>BL: <span class="fw-medium">${
-                    dossier.numero_bl || "N/A"
-                  }</span></small>
-                </div>
+      <div class="list-group-item py-3 border-start-0 border-end-0 hover-bg-light">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="me-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div class="d-flex align-items-center justify-content-center" 
+                   style="width: 32px; height: 32px; background: var(--bg-accent); border-radius: 50%;">
+                <i class="fas fa-truck text-primary"></i>
               </div>
-
-              <!-- Additional Info -->
-              <div class="d-flex align-items-center gap-4">
-                <div class="d-flex align-items-center gap-2">
-                  <i class="fas fa-user text-primary"></i>
-                  <span class="fw-medium">${
-                    dossier.client_name || dossier.client || "N/A"
-                  }</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                  <i class="far fa-calendar-alt text-primary"></i>
-                  <span>${new Date(dossier.date_mise_en_liv).toLocaleDateString(
-                    "fr-FR",
-                    {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                    }
-                  )}</span>
-                </div>
-              </div>
+              <h6 class="mb-0" style="font-size: 0.95rem; font-weight: 600;">${
+                dossier.container_number || dossier.ref_conteneur || "N/A"
+              }</h6>
             </div>
-
-            <!-- Right Column -->
-            <div class="d-flex flex-column align-items-end gap-2">
-              <button class="btn btn-outline-primary btn-sm px-3" onclick="showDetails('${
-                dossier.id
-              }')">
-                <i class="fas fa-info-circle me-1"></i>
-                Détails
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-              <div>
-                <i class="far fa-calendar-alt text-secondary me-2"></i>
-                <span class="text-secondary">${new Date(
-                  dossier.date_mise_en_liv
-                ).toLocaleDateString("fr-FR")}
+            <p class="mb-1" style="font-size: 0.85rem; color: var(--text-secondary);">
+              <i class="fas fa-user me-2 text-secondary"></i>
+              ${dossier.client_name || dossier.client || "N/A"}
+            </p>
+            <div class="d-flex flex-column">
+              <div class="d-flex align-items-center mb-1">
+                <span class="badge bg-success-subtle text-success rounded-pill">
+                  <i class="fas fa-check-circle me-1"></i>
+                  Mis en livraison
+                </span>
+                <small class="text-muted ms-2" style="font-size: 0.8rem;">
+                  <i class="far fa-calendar-alt me-1"></i>
+                  ${new Date(dossier.date_echange_bl).toLocaleDateString()}
                 </small>
               </div>
               ${
