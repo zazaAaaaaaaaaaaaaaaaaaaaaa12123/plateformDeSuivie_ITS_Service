@@ -126,9 +126,32 @@ function refreshMiseEnLivList() {
           <h6 class="mb-1">${
             dossier.container_number || dossier.ref_conteneur || "N/A"
           }</h6>
-          <small class="text-muted">${new Date(
-            dossier.date_mise_en_liv
-          ).toLocaleDateString()}</small>
+          <div>
+            <small class="text-muted">Date BL: ${new Date(
+              dossier.date_mise_en_liv
+            ).toLocaleDateString()}</small>
+            ${
+              dossier.date_do
+                ? `<br><small class="text-muted">Date DO: ${new Date(
+                    dossier.date_do
+                  ).toLocaleDateString()}</small>`
+                : ""
+            }
+            ${
+              dossier.date_paiement_acconage
+                ? `<br><small class="text-muted">Date Paiement Acconage: ${new Date(
+                    dossier.date_paiement_acconage
+                  ).toLocaleDateString()}</small>`
+                : ""
+            }
+            ${
+              dossier.date_badt
+                ? `<br><small class="text-muted">Date BADT: ${new Date(
+                    dossier.date_badt
+                  ).toLocaleDateString()}</small>`
+                : ""
+            }
+          </div>
         </div>
         <p class="mb-1">Client: ${
           dossier.client_name || dossier.client || "N/A"
