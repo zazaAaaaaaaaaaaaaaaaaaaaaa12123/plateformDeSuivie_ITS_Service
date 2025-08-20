@@ -417,23 +417,32 @@ function refreshMiseEnLivList() {
                 } else {
                   const displayCount = containerNumbers.length;
                   return `
-                    <div class="dropdown">
-                      <button class="btn btn-link dropdown-toggle p-0 text-decoration-none" 
+                    <div class="dropdown d-inline-block">
+                      <button class="btn btn-link d-inline-flex align-items-center gap-2 p-0 text-decoration-none" 
                               type="button" 
                               data-bs-toggle="dropdown" 
+                              data-bs-auto-close="outside"
                               aria-expanded="false"
                               style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">
-                        ${displayCount} Conteneurs
+                        <span>${displayCount} Conteneurs</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
                       </button>
-                      <ul class="dropdown-menu shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                      <div class="dropdown-menu shadow-sm border-0 p-2" 
+                           style="max-height: 300px; overflow-y: auto; min-width: 250px; border-radius: 8px;">
+                        <div class="dropdown-header border-bottom mb-2 py-2" style="color: var(--text-primary);">
+                          Liste des conteneurs
+                        </div>
                         ${containerNumbers
                           .map(
                             (num) => `
-                          <li><span class="dropdown-item text-wrap">${num.trim()}</span></li>
+                          <div class="dropdown-item rounded-2 px-3 py-2">
+                            <i class="fas fa-box me-2 text-primary"></i>
+                            <span class="fw-medium">${num.trim()}</span>
+                          </div>
                         `
                           )
                           .join("")}
-                      </ul>
+                      </div>
                     </div>`;
                 }
               })()}
