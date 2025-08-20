@@ -101,6 +101,22 @@ async function ajouterDossierMiseEnLiv(dossier) {
 
 // Fonction pour afficher un dossier dans la modal
 function afficherDetailsDossier(dossier) {
+  // Récupérer les valeurs des dates du formulaire si elles existent
+  const dateDOInput = document.querySelector('input[name="date_do"]');
+  const dateBADTInput = document.querySelector('input[name="date_badt"]');
+  const datePaiementAcconageInput = document.querySelector(
+    'input[name="date_paiement_acconage"]'
+  );
+
+  // Créer une copie du dossier avec les dates du formulaire
+  const dossierComplet = {
+    ...dossier,
+    date_do: dossier.date_do || dateDOInput?.value,
+    date_badt: dossier.date_badt || dateBADTInput?.value,
+    date_paiement_acconage:
+      dossier.date_paiement_acconage || datePaiementAcconageInput?.value,
+  };
+
   // Mapping des clés en anglais vers le français
   const keyTranslations = {
     container_number: "Numéro TC",
@@ -175,19 +191,19 @@ function afficherDetailsDossier(dossier) {
         ${fieldsToShow
           .filter(
             (key) =>
-              dossier.hasOwnProperty(key) &&
-              dossier[key] !== null &&
-              dossier[key] !== undefined
+              dossierComplet.hasOwnProperty(key) &&
+              dossierComplet[key] !== null &&
+              dossierComplet[key] !== undefined
           )
           .map((key) => {
             const translatedKey = keyTranslations[key] || key;
             const isDateField = key.toLowerCase().includes("date");
             const displayValue = isDateField
-              ? formatDate(dossier[key])
-              : dossier[key] !== undefined &&
-                dossier[key] !== null &&
-                dossier[key] !== ""
-              ? dossier[key]
+              ? formatDate(dossierComplet[key])
+              : dossierComplet[key] !== undefined &&
+                dossierComplet[key] !== null &&
+                dossierComplet[key] !== ""
+              ? dossierComplet[key]
               : "-";
 
             return `
