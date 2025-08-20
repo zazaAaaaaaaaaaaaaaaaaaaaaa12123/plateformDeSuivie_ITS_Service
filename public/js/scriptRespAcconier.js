@@ -107,6 +107,124 @@ function refreshMiseEnLivList() {
           .join("");
 }
 
+// Stockage local pour les dossiers mis en livraison
+const STORAGE_KEY_LIVRAISON = "dossiersMisEnLiv";
+
+// Fonction pour récupérer les dossiers mis en livraison
+function getDossiersMisEnLiv() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY_LIVRAISON) || "[]");
+}
+
+// Fonction pour sauvegarder les dossiers mis en livraison
+function saveDossiersMisEnLiv(dossiers) {
+  localStorage.setItem(STORAGE_KEY_LIVRAISON, JSON.stringify(dossiers));
+}
+
+// Fonction pour ajouter un dossier à la liste des mises en livraison
+function ajouterDossierMiseEnLiv(dossier) {
+  const dossiers = getDossiersMisEnLiv();
+  dossier.date_mise_en_liv = new Date().toISOString();
+
+  // Vérifier si le dossier n'existe pas déjà
+  const existe = dossiers.some(
+    (d) =>
+      d.container_number === dossier.container_number || d.id === dossier.id
+  );
+
+  if (!existe) {
+    dossiers.push(dossier);
+    saveDossiersMisEnLiv(dossiers);
+  }
+}
+
+// Fonction pour rafraîchir la liste des dossiers dans la modal
+function refreshMiseEnLivList() {
+  const miseEnLivList = document.getElementById("miseEnLivList");
+  if (!miseEnLivList) return;
+
+  const dossiers = getDossiersMisEnLiv();
+  const searchTerm =
+    document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
+
+  const filteredDossiers = searchTerm
+    ? dossiers.filter((dossier) =>
+        Object.values(dossier).some((value) =>
+          String(value).toLowerCase().includes(searchTerm)
+        )
+      )
+    : dossiers;
+
+  miseEnLivList.innerHTML =
+    filteredDossiers.length === 0
+      ? '<div class="list-group-item text-center text-muted">Aucun dossier trouvé</div>'
+      : filteredDossiers
+          .map(
+            (dossier) => `
+      <div class="list-group-item">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-1">${
+            dossier.container_number || dossier.ref_conteneur || "N/A"
+          }</h6>
+          <small class="text-muted">${new Date(
+            dossier.date_mise_en_liv
+          ).toLocaleDateString()}</small>
+        </div>
+        <p class="mb-1">Client: ${
+          dossier.client_name || dossier.client || "N/A"
+        }</p>
+        <small>Status: Mis en livraison</small>
+        <button class="btn btn-sm btn-info mt-2" onclick="voirDetailsDossier(${JSON.stringify(
+          dossier
+        ).replace(/"/g, "&quot;")})">
+          Voir détails
+        </button>
+      </div>
+    `
+          )
+          .join("");
+}
+
+// Fonction pour afficher les détails d'un dossier
+function voirDetailsDossier(dossier) {
+  const detailsHTML = Object.entries(dossier)
+    .filter(([key]) => key !== "date_mise_en_liv") // Exclure certains champs techniques
+    .map(
+      ([key, value]) => `
+      <div class="row mb-2">
+        <div class="col-sm-4 fw-bold">${key}</div>
+        <div class="col-sm-8">${value || "N/A"}</div>
+      </div>
+    `
+    )
+    .join("");
+
+  const detailsModal = document.createElement("div");
+  detailsModal.className = "modal fade";
+  detailsModal.innerHTML = `
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Détails du dossier ${
+            dossier.container_number || dossier.ref_conteneur || ""
+          }</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          ${detailsHTML}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(detailsModal);
+  const modal = new bootstrap.Modal(detailsModal);
+  modal.show();
+
+  detailsModal.addEventListener("hidden.bs.modal", () => {
+    document.body.removeChild(detailsModal);
+  });
+}
+
 // Fonction utilitaire pour récupérer les paramètres URL
 function getUrlParameter(name) {
   const urlParams = new URLSearchParams(window.location.search);
@@ -4008,6 +4126,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               function finishBLStatusChange() {
                 // 1. MAJ locale immédiate du statut BL
                 delivery.bl_statuses[blNumber] = statutToSend;
+
+                // Si le statut est mise_en_livraison, ajouter à la liste des dossiers mis en livraison
+                if (statutToSend === "mise_en_livraison") {
+                  const dossierToSave = {
+                    ...delivery,
+                    container_number: delivery.container_number || "",
+                    client_name: delivery.client_name || delivery.client || "",
+                    status: "Mis en livraison",
+                    bl_number: blNumber,
+                    date_mise_en_liv: new Date().toISOString(),
+                  };
+                  ajouterDossierMiseEnLiv(dossierToSave);
+                }
                 // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
                 const tableBody = document.getElementById(
                   "deliveriesTableBody"
@@ -4909,8 +5040,24 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         ? delivery.bl_statuses[bl]
         : "aucun"
     );
-    // Si tous les BL sont en 'mise_en_livraison', on ne l'affiche pas dans le tableau principal
-    return !blStatuses.every((s) => s === "mise_en_livraison");
+    // Si tous les BL sont en 'mise_en_livraison'
+    const tousEnLivraison = blStatuses.every((s) => s === "mise_en_livraison");
+
+    // Si le dossier disparaît du tableau (tous les BL en livraison), on l'ajoute à la liste des mises en livraison
+    if (tousEnLivraison) {
+      const dossierToSave = {
+        ...delivery,
+        container_number: delivery.container_number || "",
+        client_name: delivery.client_name || delivery.client || "",
+        status: "Mis en livraison",
+        bl_numbers: blList.join(", "),
+        date_mise_en_liv: new Date().toISOString(),
+      };
+      ajouterDossierMiseEnLiv(dossierToSave);
+    }
+
+    // Ne pas afficher dans le tableau principal si tous les BL sont en livraison
+    return !tousEnLivraison;
   });
   // Rafraîchissement du tableau :
   if (deliveriesToShow.length === 0) {
