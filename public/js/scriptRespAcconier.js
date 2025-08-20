@@ -366,9 +366,36 @@ function refreshMiseEnLivList() {
                    style="width: 32px; height: 32px; background: var(--bg-accent); border-radius: 50%;">
                 <i class="fas fa-truck text-primary"></i>
               </div>
-              <h6 class="mb-0" style="font-size: 0.95rem; font-weight: 600;">${
-                dossier.container_number || dossier.ref_conteneur || "N/A"
-              }</h6>
+              ${
+                dossier.container_numbers_list &&
+                Array.isArray(JSON.parse(dossier.container_numbers_list)) &&
+                JSON.parse(dossier.container_numbers_list).length > 1
+                  ? `
+                <div class="dropdown">
+                  <h6 class="mb-0 dropdown-toggle" style="font-size: 0.95rem; font-weight: 600; cursor: pointer;" 
+                     data-bs-toggle="dropdown" aria-expanded="false">
+                    ${
+                      dossier.container_number || dossier.ref_conteneur || "N/A"
+                    } 
+                    <span class="badge bg-secondary">${
+                      JSON.parse(dossier.container_numbers_list).length
+                    }</span>
+                  </h6>
+                  <ul class="dropdown-menu">
+                    ${JSON.parse(dossier.container_numbers_list)
+                      .map(
+                        (tc) =>
+                          `<li><a class="dropdown-item" href="#">${tc}</a></li>`
+                      )
+                      .join("")}
+                  </ul>
+                </div>`
+                  : `<h6 class="mb-0" style="font-size: 0.95rem; font-weight: 600;">
+                    ${
+                      dossier.container_number || dossier.ref_conteneur || "N/A"
+                    }
+                   </h6>`
+              }
             </div>
             <p class="mb-1" style="font-size: 0.85rem; color: var(--text-secondary);">
               <i class="fas fa-user me-2 text-secondary"></i>
