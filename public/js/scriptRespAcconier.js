@@ -187,11 +187,79 @@ function afficherDetailsDossier(dossier) {
 }
 
 // Fonction pour rafraîchir la liste des dossiers mis en livraison
+// Fonction pour supprimer les dossiers sélectionnés
+function supprimerDossiersMisEnLiv() {
+  const dossiers = getDossiersMisEnLiv();
+  const dossiersSelectionnes = document.querySelectorAll(
+    ".dossier-checkbox:checked"
+  );
+
+  if (dossiersSelectionnes.length === 0) {
+    Swal.fire({
+      icon: "warning",
+      title: "Attention",
+      text: "Veuillez sélectionner au moins un dossier à supprimer",
+      confirmButtonText: "OK",
+    });
+    return;
+  }
+
+  Swal.fire({
+    title: "Confirmation",
+    text: `Voulez-vous vraiment supprimer ${dossiersSelectionnes.length} dossier(s) ?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Oui, supprimer",
+    cancelButtonText: "Annuler",
+    confirmButtonColor: "#dc3545",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const idsASupprimer = Array.from(dossiersSelectionnes).map(
+        (cb) => cb.value
+      );
+      const nouveauxDossiers = dossiers.filter(
+        (d) => !idsASupprimer.includes(d.id.toString())
+      );
+
+      saveDossiersMisEnLiv(nouveauxDossiers);
+      refreshMiseEnLivList();
+
+      Swal.fire({
+        icon: "success",
+        title: "Suppression réussie",
+        text: `${dossiersSelectionnes.length} dossier(s) ont été supprimé(s)`,
+        confirmButtonText: "OK",
+      });
+    }
+  });
+}
+
 function refreshMiseEnLivList() {
   const miseEnLivList = document.getElementById("miseEnLivList");
   const dossiers = getDossiersMisEnLiv();
   const searchTerm =
     document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
+
+  // Créer le conteneur pour le bouton de suppression et la barre de recherche
+  let headerHtml = `
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="input-group input-group-sm" style="flex: 1;">
+        <span class="input-group-text border-primary">
+          <i class="fas fa-search"></i>
+        </span>
+        <input
+          type="text"
+          id="searchMiseEnLiv"
+          class="form-control border-primary"
+          placeholder="Rechercher un dossier..."
+          value="${searchTerm}"
+        />
+      </div>
+      <button class="btn btn-danger btn-sm ms-2" onclick="supprimerDossiersMisEnLiv()">
+        <i class="fas fa-trash-alt"></i> Supprimer
+      </button>
+    </div>
+  `;
 
   const filteredDossiers = searchTerm
     ? dossiers.filter((dossier) =>
@@ -209,9 +277,38 @@ function refreshMiseEnLivList() {
             (dossier) => `
       <div class="list-group-item">
         <div class="d-flex justify-content-between align-items-center">
-          <h6 class="mb-1">${
-            dossier.container_number || dossier.ref_conteneur || "N/A"
-          }</h6>
+          <h6 class="mb-1">
+            ${(() => {
+              const containers = dossier.container_numbers_list || [
+                dossier.container_number || dossier.ref_conteneur || "N/A",
+              ];
+              if (!Array.isArray(containers)) {
+                return containers || "N/A";
+              }
+              if (containers.length === 1) {
+                return containers[0];
+              }
+              return `
+                <div class="dropdown">
+                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownContainer_${
+                    dossier.dossier_number
+                  }" data-bs-toggle="dropdown" aria-expanded="false">
+                    ${containers.length} Conteneurs
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownContainer_${
+                    dossier.dossier_number
+                  }">
+                    ${containers
+                      .map(
+                        (container) =>
+                          `<li><a class="dropdown-item" href="#">${container}</a></li>`
+                      )
+                      .join("")}
+                  </ul>
+                </div>
+              `;
+            })()}
+          </h6>
           <div>
             <small class="text-muted">Date BL: ${new Date(
               dossier.date_mise_en_liv
@@ -360,7 +457,12 @@ function refreshMiseEnLivList() {
             (dossier) => `
       <div class="list-group-item py-3 border-start-0 border-end-0 hover-bg-light">
         <div class="d-flex justify-content-between align-items-start">
-          <div class="me-3">
+          <div class="me-3 d-flex">
+            <div class="form-check me-2 align-self-center">
+              <input type="checkbox" class="form-check-input dossier-checkbox" value="${
+                dossier.id
+              }" id="checkbox-${dossier.id}">
+            </div>
             <div class="d-flex align-items-center gap-2 mb-2">
               <div class="d-flex align-items-center justify-content-center" 
                    style="width: 32px; height: 32px; background: var(--bg-accent); border-radius: 50%;">
