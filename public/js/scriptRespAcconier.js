@@ -183,7 +183,6 @@ function afficherDetailsDossier(dossier) {
     "dossier_number",
     "client_name",
     "status",
-    "date_mise_en_liv",
     "date_echange_bl",
     "date_do",
     "date_badt",
@@ -193,6 +192,9 @@ function afficherDetailsDossier(dossier) {
     "shipping_company",
     "declaration_number",
     "lieu",
+    "container_numbers_list",
+    "transporter_mode",
+    "observation_acconier",
   ];
 
   const html = `
