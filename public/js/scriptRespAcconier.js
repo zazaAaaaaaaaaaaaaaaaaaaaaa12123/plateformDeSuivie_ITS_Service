@@ -370,6 +370,58 @@ function refreshMiseEnLivList() {
       )
     : dossiers;
 
+  miseEnLivList.innerHTML =
+    filteredDossiers.length === 0
+      ? '<div class="list-group-item py-4 text-center text-muted">Aucun dossier trouvé</div>'
+      : filteredDossiers
+          .map(
+            (dossier, index) => `
+      <div class="list-group-item py-3 border-start-0 border-end-0 hover-bg-light">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="me-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="dossier-checkbox-${index}">
+              </div>
+              <div class="d-flex align-items-center justify-content-center" 
+                   style="width: 32px; height: 32px; background: var(--bg-accent); border-radius: 50%;">
+                <i class="fas fa-truck text-primary"></i>
+              </div>
+              <h6 class="mb-0" style="font-size: 0.95rem; font-weight: 600;">${
+                dossier.container_number || dossier.ref_conteneur || "N/A"
+              }</h6>
+            </div>
+            <p class="mb-1" style="font-size: 0.85rem; color: var(--text-secondary);">
+              <i class="fas fa-user me-2 text-secondary"></i>
+              ${dossier.client_name || dossier.client || "N/A"}
+            </p>
+            <div class="d-flex flex-column">
+              <div class="d-flex align-items-center mb-1">
+                <span class="badge bg-success-subtle text-success rounded-pill">
+                  <i class="fas fa-check-circle me-1"></i>
+                  ${dossier.status || "En cours"}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <button 
+              class="btn btn-sm btn-outline-primary" 
+              style="font-size: 0.8rem; box-shadow: 0 2px 4px rgba(37,99,235,0.1);" 
+              onclick="voirDetailsDossier(${JSON.stringify(dossier).replace(
+                /"/g,
+                "&quot;"
+              )})">
+              <i class="fas fa-info-circle me-1"></i>
+              Détails
+            </button>
+          </div>
+        </div>
+      </div>
+    `
+          )
+          .join("");
+
   // Fonction utilitaire pour formater les dates
   const formatDate = (dateStr) => {
     try {
@@ -383,30 +435,20 @@ function refreshMiseEnLivList() {
     }
   };
 
-  // Suppression des anciens boutons de suppression
-  const existingButtons = miseEnLivList.parentNode.querySelectorAll(
-    ".delete-button-container"
+  // Le bouton de suppression est maintenant dans le header de la modal
+  // Nous n'avons plus besoin d'ajouter de bouton supplémentaire ici
+  miseEnLivList.innerHTML = miseEnLivList.parentNode.insertBefore(
+    buttonContainer,
+    miseEnLivList
   );
-  existingButtons.forEach((button) => button.remove());
+}
 
-  // Ajout du bouton de suppression
-  if (filteredDossiers.length > 0) {
-    const buttonContainer = document.createElement("div");
-    buttonContainer.className = "mb-3 delete-button-container";
-    buttonContainer.innerHTML = `
-      <button class="btn btn-danger" onclick="supprimerDossiersSelectionnes()">
-        <i class="fas fa-trash me-2"></i>Supprimer les dossiers sélectionnés
-      </button>
-    `;
-    miseEnLivList.parentNode.insertBefore(buttonContainer, miseEnLivList);
-  }
-
-  miseEnLivList.innerHTML =
-    filteredDossiers.length === 0
-      ? '<div class="list-group-item py-4 text-center text-muted">Aucun dossier trouvé</div>'
-      : filteredDossiers
-          .map(
-            (dossier, index) => `
+miseEnLivList.innerHTML =
+  filteredDossiers.length === 0
+    ? '<div class="list-group-item py-4 text-center text-muted">Aucun dossier trouvé</div>'
+    : filteredDossiers
+        .map(
+          (dossier, index) => `
       <div class="list-group-item py-3 border-start-0 border-end-0 hover-bg-light">
         <div class="d-flex justify-content-between align-items-start">
           <div class="me-3">
@@ -483,9 +525,8 @@ function refreshMiseEnLivList() {
         </div>
       </div>
     `
-          )
-          .join("");
-}
+        )
+        .join("");
 
 // Fonction pour afficher les détails d'un dossier
 function voirDetailsDossier(dossier) {
@@ -5885,7 +5926,7 @@ const tableObserver = new MutationObserver(function (mutations) {
   });
 });
 
-// Observer le body pour détecter les 12344 changements 1de SUI1coghchntenusdhsj1
+// Observer le body pour détecter les 123445 changements 1de SUI1coghchntenusdhsj1
 const bodyElement = document.body;
 if (bodyElement) {
   tableObserver.observe(bodyElement, {
