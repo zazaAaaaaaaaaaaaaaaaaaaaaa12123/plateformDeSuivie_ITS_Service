@@ -188,6 +188,9 @@ function afficherDetailsDossier(dossier) {
     "Types de conteneurs",
     "Statuts BL",
     "Statuts des conteneurs",
+    "delivery_status_acconier",
+    "Statut de livraison",
+    "status",
   ];
 
   // Filtrer et ordonner les champs que nous voulons afficher
