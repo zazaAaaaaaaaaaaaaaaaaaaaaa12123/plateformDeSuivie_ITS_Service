@@ -382,7 +382,7 @@ function refreshMiseEnLivList() {
                 </span>
                 <small class="text-muted ms-2" style="font-size: 0.8rem;">
                   <i class="far fa-calendar-alt me-1"></i>
-                  ${new Date(dossier.date_mise_en_liv).toLocaleDateString()}
+                  ${new Date(dossier.date_echange_bl).toLocaleDateString()}
                 </small>
               </div>
               ${
@@ -548,16 +548,14 @@ function voirDetailsDossier(dossier) {
     "created_at", // Date de création
   ];
 
-  const sortedEntries = Object.entries(dossier)
-    .filter(([key]) => key !== "date_mise_en_liv")
-    .sort(([keyA], [keyB]) => {
-      const indexA = priorityOrder.indexOf(keyA);
-      const indexB = priorityOrder.indexOf(keyB);
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
+  const sortedEntries = Object.entries(dossier).sort(([keyA], [keyB]) => {
+    const indexA = priorityOrder.indexOf(keyA);
+    const indexB = priorityOrder.indexOf(keyB);
+    if (indexA === -1 && indexB === -1) return 0;
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
 
   // Fonction pour traduire les propriétés de l'anglais vers le français
   function traduireProprieteDossier(key) {
