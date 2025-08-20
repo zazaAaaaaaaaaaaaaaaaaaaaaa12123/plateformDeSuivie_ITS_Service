@@ -210,36 +210,49 @@ function refreshMiseEnLivList() {
 function voirDetailsDossier(dossier) {
   // Mapping des noms de propriétés pour un affichage plus lisible
   const propertyLabels = {
-    dossier_number: "N° Dossier",
-    ref_conteneur: "N° Conteneur",
-    container_number: "N° Conteneur",
-    client_name: "Client",
+    dossiernumber: "N° Dossier",
+    refconteneur: "N° Conteneur",
+    containernumber: "N° Conteneur",
+    clientname: "Nom du client",
     client: "Client",
-    marchandise: "Marchandise",
-    type_operation: "Type d'opération",
-    status: "Statut",
+    marchandise: "Nature marchandise",
+    typeoperation: "Type d'opération",
+    status: "État actuel",
     volume: "Volume",
     poids: "Poids",
-    date_arrivee: "Date d'arrivée",
-    date_sortie: "Date de sortie",
+    datearrivee: "Arrivée le",
+    datesortie: "Sortie le",
     navire: "Navire",
     destination: "Destination",
-    observations: "Observations",
-    employee_name: "Agent responsable",
-    created_at: "Date de création",
-    updated_at: "Dernière mise à jour",
+    observations: "Remarques",
+    employeename: "Agent responsable",
+    telephone: "Téléphone",
+    email: "Email",
+    createdat: "Créé le",
+    updatedat: "Modifié le",
   };
+
+  // Liste des propriétés à exclure
+  const excludedProperties = [
+    "containerstatuses",
+    "blstatuses",
+    "containerfoottypesmap",
+    "datemiseenliv",
+    "id",
+    "_id",
+    "updatedAt",
+    "createdAt",
+  ];
 
   // Filtrer et trier les propriétés à afficher
   const priorityOrder = [
-    "dossier_number",
-    "ref_conteneur",
-    "container_number",
-    "client_name",
-    "client",
+    "dossiernumber",
+    "clientname",
     "marchandise",
-    "type_operation",
+    "typeoperation",
     "status",
+    "refconteneur",
+    "containernumber",
     "volume",
     "poids",
   ];
@@ -258,7 +271,14 @@ function voirDetailsDossier(dossier) {
   const detailsHTML = sortedEntries
     .map(([key, value]) => {
       if (!value || value === "null" || value === "undefined") return "";
-      const label = propertyLabels[key] || key;
+
+      // Transformer la clé pour enlever les underscores et mettre en majuscule chaque première lettre
+      const formattedKey = key
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+
+      const label = propertyLabels[key] || formattedKey;
       let displayValue = value;
 
       // Formater les dates si la valeur ressemble à une date
@@ -271,9 +291,9 @@ function voirDetailsDossier(dossier) {
       }
 
       return `
-      <div class="row mb-2 py-2 border-bottom">
-        <div class="col-sm-4 text-secondary">${label}</div>
-        <div class="col-sm-8 fw-medium">${displayValue}</div>
+      <div class="row py-2 border-bottom" style="margin: 0 -8px;">
+        <div class="col-5 text-secondary" style="font-size: 0.9rem;">${label}</div>
+        <div class="col-7 fw-medium text-dark">${displayValue}</div>
       </div>`;
     })
     .filter((html) => html !== "")
@@ -282,16 +302,25 @@ function voirDetailsDossier(dossier) {
   const detailsModal = document.createElement("div");
   detailsModal.className = "modal fade";
   detailsModal.innerHTML = `
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-light">
-          <h5 class="modal-title">Détails du dossier ${
-            dossier.dossier_number || "N/A"
-          }</h5>
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+      <div class="modal-content border-0 shadow-sm">
+        <div class="modal-header py-2 bg-primary bg-opacity-10 border-bottom-0">
+          <div>
+            <h6 class="modal-title mb-1 fw-bold" style="color: var(--bs-primary);">
+              <i class="fas fa-folder-open me-2"></i>
+              Dossier N° ${dossier.dossier_number || "N/A"}
+            </h6>
+            <small class="text-secondary">
+              <i class="far fa-calendar-alt me-1"></i>
+              ${new Date().toLocaleDateString("fr-FR")}
+            </small>
+          </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body px-4">
-          ${detailsHTML}
+        <div class="modal-body p-0" style="max-height: 65vh; overflow-y: auto;">
+          <div class="p-3">
+            ${detailsHTML}
+          </div>
         </div>
       </div>
     </div>
