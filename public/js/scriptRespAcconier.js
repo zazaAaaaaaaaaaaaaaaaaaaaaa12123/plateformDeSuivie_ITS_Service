@@ -459,45 +459,78 @@ function refreshMiseEnLivList() {
       : filteredDossiers
           .map(
             (dossier) => `
-      <div class="list-group-item py-3 border-start-0 border-end-0 hover-bg-light">
-        <div class="d-flex align-items-center w-100">
-          <div class="form-check me-3">
+      <div class="list-group-item hover-bg-light p-3">
+        <div class="d-flex align-items-center gap-3">
+          <!-- Checkbox -->
+          <div class="form-check">
             <input type="checkbox" class="form-check-input dossier-checkbox" value="${
               dossier.id
             }" id="checkbox-${dossier.id}">
           </div>
-          
-          <div class="d-flex flex-column flex-grow-1">
-            <div class="d-flex align-items-center gap-3 mb-2">
-              <div class="d-flex align-items-center gap-2">
-                <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style="width: 40px; height: 40px;">
-                  <i class="fas fa-truck text-primary"></i>
+
+          <!-- Icon -->
+          <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style="width: 48px; height: 48px; flex-shrink: 0;">
+            <i class="fas fa-truck text-primary fs-5"></i>
+          </div>
+
+          <!-- Main Content -->
+          <div class="d-flex justify-content-between align-items-start flex-grow-1">
+            <!-- Left Column -->
+            <div class="d-flex flex-column gap-2">
+              <!-- Container Info -->
+              <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <h6 class="mb-0 fw-bold" style="font-size: 1.1rem;">
+                    ${
+                      dossier.container_number || dossier.ref_conteneur || "N/A"
+                    }
+                  </h6>
+                  <span class="badge bg-success-subtle text-success px-2 py-1">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Mis en livraison
+                  </span>
                 </div>
-                <div>
-                  <h6 class="mb-0 fw-bold">${
-                    dossier.container_number || dossier.ref_conteneur || "N/A"
-                  }</h6>
-                  <small class="text-muted">BL: ${
+                <div class="text-muted">
+                  <small>BL: <span class="fw-medium">${
                     dossier.numero_bl || "N/A"
-                  }</small>
+                  }</span></small>
                 </div>
               </div>
-            </div>
-              <div class="ms-auto text-end">
-                <span class="badge bg-success-subtle text-success px-3 py-2">
-                  <i class="fas fa-check-circle me-1"></i>
-                  Mis en livraison
-                </span>
+
+              <!-- Additional Info -->
+              <div class="d-flex align-items-center gap-4">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="fas fa-user text-primary"></i>
+                  <span class="fw-medium">${
+                    dossier.client_name || dossier.client || "N/A"
+                  }</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <i class="far fa-calendar-alt text-primary"></i>
+                  <span>${new Date(dossier.date_mise_en_liv).toLocaleDateString(
+                    "fr-FR",
+                    {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                    }
+                  )}</span>
+                </div>
               </div>
             </div>
 
-            <div class="d-flex align-items-center gap-4 mt-2">
-              <div>
-                <i class="fas fa-user text-secondary me-2"></i>
-                <span class="text-secondary">${
-                  dossier.client_name || dossier.client || "N/A"
-                }</span>
-              </div>
+            <!-- Right Column -->
+            <div class="d-flex flex-column align-items-end gap-2">
+              <button class="btn btn-outline-primary btn-sm px-3" onclick="showDetails('${
+                dossier.id
+              }')">
+                <i class="fas fa-info-circle me-1"></i>
+                Détails
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
               <div>
                 <i class="far fa-calendar-alt text-secondary me-2"></i>
                 <span class="text-secondary">${new Date(
