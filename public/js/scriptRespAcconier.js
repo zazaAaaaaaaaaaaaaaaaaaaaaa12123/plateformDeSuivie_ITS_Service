@@ -841,7 +841,13 @@ function voirDetailsDossier(dossier) {
             </h6>
             <small class="text-secondary">
               <i class="far fa-calendar-alt me-1"></i>
-              ${new Date().toLocaleDateString("fr-FR")}
+              ${
+                dossier.date_echange_bl
+                  ? new Date(dossier.date_echange_bl).toLocaleDateString(
+                      "fr-FR"
+                    )
+                  : "N/A"
+              }
             </small>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
