@@ -22,69 +22,141 @@ function ajouterDossierMiseEnLiv(dossier) {
 
 // Fonction pour afficher un dossier dans la modal
 function afficherDetailsDossier(dossier) {
-  // Mapping des clés en anglais vers le français
+  // Ordre exact des propriétés comme dans l'image
+  const priorityOrder = [
+    "dossier_number", // Dossier N°
+    "circuit", // Circuit
+    "transporter_mode", // Mode de Transport
+    "observation_acconier", // Observation Acconier
+    "date_creation", // Date de Création
+    "id", // ID
+    "date_livraison", // Date de Livraison
+    "nombre_conteneurs", // Nombre de Conteneurs
+    "statut", // Statut
+    "container_statuses", // Statuts des conteneurs
+    "bl_statuses", // Statuts BL
+    "container_numbers", // Container Numbers List
+    "container_foot_types_map", // Types de conteneurs
+    "bl_number", // Numéro de BL
+    "container_type_and_content", // Type de Conteneur
+    "container_foot_type", // Type de Conteneur (pieds)
+    "lieu", // Lieu
+    "paiement_acconage", // Paiement Acconage
+    "date_echange_bl", // Date d'Échange BL
+    "date_do", // Date DO
+    "date_badt", // Date BADT
+    "declaration_number", // Numéro de Déclaration
+    "shipping_company", // Compagnie Maritime
+  ];
+
+  // Mapping des clés en français
   const keyTranslations = {
-    container_number: "Numéro TC",
-    client_name: "Nom du client",
-    client: "Client",
-    status: "Statut",
-    date_mise_en_liv: "Date de mise en livraison",
-    dossier_number: "Numéro de dossier",
+    dossier_number: "Dossier N°",
+    circuit: "Circuit",
+    transporter_mode: "Mode de Transport",
+    observation_acconier: "Observation Acconier",
+    date_creation: "Date de Création",
+    id: "ID",
+    date_livraison: "Date de Livraison",
+    nombre_conteneurs: "Nombre de Conteneurs",
+    statut: "Statut",
+    container_statuses: "Statuts des conteneurs",
+    bl_statuses: "Statuts BL",
+    container_numbers: "Container Numbers List",
+    container_foot_types_map: "Types de conteneurs",
     bl_number: "Numéro de BL",
-    bl_numbers: "Numéros de BL",
+    container_type_and_content: "Type de Conteneur",
+    container_foot_type: "Type de Conteneur (pieds)",
+    lieu: "Lieu",
     paiement_acconage: "Paiement Acconage",
     date_echange_bl: "Date d'Échange BL",
-    date_do: "Date Do",
-    date_badt: "Date Badt",
-    container_numbers_list: "Liste des numéros de conteneurs",
-    "Container Numbers List": "Liste des numéros de conteneurs",
-    shipping_company: "Compagnie maritime",
-    declaration_number: "Numéro de déclaration",
-    circuit: "Circuit",
-    employee_name: "Nom de l'employé",
-    observation_acconier: "Observation",
-    delivery_date: "Date de livraison",
-    driver_name: "Nom du chauffeur",
-    driver_phone: "Téléphone du chauffeur",
-    transporter: "Transporteur",
-    weight: "Poids",
-    delivery_status_acconier: "Statut de livraison",
-    ship_name: "Nom du navire",
-    number_of_containers: "Nombre de conteneurs",
-    container_foot_type: "Type de conteneur (pieds)",
-    container_type_and_content: "Type et contenu du conteneur",
-    lieu: "Lieu",
-    created_at: "Date de création",
-    transporter_mode: "Mode de transport",
-    container_type_and_content: "Type et contenu du conteneur",
+    date_do: "Date DO",
+    date_badt: "Date BADT",
+    declaration_number: "Numéro de Déclaration",
+    shipping_company: "Compagnie Maritime",
   };
 
-  const html = `
-    <div class="modal-body">
-      <dl class="row">
-        ${Object.entries(dossier)
-          .map(
-            ([key, value]) => `
-          <dt class="col-sm-4">${keyTranslations[key] || key}</dt>
-          <dd class="col-sm-8">${value}</dd>
-        `
-          )
-          .join("")}
-      </dl>
-    </div>
-  `;
+  // Trier les propriétés selon l'ordre défini
+  const sortedEntries = Object.entries(dossier).sort(([keyA], [keyB]) => {
+    const indexA = priorityOrder.indexOf(keyA);
+    const indexB = priorityOrder.indexOf(keyB);
+    if (indexA === -1 && indexB === -1) return 0;
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
 
-  // Créer une nouvelle modal pour les détails
+  // Générer le HTML des détails
+  const detailsHTML = sortedEntries
+    .map(([key, value]) => {
+      if (!value || value === "null" || value === "undefined") return "";
+
+      const label = keyTranslations[key] || key;
+      let displayValue = value;
+
+      // Formatage des dates
+      if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+        try {
+          displayValue = new Date(value).toLocaleDateString("fr-FR");
+        } catch (e) {
+          displayValue = value;
+        }
+      }
+
+      // Formatage des objets
+      if (value === "[object Object]") {
+        try {
+          displayValue = JSON.stringify(value, null, 2)
+            .replace(/[{}"]/g, "")
+            .replace(/,/g, "<br>")
+            .replace(/:/g, " : ");
+        } catch (e) {
+          displayValue = "Non disponible";
+        }
+      }
+
+      // Valeur par défaut si vide
+      if (
+        !displayValue ||
+        displayValue === "undefined" ||
+        displayValue === "null"
+      ) {
+        displayValue = "-";
+      }
+
+      return `
+      <div class="row py-2 border-bottom" style="margin: 0 -8px;">
+        <div class="col-5 text-secondary" style="font-size: 0.9rem;">${label}</div>
+        <div class="col-7 fw-medium text-dark">${displayValue}</div>
+      </div>`;
+    })
+    .filter((html) => html !== "")
+    .join("");
+
+  // Créer la modale
   const detailsModal = document.createElement("div");
   detailsModal.className = "modal fade";
   detailsModal.innerHTML = `
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Détails du dossier</h5>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 460px;">
+      <div class="modal-content border-0 shadow-sm">
+        <div class="modal-header py-2 bg-primary bg-opacity-10 border-bottom-0">
+          <div>
+            <h6 class="modal-title mb-1 fw-bold" style="color: var(--bs-primary);">
+              <i class="fas fa-folder-open me-2"></i>
+              Dossier N° ${dossier.dossier_number || "N/A"}
+            </h6>
+            <small class="text-secondary">
+              <i class="far fa-calendar-alt me-1"></i>
+              ${new Date().toLocaleDateString("fr-FR")}
+            </small>
+          </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        ${html}
+        <div class="modal-body p-0" style="max-height: 80vh; overflow-y: auto;">
+          <div class="p-3">
+            ${detailsHTML}
+          </div>
+        </div>
       </div>
     </div>
   `;
