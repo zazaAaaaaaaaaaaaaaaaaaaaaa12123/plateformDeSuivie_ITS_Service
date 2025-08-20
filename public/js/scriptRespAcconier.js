@@ -11,26 +11,86 @@ function saveDossiersMisEnLiv(dossiers) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dossiers));
 }
 
+// Fonction pour mettre à jour le statut et les dates de mise en livraison
+async function updateMiseEnLivraison(dossier, dates) {
+  try {
+    const response = await fetch(
+      `/deliveries/${dossier.id}/mise-en-livraison`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dates),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Erreur lors de la mise à jour des dates");
+    }
+
+    const result = await response.json();
+    return result.delivery;
+  } catch (error) {
+    console.error("Erreur:", error);
+    throw error;
+  }
+}
+
 // Fonction pour ajouter un dossier à la liste des mises en livraison
-function ajouterDossierMiseEnLiv(dossier) {
+async function ajouterDossierMiseEnLiv(dossier) {
   console.log("Dossier reçu:", dossier); // Debug
   const dossiers = getDossiersMisEnLiv();
 
-  // Assurons-nous que toutes les dates sont correctement formatées
+  // Assurons-nous que toutes les dates sont correctement formatées et présentes
   dossier.date_mise_en_liv = new Date().toISOString();
+
+  // Récupérer les dates du formulaire si elles existent
+  const dateDOInput = document.querySelector('input[name="date_do"]');
+  const dateBADTInput = document.querySelector('input[name="date_badt"]');
+  const datePaiementAcconageInput = document.querySelector(
+    'input[name="date_paiement_acconage"]'
+  );
+
+  // Préparer l'objet des dates pour la mise à jour
+  const dates = {
+    date_do: dateDOInput?.value || null,
+    date_badt: dateBADTInput?.value || null,
+    date_paiement_acconage: datePaiementAcconageInput?.value || null,
+    date_echange_bl: dossier.date_echange_bl || null,
+  };
+
+  try {
+    // Mettre à jour le statut et les dates dans la base de données
+    const updatedDossier = await updateMiseEnLivraison(dossier, dates);
+
+    // Mise à jour des dates depuis la réponse du serveur
+    Object.assign(dossier, updatedDossier);
+
+    dossiers.push(dossier);
+    saveDossiersMisEnLiv(dossiers);
+    refreshMiseEnLivList();
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du dossier:", error);
+    alert(
+      "Une erreur est survenue lors de la mise en livraison. Veuillez réessayer."
+    );
+  }
+
+  // Formatage des dates existantes
   if (dossier.date_echange_bl) {
     dossier.date_echange_bl = new Date(dossier.date_echange_bl).toISOString();
   }
-  if (dossier.date_do) {
+  if (dossier.date_do && !dateDOInput) {
     dossier.date_do = new Date(dossier.date_do).toISOString();
   }
-  if (dossier.date_paiement_acconage) {
+  if (dossier.date_badt && !dateBADTInput) {
+    dossier.date_badt = new Date(dossier.date_badt).toISOString();
+  }
+  if (dossier.date_paiement_acconage && !datePaiementAcconageInput) {
     dossier.date_paiement_acconage = new Date(
       dossier.date_paiement_acconage
     ).toISOString();
-  }
-  if (dossier.date_badt) {
-    dossier.date_badt = new Date(dossier.date_badt).toISOString();
   }
 
   console.log("Dossier après formatage:", dossier); // Debug
@@ -92,17 +152,42 @@ function afficherDetailsDossier(dossier) {
     }
   };
 
+  // Filtrer et ordonner les champs que nous voulons afficher
+  const fieldsToShow = [
+    "dossier_number",
+    "client_name",
+    "status",
+    "date_mise_en_liv",
+    "date_echange_bl",
+    "date_do",
+    "date_badt",
+    "date_paiement_acconage",
+    "bl_number",
+    "container_number",
+    "shipping_company",
+    "declaration_number",
+    "lieu",
+  ];
+
   const html = `
     <div class="modal-body">
       <dl class="row">
-        ${Object.entries(dossier)
-          .map(([key, value]) => {
-            // Vérifier si c'est une date
+        ${fieldsToShow
+          .filter(
+            (key) =>
+              dossier.hasOwnProperty(key) &&
+              dossier[key] !== null &&
+              dossier[key] !== undefined
+          )
+          .map((key) => {
+            const translatedKey = keyTranslations[key] || key;
             const isDateField = key.toLowerCase().includes("date");
             const displayValue = isDateField
-              ? formatDate(value)
-              : value !== undefined && value !== null && value !== ""
-              ? value
+              ? formatDate(dossier[key])
+              : dossier[key] !== undefined &&
+                dossier[key] !== null &&
+                dossier[key] !== ""
+              ? dossier[key]
               : "-";
 
             return `

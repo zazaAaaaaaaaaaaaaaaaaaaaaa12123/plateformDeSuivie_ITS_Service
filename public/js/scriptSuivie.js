@@ -5801,7 +5801,7 @@ function mapStatus(status) {
       deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
       deleteButton.title = `Supprimer l'agent ${employeeName} et toutes ses livraisons`;
       deleteButton.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent the li's click event fromSDUYIGJ firing
+        e.stopPropagation(); // Prevent the li's click event from firing
         handleDeleteAgent(employeeName);
       });
       li.appendChild(deleteButton);
