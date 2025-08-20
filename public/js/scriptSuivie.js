@@ -4365,6 +4365,35 @@ function mapStatus(status) {
             tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${containerNumber}</span>`;
             content.appendChild(tcNum);
 
+            // Ajouter les informations de dates
+            const datesInfo = document.createElement("div");
+            datesInfo.style.marginTop = "12px";
+            datesInfo.style.fontSize = "0.95em";
+            datesInfo.style.color = "#1e293b";
+
+            // Formatage des dates
+            const formatDate = (date) => {
+              if (!date) return "-";
+              const d = new Date(date);
+              return isNaN(d.getTime()) ? "-" : d.toLocaleDateString("fr-FR");
+            };
+
+            datesInfo.innerHTML = `
+              <div style='margin-bottom:8px;'><b>Date d'Échange BL :</b> ${formatDate(
+                delivery.date_echange_bl
+              )}</div>
+              <div style='margin-bottom:8px;'><b>Date DO :</b> ${formatDate(
+                delivery.date_do
+              )}</div>
+              <div style='margin-bottom:8px;'><b>Date BADT :</b> ${formatDate(
+                delivery.date_badt
+              )}</div>
+              <div><b>Date Paiement Acconage :</b> ${formatDate(
+                delivery.date_paiement_acconage
+              )}</div>
+            `;
+            content.appendChild(datesInfo);
+
             box.appendChild(content);
             overlay.appendChild(box);
             document.body.appendChild(overlay);
