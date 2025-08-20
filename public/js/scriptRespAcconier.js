@@ -210,74 +210,100 @@ function refreshMiseEnLivList() {
 function voirDetailsDossier(dossier) {
   // Mapping des noms de propriétés pour un affichage plus lisible
   const propertyLabels = {
-    // Propriétés standards
+    // Informations principales
     numeroDossier: "N° Dossier",
     numeroConteneur: "N° Conteneur",
     nomClient: "Nom du client",
     client: "Client",
     marchandise: "Nature de la marchandise",
-    typeOperation: "Type d'opération",
-    statut: "Statut",
-    volume: "Volume",
-    poids: "Poids",
-    dateArrivee: "Date d'arrivée",
-    dateSortie: "Date de sortie",
-    navire: "Nom du navire",
-    destination: "Destination",
+    modeTransport: "Mode de transport",
+    statut: "État actuel",
+    statutLivraison: "Statut de livraison",
+    statutLivraisonAcconier: "Statut livraison acconier",
     observation: "Observation",
-    nomAgent: "Agent responsable",
-    telephone: "N° Téléphone",
-    email: "Adresse email",
+    observationAcconier: "Observation acconier",
+
+    // Informations conteneur
+    typeEtContenuConteneur: "Type et contenu",
+    typePiedConteneur: "Type de pied",
+    nombreConteneurs: "Nombre de conteneurs",
+    listeNumeroConteneur: "Liste des conteneurs",
+    statutConteneur: "Statut conteneur",
+
+    // Informations BL
+    numeroBL: "N° BL",
+    dateEchangeBL: "Date échange BL",
+    statutBL: "Statut BL",
+
+    // Dates
     dateCreation: "Créé le",
     dateModification: "Dernière modification",
+    dateLivraison: "Date de livraison",
 
-    // Traductions des propriétés anglaises
-    Statut: "État actuel",
-    StatutLivraison: "Statut de livraison",
-    StatutLivraisonAcconier: "Statut livraison acconier",
-    Observation: "Observation",
-    DateCreation: "Date de création",
-    StatutsConteneur: "Statuts conteneur",
-    StatutsBL: "Statuts BL",
-    NumeroConteneur: "N° Conteneur",
-    TypeConteneur: "Type de conteneur",
-    DateEchangeBL: "Date échange BL",
-    NumeroBL: "N° BL",
+    // Agent et localisation
+    agentResponsable: "Agent responsable",
+    lieu: "Lieu",
+    numeroDeclaration: "N° Déclaration",
+
+    // Propriétés système
+    identifiant: "ID",
   };
 
   // Liste des propriétés à exclure
   const excludedProperties = [
-    "containerstatuses",
-    "blstatuses",
-    "containerfoottypesmap",
-    "deliverystatusacconier",
-    "Container Statuses",
-    "Bl Statuses",
-    "Container Foot Types Map",
-    "Delivery Status Acconier",
-    "datemiseenliv",
+    // Propriétés système à masquer
     "id",
     "_id",
     "updatedAt",
     "createdAt",
+    "datemiseenliv",
+
+    // Versions anglaises des propriétés (pour éviter les doublons)
+    "Status",
+    "Delivery Status",
+    "Delivery Status Acconier",
+    "Container Statuses",
+    "Container Numbers",
+    "Container Numbers List",
+    "Container Foot Types Map",
+    "Container Foot Type",
+    "Container Type And Content",
+    "Bl Statuses",
+    "Bl Numbers",
+    "Transporter Mode",
+    "Created At",
+    "Location",
+    "Declaration Number",
+
+    // Versions avec underscores
     "container_statuses",
     "bl_statuses",
     "container_foot_types_map",
     "delivery_status_acconier",
+    "container_number",
+    "created_at",
+    "updated_at",
+    "employee_name",
+    "client_name",
   ];
 
   // Filtrer et trier les propriétés à afficher
   const priorityOrder = [
-    "numerodossier",
-    "nomclient",
-    "marchandise",
-    "typeoperation",
-    "etat",
-    "numeroconteneur",
-    "volume",
-    "poids",
-    "datearrivee",
-    "datesortie",
+    "numeroDossier",
+    "nomClient",
+    "modeTransport",
+    "statut",
+    "statutLivraison",
+    "observation",
+    "numeroConteneur",
+    "typeEtContenuConteneur",
+    "typePiedConteneur",
+    "dateEchangeBL",
+    "numeroBL",
+    "numeroDeclaration",
+    "agentResponsable",
+    "lieu",
+    "dateCreation",
   ];
 
   const sortedEntries = Object.entries(dossier)
@@ -294,24 +320,57 @@ function voirDetailsDossier(dossier) {
   // Fonction pour traduire les propriétés de l'anglais vers le français
   function traduireProprieteDossier(key) {
     const traductions = {
+      // Statuts et modes
       Status: "Statut",
+      StatutLivraisonAcconier: "StatutLivraisonAcconier",
+      "Transporter Mode": "ModeTransport",
+      REMORQUE: "ModeTransport",
       "Delivery Status": "StatutLivraison",
+      "Delivery Date": "DateLivraison",
+
+      // Observations et dates
       Observation: "Observation",
+      "Observation Acconier": "ObservationAcconier",
       "Created At": "DateCreation",
-      "Container Statuses": "StatutsConteneur",
-      "Bl Statuses": "StatutsBL",
+      "Créé le": "DateCreation",
+      created_at: "DateCreation",
+      updated_at: "DateModification",
+
+      // Conteneurs
+      "Container Statuses": "StatutConteneur",
+      "Container Numbers List": "ListeNumeroConteneur",
+      "Container Number": "NumeroConteneur",
       "Container Numbers": "NumeroConteneur",
-      "Container Foot Types Map": "TypeConteneur",
-      "Date Echange Bl": "DateEchangeBL",
+      "N° Conteneur": "NumeroConteneur",
+      container_number: "NumeroConteneur",
+      "Container Type And Content": "TypeEtContenuConteneur",
+      "Container Foot Type": "TypePiedConteneur",
+      "Container Foot Types Map": "TypePiedConteneur",
+      "Number Of Containers": "NombreConteneurs",
+
+      // BL
+      "Bl Statuses": "StatutBL",
       "Bl Numbers": "NumeroBL",
+      "Bl Number": "NumeroBL",
+      "Date Echange Bl": "DateEchangeBL",
+
+      // Autres
+      "Declaration Number": "NumeroDeclaration",
+      Id: "Identifiant",
+      "Agent responsable": "AgentResponsable",
+      employee_name: "AgentResponsable",
+      "Nom du client": "NomClient",
+      client_name: "NomClient",
+      Lieu: "Lieu",
+      Location: "Lieu",
+
+      // Statuts bas niveau
       delivery_status_acconier: "statutLivraisonAcconier",
-      container_number: "numeroConteneur",
-      created_at: "dateCreation",
-      updated_at: "dateModification",
-      employee_name: "nomAgent",
-      client_name: "nomClient",
-      // Ajoutez d'autres traductions ici
+      container_statuses: "statutConteneur",
+      bl_statuses: "statutBL",
+      container_foot_types_map: "typePiedConteneur",
     };
+
     return traductions[key] || key;
   }
 
