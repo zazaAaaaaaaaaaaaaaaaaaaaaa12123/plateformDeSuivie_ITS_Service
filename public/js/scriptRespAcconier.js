@@ -11,6 +11,14 @@ function saveDossiersMisEnLiv(dossiers) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dossiers));
 }
 
+// Fonction pour supprimer un dossier de la liste des mises en livraison
+function supprimerDossierMiseEnLiv(index) {
+  const dossiers = getDossiersMisEnLiv();
+  dossiers.splice(index, 1);
+  saveDossiersMisEnLiv(dossiers);
+  refreshMiseEnLivList();
+}
+
 // Fonction pour ajouter un dossier à la liste des mises en livraison
 function ajouterDossierMiseEnLiv(dossier) {
   console.log("Dossier reçu:", dossier); // Debug
@@ -209,9 +217,16 @@ function refreshMiseEnLivList() {
             (dossier) => `
       <div class="list-group-item">
         <div class="d-flex justify-content-between align-items-center">
-          <h6 class="mb-1">${
-            dossier.container_number || dossier.ref_conteneur || "N/A"
-          }</h6>
+          <div class="d-flex align-items-center">
+            <div class="form-check me-2">
+              <input type="checkbox" class="form-check-input" data-index="${filteredDossiers.indexOf(
+                dossier
+              )}">
+            </div>
+            <h6 class="mb-1">${
+              dossier.container_number || dossier.ref_conteneur || "N/A"
+            }</h6>
+          </div>
           <div>
             <small class="text-muted">Date BL: ${new Date(
               dossier.date_mise_en_liv
@@ -238,6 +253,13 @@ function refreshMiseEnLivList() {
                 : ""
             }
           </div>
+        </div>
+        <div class="mt-2 text-end">
+          <button class="btn btn-danger btn-sm" onclick="supprimerDossierMiseEnLiv(${filteredDossiers.indexOf(
+            dossier
+          )})">
+            <i class="fas fa-trash"></i> Supprimer
+          </button>
         </div>
         <p class="mb-1">Client: ${
           dossier.client_name || dossier.client || "N/A"
