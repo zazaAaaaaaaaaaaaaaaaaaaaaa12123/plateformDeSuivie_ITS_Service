@@ -231,16 +231,19 @@ function refreshMiseEnLivList() {
                 dossier.container_number || dossier.ref_conteneur || "N/A"
               }</h6>`;
             } else {
+              const firstContainer = containers[0];
               return `
                 <div class="dropdown">
-                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    ${containers.length} Conteneurs
+                  <h6 class="mb-1 d-inline-block me-1">${firstContainer}</h6>
+                  <button class="btn btn-link btn-sm p-0 text-muted text-decoration-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    (+${containers.length - 1} autres)
                   </button>
-                  <ul class="dropdown-menu">
+                  <ul class="dropdown-menu py-1">
                     ${containers
+                      .slice(1)
                       .map(
                         (container) =>
-                          `<li><span class="dropdown-item">${container}</span></li>`
+                          `<li><a class="dropdown-item py-1 px-3" href="#">${container}</a></li>`
                       )
                       .join("")}
                   </ul>
