@@ -320,55 +320,45 @@ function voirDetailsDossier(dossier) {
   // Fonction pour traduire les propriétés de l'anglais vers le français
   function traduireProprieteDossier(key) {
     const traductions = {
-      // Statuts et modes
-      Status: "Statut",
-      StatutLivraisonAcconier: "StatutLivraisonAcconier",
-      "Transporter Mode": "ModeTransport",
-      REMORQUE: "ModeTransport",
-      "Delivery Status": "StatutLivraison",
-      "Delivery Date": "DateLivraison",
-
-      // Observations et dates
-      Observation: "Observation",
-      "Observation Acconier": "ObservationAcconier",
-      "Created At": "DateCreation",
-      "Créé le": "DateCreation",
-      created_at: "DateCreation",
-      updated_at: "DateModification",
-
       // Conteneurs
-      "Container Statuses": "StatutConteneur",
-      "Container Numbers List": "ListeNumeroConteneur",
-      "Container Number": "NumeroConteneur",
-      "Container Numbers": "NumeroConteneur",
-      "N° Conteneur": "NumeroConteneur",
-      container_number: "NumeroConteneur",
-      "Container Type And Content": "TypeEtContenuConteneur",
-      "Container Foot Type": "TypePiedConteneur",
-      "Container Foot Types Map": "TypePiedConteneur",
-      "Number Of Containers": "NombreConteneurs",
+      "Container Type And Content": "Type et Contenu du Conteneur",
+      "Container Foot Type": "Type de Conteneur",
+      "Number Of Containers": "Nombre de Conteneurs",
+      "Container Numbers List": "Liste des Conteneurs",
+      "Container Number": "Numéro de Conteneur",
+      "Container Numbers": "Numéros de Conteneurs",
+      "N° Conteneur": "Numéro de Conteneur",
+      container_number: "Numéro de Conteneur",
 
-      // BL
-      "Bl Statuses": "StatutBL",
-      "Bl Numbers": "NumeroBL",
-      "Bl Number": "NumeroBL",
-      "Date Echange Bl": "DateEchangeBL",
+      // BL et Documents
+      "Bl Number": "Numéro de Connaissement",
+      "Declaration Number": "Numéro de Déclaration",
+      "Bl Numbers": "Numéros de Connaissement",
+      "Date Echange Bl": "Date d'Échange du Connaissement",
+
+      // Transport
+      "Shipping Company": "Compagnie Maritime",
+      "Ship Name": "Nom du Navire",
+      "Transporter Mode": "Mode de Transport",
+      "Dossier Number": "Numéro de Dossier",
 
       // Autres
-      "Declaration Number": "NumeroDeclaration",
       Id: "Identifiant",
-      "Agent responsable": "AgentResponsable",
-      employee_name: "AgentResponsable",
-      "Nom du client": "NomClient",
-      client_name: "NomClient",
+      "Agent responsable": "Agent Responsable",
+      employee_name: "Agent Responsable",
+      "Nom du client": "Nom du Client",
+      client_name: "Nom du Client",
       Lieu: "Lieu",
       Location: "Lieu",
-
-      // Statuts bas niveau
-      delivery_status_acconier: "statutLivraisonAcconier",
-      container_statuses: "statutConteneur",
-      bl_statuses: "statutBL",
-      container_foot_types_map: "typePiedConteneur",
+      Status: "Statut",
+      "Delivery Status": "Statut de Livraison",
+      "Delivery Date": "Date de Livraison",
+      Observation: "Observation",
+      "Observation Acconier": "Observation de l'Acconier",
+      "Created At": "Date de Création",
+      "Créé le": "Date de Création",
+      created_at: "Date de Création",
+      updated_at: "Date de Modification",
     };
 
     return traductions[key] || key;
