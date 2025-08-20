@@ -132,7 +132,6 @@ function afficherDetailsDossier(dossier) {
     container_number: "Numéro TC",
     client_name: "Nom du client",
     client: "Client",
-    status: "Statut",
     date_mise_en_liv: "Date de mise en livraison",
     dossier_number: "Numéro de dossier",
     bl_number: "Numéro de BL",
@@ -196,7 +195,6 @@ function afficherDetailsDossier(dossier) {
   const fieldsToShow = [
     "dossier_number",
     "client_name",
-    "status",
     "date_echange_bl",
     "date_do",
     "date_badt",
