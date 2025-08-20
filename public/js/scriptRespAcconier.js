@@ -11,34 +11,8 @@ function saveDossiersMisEnLiv(dossiers) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dossiers));
 }
 
-// Fonction pour mettre à jour le statut et les dates de mise en livraison
-async function updateMiseEnLivraison(dossier, dates) {
-  try {
-    const response = await fetch(
-      `/deliveries/${dossier.id}/mise-en-livraison`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dates),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("Erreur lors de la mise à jour des dates");
-    }
-
-    const result = await response.json();
-    return result.delivery;
-  } catch (error) {
-    console.error("Erreur:", error);
-    throw error;
-  }
-}
-
 // Fonction pour ajouter un dossier à la liste des mises en livraison
-async function ajouterDossierMiseEnLiv(dossier) {
+function ajouterDossierMiseEnLiv(dossier) {
   console.log("Dossier reçu:", dossier); // Debug
   const dossiers = getDossiersMisEnLiv();
 
@@ -52,29 +26,17 @@ async function ajouterDossierMiseEnLiv(dossier) {
     'input[name="date_paiement_acconage"]'
   );
 
-  // Préparer l'objet des dates pour la mise à jour
-  const dates = {
-    date_do: dateDOInput?.value || null,
-    date_badt: dateBADTInput?.value || null,
-    date_paiement_acconage: datePaiementAcconageInput?.value || null,
-    date_echange_bl: dossier.date_echange_bl || null,
-  };
-
-  try {
-    // Mettre à jour le statut et les dates dans la base de données
-    const updatedDossier = await updateMiseEnLivraison(dossier, dates);
-
-    // Mise à jour des dates depuis la réponse du serveur
-    Object.assign(dossier, updatedDossier);
-
-    dossiers.push(dossier);
-    saveDossiersMisEnLiv(dossiers);
-    refreshMiseEnLivList();
-  } catch (error) {
-    console.error("Erreur lors de la mise à jour du dossier:", error);
-    alert(
-      "Une erreur est survenue lors de la mise en livraison. Veuillez réessayer."
-    );
+  // Mise à jour des dates depuis le formulaire
+  if (dateDOInput && dateDOInput.value) {
+    dossier.date_do = new Date(dateDOInput.value).toISOString();
+  }
+  if (dateBADTInput && dateBADTInput.value) {
+    dossier.date_badt = new Date(dateBADTInput.value).toISOString();
+  }
+  if (datePaiementAcconageInput && datePaiementAcconageInput.value) {
+    dossier.date_paiement_acconage = new Date(
+      datePaiementAcconageInput.value
+    ).toISOString();
   }
 
   // Formatage des dates existantes
@@ -101,22 +63,6 @@ async function ajouterDossierMiseEnLiv(dossier) {
 
 // Fonction pour afficher un dossier dans la modal
 function afficherDetailsDossier(dossier) {
-  // Récupérer les valeurs des dates du formulaire si elles existent
-  const dateDOInput = document.querySelector('input[name="date_do"]');
-  const dateBADTInput = document.querySelector('input[name="date_badt"]');
-  const datePaiementAcconageInput = document.querySelector(
-    'input[name="date_paiement_acconage"]'
-  );
-
-  // Créer une copie du dossier avec les dates du formulaire
-  const dossierComplet = {
-    ...dossier,
-    date_do: dossier.date_do || dateDOInput?.value,
-    date_badt: dossier.date_badt || dateBADTInput?.value,
-    date_paiement_acconage:
-      dossier.date_paiement_acconage || datePaiementAcconageInput?.value,
-  };
-
   // Mapping des clés en anglais vers le français
   const keyTranslations = {
     container_number: "Numéro TC",
@@ -191,19 +137,19 @@ function afficherDetailsDossier(dossier) {
         ${fieldsToShow
           .filter(
             (key) =>
-              dossierComplet.hasOwnProperty(key) &&
-              dossierComplet[key] !== null &&
-              dossierComplet[key] !== undefined
+              dossier.hasOwnProperty(key) &&
+              dossier[key] !== null &&
+              dossier[key] !== undefined
           )
           .map((key) => {
             const translatedKey = keyTranslations[key] || key;
             const isDateField = key.toLowerCase().includes("date");
             const displayValue = isDateField
-              ? formatDate(dossierComplet[key])
-              : dossierComplet[key] !== undefined &&
-                dossierComplet[key] !== null &&
-                dossierComplet[key] !== ""
-              ? dossierComplet[key]
+              ? formatDate(dossier[key])
+              : dossier[key] !== undefined &&
+                dossier[key] !== null &&
+                dossier[key] !== ""
+              ? dossier[key]
               : "-";
 
             return `
@@ -5799,6 +5745,11 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
 // Fonction de synchronisation vers le tableau de suivi
 function syncToTableauSuivie(deliveryId, dateField, dateValue) {
   try {
+    // Mettre à jour les dates dans le stockage des mises en livraison
+    if (typeof updateDossierMiseEnLivDates === "function") {
+      updateDossierMiseEnLivDates(deliveryId, dateField, dateValue);
+    }
+
     // Vérifier si on est dans la page de tableau de suivi
     if (typeof window.parent !== "undefined" && window.parent !== window) {
       // Communication avec la fenêtre parent si on est dans un iframe
@@ -5827,6 +5778,9 @@ function syncToTableauSuivie(deliveryId, dateField, dateValue) {
                 break;
               case "date_badt":
                 columnIndex = 33; // Index de la colonne Date de BADT
+                break;
+              case "date_paiement_acconage":
+                columnIndex = 34; // Index de la colonne Date Paiement Acconage
                 break;
             }
 
