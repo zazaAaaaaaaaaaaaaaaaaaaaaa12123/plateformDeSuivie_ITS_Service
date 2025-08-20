@@ -209,9 +209,45 @@ function refreshMiseEnLivList() {
             (dossier) => `
       <div class="list-group-item">
         <div class="d-flex justify-content-between align-items-center">
-          <h6 class="mb-1">${
-            dossier.container_number || dossier.ref_conteneur || "N/A"
-          }</h6>
+          ${(() => {
+            let containers = [];
+            if (dossier.container_numbers_list) {
+              try {
+                containers =
+                  typeof dossier.container_numbers_list === "string"
+                    ? JSON.parse(dossier.container_numbers_list)
+                    : dossier.container_numbers_list;
+              } catch (e) {
+                containers = [];
+              }
+            } else if (dossier.container_number) {
+              containers = Array.isArray(dossier.container_number)
+                ? dossier.container_number
+                : [dossier.container_number];
+            }
+
+            if (containers.length <= 1) {
+              return `<h6 class="mb-1">${
+                dossier.container_number || dossier.ref_conteneur || "N/A"
+              }</h6>`;
+            } else {
+              return `
+                <div class="dropdown">
+                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    ${containers.length} Conteneurs
+                  </button>
+                  <ul class="dropdown-menu">
+                    ${containers
+                      .map(
+                        (container) =>
+                          `<li><span class="dropdown-item">${container}</span></li>`
+                      )
+                      .join("")}
+                  </ul>
+                </div>
+              `;
+            }
+          })()}
           <div>
             <small class="text-muted">Date BL: ${new Date(
               dossier.date_mise_en_liv
