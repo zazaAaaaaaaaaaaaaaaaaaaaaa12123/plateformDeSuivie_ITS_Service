@@ -400,9 +400,43 @@ function refreshMiseEnLivList() {
                    style="width: 32px; height: 32px; background: var(--bg-accent); border-radius: 50%;">
                 <i class="fas fa-truck text-primary"></i>
               </div>
-              <h6 class="mb-0" style="font-size: 0.95rem; font-weight: 600;">${
-                dossier.container_number || dossier.ref_conteneur || "N/A"
-              }</h6>
+              ${(() => {
+                const containerNumbers = (
+                  dossier.container_number ||
+                  dossier.ref_conteneur ||
+                  ""
+                )
+                  .toString()
+                  .split(",");
+                if (containerNumbers.length <= 1) {
+                  return `<h6 class="mb-0" style="font-size: 0.95rem; font-weight: 600;">
+                    ${
+                      dossier.container_number || dossier.ref_conteneur || "N/A"
+                    }
+                  </h6>`;
+                } else {
+                  const displayCount = containerNumbers.length;
+                  return `
+                    <div class="dropdown">
+                      <button class="btn btn-link dropdown-toggle p-0 text-decoration-none" 
+                              type="button" 
+                              data-bs-toggle="dropdown" 
+                              aria-expanded="false"
+                              style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">
+                        ${displayCount} Conteneurs
+                      </button>
+                      <ul class="dropdown-menu shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                        ${containerNumbers
+                          .map(
+                            (num) => `
+                          <li><span class="dropdown-item text-wrap">${num.trim()}</span></li>
+                        `
+                          )
+                          .join("")}
+                      </ul>
+                    </div>`;
+                }
+              })()}
             </div>
             <p class="mb-1" style="font-size: 0.85rem; color: var(--text-secondary);">
               <i class="fas fa-user me-2 text-secondary"></i>
