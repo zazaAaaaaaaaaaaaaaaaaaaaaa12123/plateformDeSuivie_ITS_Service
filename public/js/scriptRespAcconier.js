@@ -243,21 +243,13 @@ function refreshMiseEnLivList() {
           dossier.client_name || dossier.client || "N/A"
         }</p>
         <small>Status: ${dossier.status || "Mis en livraison"}</small>
-        <div class="btn-group mt-2">
-          <button onclick="voirDetailsDossier(${JSON.stringify(dossier).replace(
-            /"/g,
-            "&quot;"
-          )})" 
-                  class="btn btn-sm btn-info">
-            Voir détails
-          </button>
-          <button onclick="supprimerDossierMiseEnLiv(${JSON.stringify(
-            dossier
-          ).replace(/"/g, "&quot;")})"
-                  class="btn btn-sm btn-danger">
-            Supprimer
-          </button>
-        </div>
+        <button onclick="voirDetailsDossier(${JSON.stringify(dossier).replace(
+          /"/g,
+          "&quot;"
+        )})" 
+                class="btn btn-sm btn-info mt-2">
+          Voir détails
+        </button>
       </div>
     `
           )
@@ -275,25 +267,6 @@ function getDossiersMisEnLiv() {
 // Fonction pour sauvegarder les dossiers mis en livraison
 function saveDossiersMisEnLiv(dossiers) {
   localStorage.setItem(STORAGE_KEY_LIVRAISON, JSON.stringify(dossiers));
-}
-
-// Fonction pour supprimer un dossier de la liste des mises en livraison
-function supprimerDossierMiseEnLiv(dossier) {
-  if (confirm("Êtes-vous sûr de vouloir supprimer ce dossier ?")) {
-    const dossiers = getDossiersMisEnLiv();
-    const index = dossiers.findIndex(
-      (d) =>
-        d.container_number === dossier.container_number || d.id === dossier.id
-    );
-
-    if (index !== -1) {
-      dossiers.splice(index, 1);
-      saveDossiersMisEnLiv(dossiers);
-      refreshMiseEnLivList();
-      // Afficher une notification de succès
-      alert("Le dossier a été supprimé avec succès.");
-    }
-  }
 }
 
 // Fonction pour ajouter un dossier à la liste des mises en livraison
