@@ -186,7 +186,28 @@ function saveDossiersMisEnLiv(dossiers) {
 // Fonction pour ajouter un dossier à la liste des mises en livraison
 function ajouterDossierMiseEnLiv(dossier) {
   const dossiers = getDossiersMisEnLiv();
+
+  // Sauvegarder toutes les dates importantes
   dossier.date_mise_en_liv = new Date().toISOString();
+
+  // Vérifier si les dates sont présentes dans le formulaire et les ajouter au dossier
+  const dateEchangeBL = document.querySelector(
+    'input[name="date_echange_bl"]'
+  )?.value;
+  const dateDO = document.querySelector('input[name="date_do"]')?.value;
+  const datePaiementAcconage = document.querySelector(
+    'input[name="date_paiement_acconage"]'
+  )?.value;
+  const dateBADT = document.querySelector('input[name="date_badt"]')?.value;
+
+  if (dateEchangeBL)
+    dossier.date_echange_bl = new Date(dateEchangeBL).toISOString();
+  if (dateDO) dossier.date_do = new Date(dateDO).toISOString();
+  if (datePaiementAcconage)
+    dossier.date_paiement_acconage = new Date(
+      datePaiementAcconage
+    ).toISOString();
+  if (dateBADT) dossier.date_badt = new Date(dateBADT).toISOString();
 
   // Vérifier si le dossier n'existe pas déjà
   const existe = dossiers.some(
@@ -197,6 +218,7 @@ function ajouterDossierMiseEnLiv(dossier) {
   if (!existe) {
     dossiers.push(dossier);
     saveDossiersMisEnLiv(dossiers);
+    refreshMiseEnLivList(); // Rafraîchir la liste après l'ajout
   }
 }
 
@@ -415,9 +437,15 @@ function voirDetailsDossier(dossier) {
       "Declaration Number": "Numéro de Déclaration",
       "Bl Numbers": "Numéros de BL",
       "Date Echange Bl": "Date d'Échange BL",
+      "Date Do": "Date DO",
+      "Date Badt": "Date BADT",
+      "Date Paiement Acconage": "Date Paiement Acconage",
       bl_number: "Numéro de BL",
       bl_numbers: "Numéros de BL",
       date_echange_bl: "Date d'Échange BL",
+      date_do: "Date DO",
+      date_badt: "Date BADT",
+      date_paiement_acconage: "Date Paiement Acconage",
       declaration_number: "Numéro de Déclaration",
 
       // Transport
