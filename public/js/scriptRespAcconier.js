@@ -156,28 +156,41 @@ function refreshMiseEnLivList() {
 
   miseEnLivList.innerHTML =
     filteredDossiers.length === 0
-      ? '<div class="list-group-item text-center text-muted">Aucun dossier trouvé</div>'
+      ? '<div class="list-group-item py-4 text-center text-muted">Aucun dossier trouvé</div>'
       : filteredDossiers
           .map(
             (dossier) => `
-      <div class="list-group-item">
-        <div class="d-flex justify-content-between align-items-center">
-          <h6 class="mb-1">${
-            dossier.container_number || dossier.ref_conteneur || "N/A"
-          }</h6>
-          <small class="text-muted">${new Date(
-            dossier.date_mise_en_liv
-          ).toLocaleDateString()}</small>
+      <div class="list-group-item py-2 border-start-0 border-end-0">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="fas fa-truck text-primary"></i>
+              <h6 class="mb-1" style="font-size: 0.95rem;">${
+                dossier.container_number || dossier.ref_conteneur || "N/A"
+              }</h6>
+            </div>
+            <p class="mb-1" style="font-size: 0.85rem;">
+              <i class="fas fa-user me-1 text-secondary"></i>
+              ${dossier.client_name || dossier.client || "N/A"}
+            </p>
+            <small class="text-success">
+              <i class="fas fa-check-circle me-1"></i>
+              Mis en livraison
+            </small>
+          </div>
+          <div class="d-flex flex-column align-items-end">
+            <small class="text-muted" style="font-size: 0.8rem;">
+              <i class="far fa-calendar-alt me-1"></i>
+              ${new Date(dossier.date_mise_en_liv).toLocaleDateString()}
+            </small>
+            <button class="btn btn-sm btn-outline-primary mt-2" style="font-size: 0.8rem;" onclick="voirDetailsDossier(${JSON.stringify(
+              dossier
+            ).replace(/"/g, "&quot;")})">
+              <i class="fas fa-info-circle me-1"></i>
+              Détails
+            </button>
+          </div>
         </div>
-        <p class="mb-1">Client: ${
-          dossier.client_name || dossier.client || "N/A"
-        }</p>
-        <small>Status: Mis en livraison</small>
-        <button class="btn btn-sm btn-info mt-2" onclick="voirDetailsDossier(${JSON.stringify(
-          dossier
-        ).replace(/"/g, "&quot;")})">
-          Voir détails
-        </button>
       </div>
     `
           )
