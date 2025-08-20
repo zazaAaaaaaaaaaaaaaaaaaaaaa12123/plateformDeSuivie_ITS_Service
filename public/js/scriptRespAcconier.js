@@ -395,7 +395,7 @@ function refreshMiseEnLivList() {
     buttonContainer.className = "mb-3 delete-button-container";
     buttonContainer.innerHTML = `
       <button class="btn btn-danger" onclick="supprimerDossiersSelectionnes()">
-        <i class="fas fa-trash"></i>
+        <i class="fas fa-trash me-2"></i>Supprimer les dossiers sélectionnés
       </button>
     `;
     miseEnLivList.parentNode.insertBefore(buttonContainer, miseEnLivList);
@@ -487,7 +487,7 @@ function refreshMiseEnLivList() {
           .join("");
 }
 
-// Fonction pour afficher les détails d'un dossier
+// Fonction pour afficher les détails d'un dossier111100000
 function voirDetailsDossier(dossier) {
   // Mapping des noms de propriétés pour un affichage plus lisible
   const propertyLabels = {
