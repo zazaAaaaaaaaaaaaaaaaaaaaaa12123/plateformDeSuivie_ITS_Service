@@ -11,10 +11,29 @@ function saveDossiersMisEnLiv(dossiers) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dossiers));
 }
 
-// Fonction pour ajouter un dossier à la liste des mises en livraison1
+// Fonction pour ajouter un dossier à la liste des mises en livraison
 function ajouterDossierMiseEnLiv(dossier) {
+  console.log("Dossier reçu:", dossier); // Debug
   const dossiers = getDossiersMisEnLiv();
+
+  // Assurons-nous que toutes les dates sont correctement formatées
   dossier.date_mise_en_liv = new Date().toISOString();
+  if (dossier.date_echange_bl) {
+    dossier.date_echange_bl = new Date(dossier.date_echange_bl).toISOString();
+  }
+  if (dossier.date_do) {
+    dossier.date_do = new Date(dossier.date_do).toISOString();
+  }
+  if (dossier.date_paiement_acconage) {
+    dossier.date_paiement_acconage = new Date(
+      dossier.date_paiement_acconage
+    ).toISOString();
+  }
+  if (dossier.date_badt) {
+    dossier.date_badt = new Date(dossier.date_badt).toISOString();
+  }
+
+  console.log("Dossier après formatage:", dossier); // Debug
   dossiers.push(dossier);
   saveDossiersMisEnLiv(dossiers);
   refreshMiseEnLivList();
@@ -34,8 +53,9 @@ function afficherDetailsDossier(dossier) {
     bl_numbers: "Numéros de BL",
     paiement_acconage: "Paiement Acconage",
     date_echange_bl: "Date d'Échange BL",
-    date_do: "Date Do",
-    date_badt: "Date Badt",
+    date_do: "Date DO",
+    date_badt: "Date BADT",
+    date_paiement_acconage: "Date Paiement Acconage",
     container_numbers_list: "Liste des numéros de conteneurs",
     "Container Numbers List": "Liste des numéros de conteneurs",
     shipping_company: "Compagnie maritime",
@@ -59,18 +79,37 @@ function afficherDetailsDossier(dossier) {
     container_type_and_content: "Type et contenu du conteneur",
   };
 
+  // Fonction pour formater les dates
+  const formatDate = (dateStr) => {
+    try {
+      if (!dateStr) return "-";
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "-";
+      return date.toLocaleDateString();
+    } catch (e) {
+      console.error("Erreur de formatage de date:", e);
+      return "-";
+    }
+  };
+
   const html = `
     <div class="modal-body">
       <dl class="row">
         ${Object.entries(dossier)
-          .map(
-            ([key, value]) => `
-          <dt class="col-sm-4">${keyTranslations[key] || key}</dt>
-          <dd class="col-sm-8">${
-            value !== undefined && value !== null && value !== "" ? value : "-"
-          }</dd>
-        `
-          )
+          .map(([key, value]) => {
+            // Vérifier si c'est une date
+            const isDateField = key.toLowerCase().includes("date");
+            const displayValue = isDateField
+              ? formatDate(value)
+              : value !== undefined && value !== null && value !== ""
+              ? value
+              : "-";
+
+            return `
+              <dt class="col-sm-4">${keyTranslations[key] || key}</dt>
+              <dd class="col-sm-8">${displayValue}</dd>
+            `;
+          })
           .join("")}
       </dl>
     </div>
@@ -240,6 +279,8 @@ function refreshMiseEnLivList() {
   if (!miseEnLivList) return;
 
   const dossiers = getDossiersMisEnLiv();
+  console.log("Dossiers chargés:", dossiers); // Debug
+
   const searchTerm =
     document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
 
@@ -250,6 +291,19 @@ function refreshMiseEnLivList() {
         )
       )
     : dossiers;
+
+  // Fonction utilitaire pour formater les dates
+  const formatDate = (dateStr) => {
+    try {
+      if (!dateStr) return null;
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return null;
+      return date.toLocaleDateString();
+    } catch (e) {
+      console.error("Erreur de formatage de date:", e);
+      return null;
+    }
+  };
 
   miseEnLivList.innerHTML =
     filteredDossiers.length === 0
@@ -5456,6 +5510,10 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         status: "Mis en livraison",
         bl_numbers: blList.join(", "),
         date_mise_en_liv: new Date().toISOString(),
+        date_do: delivery.date_do || null,
+        date_badt: delivery.date_badt || null,
+        date_paiement_acconage: delivery.date_paiement_acconage || null,
+        date_echange_bl: delivery.date_echange_bl || null,
       };
       ajouterDossierMiseEnLiv(dossierToSave);
     }
