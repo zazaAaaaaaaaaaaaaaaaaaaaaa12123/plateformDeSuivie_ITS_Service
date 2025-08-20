@@ -4732,6 +4732,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   );
                   // Ne pas arrêter le processus si seules les données d'échange échouent
                 } else {
+                  // Mettre à jour l'objet delivery avec les nouvelles données
+                  delivery.paiement_acconage =
+                    exchangeData.paiement_acconage ||
+                    delivery.paiement_acconage;
+                  delivery.date_do = exchangeData.date_do || delivery.date_do;
+                  delivery.date_badt =
+                    exchangeData.date_badt || delivery.date_badt;
+                  delivery.date_echange_bl =
+                    exchangeData.date_echange_bl || delivery.date_echange_bl;
+
                   // Rafraîchir la liste des dossiers mis en livraison
                   refreshMiseEnLivList();
                   // Synchronisation vers scriptSuivie.js après sauvegarde réussie
