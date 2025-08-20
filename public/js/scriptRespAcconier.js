@@ -4335,7 +4335,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               confirmBox.style.borderRadius =
                 window.innerWidth <= 768 ? "14px" : "18px";
               confirmBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-              // Adaptation responsive de la popup de confirmation
+              // Adaptation responsive de la popup de confirmation&&
               if (window.innerWidth <= 480) {
                 confirmBox.style.maxWidth = "95vw";
                 confirmBox.style.width = "95vw";
@@ -4732,16 +4732,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   );
                   // Ne pas arrêter le processus si seules les données d'échange échouent
                 } else {
-                  // Mettre à jour l'objet delivery avec les nouvelles données
-                  delivery.paiement_acconage =
-                    exchangeData.paiement_acconage ||
-                    delivery.paiement_acconage;
-                  delivery.date_do = exchangeData.date_do || delivery.date_do;
-                  delivery.date_badt =
-                    exchangeData.date_badt || delivery.date_badt;
-                  delivery.date_echange_bl =
-                    exchangeData.date_echange_bl || delivery.date_echange_bl;
-
                   // Rafraîchir la liste des dossiers mis en livraison
                   refreshMiseEnLivList();
                   // Synchronisation vers scriptSuivie.js après sauvegarde réussie
