@@ -31,6 +31,8 @@ function afficherDetailsDossier(dossier) {
     date_mise_en_liv: "Date de mise en livraison",
     dossier_number: "Numéro de dossier",
     bl_number: "Numéro de BL",
+    bl_numbers: "Numéros de BL",
+    container_numbers_list: "Liste des numéros de conteneurs",
     shipping_company: "Compagnie maritime",
     declaration_number: "Numéro de déclaration",
     circuit: "Circuit",
@@ -42,6 +44,10 @@ function afficherDetailsDossier(dossier) {
     transporter: "Transporteur",
     weight: "Poids",
     delivery_status_acconier: "Statut de livraison",
+    ship_name: "Nom du navire",
+    number_of_containers: "Nombre de conteneurs",
+    container_foot_type: "Type de conteneur (pieds)",
+    container_type_and_content: "Type et contenu du conteneur",
   };
 
   const html = `
