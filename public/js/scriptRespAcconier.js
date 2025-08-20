@@ -242,22 +242,26 @@ function refreshMiseEnLivList() {
 
   // Créer le conteneur pour le bouton de suppression et la barre de recherche
   let headerHtml = `
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <div class="input-group input-group-sm" style="flex: 1;">
-        <span class="input-group-text border-primary">
-          <i class="fas fa-search"></i>
-        </span>
-        <input
-          type="text"
-          id="searchMiseEnLiv"
-          class="form-control border-primary"
-          placeholder="Rechercher un dossier..."
-          value="${searchTerm}"
-        />
+    <div class="d-flex flex-column gap-3 mb-4">
+      <div class="d-flex align-items-center">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="fas fa-search text-primary"></i>
+          </span>
+          <input
+            type="text"
+            id="searchMiseEnLiv"
+            class="form-control border-start-0 ps-0"
+            placeholder="Rechercher par numéro de conteneur, BL ou client..."
+            value="${searchTerm}"
+          />
+        </div>
+        <button class="btn btn-danger ms-3 d-flex align-items-center gap-2" onclick="supprimerDossiersMisEnLiv()">
+          <i class="fas fa-trash-alt"></i>
+          <span>Supprimer</span>
+        </button>
       </div>
-      <button class="btn btn-danger btn-sm ms-2" onclick="supprimerDossiersMisEnLiv()">
-        <i class="fas fa-trash-alt"></i> Supprimer
-      </button>
+      <div class="border-bottom"></div>
     </div>
   `;
 
@@ -456,35 +460,49 @@ function refreshMiseEnLivList() {
           .map(
             (dossier) => `
       <div class="list-group-item py-3 border-start-0 border-end-0 hover-bg-light">
-        <div class="d-flex justify-content-between align-items-start">
-          <div class="me-3 d-flex">
-            <div class="form-check me-2 align-self-center">
-              <input type="checkbox" class="form-check-input dossier-checkbox" value="${
-                dossier.id
-              }" id="checkbox-${dossier.id}">
-            </div>
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <div class="d-flex align-items-center justify-content-center" 
-                   style="width: 32px; height: 32px; background: var(--bg-accent); border-radius: 50%;">
-                <i class="fas fa-truck text-primary"></i>
+        <div class="d-flex align-items-center w-100">
+          <div class="form-check me-3">
+            <input type="checkbox" class="form-check-input dossier-checkbox" value="${
+              dossier.id
+            }" id="checkbox-${dossier.id}">
+          </div>
+          
+          <div class="d-flex flex-column flex-grow-1">
+            <div class="d-flex align-items-center gap-3 mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style="width: 40px; height: 40px;">
+                  <i class="fas fa-truck text-primary"></i>
+                </div>
+                <div>
+                  <h6 class="mb-0 fw-bold">${
+                    dossier.container_number || dossier.ref_conteneur || "N/A"
+                  }</h6>
+                  <small class="text-muted">BL: ${
+                    dossier.numero_bl || "N/A"
+                  }</small>
+                </div>
               </div>
-              <h6 class="mb-0" style="font-size: 0.95rem; font-weight: 600;">${
-                dossier.container_number || dossier.ref_conteneur || "N/A"
-              }</h6>
             </div>
-            <p class="mb-1" style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-user me-2 text-secondary"></i>
-              ${dossier.client_name || dossier.client || "N/A"}
-            </p>
-            <div class="d-flex flex-column">
-              <div class="d-flex align-items-center mb-1">
-                <span class="badge bg-success-subtle text-success rounded-pill">
+              <div class="ms-auto text-end">
+                <span class="badge bg-success-subtle text-success px-3 py-2">
                   <i class="fas fa-check-circle me-1"></i>
                   Mis en livraison
                 </span>
-                <small class="text-muted ms-2" style="font-size: 0.8rem;">
-                  <i class="far fa-calendar-alt me-1"></i>
-                  ${new Date(dossier.date_echange_bl).toLocaleDateString()}
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-4 mt-2">
+              <div>
+                <i class="fas fa-user text-secondary me-2"></i>
+                <span class="text-secondary">${
+                  dossier.client_name || dossier.client || "N/A"
+                }</span>
+              </div>
+              <div>
+                <i class="far fa-calendar-alt text-secondary me-2"></i>
+                <span class="text-secondary">${new Date(
+                  dossier.date_mise_en_liv
+                ).toLocaleDateString("fr-FR")}
                 </small>
               </div>
               ${
