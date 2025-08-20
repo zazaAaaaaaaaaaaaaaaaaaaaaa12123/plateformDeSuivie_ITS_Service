@@ -210,29 +210,39 @@ function refreshMiseEnLivList() {
 function voirDetailsDossier(dossier) {
   // Mapping des noms de propriétés pour un affichage plus lisible
   const propertyLabels = {
-    numerodossier: "N° Dossier",
-    numeroconteneur: "N° Conteneur",
-    nomclient: "Nom du client",
+    // Propriétés standards
+    numeroDossier: "N° Dossier",
+    numeroConteneur: "N° Conteneur",
+    nomClient: "Nom du client",
     client: "Client",
     marchandise: "Nature de la marchandise",
-    typeoperation: "Type d'opération",
-    etat: "État actuel",
+    typeOperation: "Type d'opération",
+    statut: "Statut",
     volume: "Volume",
     poids: "Poids",
-    datearrivee: "Date d'arrivée",
-    datesortie: "Date de sortie",
+    dateArrivee: "Date d'arrivée",
+    dateSortie: "Date de sortie",
     navire: "Nom du navire",
     destination: "Destination",
-    observations: "Observations",
-    agent: "Agent responsable",
+    observation: "Observation",
+    nomAgent: "Agent responsable",
     telephone: "N° Téléphone",
     email: "Adresse email",
-    datecreation: "Créé le",
-    datemodification: "Dernière modification",
-    remarques: "Remarques additionnelles",
-    adresse: "Adresse",
-    ville: "Ville",
-    pays: "Pays",
+    dateCreation: "Créé le",
+    dateModification: "Dernière modification",
+
+    // Traductions des propriétés anglaises
+    Statut: "État actuel",
+    StatutLivraison: "Statut de livraison",
+    StatutLivraisonAcconier: "Statut livraison acconier",
+    Observation: "Observation",
+    DateCreation: "Date de création",
+    StatutsConteneur: "Statuts conteneur",
+    StatutsBL: "Statuts BL",
+    NumeroConteneur: "N° Conteneur",
+    TypeConteneur: "Type de conteneur",
+    DateEchangeBL: "Date échange BL",
+    NumeroBL: "N° BL",
   };
 
   // Liste des propriétés à exclure
@@ -281,17 +291,44 @@ function voirDetailsDossier(dossier) {
       return indexA - indexB;
     });
 
+  // Fonction pour traduire les propriétés de l'anglais vers le français
+  function traduireProprieteDossier(key) {
+    const traductions = {
+      Status: "Statut",
+      "Delivery Status": "StatutLivraison",
+      Observation: "Observation",
+      "Created At": "DateCreation",
+      "Container Statuses": "StatutsConteneur",
+      "Bl Statuses": "StatutsBL",
+      "Container Numbers": "NumeroConteneur",
+      "Container Foot Types Map": "TypeConteneur",
+      "Date Echange Bl": "DateEchangeBL",
+      "Bl Numbers": "NumeroBL",
+      delivery_status_acconier: "statutLivraisonAcconier",
+      container_number: "numeroConteneur",
+      created_at: "dateCreation",
+      updated_at: "dateModification",
+      employee_name: "nomAgent",
+      client_name: "nomClient",
+      // Ajoutez d'autres traductions ici
+    };
+    return traductions[key] || key;
+  }
+
   const detailsHTML = sortedEntries
     .map(([key, value]) => {
       if (!value || value === "null" || value === "undefined") return "";
 
-      // Transformer la clé pour enlever les underscores et mettre en majuscule chaque première lettre
-      const formattedKey = key
+      // Traduire la clé en français
+      const keyFr = traduireProprieteDossier(key);
+
+      // Transformer la clé pour un affichage propre
+      const formattedKey = keyFr
         .split("_")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
 
-      const label = propertyLabels[key] || formattedKey;
+      const label = propertyLabels[keyFr] || formattedKey;
       let displayValue = value;
 
       // Formater les dates si la valeur ressemble à une date
