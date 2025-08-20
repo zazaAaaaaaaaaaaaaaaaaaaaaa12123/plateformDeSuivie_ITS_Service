@@ -4439,6 +4439,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     status: "Mis en livraison",
                     bl_number: blNumber,
                     date_mise_en_liv: new Date().toISOString(),
+                    // Ajout des dates d'échange
+                    paiement_acconage: delivery.paiement_acconage || "",
+                    date_do: delivery.date_do || "",
+                    date_badt: delivery.date_badt || "",
+                    date_echange_bl: delivery.date_echange_bl || "",
                   };
                   ajouterDossierMiseEnLiv(dossierToSave);
                 }
@@ -4727,6 +4732,8 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   );
                   // Ne pas arrêter le processus si seules les données d'échange échouent
                 } else {
+                  // Rafraîchir la liste des dossiers mis en livraison
+                  refreshMiseEnLivList();
                   // Synchronisation vers scriptSuivie.js après sauvegarde réussie
                   if (paiementAcconage) {
                     const syncKey = `sync_${delivery.id}_paiement_acconage`;
