@@ -395,7 +395,7 @@ function refreshMiseEnLivList() {
     buttonContainer.className = "mb-3 delete-button-container";
     buttonContainer.innerHTML = `
       <button class="btn btn-danger" onclick="supprimerDossiersSelectionnes()">
-        <i class="fas fa-trash me-2"></i>Supprimer les dossiers sélectionnés
+        <i class="fas fa-trash"></i>
       </button>
     `;
     miseEnLivList.parentNode.insertBefore(buttonContainer, miseEnLivList);
