@@ -132,9 +132,10 @@ function refreshMiseEnLivList() {
           dossier.client_name || dossier.client || "N/A"
         }</p>
         <small>Status: ${dossier.status || "Mis en livraison"}</small>
-        <button onclick="afficherDetailsDossier(${JSON.stringify(
-          dossier
-        ).replace(/"/g, "&quot;")})" 
+        <button onclick="voirDetailsDossier(${JSON.stringify(dossier).replace(
+          /"/g,
+          "&quot;"
+        )})" 
                 class="btn btn-sm btn-info mt-2">
           Voir détails
         </button>
@@ -248,42 +249,48 @@ function voirDetailsDossier(dossier) {
   // Mapping des noms de propriétés pour un affichage plus lisible
   const propertyLabels = {
     // Informations principales
-    numeroDossier: "N° Dossier",
-    numeroConteneur: "N° Conteneur",
-    nomClient: "Nom du client",
+    dossier_number: "N° Dossier",
+    employee_name: "Agent",
+    client_name: "Nom du client",
     client: "Client",
-    marchandise: "Nature de la marchandise",
-    modeTransport: "Mode de transport",
+    client_phone: "Téléphone client",
     statut: "État actuel",
-    statutLivraison: "Statut de livraison",
-    statutLivraisonAcconier: "Statut livraison acconier",
-    observation: "Observation",
-    observationAcconier: "Observation acconier",
+    delivery_status_acconier: "Statut de livraison",
 
     // Informations conteneur
-    typeEtContenuConteneur: "Type et contenu",
-    typePiedConteneur: "Type de pied",
-    nombreConteneurs: "Nombre de conteneurs",
-    listeNumeroConteneur: "Liste des conteneurs",
-    statutConteneur: "Statut conteneur",
-
-    // Informations BL
-    numeroBL: "N° BL",
-    dateEchangeBL: "Date échange BL",
-    statutBL: "Statut BL",
-
-    // Dates
-    dateCreation: "Créé le",
-    dateModification: "Dernière modification",
-    dateLivraison: "Date de livraison",
-
-    // Agent et localisation
-    agentResponsable: "Agent responsable",
+    container_number: "N° TC",
+    container_type_and_content: "Type et contenu",
+    container_foot_type: "Type de conteneur",
     lieu: "Lieu",
-    numeroDeclaration: "N° Déclaration",
+    number_of_containers: "Nombre de conteneurs",
 
-    // Propriétés système
-    identifiant: "ID",
+    // Dates et paiements
+    paiement_acconage: "Paiement Acconage",
+    date_echange_bl: "Date d'échange BL",
+    date_do: "Date DO",
+    date_badt: "Date BADT",
+    delivery_date: "Date de livraison",
+    created_at: "Date de création",
+
+    // Documents et références
+    bl_number: "N° BL",
+    declaration_number: "N° Déclaration",
+
+    // Transport et logistique
+    shipping_company: "Compagnie maritime",
+    weight: "Poids",
+    ship_name: "Nom du navire",
+    circuit: "Circuit",
+    transporter_mode: "Mode de transport",
+
+    // Observations
+    observation_acconier: "Observation",
+    delivery_notes: "Notes de livraison",
+
+    // Statuts détaillés
+    container_statuses: "Statuts des conteneurs",
+    bl_statuses: "Statuts BL",
+    container_foot_types_map: "Types de conteneurs",
   };
 
   // Liste des propriétés à exclure
@@ -442,12 +449,36 @@ function voirDetailsDossier(dossier) {
       let displayValue = value;
 
       // Formater les dates si la valeur ressemble à une date
+      // Formatage des dates
       if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
         try {
-          displayValue = new Date(value).toLocaleDateString();
+          displayValue = new Date(value).toLocaleDateString("fr-FR");
         } catch (e) {
           displayValue = value;
         }
+      }
+
+      // Formatage des objets
+      if (value === "[object Object]") {
+        if (key === "container_statuses" || key === "bl_statuses") {
+          try {
+            displayValue = JSON.stringify(dossier[key], null, 2)
+              .replace(/[{}"]/g, "")
+              .replace(/,/g, "<br>")
+              .replace(/:/g, " : ");
+          } catch (e) {
+            displayValue = "Non disponible";
+          }
+        }
+      }
+
+      // Valeur par défaut si vide
+      if (
+        !displayValue ||
+        displayValue === "undefined" ||
+        displayValue === "null"
+      ) {
+        displayValue = "-";
       }
 
       return `
