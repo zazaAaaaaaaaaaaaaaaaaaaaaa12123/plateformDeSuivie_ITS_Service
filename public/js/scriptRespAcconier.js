@@ -208,30 +208,89 @@ function refreshMiseEnLivList() {
 
 // Fonction pour afficher les détails d'un dossier
 function voirDetailsDossier(dossier) {
-  const detailsHTML = Object.entries(dossier)
-    .filter(([key]) => key !== "date_mise_en_liv") // Exclure certains champs techniques
-    .map(
-      ([key, value]) => `
-      <div class="row mb-2">
-        <div class="col-sm-4 fw-bold">${key}</div>
-        <div class="col-sm-8">${value || "N/A"}</div>
-      </div>
-    `
-    )
+  // Mapping des noms de propriétés pour un affichage plus lisible
+  const propertyLabels = {
+    dossier_number: "N° Dossier",
+    ref_conteneur: "N° Conteneur",
+    container_number: "N° Conteneur",
+    client_name: "Client",
+    client: "Client",
+    marchandise: "Marchandise",
+    type_operation: "Type d'opération",
+    status: "Statut",
+    volume: "Volume",
+    poids: "Poids",
+    date_arrivee: "Date d'arrivée",
+    date_sortie: "Date de sortie",
+    navire: "Navire",
+    destination: "Destination",
+    observations: "Observations",
+    employee_name: "Agent responsable",
+    created_at: "Date de création",
+    updated_at: "Dernière mise à jour",
+  };
+
+  // Filtrer et trier les propriétés à afficher
+  const priorityOrder = [
+    "dossier_number",
+    "ref_conteneur",
+    "container_number",
+    "client_name",
+    "client",
+    "marchandise",
+    "type_operation",
+    "status",
+    "volume",
+    "poids",
+  ];
+
+  const sortedEntries = Object.entries(dossier)
+    .filter(([key]) => key !== "date_mise_en_liv")
+    .sort(([keyA], [keyB]) => {
+      const indexA = priorityOrder.indexOf(keyA);
+      const indexB = priorityOrder.indexOf(keyB);
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+
+  const detailsHTML = sortedEntries
+    .map(([key, value]) => {
+      if (!value || value === "null" || value === "undefined") return "";
+      const label = propertyLabels[key] || key;
+      let displayValue = value;
+
+      // Formater les dates si la valeur ressemble à une date
+      if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+        try {
+          displayValue = new Date(value).toLocaleDateString();
+        } catch (e) {
+          displayValue = value;
+        }
+      }
+
+      return `
+      <div class="row mb-2 py-2 border-bottom">
+        <div class="col-sm-4 text-secondary">${label}</div>
+        <div class="col-sm-8 fw-medium">${displayValue}</div>
+      </div>`;
+    })
+    .filter((html) => html !== "")
     .join("");
 
   const detailsModal = document.createElement("div");
   detailsModal.className = "modal fade";
   detailsModal.innerHTML = `
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header bg-light">
           <h5 class="modal-title">Détails du dossier ${
-            dossier.container_number || dossier.ref_conteneur || ""
+            dossier.dossier_number || "N/A"
           }</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body px-4">
           ${detailsHTML}
         </div>
       </div>
