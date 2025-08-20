@@ -66,7 +66,9 @@ function afficherDetailsDossier(dossier) {
           .map(
             ([key, value]) => `
           <dt class="col-sm-4">${keyTranslations[key] || key}</dt>
-          <dd class="col-sm-8">${value}</dd>
+          <dd class="col-sm-8">${
+            value !== undefined && value !== null && value !== "" ? value : "-"
+          }</dd>
         `
           )
           .join("")}
