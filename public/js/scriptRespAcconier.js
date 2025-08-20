@@ -350,28 +350,39 @@ function voirDetailsDossier(dossier) {
     const traductions = {
       // Conteneurs
       "Container Type And Content": "Type et Contenu du Conteneur",
-      "Container Foot Type": "Type de Conteneur",
+      "Container Foot Type": "Type de Conteneur (pieds)",
       "Number Of Containers": "Nombre de Conteneurs",
-      "Container Numbers List": "Liste des Conteneurs",
+      "Container Numbers List": "Liste des Numéros de Conteneurs",
       "Container Number": "Numéro de Conteneur",
       "Container Numbers": "Numéros de Conteneurs",
       "N° Conteneur": "Numéro de Conteneur",
       container_number: "Numéro de Conteneur",
+      container_numbers: "Numéros de Conteneurs",
+      container_type_and_content: "Type et Contenu du Conteneur",
+      container_foot_type: "Type de Conteneur (pieds)",
+      number_of_containers: "Nombre de Conteneurs",
 
       // BL et Documents
-      "Bl Number": "Numéro de Connaissement",
+      "Bl Number": "Numéro de BL",
       "Declaration Number": "Numéro de Déclaration",
-      "Bl Numbers": "Numéros de Connaissement",
-      "Date Echange Bl": "Date d'Échange du Connaissement",
+      "Bl Numbers": "Numéros de BL",
+      "Date Echange Bl": "Date d'Échange BL",
+      bl_number: "Numéro de BL",
+      bl_numbers: "Numéros de BL",
+      date_echange_bl: "Date d'Échange BL",
+      declaration_number: "Numéro de Déclaration",
 
       // Transport
       "Shipping Company": "Compagnie Maritime",
       "Ship Name": "Nom du Navire",
       "Transporter Mode": "Mode de Transport",
       "Dossier Number": "Numéro de Dossier",
+      shipping_company: "Compagnie Maritime",
+      ship_name: "Nom du Navire",
+      transporter_mode: "Mode de Transport",
 
       // Autres
-      Id: "Identifiant",
+      Id: "ID",
       "Agent responsable": "Agent Responsable",
       employee_name: "Agent Responsable",
       "Nom du client": "Nom du Client",
@@ -380,13 +391,18 @@ function voirDetailsDossier(dossier) {
       Location: "Lieu",
       Status: "Statut",
       "Delivery Status": "Statut de Livraison",
+      "Delivery Status Acconier": "Statut de Livraison",
       "Delivery Date": "Date de Livraison",
       Observation: "Observation",
       "Observation Acconier": "Observation de l'Acconier",
       "Created At": "Date de Création",
       "Créé le": "Date de Création",
       created_at: "Date de Création",
-      updated_at: "Date de Modification",
+      delivery_status_acconier: "Statut de Livraison",
+      delivery_date: "Date de Livraison",
+      observation: "Observation",
+      status: "Statut",
+      id: "ID",
     };
 
     return traductions[key] || key;
