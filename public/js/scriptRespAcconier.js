@@ -608,7 +608,6 @@ function voirDetailsDossier(dossier) {
     client: "Client",
     client_phone: "Téléphone client",
     statut: "État actuel",
-    delivery_status_acconier: "Statut de livraison",
 
     // Informations conteneur
     container_number: "N° TC",
@@ -654,6 +653,9 @@ function voirDetailsDossier(dossier) {
     "updatedAt",
     "createdAt",
     "datemiseenliv",
+    "delivery_status_acconier",
+    "Statut de livraison",
+    "statut_livraison",
 
     // Versions anglaises des propriétés (pour éviter les doublons)
     "Status",
@@ -690,7 +692,6 @@ function voirDetailsDossier(dossier) {
     "employee_name", // Agent
     "client_name", // Client
     "statut", // Statut
-    "delivery_status_acconier", // Statut de livraison
     "container_number", // Numéro TC
     "container_type_and_content", // Type et contenu
     "container_foot_type", // Type de conteneur
