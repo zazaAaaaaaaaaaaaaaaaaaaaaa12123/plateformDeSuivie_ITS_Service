@@ -213,23 +213,23 @@ function afficherDetailsDossier(dossier) {
     return false;
   };
 
-  // Filtrer et ordonner les champs que nous voulons afficher
+  // Seuls ces champs seront affichés, dans cet ordre
   const fieldsToShow = [
     "dossier_number",
     "client_name",
-    "date_echange_bl",
-    "date_do",
-    "date_badt",
-    "date_paiement_acconage",
-    "bl_number",
     "container_number",
     "container_type_and_content",
     "container_foot_type",
+    "lieu",
+    "date_echange_bl",
+    "bl_number",
+    "declaration_number",
     "shipping_company",
     "ship_name",
-    "declaration_number",
-    "lieu",
     "observation_acconier",
+    "date_do",
+    "date_badt",
+    "date_paiement_acconage",
   ];
 
   const html = `
@@ -249,6 +249,14 @@ function afficherDetailsDossier(dossier) {
               !String(dossier[key]).toLowerCase().includes("mise_en_livraison")
           )
           .map((key) => {
+            // Ignorer explicitement les champs de statut
+            if (
+              key.includes("status") ||
+              key.includes("statut") ||
+              String(dossier[key]).includes("mise_en_livraison")
+            ) {
+              return "";
+            }
             const translatedKey = keyTranslations[key] || key;
             const isDateField = key.toLowerCase().includes("date");
             const displayValue = isDateField
