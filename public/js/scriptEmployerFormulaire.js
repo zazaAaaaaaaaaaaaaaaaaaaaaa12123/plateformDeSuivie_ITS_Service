@@ -1,4 +1,8 @@
 // --- DÉCLARATION DES VARIABLES GLOBALES AVANT TOUTE FONCTION ---
+// Variables globales pour la sidebar mobile
+let selectedOrders = new Set();
+let allOrders = [];
+
 // --- Animation d'intro avant le formulaire ---
 window.addEventListener("DOMContentLoaded", function () {
   const introElement = document.getElementById("introAnimation");
@@ -374,10 +378,6 @@ window.createMobileHistorySidebar = function () {
   const deleteBtn = document.getElementById("deleteSelectedOrdersBtn");
   const orderModal = document.getElementById("orderDetailModal");
 
-  // Variables globales pour la sélection
-  let selectedOrders = new Set();
-  let allOrders = [];
-
   // Fonction pour ouvrir la sidebar
   window.openMobileHistorySidebar = function () {
     sidebar.style.right = "0";
@@ -400,11 +400,95 @@ window.createMobileHistorySidebar = function () {
   };
 
   // Fonction pour afficher les détails d'un ordre
-  window.showOrderDetails = function (orderData) {
+  window.showOrderDetails = function (orderData, orderDate) {
     const modalContent = document.getElementById("orderDetailContent");
     const containerNumbers = Array.isArray(orderData.containerNumbers)
       ? orderData.containerNumbers
-      : (orderData.containerNumbers || "").split(",").map((s) => s.trim());
+      : (orderData.containerNumbers || "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter((tc) => tc);
+
+    // Formater la date correctement
+    const formattedDate = orderDate
+      ? new Date(orderDate).toLocaleDateString("fr-FR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "Non spécifiée";
+
+    // Créer le contenu pour les conteneurs (menu déroulant si plus d'un)
+    let containersContent = "";
+    if (containerNumbers.length === 0) {
+      containersContent = `<p style="margin: 0; color: #64748b;">Aucun conteneur spécifié</p>`;
+    } else if (containerNumbers.length === 1) {
+      containersContent = `
+        <span style="
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 6px 16px;
+          border-radius: 20px;
+          font-size: 0.9em;
+          font-weight: 600;
+          display: inline-block;
+        ">${containerNumbers[0]}</span>
+      `;
+    } else {
+      containersContent = `
+        <div style="position: relative; display: inline-block;">
+          <button onclick="toggleContainerDropdown()" style="
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          ">
+            ${
+              containerNumbers.length
+            } conteneurs <i class="fas fa-chevron-down"></i>
+          </button>
+          <div id="containerDropdown" style="
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+          ">
+            ${containerNumbers
+              .map(
+                (tc) => `
+              <div style="
+                padding: 8px 12px;
+                border-bottom: 1px solid #f1f5f9;
+                font-size: 0.9em;
+                color: #374151;
+                background: #fafafa;
+                font-weight: 600;
+              ">${tc}</div>
+            `
+              )
+              .join("")}
+          </div>
+        </div>
+      `;
+    }
 
     modalContent.innerHTML = `
       <div style="padding: 24px;">
@@ -432,6 +516,12 @@ window.createMobileHistorySidebar = function () {
           }</p>
         </div>
 
+        <!-- Date de création de l'ordre -->
+        <div style="background: #ecfdf5; padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #10b981;">
+          <h4 style="margin: 0 0 4px 0; color: #065f46; font-size: 0.85em;">DATE DE CRÉATION</h4>
+          <p style="margin: 0; font-weight: 600; color: #064e3b;">${formattedDate}</p>
+        </div>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
           <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
             <h4 style="margin: 0 0 4px 0; color: #64748b; font-size: 0.85em;">TÉLÉPHONE</h4>
@@ -446,23 +536,8 @@ window.createMobileHistorySidebar = function () {
         </div>
 
         <div style="background: white; padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #e5e7eb;">
-          <h4 style="margin: 0 0 8px 0; color: #667eea; font-size: 1em;">Conteneurs</h4>
-          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-            ${containerNumbers
-              .map(
-                (tc) => `
-              <span style="
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 4px 12px;
-                border-radius: 16px;
-                font-size: 0.85em;
-                font-weight: 600;
-              ">${tc}</span>
-            `
-              )
-              .join("")}
-          </div>
+          <h4 style="margin: 0 0 12px 0; color: #667eea; font-size: 1em;">Conteneurs</h4>
+          <div>${containersContent}</div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
@@ -510,6 +585,26 @@ window.createMobileHistorySidebar = function () {
     orderModal.style.visibility = "visible";
     document.getElementById("orderDetailContent").style.transform = "scale(1)";
   };
+
+  // Fonction pour basculer le menu déroulant des conteneurs
+  window.toggleContainerDropdown = function () {
+    const dropdown = document.getElementById("containerDropdown");
+    if (dropdown) {
+      dropdown.style.display =
+        dropdown.style.display === "none" ? "block" : "none";
+    }
+  };
+
+  // Fermer le dropdown si on clique ailleurs
+  document.addEventListener("click", function (event) {
+    const dropdown = document.getElementById("containerDropdown");
+    if (
+      dropdown &&
+      !event.target.closest('[onclick="toggleContainerDropdown()"]')
+    ) {
+      dropdown.style.display = "none";
+    }
+  });
 
   // Fonction pour fermer les détails
   window.closeOrderDetails = function () {
@@ -669,11 +764,6 @@ window.loadMobileHistoryData = function () {
       containerNumbers = containerNumbers.split(",").map((s) => s.trim());
     }
 
-    const statusColors = ["#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
-    const statusTexts = ["Livré", "En cours", "Validé", "Urgent"];
-    const statusColor = statusColors[index % statusColors.length];
-    const statusText = statusTexts[index % statusTexts.length];
-
     ordersHTML += `
       <div class="mobile-order-item" style="
         background: white;
@@ -705,46 +795,29 @@ window.loadMobileHistoryData = function () {
         </div>
         
         <!-- Contenu cliquable -->
-        <div onclick="showOrderDetails(allOrders[${index}].data)" style="
+        <div onclick="showOrderDetails(allOrders[${index}].data, allOrders[${index}].date)" style="
           padding: 20px;
           cursor: pointer;
           padding-right: 50px;
         ">
-          <!-- Header avec client et statut -->
+          <!-- Header avec client -->
           <div style="
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             margin-bottom: 12px;
           ">
             <div style="
-              display: flex;
-              align-items: center;
-              gap: 10px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 6px 12px;
+              border-radius: 20px;
+              font-weight: 700;
+              font-size: 0.9em;
+              letter-spacing: 0.3px;
             ">
-              <div style="
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 6px 12px;
-                border-radius: 20px;
-                font-weight: 700;
-                font-size: 0.9em;
-                letter-spacing: 0.3px;
-              ">
-                <i class="fas fa-user" style="margin-right: 6px; font-size: 0.8em;"></i>
-                ${item.data.clientName || "Client inconnu"}
-              </div>
-            </div>
-            <div style="
-              background: ${statusColor}15;
-              color: ${statusColor};
-              padding: 4px 12px;
-              border-radius: 16px;
-              font-size: 0.8em;
-              font-weight: 600;
-              border: 1px solid ${statusColor}25;
-            ">
-              ${statusText}
+              <i class="fas fa-user" style="margin-right: 6px; font-size: 0.8em;"></i>
+              ${item.data.clientName || "Client inconnu"}
             </div>
           </div>
 
@@ -1038,80 +1111,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Anciennes fonctions d'historique supprimées - remplacées par la nouvelle sidebar mobile
 
-// Fonction globale pour afficher/masquer l'icône historique selon la visibilité du formulaire
-/*function updateHistoryBtnVisibility() {
-  const deliveryFormSection = document.getElementById("deliveryFormSection");
-  const codeEntrySection = document.getElementById("codeEntrySection");
-  let historyBtn = document.getElementById("historySidebarBtn");
-  let sidebar = document.getElementById("historySidebarFormulaire");
-  // Détection mobile
-  const isMobile =
-    window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
-  if (
-    deliveryFormSection &&
-    !deliveryFormSection.classList.contains("hidden")
-  ) {
-    if (!historyBtn) {
-      historyBtn = document.createElement("button");
-      historyBtn.id = "historySidebarBtn";
-      historyBtn.innerHTML = `<i class=\"fas fa-history\"></i>`;
-      historyBtn.title = "Voir l'historique des ordres de livraison";
-      document.body.appendChild(historyBtn);
-    }
-    // Styles responsive
-    if (isMobile) {
-      historyBtn.style.position = "fixed";
-      historyBtn.style.top = "12px";
-      historyBtn.style.left = "12px";
-      historyBtn.style.zIndex = "3000";
-      historyBtn.style.background = "#fff";
-      historyBtn.style.border = "none";
-      historyBtn.style.borderRadius = "50%";
-      historyBtn.style.width = "38px";
-      historyBtn.style.height = "38px";
-      historyBtn.style.boxShadow = "0 2px 8px #2563eb22";
-      historyBtn.style.display = "flex";
-      historyBtn.style.alignItems = "center";
-      historyBtn.style.justifyContent = "center";
-      historyBtn.style.fontSize = "1.15em";
-      historyBtn.style.color = "#2563eb";
-      historyBtn.style.cursor = "pointer";
-      historyBtn.style.transition = "filter .18s";
-      historyBtn.style.outline = "none";
-      historyBtn.style.touchAction = "manipulation";
-    } else {
-      historyBtn.style.position = "fixed";
-      historyBtn.style.top = "28px";
-      historyBtn.style.left = "38px";
-      historyBtn.style.zIndex = "3000";
-      historyBtn.style.background = "#fff";
-      historyBtn.style.border = "none";
-      historyBtn.style.borderRadius = "50%";
-      historyBtn.style.width = "48px";
-      historyBtn.style.height = "48px";
-      historyBtn.style.boxShadow = "0 2px 12px #2563eb22";
-      historyBtn.style.display = "flex";
-      historyBtn.style.alignItems = "center";
-      historyBtn.style.justifyContent = "center";
-      historyBtn.style.fontSize = "1.55em";
-      historyBtn.style.color = "#2563eb";
-      historyBtn.style.cursor = "pointer";
-      historyBtn.style.transition = "filter .18s";
-      historyBtn.style.outline = "none";
-    }
-    historyBtn.style.display = "flex";
-    // Toujours attacher l'événement onclick (même si le bouton vient d'être créé)
-    if (historyBtn && sidebar) {
-      historyBtn.onclick = function () {
-        sidebar.style.right = "0";
-        if (typeof renderHistorySidebarList === "function")
-          renderHistorySidebarList();
-      };
-    }
-  } else {
-    if (historyBtn) historyBtn.style.display = "none";
-  }
-}*/
+// Fonction de remplacement pour les anciens appels
+function updateHistoryBtnVisibility() {
+  // Cette fonction ne fait plus rien car remplacée par la nouvelle sidebar mobile
+  return;
+}
 
 // --- Insertion dynamique du conteneur avatar à côté du formulaire ---
 document.addEventListener("DOMContentLoaded", () => {
@@ -3035,18 +3039,24 @@ async function submitDeliveryForm(status) {
         if (wasDisabled) employeeNameInput.disabled = true;
       }
 
-      // Affichage immédiat d'un message de confirmation avec les détails
+      // Affichage immédiat d'un message de confirmation simple avec animation
       setTimeout(() => {
-        const confirmationMessage = `✅ Ordre de livraison validé avec succès !
-        
-📋 Détails :
-• Client : ${clientName}
-• Conteneurs : ${containerNumbers.join(", ")}
-• Lieu : ${lieu}
-• BL : ${finalBlNumber || "Non spécifié"}
-• Déclaration : ${declarationNumber}
-
-L'ordre a été ajouté à votre historique.`;
+        const confirmationMessage = `
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="
+              animation: checkmark-bounce 0.6s ease-in-out;
+              font-size: 1.5em;
+            ">✅</div>
+            <span style="font-size: 1.1em; font-weight: 600;">Ordre de livraison validé</span>
+          </div>
+          <style>
+            @keyframes checkmark-bounce {
+              0% { transform: scale(0) rotate(0deg); }
+              50% { transform: scale(1.3) rotate(180deg); }
+              100% { transform: scale(1) rotate(360deg); }
+            }
+          </style>
+        `;
 
         displayMessage(formSuccessDisplay, confirmationMessage, "success");
       }, 100);
