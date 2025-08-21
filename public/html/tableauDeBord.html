@@ -2975,16 +2975,16 @@
               /* ignore erreur ws */
             }
             // Affiche le nom de l'utilisateur connecté (stocké dans localStorage.user)
-            var nom = null;
+            const nom = null;
             try {
-              var user = JSON.parse(localStorage.getItem("user"));
+              const user = JSON.parse(localStorage.getItem("user"));
               if (user && user.nom) {
                 nom = user.nom;
               }
             } catch (e) {}
             if (!nom || nom.length < 2) nom = "Utilisateur";
-            var message = `Bonjour ${nom}, Bienvenue`;
-            var el = document.getElementById("welcomeTypewriter");
+            const message = `Bonjour ${nom}, Bienvenue`;
+            const  el = document.getElementById("welcomeTypewriter");
             if (el) {
               el.textContent = "";
               let i = 0;

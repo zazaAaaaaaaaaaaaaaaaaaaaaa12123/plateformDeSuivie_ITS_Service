@@ -2702,8 +2702,8 @@ function mapStatus(status) {
 
   // --- Correction alignement bouton Suivi spécifique Agent ---
   window.addEventListener("DOMContentLoaded", function () {
-    var wrapper = document.querySelector(".employee-tracking-btn-wrapper");
-    var btn = document.getElementById("employeeTrackingBtn");
+    const wrapper = document.querySelector(".employee-tracking-btn-wrapper");
+    const btn = document.getElementById("employeeTrackingBtn");
     if (wrapper) {
       wrapper.style.display = "flex";
       wrapper.style.justifyContent = "flex-end";

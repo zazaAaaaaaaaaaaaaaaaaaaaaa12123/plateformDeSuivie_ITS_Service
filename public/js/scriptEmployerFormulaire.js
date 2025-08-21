@@ -20,34 +20,17 @@ window.addEventListener("DOMContentLoaded", function () {
           elapsed = 0;
         }
       }
-      // Phase 1 : pause 3s à 50%
+      // Phase 1 : pause 5s à 50%
       else if (phase === 1) {
         percent = 50;
-        if (elapsed >= 3000) {
+        if (elapsed >= 5000) {
           phase = 2;
           elapsed = 0;
         }
       }
-      // Phase 2 : progression jusqu'à 75% sur 2s
+      // Phase 2 : progression rapide et brusque de 50% à 100% en 500ms
       else if (phase === 2) {
-        percent = 50 + Math.min(25, Math.round((elapsed / 2000) * 25));
-        if (percent >= 75) {
-          percent = 75;
-          phase = 3;
-          elapsed = 0;
-        }
-      }
-      // Phase 3 : pause 3s à 75%
-      else if (phase === 3) {
-        percent = 75;
-        if (elapsed >= 3000) {
-          phase = 4;
-          elapsed = 0;
-        }
-      }
-      // Phase 4 : progression lente jusqu'à 100% sur 10s
-      else if (phase === 4) {
-        percent = 75 + Math.min(25, Math.round((elapsed / 10000) * 25));
+        percent = 50 + Math.min(50, Math.round((elapsed / 500) * 50));
         if (percent >= 100) {
           percent = 100;
           clearInterval(timer);
@@ -144,101 +127,357 @@ function resetUsedBLNumbers() {
 // Ce script gère le formulaire de validation de livraison pour l'employé.
 // Il gère la saisie du code d'entreprise et la soumission des données de livraison.
 
-// --- AFFICHAGE HISTORIQUE & AVATAR ---
+// --- NOUVELLE SIDEBAR HISTORIQUE MOBILE ---
 /**
- * Affiche l'historique des ordres de livraison pour l'agent acconier.
- * @param {string} agentKey - Le nom de l'agent (ex: "Agent Acconier")
+ * Crée et initialise la nouvelle sidebar d'historique optimisée pour mobile
  */
-window.displayAgentHistory = function (agentKey = "Agent Acconier") {
-  // Cherche le conteneur principal d'abord
-  let historyContainer = document.getElementById("mainHistoryList");
-
-  // Si pas trouvé, cherche dans la sidebar
-  if (!historyContainer) {
-    historyContainer = document.getElementById("historySidebarList");
+window.createMobileHistorySidebar = function () {
+  // Supprimer l'ancienne sidebar si elle existe
+  const oldSidebar = document.getElementById("historySidebarFormulaire");
+  if (oldSidebar) {
+    oldSidebar.remove();
   }
 
-  // Si toujours pas trouvé, créer la section et réessayer
-  if (!historyContainer) {
-    console.log("📝 Création de la section d'historique...");
-    createHistorySection();
-    historyContainer = document.getElementById("mainHistoryList");
-  }
+  // Créer la nouvelle sidebar
+  const sidebarHTML = `
+    <div id="mobileHistorySidebar" style="
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 100vw;
+      max-width: 380px;
+      height: 100vh;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      z-index: 9998;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    ">
+      <!-- Header de la sidebar -->
+      <div style="
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      ">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <i class="fas fa-clipboard-list" style="font-size: 1.4em;"></i>
+          <div>
+            <h3 style="margin: 0; font-size: 1.2em; font-weight: 700;">📋 Historique</h3>
+            <p style="margin: 0; font-size: 0.85em; opacity: 0.9;">Ordres de livraison</p>
+          </div>
+        </div>
+        <button id="closeMobileHistoryBtn" style="
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          color: white;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.2s;
+        ">
+          <i class="fas fa-times" style="font-size: 1.1em;"></i>
+        </button>
+      </div>
 
-  if (!historyContainer) {
-    console.error("❌ Impossible de créer le conteneur d'historique");
-    return;
-  }
+      <!-- Compteur d'ordres -->
+      <div style="
+        background: rgba(37, 99, 235, 0.08);
+        padding: 12px 20px;
+        border-bottom: 1px solid rgba(37, 99, 235, 0.1);
+      ">
+        <div style="
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #2563eb;
+          font-weight: 600;
+          font-size: 0.95em;
+        ">
+          <i class="fas fa-chart-bar" style="font-size: 1em;"></i>
+          <span>Total: <span id="mobileHistoryCount">0</span> ordres</span>
+        </div>
+      </div>
 
-  const historyKey = "simulatedHistoryData";
-  let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
-  let agentHistory = historyData[agentKey] || [];
+      <!-- Zone de contenu avec scroll -->
+      <div id="mobileHistoryContent" style="
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 20px;
+        background: #f8fafc;
+      ">
+        <div style="
+          text-align: center;
+          color: #64748b;
+          font-size: 1em;
+          padding: 40px 20px;
+        ">
+          <i class="fas fa-hourglass-half" style="font-size: 2em; margin-bottom: 16px; opacity: 0.5;"></i>
+          <p>Chargement de l'historique...</p>
+        </div>
+      </div>
 
-  console.log(`🔄 Affichage historique pour:`, agentKey);
-  console.log(`📊 Données historique:`, {
-    agentKey,
-    numberOfOrders: agentHistory.length,
-    container: historyContainer ? historyContainer.id : "N/A",
+      <!-- Footer avec actions -->
+      <div style="
+        background: white;
+        padding: 16px 20px;
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      ">
+        <button id="refreshHistoryBtn" style="
+          width: 100%;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          border: none;
+          padding: 12px;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        ">
+          <i class="fas fa-sync-alt" style="font-size: 1em;"></i>
+          Actualiser l'historique
+        </button>
+      </div>
+    </div>
+
+    <!-- Overlay pour fermer la sidebar -->
+    <div id="mobileHistoryOverlay" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9997;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    "></div>
+  `;
+
+  // Injecter la sidebar dans le body
+  document.body.insertAdjacentHTML("beforeend", sidebarHTML);
+
+  // Ajouter les événements
+  const sidebar = document.getElementById("mobileHistorySidebar");
+  const overlay = document.getElementById("mobileHistoryOverlay");
+  const closeBtn = document.getElementById("closeMobileHistoryBtn");
+  const refreshBtn = document.getElementById("refreshHistoryBtn");
+
+  // Fonction pour ouvrir la sidebar
+  window.openMobileHistorySidebar = function () {
+    sidebar.style.right = "0";
+    overlay.style.opacity = "1";
+    overlay.style.visibility = "visible";
+    document.body.style.overflow = "hidden";
+
+    // Charger l'historique
+    loadMobileHistoryData();
+  };
+
+  // Fonction pour fermer la sidebar
+  window.closeMobileHistorySidebar = function () {
+    sidebar.style.right = "-100%";
+    overlay.style.opacity = "0";
+    overlay.style.visibility = "hidden";
+    document.body.style.overflow = "";
+  };
+
+  // Événements de fermeture
+  closeBtn.addEventListener("click", window.closeMobileHistorySidebar);
+  overlay.addEventListener("click", window.closeMobileHistorySidebar);
+
+  // Événement de rafraîchissement
+  refreshBtn.addEventListener("click", function () {
+    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualisation...';
+    setTimeout(() => {
+      loadMobileHistoryData();
+      this.innerHTML =
+        '<i class="fas fa-sync-alt"></i> Actualiser l\'historique';
+    }, 800);
   });
 
+  // Connecter le bouton historique existant
+  const historyBtn = document.getElementById("historySidebarBtn");
+  if (historyBtn) {
+    historyBtn.addEventListener("click", window.openMobileHistorySidebar);
+  }
+};
+
+/**
+ * Charge et affiche les données d'historique dans la sidebar mobile
+ */
+window.loadMobileHistoryData = function () {
+  const contentDiv = document.getElementById("mobileHistoryContent");
+  const countSpan = document.getElementById("mobileHistoryCount");
+
+  if (!contentDiv || !countSpan) return;
+
+  const historyKey = "simulatedHistoryData";
+  const historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
+  const agentHistory = historyData["Agent Acconier"] || [];
+
   // Filtrer les données valides
-  let filteredHistory = agentHistory.filter((item) => {
+  const filteredHistory = agentHistory.filter((item) => {
     return item && item.data && typeof item.data === "object" && item.date;
   });
 
   // Mettre à jour le compteur
-  const countElement = document.getElementById("historyCount");
-  if (countElement) {
-    countElement.textContent = filteredHistory.length;
-  }
+  countSpan.textContent = filteredHistory.length;
 
   if (filteredHistory.length === 0) {
-    historyContainer.innerHTML =
-      '<div style="color:#64748b;text-align:center;margin-top:30px;font-size:1.15em;padding:20px;background:#ffffff;border-radius:8px;border:1px dashed #d1d5db;">Aucun ordre de livraison enregistré pour le moment.</div>';
+    contentDiv.innerHTML = `
+      <div style="
+        text-align: center;
+        color: #64748b;
+        font-size: 1em;
+        padding: 40px 20px;
+        background: white;
+        border-radius: 12px;
+        border: 2px dashed #e2e8f0;
+        margin-top: 20px;
+      ">
+        <i class="fas fa-inbox" style="font-size: 2.5em; margin-bottom: 16px; opacity: 0.4;"></i>
+        <p style="margin: 0; font-weight: 500;">Aucun ordre de livraison</p>
+        <p style="margin: 8px 0 0 0; font-size: 0.9em; opacity: 0.7;">Les ordres validés apparaîtront ici</p>
+      </div>
+    `;
     return;
   }
 
-  let html = "";
-  filteredHistory.slice(0, 10).forEach((item, index) => {
-    // Assure-toi que containerNumbers est un tableau
+  // Générer le HTML des ordres
+  let ordersHTML = "";
+  filteredHistory.slice(0, 20).forEach((item, index) => {
     let containerNumbers = item.data.containerNumbers || [];
     if (typeof containerNumbers === "string") {
       containerNumbers = containerNumbers.split(",").map((s) => s.trim());
     }
 
-    html += `<div style="background:#ffffff;margin-bottom:12px;padding:16px 20px;border-radius:10px;box-shadow:0 2px 8px rgba(37, 99, 235, 0.1);border-left:4px solid #2563eb;">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
-          <div style="font-weight:600;color:#2563eb;font-size:1.1em;">${
-            item.data.clientName || "-"
-          }</div>
-          <div style="font-size:0.85em;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:12px;">#${
-            index + 1
-          }</div>
+    const statusColor =
+      index % 3 === 0 ? "#10b981" : index % 3 === 1 ? "#f59e0b" : "#2563eb";
+    const statusText =
+      index % 3 === 0 ? "Livré" : index % 3 === 1 ? "En cours" : "Validé";
+
+    ordersHTML += `
+      <div style="
+        background: white;
+        margin-bottom: 12px;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border-left: 4px solid ${statusColor};
+        transition: transform 0.2s;
+      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        
+        <!-- Header de l'ordre -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          ">
+            <i class="fas fa-user-circle" style="color: ${statusColor}; font-size: 1em;"></i>
+            ${item.data.clientName || "Client inconnu"}
+          </div>
+          <div style="
+            background: ${statusColor}15;
+            color: ${statusColor};
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+          ">
+            ${statusText}
+          </div>
         </div>
-        <div style="color:#334155;font-size:0.95em;margin-bottom:6px;">
-          <strong>Conteneurs:</strong> ${
-            containerNumbers.length > 0 ? containerNumbers.join(", ") : "-"
-          }
+
+        <!-- Informations principales -->
+        <div style="margin-bottom: 10px;">
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+            color: #475569;
+            font-size: 0.95em;
+          ">
+            <i class="fas fa-shipping-fast" style="color: #64748b; width: 16px;"></i>
+            <strong>TC:</strong> ${
+              containerNumbers.length > 0
+                ? containerNumbers.join(", ")
+                : "Non spécifié"
+            }
+          </div>
+          
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+            color: #475569;
+            font-size: 0.95em;
+          ">
+            <i class="fas fa-map-marker-alt" style="color: #64748b; width: 16px;"></i>
+            <strong>Lieu:</strong> ${item.data.lieu || "Non spécifié"}
+          </div>
+
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #475569;
+            font-size: 0.95em;
+          ">
+            <i class="fas fa-calendar" style="color: #64748b; width: 16px;"></i>
+            <strong>Date:</strong> ${item.date || "Non spécifiée"}
+          </div>
         </div>
-        <div style="color:#334155;font-size:0.95em;margin-bottom:6px;">
-          <strong>Lieu:</strong> ${
-            item.data.lieu || "-"
-          } | <strong>Date:</strong> ${item.date || "-"}
+
+        <!-- Détails supplémentaires -->
+        <div style="
+          background: #f8fafc;
+          padding: 10px;
+          border-radius: 8px;
+          font-size: 0.85em;
+          color: #64748b;
+        ">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div><strong>BL:</strong> ${item.data.blNumber || "-"}</div>
+            <div><strong>Mode:</strong> ${
+              item.data.transporterMode || "-"
+            }</div>
+            <div style="grid-column: 1 / -1;"><strong>Déclaration:</strong> ${
+              item.data.declarationNumber || "-"
+            }</div>
+          </div>
         </div>
-        <div style="font-size:0.9em;color:#64748b;display:flex;gap:15px;flex-wrap:wrap;">
-          <span><strong>BL:</strong> ${item.data.blNumber || "-"}</span>
-          <span><strong>Déclaration:</strong> ${
-            item.data.declarationNumber || "-"
-          }</span>
-          <span><strong>Mode:</strong> ${
-            item.data.transporterMode || "-"
-          }</span>
-        </div>
-      </div>`;
+      </div>
+    `;
   });
 
-  historyContainer.innerHTML = html;
-  console.log("✅ Historique affiché avec", filteredHistory.length, "éléments");
+  contentDiv.innerHTML = ordersHTML;
+  console.log(
+    "✅ Historique mobile affiché avec",
+    filteredHistory.length,
+    "éléments"
+  );
 };
 
 /**
@@ -404,29 +643,12 @@ document.addEventListener("DOMContentLoaded", () => {
       : 0
   );
 
-  // Créer la section d'historique immédiatement
-  createHistorySection();
+  // Créer la nouvelle sidebar mobile d'historique
+  createMobileHistorySidebar();
 
-  window.displayAgentHistory && window.displayAgentHistory("Agent Acconier");
   window.displayProfileAvatar && window.displayProfileAvatar();
 
-  // Mise à jour de l'affichage de l'historique au chargement
-  setTimeout(() => {
-    if (window.renderHistorySidebarList) {
-      window.renderHistorySidebarList();
-    }
-    // Force l'affichage de l'historique dans la sidebar
-    if (window.displayAgentHistory) {
-      window.displayAgentHistory("Agent Acconier");
-    }
-
-    // Vérifie si le bouton historique doit être affiché
-    if (typeof updateHistoryBtnVisibility === "function") {
-      updateHistoryBtnVisibility();
-    }
-
-    console.log("✅ Affichage historique initialisé");
-  }, 100);
+  console.log("✅ Nouvelle sidebar d'historique mobile initialisée");
 
   // Affiche directement le formulaire d'ordre de livraison
   const deliveryFormSection = document.getElementById("deliveryFormSection");
@@ -450,36 +672,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Fonction pour créer la section d'historique dans la page
-function createHistorySection() {
-  const deliveryFormSection = document.getElementById("deliveryFormSection");
-  if (deliveryFormSection && !document.getElementById("mainHistorySection")) {
-    const historySection = document.createElement("div");
-    historySection.id = "mainHistorySection";
-    historySection.style.marginTop = "30px";
-    historySection.style.padding = "20px";
-    historySection.style.background = "#f8fafc";
-    historySection.style.borderRadius = "12px";
-    historySection.style.boxShadow = "0 4px 24px rgba(30, 41, 59, 0.07)";
-    historySection.style.border = "2px solid #e5e7eb";
-
-    historySection.innerHTML = `
-      <h3 style="margin:0 0 15px 0;font-weight:700;font-size:1.25em;color:#2563eb;display:flex;align-items:center;">
-        <i class="fas fa-history" style="margin-right:8px;"></i>
-        📋 Historique des ordres de livraison
-        <span id="historyCount" style="background:#2563eb;color:white;padding:2px 8px;border-radius:12px;font-size:0.8em;margin-left:10px;">0</span>
-      </h3>
-      <div id="mainHistoryList" style="max-height:400px;overflow-y:auto;"></div>
-    `;
-
-    // Insérer après la section du formulaire
-    deliveryFormSection.parentNode.insertBefore(
-      historySection,
-      deliveryFormSection.nextSibling
-    );
-    console.log("✅ Section d'historique créée");
-  }
-}
+// Anciennes fonctions d'historique supprimées - remplacées par la nouvelle sidebar mobile
 
 // Fonction globale pour afficher/masquer l'icône historique selon la visibilité du formulaire
 function updateHistoryBtnVisibility() {
@@ -2452,33 +2645,19 @@ async function submitDeliveryForm(status) {
         "DEBUG localStorage.simulatedHistoryData =",
         localStorage.getItem("simulatedHistoryData")
       );
-      // --- Mise à jour immédiate de l'affichage historique (sidebar et liste) ---
-      // Correction : on force le rafraîchissement de l'historique et on s'assure que le conteneur est visible
+      // --- Mise à jour immédiate de l'affichage historique (nouvelle sidebar mobile) ---
       setTimeout(function () {
-        // Mise à jour de la sidebar historique
-        if (typeof window.renderHistorySidebarList === "function") {
-          window.renderHistorySidebarList();
+        // Mettre à jour la nouvelle sidebar mobile d'historique
+        if (window.loadMobileHistoryData) {
+          window.loadMobileHistoryData();
         }
-        // Mise à jour de l'affichage principal de l'historique
-        if (window.displayAgentHistory) {
-          window.displayAgentHistory("Agent Acconier");
-        }
-        // Ajout : forcer l'affichage du conteneur historique si masqué
-        let historyContainer = document.getElementById("historySidebarList");
-        if (historyContainer) {
-          historyContainer.style.display = "";
-          historyContainer.classList.remove("hidden");
-        }
-
-        // Ajout : mise à jour du bouton d'historique pour montrer qu'il y a des données
-        updateHistoryBtnVisibility();
 
         // Logs de debug pour vérifier
-        console.log("Historique mis à jour après soumission");
+        console.log("✅ Historique mobile mis à jour après soumission");
         const historyKey = "simulatedHistoryData";
         const currentHistory =
           JSON.parse(localStorage.getItem(historyKey)) || {};
-        console.log("Données historique actuelles:", currentHistory);
+        console.log("📊 Données historique actuelles:", currentHistory);
       }, 200);
       deliveryForm.reset();
 
