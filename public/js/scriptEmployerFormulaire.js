@@ -2289,6 +2289,61 @@ async function submitDeliveryForm(status) {
       } catch (e) {
         console.warn("Impossible d'ajouter à l'historique Agent Acconier :", e);
       }
+
+      // --- AJOUT À L'HISTORIQUE GÉNÉRAL DES LIVRAISONS ---
+      try {
+        const DELIVERY_HISTORY_KEY = "delivery_history";
+        let deliveryHistory = JSON.parse(
+          localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+        );
+
+        const historyEntry = {
+          id: `hist_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+          delivery_id: response.delivery.id,
+          container_number: containerNumberForDB,
+          dossier_number: finalDossierNumber,
+          bl_number: finalBlNumber,
+          client_name: clientName,
+          employee_name: employeeNameInput.value,
+          circuit: circuit,
+          shipping_company: finalShippingCompany,
+          container_foot_type: containerFootType,
+          weight: weight,
+          ship_name: shipName,
+          delivery_date: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          status: status,
+          delivered_by:
+            localStorage.getItem("user_nom") || employeeNameInput.value,
+        };
+
+        // Vérifie si cette livraison n'existe pas déjà dans l'historique
+        const exists = deliveryHistory.some(
+          (entry) =>
+            entry.delivery_id === response.delivery.id &&
+            entry.container_number === containerNumberForDB
+        );
+
+        if (!exists) {
+          deliveryHistory.unshift(historyEntry);
+          // Limite l'historique à 1000 entrées
+          if (deliveryHistory.length > 1000) {
+            deliveryHistory = deliveryHistory.slice(0, 1000);
+          }
+          localStorage.setItem(
+            DELIVERY_HISTORY_KEY,
+            JSON.stringify(deliveryHistory)
+          );
+          console.log(
+            `[HISTORIQUE] ✅ Ordre de livraison ajouté à l'historique`
+          );
+        }
+      } catch (e) {
+        console.warn(
+          "[HISTORIQUE] ❌ Erreur lors de l'ajout à l'historique:",
+          e
+        );
+      }
       // --- FIN AJOUT HISTORIQUE ---
       // DEBUG : Affiche le contenu du localStorage juste après ajout
       console.log(
