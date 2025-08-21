@@ -5677,6 +5677,83 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           isDark ? "#ffd600" : "#2563eb"
         };'>${containerNumber}</span>`;
         content.appendChild(tcNum);
+
+        // === AJOUT DES DÉTAILS DES DATES ===
+        const detailsSection = document.createElement("div");
+        detailsSection.style.marginTop = "20px";
+        detailsSection.style.padding = "15px";
+        detailsSection.style.background = isDark ? "#334155" : "#ffffff";
+        detailsSection.style.borderRadius = "8px";
+        detailsSection.style.border = isDark
+          ? "1px solid #475569"
+          : "1px solid #e2e8f0";
+        detailsSection.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+
+        // Titre de la section
+        const detailsTitle = document.createElement("h4");
+        detailsTitle.textContent = "Informations de livraison";
+        detailsTitle.style.margin = "0 0 12px 0";
+        detailsTitle.style.fontSize = "1.1em";
+        detailsTitle.style.fontWeight = "600";
+        detailsTitle.style.color = isDark ? "#ffd600" : "#2563eb";
+        detailsSection.appendChild(detailsTitle);
+
+        // Fonction pour formater les dates
+        function formatDate(dateValue) {
+          if (!dateValue) return "-";
+          try {
+            const date = new Date(dateValue);
+            return date.toLocaleDateString("fr-FR");
+          } catch (e) {
+            return dateValue.toString();
+          }
+        }
+
+        // Création des éléments d'information
+        const infoItems = [
+          { label: "Date DO", value: formatDate(delivery.date_do) },
+          { label: "Date BADT", value: formatDate(delivery.date_badt) },
+          {
+            label: "Date de paiement acconage",
+            value: formatDate(delivery.date_paiement_acconage),
+          },
+          {
+            label: "Date d'échange BL",
+            value: formatDate(delivery.date_echange_bl),
+          },
+        ];
+
+        infoItems.forEach((item) => {
+          const infoRow = document.createElement("div");
+          infoRow.style.display = "flex";
+          infoRow.style.justifyContent = "space-between";
+          infoRow.style.alignItems = "center";
+          infoRow.style.marginBottom = "8px";
+          infoRow.style.padding = "8px 0";
+          infoRow.style.borderBottom = isDark
+            ? "1px solid #475569"
+            : "1px solid #f1f5f9";
+
+          const label = document.createElement("span");
+          label.textContent = item.label + " :";
+          label.style.fontWeight = "500";
+          label.style.color = isDark ? "#cbd5e1" : "#64748b";
+
+          const value = document.createElement("span");
+          value.textContent = item.value;
+          value.style.fontWeight = "600";
+          value.style.color = isDark ? "#f8fafc" : "#1e293b";
+          if (item.value === "-") {
+            value.style.color = isDark ? "#94a3b8" : "#94a3b8";
+            value.style.fontStyle = "italic";
+          }
+
+          infoRow.appendChild(label);
+          infoRow.appendChild(value);
+          detailsSection.appendChild(infoRow);
+        });
+
+        content.appendChild(detailsSection);
         box.appendChild(content);
         overlay.appendChild(box);
         document.body.appendChild(overlay);
