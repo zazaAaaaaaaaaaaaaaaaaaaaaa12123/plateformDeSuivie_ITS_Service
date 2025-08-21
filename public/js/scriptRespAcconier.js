@@ -2100,7 +2100,9 @@ document.addEventListener("DOMContentLoaded", function () {
             });
           }
 
-          processedDeliveries = processedDeliveries.filter((delivery) => {
+          // 🔧 MODIFICATION ADMIN : En mode admin, afficher TOUS les dossiers sans exception
+          // Supprimer le filtrage restrictif et laisser tous les dossiers visibles
+          processedDeliveries.forEach((delivery) => {
             // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
             const userFields = [
               delivery.responsible_acconier,
@@ -2128,42 +2130,7 @@ document.addEventListener("DOMContentLoaded", function () {
               delivery.last_modified_by,
             ];
 
-            // Recherche par nom d'utilisateur avec différentes variantes
-            const targetUserLower = targetUser.toLowerCase();
-            const targetUserIdLower = targetUserId
-              ? targetUserId.toLowerCase()
-              : "";
-
-            const foundByName = userFields.some((field) => {
-              if (!field) return false;
-              const fieldLower = field.toString().toLowerCase();
-
-              // Recherche exacte
-              if (fieldLower === targetUserLower) return true;
-
-              // Recherche partielle (contient le nom)
-              if (fieldLower.includes(targetUserLower)) return true;
-
-              // Recherche inverse (le nom contient le champ)
-              if (targetUserLower.includes(fieldLower)) return true;
-
-              return false;
-            });
-
-            // Aussi chercher par userId si disponible
-            const foundByUserId =
-              targetUserIdLower &&
-              userFields.some((field) => {
-                if (!field) return false;
-                const fieldLower = field.toString().toLowerCase();
-                return (
-                  fieldLower.includes(targetUserIdLower) ||
-                  targetUserIdLower.includes(fieldLower)
-                );
-              });
-
-            // Recherche spéciale dans les observations stockées localement
-            let foundInObservations = false;
+            // Recherche spéciale dans les observations stockées localement pour chaque dossier
             try {
               // Vérifier les observations stockées dans localStorage avec différentes clés possibles
               const observationKeys = [
@@ -2176,7 +2143,6 @@ document.addEventListener("DOMContentLoaded", function () {
               for (const key of observationKeys) {
                 const storedObservation = localStorage.getItem(key);
                 if (storedObservation && storedObservation.trim() !== "") {
-                  foundInObservations = true;
                   console.log(
                     `📝 [DEBUG] Observation trouvée avec clé ${key} pour livraison ${delivery.id}:`,
                     storedObservation
@@ -2193,68 +2159,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
               }
 
-              // Vérifier les champs d'observation de la livraison elle-même
-              if (
-                delivery.observation_acconier &&
-                delivery.observation_acconier.trim() !== ""
-              ) {
-                foundInObservations = true;
-                console.log(
-                  `📝 [DEBUG] Observation BD trouvée pour livraison ${delivery.id}:`,
-                  delivery.observation_acconier
-                );
-              }
-
-              // Vérifier les autres champs d'observation possibles
-              const observationFields = [
-                delivery.observation,
-                delivery.observations,
-                delivery.observation_acconier,
-                delivery.delivery_notes,
-                delivery.notes,
-                delivery.comments,
-                delivery.remarques,
-              ];
-
-              for (const obsField of observationFields) {
-                if (
-                  obsField &&
-                  obsField.toString().trim() !== "" &&
-                  obsField !== "-"
-                ) {
-                  foundInObservations = true;
-                  console.log(
-                    `📝 [DEBUG] Observation trouvée dans champ pour livraison ${delivery.id}:`,
-                    obsField
-                  );
-                  break;
-                }
-              }
-            } catch (e) {
-              // Ignorer les erreurs de parsing
-            }
-
-            const finalFound =
-              foundByName || foundByUserId || foundInObservations;
-
-            if (finalFound) {
-              console.log(
-                `✅ [DEBUG] Livraison trouvée pour ${targetUser}:`,
-                delivery.id,
-                {
-                  foundByName,
-                  foundByUserId,
-                  foundInObservations,
-                  observation: delivery.observation_acconier || "Aucune",
-                  employee_name: delivery.employee_name,
-                  matchingFields: userFields.filter(
-                    (f) =>
-                      f && f.toString().toLowerCase().includes(targetUserLower)
-                  ),
-                }
-              );
-
-              // 🔧 CORRECTION CRITIQUE : Stocker l'observation dans localStorage immédiatement
+              // 🔧 CORRECTION CRITIQUE : Stocker l'observation dans localStorage si elle existe
               if (
                 delivery.observation_acconier &&
                 delivery.observation_acconier.trim() !== "" &&
@@ -2266,10 +2171,15 @@ document.addEventListener("DOMContentLoaded", function () {
                   `💾 [STOCK OBSERVATION] Livraison ${delivery.id}: "${delivery.observation_acconier}" stockée dans localStorage`
                 );
               }
+            } catch (e) {
+              // Ignorer les erreurs de parsing
             }
-
-            return finalFound;
           });
+
+          // En mode admin, on garde TOUS les dossiers - pas de filtrage restrictif
+          console.log(
+            `[MODE ADMIN] Affichage de TOUS les dossiers: ${processedDeliveries.length} livraisons`
+          );
 
           console.log(
             `[MODE ADMIN] Filtrage pour l'utilisateur "${targetUser}": ${processedDeliveries.length} livraisons trouvées`
@@ -2966,6 +2876,41 @@ const AGENT_TABLE_COLUMNS = [
   { id: "container_status", label: "Statut Dossier " },
   { id: "observation", label: "Observation" },
 ];
+
+// 🎨 FONCTION POUR METTRE À JOUR LES STYLES DES OBSERVATIONS SELON LE THÈME
+function updateObservationCellsTheme() {
+  const isDarkMode =
+    document.documentElement.getAttribute("data-theme") === "dark";
+  const observationCells = document.querySelectorAll(".observation-col");
+
+  observationCells.forEach((cell) => {
+    if (isDarkMode) {
+      cell.style.backgroundColor = "#fbbf24"; // Jaune pour mode sombre
+      cell.style.color = "#1e293b"; // Texte sombre pour contraste
+    } else {
+      cell.style.backgroundColor = ""; // Retour au style par défaut
+      cell.style.color = "";
+    }
+  });
+}
+
+// 🎨 ÉCOUTER LES CHANGEMENTS DE THÈME
+const themeObserver = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (
+      mutation.type === "attributes" &&
+      mutation.attributeName === "data-theme"
+    ) {
+      updateObservationCellsTheme();
+    }
+  });
+});
+
+// Observer les changements sur l'élément html
+themeObserver.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ["data-theme"],
+});
 
 // --- SYSTÈME D'ÉDITION DU TABLEAU ---
 let isTableEditMode = false; // État global du mode édition
@@ -5311,6 +5256,15 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         if (col.id === "observation") {
           td.classList.add("observation-col");
           td.style.cursor = "pointer";
+
+          // 🎨 STYLE MODE SOMBRE : Appliquer la couleur jaune pour les observations en mode sombre
+          const isDarkMode =
+            document.documentElement.getAttribute("data-theme") === "dark";
+          if (isDarkMode) {
+            td.style.backgroundColor = "#fbbf24"; // Jaune pour mode sombre
+            td.style.color = "#1e293b"; // Texte sombre pour contraste
+          }
+
           // Ajouter les attributs pour la synchronisation WebSocket
           td.setAttribute("data-delivery-id", delivery.id);
           td.setAttribute("data-field", "observation");
@@ -5442,12 +5396,29 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             textarea.style.width = "100%";
             textarea.style.fontSize = "1em";
             textarea.style.padding = "2px 4px";
+
+            // 🎨 STYLE MODE SOMBRE : Appliquer les styles appropriés pour l'édition
+            const isDarkMode =
+              document.documentElement.getAttribute("data-theme") === "dark";
+            if (isDarkMode) {
+              textarea.style.backgroundColor = "#fbbf24"; // Jaune pour mode sombre
+              textarea.style.color = "#000000"; // Texte noir pour la saisie
+              textarea.style.border = "2px solid #f59e0b";
+            }
+
             async function saveObservation(val) {
               // Marquer temporairement la cellule comme en cours de sauvegarde
               td.setAttribute("data-saving", "true");
 
               td.textContent = val || "-";
               td.dataset.edited = "true";
+
+              // 🎨 RESTAURER LE STYLE MODE SOMBRE après sauvegarde
+              if (isDarkMode) {
+                td.style.backgroundColor = "#fbbf24"; // Retour au jaune
+                td.style.color = "#1e293b"; // Retour au texte sombre
+              }
+
               if (val && val.trim() !== "") {
                 localStorage.setItem(localKey, val.trim());
               } else {
