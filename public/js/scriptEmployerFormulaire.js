@@ -2689,53 +2689,244 @@ async function submitDeliveryForm(status) {
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%) scale(0);
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          background: linear-gradient(145deg, #10b981 0%, #059669 40%, #047857 100%);
           color: white;
-          padding: 24px 32px;
-          border-radius: 16px;
-          box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
+          padding: 32px 40px;
+          border-radius: 24px;
+          box-shadow: 
+            0 25px 50px rgba(16, 185, 129, 0.4),
+            0 15px 35px rgba(16, 185, 129, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
           z-index: 10000;
           display: flex;
           align-items: center;
-          gap: 16px;
-          font-family: Arial, sans-serif;
-          animation: popupShow 0.6s ease-out forwards;
+          gap: 20px;
+          font-family: 'Segoe UI', 'Arial', sans-serif;
+          animation: popup3DShow 1.2s cubic-bezier(0.23, 1, 0.320, 1) forwards;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          perspective: 1000px;
         `;
 
         popup.innerHTML = `
-          <div style="font-size: 2em; animation: checkSpin 0.8s ease-out;">✅</div>
-          <span style="font-size: 1.2em; font-weight: 600;">Ordre de livraison validé</span>
+          <div class="success-icon-container" style="
+            position: relative;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: icon3DEntrance 1.5s cubic-bezier(0.23, 1, 0.320, 1) forwards;
+          ">
+            <div class="icon-background" style="
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(145deg, #34d399, #10b981);
+              border-radius: 50%;
+              box-shadow: 
+                0 8px 32px rgba(16, 185, 129, 0.4),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+              animation: iconPulse 2s ease-in-out infinite;
+            "></div>
+            <i class="fas fa-check" style="
+              font-size: 28px;
+              color: white;
+              position: relative;
+              z-index: 2;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+              animation: checkMark 0.8s ease-out 0.4s both;
+            "></i>
+            <div class="sparkles" style="
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              pointer-events: none;
+            ">
+              <div class="sparkle" style="position: absolute; top: 10%; right: 10%; animation: sparkle 1.5s ease-in-out infinite;"></div>
+              <div class="sparkle" style="position: absolute; bottom: 15%; left: 15%; animation: sparkle 1.5s ease-in-out infinite 0.3s;"></div>
+              <div class="sparkle" style="position: absolute; top: 50%; left: -5%; animation: sparkle 1.5s ease-in-out infinite 0.6s;"></div>
+              <div class="sparkle" style="position: absolute; bottom: 50%; right: -5%; animation: sparkle 1.5s ease-in-out infinite 0.9s;"></div>
+            </div>
+          </div>
+          <div class="success-text" style="
+            animation: textSlideIn 1s ease-out 0.6s both;
+          ">
+            <div style="
+              font-size: 1.4em; 
+              font-weight: 700;
+              margin-bottom: 4px;
+              letter-spacing: 0.5px;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            ">Ordre de livraison validé</div>
+            <div style="
+              font-size: 0.9em;
+              opacity: 0.9;
+              font-weight: 400;
+            ">Votre demande a été traitée avec succès</div>
+          </div>
         `;
 
-        // Ajouter les animations CSS
+        // Ajouter les animations CSS 3D ultra-professionnelles
         const style = document.createElement("style");
         style.textContent = `
-          @keyframes popupShow {
+          @keyframes popup3DShow {
             0% { 
-              transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+              transform: translate(-50%, -50%) scale(0) rotateX(-90deg) rotateY(-45deg);
               opacity: 0;
+              filter: blur(10px);
             }
-            50% {
-              transform: translate(-50%, -50%) scale(1.1) rotate(0deg);
+            30% {
+              transform: translate(-50%, -50%) scale(0.3) rotateX(-30deg) rotateY(-15deg);
+              opacity: 0.3;
+              filter: blur(5px);
+            }
+            60% {
+              transform: translate(-50%, -50%) scale(1.05) rotateX(5deg) rotateY(2deg);
+              opacity: 0.9;
+              filter: blur(0px);
+            }
+            80% {
+              transform: translate(-50%, -50%) scale(0.98) rotateX(-2deg) rotateY(-1deg);
               opacity: 1;
             }
             100% { 
-              transform: translate(-50%, -50%) scale(1) rotate(0deg);
+              transform: translate(-50%, -50%) scale(1) rotateX(0deg) rotateY(0deg);
+              opacity: 1;
+              filter: blur(0px);
+            }
+          }
+          
+          @keyframes icon3DEntrance {
+            0% { 
+              transform: scale(0) rotateY(-180deg) rotateX(-90deg);
+              opacity: 0;
+            }
+            40% {
+              transform: scale(0.5) rotateY(-90deg) rotateX(-45deg);
+              opacity: 0.5;
+            }
+            70% {
+              transform: scale(1.2) rotateY(10deg) rotateX(5deg);
+              opacity: 0.9;
+            }
+            90% {
+              transform: scale(0.95) rotateY(-5deg) rotateX(-2deg);
+              opacity: 1;
+            }
+            100% { 
+              transform: scale(1) rotateY(0deg) rotateX(0deg);
               opacity: 1;
             }
           }
-          @keyframes checkSpin {
+          
+          @keyframes iconPulse {
+            0%, 100% { 
+              transform: scale(1);
+              box-shadow: 
+                0 8px 32px rgba(16, 185, 129, 0.4),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+            }
+            50% { 
+              transform: scale(1.05);
+              box-shadow: 
+                0 12px 40px rgba(16, 185, 129, 0.6),
+                inset 0 2px 0 rgba(255, 255, 255, 0.4),
+                inset 0 -2px 0 rgba(0, 0, 0, 0.15);
+            }
+          }
+          
+          @keyframes checkMark {
             0% { 
-              transform: scale(0) rotate(0deg);
+              transform: scale(0) rotate(-45deg);
               opacity: 0;
             }
             50% {
-              transform: scale(1.3) rotate(180deg);
-              opacity: 1;
+              transform: scale(1.3) rotate(0deg);
+              opacity: 0.8;
             }
             100% { 
-              transform: scale(1) rotate(360deg);
+              transform: scale(1) rotate(0deg);
               opacity: 1;
+            }
+          }
+          
+          @keyframes textSlideIn {
+            0% { 
+              transform: translateX(30px) rotateY(45deg);
+              opacity: 0;
+              filter: blur(5px);
+            }
+            60% {
+              transform: translateX(-5px) rotateY(-5deg);
+              opacity: 0.8;
+              filter: blur(1px);
+            }
+            100% { 
+              transform: translateX(0) rotateY(0deg);
+              opacity: 1;
+              filter: blur(0px);
+            }
+          }
+          
+          @keyframes sparkle {
+            0%, 100% { 
+              opacity: 0;
+              transform: scale(0) rotate(0deg);
+            }
+            50% { 
+              opacity: 1;
+              transform: scale(1) rotate(180deg);
+            }
+          }
+          
+          .sparkle {
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #fbbf24 0%, #f59e0b 50%, transparent 70%);
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fbbf24;
+          }
+          
+          .sparkle::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 8px;
+            background: linear-gradient(to bottom, #fbbf24, transparent);
+            transform: translate(-50%, -50%);
+          }
+          
+          .sparkle::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 2px;
+            background: linear-gradient(to right, #fbbf24, transparent);
+            transform: translate(-50%, -50%);
+          }
+          
+          @keyframes popup3DFadeOut {
+            0% { 
+              transform: translate(-50%, -50%) scale(1) rotateX(0deg) rotateY(0deg);
+              opacity: 1;
+              filter: blur(0px);
+            }
+            30% {
+              transform: translate(-50%, -50%) scale(1.1) rotateX(10deg) rotateY(5deg);
+              opacity: 0.8;
+              filter: blur(1px);
+            }
+            100% { 
+              transform: translate(-50%, -50%) scale(0) rotateX(90deg) rotateY(45deg);
+              opacity: 0;
+              filter: blur(10px);
             }
           }
         `;
@@ -2747,15 +2938,16 @@ async function submitDeliveryForm(status) {
 
         document.body.appendChild(popup);
 
-        // Supprimer le popup après 3 secondes
+        // Supprimer le popup après 4.5 secondes (plus long pour profiter de la belle animation)
         setTimeout(() => {
-          popup.style.animation = "popupShow 0.3s ease-in reverse";
+          popup.style.animation =
+            "popup3DFadeOut 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards";
           setTimeout(() => {
             if (popup.parentNode) {
               popup.parentNode.removeChild(popup);
             }
-          }, 300);
-        }, 3000);
+          }, 800);
+        }, 4500);
       }, 100);
 
       // Rafraîchit la liste des agents côtés suivi après succès serveur
