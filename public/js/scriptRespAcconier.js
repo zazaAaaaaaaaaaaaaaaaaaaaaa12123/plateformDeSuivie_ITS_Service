@@ -132,6 +132,7 @@ function afficherDetailsDossier(dossier) {
     container_number: "Numéro TC",
     client_name: "Nom du client",
     client: "Client",
+    status: "Statut",
     date_mise_en_liv: "Date de mise en livraison",
     dossier_number: "Numéro de dossier",
     bl_number: "Numéro de BL",
@@ -153,6 +154,7 @@ function afficherDetailsDossier(dossier) {
     driver_phone: "Téléphone du chauffeur",
     transporter: "Transporteur",
     weight: "Poids",
+    delivery_status_acconier: "Statut de livraison",
     ship_name: "Nom du navire",
     number_of_containers: "Nombre de conteneurs",
     container_foot_type: "Type de conteneur (pieds)",
@@ -189,7 +191,21 @@ function afficherDetailsDossier(dossier) {
     "delivery_status_acconier",
     "Statut de livraison",
     "status",
+    "container_statuses_map",
+    "bl_statuses_map",
+    "container_foot_types",
+    "[object Object]",
   ];
+
+  // Fonction pour vérifier si une valeur doit être exclue
+  const shouldExcludeValue = (value, key) => {
+    if (!value) return true;
+    if (typeof value === "object") return true;
+    if (String(value) === "[object Object]") return true;
+    if (excludedFields.includes(key)) return true;
+    if (excludedFields.includes(String(value))) return true;
+    return false;
+  };
 
   // Filtrer et ordonner les champs que nous voulons afficher
   const fieldsToShow = [
@@ -201,7 +217,10 @@ function afficherDetailsDossier(dossier) {
     "date_paiement_acconage",
     "bl_number",
     "container_number",
+    "container_type_and_content",
+    "container_foot_type",
     "shipping_company",
+    "ship_name",
     "declaration_number",
     "lieu",
     "transporter_mode",
@@ -217,6 +236,7 @@ function afficherDetailsDossier(dossier) {
               dossier.hasOwnProperty(key) &&
               dossier[key] !== null &&
               dossier[key] !== undefined &&
+              dossier[key] !== "[object Object]" &&
               !excludedFields.includes(key) &&
               !excludedFields.includes(keyTranslations[key])
           )
