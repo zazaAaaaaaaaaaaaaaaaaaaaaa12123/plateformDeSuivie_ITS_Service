@@ -659,6 +659,8 @@ function voirDetailsDossier(dossier) {
     "delivery_status_acconier",
     "Statut de livraison",
     "statut_livraison",
+    "mise_en_livraison_acconier",
+    "Delivery Status Acconier",
 
     // Versions anglaises des propriétés (pour éviter les doublons)
     "Status",
@@ -694,7 +696,6 @@ function voirDetailsDossier(dossier) {
     "dossier_number", // Numéro de dossier
     "employee_name", // Agent
     "client_name", // Client
-    "statut", // Statut
     "container_number", // Numéro TC
     "container_type_and_content", // Type et contenu
     "container_foot_type", // Type de conteneur
