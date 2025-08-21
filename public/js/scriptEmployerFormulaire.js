@@ -186,34 +186,43 @@ window.displayAgentHistory = async function (agentKey = "Agent Acconier") {
   const historyContainer = document.getElementById("historySidebarList");
   if (!historyContainer) return;
 
-  // Charge les données d'historique depuis le serveur
-  const deliveries = await loadDeliveryHistory();
+  try {
+    // Charge les données d'historique depuis le serveur
+    const deliveries = await loadDeliveryHistory();
 
-  if (!deliveries || deliveries.length === 0) {
-    historyContainer.innerHTML =
-      '<div class="text-gray-500" style="padding:32px 0;text-align:center;font-size:1.15em;">Aucun ordre de livraison enregistré.</div>';
-    return;
-  }
-  let html = "";
-  agentHistory.forEach((item) => {
-    html += `<div style="background:#f1f5f9;margin-bottom:12px;padding:14px 18px;border-radius:10px;box-shadow:0 1px 6px #2563eb11;">
+    if (!deliveries || deliveries.length === 0) {
+      historyContainer.innerHTML =
+        '<div class="text-gray-500" style="padding:32px 0;text-align:center;font-size:1.15em;">Aucun ordre de livraison enregistré.</div>';
+      return;
+    }
+
+    // Trie les livraisons par date décroissante (plus récent en premier)
+    deliveries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    let html = "";
+    deliveries.forEach((item) => {
+      html += `<div style="background:#f1f5f9;margin-bottom:12px;padding:14px 18px;border-radius:10px;box-shadow:0 1px 6px #2563eb11;">
         <div style="font-weight:600;color:#2563eb;font-size:1.08em;margin-bottom:2px;">${
-          item.data.clientName || "-"
+          item.clientName || "-"
         } <span style="color:#334155;font-weight:400;font-size:0.98em;">(${
-      item.data.containerNumbers ? item.data.containerNumbers.join(", ") : "-"
-    })</span></div>
-        <div style="font-size:0.97em;color:#334155;">${
-          item.data.lieu || "-"
-        } | ${item.date || "-"} </div>
+        item.containerNumber || "-"
+      })</span></div>
+        <div style="font-size:0.97em;color:#334155;">${item.lieu || "-"} | ${
+        item.date || "-"
+      } </div>
         <div style="font-size:0.93em;color:#64748b;margin-top:2px;">BL: ${
-          item.data.blNumber || "-"
-        } | Déclaration: ${item.data.declarationNumber || "-"} | Mode: ${
-      item.data.transporterMode || "-"
-    } </div>
+          item.blNumber || "-"
+        } | Déclaration: ${item.declarationNumber || "-"} | Mode: ${
+        item.transporterMode || "-"
+      } </div>
       </div>`;
-  });
-  historyContainer.innerHTML = html;
-  historyContainer.innerHTML = html;
+    });
+    historyContainer.innerHTML = html;
+  } catch (error) {
+    console.error("Erreur lors de l'affichage de l'historique:", error);
+    historyContainer.innerHTML =
+      '<div class="text-red-500" style="padding:32px 0;text-align:center;font-size:1.15em;">Erreur lors du chargement de l\'historique.</div>';
+  }
 };
 
 /**
