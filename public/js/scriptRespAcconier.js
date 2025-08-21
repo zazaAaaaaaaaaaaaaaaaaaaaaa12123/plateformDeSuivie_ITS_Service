@@ -154,6 +154,7 @@ function afficherDetailsDossier(dossier) {
     driver_phone: "Téléphone du chauffeur",
     transporter: "Transporteur",
     weight: "Poids",
+    delivery_status_acconier: "Statut de livraison",
     ship_name: "Nom du navire",
     number_of_containers: "Nombre de conteneurs",
     container_foot_type: "Type de conteneur (pieds)",
@@ -161,6 +162,7 @@ function afficherDetailsDossier(dossier) {
     lieu: "Lieu",
     created_at: "Date de création",
     transporter_mode: "Mode de transport",
+    container_type_and_content: "Type et contenu du conteneur",
   };
 
   // Fonction pour formater les dates
@@ -188,19 +190,11 @@ function afficherDetailsDossier(dossier) {
     "Statuts des conteneurs",
     "delivery_status_acconier",
     "Statut de livraison",
-    "Statut de Livraison",
     "status",
-    "statut",
     "container_statuses_map",
     "bl_statuses_map",
     "container_foot_types",
     "[object Object]",
-    "mise_en_livraison_acconier",
-    "statut_livraison",
-    "delivery_status_acconier_fr",
-    "Status",
-    "Delivery Status",
-    "Delivery Status Acconier",
   ];
 
   // Fonction pour vérifier si une valeur doit être exclue
@@ -213,23 +207,24 @@ function afficherDetailsDossier(dossier) {
     return false;
   };
 
-  // Seuls ces champs seront affichés, dans cet ordre
+  // Filtrer et ordonner les champs que nous voulons afficher
   const fieldsToShow = [
     "dossier_number",
     "client_name",
-    "container_number",
-    "container_type_and_content",
-    "container_foot_type",
-    "lieu",
     "date_echange_bl",
-    "bl_number",
-    "declaration_number",
-    "shipping_company",
-    "ship_name",
-    "observation_acconier",
     "date_do",
     "date_badt",
     "date_paiement_acconage",
+    "bl_number",
+    "container_number",
+    "container_type_and_content",
+    "container_foot_type",
+    "shipping_company",
+    "ship_name",
+    "declaration_number",
+    "lieu",
+    "transporter_mode",
+    "observation_acconier",
   ];
 
   const html = `
@@ -243,20 +238,9 @@ function afficherDetailsDossier(dossier) {
               dossier[key] !== undefined &&
               dossier[key] !== "[object Object]" &&
               !excludedFields.includes(key) &&
-              !excludedFields.includes(keyTranslations[key]) &&
-              !String(key).toLowerCase().includes("status") &&
-              !String(key).toLowerCase().includes("statut") &&
-              !String(dossier[key]).toLowerCase().includes("mise_en_livraison")
+              !excludedFields.includes(keyTranslations[key])
           )
           .map((key) => {
-            // Ignorer explicitement les champs de statut
-            if (
-              key.includes("status") ||
-              key.includes("statut") ||
-              String(dossier[key]).includes("mise_en_livraison")
-            ) {
-              return "";
-            }
             const translatedKey = keyTranslations[key] || key;
             const isDateField = key.toLowerCase().includes("date");
             const displayValue = isDateField
