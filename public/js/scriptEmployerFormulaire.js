@@ -3041,21 +3041,38 @@ async function submitDeliveryForm(status) {
 
       // Affichage immédiat d'un message de confirmation simple avec animation
       setTimeout(() => {
-        const confirmationMessage = `
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="
-              animation: checkmark-bounce 0.6s ease-in-out;
-              font-size: 1.5em;
-            ">✅</div>
-            <span style="font-size: 1.1em; font-weight: 600;">Ordre de livraison validé</span>
-          </div>
-          <style>
+        // Ajouter l'animation CSS au document s'il n'existe pas déjà
+        if (!document.getElementById("checkmark-animation-style")) {
+          const style = document.createElement("style");
+          style.id = "checkmark-animation-style";
+          style.textContent = `
             @keyframes checkmark-bounce {
-              0% { transform: scale(0) rotate(0deg); }
-              50% { transform: scale(1.3) rotate(180deg); }
-              100% { transform: scale(1) rotate(360deg); }
+              0% { 
+                transform: scale(0) rotate(0deg); 
+                opacity: 0;
+              }
+              50% { 
+                transform: scale(1.3) rotate(180deg); 
+                opacity: 1;
+              }
+              100% { 
+                transform: scale(1) rotate(360deg); 
+                opacity: 1;
+              }
             }
-          </style>
+            .checkmark-animated {
+              animation: checkmark-bounce 0.8s ease-in-out;
+              display: inline-block;
+            }
+          `;
+          document.head.appendChild(style);
+        }
+
+        const confirmationMessage = `
+          <div style="display: flex; align-items: center; gap: 12px; padding: 8px;">
+            <div class="checkmark-animated" style="font-size: 1.8em;">✅</div>
+            <span style="font-size: 1.1em; font-weight: 600; color: #065f46;">Ordre de livraison validé</span>
+          </div>
         `;
 
         displayMessage(formSuccessDisplay, confirmationMessage, "success");
