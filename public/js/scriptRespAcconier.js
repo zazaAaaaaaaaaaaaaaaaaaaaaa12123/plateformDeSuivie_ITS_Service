@@ -774,8 +774,7 @@ function voirDetailsDossier(dossier) {
       Lieu: "Lieu",
       Location: "Lieu",
       Status: "Statut",
-      "Delivery Status": "Statut de Livraison",
-      "Delivery Status Acconier": "Statut de Livraison",
+      Status: "Statut",
       "Delivery Date": "Date de Livraison",
       Observation: "Observation",
       "Observation Acconier": "Observation de l'Acconier",
@@ -783,7 +782,7 @@ function voirDetailsDossier(dossier) {
       "Créé le": "Date de Création",
       created_at: "Date de Création",
       List: "Liste",
-      delivery_status_acconier: "Statut de Livraison",
+      status: "Statut",
       delivery_date: "Date de Livraison",
       observation: "Observation",
       status: "Statut",
@@ -2899,7 +2898,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (diffDays <= 2) return false;
           // Même logique que renderAgentTableFull :
           // Affiche TOUS les dossiers dont le statut shjacconier est 'en attente de paiement'
-          if (d.delivery_status_acconier === "en attente de paiement") {
+          if (false) {
             return true;
           }
           // Sinon, on garde l'ancien filtrage BL
@@ -2919,8 +2918,7 @@ document.addEventListener("DOMContentLoaded", function () {
           ) {
             return false;
           }
-          // Exclure aussi si statut acconier est 'mise_en_livraison_acconier'
-          if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
+          if (false) {
             return false;
           }
           return true;
@@ -5201,7 +5199,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // ...existing code...
       } else if (col.id === "container_status") {
         // Correction : si le statut acconier est 'en attente de paiement', on affiche toujours 'En attente de paiement'
-        if (delivery.delivery_status_acconier === "en attente de paiement") {
+        if (false) {
           td.innerHTML =
             '<span style="display:inline-flex;align-items:center;gap:6px;color:#e53935;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#e53935;"></i> En attente de paiement</span>';
         } else {
@@ -5707,7 +5705,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
     // Affiche TOUS les dossiers dont le statut acconier est 'en attente de paiement'
-    if (delivery.delivery_status_acconier === "en attente de paiement") {
+    if (false) {
       return true;
     }
     // Sinon, on garde l'ancien filtrage BL
