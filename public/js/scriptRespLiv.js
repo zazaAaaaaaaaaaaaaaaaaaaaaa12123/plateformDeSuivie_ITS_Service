@@ -2650,7 +2650,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       // Champs obligatoires à vérifier
       const requiredFields = [
         "visitor_agent_name",
-        "transporter", 
+        "transporter",
         "inspector",
         "customs_agent",
         "driver",
@@ -2665,28 +2665,41 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         }_${colId}`;
       }
 
-      console.log(`[VALIDATION] ⚠️ VÉRIFICATION STRICTE pour la livraison ${delivery.id || delivery.dossier_number}`);
+      console.log(
+        `[VALIDATION] ⚠️ VÉRIFICATION STRICTE pour la livraison ${
+          delivery.id || delivery.dossier_number
+        }`
+      );
 
       // Vérifier chaque champ obligatoire - VALIDATION STRICTE
       for (const fieldId of requiredFields) {
         const storageKey = getStorageKey(delivery, fieldId, deliveryIndex);
         const savedValue = localStorage.getItem(storageKey);
-        
+
         console.log(`[VALIDATION] Champ ${fieldId}:`);
         console.log(`  - Clé de stockage: ${storageKey}`);
         console.log(`  - Valeur sauvegardée: "${savedValue}"`);
 
         // VALIDATION STRICTE : On vérifie UNIQUEMENT ce qui a été saisi par l'utilisateur
         // Si rien n'est sauvegardé dans localStorage, le champ est considéré comme vide
-        if (!savedValue || savedValue.trim() === "" || savedValue === "-" || savedValue === "null") {
+        if (
+          !savedValue ||
+          savedValue.trim() === "" ||
+          savedValue === "-" ||
+          savedValue === "null"
+        ) {
           console.log(`[VALIDATION] ❌ CHAMP MANQUANT: ${fieldId}`);
           return false;
         }
-        
+
         console.log(`[VALIDATION] ✅ Champ ${fieldId} OK`);
       }
 
-      console.log(`[VALIDATION] ✅ TOUS LES CHAMPS OBLIGATOIRES SONT REMPLIS pour la livraison ${delivery.id || delivery.dossier_number}`);
+      console.log(
+        `[VALIDATION] ✅ TOUS LES CHAMPS OBLIGATOIRES SONT REMPLIS pour la livraison ${
+          delivery.id || delivery.dossier_number
+        }`
+      );
       return true;
     }
     // Gestion dynamique du message d'accès
@@ -3222,17 +3235,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               }
             }
 
-                // Permettre la modification si :
-                // 1. Tous les champs obligatoires sont remplis OU
-                // 2. La livraison a déjà été activée (même si conteneur remis à "aucun") OU
-                // 3. Le conteneur a un historique de statut
-                if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
-                  showAccessMessage(
-                    "🚫 ACCÈS REFUSÉ 🚫\n\nVous DEVEZ d'abord remplir TOUS les champs obligatoires :\n• NOM Agent visiteurs\n• TRANSPORTEUR\n• INSPECTEUR\n• AGENT EN DOUANES\n• CHAUFFEUR\n• TEL CHAUFFEUR\n• DATE LIVRAISON\n\nSans exception !",
-                    "red"
-                  );
-                  return;
-                }
+            // Permettre la modification si :
+            // 1. Tous les champs obligatoires sont remplis OU
+            // 2. La livraison a déjà été activée (même si conteneur remis à "aucun") OU
+            // 3. Le conteneur a un historique de statut
+            if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
+              showAccessMessage(
+                "🚫 ACCÈS REFUSÉ 🚫\n\nVous DEVEZ d'abord remplir TOUS les champs obligatoires :\n• NOM Agent visiteurs\n• TRANSPORTEUR\n• INSPECTEUR\n• AGENT EN DOUANES\n• CHAUFFEUR\n• TEL CHAUFFEUR\n• DATE LIVRAISON\n\nSans exception !",
+                "red"
+              );
+              return;
+            }
 
             showContainerDetailPopup(delivery, tcList[0]);
           };
