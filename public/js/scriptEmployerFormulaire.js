@@ -150,23 +150,44 @@ function resetUsedBLNumbers() {
  * @param {string} agentKey - Le nom de l'agent (ex: "Agent Acconier")
  */
 window.displayAgentHistory = function (agentKey = "Agent Acconier") {
-  const historyContainer = document.getElementById("historySidebarList");
-  if (!historyContainer) return;
+  // Cherche d'abord le conteneur de la sidebar
+  let historyContainer = document.getElementById("historySidebarList");
+
+  // Si le conteneur n'existe pas, on ne fait rien car il sera créé plus tard par la sidebar
+  if (!historyContainer) {
+    console.log("Conteneur historique non trouvé, sera créé avec la sidebar");
+    return;
+  }
+
   const historyKey = "simulatedHistoryData";
   let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
   let agentHistory = historyData[agentKey] || [];
-  if (agentHistory.length === 0) {
+
+  // Filtrer les données valides (comme dans renderHistorySidebarList)
+  let filteredHistory = agentHistory.filter((item) => {
+    return item && item.data && typeof item.data === "object" && item.date;
+  });
+
+  if (filteredHistory.length === 0) {
     historyContainer.innerHTML =
-      '<div class="text-gray-500" style="padding:32px 0;text-align:center;font-size:1.15em;">Aucun ordre de livraison enregistré.</div>';
+      '<div style="color:#64748b;text-align:center;margin-top:30px;font-size:1.15em;">Aucun ordre de livraison enregistré.</div>';
     return;
   }
+
   let html = "";
-  agentHistory.forEach((item) => {
+  filteredHistory.slice(0, 10).forEach((item) => {
+    // Limite à 10 éléments pour l'affichage simple
+    // Assure-toi que containerNumbers est un tableau
+    let containerNumbers = item.data.containerNumbers || [];
+    if (typeof containerNumbers === "string") {
+      containerNumbers = containerNumbers.split(",").map((s) => s.trim());
+    }
+
     html += `<div style="background:#f1f5f9;margin-bottom:12px;padding:14px 18px;border-radius:10px;box-shadow:0 1px 6px #2563eb11;">
         <div style="font-weight:600;color:#2563eb;font-size:1.08em;margin-bottom:2px;">${
           item.data.clientName || "-"
         } <span style="color:#334155;font-weight:400;font-size:0.98em;">(${
-      item.data.containerNumbers ? item.data.containerNumbers.join(", ") : "-"
+      containerNumbers.length > 0 ? containerNumbers.join(", ") : "-"
     })</span></div>
         <div style="font-size:0.97em;color:#334155;">${
           item.data.lieu || "-"
@@ -334,8 +355,36 @@ window.saveAcconierUserToLocalStorage = function (acconier) {
 
 // Initialisation de l'affichage historique et avatar au chargement
 document.addEventListener("DOMContentLoaded", () => {
+  // Debug : vérifier les données d'historique au chargement
+  const historyKey = "simulatedHistoryData";
+  const currentHistory = JSON.parse(localStorage.getItem(historyKey)) || {};
+  console.log("🔍 Vérification historique au chargement:", currentHistory);
+  console.log(
+    "📈 Nombre d'ordres pour Agent Acconier:",
+    currentHistory["Agent Acconier"]
+      ? currentHistory["Agent Acconier"].length
+      : 0
+  );
+
   window.displayAgentHistory && window.displayAgentHistory("Agent Acconier");
   window.displayProfileAvatar && window.displayProfileAvatar();
+
+  // Mise à jour de l'affichage de l'historique au chargement
+  setTimeout(() => {
+    if (window.renderHistorySidebarList) {
+      window.renderHistorySidebarList();
+    }
+    // Force l'affichage de l'historique dans la sidebar
+    if (window.displayAgentHistory) {
+      window.displayAgentHistory("Agent Acconier");
+    }
+
+    // Vérifie si le bouton historique doit être affiché
+    updateHistoryBtnVisibility();
+
+    console.log("✅ Affichage historique initialisé");
+  }, 100);
+
   // Affiche directement le formulaire d'ordre de livraison
   const deliveryFormSection = document.getElementById("deliveryFormSection");
   if (deliveryFormSection) {
@@ -2258,7 +2307,9 @@ async function submitDeliveryForm(status) {
           ", "
         )} (${containerFootType})`;
         const newOperation = {
-          id: `form-op-${Date.now()}`,
+          id: `form-op-${Date.now()}-${Math.random()
+            .toString(36)
+            .substr(2, 9)}`, // ID plus unique
           date: dateStr,
           details: details,
           data: {
@@ -2283,11 +2334,32 @@ async function submitDeliveryForm(status) {
             dossierNumber: finalDossierNumber,
           },
         };
+
+        // Ajouter au début de la liste (plus récent en premier)
         historyData[historyAgentKey].unshift(newOperation);
+
+        // Limiter l'historique à 100 entrées maximum pour éviter un localStorage trop volumineux
+        if (historyData[historyAgentKey].length > 100) {
+          historyData[historyAgentKey] = historyData[historyAgentKey].slice(
+            0,
+            100
+          );
+        }
+
+        // Sauvegarder dans localStorage
         localStorage.setItem(historyKey, JSON.stringify(historyData));
-        localStorage.setItem(historyKey, JSON.stringify(historyData));
+
+        // Log de confirmation
+        console.log("✅ Nouvel ordre ajouté à l'historique:", newOperation);
+        console.log(
+          "📊 Total ordres dans l'historique:",
+          historyData[historyAgentKey].length
+        );
       } catch (e) {
-        console.warn("Impossible d'ajouter à l'historique Agent Acconier :", e);
+        console.warn(
+          "❌ Impossible d'ajouter à l'historique Agent Acconier :",
+          e
+        );
       }
       // --- FIN AJOUT HISTORIQUE ---
       // DEBUG : Affiche le contenu du localStorage juste après ajout
@@ -2298,9 +2370,11 @@ async function submitDeliveryForm(status) {
       // --- Mise à jour immédiate de l'affichage historique (sidebar et liste) ---
       // Correction : on force le rafraîchissement de l'historique et on s'assure que le conteneur est visible
       setTimeout(function () {
+        // Mise à jour de la sidebar historique
         if (typeof window.renderHistorySidebarList === "function") {
           window.renderHistorySidebarList();
         }
+        // Mise à jour de l'affichage principal de l'historique
         if (window.displayAgentHistory) {
           window.displayAgentHistory("Agent Acconier");
         }
@@ -2310,9 +2384,20 @@ async function submitDeliveryForm(status) {
           historyContainer.style.display = "";
           historyContainer.classList.remove("hidden");
         }
+
+        // Ajout : mise à jour du bouton d'historique pour montrer qu'il y a des données
+        updateHistoryBtnVisibility();
+
+        // Logs de debug pour vérifier
+        console.log("Historique mis à jour après soumission");
+        const historyKey = "simulatedHistoryData";
+        const currentHistory =
+          JSON.parse(localStorage.getItem(historyKey)) || {};
+        console.log("Données historique actuelles:", currentHistory);
       }, 200);
       deliveryForm.reset();
-      // Après le reset, remettre le nom duihlde l'agent connecté dans le champ même s'il est disabled
+
+      // Après le reset, remettre le nom de l'agent connecté dans le champ même s'il est disabled
       let acconier = JSON.parse(localStorage.getItem("acconier_user")) || {};
       if (employeeNameInput && acconier.nom) {
         // On active temporairement le champ si désactivé
@@ -2321,6 +2406,23 @@ async function submitDeliveryForm(status) {
         employeeNameInput.value = acconier.nom;
         if (wasDisabled) employeeNameInput.disabled = true;
       }
+
+      // Affichage immédiat d'un message de confirmation avec les détails
+      setTimeout(() => {
+        const confirmationMessage = `✅ Ordre de livraison validé avec succès !
+        
+📋 Détails :
+• Client : ${clientName}
+• Conteneurs : ${containerNumbers.join(", ")}
+• Lieu : ${lieu}
+• BL : ${finalBlNumber || "Non spécifié"}
+• Déclaration : ${declarationNumber}
+
+L'ordre a été ajouté à votre historique.`;
+
+        displayMessage(formSuccessDisplay, confirmationMessage, "success");
+      }, 100);
+
       // Rafraîchit la liste des agents côtés suivi après succès serveur
       if (window.loadDeliveries) {
         window.loadDeliveries();
