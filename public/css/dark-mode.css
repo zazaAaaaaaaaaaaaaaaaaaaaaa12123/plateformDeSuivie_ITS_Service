@@ -1,0 +1,278 @@
+/* Mode sombre pour toute l'application */
+:root {
+  /* Variables pour le mode clair */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border-light: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-yellow: #f59e0b;
+  --accent-red: #ef4444;
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+}
+
+/* Variables pour le mode sombre */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #334155;
+  --text-primary: #ffffff;
+  --text-secondary: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border-light: #475569;
+  --border-medium: #64748b;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-yellow: #f59e0b;
+  --accent-red: #ef4444;
+  --shadow-light: rgba(0, 0, 0, 0.3);
+  --shadow-medium: rgba(0, 0, 0, 0.5);
+}
+
+/* Application des variables au body et éléments principaux */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Formulaires et inputs */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="password"],
+textarea,
+select {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-medium) !important;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="tel"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #475569 !important;
+}
+
+/* Focus states pour les inputs */
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Labels et textes */
+label {
+  color: var(--text-primary);
+}
+
+/* Numéros TC en vert */
+.tc-number {
+  color: var(--accent-green) !important;
+  font-weight: 600;
+}
+
+/* Messages de validation en vert */
+.validation-message,
+.success-message {
+  color: var(--accent-green) !important;
+}
+
+/* Messages de statut en jaune */
+.status-message,
+.warning-message {
+  color: var(--accent-yellow) !important;
+}
+
+/* Messages d'erreur en rouge */
+.error-message {
+  color: var(--accent-red) !important;
+}
+
+/* Cards et containers */
+.card,
+.container,
+.form-section {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+/* Boutons */
+button {
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"]
+  button:not(.btn-primary):not(.btn-success):not(.btn-warning):not(
+    .btn-danger
+  ) {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+/* Mode sombre pour la sidebar */
+[data-theme="dark"] #mobileHistorySidebar {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-light) !important;
+}
+
+[data-theme="dark"] #mobileHistorySidebar .sidebar-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+}
+
+[data-theme="dark"] #mobileHistorySidebar .search-section,
+[data-theme="dark"] #mobileHistorySidebar .controls-section {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-light) !important;
+}
+
+[data-theme="dark"] #mobileHistorySidebar .order-item {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 80%,
+    rgba(59, 130, 246, 0.1) 100%
+  ) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Overlay mode sombre */
+[data-theme="dark"] #mobileHistoryOverlay {
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Icône mode sombre */
+.dark-mode-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--bg-card);
+  border: 2px solid var(--border-medium);
+  color: var(--text-primary);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.dark-mode-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px var(--shadow-medium);
+}
+
+/* Animation pour le toggle */
+.dark-mode-toggle .icon {
+  transition: transform 0.3s ease;
+}
+
+.dark-mode-toggle:hover .icon {
+  transform: rotate(180deg);
+}
+
+/* Tables mode sombre */
+[data-theme="dark"] table {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] th,
+[data-theme="dark"] td {
+  border-color: var(--border-light);
+}
+
+[data-theme="dark"] thead {
+  background-color: var(--bg-secondary);
+}
+
+/* Modals mode sombre */
+[data-theme="dark"] .modal-content {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+[data-theme="dark"] .modal-header {
+  border-color: var(--border-light);
+  background-color: var(--bg-secondary);
+}
+
+[data-theme="dark"] .modal-footer {
+  border-color: var(--border-light);
+  background-color: var(--bg-secondary);
+}
+
+/* Dropdowns mode sombre */
+[data-theme="dark"] .dropdown-menu {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* Navbar et navigation */
+[data-theme="dark"] .navbar {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-light);
+}
+
+[data-theme="dark"] .nav-link {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .nav-link:hover {
+  color: var(--text-primary) !important;
+}
+
+/* Personnalisation des scrollbars en mode sombre */
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Transitions globales pour un changement fluide */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease,
+    border-color 0.3s ease;
+}

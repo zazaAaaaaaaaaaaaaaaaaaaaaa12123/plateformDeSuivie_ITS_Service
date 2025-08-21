@@ -471,14 +471,7 @@ window.createMobileHistorySidebar = function () {
 
     // Formater la date correctement avec notre fonction utilitaire
     const formattedDate = window.formatOrderDate
-      ? window.formatOrderDate(orderDate) +
-        " " +
-        (orderDate
-          ? new Date(orderDate).toLocaleTimeString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "")
+      ? window.formatOrderDate(orderDate)
       : "Non spécifiée";
 
     // Créer le contenu pour les conteneurs (menu déroulant si plus d'un)
@@ -1213,482 +1206,129 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Ajout de la sidebar historique cachée (toujours dans le DOM, mais cachée) + overlay ---
-  let sidebar = document.getElementById("historySidebarFormulaire");
-  let sidebarOverlay = document.getElementById("historySidebarOverlay");
-  if (!sidebarOverlay) {
-    sidebarOverlay = document.createElement("div");
-    sidebarOverlay.id = "historySidebarOverlay";
-    sidebarOverlay.style.position = "fixed";
-    sidebarOverlay.style.top = "0";
-    sidebarOverlay.style.left = "0";
-    sidebarOverlay.style.width = "100vw";
-    sidebarOverlay.style.height = "100vh";
-    sidebarOverlay.style.background = "rgba(30,41,59,0.18)";
-    sidebarOverlay.style.zIndex = "1999";
-    sidebarOverlay.style.display = "none";
-    sidebarOverlay.style.pointerEvents = "auto";
-    document.body.appendChild(sidebarOverlay);
-  }
-  if (!sidebar) {
-    sidebar = document.createElement("div");
-    sidebar.id = "historySidebarFormulaire";
-    sidebar.style.position = "fixed";
-    sidebar.style.top = "0";
-    sidebar.style.right = "-420px";
-    sidebar.style.width = "370px";
-    sidebar.style.height = "100vh";
-    sidebar.style.background = "#fff";
-    sidebar.style.boxShadow = "-4px 0 24px #2563eb22";
-    sidebar.style.zIndex = "2000";
-    sidebar.style.transition = "right 0.32s cubic-bezier(.4,1.3,.5,1)";
-    sidebar.style.display = "flex";
-    sidebar.style.flexDirection = "column";
-    sidebar.style.padding = "0";
-    sidebar.innerHTML = `
-      <!-- En-tête avec titre et bouton fermer -->
-      <div style='display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px 18px;border-bottom:1px solid #e2e8f0;background:linear-gradient(135deg, #1e293b 0%, #334155 100%);'>
-        <h3 style='margin:0;font-weight:700;font-size:1em;color:#ffffff;letter-spacing:-0.3px;'>📋 Historique ordres de livraison</h3>
-        <button id='closeHistorySidebarBtn' style='background:rgba(212, 144, 6, 0.1);border:1px solid rgba(255,255,255,0.2);color:#e2e8f0;cursor:pointer;padding:6px;border-radius:4px;width:28px;height:28px;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;' title="Fermer">
-          <i class='fas fa-times'></i>
-        </button>
-      </div>  
-      
-      <!-- Champ de recherche compact -->
-      <div style='padding:12px 16px 8px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;'>
-        <div style='position:relative;'>
-          <i class='fas fa-search' style='position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:0.8em;z-index:1;'></i>
-          <input type='text' id='historySearchInput' placeholder='Rechercher...' style='width:100%;padding:8px 12px 8px 32px;border:1px solid #d1d5db;border-radius:6px;font-size:0.85em;background:#ffffff;outline:none;transition:border-color 0.2s ease;box-sizing:border-box;'>
-        </div>
-      </div>
-      
-      <!-- Contrôles de sélection -->
-      <div style='padding:8px 16px;background:#ffffff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:8px;'>
-        <div style='display:flex;align-items:center;gap:8px;'>
-          <label style='display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85em;color:#374151;'>
-            <input type='checkbox' id='selectAllOrders' style='accent-color:#3b82f6;'>
-            <span>Sélectionner tout</span>
-          </label>
-          <span id='selectedCount' style='font-size:0.75em;color:#6b7280;font-weight:500;'>(0 sélectionné)</span>
-        </div>
-        <button id='deleteSelectedBtn' style='background:#ef4444;color:#ffffff;border:none;padding:6px 12px;border-radius:5px;font-size:0.75em;font-weight:600;cursor:pointer;transition:background 0.2s ease;display:none;' title='Supprimer la sélection'>
-          <i class='fas fa-trash' style='margin-right:4px;'></i>Supprimer
-        </button>
-      </div>
-      
-      <!-- Liste des ordres -->
-      <div id='historySidebarList' style='flex:1;overflow-y:auto;padding:12px 16px;background:#ffffff;'></div>
-    `;
-    document.body.appendChild(sidebar);
-  }
+  // --- Système de mode sombre ---
+  window.initDarkMode = function () {
+    // Récupère la préférence sauvegardée ou utilise le mode système
+    const savedTheme = localStorage.getItem("theme");
+    const systemDarkMode = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    const isDarkMode = savedTheme === "dark" || (!savedTheme && systemDarkMode);
 
-  // --- Gestion de l'affichage/masquage du bouton historique ---
-  updateHistoryBtnVisibility();
-
-  // --- Affichage de la sidebar au clic sur l'icône ---
-  let historyBtn = document.getElementById("historySidebarBtn");
-  function openSidebarHistory() {
-    // Place l'overlay juste avant la sidebar dans le DOM pour garantir l'empilement
-    if (sidebarOverlay && sidebar) {
-      if (sidebarOverlay.nextSibling !== sidebar) {
-        document.body.insertBefore(sidebarOverlay, sidebar);
-      }
-      sidebarOverlay.style.display = "block";
-      sidebarOverlay.style.pointerEvents = "auto";
-      sidebarOverlay.style.zIndex = "1999";
-      sidebar.style.zIndex = "2000";
-      // Ajoute pointer-events:auto à l'overlay et pointer-events:auto à la sidebar
-      sidebarOverlay.style.pointerEvents = "auto";
-      sidebar.style.pointerEvents = "auto";
-    }
-    sidebar.style.right = "0";
-    renderHistorySidebarList();
-
-    // Initialise la recherche et la sélection multiple après le rendu
-    setTimeout(() => {
-      setupHistorySearch();
-      setupMultiSelectControls();
-    }, 100);
-  }
-  function closeSidebarHistory() {
-    sidebar.style.right = "-420px";
-    if (sidebarOverlay) {
-      sidebarOverlay.style.display = "none";
-      sidebarOverlay.style.pointerEvents = "none";
-    }
-  }
-  if (historyBtn) {
-    historyBtn.onclick = openSidebarHistory;
-  }
-  // --- Fermeture de la sidebar ---
-  const closeBtn = sidebar.querySelector("#closeHistorySidebarBtn");
-  if (closeBtn) {
-    closeBtn.onclick = closeSidebarHistory;
-  }
-  // Ferme la sidebar si on clique sur l'overlay
-  if (sidebarOverlay) {
-    // On utilise click au lieu de mousedown pour éviter les conflits focus
-    sidebarOverlay.addEventListener("click", function (e) {
-      // Si le clic est sur l'overlay (et pas sur la sidebar)
-      // On vérifie que le clic n'est pas sur la sidebar (qui est au-dessus)
-      // Si le clic est sur la partie visible de la sidebar, ne rien faire
-      // Si le clic est sur l'overlay (hors sidebar), fermer
-      var sidebarRect = sidebar.getBoundingClientRect();
-      var x = e.clientX;
-      var y = e.clientY;
-      var inSidebar =
-        x >= sidebarRect.left &&
-        x <= sidebarRect.right &&
-        y >= sidebarRect.top &&
-        y <= sidebarRect.bottom;
-      if (sidebar.style.right === "0" && !inSidebar) {
-        closeSidebarHistory();
-      }
-    });
-  }
-  // Ferme la sidebar si on clique en dehors (fallback pour compatibilité)
-  // Supprime le fallback global qui interfère avec l'overlay
-  // (plus besoin car l'overlay gère tout)
-  // Fonction pour afficher la liste historique
-  window.renderHistorySidebarList = function () {
-    const listDiv = document.getElementById("historySidebarList");
-    if (!listDiv) return;
-    // Récupère l'historique local
-    const historyKey = "simulatedHistoryData";
-    let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
-    let agentHistory = historyData["Agent Acconier"] || [];
-    if (agentHistory.length === 0) {
-      listDiv.innerHTML = `<div style='color:#64748b;text-align:center;margin-top:30px;'>Aucun ordre de livraison enregistré.</div>`;
-      return;
-    }
-    // Filtrer pour ne garder que les ordres avec un champ 'data' valide (vraies données)
-    let now = new Date();
-    let filteredHistory = agentHistory.filter((item) => {
-      if (!item || !item.data || typeof item.data !== "object" || !item.date)
-        return false;
-      // Garde uniquement les ordres de moins de 7 jours
-      let orderDate = new Date(item.date);
-      let diffDays = (now - orderDate) / (1000 * 60 * 60 * 24);
-      return diffDays <= 7;
-    });
-    // Supprimer les doublons par id ET par contenu principal (clientName, containerNumbers, date, etc.)
-    const seenKeys = new Set();
-    filteredHistory = filteredHistory.filter((item) => {
-      // On construit une clé unique sur les infos principales (clientName, containerNumbers, containerFootType, date, etc.)
-      const key = [
-        item.id || "",
-        item.data ? item.data.clientName : "",
-        item.data
-          ? Array.isArray(item.data.containerNumbers)
-            ? item.data.containerNumbers.join(",")
-            : item.data.containerNumbers
-          : "",
-        item.data ? item.data.containerFootType : "",
-        item.data ? item.data.declarationNumber : "",
-        item.data ? item.data.numberOfContainers : "",
-        item.data ? item.data.weight : "",
-        item.data ? item.data.shipName : "",
-        item.data ? item.data.circuit : "",
-        item.data ? item.data.shippingCompany : "",
-        item.data ? item.data.transporterMode : "",
-        item.data ? item.data.status : "",
-        item.date || "",
-      ].join("|");
-      if (seenKeys.has(key)) return false;
-      seenKeys.add(key);
-      return true;
-    });
-    if (filteredHistory.length === 0) {
-      listDiv.innerHTML = `<div style='color:#64748b;text-align:center;margin-top:30px;'>Aucun ordre de livraison enregistré.</div>`;
-      return;
-    }
-    // Regrouper les ordres par date (format YYYY-MM-DD)
-    const ordersByDate = {};
-    filteredHistory.forEach((item) => {
-      const dateKey = item.date ? item.date.slice(0, 10) : "?";
-      if (!ordersByDate[dateKey]) ordersByDate[dateKey] = [];
-      ordersByDate[dateKey].push(item);
-    });
-    // Trier les dates décroissantes
-    const sortedDates = Object.keys(ordersByDate).sort((a, b) =>
-      b.localeCompare(a)
+    // Applique le thème
+    document.documentElement.setAttribute(
+      "data-theme",
+      isDarkMode ? "dark" : "light"
     );
-    let html = '<div style="padding-bottom:10px;">';
-    let globalIdx = 0;
-    sortedDates.forEach((dateKey) => {
-      // Titre de date (sécurité sur le format)
-      let yyyy = "",
-        mm = "",
-        dd = "";
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
-        [yyyy, mm, dd] = dateKey.split("-");
-      }
-      let dateAffichee =
-        dd && mm && yyyy
-          ? `${dd}/${mm}/${yyyy}`
-          : dateKey !== "?"
-          ? dateKey
-          : "Date inconnue";
-      // Récupère le nom du client du premier ordre de la date
-      let clientName = "Client inconnu";
-      if (
-        ordersByDate[dateKey][0] &&
-        ordersByDate[dateKey][0].data &&
-        ordersByDate[dateKey][0].data.clientName
-      ) {
-        clientName = ordersByDate[dateKey][0].data.clientName;
-      }
-      // Suppression de la carte "Serge JJ/MM/AAAA" en haut de chaque date
-      html += '<ul style="list-style:none;padding:0;margin:0;">';
-      ordersByDate[dateKey].forEach((item, idx) => {
-        // Génère la carte de l'ordre avec case à cocher
-        let liHtml = `<li class="history-order-item" data-history-idx="${globalIdx}" style="background:linear-gradient(90deg,#f1f5f9 80%,#e0e7ff 100%);margin-bottom:7px;padding:18px 18px 16px 18px;border-radius:14px;box-shadow:0 2px 10px #2563eb13;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:all 0.18s;position:relative;">
-          <!-- Case à cocher en haut à droite -->
-          <input type="checkbox" class="order-checkbox" data-order-idx="${globalIdx}" style="position:absolute;top:12px;right:12px;width:16px;height:16px;accent-color:#3b82f6;cursor:pointer;z-index:10;" onclick="event.stopPropagation();">
-          
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;margin-right:25px;">
-            <span style="background:#2563eb;color:#fff;border-radius:8px 18px 18px 8px;width:auto;min-width:70px;padding:4px 14px 4px 10px;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:1em;box-shadow:0 1px 4px #2563eb11;letter-spacing:0.5px;">${
-              item.date
-                ? item.date.slice(0, 10).split("-").reverse().join("/")
-                : "--/--/----"
-            }</span>
-            <span style="color:#64748b;font-size:0.98em;font-weight:500;">${
-              item.data && item.data.clientName
-                ? item.data.clientName
-                : "Client inconnu"
-            }</span>
-          </div>
-          <div style="color:#1e293b;font-size:1.04em;font-weight:500;margin-right:25px;">${
-            item.details
-          }</div>
-        </li>`;
-        html += liHtml;
-        globalIdx++;
-      });
-      html += "</ul>";
-    });
-    html += "</div>";
-    listDiv.innerHTML = html;
 
-    // Ajoute l'écouteur sur chaque item pour afficher le détail en pop-up
-    var items = listDiv.querySelectorAll(".history-order-item");
-    for (var i = 0; i < items.length; i++) {
-      items[i].addEventListener("click", function (e) {
-        // Ne pas ouvrir le détail si clic sur la case à cocher
-        if (e.target.classList.contains("order-checkbox")) return;
-        var idx = parseInt(this.getAttribute("data-history-idx"));
-        var order = filteredHistory[idx];
-        window.showOrderDetailPopup(order);
-      });
-    }
+    // Crée le bouton toggle
+    createDarkModeToggle();
 
-    // Ajouter les événements sur les cases à cocher
-    var checkboxes = listDiv.querySelectorAll(".order-checkbox");
-    for (var k = 0; k < checkboxes.length; k++) {
-      checkboxes[k].addEventListener("change", function () {
-        updateSelectionUI();
+    // Écoute les changements du mode système
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        if (!localStorage.getItem("theme")) {
+          document.documentElement.setAttribute(
+            "data-theme",
+            e.matches ? "dark" : "light"
+          );
+          updateToggleIcon();
+        }
       });
-    }
-
-    // Ajout : synchronise les contrôles multi-sélection et le bouton suppression
-    if (typeof window.setupMultiSelectControls === "function") {
-      window.setupMultiSelectControls();
-    }
-    if (typeof window.updateSelectionUI === "function") {
-      window.updateSelectionUI();
-    }
   };
 
-  // Fonction pour gérer la sélection multiple
-  window.setupMultiSelectControls = function () {
-    const selectAllCheckbox = document.getElementById("selectAllOrders");
-    const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
-    const selectedCountSpan = document.getElementById("selectedCount");
+  function createDarkModeToggle() {
+    // Supprime l'ancien toggle s'il existe
+    const existingToggle = document.getElementById("darkModeToggle");
+    if (existingToggle) existingToggle.remove();
 
-    if (!selectAllCheckbox || !deleteSelectedBtn || !selectedCountSpan) return;
+    const toggle = document.createElement("button");
+    toggle.id = "darkModeToggle";
+    toggle.className = "dark-mode-toggle";
+    toggle.innerHTML = '<span class="icon">🌙</span>';
+    toggle.title = "Basculer le mode sombre";
 
-    // Fonction globale pour mettre à jour le compteur et le bouton
-    window.updateSelectionUI = function () {
-      const checkboxes = document.querySelectorAll(".order-checkbox");
-      const checkedBoxes = document.querySelectorAll(".order-checkbox:checked");
-      const count = checkedBoxes.length;
+    toggle.addEventListener("click", () => {
+      const currentTheme = document.documentElement.getAttribute("data-theme");
+      const newTheme = currentTheme === "dark" ? "light" : "dark";
 
-      selectedCountSpan.textContent = `(${count} sélectionné${
-        count > 1 ? "s" : ""
-      })`;
-
-      if (count > 0) {
-        deleteSelectedBtn.style.display = "block";
-        deleteSelectedBtn.innerHTML = `<i class='fas fa-trash' style='margin-right:4px;'></i>Supprimer (${count})`;
-      } else {
-        deleteSelectedBtn.style.display = "none";
-      }
-
-      // Mettre à jour l'état du "Sélectionner tout"
-      if (count === 0) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = false;
-      } else if (count === checkboxes.length) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = true;
-      } else {
-        selectAllCheckbox.indeterminate = true;
-      }
-    };
-
-    // Gestionnaire pour "Sélectionner tout"
-    selectAllCheckbox.addEventListener("change", function () {
-      const checkboxes = document.querySelectorAll(".order-checkbox");
-      checkboxes.forEach((checkbox) => {
-        checkbox.checked = this.checked;
-      });
-      window.updateSelectionUI();
+      document.documentElement.setAttribute("data-theme", newTheme);
+      localStorage.setItem("theme", newTheme);
+      updateToggleIcon();
     });
 
-    // Gestionnaire pour les cases individuelles
-    document.addEventListener("change", function (e) {
-      if (e.target.classList.contains("order-checkbox")) {
-        window.updateSelectionUI();
-      }
-    });
+    document.body.appendChild(toggle);
+    updateToggleIcon();
+  }
 
-    // Gestionnaire pour le bouton supprimer
-    deleteSelectedBtn.addEventListener("click", function () {
-      const checkedBoxes = document.querySelectorAll(".order-checkbox:checked");
-      if (checkedBoxes.length === 0) return;
-
-      // Créer popup de confirmation
-      const confirmModal = document.createElement("div");
-      confirmModal.style.position = "fixed";
-      confirmModal.style.top = "0";
-      confirmModal.style.left = "0";
-      confirmModal.style.width = "100vw";
-      confirmModal.style.height = "100vh";
-      confirmModal.style.background = "rgba(30,41,59,0.4)";
-      confirmModal.style.zIndex = "6000";
-      confirmModal.style.display = "flex";
-      confirmModal.style.alignItems = "center";
-      confirmModal.style.justifyContent = "center";
-
-      const confirmBox = document.createElement("div");
-      confirmBox.style.background = "#fff";
-      confirmBox.style.borderRadius = "12px";
-      confirmBox.style.padding = "24px";
-      confirmBox.style.maxWidth = "400px";
-      confirmBox.style.margin = "0 20px";
-      confirmBox.style.textAlign = "center";
-      confirmBox.style.boxShadow = "0 8px 32px rgba(0,0,0,0.2)";
-
-      confirmBox.innerHTML =
-        '<div style="color:#dc2626;font-size:2em;margin-bottom:12px;">' +
-        '<i class="fas fa-exclamation-triangle"></i>' +
-        "</div>" +
-        '<h3 style="margin:0 0 12px 0;color:#1f2937;">Supprimer ' +
-        checkedBoxes.length +
-        " ordre" +
-        (checkedBoxes.length > 1 ? "s" : "") +
-        " ?</h3>" +
-        '<p style="margin:0 0 20px 0;color:#6b7280;">Cette action est irréversible.</p>' +
-        '<div style="display:flex;gap:12px;justify-content:center;">' +
-        '<button id="confirmMultiDelete" style="background:#dc2626;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-weight:600;cursor:pointer;">' +
-        "Supprimer" +
-        "</button>" +
-        '<button id="cancelMultiDelete" style="background:#f3f4f6;color:#374151;border:none;padding:10px 20px;border-radius:6px;font-weight:600;cursor:pointer;">' +
-        "Annuler" +
-        "</button>" +
-        "</div>";
-
-      confirmModal.appendChild(confirmBox);
-      document.body.appendChild(confirmModal);
-
-      // Gestionnaires de la popup
-      document.getElementById("cancelMultiDelete").onclick = () =>
-        confirmModal.remove();
-      confirmModal.onclick = (e) => {
-        if (e.target === confirmModal) confirmModal.remove();
-      };
-
-      document.getElementById("confirmMultiDelete").onclick = function () {
-        // Récupérer les indices des ordres sélectionnés
-        const indicesToDelete = Array.from(checkedBoxes).map((cb) =>
-          parseInt(cb.dataset.orderIdx)
-        );
-
-        // Supprimer de localStorage
-        const historyKey = "simulatedHistoryData";
-        let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
-        let agentHistory = historyData["Agent Acconier"] || [];
-
-        // Filtrer pour ne garder que les ordres non sélectionnés
-        let filteredHistory = agentHistory.filter(
-          (item) => item && item.data && typeof item.data === "object"
-        );
-
-        // Supprimer les doublons et construire la liste finale
-        const seenKeys = new Set();
-        filteredHistory = filteredHistory.filter((item, index) => {
-          if (indicesToDelete.includes(index)) return false;
-
-          const key = [
-            item.id || "",
-            item.data ? item.data.clientName : "",
-            item.data
-              ? Array.isArray(item.data.containerNumbers)
-                ? item.data.containerNumbers.join(",")
-                : item.data.containerNumbers
-              : "",
-            item.data ? item.data.containerFootType : "",
-            item.data ? item.data.declarationNumber : "",
-            item.data ? item.data.numberOfContainers : "",
-            item.data ? item.data.weight : "",
-            item.data ? item.data.shipName : "",
-            item.data ? item.data.circuit : "",
-            item.data ? item.data.shippingCompany : "",
-            item.data ? item.data.transporterMode : "",
-            item.data ? item.data.status : "",
-            item.date || "",
-          ].join("|");
-
-          if (seenKeys.has(key)) return false;
-          seenKeys.add(key);
-          return true;
-        });
-
-        historyData["Agent Acconier"] = filteredHistory;
-        localStorage.setItem(historyKey, JSON.stringify(historyData));
-
-        confirmModal.remove();
-        window.renderHistorySidebarList();
-      };
-    });
-
-    // Initialiser l'UI
-    window.updateSelectionUI();
-  };
-
-  // Fonction de recherche pour la sidebar
-  window.setupHistorySearch = function () {
-    const searchInput = document.getElementById("historySearchInput");
-
-    if (searchInput) {
-      searchInput.addEventListener("input", function () {
-        const searchTerm = this.value.toLowerCase().trim();
-        const listDiv = document.getElementById("historySidebarList");
-        const items = listDiv.querySelectorAll(".history-order-item");
-
-        items.forEach((item) => {
-          const text = item.textContent.toLowerCase();
-          if (text.includes(searchTerm)) {
-            item.style.display = "block";
-          } else {
-            item.style.display = "none";
-          }
-        });
-      });
+  function updateToggleIcon() {
+    const toggle = document.getElementById("darkModeToggle");
+    const icon = toggle?.querySelector(".icon");
+    if (icon) {
+      const isDark =
+        document.documentElement.getAttribute("data-theme") === "dark";
+      icon.textContent = isDark ? "☀️" : "🌙";
+      toggle.title = isDark
+        ? "Basculer en mode clair"
+        : "Basculer en mode sombre";
     }
+  }
+
+  // --- Initialisation du mode sombre ---
+  initDarkMode();
+  // --- Fonction pour marquer les numéros TC en vert ---
+  window.highlightTCNumbers = function (text) {
+    if (!text) return text;
+    // Pattern pour TC + 4 chiffres
+    return text.replace(
+      /\b(TC\s*\d{4})\b/gi,
+      '<span class="tc-number">$1</span>'
+    );
   };
 
-  // Fonction pour afficher le pop-up détaillé d'un ordre de livraison
+  // --- Fonction pour marquer les messages de validation ---
+  window.highlightValidationMessages = function (text) {
+    if (!text) return text;
+    // Marque les messages de validation en vert
+    const validationKeywords = [
+      "validé",
+      "approuvé",
+      "confirmé",
+      "accepté",
+      "vérifié",
+    ];
+    let result = text;
+    validationKeywords.forEach((keyword) => {
+      const regex = new RegExp(`\\b(${keyword}[^\\s]*)\\b`, "gi");
+      result = result.replace(
+        regex,
+        '<span class="validation-message">$1</span>'
+      );
+    });
+    return result;
+  };
+
+  // --- Fonction pour marquer les messages de statut ---
+  window.highlightStatusMessages = function (text) {
+    if (!text) return text;
+    // Marque les messages de statut en jaune
+    const statusKeywords = [
+      "en attente",
+      "en cours",
+      "traitement",
+      "préparation",
+      "planifié",
+    ];
+    let result = text;
+    statusKeywords.forEach((keyword) => {
+      const regex = new RegExp(`\\b(${keyword}[^\\s]*)\\b`, "gi");
+      result = result.replace(regex, '<span class="status-message">$1</span>');
+    });
+    return result;
+  };
+
+  // --- Mise à jour de la fonction showOrderDetails avec formatage des couleurs ---
   window.showOrderDetailPopup = function (order) {
     // Supprime l'ancien pop-up s'il existe
     let oldModal = document.getElementById("orderDetailModal");
@@ -1800,9 +1440,11 @@ document.addEventListener("DOMContentLoaded", () => {
         isMobile ? "12px 10px" : "14px 18px"
       };border-radius:12px;border-left:4px solid #3b82f6;">
           <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-calendar-alt' style='color:#3b82f6;'></i>Date</span><br><span style='font-weight:700;color:#2563eb;'>${
-            order.date || "-"
+            order.date
+              ? window.highlightTCNumbers(formatOrderDate(order.date))
+              : "-"
           }</span></div>
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-user-tie' style='color:#3b82f6;'></i>Agent</span><br><span style='font-weight:700;'>${
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-user-tie' style='color:#3b82f6;'></i>Agent</span><br><span style='font-weight:700;' class='validation-message'>${
             d.employeeName || "-"
           }</span></div>
         </div>
@@ -1812,7 +1454,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };justify-content:space-between;align-items:center;background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);padding:${
         isMobile ? "12px 10px" : "14px 18px"
       };border-radius:12px;border-left:4px solid #10b981;">
-          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-user-circle' style='color:#10b981;'></i>Client</span><br><span style='font-weight:700;'>${
+          <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-user-circle' style='color:#10b981;'></i>Client</span><br><span style='font-weight:700;' class='validation-message'>${
             d.clientName || "-"
           }</span></div>
           <div style="flex:1;min-width:120px;"><span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-phone' style='color:#10b981;'></i>Téléphone</span><br><span style='font-weight:700;'>${
@@ -1843,7 +1485,7 @@ document.addEventListener("DOMContentLoaded", () => {
                      onmouseover="this.style.backgroundColor='#fde68a'"
                      onmouseout="this.style.backgroundColor='#fef3c7'">
                    <div style="display:flex;align-items:center;justify-content:space-between;">
-                     <span style='font-weight:700;color:#d97706;'>${
+                     <span style='font-weight:700;' class='status-message'>${
                        containers.length
                      } conteneurs</span>
                      <i class='fas fa-chevron-down' style="color:#d97706;font-size:0.8em;transition:transform 0.3s ease;"></i>
@@ -1852,19 +1494,21 @@ document.addEventListener("DOMContentLoaded", () => {
                      ${containers
                        .map(
                          (container) =>
-                           `<div style="padding:4px 0;color:#92400e;font-weight:600;font-size:0.9em;border-bottom:1px solid rgba(217,119,6,0.2);margin-bottom:4px;">${container}</div>`
+                           `<div style="padding:4px 0;font-weight:600;font-size:0.9em;border-bottom:1px solid rgba(217,119,6,0.2);margin-bottom:4px;" class="tc-number">${window.highlightTCNumbers(
+                             container
+                           )}</div>`
                        )
                        .join("")}
                    </div>
                  </div>`
-                  : `<span style='font-weight:700;color:#d97706;'>${
+                  : `<span style='font-weight:700;' class='tc-number'>${window.highlightTCNumbers(
                       containers[0] || "-"
-                    }</span>`
+                    )}</span>`
               }
             </div>
             <div style="flex:1;min-width:120px;">
               <span style='color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;'><i class='fas fa-cogs' style='color:#f59e0b;'></i>Type(s) de pied</span><br>
-              <span style='font-weight:700;color:#d97706;'>${
+              <span style='font-weight:700;' class='status-message'>${
                 isMultiple ? "Multiples types" : d.containerFootType || "-"
               }</span>
             </div>`;
