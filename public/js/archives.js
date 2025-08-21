@@ -23,42 +23,68 @@ class ArchivesManager {
 
   init() {
     this.bindEvents();
-    this.loadArchives();
-    this.setDefaultDates();
+
+    // Ne charger les archives que si nous sommes sur la page d'archives
+    const searchBtn = document.getElementById("searchBtn");
+    if (searchBtn) {
+      this.loadArchives();
+      this.setDefaultDates();
+    }
   }
 
   bindEvents() {
+    // Vérifier si nous sommes sur la page archives avant de lier les événements
+    const searchBtn = document.getElementById("searchBtn");
+    if (!searchBtn) {
+      console.log(
+        "[ARCHIVES] Interface d'archives non détectée, événements non liés"
+      );
+      return;
+    }
+
     // Boutons de recherche et reset
-    document
-      .getElementById("searchBtn")
-      .addEventListener("click", () => this.performSearch());
-    document
-      .getElementById("resetBtn")
-      .addEventListener("click", () => this.resetFilters());
+    searchBtn.addEventListener("click", () => this.performSearch());
+
+    const resetBtn = document.getElementById("resetBtn");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => this.resetFilters());
+    }
 
     // Filtres en temps réel
-    document
-      .getElementById("searchInput")
-      .addEventListener("input", () => this.debounceSearch());
-    document
-      .getElementById("actionFilter")
-      .addEventListener("change", () => this.performSearch());
-    document
-      .getElementById("roleFilter")
-      .addEventListener("change", () => this.performSearch());
-    document
-      .getElementById("dateStart")
-      .addEventListener("change", () => this.performSearch());
-    document
-      .getElementById("dateEnd")
-      .addEventListener("change", () => this.performSearch());
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+      searchInput.addEventListener("input", () => this.debounceSearch());
+    }
+
+    const actionFilter = document.getElementById("actionFilter");
+    if (actionFilter) {
+      actionFilter.addEventListener("change", () => this.performSearch());
+    }
+
+    const roleFilter = document.getElementById("roleFilter");
+    if (roleFilter) {
+      roleFilter.addEventListener("change", () => this.performSearch());
+    }
+
+    const dateStart = document.getElementById("dateStart");
+    if (dateStart) {
+      dateStart.addEventListener("change", () => this.performSearch());
+    }
+
+    const dateEnd = document.getElementById("dateEnd");
+    if (dateEnd) {
+      dateEnd.addEventListener("change", () => this.performSearch());
+    }
 
     // Pagination
-    document.getElementById("itemsPerPage").addEventListener("change", (e) => {
-      this.itemsPerPage = parseInt(e.target.value);
-      this.currentPage = 1;
-      this.renderCurrentView();
-    });
+    const itemsPerPage = document.getElementById("itemsPerPage");
+    if (itemsPerPage) {
+      itemsPerPage.addEventListener("change", (e) => {
+        this.itemsPerPage = parseInt(e.target.value);
+        this.currentPage = 1;
+        this.renderCurrentView();
+      });
+    }
 
     // Onglets
     document.querySelectorAll('[data-bs-toggle="tab"]').forEach((tab) => {
@@ -902,5 +928,15 @@ window.archiveDossier = async function (
 
 // Initialisation quand la page est chargée
 document.addEventListener("DOMContentLoaded", function () {
-  window.archivesManager = new ArchivesManager();
+  // Vérifier si nous sommes sur la page d'archives
+  const archivesContainer =
+    document.getElementById("searchBtn") || document.querySelector(".nav-tabs");
+  if (archivesContainer) {
+    console.log("[ARCHIVES] Initialisation de l'interface d'archives");
+    window.archivesManager = new ArchivesManager();
+  } else {
+    console.log(
+      "[ARCHIVES] Interface d'archives non détectée, initialisation ignorée"
+    );
+  }
 });
