@@ -232,6 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const lienSuivi = document.getElementById("lienSuivi");
   const lienAcceuil = document.querySelector('a[href="tableauDeBord.html"]');
   const lienHistoriqueAgents = document.getElementById("lienHistoriqueAgents");
+  const lienArchive = document.getElementById("lienArchive");
 
   // --- GESTION DES CLICS SUR LES LIENS DE LA SIDEBAR ---
 
@@ -264,6 +265,19 @@ document.addEventListener("DOMContentLoaded", () => {
     lienHistoriqueAgents.addEventListener("click", async (e) => {
       e.preventDefault();
       window.afficherHistoriqueAgents(); // Utilise la fonction globale pour l'historique
+    });
+  }
+
+  // GESTION DU LIEN "Archive"
+  if (lienArchive) {
+    lienArchive.addEventListener("click", (e) => {
+      e.preventDefault();
+      // Fonctionnalité d'archive - à implémenter selon vos besoins
+      showCustomAlert(
+        "Fonction Archives en cours de développement",
+        "info",
+        3000
+      );
     });
   }
 
