@@ -1,10 +1,10 @@
 // --- DÉCLARATION DES VARIABLES GLOBALES AVANT TOUTE FONCTION ---
 // --- Animation d'intro avant le formulaire ---
 window.addEventListener("DOMContentLoaded", function () {
-  var intro = document.getElementById("introAnimation");
-  var app = document.getElementById("appContainer");
-  var progress = document.getElementById("introProgressBar");
-  if (intro && app && progress) {
+  const introElement = document.getElementById("introAnimation");
+  const appContainer = document.getElementById("appContainer");
+  const progressBar = document.getElementById("introProgressBar");
+  if (introElement && appContainer && progressBar) {
     let interval = 50;
     let percent = 0;
     let phase = 0;
@@ -35,12 +35,12 @@ window.addEventListener("DOMContentLoaded", function () {
           percent = 100;
           clearInterval(timer);
           setTimeout(function () {
-            intro.style.display = "none";
-            app.style.display = "";
+            introElement.style.display = "none";
+            appContainer.style.display = "";
           }, 300);
         }
       }
-      progress.style.width = percent + "%";
+      progressBar.style.width = percent + "%";
     }, interval);
   }
 });
@@ -145,66 +145,153 @@ window.createMobileHistorySidebar = function () {
       top: 0;
       right: -100%;
       width: 100vw;
-      max-width: 380px;
+      max-width: 400px;
       height: 100vh;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
       z-index: 9998;
-      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+      transition: right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: -8px 0 40px rgba(0, 0, 0, 0.12);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      border-left: 1px solid rgba(37, 99, 235, 0.1);
     ">
-      <!-- Header de la sidebar -->
+      <!-- Header professionnel -->
       <div style="
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 16px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      ">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <i class="fas fa-clipboard-list" style="font-size: 1.4em;"></i>
-          <div>
-            <h3 style="margin: 0; font-size: 1.2em; font-weight: 700;">📋 Historique</h3>
-            <p style="margin: 0; font-size: 0.85em; opacity: 0.9;">Ordres de livraison</p>
-          </div>
-        </div>
-        <button id="closeMobileHistoryBtn" style="
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: background 0.2s;
-        ">
-          <i class="fas fa-times" style="font-size: 1.1em;"></i>
-        </button>
-      </div>
-
-      <!-- Compteur d'ordres -->
-      <div style="
-        background: rgba(37, 99, 235, 0.08);
-        padding: 12px 20px;
-        border-bottom: 1px solid rgba(37, 99, 235, 0.1);
+        padding: 20px 24px;
+        position: relative;
+        overflow: hidden;
       ">
         <div style="
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: #2563eb;
-          font-weight: 600;
-          font-size: 0.95em;
+          position: absolute;
+          top: -50%;
+          right: -50%;
+          width: 100%;
+          height: 100%;
+          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+          pointer-events: none;
+        "></div>
+        <div style="position: relative; z-index: 2;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="
+                background: rgba(255, 255, 255, 0.2);
+                padding: 8px;
+                border-radius: 12px;
+                backdrop-filter: blur(10px);
+              ">
+                <i class="fas fa-history" style="font-size: 1.5em; color: white;"></i>
+              </div>
+              <div>
+                <h3 style="margin: 0; font-size: 1.3em; font-weight: 800; letter-spacing: -0.5px;">Historique</h3>
+                <p style="margin: 0; font-size: 0.9em; opacity: 0.85; font-weight: 500;">Ordres de livraison</p>
+              </div>
+            </div>
+            <button id="closeMobileHistoryBtn" style="
+              background: rgba(255, 255, 255, 0.15);
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              color: white;
+              width: 40px;
+              height: 40px;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              backdrop-filter: blur(10px);
+            " onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+              <i class="fas fa-times" style="font-size: 1.1em;"></i>
+            </button>
+          </div>
+          
+          <!-- Statistiques -->
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 8px;
+          ">
+            <div style="
+              background: rgba(255, 255, 255, 0.15);
+              padding: 8px 12px;
+              border-radius: 20px;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              backdrop-filter: blur(10px);
+            ">
+              <i class="fas fa-chart-line" style="font-size: 0.9em;"></i>
+              <span style="font-weight: 600; font-size: 0.9em;">Total: <span id="mobileHistoryCount">0</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barre de recherche et actions -->
+      <div style="
+        background: white;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      ">
+        <div style="
+          position: relative;
+          margin-bottom: 12px;
         ">
-          <i class="fas fa-chart-bar" style="font-size: 1em;"></i>
-          <span>Total: <span id="mobileHistoryCount">0</span> ordres</span>
+          <input type="text" id="historySearchInput" placeholder="Rechercher par client, TC, lieu..." style="
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.95em;
+            background: #f9fafb;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+          " onfocus="this.style.borderColor='#667eea'; this.style.background='white'" onblur="this.style.borderColor='#e5e7eb'; this.style.background='#f9fafb'">
+          <i class="fas fa-search" style="
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 1em;
+          "></i>
+        </div>
+        
+        <div style="display: flex; gap: 8px;">
+          <button id="selectAllOrdersBtn" style="
+            flex: 1;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+          " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+            <i class="fas fa-check-square" style="margin-right: 6px;"></i>Sélectionner
+          </button>
+          <button id="deleteSelectedOrdersBtn" style="
+            flex: 1;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            opacity: 0.6;
+            pointer-events: none;
+          " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+            <i class="fas fa-trash" style="margin-right: 6px;"></i>Supprimer
+          </button>
         </div>
       </div>
 
@@ -225,33 +312,6 @@ window.createMobileHistorySidebar = function () {
           <p>Chargement de l'historique...</p>
         </div>
       </div>
-
-      <!-- Footer avec actions -->
-      <div style="
-        background: white;
-        padding: 16px 20px;
-        border-top: 1px solid #e2e8f0;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-      ">
-        <button id="refreshHistoryBtn" style="
-          width: 100%;
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          color: white;
-          border: none;
-          padding: 12px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: transform 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        ">
-          <i class="fas fa-sync-alt" style="font-size: 1em;"></i>
-          Actualiser l'historique
-        </button>
-      </div>
     </div>
 
     <!-- Overlay pour fermer la sidebar -->
@@ -261,12 +321,45 @@ window.createMobileHistorySidebar = function () {
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.4);
       z-index: 9997;
       opacity: 0;
       visibility: hidden;
       transition: all 0.3s ease;
+      backdrop-filter: blur(2px);
     "></div>
+
+    <!-- Modal pour les détails d'un ordre -->
+    <div id="orderDetailModal" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    ">
+      <div id="orderDetailContent" style="
+        background: white;
+        border-radius: 16px;
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        transform: scale(0.8);
+        transition: transform 0.3s ease;
+      ">
+        <!-- Le contenu sera injecté dynamiquement -->
+      </div>
+    </div>
   `;
 
   // Injecter la sidebar dans le body
@@ -276,7 +369,14 @@ window.createMobileHistorySidebar = function () {
   const sidebar = document.getElementById("mobileHistorySidebar");
   const overlay = document.getElementById("mobileHistoryOverlay");
   const closeBtn = document.getElementById("closeMobileHistoryBtn");
-  const refreshBtn = document.getElementById("refreshHistoryBtn");
+  const searchInput = document.getElementById("historySearchInput");
+  const selectAllBtn = document.getElementById("selectAllOrdersBtn");
+  const deleteBtn = document.getElementById("deleteSelectedOrdersBtn");
+  const orderModal = document.getElementById("orderDetailModal");
+
+  // Variables globales pour la sélection
+  let selectedOrders = new Set();
+  let allOrders = [];
 
   // Fonction pour ouvrir la sidebar
   window.openMobileHistorySidebar = function () {
@@ -295,20 +395,178 @@ window.createMobileHistorySidebar = function () {
     overlay.style.opacity = "0";
     overlay.style.visibility = "hidden";
     document.body.style.overflow = "";
+    selectedOrders.clear();
+    updateSelectionUI();
   };
+
+  // Fonction pour afficher les détails d'un ordre
+  window.showOrderDetails = function (orderData) {
+    const modalContent = document.getElementById("orderDetailContent");
+    const containerNumbers = Array.isArray(orderData.containerNumbers)
+      ? orderData.containerNumbers
+      : (orderData.containerNumbers || "").split(",").map((s) => s.trim());
+
+    modalContent.innerHTML = `
+      <div style="padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="margin: 0; color: #1e293b; font-size: 1.4em;">📋 Détails de l'ordre</h2>
+          <button onclick="closeOrderDetails()" style="
+            background: #f1f5f9;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <i class="fas fa-times" style="color: #64748b;"></i>
+          </button>
+        </div>
+        
+        <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+          <h3 style="margin: 0 0 8px 0; color: #667eea; font-size: 1.1em;">Client</h3>
+          <p style="margin: 0; font-size: 1.1em; font-weight: 600; color: #1e293b;">${
+            orderData.clientName || "Non spécifié"
+          }</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h4 style="margin: 0 0 4px 0; color: #64748b; font-size: 0.85em;">TÉLÉPHONE</h4>
+            <p style="margin: 0; font-weight: 600;">${
+              orderData.clientPhone || "-"
+            }</p>
+          </div>
+          <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h4 style="margin: 0 0 4px 0; color: #64748b; font-size: 0.85em;">LIEU</h4>
+            <p style="margin: 0; font-weight: 600;">${orderData.lieu || "-"}</p>
+          </div>
+        </div>
+
+        <div style="background: white; padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 1px solid #e5e7eb;">
+          <h4 style="margin: 0 0 8px 0; color: #667eea; font-size: 1em;">Conteneurs</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            ${containerNumbers
+              .map(
+                (tc) => `
+              <span style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 4px 12px;
+                border-radius: 16px;
+                font-size: 0.85em;
+                font-weight: 600;
+              ">${tc}</span>
+            `
+              )
+              .join("")}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h4 style="margin: 0 0 4px 0; color: #64748b; font-size: 0.85em;">N° BL</h4>
+            <p style="margin: 0; font-weight: 600;">${
+              orderData.blNumber || "-"
+            }</p>
+          </div>
+          <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h4 style="margin: 0 0 4px 0; color: #64748b; font-size: 0.85em;">DÉCLARATION</h4>
+            <p style="margin: 0; font-weight: 600;">${
+              orderData.declarationNumber || "-"
+            }</p>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h4 style="margin: 0 0 4px 0; color: #64748b; font-size: 0.85em;">NAVIRE</h4>
+            <p style="margin: 0; font-weight: 600;">${
+              orderData.shipName || "-"
+            }</p>
+          </div>
+          <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h4 style="margin: 0 0 4px 0; color: #64748b; font-size: 0.85em;">MODE TRANSPORT</h4>
+            <p style="margin: 0; font-weight: 600;">${
+              orderData.transporterMode || "-"
+            }</p>
+          </div>
+        </div>
+
+        <div style="background: #f0f9ff; padding: 12px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+          <h4 style="margin: 0 0 4px 0; color: #0369a1; font-size: 0.85em;">INFORMATIONS SUPPLÉMENTAIRES</h4>
+          <p style="margin: 0; font-size: 0.9em; color: #0c4a6e;">
+            Circuit: ${orderData.circuit || "-"} | 
+            Compagnie: ${orderData.shippingCompany || "-"} | 
+            Poids: ${orderData.weight || "-"}
+          </p>
+        </div>
+      </div>
+    `;
+
+    orderModal.style.opacity = "1";
+    orderModal.style.visibility = "visible";
+    document.getElementById("orderDetailContent").style.transform = "scale(1)";
+  };
+
+  // Fonction pour fermer les détails
+  window.closeOrderDetails = function () {
+    orderModal.style.opacity = "0";
+    orderModal.style.visibility = "hidden";
+    document.getElementById("orderDetailContent").style.transform =
+      "scale(0.8)";
+  };
+
+  // Fonction pour mettre à jour l'UI de sélection
+  function updateSelectionUI() {
+    const count = selectedOrders.size;
+    if (count > 0) {
+      deleteBtn.style.opacity = "1";
+      deleteBtn.style.pointerEvents = "auto";
+      selectAllBtn.innerHTML = `<i class="fas fa-times-circle" style="margin-right: 6px;"></i>Désélectionner`;
+    } else {
+      deleteBtn.style.opacity = "0.6";
+      deleteBtn.style.pointerEvents = "none";
+      selectAllBtn.innerHTML = `<i class="fas fa-check-square" style="margin-right: 6px;"></i>Sélectionner`;
+    }
+  }
 
   // Événements de fermeture
   closeBtn.addEventListener("click", window.closeMobileHistorySidebar);
   overlay.addEventListener("click", window.closeMobileHistorySidebar);
+  orderModal.addEventListener("click", (e) => {
+    if (e.target === orderModal) window.closeOrderDetails();
+  });
 
-  // Événement de rafraîchissement
-  refreshBtn.addEventListener("click", function () {
-    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualisation...';
-    setTimeout(() => {
-      loadMobileHistoryData();
-      this.innerHTML =
-        '<i class="fas fa-sync-alt"></i> Actualiser l\'historique';
-    }, 800);
+  // Événement de recherche
+  searchInput.addEventListener("input", function () {
+    filterOrders(this.value.toLowerCase());
+  });
+
+  // Événement de sélection/désélection
+  selectAllBtn.addEventListener("click", function () {
+    if (selectedOrders.size > 0) {
+      selectedOrders.clear();
+    } else {
+      allOrders.forEach((_, index) => selectedOrders.add(index));
+    }
+    updateSelectionUI();
+    updateOrderCheckboxes();
+  });
+
+  // Événement de suppression
+  deleteBtn.addEventListener("click", function () {
+    if (selectedOrders.size === 0) return;
+
+    if (
+      confirm(
+        `Êtes-vous sûr de vouloir supprimer ${selectedOrders.size} ordre(s) ?`
+      )
+    ) {
+      deleteSelectedOrders();
+    }
   });
 
   // Connecter le bouton historique existant
@@ -316,10 +574,53 @@ window.createMobileHistorySidebar = function () {
   if (historyBtn) {
     historyBtn.addEventListener("click", window.openMobileHistorySidebar);
   }
+
+  // Fonctions utilitaires
+  function filterOrders(searchTerm) {
+    const orderElements = document.querySelectorAll(".mobile-order-item");
+    orderElements.forEach((element) => {
+      const text = element.textContent.toLowerCase();
+      element.style.display = text.includes(searchTerm) ? "block" : "none";
+    });
+  }
+
+  function updateOrderCheckboxes() {
+    document
+      .querySelectorAll(".order-checkbox-mobile")
+      .forEach((checkbox, index) => {
+        checkbox.checked = selectedOrders.has(index);
+      });
+  }
+
+  function deleteSelectedOrders() {
+    const historyKey = "simulatedHistoryData";
+    const historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
+    const agentHistory = historyData["Agent Acconier"] || [];
+
+    // Supprimer les ordres sélectionnés (en ordre décroissant pour éviter les problèmes d'index)
+    const sortedIndexes = Array.from(selectedOrders).sort((a, b) => b - a);
+    sortedIndexes.forEach((index) => {
+      if (agentHistory[index]) {
+        agentHistory.splice(index, 1);
+      }
+    });
+
+    // Sauvegarder
+    historyData["Agent Acconier"] = agentHistory;
+    localStorage.setItem(historyKey, JSON.stringify(historyData));
+
+    // Réinitialiser et recharger
+    selectedOrders.clear();
+    updateSelectionUI();
+    loadMobileHistoryData();
+  }
 };
 
 /**
  * Charge et affiche les données d'historique dans la sidebar mobile
+ */
+/**
+ * Charge et affiche les données d'historique dans la sidebar mobile avec fonctionnalités avancées
  */
 window.loadMobileHistoryData = function () {
   const contentDiv = document.getElementById("mobileHistoryContent");
@@ -336,8 +637,9 @@ window.loadMobileHistoryData = function () {
     return item && item.data && typeof item.data === "object" && item.date;
   });
 
-  // Mettre à jour le compteur
+  // Mettre à jour le compteur et stocker les données globalement
   countSpan.textContent = filteredHistory.length;
+  allOrders = filteredHistory;
 
   if (filteredHistory.length === 0) {
     contentDiv.innerHTML = `
@@ -359,7 +661,7 @@ window.loadMobileHistoryData = function () {
     return;
   }
 
-  // Générer le HTML des ordres
+  // Générer le HTML des ordres avec fonctionnalités cliquables
   let ordersHTML = "";
   filteredHistory.slice(0, 20).forEach((item, index) => {
     let containerNumbers = item.data.containerNumbers || [];
@@ -367,105 +669,152 @@ window.loadMobileHistoryData = function () {
       containerNumbers = containerNumbers.split(",").map((s) => s.trim());
     }
 
-    const statusColor =
-      index % 3 === 0 ? "#10b981" : index % 3 === 1 ? "#f59e0b" : "#2563eb";
-    const statusText =
-      index % 3 === 0 ? "Livré" : index % 3 === 1 ? "En cours" : "Validé";
+    const statusColors = ["#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
+    const statusTexts = ["Livré", "En cours", "Validé", "Urgent"];
+    const statusColor = statusColors[index % statusColors.length];
+    const statusText = statusTexts[index % statusTexts.length];
 
     ordersHTML += `
-      <div style="
+      <div class="mobile-order-item" style="
         background: white;
         margin-bottom: 12px;
-        padding: 16px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        border-left: 4px solid ${statusColor};
-        transition: transform 0.2s;
-      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #f1f5f9;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+      " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.12)'" 
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 12px rgba(0,0,0,0.08)'">
         
-        <!-- Header de l'ordre -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <!-- Checkbox de sélection -->
+        <div style="
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          z-index: 5;
+        ">
+          <input type="checkbox" class="order-checkbox-mobile" data-order-index="${index}" style="
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+            cursor: pointer;
+            border-radius: 4px;
+            border: 2px solid #d1d5db;
+          " onchange="toggleOrderSelection(${index}, this.checked)">
+        </div>
+        
+        <!-- Contenu cliquable -->
+        <div onclick="showOrderDetails(allOrders[${index}].data)" style="
+          padding: 20px;
+          cursor: pointer;
+          padding-right: 50px;
+        ">
+          <!-- Header avec client et statut -->
           <div style="
-            font-weight: 700;
-            color: #1e293b;
-            font-size: 1.1em;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
+            margin-bottom: 12px;
           ">
-            <i class="fas fa-user-circle" style="color: ${statusColor}; font-size: 1em;"></i>
-            ${item.data.clientName || "Client inconnu"}
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            ">
+              <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-weight: 700;
+                font-size: 0.9em;
+                letter-spacing: 0.3px;
+              ">
+                <i class="fas fa-user" style="margin-right: 6px; font-size: 0.8em;"></i>
+                ${item.data.clientName || "Client inconnu"}
+              </div>
+            </div>
+            <div style="
+              background: ${statusColor}15;
+              color: ${statusColor};
+              padding: 4px 12px;
+              border-radius: 16px;
+              font-size: 0.8em;
+              font-weight: 600;
+              border: 1px solid ${statusColor}25;
+            ">
+              ${statusText}
+            </div>
           </div>
+
+          <!-- Informations principales -->
+          <div style="margin-bottom: 12px;">
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 8px;
+              padding: 8px 12px;
+              background: #f8fafc;
+              border-radius: 8px;
+            ">
+              <i class="fas fa-shipping-fast" style="color: #667eea; width: 16px;"></i>
+              <span style="font-size: 0.9em; color: #475569;">
+                <strong>TC:</strong> ${
+                  containerNumbers.length > 0
+                    ? containerNumbers.slice(0, 2).join(", ")
+                    : "Non spécifié"
+                }
+                ${
+                  containerNumbers.length > 2
+                    ? `<span style="color: #64748b; font-size: 0.85em;"> +${
+                        containerNumbers.length - 2
+                      }</span>`
+                    : ""
+                }
+              </span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div style="
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.85em;
+                color: #475569;
+              ">
+                <i class="fas fa-map-marker-alt" style="color: #64748b; width: 14px;"></i>
+                ${item.data.lieu || "Non spécifié"}
+              </div>
+              <div style="
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.85em;
+                color: #475569;
+              ">
+                <i class="fas fa-calendar" style="color: #64748b; width: 14px;"></i>
+                ${
+                  new Date(item.date).toLocaleDateString("fr-FR") ||
+                  "Non spécifiée"
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Indicateur cliquable -->
           <div style="
-            background: ${statusColor}15;
-            color: ${statusColor};
-            padding: 4px 10px;
-            border-radius: 20px;
+            text-align: center;
+            padding: 8px;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 8px;
             font-size: 0.8em;
+            color: #667eea;
             font-weight: 600;
           ">
-            ${statusText}
-          </div>
-        </div>
-
-        <!-- Informations principales -->
-        <div style="margin-bottom: 10px;">
-          <div style="
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
-            color: #475569;
-            font-size: 0.95em;
-          ">
-            <i class="fas fa-shipping-fast" style="color: #64748b; width: 16px;"></i>
-            <strong>TC:</strong> ${
-              containerNumbers.length > 0
-                ? containerNumbers.join(", ")
-                : "Non spécifié"
-            }
-          </div>
-          
-          <div style="
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
-            color: #475569;
-            font-size: 0.95em;
-          ">
-            <i class="fas fa-map-marker-alt" style="color: #64748b; width: 16px;"></i>
-            <strong>Lieu:</strong> ${item.data.lieu || "Non spécifié"}
-          </div>
-
-          <div style="
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #475569;
-            font-size: 0.95em;
-          ">
-            <i class="fas fa-calendar" style="color: #64748b; width: 16px;"></i>
-            <strong>Date:</strong> ${item.date || "Non spécifiée"}
-          </div>
-        </div>
-
-        <!-- Détails supplémentaires -->
-        <div style="
-          background: #f8fafc;
-          padding: 10px;
-          border-radius: 8px;
-          font-size: 0.85em;
-          color: #64748b;
-        ">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div><strong>BL:</strong> ${item.data.blNumber || "-"}</div>
-            <div><strong>Mode:</strong> ${
-              item.data.transporterMode || "-"
-            }</div>
-            <div style="grid-column: 1 / -1;"><strong>Déclaration:</strong> ${
-              item.data.declarationNumber || "-"
-            }</div>
+            <i class="fas fa-eye" style="margin-right: 6px;"></i>
+            Cliquer pour voir les détails
           </div>
         </div>
       </div>
@@ -473,11 +822,26 @@ window.loadMobileHistoryData = function () {
   });
 
   contentDiv.innerHTML = ordersHTML;
+
+  // Réinitialiser les sélections
+  selectedOrders.clear();
+  updateSelectionUI();
+
   console.log(
     "✅ Historique mobile affiché avec",
     filteredHistory.length,
     "éléments"
   );
+};
+
+// Fonction globale pour gérer la sélection des ordres
+window.toggleOrderSelection = function (index, isChecked) {
+  if (isChecked) {
+    selectedOrders.add(index);
+  } else {
+    selectedOrders.delete(index);
+  }
+  updateSelectionUI();
 };
 
 /**
@@ -675,7 +1039,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Anciennes fonctions d'historique supprimées - remplacées par la nouvelle sidebar mobile
 
 // Fonction globale pour afficher/masquer l'icône historique selon la visibilité du formulaire
-function updateHistoryBtnVisibility() {
+/*function updateHistoryBtnVisibility() {
   const deliveryFormSection = document.getElementById("deliveryFormSection");
   const codeEntrySection = document.getElementById("codeEntrySection");
   let historyBtn = document.getElementById("historySidebarBtn");
@@ -747,7 +1111,7 @@ function updateHistoryBtnVisibility() {
   } else {
     if (historyBtn) historyBtn.style.display = "none";
   }
-}
+}*/
 
 // --- Insertion dynamique du conteneur avatar à côté du formulaire ---
 document.addEventListener("DOMContentLoaded", () => {
