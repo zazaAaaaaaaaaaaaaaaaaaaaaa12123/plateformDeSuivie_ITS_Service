@@ -2988,11 +2988,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   }
                 }
 
-                // Permettre la modification si :
-                // 1. Tous les champs obligatoires sont remplis OU
-                // 2. La livraison a déjà été activée (même si conteneur remis à "aucun") OU
-                // 3. Le conteneur a un historique de statut
-                if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
+                // VALIDATION STRICTE : Les champs obligatoires doivent TOUJOURS être remplis
+                // AUCUNE EXCEPTION ! Peu importe l'historique ou l'activation précédente
+                if (!canModify) {
                   showAccessMessage(
                     "🚫 ACCÈS REFUSÉ 🚫\n\nVous DEVEZ d'abord remplir TOUS les champs obligatoires :\n• NOM Agent visiteurs\n• TRANSPORTEUR\n• INSPECTEUR\n• AGENT EN DOUANES\n• CHAUFFEUR\n• TEL CHAUFFEUR\n• DATE LIVRAISON\n\nSans exception !",
                     "red"
@@ -3038,8 +3036,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }
               }
 
-              // Permettre le marquage si tous les champs sont remplis ou si la livraison a été activée
-              if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
+              // VALIDATION STRICTE : Les champs obligatoires doivent TOUJOURS être remplis
+              // AUCUNE EXCEPTION pour le marquage en masse !
+              if (!canModify) {
                 showAccessMessage(
                   "🚫 ACCÈS REFUSÉ 🚫\n\nVous DEVEZ d'abord remplir TOUS les champs obligatoires :\n• NOM Agent visiteurs\n• TRANSPORTEUR\n• INSPECTEUR\n• AGENT EN DOUANES\n• CHAUFFEUR\n• TEL CHAUFFEUR\n• DATE LIVRAISON\n\nSans exception !",
                   "red"
@@ -3118,8 +3117,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }
               }
 
-              // Permettre le démarquage si tous les champs sont remplis ou si la livraison a été activée
-              if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
+              // VALIDATION STRICTE : Les champs obligatoires doivent TOUJOURS être remplis
+              // AUCUNE EXCEPTION pour le démarquage !
+              if (!canModify) {
                 showAccessMessage(
                   "🚫 ACCÈS REFUSÉ 🚫\n\nVous DEVEZ d'abord remplir TOUS les champs obligatoires :\n• NOM Agent visiteurs\n• TRANSPORTEUR\n• INSPECTEUR\n• AGENT EN DOUANES\n• CHAUFFEUR\n• TEL CHAUFFEUR\n• DATE LIVRAISON\n\nSans exception !",
                   "red"
@@ -3235,11 +3235,9 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               }
             }
 
-            // Permettre la modification si :
-            // 1. Tous les champs obligatoires sont remplis OU
-            // 2. La livraison a déjà été activée (même si conteneur remis à "aucun") OU
-            // 3. Le conteneur a un historique de statut
-            if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
+            // VALIDATION STRICTE : Les champs obligatoires doivent TOUJOURS être remplis
+            // AUCUNE EXCEPTION pour les conteneurs uniques !
+            if (!canModify) {
               showAccessMessage(
                 "🚫 ACCÈS REFUSÉ 🚫\n\nVous DEVEZ d'abord remplir TOUS les champs obligatoires :\n• NOM Agent visiteurs\n• TRANSPORTEUR\n• INSPECTEUR\n• AGENT EN DOUANES\n• CHAUFFEUR\n• TEL CHAUFFEUR\n• DATE LIVRAISON\n\nSans exception !",
                 "red"
