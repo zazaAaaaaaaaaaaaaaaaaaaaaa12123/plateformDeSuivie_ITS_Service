@@ -790,10 +790,31 @@ function voirDetailsDossier(dossier) {
     return traductions[key] || key;
   }
 
-  const detailsHTML = sortedEntries
-    .map(([key, value]) => {
-      if (!value || value === "null" || value === "undefined") return "";
+  // Filtrer les entrées avant de générer le HTML
+  const filteredEntries = sortedEntries.filter(([key, value]) => {
+    // Exclure les entrées null ou undefined
+    if (!value || value === "null" || value === "undefined") return false;
 
+    // Exclure les entrées spécifiques
+    const excludeKeys = [
+      "container_statuses",
+      "bl_statuses",
+      "container_foot_types_map",
+      "Statuts des conteneurs",
+      "Statuts BL",
+      "Types de conteneurs",
+    ];
+    if (excludeKeys.includes(key)) return false;
+
+    // Exclure les objets et [object Object]
+    if (typeof value === "object" || String(value) === "[object Object]")
+      return false;
+
+    return true;
+  });
+
+  const detailsHTML = filteredEntries
+    .map(([key, value]) => {
       // Traduire la clé en français
       const keyFr = traduireProprieteDossier(key);
 
@@ -813,20 +834,6 @@ function voirDetailsDossier(dossier) {
           displayValue = new Date(value).toLocaleDateString("fr-FR");
         } catch (e) {
           displayValue = value;
-        }
-      }
-
-      // Formatage des objets
-      if (value === "[object Object]") {
-        if (key === "container_statuses" || key === "bl_statuses") {
-          try {
-            displayValue = JSON.stringify(dossier[key], null, 2)
-              .replace(/[{}"]/g, "")
-              .replace(/,/g, "<br>")
-              .replace(/:/g, " : ");
-          } catch (e) {
-            displayValue = "Non disponible";
-          }
         }
       }
 
