@@ -1,39 +1,6 @@
 // --- DÉCLARATION DES VARIABLES GLOBALES AVANT TOUTE FONCTION ---
-// Fonction pour charger l'historique des livraisons
-async function loadDeliveryHistory() {
-  try {
-    const response = await fetch("/deliveries/status");
-    const serverData = await response.json();
-
-    if (serverData.success && serverData.deliveries) {
-      // Mettre à jour le localStorage avec les données du serveur
-      localStorage.setItem(
-        "delivery_history",
-        JSON.stringify(serverData.deliveries)
-      );
-      return serverData.deliveries;
-    }
-    return [];
-  } catch (error) {
-    console.error("Erreur lors du chargement de l'historique:", error);
-    // En cas d'erreur, utiliser les données du localStorage
-    return JSON.parse(localStorage.getItem("delivery_history") || "[]");
-  }
-}
-
 // --- Animation d'intro avant le formulaire ---
-window.addEventListener("DOMContentLoaded", async function () {
-  // Charger l'historique au démarrage
-  await loadDeliveryHistory();
-
-  // Mettre à jour l'historique toutes les 30 secondes
-  setInterval(async () => {
-    await loadDeliveryHistory();
-    // Rafraîchir l'affichage si nécessaire
-    if (typeof window.renderHistorySidebarList === "function") {
-      window.renderHistorySidebarList();
-    }
-  }, 30000); // 30000 ms = 30 secondes
+window.addEventListener("DOMContentLoaded", function () {
   var intro = document.getElementById("introAnimation");
   var app = document.getElementById("appContainer");
   var progress = document.getElementById("introProgressBar");
@@ -182,47 +149,37 @@ function resetUsedBLNumbers() {
  * Affiche l'historique des ordres de livraison pour l'agent acconier.
  * @param {string} agentKey - Le nom de l'agent (ex: "Agent Acconier")
  */
-window.displayAgentHistory = async function (agentKey = "Agent Acconier") {
+window.displayAgentHistory = function (agentKey = "Agent Acconier") {
   const historyContainer = document.getElementById("historySidebarList");
   if (!historyContainer) return;
-
-  try {
-    // Charge les données d'historique depuis le serveur
-    const deliveries = await loadDeliveryHistory();
-
-    if (!deliveries || deliveries.length === 0) {
-      historyContainer.innerHTML =
-        '<div class="text-gray-500" style="padding:32px 0;text-align:center;font-size:1.15em;">Aucun ordre de livraison enregistré.</div>';
-      return;
-    }
-
-    // Trie les livraisons par date décroissante (plus récent en premier)
-    deliveries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    let html = "";
-    deliveries.forEach((item) => {
-      html += `<div style="background:#f1f5f9;margin-bottom:12px;padding:14px 18px;border-radius:10px;box-shadow:0 1px 6px #2563eb11;">
-        <div style="font-weight:600;color:#2563eb;font-size:1.08em;margin-bottom:2px;">${
-          item.clientName || "-"
-        } <span style="color:#334155;font-weight:400;font-size:0.98em;">(${
-        item.containerNumber || "-"
-      })</span></div>
-        <div style="font-size:0.97em;color:#334155;">${item.lieu || "-"} | ${
-        item.date || "-"
-      } </div>
-        <div style="font-size:0.93em;color:#64748b;margin-top:2px;">BL: ${
-          item.blNumber || "-"
-        } | Déclaration: ${item.declarationNumber || "-"} | Mode: ${
-        item.transporterMode || "-"
-      } </div>
-      </div>`;
-    });
-    historyContainer.innerHTML = html;
-  } catch (error) {
-    console.error("Erreur lors de l'affichage de l'historique:", error);
+  const historyKey = "simulatedHistoryData";
+  let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
+  let agentHistory = historyData[agentKey] || [];
+  if (agentHistory.length === 0) {
     historyContainer.innerHTML =
-      '<div class="text-red-500" style="padding:32px 0;text-align:center;font-size:1.15em;">Erreur lors du chargement de l\'historique.</div>';
+      '<div class="text-gray-500" style="padding:32px 0;text-align:center;font-size:1.15em;">Aucun ordre de livraison enregistré.</div>';
+    return;
   }
+  let html = "";
+  agentHistory.forEach((item) => {
+    html += `<div style="background:#f1f5f9;margin-bottom:12px;padding:14px 18px;border-radius:10px;box-shadow:0 1px 6px #2563eb11;">
+        <div style="font-weight:600;color:#2563eb;font-size:1.08em;margin-bottom:2px;">${
+          item.data.clientName || "-"
+        } <span style="color:#334155;font-weight:400;font-size:0.98em;">(${
+      item.data.containerNumbers ? item.data.containerNumbers.join(", ") : "-"
+    })</span></div>
+        <div style="font-size:0.97em;color:#334155;">${
+          item.data.lieu || "-"
+        } | ${item.date || "-"} </div>
+        <div style="font-size:0.93em;color:#64748b;margin-top:2px;">BL: ${
+          item.data.blNumber || "-"
+        } | Déclaration: ${item.data.declarationNumber || "-"} | Mode: ${
+      item.data.transporterMode || "-"
+    } </div>
+      </div>`;
+  });
+  historyContainer.innerHTML = html;
+  historyContainer.innerHTML = html;
 };
 
 /**
@@ -2332,80 +2289,6 @@ async function submitDeliveryForm(status) {
       } catch (e) {
         console.warn("Impossible d'ajouter à l'historique Agent Acconier :", e);
       }
-
-      // --- AJOUT À L'HISTORIQUE GÉNÉRAL DES LIVRAISONS ---
-      try {
-        const DELIVERY_HISTORY_KEY = "delivery_history";
-        // Récupérer l'historique à la fois du localStorage et du serveur
-        let deliveryHistory = JSON.parse(
-          localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
-        );
-
-        const historyEntry = {
-          id: `hist_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
-          delivery_id: data.delivery ? data.delivery.id : null,
-          container_number: containerNumberForDB,
-          dossier_number: finalDossierNumber,
-          bl_number: finalBlNumber,
-          client_name: clientName,
-          employee_name: employeeNameInput.value,
-          circuit: circuit,
-          shipping_company: finalShippingCompany,
-          container_foot_type: containerFootType,
-          weight: weight,
-          ship_name: shipName,
-          delivery_date: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          status: status,
-          delivered_by:
-            localStorage.getItem("user_nom") || employeeNameInput.value,
-        };
-
-        // Vérifie si cette livraison n'existe pas déjà dans l'historique
-        const exists = deliveryHistory.some(
-          (entry) =>
-            (entry.delivery_id === historyEntry.delivery_id ||
-              entry.bl_number === historyEntry.bl_number) &&
-            entry.container_number === containerNumberForDB
-        );
-
-        if (!exists) {
-          deliveryHistory.unshift(historyEntry);
-          // Limite l'historique à 1000 entrées
-          if (deliveryHistory.length > 1000) {
-            deliveryHistory = deliveryHistory.slice(0, 1000);
-          }
-          localStorage.setItem(
-            DELIVERY_HISTORY_KEY,
-            JSON.stringify(deliveryHistory)
-          );
-
-          // Synchronisation avec le serveur via une nouvelle requête
-          fetch("/deliveries/status")
-            .then((response) => response.json())
-            .then((serverData) => {
-              if (serverData.success && serverData.deliveries) {
-                // Fusionner les données du serveur avec l'historique local
-                const mergedHistory = [...serverData.deliveries];
-                localStorage.setItem(
-                  DELIVERY_HISTORY_KEY,
-                  JSON.stringify(mergedHistory)
-                );
-              }
-            })
-            .catch((error) =>
-              console.error("Erreur de synchronisation:", error)
-            );
-          console.log(
-            `[HISTORIQUE] ✅ Ordre de livraison ajouté à l'historique`
-          );
-        }
-      } catch (e) {
-        console.warn(
-          "[HISTORIQUE] ❌ Erreur lors de l'ajout à l'historique:",
-          e
-        );
-      }
       // --- FIN AJOUT HISTORIQUE ---
       // DEBUG : Affiche le contenu du localStorage juste après ajout
       console.log(
@@ -2429,7 +2312,7 @@ async function submitDeliveryForm(status) {
         }
       }, 200);
       deliveryForm.reset();
-      // Après le reset, remettre le nom de l'agent connecté dans le champ même s'il est disabled
+      // Après le reset, remettre le nom duihlde l'agent connecté dans le champ même s'il est disabled
       let acconier = JSON.parse(localStorage.getItem("acconier_user")) || {};
       if (employeeNameInput && acconier.nom) {
         // On active temporairement le champ si désactivé
@@ -2495,4 +2378,3 @@ async function submitDeliveryForm(status) {
 // par d'autres scripts (par exemple, un script pour le panneau d'administration).
 // Ce script se consnjsdbjsydgjshdtre dxhjbsésormaidhjs uniquement sur le formulaire employé.
 /***djh1*/
-/**aaaaaaa */
