@@ -436,3 +436,35 @@ html {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
+
+/* Personnalisation du header - couleur des liens */
+.navbar-dark .navbar-nav .nav-link {
+  color: #e9ecef !important; /* Blanc foncé / gris clair */
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus {
+  color: #ffffff !important; /* Blanc pur au survol */
+}
+
+.navbar-dark .navbar-nav .nav-link i {
+  color: #e9ecef !important; /* Icônes en blanc foncé */
+}
+
+.navbar-dark .navbar-nav .nav-link:hover i,
+.navbar-dark .navbar-nav .nav-link:focus i {
+  color: #ffffff !important; /* Icônes en blanc pur au survol */
+}
+
+.navbar-dark .navbar-brand {
+  color: #e9ecef !important; /* Brand en blanc foncé */
+}
+
+.navbar-dark .navbar-brand:hover,
+.navbar-dark .navbar-brand:focus {
+  color: #ffffff !important; /* Brand en blanc pur au survol */
+}
+
+.navbar-dark .navbar-brand i {
+  color: #e9ecef !important; /* Icône brand en blanc foncé */
+}

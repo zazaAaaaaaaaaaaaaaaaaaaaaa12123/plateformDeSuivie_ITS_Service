@@ -2078,6 +2078,16 @@ async function propagateStatusToAllTCs(deliveryId, newStatus) {
 
       // Affiche une notification de succès
       showStatusUpdateNotification(successCount, newStatus, errorCount);
+
+      // Vérifier et archiver automatiquement les dossiers entièrement livrés
+      if (newStatus === "livre" || newStatus === "livré") {
+        console.log(
+          "[STATUS PROPAGATION] 🔍 Vérification des dossiers entièrement livrés pour archivage"
+        );
+        setTimeout(() => {
+          removeDeliveredFromMainTable();
+        }, 1000); // Délai pour s'assurer que toutes les mises à jour sont terminées
+      }
     }
   } catch (error) {
     console.error(
@@ -6921,37 +6931,126 @@ function executeAutoRemoval() {
 }
 
 /**
+ * Fonction utilitaire pour archiver un dossier
+ */
+window.archiveDossier = async function (
+  dossierData,
+  actionType,
+  roleSource,
+  pageOrigine
+) {
+  try {
+    const archiveData = {
+      dossier_id: dossierData.id,
+      dossier_reference:
+        dossierData.dossier_number || dossierData.container_number,
+      intitule: dossierData.container_type_and_content || "",
+      client_name: dossierData.client_name,
+      role_source: roleSource,
+      page_origine: pageOrigine,
+      action_type: actionType,
+      archived_by: localStorage.getItem("currentUser") || "Système",
+      archived_by_email: localStorage.getItem("currentUserEmail") || "",
+      dossier_data: dossierData,
+      metadata: {
+        archived_from_url: window.location.href,
+        user_agent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+      },
+    };
+
+    const response = await fetch("/api/archives", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(archiveData),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      console.log("Dossier archivé avec succès:", result.archive);
+      return true;
+    } else {
+      console.error("Erreur lors de l'archivage:", result.message);
+      return false;
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'archivage:", error);
+    return false;
+  }
+};
+
+/**
  * Supprime les livraisons livrées du tableau principal
  */
 function removeDeliveredFromMainTable() {
-  if (!window.allDeliveries) return;
+  if (!window.allDeliveries) {
+    console.log("[ARCHIVE DEBUG] Pas de window.allDeliveries disponible");
+    return;
+  }
 
   let removedCount = 0;
   const deliveredToArchive = [];
 
+  console.log(
+    `[ARCHIVE DEBUG] Vérification de ${window.allDeliveries.length} livraisons`
+  );
+
   // Filtrer pour garder seulement les livraisons non entièrement livrées
   window.allDeliveries = window.allDeliveries.filter((delivery) => {
-    if (!delivery.container_statuses) return true;
+    if (!delivery.container_statuses) {
+      console.log(
+        `[ARCHIVE DEBUG] Dossier ${
+          delivery.dossier_number || delivery.id
+        } sans container_statuses`
+      );
+      return true;
+    }
 
     const statuses = Object.values(delivery.container_statuses);
+    console.log(
+      `[ARCHIVE DEBUG] Dossier ${
+        delivery.dossier_number || delivery.id
+      } statuses:`,
+      statuses
+    );
+
     const allDelivered =
       statuses.length > 0 &&
       statuses.every((status) => status === "livre" || status === "livré");
 
+    console.log(
+      `[ARCHIVE DEBUG] Dossier ${
+        delivery.dossier_number || delivery.id
+      } allDelivered:`,
+      allDelivered
+    );
+
     if (allDelivered) {
       removedCount++;
       deliveredToArchive.push(delivery);
+      console.log(
+        `[ARCHIVE DEBUG] Dossier ${
+          delivery.dossier_number || delivery.id
+        } marqué pour archivage`
+      );
       return false; // Supprimer du tableau
     }
 
     return true; // Garder dans le tableau
   });
 
+  console.log(
+    `[ARCHIVE DEBUG] ${deliveredToArchive.length} dossiers à archiver`
+  );
+
   // Archiver automatiquement les dossiers livrés
   if (
     deliveredToArchive.length > 0 &&
     typeof window.archiveDossier === "function"
   ) {
+    console.log("[ARCHIVE DEBUG] Début de l'archivage automatique");
     deliveredToArchive.forEach(async (delivery) => {
       try {
         await window.archiveDossier(
@@ -6972,6 +7071,18 @@ function removeDeliveredFromMainTable() {
         );
       }
     });
+  } else {
+    console.log(
+      "[ARCHIVE DEBUG] Aucun dossier à archiver ou fonction archiveDossier non disponible"
+    );
+    console.log(
+      "[ARCHIVE DEBUG] deliveredToArchive.length:",
+      deliveredToArchive.length
+    );
+    console.log(
+      "[ARCHIVE DEBUG] typeof window.archiveDossier:",
+      typeof window.archiveDossier
+    );
   }
 
   // Rafraîchir l'affichage
