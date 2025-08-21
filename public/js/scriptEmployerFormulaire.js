@@ -153,15 +153,57 @@ window.displayAgentHistory = function (agentKey = "Agent Acconier") {
   // Cherche d'abord le conteneur de la sidebar
   let historyContainer = document.getElementById("historySidebarList");
 
-  // Si le conteneur n'existe pas, on ne fait rien car il sera créé plus tard par la sidebar
+  // Si le conteneur n'existe pas, créons une section d'historique dans la page principale
   if (!historyContainer) {
-    console.log("Conteneur historique non trouvé, sera créé avec la sidebar");
+    console.log("Création d'une section d'historique dans la page principale");
+
+    // Cherche où insérer la section d'historique
+    const deliveryFormSection = document.getElementById("deliveryFormSection");
+    if (deliveryFormSection) {
+      // Créer une section d'historique si elle n'existe pas déjà
+      let historySection = document.getElementById("mainHistorySection");
+      if (!historySection) {
+        historySection = document.createElement("div");
+        historySection.id = "mainHistorySection";
+        historySection.style.marginTop = "30px";
+        historySection.style.padding = "20px";
+        historySection.style.background = "#f8fafc";
+        historySection.style.borderRadius = "12px";
+        historySection.style.boxShadow = "0 4px 24px rgba(30, 41, 59, 0.07)";
+
+        historySection.innerHTML = `
+          <h3 style="margin:0 0 15px 0;font-weight:700;font-size:1.25em;color:#2563eb;display:flex;align-items:center;">
+            <i class="fas fa-history" style="margin-right:8px;"></i>
+            📋 Historique des ordres de livraison
+          </h3>
+          <div id="mainHistoryList" style="max-height:400px;overflow-y:auto;"></div>
+        `;
+
+        // Insérer après la section du formulaire
+        deliveryFormSection.parentNode.insertBefore(
+          historySection,
+          deliveryFormSection.nextSibling
+        );
+      }
+
+      historyContainer = document.getElementById("mainHistoryList");
+    }
+  }
+
+  if (!historyContainer) {
+    console.log("Impossible de créer ou trouver le conteneur d'historique");
     return;
   }
 
   const historyKey = "simulatedHistoryData";
   let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
   let agentHistory = historyData[agentKey] || [];
+
+  console.log(`Vérification historique au chargement:`, {
+    agentKey,
+    numberOfOrders: agentHistory.length,
+    historyData: historyData,
+  });
 
   // Filtrer les données valides (comme dans renderHistorySidebarList)
   let filteredHistory = agentHistory.filter((item) => {
@@ -199,7 +241,6 @@ window.displayAgentHistory = function (agentKey = "Agent Acconier") {
     } </div>
       </div>`;
   });
-  historyContainer.innerHTML = html;
   historyContainer.innerHTML = html;
 };
 
@@ -407,83 +448,86 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+// Fonction globale pour afficher/masquer l'icône historique selon la visibilité du formulaire
+function updateHistoryBtnVisibility() {
+  const deliveryFormSection = document.getElementById("deliveryFormSection");
+  const codeEntrySection = document.getElementById("codeEntrySection");
+  let historyBtn = document.getElementById("historySidebarBtn");
+  let sidebar = document.getElementById("historySidebarFormulaire");
+  // Détection mobile
+  const isMobile =
+    window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
+  if (
+    deliveryFormSection &&
+    !deliveryFormSection.classList.contains("hidden")
+  ) {
+    if (!historyBtn) {
+      historyBtn = document.createElement("button");
+      historyBtn.id = "historySidebarBtn";
+      historyBtn.innerHTML = `<i class=\"fas fa-history\"></i>`;
+      historyBtn.title = "Voir l'historique des ordres de livraison";
+      document.body.appendChild(historyBtn);
+    }
+    // Styles responsive
+    if (isMobile) {
+      historyBtn.style.position = "fixed";
+      historyBtn.style.top = "12px";
+      historyBtn.style.left = "12px";
+      historyBtn.style.zIndex = "3000";
+      historyBtn.style.background = "#fff";
+      historyBtn.style.border = "none";
+      historyBtn.style.borderRadius = "50%";
+      historyBtn.style.width = "38px";
+      historyBtn.style.height = "38px";
+      historyBtn.style.boxShadow = "0 2px 8px #2563eb22";
+      historyBtn.style.display = "flex";
+      historyBtn.style.alignItems = "center";
+      historyBtn.style.justifyContent = "center";
+      historyBtn.style.fontSize = "1.15em";
+      historyBtn.style.color = "#2563eb";
+      historyBtn.style.cursor = "pointer";
+      historyBtn.style.transition = "filter .18s";
+      historyBtn.style.outline = "none";
+      historyBtn.style.touchAction = "manipulation";
+    } else {
+      historyBtn.style.position = "fixed";
+      historyBtn.style.top = "28px";
+      historyBtn.style.left = "38px";
+      historyBtn.style.zIndex = "3000";
+      historyBtn.style.background = "#fff";
+      historyBtn.style.border = "none";
+      historyBtn.style.borderRadius = "50%";
+      historyBtn.style.width = "48px";
+      historyBtn.style.height = "48px";
+      historyBtn.style.boxShadow = "0 2px 12px #2563eb22";
+      historyBtn.style.display = "flex";
+      historyBtn.style.alignItems = "center";
+      historyBtn.style.justifyContent = "center";
+      historyBtn.style.fontSize = "1.55em";
+      historyBtn.style.color = "#2563eb";
+      historyBtn.style.cursor = "pointer";
+      historyBtn.style.transition = "filter .18s";
+      historyBtn.style.outline = "none";
+    }
+    historyBtn.style.display = "flex";
+    // Toujours attacher l'événement onclick (même si le bouton vient d'être créé)
+    if (historyBtn && sidebar) {
+      historyBtn.onclick = function () {
+        sidebar.style.right = "0";
+        if (typeof renderHistorySidebarList === "function")
+          renderHistorySidebarList();
+      };
+    }
+  } else {
+    if (historyBtn) historyBtn.style.display = "none";
+  }
+}
+
 // --- Insertion dynamique du conteneur avatar à côté du formulaire ---
 document.addEventListener("DOMContentLoaded", () => {
   // Cherche la section du formulaire de livraison
   const deliveryFormSection = document.getElementById("deliveryFormSection");
   const codeEntrySection = document.getElementById("codeEntrySection");
-  // Fonction pour afficher/masquer l'icône historique selon la visibilité du formulaire
-  function updateHistoryBtnVisibility() {
-    let historyBtn = document.getElementById("historySidebarBtn");
-    let sidebar = document.getElementById("historySidebarFormulaire");
-    // Détection mobile
-    const isMobile =
-      window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
-    if (
-      deliveryFormSection &&
-      !deliveryFormSection.classList.contains("hidden")
-    ) {
-      if (!historyBtn) {
-        historyBtn = document.createElement("button");
-        historyBtn.id = "historySidebarBtn";
-        historyBtn.innerHTML = `<i class=\"fas fa-history\"></i>`;
-        historyBtn.title = "Voir l'historique des ordres de livraison";
-        document.body.appendChild(historyBtn);
-      }
-      // Styles responsive
-      if (isMobile) {
-        historyBtn.style.position = "fixed";
-        historyBtn.style.top = "12px";
-        historyBtn.style.left = "12px";
-        historyBtn.style.zIndex = "3000";
-        historyBtn.style.background = "#fff";
-        historyBtn.style.border = "none";
-        historyBtn.style.borderRadius = "50%";
-        historyBtn.style.width = "38px";
-        historyBtn.style.height = "38px";
-        historyBtn.style.boxShadow = "0 2px 8px #2563eb22";
-        historyBtn.style.display = "flex";
-        historyBtn.style.alignItems = "center";
-        historyBtn.style.justifyContent = "center";
-        historyBtn.style.fontSize = "1.15em";
-        historyBtn.style.color = "#2563eb";
-        historyBtn.style.cursor = "pointer";
-        historyBtn.style.transition = "filter .18s";
-        historyBtn.style.outline = "none";
-        historyBtn.style.touchAction = "manipulation";
-      } else {
-        historyBtn.style.position = "fixed";
-        historyBtn.style.top = "28px";
-        historyBtn.style.left = "38px";
-        historyBtn.style.zIndex = "3000";
-        historyBtn.style.background = "#fff";
-        historyBtn.style.border = "none";
-        historyBtn.style.borderRadius = "50%";
-        historyBtn.style.width = "48px";
-        historyBtn.style.height = "48px";
-        historyBtn.style.boxShadow = "0 2px 12px #2563eb22";
-        historyBtn.style.display = "flex";
-        historyBtn.style.alignItems = "center";
-        historyBtn.style.justifyContent = "center";
-        historyBtn.style.fontSize = "1.55em";
-        historyBtn.style.color = "#2563eb";
-        historyBtn.style.cursor = "pointer";
-        historyBtn.style.transition = "filter .18s";
-        historyBtn.style.outline = "none";
-      }
-      historyBtn.style.display = "flex";
-      // Toujours attacher l'événement onclick (même si le bouton vient d'être créé)
-      if (historyBtn && sidebar) {
-        historyBtn.onclick = function () {
-          sidebar.style.right = "0";
-          if (typeof renderHistorySidebarList === "function")
-            renderHistorySidebarList();
-        };
-      }
-    } else {
-      if (historyBtn) historyBtn.style.display = "none";
-    }
-  }
 
   // Ajout du conteneur avatar uniquement si on est sur le formulaire
   if (deliveryFormSection) {
@@ -1310,6 +1354,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Charger les numéros BL existants au démarrage
   loadUsedBLNumbers();
   init();
+
+  // Affichage de l'historique au chargement de la page
+  setTimeout(() => {
+    if (window.displayAgentHistory) {
+      window.displayAgentHistory("Agent Acconier");
+    }
+  }, 500);
+
   // Suppression de toute logique liée au code entreprise
 });
 
