@@ -119,6 +119,17 @@ function ajouterDossierMiseEnLiv(dossier) {
     ).toISOString();
   }
 
+  // S'assurer que les dates importantes sont toujours présentes (même si null)
+  if (!dossier.hasOwnProperty("date_do")) {
+    dossier.date_do = null;
+  }
+  if (!dossier.hasOwnProperty("date_badt")) {
+    dossier.date_badt = null;
+  }
+  if (!dossier.hasOwnProperty("date_paiement_acconage")) {
+    dossier.date_paiement_acconage = null;
+  }
+
   console.log("Dossier après formatage:", dossier); // Debug
   dossiers.push(dossier);
   saveDossiersMisEnLiv(dossiers);
@@ -555,35 +566,45 @@ function refreshMiseEnLivList() {
                   ${new Date(dossier.date_echange_bl).toLocaleDateString()}
                 </small>
               </div>
-              ${
-                dossier.date_do
-                  ? `
+              ${(() => {
+                const formatDateOrDefault = (dateStr, label, icon) => {
+                  let displayDate = "-";
+                  if (
+                    dateStr &&
+                    dateStr !== "null" &&
+                    dateStr !== "undefined"
+                  ) {
+                    try {
+                      displayDate = new Date(dateStr).toLocaleDateString();
+                    } catch (e) {
+                      displayDate = "-";
+                    }
+                  }
+                  return `
               <small class="text-muted" style="font-size: 0.8rem;">
-                <i class="far fa-calendar-check me-1"></i>
-                DO: ${new Date(dossier.date_do).toLocaleDateString()}
-              </small>`
-                  : ""
-              }
-              ${
-                dossier.date_paiement_acconage
-                  ? `
-              <small class="text-muted" style="font-size: 0.8rem;">
-                <i class="far fa-money-bill-alt me-1"></i>
-                Paiement Acconage: ${new Date(
-                  dossier.date_paiement_acconage
-                ).toLocaleDateString()}
-              </small>`
-                  : ""
-              }
-              ${
-                dossier.date_badt
-                  ? `
-              <small class="text-muted" style="font-size: 0.8rem;">
-                <i class="far fa-file-alt me-1"></i>
-                BADT: ${new Date(dossier.date_badt).toLocaleDateString()}
-              </small>`
-                  : ""
-              }
+                <i class="${icon} me-1"></i>
+                ${label}: ${displayDate}
+              </small>`;
+                };
+
+                return (
+                  formatDateOrDefault(
+                    dossier.date_do,
+                    "DO",
+                    "far fa-calendar-check"
+                  ) +
+                  formatDateOrDefault(
+                    dossier.date_paiement_acconage,
+                    "Paiement Acconage",
+                    "far fa-money-bill-alt"
+                  ) +
+                  formatDateOrDefault(
+                    dossier.date_badt,
+                    "BADT",
+                    "far fa-file-alt"
+                  )
+                );
+              })()}
             </div>
           </div>
           <div>
@@ -805,7 +826,18 @@ function voirDetailsDossier(dossier) {
 
   // Filtrer les entrées avant de générer le HTML
   const filteredEntries = sortedEntries.filter(([key, value]) => {
-    // Exclure les entrées null ou undefined
+    // Les dates importantes doivent toujours s'afficher, même si vides
+    const importantDates = [
+      "date_do",
+      "date_badt",
+      "date_paiement_acconage",
+      "date_echange_bl",
+    ];
+    if (importantDates.includes(key)) {
+      return true; // Toujours inclure ces dates
+    }
+
+    // Exclure les entrées null ou undefined pour les autres champs
     if (!value || value === "null" || value === "undefined") return false;
 
     // Exclure les entrées spécifiques
@@ -4373,6 +4405,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               select.value === "aucun" ? "aucun" : select.value;
             // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
             if (statutToSend === "mise_en_livraison") {
+              // Récupérer les dates des champs de saisie
+              const dateDOInput = document.querySelector(
+                'input[name="date_do"]'
+              );
+              const dateBADTInput = document.querySelector(
+                'input[name="date_badt"]'
+              );
+              const datePaiementAcconageInput = document.querySelector(
+                'input[name="date_paiement_acconage"]'
+              );
+
               // Ajouter le dossier à la liste des mises en livraison
               const dossierToSave = {
                 ...delivery,
@@ -4380,6 +4423,22 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 client_name: delivery.client_name || delivery.client || "",
                 status: "Mis en livraison",
                 date_mise_en_liv: new Date().toISOString(),
+                // Inclure les dates si elles sont disponibles dans le delivery original ou dans les inputs
+                date_do:
+                  delivery.date_do ||
+                  (dateDOInput && dateDOInput.value
+                    ? new Date(dateDOInput.value).toISOString()
+                    : null),
+                date_badt:
+                  delivery.date_badt ||
+                  (dateBADTInput && dateBADTInput.value
+                    ? new Date(dateBADTInput.value).toISOString()
+                    : null),
+                date_paiement_acconage:
+                  delivery.date_paiement_acconage ||
+                  (datePaiementAcconageInput && datePaiementAcconageInput.value
+                    ? new Date(datePaiementAcconageInput.value).toISOString()
+                    : null),
               };
               ajouterDossierMiseEnLiv(dossierToSave);
 
@@ -4497,6 +4556,17 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
                 // Si le statut est mise_en_livraison, ajouter à la liste des dossiers mis en livraison
                 if (statutToSend === "mise_en_livraison") {
+                  // Récupérer les dates des champs de saisie
+                  const dateDOInput = document.querySelector(
+                    'input[name="date_do"]'
+                  );
+                  const dateBADTInput = document.querySelector(
+                    'input[name="date_badt"]'
+                  );
+                  const datePaiementAcconageInput = document.querySelector(
+                    'input[name="date_paiement_acconage"]'
+                  );
+
                   const dossierToSave = {
                     ...delivery,
                     container_number: delivery.container_number || "",
@@ -4504,10 +4574,26 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     status: "Mis en livraison",
                     bl_number: blNumber,
                     date_mise_en_liv: new Date().toISOString(),
-                    // Ajout des dates d'échange
+                    // Ajout des dates d'échange avec vérification des inputs
                     paiement_acconage: delivery.paiement_acconage || "",
-                    date_do: delivery.date_do || "",
-                    date_badt: delivery.date_badt || "",
+                    date_do:
+                      delivery.date_do ||
+                      (dateDOInput && dateDOInput.value
+                        ? new Date(dateDOInput.value).toISOString()
+                        : null),
+                    date_badt:
+                      delivery.date_badt ||
+                      (dateBADTInput && dateBADTInput.value
+                        ? new Date(dateBADTInput.value).toISOString()
+                        : null),
+                    date_paiement_acconage:
+                      delivery.date_paiement_acconage ||
+                      (datePaiementAcconageInput &&
+                      datePaiementAcconageInput.value
+                        ? new Date(
+                            datePaiementAcconageInput.value
+                          ).toISOString()
+                        : null),
                     date_echange_bl: delivery.date_echange_bl || "",
                   };
                   ajouterDossierMiseEnLiv(dossierToSave);
