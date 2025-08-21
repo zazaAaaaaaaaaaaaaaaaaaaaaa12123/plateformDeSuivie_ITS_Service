@@ -1180,6 +1180,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // GESTION DU LIEN "Archive"
+  const lienArchive = document.getElementById("lienArchive");
+  if (lienArchive) {
+    lienArchive.addEventListener("click", (e) => {
+      e.preventDefault();
+      // Redirection vers la page des archives
+      window.location.href = "https://plateformdesuivie-its-service-1cjx.onrender.com/html/archives.html";
+    });
+  }
+
   // --- Sidebar repliable ---
   if (sidebarTitle && body) {
     sidebarTitle.addEventListener("click", function () {
