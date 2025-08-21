@@ -182,13 +182,14 @@ function resetUsedBLNumbers() {
  * Affiche l'historique des ordres de livraison pour l'agent acconier.
  * @param {string} agentKey - Le nom de l'agent (ex: "Agent Acconier")
  */
-window.displayAgentHistory = function (agentKey = "Agent Acconier") {
+window.displayAgentHistory = async function (agentKey = "Agent Acconier") {
   const historyContainer = document.getElementById("historySidebarList");
   if (!historyContainer) return;
-  const historyKey = "simulatedHistoryData";
-  let historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
-  let agentHistory = historyData[agentKey] || [];
-  if (agentHistory.length === 0) {
+
+  // Charge les données d'historique depuis le serveur
+  const deliveries = await loadDeliveryHistory();
+
+  if (!deliveries || deliveries.length === 0) {
     historyContainer.innerHTML =
       '<div class="text-gray-500" style="padding:32px 0;text-align:center;font-size:1.15em;">Aucun ordre de livraison enregistré.</div>';
     return;
@@ -2485,3 +2486,4 @@ async function submitDeliveryForm(status) {
 // par d'autres scripts (par exemple, un script pour le panneau d'administration).
 // Ce script se consnjsdbjsydgjshdtre dxhjbsésormaidhjs uniquement sur le formulaire employé.
 /***djh1*/
+/**aaaaaaa */
