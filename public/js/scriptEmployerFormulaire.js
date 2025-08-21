@@ -1,6 +1,39 @@
 // --- DÉCLARATION DES VARIABLES GLOBALES AVANT TOUTE FONCTION ---
+// Fonction pour charger l'historique des livraisons
+async function loadDeliveryHistory() {
+  try {
+    const response = await fetch("/deliveries/status");
+    const serverData = await response.json();
+
+    if (serverData.success && serverData.deliveries) {
+      // Mettre à jour le localStorage avec les données du serveur
+      localStorage.setItem(
+        "delivery_history",
+        JSON.stringify(serverData.deliveries)
+      );
+      return serverData.deliveries;
+    }
+    return [];
+  } catch (error) {
+    console.error("Erreur lors du chargement de l'historique:", error);
+    // En cas d'erreur, utiliser les données du localStorage
+    return JSON.parse(localStorage.getItem("delivery_history") || "[]");
+  }
+}
+
 // --- Animation d'intro avant le formulaire ---
-window.addEventListener("DOMContentLoaded", function () {
+window.addEventListener("DOMContentLoaded", async function () {
+  // Charger l'historique au démarrage
+  await loadDeliveryHistory();
+
+  // Mettre à jour l'historique toutes les 30 secondes
+  setInterval(async () => {
+    await loadDeliveryHistory();
+    // Rafraîchir l'affichage si nécessaire
+    if (typeof window.renderHistorySidebarList === "function") {
+      window.renderHistorySidebarList();
+    }
+  }, 30000); // 30000 ms = 30 secondes
   var intro = document.getElementById("introAnimation");
   var app = document.getElementById("appContainer");
   var progress = document.getElementById("introProgressBar");
@@ -2293,13 +2326,14 @@ async function submitDeliveryForm(status) {
       // --- AJOUT À L'HISTORIQUE GÉNÉRAL DES LIVRAISONS ---
       try {
         const DELIVERY_HISTORY_KEY = "delivery_history";
+        // Récupérer l'historique à la fois du localStorage et du serveur
         let deliveryHistory = JSON.parse(
           localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
         );
 
         const historyEntry = {
           id: `hist_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
-          delivery_id: response.delivery.id,
+          delivery_id: data.delivery ? data.delivery.id : null,
           container_number: containerNumberForDB,
           dossier_number: finalDossierNumber,
           bl_number: finalBlNumber,
@@ -2320,7 +2354,8 @@ async function submitDeliveryForm(status) {
         // Vérifie si cette livraison n'existe pas déjà dans l'historique
         const exists = deliveryHistory.some(
           (entry) =>
-            entry.delivery_id === response.delivery.id &&
+            (entry.delivery_id === historyEntry.delivery_id ||
+              entry.bl_number === historyEntry.bl_number) &&
             entry.container_number === containerNumberForDB
         );
 
@@ -2334,6 +2369,23 @@ async function submitDeliveryForm(status) {
             DELIVERY_HISTORY_KEY,
             JSON.stringify(deliveryHistory)
           );
+
+          // Synchronisation avec le serveur via une nouvelle requête
+          fetch("/deliveries/status")
+            .then((response) => response.json())
+            .then((serverData) => {
+              if (serverData.success && serverData.deliveries) {
+                // Fusionner les données du serveur avec l'historique local
+                const mergedHistory = [...serverData.deliveries];
+                localStorage.setItem(
+                  DELIVERY_HISTORY_KEY,
+                  JSON.stringify(mergedHistory)
+                );
+              }
+            })
+            .catch((error) =>
+              console.error("Erreur de synchronisation:", error)
+            );
           console.log(
             `[HISTORIQUE] ✅ Ordre de livraison ajouté à l'historique`
           );

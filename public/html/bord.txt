@@ -1,1 +1,1 @@
-  Ne te manque pas stp mais fait le correctement car je sais tu n'est pas humain mais que tu peut faire des erreur mais ne te manque pas stp .
+Ensuite pour la barre de cahrgement qui se fait je veux que quand il arrive à 50% apres 5 seconde il faut que la barre charge rapidement en un coup de façon brusque . 
