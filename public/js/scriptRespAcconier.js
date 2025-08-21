@@ -90,17 +90,29 @@ function ajouterDossierMiseEnLiv(dossier) {
     'input[name="date_paiement_acconage"]'
   );
 
+  // Fonction utilitaire pour obtenir la valeur d'un input de manière sécurisée
+  const getInputValue = (input) => {
+    try {
+      return input && input.value ? input.value : null;
+    } catch (e) {
+      console.warn("Erreur lors de la lecture de l'input:", e);
+      return null;
+    }
+  };
+
   // Mise à jour des dates depuis le formulaire
-  if (dateDOInput && dateDOInput.value) {
-    dossier.date_do = new Date(dateDOInput.value).toISOString();
+  const dateDoValue = getInputValue(dateDOInput);
+  const dateBadtValue = getInputValue(dateBADTInput);
+  const datePaiementValue = getInputValue(datePaiementAcconageInput);
+
+  if (dateDoValue) {
+    dossier.date_do = new Date(dateDoValue).toISOString();
   }
-  if (dateBADTInput && dateBADTInput.value) {
-    dossier.date_badt = new Date(dateBADTInput.value).toISOString();
+  if (dateBadtValue) {
+    dossier.date_badt = new Date(dateBadtValue).toISOString();
   }
-  if (datePaiementAcconageInput && datePaiementAcconageInput.value) {
-    dossier.date_paiement_acconage = new Date(
-      datePaiementAcconageInput.value
-    ).toISOString();
+  if (datePaiementValue) {
+    dossier.date_paiement_acconage = new Date(datePaiementValue).toISOString();
   }
 
   // Formatage des dates existantes
@@ -4405,7 +4417,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               select.value === "aucun" ? "aucun" : select.value;
             // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
             if (statutToSend === "mise_en_livraison") {
-              // Récupérer les dates des champs de saisie
+              // Récupérer les dates des champs de saisie avec vérification sécurisée
               const dateDOInput = document.querySelector(
                 'input[name="date_do"]'
               );
@@ -4415,6 +4427,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               const datePaiementAcconageInput = document.querySelector(
                 'input[name="date_paiement_acconage"]'
               );
+
+              // Fonction utilitaire pour obtenir la valeur d'un input de manière sécurisée
+              const getInputValue = (input) => {
+                try {
+                  return input && input.value ? input.value : null;
+                } catch (e) {
+                  console.warn("Erreur lors de la lecture de l'input:", e);
+                  return null;
+                }
+              };
 
               // Ajouter le dossier à la liste des mises en livraison
               const dossierToSave = {
@@ -4426,18 +4448,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 // Inclure les dates si elles sont disponibles dans le delivery original ou dans les inputs
                 date_do:
                   delivery.date_do ||
-                  (dateDOInput && dateDOInput.value
-                    ? new Date(dateDOInput.value).toISOString()
+                  (getInputValue(dateDOInput)
+                    ? new Date(getInputValue(dateDOInput)).toISOString()
                     : null),
                 date_badt:
                   delivery.date_badt ||
-                  (dateBADTInput && dateBADTInput.value
-                    ? new Date(dateBADTInput.value).toISOString()
+                  (getInputValue(dateBADTInput)
+                    ? new Date(getInputValue(dateBADTInput)).toISOString()
                     : null),
                 date_paiement_acconage:
                   delivery.date_paiement_acconage ||
-                  (datePaiementAcconageInput && datePaiementAcconageInput.value
-                    ? new Date(datePaiementAcconageInput.value).toISOString()
+                  (getInputValue(datePaiementAcconageInput)
+                    ? new Date(
+                        getInputValue(datePaiementAcconageInput)
+                      ).toISOString()
                     : null),
               };
               ajouterDossierMiseEnLiv(dossierToSave);
@@ -4556,7 +4580,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
                 // Si le statut est mise_en_livraison, ajouter à la liste des dossiers mis en livraison
                 if (statutToSend === "mise_en_livraison") {
-                  // Récupérer les dates des champs de saisie
+                  // Récupérer les dates des champs de saisie avec vérification sécurisée
                   const dateDOInput = document.querySelector(
                     'input[name="date_do"]'
                   );
@@ -4566,6 +4590,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   const datePaiementAcconageInput = document.querySelector(
                     'input[name="date_paiement_acconage"]'
                   );
+
+                  // Fonction utilitaire pour obtenir la valeur d'un input de manière sécurisée
+                  const getInputValue = (input) => {
+                    try {
+                      return input && input.value ? input.value : null;
+                    } catch (e) {
+                      console.warn("Erreur lors de la lecture de l'input:", e);
+                      return null;
+                    }
+                  };
 
                   const dossierToSave = {
                     ...delivery,
@@ -4578,20 +4612,19 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     paiement_acconage: delivery.paiement_acconage || "",
                     date_do:
                       delivery.date_do ||
-                      (dateDOInput && dateDOInput.value
-                        ? new Date(dateDOInput.value).toISOString()
+                      (getInputValue(dateDOInput)
+                        ? new Date(getInputValue(dateDOInput)).toISOString()
                         : null),
                     date_badt:
                       delivery.date_badt ||
-                      (dateBADTInput && dateBADTInput.value
-                        ? new Date(dateBADTInput.value).toISOString()
+                      (getInputValue(dateBADTInput)
+                        ? new Date(getInputValue(dateBADTInput)).toISOString()
                         : null),
                     date_paiement_acconage:
                       delivery.date_paiement_acconage ||
-                      (datePaiementAcconageInput &&
-                      datePaiementAcconageInput.value
+                      (getInputValue(datePaiementAcconageInput)
                         ? new Date(
-                            datePaiementAcconageInput.value
+                            getInputValue(datePaiementAcconageInput)
                           ).toISOString()
                         : null),
                     date_echange_bl: delivery.date_echange_bl || "",
