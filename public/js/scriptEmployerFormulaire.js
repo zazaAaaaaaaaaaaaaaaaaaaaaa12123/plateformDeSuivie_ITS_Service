@@ -2691,16 +2691,16 @@ async function submitDeliveryForm(status) {
           transform: translate(-50%, -50%) scale(0);
           background: linear-gradient(145deg, #10b981 0%, #059669 40%, #047857 100%);
           color: white;
-          padding: 32px 40px;
-          border-radius: 24px;
+          padding: 20px 28px;
+          border-radius: 16px;
           box-shadow: 
-            0 25px 50px rgba(16, 185, 129, 0.4),
-            0 15px 35px rgba(16, 185, 129, 0.3),
+            0 20px 40px rgba(16, 185, 129, 0.3),
+            0 12px 28px rgba(16, 185, 129, 0.2),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
           z-index: 10000;
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
           font-family: 'Segoe UI', 'Arial', sans-serif;
           animation: popup3DShow 1.2s cubic-bezier(0.23, 1, 0.320, 1) forwards;
           backdrop-filter: blur(10px);
@@ -2711,8 +2711,8 @@ async function submitDeliveryForm(status) {
         popup.innerHTML = `
           <div class="success-icon-container" style="
             position: relative;
-            width: 60px;
-            height: 60px;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2731,7 +2731,7 @@ async function submitDeliveryForm(status) {
               animation: iconPulse 2s ease-in-out infinite;
             "></div>
             <i class="fas fa-check" style="
-              font-size: 28px;
+              font-size: 22px;
               color: white;
               position: relative;
               z-index: 2;
@@ -2754,14 +2754,14 @@ async function submitDeliveryForm(status) {
             animation: textSlideIn 1s ease-out 0.6s both;
           ">
             <div style="
-              font-size: 1.4em; 
+              font-size: 1.2em; 
               font-weight: 700;
               margin-bottom: 4px;
               letter-spacing: 0.5px;
               text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             ">Ordre de livraison validé</div>
             <div style="
-              font-size: 0.9em;
+              font-size: 0.85em;
               opacity: 0.9;
               font-weight: 400;
             ">Votre demande a été traitée avec succès</div>
