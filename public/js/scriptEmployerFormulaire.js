@@ -2691,16 +2691,16 @@ async function submitDeliveryForm(status) {
           transform: translate(-50%, -50%) scale(0);
           background: linear-gradient(145deg, #10b981 0%, #059669 40%, #047857 100%);
           color: white;
-          padding: 20px 28px;
-          border-radius: 16px;
+          padding: 6px 10px;
+          border-radius: 8px;
           box-shadow: 
-            0 20px 40px rgba(16, 185, 129, 0.3),
-            0 12px 28px rgba(16, 185, 129, 0.2),
+            0 8px 16px rgba(16, 185, 129, 0.25),
+            0 4px 8px rgba(16, 185, 129, 0.15),
             inset 0 1px 0 rgba(255, 255, 255, 0.2);
           z-index: 10000;
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 8px;
           font-family: 'Segoe UI', 'Arial', sans-serif;
           animation: popup3DShow 1.2s cubic-bezier(0.23, 1, 0.320, 1) forwards;
           backdrop-filter: blur(10px);
@@ -2711,8 +2711,8 @@ async function submitDeliveryForm(status) {
         popup.innerHTML = `
           <div class="success-icon-container" style="
             position: relative;
-            width: 48px;
-            height: 48px;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2725,17 +2725,17 @@ async function submitDeliveryForm(status) {
               background: linear-gradient(145deg, #34d399, #10b981);
               border-radius: 50%;
               box-shadow: 
-                0 8px 32px rgba(16, 185, 129, 0.4),
-                inset 0 2px 0 rgba(255, 255, 255, 0.3),
-                inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+                0 4px 16px rgba(16, 185, 129, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
               animation: iconPulse 2s ease-in-out infinite;
             "></div>
             <i class="fas fa-check" style="
-              font-size: 22px;
+              font-size: 10px;
               color: white;
               position: relative;
               z-index: 2;
-              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+              text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
               animation: checkMark 0.8s ease-out 0.4s both;
             "></i>
             <div class="sparkles" style="
@@ -2754,15 +2754,15 @@ async function submitDeliveryForm(status) {
             animation: textSlideIn 1s ease-out 0.6s both;
           ">
             <div style="
-              font-size: 1.2em; 
-              font-weight: 700;
-              margin-bottom: 4px;
-              letter-spacing: 0.5px;
-              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+              font-size: 0.9em; 
+              font-weight: 600;
+              margin-bottom: 1px;
+              letter-spacing: 0.3px;
+              text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
             ">Ordre de livraison validé</div>
             <div style="
-              font-size: 0.85em;
-              opacity: 0.9;
+              font-size: 0.65em;
+              opacity: 0.85;
               font-weight: 400;
             ">Votre demande a été traitée avec succès</div>
           </div>
@@ -2883,11 +2883,11 @@ async function submitDeliveryForm(status) {
           }
           
           .sparkle {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background: radial-gradient(circle, #fbbf24 0%, #f59e0b 50%, transparent 70%);
             border-radius: 50%;
-            box-shadow: 0 0 10px #fbbf24;
+            box-shadow: 0 0 8px #fbbf24;
           }
           
           .sparkle::before {
@@ -2895,8 +2895,8 @@ async function submitDeliveryForm(status) {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 2px;
-            height: 8px;
+            width: 1.5px;
+            height: 6px;
             background: linear-gradient(to bottom, #fbbf24, transparent);
             transform: translate(-50%, -50%);
           }
@@ -2906,8 +2906,8 @@ async function submitDeliveryForm(status) {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 8px;
-            height: 2px;
+            width: 6px;
+            height: 1.5px;
             background: linear-gradient(to right, #fbbf24, transparent);
             transform: translate(-50%, -50%);
           }
