@@ -1,0 +1,438 @@
+/* Archives.css - Styles pour l'interface des archives */
+
+/* Variables CSS */
+:root {
+  --primary-color: #0d6efd;
+  --success-color: #198754;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #0dcaf0;
+  --dark-color: #212529;
+  --light-color: #f8f9fa;
+  --border-radius: 0.375rem;
+  --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --transition: all 0.15s ease-in-out;
+}
+
+/* Styles généraux */
+body {
+  background-color: #f8f9fa;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header personnalisé */
+.navbar-brand {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+/* Cartes et conteneurs */
+.card {
+  border: none;
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  background-color: white;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+}
+
+/* Onglets personnalisés */
+.nav-tabs .nav-link {
+  border: none;
+  color: #6c757d;
+  font-weight: 500;
+  transition: var(--transition);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.nav-tabs .nav-link:hover {
+  background-color: #f8f9fa;
+  color: var(--primary-color);
+}
+
+.nav-tabs .nav-link.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.nav-tabs .nav-link .badge {
+  font-size: 0.75em;
+}
+
+/* Table des archives */
+.archives-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.archives-table th,
+.archives-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.archives-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: var(--dark-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.archives-table tbody tr {
+  transition: var(--transition);
+}
+
+.archives-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Badges de statut */
+.badge-action {
+  font-size: 0.75em;
+  padding: 0.375em 0.5em;
+  font-weight: 500;
+}
+
+.badge-suppression {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.badge-livraison {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.badge-mise_en_livraison {
+  background-color: var(--warning-color);
+  color: var(--dark-color);
+}
+
+.badge-role {
+  background-color: var(--info-color);
+  color: var(--dark-color);
+  font-size: 0.7em;
+}
+
+/* Badges d'ancienneté */
+.badge-recent {
+  background-color: #20c997;
+  color: white;
+}
+
+.badge-old {
+  background-color: #6c757d;
+  color: white;
+}
+
+.badge-very-old {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* Boutons d'actions */
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+}
+
+.btn-restore {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+  color: white;
+}
+
+.btn-restore:hover {
+  background-color: #157347;
+  border-color: #146c43;
+  color: white;
+}
+
+.btn-restore:disabled {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  opacity: 0.65;
+}
+
+.btn-delete-permanent {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+  color: white;
+}
+
+.btn-delete-permanent:hover {
+  background-color: #bb2d3b;
+  border-color: #b02a37;
+  color: white;
+}
+
+/* Pagination personnalisée */
+.pagination-sm .page-link {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Formulaires et filtres */
+.form-label {
+  font-weight: 500;
+  color: var(--dark-color);
+  margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Messages d'état */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6c757d;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h5 {
+  color: var(--dark-color);
+  margin-bottom: 0.5rem;
+}
+
+/* Loading states */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  z-index: 1000;
+}
+
+.table-container {
+  position: relative;
+  min-height: 200px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .archives-table {
+    font-size: 0.875rem;
+  }
+
+  .archives-table th,
+  .archives-table td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .btn-group-sm .btn {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.75rem;
+  }
+
+  .badge {
+    font-size: 0.65em;
+  }
+
+  /* Masquer certaines colonnes sur mobile */
+  .d-none-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .navbar-brand {
+    font-size: 1rem;
+  }
+
+  .card-header h5 {
+    font-size: 1rem;
+  }
+
+  .nav-tabs .nav-link {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+
+  .empty-state i {
+    font-size: 2rem;
+  }
+}
+
+/* Colonnes spécifiques */
+.col-id {
+  width: 80px;
+  text-align: center;
+}
+
+.col-reference {
+  width: 120px;
+}
+
+.col-action {
+  width: 100px;
+  text-align: center;
+}
+
+.col-role {
+  width: 150px;
+}
+
+.col-date {
+  width: 130px;
+}
+
+.col-actions {
+  width: 180px;
+  text-align: center;
+}
+
+/* Détails dans la modal */
+.detail-row {
+  display: flex;
+  margin-bottom: 0.75rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  width: 150px;
+  color: var(--dark-color);
+}
+
+.detail-value {
+  flex: 1;
+  color: #495057;
+}
+
+.detail-section {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detail-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.detail-section h6 {
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+/* Icônes de statut */
+.status-icon {
+  margin-right: 0.5rem;
+}
+
+.status-icon.success {
+  color: var(--success-color);
+}
+
+.status-icon.warning {
+  color: var(--warning-color);
+}
+
+.status-icon.danger {
+  color: var(--danger-color);
+}
+
+/* Tooltips personnalisés */
+.tooltip .tooltip-inner {
+  background-color: var(--dark-color);
+  color: white;
+  font-size: 0.875rem;
+}
+
+.tooltip .tooltip-arrow::before {
+  border-top-color: var(--dark-color) !important;
+  border-bottom-color: var(--dark-color) !important;
+}
+
+/* États de boutons */
+.btn:disabled {
+  cursor: not-allowed;
+}
+
+.btn-outline-secondary:disabled {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  color: #6c757d;
+}
+
+/* Mise en évidence des actions récentes */
+.recent-archive {
+  border-left: 4px solid var(--primary-color);
+}
+
+.recent-archive td:first-child {
+  padding-left: calc(0.75rem - 4px);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus states pour l'accessibilité */
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.nav-link:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}

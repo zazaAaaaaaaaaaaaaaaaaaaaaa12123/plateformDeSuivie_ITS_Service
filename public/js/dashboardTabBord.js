@@ -272,12 +272,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (lienArchive) {
     lienArchive.addEventListener("click", (e) => {
       e.preventDefault();
-      // Fonctionnalité d'archive - à implémenter selon vos besoins
-      showCustomAlert(
-        "Fonction Archives en cours de développement",
-        "info",
-        3000
-      );
+      // Redirection vers la page des archives
+      window.location.href =
+        "https://plateformdesuivie-its-service-1cjx.onrender.com/html/archives.html";
     });
   }
 

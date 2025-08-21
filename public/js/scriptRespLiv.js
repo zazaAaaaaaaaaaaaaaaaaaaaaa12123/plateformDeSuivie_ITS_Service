@@ -6927,6 +6927,7 @@ function removeDeliveredFromMainTable() {
   if (!window.allDeliveries) return;
 
   let removedCount = 0;
+  const deliveredToArchive = [];
 
   // Filtrer pour garder seulement les livraisons non entièrement livrées
   window.allDeliveries = window.allDeliveries.filter((delivery) => {
@@ -6939,11 +6940,39 @@ function removeDeliveredFromMainTable() {
 
     if (allDelivered) {
       removedCount++;
+      deliveredToArchive.push(delivery);
       return false; // Supprimer du tableau
     }
 
     return true; // Garder dans le tableau
   });
+
+  // Archiver automatiquement les dossiers livrés
+  if (
+    deliveredToArchive.length > 0 &&
+    typeof window.archiveDossier === "function"
+  ) {
+    deliveredToArchive.forEach(async (delivery) => {
+      try {
+        await window.archiveDossier(
+          delivery,
+          "livraison",
+          "Responsable Livraison",
+          window.location.href
+        );
+        console.log(
+          `[ARCHIVE] Dossier livré archivé: ${
+            delivery.dossier_number || delivery.id
+          }`
+        );
+      } catch (error) {
+        console.error(
+          "[ARCHIVE] Erreur lors de l'archivage du dossier livré:",
+          error
+        );
+      }
+    });
+  }
 
   // Rafraîchir l'affichage
   const dateStartInput = document.getElementById("mainTableDateStartFilter");

@@ -751,8 +751,57 @@ window.createMobileHistorySidebar = function () {
     const historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
     const agentHistory = historyData["Agent Acconier"] || [];
 
-    // Supprimer les ordres sélectionnés (en ordre décroissant pour éviter les problèmes d'index)
+    // Archiver les ordres avant suppression
+    const ordersToArchive = [];
     const sortedIndexes = Array.from(selectedOrders).sort((a, b) => b - a);
+
+    sortedIndexes.forEach((index) => {
+      if (agentHistory[index]) {
+        const orderData = agentHistory[index];
+        // Préparer les données pour l'archive
+        const dossierForArchive = {
+          id: index,
+          dossier_number:
+            orderData.data?.container_number || orderData.data?.dossier_number,
+          container_number: orderData.data?.container_number,
+          client_name: orderData.data?.client_name,
+          employee_name: orderData.data?.employee_name,
+          container_type_and_content:
+            orderData.data?.container_type_and_content,
+          ...orderData.data,
+        };
+        ordersToArchive.push(dossierForArchive);
+      }
+    });
+
+    // Archiver automatiquement les ordres supprimés
+    if (
+      ordersToArchive.length > 0 &&
+      typeof window.archiveDossier === "function"
+    ) {
+      ordersToArchive.forEach(async (orderData) => {
+        try {
+          await window.archiveDossier(
+            orderData,
+            "suppression",
+            "Agent Acconier",
+            window.location.href
+          );
+          console.log(
+            `[ARCHIVE] Ordre supprimé archivé: ${
+              orderData.dossier_number || orderData.id
+            }`
+          );
+        } catch (error) {
+          console.error(
+            "[ARCHIVE] Erreur lors de l'archivage de l'ordre supprimé:",
+            error
+          );
+        }
+      });
+    }
+
+    // Supprimer les ordres sélectionnés (en ordre décroissant pour éviter les problèmes d'index)
     sortedIndexes.forEach((index) => {
       if (agentHistory[index]) {
         agentHistory.splice(index, 1);

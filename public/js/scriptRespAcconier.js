@@ -4799,6 +4799,30 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                         if (allMiseEnLivraison) {
                           row.cells[colIdx].innerHTML =
                             '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
+
+                          // Archiver automatiquement le dossier mis en livraison
+                          if (typeof window.archiveDossier === "function") {
+                            window
+                              .archiveDossier(
+                                delivery,
+                                "mise_en_livraison",
+                                "Responsable Acconier",
+                                window.location.href
+                              )
+                              .then(() => {
+                                console.log(
+                                  `[ARCHIVE] Dossier mis en livraison archivé: ${
+                                    delivery.dossier_number || delivery.id
+                                  }`
+                                );
+                              })
+                              .catch((error) => {
+                                console.error(
+                                  "[ARCHIVE] Erreur lors de l'archivage du dossier mis en livraison:",
+                                  error
+                                );
+                              });
+                          }
                         } else {
                           row.cells[colIdx].innerHTML =
                             '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';

@@ -2001,10 +2001,36 @@ const creationTableLivraisonConteneur = `
     );
 `;
 
+// Définition de la table d'archives
+const creationTableArchives = `
+    CREATE TABLE IF NOT EXISTS archives_dossiers (
+      id SERIAL PRIMARY KEY,
+      dossier_id INTEGER NULL,
+      dossier_reference VARCHAR(100),
+      intitule TEXT,
+      client_name VARCHAR(255),
+      role_source VARCHAR(100) NOT NULL,
+      page_origine VARCHAR(255) NOT NULL,
+      action_type VARCHAR(50) NOT NULL, -- 'suppression', 'livraison', 'mise_en_livraison'
+      archived_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      archived_by VARCHAR(255),
+      archived_by_email VARCHAR(255),
+      is_restorable BOOLEAN DEFAULT TRUE,
+      dossier_data JSONB, -- Stockage complet des données du dossier pour restauration
+      metadata JSONB, -- Métadonnées supplémentaires pour la restauration
+      
+      CONSTRAINT chk_action_type CHECK (action_type IN ('suppression', 'livraison', 'mise_en_livraison'))
+    );
+`;
+
 async function createTables() {
   try {
     await pool.query(creationTableLivraisonConteneur);
     console.log("Table livraison_conteneur créée ou déjà existante.");
+
+    await pool.query(creationTableArchives);
+    console.log("Table archives_dossiers créée ou déjà existante.");
+
     //
     // Assurez-vous que delivery_date et delivery_time sont bien NULLABLE
     const columnsToMakeNullable = ["delivery_date", "delivery_time"];
@@ -4001,26 +4027,6 @@ async function broadcastAgentList(wss) {
   });
 }
 
-// --- Fonction de nettoyage des archives de plus de 3 ans ---
-async function cleanOldArchives() {
-  console.log("Démarrage du nettoyage des archives de plus de 3 ans...");
-  try {
-    // Calcule la date limite (3 ans avant la date actuelle)
-    const threeYearsAgo = new Date();
-    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
-
-    const query = `
-      DELETE FROM livraison_conteneur
-      WHERE created_at < $1
-      RETURNING id;
-    `;
-    const result = await pool.query(query, [threeYearsAgo]);
-    console.log(`Nettoyage terminé : ${result.rowCount} archives supprimées.`);
-  } catch (error) {
-    console.error("Erreur lors du nettoyage des archives :", error);
-  }
-}
-
 // Planifier l'exécution du nettoyage des archives
 // Exécute une première fois au démarrage
 cleanOldArchives();
@@ -4392,6 +4398,326 @@ app.get("/clients", async (req, res) => {
     });
   }
 });
+
+// ===============================
+// ROUTES POUR LE SYSTÈME D'ARCHIVES
+// ===============================
+
+// Récupérer toutes les archives avec filtres et pagination
+app.get("/api/archives", async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 50,
+      search = "",
+      action_type = "",
+      role_source = "",
+      date_start = "",
+      date_end = "",
+    } = req.query;
+
+    let whereConditions = [];
+    let queryParams = [];
+    let paramIndex = 1;
+
+    // Filtres de recherche
+    if (search) {
+      whereConditions.push(`(
+        dossier_reference ILIKE $${paramIndex} OR 
+        intitule ILIKE $${paramIndex} OR 
+        client_name ILIKE $${paramIndex} OR
+        archived_by ILIKE $${paramIndex}
+      )`);
+      queryParams.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (action_type) {
+      whereConditions.push(`action_type = $${paramIndex}`);
+      queryParams.push(action_type);
+      paramIndex++;
+    }
+
+    if (role_source) {
+      whereConditions.push(`role_source = $${paramIndex}`);
+      queryParams.push(role_source);
+      paramIndex++;
+    }
+
+    if (date_start) {
+      whereConditions.push(`archived_at >= $${paramIndex}`);
+      queryParams.push(date_start);
+      paramIndex++;
+    }
+
+    if (date_end) {
+      whereConditions.push(`archived_at <= $${paramIndex}`);
+      queryParams.push(date_end);
+      paramIndex++;
+    }
+
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE ${whereConditions.join(" AND ")}`
+        : "";
+
+    // Pagination
+    const offset = (page - 1) * limit;
+    queryParams.push(limit, offset);
+
+    const query = `
+      SELECT * FROM archives_dossiers 
+      ${whereClause}
+      ORDER BY archived_at DESC 
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    const result = await pool.query(query, queryParams);
+
+    // Compter le total pour la pagination
+    const countQuery = `
+      SELECT COUNT(*) as total FROM archives_dossiers ${whereClause}
+    `;
+    const countResult = await pool.query(countQuery, queryParams.slice(0, -2));
+    const total = parseInt(countResult.rows[0].total);
+
+    res.json({
+      success: true,
+      archives: result.rows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: parseInt(limit),
+      },
+    });
+  } catch (err) {
+    console.error("Erreur lors de la récupération des archives:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération des archives.",
+    });
+  }
+});
+
+// Archiver un dossier (suppression, livraison ou mise en livraison)
+app.post("/api/archives", async (req, res) => {
+  try {
+    const {
+      dossier_id,
+      dossier_reference,
+      intitule,
+      client_name,
+      role_source,
+      page_origine,
+      action_type,
+      archived_by,
+      archived_by_email,
+      dossier_data,
+      metadata,
+    } = req.body;
+
+    // Validation des champs requis
+    if (!role_source || !page_origine || !action_type) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Champs requis manquants (role_source, page_origine, action_type)",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      INSERT INTO archives_dossiers (
+        dossier_id, dossier_reference, intitule, client_name,
+        role_source, page_origine, action_type, archived_by,
+        archived_by_email, dossier_data, metadata
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING *
+    `,
+      [
+        dossier_id,
+        dossier_reference,
+        intitule,
+        client_name,
+        role_source,
+        page_origine,
+        action_type,
+        archived_by,
+        archived_by_email,
+        JSON.stringify(dossier_data),
+        JSON.stringify(metadata),
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      archive: result.rows[0],
+      message: "Dossier archivé avec succès",
+    });
+  } catch (err) {
+    console.error("Erreur lors de l'archivage:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'archivage",
+    });
+  }
+});
+
+// Restaurer un dossier archivé
+app.post("/api/archives/:id/restore", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { restored_by, restored_by_email } = req.body;
+
+    // Récupérer l'archive
+    const archiveResult = await pool.query(
+      "SELECT * FROM archives_dossiers WHERE id = $1 AND is_restorable = true",
+      [id]
+    );
+
+    if (archiveResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Archive non trouvée ou non restaurable",
+      });
+    }
+
+    const archive = archiveResult.rows[0];
+    const dossierData = archive.dossier_data;
+
+    if (!dossierData) {
+      return res.status(400).json({
+        success: false,
+        message: "Données du dossier non disponibles pour la restauration",
+      });
+    }
+
+    // Restaurer le dossier dans la table principale
+    const restoreQuery = `
+      INSERT INTO livraison_conteneur (
+        employee_name, delivery_date, delivery_time, client_name, client_phone,
+        container_type_and_content, lieu, container_number, container_foot_type,
+        declaration_number, number_of_containers, bl_number, dossier_number,
+        shipping_company, transporter, weight, ship_name, circuit, number_of_packages,
+        transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes,
+        driver_name, driver_phone, truck_registration, delivery_notes, status,
+        is_eir_received, delivery_status_acconier, observation_acconier,
+        container_numbers_list, container_foot_types_map, bl_statuses, container_statuses
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+        $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35
+      ) RETURNING id
+    `;
+
+    const restoreResult = await pool.query(restoreQuery, [
+      dossierData.employee_name,
+      dossierData.delivery_date,
+      dossierData.delivery_time,
+      dossierData.client_name,
+      dossierData.client_phone,
+      dossierData.container_type_and_content,
+      dossierData.lieu,
+      dossierData.container_number,
+      dossierData.container_foot_type,
+      dossierData.declaration_number,
+      dossierData.number_of_containers,
+      dossierData.bl_number,
+      dossierData.dossier_number,
+      dossierData.shipping_company,
+      dossierData.transporter,
+      dossierData.weight,
+      dossierData.ship_name,
+      dossierData.circuit,
+      dossierData.number_of_packages,
+      dossierData.transporter_mode,
+      dossierData.nom_agent_visiteur,
+      dossierData.inspecteur,
+      dossierData.agent_en_douanes,
+      dossierData.driver_name,
+      dossierData.driver_phone,
+      dossierData.truck_registration,
+      dossierData.delivery_notes,
+      dossierData.status,
+      dossierData.is_eir_received,
+      dossierData.delivery_status_acconier,
+      dossierData.observation_acconier,
+      JSON.stringify(dossierData.container_numbers_list),
+      JSON.stringify(dossierData.container_foot_types_map),
+      JSON.stringify(dossierData.bl_statuses),
+      JSON.stringify(dossierData.container_statuses),
+    ]);
+
+    // Marquer l'archive comme non restaurable
+    await pool.query(
+      "UPDATE archives_dossiers SET is_restorable = false WHERE id = $1",
+      [id]
+    );
+
+    res.json({
+      success: true,
+      message: "Dossier restauré avec succès",
+      restored_id: restoreResult.rows[0].id,
+    });
+  } catch (err) {
+    console.error("Erreur lors de la restauration:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la restauration",
+    });
+  }
+});
+
+// Supprimer définitivement une archive
+app.delete("/api/archives/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      "DELETE FROM archives_dossiers WHERE id = $1 RETURNING *",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Archive non trouvée",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Archive supprimée définitivement",
+    });
+  } catch (err) {
+    console.error("Erreur lors de la suppression d'archive:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la suppression",
+    });
+  }
+});
+
+// Nettoyage automatique des archives de plus de 2 ans
+async function cleanOldArchives() {
+  console.log("Démarrage du nettoyage des archives de plus de 2 ans...");
+  try {
+    const twoYearsAgo = new Date();
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+    const query = `
+      DELETE FROM archives_dossiers
+      WHERE archived_at < $1
+      RETURNING id;
+    `;
+    const result = await pool.query(query, [twoYearsAgo]);
+    console.log(
+      `Nettoyage terminé : ${result.rowCount} archives supprimées automatiquement.`
+    );
+  } catch (error) {
+    console.error("Erreur lors du nettoyage automatique des archives :", error);
+  }
+}
 
 app.use("/uploads", express.static(uploadDir));
 
