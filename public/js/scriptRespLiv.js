@@ -2645,9 +2645,48 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       "driver_phone",
       "delivery_date",
     ];
-    // Fonction pour vérifier si tous les champs sont remplis (maintenant facultatif - toujours autorisé)
+    // Fonction pour vérifier si tous les champs obligatoires sont remplis
     function isAllRequiredFilled() {
-      // Les champs sont maintenant facultatifs, donc toujours autorisé
+      // Champs obligatoires à vérifier
+      const requiredFields = [
+        "visitor_agent_name",
+        "transporter",
+        "inspector",
+        "customs_agent",
+        "driver",
+        "driver_phone",
+        "delivery_date",
+      ];
+
+      // Vérifier chaque champ obligatoire pour cette livraison
+      for (const fieldId of requiredFields) {
+        const storageKey = getCellStorageKey(delivery, fieldId);
+        const savedValue = localStorage.getItem(storageKey);
+
+        // Vérifier la valeur sauvegardée dans localStorage
+        if (!savedValue || savedValue.trim() === "" || savedValue === "-") {
+          // Si pas de valeur sauvegardée, vérifier la valeur originale de la livraison
+          const originalValue = delivery[fieldId];
+          if (
+            !originalValue ||
+            originalValue.toString().trim() === "" ||
+            originalValue === "-"
+          ) {
+            console.log(
+              `[VALIDATION] Champ manquant: ${fieldId} pour la livraison ${
+                delivery.id || delivery.dossier_number
+              }`
+            );
+            return false;
+          }
+        }
+      }
+
+      console.log(
+        `[VALIDATION] Tous les champs obligatoires sont remplis pour la livraison ${
+          delivery.id || delivery.dossier_number
+        }`
+      );
       return true;
     }
     // Gestion dynamique du message d'accès
@@ -2908,8 +2947,46 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   }
                 }
 
-                // Permettre la modification maintenant que les champs sont facultatifs
-                // Accès libre pour tous les utilisateurs
+                // Vérifier si tous les champs obligatoires sont remplis avant de permettre la modification
+                canModify = isAllRequiredFilled();
+
+                // Réinitialiser les variables pour cette vérification
+                isDeliveryActivated =
+                  localStorage.getItem(deliveryKey) === "true";
+
+                // Vérifier si des conteneurs ont déjà eu un statut défini (même "aucun" après avoir été "livré")
+                hasStatusHistory = false;
+                if (
+                  delivery.container_statuses &&
+                  typeof delivery.container_statuses === "object"
+                ) {
+                  // Vérifier si au moins un conteneur a un statut défini (même "aucun")
+                  hasStatusHistory =
+                    Object.keys(delivery.container_statuses).length > 0;
+
+                  // Si on trouve des statuts "livre"/"livré", marquer la livraison comme activée
+                  const hasDeliveredContainers = Object.values(
+                    delivery.container_statuses
+                  ).some((status) => status === "livre" || status === "livré");
+
+                  if (hasDeliveredContainers && !isDeliveryActivated) {
+                    localStorage.setItem(deliveryKey, "true");
+                    isDeliveryActivated = true;
+                  }
+                }
+
+                // Permettre la modification si :
+                // 1. Tous les champs obligatoires sont remplis OU
+                // 2. La livraison a déjà été activée (même si conteneur remis à "aucun") OU
+                // 3. Le conteneur a un historique de statut
+                if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
+                  showAccessMessage(
+                    "⚠️ CHAMPS OBLIGATOIRES MANQUANTS : Vous devez d'abord remplir TOUS les champs suivants : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                    "red"
+                  );
+                  return;
+                }
+
                 showContainerDetailPopup(delivery, item.textContent);
               };
             });
@@ -2921,7 +2998,41 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               ev.stopPropagation();
               popup.style.display = "none";
 
-              // Les champs sont maintenant facultatifs - plus de vérification
+              // Vérifier si tous les champs obligatoires sont remplis avant de permettre le marquage
+              canModify = isAllRequiredFilled();
+
+              // Réinitialiser les variables pour cette vérification
+              isDeliveryActivated =
+                localStorage.getItem(deliveryKey) === "true";
+
+              // Vérifier si des conteneurs ont déjà eu un statut défini
+              hasStatusHistory = false;
+              if (
+                delivery.container_statuses &&
+                typeof delivery.container_statuses === "object"
+              ) {
+                hasStatusHistory =
+                  Object.keys(delivery.container_statuses).length > 0;
+
+                // Si on trouve des statuts "livre"/"livré", marquer la livraison comme activée
+                const hasDeliveredContainers = Object.values(
+                  delivery.container_statuses
+                ).some((status) => status === "livre" || status === "livré");
+
+                if (hasDeliveredContainers && !isDeliveryActivated) {
+                  localStorage.setItem(deliveryKey, "true");
+                  isDeliveryActivated = true;
+                }
+              }
+
+              // Permettre le marquage si tous les champs sont remplis ou si la livraison a été activée
+              if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
+                showAccessMessage(
+                  "⚠️ CHAMPS OBLIGATOIRES MANQUANTS : Vous devez d'abord remplir TOUS les champs suivants : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                  "red"
+                );
+                return;
+              }
 
               if (
                 !confirm(
@@ -2966,6 +3077,42 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             unmarkAllBtn.onclick = async (ev) => {
               ev.stopPropagation();
               popup.style.display = "none";
+
+              // Vérifier si tous les champs obligatoires sont remplis avant de permettre le démarquage
+              canModify = isAllRequiredFilled();
+
+              // Réinitialiser les variables pour cette vérification
+              isDeliveryActivated =
+                localStorage.getItem(deliveryKey) === "true";
+
+              // Vérifier si des conteneurs ont déjà eu un statut défini
+              hasStatusHistory = false;
+              if (
+                delivery.container_statuses &&
+                typeof delivery.container_statuses === "object"
+              ) {
+                hasStatusHistory =
+                  Object.keys(delivery.container_statuses).length > 0;
+
+                // Si on trouve des statuts "livre"/"livré", marquer la livraison comme activée
+                const hasDeliveredContainers = Object.values(
+                  delivery.container_statuses
+                ).some((status) => status === "livre" || status === "livré");
+
+                if (hasDeliveredContainers && !isDeliveryActivated) {
+                  localStorage.setItem(deliveryKey, "true");
+                  isDeliveryActivated = true;
+                }
+              }
+
+              // Permettre le démarquage si tous les champs sont remplis ou si la livraison a été activée
+              if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
+                showAccessMessage(
+                  "⚠️ CHAMPS OBLIGATOIRES MANQUANTS : Vous devez d'abord remplir TOUS les champs suivants : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                  "red"
+                );
+                return;
+              }
 
               if (
                 !confirm(
@@ -3081,7 +3228,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             // 3. Le conteneur a un historique de statut
             if (!canModify && !isDeliveryActivated && !hasStatusHistory) {
               showAccessMessage(
-                "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+                "⚠️ CHAMPS OBLIGATOIRES MANQUANTS : Vous devez d'abord remplir TOUS les champs suivants : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
                 "red"
               );
               return;
@@ -3253,7 +3400,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           // Blocage pour observation si champs obligatoires non remplis
           if (col.id === "observation" && !isAllRequiredFilled()) {
             showAccessMessage(
-              "Veuillez d'abord renseigner tous les champs obligatoires : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
+              "⚠️ CHAMPS OBLIGATOIRES MANQUANTS : Vous devez d'abord remplir TOUS les champs suivants : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
               "red"
             );
             return;
