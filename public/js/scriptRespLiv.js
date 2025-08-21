@@ -2646,7 +2646,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       "delivery_date",
     ];
     // Fonction pour vérifier si tous les champs obligatoires sont remplis
-    function isAllRequiredFilled() {
+    function isAllRequiredFilled(delivery, deliveryIndex) {
       // Champs obligatoires à vérifier
       const requiredFields = [
         "visitor_agent_name",
@@ -2658,9 +2658,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         "delivery_date",
       ];
 
+      // Fonction locale pour générer la clé de stockage
+      function getStorageKey(delivery, colId, index) {
+        return `deliverycell_${
+          delivery.id || delivery.dossier_number || index
+        }_${colId}`;
+      }
+
       // Vérifier chaque champ obligatoire pour cette livraison
       for (const fieldId of requiredFields) {
-        const storageKey = getCellStorageKey(delivery, fieldId);
+        const storageKey = getStorageKey(delivery, fieldId, deliveryIndex);
         const savedValue = localStorage.getItem(storageKey);
 
         // Vérifier la valeur sauvegardée dans localStorage
@@ -2917,7 +2924,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 popup.style.display = "none";
 
                 // 🔧 MODIFICATION AMÉLIORÉE : Permettre la modification une fois que la livraison a été "activée"
-                let canModify = isAllRequiredFilled();
+                let canModify = isAllRequiredFilled(delivery, i);
 
                 // Vérifier si cette livraison a déjà été "activée" pour les modifications
                 const deliveryKey = `delivery_activated_${
@@ -2948,7 +2955,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 }
 
                 // Vérifier si tous les champs obligatoires sont remplis avant de permettre la modification
-                canModify = isAllRequiredFilled();
+                canModify = isAllRequiredFilled(delivery, i);
 
                 // Réinitialiser les variables pour cette vérification
                 isDeliveryActivated =
@@ -2999,7 +3006,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               popup.style.display = "none";
 
               // Vérifier si tous les champs obligatoires sont remplis avant de permettre le marquage
-              canModify = isAllRequiredFilled();
+              canModify = isAllRequiredFilled(delivery, i);
 
               // Réinitialiser les variables pour cette vérification
               isDeliveryActivated =
@@ -3079,7 +3086,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               popup.style.display = "none";
 
               // Vérifier si tous les champs obligatoires sont remplis avant de permettre le démarquage
-              canModify = isAllRequiredFilled();
+              canModify = isAllRequiredFilled(delivery, i);
 
               // Réinitialiser les variables pour cette vérification
               isDeliveryActivated =
@@ -3192,7 +3199,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           tag.onclick = (e) => {
             e.stopPropagation();
             // 🔧 MODIFICATION AMÉLIORÉE : Permettre la modification une fois que la livraison a été "activée"
-            let canModify = isAllRequiredFilled();
+            let canModify = isAllRequiredFilled(delivery, i);
 
             // Vérifier si cette livraison a déjà été "activée" pour les modifications
             const deliveryKey = `delivery_activated_${
@@ -3398,7 +3405,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         td.onclick = function (e) {
           if (td.querySelector("input") || td.querySelector("textarea")) return;
           // Blocage pour observation si champs obligatoires non remplis
-          if (col.id === "observation" && !isAllRequiredFilled()) {
+          if (col.id === "observation" && !isAllRequiredFilled(delivery, i)) {
             showAccessMessage(
               "⚠️ CHAMPS OBLIGATOIRES MANQUANTS : Vous devez d'abord remplir TOUS les champs suivants : NOM Agent visiteurs, TRANSPORTEUR, INSPECTEUR, AGENT EN DOUANES, CHAUFFEUR, TEL CHAUFFEUR, DATE LIVRAISON.",
               "red"
@@ -3464,7 +3471,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             // === SYNCHRONISATION VERS SUIVIE ===
             syncDataToSuivie(delivery, col.id, input.value);
             setTimeout(() => {
-              if (isAllRequiredFilled()) {
+              if (isAllRequiredFilled(delivery, i)) {
                 showAccessMessage(
                   "Accès débloqué : vous pouvez modifier le statut du conteneur et l'observation.",
                   "green"
