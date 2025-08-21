@@ -10,7 +10,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
     <link rel="stylesheet" href="../css/styleFormulaireEmploy.css" />
-     <link rel="stylesheet" href="/css/dark-mode.css" />
     <style>
       /* Animation intro responsive mobile */
       @media (max-width: 600px) {
@@ -561,113 +560,15 @@
         </div>
       </div>
     </div>
-    <!-- Bouton historique + Sélecteur de thème -->
+    <!-- Bouton historique seulement -->
     <div style="position:fixed;top:12px;left:12px;z-index:3000;display:flex;align-items:center;gap:10px;">
       <button id="historySidebarBtn" title="Historique" style="width:38px;height:38px;box-shadow:0 2px 8px #2563eb22;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;">
         <i class="fas fa-history" style="font-size:1.15em;color:#2563eb;"></i>
       </button>
-      <button id="themeSelectorBtn" title="Changer le thème" style="width:38px;height:38px;box-shadow:0 2px 8px #2563eb22;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;">
-        <i class="fas fa-moon" id="themeIcon" style="font-size:1.15em;color:#2563eb;"></i>
-      </button>
     </div>
 
     <script src="../js/scriptEmployerFormulaire.js"></script>
-    <style>
-      body.dark-theme {
-        background: #18181b !important;
-      }
-      body.dark-theme .block,
-      body.dark-theme .font-bold,
-      body.dark-theme .font-semibold,
-      body.dark-theme legend,
-      body.dark-theme h3,
-      body.dark-theme h2,
-      body.dark-theme h1 {
-        color: #fff !important;
-        text-shadow: 0 0 2px #fff, 0 0 8px #0ff;
-      }
-      body.dark-theme label,
-      body.dark-theme .text-gray-700 {
-        color: #3b82f6 !important;
-        text-shadow: 0 0 2px #3b82f6, 0 0 8px #00f6ff;
-      }
-      body.dark-theme input#containerNumber,
-      body.dark-theme .tc-foot-label {
-        color: #39ff14 !important;
-        background: #18181b !important;
-        border: 1.5px solid #39ff14 !important;
-        text-shadow: 0 0 2px #39ff14, 0 0 8px #39ff14;
-      }
-      body.dark-theme .tc-foot-select,
-      body.dark-theme .tc-foot-input {
-        color: #39ff14 !important;
-        background: #18181b !important;
-        border: 1.5px solid #39ff14 !important;
-        text-shadow: 0 0 2px #39ff14, 0 0 8px #39ff14;
-      }
-      body.dark-theme #formSuccess {
-        color: #39ff14 !important;
-        background: #18181b !important;
-        border: none;
-        text-shadow: 0 0 2px #39ff14, 0 0 8px #39ff14;
-      }
-      body.dark-theme #formError {
-        color: #ff1744 !important;
-        background: #18181b !important;
-        border: none;
-        text-shadow: 0 0 2px #ff1744, 0 0 8px #ff1744;
-      }
-      body.dark-theme .countdown-message {
-        color: #fff700 !important;
-        background: #18181b !important;
-        border: none;
-        text-shadow: 0 0 2px #fff700, 0 0 8px #fff700;
-      }
-      body.dark-theme input,
-      body.dark-theme select {
-        background: #18181b !important;
-        color: #3b82f6 !important;
-        border: 1.5px solid #3b82f6 !important;
-      }
-      body.dark-theme button {
-        background: #23232b !important;
-        color: #fff !important;
-        border: 1.5px solid #3b82f6 !important;
-      }
-    </style>
     <!-- La gestion du bouton 'Code oublié ?' est assurée uniquement par scriptEmployerFormulaire.js -->
     <!-- Le script de déconnexion est désormais géré dans scriptEmployerFormulaire.js -->
-    <script>
-      // Gestion du thème sombre/clair
-      const themeBtn = document.getElementById('themeSelectorBtn');
-      const themeIcon = document.getElementById('themeIcon');
-      function setTheme(dark) {
-        if (dark) {
-          document.body.classList.add('dark-theme');
-          themeIcon.classList.remove('fa-moon');
-          themeIcon.classList.add('fa-sun');
-          themeIcon.style.color = '#fff700';
-        } else {
-          document.body.classList.remove('dark-theme');
-          themeIcon.classList.remove('fa-sun');
-          themeIcon.classList.add('fa-moon');
-          themeIcon.style.color = '#2563eb';
-        }
-      }
-      // Initialisation
-      let isDark = false;
-      themeBtn.addEventListener('click', function() {
-        isDark = !isDark;
-        setTheme(isDark);
-      });
-      // Optionnel : garder le thème en mémoire locale
-      if (localStorage.getItem('theme') === 'dark') {
-        isDark = true;
-        setTheme(true);
-      }
-      themeBtn.addEventListener('click', function() {
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      });
-    </script>
   </body>
 </html>

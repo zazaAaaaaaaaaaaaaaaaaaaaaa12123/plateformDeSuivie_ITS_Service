@@ -1206,84 +1206,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Système de mode sombre ---
-  window.initDarkMode = function () {
-    // Récupère la préférence sauvegardée ou utilise le mode système
-    const savedTheme = localStorage.getItem("theme");
-    const systemDarkMode = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-    const isDarkMode = savedTheme === "dark" || (!savedTheme && systemDarkMode);
-
-    // Applique le thème
-    document.documentElement.setAttribute(
-      "data-theme",
-      isDarkMode ? "dark" : "light"
-    );
-
-    // Crée le bouton toggle
-    createDarkModeToggle();
-
-    // Écoute les changements du mode système
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        if (!localStorage.getItem("theme")) {
-          document.documentElement.setAttribute(
-            "data-theme",
-            e.matches ? "dark" : "light"
-          );
-          updateToggleIcon();
-        }
-      });
-  };
-
-  function createDarkModeToggle() {
-    // Supprime l'ancien toggle s'il existe
-    const existingToggle = document.getElementById("darkModeToggle");
-    if (existingToggle) existingToggle.remove();
-
-    const toggle = document.createElement("button");
-    toggle.id = "darkModeToggle";
-    toggle.className = "dark-mode-toggle";
-    toggle.innerHTML = '<span class="icon">🌙</span>';
-    toggle.title = "Basculer le mode sombre";
-
-    toggle.addEventListener("click", () => {
-      const currentTheme = document.documentElement.getAttribute("data-theme");
-      const newTheme = currentTheme === "dark" ? "light" : "dark";
-
-      document.documentElement.setAttribute("data-theme", newTheme);
-      localStorage.setItem("theme", newTheme);
-      updateToggleIcon();
-    });
-
-    document.body.appendChild(toggle);
-    updateToggleIcon();
-  }
-
-  function updateToggleIcon() {
-    const toggle = document.getElementById("darkModeToggle");
-    const icon = toggle?.querySelector(".icon");
-    if (icon) {
-      const isDark =
-        document.documentElement.getAttribute("data-theme") === "dark";
-      icon.textContent = isDark ? "☀️" : "🌙";
-      toggle.title = isDark
-        ? "Basculer en mode clair"
-        : "Basculer en mode sombre";
-    }
-  }
-
-  // --- Initialisation du mode sombre ---
-  initDarkMode();
-  // --- Fonction pour marquer les numéros TC en vert ---
+  // --- Fonction pour marquer les numéros TC ---
   window.highlightTCNumbers = function (text) {
     if (!text) return text;
     // Pattern pour TC + 4 chiffres
     return text.replace(
       /\b(TC\s*\d{4})\b/gi,
-      '<span class="tc-number">$1</span>'
+      '<span style="color:#10b981;font-weight:600;">$1</span>'
     );
   };
 
@@ -1303,7 +1232,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const regex = new RegExp(`\\b(${keyword}[^\\s]*)\\b`, "gi");
       result = result.replace(
         regex,
-        '<span class="validation-message">$1</span>'
+        '<span style="color:#10b981;font-weight:600;">$1</span>'
       );
     });
     return result;
@@ -1323,7 +1252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let result = text;
     statusKeywords.forEach((keyword) => {
       const regex = new RegExp(`\\b(${keyword}[^\\s]*)\\b`, "gi");
-      result = result.replace(regex, '<span class="status-message">$1</span>');
+      result = result.replace(regex, '<span style="color:#f59e0b;font-weight:600;">$1</span>');
     });
     return result;
   };
