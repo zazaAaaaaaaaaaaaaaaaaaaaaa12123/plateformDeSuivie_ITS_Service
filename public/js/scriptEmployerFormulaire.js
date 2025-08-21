@@ -136,6 +136,66 @@ function resetUsedBLNumbers() {
  * Crée et initialise la nouvelle sidebar d'historique optimisée pour mobile
  */
 window.createMobileHistorySidebar = function () {
+  // Fonction utilitaire pour formater les dates
+  window.formatOrderDate = function (dateValue) {
+    if (!dateValue) return "Non spécifiée";
+
+    try {
+      let date;
+
+      // Si c'est déjà un objet Date
+      if (dateValue instanceof Date) {
+        date = dateValue;
+      }
+      // Si c'est un timestamp en millisecondes
+      else if (typeof dateValue === "number") {
+        date = new Date(dateValue);
+      }
+      // Si c'est une chaîne de caractères
+      else if (typeof dateValue === "string") {
+        // Essayer différents formats
+        date = new Date(dateValue);
+
+        // Si la date n'est pas valide, essayer d'autres formats
+        if (isNaN(date.getTime())) {
+          // Format DD/MM/YYYY HH:MM
+          const parts = dateValue.match(
+            /(\d{1,2})\/(\d{1,2})\/(\d{4})\s*(\d{1,2}):(\d{1,2})/
+          );
+          if (parts) {
+            date = new Date(
+              parts[3],
+              parts[2] - 1,
+              parts[1],
+              parts[4],
+              parts[5]
+            );
+          } else {
+            // Essayer le format ISO
+            date = new Date(
+              dateValue.replace(/(\d{2})\/(\d{2})\/(\d{4})/, "$3-$2-$1")
+            );
+          }
+        }
+      }
+
+      // Vérifier si la date est valide
+      if (!date || isNaN(date.getTime())) {
+        return "Date invalide";
+      }
+
+      // Formater la date en français
+      return date.toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    } catch (error) {
+      console.warn("Erreur formatage date:", dateValue, error);
+      return "Date invalide";
+    }
+  };
+
   // Supprimer l'ancienne sidebar si elle existe
   const oldSidebar = document.getElementById("historySidebarFormulaire");
   if (oldSidebar) {
@@ -409,15 +469,16 @@ window.createMobileHistorySidebar = function () {
           .map((s) => s.trim())
           .filter((tc) => tc);
 
-    // Formater la date correctement
-    const formattedDate = orderDate
-      ? new Date(orderDate).toLocaleDateString("fr-FR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+    // Formater la date correctement avec notre fonction utilitaire
+    const formattedDate = window.formatOrderDate
+      ? window.formatOrderDate(orderDate) +
+        " " +
+        (orderDate
+          ? new Date(orderDate).toLocaleTimeString("fr-FR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "")
       : "Non spécifiée";
 
     // Créer le contenu pour les conteneurs (menu déroulant si plus d'un)
@@ -614,8 +675,13 @@ window.createMobileHistorySidebar = function () {
       "scale(0.8)";
   };
 
-  // Fonction pour mettre à jour l'UI de sélection
-  function updateSelectionUI() {
+  // Fonction pour mettre à jour l'UI de sélection (globale)
+  window.updateSelectionUI = function () {
+    const deleteBtn = document.getElementById("deleteSelectedOrdersBtn");
+    const selectAllBtn = document.getElementById("selectAllOrdersBtn");
+
+    if (!deleteBtn || !selectAllBtn) return;
+
     const count = selectedOrders.size;
     if (count > 0) {
       deleteBtn.style.opacity = "1";
@@ -626,7 +692,7 @@ window.createMobileHistorySidebar = function () {
       deleteBtn.style.pointerEvents = "none";
       selectAllBtn.innerHTML = `<i class="fas fa-check-square" style="margin-right: 6px;"></i>Sélectionner`;
     }
-  }
+  };
 
   // Événements de fermeture
   closeBtn.addEventListener("click", window.closeMobileHistorySidebar);
@@ -868,10 +934,7 @@ window.loadMobileHistoryData = function () {
                 color: #475569;
               ">
                 <i class="fas fa-calendar" style="color: #64748b; width: 14px;"></i>
-                ${
-                  new Date(item.date).toLocaleDateString("fr-FR") ||
-                  "Non spécifiée"
-                }
+                ${formatOrderDate(item.date)}
               </div>
             </div>
           </div>
@@ -898,7 +961,9 @@ window.loadMobileHistoryData = function () {
 
   // Réinitialiser les sélections
   selectedOrders.clear();
-  updateSelectionUI();
+  if (window.updateSelectionUI) {
+    window.updateSelectionUI();
+  }
 
   console.log(
     "✅ Historique mobile affiché avec",
@@ -914,7 +979,9 @@ window.toggleOrderSelection = function (index, isChecked) {
   } else {
     selectedOrders.delete(index);
   }
-  updateSelectionUI();
+  if (window.updateSelectionUI) {
+    window.updateSelectionUI();
+  }
 };
 
 /**
@@ -3041,41 +3108,81 @@ async function submitDeliveryForm(status) {
 
       // Affichage immédiat d'un message de confirmation simple avec animation
       setTimeout(() => {
-        // Ajouter l'animation CSS au document s'il n'existe pas déjà
-        if (!document.getElementById("checkmark-animation-style")) {
-          const style = document.createElement("style");
-          style.id = "checkmark-animation-style";
-          style.textContent = `
-            @keyframes checkmark-bounce {
-              0% { 
-                transform: scale(0) rotate(0deg); 
-                opacity: 0;
-              }
-              50% { 
-                transform: scale(1.3) rotate(180deg); 
-                opacity: 1;
-              }
-              100% { 
-                transform: scale(1) rotate(360deg); 
-                opacity: 1;
-              }
+        // Créer un popup de confirmation personnalisé avec animation
+        const popup = document.createElement("div");
+        popup.id = "validationPopup";
+        popup.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) scale(0);
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          padding: 24px 32px;
+          border-radius: 16px;
+          box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
+          z-index: 10000;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          font-family: Arial, sans-serif;
+          animation: popupShow 0.6s ease-out forwards;
+        `;
+
+        popup.innerHTML = `
+          <div style="font-size: 2em; animation: checkSpin 0.8s ease-out;">✅</div>
+          <span style="font-size: 1.2em; font-weight: 600;">Ordre de livraison validé</span>
+        `;
+
+        // Ajouter les animations CSS
+        const style = document.createElement("style");
+        style.textContent = `
+          @keyframes popupShow {
+            0% { 
+              transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+              opacity: 0;
             }
-            .checkmark-animated {
-              animation: checkmark-bounce 0.8s ease-in-out;
-              display: inline-block;
+            50% {
+              transform: translate(-50%, -50%) scale(1.1) rotate(0deg);
+              opacity: 1;
             }
-          `;
+            100% { 
+              transform: translate(-50%, -50%) scale(1) rotate(0deg);
+              opacity: 1;
+            }
+          }
+          @keyframes checkSpin {
+            0% { 
+              transform: scale(0) rotate(0deg);
+              opacity: 0;
+            }
+            50% {
+              transform: scale(1.3) rotate(180deg);
+              opacity: 1;
+            }
+            100% { 
+              transform: scale(1) rotate(360deg);
+              opacity: 1;
+            }
+          }
+        `;
+
+        if (!document.getElementById("validation-popup-style")) {
+          style.id = "validation-popup-style";
           document.head.appendChild(style);
         }
 
-        const confirmationMessage = `
-          <div style="display: flex; align-items: center; gap: 12px; padding: 8px;">
-            <div class="checkmark-animated" style="font-size: 1.8em;">✅</div>
-            <span style="font-size: 1.1em; font-weight: 600; color: #065f46;">Ordre de livraison validé</span>
-          </div>
-        `;
+        document.body.appendChild(popup);
 
-        displayMessage(formSuccessDisplay, confirmationMessage, "success");
+        // Supprimer le popup après 3 secondes
+        setTimeout(() => {
+          popup.style.animation = "popupShow 0.3s ease-in reverse";
+          setTimeout(() => {
+            if (popup.parentNode) {
+              popup.parentNode.removeChild(popup);
+            }
+          }, 300);
+        }, 3000);
       }, 100);
 
       // Rafraîchit la liste des agents côtés suivi après succès serveur
