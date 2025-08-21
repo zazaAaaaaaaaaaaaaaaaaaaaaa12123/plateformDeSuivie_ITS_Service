@@ -119,17 +119,6 @@ function ajouterDossierMiseEnLiv(dossier) {
     ).toISOString();
   }
 
-  // S'assurer que les dates importantes sont toujours présentes (même si null)
-  if (!dossier.hasOwnProperty("date_do")) {
-    dossier.date_do = null;
-  }
-  if (!dossier.hasOwnProperty("date_badt")) {
-    dossier.date_badt = null;
-  }
-  if (!dossier.hasOwnProperty("date_paiement_acconage")) {
-    dossier.date_paiement_acconage = null;
-  }
-
   console.log("Dossier après formatage:", dossier); // Debug
   dossiers.push(dossier);
   saveDossiersMisEnLiv(dossiers);
@@ -165,6 +154,7 @@ function afficherDetailsDossier(dossier) {
     driver_phone: "Téléphone du chauffeur",
     transporter: "Transporteur",
     weight: "Poids",
+    delivery_status_acconier: "Statut de livraison",
     ship_name: "Nom du navire",
     number_of_containers: "Nombre de conteneurs",
     container_foot_type: "Type de conteneur (pieds)",
@@ -200,16 +190,14 @@ function afficherDetailsDossier(dossier) {
     "Statuts des conteneurs",
     "delivery_status_acconier",
     "Statut de livraison",
-    "statut_livraison",
     "status",
     "container_statuses_map",
     "bl_statuses_map",
     "container_foot_types",
     "[object Object]",
-    "mise_en_livraison_acconier",
-    "delivery_status",
-    "statut_de_livraison",
-  ]; // Fonction pour vérifier si une valeur doit être exclue
+  ];
+
+  // Fonction pour vérifier si une valeur doit être exclue
   const shouldExcludeValue = (value, key) => {
     if (!value) return true;
     if (typeof value === "object") return true;
@@ -255,19 +243,13 @@ function afficherDetailsDossier(dossier) {
           .map((key) => {
             const translatedKey = keyTranslations[key] || key;
             const isDateField = key.toLowerCase().includes("date");
-
-            // Gestion spéciale pour les dates qui peuvent être vides mais doivent s'afficher
-            let displayValue;
-            if (isDateField) {
-              displayValue = formatDate(dossier[key]) || "-";
-            } else {
-              displayValue =
-                dossier[key] !== undefined &&
+            const displayValue = isDateField
+              ? formatDate(dossier[key])
+              : dossier[key] !== undefined &&
                 dossier[key] !== null &&
                 dossier[key] !== ""
-                  ? dossier[key]
-                  : "-";
-            }
+              ? dossier[key]
+              : "-";
 
             return `
               <dt class="col-sm-4">${keyTranslations[key] || key}</dt>
@@ -566,45 +548,35 @@ function refreshMiseEnLivList() {
                   ${new Date(dossier.date_echange_bl).toLocaleDateString()}
                 </small>
               </div>
-              ${(() => {
-                const formatDateOrDefault = (dateStr, label, icon) => {
-                  let displayDate = "-";
-                  if (
-                    dateStr &&
-                    dateStr !== "null" &&
-                    dateStr !== "undefined"
-                  ) {
-                    try {
-                      displayDate = new Date(dateStr).toLocaleDateString();
-                    } catch (e) {
-                      displayDate = "-";
-                    }
-                  }
-                  return `
+              ${
+                dossier.date_do
+                  ? `
               <small class="text-muted" style="font-size: 0.8rem;">
-                <i class="${icon} me-1"></i>
-                ${label}: ${displayDate}
-              </small>`;
-                };
-
-                return (
-                  formatDateOrDefault(
-                    dossier.date_do,
-                    "DO",
-                    "far fa-calendar-check"
-                  ) +
-                  formatDateOrDefault(
-                    dossier.date_paiement_acconage,
-                    "Paiement Acconage",
-                    "far fa-money-bill-alt"
-                  ) +
-                  formatDateOrDefault(
-                    dossier.date_badt,
-                    "BADT",
-                    "far fa-file-alt"
-                  )
-                );
-              })()}
+                <i class="far fa-calendar-check me-1"></i>
+                DO: ${new Date(dossier.date_do).toLocaleDateString()}
+              </small>`
+                  : ""
+              }
+              ${
+                dossier.date_paiement_acconage
+                  ? `
+              <small class="text-muted" style="font-size: 0.8rem;">
+                <i class="far fa-money-bill-alt me-1"></i>
+                Paiement Acconage: ${new Date(
+                  dossier.date_paiement_acconage
+                ).toLocaleDateString()}
+              </small>`
+                  : ""
+              }
+              ${
+                dossier.date_badt
+                  ? `
+              <small class="text-muted" style="font-size: 0.8rem;">
+                <i class="far fa-file-alt me-1"></i>
+                BADT: ${new Date(dossier.date_badt).toLocaleDateString()}
+              </small>`
+                  : ""
+              }
             </div>
           </div>
           <div>
@@ -637,6 +609,7 @@ function voirDetailsDossier(dossier) {
     client: "Client",
     client_phone: "Téléphone client",
     statut: "État actuel",
+    delivery_status_acconier: "Statut de livraison",
 
     // Informations conteneur
     container_number: "N° TC",
@@ -682,16 +655,6 @@ function voirDetailsDossier(dossier) {
     "updatedAt",
     "createdAt",
     "datemiseenliv",
-    "Delivery Status Acconier",
-    "delivery_status_acconier",
-    "mise_en_livraison_acconier",
-    "statut_livraison",
-    "Statut de livraison",
-    "delivery_status_acconier",
-    "Statut de livraison",
-    "statut_livraison",
-    "mise_en_livraison_acconier",
-    "Delivery Status Acconier",
 
     // Versions anglaises des propriétés (pour éviter les doublons)
     "Status",
@@ -727,6 +690,8 @@ function voirDetailsDossier(dossier) {
     "dossier_number", // Numéro de dossier
     "employee_name", // Agent
     "client_name", // Client
+    "statut", // Statut
+    "delivery_status_acconier", // Statut de livraison
     "container_number", // Numéro TC
     "container_type_and_content", // Type et contenu
     "container_foot_type", // Type de conteneur
@@ -806,7 +771,8 @@ function voirDetailsDossier(dossier) {
       Lieu: "Lieu",
       Location: "Lieu",
       Status: "Statut",
-      Status: "Statut",
+      "Delivery Status": "Statut de Livraison",
+      "Delivery Status Acconier": "Statut de Livraison",
       "Delivery Date": "Date de Livraison",
       Observation: "Observation",
       "Observation Acconier": "Observation de l'Acconier",
@@ -814,7 +780,7 @@ function voirDetailsDossier(dossier) {
       "Créé le": "Date de Création",
       created_at: "Date de Création",
       List: "Liste",
-      status: "Statut",
+      delivery_status_acconier: "Statut de Livraison",
       delivery_date: "Date de Livraison",
       observation: "Observation",
       status: "Statut",
@@ -826,18 +792,7 @@ function voirDetailsDossier(dossier) {
 
   // Filtrer les entrées avant de générer le HTML
   const filteredEntries = sortedEntries.filter(([key, value]) => {
-    // Les dates importantes doivent toujours s'afficher, même si vides
-    const importantDates = [
-      "date_do",
-      "date_badt",
-      "date_paiement_acconage",
-      "date_echange_bl",
-    ];
-    if (importantDates.includes(key)) {
-      return true; // Toujours inclure ces dates
-    }
-
-    // Exclure les entrées null ou undefined pour les autres champs
+    // Exclure les entrées null ou undefined
     if (!value || value === "null" || value === "undefined") return false;
 
     // Exclure les entrées spécifiques
@@ -848,11 +803,6 @@ function voirDetailsDossier(dossier) {
       "Statuts des conteneurs",
       "Statuts BL",
       "Types de conteneurs",
-      "delivery_status_acconier",
-      "Delivery Status Acconier",
-      "mise_en_livraison_acconier",
-      "statut_livraison",
-      "Statut de livraison",
     ];
     if (excludeKeys.includes(key)) return false;
 
@@ -2122,10 +2072,10 @@ document.addEventListener("DOMContentLoaded", function () {
           return delivery;
         });
 
-        // Filtrage pour le mode admin : afficher TOUS les dossiers sans exception
+        // Filtrage pour le mode admin : ne montrer que les livraisons de l'utilisateur ciblé
         if (isAdminMode && targetUser) {
           console.log(
-            `🔍 [DEBUG FILTRAGE] Mode Admin - Affichage de TOUS les dossiers pour l'utilisateur "${targetUser}"`
+            `🔍 [DEBUG FILTRAGE] Recherche pour l'utilisateur "${targetUser}"`
           );
           console.log(
             `🔍 [DEBUG] Nombre total de livraisons avant filtrage: ${processedDeliveries.length}`
@@ -2134,11 +2084,88 @@ document.addEventListener("DOMContentLoaded", function () {
           // Charger les observations de l'utilisateur ciblé
           await loadUserObservations(targetUser, targetUserId);
 
-          // En mode admin, on affiche TOUTES les livraisons sans exception
-          // On se contente de charger les observations pour l'utilisateur ciblé
-          processedDeliveries.forEach((delivery) => {
-            // Charger les observations stockées localement si elles existent
+          // Afficher quelques exemples de données pour comprendre la structure
+          if (processedDeliveries.length > 0) {
+            console.log(`🔍 [DEBUG] Exemple de livraison:`, {
+              responsible_acconier: processedDeliveries[0].responsible_acconier,
+              resp_acconier: processedDeliveries[0].resp_acconier,
+              responsible_livreur: processedDeliveries[0].responsible_livreur,
+              resp_livreur: processedDeliveries[0].resp_livreur,
+              assigned_to: processedDeliveries[0].assigned_to,
+              created_by: processedDeliveries[0].created_by,
+              updated_by: processedDeliveries[0].updated_by,
+              nom_agent_visiteur: processedDeliveries[0].nom_agent_visiteur,
+              employee_name: processedDeliveries[0].employee_name,
+              driver_name: processedDeliveries[0].driver_name,
+            });
+          }
+
+          processedDeliveries = processedDeliveries.filter((delivery) => {
+            // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
+            const userFields = [
+              delivery.responsible_acconier,
+              delivery.resp_acconier,
+              delivery.responsible_livreur,
+              delivery.resp_livreur,
+              delivery.assigned_to,
+              delivery.created_by,
+              delivery.updated_by,
+              // Ajouter plus de champs possibles
+              delivery.nom_agent_visiteur,
+              delivery.employee_name,
+              delivery.driver_name,
+              delivery.transporteur,
+              delivery.inspecteur,
+              delivery.agent_douanes,
+              delivery.chauffeur,
+              // Champs supplémentaires pour les observations et activités
+              delivery.agent_email,
+              delivery.user_email,
+              delivery.created_by_email,
+              delivery.observation_acconier_author,
+              delivery.observation_author,
+              delivery.modified_by,
+              delivery.last_modified_by,
+            ];
+
+            // Recherche par nom d'utilisateur avec différentes variantes
+            const targetUserLower = targetUser.toLowerCase();
+            const targetUserIdLower = targetUserId
+              ? targetUserId.toLowerCase()
+              : "";
+
+            const foundByName = userFields.some((field) => {
+              if (!field) return false;
+              const fieldLower = field.toString().toLowerCase();
+
+              // Recherche exacte
+              if (fieldLower === targetUserLower) return true;
+
+              // Recherche partielle (contient le nom)
+              if (fieldLower.includes(targetUserLower)) return true;
+
+              // Recherche inverse (le nom contient le champ)
+              if (targetUserLower.includes(fieldLower)) return true;
+
+              return false;
+            });
+
+            // Aussi chercher par userId si disponible
+            const foundByUserId =
+              targetUserIdLower &&
+              userFields.some((field) => {
+                if (!field) return false;
+                const fieldLower = field.toString().toLowerCase();
+                return (
+                  fieldLower.includes(targetUserIdLower) ||
+                  targetUserIdLower.includes(fieldLower)
+                );
+              });
+
+            // Recherche spéciale dans les observations stockées localement
+            let foundInObservations = false;
             try {
+              // Vérifier les observations stockées dans localStorage avec différentes clés possibles
               const observationKeys = [
                 `observation_${delivery.id}`,
                 `obs_${delivery.id}`,
@@ -2149,8 +2176,9 @@ document.addEventListener("DOMContentLoaded", function () {
               for (const key of observationKeys) {
                 const storedObservation = localStorage.getItem(key);
                 if (storedObservation && storedObservation.trim() !== "") {
+                  foundInObservations = true;
                   console.log(
-                    `📝 [ADMIN MODE] Observation trouvée avec clé ${key} pour livraison ${delivery.id}:`,
+                    `📝 [DEBUG] Observation trouvée avec clé ${key} pour livraison ${delivery.id}:`,
                     storedObservation
                   );
 
@@ -2165,7 +2193,68 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
               }
 
-              // Stocker l'observation en base de données dans localStorage pour persistance
+              // Vérifier les champs d'observation de la livraison elle-même
+              if (
+                delivery.observation_acconier &&
+                delivery.observation_acconier.trim() !== ""
+              ) {
+                foundInObservations = true;
+                console.log(
+                  `📝 [DEBUG] Observation BD trouvée pour livraison ${delivery.id}:`,
+                  delivery.observation_acconier
+                );
+              }
+
+              // Vérifier les autres champs d'observation possibles
+              const observationFields = [
+                delivery.observation,
+                delivery.observations,
+                delivery.observation_acconier,
+                delivery.delivery_notes,
+                delivery.notes,
+                delivery.comments,
+                delivery.remarques,
+              ];
+
+              for (const obsField of observationFields) {
+                if (
+                  obsField &&
+                  obsField.toString().trim() !== "" &&
+                  obsField !== "-"
+                ) {
+                  foundInObservations = true;
+                  console.log(
+                    `📝 [DEBUG] Observation trouvée dans champ pour livraison ${delivery.id}:`,
+                    obsField
+                  );
+                  break;
+                }
+              }
+            } catch (e) {
+              // Ignorer les erreurs de parsing
+            }
+
+            const finalFound =
+              foundByName || foundByUserId || foundInObservations;
+
+            if (finalFound) {
+              console.log(
+                `✅ [DEBUG] Livraison trouvée pour ${targetUser}:`,
+                delivery.id,
+                {
+                  foundByName,
+                  foundByUserId,
+                  foundInObservations,
+                  observation: delivery.observation_acconier || "Aucune",
+                  employee_name: delivery.employee_name,
+                  matchingFields: userFields.filter(
+                    (f) =>
+                      f && f.toString().toLowerCase().includes(targetUserLower)
+                  ),
+                }
+              );
+
+              // 🔧 CORRECTION CRITIQUE : Stocker l'observation dans localStorage immédiatement
               if (
                 delivery.observation_acconier &&
                 delivery.observation_acconier.trim() !== "" &&
@@ -2174,24 +2263,226 @@ document.addEventListener("DOMContentLoaded", function () {
                 const localKey = `obs_${delivery.id}`;
                 localStorage.setItem(localKey, delivery.observation_acconier);
                 console.log(
-                  `� [ADMIN MODE] Observation stockée pour livraison ${delivery.id}: "${delivery.observation_acconier}"`
+                  `💾 [STOCK OBSERVATION] Livraison ${delivery.id}: "${delivery.observation_acconier}" stockée dans localStorage`
                 );
               }
-            } catch (e) {
-              console.error(
-                `Erreur lors du traitement de la livraison ${delivery.id}:`,
-                e
-              );
             }
+
+            return finalFound;
           });
 
           console.log(
-            `[MODE ADMIN] Affichage de TOUTES les livraisons pour l'utilisateur "${targetUser}": ${processedDeliveries.length} livraisons`
+            `[MODE ADMIN] Filtrage pour l'utilisateur "${targetUser}": ${processedDeliveries.length} livraisons trouvées`
           );
-        } else {
-          console.log(
-            `[MODE NORMAL] Affichage des livraisons en mode utilisateur normal: ${processedDeliveries.length} livraisons`
-          );
+
+          // Si aucune livraison trouvée, essayer une recherche plus large
+          if (processedDeliveries.length === 0) {
+            console.log(
+              `⚠️ [DEBUG] Aucune livraison trouvée pour "${targetUser}". Tentative de recherche élargie...`
+            );
+
+            // Recherche élargie : toutes les livraisons avec des observations ou modifications récentes
+            processedDeliveries = data.deliveries.filter((delivery) => {
+              // Appliquer la même normalisation que précédemment
+              let tcList = [];
+              if (delivery.container_numbers_list) {
+                try {
+                  if (typeof delivery.container_numbers_list === "string") {
+                    tcList = JSON.parse(delivery.container_numbers_list);
+                  } else if (Array.isArray(delivery.container_numbers_list)) {
+                    tcList = delivery.container_numbers_list;
+                  }
+                  tcList = tcList.filter(Boolean);
+                } catch (e) {
+                  console.warn("Erreur parsing container_numbers_list:", e);
+                  tcList = [];
+                }
+              }
+              if (tcList.length === 0) {
+                if (Array.isArray(delivery.container_number)) {
+                  tcList = delivery.container_number.filter(Boolean);
+                } else if (typeof delivery.container_number === "string") {
+                  tcList = delivery.container_number
+                    .split(/[,;\s]+/)
+                    .filter(Boolean);
+                }
+              }
+              if (
+                !delivery.container_statuses ||
+                typeof delivery.container_statuses !== "object"
+              ) {
+                delivery.container_statuses = {};
+              }
+              tcList.forEach((tc) => {
+                if (!delivery.container_statuses[tc]) {
+                  delivery.container_statuses[tc] = "attente_paiement";
+                }
+              });
+              if (
+                delivery.bl_statuses &&
+                typeof delivery.bl_statuses === "string"
+              ) {
+                try {
+                  delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+                } catch {
+                  delivery.bl_statuses = {};
+                }
+              }
+              if (
+                !delivery.bl_statuses ||
+                typeof delivery.bl_statuses !== "object"
+              ) {
+                delivery.bl_statuses = {};
+              }
+
+              // Recherche élargie : livraisons avec observations ou activité récente
+              let hasUserActivity = false;
+
+              // 1. Vérifier les observations stockées localement
+              try {
+                const observationKey = `observation_${delivery.id}`;
+                const storedObservation = localStorage.getItem(observationKey);
+                if (storedObservation && storedObservation.trim() !== "") {
+                  hasUserActivity = true;
+                  console.log(
+                    `📝 [RECHERCHE ÉLARGIE] Observation locale trouvée pour ${delivery.id}:`,
+                    storedObservation
+                  );
+                }
+              } catch (e) {}
+
+              // 2. Vérifier les observations en base de données
+              if (
+                delivery.observation_acconier &&
+                delivery.observation_acconier.trim() !== ""
+              ) {
+                hasUserActivity = true;
+                console.log(
+                  `📝 [RECHERCHE ÉLARGIE] Observation BD trouvée pour ${delivery.id}:`,
+                  delivery.observation_acconier
+                );
+              }
+
+              // 3. Vérifier l'activité récente (livraisons modifiées dans les 7 derniers jours)
+              if (delivery.updated_at) {
+                const updatedDate = new Date(delivery.updated_at);
+                const now = new Date();
+                const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
+                if (daysDiff <= 7) {
+                  hasUserActivity = true;
+                  console.log(
+                    `⏰ [RECHERCHE ÉLARGIE] Activité récente pour ${
+                      delivery.id
+                    } (${daysDiff.toFixed(1)} jours)`
+                  );
+                }
+              }
+
+              // 4. Recherche dans tous les champs texte pour des traces d'activité
+              const allTextFields = [
+                delivery.employee_name,
+                delivery.client_name,
+                delivery.delivery_notes,
+                delivery.observation_acconier,
+                delivery.status,
+                delivery.container_status,
+                delivery.transporter,
+                delivery.driver_name,
+              ].filter(Boolean);
+
+              const hasTextActivity = allTextFields.some((field) => {
+                const fieldStr = field.toString().toLowerCase();
+                return (
+                  fieldStr.includes(targetUser.toLowerCase()) ||
+                  fieldStr.includes("observation") ||
+                  fieldStr.includes("modifié") ||
+                  fieldStr.includes("mis à jour")
+                );
+              });
+
+              if (hasTextActivity) {
+                hasUserActivity = true;
+                console.log(
+                  `📝 [RECHERCHE ÉLARGIE] Activité textuelle trouvée pour ${delivery.id}`
+                );
+              }
+
+              return hasUserActivity;
+            });
+
+            console.log(
+              `📊 [RECHERCHE ÉLARGIE] ${processedDeliveries.length} livraisons trouvées avec activité ou observations`
+            );
+
+            // Si toujours aucune livraison, afficher les plus récentes pour debug
+            if (processedDeliveries.length === 0) {
+              console.log(
+                `🔍 [DEBUG FINAL] Affichage des 10 livraisons les plus récentes pour debug`
+              );
+              processedDeliveries = data.deliveries
+                .sort(
+                  (a, b) =>
+                    new Date(b.created_at || b.delivery_date) -
+                    new Date(a.created_at || a.delivery_date)
+                )
+                .slice(0, 10)
+                .map((delivery) => {
+                  // Normaliser pour l'affichage
+                  let tcList = [];
+                  if (delivery.container_numbers_list) {
+                    try {
+                      if (typeof delivery.container_numbers_list === "string") {
+                        tcList = JSON.parse(delivery.container_numbers_list);
+                      } else if (
+                        Array.isArray(delivery.container_numbers_list)
+                      ) {
+                        tcList = delivery.container_numbers_list;
+                      }
+                      tcList = tcList.filter(Boolean);
+                    } catch (e) {
+                      tcList = [];
+                    }
+                  }
+                  if (tcList.length === 0) {
+                    if (Array.isArray(delivery.container_number)) {
+                      tcList = delivery.container_number.filter(Boolean);
+                    } else if (typeof delivery.container_number === "string") {
+                      tcList = delivery.container_number
+                        .split(/[,;\s]+/)
+                        .filter(Boolean);
+                    }
+                  }
+                  if (
+                    !delivery.container_statuses ||
+                    typeof delivery.container_statuses !== "object"
+                  ) {
+                    delivery.container_statuses = {};
+                  }
+                  tcList.forEach((tc) => {
+                    if (!delivery.container_statuses[tc]) {
+                      delivery.container_statuses[tc] = "attente_paiement";
+                    }
+                  });
+                  if (
+                    delivery.bl_statuses &&
+                    typeof delivery.bl_statuses === "string"
+                  ) {
+                    try {
+                      delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
+                    } catch {
+                      delivery.bl_statuses = {};
+                    }
+                  }
+                  if (
+                    !delivery.bl_statuses ||
+                    typeof delivery.bl_statuses !== "object"
+                  ) {
+                    delivery.bl_statuses = {};
+                  }
+                  return delivery;
+                });
+            }
+          }
         }
 
         allDeliveries = processedDeliveries;
@@ -2605,7 +2896,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (diffDays <= 2) return false;
           // Même logique que renderAgentTableFull :
           // Affiche TOUS les dossiers dont le statut shjacconier est 'en attente de paiement'
-          if (false) {
+          if (d.delivery_status_acconier === "en attente de paiement") {
             return true;
           }
           // Sinon, on garde l'ancien filtrage BL
@@ -2625,7 +2916,8 @@ document.addEventListener("DOMContentLoaded", function () {
           ) {
             return false;
           }
-          if (false) {
+          // Exclure aussi si statut acconier est 'mise_en_livraison_acconier'
+          if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
             return false;
           }
           return true;
@@ -2909,30 +3201,11 @@ function createEditInput(columnId, currentValue) {
     input.style.resize = "vertical";
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
-
-    // Style spécial pour les observations en mode sombre
-    if (columnId === "observation" && isDark) {
-      input.style.backgroundColor = "#fbbf24"; // Jaune en mode sombre pour observations
-      input.style.color = "#000"; // Texte noir pour contraste
-      input.style.border = "2px solid #f59e0b";
-      input.addEventListener("focus", function () {
-        this.style.backgroundColor = "#fbbf24";
-        this.style.color = "#000";
-      });
-      input.addEventListener("input", function () {
-        if (document.activeElement === this) {
-          this.style.backgroundColor = "#fbbf24";
-          this.style.color = "#000";
-        }
-      });
-      input.addEventListener("blur", function () {
-        // Après la saisie, revenir au style normal du mode sombre
-        this.style.backgroundColor = "#0e274e";
-        this.style.color = "#fff";
-      });
-    } else if (isDark) {
-      input.style.backgroundColor = "#0e274e";
+    input.style.backgroundColor = isDark ? "#0e274e" : "#fff";
+    // Couleur du texte : noir pendantzsudh la saidbhjsie, blanc après en mode sombre
+    if (isDark) {
       input.style.color = "#fff";
+      input.style.backgroundColor = "#0e274e";
       input.addEventListener("focus", function () {
         this.style.color = "#fff";
         this.style.backgroundColor = "#0e274e";
@@ -2949,7 +3222,6 @@ function createEditInput(columnId, currentValue) {
       });
     } else {
       input.style.color = "#111";
-      input.style.backgroundColor = "#fff";
     }
   } else if (columnId === "circuit") {
     input = document.createElement("select");
@@ -4376,7 +4648,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           saveBtn.style.fontWeight = "bold";
           // Adaptation responsive du bouton - ultra compact pour tablette/mobile
           if (window.innerWidth <= 480) {
-            // Mobile - bouton compact55
+            // Mobile - bouton compact
             saveBtn.style.fontSize = "0.85em";
             saveBtn.style.padding = "0.6em 1em";
             saveBtn.style.marginTop = "4px";
@@ -4405,17 +4677,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               select.value === "aucun" ? "aucun" : select.value;
             // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
             if (statutToSend === "mise_en_livraison") {
-              // Récupérer les dates des champs de saisie
-              const dateDOInput = document.querySelector(
-                'input[name="date_do"]'
-              );
-              const dateBADTInput = document.querySelector(
-                'input[name="date_badt"]'
-              );
-              const datePaiementAcconageInput = document.querySelector(
-                'input[name="date_paiement_acconage"]'
-              );
-
               // Ajouter le dossier à la liste des mises en livraison
               const dossierToSave = {
                 ...delivery,
@@ -4423,22 +4684,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                 client_name: delivery.client_name || delivery.client || "",
                 status: "Mis en livraison",
                 date_mise_en_liv: new Date().toISOString(),
-                // Inclure les dates si elles sont disponibles dans le delivery original ou dans les inputs
-                date_do:
-                  delivery.date_do ||
-                  (dateDOInput && dateDOInput.value
-                    ? new Date(dateDOInput.value).toISOString()
-                    : null),
-                date_badt:
-                  delivery.date_badt ||
-                  (dateBADTInput && dateBADTInput.value
-                    ? new Date(dateBADTInput.value).toISOString()
-                    : null),
-                date_paiement_acconage:
-                  delivery.date_paiement_acconage ||
-                  (datePaiementAcconageInput && datePaiementAcconageInput.value
-                    ? new Date(datePaiementAcconageInput.value).toISOString()
-                    : null),
               };
               ajouterDossierMiseEnLiv(dossierToSave);
 
@@ -4556,17 +4801,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
                 // Si le statut est mise_en_livraison, ajouter à la liste des dossiers mis en livraison
                 if (statutToSend === "mise_en_livraison") {
-                  // Récupérer les dates des champs de saisie
-                  const dateDOInput = document.querySelector(
-                    'input[name="date_do"]'
-                  );
-                  const dateBADTInput = document.querySelector(
-                    'input[name="date_badt"]'
-                  );
-                  const datePaiementAcconageInput = document.querySelector(
-                    'input[name="date_paiement_acconage"]'
-                  );
-
                   const dossierToSave = {
                     ...delivery,
                     container_number: delivery.container_number || "",
@@ -4574,26 +4808,10 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     status: "Mis en livraison",
                     bl_number: blNumber,
                     date_mise_en_liv: new Date().toISOString(),
-                    // Ajout des dates d'échange avec vérification des inputs
+                    // Ajout des dates d'échange
                     paiement_acconage: delivery.paiement_acconage || "",
-                    date_do:
-                      delivery.date_do ||
-                      (dateDOInput && dateDOInput.value
-                        ? new Date(dateDOInput.value).toISOString()
-                        : null),
-                    date_badt:
-                      delivery.date_badt ||
-                      (dateBADTInput && dateBADTInput.value
-                        ? new Date(dateBADTInput.value).toISOString()
-                        : null),
-                    date_paiement_acconage:
-                      delivery.date_paiement_acconage ||
-                      (datePaiementAcconageInput &&
-                      datePaiementAcconageInput.value
-                        ? new Date(
-                            datePaiementAcconageInput.value
-                          ).toISOString()
-                        : null),
+                    date_do: delivery.date_do || "",
+                    date_badt: delivery.date_badt || "",
                     date_echange_bl: delivery.date_echange_bl || "",
                   };
                   ajouterDossierMiseEnLiv(dossierToSave);
@@ -4980,7 +5198,7 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         // ...existing code...
       } else if (col.id === "container_status") {
         // Correction : si le statut acconier est 'en attente de paiement', on affiche toujours 'En attente de paiement'
-        if (false) {
+        if (delivery.delivery_status_acconier === "en attente de paiement") {
           td.innerHTML =
             '<span style="display:inline-flex;align-items:center;gap:6px;color:#e53935;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#e53935;"></i> En attente de paiement</span>';
         } else {
@@ -5224,34 +5442,12 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             textarea.style.width = "100%";
             textarea.style.fontSize = "1em";
             textarea.style.padding = "2px 4px";
-
-            // Application du style jaune en mode sombre pour les observations
-            const isDarkMode =
-              document.documentElement.getAttribute("data-theme") === "dark";
-            if (isDarkMode) {
-              textarea.style.backgroundColor = "#fbbf24"; // Jaune en mode sombre
-              textarea.style.color = "#000"; // Texte noir pour contraste
-              textarea.style.border = "2px solid #f59e0b";
-            } else {
-              textarea.style.backgroundColor = "#fff";
-              textarea.style.color = "#000";
-              textarea.style.border = "1px solid #ccc";
-            }
             async function saveObservation(val) {
               // Marquer temporairement la cellule comme en cours de sauvegarde
               td.setAttribute("data-saving", "true");
 
               td.textContent = val || "-";
               td.dataset.edited = "true";
-
-              // Restaurer le style du mode sombre après la sauvegarde
-              const isDarkMode =
-                document.documentElement.getAttribute("data-theme") === "dark";
-              if (isDarkMode) {
-                td.style.backgroundColor = ""; // Revenir au style par défaut du mode sombre
-                td.style.color = ""; // Revenir à la couleur par défaut du mode sombre
-              }
-
               if (val && val.trim() !== "") {
                 localStorage.setItem(localKey, val.trim());
               } else {
@@ -5508,7 +5704,7 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
     // Affiche TOUS les dossiers dont le statut acconier est 'en attente de paiement'
-    if (false) {
+    if (delivery.delivery_status_acconier === "en attente de paiement") {
       return true;
     }
     // Sinon, on garde l'ancien filtrage BL
