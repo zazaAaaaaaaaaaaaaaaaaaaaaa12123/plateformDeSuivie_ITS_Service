@@ -154,7 +154,6 @@ function afficherDetailsDossier(dossier) {
     driver_phone: "Téléphone du chauffeur",
     transporter: "Transporteur",
     weight: "Poids",
-    delivery_status_acconier: "Statut de livraison",
     ship_name: "Nom du navire",
     number_of_containers: "Nombre de conteneurs",
     container_foot_type: "Type de conteneur (pieds)",
@@ -656,6 +655,11 @@ function voirDetailsDossier(dossier) {
     "updatedAt",
     "createdAt",
     "datemiseenliv",
+    "Delivery Status Acconier",
+    "delivery_status_acconier",
+    "mise_en_livraison_acconier",
+    "statut_livraison",
+    "Statut de livraison",
     "delivery_status_acconier",
     "Statut de livraison",
     "statut_livraison",
@@ -806,6 +810,11 @@ function voirDetailsDossier(dossier) {
       "Statuts des conteneurs",
       "Statuts BL",
       "Types de conteneurs",
+      "delivery_status_acconier",
+      "Delivery Status Acconier",
+      "mise_en_livraison_acconier",
+      "statut_livraison",
+      "Statut de livraison",
     ];
     if (excludeKeys.includes(key)) return false;
 
