@@ -195,6 +195,8 @@ function afficherDetailsDossier(dossier) {
     "bl_statuses_map",
     "container_foot_types",
     "[object Object]",
+    "mise_en_livraison_acconier",
+    "statut_livraison",
   ];
 
   // Fonction pour vérifier si une valeur doit être exclue
@@ -223,7 +225,6 @@ function afficherDetailsDossier(dossier) {
     "ship_name",
     "declaration_number",
     "lieu",
-    "transporter_mode",
     "observation_acconier",
   ];
 
