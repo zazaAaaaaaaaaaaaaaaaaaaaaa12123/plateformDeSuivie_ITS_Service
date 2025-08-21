@@ -154,7 +154,7 @@ function afficherDetailsDossier(dossier) {
     driver_phone: "Téléphone du chauffeur",
     transporter: "Transporteur",
     weight: "Poids",
-    //delivery_status_acconier: "Statut de livraison",
+    delivery_status_acconier: "Statut de livraison",
     ship_name: "Nom du navire",
     number_of_containers: "Nombre de conteneurs",
     container_foot_type: "Type de conteneur (pieds)",
@@ -190,14 +190,13 @@ function afficherDetailsDossier(dossier) {
     "Statuts des conteneurs",
     "delivery_status_acconier",
     "Statut de livraison",
+    "statut_livraison",
     "status",
     "container_statuses_map",
     "bl_statuses_map",
     "container_foot_types",
     "[object Object]",
-  ];
-
-  // Fonction pour vérifier si une valeur doit être exclue
+  ]; // Fonction pour vérifier si une valeur doit être exclue
   const shouldExcludeValue = (value, key) => {
     if (!value) return true;
     if (typeof value === "object") return true;
