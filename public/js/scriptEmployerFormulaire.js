@@ -1206,13 +1206,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Fonction pour marquer les numéros TC ---
+  // --- Fonction pour marquer les numéros TC en vert ---
   window.highlightTCNumbers = function (text) {
     if (!text) return text;
     // Pattern pour TC + 4 chiffres
     return text.replace(
       /\b(TC\s*\d{4})\b/gi,
-      '<span style="color:#10b981;font-weight:600;">$1</span>'
+      '<span class="tc-number">$1</span>'
     );
   };
 
@@ -1232,7 +1232,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const regex = new RegExp(`\\b(${keyword}[^\\s]*)\\b`, "gi");
       result = result.replace(
         regex,
-        '<span style="color:#10b981;font-weight:600;">$1</span>'
+        '<span class="validation-message">$1</span>'
       );
     });
     return result;
@@ -1252,7 +1252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let result = text;
     statusKeywords.forEach((keyword) => {
       const regex = new RegExp(`\\b(${keyword}[^\\s]*)\\b`, "gi");
-      result = result.replace(regex, '<span style="color:#f59e0b;font-weight:600;">$1</span>');
+      result = result.replace(regex, '<span class="status-message">$1</span>');
     });
     return result;
   };
