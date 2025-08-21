@@ -196,6 +196,9 @@ function afficherDetailsDossier(dossier) {
     "bl_statuses_map",
     "container_foot_types",
     "[object Object]",
+    "mise_en_livraison_acconier",
+    "delivery_status",
+    "statut_de_livraison",
   ]; // Fonction pour vérifier si une valeur doit être exclue
   const shouldExcludeValue = (value, key) => {
     if (!value) return true;
