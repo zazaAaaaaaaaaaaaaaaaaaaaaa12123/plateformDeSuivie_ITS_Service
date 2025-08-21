@@ -4413,544 +4413,563 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           saveBtn.style.zIndex = "10";
           saveBtn.style.backgroundColor = "#f8fafc"; // Fond pour le sticky
           saveBtn.onclick = async () => {
-            let statutToSend =
-              select.value === "aucun" ? "aucun" : select.value;
-            // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
-            if (statutToSend === "mise_en_livraison") {
-              // Récupérer les dates des champs de saisie avec vérification sécurisée
-              const dateDOInput = document.querySelector(
-                'input[name="date_do"]'
-              );
-              const dateBADTInput = document.querySelector(
-                'input[name="date_badt"]'
-              );
-              const datePaiementAcconageInput = document.querySelector(
-                'input[name="date_paiement_acconage"]'
-              );
-
-              // Fonction utilitaire pour obtenir la valeur d'un input de manière sécurisée
-              const getInputValue = (input) => {
-                try {
-                  return input && input.value ? input.value : null;
-                } catch (e) {
-                  console.warn("Erreur lors de la lecture de l'input:", e);
-                  return null;
-                }
-              };
-
-              // Ajouter le dossier à la liste des mises en livraison
-              const dossierToSave = {
-                ...delivery,
-                container_number: delivery.container_number || "",
-                client_name: delivery.client_name || delivery.client || "",
-                status: "Mis en livraison",
-                date_mise_en_liv: new Date().toISOString(),
-                // Inclure les dates si elles sont disponibles dans le delivery original ou dans les inputs
-                date_do:
-                  delivery.date_do ||
-                  (getInputValue(dateDOInput)
-                    ? new Date(getInputValue(dateDOInput)).toISOString()
-                    : null),
-                date_badt:
-                  delivery.date_badt ||
-                  (getInputValue(dateBADTInput)
-                    ? new Date(getInputValue(dateBADTInput)).toISOString()
-                    : null),
-                date_paiement_acconage:
-                  delivery.date_paiement_acconage ||
-                  (getInputValue(datePaiementAcconageInput)
-                    ? new Date(
-                        getInputValue(datePaiementAcconageInput)
-                      ).toISOString()
-                    : null),
-              };
-              ajouterDossierMiseEnLiv(dossierToSave);
-
-              // Popup de confirmation personnalisée
-              const confirmOverlay = document.createElement("div");
-              confirmOverlay.style.position = "fixed";
-              confirmOverlay.style.top = 0;
-              confirmOverlay.style.left = 0;
-              confirmOverlay.style.width = "100vw";
-              confirmOverlay.style.height = "100vh";
-              confirmOverlay.style.background = "rgba(30,41,59,0.45)";
-              confirmOverlay.style.zIndex = 99999;
-              confirmOverlay.style.display = "flex";
-              confirmOverlay.style.alignItems = "center";
-              confirmOverlay.style.justifyContent = "center";
-              const confirmBox = document.createElement("div");
-              confirmBox.style.background = "#fff";
-              confirmBox.style.borderRadius =
-                window.innerWidth <= 768 ? "14px" : "18px";
-              confirmBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-              // Adaptation responsive de la popup de confirmation&&
-              if (window.innerWidth <= 480) {
-                confirmBox.style.maxWidth = "95vw";
-                confirmBox.style.width = "95vw";
-              } else if (window.innerWidth <= 768) {
-                confirmBox.style.maxWidth = "85vw";
-                confirmBox.style.width = "85vw";
-              } else {
-                confirmBox.style.maxWidth = "420px";
-                confirmBox.style.width = "96vw";
+            try {
+              let statutToSend = "aucun";
+              try {
+                statutToSend = select && select.value ? select.value : "aucun";
+                if (statutToSend === "aucun") statutToSend = "aucun";
+              } catch (e) {
+                console.warn("Erreur lors de la lecture du statut:", e);
+                statutToSend = "aucun";
               }
-              confirmBox.style.padding = "0";
-              confirmBox.style.position = "relative";
-              confirmBox.style.display = "flex";
-              confirmBox.style.flexDirection = "column";
-              // Header
-              const confirmHeader = document.createElement("div");
-              confirmHeader.style.background =
-                "linear-gradient(90deg,#eab308 0%,#2563eb 100%)";
-              confirmHeader.style.color = "#fff";
-              // Adaptation responsive du header de confirmation
-              if (window.innerWidth <= 768) {
-                confirmHeader.style.padding = "16px 20px 10px 20px";
-                confirmHeader.style.fontSize = "1.1rem";
-              } else {
-                confirmHeader.style.padding = "22px 32px 12px 32px";
-                confirmHeader.style.fontSize = "1.18rem";
-              }
-              confirmHeader.style.fontWeight = "bold";
-              confirmHeader.style.borderTopLeftRadius =
-                window.innerWidth <= 768 ? "14px" : "18px";
-              confirmHeader.style.borderTopRightRadius =
-                window.innerWidth <= 768 ? "14px" : "18px";
-              confirmHeader.innerHTML = `<span style='font-size:1.25em;'>⚠️ Confirmation requise</span>`;
-              confirmBox.appendChild(confirmHeader);
-              // Message
-              const confirmMsgDiv = document.createElement("div");
-              confirmMsgDiv.style.padding = "24px 24px 18px 24px";
-              confirmMsgDiv.style.background = "#f8fafc";
-              confirmMsgDiv.style.fontSize = "1.08em";
-              confirmMsgDiv.style.color = "#1e293b";
-              confirmMsgDiv.style.textAlign = "center";
-              confirmMsgDiv.innerHTML =
-                "<b>Vous êtes sur le point de valider la mise en livraison pour ce BL.</b><br><br>Cette opération est <span style='color:#eab308;font-weight:600;'>définitive</span> et ne pourra pas être annulée.<br><br>Voulez-vous vraiment continuer ?";
-              confirmBox.appendChild(confirmMsgDiv);
-              // Boutons
-              const btnsDiv = document.createElement("div");
-              btnsDiv.style.display = "flex";
-              btnsDiv.style.justifyContent = "center";
-              btnsDiv.style.gap = "18px";
-              btnsDiv.style.padding = "0 0 22px 0";
-              // Bouton Annuler
-              const cancelBtn = document.createElement("button");
-              cancelBtn.textContent = "Annuler";
-              cancelBtn.style.background = "#fff";
-              cancelBtn.style.color = "#2563eb";
-              cancelBtn.style.fontWeight = "bold";
-              cancelBtn.style.fontSize = "1em";
-              cancelBtn.style.border = "2px solid #2563eb";
-              cancelBtn.style.borderRadius = "8px";
-              cancelBtn.style.padding = "0.7em 1.7em";
-              cancelBtn.style.cursor = "pointer";
-              cancelBtn.onclick = () => confirmOverlay.remove();
-              // Bouton Confirmer
-              const okBtn = document.createElement("button");
-              okBtn.textContent = "Confirmer";
-              okBtn.style.background =
-                "linear-gradient(90deg,#2563eb 0%,#eab308 100%)";
-              okBtn.style.color = "#fff";
-              okBtn.style.fontWeight = "bold";
-              okBtn.style.fontSize = "1em";
-              okBtn.style.border = "none";
-              okBtn.style.borderRadius = "8px";
-              okBtn.style.padding = "0.7em 1.7em";
-              okBtn.style.cursor = "pointer";
-              okBtn.onclick = () => {
-                confirmOverlay.remove();
-                // On continue la procédure
-                finishBLStatusChange();
-              };
-              btnsDiv.appendChild(cancelBtn);
-              btnsDiv.appendChild(okBtn);
-              confirmBox.appendChild(btnsDiv);
-              confirmOverlay.appendChild(confirmBox);
-              document.body.appendChild(confirmOverlay);
-              confirmOverlay.onclick = (e) => {
-                if (e.target === confirmOverlay) confirmOverlay.remove();
-              };
-              // On stoppe ici, finishBLStatusChange sera appelé si l'utilisateur confirme
-              return;
-              // Fonction pour continuer la procédure après confirmation
-              function finishBLStatusChange() {
-                // 1. MAJ locale immédiate du statut BL
-                delivery.bl_statuses[blNumber] = statutToSend;
 
-                // Si le statut est mise_en_livraison, ajouter à la liste des dossiers mis en livraison
-                if (statutToSend === "mise_en_livraison") {
-                  // Récupérer les dates des champs de saisie avec vérification sécurisée
-                  const dateDOInput = document.querySelector(
-                    'input[name="date_do"]'
-                  );
-                  const dateBADTInput = document.querySelector(
-                    'input[name="date_badt"]'
-                  );
-                  const datePaiementAcconageInput = document.querySelector(
-                    'input[name="date_paiement_acconage"]'
-                  );
-
-                  // Fonction utilitaire pour obtenir la valeur d'un input de manière sécurisée
-                  const getInputValue = (input) => {
-                    try {
-                      return input && input.value ? input.value : null;
-                    } catch (e) {
-                      console.warn("Erreur lors de la lecture de l'input:", e);
-                      return null;
-                    }
-                  };
-
-                  const dossierToSave = {
-                    ...delivery,
-                    container_number: delivery.container_number || "",
-                    client_name: delivery.client_name || delivery.client || "",
-                    status: "Mis en livraison",
-                    bl_number: blNumber,
-                    date_mise_en_liv: new Date().toISOString(),
-                    // Ajout des dates d'échange avec vérification des inputs
-                    paiement_acconage: delivery.paiement_acconage || "",
-                    date_do:
-                      delivery.date_do ||
-                      (getInputValue(dateDOInput)
-                        ? new Date(getInputValue(dateDOInput)).toISOString()
-                        : null),
-                    date_badt:
-                      delivery.date_badt ||
-                      (getInputValue(dateBADTInput)
-                        ? new Date(getInputValue(dateBADTInput)).toISOString()
-                        : null),
-                    date_paiement_acconage:
-                      delivery.date_paiement_acconage ||
-                      (getInputValue(datePaiementAcconageInput)
-                        ? new Date(
-                            getInputValue(datePaiementAcconageInput)
-                          ).toISOString()
-                        : null),
-                    date_echange_bl: delivery.date_echange_bl || "",
-                  };
-                  ajouterDossierMiseEnLiv(dossierToSave);
-                }
-                // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
-                const tableBody = document.getElementById(
-                  "deliveriesTableBody"
+              // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
+              if (statutToSend === "mise_en_livraison") {
+                // Récupérer les dates des champs de saisie avec vérification sécurisée
+                const dateDOInput = document.querySelector(
+                  'input[name="date_do"]'
                 );
-                if (tableBody) {
-                  for (let row of tableBody.rows) {
-                    let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
-                      (c) => c.id === "dossier_number"
+                const dateBADTInput = document.querySelector(
+                  'input[name="date_badt"]'
+                );
+                const datePaiementAcconageInput = document.querySelector(
+                  'input[name="date_paiement_acconage"]'
+                );
+
+                // Fonction utilitaire pour obtenir la valeur d'un input de manière sécurisée
+                const getInputValue = (input) => {
+                  try {
+                    return input && input.value ? input.value : null;
+                  } catch (e) {
+                    console.warn("Erreur lors de la lecture de l'input:", e);
+                    return null;
+                  }
+                };
+
+                // Ajouter le dossier à la liste des mises en livraison
+                const dossierToSave = {
+                  ...delivery,
+                  container_number: delivery.container_number || "",
+                  client_name: delivery.client_name || delivery.client || "",
+                  status: "Mis en livraison",
+                  date_mise_en_liv: new Date().toISOString(),
+                  // Inclure les dates si elles sont disponibles dans le delivery original ou dans les inputs
+                  date_do:
+                    delivery.date_do ||
+                    (getInputValue(dateDOInput)
+                      ? new Date(getInputValue(dateDOInput)).toISOString()
+                      : null),
+                  date_badt:
+                    delivery.date_badt ||
+                    (getInputValue(dateBADTInput)
+                      ? new Date(getInputValue(dateBADTInput)).toISOString()
+                      : null),
+                  date_paiement_acconage:
+                    delivery.date_paiement_acconage ||
+                    (getInputValue(datePaiementAcconageInput)
+                      ? new Date(
+                          getInputValue(datePaiementAcconageInput)
+                        ).toISOString()
+                      : null),
+                };
+                ajouterDossierMiseEnLiv(dossierToSave);
+
+                // Popup de confirmation personnalisée
+                const confirmOverlay = document.createElement("div");
+                confirmOverlay.style.position = "fixed";
+                confirmOverlay.style.top = 0;
+                confirmOverlay.style.left = 0;
+                confirmOverlay.style.width = "100vw";
+                confirmOverlay.style.height = "100vh";
+                confirmOverlay.style.background = "rgba(30,41,59,0.45)";
+                confirmOverlay.style.zIndex = 99999;
+                confirmOverlay.style.display = "flex";
+                confirmOverlay.style.alignItems = "center";
+                confirmOverlay.style.justifyContent = "center";
+                const confirmBox = document.createElement("div");
+                confirmBox.style.background = "#fff";
+                confirmBox.style.borderRadius =
+                  window.innerWidth <= 768 ? "14px" : "18px";
+                confirmBox.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+                // Adaptation responsive de la popup de confirmation&&
+                if (window.innerWidth <= 480) {
+                  confirmBox.style.maxWidth = "95vw";
+                  confirmBox.style.width = "95vw";
+                } else if (window.innerWidth <= 768) {
+                  confirmBox.style.maxWidth = "85vw";
+                  confirmBox.style.width = "85vw";
+                } else {
+                  confirmBox.style.maxWidth = "420px";
+                  confirmBox.style.width = "96vw";
+                }
+                confirmBox.style.padding = "0";
+                confirmBox.style.position = "relative";
+                confirmBox.style.display = "flex";
+                confirmBox.style.flexDirection = "column";
+                // Header
+                const confirmHeader = document.createElement("div");
+                confirmHeader.style.background =
+                  "linear-gradient(90deg,#eab308 0%,#2563eb 100%)";
+                confirmHeader.style.color = "#fff";
+                // Adaptation responsive du header de confirmation
+                if (window.innerWidth <= 768) {
+                  confirmHeader.style.padding = "16px 20px 10px 20px";
+                  confirmHeader.style.fontSize = "1.1rem";
+                } else {
+                  confirmHeader.style.padding = "22px 32px 12px 32px";
+                  confirmHeader.style.fontSize = "1.18rem";
+                }
+                confirmHeader.style.fontWeight = "bold";
+                confirmHeader.style.borderTopLeftRadius =
+                  window.innerWidth <= 768 ? "14px" : "18px";
+                confirmHeader.style.borderTopRightRadius =
+                  window.innerWidth <= 768 ? "14px" : "18px";
+                confirmHeader.innerHTML = `<span style='font-size:1.25em;'>⚠️ Confirmation requise</span>`;
+                confirmBox.appendChild(confirmHeader);
+                // Message
+                const confirmMsgDiv = document.createElement("div");
+                confirmMsgDiv.style.padding = "24px 24px 18px 24px";
+                confirmMsgDiv.style.background = "#f8fafc";
+                confirmMsgDiv.style.fontSize = "1.08em";
+                confirmMsgDiv.style.color = "#1e293b";
+                confirmMsgDiv.style.textAlign = "center";
+                confirmMsgDiv.innerHTML =
+                  "<b>Vous êtes sur le point de valider la mise en livraison pour ce BL.</b><br><br>Cette opération est <span style='color:#eab308;font-weight:600;'>définitive</span> et ne pourra pas être annulée.<br><br>Voulez-vous vraiment continuer ?";
+                confirmBox.appendChild(confirmMsgDiv);
+                // Boutons
+                const btnsDiv = document.createElement("div");
+                btnsDiv.style.display = "flex";
+                btnsDiv.style.justifyContent = "center";
+                btnsDiv.style.gap = "18px";
+                btnsDiv.style.padding = "0 0 22px 0";
+                // Bouton Annuler
+                const cancelBtn = document.createElement("button");
+                cancelBtn.textContent = "Annuler";
+                cancelBtn.style.background = "#fff";
+                cancelBtn.style.color = "#2563eb";
+                cancelBtn.style.fontWeight = "bold";
+                cancelBtn.style.fontSize = "1em";
+                cancelBtn.style.border = "2px solid #2563eb";
+                cancelBtn.style.borderRadius = "8px";
+                cancelBtn.style.padding = "0.7em 1.7em";
+                cancelBtn.style.cursor = "pointer";
+                cancelBtn.onclick = () => confirmOverlay.remove();
+                // Bouton Confirmer
+                const okBtn = document.createElement("button");
+                okBtn.textContent = "Confirmer";
+                okBtn.style.background =
+                  "linear-gradient(90deg,#2563eb 0%,#eab308 100%)";
+                okBtn.style.color = "#fff";
+                okBtn.style.fontWeight = "bold";
+                okBtn.style.fontSize = "1em";
+                okBtn.style.border = "none";
+                okBtn.style.borderRadius = "8px";
+                okBtn.style.padding = "0.7em 1.7em";
+                okBtn.style.cursor = "pointer";
+                okBtn.onclick = () => {
+                  confirmOverlay.remove();
+                  // On continue la procédure
+                  finishBLStatusChange();
+                };
+                btnsDiv.appendChild(cancelBtn);
+                btnsDiv.appendChild(okBtn);
+                confirmBox.appendChild(btnsDiv);
+                confirmOverlay.appendChild(confirmBox);
+                document.body.appendChild(confirmOverlay);
+                confirmOverlay.onclick = (e) => {
+                  if (e.target === confirmOverlay) confirmOverlay.remove();
+                };
+                // On stoppe ici, finishBLStatusChange sera appelé si l'utilisateur confirme
+                return;
+                // Fonction pour continuer la procédure après confirmation
+                function finishBLStatusChange() {
+                  // 1. MAJ locale immédiate du statut BL
+                  delivery.bl_statuses[blNumber] = statutToSend;
+
+                  // Si le statut est mise_en_livraison, ajouter à la liste des dossiers mis en livraison
+                  if (statutToSend === "mise_en_livraison") {
+                    // Récupérer les dates des champs de saisie avec vérification sécurisée
+                    const dateDOInput = document.querySelector(
+                      'input[name="date_do"]'
                     );
-                    if (
-                      dossierCellIdx !== -1 &&
-                      row.cells[dossierCellIdx] &&
-                      row.cells[dossierCellIdx].textContent ===
-                        String(delivery.dossier_number)
-                    ) {
-                      let colIdx = AGENT_TABLE_COLUMNS.findIndex(
-                        (c) => c.id === "container_status"
-                      );
-                      if (colIdx !== -1 && row.cells[colIdx]) {
-                        let blList = [];
-                        if (Array.isArray(delivery.bl_number)) {
-                          blList = delivery.bl_number.filter(Boolean);
-                        } else if (typeof delivery.bl_number === "string") {
-                          blList = delivery.bl_number
-                            .split(/[,;\s]+/)
-                            .filter(Boolean);
-                        }
-                        let blStatuses = blList.map((bl) =>
-                          delivery.bl_statuses && delivery.bl_statuses[bl]
-                            ? delivery.bl_statuses[bl]
-                            : "aucun"
+                    const dateBADTInput = document.querySelector(
+                      'input[name="date_badt"]'
+                    );
+                    const datePaiementAcconageInput = document.querySelector(
+                      'input[name="date_paiement_acconage"]'
+                    );
+
+                    // Fonction utilitaire pour obtenir la valeur d'un input de manière sécurisée
+                    const getInputValue = (input) => {
+                      try {
+                        return input && input.value ? input.value : null;
+                      } catch (e) {
+                        console.warn(
+                          "Erreur lors de la lecture de l'input:",
+                          e
                         );
-                        let allMiseEnLivraison =
-                          blStatuses.length > 0 &&
-                          blStatuses.every((s) => s === "mise_en_livraison");
-                        if (allMiseEnLivraison) {
-                          row.cells[colIdx].innerHTML =
-                            '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-                        } else {
-                          row.cells[colIdx].innerHTML =
-                            '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
-                        }
+                        return null;
                       }
-                      break;
+                    };
+
+                    const dossierToSave = {
+                      ...delivery,
+                      container_number: delivery.container_number || "",
+                      client_name:
+                        delivery.client_name || delivery.client || "",
+                      status: "Mis en livraison",
+                      bl_number: blNumber,
+                      date_mise_en_liv: new Date().toISOString(),
+                      // Ajout des dates d'échange avec vérification des inputs
+                      paiement_acconage: delivery.paiement_acconage || "",
+                      date_do:
+                        delivery.date_do ||
+                        (getInputValue(dateDOInput)
+                          ? new Date(getInputValue(dateDOInput)).toISOString()
+                          : null),
+                      date_badt:
+                        delivery.date_badt ||
+                        (getInputValue(dateBADTInput)
+                          ? new Date(getInputValue(dateBADTInput)).toISOString()
+                          : null),
+                      date_paiement_acconage:
+                        delivery.date_paiement_acconage ||
+                        (getInputValue(datePaiementAcconageInput)
+                          ? new Date(
+                              getInputValue(datePaiementAcconageInput)
+                            ).toISOString()
+                          : null),
+                      date_echange_bl: delivery.date_echange_bl || "",
+                    };
+                    ajouterDossierMiseEnLiv(dossierToSave);
+                  }
+                  // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
+                  const tableBody = document.getElementById(
+                    "deliveriesTableBody"
+                  );
+                  if (tableBody) {
+                    for (let row of tableBody.rows) {
+                      let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
+                        (c) => c.id === "dossier_number"
+                      );
+                      if (
+                        dossierCellIdx !== -1 &&
+                        row.cells[dossierCellIdx] &&
+                        row.cells[dossierCellIdx].textContent ===
+                          String(delivery.dossier_number)
+                      ) {
+                        let colIdx = AGENT_TABLE_COLUMNS.findIndex(
+                          (c) => c.id === "container_status"
+                        );
+                        if (colIdx !== -1 && row.cells[colIdx]) {
+                          let blList = [];
+                          if (Array.isArray(delivery.bl_number)) {
+                            blList = delivery.bl_number.filter(Boolean);
+                          } else if (typeof delivery.bl_number === "string") {
+                            blList = delivery.bl_number
+                              .split(/[,;\s]+/)
+                              .filter(Boolean);
+                          }
+                          let blStatuses = blList.map((bl) =>
+                            delivery.bl_statuses && delivery.bl_statuses[bl]
+                              ? delivery.bl_statuses[bl]
+                              : "aucun"
+                          );
+                          let allMiseEnLivraison =
+                            blStatuses.length > 0 &&
+                            blStatuses.every((s) => s === "mise_en_livraison");
+                          if (allMiseEnLivraison) {
+                            row.cells[colIdx].innerHTML =
+                              '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
+                          } else {
+                            row.cells[colIdx].innerHTML =
+                              '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+                          }
+                        }
+                        break;
+                      }
                     }
                   }
-                }
-                // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
-                try {
-                  // Récupération des valeurs des nouveaux champs
-                  const paiementAcconage = paiementInput.value.trim();
-                  const dateDO = dateDOInput.value.trim();
-                  const dateBADT = dateBADTInput.value.trim();
+                  // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
+                  try {
+                    // Récupération des valeurs des nouveaux champs
+                    const paiementAcconage = paiementInput.value.trim();
+                    const dateDO = dateDOInput.value.trim();
+                    const dateBADT = dateBADTInput.value.trim();
 
-                  // 1. Mise à jour du statut BL
-                  fetch(`/deliveries/${delivery.id}/bl-status`, {
+                    // 1. Mise à jour du statut BL
+                    fetch(`/deliveries/${delivery.id}/bl-status`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ blNumber, status: statutToSend }),
+                    }).then(async (res) => {
+                      if (!res.ok) {
+                        let msg =
+                          "Erreur lors de la mise à jour du statut du BL.";
+                        try {
+                          const errData = await res.json();
+                          if (errData && errData.error)
+                            msg += "\n" + errData.error;
+                        } catch {}
+                        alert(msg);
+                        return;
+                      }
+
+                      // 2. Mise à jour des données d'échange si présentes
+                      const exchangeData = {};
+                      if (paiementAcconage)
+                        exchangeData.paiement_acconage = paiementAcconage;
+                      if (dateDO) exchangeData.date_do = dateDO;
+                      if (dateBADT) exchangeData.date_badt = dateBADT;
+
+                      if (Object.keys(exchangeData).length > 0) {
+                        fetch(`/api/exchange/update/${delivery.id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(exchangeData),
+                        })
+                          .then(() => {
+                            // Synchronisation finale vers scriptSuivie.js après sauvegarde réussie
+                            if (paiementAcconage) {
+                              const syncKey = `sync_${delivery.id}_paiement_acconage`;
+                              localStorage.setItem(
+                                syncKey,
+                                JSON.stringify({
+                                  value: paiementAcconage,
+                                  timestamp: Date.now(),
+                                })
+                              );
+                            }
+                            if (dateDO) {
+                              const syncKeyDO = `sync_${delivery.id}_date_do`;
+                              localStorage.setItem(
+                                syncKeyDO,
+                                JSON.stringify({
+                                  value: dateDO,
+                                  timestamp: Date.now(),
+                                })
+                              );
+                            }
+                            if (dateBADT) {
+                              const syncKeyBADT = `sync_${delivery.id}_date_badt`;
+                              localStorage.setItem(
+                                syncKeyBADT,
+                                JSON.stringify({
+                                  value: dateBADT,
+                                  timestamp: Date.now(),
+                                })
+                              );
+                            }
+                            // Nettoyer le localStorage temporaire après sauvegarde réussie
+                            clearTempDatesFromStorage(delivery.id);
+                          })
+                          .catch((err) => {
+                            console.warn(
+                              "Erreur lors de la mise à jour des données d'échange:",
+                              err
+                            );
+                          });
+                      } else {
+                        // Nettoyer le localStorage même s'il n'y a pas de données d'échange à sauvegarder
+                        clearTempDatesFromStorage(delivery.id);
+                      }
+
+                      overlay.remove();
+                      // Afficher l'alerte verte de confirmation
+                      showMiseEnLivraisonSuccessAlert();
+                    });
+                  } catch (err) {
+                    alert(
+                      "Erreur lors de la mise à jour du statut du BL.\n" +
+                        (err && err.message ? err.message : "")
+                    );
+                  }
+                }
+
+                // Fonction d'alerte verte de confirmation
+                function showMiseEnLivraisonSuccessAlert() {
+                  // Supprimer toute alerte existante
+                  const oldAlert = document.getElementById(
+                    "mise-en-livraison-success-alert"
+                  );
+                  if (oldAlert) oldAlert.remove();
+
+                  // Créer la nouvelle alerte
+                  const alert = document.createElement("div");
+                  alert.id = "mise-en-livraison-success-alert";
+                  alert.style.position = "fixed";
+                  alert.style.top = "20px";
+                  alert.style.left = "50%";
+                  alert.style.transform = "translateX(-50%)";
+                  alert.style.background =
+                    "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
+                  alert.style.color = "#fff";
+                  alert.style.fontWeight = "bold";
+                  alert.style.fontSize = "1.1em";
+                  alert.style.padding = "15px 30px";
+                  alert.style.borderRadius = "12px";
+                  alert.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
+                  alert.style.zIndex = 99999;
+                  alert.style.opacity = "0";
+                  alert.style.transition = "opacity 0.3s";
+                  alert.style.display = "flex";
+                  alert.style.alignItems = "center";
+                  alert.style.gap = "10px";
+                  alert.innerHTML =
+                    '<i class="fas fa-check-circle" style="font-size:1.2em;"></i> Mise en livraison effectuée';
+
+                  document.body.appendChild(alert);
+                  setTimeout(() => {
+                    alert.style.opacity = "1";
+                  }, 10);
+                  setTimeout(() => {
+                    alert.style.opacity = "0";
+                    setTimeout(() => alert.remove(), 400);
+                  }, 3000);
+                }
+              }
+              // 1. MAJ locale immédiate du statut BL
+              delivery.bl_statuses[blNumber] = statutToSend;
+              // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
+              const tableBody = document.getElementById("deliveriesTableBody");
+              if (tableBody) {
+                for (let row of tableBody.rows) {
+                  let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
+                    (c) => c.id === "dossier_number"
+                  );
+                  if (
+                    dossierCellIdx !== -1 &&
+                    row.cells[dossierCellIdx] &&
+                    row.cells[dossierCellIdx].textContent ===
+                      String(delivery.dossier_number)
+                  ) {
+                    let colIdx = AGENT_TABLE_COLUMNS.findIndex(
+                      (c) => c.id === "container_status"
+                    );
+                    if (colIdx !== -1 && row.cells[colIdx]) {
+                      let blList = [];
+                      if (Array.isArray(delivery.bl_number)) {
+                        blList = delivery.bl_number.filter(Boolean);
+                      } else if (typeof delivery.bl_number === "string") {
+                        blList = delivery.bl_number
+                          .split(/[,;\s]+/)
+                          .filter(Boolean);
+                      }
+                      let blStatuses = blList.map((bl) =>
+                        delivery.bl_statuses && delivery.bl_statuses[bl]
+                          ? delivery.bl_statuses[bl]
+                          : "aucun"
+                      );
+                      let allMiseEnLivraison =
+                        blStatuses.length > 0 &&
+                        blStatuses.every((s) => s === "mise_en_livraison");
+                      if (allMiseEnLivraison) {
+                        row.cells[colIdx].innerHTML =
+                          '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
+                      } else {
+                        row.cells[colIdx].innerHTML =
+                          '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+                      }
+                    }
+                    break;
+                  }
+                }
+              }
+              // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
+              try {
+                // Récupération des valeurs des nouveaux champs
+                const paiementAcconage = paiementInput.value.trim();
+                const dateDO = dateDOInput.value.trim();
+                const dateBADT = dateBADTInput.value.trim();
+
+                // 1. Mise à jour du statut BL
+                const blStatusRes = await fetch(
+                  `/deliveries/${delivery.id}/bl-status`,
+                  {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ blNumber, status: statutToSend }),
-                  }).then(async (res) => {
-                    if (!res.ok) {
-                      let msg =
-                        "Erreur lors de la mise à jour du statut du BL.";
-                      try {
-                        const errData = await res.json();
-                        if (errData && errData.error)
-                          msg += "\n" + errData.error;
-                      } catch {}
-                      alert(msg);
-                      return;
+                  }
+                );
+
+                if (!blStatusRes.ok) {
+                  let msg = "Erreur lors de la mise à jour du statut du BL.";
+                  try {
+                    const errData = await blStatusRes.json();
+                    if (errData && errData.error) msg += "\n" + errData.error;
+                  } catch {}
+                  alert(msg);
+                  return;
+                }
+
+                // 2. Mise à jour des données d'échange via la nouvelle API
+                const exchangeData = {};
+                if (paiementAcconage)
+                  exchangeData.paiement_acconage = paiementAcconage;
+                if (dateDO) exchangeData.date_do = dateDO;
+                if (dateBADT) exchangeData.date_badt = dateBADT;
+
+                // Si des données d'échange sont présentes, les envoyer
+                if (Object.keys(exchangeData).length > 0) {
+                  const exchangeRes = await fetch(
+                    `/api/exchange/update/${delivery.id}`,
+                    {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(exchangeData),
                     }
+                  );
 
-                    // 2. Mise à jour des données d'échange si présentes
-                    const exchangeData = {};
-                    if (paiementAcconage)
-                      exchangeData.paiement_acconage = paiementAcconage;
-                    if (dateDO) exchangeData.date_do = dateDO;
-                    if (dateBADT) exchangeData.date_badt = dateBADT;
-
-                    if (Object.keys(exchangeData).length > 0) {
-                      fetch(`/api/exchange/update/${delivery.id}`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(exchangeData),
-                      })
-                        .then(() => {
-                          // Synchronisation finale vers scriptSuivie.js après sauvegarde réussie
-                          if (paiementAcconage) {
-                            const syncKey = `sync_${delivery.id}_paiement_acconage`;
-                            localStorage.setItem(
-                              syncKey,
-                              JSON.stringify({
-                                value: paiementAcconage,
-                                timestamp: Date.now(),
-                              })
-                            );
-                          }
-                          if (dateDO) {
-                            const syncKeyDO = `sync_${delivery.id}_date_do`;
-                            localStorage.setItem(
-                              syncKeyDO,
-                              JSON.stringify({
-                                value: dateDO,
-                                timestamp: Date.now(),
-                              })
-                            );
-                          }
-                          if (dateBADT) {
-                            const syncKeyBADT = `sync_${delivery.id}_date_badt`;
-                            localStorage.setItem(
-                              syncKeyBADT,
-                              JSON.stringify({
-                                value: dateBADT,
-                                timestamp: Date.now(),
-                              })
-                            );
-                          }
-                          // Nettoyer le localStorage temporaire après sauvegarde réussie
-                          clearTempDatesFromStorage(delivery.id);
+                  if (!exchangeRes.ok) {
+                    const errData = await exchangeRes.json();
+                    console.warn(
+                      "Erreur lors de la mise à jour des données d'échange:",
+                      errData.message
+                    );
+                    // Ne pas arrêter le processus si seules les données d'échange échouent
+                  } else {
+                    // Rafraîchir la liste des dossiers mis en livraison
+                    refreshMiseEnLivList();
+                    // Synchronisation vers scriptSuivie.js après sauvegarde réussie
+                    if (paiementAcconage) {
+                      const syncKey = `sync_${delivery.id}_paiement_acconage`;
+                      localStorage.setItem(
+                        syncKey,
+                        JSON.stringify({
+                          value: paiementAcconage,
+                          timestamp: Date.now(),
                         })
-                        .catch((err) => {
-                          console.warn(
-                            "Erreur lors de la mise à jour des données d'échange:",
-                            err
-                          );
-                        });
-                    } else {
-                      // Nettoyer le localStorage même s'il n'y a pas de données d'échange à sauvegarder
-                      clearTempDatesFromStorage(delivery.id);
+                      );
                     }
-
-                    overlay.remove();
-                    // Afficher l'alerte verte de confirmation
-                    showMiseEnLivraisonSuccessAlert();
-                  });
-                } catch (err) {
-                  alert(
-                    "Erreur lors de la mise à jour du statut du BL.\n" +
-                      (err && err.message ? err.message : "")
-                  );
-                }
-              }
-
-              // Fonction d'alerte verte de confirmation
-              function showMiseEnLivraisonSuccessAlert() {
-                // Supprimer toute alerte existante
-                const oldAlert = document.getElementById(
-                  "mise-en-livraison-success-alert"
-                );
-                if (oldAlert) oldAlert.remove();
-
-                // Créer la nouvelle alerte
-                const alert = document.createElement("div");
-                alert.id = "mise-en-livraison-success-alert";
-                alert.style.position = "fixed";
-                alert.style.top = "20px";
-                alert.style.left = "50%";
-                alert.style.transform = "translateX(-50%)";
-                alert.style.background =
-                  "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)";
-                alert.style.color = "#fff";
-                alert.style.fontWeight = "bold";
-                alert.style.fontSize = "1.1em";
-                alert.style.padding = "15px 30px";
-                alert.style.borderRadius = "12px";
-                alert.style.boxShadow = "0 6px 32px rgba(34,197,94,0.18)";
-                alert.style.zIndex = 99999;
-                alert.style.opacity = "0";
-                alert.style.transition = "opacity 0.3s";
-                alert.style.display = "flex";
-                alert.style.alignItems = "center";
-                alert.style.gap = "10px";
-                alert.innerHTML =
-                  '<i class="fas fa-check-circle" style="font-size:1.2em;"></i> Mise en livraison effectuée';
-
-                document.body.appendChild(alert);
-                setTimeout(() => {
-                  alert.style.opacity = "1";
-                }, 10);
-                setTimeout(() => {
-                  alert.style.opacity = "0";
-                  setTimeout(() => alert.remove(), 400);
-                }, 3000);
-              }
-            }
-            // 1. MAJ locale immédiate du statut BL
-            delivery.bl_statuses[blNumber] = statutToSend;
-            // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
-            const tableBody = document.getElementById("deliveriesTableBody");
-            if (tableBody) {
-              for (let row of tableBody.rows) {
-                let dossierCellIdx = AGENT_TABLE_COLUMNS.findIndex(
-                  (c) => c.id === "dossier_number"
-                );
-                if (
-                  dossierCellIdx !== -1 &&
-                  row.cells[dossierCellIdx] &&
-                  row.cells[dossierCellIdx].textContent ===
-                    String(delivery.dossier_number)
-                ) {
-                  let colIdx = AGENT_TABLE_COLUMNS.findIndex(
-                    (c) => c.id === "container_status"
-                  );
-                  if (colIdx !== -1 && row.cells[colIdx]) {
-                    let blList = [];
-                    if (Array.isArray(delivery.bl_number)) {
-                      blList = delivery.bl_number.filter(Boolean);
-                    } else if (typeof delivery.bl_number === "string") {
-                      blList = delivery.bl_number
-                        .split(/[,;\s]+/)
-                        .filter(Boolean);
+                    if (dateDO) {
+                      const syncKeyDO = `sync_${delivery.id}_date_do`;
+                      localStorage.setItem(
+                        syncKeyDO,
+                        JSON.stringify({ value: dateDO, timestamp: Date.now() })
+                      );
                     }
-                    let blStatuses = blList.map((bl) =>
-                      delivery.bl_statuses && delivery.bl_statuses[bl]
-                        ? delivery.bl_statuses[bl]
-                        : "aucun"
-                    );
-                    let allMiseEnLivraison =
-                      blStatuses.length > 0 &&
-                      blStatuses.every((s) => s === "mise_en_livraison");
-                    if (allMiseEnLivraison) {
-                      row.cells[colIdx].innerHTML =
-                        '<span style="display:inline-flex;align-items:center;gap:6px;color:#2563eb;font-weight:600;"><i class="fas fa-truck" style="font-size:1.1em;color:#2563eb;"></i> Mise en livraison</span>';
-                    } else {
-                      row.cells[colIdx].innerHTML =
-                        '<span style="display:inline-flex;align-items:center;gap:6px;color:#b45309;font-weight:600;"><i class="fas fa-clock" style="font-size:1.1em;color:#b45309;"></i> En attente de paiement</span>';
+                    if (dateBADT) {
+                      const syncKeyBADT = `sync_${delivery.id}_date_badt`;
+                      localStorage.setItem(
+                        syncKeyBADT,
+                        JSON.stringify({
+                          value: dateBADT,
+                          timestamp: Date.now(),
+                        })
+                      );
                     }
                   }
-                  break;
                 }
-              }
-            }
-            // 3. Envoi serveur (asynchrone, mais pas bloquant pour l'UI)
-            try {
-              // Récupération des valeurs des nouveaux champs
-              const paiementAcconage = paiementInput.value.trim();
-              const dateDO = dateDOInput.value.trim();
-              const dateBADT = dateBADTInput.value.trim();
-
-              // 1. Mise à jour du statut BL
-              const blStatusRes = await fetch(
-                `/deliveries/${delivery.id}/bl-status`,
-                {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ blNumber, status: statutToSend }),
-                }
-              );
-
-              if (!blStatusRes.ok) {
-                let msg = "Erreur lors de la mise à jour du statut du BL.";
-                try {
-                  const errData = await blStatusRes.json();
-                  if (errData && errData.error) msg += "\n" + errData.error;
-                } catch {}
-                alert(msg);
-                return;
-              }
-
-              // 2. Mise à jour des données d'échange via la nouvelle API
-              const exchangeData = {};
-              if (paiementAcconage)
-                exchangeData.paiement_acconage = paiementAcconage;
-              if (dateDO) exchangeData.date_do = dateDO;
-              if (dateBADT) exchangeData.date_badt = dateBADT;
-
-              // Si des données d'échange sont présentes, les envoyer
-              if (Object.keys(exchangeData).length > 0) {
-                const exchangeRes = await fetch(
-                  `/api/exchange/update/${delivery.id}`,
-                  {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(exchangeData),
-                  }
+                overlay.remove();
+              } catch (err) {
+                alert(
+                  "Erreur lors de la mise à jour des données.\n" +
+                    (err && err.message ? err.message : "")
                 );
-
-                if (!exchangeRes.ok) {
-                  const errData = await exchangeRes.json();
-                  console.warn(
-                    "Erreur lors de la mise à jour des données d'échange:",
-                    errData.message
-                  );
-                  // Ne pas arrêter le processus si seules les données d'échange échouent
-                } else {
-                  // Rafraîchir la liste des dossiers mis en livraison
-                  refreshMiseEnLivList();
-                  // Synchronisation vers scriptSuivie.js après sauvegarde réussie
-                  if (paiementAcconage) {
-                    const syncKey = `sync_${delivery.id}_paiement_acconage`;
-                    localStorage.setItem(
-                      syncKey,
-                      JSON.stringify({
-                        value: paiementAcconage,
-                        timestamp: Date.now(),
-                      })
-                    );
-                  }
-                  if (dateDO) {
-                    const syncKeyDO = `sync_${delivery.id}_date_do`;
-                    localStorage.setItem(
-                      syncKeyDO,
-                      JSON.stringify({ value: dateDO, timestamp: Date.now() })
-                    );
-                  }
-                  if (dateBADT) {
-                    const syncKeyBADT = `sync_${delivery.id}_date_badt`;
-                    localStorage.setItem(
-                      syncKeyBADT,
-                      JSON.stringify({ value: dateBADT, timestamp: Date.now() })
-                    );
-                  }
-                }
               }
-              overlay.remove();
-            } catch (err) {
-              alert(
-                "Erreur lors de la mise à jour des données.\n" +
-                  (err && err.message ? err.message : "")
-              );
+            } catch (globalErr) {
+              console.error("Erreur globale dans saveBtn.onclick:", globalErr);
+              alert("Une erreur s'est produite. Veuillez réessayer.");
             }
           };
           content.appendChild(saveBtn);
