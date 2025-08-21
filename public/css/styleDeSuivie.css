@@ -1730,3 +1730,50 @@ tbody td:first-child {
   position: relative;
   min-width: 120px;
 }
+
+/* === STYLES POUR LES OBSERVATIONS EN MODE SOMBRE === */
+/* Style spécial pour les champs d'observation en mode sombre */
+[data-theme="dark"] .observation-cell {
+  background-color: inherit;
+  color: inherit;
+}
+
+[data-theme="dark"] .observation-cell:focus-within {
+  background-color: #fbbf24 !important; /* Jaune */
+  color: #000 !important; /* Texte noir */
+}
+
+[data-theme="dark"] .observation-cell textarea {
+  background-color: #fbbf24 !important; /* Jaune */
+  color: #000 !important; /* Texte noir */
+  border: 2px solid #f59e0b !important;
+}
+
+[data-theme="dark"] .observation-cell textarea:focus {
+  background-color: #fbbf24 !important; /* Jaune */
+  color: #000 !important; /* Texte noir */
+  border: 2px solid #f59e0b !important;
+  outline: none;
+}
+
+/* Style pour les observations après édition (revenir au mode sombre normal) */
+[data-theme="dark"] .observation-cell:not(:focus-within) {
+  background-color: inherit;
+  color: inherit;
+}
+
+/* Styles pour rendre les colonnes d'observation plus visibles en mode sombre */
+[data-theme="dark"] .agent-deliveries-table th:nth-child(12) {
+  background-color: #fbbf24 !important; /* Header jaune pour observation */
+  color: #000 !important; /* Texte noir pour contraste */
+  font-weight: bold;
+}
+
+[data-theme="dark"] .agent-deliveries-table td:nth-child(12) {
+  background-color: rgba(251, 191, 36, 0.1); /* Légère teinte jaune pour les cellules */
+}
+
+[data-theme="dark"] .agent-deliveries-table td:nth-child(12):hover {
+  background-color: rgba(251, 191, 36, 0.2); /* Plus de jaune au survol */
+  cursor: pointer;
+}

@@ -244,13 +244,19 @@ function afficherDetailsDossier(dossier) {
           .map((key) => {
             const translatedKey = keyTranslations[key] || key;
             const isDateField = key.toLowerCase().includes("date");
-            const displayValue = isDateField
-              ? formatDate(dossier[key])
-              : dossier[key] !== undefined &&
+
+            // Gestion spéciale pour les dates qui peuvent être vides mais doivent s'afficher
+            let displayValue;
+            if (isDateField) {
+              displayValue = formatDate(dossier[key]) || "-";
+            } else {
+              displayValue =
+                dossier[key] !== undefined &&
                 dossier[key] !== null &&
                 dossier[key] !== ""
-              ? dossier[key]
-              : "-";
+                  ? dossier[key]
+                  : "-";
+            }
 
             return `
               <dt class="col-sm-4">${keyTranslations[key] || key}</dt>
@@ -2084,10 +2090,10 @@ document.addEventListener("DOMContentLoaded", function () {
           return delivery;
         });
 
-        // Filtrage pour le mode admin : ne montrer que les livraisons de l'utilisateur ciblé
+        // Filtrage pour le mode admin : afficher TOUS les dossiers sans exception
         if (isAdminMode && targetUser) {
           console.log(
-            `🔍 [DEBUG FILTRAGE] Recherche pour l'utilisateur "${targetUser}"`
+            `🔍 [DEBUG FILTRAGE] Mode Admin - Affichage de TOUS les dossiers pour l'utilisateur "${targetUser}"`
           );
           console.log(
             `🔍 [DEBUG] Nombre total de livraisons avant filtrage: ${processedDeliveries.length}`
@@ -2096,88 +2102,11 @@ document.addEventListener("DOMContentLoaded", function () {
           // Charger les observations de l'utilisateur ciblé
           await loadUserObservations(targetUser, targetUserId);
 
-          // Afficher quelques exemples de données pour comprendre la structure
-          if (processedDeliveries.length > 0) {
-            console.log(`🔍 [DEBUG] Exemple de livraison:`, {
-              responsible_acconier: processedDeliveries[0].responsible_acconier,
-              resp_acconier: processedDeliveries[0].resp_acconier,
-              responsible_livreur: processedDeliveries[0].responsible_livreur,
-              resp_livreur: processedDeliveries[0].resp_livreur,
-              assigned_to: processedDeliveries[0].assigned_to,
-              created_by: processedDeliveries[0].created_by,
-              updated_by: processedDeliveries[0].updated_by,
-              nom_agent_visiteur: processedDeliveries[0].nom_agent_visiteur,
-              employee_name: processedDeliveries[0].employee_name,
-              driver_name: processedDeliveries[0].driver_name,
-            });
-          }
-
-          processedDeliveries = processedDeliveries.filter((delivery) => {
-            // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
-            const userFields = [
-              delivery.responsible_acconier,
-              delivery.resp_acconier,
-              delivery.responsible_livreur,
-              delivery.resp_livreur,
-              delivery.assigned_to,
-              delivery.created_by,
-              delivery.updated_by,
-              // Ajouter plus de champs possibles
-              delivery.nom_agent_visiteur,
-              delivery.employee_name,
-              delivery.driver_name,
-              delivery.transporteur,
-              delivery.inspecteur,
-              delivery.agent_douanes,
-              delivery.chauffeur,
-              // Champs supplémentaires pour les observations et activités
-              delivery.agent_email,
-              delivery.user_email,
-              delivery.created_by_email,
-              delivery.observation_acconier_author,
-              delivery.observation_author,
-              delivery.modified_by,
-              delivery.last_modified_by,
-            ];
-
-            // Recherche par nom d'utilisateur avec différentes variantes
-            const targetUserLower = targetUser.toLowerCase();
-            const targetUserIdLower = targetUserId
-              ? targetUserId.toLowerCase()
-              : "";
-
-            const foundByName = userFields.some((field) => {
-              if (!field) return false;
-              const fieldLower = field.toString().toLowerCase();
-
-              // Recherche exacte
-              if (fieldLower === targetUserLower) return true;
-
-              // Recherche partielle (contient le nom)
-              if (fieldLower.includes(targetUserLower)) return true;
-
-              // Recherche inverse (le nom contient le champ)
-              if (targetUserLower.includes(fieldLower)) return true;
-
-              return false;
-            });
-
-            // Aussi chercher par userId si disponible
-            const foundByUserId =
-              targetUserIdLower &&
-              userFields.some((field) => {
-                if (!field) return false;
-                const fieldLower = field.toString().toLowerCase();
-                return (
-                  fieldLower.includes(targetUserIdLower) ||
-                  targetUserIdLower.includes(fieldLower)
-                );
-              });
-
-            // Recherche spéciale dans les observations stockées localement
-            let foundInObservations = false;
+          // En mode admin, on affiche TOUTES les livraisons sans exception
+          // On se contente de charger les observations pour l'utilisateur ciblé
+          processedDeliveries.forEach((delivery) => {
+            // Charger les observations stockées localement si elles existent
             try {
-              // Vérifier les observations stockées dans localStorage avec différentes clés possibles
               const observationKeys = [
                 `observation_${delivery.id}`,
                 `obs_${delivery.id}`,
@@ -2188,9 +2117,8 @@ document.addEventListener("DOMContentLoaded", function () {
               for (const key of observationKeys) {
                 const storedObservation = localStorage.getItem(key);
                 if (storedObservation && storedObservation.trim() !== "") {
-                  foundInObservations = true;
                   console.log(
-                    `📝 [DEBUG] Observation trouvée avec clé ${key} pour livraison ${delivery.id}:`,
+                    `📝 [ADMIN MODE] Observation trouvée avec clé ${key} pour livraison ${delivery.id}:`,
                     storedObservation
                   );
 
@@ -2205,68 +2133,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
               }
 
-              // Vérifier les champs d'observation de la livraison elle-même
-              if (
-                delivery.observation_acconier &&
-                delivery.observation_acconier.trim() !== ""
-              ) {
-                foundInObservations = true;
-                console.log(
-                  `📝 [DEBUG] Observation BD trouvée pour livraison ${delivery.id}:`,
-                  delivery.observation_acconier
-                );
-              }
-
-              // Vérifier les autres champs d'observation possibles
-              const observationFields = [
-                delivery.observation,
-                delivery.observations,
-                delivery.observation_acconier,
-                delivery.delivery_notes,
-                delivery.notes,
-                delivery.comments,
-                delivery.remarques,
-              ];
-
-              for (const obsField of observationFields) {
-                if (
-                  obsField &&
-                  obsField.toString().trim() !== "" &&
-                  obsField !== "-"
-                ) {
-                  foundInObservations = true;
-                  console.log(
-                    `📝 [DEBUG] Observation trouvée dans champ pour livraison ${delivery.id}:`,
-                    obsField
-                  );
-                  break;
-                }
-              }
-            } catch (e) {
-              // Ignorer les erreurs de parsing
-            }
-
-            const finalFound =
-              foundByName || foundByUserId || foundInObservations;
-
-            if (finalFound) {
-              console.log(
-                `✅ [DEBUG] Livraison trouvée pour ${targetUser}:`,
-                delivery.id,
-                {
-                  foundByName,
-                  foundByUserId,
-                  foundInObservations,
-                  observation: delivery.observation_acconier || "Aucune",
-                  employee_name: delivery.employee_name,
-                  matchingFields: userFields.filter(
-                    (f) =>
-                      f && f.toString().toLowerCase().includes(targetUserLower)
-                  ),
-                }
-              );
-
-              // 🔧 CORRECTION CRITIQUE : Stocker l'observation dans localStorage immédiatement
+              // Stocker l'observation en base de données dans localStorage pour persistance
               if (
                 delivery.observation_acconier &&
                 delivery.observation_acconier.trim() !== "" &&
@@ -2275,226 +2142,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 const localKey = `obs_${delivery.id}`;
                 localStorage.setItem(localKey, delivery.observation_acconier);
                 console.log(
-                  `💾 [STOCK OBSERVATION] Livraison ${delivery.id}: "${delivery.observation_acconier}" stockée dans localStorage`
+                  `� [ADMIN MODE] Observation stockée pour livraison ${delivery.id}: "${delivery.observation_acconier}"`
                 );
               }
+            } catch (e) {
+              console.error(
+                `Erreur lors du traitement de la livraison ${delivery.id}:`,
+                e
+              );
             }
-
-            return finalFound;
           });
 
           console.log(
-            `[MODE ADMIN] Filtrage pour l'utilisateur "${targetUser}": ${processedDeliveries.length} livraisons trouvées`
+            `[MODE ADMIN] Affichage de TOUTES les livraisons pour l'utilisateur "${targetUser}": ${processedDeliveries.length} livraisons`
           );
-
-          // Si aucune livraison trouvée, essayer une recherche plus large
-          if (processedDeliveries.length === 0) {
-            console.log(
-              `⚠️ [DEBUG] Aucune livraison trouvée pour "${targetUser}". Tentative de recherche élargie...`
-            );
-
-            // Recherche élargie : toutes les livraisons avec des observations ou modifications récentes
-            processedDeliveries = data.deliveries.filter((delivery) => {
-              // Appliquer la même normalisation que précédemment
-              let tcList = [];
-              if (delivery.container_numbers_list) {
-                try {
-                  if (typeof delivery.container_numbers_list === "string") {
-                    tcList = JSON.parse(delivery.container_numbers_list);
-                  } else if (Array.isArray(delivery.container_numbers_list)) {
-                    tcList = delivery.container_numbers_list;
-                  }
-                  tcList = tcList.filter(Boolean);
-                } catch (e) {
-                  console.warn("Erreur parsing container_numbers_list:", e);
-                  tcList = [];
-                }
-              }
-              if (tcList.length === 0) {
-                if (Array.isArray(delivery.container_number)) {
-                  tcList = delivery.container_number.filter(Boolean);
-                } else if (typeof delivery.container_number === "string") {
-                  tcList = delivery.container_number
-                    .split(/[,;\s]+/)
-                    .filter(Boolean);
-                }
-              }
-              if (
-                !delivery.container_statuses ||
-                typeof delivery.container_statuses !== "object"
-              ) {
-                delivery.container_statuses = {};
-              }
-              tcList.forEach((tc) => {
-                if (!delivery.container_statuses[tc]) {
-                  delivery.container_statuses[tc] = "attente_paiement";
-                }
-              });
-              if (
-                delivery.bl_statuses &&
-                typeof delivery.bl_statuses === "string"
-              ) {
-                try {
-                  delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
-                } catch {
-                  delivery.bl_statuses = {};
-                }
-              }
-              if (
-                !delivery.bl_statuses ||
-                typeof delivery.bl_statuses !== "object"
-              ) {
-                delivery.bl_statuses = {};
-              }
-
-              // Recherche élargie : livraisons avec observations ou activité récente
-              let hasUserActivity = false;
-
-              // 1. Vérifier les observations stockées localement
-              try {
-                const observationKey = `observation_${delivery.id}`;
-                const storedObservation = localStorage.getItem(observationKey);
-                if (storedObservation && storedObservation.trim() !== "") {
-                  hasUserActivity = true;
-                  console.log(
-                    `📝 [RECHERCHE ÉLARGIE] Observation locale trouvée pour ${delivery.id}:`,
-                    storedObservation
-                  );
-                }
-              } catch (e) {}
-
-              // 2. Vérifier les observations en base de données
-              if (
-                delivery.observation_acconier &&
-                delivery.observation_acconier.trim() !== ""
-              ) {
-                hasUserActivity = true;
-                console.log(
-                  `📝 [RECHERCHE ÉLARGIE] Observation BD trouvée pour ${delivery.id}:`,
-                  delivery.observation_acconier
-                );
-              }
-
-              // 3. Vérifier l'activité récente (livraisons modifiées dans les 7 derniers jours)
-              if (delivery.updated_at) {
-                const updatedDate = new Date(delivery.updated_at);
-                const now = new Date();
-                const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
-                if (daysDiff <= 7) {
-                  hasUserActivity = true;
-                  console.log(
-                    `⏰ [RECHERCHE ÉLARGIE] Activité récente pour ${
-                      delivery.id
-                    } (${daysDiff.toFixed(1)} jours)`
-                  );
-                }
-              }
-
-              // 4. Recherche dans tous les champs texte pour des traces d'activité
-              const allTextFields = [
-                delivery.employee_name,
-                delivery.client_name,
-                delivery.delivery_notes,
-                delivery.observation_acconier,
-                delivery.status,
-                delivery.container_status,
-                delivery.transporter,
-                delivery.driver_name,
-              ].filter(Boolean);
-
-              const hasTextActivity = allTextFields.some((field) => {
-                const fieldStr = field.toString().toLowerCase();
-                return (
-                  fieldStr.includes(targetUser.toLowerCase()) ||
-                  fieldStr.includes("observation") ||
-                  fieldStr.includes("modifié") ||
-                  fieldStr.includes("mis à jour")
-                );
-              });
-
-              if (hasTextActivity) {
-                hasUserActivity = true;
-                console.log(
-                  `📝 [RECHERCHE ÉLARGIE] Activité textuelle trouvée pour ${delivery.id}`
-                );
-              }
-
-              return hasUserActivity;
-            });
-
-            console.log(
-              `📊 [RECHERCHE ÉLARGIE] ${processedDeliveries.length} livraisons trouvées avec activité ou observations`
-            );
-
-            // Si toujours aucune livraison, afficher les plus récentes pour debug
-            if (processedDeliveries.length === 0) {
-              console.log(
-                `🔍 [DEBUG FINAL] Affichage des 10 livraisons les plus récentes pour debug`
-              );
-              processedDeliveries = data.deliveries
-                .sort(
-                  (a, b) =>
-                    new Date(b.created_at || b.delivery_date) -
-                    new Date(a.created_at || a.delivery_date)
-                )
-                .slice(0, 10)
-                .map((delivery) => {
-                  // Normaliser pour l'affichage
-                  let tcList = [];
-                  if (delivery.container_numbers_list) {
-                    try {
-                      if (typeof delivery.container_numbers_list === "string") {
-                        tcList = JSON.parse(delivery.container_numbers_list);
-                      } else if (
-                        Array.isArray(delivery.container_numbers_list)
-                      ) {
-                        tcList = delivery.container_numbers_list;
-                      }
-                      tcList = tcList.filter(Boolean);
-                    } catch (e) {
-                      tcList = [];
-                    }
-                  }
-                  if (tcList.length === 0) {
-                    if (Array.isArray(delivery.container_number)) {
-                      tcList = delivery.container_number.filter(Boolean);
-                    } else if (typeof delivery.container_number === "string") {
-                      tcList = delivery.container_number
-                        .split(/[,;\s]+/)
-                        .filter(Boolean);
-                    }
-                  }
-                  if (
-                    !delivery.container_statuses ||
-                    typeof delivery.container_statuses !== "object"
-                  ) {
-                    delivery.container_statuses = {};
-                  }
-                  tcList.forEach((tc) => {
-                    if (!delivery.container_statuses[tc]) {
-                      delivery.container_statuses[tc] = "attente_paiement";
-                    }
-                  });
-                  if (
-                    delivery.bl_statuses &&
-                    typeof delivery.bl_statuses === "string"
-                  ) {
-                    try {
-                      delivery.bl_statuses = JSON.parse(delivery.bl_statuses);
-                    } catch {
-                      delivery.bl_statuses = {};
-                    }
-                  }
-                  if (
-                    !delivery.bl_statuses ||
-                    typeof delivery.bl_statuses !== "object"
-                  ) {
-                    delivery.bl_statuses = {};
-                  }
-                  return delivery;
-                });
-            }
-          }
+        } else {
+          console.log(
+            `[MODE NORMAL] Affichage des livraisons en mode utilisateur normal: ${processedDeliveries.length} livraisons`
+          );
         }
 
         allDeliveries = processedDeliveries;
@@ -3212,11 +2877,30 @@ function createEditInput(columnId, currentValue) {
     input.style.resize = "vertical";
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
-    input.style.backgroundColor = isDark ? "#0e274e" : "#fff";
-    // Couleur du texte : noir pendantzsudh la saidbhjsie, blanc après en mode sombre
-    if (isDark) {
-      input.style.color = "#fff";
+
+    // Style spécial pour les observations en mode sombre
+    if (columnId === "observation" && isDark) {
+      input.style.backgroundColor = "#fbbf24"; // Jaune en mode sombre pour observations
+      input.style.color = "#000"; // Texte noir pour contraste
+      input.style.border = "2px solid #f59e0b";
+      input.addEventListener("focus", function () {
+        this.style.backgroundColor = "#fbbf24";
+        this.style.color = "#000";
+      });
+      input.addEventListener("input", function () {
+        if (document.activeElement === this) {
+          this.style.backgroundColor = "#fbbf24";
+          this.style.color = "#000";
+        }
+      });
+      input.addEventListener("blur", function () {
+        // Après la saisie, revenir au style normal du mode sombre
+        this.style.backgroundColor = "#0e274e";
+        this.style.color = "#fff";
+      });
+    } else if (isDark) {
       input.style.backgroundColor = "#0e274e";
+      input.style.color = "#fff";
       input.addEventListener("focus", function () {
         this.style.color = "#fff";
         this.style.backgroundColor = "#0e274e";
@@ -3233,6 +2917,7 @@ function createEditInput(columnId, currentValue) {
       });
     } else {
       input.style.color = "#111";
+      input.style.backgroundColor = "#fff";
     }
   } else if (columnId === "circuit") {
     input = document.createElement("select");
@@ -5453,12 +5138,34 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             textarea.style.width = "100%";
             textarea.style.fontSize = "1em";
             textarea.style.padding = "2px 4px";
+
+            // Application du style jaune en mode sombre pour les observations
+            const isDarkMode =
+              document.documentElement.getAttribute("data-theme") === "dark";
+            if (isDarkMode) {
+              textarea.style.backgroundColor = "#fbbf24"; // Jaune en mode sombre
+              textarea.style.color = "#000"; // Texte noir pour contraste
+              textarea.style.border = "2px solid #f59e0b";
+            } else {
+              textarea.style.backgroundColor = "#fff";
+              textarea.style.color = "#000";
+              textarea.style.border = "1px solid #ccc";
+            }
             async function saveObservation(val) {
               // Marquer temporairement la cellule comme en cours de sauvegarde
               td.setAttribute("data-saving", "true");
 
               td.textContent = val || "-";
               td.dataset.edited = "true";
+
+              // Restaurer le style du mode sombre après la sauvegarde
+              const isDarkMode =
+                document.documentElement.getAttribute("data-theme") === "dark";
+              if (isDarkMode) {
+                td.style.backgroundColor = ""; // Revenir au style par défaut du mode sombre
+                td.style.color = ""; // Revenir à la couleur par défaut du mode sombre
+              }
+
               if (val && val.trim() !== "") {
                 localStorage.setItem(localKey, val.trim());
               } else {
@@ -5677,83 +5384,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           isDark ? "#ffd600" : "#2563eb"
         };'>${containerNumber}</span>`;
         content.appendChild(tcNum);
-
-        // === AJOUT DES DÉTAILS DES DATES ===
-        const detailsSection = document.createElement("div");
-        detailsSection.style.marginTop = "20px";
-        detailsSection.style.padding = "15px";
-        detailsSection.style.background = isDark ? "#334155" : "#ffffff";
-        detailsSection.style.borderRadius = "8px";
-        detailsSection.style.border = isDark
-          ? "1px solid #475569"
-          : "1px solid #e2e8f0";
-        detailsSection.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-
-        // Titre de la section
-        const detailsTitle = document.createElement("h4");
-        detailsTitle.textContent = "Informations de livraison";
-        detailsTitle.style.margin = "0 0 12px 0";
-        detailsTitle.style.fontSize = "1.1em";
-        detailsTitle.style.fontWeight = "600";
-        detailsTitle.style.color = isDark ? "#ffd600" : "#2563eb";
-        detailsSection.appendChild(detailsTitle);
-
-        // Fonction pour formater les dates
-        function formatDate(dateValue) {
-          if (!dateValue) return "-";
-          try {
-            const date = new Date(dateValue);
-            return date.toLocaleDateString("fr-FR");
-          } catch (e) {
-            return dateValue.toString();
-          }
-        }
-
-        // Création des éléments d'information
-        const infoItems = [
-          { label: "Date DO", value: formatDate(delivery.date_do) },
-          { label: "Date BADT", value: formatDate(delivery.date_badt) },
-          {
-            label: "Date de paiement acconage",
-            value: formatDate(delivery.date_paiement_acconage),
-          },
-          {
-            label: "Date d'échange BL",
-            value: formatDate(delivery.date_echange_bl),
-          },
-        ];
-
-        infoItems.forEach((item) => {
-          const infoRow = document.createElement("div");
-          infoRow.style.display = "flex";
-          infoRow.style.justifyContent = "space-between";
-          infoRow.style.alignItems = "center";
-          infoRow.style.marginBottom = "8px";
-          infoRow.style.padding = "8px 0";
-          infoRow.style.borderBottom = isDark
-            ? "1px solid #475569"
-            : "1px solid #f1f5f9";
-
-          const label = document.createElement("span");
-          label.textContent = item.label + " :";
-          label.style.fontWeight = "500";
-          label.style.color = isDark ? "#cbd5e1" : "#64748b";
-
-          const value = document.createElement("span");
-          value.textContent = item.value;
-          value.style.fontWeight = "600";
-          value.style.color = isDark ? "#f8fafc" : "#1e293b";
-          if (item.value === "-") {
-            value.style.color = isDark ? "#94a3b8" : "#94a3b8";
-            value.style.fontStyle = "italic";
-          }
-
-          infoRow.appendChild(label);
-          infoRow.appendChild(value);
-          detailsSection.appendChild(infoRow);
-        });
-
-        content.appendChild(detailsSection);
         box.appendChild(content);
         overlay.appendChild(box);
         document.body.appendChild(overlay);
