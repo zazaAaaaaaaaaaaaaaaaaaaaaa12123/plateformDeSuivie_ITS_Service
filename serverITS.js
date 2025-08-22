@@ -4645,6 +4645,16 @@ app.post("/api/archives/:id/restore", async (req, res) => {
       has_dossier_data: !!archive.dossier_data,
     });
 
+    // Vérifier si c'est un dossier livré
+    if (archive.action_type === "livraison") {
+      console.log(`🚫 Tentative de restauration d'un dossier livré refusée`);
+      return res.status(403).json({
+        success: false,
+        message:
+          "Désolé, les dossiers livrés ne peuvent pas être restaurés car le responsable l'a déclaré livré.",
+      });
+    }
+
     if (!archive.is_restorable) {
       console.log(`⚠️ Archive ${id} non restaurable`);
       return res.status(400).json({
@@ -4668,67 +4678,194 @@ app.post("/api/archives/:id/restore", async (req, res) => {
       employee_name: dossierData.employee_name,
       delivery_date: dossierData.delivery_date,
       container_number: dossierData.container_number,
+      page_origine: archive.page_origine,
     });
 
-    // Restaurer le dossier dans la table principale
-    const restoreQuery = `
-      INSERT INTO livraison_conteneur (
-        employee_name, delivery_date, delivery_time, client_name, client_phone,
-        container_type_and_content, lieu, container_number, container_foot_type,
-        declaration_number, number_of_containers, bl_number, dossier_number,
-        shipping_company, transporter, weight, ship_name, circuit, number_of_packages,
-        transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes,
-        driver_name, driver_phone, truck_registration, delivery_notes, status,
-        is_eir_received, delivery_status_acconier, observation_acconier,
-        container_numbers_list, container_foot_types_map, bl_statuses, container_statuses
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-        $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35
-      ) RETURNING id
-    `;
+    // Déterminer la table de destination selon la page d'origine
+    let targetTable = "livraison_conteneur"; // Table par défaut
+    let restoreQuery = "";
+    let queryParams = [];
 
-    console.log(`💾 Insertion du dossier restauré dans livraison_conteneur...`);
+    switch (archive.page_origine) {
+      case "mise_en_livraison":
+        targetTable = "livraison_conteneur";
+        // Restaurer avec le statut de mise en livraison
+        restoreQuery = `
+          INSERT INTO livraison_conteneur (
+            employee_name, delivery_date, delivery_time, client_name, client_phone,
+            container_type_and_content, lieu, container_number, container_foot_type,
+            declaration_number, number_of_containers, bl_number, dossier_number,
+            shipping_company, transporter, weight, ship_name, circuit, number_of_packages,
+            transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes,
+            driver_name, driver_phone, truck_registration, delivery_notes, status,
+            is_eir_received, delivery_status_acconier, observation_acconier,
+            container_numbers_list, container_foot_types_map, bl_statuses, container_statuses
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+            $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35
+          ) RETURNING id
+        `;
+        queryParams = [
+          dossierData.employee_name,
+          dossierData.delivery_date,
+          dossierData.delivery_time,
+          dossierData.client_name,
+          dossierData.client_phone,
+          dossierData.container_type_and_content,
+          dossierData.lieu,
+          dossierData.container_number,
+          dossierData.container_foot_type,
+          dossierData.declaration_number,
+          dossierData.number_of_containers,
+          dossierData.bl_number,
+          dossierData.dossier_number,
+          dossierData.shipping_company,
+          dossierData.transporter,
+          dossierData.weight,
+          dossierData.ship_name,
+          dossierData.circuit,
+          dossierData.number_of_packages,
+          dossierData.transporter_mode,
+          dossierData.nom_agent_visiteur,
+          dossierData.inspecteur,
+          dossierData.agent_en_douanes,
+          dossierData.driver_name,
+          dossierData.driver_phone,
+          dossierData.truck_registration,
+          dossierData.delivery_notes,
+          "pending_acconier", // Remettre le statut d'origine pour mise en livraison
+          dossierData.is_eir_received,
+          dossierData.delivery_status_acconier,
+          dossierData.observation_acconier,
+          JSON.stringify(dossierData.container_numbers_list || []),
+          JSON.stringify(dossierData.container_foot_types_map || {}),
+          JSON.stringify(dossierData.bl_statuses || {}),
+          JSON.stringify(dossierData.container_statuses || {}),
+        ];
+        break;
 
-    const restoreResult = await pool.query(restoreQuery, [
-      dossierData.employee_name,
-      dossierData.delivery_date,
-      dossierData.delivery_time,
-      dossierData.client_name,
-      dossierData.client_phone,
-      dossierData.container_type_and_content,
-      dossierData.lieu,
-      dossierData.container_number,
-      dossierData.container_foot_type,
-      dossierData.declaration_number,
-      dossierData.number_of_containers,
-      dossierData.bl_number,
-      dossierData.dossier_number,
-      dossierData.shipping_company,
-      dossierData.transporter,
-      dossierData.weight,
-      dossierData.ship_name,
-      dossierData.circuit,
-      dossierData.number_of_packages,
-      dossierData.transporter_mode,
-      dossierData.nom_agent_visiteur,
-      dossierData.inspecteur,
-      dossierData.agent_en_douanes,
-      dossierData.driver_name,
-      dossierData.driver_phone,
-      dossierData.truck_registration,
-      dossierData.delivery_notes,
-      dossierData.status,
-      dossierData.is_eir_received,
-      dossierData.delivery_status_acconier,
-      dossierData.observation_acconier,
-      JSON.stringify(dossierData.container_numbers_list || []),
-      JSON.stringify(dossierData.container_foot_types_map || {}),
-      JSON.stringify(dossierData.bl_statuses || {}),
-      JSON.stringify(dossierData.container_statuses || {}),
-    ]);
+      case "order_details":
+      case "creation_dossier":
+        // Pour les ordres de livraison, les remettre dans livraison_conteneur avec statut initial
+        targetTable = "livraison_conteneur";
+        restoreQuery = `
+          INSERT INTO livraison_conteneur (
+            employee_name, delivery_date, delivery_time, client_name, client_phone,
+            container_type_and_content, lieu, container_number, container_foot_type,
+            declaration_number, number_of_containers, bl_number, dossier_number,
+            shipping_company, transporter, weight, ship_name, circuit, number_of_packages,
+            transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes,
+            driver_name, driver_phone, truck_registration, delivery_notes, status,
+            is_eir_received, delivery_status_acconier, observation_acconier,
+            container_numbers_list, container_foot_types_map, bl_statuses, container_statuses
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+            $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35
+          ) RETURNING id
+        `;
+        queryParams = [
+          dossierData.employee_name,
+          dossierData.delivery_date,
+          dossierData.delivery_time,
+          dossierData.client_name,
+          dossierData.client_phone,
+          dossierData.container_type_and_content,
+          dossierData.lieu,
+          dossierData.container_number,
+          dossierData.container_foot_type,
+          dossierData.declaration_number,
+          dossierData.number_of_containers,
+          dossierData.bl_number,
+          dossierData.dossier_number,
+          dossierData.shipping_company,
+          dossierData.transporter,
+          dossierData.weight,
+          dossierData.ship_name,
+          dossierData.circuit,
+          dossierData.number_of_packages,
+          dossierData.transporter_mode,
+          dossierData.nom_agent_visiteur,
+          dossierData.inspecteur,
+          dossierData.agent_en_douanes,
+          dossierData.driver_name,
+          dossierData.driver_phone,
+          dossierData.truck_registration,
+          dossierData.delivery_notes,
+          dossierData.status || "en_attente", // Statut d'origine
+          dossierData.is_eir_received,
+          dossierData.delivery_status_acconier,
+          dossierData.observation_acconier,
+          JSON.stringify(dossierData.container_numbers_list || []),
+          JSON.stringify(dossierData.container_foot_types_map || {}),
+          JSON.stringify(dossierData.bl_statuses || {}),
+          JSON.stringify(dossierData.container_statuses || {}),
+        ];
+        break;
+
+      default:
+        // Restauration par défaut dans livraison_conteneur
+        restoreQuery = `
+          INSERT INTO livraison_conteneur (
+            employee_name, delivery_date, delivery_time, client_name, client_phone,
+            container_type_and_content, lieu, container_number, container_foot_type,
+            declaration_number, number_of_containers, bl_number, dossier_number,
+            shipping_company, transporter, weight, ship_name, circuit, number_of_packages,
+            transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes,
+            driver_name, driver_phone, truck_registration, delivery_notes, status,
+            is_eir_received, delivery_status_acconier, observation_acconier,
+            container_numbers_list, container_foot_types_map, bl_statuses, container_statuses
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+            $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35
+          ) RETURNING id
+        `;
+        queryParams = [
+          dossierData.employee_name,
+          dossierData.delivery_date,
+          dossierData.delivery_time,
+          dossierData.client_name,
+          dossierData.client_phone,
+          dossierData.container_type_and_content,
+          dossierData.lieu,
+          dossierData.container_number,
+          dossierData.container_foot_type,
+          dossierData.declaration_number,
+          dossierData.number_of_containers,
+          dossierData.bl_number,
+          dossierData.dossier_number,
+          dossierData.shipping_company,
+          dossierData.transporter,
+          dossierData.weight,
+          dossierData.ship_name,
+          dossierData.circuit,
+          dossierData.number_of_packages,
+          dossierData.transporter_mode,
+          dossierData.nom_agent_visiteur,
+          dossierData.inspecteur,
+          dossierData.agent_en_douanes,
+          dossierData.driver_name,
+          dossierData.driver_phone,
+          dossierData.truck_registration,
+          dossierData.delivery_notes,
+          dossierData.status || "en_attente",
+          dossierData.is_eir_received,
+          dossierData.delivery_status_acconier,
+          dossierData.observation_acconier,
+          JSON.stringify(dossierData.container_numbers_list || []),
+          JSON.stringify(dossierData.container_foot_types_map || {}),
+          JSON.stringify(dossierData.bl_statuses || {}),
+          JSON.stringify(dossierData.container_statuses || {}),
+        ];
+    }
+
+    console.log(`💾 Restauration dans la table ${targetTable}...`);
+
+    const restoreResult = await pool.query(restoreQuery, queryParams);
 
     const restoredId = restoreResult.rows[0].id;
-    console.log(`✅ Dossier restauré avec succès - Nouveau ID: ${restoredId}`);
+    console.log(
+      `✅ Dossier restauré avec succès dans ${targetTable} - Nouveau ID: ${restoredId}`
+    );
 
     // Marquer l'archive comme non restaurable
     await pool.query(
@@ -4740,8 +4877,14 @@ app.post("/api/archives/:id/restore", async (req, res) => {
 
     res.json({
       success: true,
-      message: "Dossier restauré avec succès",
+      message: `Dossier restauré avec succès dans ${
+        targetTable === "livraison_conteneur"
+          ? "l'interface de livraison"
+          : targetTable
+      }`,
       restored_id: restoredId,
+      target_table: targetTable,
+      page_origine: archive.page_origine,
     });
   } catch (err) {
     console.error("🚨 Erreur lors de la restauration:", err);

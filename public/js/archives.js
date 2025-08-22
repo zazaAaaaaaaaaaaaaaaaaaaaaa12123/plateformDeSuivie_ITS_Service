@@ -466,7 +466,17 @@ class ArchivesManager {
   }
 
   renderActionButtons(archive) {
-    const canRestore = archive.is_restorable && archive.dossier_data;
+    const canRestore =
+      archive.is_restorable &&
+      archive.dossier_data &&
+      archive.action_type !== "livraison"; // Interdire la restauration des dossiers livrés
+
+    const restoreTooltip =
+      archive.action_type === "livraison"
+        ? "Les dossiers livrés ne peuvent pas être restaurés"
+        : canRestore
+        ? "Restaurer le dossier"
+        : "Dossier non restaurable";
 
     return `
             <div class="btn-group btn-group-sm" role="group">
@@ -479,9 +489,8 @@ class ArchivesManager {
                 <button type="button" class="btn btn-restore ${
                   !canRestore ? "disabled" : ""
                 }" 
-                        data-archive-id="${
-                          archive.id
-                        }" title="Restaurer le dossier"
+                        data-archive-id="${archive.id}" 
+                        title="${restoreTooltip}"
                         ${!canRestore ? "disabled" : ""}>
                     <i class="fas fa-undo"></i>
                 </button>
