@@ -432,6 +432,7 @@ class ArchivesManager {
                     <br><small class="text-muted">${this.getTimeAgo(
                       archive.archived_at
                     )}</small>
+                    ${this.renderDeliveryStatus(archive)}
                 </td>
                 <td class="d-none d-md-table-cell">
                     ${archive.archived_by || "Système"}
@@ -462,6 +463,35 @@ class ArchivesManager {
     return (
       badges[actionType] ||
       `<span class="badge bg-secondary">${actionType}</span>`
+    );
+  }
+
+  // Afficher le statut de livraison pour les dossiers mis en livraison
+  renderDeliveryStatus(archive) {
+    if (archive.action_type === "mise_en_livraison") {
+      const deliveredArchive = this.findCorrespondingDeliveredArchive(archive);
+      if (deliveredArchive) {
+        return `<br><small class="text-success"><i class="fas fa-check-circle me-1"></i>était mis en livraison - ${this.formatDate(
+          deliveredArchive.archived_at
+        )}</small>`;
+      }
+    }
+    return "";
+  }
+
+  // Trouver l'archive correspondante qui a été livrée
+  findCorrespondingDeliveredArchive(miseEnLivraisonArchive) {
+    if (!this.allArchives || !miseEnLivraisonArchive.dossier_reference) {
+      return null;
+    }
+
+    // Chercher un dossier avec la même référence mais avec action_type "livraison"
+    return this.allArchives.find(
+      (archive) =>
+        archive.dossier_reference ===
+          miseEnLivraisonArchive.dossier_reference &&
+        archive.action_type === "livraison" &&
+        archive.id !== miseEnLivraisonArchive.id
     );
   }
 
