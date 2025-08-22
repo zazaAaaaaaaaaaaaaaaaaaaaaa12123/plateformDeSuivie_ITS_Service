@@ -334,10 +334,22 @@ class ArchivesManager {
     const containerId = this.getTableContainerId();
     const container = document.getElementById(containerId);
 
+    console.log("[ARCHIVES] renderTable appelé avec:", {
+      containerId,
+      archivesLength: archives.length,
+      selectedTab: this.selectedTab,
+      currentFilters: this.currentFilters,
+    });
+
     if (archives.length === 0) {
+      console.log(
+        "[ARCHIVES] Aucune archive à afficher - rendu de l'état vide"
+      );
       container.innerHTML = this.renderEmptyState();
       return;
     }
+
+    console.log("[ARCHIVES] Rendu de", archives.length, "archives");
 
     const table = `
             <div class="table-container">
@@ -495,6 +507,9 @@ class ArchivesManager {
     const archive = this.allArchives.find((a) => a.id == archiveId);
     if (!archive) return;
 
+    console.log("[DEBUG] showDetails - Archive complète:", archive);
+    console.log("[DEBUG] showDetails - dossier_data:", archive.dossier_data);
+
     const modalBody = document.getElementById("detailsModalBody");
     modalBody.innerHTML = this.renderDetailsContent(archive);
 
@@ -605,9 +620,9 @@ class ArchivesManager {
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Numéro conteneur:</div>
-                        <div class="detail-value">${
-                          dossierData.container_number || "N/A"
-                        }</div>
+                        <div class="detail-value">${this.formatContainerNumbers(
+                          dossierData
+                        )}</div>
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Transporteur:</div>
@@ -875,6 +890,243 @@ class ArchivesManager {
       shipping: "shippingArchivesTable",
     };
     return mapping[this.selectedTab] || "allArchivesTable";
+  }
+
+  // Fonction pour formater l'affichage des numéros de conteneurs
+  formatContainerNumbers(dossierData) {
+    try {
+      console.log(
+        "[DEBUG] formatContainerNumbers - Données complètes reçues:",
+        dossierData
+      );
+
+      let containers = [];
+
+      // Méthode 1: Vérifier container_numbers_list (format tableau)
+      if (
+        dossierData.container_numbers_list &&
+        Array.isArray(dossierData.container_numbers_list)
+      ) {
+        containers = dossierData.container_numbers_list.filter(
+          (c) => c && c.toString().trim()
+        );
+        console.log("[DEBUG] Méthode 1 - Array containers:", containers);
+      }
+
+      // Méthode 2: Vérifier container_numbers_list (format string JSON)
+      if (
+        containers.length === 0 &&
+        dossierData.container_numbers_list &&
+        typeof dossierData.container_numbers_list === "string"
+      ) {
+        try {
+          const parsed = JSON.parse(dossierData.container_numbers_list);
+          if (Array.isArray(parsed)) {
+            containers = parsed.filter((c) => c && c.toString().trim());
+            console.log("[DEBUG] Méthode 2 - JSON containers:", containers);
+          }
+        } catch (e) {
+          console.warn("Erreur parsing container_numbers_list:", e);
+        }
+      }
+
+      // Méthode 3: Analyser container_number pour détecter plusieurs conteneurs
+      if (containers.length === 0 && dossierData.container_number) {
+        const containerStr = dossierData.container_number.toString().trim();
+
+        // Essayer différents séparateurs
+        const separators = [",", ";", "|", "\n", "\r\n", "\r", "\t"];
+        for (const sep of separators) {
+          if (containerStr.includes(sep)) {
+            containers = containerStr
+              .split(sep)
+              .map((c) => c.trim())
+              .filter((c) => c.length > 0);
+            console.log(`[DEBUG] Méthode 3 - Séparateur '${sep}':`, containers);
+            break;
+          }
+        }
+
+        // Si pas de séparateurs trouvés, utiliser comme un seul conteneur
+        if (containers.length === 0) {
+          containers = [containerStr];
+        }
+      }
+
+      // Méthode 4: Utiliser container_statuses pour extraire les conteneurs
+      if (containers.length <= 1 && dossierData.container_statuses) {
+        try {
+          let statuses = dossierData.container_statuses;
+          if (typeof statuses === "string") {
+            statuses = JSON.parse(statuses);
+          }
+
+          if (typeof statuses === "object" && statuses !== null) {
+            const statusContainers = Object.keys(statuses).filter(
+              (key) => key && key.trim()
+            );
+            if (statusContainers.length > containers.length) {
+              containers = statusContainers;
+              console.log(
+                "[DEBUG] Méthode 4 - Container statuses:",
+                containers
+              );
+            }
+          }
+        } catch (e) {
+          console.warn("Erreur parsing container_statuses:", e);
+        }
+      }
+
+      // Méthode 5: Si on détecte qu'il y a plusieurs conteneurs mais qu'on n'a pas tous les numéros
+      if (
+        containers.length <= 1 &&
+        this.shouldHaveMultipleContainers(dossierData)
+      ) {
+        return this.createContainerDropdown(
+          dossierData,
+          containers[0] || dossierData.container_number
+        );
+      }
+
+      // Formatage final
+      if (containers.length === 0) {
+        console.log("[DEBUG] Aucun conteneur trouvé, retour N/A");
+        return "N/A";
+      } else if (containers.length === 1) {
+        console.log("[DEBUG] Un seul conteneur:", containers[0]);
+        return containers[0];
+      } else {
+        console.log("[DEBUG] Plusieurs conteneurs trouvés:", containers);
+        return this.createContainerDropdown(dossierData, null, containers);
+      }
+    } catch (error) {
+      console.error("Erreur formatContainerNumbers:", error);
+      return dossierData.container_number || "N/A";
+    }
+  }
+
+  // Fonction pour détecter si un dossier devrait avoir plusieurs conteneurs
+  shouldHaveMultipleContainers(dossierData) {
+    // Vérifier number_of_containers
+    if (
+      dossierData.number_of_containers &&
+      parseInt(dossierData.number_of_containers) > 1
+    ) {
+      return true;
+    }
+
+    // Vérifier container_type_and_content pour détecter plusieurs conteneurs
+    if (dossierData.container_type_and_content) {
+      const typeContent = dossierData.container_type_and_content.toString();
+      const sizes = typeContent
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      if (sizes.length > 1) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Fonction pour créer un menu déroulant avec les conteneurs
+  createContainerDropdown(
+    dossierData,
+    firstContainer = null,
+    allContainers = null
+  ) {
+    const dossierId = dossierData.id;
+    const dropdownId = `containerDropdown_${dossierId}`;
+
+    if (allContainers && allContainers.length > 1) {
+      // Cas où on a tous les conteneurs
+      return `
+        <div class="dropdown">
+          <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button" id="${dropdownId}" data-bs-toggle="dropdown">
+            ${allContainers.length} conteneurs
+          </button>
+          <ul class="dropdown-menu">
+            ${allContainers
+              .map(
+                (container, index) =>
+                  `<li><a class="dropdown-item" href="#">📦 ${container}</a></li>`
+              )
+              .join("")}
+          </ul>
+        </div>
+      `;
+    } else {
+      // Cas où on doit récupérer les conteneurs depuis la BD
+      const containerCount = this.getEstimatedContainerCount(dossierData);
+      return `
+        <div class="dropdown">
+          <button class="btn btn-sm btn-outline-warning dropdown-toggle" type="button" id="${dropdownId}" data-bs-toggle="dropdown" onclick="archivesManager.loadContainerDetails('${dossierId}', '${dropdownId}')">
+            ${containerCount} conteneur${
+        containerCount > 1 ? "s" : ""
+      } <small>(cliquer pour voir)</small>
+          </button>
+          <ul class="dropdown-menu" id="${dropdownId}_menu">
+            <li><a class="dropdown-item" href="#"><i class="fas fa-spinner fa-spin"></i> Chargement...</a></li>
+          </ul>
+        </div>
+      `;
+    }
+  }
+
+  // Fonction pour estimer le nombre de conteneurs
+  getEstimatedContainerCount(dossierData) {
+    if (
+      dossierData.number_of_containers &&
+      parseInt(dossierData.number_of_containers) > 1
+    ) {
+      return parseInt(dossierData.number_of_containers);
+    }
+
+    if (dossierData.container_type_and_content) {
+      const typeContent = dossierData.container_type_and_content.toString();
+      const sizes = typeContent
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      return sizes.length;
+    }
+
+    return 2; // Par défaut, supposer 2 conteneurs
+  }
+
+  // Fonction pour charger les détails des conteneurs depuis la BD
+  async loadContainerDetails(dossierId, dropdownId) {
+    try {
+      console.log("[DEBUG] Chargement des détails pour dossier:", dossierId);
+
+      const response = await fetch(
+        `/api/archives/container-details/${dossierId}`
+      );
+      const data = await response.json();
+
+      const menuElement = document.getElementById(`${dropdownId}_menu`);
+
+      if (data.success && data.containers && data.containers.length > 0) {
+        menuElement.innerHTML = data.containers
+          .map(
+            (container) =>
+              `<li><a class="dropdown-item" href="#">📦 ${container}</a></li>`
+          )
+          .join("");
+      } else {
+        menuElement.innerHTML =
+          '<li><a class="dropdown-item" href="#">❌ Aucun détail disponible</a></li>';
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des détails:", error);
+      const menuElement = document.getElementById(`${dropdownId}_menu`);
+      if (menuElement) {
+        menuElement.innerHTML =
+          '<li><a class="dropdown-item" href="#">❌ Erreur de chargement</a></li>';
+      }
+    }
   }
 
   getPageName(url) {

@@ -4718,6 +4718,92 @@ app.delete("/api/archives/:id", async (req, res) => {
   }
 });
 
+// Route pour récupérer les détails des conteneurs d'un dossier archivé
+app.get("/api/archives/container-details/:dossierId", async (req, res) => {
+  try {
+    const { dossierId } = req.params;
+
+    console.log(
+      "[ARCHIVES] Récupération des détails conteneurs pour dossier:",
+      dossierId
+    );
+
+    // Récupérer les données du dossier depuis livraison_conteneur
+    const dossierQuery = `
+      SELECT container_numbers_list, container_statuses, container_number, number_of_containers
+      FROM livraison_conteneur 
+      WHERE id = $1
+    `;
+
+    const dossierResult = await pool.query(dossierQuery, [dossierId]);
+
+    if (dossierResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Dossier non trouvé",
+      });
+    }
+
+    const dossierData = dossierResult.rows[0];
+    let containers = [];
+
+    // Essayer d'extraire les conteneurs de container_numbers_list
+    if (dossierData.container_numbers_list) {
+      try {
+        if (Array.isArray(dossierData.container_numbers_list)) {
+          containers = dossierData.container_numbers_list.filter(
+            (c) => c && c.trim()
+          );
+        } else if (typeof dossierData.container_numbers_list === "string") {
+          containers = JSON.parse(dossierData.container_numbers_list).filter(
+            (c) => c && c.trim()
+          );
+        }
+      } catch (e) {
+        console.warn("Erreur parsing container_numbers_list:", e);
+      }
+    }
+
+    // Si pas de liste, essayer container_statuses
+    if (containers.length === 0 && dossierData.container_statuses) {
+      try {
+        let statuses = dossierData.container_statuses;
+        if (typeof statuses === "string") {
+          statuses = JSON.parse(statuses);
+        }
+
+        if (typeof statuses === "object" && statuses !== null) {
+          containers = Object.keys(statuses).filter((key) => key && key.trim());
+        }
+      } catch (e) {
+        console.warn("Erreur parsing container_statuses:", e);
+      }
+    }
+
+    // Si toujours pas de conteneurs, utiliser container_number comme fallback
+    if (containers.length === 0 && dossierData.container_number) {
+      containers = [dossierData.container_number];
+    }
+
+    console.log("[ARCHIVES] Conteneurs trouvés:", containers);
+
+    res.json({
+      success: true,
+      containers: containers,
+      totalCount: containers.length,
+    });
+  } catch (err) {
+    console.error(
+      "Erreur lors de la récupération des détails conteneurs:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération des détails",
+    });
+  }
+});
+
 // Nettoyage automatique des archives de plus de 2 ans
 async function cleanOldArchives() {
   console.log("Démarrage du nettoyage des archives de plus de 2 ans...");
