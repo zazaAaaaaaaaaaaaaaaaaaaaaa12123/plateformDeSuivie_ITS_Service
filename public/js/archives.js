@@ -354,6 +354,13 @@ class ArchivesManager {
   updateStorageModalDisplay(data) {
     const storage = data.storage;
 
+    // Vérification des données essentielles
+    if (!storage) {
+      console.error("[STORAGE MODAL] Données de stockage manquantes");
+      this.showStorageModalError("Données de stockage non disponibles");
+      return;
+    }
+
     // Indicateur principal
     const mainProgress = document.getElementById("storageModalMainProgress");
     const mainProgressText = document.getElementById(
@@ -365,8 +372,8 @@ class ArchivesManager {
     const usedText = document.getElementById("storageModalUsedText");
     const limitText = document.getElementById("storageModalLimitText");
 
-    if (mainProgress && mainProgressText) {
-      const percentage = storage.percentage.toFixed(1);
+    if (mainProgress && mainProgressText && storage.percentage !== undefined) {
+      const percentage = (storage.percentage || 0).toFixed(1);
       mainProgress.style.width = `${percentage}%`;
       mainProgressText.textContent = `${percentage}%`;
 
@@ -382,34 +389,52 @@ class ArchivesManager {
       }
     }
 
-    if (usedText)
-      usedText.textContent = `${storage.usedMB.toFixed(1)} MB utilisés`;
-    if (limitText)
-      limitText.textContent = `${storage.limitMB.toFixed(1)} MB disponibles`;
+    if (usedText && storage.usedMB !== undefined) {
+      usedText.textContent = `${(storage.usedMB || 0).toFixed(1)} MB utilisés`;
+    }
+    if (limitText && storage.limitMB !== undefined) {
+      limitText.textContent = `${(storage.limitMB || 0).toFixed(
+        1
+      )} MB disponibles`;
+    }
 
     // Status badge
-    if (mainStatus && mainIcon && mainText) {
+    if (mainStatus && mainIcon && mainText && storage.status) {
       const status = storage.status;
-      mainIcon.className = `fas ${status.icon} me-2`;
-      mainText.textContent = status.text;
-      mainStatus.className = `badge badge-xl p-3 ${status.class}`;
+      mainIcon.className = `fas ${status.icon || "fa-info-circle"} me-2`;
+      mainText.textContent = status.text || "Inconnu";
+      mainStatus.className = `badge badge-xl p-3 ${
+        status.class || "bg-secondary"
+      }`;
       mainStatus.style.fontSize = "1.2rem";
     }
 
-    // Fichiers Uploads
-    this.updateStorageModalCategory("Uploads", storage.categories.uploads);
+    // Fichiers Uploads - avec vérification
+    if (storage.categories && storage.categories.uploads) {
+      this.updateStorageModalCategory("Uploads", storage.categories.uploads);
+    }
 
-    // Base de données
-    this.updateStorageModalCategory("Database", storage.categories.database);
+    // Base de données - avec vérification
+    if (storage.categories && storage.categories.database) {
+      this.updateStorageModalCategory("Database", storage.categories.database);
+    }
 
-    // Recommandations
-    this.updateStorageModalRecommendations(storage.recommendations);
+    // Recommandations - avec vérification
+    if (storage.recommendations) {
+      this.updateStorageModalRecommendations(storage.recommendations);
+    }
 
     // Métriques de performance
     this.updateStorageModalMetrics(data);
   }
 
   updateStorageModalCategory(type, categoryData) {
+    // Vérification des données
+    if (!categoryData) {
+      console.warn(`[STORAGE MODAL] Données manquantes pour ${type}`);
+      return;
+    }
+
     const progress = document.getElementById(`storageModal${type}Progress`);
     const progressText = document.getElementById(
       `storageModal${type}ProgressText`
@@ -417,14 +442,18 @@ class ArchivesManager {
     const used = document.getElementById(`storageModal${type}Used`);
     const limit = document.getElementById(`storageModal${type}Limit`);
 
-    if (progress && progressText) {
-      const percentage = categoryData.percentage.toFixed(1);
+    if (progress && progressText && categoryData.percentage !== undefined) {
+      const percentage = (categoryData.percentage || 0).toFixed(1);
       progress.style.width = `${percentage}%`;
       progressText.textContent = `${percentage}%`;
     }
 
-    if (used) used.textContent = `${categoryData.usedMB.toFixed(1)} MB`;
-    if (limit) limit.textContent = `${categoryData.limitMB.toFixed(1)} MB`;
+    if (used && categoryData.usedMB !== undefined) {
+      used.textContent = `${(categoryData.usedMB || 0).toFixed(1)} MB`;
+    }
+    if (limit && categoryData.limitMB !== undefined) {
+      limit.textContent = `${(categoryData.limitMB || 0).toFixed(1)} MB`;
+    }
 
     // Contenu spécifique
     if (type === "Uploads") {
@@ -444,17 +473,25 @@ class ArchivesManager {
       </h6>
     `;
 
-    Object.entries(fileTypes).forEach(([type, data]) => {
-      html += `
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <span class="small">${type.toUpperCase()}</span>
-          <div>
-            <span class="badge bg-primary me-2">${data.count}</span>
-            <span class="small text-muted">${data.sizeMB.toFixed(1)} MB</span>
-          </div>
-        </div>
-      `;
-    });
+    if (fileTypes && typeof fileTypes === "object") {
+      Object.entries(fileTypes).forEach(([type, data]) => {
+        if (data && typeof data === "object") {
+          html += `
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="small">${type.toUpperCase()}</span>
+              <div>
+                <span class="badge bg-primary me-2">${data.count || 0}</span>
+                <span class="small text-muted">${(data.sizeMB || 0).toFixed(
+                  1
+                )} MB</span>
+              </div>
+            </div>
+          `;
+        }
+      });
+    } else {
+      html += '<p class="small text-muted">Aucune donnée disponible</p>';
+    }
 
     container.innerHTML = html;
   }
@@ -469,16 +506,16 @@ class ArchivesManager {
       </h6>
       <div class="d-flex justify-content-between align-items-center mb-1">
         <span class="small">Total dossiers</span>
-        <span class="badge bg-success">${archives.total || 0}</span>
+        <span class="badge bg-success">${archives?.total || 0}</span>
       </div>
       <div class="d-flex justify-content-between align-items-center mb-1">
         <span class="small">Avec fichiers</span>
-        <span class="badge bg-info">${archives.withFiles || 0}</span>
+        <span class="badge bg-info">${archives?.withFiles || 0}</span>
       </div>
       <div class="d-flex justify-content-between align-items-center">
         <span class="small">Taille moyenne</span>
         <span class="small text-muted">${
-          archives.avgSizeMB ? archives.avgSizeMB.toFixed(2) : "0"
+          archives?.avgSizeMB ? (archives.avgSizeMB || 0).toFixed(2) : "0"
         } MB</span>
       </div>
     `;
@@ -518,7 +555,7 @@ class ArchivesManager {
     const lastUpdate = document.getElementById("storageModalLastUpdate");
     const systemStatus = document.getElementById("storageModalSystemStatus");
 
-    if (calculationTime && data.calculationTime) {
+    if (calculationTime && data?.calculationTime) {
       calculationTime.textContent = `${data.calculationTime} ms`;
     }
 
@@ -526,10 +563,10 @@ class ArchivesManager {
       lastUpdate.textContent = new Date().toLocaleString("fr-FR");
     }
 
-    if (systemStatus) {
+    if (systemStatus && data?.storage?.status) {
       const status = data.storage.status;
-      systemStatus.textContent = status.text;
-      systemStatus.className = `badge ${status.class}`;
+      systemStatus.textContent = status.text || "Inconnu";
+      systemStatus.className = `badge ${status.class || "bg-secondary"}`;
     }
   }
 
