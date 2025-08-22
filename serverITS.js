@@ -4675,7 +4675,8 @@ app.get("/api/archives", async (req, res) => {
       queryParams.push(limit, offset);
 
       const query = `
-        SELECT 
+        SELECT DISTINCT
+          id,
           id as dossier_id,
           dossier_number as dossier_reference,
           container_type_and_content as intitule,
@@ -4700,7 +4701,7 @@ app.get("/api/archives", async (req, res) => {
 
       // Compter le total pour la pagination
       const countQuery = `
-        SELECT COUNT(*) as total FROM livraison_conteneur ${whereClause}
+        SELECT COUNT(DISTINCT id) as total FROM livraison_conteneur ${whereClause}
       `;
       const countResult = await pool.query(
         countQuery,
