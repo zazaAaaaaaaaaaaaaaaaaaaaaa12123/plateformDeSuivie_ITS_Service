@@ -3407,6 +3407,74 @@ app.post(
       const result = await pool.query(query, values);
       const newDelivery = result.rows[0];
 
+      // *** AJOUT AUTOMATIQUE DANS LES ARCHIVES POUR L'ONGLET "ORDRE DE LIVRAISON" ***
+      try {
+        console.log(
+          "[ARCHIVE AUTO] Début de l'archivage automatique de l'ordre de livraison..."
+        );
+
+        const archiveData = {
+          dossier_id: newDelivery.id,
+          dossier_reference:
+            newDelivery.dossier_number ||
+            newDelivery.container_number ||
+            `ORDER-${newDelivery.id}`,
+          intitule: newDelivery.container_type_and_content || "",
+          client_name: newDelivery.client_name || "",
+          role_source: "Agent Acconier",
+          page_origine: "interfaceFormulaireEmployer.html",
+          action_type: "ordre_livraison_etabli",
+          archived_by: newDelivery.employee_name || "Système",
+          archived_by_email: "",
+          dossier_data: newDelivery,
+          metadata: {
+            archived_from_url: "interfaceFormulaireEmployer.html",
+            user_agent: "Système - Création automatique",
+            timestamp: new Date().toISOString(),
+            auto_archive_reason: "Création d'ordre de livraison",
+          },
+        };
+
+        const archiveInsertQuery = `
+          INSERT INTO archives_dossiers (
+            dossier_id, dossier_reference, intitule, client_name,
+            role_source, page_origine, action_type, archived_by,
+            archived_by_email, dossier_data, metadata
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          RETURNING id
+        `;
+
+        const archiveResult = await pool.query(archiveInsertQuery, [
+          archiveData.dossier_id,
+          archiveData.dossier_reference,
+          archiveData.intitule,
+          archiveData.client_name,
+          archiveData.role_source,
+          archiveData.page_origine,
+          archiveData.action_type,
+          archiveData.archived_by,
+          archiveData.archived_by_email,
+          JSON.stringify(archiveData.dossier_data),
+          JSON.stringify(archiveData.metadata),
+        ]);
+
+        console.log(
+          `[ARCHIVE AUTO] ✅ Ordre de livraison archivé avec succès - Archive ID: ${archiveResult.rows[0].id}`
+        );
+        console.log(
+          `[ARCHIVE AUTO] 📋 Référence: ${archiveData.dossier_reference}`
+        );
+        console.log(`[ARCHIVE AUTO] 👤 Client: ${archiveData.client_name}`);
+        console.log(`[ARCHIVE AUTO] 🏷️ Type: ${archiveData.action_type}`);
+      } catch (archiveError) {
+        console.error(
+          "[ARCHIVE AUTO] ❌ Erreur lors de l'ajout automatique aux archives:",
+          archiveError
+        );
+        // Ne pas faire échouer la création de l'ordre si l'archivage échoue
+      }
+      // *** FIN AJOUT AUTOMATIQUE ARCHIVES ***
+
       const wss = req.app.get("wss");
       // Utilisez le nouveau statut acconier pour l'alerte
       const statusInfo = getFrenchStatusWithIcon(
@@ -4564,6 +4632,100 @@ app.get("/api/archives", async (req, res) => {
       date_end,
     });
 
+    // *** LOGIQUE SPÉCIALE POUR "MISE EN LIVRAISON" ***
+    if (action_type === "mise_en_livraison") {
+      console.log(
+        "[ARCHIVES API] Requête spéciale pour 'mise_en_livraison' - récupération des dossiers en cours"
+      );
+
+      let whereConditions = [
+        "delivery_status_acconier = 'mise_en_livraison_acconier'",
+      ];
+      let queryParams = [];
+      let paramIndex = 1;
+
+      // Filtres de recherche pour les dossiers en cours
+      if (search && search.trim()) {
+        whereConditions.push(`(
+          container_number ILIKE $${paramIndex} OR 
+          dossier_number ILIKE $${paramIndex} OR 
+          client_name ILIKE $${paramIndex} OR
+          employee_name ILIKE $${paramIndex}
+        )`);
+        queryParams.push(`%${search}%`);
+        paramIndex++;
+      }
+
+      if (date_start && date_start.trim()) {
+        whereConditions.push(`DATE(created_at) >= $${paramIndex}`);
+        queryParams.push(date_start);
+        paramIndex++;
+      }
+
+      if (date_end && date_end.trim()) {
+        whereConditions.push(`DATE(created_at) <= $${paramIndex}`);
+        queryParams.push(date_end);
+        paramIndex++;
+      }
+
+      const whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+
+      // Pagination
+      const offset = (page - 1) * limit;
+      queryParams.push(limit, offset);
+
+      const query = `
+        SELECT 
+          id as dossier_id,
+          dossier_number as dossier_reference,
+          container_type_and_content as intitule,
+          client_name,
+          'Responsable Livraison' as role_source,
+          'resp_liv.html' as page_origine,
+          'mise_en_livraison' as action_type,
+          employee_name as archived_by,
+          '' as archived_by_email,
+          created_at as archived_at,
+          to_jsonb(livraison_conteneur) as dossier_data,
+          '{"source": "active_delivery", "status": "en_cours"}' as metadata
+        FROM livraison_conteneur 
+        ${whereClause}
+        ORDER BY created_at DESC 
+        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      `;
+
+      console.log("[ARCHIVES API] Requête SQL pour mise_en_livraison:", query);
+
+      const result = await pool.query(query, queryParams);
+
+      // Compter le total pour la pagination
+      const countQuery = `
+        SELECT COUNT(*) as total FROM livraison_conteneur ${whereClause}
+      `;
+      const countResult = await pool.query(
+        countQuery,
+        queryParams.slice(0, -2)
+      );
+      const total = parseInt(countResult.rows[0].total);
+
+      console.log("[ARCHIVES API] Résultats mise_en_livraison:", {
+        foundRows: result.rows.length,
+        total: total,
+      });
+
+      return res.json({
+        success: true,
+        archives: result.rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: parseInt(limit),
+        },
+      });
+    }
+    // *** FIN LOGIQUE SPÉCIALE POUR "MISE EN LIVRAISON" ***
+
     let whereConditions = [];
     let queryParams = [];
     let paramIndex = 1;
@@ -4654,6 +4816,72 @@ app.get("/api/archives", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la récupération des archives.",
+    });
+  }
+});
+
+// *** NOUVEAU ENDPOINT POUR LES COMPTEURS ARCHIVES ***
+app.get("/api/archives/counts", async (req, res) => {
+  try {
+    console.log("[ARCHIVES COUNTS] Calcul des compteurs...");
+
+    // Compter les archives normales par type
+    const archiveCountsQuery = `
+      SELECT 
+        action_type,
+        COUNT(*) as count
+      FROM archives_dossiers 
+      GROUP BY action_type
+    `;
+
+    const archiveCountsResult = await pool.query(archiveCountsQuery);
+
+    // Compter les dossiers en cours de livraison (pour l'onglet "Mise en Livraison")
+    const activeDeliveryCountQuery = `
+      SELECT COUNT(*) as count
+      FROM livraison_conteneur 
+      WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
+    `;
+
+    const activeDeliveryCountResult = await pool.query(
+      activeDeliveryCountQuery
+    );
+
+    // Initialiser les compteurs
+    const counts = {
+      suppression: 0,
+      livraison: 0,
+      mise_en_livraison: 0,
+      ordre_livraison_etabli: 0,
+    };
+
+    // Remplir les compteurs des archives
+    archiveCountsResult.rows.forEach((row) => {
+      if (counts.hasOwnProperty(row.action_type)) {
+        counts[row.action_type] = parseInt(row.count);
+      }
+    });
+
+    // Ajouter les dossiers en cours pour "mise_en_livraison"
+    counts.mise_en_livraison += parseInt(
+      activeDeliveryCountResult.rows[0].count
+    );
+
+    // Calculer le total
+    counts.all = Object.values(counts).reduce((sum, count) => sum + count, 0);
+
+    console.log("[ARCHIVES COUNTS] Compteurs calculés:", counts);
+
+    res.json({
+      success: true,
+      counts: counts,
+    });
+  } catch (error) {
+    console.error("[ARCHIVES COUNTS] Erreur:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors du calcul des compteurs",
+      error: error.message,
     });
   }
 });

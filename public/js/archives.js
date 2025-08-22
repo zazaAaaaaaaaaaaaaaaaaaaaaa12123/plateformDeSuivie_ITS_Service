@@ -303,31 +303,91 @@ class ArchivesManager {
     }
   }
 
-  updateCounts() {
-    const counts = {
-      all: this.allArchives.length,
-      suppression: this.allArchives.filter(
-        (a) => a.action_type === "suppression"
-      ).length,
-      livraison: this.allArchives.filter((a) => a.action_type === "livraison")
-        .length,
-      mise_en_livraison: this.allArchives.filter(
-        (a) => a.action_type === "mise_en_livraison"
-      ).length,
-      ordre_livraison_etabli: this.allArchives.filter(
-        (a) => a.action_type === "ordre_livraison_etabli"
-      ).length,
-    };
+  async updateCounts() {
+    try {
+      // Récupérer les vrais compteurs depuis le serveur
+      const response = await fetch("/api/archives/counts");
+      const data = await response.json();
 
-    console.log("[ARCHIVES] Compteurs mis à jour:", counts);
+      if (data.success) {
+        console.log("[ARCHIVES] Compteurs reçus du serveur:", data.counts);
 
-    document.getElementById("allCount").textContent = counts.all;
-    document.getElementById("deletedCount").textContent = counts.suppression;
-    document.getElementById("deliveredCount").textContent = counts.livraison;
-    document.getElementById("shippingCount").textContent =
-      counts.mise_en_livraison;
-    document.getElementById("ordersCount").textContent =
-      counts.ordre_livraison_etabli;
+        document.getElementById("allCount").textContent = data.counts.all;
+        document.getElementById("deletedCount").textContent =
+          data.counts.suppression;
+        document.getElementById("deliveredCount").textContent =
+          data.counts.livraison;
+        document.getElementById("shippingCount").textContent =
+          data.counts.mise_en_livraison;
+        document.getElementById("ordersCount").textContent =
+          data.counts.ordre_livraison_etabli;
+      } else {
+        // Fallback sur l'ancien système si l'API échoue
+        const counts = {
+          all: this.allArchives.length,
+          suppression: this.allArchives.filter(
+            (a) => a.action_type === "suppression"
+          ).length,
+          livraison: this.allArchives.filter(
+            (a) => a.action_type === "livraison"
+          ).length,
+          mise_en_livraison: this.allArchives.filter(
+            (a) => a.action_type === "mise_en_livraison"
+          ).length,
+          ordre_livraison_etabli: this.allArchives.filter(
+            (a) => a.action_type === "ordre_livraison_etabli"
+          ).length,
+        };
+
+        console.log(
+          "[ARCHIVES] Compteurs calculés côté client (fallback):",
+          counts
+        );
+
+        document.getElementById("allCount").textContent = counts.all;
+        document.getElementById("deletedCount").textContent =
+          counts.suppression;
+        document.getElementById("deliveredCount").textContent =
+          counts.livraison;
+        document.getElementById("shippingCount").textContent =
+          counts.mise_en_livraison;
+        document.getElementById("ordersCount").textContent =
+          counts.ordre_livraison_etabli;
+      }
+    } catch (error) {
+      console.error(
+        "[ARCHIVES] Erreur lors de la récupération des compteurs:",
+        error
+      );
+      // Fallback sur l'ancien système en cas d'erreur
+      const counts = {
+        all: this.allArchives.length,
+        suppression: this.allArchives.filter(
+          (a) => a.action_type === "suppression"
+        ).length,
+        livraison: this.allArchives.filter((a) => a.action_type === "livraison")
+          .length,
+        mise_en_livraison: this.allArchives.filter(
+          (a) => a.action_type === "mise_en_livraison"
+        ).length,
+        ordre_livraison_etabli: this.allArchives.filter(
+          (a) => a.action_type === "ordre_livraison_etabli"
+        ).length,
+      };
+
+      console.log(
+        "[ARCHIVES] Compteurs calculés côté client (erreur):",
+        counts
+      );
+
+      document.getElementById("allCount").textContent = counts.all;
+      document.getElementById("deletedCount").textContent = counts.suppression;
+      document.getElementById("deliveredCount").textContent = counts.livraison;
+      document.getElementById("shippingCount").textContent =
+        counts.mise_en_livraison;
+      document.getElementById("ordersCount").textContent =
+        counts.ordre_livraison_etabli;
+    }
   }
 
   renderCurrentView() {
