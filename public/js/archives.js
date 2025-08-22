@@ -97,17 +97,17 @@ class ArchivesManager {
       tab.addEventListener("shown.bs.tab", (e) => {
         this.selectedTab = e.target.id.replace("-tab", "");
         this.currentPage = 1;
-        
+
         // Si on change d'onglet, adapter les filtres en conséquence
         const actionFilter = document.getElementById("actionFilter");
         if (actionFilter && this.selectedTab !== "all") {
           // Mapper les onglets aux types d'action
           const tabToActionMap = {
-            "deleted": "suppression",
-            "delivered": "livraison", 
-            "shipping": "mise_en_livraison"
+            deleted: "suppression",
+            delivered: "livraison",
+            shipping: "mise_en_livraison",
           };
-          
+
           if (tabToActionMap[this.selectedTab]) {
             actionFilter.value = tabToActionMap[this.selectedTab];
             this.performSearch(); // Recharger avec le nouveau filtre
@@ -198,7 +198,7 @@ class ArchivesManager {
 
       // Charger d'abord toutes les données pour les compteurs (si pas déjà en cache)
       if (!this.allArchivesData) {
-        const allDataResponse = await fetch('/api/archives?limit=1000'); // Récupérer toutes les données
+        const allDataResponse = await fetch("/api/archives?limit=1000"); // Récupérer toutes les données
         const allData = await allDataResponse.json();
         if (allData.success) {
           this.allArchivesData = allData.archives;
@@ -260,12 +260,20 @@ class ArchivesManager {
     let archivesToRender = this.filteredArchives;
 
     // Si aucun filtre n'est appliqué côté serveur, filtrer selon l'onglet actif
-    const hasServerFilters = this.currentFilters.search || 
-                           this.currentFilters.action_type || 
-                           this.currentFilters.role_source;
-    
-    console.log("[ARCHIVES] Rendu - Onglet:", this.selectedTab, "| Filtres serveur:", hasServerFilters, "| Données filtrées:", this.filteredArchives.length);
-    
+    const hasServerFilters =
+      this.currentFilters.search ||
+      this.currentFilters.action_type ||
+      this.currentFilters.role_source;
+
+    console.log(
+      "[ARCHIVES] Rendu - Onglet:",
+      this.selectedTab,
+      "| Filtres serveur:",
+      hasServerFilters,
+      "| Données filtrées:",
+      this.filteredArchives.length
+    );
+
     if (!hasServerFilters) {
       // Filtrer selon l'onglet actif seulement si pas de filtres serveur
       switch (this.selectedTab) {
@@ -931,7 +939,7 @@ class ArchivesManager {
   // Méthode pour rafraîchir les données complètes (cache)
   async refreshAllData() {
     try {
-      const allDataResponse = await fetch('/api/archives?limit=1000');
+      const allDataResponse = await fetch("/api/archives?limit=1000");
       const allData = await allDataResponse.json();
       if (allData.success) {
         this.allArchivesData = allData.archives;
@@ -990,13 +998,16 @@ window.archiveDossier = async function (
     const result = await response.json();
     if (result.success) {
       console.log("Dossier archivé avec succès:", result.archive);
-      
+
       // Rafraîchir les données si on est sur la page des archives
-      if (window.archivesManager && typeof window.archivesManager.refreshAllData === 'function') {
+      if (
+        window.archivesManager &&
+        typeof window.archivesManager.refreshAllData === "function"
+      ) {
         await window.archivesManager.refreshAllData();
         window.archivesManager.updateCounts();
       }
-      
+
       return true;
     } else {
       console.error("Erreur lors de l'archivage:", result.message);
