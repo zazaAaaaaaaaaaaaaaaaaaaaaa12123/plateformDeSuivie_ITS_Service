@@ -4713,6 +4713,20 @@ app.post("/api/archives", async (req, res) => {
       }
     }
 
+    // Calculer la taille du dossier avant l'archivage
+    const storageSize = await calculateFolderSize(
+      dossier_id,
+      action_type,
+      dossier_data
+    );
+
+    // Ajouter la taille aux métadonnées
+    const enrichedMetadata = {
+      ...metadata,
+      storage_size: storageSize,
+      size_calculated_at: new Date().toISOString(),
+    };
+
     const result = await pool.query(
       `
       INSERT INTO archives_dossiers (
@@ -4733,12 +4747,14 @@ app.post("/api/archives", async (req, res) => {
         archived_by,
         archived_by_email,
         JSON.stringify(dossier_data),
-        JSON.stringify(metadata),
+        JSON.stringify(enrichedMetadata),
       ]
     );
 
     console.log(
-      `✅ Nouveau dossier archivé: ${dossier_reference} (${action_type}) par ${archived_by}`
+      `✅ Nouveau dossier archivé: ${dossier_reference} (${action_type}) par ${archived_by} - Taille: ${formatBytes(
+        storageSize
+      )}`
     );
 
     res.status(201).json({
@@ -6597,6 +6613,290 @@ setInterval(() => {
 // ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
 // ===============================
 // Cette route doit être TOUT EN BAS, après toutes les routes API !
+// ===============================
+// API : NIVEAU DE STOCKAGE DES ARCHIVES
+// ===============================
+
+/**
+ * Calcule le poids d'un dossier basé sur ses fichiers associés
+ */
+async function calculateFolderSize(dossierId, actionType, dossierData) {
+  try {
+    let totalSize = 0;
+
+    // Taille de base pour les données textuelles (estimation)
+    const baseDataSize = JSON.stringify(dossierData || {}).length;
+    totalSize += baseDataSize;
+
+    // Calcul de la taille des fichiers uploadés
+    if (dossierData && dossierData.files) {
+      const files = Array.isArray(dossierData.files)
+        ? dossierData.files
+        : [dossierData.files];
+
+      for (const file of files) {
+        if (file && file.filename) {
+          try {
+            const filePath = path.join(__dirname, "uploads", file.filename);
+            if (fs.existsSync(filePath)) {
+              const stats = fs.statSync(filePath);
+              totalSize += stats.size;
+            }
+          } catch (err) {
+            console.warn(
+              `Impossible de calculer la taille du fichier: ${file.filename}`,
+              err.message
+            );
+          }
+        }
+      }
+    }
+
+    // Recherche des fichiers dans le dossier uploads basés sur l'ID du dossier
+    try {
+      const uploadsDir = path.join(__dirname, "uploads");
+      if (fs.existsSync(uploadsDir)) {
+        const files = fs.readdirSync(uploadsDir);
+        const dossierFiles = files.filter(
+          (file) =>
+            file.includes(`-${dossierId}.`) ||
+            file.includes(`-${dossierId}-`) ||
+            file.startsWith(`${dossierId}-`) ||
+            file.startsWith(`${dossierId}_`)
+        );
+
+        for (const file of dossierFiles) {
+          try {
+            const filePath = path.join(uploadsDir, file);
+            const stats = fs.statSync(filePath);
+            totalSize += stats.size;
+          } catch (err) {
+            console.warn(
+              `Erreur lors du calcul de la taille du fichier ${file}:`,
+              err.message
+            );
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(
+        "Erreur lors de la lecture du dossier uploads:",
+        err.message
+      );
+    }
+
+    return totalSize;
+  } catch (error) {
+    console.error("Erreur lors du calcul de la taille du dossier:", error);
+    return 0;
+  }
+}
+
+/**
+ * Met à jour la taille stockée dans les archives
+ */
+async function updateArchiveStorageSize(archiveId, size) {
+  try {
+    const updateQuery = `
+      UPDATE archives_dossiers 
+      SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('storage_size', $1)
+      WHERE id = $2
+    `;
+    await pool.query(updateQuery, [size, archiveId]);
+    console.log(
+      `✅ Taille mise à jour pour l'archive ${archiveId}: ${size} bytes`
+    );
+  } catch (error) {
+    console.error(
+      "Erreur lors de la mise à jour de la taille de stockage:",
+      error
+    );
+  }
+}
+
+/**
+ * API pour obtenir les statistiques de stockage
+ */
+app.get("/api/storage-stats", async (req, res) => {
+  try {
+    console.log("📊 Calcul des statistiques de stockage...");
+
+    // Récupérer toutes les archives avec leurs tailles
+    const archivesQuery = `
+      SELECT 
+        id,
+        action_type,
+        dossier_id,
+        dossier_data,
+        metadata,
+        archived_at
+      FROM archives_dossiers 
+      ORDER BY archived_at DESC
+    `;
+
+    const archivesResult = await pool.query(archivesQuery);
+    const archives = archivesResult.rows;
+
+    let totalSize = 0;
+    let sizeByType = {
+      suppression: 0,
+      livraison: 0,
+      mise_en_livraison: 0,
+      ordre_livraison_etabli: 0,
+    };
+
+    let processedArchives = 0;
+
+    // Calculer ou recalculer les tailles si nécessaire
+    for (const archive of archives) {
+      let archiveSize = 0;
+
+      // Vérifier si la taille est déjà calculée dans les métadonnées
+      if (archive.metadata && archive.metadata.storage_size) {
+        archiveSize = parseInt(archive.metadata.storage_size);
+      } else {
+        // Calculer la taille et la sauvegarder
+        archiveSize = await calculateFolderSize(
+          archive.dossier_id,
+          archive.action_type,
+          archive.dossier_data
+        );
+
+        // Mettre à jour les métadonnées avec la taille calculée
+        await updateArchiveStorageSize(archive.id, archiveSize);
+      }
+
+      totalSize += archiveSize;
+      sizeByType[archive.action_type] += archiveSize;
+      processedArchives++;
+    }
+
+    // Calculer les statistiques
+    const maxStorageBytes = 10 * 1024 * 1024 * 1024; // 10 GB par défaut
+    const usagePercentage = Math.round((totalSize / maxStorageBytes) * 100);
+
+    // Historique des 30 derniers jours
+    const historyQuery = `
+      SELECT 
+        DATE(archived_at) as date,
+        COUNT(*) as archives_count,
+        SUM(COALESCE((metadata->>'storage_size')::bigint, 0)) as daily_size
+      FROM archives_dossiers 
+      WHERE archived_at >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE(archived_at)
+      ORDER BY date DESC
+    `;
+
+    const historyResult = await pool.query(historyQuery);
+
+    const stats = {
+      totalSizeBytes: totalSize,
+      totalSizeFormatted: formatBytes(totalSize),
+      maxStorageBytes: maxStorageBytes,
+      maxStorageFormatted: formatBytes(maxStorageBytes),
+      usagePercentage: usagePercentage,
+      sizeByType: {
+        suppression: {
+          bytes: sizeByType.suppression,
+          formatted: formatBytes(sizeByType.suppression),
+        },
+        livraison: {
+          bytes: sizeByType.livraison,
+          formatted: formatBytes(sizeByType.livraison),
+        },
+        mise_en_livraison: {
+          bytes: sizeByType.mise_en_livraison,
+          formatted: formatBytes(sizeByType.mise_en_livraison),
+        },
+        ordre_livraison_etabli: {
+          bytes: sizeByType.ordre_livraison_etabli,
+          formatted: formatBytes(sizeByType.ordre_livraison_etabli),
+        },
+      },
+      totalArchives: archives.length,
+      processedArchives: processedArchives,
+      history: historyResult.rows,
+      lastUpdated: new Date().toISOString(),
+    };
+
+    console.log("✅ Statistiques de stockage calculées:", {
+      totalSize: formatBytes(totalSize),
+      usagePercentage: usagePercentage + "%",
+      totalArchives: archives.length,
+    });
+
+    res.json(stats);
+  } catch (error) {
+    console.error(
+      "❌ Erreur lors du calcul des statistiques de stockage:",
+      error
+    );
+    res.status(500).json({
+      error: "Erreur lors du calcul des statistiques de stockage",
+      details: error.message,
+    });
+  }
+});
+
+/**
+ * Fonction utilitaire pour formater les bytes
+ */
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return "0 B";
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+}
+
+/**
+ * API pour recalculer manuellement toutes les tailles de stockage
+ */
+app.post("/api/storage-stats/recalculate", async (req, res) => {
+  try {
+    console.log("🔄 Recalcul manuel des tailles de stockage...");
+
+    const archivesQuery = `
+      SELECT id, dossier_id, action_type, dossier_data
+      FROM archives_dossiers 
+    `;
+
+    const archivesResult = await pool.query(archivesQuery);
+    const archives = archivesResult.rows;
+
+    let recalculated = 0;
+
+    for (const archive of archives) {
+      const newSize = await calculateFolderSize(
+        archive.dossier_id,
+        archive.action_type,
+        archive.dossier_data
+      );
+
+      await updateArchiveStorageSize(archive.id, newSize);
+      recalculated++;
+    }
+
+    console.log(`✅ Recalcul terminé: ${recalculated} archives mises à jour`);
+
+    res.json({
+      success: true,
+      message: `${recalculated} archives recalculées`,
+      recalculated: recalculated,
+    });
+  } catch (error) {
+    console.error("❌ Erreur lors du recalcul des tailles:", error);
+    res.status(500).json({
+      error: "Erreur lors du recalcul des tailles",
+      details: error.message,
+    });
+  }
+});
+
 // (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));

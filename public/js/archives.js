@@ -1629,14 +1629,14 @@ window.archiveDossier = async function (
   }
 };
 
-// Initialisation quand la page est chargée
-document.addEventListener("DOMContentLoaded", function () {
-  // Vérifier si nous sommes sur la page d'archives
-  const archivesContainer =
-    document.getElementById("searchBtn") || document.querySelector(".nav-tabs");
-  if (archivesContainer) {
+// Initialisation automatique des archives
+document.addEventListener("DOMContentLoaded", () => {
+  const searchBtn = document.getElementById("searchBtn");
+  if (searchBtn) {
+    // Nous sommes sur la page d'archives
     console.log("[ARCHIVES] Initialisation de l'interface d'archives");
     window.archivesManager = new ArchivesManager();
+    console.log("[ARCHIVES] Gestionnaire d'archives initialisé");
   } else {
     console.log(
       "[ARCHIVES] Interface d'archives non détectée, initialisation ignorée"
