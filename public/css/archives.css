@@ -473,3 +473,100 @@ html {
 .navbar-dark .navbar-brand i {
   color: #e9ecef !important; /* Icône brand en blanc foncé */
 }
+
+/* Styles pour la version compacte des détails */
+.detail-section-compact {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  border-left: 4px solid #007bff;
+}
+
+.detail-section-compact h6 {
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+.detail-item {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label-compact {
+  font-weight: 600;
+  color: #6c757d;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.detail-value-compact {
+  color: #212529;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.badge-status {
+  background-color: #6c757d;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Responsive adjustments pour version compacte */
+@media (max-width: 768px) {
+  .detail-item {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .detail-label-compact {
+    font-weight: 700;
+    color: #495057;
+  }
+}
+
+/* Amélioration du modal pour la version compacte */
+.modal-dialog {
+  max-width: 800px;
+}
+
+.modal-body {
+  padding: 1rem 1.5rem;
+}
+
+/* Container pour les dropdowns de conteneurs */
+.container-dropdown {
+  min-width: 200px;
+}
+
+.container-dropdown .dropdown-menu {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}

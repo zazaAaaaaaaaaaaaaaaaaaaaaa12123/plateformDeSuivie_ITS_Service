@@ -539,182 +539,173 @@ class ArchivesManager {
     const dossierData = archive.dossier_data || {};
 
     return `
-            <div class="detail-section">
-                <h6><i class="fas fa-info-circle me-2"></i>Informations générales</h6>
-                <div class="detail-row">
-                    <div class="detail-label">ID Archive:</div>
-                    <div class="detail-value">#${archive.id}</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Référence dossier:</div>
-                    <div class="detail-value">${
-                      archive.dossier_reference || "N/A"
-                    }</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Type d'action:</div>
-                    <div class="detail-value">${this.renderActionBadge(
-                      archive.action_type
-                    )}</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Client:</div>
-                    <div class="detail-value">${
-                      archive.client_name || "N/A"
-                    }</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Intitulé:</div>
-                    <div class="detail-value">${archive.intitule || "N/A"}</div>
-                </div>
-            </div>
+            <div class="row">
+                <!-- Colonne gauche -->
+                <div class="col-md-6">
+                    <div class="detail-section-compact">
+                        <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Informations générales</h6>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label-compact">ID:</span>
+                                <span class="detail-value-compact">#${
+                                  archive.id
+                                }</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Référence:</span>
+                                <span class="detail-value-compact">${
+                                  archive.dossier_reference || "N/A"
+                                }</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Action:</span>
+                                <span class="detail-value-compact">${this.renderActionBadge(
+                                  archive.action_type
+                                )}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Client:</span>
+                                <span class="detail-value-compact">${
+                                  dossierData.client_name ||
+                                  archive.client_name ||
+                                  "Non spécifié"
+                                }</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Intitulé:</span>
+                                <span class="detail-value-compact">${
+                                  dossierData.container_type_and_content ||
+                                  archive.intitule ||
+                                  "N/A"
+                                }</span>
+                            </div>
+                        </div>
+                    </div>
 
-            <div class="detail-section">
-                <h6><i class="fas fa-user me-2"></i>Source et responsabilité</h6>
-                <div class="detail-row">
-                    <div class="detail-label">Rôle/Source:</div>
-                    <div class="detail-value">${archive.role_source}</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Page d'origine:</div>
-                    <div class="detail-value">${this.getPageName(
-                      archive.page_origine
-                    )}</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Archivé par:</div>
-                    <div class="detail-value">${
-                      archive.archived_by || "Système"
-                    }</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Email:</div>
-                    <div class="detail-value">${
-                      archive.archived_by_email || "N/A"
-                    }</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Date d'archivage:</div>
-                    <div class="detail-value">${this.formatDate(
-                      archive.archived_at
-                    )} (${this.getTimeAgo(archive.archived_at)})</div>
-                </div>
-            </div>
-
-            <div class="detail-section">
-                <h6><i class="fas fa-cogs me-2"></i>État de restauration</h6>
-                <div class="detail-row">
-                    <div class="detail-label">Restaurable:</div>
-                    <div class="detail-value">
-                        ${
-                          archive.is_restorable
-                            ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Oui</span>'
-                            : '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Non</span>'
-                        }
-                    </div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Données disponibles:</div>
-                    <div class="detail-value">
-                        ${
-                          archive.dossier_data
-                            ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Complètes</span>'
-                            : '<span class="badge bg-warning"><i class="fas fa-exclamation-triangle me-1"></i>Partielles</span>'
-                        }
-                    </div>
-                </div>
-            </div>
-
-            ${
-              archive.dossier_data
-                ? `
-                <div class="detail-section">
-                    <h6><i class="fas fa-database me-2"></i>Aperçu des données du dossier</h6>
-                    <div class="detail-row">
-                        <div class="detail-label">Employé:</div>
-                        <div class="detail-value">${
-                          dossierData.employee_name || "N/A"
-                        }</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Client:</div>
-                        <div class="detail-value">${
-                          dossierData.client_name ||
-                          archive.client_name ||
-                          "N/A"
-                        }</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Numéro conteneur:</div>
-                        <div class="detail-value">${this.formatContainerNumbers(
-                          dossierData
-                        )}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Type/Contenu:</div>
-                        <div class="detail-value">${
-                          dossierData.container_type_and_content ||
-                          dossierData.container_content ||
-                          archive.intitule ||
-                          "N/A"
-                        }</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Transporteur:</div>
-                        <div class="detail-value">${
-                          dossierData.transporter || "N/A"
-                        }</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Lieu:</div>
-                        <div class="detail-value">${
-                          dossierData.lieu || "N/A"
-                        }</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Statut:</div>
-                        <div class="detail-value">${
-                          dossierData.status ||
-                          dossierData.delivery_status_acconier ||
-                          "N/A"
-                        }</div>
-                    </div>
                     ${
-                      dossierData.delivery_date
+                      archive.dossier_data
                         ? `
-                    <div class="detail-row">
-                        <div class="detail-label">Date de livraison:</div>
-                        <div class="detail-value">${
-                          dossierData.delivery_date
-                        } ${dossierData.delivery_time || ""}</div>
-                    </div>
-                    `
-                        : ""
-                    }
-                    ${
-                      dossierData.weight_on_arrival
-                        ? `
-                    <div class="detail-row">
-                        <div class="detail-label">Poids à l'arrivée:</div>
-                        <div class="detail-value">${dossierData.weight_on_arrival} kg</div>
-                    </div>
-                    `
-                        : ""
-                    }
-                    ${
-                      dossierData.container_foot_type
-                        ? `
-                    <div class="detail-row">
-                        <div class="detail-label">Pied de conteneur:</div>
-                        <div class="detail-value">${dossierData.container_foot_type}</div>
+                    <div class="detail-section-compact">
+                        <h6 class="mb-3"><i class="fas fa-database me-2"></i>Données du dossier</h6>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Employé:</span>
+                                <span class="detail-value-compact">${
+                                  dossierData.employee_name || "N/A"
+                                }</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Conteneur:</span>
+                                <span class="detail-value-compact">${this.formatContainerNumbers(
+                                  dossierData
+                                )}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Transporteur:</span>
+                                <span class="detail-value-compact">${
+                                  dossierData.transporter || "N/A"
+                                }</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Lieu:</span>
+                                <span class="detail-value-compact">${
+                                  dossierData.lieu || "N/A"
+                                }</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Statut:</span>
+                                <span class="detail-value-compact">
+                                    <span class="badge badge-status">${
+                                      dossierData.status ||
+                                      dossierData.delivery_status_acconier ||
+                                      "N/A"
+                                    }</span>
+                                </span>
+                            </div>
+                            ${
+                              dossierData.delivery_date
+                                ? `
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Livraison:</span>
+                                <span class="detail-value-compact">${
+                                  dossierData.delivery_date
+                                } ${dossierData.delivery_time || ""}</span>
+                            </div>
+                            `
+                                : ""
+                            }
+                        </div>
                     </div>
                     `
                         : ""
                     }
                 </div>
-            `
-                : ""
-            }
+
+                <!-- Colonne droite -->
+                <div class="col-md-6">
+                    <div class="detail-section-compact">
+                        <h6 class="mb-3"><i class="fas fa-user me-2"></i>Source et archivage</h6>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Source:</span>
+                                <span class="detail-value-compact">${
+                                  archive.role_source
+                                }</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Page:</span>
+                                <span class="detail-value-compact">${this.getPageName(
+                                  archive.page_origine
+                                )}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Archivé par:</span>
+                                <span class="detail-value-compact">${
+                                  archive.archived_by || "Système"
+                                }</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Date:</span>
+                                <span class="detail-value-compact">${this.formatDate(
+                                  archive.archived_at
+                                )}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Délai:</span>
+                                <span class="detail-value-compact">${this.getTimeAgo(
+                                  archive.archived_at
+                                )}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section-compact">
+                        <h6 class="mb-3"><i class="fas fa-cogs me-2"></i>État de restauration</h6>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Restaurable:</span>
+                                <span class="detail-value-compact">
+                                    ${
+                                      archive.is_restorable
+                                        ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Oui</span>'
+                                        : '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Non</span>'
+                                    }
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Données:</span>
+                                <span class="detail-value-compact">
+                                    ${
+                                      archive.dossier_data
+                                        ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Complètes</span>'
+                                        : '<span class="badge bg-warning"><i class="fas fa-exclamation-triangle me-1"></i>Partielles</span>'
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
   }
 
