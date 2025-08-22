@@ -1,0 +1,403 @@
+/* 
+ * Storage Monitor CSS - Styles pour le système de gestion du stockage
+ * Plateforme de suivi ITS Service
+ */
+
+/* ===============================
+   CONTENEUR PRINCIPAL
+   =============================== */
+#storageMonitorContainer {
+  animation: slideIn 0.5s ease-out;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===============================
+   HEADER DU PANNEAU
+   =============================== */
+#storageMonitorContainer .card-header {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  border: none;
+  padding: 12px 20px;
+}
+
+#storageMonitorContainer .card-header h6 {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+#storageMonitorContainer .card-header .btn-outline-light {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+#storageMonitorContainer .card-header .btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+}
+
+/* ===============================
+   INDICATEUR PRINCIPAL
+   =============================== */
+.storage-main-indicator {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+#storageMainStatus {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#storageMainProgress {
+  border-radius: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+#storageMainProgress::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ===============================
+   CARTES DE DÉTAILS
+   =============================== */
+.storage-detail-card {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.storage-detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.storage-detail-card .card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+}
+
+.storage-detail-card .progress {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.storage-detail-card .progress-bar {
+  transition: width 0.6s ease;
+  border-radius: 10px;
+}
+
+/* ===============================
+   TYPES DE FICHIERS
+   =============================== */
+#uploadsFileTypes {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 8px;
+  border-left: 4px solid #007bff;
+}
+
+#uploadsFileTypes .small {
+  padding: 2px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+#uploadsFileTypes .small:last-child {
+  border-bottom: none;
+}
+
+/* ===============================
+   STATISTIQUES ARCHIVES
+   =============================== */
+#archivesStats {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 8px;
+  border-left: 4px solid #28a745;
+}
+
+#archivesStats .small {
+  padding: 2px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+#archivesStats .small:last-child {
+  border-bottom: none;
+}
+
+/* ===============================
+   RECOMMANDATIONS
+   =============================== */
+#storageRecommendations .alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#storageRecommendations .alert-danger {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+  border-left: 5px solid #dc3545;
+}
+
+#storageRecommendations .alert-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  color: #856404;
+  border-left: 5px solid #ffc107;
+}
+
+/* ===============================
+   BOUTONS D'ACTION
+   =============================== */
+.storage-action-buttons {
+  text-align: center;
+  padding: 15px 0;
+}
+
+.storage-action-buttons .btn {
+  margin: 0 5px;
+  border-radius: 25px;
+  padding: 8px 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+}
+
+.storage-action-buttons .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.storage-action-buttons .btn-outline-warning:hover {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.storage-action-buttons .btn-outline-info:hover {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+/* ===============================
+   SPINNER DE CHARGEMENT
+   =============================== */
+#storageLoadingSpinner {
+  padding: 40px;
+}
+
+#storageLoadingSpinner .spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* ===============================
+   RESPONSIVE
+   =============================== */
+@media (max-width: 768px) {
+  #storageMonitorContainer .card-header {
+    padding: 10px 15px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  #storageMonitorContainer .card-header .d-flex {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #storageMonitorContainer .card-header small {
+    margin: 5px 0 !important;
+  }
+
+  .storage-action-buttons .btn {
+    display: block;
+    width: 100%;
+    margin: 5px 0;
+  }
+
+  .storage-detail-card {
+    margin-bottom: 15px;
+  }
+}
+
+/* ===============================
+   COULEURS DE STATUT
+   =============================== */
+.bg-success-gradient {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.bg-warning-gradient {
+  background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+}
+
+.bg-danger-gradient {
+  background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%) !important;
+}
+
+/* ===============================
+   BADGES PERSONNALISÉS
+   =============================== */
+.badge-lg {
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ===============================
+   ANIMATIONS D'ÉTAT
+   =============================== */
+.storage-critical {
+  animation: pulse-red 2s infinite;
+}
+
+.storage-warning {
+  animation: pulse-yellow 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
+@keyframes pulse-yellow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+  }
+}
+
+/* ===============================
+   DARK MODE SUPPORT
+   =============================== */
+@media (prefers-color-scheme: dark) {
+  #storageMonitorContainer {
+    background-color: #2d3748;
+    color: #e2e8f0;
+  }
+
+  .storage-main-indicator {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  }
+
+  .storage-detail-card .card-header {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    color: #e2e8f0;
+  }
+
+  #uploadsFileTypes,
+  #archivesStats {
+    background: #2d3748;
+    color: #e2e8f0;
+  }
+}
+
+/* ===============================
+   TOOLTIPS PERSONNALISÉS
+   =============================== */
+[data-bs-toggle="tooltip"] {
+  cursor: help;
+}
+
+/* ===============================
+   EFFETS DE TRANSITION
+   =============================== */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

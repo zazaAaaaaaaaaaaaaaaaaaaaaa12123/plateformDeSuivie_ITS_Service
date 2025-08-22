@@ -4741,6 +4741,34 @@ app.post("/api/archives", async (req, res) => {
       `✅ Nouveau dossier archivé: ${dossier_reference} (${action_type}) par ${archived_by}`
     );
 
+    // Nouveau: Déclencher une mise à jour du calcul de stockage en arrière-plan
+    setTimeout(async () => {
+      try {
+        const storageData = await calculateStorageUsage();
+        console.log(
+          `[STORAGE] 📊 Mise à jour post-archivage: ${formatBytes(
+            storageData.total.used
+          )} utilisés (${storageData.total.percentage}%)`
+        );
+
+        // Alerter si on approche des limites
+        if (storageData.total.percentage > 85) {
+          console.warn(
+            `[STORAGE] ⚠️ ALERTE: Stockage critique à ${storageData.total.percentage}%`
+          );
+        } else if (storageData.total.percentage > 70) {
+          console.warn(
+            `[STORAGE] ⚠️ Attention: Stockage élevé à ${storageData.total.percentage}%`
+          );
+        }
+      } catch (error) {
+        console.error(
+          "[STORAGE] Erreur lors de la mise à jour post-archivage:",
+          error
+        );
+      }
+    }, 1000); // 1 seconde de délai pour laisser la DB se synchroniser
+
     res.status(201).json({
       success: true,
       archive: result.rows[0],
@@ -4953,6 +4981,28 @@ app.delete("/api/archives/:id", async (req, res) => {
         message: "Archive non trouvée",
       });
     }
+
+    const deletedArchive = result.rows[0];
+    console.log(
+      `🗑️ Archive supprimée définitivement: ID ${id} (${deletedArchive.dossier_reference})`
+    );
+
+    // Nouveau: Déclencher une mise à jour du calcul de stockage en arrière-plan
+    setTimeout(async () => {
+      try {
+        const storageData = await calculateStorageUsage();
+        console.log(
+          `[STORAGE] 📊 Mise à jour post-suppression: ${formatBytes(
+            storageData.total.used
+          )} utilisés (${storageData.total.percentage}%)`
+        );
+      } catch (error) {
+        console.error(
+          "[STORAGE] Erreur lors de la mise à jour post-suppression:",
+          error
+        );
+      }
+    }, 1000);
 
     res.json({
       success: true,
@@ -6029,6 +6079,918 @@ app.get("/api/dossiers/retard", async (req, res) => {
     res.json([]); // Renvoie un tableau vide en cas d'erreur pour éviter le crash frontend
   }
 });
+
+// ===============================
+// ROUTE : API de gestion du stockage - Calcul de l'utilisation du stockage
+// ===============================
+app.get("/api/storage/usage", async (req, res) => {
+  try {
+    console.log("[STORAGE] 📊 Calcul de l'utilisation du stockage...");
+
+    const storageData = await calculateStorageUsage();
+
+    res.json({
+      success: true,
+      storage: storageData,
+    });
+  } catch (error) {
+    console.error("Erreur lors du calcul du stockage:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors du calcul du stockage",
+      error: error.message,
+    });
+  }
+});
+
+// Fonction pour calculer l'utilisation du stockage
+async function calculateStorageUsage() {
+  try {
+    const startTime = Date.now();
+
+    // 1. Calculer la taille des fichiers uploads
+    const uploadsSize = await calculateDirectorySize(
+      path.join(__dirname, "uploads")
+    );
+
+    // 2. Calculer la taille de la base de données
+    const dbSize = await calculateDatabaseSize();
+
+    // 3. Calculer les détails par type de fichiers
+    const fileTypes = await analyzeFileTypes();
+
+    // 4. Calculer les statistiques des archives
+    const archivesStats = await calculateArchivesSize();
+
+    // 5. Limites et seuils (en octets)
+    const limits = {
+      uploads_warning: 100 * 1024 * 1024, // 100 MB
+      uploads_critical: 200 * 1024 * 1024, // 200 MB
+      uploads_max: 300 * 1024 * 1024, // 300 MB (limite Render)
+      database_warning: 50 * 1024 * 1024, // 50 MB
+      database_critical: 100 * 1024 * 1024, // 100 MB
+      database_max: 150 * 1024 * 1024, // 150 MB
+    };
+
+    // 6. Calculer les totaux et pourcentages
+    const totalUsed = uploadsSize + dbSize;
+    const totalLimit = limits.uploads_max + limits.database_max;
+    const usagePercentage = Math.round((totalUsed / totalLimit) * 100);
+
+    // 7. Déterminer le statut général
+    let status = "safe";
+    let statusColor = "#28a745";
+    let statusIcon = "fa-check-circle";
+
+    if (usagePercentage >= 85) {
+      status = "critical";
+      statusColor = "#dc3545";
+      statusIcon = "fa-exclamation-triangle";
+    } else if (usagePercentage >= 70) {
+      status = "warning";
+      statusColor = "#ffc107";
+      statusIcon = "fa-exclamation-circle";
+    }
+
+    const calculationTime = Date.now() - startTime;
+
+    console.log(`[STORAGE] ✅ Calcul terminé en ${calculationTime}ms`);
+    console.log(
+      `[STORAGE] 📈 Utilisation: ${formatBytes(totalUsed)} / ${formatBytes(
+        totalLimit
+      )} (${usagePercentage}%)`
+    );
+
+    return {
+      // Totaux généraux
+      total: {
+        used: totalUsed,
+        limit: totalLimit,
+        available: totalLimit - totalUsed,
+        percentage: usagePercentage,
+        status: status,
+        statusColor: statusColor,
+        statusIcon: statusIcon,
+      },
+
+      // Détails uploads
+      uploads: {
+        size: uploadsSize,
+        limit: limits.uploads_max,
+        percentage: Math.round((uploadsSize / limits.uploads_max) * 100),
+        status:
+          uploadsSize > limits.uploads_critical
+            ? "critical"
+            : uploadsSize > limits.uploads_warning
+            ? "warning"
+            : "safe",
+        fileTypes: fileTypes,
+      },
+
+      // Détails base de données
+      database: {
+        size: dbSize,
+        limit: limits.database_max,
+        percentage: Math.round((dbSize / limits.database_max) * 100),
+        status:
+          dbSize > limits.database_critical
+            ? "critical"
+            : dbSize > limits.database_warning
+            ? "warning"
+            : "safe",
+        archives: archivesStats,
+      },
+
+      // Métriques de performance
+      performance: {
+        calculationTime: calculationTime,
+        lastUpdate: new Date().toISOString(),
+      },
+
+      // Recommandations
+      recommendations: generateStorageRecommendations(
+        uploadsSize,
+        dbSize,
+        limits
+      ),
+    };
+  } catch (error) {
+    console.error("[STORAGE] Erreur lors du calcul:", error);
+    throw error;
+  }
+}
+
+// Fonction pour calculer la taille d'un répertoire
+async function calculateDirectorySize(dirPath) {
+  try {
+    if (!fs.existsSync(dirPath)) {
+      return 0;
+    }
+
+    let totalSize = 0;
+    const files = fs.readdirSync(dirPath);
+
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      const stats = fs.statSync(filePath);
+
+      if (stats.isDirectory()) {
+        totalSize += await calculateDirectorySize(filePath);
+      } else {
+        totalSize += stats.size;
+      }
+    }
+
+    return totalSize;
+  } catch (error) {
+    console.error(`Erreur calcul taille répertoire ${dirPath}:`, error);
+    return 0;
+  }
+}
+
+// Fonction pour calculer la taille de la base de données
+async function calculateDatabaseSize() {
+  try {
+    // Taille de la base de données PostgreSQL
+    const dbSizeQuery = `
+      SELECT pg_size_pretty(pg_database_size(current_database())) as size_pretty,
+             pg_database_size(current_database()) as size_bytes
+    `;
+
+    const result = await pool.query(dbSizeQuery);
+
+    if (result.rows.length > 0) {
+      return parseInt(result.rows[0].size_bytes) || 0;
+    }
+
+    return 0;
+  } catch (error) {
+    console.error("Erreur calcul taille DB:", error);
+    return 0;
+  }
+}
+
+// Fonction pour analyser les types de fichiers
+async function analyzeFileTypes() {
+  try {
+    const uploadsDir = path.join(__dirname, "uploads");
+    const fileTypes = {};
+
+    if (!fs.existsSync(uploadsDir)) {
+      return fileTypes;
+    }
+
+    const files = fs.readdirSync(uploadsDir);
+
+    for (const file of files) {
+      const filePath = path.join(uploadsDir, file);
+      const stats = fs.statSync(filePath);
+
+      if (stats.isFile()) {
+        const ext = path.extname(file).toLowerCase() || ".unknown";
+
+        if (!fileTypes[ext]) {
+          fileTypes[ext] = {
+            count: 0,
+            totalSize: 0,
+            files: [],
+          };
+        }
+
+        fileTypes[ext].count++;
+        fileTypes[ext].totalSize += stats.size;
+        fileTypes[ext].files.push({
+          name: file,
+          size: stats.size,
+          created: stats.ctime,
+        });
+      }
+    }
+
+    return fileTypes;
+  } catch (error) {
+    console.error("Erreur analyse types fichiers:", error);
+    return {};
+  }
+}
+
+// Fonction pour calculer les statistiques des archives
+async function calculateArchivesSize() {
+  try {
+    const archivesQuery = `
+      SELECT 
+        action_type,
+        COUNT(*) as count,
+        AVG(LENGTH(dossier_data::text)) as avg_data_size,
+        SUM(LENGTH(dossier_data::text)) as total_data_size
+      FROM archives_dossiers 
+      WHERE dossier_data IS NOT NULL
+      GROUP BY action_type
+    `;
+
+    const result = await pool.query(archivesQuery);
+
+    const stats = {
+      totalArchives: 0,
+      totalDataSize: 0,
+      byActionType: {},
+    };
+
+    for (const row of result.rows) {
+      stats.totalArchives += parseInt(row.count);
+      stats.totalDataSize += parseInt(row.total_data_size) || 0;
+
+      stats.byActionType[row.action_type] = {
+        count: parseInt(row.count),
+        avgSize: parseInt(row.avg_data_size) || 0,
+        totalSize: parseInt(row.total_data_size) || 0,
+      };
+    }
+
+    return stats;
+  } catch (error) {
+    console.error("Erreur calcul stats archives:", error);
+    return {
+      totalArchives: 0,
+      totalDataSize: 0,
+      byActionType: {},
+    };
+  }
+}
+
+// Fonction pour générer des recommandations
+function generateStorageRecommendations(uploadsSize, dbSize, limits) {
+  const recommendations = [];
+
+  const uploadsPercentage = (uploadsSize / limits.uploads_max) * 100;
+  const dbPercentage = (dbSize / limits.database_max) * 100;
+
+  if (uploadsPercentage > 70) {
+    recommendations.push({
+      type: "warning",
+      category: "uploads",
+      message: "Les fichiers uploads occupent plus de 70% de l'espace autorisé",
+      action:
+        "Considérez supprimer les anciens fichiers ou optimiser le stockage",
+    });
+  }
+
+  if (dbPercentage > 70) {
+    recommendations.push({
+      type: "warning",
+      category: "database",
+      message: "La base de données approche de sa limite",
+      action: "Archivez ou supprimez les anciennes données",
+    });
+  }
+
+  if (uploadsPercentage > 90 || dbPercentage > 90) {
+    recommendations.push({
+      type: "critical",
+      category: "general",
+      message: "Espace de stockage critique !",
+      action: "Action immédiate requise pour libérer de l'espace",
+    });
+  }
+
+  return recommendations;
+}
+
+// Fonction utilitaire pour formater les octets
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return "0 Bytes";
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+}
+
+// ===============================
+// ROUTE : API de gestion du stockage - Nettoyage des anciens fichiers
+// ===============================
+app.post("/api/storage/cleanup", async (req, res) => {
+  try {
+    console.log(
+      "[STORAGE CLEANUP] 🧹 Début du nettoyage des anciens fichiers..."
+    );
+
+    const { days = 30, dryRun = false } = req.body;
+
+    const cleanupResult = await cleanupOldFiles(days, dryRun);
+
+    res.json({
+      success: true,
+      cleanup: cleanupResult,
+      message: dryRun ? "Simulation terminée" : "Nettoyage terminé avec succès",
+    });
+  } catch (error) {
+    console.error("Erreur lors du nettoyage:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors du nettoyage",
+      error: error.message,
+    });
+  }
+});
+
+// ===============================
+// ROUTE : API de gestion du stockage - Optimisation du stockage
+// ===============================
+app.post("/api/storage/optimize", async (req, res) => {
+  try {
+    console.log("[STORAGE OPTIMIZE] ⚡ Début de l'optimisation du stockage...");
+
+    const optimizationResult = await optimizeStorage();
+
+    res.json({
+      success: true,
+      optimization: optimizationResult,
+      message: "Optimisation terminée avec succès",
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'optimisation:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de l'optimisation",
+      error: error.message,
+    });
+  }
+});
+
+// Fonction pour nettoyer les anciens fichiers
+async function cleanupOldFiles(daysOld = 30, dryRun = false) {
+  try {
+    const uploadsDir = path.join(__dirname, "uploads");
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+
+    console.log(
+      `[CLEANUP] Recherche des fichiers antérieurs au ${cutoffDate.toLocaleDateString(
+        "fr-FR"
+      )}`
+    );
+
+    if (!fs.existsSync(uploadsDir)) {
+      return {
+        filesScanned: 0,
+        filesDeleted: 0,
+        spaceFreed: 0,
+        errors: [],
+      };
+    }
+
+    const files = fs.readdirSync(uploadsDir);
+    const result = {
+      filesScanned: 0,
+      filesDeleted: 0,
+      spaceFreed: 0,
+      errors: [],
+      deletedFiles: [],
+    };
+
+    for (const file of files) {
+      try {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+
+        result.filesScanned++;
+
+        if (stats.isFile() && stats.mtime < cutoffDate) {
+          console.log(
+            `[CLEANUP] Fichier ancien trouvé: ${file} (${stats.mtime.toLocaleDateString(
+              "fr-FR"
+            )})`
+          );
+
+          if (!dryRun) {
+            fs.unlinkSync(filePath);
+            console.log(`[CLEANUP] ✅ Fichier supprimé: ${file}`);
+          }
+
+          result.filesDeleted++;
+          result.spaceFreed += stats.size;
+          result.deletedFiles.push({
+            name: file,
+            size: stats.size,
+            lastModified: stats.mtime,
+          });
+        }
+      } catch (error) {
+        console.error(`[CLEANUP] Erreur avec le fichier ${file}:`, error);
+        result.errors.push({
+          file: file,
+          error: error.message,
+        });
+      }
+    }
+
+    console.log(
+      `[CLEANUP] Résumé: ${result.filesScanned} fichiers scannés, ${
+        result.filesDeleted
+      } fichiers ${dryRun ? "à supprimer" : "supprimés"}, ${formatBytes(
+        result.spaceFreed
+      )} ${dryRun ? "à libérer" : "libérés"}`
+    );
+
+    return result;
+  } catch (error) {
+    console.error("[CLEANUP] Erreur générale:", error);
+    throw error;
+  }
+}
+
+// Fonction pour optimiser le stockage
+async function optimizeStorage() {
+  try {
+    const startTime = Date.now();
+    const result = {
+      databaseOptimization: null,
+      archivesCompaction: null,
+      orphanedFilesCleanup: null,
+      totalTimeSaved: 0,
+    };
+
+    // 1. Optimisation de la base de données
+    console.log("[OPTIMIZE] 📊 Optimisation de la base de données...");
+    try {
+      await pool.query("VACUUM ANALYZE");
+      result.databaseOptimization = {
+        status: "success",
+        message: "Base de données optimisée avec VACUUM ANALYZE",
+      };
+    } catch (error) {
+      result.databaseOptimization = {
+        status: "error",
+        message: error.message,
+      };
+    }
+
+    // 2. Compaction des archives anciennes
+    console.log("[OPTIMIZE] 📦 Compaction des archives...");
+    try {
+      const compactionResult = await compactOldArchives();
+      result.archivesCompaction = compactionResult;
+    } catch (error) {
+      result.archivesCompaction = {
+        status: "error",
+        message: error.message,
+        archivesProcessed: 0,
+        spaceOptimized: 0,
+      };
+    }
+
+    // 3. Nettoyage des fichiers orphelins
+    console.log("[OPTIMIZE] 🗑️ Nettoyage des fichiers orphelins...");
+    try {
+      const orphanCleanup = await cleanupOrphanedFiles();
+      result.orphanedFilesCleanup = orphanCleanup;
+    } catch (error) {
+      result.orphanedFilesCleanup = {
+        status: "error",
+        message: error.message,
+        filesDeleted: 0,
+        spaceFreed: 0,
+      };
+    }
+
+    const totalTime = Date.now() - startTime;
+    result.optimizationTime = totalTime;
+
+    console.log(`[OPTIMIZE] ✅ Optimisation terminée en ${totalTime}ms`);
+
+    return result;
+  } catch (error) {
+    console.error("[OPTIMIZE] Erreur générale:", error);
+    throw error;
+  }
+}
+
+// Fonction pour compacter les anciennes archives
+async function compactOldArchives() {
+  try {
+    // Rechercher les archives de plus de 90 jours avec des données volumineuses
+    const oldArchivesQuery = `
+      SELECT id, dossier_data, LENGTH(dossier_data::text) as data_size
+      FROM archives_dossiers 
+      WHERE archived_at < NOW() - INTERVAL '90 days'
+      AND LENGTH(dossier_data::text) > 10000
+      ORDER BY data_size DESC
+      LIMIT 100
+    `;
+
+    const oldArchives = await pool.query(oldArchivesQuery);
+
+    let processedCount = 0;
+    let spaceOptimized = 0;
+
+    for (const archive of oldArchives.rows) {
+      try {
+        // Compacter les données JSON en supprimant les espaces et champs non essentiels
+        const originalData = archive.dossier_data;
+        const compactedData = compactJsonData(originalData);
+
+        const originalSize = archive.data_size;
+        const newSize = JSON.stringify(compactedData).length;
+
+        if (newSize < originalSize * 0.8) {
+          // Seulement si on économise au moins 20%
+          await pool.query(
+            "UPDATE archives_dossiers SET dossier_data = $1 WHERE id = $2",
+            [JSON.stringify(compactedData), archive.id]
+          );
+
+          processedCount++;
+          spaceOptimized += originalSize - newSize;
+
+          console.log(
+            `[COMPACT] Archive ${
+              archive.id
+            }: ${originalSize} → ${newSize} bytes (-${originalSize - newSize})`
+          );
+        }
+      } catch (error) {
+        console.error(`[COMPACT] Erreur archive ${archive.id}:`, error);
+      }
+    }
+
+    return {
+      status: "success",
+      archivesProcessed: processedCount,
+      spaceOptimized: spaceOptimized,
+      message: `${processedCount} archives compactées, ${formatBytes(
+        spaceOptimized
+      )} économisés`,
+    };
+  } catch (error) {
+    console.error("[COMPACT] Erreur:", error);
+    return {
+      status: "error",
+      message: error.message,
+      archivesProcessed: 0,
+      spaceOptimized: 0,
+    };
+  }
+}
+
+// Fonction pour compacter les données JSON
+function compactJsonData(data) {
+  if (!data || typeof data !== "object") return data;
+
+  const compacted = {};
+
+  // Liste des champs essentiels à conserver
+  const essentialFields = [
+    "id",
+    "client_name",
+    "employee_name",
+    "container_number",
+    "delivery_date",
+    "delivery_time",
+    "container_type_and_content",
+    "dossier_number",
+    "status",
+    "delivery_status_acconier",
+    "created_at",
+    "updated_at",
+  ];
+
+  // Copier seulement les champs essentiels
+  for (const field of essentialFields) {
+    if (
+      data[field] !== undefined &&
+      data[field] !== null &&
+      data[field] !== ""
+    ) {
+      compacted[field] = data[field];
+    }
+  }
+
+  return compacted;
+}
+
+// Fonction pour nettoyer les fichiers orphelins
+async function cleanupOrphanedFiles() {
+  try {
+    const uploadsDir = path.join(__dirname, "uploads");
+
+    if (!fs.existsSync(uploadsDir)) {
+      return {
+        status: "success",
+        filesDeleted: 0,
+        spaceFreed: 0,
+        message: "Répertoire uploads inexistant",
+      };
+    }
+
+    const files = fs.readdirSync(uploadsDir);
+    let deletedCount = 0;
+    let spaceFreed = 0;
+
+    // Récupérer la liste des fichiers référencés dans la BD
+    const referencedFilesQuery = `
+      SELECT DISTINCT 
+        CASE 
+          WHEN dossier_data->>'eir_document_file' IS NOT NULL 
+          THEN regexp_replace(dossier_data->>'eir_document_file', '^.*/([^/]+)$', '\\1')
+          ELSE NULL 
+        END as filename
+      FROM archives_dossiers
+      WHERE dossier_data->>'eir_document_file' IS NOT NULL
+      
+      UNION
+      
+      SELECT DISTINCT 
+        CASE 
+          WHEN dossier_data->>'client_signature_photo' IS NOT NULL 
+          THEN regexp_replace(dossier_data->>'client_signature_photo', '^.*/([^/]+)$', '\\1')
+          ELSE NULL 
+        END as filename
+      FROM archives_dossiers
+      WHERE dossier_data->>'client_signature_photo' IS NOT NULL
+    `;
+
+    const referencedFiles = await pool.query(referencedFilesQuery);
+    const referencedSet = new Set(
+      referencedFiles.rows
+        .map((row) => row.filename)
+        .filter((filename) => filename && filename.trim() !== "")
+    );
+
+    console.log(
+      `[ORPHAN CLEANUP] ${referencedSet.size} fichiers référencés trouvés`
+    );
+
+    for (const file of files) {
+      try {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+
+        if (stats.isFile()) {
+          // Vérifier si le fichier est référencé
+          if (!referencedSet.has(file)) {
+            // Vérifier que le fichier n'est pas trop récent (moins de 7 jours)
+            const fileAge = Date.now() - stats.mtime.getTime();
+            const weekInMs = 7 * 24 * 60 * 60 * 1000;
+
+            if (fileAge > weekInMs) {
+              console.log(`[ORPHAN CLEANUP] Fichier orphelin trouvé: ${file}`);
+              fs.unlinkSync(filePath);
+              deletedCount++;
+              spaceFreed += stats.size;
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`[ORPHAN CLEANUP] Erreur avec ${file}:`, error);
+      }
+    }
+
+    return {
+      status: "success",
+      filesDeleted: deletedCount,
+      spaceFreed: spaceFreed,
+      message: `${deletedCount} fichiers orphelins supprimés, ${formatBytes(
+        spaceFreed
+      )} libérés`,
+    };
+  } catch (error) {
+    console.error("[ORPHAN CLEANUP] Erreur:", error);
+    return {
+      status: "error",
+      message: error.message,
+      filesDeleted: 0,
+      spaceFreed: 0,
+    };
+  }
+}
+
+// ===============================
+// SURVEILLANCE AUTOMATIQUE DU STOCKAGE
+// ===============================
+
+// Variable globale pour stocker les données de stockage en cache
+let globalStorageCache = null;
+let lastGlobalStorageUpdate = 0;
+const globalStorageCacheTimeout = 5 * 60 * 1000; // 5 minutes
+
+// Fonction pour surveiller automatiquement le stockage
+async function monitorStorageAutomatically() {
+  try {
+    console.log("[STORAGE MONITOR] 🔍 Surveillance automatique du stockage...");
+
+    const storageData = await calculateStorageUsage();
+    globalStorageCache = storageData;
+    lastGlobalStorageUpdate = Date.now();
+
+    const { total, uploads, database } = storageData;
+
+    // Alertes critiques
+    if (total.percentage >= 90) {
+      console.error(
+        `[STORAGE MONITOR] 🚨 ALERTE CRITIQUE: Stockage à ${total.percentage}% !`
+      );
+      console.error(
+        `[STORAGE MONITOR] 📊 ${formatBytes(total.used)} / ${formatBytes(
+          total.limit
+        )} utilisés`
+      );
+
+      // Ici, on pourrait envoyer un email ou une notification push
+      await sendStorageAlert("critical", total.percentage, storageData);
+    } else if (total.percentage >= 75) {
+      console.warn(
+        `[STORAGE MONITOR] ⚠️ ATTENTION: Stockage élevé à ${total.percentage}%`
+      );
+      console.warn(
+        `[STORAGE MONITOR] 📊 ${formatBytes(total.used)} / ${formatBytes(
+          total.limit
+        )} utilisés`
+      );
+
+      await sendStorageAlert("warning", total.percentage, storageData);
+    }
+
+    // Alertes spécifiques
+    if (uploads.percentage >= 85) {
+      console.warn(
+        `[STORAGE MONITOR] 📁 Uploads: ${uploads.percentage}% (${formatBytes(
+          uploads.size
+        )})`
+      );
+    }
+
+    if (database.percentage >= 85) {
+      console.warn(
+        `[STORAGE MONITOR] 🗄️ Database: ${database.percentage}% (${formatBytes(
+          database.size
+        )})`
+      );
+    }
+
+    // Log informatif
+    console.log(
+      `[STORAGE MONITOR] 📈 Statut général: ${total.status.toUpperCase()} (${
+        total.percentage
+      }%)`
+    );
+  } catch (error) {
+    console.error("[STORAGE MONITOR] ❌ Erreur de surveillance:", error);
+  }
+}
+
+// Fonction pour envoyer des alertes de stockage
+async function sendStorageAlert(level, percentage, storageData) {
+  try {
+    const alertData = {
+      timestamp: new Date().toISOString(),
+      level: level,
+      percentage: percentage,
+      details: {
+        total: {
+          used: formatBytes(storageData.total.used),
+          limit: formatBytes(storageData.total.limit),
+          available: formatBytes(storageData.total.available),
+        },
+        uploads: {
+          used: formatBytes(storageData.uploads.size),
+          percentage: storageData.uploads.percentage,
+        },
+        database: {
+          used: formatBytes(storageData.database.size),
+          percentage: storageData.database.percentage,
+        },
+      },
+      recommendations: storageData.recommendations,
+    };
+
+    // Sauvegarder l'alerte dans un fichier de log
+    const alertLog = path.join(__dirname, "storage-alerts.log");
+    const logEntry = `${
+      alertData.timestamp
+    } [${level.toUpperCase()}] Stockage à ${percentage}% - ${JSON.stringify(
+      alertData.details
+    )}\n`;
+
+    fs.appendFileSync(alertLog, logEntry);
+
+    console.log(`[STORAGE ALERT] 📝 Alerte ${level} sauvegardée`);
+
+    // TODO: Ici on pourrait ajouter:
+    // - Envoi d'email aux administrateurs
+    // - Notification push
+    // - Webhook vers un service de monitoring externe
+  } catch (error) {
+    console.error("[STORAGE ALERT] Erreur lors de l'envoi d'alerte:", error);
+  }
+}
+
+// Route pour obtenir le statut de stockage en cache (plus rapide)
+app.get("/api/storage/status", async (req, res) => {
+  try {
+    const now = Date.now();
+
+    // Utiliser le cache si disponible et récent
+    if (
+      globalStorageCache &&
+      now - lastGlobalStorageUpdate < globalStorageCacheTimeout
+    ) {
+      res.json({
+        success: true,
+        storage: {
+          percentage: globalStorageCache.total.percentage,
+          status: globalStorageCache.total.status,
+          statusColor: globalStorageCache.total.statusColor,
+          used: globalStorageCache.total.used,
+          limit: globalStorageCache.total.limit,
+          lastUpdate: new Date(lastGlobalStorageUpdate).toISOString(),
+        },
+        cached: true,
+      });
+    } else {
+      // Recalculer si le cache est expiré
+      const storageData = await calculateStorageUsage();
+      globalStorageCache = storageData;
+      lastGlobalStorageUpdate = now;
+
+      res.json({
+        success: true,
+        storage: {
+          percentage: storageData.total.percentage,
+          status: storageData.total.status,
+          statusColor: storageData.total.statusColor,
+          used: storageData.total.used,
+          limit: storageData.total.limit,
+          lastUpdate: new Date(now).toISOString(),
+        },
+        cached: false,
+      });
+    }
+  } catch (error) {
+    console.error("Erreur status stockage:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération du statut",
+    });
+  }
+});
+
+// Démarrer la surveillance automatique du stockage
+setInterval(() => {
+  monitorStorageAutomatically();
+}, 10 * 60 * 1000); // Toutes les 10 minutes
+
+// Lancer une première surveillance au démarrage (après 30 secondes)
+setTimeout(() => {
+  monitorStorageAutomatically();
+}, 30000);
+
+console.log(
+  "[STORAGE MONITOR] 🚀 Surveillance automatique du stockage initialisée"
+);
 
 // ===============================
 // ROUTE : Compteurs des statuts de dossiers (pour le tableau de bord)

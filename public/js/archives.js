@@ -1,6 +1,7 @@
 /**
  * Archives.js - Gestion de l'interface des archives
  * Système de centralisation, recherche et restauration des dossiers archivés
+ * Inclut le système de gestion du stockage avancé
  */
 
 class ArchivesManager {
@@ -21,6 +22,12 @@ class ArchivesManager {
     this.lastDataRefresh = 0; // Timestamp du dernier rafraîchissement
     this.cacheTimeout = 30000; // 30 secondes de cache
 
+    // Nouveau: Gestion du stockage
+    this.storageData = null;
+    this.storageUpdateInterval = null;
+    this.lastStorageUpdate = 0;
+    this.storageUpdateTimeout = 60000; // 1 minute
+
     this.init();
   }
 
@@ -32,8 +39,930 @@ class ArchivesManager {
     if (searchBtn) {
       this.loadArchives();
       this.setDefaultDates();
+
+      // Nouveau: Initialiser le système de stockage
+      this.initializeStorageMonitoring();
     }
   }
+
+  // ===============================
+  // SYSTÈME DE GESTION DU STOCKAGE
+  // ===============================
+
+  async initializeStorageMonitoring() {
+    console.log("[STORAGE] 🚀 Initialisation du monitoring du stockage...");
+
+    // Créer l'interface de stockage si elle n'existe pas
+    this.createStorageInterface();
+
+    // Charger les données initiales
+    await this.updateStorageData();
+
+    // Mettre à jour périodiquement
+    this.storageUpdateInterval = setInterval(() => {
+      this.updateStorageData();
+    }, this.storageUpdateTimeout);
+
+    console.log("[STORAGE] ✅ Monitoring du stockage initialisé");
+  }
+
+  createStorageInterface() {
+    const container = document.querySelector(".container-fluid");
+    if (!container) return;
+
+    // Vérifier si l'interface existe déjà
+    if (document.getElementById("storageMonitorContainer")) {
+      return;
+    }
+
+    const storageHTML = `
+      <div id="storageMonitorContainer" class="mb-4">
+        <div class="card border-info">
+          <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+              <i class="fas fa-database me-2"></i>
+              Niveau de Stockage Plateforme
+            </h6>
+            <div class="d-flex align-items-center">
+              <small id="storageLastUpdate" class="me-3 opacity-75">Chargement...</small>
+              <button id="refreshStorageBtn" class="btn btn-sm btn-outline-light" title="Actualiser">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-3">
+            <div id="storageLoadingSpinner" class="text-center py-3">
+              <div class="spinner-border text-info" role="status">
+                <span class="visually-hidden">Chargement des données de stockage...</span>
+              </div>
+            </div>
+            <div id="storageContent" style="display: none;">
+              <!-- Indicateur principal -->
+              <div class="row mb-3">
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Utilisation Globale</h6>
+                    <span id="storageMainStatus" class="badge badge-lg">
+                      <i id="storageMainIcon" class="fas fa-check-circle me-1"></i>
+                      <span id="storageMainText">Optimal</span>
+                    </span>
+                  </div>
+                  <div class="progress mb-2" style="height: 25px;">
+                    <div id="storageMainProgress" 
+                         class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" 
+                         style="width: 0%">
+                      <span id="storageMainProgressText" class="fw-bold">0%</span>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-between small text-muted">
+                    <span id="storageUsedText">0 MB utilisés</span>
+                    <span id="storageLimitText">0 MB disponibles</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Détails par catégorie -->
+              <div class="row">
+                <!-- Fichiers Uploads -->
+                <div class="col-md-6 mb-3">
+                  <div class="card border-secondary h-100">
+                    <div class="card-header bg-light py-2">
+                      <h6 class="mb-0">
+                        <i class="fas fa-file-upload text-primary me-2"></i>
+                        Fichiers Uploads
+                      </h6>
+                    </div>
+                    <div class="card-body p-3">
+                      <div class="progress mb-2" style="height: 20px;">
+                        <div id="uploadsProgress" 
+                             class="progress-bar" 
+                             role="progressbar" 
+                             style="width: 0%">
+                          <span id="uploadsProgressText" class="small">0%</span>
+                        </div>
+                      </div>
+                      <div class="d-flex justify-content-between small">
+                        <span id="uploadsUsed">0 MB</span>
+                        <span id="uploadsLimit">0 MB</span>
+                      </div>
+                      <div id="uploadsFileTypes" class="mt-2">
+                        <!-- Types de fichiers injectés ici -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Base de Données -->
+                <div class="col-md-6 mb-3">
+                  <div class="card border-secondary h-100">
+                    <div class="card-header bg-light py-2">
+                      <h6 class="mb-0">
+                        <i class="fas fa-database text-success me-2"></i>
+                        Base de Données
+                      </h6>
+                    </div>
+                    <div class="card-body p-3">
+                      <div class="progress mb-2" style="height: 20px;">
+                        <div id="databaseProgress" 
+                             class="progress-bar bg-success" 
+                             role="progressbar" 
+                             style="width: 0%">
+                          <span id="databaseProgressText" class="small">0%</span>
+                        </div>
+                      </div>
+                      <div class="d-flex justify-content-between small">
+                        <span id="databaseUsed">0 MB</span>
+                        <span id="databaseLimit">0 MB</span>
+                      </div>
+                      <div id="archivesStats" class="mt-2">
+                        <!-- Statistiques archives injectées ici -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Recommandations -->
+              <div id="storageRecommendations" class="mt-3">
+                <!-- Recommandations injectées ici -->
+              </div>
+              
+              <!-- Actions rapides -->
+              <div class="mt-3 text-center">
+                <button id="cleanOldFilesBtn" class="btn btn-outline-warning btn-sm me-2">
+                  <i class="fas fa-broom me-1"></i>
+                  Nettoyer les anciens fichiers
+                </button>
+                <button id="optimizeStorageBtn" class="btn btn-outline-info btn-sm">
+                  <i class="fas fa-magic me-1"></i>
+                  Optimiser le stockage
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Insérer avant le premier élément de contenu
+    const firstCard = container.querySelector(".card");
+    if (firstCard) {
+      firstCard.insertAdjacentHTML("beforebegin", storageHTML);
+    } else {
+      container.insertAdjacentHTML("afterbegin", storageHTML);
+    }
+
+    // Lier les événements
+    this.bindStorageEvents();
+  }
+
+  bindStorageEvents() {
+    // Bouton de rafraîchissement
+    const refreshBtn = document.getElementById("refreshStorageBtn");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", () => {
+        this.updateStorageData(true);
+      });
+    }
+
+    // Bouton nettoyage
+    const cleanBtn = document.getElementById("cleanOldFilesBtn");
+    if (cleanBtn) {
+      cleanBtn.addEventListener("click", () => {
+        this.showCleanupDialog();
+      });
+    }
+
+    // Bouton optimisation
+    const optimizeBtn = document.getElementById("optimizeStorageBtn");
+    if (optimizeBtn) {
+      optimizeBtn.addEventListener("click", () => {
+        this.showOptimizationDialog();
+      });
+    }
+  }
+
+  async updateStorageData(forceRefresh = false) {
+    const now = Date.now();
+
+    // Vérifier si on doit rafraîchir
+    if (
+      !forceRefresh &&
+      this.storageData &&
+      now - this.lastStorageUpdate < this.storageUpdateTimeout
+    ) {
+      return;
+    }
+
+    try {
+      console.log("[STORAGE] 📊 Récupération des données de stockage...");
+
+      // Afficher le spinner
+      const spinner = document.getElementById("storageLoadingSpinner");
+      const content = document.getElementById("storageContent");
+
+      if (spinner && content) {
+        spinner.style.display = "block";
+        content.style.display = "none";
+      }
+
+      // Récupérer les données
+      const response = await fetch("/api/storage/usage");
+      const data = await response.json();
+
+      if (data.success) {
+        this.storageData = data.storage;
+        this.lastStorageUpdate = now;
+
+        // Mettre à jour l'interface
+        this.renderStorageInterface();
+
+        console.log("[STORAGE] ✅ Données de stockage mises à jour");
+      } else {
+        throw new Error(
+          data.message || "Erreur lors de la récupération des données"
+        );
+      }
+    } catch (error) {
+      console.error("[STORAGE] ❌ Erreur:", error);
+      this.showStorageError(error.message);
+    } finally {
+      // Masquer le spinner
+      const spinner = document.getElementById("storageLoadingSpinner");
+      const content = document.getElementById("storageContent");
+
+      if (spinner && content) {
+        spinner.style.display = "none";
+        content.style.display = "block";
+      }
+    }
+  }
+
+  renderStorageInterface() {
+    if (!this.storageData) return;
+
+    const { total, uploads, database, performance, recommendations } =
+      this.storageData;
+
+    // Mise à jour de l'indicateur principal
+    this.updateMainStorageIndicator(total);
+
+    // Mise à jour des uploads
+    this.updateUploadsSection(uploads);
+
+    // Mise à jour de la base de données
+    this.updateDatabaseSection(database);
+
+    // Mise à jour des recommandations
+    this.updateRecommendations(recommendations);
+
+    // Mise à jour du timestamp
+    this.updateLastUpdateTime(performance.lastUpdate);
+  }
+
+  updateMainStorageIndicator(total) {
+    // Status badge
+    const statusElement = document.getElementById("storageMainStatus");
+    const iconElement = document.getElementById("storageMainIcon");
+    const textElement = document.getElementById("storageMainText");
+
+    if (statusElement && iconElement && textElement) {
+      statusElement.className = `badge badge-lg bg-${this.getStatusColor(
+        total.status
+      )}`;
+      iconElement.className = `fas ${total.statusIcon} me-1`;
+      textElement.textContent = this.getStatusText(total.status);
+    }
+
+    // Progress bar
+    const progressElement = document.getElementById("storageMainProgress");
+    const progressTextElement = document.getElementById(
+      "storageMainProgressText"
+    );
+
+    if (progressElement && progressTextElement) {
+      progressElement.style.width = `${total.percentage}%`;
+      progressElement.className = `progress-bar progress-bar-striped progress-bar-animated bg-${this.getStatusColor(
+        total.status
+      )}`;
+      progressTextElement.textContent = `${total.percentage}%`;
+    }
+
+    // Textes d'utilisation
+    const usedElement = document.getElementById("storageUsedText");
+    const limitElement = document.getElementById("storageLimitText");
+
+    if (usedElement && limitElement) {
+      usedElement.textContent = this.formatBytes(total.used) + " utilisés";
+      limitElement.textContent =
+        this.formatBytes(total.available) + " disponibles";
+    }
+  }
+
+  updateUploadsSection(uploads) {
+    // Progress bar
+    const progressElement = document.getElementById("uploadsProgress");
+    const progressTextElement = document.getElementById("uploadsProgressText");
+
+    if (progressElement && progressTextElement) {
+      progressElement.style.width = `${uploads.percentage}%`;
+      progressElement.className = `progress-bar bg-${this.getStatusColor(
+        uploads.status
+      )}`;
+      progressTextElement.textContent = `${uploads.percentage}%`;
+    }
+
+    // Textes
+    const usedElement = document.getElementById("uploadsUsed");
+    const limitElement = document.getElementById("uploadsLimit");
+
+    if (usedElement && limitElement) {
+      usedElement.textContent = this.formatBytes(uploads.size);
+      limitElement.textContent = this.formatBytes(uploads.limit);
+    }
+
+    // Types de fichiers
+    this.updateFileTypesDisplay(uploads.fileTypes);
+  }
+
+  updateDatabaseSection(database) {
+    // Progress bar
+    const progressElement = document.getElementById("databaseProgress");
+    const progressTextElement = document.getElementById("databaseProgressText");
+
+    if (progressElement && progressTextElement) {
+      progressElement.style.width = `${database.percentage}%`;
+      progressElement.className = `progress-bar bg-${this.getStatusColor(
+        database.status
+      )}`;
+      progressTextElement.textContent = `${database.percentage}%`;
+    }
+
+    // Textes
+    const usedElement = document.getElementById("databaseUsed");
+    const limitElement = document.getElementById("databaseLimit");
+
+    if (usedElement && limitElement) {
+      usedElement.textContent = this.formatBytes(database.size);
+      limitElement.textContent = this.formatBytes(database.limit);
+    }
+
+    // Statistiques des archives
+    this.updateArchivesStats(database.archives);
+  }
+
+  updateFileTypesDisplay(fileTypes) {
+    const container = document.getElementById("uploadsFileTypes");
+    if (!container || !fileTypes) return;
+
+    const sortedTypes = Object.entries(fileTypes)
+      .sort((a, b) => b[1].totalSize - a[1].totalSize)
+      .slice(0, 3); // Top 3
+
+    if (sortedTypes.length === 0) {
+      container.innerHTML = '<small class="text-muted">Aucun fichier</small>';
+      return;
+    }
+
+    container.innerHTML = sortedTypes
+      .map(
+        ([ext, data]) => `
+      <div class="small d-flex justify-content-between">
+        <span>${ext.toUpperCase()} (${data.count})</span>
+        <span class="text-muted">${this.formatBytes(data.totalSize)}</span>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  updateArchivesStats(archives) {
+    const container = document.getElementById("archivesStats");
+    if (!container || !archives) return;
+
+    const totalArchives = archives.totalArchives || 0;
+    const totalSize = archives.totalDataSize || 0;
+
+    container.innerHTML = `
+      <div class="small d-flex justify-content-between">
+        <span>Archives totales</span>
+        <span class="text-muted">${totalArchives.toLocaleString()}</span>
+      </div>
+      <div class="small d-flex justify-content-between">
+        <span>Données archives</span>
+        <span class="text-muted">${this.formatBytes(totalSize)}</span>
+      </div>
+    `;
+  }
+
+  updateRecommendations(recommendations) {
+    const container = document.getElementById("storageRecommendations");
+    if (!container) return;
+
+    if (!recommendations || recommendations.length === 0) {
+      container.innerHTML = "";
+      return;
+    }
+
+    container.innerHTML = recommendations
+      .map(
+        (rec) => `
+      <div class="alert alert-${
+        rec.type === "critical" ? "danger" : "warning"
+      } py-2 mb-2">
+        <div class="d-flex align-items-start">
+          <i class="fas fa-${
+            rec.type === "critical" ? "exclamation-triangle" : "info-circle"
+          } me-2 mt-1"></i>
+          <div class="flex-grow-1">
+            <strong>${rec.message}</strong>
+            <br>
+            <small>${rec.action}</small>
+          </div>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  updateLastUpdateTime(lastUpdate) {
+    const element = document.getElementById("storageLastUpdate");
+    if (!element) return;
+
+    const date = new Date(lastUpdate);
+    element.textContent = `Mis à jour: ${date.toLocaleTimeString("fr-FR")}`;
+  }
+
+  getStatusColor(status) {
+    switch (status) {
+      case "critical":
+        return "danger";
+      case "warning":
+        return "warning";
+      case "safe":
+      default:
+        return "success";
+    }
+  }
+
+  getStatusText(status) {
+    switch (status) {
+      case "critical":
+        return "Critique";
+      case "warning":
+        return "Attention";
+      case "safe":
+      default:
+        return "Optimal";
+    }
+  }
+
+  formatBytes(bytes) {
+    if (bytes === 0) return "0 B";
+
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  }
+
+  showStorageError(message) {
+    const content = document.getElementById("storageContent");
+    if (content) {
+      content.innerHTML = `
+        <div class="alert alert-danger text-center">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Erreur lors du chargement des données de stockage
+          <br>
+          <small>${message}</small>
+        </div>
+      `;
+    }
+  }
+
+  showCleanupDialog() {
+    const modal = document.createElement("div");
+    modal.className = "modal fade";
+    modal.innerHTML = `
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title">
+              <i class="fas fa-broom me-2"></i>
+              Nettoyage des Anciens Fichiers
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              Cette fonction supprime définitivement les fichiers uploadés qui sont plus anciens que la période spécifiée.
+            </div>
+            
+            <div class="mb-3">
+              <label for="cleanupDays" class="form-label">Supprimer les fichiers de plus de :</label>
+              <select id="cleanupDays" class="form-select">
+                <option value="7">7 jours</option>
+                <option value="15">15 jours</option>
+                <option value="30" selected>30 jours</option>
+                <option value="60">60 jours</option>
+                <option value="90">90 jours</option>
+              </select>
+            </div>
+            
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="dryRunCheck" checked>
+              <label class="form-check-label" for="dryRunCheck">
+                Mode simulation (voir ce qui serait supprimé sans supprimer)
+              </label>
+            </div>
+            
+            <div id="cleanupResults" style="display: none;">
+              <!-- Résultats injectés ici -->
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" id="startCleanupBtn" class="btn btn-warning">
+              <i class="fas fa-play me-1"></i>
+              Démarrer l'analyse
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    const modalInstance = new bootstrap.Modal(modal);
+
+    // Gérer le bouton de nettoyage
+    modal
+      .querySelector("#startCleanupBtn")
+      .addEventListener("click", async () => {
+        const days = parseInt(modal.querySelector("#cleanupDays").value);
+        const dryRun = modal.querySelector("#dryRunCheck").checked;
+
+        await this.performCleanup(days, dryRun, modal);
+      });
+
+    // Nettoyer le modal à sa fermeture
+    modal.addEventListener("hidden.bs.modal", () => {
+      document.body.removeChild(modal);
+    });
+
+    modalInstance.show();
+  }
+
+  async performCleanup(days, dryRun, modal) {
+    const btn = modal.querySelector("#startCleanupBtn");
+    const resultsDiv = modal.querySelector("#cleanupResults");
+
+    // Changer l'état du bouton
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>En cours...';
+
+    try {
+      console.log(
+        `[CLEANUP] Début du ${
+          dryRun ? "simulation" : "nettoyage"
+        } pour ${days} jours`
+      );
+
+      const response = await fetch("/api/storage/cleanup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ days, dryRun }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const cleanup = data.cleanup;
+
+        resultsDiv.style.display = "block";
+        resultsDiv.innerHTML = `
+          <div class="alert alert-${dryRun ? "info" : "success"}">
+            <h6><i class="fas fa-check-circle me-2"></i>${data.message}</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <strong>Fichiers scannés :</strong> ${cleanup.filesScanned.toLocaleString()}<br>
+                <strong>Fichiers ${
+                  dryRun ? "à supprimer" : "supprimés"
+                } :</strong> ${cleanup.filesDeleted.toLocaleString()}<br>
+                <strong>Espace ${
+                  dryRun ? "à libérer" : "libéré"
+                } :</strong> ${this.formatBytes(cleanup.spaceFreed)}
+              </div>
+              <div class="col-md-6">
+                ${
+                  cleanup.errors.length > 0
+                    ? `
+                  <strong class="text-warning">Erreurs :</strong> ${cleanup.errors.length}<br>
+                `
+                    : ""
+                }
+                ${
+                  cleanup.deletedFiles.length > 0
+                    ? `
+                  <details class="mt-2">
+                    <summary>Voir les fichiers concernés (${
+                      cleanup.deletedFiles.length
+                    })</summary>
+                    <ul class="small mt-2">
+                      ${cleanup.deletedFiles
+                        .slice(0, 10)
+                        .map(
+                          (file) => `
+                        <li>${file.name} (${this.formatBytes(file.size)})</li>
+                      `
+                        )
+                        .join("")}
+                      ${
+                        cleanup.deletedFiles.length > 10
+                          ? `<li>... et ${
+                              cleanup.deletedFiles.length - 10
+                            } autres</li>`
+                          : ""
+                      }
+                    </ul>
+                  </details>
+                `
+                    : ""
+                }
+              </div>
+            </div>
+          </div>
+        `;
+
+        if (dryRun && cleanup.filesDeleted > 0) {
+          btn.innerHTML =
+            '<i class="fas fa-trash me-1"></i>Supprimer maintenant';
+          btn.className = "btn btn-danger";
+          btn.disabled = false;
+
+          // Changer l'action du bouton pour un vrai nettoyage
+          btn.onclick = async () => {
+            modal.querySelector("#dryRunCheck").checked = false;
+            await this.performCleanup(days, false, modal);
+          };
+        } else {
+          btn.innerHTML = '<i class="fas fa-check me-1"></i>Terminé';
+
+          // Actualiser les données de stockage
+          await this.updateStorageData(true);
+        }
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("[CLEANUP] Erreur:", error);
+      resultsDiv.style.display = "block";
+      resultsDiv.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Erreur lors du nettoyage : ${error.message}
+        </div>
+      `;
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-redo me-1"></i>Réessayer';
+    }
+  }
+
+  showOptimizationDialog() {
+    const modal = document.createElement("div");
+    modal.className = "modal fade";
+    modal.innerHTML = `
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-magic me-2"></i>
+              Optimisation du Stockage
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              Cette fonction optimise automatiquement le stockage en :
+              <ul class="mb-0 mt-2">
+                <li>Compactant la base de données</li>
+                <li>Réduisant la taille des archives anciennes</li>
+                <li>Supprimant les fichiers orphelins</li>
+              </ul>
+            </div>
+            
+            <div id="optimizationProgress" style="display: none;">
+              <div class="progress mb-3">
+                <div id="optimizationProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+              </div>
+              <div id="optimizationSteps"></div>
+            </div>
+            
+            <div id="optimizationResults" style="display: none;">
+              <!-- Résultats injectés ici -->
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" id="startOptimizationBtn" class="btn btn-info">
+              <i class="fas fa-magic me-1"></i>
+              Démarrer l'optimisation
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    const modalInstance = new bootstrap.Modal(modal);
+
+    // Gérer le bouton d'optimisation
+    modal
+      .querySelector("#startOptimizationBtn")
+      .addEventListener("click", async () => {
+        await this.performOptimization(modal);
+      });
+
+    // Nettoyer le modal à sa fermeture
+    modal.addEventListener("hidden.bs.modal", () => {
+      document.body.removeChild(modal);
+    });
+
+    modalInstance.show();
+  }
+
+  async performOptimization(modal) {
+    const btn = modal.querySelector("#startOptimizationBtn");
+    const progressDiv = modal.querySelector("#optimizationProgress");
+    const resultsDiv = modal.querySelector("#optimizationResults");
+    const progressBar = modal.querySelector("#optimizationProgressBar");
+    const stepsDiv = modal.querySelector("#optimizationSteps");
+
+    // Changer l'état du bouton
+    btn.disabled = true;
+    btn.innerHTML =
+      '<i class="fas fa-spinner fa-spin me-1"></i>Optimisation...';
+
+    // Afficher la barre de progression
+    progressDiv.style.display = "block";
+
+    try {
+      console.log("[OPTIMIZATION] Début de l'optimisation");
+
+      // Simulation des étapes
+      const steps = [
+        "Analyse de la base de données...",
+        "Compaction des archives...",
+        "Nettoyage des fichiers orphelins...",
+        "Finalisation...",
+      ];
+
+      let currentStep = 0;
+
+      const updateProgress = (step, percentage) => {
+        progressBar.style.width = `${percentage}%`;
+        stepsDiv.innerHTML = `
+          <small class="text-muted">
+            Étape ${step}/${steps.length}: ${steps[step - 1]}
+          </small>
+        `;
+      };
+
+      // Démarrer l'optimisation
+      updateProgress(1, 25);
+
+      const response = await fetch("/api/storage/optimize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      updateProgress(4, 100);
+
+      const data = await response.json();
+
+      if (data.success) {
+        const optimization = data.optimization;
+
+        progressDiv.style.display = "none";
+        resultsDiv.style.display = "block";
+
+        resultsDiv.innerHTML = `
+          <div class="alert alert-success">
+            <h6><i class="fas fa-check-circle me-2"></i>${data.message}</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Base de données :</h6>
+                <span class="badge bg-${
+                  optimization.databaseOptimization.status === "success"
+                    ? "success"
+                    : "danger"
+                }">
+                  ${
+                    optimization.databaseOptimization.status === "success"
+                      ? "Optimisée"
+                      : "Erreur"
+                  }
+                </span>
+                <small class="d-block text-muted">${
+                  optimization.databaseOptimization.message
+                }</small>
+              </div>
+              <div class="col-md-6">
+                <h6>Archives :</h6>
+                ${
+                  optimization.archivesCompaction.status === "success"
+                    ? `
+                  <span class="badge bg-success">Compactées</span>
+                  <small class="d-block text-muted">
+                    ${
+                      optimization.archivesCompaction.archivesProcessed
+                    } archives traitées<br>
+                    ${this.formatBytes(
+                      optimization.archivesCompaction.spaceOptimized
+                    )} économisés
+                  </small>
+                `
+                    : `
+                  <span class="badge bg-warning">Erreur</span>
+                  <small class="d-block text-muted">${optimization.archivesCompaction.message}</small>
+                `
+                }
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6>Fichiers orphelins :</h6>
+                ${
+                  optimization.orphanedFilesCleanup.status === "success"
+                    ? `
+                  <span class="badge bg-success">Nettoyés</span>
+                  <small class="d-block text-muted">
+                    ${
+                      optimization.orphanedFilesCleanup.filesDeleted
+                    } fichiers supprimés, 
+                    ${this.formatBytes(
+                      optimization.orphanedFilesCleanup.spaceFreed
+                    )} libérés
+                  </small>
+                `
+                    : `
+                  <span class="badge bg-warning">Erreur</span>
+                  <small class="d-block text-muted">${optimization.orphanedFilesCleanup.message}</small>
+                `
+                }
+              </div>
+            </div>
+            <hr>
+            <small class="text-muted">
+              Optimisation terminée en ${optimization.optimizationTime}ms
+            </small>
+          </div>
+        `;
+
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>Terminé';
+
+        // Actualiser les données de stockage
+        await this.updateStorageData(true);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("[OPTIMIZATION] Erreur:", error);
+
+      progressDiv.style.display = "none";
+      resultsDiv.style.display = "block";
+      resultsDiv.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Erreur lors de l'optimisation : ${error.message}
+        </div>
+      `;
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-redo me-1"></i>Réessayer';
+    }
+  }
+
+  // Nettoyer les intervalles lors de la destruction
+  destroy() {
+    if (this.storageUpdateInterval) {
+      clearInterval(this.storageUpdateInterval);
+      this.storageUpdateInterval = null;
+    }
+  }
+
+  // ===============================
+  // MÉTHODES EXISTANTES (conservées)
+  // ===============================
 
   bindEvents() {
     // Vérifier si nous sommes sur la page archives avant de lier les événements
@@ -283,6 +1212,9 @@ class ArchivesManager {
         // Afficher les résultats filtrés
         this.renderCurrentView();
         this.renderPagination();
+
+        // Nouveau: Mettre à jour les données de stockage après chargement des archives
+        await this.updateStorageData();
 
         console.log(
           "[ARCHIVES] Rendu terminé - Archives filtrées:",
