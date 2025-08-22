@@ -54,46 +54,33 @@
                 <i class="fas fa-warehouse me-1"></i>Acconier
               </a>
             </li>
+            <li class="nav-item">
+              <button
+                id="storageMonitorBtn"
+                class="btn btn-outline-light btn-sm ms-2 position-relative"
+              >
+                <i class="fas fa-database me-1"></i>
+                Stockage
+                <span class="badge rounded-pill bg-success ms-1">
+                  <span id="storagePercentageQuick">--</span>%
+                </span>
+              </button>
+            </li>
           </ul>
         </div>
       </div>
     </header>
 
     <!-- Conteneur principal -->
-    <div class="container-fluid py-4">
-      <!-- Bouton Stockage (remplace le panneau) -->
-      <div class="row mb-4">
-        <div class="col-12">
-          <div class="d-flex justify-content-between align-items-center">
-            <h2 class="mb-0 text-primary">
-              <i class="fas fa-archive me-2"></i>Archives de la Plateforme
-            </h2>
-            <button
-              id="storageMonitorBtn"
-              class="btn btn-outline-info btn-lg position-relative"
-            >
-              <i class="fas fa-database me-2"></i>
-              Niveau de Stockage
-              <span
-                id="storageStatusBadge"
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success"
-              >
-                <span id="storagePercentageQuick">--</span>%
-              </span>
-            </button>
-          </div>
-          <hr class="my-3" />
-        </div>
-      </div>
-
+    <div class="container-fluid py-3">
       <!-- Section des filtres -->
-      <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-light">
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-light py-2">
           <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
+            <h6 class="mb-0">
               <i class="fas fa-filter me-2 text-primary"></i>Recherche et
               Filtres
-            </h5>
+            </h6>
             <div class="d-flex align-items-center">
               <small class="text-muted me-3" id="totalArchivesCount">
                 <i class="fas fa-archive me-1"></i>
@@ -105,104 +92,100 @@
             </div>
           </div>
         </div>
-        <div class="card-body">
+        <div class="card-body py-3">
           <!-- Filtres principaux -->
-          <div class="row g-3 mb-3">
+          <div class="row g-2 mb-2">
             <div class="col-lg-5">
-              <label for="searchInput" class="form-label fw-semibold">
+              <label for="searchInput" class="form-label fw-semibold small">
                 <i class="fas fa-search me-1 text-primary"></i>Recherche
                 générale
               </label>
               <input
                 type="text"
-                class="form-control form-control-lg"
+                class="form-control"
                 id="searchInput"
                 placeholder="🔍 ID, référence, client, utilisateur..."
               />
             </div>
             <div class="col-lg-7">
               <div class="row g-2">
-                <div class="col-md-4">
-                  <label for="actionFilter" class="form-label fw-semibold"
-                    >Type d'action</label
+                <div class="col-md-3">
+                  <label for="actionFilter" class="form-label fw-semibold small"
+                    >Action</label
                   >
-                  <select class="form-select" id="actionFilter">
-                    <option value="">🗂️ Toutes les actions</option>
+                  <select class="form-control" id="actionFilter">
+                    <option value="">🗂️ Toutes</option>
                     <option value="suppression">🗑️ Supprimés</option>
                     <option value="livraison">✅ Livrés</option>
                     <option value="mise_en_livraison">
                       🚚 Mis en livraison
                     </option>
-                    <option value="ordre_livraison_etabli">
-                      📋 Ordres de livraison
-                    </option>
+                    <option value="ordre_livraison_etabli">📋 Ordres</option>
                   </select>
                 </div>
-                <div class="col-md-4">
-                  <label for="roleFilter" class="form-label fw-semibold"
-                    >Rôle/Source</label
+                <div class="col-md-3">
+                  <label for="roleFilter" class="form-label fw-semibold small"
+                    >Rôle</label
                   >
-                  <select class="form-select" id="roleFilter">
-                    <option value="">👥 Tous les rôles</option>
-                    <option value="Agent Acconier">👤 Agent Acconier</option>
-                    <option value="Responsable Acconier">
-                      👨‍💼 Resp. Acconier
-                    </option>
-                    <option value="Responsable Livraison">
-                      🚛 Resp. Livraison
-                    </option>
+                  <select class="form-control" id="roleFilter">
+                    <option value="">👥 Tous</option>
+                    <option value="Agent Acconier">👤 Agent</option>
+                    <option value="Responsable Acconier">👨‍💼 Resp. Acc</option>
+                    <option value="Responsable Livraison">🚛 Resp. Liv</option>
                   </select>
                 </div>
-                <div class="col-md-4">
-                  <label for="itemsPerPage" class="form-label fw-semibold"
-                    >Affichage</label
+                <div class="col-md-3">
+                  <label for="dateStart" class="form-label fw-semibold small"
+                    >Date début</label
                   >
-                  <select class="form-select" id="itemsPerPage">
-                    <option value="25">25 par page</option>
-                    <option value="50" selected>50 par page</option>
-                    <option value="100">100 par page</option>
-                  </select>
+                  <input
+                    type="date"
+                    class="form-control form-control-sm"
+                    id="dateStart"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label for="dateEnd" class="form-label fw-semibold small"
+                    >Date fin</label
+                  >
+                  <input
+                    type="date"
+                    class="form-control form-control-sm"
+                    id="dateEnd"
+                  />
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Filtres de dates -->
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label for="dateStart" class="form-label fw-semibold">
-                <i class="fas fa-calendar-alt me-1 text-success"></i>Date de
-                début
-              </label>
-              <input type="date" class="form-control" id="dateStart" />
-            </div>
-            <div class="col-md-6">
-              <label for="dateEnd" class="form-label fw-semibold">
-                <i class="fas fa-calendar-alt me-1 text-danger"></i>Date de fin
-              </label>
-              <input type="date" class="form-control" id="dateEnd" />
-            </div>
-          </div>
-
-          <!-- Boutons d'action -->
+          <!-- Actions -->
           <div
-            class="d-flex flex-wrap gap-2 justify-content-between align-items-center"
+            class="d-flex flex-wrap gap-2 justify-content-between align-items-center mt-2"
           >
             <div class="d-flex flex-wrap gap-2">
               <button
                 type="button"
-                class="btn btn-primary btn-lg"
+                class="btn btn-primary btn-sm"
                 id="searchBtn"
               >
                 <i class="fas fa-search me-1"></i>Rechercher
               </button>
               <button
                 type="button"
-                class="btn btn-outline-secondary"
+                class="btn btn-outline-secondary btn-sm"
                 id="resetBtn"
               >
-                <i class="fas fa-undo me-1"></i>Réinitialiser
+                <i class="fas fa-undo me-1"></i>Reset
               </button>
+              <select
+                class="form-control form-control-sm"
+                id="itemsPerPage"
+                style="width: auto"
+              >
+                <option value="25">25/page</option>
+                <option value="50" selected>50/page</option>
+                <option value="100">100/page</option>
+              </select>
             </div>
             <div class="d-flex align-items-center text-muted">
               <i class="fas fa-info-circle me-1"></i>
@@ -229,7 +212,7 @@
                 type="button"
                 role="tab"
               >
-                <i class="fas fa-list me-1"></i>Toutes les Archives
+                <i class="fas fa-list me-1"></i>Toutes
                 <span class="badge bg-secondary ms-1" id="allCount">0</span>
               </button>
             </li>
@@ -242,7 +225,7 @@
                 type="button"
                 role="tab"
               >
-                <i class="fas fa-trash me-1"></i>Dossiers Supprimés
+                <i class="fas fa-trash me-1"></i>Supprimés
                 <span class="badge bg-danger ms-1" id="deletedCount">0</span>
               </button>
             </li>
@@ -255,7 +238,7 @@
                 type="button"
                 role="tab"
               >
-                <i class="fas fa-check-circle me-1"></i>Dossiers Livrés
+                <i class="fas fa-check-circle me-1"></i>Livrés
                 <span class="badge bg-success ms-1" id="deliveredCount">0</span>
               </button>
             </li>
@@ -268,7 +251,7 @@
                 type="button"
                 role="tab"
               >
-                <i class="fas fa-truck-loading me-1"></i>Mis en Livraison
+                <i class="fas fa-truck-loading me-1"></i>En Livraison
                 <span class="badge bg-warning ms-1" id="shippingCount">0</span>
               </button>
             </li>
@@ -281,13 +264,13 @@
                 type="button"
                 role="tab"
               >
-                <i class="fas fa-file-alt me-1"></i>Ordres de Livraison
+                <i class="fas fa-file-alt me-1"></i>Ordres
                 <span class="badge bg-info ms-1" id="ordersCount">0</span>
               </button>
             </li>
           </ul>
         </div>
-        <div class="card-body">
+        <div class="card-body py-3">
           <!-- Contenu des onglets -->
           <div class="tab-content" id="archivesTabContent">
             <!-- Onglet Toutes les Archives -->
