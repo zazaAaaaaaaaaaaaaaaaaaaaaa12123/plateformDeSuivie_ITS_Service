@@ -100,6 +100,13 @@ class ArchivesManager {
         this.selectedTab = e.target.id.replace("-tab", "");
         this.currentPage = 1;
 
+        // Gestion spéciale pour l'onglet "Mis en livraison"
+        if (this.selectedTab === "shipping") {
+          console.log("[ARCHIVES] Onglet 'Mis en livraison' sélectionné - chargement des dossiers en cours de livraison");
+          this.loadShippingDeliveries();
+          return;
+        }
+
         // Si on change d'onglet, adapter les filtres en conséquence
         const actionFilter = document.getElementById("actionFilter");
         if (actionFilter && this.selectedTab !== "all") {
@@ -107,7 +114,6 @@ class ArchivesManager {
           const tabToActionMap = {
             deleted: "suppression",
             delivered: "livraison",
-            shipping: "mise_en_livraison",
             orders: "ordre_livraison_etabli",
           };
 
@@ -303,35 +309,132 @@ class ArchivesManager {
     }
   }
 
+  async loadShippingDeliveries() {
+    try {
+      this.showLoading(true);
+
+      console.log("[ARCHIVES] Chargement des dossiers mis en livraison...");
+
+      // Charger les dossiers de livraison qui sont "mis en livraison" mais pas encore "livrés"
+      const response = await fetch("/api/deliveries/shipping-status");
+      const data = await response.json();
+
+      console.log("[ARCHIVES] Réponse reçue pour les livraisons:", {
+        success: data.success,
+        deliveriesCount: data.deliveries ? data.deliveries.length : 0,
+      });
+
+      if (data.success) {
+        // Convertir les livraisons en format archive pour l'affichage
+        this.filteredArchives = data.deliveries.map(delivery => ({
+          id: delivery.id,
+          dossier_reference: delivery.dossier_number || delivery.container_number || `DEL-${delivery.id}`,
+          intitule: delivery.container_type_and_content || "",
+          client_name: delivery.client_name || "",
+          role_source: "Responsable Livraison",
+          page_origine: "resp_liv.html",
+          action_type: "mise_en_livraison",
+          archived_by: delivery.employee_name || "",
+          archived_by_email: "",
+          archived_at: delivery.created_at || delivery.updated_at || new Date().toISOString(),
+          dossier_data: delivery,
+          metadata: {
+            original_table: "livraison_conteneur",
+            delivery_status: delivery.delivery_status_acconier,
+            is_live_delivery: true
+          },
+          is_restorable: false, // Les livraisons en cours ne sont pas restaurables
+          container_numbers: delivery.container_number,
+          transporter: delivery.transporter
+        }));
+
+        // Pas de pagination pour les livraisons en cours, on affiche tout
+        this.pagination = {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: this.filteredArchives.length,
+          itemsPerPage: this.filteredArchives.length
+        };
+
+        // Mettre à jour les compteurs
+        this.updateCounts();
+
+        // Afficher les résultats
+        this.renderCurrentView();
+        this.renderPagination();
+
+        console.log(
+          "[ARCHIVES] Rendu terminé - Livraisons en cours:",
+          this.filteredArchives.length
+        );
+      } else {
+        console.error("[ARCHIVES] Erreur serveur:", data.message);
+        this.showNotification(
+          data.message || "Erreur lors du chargement des livraisons en cours",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des livraisons en cours:", error);
+      this.showNotification("Erreur de connexion", "error");
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
   updateCounts() {
-    const counts = {
+    // Pour les archives normales
+    const archiveCounts = {
       all: this.allArchives.length,
       suppression: this.allArchives.filter(
         (a) => a.action_type === "suppression"
       ).length,
       livraison: this.allArchives.filter((a) => a.action_type === "livraison")
         .length,
-      mise_en_livraison: this.allArchives.filter(
-        (a) => a.action_type === "mise_en_livraison"
-      ).length,
       ordre_livraison_etabli: this.allArchives.filter(
         (a) => a.action_type === "ordre_livraison_etabli"
       ).length,
     };
 
-    console.log("[ARCHIVES] Compteurs mis à jour:", counts);
+    // Pour les livraisons en cours (mise_en_livraison), il faut compter depuis la table des livraisons
+    this.loadShippingCount().then(shippingCount => {
+      const counts = {
+        ...archiveCounts,
+        mise_en_livraison: shippingCount,
+        all: archiveCounts.all + shippingCount // Ajouter les livraisons en cours au total
+      };
 
-    document.getElementById("allCount").textContent = counts.all;
-    document.getElementById("deletedCount").textContent = counts.suppression;
-    document.getElementById("deliveredCount").textContent = counts.livraison;
-    document.getElementById("shippingCount").textContent =
-      counts.mise_en_livraison;
-    document.getElementById("ordersCount").textContent =
-      counts.ordre_livraison_etabli;
+      console.log("[ARCHIVES] Compteurs mis à jour:", counts);
+
+      document.getElementById("allCount").textContent = counts.all;
+      document.getElementById("deletedCount").textContent = counts.suppression;
+      document.getElementById("deliveredCount").textContent = counts.livraison;
+      document.getElementById("shippingCount").textContent = counts.mise_en_livraison;
+      document.getElementById("ordersCount").textContent = counts.ordre_livraison_etabli;
+    });
+  }
+
+  async loadShippingCount() {
+    try {
+      const response = await fetch("/api/deliveries/shipping-count");
+      const data = await response.json();
+      return data.success ? data.count : 0;
+    } catch (error) {
+      console.error("Erreur lors du comptage des livraisons en cours:", error);
+      return 0;
+    }
   }
 
   renderCurrentView() {
     let archivesToRender = this.filteredArchives;
+
+    // Gestion spéciale pour l'onglet "Mis en livraison"
+    if (this.selectedTab === "shipping") {
+      console.log("[ARCHIVES] Rendu spécial pour l'onglet Mis en livraison");
+      this.renderTable(this.filteredArchives);
+      this.updatePaginationInfo();
+      return;
+    }
 
     // Si des filtres sont appliqués côté serveur, utiliser directement les données filtrées
     const hasServerFilters =
@@ -361,11 +464,6 @@ class ArchivesManager {
         case "delivered":
           archivesToRender = this.filteredArchives.filter(
             (a) => a.action_type === "livraison"
-          );
-          break;
-        case "shipping":
-          archivesToRender = this.filteredArchives.filter(
-            (a) => a.action_type === "mise_en_livraison"
           );
           break;
         case "orders":
