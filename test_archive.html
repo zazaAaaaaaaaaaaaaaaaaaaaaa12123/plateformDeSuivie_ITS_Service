@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Archivage Automatique</title>
+  </head>
+  <body>
+    <h1>Test de l'Archivage Automatique des Ordres de Livraison</h1>
+
+    <div>
+      <h2>1. Test de création d'ordre de livraison</h2>
+      <button onclick="createTestOrder()">Créer un ordre de test</button>
+      <div id="createResult"></div>
+    </div>
+
+    <div>
+      <h2>2. Vérifier les archives</h2>
+      <button onclick="checkArchives()">Vérifier les archives</button>
+      <div id="archiveResult"></div>
+    </div>
+
+    <script>
+      async function createTestOrder() {
+        const resultDiv = document.getElementById("createResult");
+        resultDiv.innerHTML = "Création en cours...";
+
+        try {
+          const formData = new FormData();
+          formData.append("employee_name", "Agent Test");
+          formData.append("client_name", "Client Test");
+          formData.append("container_number", "TEST" + Date.now());
+          formData.append("status", "en_attente");
+          formData.append("delivery_date", "2025-08-22");
+          formData.append("delivery_time", "14:30");
+          formData.append("dossier_number", "DOSSIER-TEST-" + Date.now());
+          formData.append("container_type_and_content", "Test");
+          formData.append("lieu", "Test Location");
+          formData.append("number_of_containers", "1");
+
+          const response = await fetch("/deliveries/validate", {
+            method: "POST",
+            body: formData,
+          });
+
+          const result = await response.json();
+          resultDiv.innerHTML = `
+                    <p>Statut: ${response.status}</p>
+                    <p>Résultat: ${JSON.stringify(result, null, 2)}</p>
+                `;
+
+          if (result.success) {
+            setTimeout(checkArchives, 2000); // Vérifier les archives après 2 secondes
+          }
+        } catch (error) {
+          resultDiv.innerHTML = `Erreur: ${error.message}`;
+        }
+      }
+
+      async function checkArchives() {
+        const resultDiv = document.getElementById("archiveResult");
+        resultDiv.innerHTML = "Vérification des archives...";
+
+        try {
+          const response = await fetch("/api/archives");
+          const archives = await response.json();
+
+          // Filtrer les ordres de livraison
+          const ordresLivraison = archives.filter(
+            (archive) => archive.action_type === "ordre_livraison_etabli"
+          );
+
+          resultDiv.innerHTML = `
+                    <p>Total archives: ${archives.length}</p>
+                    <p>Ordres de livraison: ${ordresLivraison.length}</p>
+                    <pre>${JSON.stringify(ordresLivraison, null, 2)}</pre>
+                `;
+        } catch (error) {
+          resultDiv.innerHTML = `Erreur: ${error.message}`;
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -4712,8 +4712,24 @@ app.get("/api/archives", async (req, res) => {
       paramIndex++;
     }
 
+    // === CORRECTION DES FILTRES SELON LA LOGIQUE MÉTIER ===
     if (action_type && action_type.trim()) {
-      whereConditions.push(`action_type = $${paramIndex}`);
+      if (action_type === "ordre_livraison_etabli") {
+        // Pour l'onglet "Ordres de Livraison" : dossiers créés via interfaceFormulaireEmployer.html
+        whereConditions.push(`(
+          action_type = $${paramIndex} OR 
+          (page_origine = 'Interface Formulaire Employé' AND dossier_data IS NOT NULL)
+        )`);
+      } else if (action_type === "mise_en_livraison") {
+        // Pour l'onglet "Mise en Livraison" : dossiers de resp_liv.html non livrés
+        whereConditions.push(`(
+          action_type = $${paramIndex} AND 
+          page_origine != 'Interface Formulaire Employé'
+        )`);
+      } else {
+        // Pour les autres types, filtrage normal
+        whereConditions.push(`action_type = $${paramIndex}`);
+      }
       queryParams.push(action_type);
       paramIndex++;
     }
@@ -5086,6 +5102,130 @@ app.post("/api/archives/:id/restore", async (req, res) => {
 });
 
 // Supprimer définitivement une archive
+// Route de correction pour migrer les archives mal catégorisées
+app.post("/api/archives/migrate-data", async (req, res) => {
+  try {
+    const client = await pool.connect();
+
+    console.log("[MIGRATION] Début de la migration des données d'archives...");
+
+    // Étape 1: Identifier les dossiers créés via interfaceFormulaireEmployer.html
+    const ordersQuery = `
+      UPDATE archives_dossiers 
+      SET action_type = 'ordre_livraison_etabli',
+          page_origine = 'Interface Formulaire Employé'
+      WHERE (
+        dossier_data::text ILIKE '%interfaceFormulaireEmployer%' OR
+        page_origine = 'Interface Formulaire Employé' OR
+        (dossier_data->'form_data' IS NOT NULL AND 
+         dossier_data->'form_data'->>'source_page' = 'interfaceFormulaireEmployer')
+      ) AND action_type != 'ordre_livraison_etabli'
+      RETURNING id, dossier_reference, action_type;
+    `;
+
+    const ordersResult = await client.query(ordersQuery);
+
+    // Étape 2: Corriger les dossiers de mise en livraison
+    const miseEnLivraisonQuery = `
+      UPDATE archives_dossiers 
+      SET action_type = 'mise_en_livraison',
+          page_origine = 'Responsable Livraison'
+      WHERE (
+        dossier_data::text ILIKE '%resp_liv%' OR
+        page_origine = 'Responsable Livraison' OR
+        (action_type = 'ordre_livraison_etabli' AND page_origine != 'Interface Formulaire Employé')
+      ) AND action_type != 'mise_en_livraison'
+      RETURNING id, dossier_reference, action_type;
+    `;
+
+    const miseEnLivraisonResult = await client.query(miseEnLivraisonQuery);
+
+    client.release();
+
+    console.log("[MIGRATION] Migration terminée:", {
+      ordersUpdated: ordersResult.rows.length,
+      miseEnLivraisonUpdated: miseEnLivraisonResult.rows.length,
+    });
+
+    res.json({
+      success: true,
+      message: "Migration des données terminée",
+      results: {
+        ordres_livraison_corriges: ordersResult.rows.length,
+        mise_en_livraison_corriges: miseEnLivraisonResult.rows.length,
+        orders_updated: ordersResult.rows,
+        mise_en_livraison_updated: miseEnLivraisonResult.rows,
+      },
+    });
+  } catch (error) {
+    console.error("[MIGRATION] Erreur:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la migration",
+      error: error.message,
+    });
+  }
+});
+
+// Route de vérification pour analyser les données d'archives
+app.get("/api/archives/analyze", async (req, res) => {
+  try {
+    const client = await pool.connect();
+
+    // Analyser la répartition actuelle
+    const analysisQuery = `
+      SELECT 
+        action_type,
+        page_origine,
+        COUNT(*) as count,
+        array_agg(dossier_reference ORDER BY created_at DESC LIMIT 3) as sample_references
+      FROM archives_dossiers 
+      GROUP BY action_type, page_origine
+      ORDER BY action_type, page_origine;
+    `;
+
+    const analysisResult = await client.query(analysisQuery);
+
+    // Vérifier les dossiers potentiellement mal catégorisés
+    const problematicQuery = `
+      SELECT 
+        id, dossier_reference, action_type, page_origine,
+        CASE 
+          WHEN dossier_data::text ILIKE '%interfaceFormulaireEmployer%' THEN 'should_be_ordre_livraison'
+          WHEN dossier_data::text ILIKE '%resp_liv%' THEN 'should_be_mise_en_livraison'
+          ELSE 'unknown'
+        END as suggested_category
+      FROM archives_dossiers 
+      WHERE (
+        (dossier_data::text ILIKE '%interfaceFormulaireEmployer%' AND action_type != 'ordre_livraison_etabli') OR
+        (dossier_data::text ILIKE '%resp_liv%' AND action_type != 'mise_en_livraison')
+      )
+      ORDER BY created_at DESC;
+    `;
+
+    const problematicResult = await client.query(problematicQuery);
+
+    client.release();
+
+    res.json({
+      success: true,
+      analysis: analysisResult.rows,
+      problematic_entries: problematicResult.rows,
+      summary: {
+        total_problematic: problematicResult.rows.length,
+        needs_migration: problematicResult.rows.length > 0,
+      },
+    });
+  } catch (error) {
+    console.error("[ANALYSIS] Erreur:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de l'analyse",
+      error: error.message,
+    });
+  }
+});
+
 app.delete("/api/archives/:id", async (req, res) => {
   try {
     const { id } = req.params;
