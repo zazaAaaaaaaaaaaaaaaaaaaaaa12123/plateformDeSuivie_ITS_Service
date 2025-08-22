@@ -52,101 +52,117 @@ class ArchivesManager {
   async initializeStorageMonitoring() {
     console.log("[STORAGE] 🚀 Initialisation du monitoring du stockage...");
 
-    // Créer l'interface de stockage si elle n'existe pas
+    // Créer le gestionnaire du bouton de stockage
     this.createStorageInterface();
 
-    // Charger les données initiales
-    await this.updateStorageData();
+    // Charger les données pour le badge du bouton
+    await this.updateStorageButtonBadge();
 
-    // Mettre à jour périodiquement
+    // Mettre à jour périodiquement le badge
     this.storageUpdateInterval = setInterval(() => {
-      this.updateStorageData();
+      this.updateStorageButtonBadge();
     }, this.storageUpdateTimeout);
 
     console.log("[STORAGE] ✅ Monitoring du stockage initialisé");
   }
 
   createStorageInterface() {
-    const container = document.querySelector(".container-fluid");
-    if (!container) return;
-
-    // Vérifier si l'interface existe déjà
-    if (document.getElementById("storageMonitorContainer")) {
-      return;
+    // Lier l'événement click au bouton existant
+    const storageBtn = document.getElementById("storageMonitorBtn");
+    if (storageBtn) {
+      storageBtn.addEventListener("click", () => {
+        this.showStorageModal();
+      });
     }
+  }
 
-    const storageHTML = `
-      <div id="storageMonitorContainer" class="mb-4">
-        <div class="card border-info">
-          <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">
+  showStorageModal() {
+    // Créer la modal de stockage
+    const modal = document.createElement("div");
+    modal.className = "modal fade";
+    modal.id = "storageModal";
+    modal.innerHTML = `
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title">
               <i class="fas fa-database me-2"></i>
-              Niveau de Stockage Plateforme
-            </h6>
-            <div class="d-flex align-items-center">
-              <small id="storageLastUpdate" class="me-3 opacity-75">Chargement...</small>
-              <button id="refreshStorageBtn" class="btn btn-sm btn-outline-light" title="Actualiser">
-                <i class="fas fa-sync-alt"></i>
-              </button>
-            </div>
+              Niveau de Stockage - Plateforme ITS Service
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
-          <div class="card-body p-3">
-            <div id="storageLoadingSpinner" class="text-center py-3">
-              <div class="spinner-border text-info" role="status">
+          <div class="modal-body p-4">
+            <div id="storageModalLoading" class="text-center py-5">
+              <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status">
                 <span class="visually-hidden">Chargement des données de stockage...</span>
               </div>
+              <p class="mt-3 text-muted">Calcul de l'utilisation du stockage...</p>
             </div>
-            <div id="storageContent" style="display: none;">
+            <div id="storageModalContent" style="display: none;">
               <!-- Indicateur principal -->
-              <div class="row mb-3">
+              <div class="row mb-4">
                 <div class="col-12">
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="mb-0">Utilisation Globale</h6>
-                    <span id="storageMainStatus" class="badge badge-lg">
-                      <i id="storageMainIcon" class="fas fa-check-circle me-1"></i>
-                      <span id="storageMainText">Optimal</span>
-                    </span>
-                  </div>
-                  <div class="progress mb-2" style="height: 25px;">
-                    <div id="storageMainProgress" 
-                         class="progress-bar progress-bar-striped progress-bar-animated" 
-                         role="progressbar" 
-                         style="width: 0%">
-                      <span id="storageMainProgressText" class="fw-bold">0%</span>
+                  <div class="card border-0 bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white text-center py-4">
+                      <h3 class="mb-3">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Utilisation Globale du Stockage
+                      </h3>
+                      <div class="row align-items-center">
+                        <div class="col-md-8">
+                          <div class="progress mb-3" style="height: 30px; background: rgba(255,255,255,0.2);">
+                            <div id="storageModalMainProgress" 
+                                 class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 style="width: 0%; background: rgba(255,255,255,0.9);">
+                              <span id="storageModalMainProgressText" class="fw-bold text-dark">0%</span>
+                            </div>
+                          </div>
+                          <div class="d-flex justify-content-between">
+                            <span id="storageModalUsedText" class="fw-semibold">0 MB utilisés</span>
+                            <span id="storageModalLimitText" class="fw-semibold">0 MB disponibles</span>
+                          </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                          <span id="storageModalMainStatus" class="badge badge-xl p-3" style="font-size: 1.2rem;">
+                            <i id="storageModalMainIcon" class="fas fa-check-circle me-2"></i>
+                            <span id="storageModalMainText">Optimal</span>
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div class="d-flex justify-content-between small text-muted">
-                    <span id="storageUsedText">0 MB utilisés</span>
-                    <span id="storageLimitText">0 MB disponibles</span>
                   </div>
                 </div>
               </div>
               
               <!-- Détails par catégorie -->
-              <div class="row">
+              <div class="row mb-4">
                 <!-- Fichiers Uploads -->
-                <div class="col-md-6 mb-3">
-                  <div class="card border-secondary h-100">
-                    <div class="card-header bg-light py-2">
-                      <h6 class="mb-0">
-                        <i class="fas fa-file-upload text-primary me-2"></i>
+                <div class="col-lg-6 mb-3">
+                  <div class="card h-100 border-primary">
+                    <div class="card-header bg-primary text-white">
+                      <h5 class="mb-0">
+                        <i class="fas fa-file-upload me-2"></i>
                         Fichiers Uploads
-                      </h6>
+                      </h5>
                     </div>
-                    <div class="card-body p-3">
-                      <div class="progress mb-2" style="height: 20px;">
-                        <div id="uploadsProgress" 
-                             class="progress-bar" 
+                    <div class="card-body">
+                      <div class="progress mb-3" style="height: 25px;">
+                        <div id="storageModalUploadsProgress" 
+                             class="progress-bar bg-primary" 
                              role="progressbar" 
                              style="width: 0%">
-                          <span id="uploadsProgressText" class="small">0%</span>
+                          <span id="storageModalUploadsProgressText" class="fw-bold">0%</span>
                         </div>
                       </div>
-                      <div class="d-flex justify-content-between small">
-                        <span id="uploadsUsed">0 MB</span>
-                        <span id="uploadsLimit">0 MB</span>
+                      <div class="d-flex justify-content-between mb-3">
+                        <span><strong>Utilisé:</strong> <span id="storageModalUploadsUsed">0 MB</span></span>
+                        <span><strong>Limite:</strong> <span id="storageModalUploadsLimit">0 MB</span></span>
                       </div>
-                      <div id="uploadsFileTypes" class="mt-2">
+                      <div id="storageModalUploadsFileTypes" class="border rounded p-3 bg-light">
+                        <h6 class="text-primary mb-2">
+                          <i class="fas fa-file-alt me-1"></i>Types de fichiers
+                        </h6>
                         <!-- Types de fichiers injectés ici -->
                       </div>
                     </div>
@@ -154,28 +170,31 @@ class ArchivesManager {
                 </div>
                 
                 <!-- Base de Données -->
-                <div class="col-md-6 mb-3">
-                  <div class="card border-secondary h-100">
-                    <div class="card-header bg-light py-2">
-                      <h6 class="mb-0">
-                        <i class="fas fa-database text-success me-2"></i>
+                <div class="col-lg-6 mb-3">
+                  <div class="card h-100 border-success">
+                    <div class="card-header bg-success text-white">
+                      <h5 class="mb-0">
+                        <i class="fas fa-database me-2"></i>
                         Base de Données
-                      </h6>
+                      </h5>
                     </div>
-                    <div class="card-body p-3">
-                      <div class="progress mb-2" style="height: 20px;">
-                        <div id="databaseProgress" 
+                    <div class="card-body">
+                      <div class="progress mb-3" style="height: 25px;">
+                        <div id="storageModalDatabaseProgress" 
                              class="progress-bar bg-success" 
                              role="progressbar" 
                              style="width: 0%">
-                          <span id="databaseProgressText" class="small">0%</span>
+                          <span id="storageModalDatabaseProgressText" class="fw-bold">0%</span>
                         </div>
                       </div>
-                      <div class="d-flex justify-content-between small">
-                        <span id="databaseUsed">0 MB</span>
-                        <span id="databaseLimit">0 MB</span>
+                      <div class="d-flex justify-content-between mb-3">
+                        <span><strong>Utilisé:</strong> <span id="storageModalDatabaseUsed">0 MB</span></span>
+                        <span><strong>Limite:</strong> <span id="storageModalDatabaseLimit">0 MB</span></span>
                       </div>
-                      <div id="archivesStats" class="mt-2">
+                      <div id="storageModalArchivesStats" class="border rounded p-3 bg-light">
+                        <h6 class="text-success mb-2">
+                          <i class="fas fa-archive me-1"></i>Statistiques Archives
+                        </h6>
                         <!-- Statistiques archives injectées ici -->
                       </div>
                     </div>
@@ -184,20 +203,77 @@ class ArchivesManager {
               </div>
               
               <!-- Recommandations -->
-              <div id="storageRecommendations" class="mt-3">
+              <div id="storageModalRecommendations" class="mb-4">
                 <!-- Recommandations injectées ici -->
               </div>
               
-              <!-- Actions rapides -->
-              <div class="mt-3 text-center">
-                <button id="cleanOldFilesBtn" class="btn btn-outline-warning btn-sm me-2">
+              <!-- Métriques de performance -->
+              <div class="row mb-4">
+                <div class="col-12">
+                  <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                      <h6 class="mb-0">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Métriques de Performance
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="row text-center">
+                        <div class="col-md-3">
+                          <div class="border rounded p-3">
+                            <i class="fas fa-clock text-primary fa-2x mb-2"></i>
+                            <p class="mb-1"><strong>Temps de calcul</strong></p>
+                            <span id="storageModalCalculationTime" class="text-muted">-- ms</span>
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="border rounded p-3">
+                            <i class="fas fa-sync-alt text-success fa-2x mb-2"></i>
+                            <p class="mb-1"><strong>Dernière MAJ</strong></p>
+                            <span id="storageModalLastUpdate" class="text-muted">--</span>
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="border rounded p-3">
+                            <i class="fas fa-chart-line text-warning fa-2x mb-2"></i>
+                            <p class="mb-1"><strong>Tendance</strong></p>
+                            <span class="text-success">
+                              <i class="fas fa-arrow-down me-1"></i>Stable
+                            </span>
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="border rounded p-3">
+                            <i class="fas fa-shield-alt text-info fa-2x mb-2"></i>
+                            <p class="mb-1"><strong>Statut</strong></p>
+                            <span id="storageModalSystemStatus" class="badge bg-success">Sain</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <div class="d-flex w-100 justify-content-between align-items-center">
+              <div class="d-flex gap-2">
+                <button id="storageModalCleanupBtn" class="btn btn-warning">
                   <i class="fas fa-broom me-1"></i>
                   Nettoyer les anciens fichiers
                 </button>
-                <button id="optimizeStorageBtn" class="btn btn-outline-info btn-sm">
+                <button id="storageModalOptimizeBtn" class="btn btn-info">
                   <i class="fas fa-magic me-1"></i>
                   Optimiser le stockage
                 </button>
+              </div>
+              <div class="d-flex gap-2">
+                <button id="storageModalRefreshBtn" class="btn btn-outline-primary">
+                  <i class="fas fa-sync-alt me-1"></i>
+                  Actualiser
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
               </div>
             </div>
           </div>
@@ -205,16 +281,299 @@ class ArchivesManager {
       </div>
     `;
 
-    // Insérer avant le premier élément de contenu
-    const firstCard = container.querySelector(".card");
-    if (firstCard) {
-      firstCard.insertAdjacentHTML("beforebegin", storageHTML);
-    } else {
-      container.insertAdjacentHTML("afterbegin", storageHTML);
+    // Ajouter la modal au DOM
+    document.body.appendChild(modal);
+
+    // Lier les événements de la modal
+    this.bindStorageModalEvents(modal);
+
+    // Afficher la modal
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+
+    // Charger les données
+    this.loadStorageModalData();
+
+    // Nettoyer la modal à sa fermeture
+    modal.addEventListener("hidden.bs.modal", () => {
+      document.body.removeChild(modal);
+    });
+  }
+
+  bindStorageModalEvents(modal) {
+    // Bouton de rafraîchissement
+    const refreshBtn = modal.querySelector("#storageModalRefreshBtn");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", () => {
+        this.loadStorageModalData();
+      });
     }
 
-    // Lier les événements
-    this.bindStorageEvents();
+    // Bouton nettoyage
+    const cleanBtn = modal.querySelector("#storageModalCleanupBtn");
+    if (cleanBtn) {
+      cleanBtn.addEventListener("click", () => {
+        this.showCleanupDialog();
+      });
+    }
+
+    // Bouton optimisation
+    const optimizeBtn = modal.querySelector("#storageModalOptimizeBtn");
+    if (optimizeBtn) {
+      optimizeBtn.addEventListener("click", () => {
+        this.showOptimizationDialog();
+      });
+    }
+  }
+
+  async loadStorageModalData() {
+    const loadingElement = document.getElementById("storageModalLoading");
+    const contentElement = document.getElementById("storageModalContent");
+
+    if (loadingElement) loadingElement.style.display = "block";
+    if (contentElement) contentElement.style.display = "none";
+
+    try {
+      const response = await fetch("/api/storage/usage");
+      const data = await response.json();
+
+      if (data.success) {
+        this.updateStorageModalDisplay(data);
+      } else {
+        throw new Error(data.error || "Erreur lors du chargement des données");
+      }
+    } catch (error) {
+      console.error("[STORAGE MODAL] Erreur:", error);
+      this.showStorageModalError(error.message);
+    } finally {
+      if (loadingElement) loadingElement.style.display = "none";
+      if (contentElement) contentElement.style.display = "block";
+    }
+  }
+
+  updateStorageModalDisplay(data) {
+    const storage = data.storage;
+
+    // Indicateur principal
+    const mainProgress = document.getElementById("storageModalMainProgress");
+    const mainProgressText = document.getElementById(
+      "storageModalMainProgressText"
+    );
+    const mainStatus = document.getElementById("storageModalMainStatus");
+    const mainIcon = document.getElementById("storageModalMainIcon");
+    const mainText = document.getElementById("storageModalMainText");
+    const usedText = document.getElementById("storageModalUsedText");
+    const limitText = document.getElementById("storageModalLimitText");
+
+    if (mainProgress && mainProgressText) {
+      const percentage = storage.percentage.toFixed(1);
+      mainProgress.style.width = `${percentage}%`;
+      mainProgressText.textContent = `${percentage}%`;
+
+      // Couleur selon le pourcentage
+      mainProgress.className =
+        "progress-bar progress-bar-striped progress-bar-animated";
+      if (percentage > 80) {
+        mainProgress.style.background = "rgba(220, 53, 69, 0.9)"; // Rouge
+      } else if (percentage > 60) {
+        mainProgress.style.background = "rgba(255, 193, 7, 0.9)"; // Jaune
+      } else {
+        mainProgress.style.background = "rgba(255,255,255,0.9)"; // Blanc
+      }
+    }
+
+    if (usedText)
+      usedText.textContent = `${storage.usedMB.toFixed(1)} MB utilisés`;
+    if (limitText)
+      limitText.textContent = `${storage.limitMB.toFixed(1)} MB disponibles`;
+
+    // Status badge
+    if (mainStatus && mainIcon && mainText) {
+      const status = storage.status;
+      mainIcon.className = `fas ${status.icon} me-2`;
+      mainText.textContent = status.text;
+      mainStatus.className = `badge badge-xl p-3 ${status.class}`;
+      mainStatus.style.fontSize = "1.2rem";
+    }
+
+    // Fichiers Uploads
+    this.updateStorageModalCategory("Uploads", storage.categories.uploads);
+
+    // Base de données
+    this.updateStorageModalCategory("Database", storage.categories.database);
+
+    // Recommandations
+    this.updateStorageModalRecommendations(storage.recommendations);
+
+    // Métriques de performance
+    this.updateStorageModalMetrics(data);
+  }
+
+  updateStorageModalCategory(type, categoryData) {
+    const progress = document.getElementById(`storageModal${type}Progress`);
+    const progressText = document.getElementById(
+      `storageModal${type}ProgressText`
+    );
+    const used = document.getElementById(`storageModal${type}Used`);
+    const limit = document.getElementById(`storageModal${type}Limit`);
+
+    if (progress && progressText) {
+      const percentage = categoryData.percentage.toFixed(1);
+      progress.style.width = `${percentage}%`;
+      progressText.textContent = `${percentage}%`;
+    }
+
+    if (used) used.textContent = `${categoryData.usedMB.toFixed(1)} MB`;
+    if (limit) limit.textContent = `${categoryData.limitMB.toFixed(1)} MB`;
+
+    // Contenu spécifique
+    if (type === "Uploads") {
+      this.updateStorageModalFileTypes(categoryData.fileTypes || {});
+    } else if (type === "Database") {
+      this.updateStorageModalArchivesStats(categoryData.archives || {});
+    }
+  }
+
+  updateStorageModalFileTypes(fileTypes) {
+    const container = document.getElementById("storageModalUploadsFileTypes");
+    if (!container) return;
+
+    let html = `
+      <h6 class="text-primary mb-2">
+        <i class="fas fa-file-alt me-1"></i>Types de fichiers
+      </h6>
+    `;
+
+    Object.entries(fileTypes).forEach(([type, data]) => {
+      html += `
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="small">${type.toUpperCase()}</span>
+          <div>
+            <span class="badge bg-primary me-2">${data.count}</span>
+            <span class="small text-muted">${data.sizeMB.toFixed(1)} MB</span>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  updateStorageModalArchivesStats(archives) {
+    const container = document.getElementById("storageModalArchivesStats");
+    if (!container) return;
+
+    let html = `
+      <h6 class="text-success mb-2">
+        <i class="fas fa-archive me-1"></i>Statistiques Archives
+      </h6>
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="small">Total dossiers</span>
+        <span class="badge bg-success">${archives.total || 0}</span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="small">Avec fichiers</span>
+        <span class="badge bg-info">${archives.withFiles || 0}</span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="small">Taille moyenne</span>
+        <span class="small text-muted">${
+          archives.avgSizeMB ? archives.avgSizeMB.toFixed(2) : "0"
+        } MB</span>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  }
+
+  updateStorageModalRecommendations(recommendations) {
+    const container = document.getElementById("storageModalRecommendations");
+    if (!container || !recommendations || recommendations.length === 0) return;
+
+    let html = `
+      <div class="alert alert-info border-0" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
+        <div class="d-flex align-items-center mb-3">
+          <i class="fas fa-lightbulb fa-2x text-white me-3"></i>
+          <h5 class="text-white mb-0">Recommandations d'Optimisation</h5>
+        </div>
+    `;
+
+    recommendations.forEach((rec) => {
+      html += `
+        <div class="d-flex align-items-start mb-2">
+          <i class="fas ${rec.icon} text-white me-2 mt-1"></i>
+          <span class="text-white">${rec.message}</span>
+        </div>
+      `;
+    });
+
+    html += "</div>";
+    container.innerHTML = html;
+  }
+
+  updateStorageModalMetrics(data) {
+    const calculationTime = document.getElementById(
+      "storageModalCalculationTime"
+    );
+    const lastUpdate = document.getElementById("storageModalLastUpdate");
+    const systemStatus = document.getElementById("storageModalSystemStatus");
+
+    if (calculationTime && data.calculationTime) {
+      calculationTime.textContent = `${data.calculationTime} ms`;
+    }
+
+    if (lastUpdate) {
+      lastUpdate.textContent = new Date().toLocaleString("fr-FR");
+    }
+
+    if (systemStatus) {
+      const status = data.storage.status;
+      systemStatus.textContent = status.text;
+      systemStatus.className = `badge ${status.class}`;
+    }
+  }
+
+  showStorageModalError(message) {
+    const contentElement = document.getElementById("storageModalContent");
+    if (contentElement) {
+      contentElement.innerHTML = `
+        <div class="alert alert-danger text-center py-5">
+          <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+          <h5>Erreur de chargement</h5>
+          <p>${message}</p>
+          <button class="btn btn-outline-danger" onclick="this.closest('.modal').querySelector('[data-bs-dismiss]').click()">
+            Fermer
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  async updateStorageButtonBadge() {
+    try {
+      const response = await fetch("/api/storage/status");
+      const data = await response.json();
+
+      if (data.success) {
+        const badge = document.querySelector("#storageMonitorBtn .badge");
+        if (badge) {
+          const percentage = data.storage.percentage.toFixed(1);
+          badge.textContent = `${percentage}%`;
+
+          // Changer la couleur selon le pourcentage
+          badge.className = "badge rounded-pill ms-2";
+          if (percentage > 80) {
+            badge.classList.add("bg-danger");
+          } else if (percentage > 60) {
+            badge.classList.add("bg-warning");
+          } else {
+            badge.classList.add("bg-success");
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[STORAGE BADGE] Erreur mise à jour badge:", error);
+    }
   }
 
   bindStorageEvents() {

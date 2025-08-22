@@ -61,10 +61,28 @@
 
     <!-- Conteneur principal -->
     <div class="container-fluid py-4">
-      <!-- Section Tableau de Bord / Monitoring -->
+      <!-- Bouton Stockage (remplace le panneau) -->
       <div class="row mb-4">
         <div class="col-12">
-          <!-- Le panneau de stockage sera injecté ici automatiquement par JavaScript -->
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="mb-0 text-primary">
+              <i class="fas fa-archive me-2"></i>Archives de la Plateforme
+            </h2>
+            <button
+              id="storageMonitorBtn"
+              class="btn btn-outline-info btn-lg position-relative"
+            >
+              <i class="fas fa-database me-2"></i>
+              Niveau de Stockage
+              <span
+                id="storageStatusBadge"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success"
+              >
+                <span id="storagePercentageQuick">--</span>%
+              </span>
+            </button>
+          </div>
+          <hr class="my-3" />
         </div>
       </div>
 
