@@ -1006,6 +1006,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Création immédiate du bouton historique
   checkAndShowHistoryButton();
 
+  // 🔄 NOUVEAUTÉ : Synchronisation automatique de l'historique vers les archives au chargement
+  setTimeout(async () => {
+    console.log(
+      "[SYNC ARCHIVE] 🚀 Démarrage de la synchronisation automatique au chargement de la page"
+    );
+    await syncHistoryToArchives();
+  }, 3000); // Délai de 3 secondes pour laisser le temps à la page de se charger complètement
+
   // ⏰ RESTAURATION du compte à rebours si actif
   restoreCountdownIfActive();
 
@@ -5285,6 +5293,69 @@ function saveToDeliveryHistory(delivery, containerNumber) {
       console.log(
         `[HISTORIQUE] ✅ Conteneur ${containerNumber} enregistré dans l'historique professionnel`
       );
+
+      // 🆕 AJOUT : Archiver automatiquement dans les archives centrales
+      if (typeof window.archiveDossier === "function") {
+        try {
+          // Créer un objet dossier pour l'archivage
+          const dossierForArchive = {
+            id: delivery.id,
+            dossier_number: delivery.dossier_number,
+            container_number: containerNumber,
+            container_type_and_content: delivery.container_foot_type || "",
+            client_name: delivery.client_name,
+            bl_number: delivery.bl_number,
+            client_phone: delivery.client_phone,
+            employee_name: delivery.employee_name,
+            circuit: delivery.circuit,
+            shipping_company: delivery.shipping_company,
+            visitor_agent_name: realAgentName,
+            transporter: realTransporter,
+            inspector: delivery.inspector,
+            customs_agent: delivery.customs_agent,
+            driver: delivery.driver,
+            driver_phone: delivery.driver_phone,
+            weight: delivery.weight,
+            ship_name: delivery.ship_name,
+            delivery_date: delivery.delivery_date,
+            observation: delivery.observation,
+            delivered_at: historyEntry.delivered_at,
+            delivered_by: historyEntry.delivered_by,
+          };
+
+          window
+            .archiveDossier(
+              dossierForArchive,
+              "livraison",
+              "Responsable Livraison",
+              window.location.href
+            )
+            .then((success) => {
+              if (success) {
+                console.log(
+                  `[ARCHIVE] ✅ Conteneur ${containerNumber} archivé automatiquement depuis l'historique`
+                );
+              } else {
+                console.log(
+                  `[ARCHIVE] ⚠️ Échec de l'archivage automatique pour le conteneur ${containerNumber}`
+                );
+              }
+            })
+            .catch((error) => {
+              console.error(
+                `[ARCHIVE] ❌ Erreur lors de l'archivage automatique:`,
+                error
+              );
+            });
+        } catch (error) {
+          console.error(
+            `[ARCHIVE] ❌ Erreur lors de la préparation de l'archivage:`,
+            error
+          );
+        }
+      } else {
+        console.log("[ARCHIVE] ⚠️ Fonction archiveDossier non disponible");
+      }
     } else {
       console.log(
         `[HISTORIQUE] ⚠️ Conteneur ${containerNumber} déjà présent dans l'historique`
@@ -5313,6 +5384,109 @@ function checkAndShowHistoryButton() {
     console.error("[HISTORIQUE] ❌ Erreur lors de la vérification:", error);
     // Même en cas d'erreur, on affiche le bouton
     showHistoryButtonIfNeeded();
+  }
+}
+
+/**
+ * Synchronise tout l'historique existant vers les archives centrales
+ */
+async function syncHistoryToArchives() {
+  try {
+    if (typeof window.archiveDossier !== "function") {
+      console.log("[SYNC ARCHIVE] ⚠️ Fonction archiveDossier non disponible");
+      return;
+    }
+
+    const history = JSON.parse(
+      localStorage.getItem(DELIVERY_HISTORY_KEY) || "[]"
+    );
+
+    if (history.length === 0) {
+      console.log("[SYNC ARCHIVE] ℹ️ Aucun historique à synchroniser");
+      return;
+    }
+
+    console.log(
+      `[SYNC ARCHIVE] 🔄 Début de la synchronisation de ${history.length} entrées d'historique vers les archives`
+    );
+
+    let syncedCount = 0;
+    let errorCount = 0;
+
+    for (const historyEntry of history) {
+      try {
+        // Créer un objet dossier pour l'archivage
+        const dossierForArchive = {
+          id: historyEntry.delivery_id,
+          dossier_number: historyEntry.dossier_number,
+          container_number: historyEntry.container_number,
+          container_type_and_content: historyEntry.container_foot_type || "",
+          client_name: historyEntry.client_name,
+          bl_number: historyEntry.bl_number,
+          client_phone: historyEntry.client_phone,
+          employee_name: historyEntry.employee_name,
+          circuit: historyEntry.circuit,
+          shipping_company: historyEntry.shipping_company,
+          visitor_agent_name: historyEntry.visitor_agent_name,
+          transporter: historyEntry.transporter,
+          inspector: historyEntry.inspector,
+          customs_agent: historyEntry.customs_agent,
+          driver: historyEntry.driver,
+          driver_phone: historyEntry.driver_phone,
+          weight: historyEntry.weight,
+          ship_name: historyEntry.ship_name,
+          delivery_date: historyEntry.delivery_date,
+          observation: historyEntry.observation,
+          delivered_at: historyEntry.delivered_at,
+          delivered_by: historyEntry.delivered_by,
+        };
+
+        const success = await window.archiveDossier(
+          dossierForArchive,
+          "livraison",
+          "Responsable Livraison (Sync Historique)",
+          window.location.href
+        );
+
+        if (success) {
+          syncedCount++;
+          console.log(
+            `[SYNC ARCHIVE] ✅ Conteneur ${historyEntry.container_number} synchronisé`
+          );
+        } else {
+          errorCount++;
+          console.log(
+            `[SYNC ARCHIVE] ⚠️ Échec de synchronisation pour ${historyEntry.container_number}`
+          );
+        }
+
+        // Petite pause pour éviter de surcharger le serveur
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (error) {
+        errorCount++;
+        console.error(
+          `[SYNC ARCHIVE] ❌ Erreur lors de la synchronisation de ${historyEntry.container_number}:`,
+          error
+        );
+      }
+    }
+
+    console.log(
+      `[SYNC ARCHIVE] 📊 Synchronisation terminée: ${syncedCount} succès, ${errorCount} échecs sur ${history.length} entrées`
+    );
+
+    // Afficher une notification de résultat
+    if (syncedCount > 0) {
+      showNotification(
+        `Synchronisation réussie: ${syncedCount} conteneurs de l'historique ajoutés aux archives`,
+        "success"
+      );
+    }
+  } catch (error) {
+    console.error(
+      "[SYNC ARCHIVE] ❌ Erreur lors de la synchronisation complète:",
+      error
+    );
   }
 }
 
