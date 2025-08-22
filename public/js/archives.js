@@ -163,7 +163,7 @@ class ArchivesManager {
     return date.toISOString().split("T")[0];
   }
 
-  // Debounce pour la recherche en temps réel
+  // Debounce pour la recherche en temps réel - 1
   debounceSearch() {
     clearTimeout(this.searchTimeout);
     this.searchTimeout = setTimeout(() => this.performSearch(), 300);
