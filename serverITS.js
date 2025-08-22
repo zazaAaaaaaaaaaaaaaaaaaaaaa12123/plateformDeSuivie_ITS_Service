@@ -4675,9 +4675,9 @@ app.get("/api/archives", async (req, res) => {
       queryParams.push(limit, offset);
 
       const query = `
-        SELECT 
-          MIN(id) as id,
-          MIN(id) as dossier_id,
+        SELECT DISTINCT ON (dossier_number)
+          id,
+          id as dossier_id,
           dossier_number as dossier_reference,
           container_type_and_content as intitule,
           client_name,
@@ -4686,13 +4686,19 @@ app.get("/api/archives", async (req, res) => {
           'mise_en_livraison' as action_type,
           employee_name as archived_by,
           '' as archived_by_email,
-          MAX(created_at) as archived_at,
-          row_to_json((SELECT d FROM (SELECT * FROM livraison_conteneur WHERE id = MIN(livraison_conteneur.id)) d)) as dossier_data,
-          '{"source": "active_delivery", "status": "en_cours"}'::json as metadata
+          created_at as archived_at,
+          '{"source": "active_delivery", "status": "en_cours"}'::json as metadata,
+          json_build_object(
+            'id', id,
+            'dossier_number', dossier_number,
+            'client_name', client_name,
+            'employee_name', employee_name,
+            'container_type_and_content', container_type_and_content,
+            'created_at', created_at
+          ) as dossier_data
         FROM livraison_conteneur 
         ${whereClause}
-        GROUP BY dossier_number, container_type_and_content, client_name, employee_name
-        ORDER BY MAX(created_at) DESC 
+        ORDER BY dossier_number, created_at DESC 
         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
       `;
 
@@ -4703,9 +4709,8 @@ app.get("/api/archives", async (req, res) => {
       // Compter le total pour la pagination
       const countQuery = `
         SELECT COUNT(*) as total FROM (
-          SELECT dossier_number, container_type_and_content, client_name, employee_name
+          SELECT DISTINCT dossier_number
           FROM livraison_conteneur ${whereClause}
-          GROUP BY dossier_number, container_type_and_content, client_name, employee_name
         ) unique_dossiers
       `;
       const countResult = await pool.query(
