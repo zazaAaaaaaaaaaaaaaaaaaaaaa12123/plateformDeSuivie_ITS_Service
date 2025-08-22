@@ -5893,11 +5893,17 @@ app.get("/api/dossiers/retard", async (req, res) => {
 // ===============================
 app.get("/api/deliveries/status-counts", async (req, res) => {
   try {
+    console.log("[STATUS COUNTS] 🎯 Début du calcul des compteurs précis...");
+
     const result = await pool.query(
       `SELECT * FROM livraison_conteneur ORDER BY created_at DESC`
     );
 
     const deliveries = result.rows || [];
+    console.log(
+      `[STATUS COUNTS] 📦 Total dossiers en DB: ${deliveries.length}`
+    );
+
     const counts = {
       en_attente_paiement: 0,
       mise_en_livraison: 0,
@@ -5906,6 +5912,13 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
     };
 
     const now = new Date();
+    let debugCounts = {
+      fullyDelivered: 0,
+      visibleInRespLiv: 0,
+      visibleInRespAcconier: 0,
+      overdue: 0,
+      skipped: 0,
+    };
 
     // Fonction pour vérifier si un dossier est complètement livré
     function isDeliveryFullyDelivered(delivery) {
@@ -5921,9 +5934,14 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
         return false;
       }
 
-      // Récupérer la liste des conteneurs
+      // Récupérer la liste des conteneurs (priorité à container_numbers_list)
       let tcList = [];
-      if (delivery.container_number) {
+      if (
+        delivery.container_numbers_list &&
+        Array.isArray(delivery.container_numbers_list)
+      ) {
+        tcList = delivery.container_numbers_list.filter(Boolean);
+      } else if (delivery.container_number) {
         if (Array.isArray(delivery.container_number)) {
           tcList = delivery.container_number.filter(Boolean);
         } else if (typeof delivery.container_number === "string") {
@@ -5935,10 +5953,12 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
       if (tcList.length === 0) return false;
 
       // Vérifier que tous les conteneurs sont livrés
-      return tcList.every((tc) => {
+      const allDelivered = tcList.every((tc) => {
         const s = container_statuses[tc];
         return s === "livre" || s === "livré";
       });
+
+      return allDelivered;
     }
 
     // Fonction pour vérifier si un dossier est visible dans resp_acconier (en attente de paiement)
@@ -5994,11 +6014,16 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
       return delivery.delivery_status_acconier === "mise_en_livraison_acconier";
     }
 
-    deliveries.forEach((delivery) => {
+    deliveries.forEach((delivery, index) => {
       // PRIORITÉ 1: Dossier complètement livré (tous conteneurs livrés)
       if (isDeliveryFullyDelivered(delivery)) {
         counts.livres++;
-        console.log(`[COUNTS] ✅ Dossier livré: ${delivery.dossier_number}`);
+        debugCounts.fullyDelivered++;
+        console.log(
+          `[COUNTS] ✅ #${index + 1} Dossier livré: ${
+            delivery.dossier_number || delivery.id
+          }`
+        );
       }
       // PRIORITÉ 2: Dossier visible dans resp_liv ET PAS encore complètement livré
       else if (
@@ -6006,19 +6031,32 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
         !isDeliveryFullyDelivered(delivery)
       ) {
         counts.mise_en_livraison++;
+        debugCounts.visibleInRespLiv++;
         console.log(
-          `[COUNTS]   Dossier mis en livraison: ${delivery.dossier_number}`
+          `[COUNTS] 🚛 #${index + 1} Dossier mis en livraison: ${
+            delivery.dossier_number || delivery.id
+          }`
         );
       }
       // PRIORITÉ 3: Dossier visible dans resp_acconier (en attente de paiement)
       else if (isVisibleInRespAcconier(delivery)) {
         counts.en_attente_paiement++;
+        debugCounts.visibleInRespAcconier++;
         console.log(
-          `[COUNTS] ⏳ Dossier en attente: ${delivery.dossier_number}`
+          `[COUNTS] ⏳ #${index + 1} Dossier en attente: ${
+            delivery.dossier_number || delivery.id
+          }`
         );
       }
-      // PRIORITÉ 4: Autres cas (ne rien compter par défaut pour éviter la double comptabilisation)
-      // Ces dossiers ne doivent plus être comptés par défaut
+      // PRIORITÉ 4: Autres cas (archivés, supprimés, etc.)
+      else {
+        debugCounts.skipped++;
+        console.log(
+          `[COUNTS] ⚪ #${index + 1} Dossier ignoré: ${
+            delivery.dossier_number || delivery.id
+          } (statut: ${delivery.delivery_status_acconier})`
+        );
+      }
 
       // Logique pour "En retard" (cross-cutting, indépendant du statut)
       let dDate = delivery.delivery_date || delivery.created_at;
@@ -6029,12 +6067,22 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
           if (diffDays > 2 && !isDeliveryFullyDelivered(delivery)) {
             // Compter en retard seulement si pas complètement livré et > 2 jours
             counts.en_retard++;
+            debugCounts.overdue++;
           }
         }
       }
     });
 
-    console.log(`[STATUS COUNTS] 📊 Comptage précis terminé:`, counts);
+    console.log(`[STATUS COUNTS] 📊 Analyse détaillée terminée:`, {
+      "Total dossiers": deliveries.length,
+      "Entièrement livrés": debugCounts.fullyDelivered,
+      "Visibles resp_liv": debugCounts.visibleInRespLiv,
+      "Visibles resp_acconier": debugCounts.visibleInRespAcconier,
+      "En retard": debugCounts.overdue,
+      Ignorés: debugCounts.skipped,
+    });
+
+    console.log(`[STATUS COUNTS] 🎯 Comptage précis terminé:`, counts);
     res.json({ success: true, counts: counts });
   } catch (err) {
     console.error("Erreur /api/deliveries/status-counts :", err);

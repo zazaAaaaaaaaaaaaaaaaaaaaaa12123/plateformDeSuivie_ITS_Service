@@ -1402,23 +1402,71 @@ class ArchivesManager {
   }
 
   getCurrentUser() {
-    // Définir des valeurs par défaut si non définies
-    let currentUser = localStorage.getItem("currentUser");
-    if (!currentUser) {
-      currentUser = "Administrateur";
-      localStorage.setItem("currentUser", currentUser);
+    // Priorité 1: Acconier connecté
+    const acconierUser = localStorage.getItem("acconier_user");
+    if (acconierUser) {
+      try {
+        const userData = JSON.parse(acconierUser);
+        if (userData.nom) {
+          return userData.nom;
+        }
+      } catch (e) {
+        console.warn("Erreur parsing acconier_user:", e);
+      }
     }
-    return currentUser;
+
+    // Priorité 2: Utilisateur connecté via auth standard
+    const userName = localStorage.getItem("userName");
+    if (userName && userName.trim() !== "") {
+      return userName;
+    }
+
+    // Priorité 3: Utilisateur courant (ancien système)
+    const currentUser = localStorage.getItem("currentUser");
+    if (
+      currentUser &&
+      currentUser.trim() !== "" &&
+      currentUser !== "Administrateur"
+    ) {
+      return currentUser;
+    }
+
+    // Fallback: Utilisateur par défaut uniquement si aucune info trouvée
+    return "Administrateur";
   }
 
   getCurrentUserEmail() {
-    // Définir des valeurs par défaut si non définies
-    let currentUserEmail = localStorage.getItem("currentUserEmail");
-    if (!currentUserEmail) {
-      currentUserEmail = "admin@its-service.com";
-      localStorage.setItem("currentUserEmail", currentUserEmail);
+    // Priorité 1: Acconier connecté
+    const acconierUser = localStorage.getItem("acconier_user");
+    if (acconierUser) {
+      try {
+        const userData = JSON.parse(acconierUser);
+        if (userData.email) {
+          return userData.email;
+        }
+      } catch (e) {
+        console.warn("Erreur parsing acconier_user:", e);
+      }
     }
-    return currentUserEmail;
+
+    // Priorité 2: Utilisateur connecté via auth standard
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail && userEmail.trim() !== "") {
+      return userEmail;
+    }
+
+    // Priorité 3: Utilisateur courant (ancien système)
+    const currentUserEmail = localStorage.getItem("currentUserEmail");
+    if (
+      currentUserEmail &&
+      currentUserEmail.trim() !== "" &&
+      currentUserEmail !== "admin@its-service.com"
+    ) {
+      return currentUserEmail;
+    }
+
+    // Fallback: Email par défaut uniquement si aucune info trouvée
+    return "admin@its-service.com";
   }
 
   // Méthode pour rafraîchir les données complètes (cache)
@@ -1456,29 +1504,78 @@ window.archiveDossier = async function (
   pageOrigine
 ) {
   try {
-    // Récupérer les informations utilisateur correctes
-    let userName = "Système";
+    // Récupérer les informations utilisateur correctes (vraies, pas génériques)
+    let userName = "Utilisateur";
     let userEmail = "";
 
-    // Vérifier d'abord acconier_user (interface employeur)
+    // Priorité 1: Acconier connecté (interface employeur - le plus courant)
     const acconierUser = localStorage.getItem("acconier_user");
     if (acconierUser) {
       try {
         const userData = JSON.parse(acconierUser);
-        userName = userData.nom || "Système";
+        userName = userData.nom || "Utilisateur";
         userEmail = userData.email || "";
+        console.log(
+          "[ARCHIVE] Utilisateur trouvé via acconier_user:",
+          userName,
+          userEmail
+        );
       } catch (e) {
         console.warn(
           "[ARCHIVE] Erreur lors du parsing des données acconier_user:",
           e
         );
       }
-    }
+    } else {
+      // Priorité 2: Utilisateur connecté via auth standard
+      const storedUserName = localStorage.getItem("userName");
+      const storedUserEmail = localStorage.getItem("userEmail");
 
-    // Fallback vers currentUser si acconier_user n'existe pas
-    if (userName === "Système") {
-      userName = localStorage.getItem("currentUser") || "Système";
-      userEmail = localStorage.getItem("currentUserEmail") || "";
+      if (storedUserName && storedUserName.trim() !== "") {
+        userName = storedUserName;
+        userEmail = storedUserEmail || "";
+        console.log(
+          "[ARCHIVE] Utilisateur trouvé via userName/userEmail:",
+          userName,
+          userEmail
+        );
+      } else {
+        // Priorité 3: Données dans "user" object
+        const userFromStorage = localStorage.getItem("user");
+        if (userFromStorage) {
+          try {
+            const parsed = JSON.parse(userFromStorage);
+            userName = parsed.nom || parsed.name || userName;
+            userEmail = parsed.email || userEmail;
+            console.log(
+              "[ARCHIVE] Utilisateur trouvé via user object:",
+              userName,
+              userEmail
+            );
+          } catch (e) {
+            console.warn("[ARCHIVE] Erreur parsing user object:", e);
+          }
+        } else {
+          // Fallback vers currentUser seulement si pas d'autres données
+          const currentUser = localStorage.getItem("currentUser");
+          const currentUserEmail = localStorage.getItem("currentUserEmail");
+
+          // Éviter les valeurs génériques par défaut
+          if (currentUser && currentUser !== "Administrateur") {
+            userName = currentUser;
+            userEmail = currentUserEmail || "";
+            console.log(
+              "[ARCHIVE] Utilisateur trouvé via currentUser:",
+              userName,
+              userEmail
+            );
+          } else {
+            console.log(
+              "[ARCHIVE] Aucun utilisateur spécifique trouvé, utilisation de 'Utilisateur'"
+            );
+          }
+        }
+      }
     }
 
     const archiveData = {
