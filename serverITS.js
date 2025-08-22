@@ -2019,7 +2019,7 @@ const creationTableArchives = `
       dossier_data JSONB, -- Stockage complet des données du dossier pour restauration
       metadata JSONB, -- Métadonnées supplémentaires pour la restauration
       
-      CONSTRAINT chk_action_type CHECK (action_type IN ('suppression', 'livraison', 'mise_en_livraison'))
+      CONSTRAINT chk_action_type CHECK (action_type IN ('suppression', 'livraison', 'mise_en_livraison', 'ordre_livraison_etabli'))
     );
 `;
 
@@ -2030,6 +2030,29 @@ async function createTables() {
 
     await pool.query(creationTableArchives);
     console.log("Table archives_dossiers créée ou déjà existante.");
+
+    // Mettre à jour la contrainte action_type pour inclure 'ordre_livraison_etabli'
+    try {
+      await pool.query(`
+        DO $$ BEGIN
+          -- Supprimer l'ancienne contrainte si elle existe
+          IF EXISTS (SELECT 1 FROM information_schema.constraint_column_usage WHERE constraint_name = 'chk_action_type') THEN
+            ALTER TABLE archives_dossiers DROP CONSTRAINT chk_action_type;
+          END IF;
+          
+          -- Ajouter la nouvelle contrainte avec le nouveau type d'action
+          ALTER TABLE archives_dossiers ADD CONSTRAINT chk_action_type 
+          CHECK (action_type IN ('suppression', 'livraison', 'mise_en_livraison', 'ordre_livraison_etabli'));
+          
+          RAISE NOTICE 'Contrainte chk_action_type mise à jour avec ordre_livraison_etabli';
+        END $$;
+      `);
+    } catch (err) {
+      console.warn(
+        "Migration de la contrainte chk_action_type échouée :",
+        err.message
+      );
+    }
 
     //
     // Assurez-vous que delivery_date et delivery_time sont bien NULLABLE
@@ -4033,6 +4056,12 @@ cleanOldArchives();
 // Puis toutes les 24 heures (86400000 ms)
 setInterval(cleanOldArchives, 86400000); // 24 heures * 60 minutes * 60 secondes * 1000 millisecondes
 
+// Planifier l'exécution de l'archivage automatique des ordres de livraison
+// Exécute une première fois au démarrage
+archiveOldOrders();
+// Puis toutes les 24 heures
+setInterval(archiveOldOrders, 86400000); // 24 heures
+
 // =========================================================================
 // --- ROUTES DE FICHIERS STATIQUES (à placer EN DERNIER) ---
 // =========================================================================
@@ -4822,6 +4851,103 @@ async function cleanOldArchives() {
     );
   } catch (error) {
     console.error("Erreur lors du nettoyage automatique des archives :", error);
+  }
+}
+
+// Archivage automatique des ordres de livraison de plus de 7 jours
+async function archiveOldOrders() {
+  console.log(
+    "Démarrage de l'archivage automatique des ordres de livraison de plus de 7 jours..."
+  );
+  try {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    // Rechercher les dossiers de plus de 7 jours qui ne sont pas encore archivés
+    const findQuery = `
+      SELECT * FROM livraison_conteneur 
+      WHERE created_at < $1 
+        AND NOT EXISTS (
+          SELECT 1 FROM archives_dossiers 
+          WHERE CAST(dossier_id AS TEXT) = CAST(livraison_conteneur.id AS TEXT)
+        )
+      ORDER BY created_at ASC
+    `;
+
+    const oldOrders = await pool.query(findQuery, [oneWeekAgo]);
+
+    console.log(
+      `Trouvé ${oldOrders.rowCount} ordres de livraison à archiver automatiquement.`
+    );
+
+    let archivedCount = 0;
+
+    for (const order of oldOrders.rows) {
+      try {
+        // Préparer les données pour l'archivage
+        const archiveData = {
+          dossier_id: order.id,
+          dossier_reference:
+            order.dossier_number ||
+            order.container_number ||
+            `AUTO-${order.id}`,
+          intitule: order.container_type_and_content || "",
+          client_name: order.client_name || "",
+          role_source: "Système - Archivage automatique",
+          page_origine: "Historique Ordres de livraison",
+          action_type: "ordre_livraison_etabli", // Nouveau type d'action
+          archived_by: "Système",
+          archived_by_email: "",
+          dossier_data: order,
+          metadata: {
+            archived_from_url: "Auto-archivage",
+            user_agent: "Système automatique",
+            timestamp: new Date().toISOString(),
+            auto_archive_reason: "Ordre de livraison de plus de 7 jours",
+          },
+        };
+
+        // Insérer dans les archives
+        const insertQuery = `
+          INSERT INTO archives_dossiers (
+            dossier_id, dossier_reference, intitule, client_name,
+            role_source, page_origine, action_type, archived_by,
+            archived_by_email, dossier_data, metadata
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          RETURNING id
+        `;
+
+        await pool.query(insertQuery, [
+          archiveData.dossier_id,
+          archiveData.dossier_reference,
+          archiveData.intitule,
+          archiveData.client_name,
+          archiveData.role_source,
+          archiveData.page_origine,
+          archiveData.action_type,
+          archiveData.archived_by,
+          archiveData.archived_by_email,
+          JSON.stringify(archiveData.dossier_data),
+          JSON.stringify(archiveData.metadata),
+        ]);
+
+        archivedCount++;
+      } catch (error) {
+        console.error(
+          `Erreur lors de l'archivage automatique du dossier ${order.id}:`,
+          error
+        );
+      }
+    }
+
+    console.log(
+      `Archivage automatique terminé : ${archivedCount} ordres de livraison archivés automatiquement.`
+    );
+  } catch (error) {
+    console.error(
+      "Erreur lors de l'archivage automatique des ordres de livraison :",
+      error
+    );
   }
 }
 

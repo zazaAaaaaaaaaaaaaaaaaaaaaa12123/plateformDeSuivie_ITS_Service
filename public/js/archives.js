@@ -106,6 +106,7 @@ class ArchivesManager {
             deleted: "suppression",
             delivered: "livraison",
             shipping: "mise_en_livraison",
+            orders: "ordre_livraison_etabli",
           };
 
           if (tabToActionMap[this.selectedTab]) {
@@ -271,6 +272,9 @@ class ArchivesManager {
       mise_en_livraison: this.allArchives.filter(
         (a) => a.action_type === "mise_en_livraison"
       ).length,
+      ordre_livraison_etabli: this.allArchives.filter(
+        (a) => a.action_type === "ordre_livraison_etabli"
+      ).length,
     };
 
     document.getElementById("allCount").textContent = counts.all;
@@ -278,6 +282,8 @@ class ArchivesManager {
     document.getElementById("deliveredCount").textContent = counts.livraison;
     document.getElementById("shippingCount").textContent =
       counts.mise_en_livraison;
+    document.getElementById("ordersCount").textContent =
+      counts.ordre_livraison_etabli;
   }
 
   renderCurrentView() {
@@ -316,6 +322,11 @@ class ArchivesManager {
         case "shipping":
           archivesToRender = this.filteredArchives.filter(
             (a) => a.action_type === "mise_en_livraison"
+          );
+          break;
+        case "orders":
+          archivesToRender = this.filteredArchives.filter(
+            (a) => a.action_type === "ordre_livraison_etabli"
           );
           break;
         default:
@@ -403,7 +414,12 @@ class ArchivesManager {
                     ${this.renderActionBadge(archive.action_type)}
                 </td>
                 <td class="d-none d-md-table-cell">
-                    ${archive.client_name || "N/A"}
+                    ${
+                      archive.client_name ||
+                      (archive.dossier_data &&
+                        archive.dossier_data.client_name) ||
+                      "N/A"
+                    }
                 </td>
                 <td class="col-role d-none d-lg-table-cell">
                     <span class="badge badge-role">${archive.role_source}</span>
@@ -440,6 +456,8 @@ class ArchivesManager {
         '<span class="badge badge-livraison"><i class="fas fa-check-circle me-1"></i>Livré</span>',
       mise_en_livraison:
         '<span class="badge badge-mise_en_livraison"><i class="fas fa-truck-loading me-1"></i>Mis en livraison</span>',
+      ordre_livraison_etabli:
+        '<span class="badge badge-ordre-livraison"><i class="fas fa-file-alt me-1"></i>Ordre de livraison établi</span>',
     };
     return (
       badges[actionType] ||
@@ -619,15 +637,38 @@ class ArchivesManager {
                         }</div>
                     </div>
                     <div class="detail-row">
+                        <div class="detail-label">Client:</div>
+                        <div class="detail-value">${
+                          dossierData.client_name ||
+                          archive.client_name ||
+                          "N/A"
+                        }</div>
+                    </div>
+                    <div class="detail-row">
                         <div class="detail-label">Numéro conteneur:</div>
                         <div class="detail-value">${this.formatContainerNumbers(
                           dossierData
                         )}</div>
                     </div>
                     <div class="detail-row">
+                        <div class="detail-label">Type/Contenu:</div>
+                        <div class="detail-value">${
+                          dossierData.container_type_and_content ||
+                          dossierData.container_content ||
+                          archive.intitule ||
+                          "N/A"
+                        }</div>
+                    </div>
+                    <div class="detail-row">
                         <div class="detail-label">Transporteur:</div>
                         <div class="detail-value">${
                           dossierData.transporter || "N/A"
+                        }</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Lieu:</div>
+                        <div class="detail-value">${
+                          dossierData.lieu || "N/A"
                         }</div>
                     </div>
                     <div class="detail-row">
@@ -638,6 +679,38 @@ class ArchivesManager {
                           "N/A"
                         }</div>
                     </div>
+                    ${
+                      dossierData.delivery_date
+                        ? `
+                    <div class="detail-row">
+                        <div class="detail-label">Date de livraison:</div>
+                        <div class="detail-value">${
+                          dossierData.delivery_date
+                        } ${dossierData.delivery_time || ""}</div>
+                    </div>
+                    `
+                        : ""
+                    }
+                    ${
+                      dossierData.weight_on_arrival
+                        ? `
+                    <div class="detail-row">
+                        <div class="detail-label">Poids à l'arrivée:</div>
+                        <div class="detail-value">${dossierData.weight_on_arrival} kg</div>
+                    </div>
+                    `
+                        : ""
+                    }
+                    ${
+                      dossierData.container_foot_type
+                        ? `
+                    <div class="detail-row">
+                        <div class="detail-label">Pied de conteneur:</div>
+                        <div class="detail-value">${dossierData.container_foot_type}</div>
+                    </div>
+                    `
+                        : ""
+                    }
                 </div>
             `
                 : ""
@@ -888,6 +961,7 @@ class ArchivesManager {
       deleted: "deletedArchivesTable",
       delivered: "deliveredArchivesTable",
       shipping: "shippingArchivesTable",
+      orders: "ordersArchivesTable",
     };
     return mapping[this.selectedTab] || "allArchivesTable";
   }

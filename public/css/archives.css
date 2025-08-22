@@ -122,6 +122,11 @@ body {
   color: var(--dark-color);
 }
 
+.badge-ordre-livraison {
+  background-color: #17a2b8;
+  color: white;
+}
+
 .badge-role {
   background-color: var(--info-color);
   color: var(--dark-color);
