@@ -319,12 +319,12 @@ body {
 
 /* Colonnes spécifiques */
 .col-id {
-  width: 80px;
+  width: 60px;
   text-align: center;
 }
 
 .col-reference {
-  width: 120px;
+  width: 110px;
 }
 
 .col-action {
@@ -332,8 +332,14 @@ body {
   text-align: center;
 }
 
+/* Réduire la largeur de la colonne client */
+.d-none.d-md-table-cell:nth-child(4) {
+  width: 120px;
+  max-width: 120px;
+}
+
 .col-role {
-  width: 150px;
+  width: 140px;
 }
 
 .col-date {
@@ -341,7 +347,7 @@ body {
 }
 
 .col-actions {
-  width: 180px;
+  width: 120px;
   text-align: center;
 }
 
