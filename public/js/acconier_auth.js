@@ -134,6 +134,24 @@ if (loginForm)
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        // Sauvegarder les informations utilisateur dans localStorage
+        localStorage.setItem(
+          "acconier_user",
+          JSON.stringify({
+            nom: data.nom,
+            email: data.email,
+          })
+        );
+
+        // Également sauvegarder dans les anciennes clés pour la compatibilité
+        localStorage.setItem("currentUser", data.nom);
+        localStorage.setItem("currentUserEmail", data.email);
+
+        console.log("[AUTH] Informations utilisateur sauvegardées:", {
+          nom: data.nom,
+          email: data.email,
+        });
+
         // Redirige vers l'interface employeur après connexion
         window.location.href = "../html/interfaceFormulaireEmployer.html";
       } else {

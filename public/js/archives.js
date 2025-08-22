@@ -18,6 +18,8 @@ class ArchivesManager {
     this.filteredArchives = []; // Données filtrées à afficher
     this.selectedTab = "all";
     this.allArchivesData = null; // Cache pour toutes les données non filtrées
+    this.lastDataRefresh = 0; // Timestamp du dernier rafraîchissement
+    this.cacheTimeout = 30000; // 30 secondes de cache
 
     this.init();
   }
@@ -199,17 +201,46 @@ class ArchivesManager {
     this.loadArchives();
   }
 
+  // Méthode pour forcer le rechargement complet des données
+  async reload() {
+    console.log("[ARCHIVES] Rechargement forcé des données...");
+    this.allArchivesData = null; // Vider le cache
+    this.lastDataRefresh = 0; // Forcer le rafraîchissement
+    this.currentPage = 1;
+    await this.loadArchives();
+  }
+
   async loadArchives() {
     try {
       this.showLoading(true);
 
-      // Charger d'abord toutes les données pour les compteurs (si pas déjà en cache)
-      if (!this.allArchivesData) {
-        const allDataResponse = await fetch("/api/archives?limit=1000"); // Récupérer toutes les données
+      // Vérifier si nous devons rafraîchir les données (cache expiré ou pas de données)
+      const now = Date.now();
+      const shouldRefresh =
+        !this.allArchivesData || now - this.lastDataRefresh > this.cacheTimeout;
+
+      // Charger toutes les données pour les compteurs
+      if (shouldRefresh) {
+        console.log(
+          "[ARCHIVES] Rafraîchissement des données (cache expiré ou inexistant)..."
+        );
+        const allDataResponse = await fetch("/api/archives?limit=10000"); // Récupérer toutes les données
         const allData = await allDataResponse.json();
         if (allData.success) {
           this.allArchivesData = allData.archives;
+          this.lastDataRefresh = now;
+          console.log(
+            "[ARCHIVES] Données complètes rafraîchies:",
+            this.allArchivesData.length,
+            "archives"
+          );
         }
+      } else {
+        console.log(
+          "[ARCHIVES] Utilisation du cache existant (",
+          this.allArchivesData.length,
+          "archives )"
+        );
       }
 
       // Ensuite charger les données filtrées
@@ -276,6 +307,8 @@ class ArchivesManager {
         (a) => a.action_type === "ordre_livraison_etabli"
       ).length,
     };
+
+    console.log("[ARCHIVES] Compteurs mis à jour:", counts);
 
     document.getElementById("allCount").textContent = counts.all;
     document.getElementById("deletedCount").textContent = counts.suppression;
@@ -458,7 +491,7 @@ class ArchivesManager {
       mise_en_livraison:
         '<span class="badge badge-mise_en_livraison"><i class="fas fa-truck-loading me-1"></i>Mis en livraison</span>',
       ordre_livraison_etabli:
-        '<span class="badge badge-ordre-livraison"><i class="fas fa-file-alt me-1"></i>Ordre de livraison établi</span>',
+        '<span class="badge badge-ordre-livraison"><i class="fas fa-file-alt me-1"></i>Ordre établi</span>',
     };
     return (
       badges[actionType] ||
@@ -1423,6 +1456,31 @@ window.archiveDossier = async function (
   pageOrigine
 ) {
   try {
+    // Récupérer les informations utilisateur correctes
+    let userName = "Système";
+    let userEmail = "";
+
+    // Vérifier d'abord acconier_user (interface employeur)
+    const acconierUser = localStorage.getItem("acconier_user");
+    if (acconierUser) {
+      try {
+        const userData = JSON.parse(acconierUser);
+        userName = userData.nom || "Système";
+        userEmail = userData.email || "";
+      } catch (e) {
+        console.warn(
+          "[ARCHIVE] Erreur lors du parsing des données acconier_user:",
+          e
+        );
+      }
+    }
+
+    // Fallback vers currentUser si acconier_user n'existe pas
+    if (userName === "Système") {
+      userName = localStorage.getItem("currentUser") || "Système";
+      userEmail = localStorage.getItem("currentUserEmail") || "";
+    }
+
     const archiveData = {
       dossier_id: dossierData.id,
       dossier_reference:
@@ -1432,8 +1490,8 @@ window.archiveDossier = async function (
       role_source: roleSource,
       page_origine: pageOrigine,
       action_type: actionType,
-      archived_by: localStorage.getItem("currentUser") || "Système",
-      archived_by_email: localStorage.getItem("currentUserEmail") || "",
+      archived_by: userName,
+      archived_by_email: userEmail,
       dossier_data: dossierData,
       metadata: {
         archived_from_url: window.location.href,
@@ -1457,10 +1515,12 @@ window.archiveDossier = async function (
       // Rafraîchir les données si on est sur la page des archives
       if (
         window.archivesManager &&
-        typeof window.archivesManager.refreshAllData === "function"
+        typeof window.archivesManager.reload === "function"
       ) {
-        await window.archivesManager.refreshAllData();
-        window.archivesManager.updateCounts();
+        console.log(
+          "[ARCHIVE] Rafraîchissement des données après archivage..."
+        );
+        await window.archivesManager.reload();
       }
 
       return true;
