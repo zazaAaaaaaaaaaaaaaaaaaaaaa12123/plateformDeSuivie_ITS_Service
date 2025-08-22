@@ -4416,12 +4416,22 @@ app.get("/api/archives", async (req, res) => {
       date_end = "",
     } = req.query;
 
+    console.log("[ARCHIVES API] Paramètres reçus:", {
+      page,
+      limit,
+      search,
+      action_type,
+      role_source,
+      date_start,
+      date_end,
+    });
+
     let whereConditions = [];
     let queryParams = [];
     let paramIndex = 1;
 
     // Filtres de recherche
-    if (search) {
+    if (search && search.trim()) {
       whereConditions.push(`(
         dossier_reference ILIKE $${paramIndex} OR 
         intitule ILIKE $${paramIndex} OR 
@@ -4432,26 +4442,26 @@ app.get("/api/archives", async (req, res) => {
       paramIndex++;
     }
 
-    if (action_type) {
+    if (action_type && action_type.trim()) {
       whereConditions.push(`action_type = $${paramIndex}`);
       queryParams.push(action_type);
       paramIndex++;
     }
 
-    if (role_source) {
+    if (role_source && role_source.trim()) {
       whereConditions.push(`role_source = $${paramIndex}`);
       queryParams.push(role_source);
       paramIndex++;
     }
 
-    if (date_start) {
-      whereConditions.push(`archived_at >= $${paramIndex}`);
+    if (date_start && date_start.trim()) {
+      whereConditions.push(`DATE(archived_at) >= $${paramIndex}`);
       queryParams.push(date_start);
       paramIndex++;
     }
 
-    if (date_end) {
-      whereConditions.push(`archived_at <= $${paramIndex}`);
+    if (date_end && date_end.trim()) {
+      whereConditions.push(`DATE(archived_at) <= $${paramIndex}`);
       queryParams.push(date_end);
       paramIndex++;
     }
@@ -4460,6 +4470,9 @@ app.get("/api/archives", async (req, res) => {
       whereConditions.length > 0
         ? `WHERE ${whereConditions.join(" AND ")}`
         : "";
+
+    console.log("[ARCHIVES API] Clause WHERE:", whereClause);
+    console.log("[ARCHIVES API] Paramètres:", queryParams);
 
     // Pagination
     const offset = (page - 1) * limit;
@@ -4472,6 +4485,8 @@ app.get("/api/archives", async (req, res) => {
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
+    console.log("[ARCHIVES API] Requête SQL:", query);
+
     const result = await pool.query(query, queryParams);
 
     // Compter le total pour la pagination
@@ -4480,6 +4495,11 @@ app.get("/api/archives", async (req, res) => {
     `;
     const countResult = await pool.query(countQuery, queryParams.slice(0, -2));
     const total = parseInt(countResult.rows[0].total);
+
+    console.log("[ARCHIVES API] Résultats:", {
+      foundRows: result.rows.length,
+      total: total,
+    });
 
     res.json({
       success: true,

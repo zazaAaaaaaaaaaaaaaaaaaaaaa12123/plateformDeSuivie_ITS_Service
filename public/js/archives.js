@@ -169,6 +169,12 @@ class ArchivesManager {
 
     console.log("[ARCHIVES] Recherche avec filtres:", this.currentFilters);
 
+    // Vérifier si au moins un filtre est défini
+    const hasFilters = Object.values(this.currentFilters).some(
+      (value) => value && value.trim() !== ""
+    );
+    console.log("[ARCHIVES] Des filtres sont-ils appliqués ?", hasFilters);
+
     this.currentPage = 1;
     await this.loadArchives();
   }
@@ -212,19 +218,37 @@ class ArchivesManager {
         ...this.currentFilters,
       });
 
+      console.log("[ARCHIVES] Chargement avec paramètres:", params.toString());
+
       const response = await fetch(`/api/archives?${params}`);
       const data = await response.json();
+
+      console.log("[ARCHIVES] Réponse reçue:", {
+        success: data.success,
+        archivesCount: data.archives ? data.archives.length : 0,
+        totalCount: data.pagination ? data.pagination.total : 0,
+      });
 
       if (data.success) {
         this.filteredArchives = data.archives; // Données filtrées pour l'affichage
         this.allArchives = this.allArchivesData || []; // Données complètes pour les compteurs
         this.pagination = data.pagination;
+
+        // Mettre à jour les compteurs avec les données complètes
         this.updateCounts();
+
+        // Afficher les résultats filtrés
         this.renderCurrentView();
         this.renderPagination();
+
+        console.log(
+          "[ARCHIVES] Rendu terminé - Archives filtrées:",
+          this.filteredArchives.length
+        );
       } else {
+        console.error("[ARCHIVES] Erreur serveur:", data.message);
         this.showNotification(
-          "Erreur lors du chargement des archives",
+          data.message || "Erreur lors du chargement des archives",
           "error"
         );
       }
@@ -259,11 +283,13 @@ class ArchivesManager {
   renderCurrentView() {
     let archivesToRender = this.filteredArchives;
 
-    // Si aucun filtre n'est appliqué côté serveur, filtrer selon l'onglet actif
+    // Si des filtres sont appliqués côté serveur, utiliser directement les données filtrées
     const hasServerFilters =
       this.currentFilters.search ||
       this.currentFilters.action_type ||
-      this.currentFilters.role_source;
+      this.currentFilters.role_source ||
+      this.currentFilters.date_start ||
+      this.currentFilters.date_end;
 
     console.log(
       "[ARCHIVES] Rendu - Onglet:",
@@ -274,8 +300,8 @@ class ArchivesManager {
       this.filteredArchives.length
     );
 
+    // Si aucun filtre serveur n'est appliqué, filtrer selon l'onglet actif
     if (!hasServerFilters) {
-      // Filtrer selon l'onglet actif seulement si pas de filtres serveur
       switch (this.selectedTab) {
         case "deleted":
           archivesToRender = this.filteredArchives.filter(
@@ -291,6 +317,10 @@ class ArchivesManager {
           archivesToRender = this.filteredArchives.filter(
             (a) => a.action_type === "mise_en_livraison"
           );
+          break;
+        default:
+          // Pour "all", garder toutes les données filtrées
+          archivesToRender = this.filteredArchives;
           break;
       }
     }
@@ -955,7 +985,10 @@ class ArchivesManager {
 
   // Méthode publique pour recharger complètement les archives
   async reload() {
+    console.log("[ARCHIVES] Rechargement complet des archives...");
     this.allArchivesData = null; // Vider le cache
+    this.filteredArchives = []; // Vider les données filtrées
+    this.currentPage = 1; // Remettre à la première page
     await this.loadArchives();
   }
 }
