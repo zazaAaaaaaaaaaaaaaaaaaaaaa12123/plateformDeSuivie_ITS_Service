@@ -115,10 +115,16 @@ class ArchivesManager {
             // Mettre à jour le filtre et appliquer la recherche
             this.currentFilters.action_type = tabToActionMap[this.selectedTab];
             actionFilter.value = tabToActionMap[this.selectedTab];
-            console.log(`[ARCHIVES] Onglet ${this.selectedTab} sélectionné, filtrage par: ${tabToActionMap[this.selectedTab]}`);
+            console.log(
+              `[ARCHIVES] Onglet ${
+                this.selectedTab
+              } sélectionné, filtrage par: ${tabToActionMap[this.selectedTab]}`
+            );
             this.performSearch(); // Recharger avec le nouveau filtre
           } else {
-            console.log(`[ARCHIVES] Onglet ${this.selectedTab} non trouvé dans le mapping`);
+            console.log(
+              `[ARCHIVES] Onglet ${this.selectedTab} non trouvé dans le mapping`
+            );
             this.renderCurrentView();
           }
         } else if (actionFilter && this.selectedTab === "all") {
