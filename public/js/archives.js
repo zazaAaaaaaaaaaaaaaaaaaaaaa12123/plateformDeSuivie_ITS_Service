@@ -1253,6 +1253,7 @@ class ArchivesManager {
 
     console.log("[ARCHIVES] Compteurs mis à jour:", counts);
 
+    // Mettre à jour les badges des onglets
     document.getElementById("allCount").textContent = counts.all;
     document.getElementById("deletedCount").textContent = counts.suppression;
     document.getElementById("deliveredCount").textContent = counts.livraison;
@@ -1260,6 +1261,12 @@ class ArchivesManager {
       counts.mise_en_livraison;
     document.getElementById("ordersCount").textContent =
       counts.ordre_livraison_etabli;
+
+    // Mettre à jour le compteur total dans le header (nouveau)
+    const totalElement = document.getElementById("archivesTotalNumber");
+    if (totalElement) {
+      totalElement.textContent = counts.all.toLocaleString("fr-FR");
+    }
   }
 
   renderCurrentView() {

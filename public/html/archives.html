@@ -61,71 +61,134 @@
 
     <!-- Conteneur principal -->
     <div class="container-fluid py-4">
+      <!-- Section Tableau de Bord / Monitoring -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <!-- Le panneau de stockage sera injecté ici automatiquement par JavaScript -->
+        </div>
+      </div>
+
       <!-- Section des filtres -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0">
-            <i class="fas fa-filter me-2"></i>Recherche et Filtres
-          </h5>
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="fas fa-filter me-2 text-primary"></i>Recherche et
+              Filtres
+            </h5>
+            <div class="d-flex align-items-center">
+              <small class="text-muted me-3" id="totalArchivesCount">
+                <i class="fas fa-archive me-1"></i>
+                <span id="archivesTotalNumber">--</span> archives
+              </small>
+              <button id="refreshBtn" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-sync-alt me-1"></i>Actualiser
+              </button>
+            </div>
+          </div>
         </div>
         <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label for="searchInput" class="form-label"
-                >Recherche générale</label
-              >
+          <!-- Filtres principaux -->
+          <div class="row g-3 mb-3">
+            <div class="col-lg-5">
+              <label for="searchInput" class="form-label fw-semibold">
+                <i class="fas fa-search me-1 text-primary"></i>Recherche
+                générale
+              </label>
               <input
                 type="text"
-                class="form-control"
+                class="form-control form-control-lg"
                 id="searchInput"
-                placeholder="ID, référence, client, utilisateur..."
+                placeholder="🔍 ID, référence, client, utilisateur..."
               />
             </div>
-            <div class="col-md-2">
-              <label for="actionFilter" class="form-label">Type d'action</label>
-              <select class="form-select" id="actionFilter">
-                <option value="">Toutes les actions</option>
-                <option value="suppression">Supprimés</option>
-                <option value="livraison">Livrés</option>
-                <option value="mise_en_livraison">Mis en livraison</option>
-                <option value="ordre_livraison_etabli">
-                  Ordres de livraison
-                </option>
-              </select>
+            <div class="col-lg-7">
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <label for="actionFilter" class="form-label fw-semibold"
+                    >Type d'action</label
+                  >
+                  <select class="form-select" id="actionFilter">
+                    <option value="">🗂️ Toutes les actions</option>
+                    <option value="suppression">🗑️ Supprimés</option>
+                    <option value="livraison">✅ Livrés</option>
+                    <option value="mise_en_livraison">
+                      🚚 Mis en livraison
+                    </option>
+                    <option value="ordre_livraison_etabli">
+                      📋 Ordres de livraison
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="roleFilter" class="form-label fw-semibold"
+                    >Rôle/Source</label
+                  >
+                  <select class="form-select" id="roleFilter">
+                    <option value="">👥 Tous les rôles</option>
+                    <option value="Agent Acconier">👤 Agent Acconier</option>
+                    <option value="Responsable Acconier">
+                      👨‍💼 Resp. Acconier
+                    </option>
+                    <option value="Responsable Livraison">
+                      🚛 Resp. Livraison
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="itemsPerPage" class="form-label fw-semibold"
+                    >Affichage</label
+                  >
+                  <select class="form-select" id="itemsPerPage">
+                    <option value="25">25 par page</option>
+                    <option value="50" selected>50 par page</option>
+                    <option value="100">100 par page</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div class="col-md-2">
-              <label for="roleFilter" class="form-label">Rôle/Source</label>
-              <select class="form-select" id="roleFilter">
-                <option value="">Tous les rôles</option>
-                <option value="Agent Acconier">Agent Acconier</option>
-                <option value="Responsable Acconier">
-                  Responsable Acconier
-                </option>
-                <option value="Responsable Livraison">
-                  Responsable Livraison
-                </option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label for="dateStart" class="form-label">Date début</label>
+          </div>
+
+          <!-- Filtres de dates -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="dateStart" class="form-label fw-semibold">
+                <i class="fas fa-calendar-alt me-1 text-success"></i>Date de
+                début
+              </label>
               <input type="date" class="form-control" id="dateStart" />
             </div>
-            <div class="col-md-2">
-              <label for="dateEnd" class="form-label">Date fin</label>
+            <div class="col-md-6">
+              <label for="dateEnd" class="form-label fw-semibold">
+                <i class="fas fa-calendar-alt me-1 text-danger"></i>Date de fin
+              </label>
               <input type="date" class="form-control" id="dateEnd" />
             </div>
           </div>
-          <div class="row mt-3">
-            <div class="col-12">
-              <button type="button" class="btn btn-primary" id="searchBtn">
+
+          <!-- Boutons d'action -->
+          <div
+            class="d-flex flex-wrap gap-2 justify-content-between align-items-center"
+          >
+            <div class="d-flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="btn btn-primary btn-lg"
+                id="searchBtn"
+              >
                 <i class="fas fa-search me-1"></i>Rechercher
               </button>
-              <button type="button" class="btn btn-secondary" id="resetBtn">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                id="resetBtn"
+              >
                 <i class="fas fa-undo me-1"></i>Réinitialiser
               </button>
-              <button type="button" class="btn btn-info" id="refreshBtn">
-                <i class="fas fa-sync-alt me-1"></i>Actualiser
-              </button>
+            </div>
+            <div class="d-flex align-items-center text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              <small>Utilisez les filtres pour affiner votre recherche</small>
             </div>
           </div>
         </div>
