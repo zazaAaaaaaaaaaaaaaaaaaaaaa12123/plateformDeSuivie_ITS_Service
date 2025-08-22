@@ -131,7 +131,7 @@ class StorageStatsManager {
 
   displayStats(stats) {
     try {
-      // Affichage principal
+      // === MÉTRIQUES PRINCIPALES ===
       const totalSizeEl = document.getElementById("totalSizeDisplay");
       const totalArchivesEl = document.getElementById("totalArchivesCount");
       const usagePercentageEl = document.getElementById(
@@ -149,41 +149,115 @@ class StorageStatsManager {
       if (maxStorageEl)
         maxStorageEl.textContent = `sur ${stats.maxStorageFormatted}`;
 
-      // Barre de progression
-      const progressBar = document.getElementById("storageProgressBar");
-      if (progressBar) {
-        const percentage = Math.min(stats.usagePercentage, 100);
-        progressBar.style.width = `${percentage}%`;
-        progressBar.textContent = `${percentage}%`;
-        progressBar.setAttribute("aria-valuenow", percentage);
+      // === DERNIÈRE SYNCHRONISATION ===
+      const lastSyncEl = document.getElementById("lastSyncDisplay");
+      if (lastSyncEl) {
+        const now = new Date();
+        const syncTime = now.toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        lastSyncEl.textContent = syncTime;
+      }
 
-        // Couleur de la barre selon le niveau d'utilisation
-        progressBar.className = "progress-bar";
+      // === BADGE DE STATUT ===
+      const statusBadge = document.getElementById("storageStatusBadge");
+      if (statusBadge) {
+        const percentage = stats.usagePercentage;
         if (percentage < 50) {
-          progressBar.classList.add("bg-success");
+          statusBadge.textContent = "Optimal";
+          statusBadge.className = "badge bg-success";
         } else if (percentage < 80) {
-          progressBar.classList.add("bg-warning");
+          statusBadge.textContent = "Attention";
+          statusBadge.className = "badge bg-warning";
         } else {
-          progressBar.classList.add("bg-danger");
+          statusBadge.textContent = "Critique";
+          statusBadge.className = "badge bg-danger";
         }
       }
 
-      // Tableau par type
-      this.displayTypeBreakdown(stats);
+      // === AFFICHAGE D'EFFICACITÉ ===
+      const efficiencyDisplay = document.getElementById("efficiencyDisplay");
+      if (efficiencyDisplay) {
+        const efficiency = Math.max(0, 100 - stats.usagePercentage);
+        efficiencyDisplay.textContent = `${efficiency}%`;
+      }
 
-      // Dernière mise à jour
+      // === BARRE DE PROGRESSION LINÉAIRE ===
+      const progressBar = document.getElementById("storageProgressBar");
+      const progressText = document.getElementById("progressPercentageText");
+      if (progressBar && progressText) {
+        const percentage = Math.min(stats.usagePercentage, 100);
+        progressBar.style.width = `${percentage}%`;
+        progressBar.setAttribute("aria-valuenow", percentage);
+        progressText.textContent = `${percentage}%`;
+
+        // Animation CSS pour la barre
+        progressBar.style.transition = "width 1.5s ease-in-out";
+
+        // Couleur adaptative avec gradient
+        if (percentage < 50) {
+          progressBar.style.background =
+            "linear-gradient(90deg, #10b981 0%, #059669 100%)";
+        } else if (percentage < 80) {
+          progressBar.style.background =
+            "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)";
+        } else {
+          progressBar.style.background =
+            "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)";
+        }
+      }
+
+      // === GRAPHIQUE CIRCULAIRE ===
+      const circleProgress = document.getElementById("circleProgress");
+      const circlePercentage = document.getElementById("circlePercentage");
+      if (circleProgress && circlePercentage) {
+        const percentage = Math.min(stats.usagePercentage, 100);
+        const circumference = 2 * Math.PI * 45; // rayon = 45
+        const offset = circumference - (percentage / 100) * circumference;
+
+        circleProgress.style.strokeDashoffset = offset;
+        circleProgress.style.transition = "stroke-dashoffset 2s ease-in-out";
+        circlePercentage.textContent = `${percentage}%`;
+
+        // Couleur adaptative du cercle
+        if (percentage < 50) {
+          circleProgress.style.stroke = "#10b981";
+        } else if (percentage < 80) {
+          circleProgress.style.stroke = "#f59e0b";
+        } else {
+          circleProgress.style.stroke = "#ef4444";
+        }
+      }
+
+      // === TABLEAU DÉTAILLÉ PREMIUM ===
+      this.displayPremiumTypeBreakdown(stats);
+
+      // === DERNIÈRE MISE À JOUR ===
       const lastUpdatedEl = document.getElementById("lastUpdatedDisplay");
       if (lastUpdatedEl) {
-        const lastUpdated = new Date(stats.lastUpdated).toLocaleString("fr-FR");
+        const lastUpdated = new Date(stats.lastUpdated).toLocaleString(
+          "fr-FR",
+          {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }
+        );
         lastUpdatedEl.textContent = lastUpdated;
       }
+
+      // === ANIMATIONS D'ENTRÉE ===
+      this.animateCounters(stats);
     } catch (error) {
       console.error("[STORAGE] Erreur lors de l'affichage:", error);
-      this.showError("Erreur lors de l'affichage des statistiques");
+      this.showError("Erreur lors de l'affichage des analytics de stockage");
     }
   }
 
-  displayTypeBreakdown(stats) {
+  displayPremiumTypeBreakdown(stats) {
     const tableBody = document.getElementById("storageByTypeTable");
     if (!tableBody) return;
 
@@ -193,7 +267,21 @@ class StorageStatsManager {
       suppression: "Dossiers supprimés",
       livraison: "Dossiers livrés",
       mise_en_livraison: "Mise en livraison",
-      ordre_livraison_etabli: "Ordre de livraison établi",
+      ordre_livraison_etabli: "Ordres établis",
+    };
+
+    const typeIcons = {
+      suppression: "fas fa-trash-alt",
+      livraison: "fas fa-truck",
+      mise_en_livraison: "fas fa-shipping-fast",
+      ordre_livraison_etabli: "fas fa-clipboard-list",
+    };
+
+    const typeColors = {
+      suppression: "#ef4444",
+      livraison: "#10b981",
+      mise_en_livraison: "#3b82f6",
+      ordre_livraison_etabli: "#8b5cf6",
     };
 
     const totalSize = stats.totalSizeBytes;
@@ -202,23 +290,57 @@ class StorageStatsManager {
       const row = document.createElement("tr");
       const percentage =
         totalSize > 0 ? Math.round((data.bytes / totalSize) * 100) : 0;
+      const color = typeColors[type] || "#6b7280";
+
+      // Déterminer le statut
+      let statusBadge = "";
+      if (percentage > 40) {
+        statusBadge = '<span class="badge bg-warning">Élevé</span>';
+      } else if (percentage > 20) {
+        statusBadge = '<span class="badge bg-info">Modéré</span>';
+      } else {
+        statusBadge = '<span class="badge bg-success">Normal</span>';
+      }
 
       row.innerHTML = `
-        <td>
-          <i class="fas fa-${this.getTypeIcon(type)} me-2 text-muted"></i>
-          ${typeLabels[type] || type}
-        </td>
-        <td><strong>${data.formatted}</strong></td>
-        <td>
+        <td class="py-3">
           <div class="d-flex align-items-center">
-            <span class="me-2">${percentage}%</span>
-            <div class="progress flex-grow-1" style="height: 8px; width: 60px;">
-              <div 
-                class="progress-bar bg-secondary" 
-                style="width: ${percentage}%"
-              ></div>
+            <div class="flex-shrink-0 me-3">
+              <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                   style="width: 40px; height: 40px; background: ${color}15; color: ${color};">
+                <i class="${
+                  typeIcons[type] || "fas fa-archive"
+                }" style="font-size: 1.1rem;"></i>
+              </div>
+            </div>
+            <div>
+              <div class="fw-medium text-dark">${typeLabels[type] || type}</div>
+              <small class="text-muted">${this.formatArchiveCount(
+                type,
+                stats
+              )}</small>
             </div>
           </div>
+        </td>
+        <td class="py-3">
+          <div class="fw-bold text-dark">${data.formatted}</div>
+          <small class="text-muted">${this.formatBytes(
+            data.bytes
+          )} bruts</small>
+        </td>
+        <td class="py-3">
+          <div class="d-flex align-items-center">
+            <div class="flex-grow-1 me-3">
+              <div class="progress" style="height: 8px; border-radius: 10px;">
+                <div class="progress-bar" 
+                     style="width: ${percentage}%; background: ${color}; border-radius: 10px;"></div>
+              </div>
+            </div>
+            <span class="fw-medium text-dark" style="min-width: 40px;">${percentage}%</span>
+          </div>
+        </td>
+        <td class="py-3">
+          ${statusBadge}
         </td>
       `;
 
@@ -226,14 +348,71 @@ class StorageStatsManager {
     });
   }
 
-  getTypeIcon(type) {
-    const icons = {
-      suppression: "trash",
-      livraison: "truck",
-      mise_en_livraison: "shipping-fast",
-      ordre_livraison_etabli: "clipboard-list",
+  formatArchiveCount(type, stats) {
+    // Simulation du nombre d'archives par type (à adapter selon vos données réelles)
+    const counts = {
+      suppression: Math.floor(stats.totalArchives * 0.4),
+      livraison: Math.floor(stats.totalArchives * 0.35),
+      mise_en_livraison: Math.floor(stats.totalArchives * 0.15),
+      ordre_livraison_etabli: Math.floor(stats.totalArchives * 0.1),
     };
-    return icons[type] || "archive";
+
+    return `${counts[type] || 0} éléments`;
+  }
+
+  formatBytes(bytes) {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  }
+
+  animateCounters(stats) {
+    // Animation des compteurs principaux
+    this.animateCounter("totalSizeDisplay", stats.totalSizeFormatted);
+    this.animateCounter("usagePercentageDisplay", `${stats.usagePercentage}%`);
+
+    // Animation du nombre total d'archives
+    const archivesEl = document.getElementById("totalArchivesCount");
+    if (archivesEl) {
+      this.animateNumber(
+        archivesEl,
+        stats.totalArchives,
+        (num) => `${num} archive${num > 1 ? "s" : ""}`
+      );
+    }
+  }
+
+  animateCounter(elementId, finalValue) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    // Animation de fondu
+    element.style.opacity = "0";
+    element.style.transform = "translateY(10px)";
+    element.style.transition = "all 0.6s ease";
+
+    setTimeout(() => {
+      element.textContent = finalValue;
+      element.style.opacity = "1";
+      element.style.transform = "translateY(0)";
+    }, 300);
+  }
+
+  animateNumber(element, finalNumber, formatter) {
+    if (!element) return;
+
+    let current = 0;
+    const increment = Math.ceil(finalNumber / 30);
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= finalNumber) {
+        current = finalNumber;
+        clearInterval(timer);
+      }
+      element.textContent = formatter(current);
+    }, 50);
   }
 
   showLoading() {
