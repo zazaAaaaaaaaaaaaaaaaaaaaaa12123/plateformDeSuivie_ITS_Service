@@ -3550,13 +3550,13 @@ app.post(
 
       // === ARCHIVAGE AUTOMATIQUE DE L'ORDRE DE LIVRAISON ===
       try {
-        console.log(`[ARCHIVE] Archivage automatique de l'ordre de livraison ID: ${newDelivery.id}`);
-        
-        // Préparer les données d'archivage
-        const archiveData = {
-          page_origine: "Interface Formulaire Employé",
-          action_type: "ordre_livraison_etabli",
-          dossier_number: newDelivery.dossier_number || `AUTO-${newDelivery.id}`,
+        console.log(
+          `[ARCHIVE] Archivage automatique de l'ordre de livraison ID: ${newDelivery.id}`
+        );
+
+        // Préparer les données du dossier pour l'archivage (structure JSONB)
+        const dossier_data = {
+          id: newDelivery.id,
           employee_name: newDelivery.employee_name,
           delivery_date: newDelivery.delivery_date,
           delivery_time: newDelivery.delivery_time,
@@ -3570,6 +3570,7 @@ app.post(
           declaration_number: newDelivery.declaration_number,
           number_of_containers: newDelivery.number_of_containers,
           bl_number: newDelivery.bl_number,
+          dossier_number: newDelivery.dossier_number,
           shipping_company: newDelivery.shipping_company,
           transporter: newDelivery.transporter,
           weight: newDelivery.weight,
@@ -3585,9 +3586,8 @@ app.post(
           truck_registration: newDelivery.truck_registration,
           delivery_notes: newDelivery.delivery_notes,
           delivery_status_acconier: newDelivery.delivery_status_acconier,
-          target_interface: "interfaceFormulaireEmployer.html",
-          auto_archive_reason: "Ordre de livraison établi par agent acconier",
-          original_id: newDelivery.id
+          created_at: newDelivery.created_at,
+          original_table: "livraison_conteneur",
         };
 
         // Créer les métadonnées pour l'archivage
@@ -3596,45 +3596,48 @@ app.post(
           archived_by: "SYSTEM_AUTO_ARCHIVE",
           archive_trigger: "ordre_livraison_creation",
           original_table: "livraison_conteneur",
+          original_id: newDelivery.id,
           archival_category: "ordre_livraison_etabli",
+          target_interface: "interfaceFormulaireEmployer.html",
+          auto_archive_reason: "Ordre de livraison établi par agent acconier",
           notes: `Archivage automatique lors de la création de l'ordre de livraison par ${newDelivery.employee_name}`,
-          data_snapshot: archiveData
+          data_snapshot: dossier_data,
         };
 
-        // Insérer dans la table archives_dossiers
+        // Insérer dans la table archives_dossiers avec la structure correcte
         const archiveInsertQuery = `
           INSERT INTO archives_dossiers (
-            page_origine, action_type, dossier_number, employee_name, delivery_date, delivery_time,
-            client_name, client_phone, container_type_and_content, lieu, status,
-            container_number, container_foot_type, declaration_number, number_of_containers,
-            bl_number, shipping_company, transporter, weight, ship_name, circuit,
-            number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes,
-            driver_name, driver_phone, truck_registration, delivery_notes,
-            delivery_status_acconier, target_interface, auto_archive_reason, original_id, metadata
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+            dossier_id, dossier_reference, intitule, client_name,
+            role_source, page_origine, action_type, archived_by,
+            archived_by_email, dossier_data, metadata
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
           RETURNING id;
         `;
 
         const archiveValues = [
-          archiveData.page_origine, archiveData.action_type, archiveData.dossier_number,
-          archiveData.employee_name, archiveData.delivery_date, archiveData.delivery_time,
-          archiveData.client_name, archiveData.client_phone, archiveData.container_type_and_content,
-          archiveData.lieu, archiveData.status, archiveData.container_number,
-          archiveData.container_foot_type, archiveData.declaration_number, archiveData.number_of_containers,
-          archiveData.bl_number, archiveData.shipping_company, archiveData.transporter,
-          archiveData.weight, archiveData.ship_name, archiveData.circuit,
-          archiveData.number_of_packages, archiveData.transporter_mode, archiveData.nom_agent_visiteur,
-          archiveData.inspecteur, archiveData.agent_en_douanes, archiveData.driver_name,
-          archiveData.driver_phone, archiveData.truck_registration, archiveData.delivery_notes,
-          archiveData.delivery_status_acconier, archiveData.target_interface, archiveData.auto_archive_reason,
-          archiveData.original_id, JSON.stringify(metadata)
+          newDelivery.id, // dossier_id (ID de l'ordre dans livraison_conteneur)
+          newDelivery.dossier_number || `ORDER-${newDelivery.id}`, // dossier_reference
+          `Ordre de livraison - ${newDelivery.container_number || "Conteneur"}`, // intitule
+          newDelivery.client_name, // client_name
+          newDelivery.employee_name, // role_source (nom de l'agent)
+          "Interface Formulaire Employé", // page_origine
+          "ordre_livraison_etabli", // action_type
+          "SYSTEM_AUTO_ARCHIVE", // archived_by
+          null, // archived_by_email (système automatique)
+          JSON.stringify(dossier_data), // dossier_data (toutes les données)
+          JSON.stringify(metadata), // metadata
         ];
 
-        const archiveResult = await pool.query(archiveInsertQuery, archiveValues);
+        const archiveResult = await pool.query(
+          archiveInsertQuery,
+          archiveValues
+        );
         const archiveId = archiveResult.rows[0].id;
-        
-        console.log(`[ARCHIVE] ✅ Ordre de livraison archivé avec succès - Archive ID: ${archiveId}`);
-        
+
+        console.log(
+          `[ARCHIVE] ✅ Ordre de livraison archivé avec succès - Archive ID: ${archiveId}`
+        );
+
         // Notifier via WebSocket de la nouvelle archive
         if (wss && wss.clients) {
           const archiveNotification = {
@@ -3642,13 +3645,15 @@ app.post(
             archive: {
               id: archiveId,
               action_type: "ordre_livraison_etabli",
-              dossier_number: archiveData.dossier_number,
-              employee_name: archiveData.employee_name,
-              page_origine: archiveData.page_origine,
-              created_at: new Date().toISOString()
-            }
+              dossier_reference:
+                newDelivery.dossier_number || `ORDER-${newDelivery.id}`,
+              client_name: newDelivery.client_name,
+              role_source: newDelivery.employee_name,
+              page_origine: "Interface Formulaire Employé",
+              archived_at: new Date().toISOString(),
+            },
           };
-          
+
           const archivePayload = JSON.stringify(archiveNotification);
           wss.clients.forEach((client) => {
             try {
@@ -3656,14 +3661,22 @@ app.post(
                 client.send(archivePayload);
               }
             } catch (e) {
-              console.error("[WebSocket] Erreur lors de l'envoi notification archive:", e);
+              console.error(
+                "[WebSocket] Erreur lors de l'envoi notification archive:",
+                e
+              );
             }
           });
-          console.log(`[ARCHIVE] 📡 Notification d'archivage envoyée via WebSocket`);
+          console.log(
+            `[ARCHIVE] 📡 Notification d'archivage envoyée via WebSocket`
+          );
         }
-
       } catch (archiveError) {
-        console.error("[ARCHIVE] ❌ Erreur lors de l'archivage automatique:", archiveError);
+        console.error(
+          "[ARCHIVE] ❌ Erreur lors de l'archivage automatique:",
+          archiveError
+        );
+        console.error("[ARCHIVE] Détails de l'erreur:", archiveError.message);
         // On continue malgré l'erreur d'archivage pour ne pas bloquer la création de l'ordre
       }
 
