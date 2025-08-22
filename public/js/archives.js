@@ -112,6 +112,8 @@ class ArchivesManager {
           };
 
           if (tabToActionMap[this.selectedTab]) {
+            // Mettre à jour le filtre et appliquer la recherche
+            this.currentFilters.action_type = tabToActionMap[this.selectedTab];
             actionFilter.value = tabToActionMap[this.selectedTab];
             this.performSearch(); // Recharger avec le nouveau filtre
           } else {
@@ -119,6 +121,7 @@ class ArchivesManager {
           }
         } else if (actionFilter && this.selectedTab === "all") {
           // Si on revient à "all", vider le filtre action_type
+          this.currentFilters.action_type = "";
           actionFilter.value = "";
           this.performSearch();
         } else {
@@ -406,7 +409,6 @@ class ArchivesManager {
                             <th class="d-none d-md-table-cell">Client</th>
                             <th class="col-role d-none d-lg-table-cell">Rôle/Source</th>
                             <th class="col-date">Date d'archive</th>
-                            <th class="d-none d-md-table-cell">Archivé par</th>
                             <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
@@ -466,14 +468,6 @@ class ArchivesManager {
                       archive.archived_at
                     )}</small>
                     ${this.renderDeliveryStatus(archive)}
-                </td>
-                <td class="d-none d-md-table-cell">
-                    ${archive.archived_by || "Système"}
-                    ${
-                      archive.archived_by_email
-                        ? `<br><small class="text-muted">${archive.archived_by_email}</small>`
-                        : ""
-                    }
                 </td>
                 <td class="col-actions">
                     ${this.renderActionButtons(archive)}
@@ -758,12 +752,6 @@ class ArchivesManager {
                                 <span class="detail-value-compact">${this.getPageName(
                                   archive.page_origine
                                 )}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Archivé par:</span>
-                                <span class="detail-value-compact">${
-                                  archive.archived_by || "Système"
-                                }</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label-compact">Date:</span>
@@ -1332,7 +1320,9 @@ class ArchivesManager {
     for (const [page, name] of Object.entries(pageNames)) {
       if (url.includes(page)) return name;
     }
-    return "Interface inconnue";
+
+    // Pour les ordres établis, ne pas afficher "Interface inconnue"
+    return "";
   }
 
   isRecentArchive(dateStr) {
