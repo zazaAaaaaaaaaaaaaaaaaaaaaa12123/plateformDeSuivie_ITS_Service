@@ -4619,28 +4619,56 @@ app.post("/api/archives/:id/restore", async (req, res) => {
     const { id } = req.params;
     const { restored_by, restored_by_email } = req.body;
 
+    console.log(`🔄 Tentative de restauration de l'archive ID: ${id}`);
+    console.log(`👤 Restauré par: ${restored_by} (${restored_by_email})`);
+
     // Récupérer l'archive
     const archiveResult = await pool.query(
-      "SELECT * FROM archives_dossiers WHERE id = $1 AND is_restorable = true",
+      "SELECT * FROM archives_dossiers WHERE id = $1",
       [id]
     );
 
     if (archiveResult.rows.length === 0) {
+      console.log(`❌ Archive ${id} non trouvée`);
       return res.status(404).json({
         success: false,
-        message: "Archive non trouvée ou non restaurable",
+        message: "Archive non trouvée",
       });
     }
 
     const archive = archiveResult.rows[0];
+    console.log(`📊 Archive trouvée:`, {
+      id: archive.id,
+      reference: archive.dossier_reference,
+      is_restorable: archive.is_restorable,
+      action_type: archive.action_type,
+      has_dossier_data: !!archive.dossier_data,
+    });
+
+    if (!archive.is_restorable) {
+      console.log(`⚠️ Archive ${id} non restaurable`);
+      return res.status(400).json({
+        success: false,
+        message: "Cette archive n'est pas restaurable",
+      });
+    }
+
     const dossierData = archive.dossier_data;
 
     if (!dossierData) {
+      console.log(`❌ Données du dossier manquantes pour l'archive ${id}`);
       return res.status(400).json({
         success: false,
         message: "Données du dossier non disponibles pour la restauration",
       });
     }
+
+    console.log(`📋 Données du dossier:`, {
+      client_name: dossierData.client_name,
+      employee_name: dossierData.employee_name,
+      delivery_date: dossierData.delivery_date,
+      container_number: dossierData.container_number,
+    });
 
     // Restaurer le dossier dans la table principale
     const restoreQuery = `
@@ -4658,6 +4686,8 @@ app.post("/api/archives/:id/restore", async (req, res) => {
         $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35
       ) RETURNING id
     `;
+
+    console.log(`💾 Insertion du dossier restauré dans livraison_conteneur...`);
 
     const restoreResult = await pool.query(restoreQuery, [
       dossierData.employee_name,
@@ -4691,11 +4721,14 @@ app.post("/api/archives/:id/restore", async (req, res) => {
       dossierData.is_eir_received,
       dossierData.delivery_status_acconier,
       dossierData.observation_acconier,
-      JSON.stringify(dossierData.container_numbers_list),
-      JSON.stringify(dossierData.container_foot_types_map),
-      JSON.stringify(dossierData.bl_statuses),
-      JSON.stringify(dossierData.container_statuses),
+      JSON.stringify(dossierData.container_numbers_list || []),
+      JSON.stringify(dossierData.container_foot_types_map || {}),
+      JSON.stringify(dossierData.bl_statuses || {}),
+      JSON.stringify(dossierData.container_statuses || {}),
     ]);
+
+    const restoredId = restoreResult.rows[0].id;
+    console.log(`✅ Dossier restauré avec succès - Nouveau ID: ${restoredId}`);
 
     // Marquer l'archive comme non restaurable
     await pool.query(
@@ -4703,16 +4736,18 @@ app.post("/api/archives/:id/restore", async (req, res) => {
       [id]
     );
 
+    console.log(`🔒 Archive ${id} marquée comme non restaurable`);
+
     res.json({
       success: true,
       message: "Dossier restauré avec succès",
-      restored_id: restoreResult.rows[0].id,
+      restored_id: restoredId,
     });
   } catch (err) {
-    console.error("Erreur lors de la restauration:", err);
+    console.error("🚨 Erreur lors de la restauration:", err);
     res.status(500).json({
       success: false,
-      message: "Erreur serveur lors de la restauration",
+      message: "Erreur serveur lors de la restauration: " + err.message,
     });
   }
 });

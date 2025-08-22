@@ -794,33 +794,60 @@ class ArchivesManager {
 
   async restoreArchive(archiveId) {
     try {
+      console.log("🔄 Tentative de restauration pour l'archive ID:", archiveId);
       this.showLoading(true);
+
+      const requestData = {
+        restored_by: this.getCurrentUser(),
+        restored_by_email: this.getCurrentUserEmail(),
+      };
+
+      console.log("📤 Données envoyées au serveur:", requestData);
 
       const response = await fetch(`/api/archives/${archiveId}/restore`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          restored_by: this.getCurrentUser(),
-          restored_by_email: this.getCurrentUserEmail(),
-        }),
+        body: JSON.stringify(requestData),
       });
 
+      console.log("📥 Réponse du serveur - Status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Erreur HTTP:", response.status, errorText);
+        throw new Error(`Erreur ${response.status}: ${errorText}`);
+      }
+
       const data = await response.json();
+      console.log("📊 Données de réponse:", data);
 
       if (data.success) {
-        this.showNotification("Dossier restauré avec succès", "success");
+        this.showNotification("✅ Dossier restauré avec succès", "success");
+        console.log("✅ Archive restaurée, rechargement de la liste...");
         await this.loadArchives(); // Recharger la liste
+
+        // Fermer le modal si ouvert
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById("detailsModal")
+        );
+        if (modal) {
+          modal.hide();
+        }
       } else {
+        console.error("❌ Échec de la restauration:", data.message);
         this.showNotification(
-          data.message || "Erreur lors de la restauration",
+          `❌ ${data.message || "Erreur lors de la restauration"}`,
           "error"
         );
       }
     } catch (error) {
-      console.error("Erreur lors de la restauration:", error);
-      this.showNotification("Erreur de connexion", "error");
+      console.error("🚨 Erreur lors de la restauration:", error);
+      this.showNotification(
+        `🚨 Erreur de connexion: ${error.message}`,
+        "error"
+      );
     } finally {
       this.showLoading(false);
     }
@@ -1298,13 +1325,23 @@ class ArchivesManager {
   }
 
   getCurrentUser() {
-    // Récupérer l'utilisateur connecté (à adapter selon votre système d'auth)
-    return localStorage.getItem("currentUser") || "Utilisateur";
+    // Définir des valeurs par défaut si non définies
+    let currentUser = localStorage.getItem("currentUser");
+    if (!currentUser) {
+      currentUser = "Administrateur";
+      localStorage.setItem("currentUser", currentUser);
+    }
+    return currentUser;
   }
 
   getCurrentUserEmail() {
-    // Récupérer l'email de l'utilisateur connecté (à adapter selon votre système d'auth)
-    return localStorage.getItem("currentUserEmail") || "";
+    // Définir des valeurs par défaut si non définies
+    let currentUserEmail = localStorage.getItem("currentUserEmail");
+    if (!currentUserEmail) {
+      currentUserEmail = "admin@its-service.com";
+      localStorage.setItem("currentUserEmail", currentUserEmail);
+    }
+    return currentUserEmail;
   }
 
   // Méthode pour rafraîchir les données complètes (cache)
