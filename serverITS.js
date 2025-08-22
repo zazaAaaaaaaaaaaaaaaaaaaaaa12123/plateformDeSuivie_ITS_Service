@@ -4675,23 +4675,35 @@ app.get("/api/archives", async (req, res) => {
       queryParams.push(limit, offset);
 
       const query = `
-        SELECT DISTINCT
-          id,
-          id as dossier_id,
-          dossier_number as dossier_reference,
-          container_type_and_content as intitule,
-          client_name,
+        WITH unique_deliveries AS (
+          SELECT DISTINCT ON (id) 
+            id,
+            dossier_number,
+            container_type_and_content,
+            client_name,
+            employee_name,
+            created_at
+          FROM livraison_conteneur 
+          ${whereClause}
+          ORDER BY id, created_at DESC
+        )
+        SELECT 
+          lc.id,
+          lc.id as dossier_id,
+          lc.dossier_number as dossier_reference,
+          lc.container_type_and_content as intitule,
+          lc.client_name,
           'Responsable Livraison' as role_source,
           'resp_liv.html' as page_origine,
           'mise_en_livraison' as action_type,
-          employee_name as archived_by,
+          lc.employee_name as archived_by,
           '' as archived_by_email,
-          created_at as archived_at,
-          to_jsonb(livraison_conteneur) as dossier_data,
-          '{"source": "active_delivery", "status": "en_cours"}' as metadata
-        FROM livraison_conteneur 
-        ${whereClause}
-        ORDER BY created_at DESC 
+          lc.created_at as archived_at,
+          row_to_json(lc.*) as dossier_data,
+          '{"source": "active_delivery", "status": "en_cours"}'::json as metadata
+        FROM livraison_conteneur lc
+        INNER JOIN unique_deliveries ud ON lc.id = ud.id
+        ORDER BY lc.created_at DESC 
         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
       `;
 
