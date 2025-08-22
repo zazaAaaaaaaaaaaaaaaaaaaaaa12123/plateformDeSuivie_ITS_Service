@@ -2168,6 +2168,115 @@ async function createTables() {
 }
 createTables();
 
+// === FONCTION POUR NETTOYER LES DOUBLONS D'ARCHIVES ===
+async function cleanArchivesDuplicates() {
+  try {
+    console.log("🧹 Début du nettoyage des doublons d'archives...");
+
+    // Étape 1: Identifier les doublons par dossier_reference + action_type
+    const duplicatesQuery = `
+      SELECT dossier_reference, action_type, COUNT(*) as count_duplicates
+      FROM archives_dossiers 
+      WHERE dossier_reference IS NOT NULL
+      GROUP BY dossier_reference, action_type
+      HAVING COUNT(*) > 1
+      ORDER BY count_duplicates DESC;
+    `;
+
+    const duplicatesResult = await pool.query(duplicatesQuery);
+    const duplicates = duplicatesResult.rows;
+
+    if (duplicates.length === 0) {
+      console.log("✅ Aucun doublon d'archive trouvé.");
+      return;
+    }
+
+    console.log(`🔍 ${duplicates.length} groupes de doublons trouvés:`);
+    duplicates.forEach((dup) => {
+      console.log(
+        `   - ${dup.dossier_reference} (${dup.action_type}): ${dup.count_duplicates} doublons`
+      );
+    });
+
+    let totalDeleted = 0;
+
+    // Étape 2: Pour chaque groupe de doublons, garder le plus récent et supprimer les autres
+    for (const duplicate of duplicates) {
+      const { dossier_reference, action_type } = duplicate;
+
+      // Récupérer tous les enregistrements de ce groupe, triés par date (plus récent en premier)
+      const allRecordsQuery = `
+        SELECT id, archived_at, archived_by
+        FROM archives_dossiers 
+        WHERE dossier_reference = $1 AND action_type = $2
+        ORDER BY archived_at DESC;
+      `;
+
+      const allRecordsResult = await pool.query(allRecordsQuery, [
+        dossier_reference,
+        action_type,
+      ]);
+      const allRecords = allRecordsResult.rows;
+
+      if (allRecords.length <= 1) continue;
+
+      // Garder le premier (plus récent) et supprimer les autres
+      const toKeep = allRecords[0];
+      const toDelete = allRecords.slice(1);
+
+      console.log(`🗑️  Nettoyage ${dossier_reference} (${action_type}):`);
+      console.log(
+        `   ✅ Garder: ID ${toKeep.id} (${toKeep.archived_at}) par ${toKeep.archived_by}`
+      );
+
+      for (const record of toDelete) {
+        await pool.query("DELETE FROM archives_dossiers WHERE id = $1", [
+          record.id,
+        ]);
+        console.log(
+          `   ❌ Supprimé: ID ${record.id} (${record.archived_at}) par ${record.archived_by}`
+        );
+        totalDeleted++;
+      }
+    }
+
+    console.log(`✅ Nettoyage terminé: ${totalDeleted} doublons supprimés.`);
+
+    // Étape 3: Ajouter une contrainte unique pour empêcher les futurs doublons
+    try {
+      await pool.query(`
+        DO $$ BEGIN
+          -- Vérifier si la contrainte n'existe pas déjà
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints 
+            WHERE constraint_name = 'unique_archive_per_dossier_action'
+          ) THEN
+            -- Créer un index unique sur dossier_reference + action_type
+            CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS unique_archive_per_dossier_action 
+            ON archives_dossiers (dossier_reference, action_type) 
+            WHERE dossier_reference IS NOT NULL;
+            
+            RAISE NOTICE 'Contrainte unique ajoutée pour éviter les doublons d''archives';
+          END IF;
+        END $$;
+      `);
+      console.log(
+        "🔒 Contrainte unique ajoutée pour empêcher les futurs doublons."
+      );
+    } catch (err) {
+      console.warn(
+        "⚠️  Impossible d'ajouter la contrainte unique:",
+        err.message
+      );
+    }
+  } catch (err) {
+    console.error("❌ Erreur lors du nettoyage des doublons d'archives:", err);
+  }
+}
+
+// Lancer le nettoyage des doublons au démarrage
+cleanArchivesDuplicates();
+
 // Helper function to validate and format time strings (HH:MM)
 function formatTimeForDB(timeString) {
   if (!timeString) return null;
@@ -4575,6 +4684,35 @@ app.post("/api/archives", async (req, res) => {
       });
     }
 
+    // VÉRIFICATION ANTI-DOUBLONS : Empêcher l'archivage multiple du même dossier pour la même action
+    if (dossier_reference) {
+      const existingArchive = await pool.query(
+        `SELECT id, archived_at, archived_by FROM archives_dossiers 
+         WHERE dossier_reference = $1 AND action_type = $2 
+         ORDER BY archived_at DESC LIMIT 1`,
+        [dossier_reference, action_type]
+      );
+
+      if (existingArchive.rows.length > 0) {
+        const existing = existingArchive.rows[0];
+        console.log(`🚫 Tentative d'archivage en doublon bloquée:`);
+        console.log(`   - Dossier: ${dossier_reference}`);
+        console.log(`   - Action: ${action_type}`);
+        console.log(
+          `   - Déjà archivé le: ${existing.archived_at} par ${existing.archived_by}`
+        );
+        console.log(`   - Tentative par: ${archived_by}`);
+
+        return res.status(409).json({
+          success: false,
+          message: `Ce dossier (${dossier_reference}) a déjà été archivé pour l'action "${action_type}" le ${new Date(
+            existing.archived_at
+          ).toLocaleDateString("fr-FR")} par ${existing.archived_by}.`,
+          existing_archive: existing,
+        });
+      }
+    }
+
     const result = await pool.query(
       `
       INSERT INTO archives_dossiers (
@@ -4597,6 +4735,10 @@ app.post("/api/archives", async (req, res) => {
         JSON.stringify(dossier_data),
         JSON.stringify(metadata),
       ]
+    );
+
+    console.log(
+      `✅ Nouveau dossier archivé: ${dossier_reference} (${action_type}) par ${archived_by}`
     );
 
     res.status(201).json({
@@ -5893,7 +6035,9 @@ app.get("/api/dossiers/retard", async (req, res) => {
 // ===============================
 app.get("/api/deliveries/status-counts", async (req, res) => {
   try {
-    console.log("[STATUS COUNTS] 🎯 Début du calcul des compteurs précis (par dossier unique)...");
+    console.log(
+      "[STATUS COUNTS] 🎯 Début du calcul des compteurs précis (par dossier unique)..."
+    );
 
     const result = await pool.query(
       `SELECT * FROM livraison_conteneur ORDER BY created_at DESC`
@@ -5906,17 +6050,19 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
 
     // ÉTAPE 1: Regrouper par dossier_number pour éviter les doublons
     const dossiersMap = new Map();
-    
+
     deliveries.forEach((delivery) => {
       const dossierKey = delivery.dossier_number || `AUTO_${delivery.id}`;
-      
+
       if (!dossiersMap.has(dossierKey)) {
         dossiersMap.set(dossierKey, []);
       }
       dossiersMap.get(dossierKey).push(delivery);
     });
 
-    console.log(`[STATUS COUNTS] 📋 Dossiers uniques trouvés: ${dossiersMap.size}`);
+    console.log(
+      `[STATUS COUNTS] 📋 Dossiers uniques trouvés: ${dossiersMap.size}`
+    );
 
     const counts = {
       en_attente_paiement: 0,
@@ -5990,15 +6136,18 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
     function isDossierVisibleInRespAcconier(deliveriesInDossier) {
       // Utiliser la première livraison comme référence pour les statuts de dossier
       const primaryDelivery = deliveriesInDossier[0];
-      
+
       // Si le statut acconier est explicitement "en attente de paiement"
-      if (primaryDelivery.delivery_status_acconier === "en attente de paiement") {
+      if (
+        primaryDelivery.delivery_status_acconier === "en attente de paiement"
+      ) {
         return true;
       }
 
       // Exclure si statut acconier est 'mise_en_livraison_acconier' ou 'livré'
       if (
-        primaryDelivery.delivery_status_acconier === "mise_en_livraison_acconier" ||
+        primaryDelivery.delivery_status_acconier ===
+          "mise_en_livraison_acconier" ||
         primaryDelivery.delivery_status_acconier === "livre" ||
         primaryDelivery.delivery_status_acconier === "livré"
       ) {
@@ -6007,7 +6156,7 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
 
       // Vérifier si tous les BL du dossier sont en 'mise_en_livraison'
       const allBLStatuses = new Set();
-      
+
       deliveriesInDossier.forEach((delivery) => {
         let blList = [];
         if (Array.isArray(delivery.bl_number)) {
@@ -6046,14 +6195,17 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
     function isDossierVisibleInRespLiv(deliveriesInDossier) {
       // Utiliser la première livraison comme référence
       const primaryDelivery = deliveriesInDossier[0];
-      return primaryDelivery.delivery_status_acconier === "mise_en_livraison_acconier";
+      return (
+        primaryDelivery.delivery_status_acconier ===
+        "mise_en_livraison_acconier"
+      );
     }
 
     // ÉTAPE 2: Analyser chaque dossier unique
     let dossierIndex = 0;
     dossiersMap.forEach((deliveriesInDossier, dossierNumber) => {
       dossierIndex++;
-      
+
       // PRIORITÉ 1: Dossier complètement livré
       if (isDossierFullyDelivered(deliveriesInDossier)) {
         counts.livres++;
@@ -6115,7 +6267,10 @@ app.get("/api/deliveries/status-counts", async (req, res) => {
       "Dossiers ignorés": debugCounts.skipped,
     });
 
-    console.log(`[STATUS COUNTS] 🎯 Comptage par dossiers uniques terminé:`, counts);
+    console.log(
+      `[STATUS COUNTS] 🎯 Comptage par dossiers uniques terminé:`,
+      counts
+    );
     res.json({ success: true, counts: counts });
   } catch (err) {
     console.error("Erreur /api/deliveries/status-counts :", err);
