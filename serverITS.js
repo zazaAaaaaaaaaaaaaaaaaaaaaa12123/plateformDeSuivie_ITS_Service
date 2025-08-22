@@ -4675,35 +4675,24 @@ app.get("/api/archives", async (req, res) => {
       queryParams.push(limit, offset);
 
       const query = `
-        WITH unique_deliveries AS (
-          SELECT DISTINCT ON (id) 
-            id,
-            dossier_number,
-            container_type_and_content,
-            client_name,
-            employee_name,
-            created_at
-          FROM livraison_conteneur 
-          ${whereClause}
-          ORDER BY id, created_at DESC
-        )
         SELECT 
-          lc.id,
-          lc.id as dossier_id,
-          lc.dossier_number as dossier_reference,
-          lc.container_type_and_content as intitule,
-          lc.client_name,
+          MIN(id) as id,
+          MIN(id) as dossier_id,
+          dossier_number as dossier_reference,
+          container_type_and_content as intitule,
+          client_name,
           'Responsable Livraison' as role_source,
           'resp_liv.html' as page_origine,
           'mise_en_livraison' as action_type,
-          lc.employee_name as archived_by,
+          employee_name as archived_by,
           '' as archived_by_email,
-          lc.created_at as archived_at,
-          row_to_json(lc.*) as dossier_data,
+          MAX(created_at) as archived_at,
+          row_to_json((SELECT d FROM (SELECT * FROM livraison_conteneur WHERE id = MIN(livraison_conteneur.id)) d)) as dossier_data,
           '{"source": "active_delivery", "status": "en_cours"}'::json as metadata
-        FROM livraison_conteneur lc
-        INNER JOIN unique_deliveries ud ON lc.id = ud.id
-        ORDER BY lc.created_at DESC 
+        FROM livraison_conteneur 
+        ${whereClause}
+        GROUP BY dossier_number, container_type_and_content, client_name, employee_name
+        ORDER BY MAX(created_at) DESC 
         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
       `;
 
@@ -4713,7 +4702,11 @@ app.get("/api/archives", async (req, res) => {
 
       // Compter le total pour la pagination
       const countQuery = `
-        SELECT COUNT(DISTINCT id) as total FROM livraison_conteneur ${whereClause}
+        SELECT COUNT(*) as total FROM (
+          SELECT dossier_number, container_type_and_content, client_name, employee_name
+          FROM livraison_conteneur ${whereClause}
+          GROUP BY dossier_number, container_type_and_content, client_name, employee_name
+        ) unique_dossiers
       `;
       const countResult = await pool.query(
         countQuery,
