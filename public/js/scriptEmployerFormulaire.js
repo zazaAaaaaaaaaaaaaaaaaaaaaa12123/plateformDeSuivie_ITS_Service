@@ -719,7 +719,10 @@ window.createMobileHistorySidebar = function () {
         `Êtes-vous sûr de vouloir supprimer ${selectedOrders.size} ordre(s) ?`
       )
     ) {
-      deleteSelectedOrders();
+      // Appel asynchrone pour gérer correctement l'archivage
+      deleteSelectedOrders().catch((error) => {
+        console.error("Erreur lors de la suppression des ordres:", error);
+      });
     }
   });
 
@@ -746,7 +749,7 @@ window.createMobileHistorySidebar = function () {
       });
   }
 
-  function deleteSelectedOrders() {
+  async function deleteSelectedOrders() {
     const historyKey = "simulatedHistoryData";
     const historyData = JSON.parse(localStorage.getItem(historyKey)) || {};
     const agentHistory = historyData["Agent Acconier"] || [];
@@ -758,19 +761,58 @@ window.createMobileHistorySidebar = function () {
     sortedIndexes.forEach((index) => {
       if (agentHistory[index]) {
         const orderData = agentHistory[index];
-        // Préparer les données pour l'archive
+
+        // Validation des données essentielles
+        if (!orderData.data) {
+          console.warn(
+            `[ARCHIVE] Ordre à l'index ${index} n'a pas de données valides, ignoré`
+          );
+          return;
+        }
+
+        // Préparer les données pour l'archive avec toutes les informations disponibles
         const dossierForArchive = {
           id: index,
           dossier_number:
-            orderData.data?.container_number || orderData.data?.dossier_number,
+            orderData.data?.container_number ||
+            orderData.data?.dossier_number ||
+            orderData.data?.bl_number ||
+            `ORDRE_${index}_${Date.now()}`,
           container_number: orderData.data?.container_number,
-          client_name: orderData.data?.client_name,
-          employee_name: orderData.data?.employee_name,
+          client_name: orderData.data?.client_name || "Non spécifié",
+          employee_name: orderData.data?.employee_name || "Agent Acconier",
           container_type_and_content:
             orderData.data?.container_type_and_content,
+          client_phone: orderData.data?.client_phone,
+          lieu: orderData.data?.lieu,
+          bl_number: orderData.data?.bl_number,
+          shipping_company: orderData.data?.shipping_company,
+          declaration_number: orderData.data?.declaration_number,
+          container_foot_type: orderData.data?.container_foot_type,
+          weight: orderData.data?.weight,
+          ship_name: orderData.data?.ship_name,
+          circuit: orderData.data?.circuit,
+          transporter_mode: orderData.data?.transporter_mode,
+          date_created: orderData.date || new Date().toISOString(),
+          // Inclure toutes les données originales
           ...orderData.data,
+          // Métadonnées spécifiques à la suppression
+          deletion_metadata: {
+            deleted_by: "Agent Acconier",
+            deleted_at: new Date().toISOString(),
+            original_index: index,
+            deletion_source: "interface_employer_formulaire",
+          },
         };
+
+        console.log(`[ARCHIVE] Préparation de l'archivage pour l'ordre:`, {
+          index,
+          dossier_number: dossierForArchive.dossier_number,
+          client_name: dossierForArchive.client_name,
+        });
         ordersToArchive.push(dossierForArchive);
+      } else {
+        console.warn(`[ARCHIVE] Aucun ordre trouvé à l'index ${index}`);
       }
     });
 
@@ -779,26 +821,53 @@ window.createMobileHistorySidebar = function () {
       ordersToArchive.length > 0 &&
       typeof window.archiveDossier === "function"
     ) {
-      ordersToArchive.forEach(async (orderData) => {
-        try {
-          await window.archiveDossier(
-            orderData,
-            "suppression",
-            "Agent Acconier",
-            window.location.href
-          );
-          console.log(
-            `[ARCHIVE] Ordre supprimé archivé: ${
-              orderData.dossier_number || orderData.id
-            }`
-          );
-        } catch (error) {
-          console.error(
-            "[ARCHIVE] Erreur lors de l'archivage de l'ordre supprimé:",
-            error
-          );
-        }
-      });
+      // Utiliser Promise.all pour attendre que tous les archivages soient terminés
+      try {
+        const archivePromises = ordersToArchive.map(async (orderData) => {
+          try {
+            const success = await window.archiveDossier(
+              orderData,
+              "suppression",
+              "Agent Acconier",
+              window.location.href
+            );
+            if (success) {
+              console.log(
+                `[ARCHIVE] Ordre supprimé archivé avec succès: ${
+                  orderData.dossier_number || orderData.id
+                }`
+              );
+            } else {
+              console.error(
+                `[ARCHIVE] Échec de l'archivage de l'ordre: ${
+                  orderData.dossier_number || orderData.id
+                }`
+              );
+            }
+            return success;
+          } catch (error) {
+            console.error(
+              `[ARCHIVE] Erreur lors de l'archivage de l'ordre supprimé ${
+                orderData.dossier_number || orderData.id
+              }:`,
+              error
+            );
+            return false;
+          }
+        });
+
+        // Attendre que tous les archivages soient terminés
+        const results = await Promise.all(archivePromises);
+        const successCount = results.filter(Boolean).length;
+        console.log(
+          `[ARCHIVE] ${successCount}/${ordersToArchive.length} ordres supprimés archivés avec succès`
+        );
+      } catch (error) {
+        console.error(
+          "[ARCHIVE] Erreur générale lors de l'archivage des ordres supprimés:",
+          error
+        );
+      }
     }
 
     // Supprimer les ordres sélectionnés (en ordre décroissant pour éviter les problèmes d'index)
@@ -816,6 +885,26 @@ window.createMobileHistorySidebar = function () {
     selectedOrders.clear();
     updateSelectionUI();
     loadMobileHistoryData();
+
+    // Notifier l'utilisateur du succès de l'opération
+    if (ordersToArchive.length > 0) {
+      console.log(
+        `[SUCCESS] ${ordersToArchive.length} ordre(s) supprimé(s) et archivé(s) avec succès`
+      );
+
+      // Optionnel : Afficher une notification visuelle
+      if (typeof showNotification === "function") {
+        showNotification(
+          `${ordersToArchive.length} ordre(s) supprimé(s) et archivé(s) avec succès`,
+          "success"
+        );
+      } else {
+        // Fallback avec alert si pas de système de notification
+        alert(
+          `${ordersToArchive.length} ordre(s) supprimé(s) et archivé(s) avec succès`
+        );
+      }
+    }
   }
 };
 
@@ -3056,3 +3145,65 @@ async function submitDeliveryForm(status) {
 // par d'autres scripts (par exemple, un script pour le panneau d'administration).
 // Ce script se consnjsdbjsydgjshdtre dxhjbsésormaidhjs uniquement sur le formulaire employé.
 /***djh1*/
+
+// Fonction de test pour vérifier l'archivage des suppressions
+window.testArchivageSuppressions = async function () {
+  console.log("[TEST] Vérification de la fonction d'archivage...");
+
+  // Vérifier si window.archiveDossier existe
+  if (typeof window.archiveDossier !== "function") {
+    console.error("[TEST] ❌ window.archiveDossier n'est pas disponible");
+    return false;
+  }
+
+  console.log("[TEST] ✅ window.archiveDossier est disponible");
+
+  // Test avec des données factices
+  const testData = {
+    id: 999,
+    dossier_number: "TEST_SUPPRESSION_" + Date.now(),
+    client_name: "Client Test",
+    employee_name: "Agent Acconier",
+    container_type_and_content: "Test Container",
+    deletion_metadata: {
+      deleted_by: "Agent Acconier",
+      deleted_at: new Date().toISOString(),
+      original_index: 999,
+      deletion_source: "test_function",
+    },
+  };
+
+  try {
+    const success = await window.archiveDossier(
+      testData,
+      "suppression",
+      "Agent Acconier",
+      window.location.href
+    );
+
+    if (success) {
+      console.log("[TEST] ✅ Test d'archivage réussi");
+      console.log(
+        "[TEST] 💡 Vérifiez la page des archives pour voir le test:",
+        "https://plateformdesuivie-its-service-1cjx.onrender.com/html/archives.html"
+      );
+      return true;
+    } else {
+      console.error("[TEST] ❌ Test d'archivage échoué");
+      return false;
+    }
+  } catch (error) {
+    console.error("[TEST] ❌ Erreur lors du test d'archivage:", error);
+    return false;
+  }
+};
+
+// Log de diagnostic au chargement
+console.log("[DEBUG] Script scriptEmployerFormulaire.js chargé");
+console.log(
+  "[DEBUG] window.archiveDossier disponible:",
+  typeof window.archiveDossier === "function"
+);
+console.log(
+  "[DEBUG] Pour tester l'archivage, exécutez: testArchivageSuppressions()"
+);
