@@ -3551,14 +3551,17 @@ app.post(
       // === ARCHIVAGE AUTOMATIQUE DE L'ORDRE DE LIVRAISON ===
       try {
         console.log("🗃️ Archivage automatique de l'ordre de livraison créé...");
-        
+
         // Préparer les données pour l'archivage
         const archiveData = {
           dossier_id: newDelivery.id,
-          dossier_reference: newDelivery.dossier_number || newDelivery.container_number || `ORD-${newDelivery.id}`,
+          dossier_reference:
+            newDelivery.dossier_number ||
+            newDelivery.container_number ||
+            `ORD-${newDelivery.id}`,
           intitule: newDelivery.container_type_and_content || "",
           client_name: newDelivery.client_name || "",
-          role_source: "Système - Agent Acconier", 
+          role_source: "Système - Agent Acconier",
           page_origine: "Interface Formulaire Employé",
           action_type: "ordre_livraison_etabli",
           archived_by: newDelivery.employee_name || "Système",
@@ -3570,7 +3573,7 @@ app.post(
             timestamp: new Date().toISOString(),
             auto_archive_reason: "Ordre de livraison créé automatiquement",
             container_numbers: full_container_numbers_list,
-            container_foot_types: container_foot_types_map
+            container_foot_types: container_foot_types_map,
           },
         };
 
@@ -3598,9 +3601,14 @@ app.post(
           JSON.stringify(archiveData.metadata),
         ]);
 
-        console.log(`✅ Ordre de livraison automatiquement archivé : ${archiveData.dossier_reference}`);
+        console.log(
+          `✅ Ordre de livraison automatiquement archivé : ${archiveData.dossier_reference}`
+        );
       } catch (archiveError) {
-        console.error("❌ Erreur lors de l'archivage automatique de l'ordre de livraison :", archiveError);
+        console.error(
+          "❌ Erreur lors de l'archivage automatique de l'ordre de livraison :",
+          archiveError
+        );
         // Ne pas faire échouer la création de l'ordre si l'archivage échoue
       }
 
@@ -4618,18 +4626,24 @@ app.get("/api/deliveries/shipping-status", async (req, res) => {
 
     const result = await pool.query(query);
 
-    console.log(`[API] ${result.rows.length} dossiers mis en livraison trouvés`);
+    console.log(
+      `[API] ${result.rows.length} dossiers mis en livraison trouvés`
+    );
 
     res.json({
       success: true,
       deliveries: result.rows,
-      count: result.rows.length
+      count: result.rows.length,
     });
   } catch (err) {
-    console.error("Erreur lors de la récupération des dossiers mis en livraison:", err);
+    console.error(
+      "Erreur lors de la récupération des dossiers mis en livraison:",
+      err
+    );
     res.status(500).json({
       success: false,
-      message: "Erreur serveur lors de la récupération des dossiers mis en livraison.",
+      message:
+        "Erreur serveur lors de la récupération des dossiers mis en livraison.",
     });
   }
 });
@@ -4651,14 +4665,17 @@ app.get("/api/deliveries/shipping-count", async (req, res) => {
 
     res.json({
       success: true,
-      count: count
+      count: count,
     });
   } catch (err) {
-    console.error("Erreur lors du comptage des dossiers mis en livraison:", err);
+    console.error(
+      "Erreur lors du comptage des dossiers mis en livraison:",
+      err
+    );
     res.status(500).json({
       success: false,
       message: "Erreur serveur lors du comptage des dossiers mis en livraison.",
-      count: 0
+      count: 0,
     });
   }
 });

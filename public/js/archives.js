@@ -102,7 +102,9 @@ class ArchivesManager {
 
         // Gestion spéciale pour l'onglet "Mis en livraison"
         if (this.selectedTab === "shipping") {
-          console.log("[ARCHIVES] Onglet 'Mis en livraison' sélectionné - chargement des dossiers en cours de livraison");
+          console.log(
+            "[ARCHIVES] Onglet 'Mis en livraison' sélectionné - chargement des dossiers en cours de livraison"
+          );
           this.loadShippingDeliveries();
           return;
         }
@@ -326,9 +328,12 @@ class ArchivesManager {
 
       if (data.success) {
         // Convertir les livraisons en format archive pour l'affichage
-        this.filteredArchives = data.deliveries.map(delivery => ({
+        this.filteredArchives = data.deliveries.map((delivery) => ({
           id: delivery.id,
-          dossier_reference: delivery.dossier_number || delivery.container_number || `DEL-${delivery.id}`,
+          dossier_reference:
+            delivery.dossier_number ||
+            delivery.container_number ||
+            `DEL-${delivery.id}`,
           intitule: delivery.container_type_and_content || "",
           client_name: delivery.client_name || "",
           role_source: "Responsable Livraison",
@@ -336,16 +341,19 @@ class ArchivesManager {
           action_type: "mise_en_livraison",
           archived_by: delivery.employee_name || "",
           archived_by_email: "",
-          archived_at: delivery.created_at || delivery.updated_at || new Date().toISOString(),
+          archived_at:
+            delivery.created_at ||
+            delivery.updated_at ||
+            new Date().toISOString(),
           dossier_data: delivery,
           metadata: {
             original_table: "livraison_conteneur",
             delivery_status: delivery.delivery_status_acconier,
-            is_live_delivery: true
+            is_live_delivery: true,
           },
           is_restorable: false, // Les livraisons en cours ne sont pas restaurables
           container_numbers: delivery.container_number,
-          transporter: delivery.transporter
+          transporter: delivery.transporter,
         }));
 
         // Pas de pagination pour les livraisons en cours, on affiche tout
@@ -353,7 +361,7 @@ class ArchivesManager {
           currentPage: 1,
           totalPages: 1,
           totalItems: this.filteredArchives.length,
-          itemsPerPage: this.filteredArchives.length
+          itemsPerPage: this.filteredArchives.length,
         };
 
         // Mettre à jour les compteurs
@@ -375,7 +383,10 @@ class ArchivesManager {
         );
       }
     } catch (error) {
-      console.error("Erreur lors du chargement des livraisons en cours:", error);
+      console.error(
+        "Erreur lors du chargement des livraisons en cours:",
+        error
+      );
       this.showNotification("Erreur de connexion", "error");
     } finally {
       this.showLoading(false);
@@ -397,11 +408,11 @@ class ArchivesManager {
     };
 
     // Pour les livraisons en cours (mise_en_livraison), il faut compter depuis la table des livraisons
-    this.loadShippingCount().then(shippingCount => {
+    this.loadShippingCount().then((shippingCount) => {
       const counts = {
         ...archiveCounts,
         mise_en_livraison: shippingCount,
-        all: archiveCounts.all + shippingCount // Ajouter les livraisons en cours au total
+        all: archiveCounts.all + shippingCount, // Ajouter les livraisons en cours au total
       };
 
       console.log("[ARCHIVES] Compteurs mis à jour:", counts);
@@ -409,8 +420,10 @@ class ArchivesManager {
       document.getElementById("allCount").textContent = counts.all;
       document.getElementById("deletedCount").textContent = counts.suppression;
       document.getElementById("deliveredCount").textContent = counts.livraison;
-      document.getElementById("shippingCount").textContent = counts.mise_en_livraison;
-      document.getElementById("ordersCount").textContent = counts.ordre_livraison_etabli;
+      document.getElementById("shippingCount").textContent =
+        counts.mise_en_livraison;
+      document.getElementById("ordersCount").textContent =
+        counts.ordre_livraison_etabli;
     });
   }
 
