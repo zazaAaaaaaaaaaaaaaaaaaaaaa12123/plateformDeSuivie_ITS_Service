@@ -536,7 +536,16 @@ class ArchivesManager {
   }
 
   renderDetailsContent(archive) {
+    console.log("Archive complète reçue:", archive);
     const dossierData = archive.dossier_data || {};
+    console.log("Données du dossier:", dossierData);
+
+    // Logique améliorée pour récupérer le nom du client
+    const clientName =
+      dossierData.client_name ||
+      archive.client_name ||
+      (archive.dossier_data && archive.dossier_data.client_name) ||
+      "Non spécifié";
 
     return `
             <div class="row">
@@ -565,11 +574,7 @@ class ArchivesManager {
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label-compact">Client:</span>
-                                <span class="detail-value-compact">${
-                                  dossierData.client_name ||
-                                  archive.client_name ||
-                                  "Non spécifié"
-                                }</span>
+                                <span class="detail-value-compact">${clientName}</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label-compact">Intitulé:</span>
@@ -582,34 +587,50 @@ class ArchivesManager {
                         </div>
                     </div>
 
-                    ${
-                      archive.dossier_data
-                        ? `
                     <div class="detail-section-compact">
                         <h6 class="mb-3"><i class="fas fa-database me-2"></i>Données du dossier</h6>
                         <div class="detail-grid">
                             <div class="detail-item">
                                 <span class="detail-label-compact">Employé:</span>
                                 <span class="detail-value-compact">${
-                                  dossierData.employee_name || "N/A"
+                                  dossierData.employee_name ||
+                                  archive.employee_name ||
+                                  "N/A"
                                 }</span>
                             </div>
                             <div class="detail-item">
+                                <span class="detail-label-compact">Client (données):</span>
+                                <span class="detail-value-compact">${clientName}</span>
+                            </div>
+                            <div class="detail-item">
                                 <span class="detail-label-compact">Conteneur:</span>
-                                <span class="detail-value-compact">${this.formatContainerNumbers(
-                                  dossierData
-                                )}</span>
+                                <span class="detail-value-compact">${
+                                  this.formatContainerNumbers(dossierData) ||
+                                  archive.container_numbers ||
+                                  "N/A"
+                                }</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label-compact">Type/Contenu:</span>
+                                <span class="detail-value-compact">${
+                                  dossierData.container_type_and_content ||
+                                  dossierData.container_content ||
+                                  archive.container_type ||
+                                  "N/A"
+                                }</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label-compact">Transporteur:</span>
                                 <span class="detail-value-compact">${
-                                  dossierData.transporter || "N/A"
+                                  dossierData.transporter ||
+                                  archive.transporter ||
+                                  "N/A"
                                 }</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label-compact">Lieu:</span>
                                 <span class="detail-value-compact">${
-                                  dossierData.lieu || "N/A"
+                                  dossierData.lieu || archive.lieu || "N/A"
                                 }</span>
                             </div>
                             <div class="detail-item">
@@ -618,27 +639,30 @@ class ArchivesManager {
                                     <span class="badge badge-status">${
                                       dossierData.status ||
                                       dossierData.delivery_status_acconier ||
+                                      archive.status ||
                                       "N/A"
                                     }</span>
                                 </span>
                             </div>
                             ${
-                              dossierData.delivery_date
+                              dossierData.delivery_date || archive.delivery_date
                                 ? `
                             <div class="detail-item">
                                 <span class="detail-label-compact">Livraison:</span>
                                 <span class="detail-value-compact">${
-                                  dossierData.delivery_date
-                                } ${dossierData.delivery_time || ""}</span>
+                                  dossierData.delivery_date ||
+                                  archive.delivery_date
+                                } ${
+                                    dossierData.delivery_time ||
+                                    archive.delivery_time ||
+                                    ""
+                                  }</span>
                             </div>
                             `
                                 : ""
                             }
                         </div>
                     </div>
-                    `
-                        : ""
-                    }
                 </div>
 
                 <!-- Colonne droite -->
