@@ -469,14 +469,19 @@ class ArchivesManager {
     const canRestore =
       archive.is_restorable &&
       archive.dossier_data &&
-      archive.action_type !== "livraison"; // Interdire la restauration des dossiers livrés
+      archive.action_type === "suppression"; // Seuls les dossiers supprimés peuvent être restaurés
 
-    const restoreTooltip =
-      archive.action_type === "livraison"
-        ? "Les dossiers livrés ne peuvent pas être restaurés"
-        : canRestore
-        ? "Restaurer le dossier"
-        : "Dossier non restaurable";
+    let restoreTooltip = "Dossier non restaurable";
+    if (archive.action_type === "livraison") {
+      restoreTooltip = "Les dossiers livrés ne peuvent pas être restaurés";
+    } else if (archive.action_type === "mise_en_livraison") {
+      restoreTooltip =
+        "Les dossiers mis en livraison ne peuvent pas être restaurés";
+    } else if (archive.action_type === "suppression" && canRestore) {
+      restoreTooltip = "Restaurer le dossier dans l'interface employé";
+    } else if (archive.action_type === "suppression") {
+      restoreTooltip = "Données insuffisantes pour la restauration";
+    }
 
     return `
             <div class="btn-group btn-group-sm" role="group">
