@@ -3548,6 +3548,125 @@ app.post(
       // RETIRÉ : L'envoi de la liste des agents n'est plus déclenché ici
       // await broadcastAgentList(wss);
 
+      // === ARCHIVAGE AUTOMATIQUE DE L'ORDRE DE LIVRAISON ===
+      try {
+        console.log(`[ARCHIVE] Archivage automatique de l'ordre de livraison ID: ${newDelivery.id}`);
+        
+        // Préparer les données d'archivage
+        const archiveData = {
+          page_origine: "Interface Formulaire Employé",
+          action_type: "ordre_livraison_etabli",
+          dossier_number: newDelivery.dossier_number || `AUTO-${newDelivery.id}`,
+          employee_name: newDelivery.employee_name,
+          delivery_date: newDelivery.delivery_date,
+          delivery_time: newDelivery.delivery_time,
+          client_name: newDelivery.client_name,
+          client_phone: newDelivery.client_phone,
+          container_type_and_content: newDelivery.container_type_and_content,
+          lieu: newDelivery.lieu,
+          status: newDelivery.status,
+          container_number: newDelivery.container_number,
+          container_foot_type: newDelivery.container_foot_type,
+          declaration_number: newDelivery.declaration_number,
+          number_of_containers: newDelivery.number_of_containers,
+          bl_number: newDelivery.bl_number,
+          shipping_company: newDelivery.shipping_company,
+          transporter: newDelivery.transporter,
+          weight: newDelivery.weight,
+          ship_name: newDelivery.ship_name,
+          circuit: newDelivery.circuit,
+          number_of_packages: newDelivery.number_of_packages,
+          transporter_mode: newDelivery.transporter_mode,
+          nom_agent_visiteur: newDelivery.nom_agent_visiteur,
+          inspecteur: newDelivery.inspecteur,
+          agent_en_douanes: newDelivery.agent_en_douanes,
+          driver_name: newDelivery.driver_name,
+          driver_phone: newDelivery.driver_phone,
+          truck_registration: newDelivery.truck_registration,
+          delivery_notes: newDelivery.delivery_notes,
+          delivery_status_acconier: newDelivery.delivery_status_acconier,
+          target_interface: "interfaceFormulaireEmployer.html",
+          auto_archive_reason: "Ordre de livraison établi par agent acconier",
+          original_id: newDelivery.id
+        };
+
+        // Créer les métadonnées pour l'archivage
+        const metadata = {
+          archived_at: new Date().toISOString(),
+          archived_by: "SYSTEM_AUTO_ARCHIVE",
+          archive_trigger: "ordre_livraison_creation",
+          original_table: "livraison_conteneur",
+          archival_category: "ordre_livraison_etabli",
+          notes: `Archivage automatique lors de la création de l'ordre de livraison par ${newDelivery.employee_name}`,
+          data_snapshot: archiveData
+        };
+
+        // Insérer dans la table archives_dossiers
+        const archiveInsertQuery = `
+          INSERT INTO archives_dossiers (
+            page_origine, action_type, dossier_number, employee_name, delivery_date, delivery_time,
+            client_name, client_phone, container_type_and_content, lieu, status,
+            container_number, container_foot_type, declaration_number, number_of_containers,
+            bl_number, shipping_company, transporter, weight, ship_name, circuit,
+            number_of_packages, transporter_mode, nom_agent_visiteur, inspecteur, agent_en_douanes,
+            driver_name, driver_phone, truck_registration, delivery_notes,
+            delivery_status_acconier, target_interface, auto_archive_reason, original_id, metadata
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+          RETURNING id;
+        `;
+
+        const archiveValues = [
+          archiveData.page_origine, archiveData.action_type, archiveData.dossier_number,
+          archiveData.employee_name, archiveData.delivery_date, archiveData.delivery_time,
+          archiveData.client_name, archiveData.client_phone, archiveData.container_type_and_content,
+          archiveData.lieu, archiveData.status, archiveData.container_number,
+          archiveData.container_foot_type, archiveData.declaration_number, archiveData.number_of_containers,
+          archiveData.bl_number, archiveData.shipping_company, archiveData.transporter,
+          archiveData.weight, archiveData.ship_name, archiveData.circuit,
+          archiveData.number_of_packages, archiveData.transporter_mode, archiveData.nom_agent_visiteur,
+          archiveData.inspecteur, archiveData.agent_en_douanes, archiveData.driver_name,
+          archiveData.driver_phone, archiveData.truck_registration, archiveData.delivery_notes,
+          archiveData.delivery_status_acconier, archiveData.target_interface, archiveData.auto_archive_reason,
+          archiveData.original_id, JSON.stringify(metadata)
+        ];
+
+        const archiveResult = await pool.query(archiveInsertQuery, archiveValues);
+        const archiveId = archiveResult.rows[0].id;
+        
+        console.log(`[ARCHIVE] ✅ Ordre de livraison archivé avec succès - Archive ID: ${archiveId}`);
+        
+        // Notifier via WebSocket de la nouvelle archive
+        if (wss && wss.clients) {
+          const archiveNotification = {
+            type: "new_archive_created",
+            archive: {
+              id: archiveId,
+              action_type: "ordre_livraison_etabli",
+              dossier_number: archiveData.dossier_number,
+              employee_name: archiveData.employee_name,
+              page_origine: archiveData.page_origine,
+              created_at: new Date().toISOString()
+            }
+          };
+          
+          const archivePayload = JSON.stringify(archiveNotification);
+          wss.clients.forEach((client) => {
+            try {
+              if (client.readyState === require("ws").OPEN) {
+                client.send(archivePayload);
+              }
+            } catch (e) {
+              console.error("[WebSocket] Erreur lors de l'envoi notification archive:", e);
+            }
+          });
+          console.log(`[ARCHIVE] 📡 Notification d'archivage envoyée via WebSocket`);
+        }
+
+      } catch (archiveError) {
+        console.error("[ARCHIVE] ❌ Erreur lors de l'archivage automatique:", archiveError);
+        // On continue malgré l'erreur d'archivage pour ne pas bloquer la création de l'ordre
+      }
+
       res.status(201).json({
         success: true,
         message: "Statut de livraison enregistré avec succès !",
