@@ -14,9 +14,10 @@ class ArchivesManager {
       date_start: "",
       date_end: "",
     };
-    this.allArchives = [];
-    this.filteredArchives = [];
+    this.allArchives = []; // Données complètes pour les compteurs
+    this.filteredArchives = []; // Données filtrées à afficher
     this.selectedTab = "all";
+    this.allArchivesData = null; // Cache pour toutes les données non filtrées
 
     this.init();
   }
@@ -48,6 +49,11 @@ class ArchivesManager {
     const resetBtn = document.getElementById("resetBtn");
     if (resetBtn) {
       resetBtn.addEventListener("click", () => this.resetFilters());
+    }
+
+    const refreshBtn = document.getElementById("refreshBtn");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", () => this.reload());
     }
 
     // Filtres en temps réel
@@ -91,7 +97,30 @@ class ArchivesManager {
       tab.addEventListener("shown.bs.tab", (e) => {
         this.selectedTab = e.target.id.replace("-tab", "");
         this.currentPage = 1;
-        this.renderCurrentView();
+        
+        // Si on change d'onglet, adapter les filtres en conséquence
+        const actionFilter = document.getElementById("actionFilter");
+        if (actionFilter && this.selectedTab !== "all") {
+          // Mapper les onglets aux types d'action
+          const tabToActionMap = {
+            "deleted": "suppression",
+            "delivered": "livraison", 
+            "shipping": "mise_en_livraison"
+          };
+          
+          if (tabToActionMap[this.selectedTab]) {
+            actionFilter.value = tabToActionMap[this.selectedTab];
+            this.performSearch(); // Recharger avec le nouveau filtre
+          } else {
+            this.renderCurrentView();
+          }
+        } else if (actionFilter && this.selectedTab === "all") {
+          // Si on revient à "all", vider le filtre action_type
+          actionFilter.value = "";
+          this.performSearch();
+        } else {
+          this.renderCurrentView();
+        }
       });
     });
 
@@ -138,6 +167,8 @@ class ArchivesManager {
       date_end: document.getElementById("dateEnd").value,
     };
 
+    console.log("[ARCHIVES] Recherche avec filtres:", this.currentFilters);
+
     this.currentPage = 1;
     await this.loadArchives();
   }
@@ -165,6 +196,16 @@ class ArchivesManager {
     try {
       this.showLoading(true);
 
+      // Charger d'abord toutes les données pour les compteurs (si pas déjà en cache)
+      if (!this.allArchivesData) {
+        const allDataResponse = await fetch('/api/archives?limit=1000'); // Récupérer toutes les données
+        const allData = await allDataResponse.json();
+        if (allData.success) {
+          this.allArchivesData = allData.archives;
+        }
+      }
+
+      // Ensuite charger les données filtrées
       const params = new URLSearchParams({
         page: this.currentPage,
         limit: this.itemsPerPage,
@@ -175,7 +216,8 @@ class ArchivesManager {
       const data = await response.json();
 
       if (data.success) {
-        this.allArchives = data.archives;
+        this.filteredArchives = data.archives; // Données filtrées pour l'affichage
+        this.allArchives = this.allArchivesData || []; // Données complètes pour les compteurs
         this.pagination = data.pagination;
         this.updateCounts();
         this.renderCurrentView();
@@ -215,27 +257,37 @@ class ArchivesManager {
   }
 
   renderCurrentView() {
-    let archivesToRender = this.allArchives;
+    let archivesToRender = this.filteredArchives;
 
-    // Filtrer selon l'onglet actif
-    switch (this.selectedTab) {
-      case "deleted":
-        archivesToRender = this.allArchives.filter(
-          (a) => a.action_type === "suppression"
-        );
-        break;
-      case "delivered":
-        archivesToRender = this.allArchives.filter(
-          (a) => a.action_type === "livraison"
-        );
-        break;
-      case "shipping":
-        archivesToRender = this.allArchives.filter(
-          (a) => a.action_type === "mise_en_livraison"
-        );
-        break;
+    // Si aucun filtre n'est appliqué côté serveur, filtrer selon l'onglet actif
+    const hasServerFilters = this.currentFilters.search || 
+                           this.currentFilters.action_type || 
+                           this.currentFilters.role_source;
+    
+    console.log("[ARCHIVES] Rendu - Onglet:", this.selectedTab, "| Filtres serveur:", hasServerFilters, "| Données filtrées:", this.filteredArchives.length);
+    
+    if (!hasServerFilters) {
+      // Filtrer selon l'onglet actif seulement si pas de filtres serveur
+      switch (this.selectedTab) {
+        case "deleted":
+          archivesToRender = this.filteredArchives.filter(
+            (a) => a.action_type === "suppression"
+          );
+          break;
+        case "delivered":
+          archivesToRender = this.filteredArchives.filter(
+            (a) => a.action_type === "livraison"
+          );
+          break;
+        case "shipping":
+          archivesToRender = this.filteredArchives.filter(
+            (a) => a.action_type === "mise_en_livraison"
+          );
+          break;
+      }
     }
 
+    console.log("[ARCHIVES] Archives à rendre:", archivesToRender.length);
     this.renderTable(archivesToRender);
     this.updatePaginationInfo();
   }
@@ -875,6 +927,29 @@ class ArchivesManager {
     // Récupérer l'email de l'utilisateur connecté (à adapter selon votre système d'auth)
     return localStorage.getItem("currentUserEmail") || "";
   }
+
+  // Méthode pour rafraîchir les données complètes (cache)
+  async refreshAllData() {
+    try {
+      const allDataResponse = await fetch('/api/archives?limit=1000');
+      const allData = await allDataResponse.json();
+      if (allData.success) {
+        this.allArchivesData = allData.archives;
+        this.allArchives = this.allArchivesData;
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement des données:", error);
+      return false;
+    }
+  }
+
+  // Méthode publique pour recharger complètement les archives
+  async reload() {
+    this.allArchivesData = null; // Vider le cache
+    await this.loadArchives();
+  }
 }
 
 // Fonction utilitaire pour archiver un dossier (appelée depuis les autres interfaces)
@@ -915,6 +990,13 @@ window.archiveDossier = async function (
     const result = await response.json();
     if (result.success) {
       console.log("Dossier archivé avec succès:", result.archive);
+      
+      // Rafraîchir les données si on est sur la page des archives
+      if (window.archivesManager && typeof window.archivesManager.refreshAllData === 'function') {
+        await window.archivesManager.refreshAllData();
+        window.archivesManager.updateCounts();
+      }
+      
       return true;
     } else {
       console.error("Erreur lors de l'archivage:", result.message);
