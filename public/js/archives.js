@@ -2296,31 +2296,48 @@ class StorageManager {
     return stats && stats.summary && stats.summary.total_archives_count === 42; // Valeur simulée caractéristique
   }
 
-  // Traitement des vraies données d'archives locales
-  processRealArchiveData() {
-    console.log("📊 Utilisation des vraies données d'archives locales");
+  // Traitement des vraies données d'archives locales avec données en temps réel
+  async processRealArchiveData() {
+    console.log("📊 Utilisation des vraies données d'archives + temps réel");
 
-    // Récupérer toutes les archives réelles
+    // 1. Récupérer les archives réelles
     const archives = this.archivesManager.allArchives;
+
+    // 2. Récupérer les données en temps réel depuis les différentes sources
+    const realTimeData = await this.fetchRealTimeData();
 
     // Calculer les vraies statistiques par type
     const realStats = {
       suppression: { count: 0, size: 0, archives: [] },
       livraison: { count: 0, size: 0, archives: [] },
-      mise_en_livraison: { count: 0, size: 0, archives: [] },
-      ordre_livraison_etabli: { count: 0, size: 0, archives: [] },
+      mise_en_livraison: {
+        count: realTimeData.mise_en_livraison || 0,
+        size: 0,
+        archives: [],
+      },
+      ordre_livraison_etabli: {
+        count: realTimeData.ordres_livraison || 0,
+        size: 0,
+        archives: [],
+      },
     };
 
     let totalSize = 0;
     let totalCount = archives.length;
 
-    // Calculer les vraies données
+    // Calculer les données des archives
     archives.forEach((archive) => {
       const archiveSize = this.estimateArchiveSize(archive);
       const actionType = archive.action_type;
 
       if (realStats[actionType]) {
-        realStats[actionType].count++;
+        // Pour mise_en_livraison et ordre_livraison_etabli, on garde les vrais comptes temps réel
+        if (
+          actionType !== "mise_en_livraison" &&
+          actionType !== "ordre_livraison_etabli"
+        ) {
+          realStats[actionType].count++;
+        }
         realStats[actionType].size += archiveSize;
         realStats[actionType].archives.push(archive);
       }
@@ -2328,7 +2345,10 @@ class StorageManager {
       totalSize += archiveSize;
     });
 
-    // Mise à jour de l'interface avec les vraies données
+    console.log("📊 Données temps réel récupérées:", realTimeData);
+    console.log("📊 Statistiques finales:", realStats);
+
+    // Mise à jour de l'interface avec les vraies données mixtes
     const totalSizeMB = totalSize;
     const totalSizeFormatted = this.formatBytes(totalSizeMB * 1024 * 1024);
 
@@ -2365,6 +2385,72 @@ class StorageManager {
 
     document.getElementById("growthPrediction").textContent =
       "Basé sur données réelles";
+  }
+
+  // Récupérer les données en temps réel depuis les différentes sources
+  async fetchRealTimeData() {
+    const realTimeData = {
+      mise_en_livraison: 0,
+      ordres_livraison: 0,
+      dossiers_actifs: 0,
+    };
+
+    try {
+      // 1. Récupérer les vrais dossiers mis en livraison depuis localStorage
+      // C'est la source de vérité selon l'utilisateur - onglet "Mis en Livraison"
+      const dossiersMisEnLiv = localStorage.getItem("dossiersMisEnLiv");
+      if (dossiersMisEnLiv) {
+        const dossiersArray = JSON.parse(dossiersMisEnLiv);
+        realTimeData.mise_en_livraison = dossiersArray.length;
+        console.log(
+          `� Dossiers mis en livraison depuis localStorage: ${realTimeData.mise_en_livraison}`
+        );
+      } else {
+        console.log("⚠️ Pas de dossiers mis en livraison dans localStorage");
+      }
+
+      // 2. Récupérer les dossiers actifs depuis l'API deliveries/status comme backup
+      const deliveriesResponse = await fetch("/deliveries/status");
+      if (deliveriesResponse.ok) {
+        const deliveriesData = await deliveriesResponse.json();
+        if (deliveriesData.success && deliveriesData.deliveries) {
+          // Compter tous les dossiers actifs (non archivés)
+          realTimeData.dossiers_actifs = deliveriesData.deliveries.filter(
+            (d) => !d.archived && !d.is_archived
+          ).length;
+
+          // Si pas de données localStorage, utiliser l'API comme fallback
+          if (realTimeData.mise_en_livraison === 0) {
+            realTimeData.mise_en_livraison = realTimeData.dossiers_actifs;
+            console.log(
+              `📊 Utilisation API comme fallback: ${realTimeData.mise_en_livraison} dossiers`
+            );
+          }
+        }
+      }
+
+      // 3. Récupérer les ordres de livraison actifs
+      try {
+        const ordresResponse = await fetch("/api/status-counts");
+        if (ordresResponse.ok) {
+          const ordresData = await ordresResponse.json();
+          if (ordresData.success && ordresData.counts) {
+            realTimeData.ordres_livraison = ordresData.counts.pending || 0;
+          }
+        }
+      } catch (apiError) {
+        console.warn("⚠️ API status-counts non disponible");
+      }
+
+      console.log("✅ Données temps réel récupérées:", realTimeData);
+      return realTimeData;
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la récupération des données temps réel:",
+        error
+      );
+      return realTimeData;
+    }
   }
 
   // Formatter les bytes en format lisible
