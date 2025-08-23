@@ -150,6 +150,17 @@ class ArchivesManager {
                 this.selectedTab
               } sélectionné, filtrage par: ${tabToActionMap[this.selectedTab]}`
             );
+
+            // 🔧 DEBUG SPÉCIAL pour l'onglet Ordres
+            if (this.selectedTab === "orders") {
+              console.log(
+                "🔍 [DEBUG ORDRES] Chargement de l'onglet Ordres de livraison..."
+              );
+              // Forcer le rechargement des données pour éviter le cache
+              this.allArchivesData = null;
+              this.lastDataRefresh = 0;
+            }
+
             this.performSearch(); // Recharger avec le nouveau filtre
           } else {
             console.log(
@@ -507,6 +518,28 @@ class ArchivesManager {
         archivesCount: data.archives ? data.archives.length : 0,
         totalCount: data.pagination ? data.pagination.total : 0,
       });
+
+      // 🔧 DEBUG SPÉCIAL pour ordre_livraison_etabli
+      if (
+        this.currentFilters.action_type === "ordre_livraison_etabli" &&
+        data.archives
+      ) {
+        console.log(
+          "🔍 [DEBUG ORDRES] Données reçues:",
+          data.archives.slice(0, 2)
+        );
+        data.archives.forEach((archive, index) => {
+          if (index < 3) {
+            // Montrer seulement les 3 premiers
+            console.log(`🔍 [DEBUG ORDRES] Archive ${index + 1}:`, {
+              id: archive.id,
+              dossier_reference: archive.dossier_reference,
+              client_name: archive.client_name,
+              action_type: archive.action_type,
+            });
+          }
+        });
+      }
 
       if (data.success) {
         this.filteredArchives = data.archives; // Données filtrées pour l'affichage
@@ -1129,19 +1162,44 @@ class ArchivesManager {
     const isRecent = this.isRecentArchive(archive.archived_at);
     const rowClass = isRecent ? "recent-archive" : "";
 
+    // 🔧 DEBUG: Afficher les données de la référence pour ordre_livraison_etabli
+    if (archive.action_type === "ordre_livraison_etabli") {
+      console.log("🔍 [DEBUG ORDRE] Archive:", {
+        id: archive.id,
+        dossier_reference: archive.dossier_reference,
+        dossier_data_number: archive.dossier_data?.dossier_number,
+        dossier_data_container: archive.dossier_data?.container_number,
+        intitule: archive.intitule,
+        client_name: archive.client_name,
+      });
+
+      // Debug du HTML généré
+      const referenceHtml = `<strong style="color: #000 !important; font-weight: bold !important;">${
+        archive.dossier_reference || "N/A"
+      }</strong>`;
+      console.log("🔍 [DEBUG ORDRE] HTML référence:", referenceHtml);
+    }
+
     return `
             <tr class="${rowClass}">
                 <td class="col-id">
                     <small class="text-muted">#${archive.id}</small>
                 </td>
-                <td class="col-reference">
-                    <strong>${archive.dossier_reference || "N/A"}</strong>
+                <td class="col-reference" style="min-width: 120px;">
+                    <strong style="color: #000 !important; font-weight: bold !important; display: block !important;">${
+                      (archive.dossier_data &&
+                        archive.dossier_data.dossier_number) ||
+                      archive.dossier_reference ||
+                      "N/A"
+                    }</strong>
                     ${
-                      archive.intitule
-                        ? `<br><small class="text-muted">${this.truncateText(
-                            archive.intitule,
-                            30
-                          )}</small>`
+                      archive.intitule && archive.intitule.trim() !== ""
+                        ? `<br><span class="text-info" style="font-weight: 600; font-size: 0.9em;">${archive.intitule}</span>`
+                        : archive.dossier_data &&
+                          archive.dossier_data.container_type_and_content &&
+                          archive.dossier_data.container_type_and_content.trim() !==
+                            ""
+                        ? `<br><span class="text-info" style="font-weight: 600; font-size: 0.9em;">${archive.dossier_data.container_type_and_content}</span>`
                         : ""
                     }
                 </td>
