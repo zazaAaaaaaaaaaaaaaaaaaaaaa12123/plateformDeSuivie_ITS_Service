@@ -2228,6 +2228,12 @@ class StorageManager {
 
   // Traitement des statistiques serveur
   processServerStats(stats) {
+    // Si les stats serveur ne sont pas disponibles ou sont simulées, utiliser les vraies données locales
+    if (!stats || this.isSimulatedData(stats)) {
+      this.processRealArchiveData();
+      return;
+    }
+
     // Mettre à jour les éléments de l'interface avec les vraies données serveur
     document.getElementById("totalStorageSize").textContent =
       stats.summary.total_storage_formatted;
@@ -2259,8 +2265,11 @@ class StorageManager {
       }`;
     }
 
-    // Mettre à jour le tableau des types
+    // Mettre à jour le tableau des types avec les vraies données serveur
     this.updateTypeTable(stats.by_type);
+
+    // Mettre à jour les détails par type avec les vraies données serveur
+    this.updateStorageDetails(stats.by_type);
 
     // Mettre à jour les graphiques avec les vraies données
     this.chartData = stats;
@@ -2279,6 +2288,204 @@ class StorageManager {
     } else {
       document.getElementById("growthPrediction").textContent =
         "Croissance stable";
+    }
+  }
+
+  // Vérifier si les données sont simulées
+  isSimulatedData(stats) {
+    return stats && stats.summary && stats.summary.total_archives_count === 42; // Valeur simulée caractéristique
+  }
+
+  // Traitement des vraies données d'archives locales
+  processRealArchiveData() {
+    console.log("📊 Utilisation des vraies données d'archives locales");
+
+    // Récupérer toutes les archives réelles
+    const archives = this.archivesManager.allArchives;
+
+    // Calculer les vraies statistiques par type
+    const realStats = {
+      suppression: { count: 0, size: 0, archives: [] },
+      livraison: { count: 0, size: 0, archives: [] },
+      mise_en_livraison: { count: 0, size: 0, archives: [] },
+      ordre_livraison_etabli: { count: 0, size: 0, archives: [] },
+    };
+
+    let totalSize = 0;
+    let totalCount = archives.length;
+
+    // Calculer les vraies données
+    archives.forEach((archive) => {
+      const archiveSize = this.estimateArchiveSize(archive);
+      const actionType = archive.action_type;
+
+      if (realStats[actionType]) {
+        realStats[actionType].count++;
+        realStats[actionType].size += archiveSize;
+        realStats[actionType].archives.push(archive);
+      }
+
+      totalSize += archiveSize;
+    });
+
+    // Mise à jour de l'interface avec les vraies données
+    const totalSizeMB = totalSize;
+    const totalSizeFormatted = this.formatBytes(totalSizeMB * 1024 * 1024);
+
+    document.getElementById("totalStorageSize").textContent =
+      totalSizeFormatted;
+    document.getElementById("archivesCount").textContent =
+      totalCount.toLocaleString();
+    document.getElementById("uploadsSize").textContent = "Calcul en cours...";
+    document.getElementById("uploadsCount").textContent = "N/A";
+
+    // Calculer le pourcentage d'utilisation
+    const usagePercent = (totalSizeMB / this.storageCapacity) * 100;
+    document.getElementById("storageUsagePercent").textContent =
+      Math.min(100, usagePercent).toFixed(1) + "%";
+
+    // Mettre à jour la barre de progression
+    const progressBar = document.getElementById("storageProgressBar");
+    if (progressBar) {
+      progressBar.style.width = Math.min(100, usagePercent) + "%";
+      progressBar.className = `progress-bar ${
+        usagePercent > 80
+          ? "bg-danger"
+          : usagePercent > 60
+          ? "bg-warning"
+          : "bg-success"
+      }`;
+    }
+
+    // Mettre à jour les détails par type avec les vraies données
+    this.updateRealStorageDetails(realStats);
+
+    // Mettre à jour le tableau des types avec les vraies données
+    this.updateRealTypeTable(realStats);
+
+    document.getElementById("growthPrediction").textContent =
+      "Basé sur données réelles";
+  }
+
+  // Formatter les bytes en format lisible
+  formatBytes(bytes) {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  }
+
+  // Mettre à jour les détails par type avec les vraies données
+  updateRealStorageDetails(realStats) {
+    const container = document.getElementById("storageDetailsContainer");
+    if (!container) return;
+
+    const typeLabels = {
+      livraison: "Dossiers Livrés",
+      suppression: "Dossiers Supprimés",
+      mise_en_livraison: "Mise en Livraison",
+      ordre_livraison_etabli: "Ordres de Livraison",
+    };
+
+    const typeColors = {
+      livraison: "#10b981",
+      suppression: "#ef4444",
+      mise_en_livraison: "#f59e0b",
+      ordre_livraison_etabli: "#3b82f6",
+    };
+
+    container.innerHTML = Object.entries(realStats)
+      .map(([type, data]) => {
+        const label = typeLabels[type] || type;
+        const color = typeColors[type] || "#6b7280";
+        const percentage =
+          realStats.livraison.count > 0
+            ? ((data.count / realStats.livraison.count) * 100).toFixed(1)
+            : 0;
+
+        return `
+        <div class="col-md-3 mb-3">
+          <div class="card h-100" style="border: 2px solid ${color}20; border-radius: 12px; background: ${color}05;">
+            <div class="card-body text-center p-3">
+              <div style="color: ${color}; font-size: 2.2em; font-weight: 700; margin-bottom: 8px;">
+                ${data.count}
+              </div>
+              <div style="color: #374151; font-weight: 600; margin-bottom: 8px;">${label}</div>
+              <div style="color: #6b7280; font-size: 0.85em; margin-bottom: 8px;">
+                ${this.formatBytes(data.size * 1024 * 1024)}
+              </div>
+              <div class="progress" style="height: 6px; background: ${color}20;">
+                <div class="progress-bar" style="background: ${color}; width: ${percentage}%"></div>
+              </div>
+              <small style="color: #9ca3af; margin-top: 4px; display: block;">
+                ${
+                  data.archives.length > 0
+                    ? `Dernière: ${new Date(
+                        data.archives[data.archives.length - 1].archived_at
+                      ).toLocaleDateString()}`
+                    : "Aucune archive"
+                }
+              </small>
+            </div>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+  }
+
+  // Mettre à jour le tableau des types avec les vraies données
+  updateRealTypeTable(realStats) {
+    const tableBody = document.querySelector("#typeStatsTable tbody");
+    if (!tableBody) return;
+
+    const typeLabels = {
+      livraison: "Dossiers Livrés",
+      suppression: "Dossiers Supprimés",
+      mise_en_livraison: "Mise en Livraison",
+      ordre_livraison_etabli: "Ordres de Livraison",
+    };
+
+    tableBody.innerHTML = Object.entries(realStats)
+      .filter(([type, data]) => data.count > 0)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([type, data]) => {
+        const label = typeLabels[type] || type;
+        const newestArchive =
+          data.archives.length > 0
+            ? data.archives.reduce((newest, archive) =>
+                new Date(archive.archived_at) > new Date(newest.archived_at)
+                  ? archive
+                  : newest
+              )
+            : null;
+
+        return `
+          <tr>
+            <td><span class="badge bg-primary">${label}</span></td>
+            <td><strong>${data.count}</strong></td>
+            <td>${this.formatBytes(data.size * 1024 * 1024)}</td>
+            <td><small>${
+              newestArchive
+                ? new Date(newestArchive.archived_at).toLocaleDateString()
+                : "N/A"
+            }</small></td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    // Si le tableau est vide, ajouter un message
+    if (Object.values(realStats).every((data) => data.count === 0)) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">
+            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+            Aucune archive trouvée
+          </td>
+        </tr>
+      `;
     }
   }
 
@@ -2426,8 +2633,9 @@ class StorageManager {
       new Date().toLocaleString("fr-FR");
   }
 
-  updateStorageDetails(storageByType) {
+  updateStorageDetails(typeStats) {
     const container = document.getElementById("storageDetailsContainer");
+    if (!container) return;
 
     const typeLabels = {
       suppression: {
@@ -2442,57 +2650,80 @@ class StorageManager {
       },
       mise_en_livraison: {
         name: "Mise en Livraison",
-        icon: "fa-truck",
-        color: "#3b82f6",
+        icon: "fa-shipping-fast",
+        color: "#f59e0b",
       },
       ordre_livraison_etabli: {
         name: "Ordres de Livraison",
-        icon: "fa-file-alt",
-        color: "#8b5cf6",
+        icon: "fa-clipboard-list",
+        color: "#3b82f6",
       },
     };
 
-    let html = "";
+    // Si typeStats est un array (données serveur), le transformer en objet
+    let statsObject = {};
+    if (Array.isArray(typeStats)) {
+      typeStats.forEach((stat) => {
+        statsObject[stat.action_type] = {
+          count: stat.count,
+          size: stat.size_bytes / (1024 * 1024), // Convertir en MB
+          newest_date: stat.newest_date,
+        };
+      });
+    } else {
+      // Format local déjà en objet
+      statsObject = typeStats;
+    }
 
-    Object.entries(storageByType).forEach(([type, data]) => {
-      const typeInfo = typeLabels[type];
-      const sizePercent =
-        this.storageCapacity > 0 ? (data.size / this.storageCapacity) * 100 : 0;
+    const maxCount = Math.max(
+      ...Object.values(statsObject).map((s) => s.count),
+      1
+    );
 
-      html += `
+    container.innerHTML = Object.entries(typeLabels)
+      .map(([type, config]) => {
+        const data = statsObject[type] || { count: 0, size: 0 };
+        const percentage = ((data.count / maxCount) * 100).toFixed(1);
+
+        return `
         <div class="col-md-3 mb-3">
-          <div class="card h-100" style="border: 1px solid #e5e7eb; border-radius: 12px;">
-            <div class="card-body p-3 text-center">
-              <div class="mb-2">
-                <i class="fas ${
-                  typeInfo.icon
-                }" style="font-size: 1.5em; color: ${typeInfo.color};"></i>
+          <div class="card h-100" style="border: 2px solid ${
+            config.color
+          }20; border-radius: 12px; background: ${config.color}05;">
+            <div class="card-body text-center p-3">
+              <div style="color: ${
+                config.color
+              }; font-size: 2.2em; font-weight: 700; margin-bottom: 8px;">
+                ${data.count}
               </div>
-              <h6 style="font-size: 0.85em; margin-bottom: 8px; color: #374151;">${
-                typeInfo.name
-              }</h6>
-              <div style="font-size: 1.1em; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
-                ${data.size.toFixed(2)} MB
+              <div style="color: #374151; font-weight: 600; margin-bottom: 8px;">
+                <i class="fas ${config.icon} me-2"></i>${config.name}
               </div>
-              <div style="font-size: 0.8em; color: #6b7280; margin-bottom: 8px;">
-                ${data.count} archive(s)
+              <div style="color: #6b7280; font-size: 0.85em; margin-bottom: 8px;">
+                ${this.formatBytes(data.size * 1024 * 1024)}
               </div>
-              <div class="progress" style="height: 6px; border-radius: 3px; background: #e5e7eb;">
-                <div class="progress-bar" 
-                     style="width: ${sizePercent}%; background: ${
-        typeInfo.color
-      }; border-radius: 3px;"></div>
+              <div class="progress" style="height: 6px; background: ${
+                config.color
+              }20;">
+                <div class="progress-bar" style="background: ${
+                  config.color
+                }; width: ${percentage}%"></div>
               </div>
-              <div style="font-size: 0.75em; color: #9ca3af; margin-top: 4px;">
-                ${sizePercent.toFixed(1)}% du total
-              </div>
+              <small style="color: #9ca3af; margin-top: 4px; display: block;">
+                ${
+                  data.newest_date
+                    ? `Dernière: ${new Date(
+                        data.newest_date
+                      ).toLocaleDateString()}`
+                    : "Aucune archive"
+                }
+              </small>
             </div>
           </div>
         </div>
       `;
-    });
-
-    container.innerHTML = html;
+      })
+      .join("");
   }
 
   createChart() {

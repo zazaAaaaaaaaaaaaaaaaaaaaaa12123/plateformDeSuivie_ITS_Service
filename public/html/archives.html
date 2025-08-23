@@ -392,13 +392,19 @@
       aria-labelledby="storageModalLabel"
       aria-hidden="true"
     >
-      <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div
+        class="modal-dialog modal-fullscreen-lg-down modal-dialog-centered"
+        style="max-width: 95vw; width: 1400px"
+      >
         <div
           class="modal-content"
           style="
-            border-radius: 16px;
+            border-radius: 20px;
             border: none;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            min-height: 80vh;
+            max-height: 90vh;
+            overflow-y: auto;
           "
         >
           <!-- Header de la modale -->
