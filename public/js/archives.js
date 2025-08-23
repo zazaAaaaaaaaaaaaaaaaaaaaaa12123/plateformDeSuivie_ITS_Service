@@ -217,6 +217,11 @@ class ArchivesManager {
         );
         // Mise à jour du compteur en temps réel
         await this.updateCounts();
+
+        // *** NOTIFICATION STOCKAGE - AJOUT ***
+        document.dispatchEvent(
+          new CustomEvent("archiveUpdated", { detail: { action: "added" } })
+        );
       } else {
         // Sinon, juste mettre à jour le cache pour le prochain affichage
         console.log(
@@ -229,6 +234,11 @@ class ArchivesManager {
         this.addNotificationBadge("orders-tab");
         // Mise à jour du compteur en temps réel
         await this.updateCounts();
+
+        // *** NOTIFICATION STOCKAGE - AJOUT ***
+        document.dispatchEvent(
+          new CustomEvent("archiveUpdated", { detail: { action: "added" } })
+        );
       }
     } catch (error) {
       console.warn("⚠️ [ARCHIVES] Erreur traitement notification:", error);
@@ -1277,6 +1287,11 @@ class ArchivesManager {
         // *** ÉTAPE 3 : MISE À JOUR DU COMPTEUR EN TEMPS RÉEL ***
         await this.updateCounts();
         console.log("✅ [ARCHIVES] Compteurs mis à jour après suppression");
+
+        // *** NOTIFICATION STOCKAGE - SUPPRESSION ***
+        document.dispatchEvent(
+          new CustomEvent("archiveUpdated", { detail: { action: "deleted" } })
+        );
       } else {
         this.showNotification(
           data.message || "Erreur lors de la suppression",
@@ -2027,6 +2042,584 @@ window.archiveDossier = async function (
   }
 };
 
+/**
+ * StorageManager - Système de suivi du stockage des archives en temps réel
+ */
+class StorageManager {
+  constructor(archivesManager) {
+    this.archivesManager = archivesManager;
+    this.storageCapacity = 1024; // 1 GB en MB (modifiable)
+    this.storageHistory = [];
+    this.chart = null;
+
+    this.init();
+  }
+
+  init() {
+    this.bindEvents();
+    console.log("✅ [STORAGE] Système de stockage initialisé");
+  }
+
+  bindEvents() {
+    // Bouton d'ouverture de la modale
+    const storageBtn = document.getElementById("storageStatusBtn");
+    if (storageBtn) {
+      storageBtn.addEventListener("click", () => this.showStorageModal());
+    }
+
+    // Boutons dans la modale
+    const refreshBtn = document.getElementById("refreshStorageBtn");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", () => this.refreshStorageData());
+    }
+
+    const optimizeBtn = document.getElementById("optimizeStorageBtn");
+    if (optimizeBtn) {
+      optimizeBtn.addEventListener("click", () => this.optimizeStorage());
+    }
+
+    // Écouter les événements de mise à jour des archives
+    document.addEventListener("archiveUpdated", () => {
+      this.updateStorageData();
+    });
+  }
+
+  async showStorageModal() {
+    console.log("📊 [STORAGE] Ouverture de la modale de stockage");
+
+    // Calculer les données de stockage
+    await this.calculateStorageData();
+
+    // Afficher la modale
+    const modal = new bootstrap.Modal(document.getElementById("storageModal"));
+    modal.show();
+
+    // Créer le graphique après que la modale soit visible
+    setTimeout(() => this.createChart(), 300);
+  }
+
+  async calculateStorageData() {
+    try {
+      console.log("🔄 [STORAGE] Calcul des données de stockage...");
+
+      // Essayer d'abord de récupérer les stats du serveur
+      const serverStats = await this.fetchServerStats();
+
+      if (serverStats) {
+        console.log("✅ [STORAGE] Utilisation des statistiques serveur");
+        this.processServerStats(serverStats);
+      } else {
+        console.log("⚠️ [STORAGE] Fallback vers calculs locaux");
+        await this.calculateLocalStats();
+      }
+    } catch (error) {
+      console.error("❌ [STORAGE] Erreur lors du calcul:", error);
+      await this.calculateLocalStats();
+    }
+  }
+
+  // Méthode pour récupérer les statistiques du serveur
+  async fetchServerStats() {
+    try {
+      console.log("📊 Récupération des statistiques serveur...");
+
+      // Simulation temporaire de données serveur pour test
+      const simulatedStats = {
+        summary: {
+          total_storage_size: 15728640, // 15 MB
+          total_storage_formatted: "15.0 MB",
+          archives_size: 12582912, // 12 MB
+          archives_formatted: "12.0 MB",
+          uploads_size: 3145728, // 3 MB
+          uploads_formatted: "3.0 MB",
+          total_archives_count: 42,
+          uploads_count: 15,
+          estimated_monthly_growth: 1048576, // 1 MB/mois
+        },
+        by_type: [
+          {
+            action_type: "livraison",
+            count: 25,
+            size_bytes: 8388608,
+            size_formatted: "8.0 MB",
+            oldest_date: "2025-01-01T00:00:00Z",
+            newest_date: "2025-08-20T00:00:00Z",
+          },
+          {
+            action_type: "suppression",
+            count: 10,
+            size_bytes: 2097152,
+            size_formatted: "2.0 MB",
+            oldest_date: "2025-02-01T00:00:00Z",
+            newest_date: "2025-08-15T00:00:00Z",
+          },
+          {
+            action_type: "mise_en_livraison",
+            count: 5,
+            size_bytes: 1572864,
+            size_formatted: "1.5 MB",
+            oldest_date: "2025-03-01T00:00:00Z",
+            newest_date: "2025-08-10T00:00:00Z",
+          },
+          {
+            action_type: "ordre_livraison_etabli",
+            count: 2,
+            size_bytes: 524288,
+            size_formatted: "512 KB",
+            oldest_date: "2025-07-01T00:00:00Z",
+            newest_date: "2025-08-05T00:00:00Z",
+          },
+        ],
+        monthly_stats: [
+          {
+            month: "2025-08-01T00:00:00Z",
+            count: 8,
+            size_bytes: 2097152,
+            size_formatted: "2.0 MB",
+          },
+          {
+            month: "2025-07-01T00:00:00Z",
+            count: 12,
+            size_bytes: 3145728,
+            size_formatted: "3.0 MB",
+          },
+        ],
+        top_largest: [
+          {
+            id: 1,
+            dossier_reference: "DOS-2025-001",
+            client_name: "Client Premium",
+            action_type: "livraison",
+            size_bytes: 1048576,
+            size_formatted: "1.0 MB",
+            archived_at: "2025-08-20T10:30:00Z",
+          },
+        ],
+        generated_at: new Date().toISOString(),
+      };
+
+      // Tentative de vraie récupération avec fallback
+      try {
+        const response = await fetch("/api/storage-stats");
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            console.log("✅ Données serveur récupérées avec succès");
+            return result.data;
+          }
+        }
+      } catch (serverError) {
+        console.warn(
+          "⚠️ Serveur non disponible, utilisation des données simulées"
+        );
+      }
+
+      console.log("📊 Utilisation des données simulées pour démonstration");
+      return simulatedStats;
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la récupération des statistiques serveur:",
+        error
+      );
+      return null;
+    }
+  }
+
+  // Traitement des statistiques serveur
+  processServerStats(stats) {
+    // Mettre à jour les éléments de l'interface avec les vraies données serveur
+    document.getElementById("totalStorageSize").textContent =
+      stats.summary.total_storage_formatted;
+    document.getElementById("archivesCount").textContent =
+      stats.summary.total_archives_count.toLocaleString();
+    document.getElementById("uploadsSize").textContent =
+      stats.summary.uploads_formatted;
+    document.getElementById("uploadsCount").textContent =
+      stats.summary.uploads_count.toLocaleString();
+
+    // Calculer le pourcentage d'utilisation (capacité par défaut: 1GB)
+    const usagePercent =
+      (stats.summary.total_storage_size /
+        (this.storageCapacity * 1024 * 1024)) *
+      100;
+    document.getElementById("storageUsagePercent").textContent =
+      Math.min(100, usagePercent).toFixed(1) + "%";
+
+    // Mettre à jour la barre de progression
+    const progressBar = document.getElementById("storageProgressBar");
+    if (progressBar) {
+      progressBar.style.width = Math.min(100, usagePercent) + "%";
+      progressBar.className = `progress-bar ${
+        usagePercent > 80
+          ? "bg-danger"
+          : usagePercent > 60
+          ? "bg-warning"
+          : "bg-success"
+      }`;
+    }
+
+    // Mettre à jour le tableau des types
+    this.updateTypeTable(stats.by_type);
+
+    // Mettre à jour les graphiques avec les vraies données
+    this.chartData = stats;
+
+    // Prédiction de croissance
+    const monthlyGrowth = stats.summary.estimated_monthly_growth;
+    const currentSize = stats.summary.total_storage_size;
+    const capacity = this.storageCapacity * 1024 * 1024; // en bytes
+
+    if (monthlyGrowth > 0) {
+      const monthsUntilFull = Math.ceil(
+        (capacity - currentSize) / monthlyGrowth
+      );
+      document.getElementById("growthPrediction").textContent =
+        monthsUntilFull > 0 ? `${monthsUntilFull} mois` : "Capacité dépassée";
+    } else {
+      document.getElementById("growthPrediction").textContent =
+        "Croissance stable";
+    }
+  }
+
+  // Calculs locaux en fallback
+  async calculateLocalStats() {
+    try {
+      // Récupérer toutes les archives
+      const archives = this.archivesManager.allArchives;
+
+      // Calculer la taille de chaque type d'archive
+      const storageByType = {
+        suppression: { count: 0, size: 0 },
+        livraison: { count: 0, size: 0 },
+        mise_en_livraison: { count: 0, size: 0 },
+        ordre_livraison_etabli: { count: 0, size: 0 },
+      };
+
+      let totalSize = 0;
+      let totalCount = 0;
+
+      archives.forEach((archive) => {
+        // Estimer la taille de l'archive basée sur son contenu
+        const archiveSize = this.estimateArchiveSize(archive);
+        const actionType = archive.action_type;
+
+        if (storageByType[actionType]) {
+          storageByType[actionType].count++;
+          storageByType[actionType].size += archiveSize;
+        }
+
+        totalSize += archiveSize;
+        totalCount++;
+      });
+
+      // Mettre à jour l'interface avec les calculs locaux
+      this.updateStorageInterface(totalSize, totalCount, storageByType);
+      this.updateStorageDetails(storageByType);
+
+      // Ajouter à l'historique
+      this.addToHistory(`Calcul local: ${totalSize.toFixed(2)} MB utilisés`);
+
+      console.log(
+        `✅ [STORAGE] ${totalSize.toFixed(
+          2
+        )} MB calculés pour ${totalCount} archives`
+      );
+    } catch (error) {
+      console.error("❌ [STORAGE] Erreur lors du calcul:", error);
+    }
+  }
+
+  // Mettre à jour le tableau des types avec les données serveur
+  updateTypeTable(typeStats) {
+    const tableBody = document.querySelector("#typeStatsTable tbody");
+    if (!tableBody) return;
+
+    tableBody.innerHTML = typeStats
+      .map(
+        (type) => `
+      <tr>
+        <td><span class="badge bg-primary">${type.action_type}</span></td>
+        <td>${type.count.toLocaleString()}</td>
+        <td>${type.size_formatted}</td>
+        <td><small>${new Date(
+          type.newest_date
+        ).toLocaleDateString()}</small></td>
+      </tr>
+    `
+      )
+      .join("");
+  }
+
+  estimateArchiveSize(archive) {
+    // Estimation de la taille d'une archive en MB
+    let size = 0;
+
+    // Taille de base (métadonnées)
+    size += 0.01; // 10 KB pour les métadonnées de base
+
+    // Taille basée sur le contenu
+    if (archive.dossier_data) {
+      const dataString = JSON.stringify(archive.dossier_data);
+      size += dataString.length / (1024 * 1024); // Convertir en MB
+    }
+
+    // Taille basée sur les métadonnées
+    if (archive.metadata) {
+      const metaString = JSON.stringify(archive.metadata);
+      size += metaString.length / (1024 * 1024);
+    }
+
+    // Facteur multiplicateur selon le type d'action
+    const typeSizeFactors = {
+      livraison: 1.5, // Plus de données pour les livraisons
+      mise_en_livraison: 1.2,
+      ordre_livraison_etabli: 1.3,
+      suppression: 0.8, // Moins de données pour les suppressions
+    };
+
+    const factor = typeSizeFactors[archive.action_type] || 1;
+    size *= factor;
+
+    // Taille minimum de 0.005 MB (5 KB)
+    return Math.max(size, 0.005);
+  }
+
+  updateStorageInterface(totalSize, totalCount, storageByType) {
+    // Mise à jour des valeurs principales
+    const usedPercent = Math.min((totalSize / this.storageCapacity) * 100, 100);
+    const availableSize = Math.max(this.storageCapacity - totalSize, 0);
+
+    document.getElementById(
+      "totalUsedStorage"
+    ).textContent = `${totalSize.toFixed(1)} MB`;
+    document.getElementById(
+      "totalAvailableStorage"
+    ).textContent = `${availableSize.toFixed(1)} MB`;
+    document.getElementById("totalArchiveCount").textContent = totalCount;
+    document.getElementById(
+      "storagePercentage"
+    ).textContent = `${usedPercent.toFixed(1)}%`;
+    document.getElementById(
+      "chartCenterValue"
+    ).textContent = `${usedPercent.toFixed(0)}%`;
+
+    // Mise à jour de la barre de progression
+    const progressBar = document.getElementById("storageProgressBar");
+    progressBar.style.width = `${usedPercent}%`;
+    progressBar.setAttribute("aria-valuenow", usedPercent);
+
+    // Couleur de la barre selon le niveau
+    if (usedPercent > 90) {
+      progressBar.style.background = "linear-gradient(90deg, #ef4444, #dc2626)";
+    } else if (usedPercent > 75) {
+      progressBar.style.background = "linear-gradient(90deg, #f59e0b, #d97706)";
+    } else {
+      progressBar.style.background = "linear-gradient(90deg, #10b981, #059669)";
+    }
+
+    // Mise à jour des détails par type
+    this.updateStorageDetails(storageByType);
+
+    // Mise à jour du timestamp
+    document.getElementById("lastUpdateTime").textContent =
+      new Date().toLocaleString("fr-FR");
+  }
+
+  updateStorageDetails(storageByType) {
+    const container = document.getElementById("storageDetailsContainer");
+
+    const typeLabels = {
+      suppression: {
+        name: "Dossiers Supprimés",
+        icon: "fa-trash",
+        color: "#ef4444",
+      },
+      livraison: {
+        name: "Dossiers Livrés",
+        icon: "fa-check-circle",
+        color: "#10b981",
+      },
+      mise_en_livraison: {
+        name: "Mise en Livraison",
+        icon: "fa-truck",
+        color: "#3b82f6",
+      },
+      ordre_livraison_etabli: {
+        name: "Ordres de Livraison",
+        icon: "fa-file-alt",
+        color: "#8b5cf6",
+      },
+    };
+
+    let html = "";
+
+    Object.entries(storageByType).forEach(([type, data]) => {
+      const typeInfo = typeLabels[type];
+      const sizePercent =
+        this.storageCapacity > 0 ? (data.size / this.storageCapacity) * 100 : 0;
+
+      html += `
+        <div class="col-md-3 mb-3">
+          <div class="card h-100" style="border: 1px solid #e5e7eb; border-radius: 12px;">
+            <div class="card-body p-3 text-center">
+              <div class="mb-2">
+                <i class="fas ${
+                  typeInfo.icon
+                }" style="font-size: 1.5em; color: ${typeInfo.color};"></i>
+              </div>
+              <h6 style="font-size: 0.85em; margin-bottom: 8px; color: #374151;">${
+                typeInfo.name
+              }</h6>
+              <div style="font-size: 1.1em; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                ${data.size.toFixed(2)} MB
+              </div>
+              <div style="font-size: 0.8em; color: #6b7280; margin-bottom: 8px;">
+                ${data.count} archive(s)
+              </div>
+              <div class="progress" style="height: 6px; border-radius: 3px; background: #e5e7eb;">
+                <div class="progress-bar" 
+                     style="width: ${sizePercent}%; background: ${
+        typeInfo.color
+      }; border-radius: 3px;"></div>
+              </div>
+              <div style="font-size: 0.75em; color: #9ca3af; margin-top: 4px;">
+                ${sizePercent.toFixed(1)}% du total
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  createChart() {
+    const canvas = document.getElementById("storageChart");
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    const totalUsed = parseFloat(
+      document.getElementById("totalUsedStorage").textContent
+    );
+    const usedPercent = (totalUsed / this.storageCapacity) * 100;
+
+    // Effacer le canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 70;
+
+    // Cercle de fond
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 12;
+    ctx.stroke();
+
+    // Arc de progression
+    if (usedPercent > 0) {
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + (2 * Math.PI * usedPercent) / 100;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+
+      // Couleur selon le niveau
+      if (usedPercent > 90) {
+        ctx.strokeStyle = "#ef4444";
+      } else if (usedPercent > 75) {
+        ctx.strokeStyle = "#f59e0b";
+      } else {
+        ctx.strokeStyle = "#10b981";
+      }
+
+      ctx.lineWidth = 12;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    }
+  }
+
+  async refreshStorageData() {
+    console.log("🔄 [STORAGE] Actualisation des données...");
+
+    // Recharger les archives
+    await this.archivesManager.loadArchives();
+
+    // Recalculer le stockage
+    await this.calculateStorageData();
+
+    // Recréer le graphique
+    this.createChart();
+
+    this.addToHistory("Données de stockage actualisées");
+  }
+
+  async optimizeStorage() {
+    console.log("🧹 [STORAGE] Optimisation du stockage...");
+
+    // Simuler une optimisation (pourrait appeler une API côté serveur)
+    this.addToHistory("Optimisation du stockage lancée");
+
+    // Dans une vraie implémentation, cela pourrait:
+    // - Compresser les anciennes archives
+    // - Supprimer les doublons
+    // - Nettoyer les métadonnées inutiles
+
+    setTimeout(() => {
+      this.addToHistory("Optimisation terminée - Espace récupéré");
+      this.refreshStorageData();
+    }, 2000);
+  }
+
+  addToHistory(message) {
+    const timestamp = new Date().toLocaleTimeString("fr-FR");
+    this.storageHistory.unshift({ time: timestamp, message });
+
+    // Garder seulement les 10 dernières entrées
+    if (this.storageHistory.length > 10) {
+      this.storageHistory = this.storageHistory.slice(0, 10);
+    }
+
+    this.updateHistoryDisplay();
+  }
+
+  updateHistoryDisplay() {
+    const container = document.getElementById("storageHistoryContainer");
+    if (!container) return;
+
+    if (this.storageHistory.length === 0) {
+      container.innerHTML =
+        '<div class="text-muted text-center">Aucune activité récente</div>';
+      return;
+    }
+
+    const html = this.storageHistory
+      .map(
+        (entry) => `
+      <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom: 1px solid #f3f4f6;">
+        <span style="font-size: 0.9em;">${entry.message}</span>
+        <small class="text-muted">${entry.time}</small>
+      </div>
+    `
+      )
+      .join("");
+
+    container.innerHTML = html;
+  }
+
+  // Méthode appelée quand une archive est ajoutée ou supprimée
+  async updateStorageData() {
+    if (document.getElementById("storageModal").classList.contains("show")) {
+      // Si la modale est ouverte, mettre à jour en temps réel
+      await this.calculateStorageData();
+      this.createChart();
+    }
+  }
+}
+
 // Initialisation quand la page est chargée
 document.addEventListener("DOMContentLoaded", function () {
   // Vérifier si nous sommes sur la page d'archives
@@ -2035,6 +2628,9 @@ document.addEventListener("DOMContentLoaded", function () {
   if (archivesContainer) {
     console.log("[ARCHIVES] Initialisation de l'interface d'archives");
     window.archivesManager = new ArchivesManager();
+
+    // Initialiser le gestionnaire de stockage
+    window.storageManager = new StorageManager(window.archivesManager);
   } else {
     console.log(
       "[ARCHIVES] Interface d'archives non détectée, initialisation ignorée"

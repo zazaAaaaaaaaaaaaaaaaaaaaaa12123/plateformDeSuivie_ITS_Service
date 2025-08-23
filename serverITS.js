@@ -5511,6 +5511,210 @@ app.post("/api/archives/repair-references", async (req, res) => {
   }
 });
 
+// Route pour obtenir les statistiques de stockage détaillées
+app.get("/api/storage-stats", async (req, res) => {
+  try {
+    console.log("📊 Calcul des statistiques de stockage côté serveur...");
+
+    // 1. Calculer la taille totale des archives avec métadonnées
+    const archivesQuery = `
+      SELECT 
+        COUNT(*) as total_archives,
+        SUM(
+          CASE 
+            WHEN dossier_data IS NOT NULL THEN LENGTH(dossier_data::text)
+            ELSE 0
+          END +
+          CASE 
+            WHEN metadata IS NOT NULL THEN LENGTH(metadata::text)
+            ELSE 0
+          END
+        ) as total_size_bytes,
+        action_type,
+        DATE_TRUNC('month', archived_at) as month
+      FROM archives_dossiers 
+      GROUP BY action_type, DATE_TRUNC('month', archived_at)
+      ORDER BY month DESC, action_type
+    `;
+
+    const archivesResult = await pool.query(archivesQuery);
+
+    // 2. Calculer la taille des fichiers uploadés
+    const fs = require("fs");
+    const path = require("path");
+    const uploadsDir = path.join(__dirname, "uploads");
+
+    let uploadsSize = 0;
+    let uploadsCount = 0;
+
+    try {
+      const files = fs.readdirSync(uploadsDir);
+      for (const file of files) {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+        if (stats.isFile()) {
+          uploadsSize += stats.size;
+          uploadsCount++;
+        }
+      }
+    } catch (err) {
+      console.warn("⚠️ Erreur lors du calcul des uploads:", err.message);
+    }
+
+    // 3. Statistiques par type d'action
+    const typeStatsQuery = `
+      SELECT 
+        action_type,
+        COUNT(*) as count,
+        SUM(
+          CASE 
+            WHEN dossier_data IS NOT NULL THEN LENGTH(dossier_data::text)
+            ELSE 0
+          END +
+          CASE 
+            WHEN metadata IS NOT NULL THEN LENGTH(metadata::text)
+            ELSE 0
+          END
+        ) as size_bytes,
+        MIN(archived_at) as oldest_date,
+        MAX(archived_at) as newest_date
+      FROM archives_dossiers 
+      GROUP BY action_type
+      ORDER BY size_bytes DESC
+    `;
+
+    const typeStatsResult = await pool.query(typeStatsQuery);
+
+    // 4. Statistiques par mois (derniers 12 mois)
+    const monthlyQuery = `
+      SELECT 
+        DATE_TRUNC('month', archived_at) as month,
+        COUNT(*) as count,
+        SUM(
+          CASE 
+            WHEN dossier_data IS NOT NULL THEN LENGTH(dossier_data::text)
+            ELSE 0
+          END +
+          CASE 
+            WHEN metadata IS NOT NULL THEN LENGTH(metadata::text)
+            ELSE 0
+          END
+        ) as size_bytes
+      FROM archives_dossiers 
+      WHERE archived_at >= NOW() - INTERVAL '12 months'
+      GROUP BY DATE_TRUNC('month', archived_at)
+      ORDER BY month DESC
+    `;
+
+    const monthlyResult = await pool.query(monthlyQuery);
+
+    // 5. Top 10 des plus gros dossiers
+    const topSizeQuery = `
+      SELECT 
+        id,
+        dossier_reference,
+        client_name,
+        action_type,
+        (
+          CASE 
+            WHEN dossier_data IS NOT NULL THEN LENGTH(dossier_data::text)
+            ELSE 0
+          END +
+          CASE 
+            WHEN metadata IS NOT NULL THEN LENGTH(metadata::text)
+            ELSE 0
+          END
+        ) as size_bytes,
+        archived_at
+      FROM archives_dossiers 
+      ORDER BY size_bytes DESC
+      LIMIT 10
+    `;
+
+    const topSizeResult = await pool.query(topSizeQuery);
+
+    // Calculs totaux
+    const totalArchivesSize = typeStatsResult.rows.reduce(
+      (sum, row) => sum + parseInt(row.size_bytes || 0),
+      0
+    );
+    const totalArchivesCount = typeStatsResult.rows.reduce(
+      (sum, row) => sum + parseInt(row.count || 0),
+      0
+    );
+    const totalStorageSize = totalArchivesSize + uploadsSize;
+
+    // Formatage des données
+    const formatBytes = (bytes) => {
+      if (bytes === 0) return "0 B";
+      const k = 1024;
+      const sizes = ["B", "KB", "MB", "GB", "TB"];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    };
+
+    const result = {
+      summary: {
+        total_storage_size: totalStorageSize,
+        total_storage_formatted: formatBytes(totalStorageSize),
+        archives_size: totalArchivesSize,
+        archives_formatted: formatBytes(totalArchivesSize),
+        uploads_size: uploadsSize,
+        uploads_formatted: formatBytes(uploadsSize),
+        total_archives_count: totalArchivesCount,
+        uploads_count: uploadsCount,
+        estimated_monthly_growth:
+          monthlyResult.rows.length > 1
+            ? parseInt(monthlyResult.rows[0]?.size_bytes || 0) -
+              parseInt(monthlyResult.rows[1]?.size_bytes || 0)
+            : 0,
+      },
+      by_type: typeStatsResult.rows.map((row) => ({
+        action_type: row.action_type,
+        count: parseInt(row.count),
+        size_bytes: parseInt(row.size_bytes || 0),
+        size_formatted: formatBytes(parseInt(row.size_bytes || 0)),
+        oldest_date: row.oldest_date,
+        newest_date: row.newest_date,
+      })),
+      monthly_stats: monthlyResult.rows.map((row) => ({
+        month: row.month,
+        count: parseInt(row.count),
+        size_bytes: parseInt(row.size_bytes || 0),
+        size_formatted: formatBytes(parseInt(row.size_bytes || 0)),
+      })),
+      top_largest: topSizeResult.rows.map((row) => ({
+        id: row.id,
+        dossier_reference: row.dossier_reference,
+        client_name: row.client_name,
+        action_type: row.action_type,
+        size_bytes: parseInt(row.size_bytes || 0),
+        size_formatted: formatBytes(parseInt(row.size_bytes || 0)),
+        archived_at: row.archived_at,
+      })),
+      generated_at: new Date().toISOString(),
+    };
+
+    console.log(
+      `📊 Statistiques calculées: ${formatBytes(totalStorageSize)} total`
+    );
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    console.error(
+      "🚨 Erreur lors du calcul des statistiques de stockage:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors du calcul des statistiques",
+    });
+  }
+});
+
 // Nettoyage automatique des archives de plus de 2 ans
 async function cleanOldArchives() {
   console.log("Démarrage du nettoyage des archives de plus de 2 ans...");
