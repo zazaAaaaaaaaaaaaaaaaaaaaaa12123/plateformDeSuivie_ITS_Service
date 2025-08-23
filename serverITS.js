@@ -4639,7 +4639,8 @@ app.get("/api/archives", async (req, res) => {
       );
 
       let whereConditions = [
-        "delivery_status_acconier = 'mise_en_livraison_acconier'",
+        "dossier_number IS NOT NULL",
+        "dossier_number != ''",
         "delivery_status_acconier != 'livre'",
         "delivery_status_acconier != 'livré'",
       ];
@@ -4953,12 +4954,11 @@ app.get("/api/archives/counts", async (req, res) => {
 
     const archiveCountsResult = await pool.query(archiveCountsQuery);
 
-    // Compter TOUS les dossiers en cours de livraison (NON livrés de resp_liv.html)
+    // Compter TOUS les dossiers NON livrés de resp_liv.html (en cours de livraison)
     const activeDeliveryCountQuery = `
       SELECT COUNT(*) as count 
       FROM livraison_conteneur 
-      WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
-      AND delivery_status_acconier != 'livre'
+      WHERE delivery_status_acconier != 'livre'
       AND delivery_status_acconier != 'livré'
       AND dossier_number IS NOT NULL 
       AND dossier_number != ''
@@ -5017,8 +5017,7 @@ app.get("/api/archives/counts", async (req, res) => {
         -- Dossiers en cours de livraison (non livrés)
         SELECT DISTINCT dossier_number 
         FROM livraison_conteneur 
-        WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
-        AND delivery_status_acconier != 'livre'
+        WHERE delivery_status_acconier != 'livre'
         AND delivery_status_acconier != 'livré'
         AND dossier_number IS NOT NULL AND dossier_number != ''
         
