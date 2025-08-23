@@ -278,7 +278,7 @@ class ArchivesManager {
         this.pagination = data.pagination;
 
         // Mettre à jour les compteurs avec les données complètes
-        this.updateCounts();
+        await this.updateCounts();
 
         // Afficher les résultats filtrés
         this.renderCurrentView();
@@ -303,31 +303,55 @@ class ArchivesManager {
     }
   }
 
-  updateCounts() {
-    const counts = {
-      all: this.allArchives.length,
-      suppression: this.allArchives.filter(
-        (a) => a.action_type === "suppression"
-      ).length,
-      livraison: this.allArchives.filter((a) => a.action_type === "livraison")
-        .length,
-      mise_en_livraison: this.allArchives.filter(
-        (a) => a.action_type === "mise_en_livraison"
-      ).length,
-      ordre_livraison_etabli: this.allArchives.filter(
-        (a) => a.action_type === "ordre_livraison_etabli"
-      ).length,
-    };
+  async updateCounts() {
+    console.log("[ARCHIVES] Mise à jour des compteurs - appels backend séparés...");
+    
+    try {
+      // Faire des appels séparés pour chaque action_type pour obtenir les vrais compteurs
+      const countPromises = [
+        fetch('/api/archives?action_type=suppression&limit=1').then(r => r.json()),
+        fetch('/api/archives?action_type=livraison&limit=1').then(r => r.json()),
+        fetch('/api/archives?action_type=mise_en_livraison&limit=1').then(r => r.json()),
+        fetch('/api/archives?action_type=ordre_livraison_etabli&limit=1').then(r => r.json()),
+        fetch('/api/archives?limit=1').then(r => r.json()) // Pour le total
+      ];
 
-    console.log("[ARCHIVES] Compteurs mis à jour:", counts);
+      const [suppressionData, livraisonData, miseEnLivraisonData, ordreData, allData] = await Promise.all(countPromises);
 
-    document.getElementById("allCount").textContent = counts.all;
-    document.getElementById("deletedCount").textContent = counts.suppression;
-    document.getElementById("deliveredCount").textContent = counts.livraison;
-    document.getElementById("shippingCount").textContent =
-      counts.mise_en_livraison;
-    document.getElementById("ordersCount").textContent =
-      counts.ordre_livraison_etabli;
+      const counts = {
+        suppression: suppressionData.pagination?.totalItems || 0,
+        livraison: livraisonData.pagination?.totalItems || 0,
+        mise_en_livraison: miseEnLivraisonData.pagination?.totalItems || 0,
+        ordre_livraison_etabli: ordreData.pagination?.totalItems || 0,
+        all: allData.pagination?.totalItems || 0
+      };
+
+      console.log("[ARCHIVES] Vrais compteurs backend récupérés:", counts);
+
+      // Mettre à jour l'affichage
+      document.getElementById("allCount").textContent = counts.all;
+      document.getElementById("deletedCount").textContent = counts.suppression;
+      document.getElementById("deliveredCount").textContent = counts.livraison;
+      document.getElementById("shippingCount").textContent = counts.mise_en_livraison;
+      document.getElementById("ordersCount").textContent = counts.ordre_livraison_etabli;
+
+    } catch (error) {
+      console.error("[ARCHIVES] Erreur lors du calcul des compteurs:", error);
+      // Fallback vers l'ancienne méthode en cas d'erreur
+      const fallbackCounts = {
+        all: this.allArchives.length,
+        suppression: this.allArchives.filter((a) => a.action_type === "suppression").length,
+        livraison: this.allArchives.filter((a) => a.action_type === "livraison").length,
+        mise_en_livraison: this.allArchives.filter((a) => a.action_type === "mise_en_livraison").length,
+        ordre_livraison_etabli: this.allArchives.filter((a) => a.action_type === "ordre_livraison_etabli").length,
+      };
+
+      document.getElementById("allCount").textContent = fallbackCounts.all;
+      document.getElementById("deletedCount").textContent = fallbackCounts.suppression;
+      document.getElementById("deliveredCount").textContent = fallbackCounts.livraison;
+      document.getElementById("shippingCount").textContent = fallbackCounts.mise_en_livraison;
+      document.getElementById("ordersCount").textContent = fallbackCounts.ordre_livraison_etabli;
+    }
   }
 
   renderCurrentView() {
