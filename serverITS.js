@@ -5270,6 +5270,18 @@ app.post("/api/archives/sync-history", async (req, res) => {
           item.dossier_number ||
           `delivery_${item.delivery_id}`;
 
+        // VALIDATION : Ignorer les dossiers avec "N/A" comme référence
+        if (
+          !dossier_reference ||
+          dossier_reference.trim() === "N/A" ||
+          dossier_reference.trim() === ""
+        ) {
+          console.log(
+            `❌ Dossier ignoré (N/A ou vide): "${dossier_reference}" - ${item.client_name}`
+          );
+          continue;
+        }
+
         // Vérifier si cet élément existe déjà dans les archives
         const existingArchive = await pool.query(
           `SELECT id FROM archives_dossiers 
@@ -5355,6 +5367,146 @@ app.post("/api/archives/sync-history", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la synchronisation",
+    });
+  }
+});
+
+// Nettoyer les archives avec des références invalides (N/A, NULL, vides)
+app.post("/api/archives/clean-invalid", async (req, res) => {
+  try {
+    console.log("🧹 Nettoyage des archives avec références invalides...");
+
+    // Supprimer tous les dossiers livrés avec des références invalides
+    const deleteQuery = `
+      DELETE FROM archives_dossiers 
+      WHERE action_type = 'livraison' 
+      AND (
+        dossier_reference IS NULL 
+        OR dossier_reference = '' 
+        OR dossier_reference = 'N/A'
+        OR TRIM(dossier_reference) = ''
+      )
+      RETURNING id, dossier_reference, client_name
+    `;
+
+    const result = await pool.query(deleteQuery);
+
+    console.log(
+      `✅ Nettoyage terminé: ${result.rows.length} archives invalides supprimées`
+    );
+
+    // Log des éléments supprimés
+    result.rows.forEach((row) => {
+      console.log(
+        `   🗑️ Supprimé: ID=${row.id}, Ref="${row.dossier_reference}", Client="${row.client_name}"`
+      );
+    });
+
+    res.json({
+      success: true,
+      message: `Nettoyage terminé: ${result.rows.length} archives invalides supprimées`,
+      deleted_count: result.rows.length,
+      deleted_archives: result.rows,
+    });
+  } catch (err) {
+    console.error("🚨 Erreur lors du nettoyage des archives:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors du nettoyage",
+    });
+  }
+});
+
+// Réparer les dossiers avec références NULL en utilisant les métadonnées
+app.post("/api/archives/repair-references", async (req, res) => {
+  try {
+    console.log("🔧 Réparation des références de dossiers NULL...");
+
+    // Récupérer tous les dossiers de livraison avec référence NULL
+    const nullRefQuery = `
+      SELECT id, dossier_reference, client_name, metadata, dossier_data
+      FROM archives_dossiers 
+      WHERE action_type = 'livraison' 
+      AND dossier_reference IS NULL
+    `;
+
+    const nullRefResult = await pool.query(nullRefQuery);
+    console.log(
+      `📋 Trouvé ${nullRefResult.rows.length} dossiers avec référence NULL`
+    );
+
+    let repairedCount = 0;
+    let deletedCount = 0;
+
+    for (const row of nullRefResult.rows) {
+      try {
+        const metadata = row.metadata;
+        const dossierData = row.dossier_data;
+
+        // Chercher le dossier_number dans les métadonnées original_data
+        let dossierNumber = null;
+
+        if (
+          metadata &&
+          metadata.original_data &&
+          metadata.original_data.dossier_number
+        ) {
+          dossierNumber = metadata.original_data.dossier_number;
+        } else if (dossierData && dossierData.dossier_number) {
+          dossierNumber = dossierData.dossier_number;
+        }
+
+        if (
+          dossierNumber &&
+          dossierNumber !== "N/A" &&
+          dossierNumber.trim() !== ""
+        ) {
+          // Mettre à jour avec le bon numéro de dossier
+          await pool.query(
+            `UPDATE archives_dossiers 
+             SET dossier_reference = $1 
+             WHERE id = $2`,
+            [dossierNumber, row.id]
+          );
+
+          console.log(
+            `✅ Réparé: ID=${row.id}, Nouvelle ref="${dossierNumber}", Client="${row.client_name}"`
+          );
+          repairedCount++;
+        } else {
+          // Supprimer si aucun numéro de dossier valide trouvé
+          await pool.query(`DELETE FROM archives_dossiers WHERE id = $1`, [
+            row.id,
+          ]);
+
+          console.log(
+            `�️ Supprimé: ID=${row.id}, Aucune ref valide, Client="${row.client_name}"`
+          );
+          deletedCount++;
+        }
+      } catch (itemError) {
+        console.error(
+          `❌ Erreur lors de la réparation de l'ID ${row.id}:`,
+          itemError
+        );
+      }
+    }
+
+    console.log(
+      `🎯 Réparation terminée: ${repairedCount} réparés, ${deletedCount} supprimés`
+    );
+
+    res.json({
+      success: true,
+      message: `Réparation terminée: ${repairedCount} références réparées, ${deletedCount} dossiers supprimés`,
+      repaired_count: repairedCount,
+      deleted_count: deletedCount,
+    });
+  } catch (err) {
+    console.error("🚨 Erreur lors de la réparation des références:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la réparation",
     });
   }
 });

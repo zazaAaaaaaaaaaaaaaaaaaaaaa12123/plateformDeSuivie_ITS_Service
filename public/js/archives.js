@@ -323,14 +323,42 @@ class ArchivesManager {
         `[ARCHIVES] Trouvé ${historyData.length} entrées dans l'historique localStorage`
       );
 
-      // Envoyer les données au backend pour synchronisation
+      // FILTRER : Exclure tous les dossiers avec "N/A" comme référence
+      const validHistoryData = historyData.filter((item) => {
+        const dossierRef = item.declaration_number || item.dossier_number || "";
+        const isValid =
+          dossierRef && dossierRef.trim() && dossierRef.trim() !== "N/A";
+
+        if (!isValid) {
+          console.log(
+            `[ARCHIVES] ❌ Dossier filtré (N/A): ${dossierRef} - ${item.client_name}`
+          );
+        }
+
+        return isValid;
+      });
+
+      console.log(
+        `[ARCHIVES] Après filtrage N/A: ${
+          validHistoryData.length
+        } entrées valides (${
+          historyData.length - validHistoryData.length
+        } filtrées)`
+      );
+
+      if (validHistoryData.length === 0) {
+        console.log("[ARCHIVES] Aucun dossier valide après filtrage N/A");
+        return { success: true, synced_count: 0 };
+      }
+
+      // Envoyer les données FILTRÉES au backend pour synchronisation
       const response = await fetch("/api/archives/sync-history", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          historyData: historyData,
+          historyData: validHistoryData,
         }),
       });
 
