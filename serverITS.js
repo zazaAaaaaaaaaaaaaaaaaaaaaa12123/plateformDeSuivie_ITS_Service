@@ -4964,7 +4964,7 @@ app.get("/api/archives/counts", async (req, res) => {
       AND dossier_number != ''
     `;
 
-    // Compter les dossiers livrés (de resp_liv.html avec statut livré)
+    // Compter les dossiers lisdughbkvrés (de resp_liv.html avec statut livré)
     const deliveredCountQuery = `
       SELECT COUNT(*) as count FROM (
         SELECT DISTINCT dossier_number
