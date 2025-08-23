@@ -4809,17 +4809,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                                 "Responsable Acconier",
                                 window.location.href
                               )
-                              .then(() => {
-                                console.log(
-                                  `[ARCHIVE] Dossier mis en livraison archivé: ${
-                                    delivery.dossier_number || delivery.id
-                                  }`
-                                );
+                              .then((success) => {
+                                if (success) {
+                                  console.log(
+                                    `[ARCHIVE] Dossier mis en livraison archivé: ${
+                                      delivery.dossier_number || delivery.id
+                                    }`
+                                  );
+                                }
                               })
                               .catch((error) => {
-                                console.error(
-                                  "[ARCHIVE] Erreur lors de l'archivage du dossier mis en livraison:",
-                                  error
+                                // Ne plus afficher d'erreur pour les doublons (409) car c'est géré dans archiveDossier
+                                console.warn(
+                                  "[ARCHIVE] Archivage non effectué (probablement déjà archivé):",
+                                  delivery.dossier_number || delivery.id
                                 );
                               });
                           }

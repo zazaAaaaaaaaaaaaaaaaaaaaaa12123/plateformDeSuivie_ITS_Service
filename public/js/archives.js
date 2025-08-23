@@ -1941,8 +1941,16 @@ window.archiveDossier = async function (
 
       return true;
     } else {
-      console.error("Erreur lors de l'archivage:", result.message);
-      return false;
+      // Gérer spécifiquement l'erreur 409 (doublon) - ne pas afficher d'erreur
+      if (response.status === 409) {
+        console.log(
+          `[ARCHIVE] Dossier "${archiveData.dossier_reference}" déjà archivé pour l'action "${actionType}" - ignoré silencieusement`
+        );
+        return true; // Considérer comme un succès car l'objectif est atteint
+      } else {
+        console.error("Erreur lors de l'archivage:", result.message);
+        return false;
+      }
     }
   } catch (error) {
     console.error("Erreur lors de l'archivage:", error);
