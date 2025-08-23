@@ -2102,16 +2102,11 @@ class StorageManager {
     try {
       console.log("🔄 [STORAGE] Calcul des données de stockage...");
 
-      // Essayer d'abord de récupérer les stats du serveur
-      const serverStats = await this.fetchServerStats();
-
-      if (serverStats) {
-        console.log("✅ [STORAGE] Utilisation des statistiques serveur");
-        this.processServerStats(serverStats);
-      } else {
-        console.log("⚠️ [STORAGE] Fallback vers calculs locaux");
-        await this.calculateLocalStats();
-      }
+      // FORCER l'utilisation des vraies données depuis resp_liv.html
+      console.log(
+        "✅ [STORAGE] Utilisation des vraies données depuis resp_liv.html"
+      );
+      await this.processRealArchiveData();
     } catch (error) {
       console.error("❌ [STORAGE] Erreur lors du calcul:", error);
       await this.calculateLocalStats();
@@ -2430,6 +2425,20 @@ class StorageManager {
           realTimeData.mise_en_livraison = miseEnLivraisonDossiers.length;
           console.log(
             `📊 Dossiers en mise en livraison (SANS les livrés): ${realTimeData.mise_en_livraison}`
+          );
+          console.log(
+            `🔍 DEBUG: Total dossiers API: ${deliveriesData.deliveries.length}`
+          );
+          console.log(
+            `🔍 DEBUG: Avec status mise_en_livraison_acconier: ${
+              deliveriesData.deliveries.filter(
+                (d) =>
+                  d.delivery_status_acconier === "mise_en_livraison_acconier"
+              ).length
+            }`
+          );
+          console.log(
+            `🔍 DEBUG: Final après exclusion des livrés: ${miseEnLivraisonDossiers.length}`
           );
         }
         console.log(
