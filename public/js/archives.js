@@ -16,6 +16,7 @@ class ArchivesManager {
     };
     this.allArchives = []; // Données complètes pour les compteurs
     this.filteredArchives = []; // Données filtrées à afficher
+    this.allCombinedArchives = []; // Toutes les archives combinées pour l'onglet "Toutes les Archives"
     this.selectedTab = "all";
     this.allArchivesData = null; // Cache pour toutes les données non filtrées
     this.lastDataRefresh = 0; // Timestamp du dernier rafraîchissement
@@ -91,7 +92,28 @@ class ArchivesManager {
       itemsPerPage.addEventListener("change", (e) => {
         this.itemsPerPage = parseInt(e.target.value);
         this.currentPage = 1;
-        this.renderCurrentView();
+
+        // 🎯 Pour l'onglet "Toutes les Archives", recalculer la pagination côté client
+        if (this.selectedTab === "all" && this.allCombinedArchives.length > 0) {
+          console.log(
+            `[ARCHIVES] 📊 Changement de taille de page: ${this.itemsPerPage} (onglet: Toutes les Archives)`
+          );
+
+          // Recalculer la pagination avec la nouvelle taille
+          this.pagination = {
+            currentPage: this.currentPage,
+            totalPages: Math.ceil(
+              this.allCombinedArchives.length / this.itemsPerPage
+            ),
+            totalItems: this.allCombinedArchives.length,
+            itemsPerPage: this.itemsPerPage,
+          };
+
+          this.renderAllArchivesPagination();
+          this.renderPagination();
+        } else {
+          this.renderCurrentView();
+        }
       });
     }
 
@@ -129,13 +151,13 @@ class ArchivesManager {
             this.renderCurrentView();
           }
         } else if (actionFilter && this.selectedTab === "all") {
-          // 🎯 CORRECTION: Pour "Toutes les Archives", charger TOUS les types combinés
+          // 🎯 CORRECTION: Pour "Toutes les Archives", additionner les compteurs des autres onglets
           console.log(
-            "[ARCHIVES] 🔄 Chargement de TOUTES les archives (tous types combinés)"
+            "[ARCHIVES] 🔄 Chargement de TOUTES les archives (addition des compteurs)"
           );
           this.currentFilters.action_type = ""; // Garder vide pour l'affichage
           actionFilter.value = "";
-          await this.loadAllCombinedArchives(); // Nouvelle méthode
+          await this.loadAllCombinedArchivesByAddition(); // Nouvelle méthode simple
         } else {
           this.renderCurrentView();
         }
@@ -423,6 +445,15 @@ class ArchivesManager {
     try {
       this.showLoading(true);
 
+      // 🎯 NOUVEAU: Si on est sur l'onglet "Toutes les Archives", utiliser la méthode combinée
+      if (this.selectedTab === "all") {
+        console.log(
+          "[ARCHIVES] 🎯 Onglet 'Toutes les Archives' détecté - Utilisation de loadAllCombinedArchivesByAddition()"
+        );
+        await this.loadAllCombinedArchivesByAddition();
+        return; // Sortir tôt car loadAllCombinedArchivesByAddition() gère tout
+      }
+
       // Vérifier si nous devons rafraîchir les données (cache expiré ou pas de données)
       const now = Date.now();
       const shouldRefresh =
@@ -510,19 +541,19 @@ class ArchivesManager {
         "[ARCHIVES] 🔄 Chargement de TOUTES les archives combinées..."
       );
 
-      // 📊 Faire des appels parallèles pour chaque type d'archive
+      // 📊 Faire des appels parallèles pour chaque type d'archive - SANS LIMITE pour récupérer TOUT
       const promises = [
+        fetch(`/api/archives?action_type=suppression&limit=9999&page=1`).then(
+          (r) => r.json()
+        ),
+        fetch(`/api/archives?action_type=livraison&limit=9999&page=1`).then(
+          (r) => r.json()
+        ),
         fetch(
-          `/api/archives?action_type=suppression&limit=${this.itemsPerPage}&page=${this.currentPage}`
+          `/api/archives?action_type=mise_en_livraison&limit=9999&page=1`
         ).then((r) => r.json()),
         fetch(
-          `/api/archives?action_type=livraison&limit=${this.itemsPerPage}&page=${this.currentPage}`
-        ).then((r) => r.json()),
-        fetch(
-          `/api/archives?action_type=mise_en_livraison&limit=${this.itemsPerPage}&page=${this.currentPage}`
-        ).then((r) => r.json()),
-        fetch(
-          `/api/archives?action_type=ordre_livraison_etabli&limit=${this.itemsPerPage}&page=${this.currentPage}`
+          `/api/archives?action_type=ordre_livraison_etabli&limit=9999&page=1`
         ).then((r) => r.json()),
       ];
 
@@ -536,19 +567,31 @@ class ArchivesManager {
         allCombinedArchives = allCombinedArchives.concat(
           suppressionData.archives
         );
+        console.log(
+          `[ARCHIVES] ➕ ${suppressionData.archives.length} archives supprimées ajoutées`
+        );
       }
       if (livraisonData.success && livraisonData.archives) {
         allCombinedArchives = allCombinedArchives.concat(
           livraisonData.archives
+        );
+        console.log(
+          `[ARCHIVES] ➕ ${livraisonData.archives.length} archives livrées ajoutées`
         );
       }
       if (miseEnLivraisonData.success && miseEnLivraisonData.archives) {
         allCombinedArchives = allCombinedArchives.concat(
           miseEnLivraisonData.archives
         );
+        console.log(
+          `[ARCHIVES] ➕ ${miseEnLivraisonData.archives.length} archives en livraison ajoutées`
+        );
       }
       if (ordreData.success && ordreData.archives) {
         allCombinedArchives = allCombinedArchives.concat(ordreData.archives);
+        console.log(
+          `[ARCHIVES] ➕ ${ordreData.archives.length} ordres de livraison ajoutés`
+        );
       }
 
       // 📅 Trier par date de création (plus récent en premier)
@@ -556,14 +599,15 @@ class ArchivesManager {
         (a, b) => new Date(b.archived_at) - new Date(a.archived_at)
       );
 
-      // 📑 Calculer la pagination combinée
-      const totalItems =
-        (suppressionData.pagination?.totalItems || 0) +
-        (livraisonData.pagination?.totalItems || 0) +
-        (miseEnLivraisonData.pagination?.totalItems || 0) +
-        (ordreData.pagination?.totalItems || 0);
+      // � Stocker TOUTES les archives pour la pagination frontend
+      this.allArchives = allCombinedArchives;
+      const totalItems = allCombinedArchives.length;
 
-      this.filteredArchives = allCombinedArchives;
+      // 📑 Appliquer la pagination côté frontend
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      this.filteredArchives = allCombinedArchives.slice(startIndex, endIndex);
+
       this.pagination = {
         currentPage: this.currentPage,
         totalPages: Math.ceil(totalItems / this.itemsPerPage),
@@ -572,8 +616,18 @@ class ArchivesManager {
       };
 
       console.log(
-        `[ARCHIVES] ✅ ${allCombinedArchives.length} archives combinées chargées (Total: ${totalItems})`
+        `[ARCHIVES] ✅ ${allCombinedArchives.length} archives TOTALES chargées, affichage de ${this.filteredArchives.length} (page ${this.currentPage})`
       );
+
+      // 🎯 Mettre à jour le badge de l'onglet "Toutes les Archives" avec le total
+      const allTabBadge = document.querySelector("#all-tab .badge");
+      if (allTabBadge) {
+        allTabBadge.textContent = totalItems;
+        allTabBadge.title = `${totalItems} archives au total`;
+        console.log(
+          `[ARCHIVES] 📊 Badge "Toutes les Archives" mis à jour: ${totalItems}`
+        );
+      }
 
       // 🎯 Mettre à jour l'affichage
       this.renderCurrentView();
@@ -585,6 +639,192 @@ class ArchivesManager {
         error
       );
       this.showNotification("Erreur lors du chargement des archives", "error");
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  // 🎯 MÉTHODE SIMPLE: Additionner les compteurs des autres onglets pour "Toutes les Archives"
+  async loadAllCombinedArchivesByAddition() {
+    try {
+      this.showLoading(true);
+      console.log(
+        "[ARCHIVES] 🔄 Calcul du total par addition des compteurs des onglets..."
+      );
+
+      // � D'abord s'assurer que tous les compteurs sont chargés
+      await this.updateCounts();
+
+      // �📊 Récupérer les badges des autres onglets pour additionner leurs valeurs
+      const deletedBadge = document.querySelector("#deletedCount");
+      const deliveredBadge = document.querySelector("#deliveredCount");
+      const shippingBadge = document.querySelector("#shippingCount");
+      const ordersBadge = document.querySelector("#ordersCount");
+
+      // 🧮 Additionner les valeurs des badges
+      let totalCount = 0;
+
+      const deletedCount = deletedBadge
+        ? parseInt(deletedBadge.textContent) || 0
+        : 0;
+      const deliveredCount = deliveredBadge
+        ? parseInt(deliveredBadge.textContent) || 0
+        : 0;
+      const shippingCount = shippingBadge
+        ? parseInt(shippingBadge.textContent) || 0
+        : 0;
+      const ordersCount = ordersBadge
+        ? parseInt(ordersBadge.textContent) || 0
+        : 0;
+
+      totalCount = deletedCount + deliveredCount + shippingCount + ordersCount;
+
+      console.log(`[ARCHIVES] 📊 Calcul du total:`);
+      console.log(`  - Dossiers supprimés: ${deletedCount}`);
+      console.log(`  - Dossiers livrés: ${deliveredCount}`);
+      console.log(`  - Mis en livraison: ${shippingCount}`);
+      console.log(`  - Ordres de livraison: ${ordersCount}`);
+      console.log(`  - TOTAL ADDITIONNÉ: ${totalCount}`);
+
+      // 🎯 Mettre à jour le badge de l'onglet "Toutes les Archives" avec le total additionné
+      const allTabBadge = document.querySelector("#allCount");
+      if (allTabBadge) {
+        allTabBadge.textContent = totalCount;
+        allTabBadge.title = `${totalCount} archives au total (${deletedCount}+${deliveredCount}+${shippingCount}+${ordersCount})`;
+        console.log(
+          `[ARCHIVES] ✅ Badge "Toutes les Archives" mis à jour: ${totalCount}`
+        );
+      } else {
+        console.warn("[ARCHIVES] ⚠️ Badge #allCount non trouvé !");
+      }
+
+      // 📑 Pour l'affichage, charger TOUTES les archives de tous les types pour respecter le badge
+      console.log(
+        "[ARCHIVES] 🔄 Chargement de TOUTES les archives pour affichage..."
+      );
+
+      // 📊 Faire des appels parallèles pour récupérer TOUTES les archives de chaque type
+      const cacheBuster = Date.now(); // Cache buster pour forcer le rechargement
+      const promises = [
+        fetch(
+          `/api/archives?action_type=suppression&limit=99999&page=1&cb=${cacheBuster}`
+        ).then((r) => r.json()),
+        fetch(
+          `/api/archives?action_type=livraison&limit=99999&page=1&cb=${cacheBuster}`
+        ).then((r) => r.json()),
+        fetch(
+          `/api/archives?action_type=mise_en_livraison&limit=99999&page=1&cb=${cacheBuster}`
+        ).then((r) => r.json()),
+        fetch(
+          `/api/archives?action_type=ordre_livraison_etabli&limit=99999&page=1&cb=${cacheBuster}`
+        ).then((r) => r.json()),
+      ];
+
+      const [suppressionData, livraisonData, miseEnLivraisonData, ordreData] =
+        await Promise.all(promises);
+
+      // � DIAGNOSTIC: Afficher les résultats détaillés
+      console.log("[ARCHIVES] 🔍 DIAGNOSTIC des données récupérées:");
+      console.log("  - suppressionData:", {
+        success: suppressionData.success,
+        archivesLength: suppressionData.archives
+          ? suppressionData.archives.length
+          : 0,
+        pagination: suppressionData.pagination,
+      });
+      console.log("  - livraisonData:", {
+        success: livraisonData.success,
+        archivesLength: livraisonData.archives
+          ? livraisonData.archives.length
+          : 0,
+        pagination: livraisonData.pagination,
+      });
+      console.log("  - miseEnLivraisonData:", {
+        success: miseEnLivraisonData.success,
+        archivesLength: miseEnLivraisonData.archives
+          ? miseEnLivraisonData.archives.length
+          : 0,
+        pagination: miseEnLivraisonData.pagination,
+      });
+      console.log("  - ordreData:", {
+        success: ordreData.success,
+        archivesLength: ordreData.archives ? ordreData.archives.length : 0,
+        pagination: ordreData.pagination,
+      });
+
+      // �🔗 Combiner toutes les archives
+      let allCombinedArchives = [];
+
+      if (suppressionData.success && suppressionData.archives) {
+        allCombinedArchives = allCombinedArchives.concat(
+          suppressionData.archives
+        );
+        console.log(
+          `[ARCHIVES] ➕ ${suppressionData.archives.length} archives supprimées récupérées`
+        );
+      }
+      if (livraisonData.success && livraisonData.archives) {
+        allCombinedArchives = allCombinedArchives.concat(
+          livraisonData.archives
+        );
+        console.log(
+          `[ARCHIVES] ➕ ${livraisonData.archives.length} archives livrées récupérées`
+        );
+      }
+      if (miseEnLivraisonData.success && miseEnLivraisonData.archives) {
+        allCombinedArchives = allCombinedArchives.concat(
+          miseEnLivraisonData.archives
+        );
+        console.log(
+          `[ARCHIVES] ➕ ${miseEnLivraisonData.archives.length} archives mises en livraison récupérées`
+        );
+      }
+      if (ordreData.success && ordreData.archives) {
+        allCombinedArchives = allCombinedArchives.concat(ordreData.archives);
+        console.log(
+          `[ARCHIVES] ➕ ${ordreData.archives.length} ordres de livraison récupérés`
+        );
+      }
+
+      // 📅 Trier par date (plus récent en premier)
+      allCombinedArchives.sort(
+        (a, b) =>
+          new Date(b.archived_at || b.created_at) -
+          new Date(a.archived_at || a.created_at)
+      );
+
+      console.log(
+        `[ARCHIVES] 🎯 Total d'archives combinées: ${allCombinedArchives.length} (doit correspondre au badge: ${totalCount})`
+      );
+
+      // 💾 Stocker toutes les archives combinées pour la pagination
+      this.allCombinedArchives = allCombinedArchives;
+
+      // 🎯 Appliquer la pagination côté client pour l'affichage
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      this.filteredArchives = this.allCombinedArchives.slice(
+        startIndex,
+        endIndex
+      );
+
+      this.pagination = {
+        currentPage: this.currentPage,
+        totalPages: Math.ceil(allCombinedArchives.length / this.itemsPerPage),
+        totalItems: allCombinedArchives.length, // Utiliser le nombre réel d'archives récupérées
+        itemsPerPage: this.itemsPerPage,
+      };
+
+      console.log(
+        `[ARCHIVES] ✅ Affichage: ${this.filteredArchives.length} archives sur ${allCombinedArchives.length} (page ${this.currentPage}/${this.pagination.totalPages})`
+      );
+
+      // 🎯 Mettre à jour l'affichage
+      this.renderCurrentView();
+      this.renderPagination();
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur lors du calcul du total:", error);
+      this.showNotification("Erreur lors du calcul du total", "error");
     } finally {
       this.showLoading(false);
     }
@@ -718,8 +958,18 @@ class ArchivesManager {
 
       console.log("[ARCHIVES] Vrais compteurs backend récupérés:", counts);
 
+      // CALCUL DU TOTAL : Addition des autres onglets
+      const totalCalcule =
+        counts.suppression +
+        counts.livraison +
+        counts.mise_en_livraison +
+        counts.ordre_livraison_etabli;
+      console.log(
+        `[ARCHIVES] Total calculé: ${counts.suppression} + ${counts.livraison} + ${counts.mise_en_livraison} + ${counts.ordre_livraison_etabli} = ${totalCalcule}`
+      );
+
       // Mettre à jour l'affichage
-      document.getElementById("allCount").textContent = counts.all;
+      document.getElementById("allCount").textContent = totalCalcule;
       document.getElementById("deletedCount").textContent = counts.suppression;
       document.getElementById("deliveredCount").textContent = counts.livraison;
       document.getElementById("shippingCount").textContent =
@@ -730,7 +980,6 @@ class ArchivesManager {
       console.error("[ARCHIVES] Erreur lors du calcul des compteurs:", error);
       // Fallback vers l'ancienne méthode en cas d'erreur
       const fallbackCounts = {
-        all: this.allArchives.length,
         suppression: this.allArchives.filter(
           (a) => a.action_type === "suppression"
         ).length,
@@ -744,7 +993,17 @@ class ArchivesManager {
         ).length,
       };
 
-      document.getElementById("allCount").textContent = fallbackCounts.all;
+      // CALCUL DU TOTAL FALLBACK : Addition des autres onglets
+      const totalFallback =
+        fallbackCounts.suppression +
+        fallbackCounts.livraison +
+        fallbackCounts.mise_en_livraison +
+        fallbackCounts.ordre_livraison_etabli;
+      console.log(
+        `[ARCHIVES] Total fallback calculé: ${fallbackCounts.suppression} + ${fallbackCounts.livraison} + ${fallbackCounts.mise_en_livraison} + ${fallbackCounts.ordre_livraison_etabli} = ${totalFallback}`
+      );
+
+      document.getElementById("allCount").textContent = totalFallback;
       document.getElementById("deletedCount").textContent =
         fallbackCounts.suppression;
       document.getElementById("deliveredCount").textContent =
@@ -1529,7 +1788,22 @@ class ArchivesManager {
           page <= totalPages
         ) {
           this.currentPage = page;
-          this.loadArchives();
+
+          // 🎯 Pour l'onglet "Toutes les Archives", utiliser la pagination côté client
+          if (
+            this.selectedTab === "all" &&
+            this.allCombinedArchives.length > 0
+          ) {
+            console.log(
+              `[ARCHIVES] 📄 Navigation côté client vers la page ${page} (onglet: Toutes les Archives)`
+            );
+            this.renderAllArchivesPagination();
+          } else {
+            console.log(
+              `[ARCHIVES] 📄 Navigation serveur vers la page ${page} (onglet: ${this.selectedTab})`
+            );
+            this.loadArchives();
+          }
         }
       });
     });
@@ -1547,6 +1821,48 @@ class ArchivesManager {
     const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
     info.textContent = `Affichage de ${startItem} à ${endItem} sur ${totalItems} éléments`;
+  }
+
+  // 🎯 Méthode pour gérer la pagination côté client pour l'onglet "Toutes les Archives"
+  renderAllArchivesPagination() {
+    try {
+      console.log(
+        `[ARCHIVES] 🔄 Pagination côté client - Page ${this.currentPage}`
+      );
+
+      if (!this.allCombinedArchives || this.allCombinedArchives.length === 0) {
+        console.warn(
+          "[ARCHIVES] ⚠️ Aucune archive combinée disponible pour la pagination"
+        );
+        return;
+      }
+
+      // 🎯 Appliquer la pagination côté client
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      this.filteredArchives = this.allCombinedArchives.slice(
+        startIndex,
+        endIndex
+      );
+
+      console.log(
+        `[ARCHIVES] ✅ Page ${this.currentPage}: Affichage de ${
+          this.filteredArchives.length
+        } archives (${startIndex + 1}-${Math.min(
+          endIndex,
+          this.allCombinedArchives.length
+        )} sur ${this.allCombinedArchives.length})`
+      );
+
+      // 🎯 Mettre à jour l'affichage
+      this.renderCurrentView();
+      this.updatePaginationInfo();
+    } catch (error) {
+      console.error(
+        "[ARCHIVES] ❌ Erreur lors de la pagination côté client:",
+        error
+      );
+    }
   }
 
   renderEmptyState() {
