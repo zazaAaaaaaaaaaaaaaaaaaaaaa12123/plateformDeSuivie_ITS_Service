@@ -2508,6 +2508,12 @@ class StorageManager {
     const container = document.getElementById("storageDetailsContainer");
     if (!container) return;
 
+    console.log("🔄 updateRealStorageDetails appelée avec:", realStats);
+    console.log(
+      "🔍 mise_en_livraison count:",
+      realStats.mise_en_livraison?.count
+    );
+
     const typeLabels = {
       livraison: "Dossiers Livrés",
       suppression: "Dossiers Supprimés",
