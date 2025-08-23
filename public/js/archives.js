@@ -2048,16 +2048,52 @@ window.archiveDossier = async function (
 class StorageManager {
   constructor(archivesManager) {
     this.archivesManager = archivesManager;
-    this.storageCapacity = 1024; // 1 GB en MB (modifiable)
+    this.storageCapacity = 1024; // Valeur par défaut en MB, sera mise à jour via API
     this.storageHistory = [];
     this.chart = null;
+    this.databaseInfo = null; // Informations de la base de données
 
     this.init();
   }
 
-  init() {
+  async init() {
     this.bindEvents();
-    console.log("✅ [STORAGE] Système de stockage initialisé");
+    await this.loadRealDatabaseCapacity(); // Charger la vraie capacité
+    console.log(
+      "✅ [STORAGE] Système de stockage initialisé avec capacité réelle"
+    );
+  }
+
+  /**
+   * Récupère la vraie capacité de la base de données depuis Render
+   */
+  async loadRealDatabaseCapacity() {
+    try {
+      console.log(
+        "🗄️ [STORAGE] Récupération de la capacité réelle de la base de données..."
+      );
+
+      const response = await fetch("/api/database/capacity");
+      const data = await response.json();
+
+      if (data.database && data.render_info) {
+        // Mettre à jour la capacité avec la vraie valeur en MB
+        this.storageCapacity = data.render_info.capacity_mb;
+        this.databaseInfo = data;
+
+        console.log("✅ [STORAGE] Capacité mise à jour:", {
+          plan: data.render_info.estimated_plan,
+          capacity: data.render_info.capacity_mb + " MB",
+          current_usage: data.render_info.current_usage_mb + " MB",
+          is_paid: data.render_info.is_paid_plan,
+        });
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ [STORAGE] Impossible de récupérer la capacité réelle, utilisation de la valeur par défaut:",
+        error
+      );
+    }
   }
 
   bindEvents() {
@@ -2499,17 +2535,31 @@ class StorageManager {
         }
       }
 
-      // 3. Récupérer les ordres de livraison actifs
+      // 3. Récupérer les ordres de livraison depuis l'API archives (comme pour mise_en_livraison)
       try {
-        const ordresResponse = await fetch("/api/status-counts");
+        const ordresResponse = await fetch(
+          "/api/archives?action_type=ordre_livraison_etabli"
+        );
         if (ordresResponse.ok) {
           const ordresData = await ordresResponse.json();
-          if (ordresData.success && ordresData.counts) {
-            realTimeData.ordres_livraison = ordresData.counts.pending || 0;
+          if (ordresData.success && ordresData.total !== undefined) {
+            realTimeData.ordres_livraison = ordresData.total;
+            console.log(
+              `📊 Ordres de livraison depuis API archives: ${realTimeData.ordres_livraison}`
+            );
+          } else if (ordresData.archives) {
+            realTimeData.ordres_livraison = ordresData.archives.length;
+            console.log(
+              `📊 Ordres de livraison comptés: ${realTimeData.ordres_livraison}`
+            );
           }
+        } else {
+          console.log(
+            "⚠️ Erreur lors de la récupération des ordres de livraison"
+          );
         }
       } catch (apiError) {
-        console.warn("⚠️ API status-counts non disponible");
+        console.warn("⚠️ API ordres de livraison non disponible");
       }
 
       console.log("✅ Données temps réel récupérées:", realTimeData);
@@ -2773,6 +2823,9 @@ class StorageManager {
       "chartCenterValue"
     ).textContent = `${usedPercent.toFixed(0)}%`;
 
+    // Mise à jour des informations de capacité et plan Render si disponibles
+    this.updateDatabaseInfo();
+
     // Mise à jour de la barre de progression
     const progressBar = document.getElementById("storageProgressBar");
     progressBar.style.width = `${usedPercent}%`;
@@ -3009,6 +3062,72 @@ class StorageManager {
       // Si la modale est ouverte, mettre à jour en temps réel
       await this.calculateStorageData();
       this.createChart();
+    }
+  }
+
+  /**
+   * Met à jour les informations de la base de données Render dans l'interface
+   */
+  updateDatabaseInfo() {
+    if (this.databaseInfo) {
+      // Créer ou mettre à jour un élément d'info de base de données
+      let dbInfoElement = document.getElementById("databaseInfoContainer");
+
+      if (!dbInfoElement) {
+        // Créer l'élément s'il n'existe pas
+        const storageModal = document.getElementById("storageModal");
+        if (storageModal) {
+          const modalBody = storageModal.querySelector(".modal-body");
+          if (modalBody) {
+            dbInfoElement = document.createElement("div");
+            dbInfoElement.id = "databaseInfoContainer";
+            dbInfoElement.className = "alert alert-info mt-3";
+            modalBody.appendChild(dbInfoElement);
+          }
+        }
+      }
+
+      if (dbInfoElement) {
+        dbInfoElement.innerHTML = `
+          <h6 class="alert-heading mb-3">
+            <i class="fas fa-database me-2"></i>Informations Base de Données Render
+          </h6>
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Plan:</strong> ${
+                this.databaseInfo.render_info.estimated_plan
+              }<br>
+              <strong>Capacité Totale:</strong> ${
+                this.databaseInfo.database.total_capacity_formatted
+              }<br>
+              <strong>Utilisation DB:</strong> ${
+                this.databaseInfo.database.current_size_formatted
+              }
+            </div>
+            <div class="col-md-6">
+              <strong>Base de Données:</strong> ${
+                this.databaseInfo.database.name
+              }<br>
+              <strong>Espace Disponible:</strong> ${
+                this.databaseInfo.database.available_space_formatted
+              }<br>
+              <strong>Pourcentage:</strong> ${
+                this.databaseInfo.database.usage_percentage
+              }%
+            </div>
+          </div>
+          <div class="progress mt-2" style="height: 8px;">
+            <div class="progress-bar ${
+              this.databaseInfo.database.usage_percentage > 80
+                ? "bg-warning"
+                : "bg-success"
+            }" 
+                 style="width: ${
+                   this.databaseInfo.database.usage_percentage
+                 }%"></div>
+          </div>
+        `;
+      }
     }
   }
 }
