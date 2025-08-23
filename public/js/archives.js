@@ -31,7 +31,15 @@ class ArchivesManager {
     // Ne charger les archives que si nous sommes sur la page d'archives
     const searchBtn = document.getElementById("searchBtn");
     if (searchBtn) {
-      this.loadArchives();
+      // Vérifier si on est sur l'onglet "all" par défaut
+      if (this.selectedTab === "all") {
+        console.log(
+          "[ARCHIVES] Initialisation - Onglet 'all' détecté, chargement combiné..."
+        );
+        this.loadAllTabsData();
+      } else {
+        this.loadArchives();
+      }
       this.setDefaultDates();
     }
   }
@@ -129,10 +137,10 @@ class ArchivesManager {
             this.renderCurrentView();
           }
         } else if (actionFilter && this.selectedTab === "all") {
-          // Si on revient à "all", vider le filtre action_type
+          // Si on revient à "all", charger TOUTES les données de tous les onglets
           this.currentFilters.action_type = "";
           actionFilter.value = "";
-          this.performSearch();
+          this.loadAllTabsData(); // Nouvelle méthode pour charger toutes les données
         } else {
           this.renderCurrentView();
         }
@@ -385,7 +393,17 @@ class ArchivesManager {
     console.log("[ARCHIVES] Des filtres sont-ils appliqués ?", hasFilters);
 
     this.currentPage = 1;
-    await this.loadArchives();
+
+    // Si on est sur l'onglet "all" et qu'il n'y a pas de filtres spécifiques,
+    // utiliser la méthode de chargement combiné
+    if (this.selectedTab === "all" && !hasFilters) {
+      console.log(
+        "[ARCHIVES] Onglet 'all' détecté sans filtres, chargement combiné..."
+      );
+      await this.loadAllTabsData();
+    } else {
+      await this.loadArchives();
+    }
   }
 
   resetFilters() {
@@ -494,6 +512,147 @@ class ArchivesManager {
     } catch (error) {
       console.error("Erreur lors du chargement des archives:", error);
       this.showNotification("Erreur de connexion", "error");
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  /**
+   * Charge et combine toutes les données de tous les onglets pour l'onglet "Toutes les archives"
+   */
+  async loadAllTabsData() {
+    this.showLoading(true);
+
+    try {
+      console.log("[ARCHIVES] Chargement de toutes les données combinées...");
+
+      // Récupérer TOUTES les données de chaque type (sans limite)
+      const [suppressionData, livraisonData, miseEnLivraisonData, ordreData] =
+        await Promise.all([
+          fetch("/api/archives?action_type=suppression&limit=10000").then((r) =>
+            r.json()
+          ), // Limite élevée
+          fetch("/api/archives?action_type=livraison&limit=10000").then((r) =>
+            r.json()
+          ),
+          fetch("/api/archives?action_type=mise_en_livraison&limit=10000").then(
+            (r) => r.json()
+          ), // Données temps réel
+          fetch(
+            "/api/archives?action_type=ordre_livraison_etabli&limit=10000"
+          ).then((r) => r.json()),
+        ]);
+
+      // Combiner toutes les archives avec vérification détaillée
+      let allCombinedArchives = [];
+
+      if (suppressionData.success && suppressionData.archives) {
+        console.log(
+          `[ARCHIVES] Dossiers supprimés: ${suppressionData.archives.length}`
+        );
+        allCombinedArchives = allCombinedArchives.concat(
+          suppressionData.archives
+        );
+      }
+
+      if (livraisonData.success && livraisonData.archives) {
+        console.log(
+          `[ARCHIVES] Dossiers livrés: ${livraisonData.archives.length}`
+        );
+        allCombinedArchives = allCombinedArchives.concat(
+          livraisonData.archives
+        );
+      }
+
+      if (miseEnLivraisonData.success && miseEnLivraisonData.archives) {
+        console.log(
+          `[ARCHIVES] Mise en livraison: ${miseEnLivraisonData.archives.length}`
+        );
+        allCombinedArchives = allCombinedArchives.concat(
+          miseEnLivraisonData.archives
+        );
+      }
+
+      if (ordreData.success && ordreData.archives) {
+        console.log(
+          `[ARCHIVES] Ordres de livraison: ${ordreData.archives.length}`
+        );
+        allCombinedArchives = allCombinedArchives.concat(ordreData.archives);
+      }
+
+      // Éliminer les doublons basés sur l'ID
+      const uniqueArchives = allCombinedArchives.filter(
+        (archive, index, self) =>
+          index === self.findIndex((a) => a.id === archive.id)
+      );
+
+      // Trier par date de création (plus récent en premier)
+      uniqueArchives.sort(
+        (a, b) => new Date(b.archived_at) - new Date(a.archived_at)
+      );
+
+      // Mettre à jour les données pour l'affichage
+      this.filteredArchives = uniqueArchives;
+      this.allArchives = uniqueArchives;
+
+      // Pagination simulée pour l'affichage
+      this.pagination = {
+        totalItems: uniqueArchives.length,
+        totalPages: Math.ceil(uniqueArchives.length / this.itemsPerPage),
+        currentPage: 1,
+        itemsPerPage: this.itemsPerPage,
+      };
+
+      console.log(`[ARCHIVES] ✅ Données combinées chargées avec succès:`);
+      console.log(
+        `[ARCHIVES] - Total d'archives uniques: ${uniqueArchives.length}`
+      );
+      console.log(
+        `[ARCHIVES] - Avant déduplication: ${allCombinedArchives.length}`
+      );
+      console.log(
+        `[ARCHIVES] - Doublons éliminés: ${
+          allCombinedArchives.length - uniqueArchives.length
+        }`
+      );
+
+      // Mettre à jour les compteurs aussi
+      await this.updateCounts();
+
+      // Afficher les résultats
+      this.renderCurrentView();
+      this.renderPagination();
+    } catch (error) {
+      console.error(
+        "[ARCHIVES] ❌ Erreur lors du chargement des données combinées:",
+        error
+      );
+      this.showNotification(
+        "Erreur lors du chargement des données combinées",
+        "error"
+      );
+
+      // Fallback : essayer de charger au moins les archives classiques
+      try {
+        console.log(
+          "[ARCHIVES] Tentative de fallback vers les archives classiques..."
+        );
+        const fallbackResponse = await fetch("/api/archives?limit=5000");
+        const fallbackData = await fallbackResponse.json();
+
+        if (fallbackData.success) {
+          this.filteredArchives = fallbackData.archives || [];
+          this.allArchives = fallbackData.archives || [];
+          this.pagination = fallbackData.pagination || {};
+          console.log(
+            `[ARCHIVES] Fallback réussi: ${this.filteredArchives.length} archives chargées`
+          );
+          this.renderCurrentView();
+          this.renderPagination();
+        }
+      } catch (fallbackError) {
+        console.error("[ARCHIVES] Échec du fallback:", fallbackError);
+      }
     } finally {
       this.showLoading(false);
     }
@@ -622,10 +781,21 @@ class ArchivesManager {
         livraison: livraisonData.pagination?.totalItems || 0,
         mise_en_livraison: miseEnLivraisonData.pagination?.totalItems || 0,
         ordre_livraison_etabli: ordreData.pagination?.totalItems || 0,
-        all: allData.pagination?.totalItems || 0,
+        // Calculer le total comme la somme des autres compteurs
+        all: 0, // Sera calculé ci-dessous
       };
 
+      // Calculer le vrai total comme somme des compteurs individuels
+      counts.all =
+        counts.suppression +
+        counts.livraison +
+        counts.mise_en_livraison +
+        counts.ordre_livraison_etabli;
+
       console.log("[ARCHIVES] Vrais compteurs backend récupérés:", counts);
+      console.log(
+        `[ARCHIVES] Total calculé: ${counts.suppression} + ${counts.livraison} + ${counts.mise_en_livraison} + ${counts.ordre_livraison_etabli} = ${counts.all}`
+      );
 
       // Mettre à jour l'affichage
       document.getElementById("allCount").textContent = counts.all;
@@ -639,7 +809,6 @@ class ArchivesManager {
       console.error("[ARCHIVES] Erreur lors du calcul des compteurs:", error);
       // Fallback vers l'ancienne méthode en cas d'erreur
       const fallbackCounts = {
-        all: this.allArchives.length,
         suppression: this.allArchives.filter(
           (a) => a.action_type === "suppression"
         ).length,
@@ -652,6 +821,18 @@ class ArchivesManager {
           (a) => a.action_type === "ordre_livraison_etabli"
         ).length,
       };
+
+      // Calculer le total comme somme des autres compteurs (fallback)
+      fallbackCounts.all =
+        fallbackCounts.suppression +
+        fallbackCounts.livraison +
+        fallbackCounts.mise_en_livraison +
+        fallbackCounts.ordre_livraison_etabli;
+
+      console.log(
+        "[ARCHIVES] Fallback - Total calculé:",
+        `${fallbackCounts.suppression} + ${fallbackCounts.livraison} + ${fallbackCounts.mise_en_livraison} + ${fallbackCounts.ordre_livraison_etabli} = ${fallbackCounts.all}`
+      );
 
       document.getElementById("allCount").textContent = fallbackCounts.all;
       document.getElementById("deletedCount").textContent =
