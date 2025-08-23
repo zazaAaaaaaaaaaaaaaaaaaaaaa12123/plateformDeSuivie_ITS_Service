@@ -2047,16 +2047,39 @@ window.archiveDossier = async function (
  */
 class StorageManager {
   constructor(archivesManager) {
-    this.archivesManager = archivesManager;
-    this.storageCapacity = 1024; // 1 GB en MB (modifiable)
+    this.archivesManager = archivesManager; // Peut être null
+    this.storageCapacity = 10240; // 10 GB en MB (VRAIE CAPACITÉ PAYANTE)
+    this.realCapacity = null; // Vraie capacité de la base de données
     this.storageHistory = [];
     this.chart = null;
 
+    console.log(
+      "[STORAGE] Construction du StorageManager avec archivesManager:",
+      !!archivesManager
+    );
     this.init();
   }
 
   init() {
     this.bindEvents();
+
+    // Debug: Vérifier si nous sommes sur la bonne page
+    console.log("🔍 [DEBUG] Initialisation StorageManager");
+    const totalCapacityEl = document.getElementById("totalStorageCapacity");
+    const totalAvailableEl = document.getElementById("totalAvailableStorage");
+    console.log("🔍 [DEBUG] Éléments trouvés:", {
+      totalCapacityEl: !!totalCapacityEl,
+      totalAvailableEl: !!totalAvailableEl,
+    });
+
+    this.loadRealDatabaseCapacity(); // Charger la vraie capacité de la DB
+
+    // Forcer le calcul et l'affichage des données de stockage dès l'initialisation
+    setTimeout(() => {
+      console.log("🔍 [DEBUG] Calcul différé des données de stockage...");
+      this.calculateStorageData();
+    }, 1000); // Délai pour laisser le temps à la capacité de se charger
+
     console.log("✅ [STORAGE] Système de stockage initialisé");
   }
 
@@ -2084,8 +2107,99 @@ class StorageManager {
     });
   }
 
+  // *** CHARGEMENT DE LA VRAIE CAPACITÉ DE LA BASE DE DONNÉES ***
+  async loadRealDatabaseCapacity() {
+    try {
+      console.log(
+        "🔄 [STORAGE] Chargement de la vraie capacité de la base de données..."
+      );
+
+      const response = await fetch("/api/database/capacity");
+      console.log("🔍 [DEBUG] Réponse API:", response.status, response.ok);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("🔍 [DEBUG] Données reçues:", data);
+
+        // Convertir en MB (la réponse est en bytes) - utiliser la nouvelle structure
+        this.realCapacity = Math.round(
+          data.database.total_capacity_bytes / (1024 * 1024)
+        );
+        this.storageCapacity = this.realCapacity;
+
+        console.log(
+          `✅ [STORAGE] Capacité réelle détectée: ${this.realCapacity} MB (${data.render_info.estimated_plan})`
+        );
+        console.log(
+          `📊 [STORAGE] Plan détecté: ${
+            data.render_info.is_paid_plan ? "Payant (10GB)" : "Gratuit (1GB)"
+          }`
+        );
+
+        // Mettre à jour l'affichage de l'espace total immédiatement
+        const totalCapacityEl = document.getElementById("totalStorageCapacity");
+        console.log(
+          "🔍 [DEBUG] Élément totalStorageCapacity trouvé:",
+          !!totalCapacityEl
+        );
+        if (totalCapacityEl) {
+          const newValue = `${(this.storageCapacity / 1024).toFixed(1)} GB`;
+          totalCapacityEl.textContent = newValue;
+          console.log(
+            `📊 [STORAGE] Interface mise à jour: ${newValue} affiché`
+          );
+          console.log(
+            "🔍 [DEBUG] Valeur après mise à jour:",
+            totalCapacityEl.textContent
+          );
+        }
+
+        // Mettre à jour l'espace disponible avec une estimation basée sur la vraie taille de la DB
+        const totalAvailableStorageEl = document.getElementById(
+          "totalAvailableStorage"
+        );
+        console.log(
+          "🔍 [DEBUG] Élément totalAvailableStorage trouvé:",
+          !!totalAvailableStorageEl
+        );
+        if (totalAvailableStorageEl) {
+          // Utiliser la taille réelle de la DB retournée par l'API
+          const currentUsedMB = Math.round(
+            data.database.current_size_bytes / (1024 * 1024)
+          );
+          const availableMB = this.storageCapacity - currentUsedMB;
+          const newAvailableValue = `${availableMB.toFixed(1)} MB`;
+          totalAvailableStorageEl.textContent = newAvailableValue;
+          console.log(
+            `📊 [STORAGE] Espace disponible estimé: ${newAvailableValue} (DB actuelle: ${currentUsedMB} MB)`
+          );
+          console.log(
+            "🔍 [DEBUG] Valeur espace disponible après mise à jour:",
+            totalAvailableStorageEl.textContent
+          );
+        }
+      } else {
+        console.warn(
+          "⚠️ [STORAGE] Impossible de récupérer la capacité réelle, utilisation de 1GB par défaut"
+        );
+        this.realCapacity = 1024; // 1GB par défaut
+        this.storageCapacity = this.realCapacity;
+      }
+    } catch (error) {
+      console.error(
+        "❌ [STORAGE] Erreur lors du chargement de la capacité:",
+        error
+      );
+      this.realCapacity = 1024; // 1GB par défaut
+      this.storageCapacity = this.realCapacity;
+    }
+  }
+
   async showStorageModal() {
     console.log("📊 [STORAGE] Ouverture de la modale de stockage");
+
+    // S'assurer d'avoir la vraie capacité avant de calculer
+    await this.loadRealDatabaseCapacity();
 
     // Calculer les données de stockage
     await this.calculateStorageData();
@@ -2307,10 +2421,35 @@ class StorageManager {
   async processRealArchiveData() {
     console.log("📊 Utilisation des vraies données d'archives + temps réel");
 
-    // 1. Récupérer les archives réelles
+    // 1. Récupérer les vraies données de capacité de la base de données
+    let realDatabaseInfo = null;
+    try {
+      const dbResponse = await fetch("/api/database/capacity");
+      if (dbResponse.ok) {
+        realDatabaseInfo = await dbResponse.json();
+        console.log(
+          "✅ [STORAGE] Vraies données DB récupérées:",
+          realDatabaseInfo
+        );
+
+        // Mettre à jour la capacité avec les vraies données
+        this.realCapacity = Math.round(
+          realDatabaseInfo.database.total_capacity_bytes / (1024 * 1024)
+        );
+        this.storageCapacity = this.realCapacity;
+
+        console.log(
+          `📊 [STORAGE] Capacité mise à jour: ${this.realCapacity} MB (${realDatabaseInfo.render_info.estimated_plan})`
+        );
+      }
+    } catch (error) {
+      console.error("❌ [STORAGE] Erreur récupération données DB:", error);
+    }
+
+    // 2. Récupérer les archives réelles
     const archives = this.archivesManager.allArchives;
 
-    // 2. Récupérer les données en temps réel depuis les différentes sources
+    // 3. Récupérer les données en temps réel depuis les différentes sources
     const realTimeData = await this.fetchRealTimeData();
 
     // Calculer les vraies statistiques par type
@@ -2355,7 +2494,10 @@ class StorageManager {
     console.log("📊 Données temps réel récupérées:", realTimeData);
     console.log("📊 Statistiques finales:", realStats);
 
-    // Mise à jour de l'interface avec les vraies données mixtes (si les éléments existent)
+    // *** MISE À JOUR DE L'INTERFACE PRINCIPALE AVEC LES VRAIES DONNÉES ***
+    this.updateStorageInterface(totalSize, totalCount, realStats);
+
+    // Mise à jour des autres éléments spécifiques (si ils existent)
     const totalSizeMB = totalSize;
     const totalSizeFormatted = this.formatBytes(totalSizeMB * 1024 * 1024);
 
@@ -2379,7 +2521,7 @@ class StorageManager {
       uploadsCountEl.textContent = "N/A";
     }
 
-    // Calculer le pourcentage d'utilisation
+    // Calculer le pourcentage d'utilisation avec la vraie capacité
     const usagePercent = (totalSizeMB / this.storageCapacity) * 100;
     const storageUsageEl = document.getElementById("storageUsagePercent");
     if (storageUsageEl) {
@@ -2409,6 +2551,12 @@ class StorageManager {
     if (growthPredictionEl) {
       growthPredictionEl.textContent = "Basé sur données réelles";
     }
+
+    console.log(
+      `📊 [STORAGE] Interface mise à jour - Utilisé: ${totalSize.toFixed(
+        1
+      )} MB / Total: ${(this.storageCapacity / 1024).toFixed(1)} GB`
+    );
   }
 
   // Récupérer les données en temps réel depuis les différentes sources
@@ -2501,18 +2649,26 @@ class StorageManager {
 
       // 3. Récupérer les ordres de livraison depuis l'API archives (comme pour mise_en_livraison)
       try {
-        const ordresResponse = await fetch("/api/archives?action_type=ordre_livraison_etabli");
+        const ordresResponse = await fetch(
+          "/api/archives?action_type=ordre_livraison_etabli"
+        );
         if (ordresResponse.ok) {
           const ordresData = await ordresResponse.json();
           if (ordresData.success && ordresData.total !== undefined) {
             realTimeData.ordres_livraison = ordresData.total;
-            console.log(`📊 Ordres de livraison depuis API archives: ${realTimeData.ordres_livraison}`);
+            console.log(
+              `📊 Ordres de livraison depuis API archives: ${realTimeData.ordres_livraison}`
+            );
           } else if (ordresData.archives) {
             realTimeData.ordres_livraison = ordresData.archives.length;
-            console.log(`📊 Ordres de livraison comptés: ${realTimeData.ordres_livraison}`);
+            console.log(
+              `📊 Ordres de livraison comptés: ${realTimeData.ordres_livraison}`
+            );
           }
         } else {
-          console.log("⚠️ Erreur lors de la récupération des ordres de livraison");
+          console.log(
+            "⚠️ Erreur lors de la récupération des ordres de livraison"
+          );
         }
       } catch (apiError) {
         console.warn("⚠️ API ordres de livraison non disponible");
@@ -2760,8 +2916,71 @@ class StorageManager {
     return Math.max(size, 0.005);
   }
 
-  updateStorageInterface(totalSize, totalCount, storageByType) {
-    // Mise à jour des valeurs principales
+  async updateStorageInterface(
+    totalSize = null,
+    totalCount = null,
+    storageByType = null
+  ) {
+    // Si pas de données fournies, utiliser les dernières données calculées
+    if (totalSize === null || totalCount === null || storageByType === null) {
+      console.log(
+        "📊 [STORAGE] Mise à jour de l'interface avec la nouvelle capacité"
+      );
+      // Si nous n'avons pas de données, ne pas mettre à jour l'interface pour le moment
+      return;
+    }
+
+    try {
+      // Récupérer les vraies données de capacité depuis l'API
+      const response = await fetch("/api/database/capacity");
+      const capacityData = await response.json();
+
+      if (capacityData && capacityData.database) {
+        // Utiliser les vraies données de la base de données
+        const totalCapacityGB = capacityData.database.total_capacity_formatted;
+        const availableGB = capacityData.database.available_space_formatted;
+
+        // Mise à jour avec les vraies données
+        document.getElementById(
+          "totalUsedStorage"
+        ).textContent = `${totalSize.toFixed(1)} MB`;
+        document.getElementById("totalAvailableStorage").textContent =
+          availableGB;
+
+        // Afficher la vraie capacité totale
+        const totalCapacityEl = document.getElementById("totalStorageCapacity");
+        if (totalCapacityEl) {
+          totalCapacityEl.textContent = totalCapacityGB;
+        }
+
+        // Calculer le pourcentage basé sur les vraies données
+        const totalCapacityBytes = capacityData.database.total_capacity_bytes;
+        const usedPercent = Math.min(
+          ((totalSize * 1024 * 1024) / totalCapacityBytes) * 100,
+          100
+        );
+
+        document.getElementById("totalArchiveCount").textContent = totalCount;
+        document.getElementById(
+          "storagePercentage"
+        ).textContent = `${usedPercent.toFixed(1)}%`;
+
+        console.log(
+          `✅ Capacité réelle affichée: ${totalCapacityGB} (${availableGB} disponible)`
+        );
+      } else {
+        // Fallback vers l'ancien système si l'API échoue
+        this.fallbackStorageDisplay(totalSize, totalCount, storageByType);
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors de la récupération de la capacité:", error);
+      // Fallback vers l'ancien système
+      this.fallbackStorageDisplay(totalSize, totalCount, storageByType);
+    }
+  }
+
+  fallbackStorageDisplay(totalSize, totalCount, storageByType) {
+    // Méthode fallback utilisant l'ancien système
     const usedPercent = Math.min((totalSize / this.storageCapacity) * 100, 100);
     const availableSize = Math.max(this.storageCapacity - totalSize, 0);
 
@@ -2771,6 +2990,14 @@ class StorageManager {
     document.getElementById(
       "totalAvailableStorage"
     ).textContent = `${availableSize.toFixed(1)} MB`;
+
+    const totalCapacityEl = document.getElementById("totalStorageCapacity");
+    if (totalCapacityEl) {
+      totalCapacityEl.textContent = `${(this.storageCapacity / 1024).toFixed(
+        1
+      )} GB`;
+    }
+
     document.getElementById("totalArchiveCount").textContent = totalCount;
     document.getElementById(
       "storagePercentage"
@@ -3021,18 +3248,21 @@ class StorageManager {
 
 // Initialisation quand la page est chargée
 document.addEventListener("DOMContentLoaded", function () {
+  console.log("[INIT] Chargement de la page détecté");
+
   // Vérifier si nous sommes sur la page d'archives
   const archivesContainer =
     document.getElementById("searchBtn") || document.querySelector(".nav-tabs");
   if (archivesContainer) {
     console.log("[ARCHIVES] Initialisation de l'interface d'archives");
     window.archivesManager = new ArchivesManager();
-
-    // Initialiser le gestionnaire de stockage
-    window.storageManager = new StorageManager(window.archivesManager);
   } else {
     console.log(
       "[ARCHIVES] Interface d'archives non détectée, initialisation ignorée"
     );
   }
+
+  // TOUJOURS initialiser le gestionnaire de stockage (même sans ArchivesManager)
+  console.log("[STORAGE] Initialisation forcée du StorageManager");
+  window.storageManager = new StorageManager(window.archivesManager || null);
 });

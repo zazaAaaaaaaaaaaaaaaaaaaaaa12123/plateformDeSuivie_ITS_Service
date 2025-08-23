@@ -520,7 +520,7 @@
 
                     <!-- Détails numériques -->
                     <div class="row text-center">
-                      <div class="col-4">
+                      <div class="col-3">
                         <div
                           class="p-3"
                           style="
@@ -550,7 +550,7 @@
                           </div>
                         </div>
                       </div>
-                      <div class="col-4">
+                      <div class="col-3">
                         <div
                           class="p-3"
                           style="
@@ -567,7 +567,7 @@
                               color: #059669;
                             "
                           >
-                            1000 MB
+                            Chargement...
                           </div>
                           <div
                             style="
@@ -580,7 +580,37 @@
                           </div>
                         </div>
                       </div>
-                      <div class="col-4">
+                      <div class="col-3">
+                        <div
+                          class="p-3"
+                          style="
+                            background: white;
+                            border-radius: 12px;
+                            border: 1px solid #e5e7eb;
+                          "
+                        >
+                          <div
+                            id="totalStorageCapacity"
+                            style="
+                              font-size: 1.5em;
+                              font-weight: 700;
+                              color: #8b5cf6;
+                            "
+                          >
+                            Chargement...
+                          </div>
+                          <div
+                            style="
+                              font-size: 0.85em;
+                              color: #6b7280;
+                              margin-top: 4px;
+                            "
+                          >
+                            Espace Total
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-3">
                         <div
                           class="p-3"
                           style="
@@ -797,5 +827,204 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/archives.js"></script>
+
+    <!-- Script de correction AGRESSIVE pour le stockage -->
+    <script>
+      let realStorageData = null;
+
+      // Fonction pour forcer la mise à jour
+      function forceUpdateStorage() {
+        if (!realStorageData) return;
+
+        const totalCapacityEl = document.getElementById("totalStorageCapacity");
+        const totalAvailableEl = document.getElementById(
+          "totalAvailableStorage"
+        );
+
+        if (
+          totalCapacityEl &&
+          totalCapacityEl.textContent !== realStorageData.totalFormatted
+        ) {
+          console.log(
+            `🔧 [FORCE] Correction Espace Total: "${totalCapacityEl.textContent}" → "${realStorageData.totalFormatted}"`
+          );
+          totalCapacityEl.textContent = realStorageData.totalFormatted;
+        }
+
+        if (
+          totalAvailableEl &&
+          totalAvailableEl.textContent !== realStorageData.availableFormatted
+        ) {
+          console.log(
+            `🔧 [FORCE] Correction Espace Disponible: "${totalAvailableEl.textContent}" → "${realStorageData.availableFormatted}"`
+          );
+          totalAvailableEl.textContent = realStorageData.availableFormatted;
+        }
+      }
+
+      // Charger les vraies données
+      async function loadRealStorageData() {
+        try {
+          console.log("🔧 [FORCE] Chargement des vraies données...");
+          const response = await fetch("/api/database/capacity");
+          if (response.ok) {
+            const data = await response.json();
+            realStorageData = {
+              totalFormatted: data.database.total_capacity_formatted, // "10 GB"
+              availableFormatted: data.database.available_space_formatted, // "9.99 GB"
+            };
+            console.log("✅ [FORCE] Données chargées:", realStorageData);
+            forceUpdateStorage();
+          }
+        } catch (error) {
+          console.error("❌ [FORCE] Erreur:", error);
+        }
+      }
+
+      // Observer pour détecter les changements dans le DOM
+      function setupStorageObserver() {
+        const totalAvailableEl = document.getElementById(
+          "totalAvailableStorage"
+        );
+        if (totalAvailableEl) {
+          const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+              if (
+                mutation.type === "childList" ||
+                mutation.type === "characterData"
+              ) {
+                console.log(
+                  "� [OBSERVER] Changement détecté dans totalAvailableStorage:",
+                  totalAvailableEl.textContent
+                );
+                setTimeout(forceUpdateStorage, 100); // Forcer correction après changement
+              }
+            });
+          });
+
+          observer.observe(totalAvailableEl, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+          });
+
+          console.log(
+            "👁️ [OBSERVER] Surveillance activée sur totalAvailableStorage"
+          );
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("🚀 [FORCE] Système de correction agressive activé");
+
+        // Charger les données immédiatement
+        loadRealStorageData();
+
+        // Configurer la surveillance
+        setupStorageObserver();
+
+        // Forcer la correction toutes les 2 secondes
+        setInterval(forceUpdateStorage, 2000);
+
+        console.log(
+          "⚡ [FORCE] Correction automatique toutes les 2 secondes activée"
+        );
+      });
+    </script>
+
+    <!-- Script ULTRA AGRESSIF pour corriger "1000 MB" -->
+    <script>
+      let ultraRealData = null;
+
+      // Fonction ULTRA agressive pour corriger TOUS les "1000 MB"
+      function ultraCorrectStorage() {
+        if (!ultraRealData) return;
+
+        // Chercher TOUS les éléments qui contiennent "1000 MB"
+        const allElements = document.querySelectorAll("*");
+        let corrected = 0;
+
+        allElements.forEach((el) => {
+          if (el.textContent && el.textContent.trim() === "1000 MB") {
+            console.log(
+              `🔥 [ULTRA] CORRECTION: "${el.textContent}" → "${ultraRealData.availableFormatted}"`
+            );
+            el.textContent = ultraRealData.availableFormatted;
+            corrected++;
+          }
+        });
+
+        if (corrected > 0) {
+          console.log(`🔥 [ULTRA] ${corrected} éléments corrigés !`);
+        }
+
+        // Corriger aussi les éléments spécifiques
+        const specificElements = [
+          "totalAvailableStorage",
+          "totalStorageCapacity",
+          "totalUsedStorage",
+        ];
+
+        specificElements.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) {
+            if (
+              id === "totalAvailableStorage" &&
+              el.textContent.includes("1000")
+            ) {
+              el.textContent = ultraRealData.availableFormatted;
+              console.log(
+                `🔥 [ULTRA] ${id} corrigé: ${ultraRealData.availableFormatted}`
+              );
+            } else if (id === "totalStorageCapacity") {
+              el.textContent = ultraRealData.totalFormatted;
+              console.log(
+                `🔥 [ULTRA] ${id} corrigé: ${ultraRealData.totalFormatted}`
+              );
+            }
+          }
+        });
+      }
+
+      // Charger les données ULTRA
+      async function loadUltraData() {
+        try {
+          const response = await fetch("/api/database/capacity");
+          if (response.ok) {
+            const data = await response.json();
+            ultraRealData = {
+              totalFormatted: data.database.total_capacity_formatted,
+              availableFormatted: data.database.available_space_formatted,
+            };
+            console.log("🔥 [ULTRA] Données chargées:", ultraRealData);
+            ultraCorrectStorage();
+          }
+        } catch (error) {
+          console.error("❌ [ULTRA] Erreur:", error);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("🔥 [ULTRA] Système ULTRA agressif activé");
+
+        loadUltraData();
+
+        // Correction ULTRA agressive toutes les 500ms
+        setInterval(ultraCorrectStorage, 500);
+
+        // Observer les changements de DOM
+        const observer = new MutationObserver(function () {
+          setTimeout(ultraCorrectStorage, 50);
+        });
+
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
+
+        console.log("🔥 [ULTRA] Mode DESTRUCTION de '1000 MB' activé !");
+      });
+    </script>
   </body>
 </html>
