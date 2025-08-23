@@ -3707,37 +3707,38 @@ class StorageManager {
   }
 
   estimateArchiveSize(archive) {
-    // Estimation de la taille d'une archive en MB
+    // Estimation RÉALISTE de la taille d'une archive en MB
     let size = 0;
 
-    // Taille de base (métadonnées)
-    size += 0.01; // 10 KB pour les métadonnées de base
+    // 🔧 TAILLE DE BASE PLUS RÉALISTE
+    size += 0.1; // 100 KB pour les métadonnées de base (au lieu de 10 KB)
 
-    // Taille basée sur le contenu
+    // Taille basée sur le contenu des données
     if (archive.dossier_data) {
       const dataString = JSON.stringify(archive.dossier_data);
-      size += dataString.length / (1024 * 1024); // Convertir en MB
+      size += (dataString.length / (1024 * 1024)) * 2; // Facteur x2 pour les données complexes
     }
 
     // Taille basée sur les métadonnées
     if (archive.metadata) {
       const metaString = JSON.stringify(archive.metadata);
-      size += metaString.length / (1024 * 1024);
+      size += (metaString.length / (1024 * 1024)) * 1.5; // Facteur x1.5 pour les métadonnées
     }
 
-    // Facteur multiplicateur selon le type d'action
+    // 🔧 FACTEURS MULTIPLICATEURS PLUS RÉALISTES
     const typeSizeFactors = {
-      livraison: 1.5, // Plus de données pour les livraisons
-      mise_en_livraison: 1.2,
-      ordre_livraison_etabli: 1.3,
-      suppression: 0.8, // Moins de données pour les suppressions
+      livraison: 2.5, // Les dossiers livrés contiennent plus de données (documents, statuts, etc.)
+      mise_en_livraison: 2.0, // Données intermédiaires importantes
+      ordre_livraison_etabli: 1.8, // Ordres avec détails et références
+      suppression: 1.2, // Même supprimés, ils gardent des données importantes
     };
 
-    const factor = typeSizeFactors[archive.action_type] || 1;
+    const factor = typeSizeFactors[archive.action_type] || 1.5;
     size *= factor;
 
-    // Taille minimum de 0.005 MB (5 KB)
-    return Math.max(size, 0.005);
+    // 🔧 TAILLE MINIMUM PLUS RÉALISTE
+    // Chaque archive doit faire au minimum 0.3 MB (300 KB) - taille réaliste pour un dossier
+    return Math.max(size, 0.3);
   }
 
   async updateStorageInterface(
