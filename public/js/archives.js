@@ -2105,6 +2105,38 @@ class StorageManager {
     document.addEventListener("archiveUpdated", () => {
       this.updateStorageData();
     });
+
+    // ⏰ MISE À JOUR AUTOMATIQUE EN TEMPS RÉEL toutes les 30 secondes
+    this.startAutoRefresh();
+  }
+
+  startAutoRefresh() {
+    // Mise à jour automatique du widget Render toutes les 30 secondes
+    console.log("🔄 [RENDER] Démarrage de la mise à jour automatique (30s)");
+
+    this.autoRefreshInterval = setInterval(async () => {
+      try {
+        console.log("🔄 [RENDER] Mise à jour automatique du widget...");
+
+        // Récupérer les nouvelles données de capacité
+        const response = await fetch("/api/database/capacity");
+        if (response.ok) {
+          const capacityData = await response.json();
+          this.updateRenderWidget(capacityData);
+          console.log("✅ [RENDER] Widget mis à jour automatiquement");
+        }
+      } catch (error) {
+        console.error("❌ [RENDER] Erreur lors de la mise à jour auto:", error);
+      }
+    }, 30000); // 30 secondes
+  }
+
+  stopAutoRefresh() {
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+      this.autoRefreshInterval = null;
+      console.log("⏹️ [RENDER] Mise à jour automatique arrêtée");
+    }
   }
 
   // *** CHARGEMENT DE LA VRAIE CAPACITÉ DE LA BASE DE DONNÉES ***
@@ -2965,6 +2997,9 @@ class StorageManager {
           "storagePercentage"
         ).textContent = `${usedPercent.toFixed(1)}%`;
 
+        // Mise à jour du widget Render
+        this.updateRenderWidget(capacityData);
+
         console.log(
           `✅ Capacité réelle affichée: ${totalCapacityGB} (${availableGB} disponible)`
         );
@@ -3026,6 +3061,69 @@ class StorageManager {
     // Mise à jour du timestamp
     document.getElementById("lastUpdateTime").textContent =
       new Date().toLocaleString("fr-FR");
+  }
+
+  updateRenderWidget(capacityData) {
+    try {
+      // Mise à jour du type de plan
+      const planTypeEl = document.getElementById("renderPlanType");
+      if (planTypeEl && capacityData.render_info) {
+        const isPayant = capacityData.render_info.is_paid_plan;
+        planTypeEl.textContent = capacityData.render_info.estimated_plan;
+        planTypeEl.className = isPayant
+          ? "badge bg-success px-2 py-1"
+          : "badge bg-warning px-2 py-1";
+      }
+
+      // Mise à jour de l'usage de la base de données
+      const dbUsageEl = document.getElementById("renderDbUsage");
+      if (dbUsageEl && capacityData.database) {
+        const currentSize = capacityData.database.current_size_formatted;
+        const totalSize = capacityData.database.total_capacity_formatted;
+        dbUsageEl.textContent = `${currentSize} / ${totalSize}`;
+      }
+
+      // Mise à jour de la barre de progression
+      const progressBarEl = document.getElementById("renderProgressBar");
+      if (progressBarEl && capacityData.database) {
+        const usagePercent = capacityData.database.usage_percentage || 0;
+        progressBarEl.style.width = `${usagePercent}%`;
+        progressBarEl.setAttribute("aria-valuenow", usagePercent);
+
+        // Couleur de la barre selon l'usage
+        if (usagePercent > 90) {
+          progressBarEl.style.background =
+            "linear-gradient(90deg, #ef4444, #dc2626)";
+        } else if (usagePercent > 75) {
+          progressBarEl.style.background =
+            "linear-gradient(90deg, #f59e0b, #d97706)";
+        } else {
+          progressBarEl.style.background =
+            "linear-gradient(90deg, #10b981, #059669)";
+        }
+      }
+
+      // Mise à jour de la capacité totale
+      const totalCapacityEl = document.getElementById("renderTotalCapacity");
+      if (totalCapacityEl && capacityData.database) {
+        totalCapacityEl.textContent =
+          capacityData.database.total_capacity_formatted;
+      }
+
+      // Mise à jour de l'espace disponible
+      const availableSpaceEl = document.getElementById("renderAvailableSpace");
+      if (availableSpaceEl && capacityData.database) {
+        availableSpaceEl.textContent =
+          capacityData.database.available_space_formatted;
+      }
+
+      console.log("🎯 Widget Render mis à jour avec succès");
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la mise à jour du widget Render:",
+        error
+      );
+    }
   }
 
   updateStorageDetails(typeStats) {
