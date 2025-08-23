@@ -30,7 +30,6 @@ class ArchivesManager {
     // Ne charger les archives que si nous sommes sur la page d'archives
     const searchBtn = document.getElementById("searchBtn");
     if (searchBtn) {
-      syncHistoryToArchives(); // Synchroniser l'historique avant de charger
       this.loadArchives();
       this.setDefaultDates();
     }
@@ -213,7 +212,7 @@ class ArchivesManager {
     this.loadArchives();
   }
 
-  // Méthode pour forcer le rechargement complet des données
+  // Méthode pour forcer le reytfgjchargement complet des données
   async reload() {
     console.log("[ARCHIVES] Rechargement forcé des données...");
     this.allArchivesData = null; // Vider le cache
@@ -304,91 +303,31 @@ class ArchivesManager {
     }
   }
 
-  async updateCounts() {
-    try {
-      // Récupérer les vrais compteurs depuis le serveur
-      const response = await fetch("/api/archives/counts");
-      const data = await response.json();
+  updateCounts() {
+    const counts = {
+      all: this.allArchives.length,
+      suppression: this.allArchives.filter(
+        (a) => a.action_type === "suppression"
+      ).length,
+      livraison: this.allArchives.filter((a) => a.action_type === "livraison")
+        .length,
+      mise_en_livraison: this.allArchives.filter(
+        (a) => a.action_type === "mise_en_livraison"
+      ).length,
+      ordre_livraison_etabli: this.allArchives.filter(
+        (a) => a.action_type === "ordre_livraison_etabli"
+      ).length,
+    };
 
-      if (data.success) {
-        console.log("[ARCHIVES] Compteurs reçus du serveur:", data.counts);
+    console.log("[ARCHIVES] Compteurs mis à jour:", counts);
 
-        document.getElementById("allCount").textContent = data.counts.all;
-        document.getElementById("deletedCount").textContent =
-          data.counts.suppression;
-        document.getElementById("deliveredCount").textContent =
-          data.counts.livraison;
-        document.getElementById("shippingCount").textContent =
-          data.counts.mise_en_livraison;
-        document.getElementById("ordersCount").textContent =
-          data.counts.ordre_livraison_etabli;
-      } else {
-        // Fallback sur l'ancien système si l'API échoue
-        const counts = {
-          all: this.allArchives.length,
-          suppression: this.allArchives.filter(
-            (a) => a.action_type === "suppression"
-          ).length,
-          livraison: this.allArchives.filter(
-            (a) => a.action_type === "livraison"
-          ).length,
-          mise_en_livraison: this.allArchives.filter(
-            (a) => a.action_type === "mise_en_livraison"
-          ).length,
-          ordre_livraison_etabli: this.allArchives.filter(
-            (a) => a.action_type === "ordre_livraison_etabli"
-          ).length,
-        };
-
-        console.log(
-          "[ARCHIVES] Compteurs calculés côté client (fallback):",
-          counts
-        );
-
-        document.getElementById("allCount").textContent = counts.all;
-        document.getElementById("deletedCount").textContent =
-          counts.suppression;
-        document.getElementById("deliveredCount").textContent =
-          counts.livraison;
-        document.getElementById("shippingCount").textContent =
-          counts.mise_en_livraison;
-        document.getElementById("ordersCount").textContent =
-          counts.ordre_livraison_etabli;
-      }
-    } catch (error) {
-      console.error(
-        "[ARCHIVES] Erreur lors de la récupération des compteurs:",
-        error
-      );
-      // Fallback sur l'ancien système en cas d'erreur
-      const counts = {
-        all: this.allArchives.length,
-        suppression: this.allArchives.filter(
-          (a) => a.action_type === "suppression"
-        ).length,
-        livraison: this.allArchives.filter((a) => a.action_type === "livraison")
-          .length,
-        mise_en_livraison: this.allArchives.filter(
-          (a) => a.action_type === "mise_en_livraison"
-        ).length,
-        ordre_livraison_etabli: this.allArchives.filter(
-          (a) => a.action_type === "ordre_livraison_etabli"
-        ).length,
-      };
-
-      console.log(
-        "[ARCHIVES] Compteurs calculés côté client (erreur):",
-        counts
-      );
-
-      document.getElementById("allCount").textContent = counts.all;
-      document.getElementById("deletedCount").textContent = counts.suppression;
-      document.getElementById("deliveredCount").textContent = counts.livraison;
-      document.getElementById("shippingCount").textContent =
-        counts.mise_en_livraison;
-      document.getElementById("ordersCount").textContent =
-        counts.ordre_livraison_etabli;
-    }
+    document.getElementById("allCount").textContent = counts.all;
+    document.getElementById("deletedCount").textContent = counts.suppression;
+    document.getElementById("deliveredCount").textContent = counts.livraison;
+    document.getElementById("shippingCount").textContent =
+      counts.mise_en_livraison;
+    document.getElementById("ordersCount").textContent =
+      counts.ordre_livraison_etabli;
   }
 
   renderCurrentView() {
@@ -1689,58 +1628,6 @@ window.archiveDossier = async function (
     return false;
   }
 };
-
-// Fonction pour synchroniser l'historique localStorage vers les archives serveur
-async function syncHistoryToArchives() {
-  try {
-    console.log(
-      "[ARCHIVES] 🔄 Synchronisation de l'historique localStorage vers les archives..."
-    );
-
-    // Récupérer l'historique depuis localStorage (même clé que resp_liv.html)
-    const historyKey = "professional_delivery_history";
-    const historyData = JSON.parse(localStorage.getItem(historyKey) || "[]");
-
-    if (historyData.length === 0) {
-      console.log("[ARCHIVES] Aucun historique trouvé dans localStorage");
-      return;
-    }
-
-    console.log(
-      `[ARCHIVES] Trouvé ${historyData.length} entrées dans l'historique`
-    );
-
-    // Appeler le nouvel endpoint de synchronisation
-    const response = await fetch("/api/archives/sync-history", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        historyData: historyData,
-      }),
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log(
-        `[ARCHIVES] ✅ Synchronisation réussie: ${result.synced_count} dossiers archivés`
-      );
-
-      // Afficher un message de succès si des éléments ont été synchronisés
-      if (result.synced_count > 0) {
-        console.log(
-          `[ARCHIVES] 🎉 ${result.synced_count} nouveaux dossiers livrés ajoutés aux archives`
-        );
-      }
-    } else {
-      const error = await response.text();
-      console.error("[ARCHIVES] ❌ Erreur lors de la synchronisation:", error);
-    }
-  } catch (error) {
-    console.error("[ARCHIVES] ❌ Erreur lors de la synchronisation:", error);
-  }
-}
 
 // Initialisation quand la page est chargée
 document.addEventListener("DOMContentLoaded", function () {
