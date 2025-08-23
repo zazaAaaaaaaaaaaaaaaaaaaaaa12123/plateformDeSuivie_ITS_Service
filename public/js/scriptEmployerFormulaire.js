@@ -2779,6 +2779,39 @@ async function submitDeliveryForm(status) {
           "📊 Total ordres dans l'historique:",
           historyData[historyAgentKey].length
         );
+
+        // *** NOTIFICATION EN TEMPS RÉEL VERS LES ARCHIVES ***
+        try {
+          // Créer un événement personnalisé pour notifier les archives
+          const archiveUpdateEvent = new CustomEvent("orderValidated", {
+            detail: {
+              type: "ordre_livraison_etabli",
+              data: newOperation,
+              timestamp: Date.now(),
+            },
+          });
+
+          // Diffuser l'événement
+          window.dispatchEvent(archiveUpdateEvent);
+
+          // Aussi notifier via localStorage pour les onglets ouverts
+          const notificationData = {
+            type: "ORDER_VALIDATED",
+            data: newOperation,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem(
+            "archiveNotification",
+            JSON.stringify(notificationData)
+          );
+
+          console.log("📢 Notification envoyée vers les archives");
+        } catch (error) {
+          console.warn(
+            "⚠️ Erreur lors de la notification des archives:",
+            error
+          );
+        }
       } catch (e) {
         console.warn(
           "❌ Impossible d'ajouter à l'historique Agent Acconier :",

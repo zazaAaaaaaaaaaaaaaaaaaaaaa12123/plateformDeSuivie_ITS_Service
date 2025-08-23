@@ -26,6 +26,7 @@ class ArchivesManager {
 
   init() {
     this.bindEvents();
+    this.setupRealTimeNotifications(); // Nouveau système de notifications
 
     // Ne charger les archives que si nous sommes sur la page d'archives
     const searchBtn = document.getElementById("searchBtn");
@@ -147,6 +148,186 @@ class ArchivesManager {
         this.resetFilters();
       }
     });
+  }
+
+  // *** SYSTÈME DE NOTIFICATIONS EN TEMPS RÉEL ***
+  setupRealTimeNotifications() {
+    // Vérifier si nous sommes sur la page archives
+    const searchBtn = document.getElementById("searchBtn");
+    if (!searchBtn) {
+      console.log("[ARCHIVES] Page non détectée, notifications désactivées");
+      return;
+    }
+
+    // Écouter les événements personnalisés (même onglet)
+    window.addEventListener("orderValidated", (event) => {
+      console.log(
+        "📢 [ARCHIVES] Notification reçue - Nouvel ordre validé:",
+        event.detail
+      );
+      this.handleNewOrderNotification(event.detail);
+    });
+
+    // Écouter les changements du localStorage (autres onglets)
+    window.addEventListener("storage", (event) => {
+      if (event.key === "archiveNotification" && event.newValue) {
+        try {
+          const notification = JSON.parse(event.newValue);
+          console.log(
+            "📢 [ARCHIVES] Notification localStorage reçue:",
+            notification
+          );
+          if (notification.type === "ORDER_VALIDATED") {
+            this.handleNewOrderNotification({
+              type: "ordre_livraison_etabli",
+              data: notification.data,
+              timestamp: notification.timestamp,
+            });
+          }
+        } catch (error) {
+          console.warn("⚠️ [ARCHIVES] Erreur parse notification:", error);
+        }
+      }
+    });
+
+    console.log("✅ [ARCHIVES] Système de notifications en temps réel activé");
+  }
+
+  // Gérer la réception d'une notification de nouvel ordre
+  async handleNewOrderNotification(notificationDetail) {
+    try {
+      // Vérifier si on est sur l'onglet "Ordres de Livraison"
+      const ordersTab = document.getElementById("orders-tab");
+      const isOrdersTabActive =
+        ordersTab && ordersTab.classList.contains("active");
+
+      console.log("📋 [ARCHIVES] Onglet Ordres actif:", isOrdersTabActive);
+
+      if (isOrdersTabActive) {
+        // Recharger immédiatement si on est sur l'onglet ordres
+        console.log(
+          "🔄 [ARCHIVES] Rechargement automatique de l'onglet Ordres..."
+        );
+        this.currentFilters.action_type = "ordre_livraison_etabli";
+        await this.loadArchives();
+
+        // Notification visuelle
+        this.showNotificationToast(
+          "📋 Nouvel ordre de livraison ajouté aux archives !"
+        );
+      } else {
+        // Sinon, juste mettre à jour le cache pour le prochain affichage
+        console.log(
+          "💾 [ARCHIVES] Cache invalidé, rechargement au prochain affichage"
+        );
+        this.allArchivesData = null;
+        this.lastDataRefresh = 0;
+
+        // Optionnel : Badge de notification sur l'onglet
+        this.addNotificationBadge("orders-tab");
+      }
+    } catch (error) {
+      console.warn("⚠️ [ARCHIVES] Erreur traitement notification:", error);
+    }
+  }
+
+  // Afficher une notification toast
+  showNotificationToast(message) {
+    // Créer un toast simple
+    const toast = document.createElement("div");
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      font-weight: 600;
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Animation d'entrée
+    setTimeout(() => {
+      toast.style.transform = "translateX(0)";
+    }, 100);
+
+    // Suppression automatique
+    setTimeout(() => {
+      toast.style.transform = "translateX(400px)";
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  // Ajouter un badge de notification sur un onglet
+  addNotificationBadge(tabId) {
+    const tab = document.getElementById(tabId);
+    if (!tab) return;
+
+    // Supprimer l'ancien badge s'il existe
+    const existingBadge = tab.querySelector(".notification-badge");
+    if (existingBadge) {
+      existingBadge.remove();
+    }
+
+    // Créer le nouveau badge
+    const badge = document.createElement("span");
+    badge.className = "notification-badge";
+    badge.style.cssText = `
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ef4444;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    `;
+    badge.textContent = "!";
+
+    // Ajouter l'animation CSS
+    if (!document.getElementById("notification-badge-style")) {
+      const style = document.createElement("style");
+      style.id = "notification-badge-style";
+      style.textContent = `
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Positioner le parent en relatif et ajouter le badge
+    tab.style.position = "relative";
+    tab.appendChild(badge);
+
+    // Supprimer le badge quand on clique sur l'onglet
+    tab.addEventListener(
+      "click",
+      () => {
+        if (badge.parentNode) {
+          badge.parentNode.removeChild(badge);
+        }
+      },
+      { once: true }
+    );
   }
 
   setDefaultDates() {
