@@ -2355,21 +2355,36 @@ class StorageManager {
     console.log("📊 Données temps réel récupérées:", realTimeData);
     console.log("📊 Statistiques finales:", realStats);
 
-    // Mise à jour de l'interface avec les vraies données mixtes
+    // Mise à jour de l'interface avec les vraies données mixtes (si les éléments existent)
     const totalSizeMB = totalSize;
     const totalSizeFormatted = this.formatBytes(totalSizeMB * 1024 * 1024);
 
-    document.getElementById("totalStorageSize").textContent =
-      totalSizeFormatted;
-    document.getElementById("archivesCount").textContent =
-      totalCount.toLocaleString();
-    document.getElementById("uploadsSize").textContent = "Calcul en cours...";
-    document.getElementById("uploadsCount").textContent = "N/A";
+    const totalStorageEl = document.getElementById("totalStorageSize");
+    if (totalStorageEl) {
+      totalStorageEl.textContent = totalSizeFormatted;
+    }
+
+    const archivesCountEl = document.getElementById("archivesCount");
+    if (archivesCountEl) {
+      archivesCountEl.textContent = totalCount.toLocaleString();
+    }
+
+    const uploadsSizeEl = document.getElementById("uploadsSize");
+    if (uploadsSizeEl) {
+      uploadsSizeEl.textContent = "Calcul en cours...";
+    }
+
+    const uploadsCountEl = document.getElementById("uploadsCount");
+    if (uploadsCountEl) {
+      uploadsCountEl.textContent = "N/A";
+    }
 
     // Calculer le pourcentage d'utilisation
     const usagePercent = (totalSizeMB / this.storageCapacity) * 100;
-    document.getElementById("storageUsagePercent").textContent =
-      Math.min(100, usagePercent).toFixed(1) + "%";
+    const storageUsageEl = document.getElementById("storageUsagePercent");
+    if (storageUsageEl) {
+      storageUsageEl.textContent = Math.min(100, usagePercent).toFixed(1) + "%";
+    }
 
     // Mettre à jour la barre de progression
     const progressBar = document.getElementById("storageProgressBar");
@@ -2390,8 +2405,10 @@ class StorageManager {
     // Mettre à jour le tableau des types avec les vraies données
     this.updateRealTypeTable(realStats);
 
-    document.getElementById("growthPrediction").textContent =
-      "Basé sur données réelles";
+    const growthPredictionEl = document.getElementById("growthPrediction");
+    if (growthPredictionEl) {
+      growthPredictionEl.textContent = "Basé sur données réelles";
+    }
   }
 
   // Récupérer les données en temps réel depuis les différentes sources
