@@ -2087,12 +2087,39 @@ class StorageManager {
           current_usage: data.render_info.current_usage_mb + " MB",
           is_paid: data.render_info.is_paid_plan,
         });
+
+        // Forcer la mise à jour de l'affichage avec les vraies données
+        this.updateDisplayWithRealData();
       }
     } catch (error) {
       console.warn(
         "⚠️ [STORAGE] Impossible de récupérer la capacité réelle, utilisation de la valeur par défaut:",
         error
       );
+    }
+  }
+
+  /**
+   * Met à jour l'affichage initial avec la vraie capacité (pas l'usage)
+   */
+  updateDisplayWithRealData() {
+    if (this.databaseInfo && this.databaseInfo.database) {
+      const realCapacity = this.databaseInfo.render_info.capacity_mb;
+
+      // Mise à jour initiale avec la capacité réelle, mais garder 0 pour l'usage
+      // L'usage sera calculé dynamiquement par les archives
+      const totalAvailableElement = document.getElementById(
+        "totalAvailableStorage"
+      );
+
+      if (totalAvailableElement) {
+        totalAvailableElement.textContent = `${realCapacity.toFixed(1)} MB`;
+      }
+
+      console.log("🎯 [STORAGE] Capacité initiale mise à jour:", {
+        capacity: realCapacity.toFixed(1) + " MB",
+        note: "L'usage sera calculé par les archives",
+      });
     }
   }
 
@@ -2390,6 +2417,9 @@ class StorageManager {
 
     console.log("📊 Données temps réel récupérées:", realTimeData);
     console.log("📊 Statistiques finales:", realStats);
+
+    // Mise à jour de l'interface principale avec les calculs d'archives
+    this.updateStorageInterface(totalSize, totalCount, realStats);
 
     // Mise à jour de l'interface avec les vraies données mixtes (si les éléments existent)
     const totalSizeMB = totalSize;
@@ -2805,13 +2835,30 @@ class StorageManager {
   }
 
   updateStorageInterface(totalSize, totalCount, storageByType) {
-    // Mise à jour des valeurs principales
-    const usedPercent = Math.min((totalSize / this.storageCapacity) * 100, 100);
-    const availableSize = Math.max(this.storageCapacity - totalSize, 0);
+    // Utiliser les données calculées des archives pour l'espace utilisé
+    // et la vraie capacité de la base de données pour la capacité totale
+    let archiveUsedSize = totalSize; // Taille calculée des archives
+    let realCapacity = this.storageCapacity; // Capacité de la DB
 
+    if (this.databaseInfo && this.databaseInfo.database) {
+      // Utiliser la vraie capacité de la base de données
+      realCapacity = this.databaseInfo.render_info.capacity_mb;
+
+      console.log("📊 [STORAGE] Calcul hybride - Archives vs DB:", {
+        archiveUsedSize: archiveUsedSize.toFixed(1) + " MB",
+        dbTotalSize: this.databaseInfo.render_info.current_usage_mb + " MB",
+        realCapacity: realCapacity + " MB",
+      });
+    }
+
+    // Calculs basés sur les archives calculées et la vraie capacité
+    const usedPercent = Math.min((archiveUsedSize / realCapacity) * 100, 100);
+    const availableSize = Math.max(realCapacity - archiveUsedSize, 0);
+
+    // Mise à jour des valeurs avec les données d'archives calculées
     document.getElementById(
       "totalUsedStorage"
-    ).textContent = `${totalSize.toFixed(1)} MB`;
+    ).textContent = `${archiveUsedSize.toFixed(1)} MB`;
     document.getElementById(
       "totalAvailableStorage"
     ).textContent = `${availableSize.toFixed(1)} MB`;
