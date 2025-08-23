@@ -35,6 +35,13 @@ class ArchivesManager {
       this.loadArchives();
       this.setDefaultDates();
     }
+
+    // 🔧 CORRECTION: Nettoyer les backdrops au démarrage (après que toutes les méthodes soient définies)
+    setTimeout(() => {
+      if (this.cleanupModalBackdrop) {
+        this.cleanupModalBackdrop();
+      }
+    }, 100);
   }
 
   bindEvents() {
@@ -2643,12 +2650,64 @@ class StorageManager {
     // Calculer les données de stockage
     await this.calculateStorageData();
 
-    // Afficher la modale
-    const modal = new bootstrap.Modal(document.getElementById("storageModal"));
+    // 🔧 CORRECTION: Nettoyer d'abord tout backdrop existant
+    this.cleanupModalBackdrop();
+
+    // Récupérer l'élément modal
+    const modalElement = document.getElementById("storageModal");
+
+    // Vérifier s'il y a déjà une instance et la nettoyer
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+      modal.dispose();
+    }
+
+    // Créer une nouvelle instance du modal
+    modal = new bootstrap.Modal(modalElement, {
+      backdrop: true,
+      keyboard: true,
+      focus: true,
+    });
+
+    // 🔧 CORRECTION: Ajouter des gestionnaires pour nettoyer le backdrop à la fermeture
+    modalElement.addEventListener(
+      "hidden.bs.modal",
+      () => {
+        console.log("📊 [STORAGE] Modal fermé - Nettoyage du backdrop");
+        this.cleanupModalBackdrop();
+
+        // Disposer de l'instance du modal
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+          modalInstance.dispose();
+        }
+      },
+      { once: true }
+    ); // { once: true } pour que l'événement ne se déclenche qu'une fois
+
+    // Afficher le modal
     modal.show();
 
     // Créer le graphique après que la modale soit visible
     setTimeout(() => this.createChart(), 300);
+  }
+
+  // 🔧 NOUVELLE MÉTHODE: Nettoyer le backdrop du modal
+  cleanupModalBackdrop() {
+    // Supprimer tous les backdrops existants
+    const backdrops = document.querySelectorAll(".modal-backdrop");
+    backdrops.forEach((backdrop) => {
+      backdrop.remove();
+    });
+
+    // S'assurer que la classe modal-open est retirée du body
+    document.body.classList.remove("modal-open");
+
+    // Remettre le scroll du body
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+
+    console.log("🧹 [STORAGE] Backdrop nettoyé");
   }
 
   async calculateStorageData() {
