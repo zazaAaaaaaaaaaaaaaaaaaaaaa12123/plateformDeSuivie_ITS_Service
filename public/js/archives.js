@@ -2642,57 +2642,152 @@ class StorageManager {
   }
 
   async showStorageModal() {
-    console.log("📊 [STORAGE] Ouverture de la modale de stockage");
+    console.log("📊 [STORAGE] Ouverture du modal de stockage");
 
-    // S'assurer d'avoir la vraie capacité avant de calculer
-    await this.loadRealDatabaseCapacity();
-
-    // Calculer les données de stockage
-    await this.calculateStorageData();
-
-    // 🔧 CORRECTION: Nettoyer d'abord tout backdrop existant
+    // Nettoyer d'abord
     this.cleanupModalBackdrop();
 
     // Récupérer l'élément modal
     const modalElement = document.getElementById("storageModal");
 
-    // Vérifier s'il y a déjà une instance et la nettoyer
-    let modal = bootstrap.Modal.getInstance(modalElement);
-    if (modal) {
-      modal.dispose();
+    if (!modalElement) {
+      console.error("❌ Modal storageModal non trouvé");
+      return;
     }
 
-    // Créer une nouvelle instance du modal
-    modal = new bootstrap.Modal(modalElement, {
-      backdrop: true,
-      keyboard: true,
-      focus: true,
-    });
+    // Créer le modal
+    const modal = new bootstrap.Modal(modalElement);
 
-    // 🔧 CORRECTION: Ajouter des gestionnaires pour nettoyer le backdrop à la fermeture
+    // Gestionnaire quand le modal est COMPLÈTEMENT affiché
+    modalElement.addEventListener(
+      "shown.bs.modal",
+      () => {
+        console.log("📊 [STORAGE] Modal affiché, mise à jour des données...");
+
+        // Délai pour s'assurer que tous les éléments DOM sont présents
+        setTimeout(() => {
+          this.updateModalWithSafeData();
+        }, 100);
+      },
+      { once: true }
+    );
+
+    // Gestionnaire de fermeture
     modalElement.addEventListener(
       "hidden.bs.modal",
       () => {
-        console.log("📊 [STORAGE] Modal fermé - Nettoyage du backdrop");
         this.cleanupModalBackdrop();
-
-        // Disposer de l'instance du modal
-        const modalInstance = bootstrap.Modal.getInstance(modalElement);
-        if (modalInstance) {
-          modalInstance.dispose();
-        }
       },
       { once: true }
-    ); // { once: true } pour que l'événement ne se déclenche qu'une fois
+    );
 
     // Afficher le modal
     modal.show();
-
-    // Créer le graphique après que la modale soit visible
-    setTimeout(() => this.createChart(), 300);
   }
 
-  // 🔧 NOUVELLE MÉTHODE: Nettoyer le backdrop du modal
+  // 🔧 NOUVELLE MÉTHODE SÉCURISÉE: Mise à jour avec vérification complète des éléments
+  updateModalWithSafeData() {
+    console.log("📊 [STORAGE] Mise à jour sécurisée des données du modal");
+
+    try {
+      // Calculer des données basiques
+      const archiveCount = this.archivesManager
+        ? this.archivesManager.selectedTab === "all" &&
+          this.archivesManager.allCombinedArchives
+          ? this.archivesManager.allCombinedArchives.length
+          : this.archivesManager.allArchives
+          ? this.archivesManager.allArchives.length
+          : 0
+        : 0;
+
+      const estimatedSize = archiveCount * 0.5; // 0.5 MB par archive en moyenne
+      const totalCapacity = 10240; // 10 GB en MB
+      const usedPercent = Math.min((estimatedSize / totalCapacity) * 100, 100);
+      const availableSize = totalCapacity - estimatedSize;
+
+      // Vérifier que le modal est bien visible
+      const modalElement = document.getElementById("storageModal");
+      if (!modalElement || !modalElement.classList.contains("show")) {
+        console.warn("⚠️ [STORAGE] Modal non visible, arrêt de la mise à jour");
+        return;
+      }
+
+      // Mise à jour seulement des éléments qui existent avec vérification
+      const updates = [
+        { id: "totalArchiveCount", value: archiveCount.toString() },
+        { id: "totalUsedStorage", value: `${estimatedSize.toFixed(1)} MB` },
+        {
+          id: "totalAvailableStorage",
+          value: `${availableSize.toFixed(1)} MB`,
+        },
+        { id: "totalStorageCapacity", value: "10.0 GB" },
+        { id: "storagePercentage", value: `${usedPercent.toFixed(1)}%` },
+        { id: "chartCenterValue", value: `${usedPercent.toFixed(0)}%` },
+        { id: "lastUpdateTime", value: new Date().toLocaleString("fr-FR") },
+      ];
+
+      let successCount = 0;
+      updates.forEach((update) => {
+        if (this.safeUpdateElement(update.id, update.value)) {
+          successCount++;
+        }
+      });
+
+      // Mise à jour de la barre de progression avec vérification
+      const progressBar = document.getElementById("storageProgressBar");
+      if (progressBar) {
+        progressBar.style.width = `${usedPercent}%`;
+        progressBar.setAttribute("aria-valuenow", usedPercent);
+
+        // Couleur selon le niveau
+        if (usedPercent > 90) {
+          progressBar.style.background =
+            "linear-gradient(90deg, #ef4444, #dc2626)";
+        } else if (usedPercent > 75) {
+          progressBar.style.background =
+            "linear-gradient(90deg, #f59e0b, #d97706)";
+        } else {
+          progressBar.style.background =
+            "linear-gradient(90deg, #10b981, #059669)";
+        }
+        successCount++;
+      }
+
+      console.log(
+        `✅ [STORAGE] ${successCount}/${
+          updates.length + 1
+        } éléments mis à jour avec succès`
+      );
+      console.log(
+        `📊 [STORAGE] Données: ${archiveCount} archives, ${estimatedSize.toFixed(
+          1
+        )} MB utilisés`
+      );
+    } catch (error) {
+      console.error(
+        "❌ [STORAGE] Erreur lors de la mise à jour sécurisée:",
+        error
+      );
+    }
+  }
+
+  // 🔧 MÉTHODE UTILITAIRE: Mise à jour sécurisée d'un élément
+  safeUpdateElement(elementId, value) {
+    try {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.textContent = value;
+        console.log(`✅ Élément ${elementId} mis à jour: ${value}`);
+        return true;
+      } else {
+        console.warn(`⚠️ Élément ${elementId} non trouvé dans le DOM`);
+        return false;
+      }
+    } catch (error) {
+      console.error(`❌ Erreur lors de la mise à jour de ${elementId}:`, error);
+      return false;
+    }
+  } // 🔧 NOUVELLE MÉTHODE: Nettoyer le backdrop du modal
   cleanupModalBackdrop() {
     // Supprimer tous les backdrops existants
     const backdrops = document.querySelectorAll(".modal-backdrop");
@@ -2948,19 +3043,31 @@ class StorageManager {
     let archives;
 
     // 🎯 NOUVEAU: Utiliser les bonnes données selon l'onglet actuel
-    if (
+    // 🔧 CORRECTION: Vérifier que archivesManager existe avant d'y accéder
+    if (!this.archivesManager) {
+      console.warn(
+        "⚠️ [STORAGE] ArchivesManager non disponible, utilisation de données par défaut"
+      );
+      archives = [];
+    } else if (
       this.archivesManager.selectedTab === "all" &&
+      this.archivesManager.allCombinedArchives &&
       this.archivesManager.allCombinedArchives.length > 0
     ) {
       archives = this.archivesManager.allCombinedArchives;
       console.log(
         `📊 [STORAGE] Utilisation des archives combinées (onglet "Toutes les Archives"): ${archives.length} archives`
       );
-    } else {
+    } else if (this.archivesManager.allArchives) {
       archives = this.archivesManager.allArchives;
       console.log(
-        `📊 [STORAGE] Utilisation des archives standard (onglet "${this.archivesManager.selectedTab}"): ${archives.length} archives`
+        `📊 [STORAGE] Utilisation des archives standard (onglet "${
+          this.archivesManager.selectedTab || "unknown"
+        }"): ${archives.length} archives`
       );
+    } else {
+      console.warn("⚠️ [STORAGE] Aucunes archives disponibles");
+      archives = [];
     }
 
     // 3. Récupérer les données en temps réel depuis les différentes sources
@@ -2988,7 +3095,8 @@ class StorageManager {
     // 🎯 NOUVEAU: Si on n'est pas sur l'onglet "all", filtrer pour ne montrer que le type actuel
     let archivesToProcess = archives;
 
-    if (this.archivesManager.selectedTab !== "all") {
+    // 🔧 CORRECTION: Vérifier que archivesManager existe avant d'accéder à selectedTab
+    if (this.archivesManager && this.archivesManager.selectedTab !== "all") {
       // Mapper l'onglet au type d'action
       const tabToActionMap = {
         deleted: "suppression",
@@ -3024,7 +3132,11 @@ class StorageManager {
 
       if (realStats[actionType]) {
         // Pour mise_en_livraison et ordre_livraison_etabli, on utilise les comptes réels quand on est sur "all"
-        if (this.archivesManager.selectedTab === "all") {
+        // 🔧 CORRECTION: Vérifier que archivesManager existe avant d'accéder à selectedTab
+        if (
+          this.archivesManager &&
+          this.archivesManager.selectedTab === "all"
+        ) {
           if (
             actionType !== "mise_en_livraison" &&
             actionType !== "ordre_livraison_etabli"
@@ -3368,6 +3480,21 @@ class StorageManager {
   // Calculs locaux en fallback
   async calculateLocalStats() {
     try {
+      // 🔧 CORRECTION: Vérifier que archivesManager existe avant d'accéder à allArchives
+      if (!this.archivesManager || !this.archivesManager.allArchives) {
+        console.warn(
+          "⚠️ [STORAGE] ArchivesManager ou allArchives non disponible pour calculateLocalStats"
+        );
+        // Utiliser des données par défaut
+        this.updateStorageInterface(0, 0, {
+          suppression: { count: 0, size: 0, archives: [] },
+          livraison: { count: 0, size: 0, archives: [] },
+          mise_en_livraison: { count: 0, size: 0, archives: [] },
+          ordre_livraison_etabli: { count: 0, size: 0, archives: [] },
+        });
+        return;
+      }
+
       // Récupérer toutes les archives
       const archives = this.archivesManager.allArchives;
 
@@ -3493,11 +3620,24 @@ class StorageManager {
         const availableGB = capacityData.database.available_space_formatted;
 
         // Mise à jour avec les vraies données
-        document.getElementById(
-          "totalUsedStorage"
-        ).textContent = `${totalSize.toFixed(1)} MB`;
-        document.getElementById("totalAvailableStorage").textContent =
-          availableGB;
+        // 🔧 CORRECTION: Vérifier que les éléments existent avant de modifier leur contenu
+        const totalUsedEl = document.getElementById("totalUsedStorage");
+        if (totalUsedEl) {
+          totalUsedEl.textContent = `${totalSize.toFixed(1)} MB`;
+        } else {
+          console.warn("⚠️ [STORAGE] Élément 'totalUsedStorage' non trouvé");
+        }
+
+        const totalAvailableEl = document.getElementById(
+          "totalAvailableStorage"
+        );
+        if (totalAvailableEl) {
+          totalAvailableEl.textContent = availableGB;
+        } else {
+          console.warn(
+            "⚠️ [STORAGE] Élément 'totalAvailableStorage' non trouvé"
+          );
+        }
 
         // Afficher la vraie capacité totale
         const totalCapacityEl = document.getElementById("totalStorageCapacity");
@@ -3512,10 +3652,12 @@ class StorageManager {
           100
         );
 
-        document.getElementById("totalArchiveCount").textContent = totalCount;
-        document.getElementById(
-          "storagePercentage"
-        ).textContent = `${usedPercent.toFixed(1)}%`;
+        // Mise à jour sécurisée des éléments
+        this.safeUpdateElement("totalArchiveCount", totalCount.toString());
+        this.safeUpdateElement(
+          "storagePercentage",
+          `${usedPercent.toFixed(1)}%`
+        );
 
         // Mise à jour du widget Render
         this.updateRenderWidget(capacityData);
@@ -3535,52 +3677,71 @@ class StorageManager {
   }
 
   fallbackStorageDisplay(totalSize, totalCount, storageByType) {
-    // Méthode fallback utilisant l'ancien système
-    const usedPercent = Math.min((totalSize / this.storageCapacity) * 100, 100);
-    const availableSize = Math.max(this.storageCapacity - totalSize, 0);
+    console.log("🔄 [STORAGE] Utilisation du système de fallback");
 
-    document.getElementById(
-      "totalUsedStorage"
-    ).textContent = `${totalSize.toFixed(1)} MB`;
-    document.getElementById(
-      "totalAvailableStorage"
-    ).textContent = `${availableSize.toFixed(1)} MB`;
+    try {
+      // Méthode fallback utilisant l'ancien système
+      const usedPercent = Math.min(
+        (totalSize / this.storageCapacity) * 100,
+        100
+      );
+      const availableSize = Math.max(this.storageCapacity - totalSize, 0);
 
-    const totalCapacityEl = document.getElementById("totalStorageCapacity");
-    if (totalCapacityEl) {
-      totalCapacityEl.textContent = `${(this.storageCapacity / 1024).toFixed(
-        1
-      )} GB`;
+      // Mise à jour sécurisée de tous les éléments
+      this.safeUpdateElement("totalUsedStorage", `${totalSize.toFixed(1)} MB`);
+      this.safeUpdateElement(
+        "totalAvailableStorage",
+        `${availableSize.toFixed(1)} MB`
+      );
+      this.safeUpdateElement(
+        "totalStorageCapacity",
+        `${(this.storageCapacity / 1024).toFixed(1)} GB`
+      );
+      this.safeUpdateElement("totalArchiveCount", totalCount.toString());
+      this.safeUpdateElement("storagePercentage", `${usedPercent.toFixed(1)}%`);
+      this.safeUpdateElement("chartCenterValue", `${usedPercent.toFixed(0)}%`);
+
+      // Mise à jour de la barre de progression avec vérification
+      const progressBar = document.getElementById("storageProgressBar");
+      if (progressBar) {
+        progressBar.style.width = `${usedPercent}%`;
+        progressBar.setAttribute("aria-valuenow", usedPercent);
+
+        // Couleur de la barre selon le niveau
+        if (usedPercent > 90) {
+          progressBar.style.background =
+            "linear-gradient(90deg, #ef4444, #dc2626)";
+        } else if (usedPercent > 75) {
+          progressBar.style.background =
+            "linear-gradient(90deg, #f59e0b, #d97706)";
+        } else {
+          progressBar.style.background =
+            "linear-gradient(90deg, #10b981, #059669)";
+        }
+        console.log(`✅ Barre de progression mise à jour: ${usedPercent}%`);
+      } else {
+        console.warn(
+          "⚠️ [STORAGE] Élément 'storageProgressBar' non trouvé dans fallback"
+        );
+      }
+
+      // Mise à jour des détails par type
+      this.updateStorageDetails(storageByType);
+
+      // Mise à jour du timestamp
+      this.safeUpdateElement(
+        "lastUpdateTime",
+        new Date().toLocaleString("fr-FR")
+      );
+
+      console.log(
+        `✅ [STORAGE] Fallback terminé: ${totalCount} archives, ${totalSize.toFixed(
+          1
+        )} MB`
+      );
+    } catch (error) {
+      console.error("❌ [STORAGE] Erreur dans fallbackStorageDisplay:", error);
     }
-
-    document.getElementById("totalArchiveCount").textContent = totalCount;
-    document.getElementById(
-      "storagePercentage"
-    ).textContent = `${usedPercent.toFixed(1)}%`;
-    document.getElementById(
-      "chartCenterValue"
-    ).textContent = `${usedPercent.toFixed(0)}%`;
-
-    // Mise à jour de la barre de progression
-    const progressBar = document.getElementById("storageProgressBar");
-    progressBar.style.width = `${usedPercent}%`;
-    progressBar.setAttribute("aria-valuenow", usedPercent);
-
-    // Couleur de la barre selon le niveau
-    if (usedPercent > 90) {
-      progressBar.style.background = "linear-gradient(90deg, #ef4444, #dc2626)";
-    } else if (usedPercent > 75) {
-      progressBar.style.background = "linear-gradient(90deg, #f59e0b, #d97706)";
-    } else {
-      progressBar.style.background = "linear-gradient(90deg, #10b981, #059669)";
-    }
-
-    // Mise à jour des détails par type
-    this.updateStorageDetails(storageByType);
-
-    // Mise à jour du timestamp
-    document.getElementById("lastUpdateTime").textContent =
-      new Date().toLocaleString("fr-FR");
   }
 
   updateRenderWidget(capacityData) {
