@@ -215,6 +215,8 @@ class ArchivesManager {
         this.showNotificationToast(
           "📋 Nouvel ordre de livraison ajouté aux archives !"
         );
+        // Mise à jour du compteur en temps réel
+        await this.updateCounts();
       } else {
         // Sinon, juste mettre à jour le cache pour le prochain affichage
         console.log(
@@ -225,6 +227,8 @@ class ArchivesManager {
 
         // Optionnel : Badge de notification sur l'onglet
         this.addNotificationBadge("orders-tab");
+        // Mise à jour du compteur en temps réel
+        await this.updateCounts();
       }
     } catch (error) {
       console.warn("⚠️ [ARCHIVES] Erreur traitement notification:", error);
