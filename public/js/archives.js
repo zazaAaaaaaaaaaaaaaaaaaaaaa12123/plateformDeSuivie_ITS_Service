@@ -2885,14 +2885,30 @@ class StorageManager {
       console.error("❌ [STORAGE] Erreur récupération données DB:", error);
     }
 
-    // 2. Récupérer les archives réelles
-    const archives = this.archivesManager.allArchives;
+    // 2. Récupérer les archives réelles selon l'onglet actuel
+    let archives;
+
+    // 🎯 NOUVEAU: Utiliser les bonnes données selon l'onglet actuel
+    if (
+      this.archivesManager.selectedTab === "all" &&
+      this.archivesManager.allCombinedArchives.length > 0
+    ) {
+      archives = this.archivesManager.allCombinedArchives;
+      console.log(
+        `📊 [STORAGE] Utilisation des archives combinées (onglet "Toutes les Archives"): ${archives.length} archives`
+      );
+    } else {
+      archives = this.archivesManager.allArchives;
+      console.log(
+        `📊 [STORAGE] Utilisation des archives standard (onglet "${this.archivesManager.selectedTab}"): ${archives.length} archives`
+      );
+    }
 
     // 3. Récupérer les données en temps réel depuis les différentes sources
     const realTimeData = await this.fetchRealTimeData();
 
     // Calculer les vraies statistiques par type
-    const realStats = {
+    let realStats = {
       suppression: { count: 0, size: 0, archives: [] },
       livraison: { count: 0, size: 0, archives: [] },
       mise_en_livraison: {
@@ -2910,19 +2926,57 @@ class StorageManager {
     let totalSize = 0;
     let totalCount = archives.length;
 
+    // 🎯 NOUVEAU: Si on n'est pas sur l'onglet "all", filtrer pour ne montrer que le type actuel
+    let archivesToProcess = archives;
+
+    if (this.archivesManager.selectedTab !== "all") {
+      // Mapper l'onglet au type d'action
+      const tabToActionMap = {
+        deleted: "suppression",
+        delivered: "livraison",
+        shipping: "mise_en_livraison",
+        orders: "ordre_livraison_etabli",
+      };
+
+      const targetActionType = tabToActionMap[this.archivesManager.selectedTab];
+      if (targetActionType) {
+        archivesToProcess = archives.filter(
+          (archive) => archive.action_type === targetActionType
+        );
+        totalCount = archivesToProcess.length;
+        console.log(
+          `📊 [STORAGE] Filtrage pour onglet "${this.archivesManager.selectedTab}" (${targetActionType}): ${totalCount} archives`
+        );
+
+        // Réinitialiser les stats pour ne montrer que le type actuel
+        realStats = {
+          suppression: { count: 0, size: 0, archives: [] },
+          livraison: { count: 0, size: 0, archives: [] },
+          mise_en_livraison: { count: 0, size: 0, archives: [] },
+          ordre_livraison_etabli: { count: 0, size: 0, archives: [] },
+        };
+      }
+    }
+
     // Calculer les données des archives
-    archives.forEach((archive) => {
+    archivesToProcess.forEach((archive) => {
       const archiveSize = this.estimateArchiveSize(archive);
       const actionType = archive.action_type;
 
       if (realStats[actionType]) {
-        // Pour mise_en_livraison et ordre_livraison_etabli, on garde les vrais comptes temps réel
-        if (
-          actionType !== "mise_en_livraison" &&
-          actionType !== "ordre_livraison_etabli"
-        ) {
+        // Pour mise_en_livraison et ordre_livraison_etabli, on utilise les comptes réels quand on est sur "all"
+        if (this.archivesManager.selectedTab === "all") {
+          if (
+            actionType !== "mise_en_livraison" &&
+            actionType !== "ordre_livraison_etabli"
+          ) {
+            realStats[actionType].count++;
+          }
+        } else {
+          // Pour les onglets spécifiques, on compte normalement
           realStats[actionType].count++;
         }
+
         realStats[actionType].size += archiveSize;
         realStats[actionType].archives.push(archive);
       }
