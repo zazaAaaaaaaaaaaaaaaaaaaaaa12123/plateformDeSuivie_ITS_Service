@@ -212,7 +212,7 @@ class ArchivesManager {
     this.loadArchives();
   }
 
-  // Méthode pour forcer le reytfgjchargement complet des données
+  // Méthode pour forcer le rechargement complet des données
   async reload() {
     console.log("[ARCHIVES] Rechargement forcé des données...");
     this.allArchivesData = null; // Vider le cache
