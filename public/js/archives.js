@@ -30,6 +30,7 @@ class ArchivesManager {
     // Ne charger les archives que si nous sommes sur la page d'archives
     const searchBtn = document.getElementById("searchBtn");
     if (searchBtn) {
+      syncHistoryToArchives(); // Synchroniser l'historique avant de charger
       this.loadArchives();
       this.setDefaultDates();
     }
@@ -1688,6 +1689,58 @@ window.archiveDossier = async function (
     return false;
   }
 };
+
+// Fonction pour synchroniser l'historique localStorage vers les archives serveur
+async function syncHistoryToArchives() {
+  try {
+    console.log(
+      "[ARCHIVES] 🔄 Synchronisation de l'historique localStorage vers les archives..."
+    );
+
+    // Récupérer l'historique depuis localStorage (même clé que resp_liv.html)
+    const historyKey = "professional_delivery_history";
+    const historyData = JSON.parse(localStorage.getItem(historyKey) || "[]");
+
+    if (historyData.length === 0) {
+      console.log("[ARCHIVES] Aucun historique trouvé dans localStorage");
+      return;
+    }
+
+    console.log(
+      `[ARCHIVES] Trouvé ${historyData.length} entrées dans l'historique`
+    );
+
+    // Appeler le nouvel endpoint de synchronisation
+    const response = await fetch("/api/archives/sync-history", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        historyData: historyData,
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log(
+        `[ARCHIVES] ✅ Synchronisation réussie: ${result.synced_count} dossiers archivés`
+      );
+
+      // Afficher un message de succès si des éléments ont été synchronisés
+      if (result.synced_count > 0) {
+        console.log(
+          `[ARCHIVES] 🎉 ${result.synced_count} nouveaux dossiers livrés ajoutés aux archives`
+        );
+      }
+    } else {
+      const error = await response.text();
+      console.error("[ARCHIVES] ❌ Erreur lors de la synchronisation:", error);
+    }
+  } catch (error) {
+    console.error("[ARCHIVES] ❌ Erreur lors de la synchronisation:", error);
+  }
+}
 
 // Initialisation quand la page est chargée
 document.addEventListener("DOMContentLoaded", function () {
