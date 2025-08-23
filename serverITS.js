@@ -4612,6 +4612,217 @@ app.get("/api/archives", async (req, res) => {
     console.log("[ARCHIVES API] Clause WHERE:", whereClause);
     console.log("[ARCHIVES API] Paramètres:", queryParams);
 
+    // Traitement spécial pour "mise_en_livraison" et "livraison"
+    if (action_type === "mise_en_livraison") {
+      console.log(
+        "[ARCHIVES API] Requête spéciale pour 'mise_en_livraison' - récupération des dossiers en cours (excluant les livrés)"
+      );
+
+      let specialWhereConditions = [
+        "delivery_status_acconier = 'mise_en_livraison_acconier'",
+        "(delivery_status_acconier != 'livre' AND delivery_status_acconier != 'livré')",
+      ];
+      let specialParams = [];
+      let specialParamIndex = 1;
+
+      // Ajouter les filtres de date si fournis
+      if (date_start && date_start.trim()) {
+        specialWhereConditions.push(
+          `DATE(created_at) >= $${specialParamIndex}`
+        );
+        specialParams.push(date_start);
+        specialParamIndex++;
+      }
+      if (date_end && date_end.trim()) {
+        specialWhereConditions.push(
+          `DATE(created_at) <= $${specialParamIndex}`
+        );
+        specialParams.push(date_end);
+        specialParamIndex++;
+      }
+
+      // Ajouter la recherche si fournie
+      if (search && search.trim()) {
+        specialWhereConditions.push(`(
+          dossier_number ILIKE $${specialParamIndex} OR 
+          container_type_and_content ILIKE $${specialParamIndex} OR 
+          client_name ILIKE $${specialParamIndex} OR
+          employee_name ILIKE $${specialParamIndex}
+        )`);
+        specialParams.push(`%${search}%`);
+        specialParamIndex++;
+      }
+
+      const offset = (page - 1) * limit;
+      specialParams.push(limit, offset);
+
+      const specialQuery = `
+        SELECT DISTINCT ON (dossier_number)
+          id,
+          id as dossier_id,
+          dossier_number as dossier_reference,
+          container_type_and_content as intitule,
+          client_name,
+          'Responsable Livraison' as role_source,
+          'resp_liv.html' as page_origine,
+          'mise_en_livraison' as action_type,
+          employee_name as archived_by,
+          '' as archived_by_email,
+          created_at as archived_at,
+          '{"source": "active_delivery", "status": "en_cours"}'::json as metadata,
+          json_build_object(
+            'id', id,
+            'dossier_number', dossier_number,
+            'client_name', client_name,
+            'employee_name', employee_name,
+            'container_type_and_content', container_type_and_content,
+            'created_at', created_at
+          ) as dossier_data
+        FROM livraison_conteneur
+        WHERE ${specialWhereConditions.join(" AND ")}
+        ORDER BY dossier_number, created_at DESC
+        LIMIT $${specialParamIndex} OFFSET $${specialParamIndex + 1}
+      `;
+
+      console.log(
+        "[ARCHIVES API] Requête SQL pour mise_en_livraison:",
+        specialQuery
+      );
+      const result = await pool.query(specialQuery, specialParams);
+
+      // Compter le total pour la pagination
+      const countQuery = `
+        SELECT COUNT(DISTINCT dossier_number) as total 
+        FROM livraison_conteneur 
+        WHERE ${specialWhereConditions.join(" AND ")}
+      `;
+      const countResult = await pool.query(
+        countQuery,
+        specialParams.slice(0, -2)
+      );
+      const total = parseInt(countResult.rows[0].total);
+
+      console.log("[ARCHIVES API] Résultats mise_en_livraison:", {
+        foundRows: result.rows.length,
+        total: total,
+      });
+
+      return res.json({
+        success: true,
+        archives: result.rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: parseInt(limit),
+        },
+      });
+    }
+
+    if (action_type === "livraison") {
+      console.log(
+        "[ARCHIVES API] Requête spéciale pour 'livraison' - récupération des dossiers livrés de resp_liv.html"
+      );
+
+      let specialWhereConditions = [
+        "(delivery_status_acconier = 'livre' OR delivery_status_acconier = 'livré')",
+      ];
+      let specialParams = [];
+      let specialParamIndex = 1;
+
+      // Ajouter les filtres de date si fournis
+      if (date_start && date_start.trim()) {
+        specialWhereConditions.push(
+          `DATE(created_at) >= $${specialParamIndex}`
+        );
+        specialParams.push(date_start);
+        specialParamIndex++;
+      }
+      if (date_end && date_end.trim()) {
+        specialWhereConditions.push(
+          `DATE(created_at) <= $${specialParamIndex}`
+        );
+        specialParams.push(date_end);
+        specialParamIndex++;
+      }
+
+      // Ajouter la recherche si fournie
+      if (search && search.trim()) {
+        specialWhereConditions.push(`(
+          dossier_number ILIKE $${specialParamIndex} OR 
+          container_type_and_content ILIKE $${specialParamIndex} OR 
+          client_name ILIKE $${specialParamIndex} OR
+          employee_name ILIKE $${specialParamIndex}
+        )`);
+        specialParams.push(`%${search}%`);
+        specialParamIndex++;
+      }
+
+      const offset = (page - 1) * limit;
+      specialParams.push(limit, offset);
+
+      const specialQuery = `
+        SELECT DISTINCT ON (dossier_number)
+          id,
+          id as dossier_id,
+          dossier_number as dossier_reference,
+          container_type_and_content as intitule,
+          client_name,
+          'Responsable Livraison' as role_source,
+          'resp_liv.html' as page_origine,
+          'livraison' as action_type,
+          employee_name as archived_by,
+          '' as archived_by_email,
+          created_at as archived_at,
+          '{"source": "delivered", "status": "livré"}'::json as metadata,
+          json_build_object(
+            'id', id,
+            'dossier_number', dossier_number,
+            'client_name', client_name,
+            'employee_name', employee_name,
+            'container_type_and_content', container_type_and_content,
+            'delivery_status_acconier', delivery_status_acconier,
+            'created_at', created_at
+          ) as dossier_data
+        FROM livraison_conteneur
+        WHERE ${specialWhereConditions.join(" AND ")}
+        ORDER BY dossier_number, created_at DESC
+        LIMIT $${specialParamIndex} OFFSET $${specialParamIndex + 1}
+      `;
+
+      console.log("[ARCHIVES API] Requête SQL pour livraison:", specialQuery);
+      const result = await pool.query(specialQuery, specialParams);
+
+      // Compter le total pour la pagination
+      const countQuery = `
+        SELECT COUNT(DISTINCT dossier_number) as total 
+        FROM livraison_conteneur 
+        WHERE ${specialWhereConditions.join(" AND ")}
+      `;
+      const countResult = await pool.query(
+        countQuery,
+        specialParams.slice(0, -2)
+      );
+      const total = parseInt(countResult.rows[0].total);
+
+      console.log("[ARCHIVES API] Résultats livraison:", {
+        foundRows: result.rows.length,
+        total: total,
+      });
+
+      return res.json({
+        success: true,
+        archives: result.rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: parseInt(limit),
+        },
+      });
+    }
+
+    // Traitement normal pour les autres action_type (suppression, ordre_livraison_etabli, etc.)
     // Pagination
     const offset = (page - 1) * limit;
     queryParams.push(limit, offset);
