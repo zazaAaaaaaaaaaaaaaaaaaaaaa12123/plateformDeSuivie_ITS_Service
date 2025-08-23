@@ -4050,6 +4050,36 @@ app.put("/deliveries/:id", async (req, res) => {
       }
     }
 
+    // ARCHIVAGE AUTOMATIQUE DES DOSSIERS LIVRÉS
+    // Vérifier si le statut est "livré" pour archiver automatiquement
+    if (updates.hasOwnProperty("delivery_status_acconier") && 
+        (updates.delivery_status_acconier === "livre" || 
+         updates.delivery_status_acconier === "livré")) {
+      
+      try {
+        console.log(`[AUTO-ARCHIVE] Archivage automatique du dossier livré: ${updatedDelivery.dossier_number}`);
+        
+        // Insérer dans archives_dossiers
+        const archiveQuery = `
+          INSERT INTO archives_dossiers (
+            dossier_number, action_type, dossier_data, archived_at
+          ) VALUES ($1, $2, $3, NOW())
+          ON CONFLICT (dossier_number, action_type) DO NOTHING
+        `;
+        
+        await pool.query(archiveQuery, [
+          updatedDelivery.dossier_number,
+          'livraison',
+          JSON.stringify(updatedDelivery)
+        ]);
+        
+        console.log(`[AUTO-ARCHIVE] Dossier ${updatedDelivery.dossier_number} archivé automatiquement dans "Dossiers Livrés"`);
+      } catch (archiveError) {
+        console.error("[AUTO-ARCHIVE] Erreur lors de l'archivage automatique:", archiveError);
+        // Ne pas faire échouer la mise à jour pour un problème d'archivage
+      }
+    }
+
     const payload = JSON.stringify({
       type: "delivery_update_alert",
       message: updateMessage,
@@ -4737,6 +4767,97 @@ app.get("/api/archives", async (req, res) => {
     }
     // *** FIN LOGIQUE SPÉCIALE POUR "MISE EN LIVRAISON" ***
 
+    // *** LOGIQUE SPÉCIALE POUR "LIVRAISON" (DOSSIERS LIVRÉS) ***
+    if (action_type === "livraison") {
+      console.log(
+        "[ARCHIVES API] Requête spéciale pour 'livraison' - récupération des dossiers livrés archivés"
+      );
+
+      let whereConditions = ["action_type = 'livraison'"];
+      let queryParams = [];
+      let paramIndex = 1;
+
+      // Filtres de recherche pour les dossiers livrés archivés
+      if (search && search.trim()) {
+        whereConditions.push(`(
+          dossier_number ILIKE $${paramIndex} OR 
+          dossier_data->>'client_name' ILIKE $${paramIndex} OR
+          archived_by ILIKE $${paramIndex}
+        )`);
+        queryParams.push(`%${search}%`);
+        paramIndex++;
+      }
+
+      if (date_start && date_start.trim()) {
+        whereConditions.push(`DATE(archived_at) >= $${paramIndex}`);
+        queryParams.push(date_start);
+        paramIndex++;
+      }
+
+      if (date_end && date_end.trim()) {
+        whereConditions.push(`DATE(archived_at) <= $${paramIndex}`);
+        queryParams.push(date_end);
+        paramIndex++;
+      }
+
+      const whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+
+      // Pagination
+      const offset = (page - 1) * limit;
+      queryParams.push(limit, offset);
+
+      const query = `
+        SELECT 
+          id,
+          dossier_number as dossier_reference,
+          dossier_data->>'container_type_and_content' as intitule,
+          dossier_data->>'client_name' as client_name,
+          'Responsable Livraison' as role_source,
+          'resp_liv.html' as page_origine,
+          action_type,
+          archived_by,
+          archived_by_email,
+          archived_at,
+          metadata,
+          dossier_data
+        FROM archives_dossiers 
+        ${whereClause}
+        ORDER BY archived_at DESC 
+        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      `;
+
+      console.log("[ARCHIVES API] Requête SQL pour livraison:", query);
+
+      const result = await pool.query(query, queryParams);
+
+      // Compter le total pour la pagination
+      const countQuery = `
+        SELECT COUNT(*) as total FROM archives_dossiers ${whereClause}
+      `;
+      const countResult = await pool.query(
+        countQuery,
+        queryParams.slice(0, -2)
+      );
+      const total = parseInt(countResult.rows[0].total);
+
+      console.log("[ARCHIVES API] Résultats livraison:", {
+        foundRows: result.rows.length,
+        total: total,
+      });
+
+      return res.json({
+        success: true,
+        archives: result.rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: parseInt(limit),
+        },
+      });
+    }
+    // *** FIN LOGIQUE SPÉCIALE POUR "LIVRAISON" ***
+
     let whereConditions = [];
     let queryParams = [];
     let paramIndex = 1;
@@ -4883,26 +5004,31 @@ app.get("/api/archives/counts", async (req, res) => {
       activeDeliveryCountResult.rows[0].count
     );
 
-    // Calculer le vrai total de tous les dossiers uniques (archives + dossiers actifs)
-    // Pour éviter de compter deux fois les dossiers mise_en_livraison
-    const totalArchivesQuery = `
-      SELECT COUNT(*) as count FROM archives_dossiers
+    // Calculer le vrai total de tous les dossiers uniques
+    // Compter les dossiers uniques à travers toutes les sources
+    const totalUniqueQuery = `
+      WITH all_dossiers AS (
+        -- Dossiers archivés
+        SELECT DISTINCT dossier_number 
+        FROM archives_dossiers 
+        WHERE dossier_number IS NOT NULL AND dossier_number != ''
+        
+        UNION
+        
+        -- Dossiers actifs en livraison
+        SELECT DISTINCT dossier_number 
+        FROM livraison_conteneur 
+        WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
+        AND dossier_number IS NOT NULL AND dossier_number != ''
+      )
+      SELECT COUNT(*) as count FROM all_dossiers
     `;
 
-    const totalArchivesResult = await pool.query(totalArchivesQuery);
-    const totalArchives = parseInt(totalArchivesResult.rows[0].count);
-    const activeDeliveries = parseInt(activeDeliveryCountResult.rows[0].count);
-
-    // Le total réel = archives + dossiers actifs de livraison
-    counts.all = totalArchives + activeDeliveries;
+    const totalUniqueResult = await pool.query(totalUniqueQuery);
+    counts.all = parseInt(totalUniqueResult.rows[0].count);
 
     console.log("[ARCHIVES COUNTS] Compteurs calculés:", counts);
-    console.log(
-      "[ARCHIVES COUNTS] Total archives:",
-      totalArchives,
-      "Active deliveries:",
-      activeDeliveries
-    );
+    console.log("[ARCHIVES COUNTS] Total dossiers uniques:", counts.all);
 
     res.json({
       success: true,
