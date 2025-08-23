@@ -1255,6 +1255,10 @@ class ArchivesManager {
     try {
       this.showLoading(true);
 
+      // *** ÉTAPE 1 : Récupérer les détails de l'archive avant suppression ***
+      const archiveToDelete = this.allArchives.find((a) => a.id == archiveId);
+      console.log("🗑️ [ARCHIVES] Archive à supprimer:", archiveToDelete);
+
       const response = await fetch(`/api/archives/${archiveId}`, {
         method: "DELETE",
       });
@@ -1262,8 +1266,17 @@ class ArchivesManager {
       const data = await response.json();
 
       if (data.success) {
+        // *** ÉTAPE 2 : Supprimer aussi du localStorage pour éviter re-création ***
+        if (archiveToDelete && archiveToDelete.action_type === "livraison") {
+          await this.removeFromLocalStorageHistory(archiveToDelete);
+        }
+
         this.showNotification("Archive supprimée définitivement", "success");
         await this.loadArchives(); // Recharger la liste
+
+        // *** ÉTAPE 3 : MISE À JOUR DU COMPTEUR EN TEMPS RÉEL ***
+        await this.updateCounts();
+        console.log("✅ [ARCHIVES] Compteurs mis à jour après suppression");
       } else {
         this.showNotification(
           data.message || "Erreur lors de la suppression",
@@ -1275,6 +1288,58 @@ class ArchivesManager {
       this.showNotification("Erreur de connexion", "error");
     } finally {
       this.showLoading(false);
+    }
+  }
+
+  // *** NOUVELLE MÉTHODE : Supprimer du localStorage pour éviter re-création ***
+  async removeFromLocalStorageHistory(archiveToDelete) {
+    try {
+      const historyKey = "professional_delivery_history";
+      const historyData = JSON.parse(localStorage.getItem(historyKey) || "[]");
+
+      if (historyData.length === 0) {
+        console.log("📝 [ARCHIVES] Aucun historique localStorage à nettoyer");
+        return;
+      }
+
+      // Identifier l'entrée à supprimer selon la référence du dossier
+      const dossierRef = archiveToDelete.dossier_reference;
+      const clientName = archiveToDelete.client_name;
+
+      console.log(
+        `🔍 [ARCHIVES] Recherche dans localStorage: ${dossierRef} - ${clientName}`
+      );
+
+      // Filtrer pour supprimer l'entrée correspondante
+      const filteredHistory = historyData.filter((item) => {
+        const itemRef = item.declaration_number || item.dossier_number || "";
+        const itemClient = item.client_name || "";
+
+        // Supprimer si la référence ET le client correspondent
+        const shouldRemove =
+          itemRef === dossierRef && itemClient === clientName;
+
+        if (shouldRemove) {
+          console.log(
+            `🗑️ [ARCHIVES] Suppression localStorage: ${itemRef} - ${itemClient}`
+          );
+        }
+
+        return !shouldRemove;
+      });
+
+      // Sauvegarder le localStorage nettoyé
+      localStorage.setItem(historyKey, JSON.stringify(filteredHistory));
+
+      const removedCount = historyData.length - filteredHistory.length;
+      console.log(
+        `✅ [ARCHIVES] ${removedCount} entrée(s) supprimée(s) du localStorage`
+      );
+    } catch (error) {
+      console.warn(
+        "⚠️ [ARCHIVES] Erreur lors du nettoyage localStorage:",
+        error
+      );
     }
   }
 
