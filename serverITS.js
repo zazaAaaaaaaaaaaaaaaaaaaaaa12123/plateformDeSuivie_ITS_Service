@@ -4956,24 +4956,16 @@ app.get("/api/archives/counts", async (req, res) => {
 
     // Compter les dossiers en cours de livraison (NON livrés de resp_liv.html)
     const activeDeliveryCountQuery = `
-      SELECT COUNT(*) as count FROM (
-        SELECT DISTINCT dossier_number
-        FROM livraison_conteneur 
-        WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
-        AND dossier_number IS NOT NULL 
-        AND dossier_number != ''
-      ) unique_dossiers
+      SELECT COUNT(*) as count
+      FROM livraison_conteneur 
+      WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
     `;
 
     // Compter les dossiers livrés (de resp_liv.html avec statut livré)
     const deliveredCountQuery = `
-      SELECT COUNT(*) as count FROM (
-        SELECT DISTINCT dossier_number
-        FROM livraison_conteneur 
-        WHERE (delivery_status_acconier = 'livre' OR delivery_status_acconier = 'livré')
-        AND dossier_number IS NOT NULL 
-        AND dossier_number != ''
-      ) unique_dossiers
+      SELECT COUNT(*) as count
+      FROM livraison_conteneur 
+      WHERE (delivery_status_acconier = 'livre' OR delivery_status_acconier = 'livré')
     `;
 
     const activeDeliveryCountResult = await pool.query(
@@ -5004,32 +4996,11 @@ app.get("/api/archives/counts", async (req, res) => {
     // Les dossiers "Livrés" viennent de resp_liv.html (avec statut livré)
     counts.livraison = parseInt(deliveredCountResult.rows[0].count);
 
-    // Calculer le vrai total de tous les dossiers uniques
+    // Calculer le vrai total de tous les dossiers uniques - SIMPLIFIÉ POUR LE TEST
     const totalUniqueQuery = `
-      WITH all_dossiers AS (
-        -- Dossiers archivés (suppression et ordre_livraison_etabli)
-        SELECT DISTINCT dossier_number 
-        FROM archives_dossiers 
-        WHERE action_type IN ('suppression', 'ordre_livraison_etabli')
-        AND dossier_number IS NOT NULL AND dossier_number != ''
-        
-        UNION
-        
-        -- Dossiers en cours de livraison (non livrés)
-        SELECT DISTINCT dossier_number 
-        FROM livraison_conteneur 
-        WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
-        AND dossier_number IS NOT NULL AND dossier_number != ''
-        
-        UNION
-        
-        -- Dossiers livrés
-        SELECT DISTINCT dossier_number 
-        FROM livraison_conteneur 
-        WHERE (delivery_status_acconier = 'livre' OR delivery_status_acconier = 'livré')
-        AND dossier_number IS NOT NULL AND dossier_number != ''
-      )
-      SELECT COUNT(*) as count FROM all_dossiers
+      SELECT COUNT(*) as count 
+      FROM archives_dossiers 
+      WHERE action_type IN ('suppression', 'ordre_livraison_etabli')
     `;
 
     const totalUniqueResult = await pool.query(totalUniqueQuery);

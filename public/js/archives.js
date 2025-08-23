@@ -332,9 +332,7 @@ class ArchivesManager {
             (a) => a.action_type === "livraison"
           ).length,
           mise_en_livraison: this.allArchives.filter(
-            (a) =>
-              a.action_type === "mise_en_livraison" &&
-              !this.findCorrespondingDeliveredArchive(a)
+            (a) => a.action_type === "mise_en_livraison"
           ).length,
           ordre_livraison_etabli: this.allArchives.filter(
             (a) => a.action_type === "ordre_livraison_etabli"
@@ -427,9 +425,7 @@ class ArchivesManager {
           break;
         case "shipping":
           archivesToRender = this.filteredArchives.filter(
-            (a) =>
-              a.action_type === "mise_en_livraison" &&
-              !this.findCorrespondingDeliveredArchive(a)
+            (a) => a.action_type === "mise_en_livraison"
           );
           break;
         case "orders":
