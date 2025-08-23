@@ -2402,10 +2402,34 @@ class StorageManager {
       if (dossiersMisEnLiv.ok) {
         const deliveriesData = await dossiersMisEnLiv.json();
         if (deliveriesData.success && deliveriesData.deliveries) {
-          // Compter TOUS les dossiers actifs (comme dans resp_liv.html)
-          realTimeData.mise_en_livraison = deliveriesData.deliveries.length;
+          // Compter EXACTEMENT comme resp_liv.html :
+          // 1. Dossiers avec status "mise_en_livraison_acconier"
+          // 2. MAIS EXCLURE ceux qui ont le statut "Livré"
+          const miseEnLivraisonDossiers = deliveriesData.deliveries.filter(
+            (delivery) => {
+              // Doit avoir le bon statut de base
+              const hasCorrectStatus =
+                delivery.delivery_status_acconier ===
+                "mise_en_livraison_acconier";
+
+              // Vérifier si le dossier n'est PAS livré
+              let isNotDelivered = true;
+              if (delivery.bl_statuses) {
+                // Vérifier tous les statuts des conteneurs
+                const statuses = Object.values(delivery.bl_statuses);
+                isNotDelivered = !statuses.some(
+                  (status) => status === "livre" || status === "livré"
+                );
+              }
+
+              // Inclure seulement si: bon statut ET pas livré
+              return hasCorrectStatus && isNotDelivered;
+            }
+          );
+
+          realTimeData.mise_en_livraison = miseEnLivraisonDossiers.length;
           console.log(
-            `📊 Dossiers en cours de livraison depuis resp_liv API: ${realTimeData.mise_en_livraison}`
+            `📊 Dossiers en mise en livraison (SANS les livrés): ${realTimeData.mise_en_livraison}`
           );
         }
         console.log(
