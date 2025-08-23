@@ -2398,15 +2398,23 @@ class StorageManager {
     try {
       // 1. Récupérer les vrais dossiers mis en livraison depuis localStorage
       // C'est la source de vérité selon l'utilisateur - onglet "Mis en Livraison"
-      const dossiersMisEnLiv = localStorage.getItem("dossiersMisEnLiv");
-      if (dossiersMisEnLiv) {
-        const dossiersArray = JSON.parse(dossiersMisEnLiv);
-        realTimeData.mise_en_livraison = dossiersArray.length;
+      const dossiersMisEnLiv = await fetch("/deliveries/status");
+      if (dossiersMisEnLiv.ok) {
+        const deliveriesData = await dossiersMisEnLiv.json();
+        if (deliveriesData.success && deliveriesData.deliveries) {
+          // Compter TOUS les dossiers actifs (comme dans resp_liv.html)
+          realTimeData.mise_en_livraison = deliveriesData.deliveries.length;
+          console.log(
+            `📊 Dossiers en cours de livraison depuis resp_liv API: ${realTimeData.mise_en_livraison}`
+          );
+        }
         console.log(
           `� Dossiers mis en livraison depuis localStorage: ${realTimeData.mise_en_livraison}`
         );
       } else {
-        console.log("⚠️ Pas de dossiers mis en livraison dans localStorage");
+        console.log(
+          "⚠️ Erreur lors de la récupération des dossiers depuis resp_liv API"
+        );
       }
 
       // 2. Récupérer les dossiers actifs depuis l'API deliveries/status comme backup
