@@ -2780,6 +2780,81 @@ async function submitDeliveryForm(status) {
           historyData[historyAgentKey].length
         );
 
+        // *** ENREGISTREMENT DANS LES ARCHIVES CÔTÉ SERVEUR ***
+        try {
+          // Préparer les données pour l'archive selon le format attendu par le serveur
+          const archiveData = {
+            dossier_reference: `ORDER-${Date.now()}`, // Référence unique pour l'ordre
+            intitule: `Ordre de livraison - ${clientName}`,
+            client_name: clientName,
+            role_source: "Agent Acconier",
+            page_origine: "Formulaire Employé",
+            action_type: "ordre_livraison_etabli",
+            archived_by: employeeName,
+            archived_by_email: "", // Peut être vide
+            dossier_data: {
+              client_name: clientName,
+              employee_name: employeeName,
+              container_numbers: containerNumbers,
+              container_foot_type: containerFootType,
+              lieu: lieu,
+              declaration_number: declarationNumber,
+              number_of_containers: numberOfContainers,
+              status: status,
+              delivery_status_acconier: deliveryStatusAcconier,
+              bl_number: finalBlNumber,
+              dossier_number: finalDossierNumber,
+              ship_name: shipName,
+              circuit: circuit,
+              shipping_company: finalShippingCompany,
+              transporter_mode: transporterMode,
+              weight: weight,
+              client_phone: clientPhone,
+              container_type_and_content: containerTypeAndContent,
+              created_at: new Date().toISOString(),
+            },
+            metadata: {
+              source: "formulaire_validation",
+              order_id: newOperation.id,
+              validation_timestamp: Date.now(),
+            },
+          };
+
+          // Choisir l'URL selon l'environnement
+          let archiveApiUrl = "";
+          if (
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1"
+          ) {
+            archiveApiUrl = "http://localhost:3000/api/archives";
+          } else {
+            archiveApiUrl =
+              "https://plateformdesuivie-its-service-1cjx.onrender.com/api/archives";
+          }
+
+          // Envoyer vers les archives
+          const archiveResponse = await fetch(archiveApiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(archiveData),
+          });
+
+          if (archiveResponse.ok) {
+            const archiveResult = await archiveResponse.json();
+            console.log(
+              "✅ Ordre ajouté aux archives côté serveur:",
+              archiveResult
+            );
+          } else {
+            const errorText = await archiveResponse.text();
+            console.warn("⚠️ Erreur lors de l'ajout aux archives:", errorText);
+          }
+        } catch (error) {
+          console.warn("⚠️ Erreur lors de l'envoi vers les archives:", error);
+        }
+
         // *** NOTIFICATION EN TEMPS RÉEL VERS LES ARCHIVES ***
         try {
           // Créer un événement personnalisé pour notifier les archives
