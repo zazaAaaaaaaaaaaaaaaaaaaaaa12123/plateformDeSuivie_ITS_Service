@@ -4848,10 +4848,15 @@ app.get("/api/archives/counts", async (req, res) => {
     const archiveCountsResult = await pool.query(archiveCountsQuery);
 
     // Compter les dossiers en cours de livraison (pour l'onglet "Mise en Livraison")
+    // Utiliser la même logique que pour l'affichage : DISTINCT ON (dossier_number)
     const activeDeliveryCountQuery = `
-      SELECT COUNT(*) as count
-      FROM livraison_conteneur 
-      WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
+      SELECT COUNT(*) as count FROM (
+        SELECT DISTINCT dossier_number
+        FROM livraison_conteneur 
+        WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
+        AND dossier_number IS NOT NULL 
+        AND dossier_number != ''
+      ) unique_dossiers
     `;
 
     const activeDeliveryCountResult = await pool.query(
