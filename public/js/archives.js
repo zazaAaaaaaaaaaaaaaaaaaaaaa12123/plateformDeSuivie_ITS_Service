@@ -31,15 +31,7 @@ class ArchivesManager {
     // Ne charger les archives que si nous sommes sur la page d'archives
     const searchBtn = document.getElementById("searchBtn");
     if (searchBtn) {
-      // Vérifier si on est sur l'onglet "all" par défaut
-      if (this.selectedTab === "all") {
-        console.log(
-          "[ARCHIVES] Initialisation - Onglet 'all' détecté, chargement combiné..."
-        );
-        this.loadAllTabsData();
-      } else {
-        this.loadArchives();
-      }
+      this.loadArchives();
       this.setDefaultDates();
     }
   }
@@ -137,10 +129,10 @@ class ArchivesManager {
             this.renderCurrentView();
           }
         } else if (actionFilter && this.selectedTab === "all") {
-          // Si on revient à "all", charger TOUTES les données de tous les onglets
+          // Si on revient à "all", vider le filtre action_type
           this.currentFilters.action_type = "";
           actionFilter.value = "";
-          this.loadAllTabsData(); // Nouvelle méthode pour charger toutes les données
+          this.performSearch();
         } else {
           this.renderCurrentView();
         }
@@ -393,17 +385,7 @@ class ArchivesManager {
     console.log("[ARCHIVES] Des filtres sont-ils appliqués ?", hasFilters);
 
     this.currentPage = 1;
-
-    // Si on est sur l'onglet "all" et qu'il n'y a pas de filtres spécifiques,
-    // utiliser la méthode de chargement combiné
-    if (this.selectedTab === "all" && !hasFilters) {
-      console.log(
-        "[ARCHIVES] Onglet 'all' détecté sans filtres, chargement combiné..."
-      );
-      await this.loadAllTabsData();
-    } else {
-      await this.loadArchives();
-    }
+    await this.loadArchives();
   }
 
   resetFilters() {
@@ -512,147 +494,6 @@ class ArchivesManager {
     } catch (error) {
       console.error("Erreur lors du chargement des archives:", error);
       this.showNotification("Erreur de connexion", "error");
-    } finally {
-      this.showLoading(false);
-    }
-  }
-
-  /**
-   * Charge et combine toutes les données de tous les onglets pour l'onglet "Toutes les archives"
-   */
-  async loadAllTabsData() {
-    this.showLoading(true);
-
-    try {
-      console.log("[ARCHIVES] Chargement de toutes les données combinées...");
-
-      // Récupérer TOUTES les données de chaque type (sans limite)
-      const [suppressionData, livraisonData, miseEnLivraisonData, ordreData] =
-        await Promise.all([
-          fetch("/api/archives?action_type=suppression&limit=10000").then((r) =>
-            r.json()
-          ), // Limite élevée
-          fetch("/api/archives?action_type=livraison&limit=10000").then((r) =>
-            r.json()
-          ),
-          fetch("/api/archives?action_type=mise_en_livraison&limit=10000").then(
-            (r) => r.json()
-          ), // Données temps réel
-          fetch(
-            "/api/archives?action_type=ordre_livraison_etabli&limit=10000"
-          ).then((r) => r.json()),
-        ]);
-
-      // Combiner toutes les archives avec vérification détaillée
-      let allCombinedArchives = [];
-
-      if (suppressionData.success && suppressionData.archives) {
-        console.log(
-          `[ARCHIVES] Dossiers supprimés: ${suppressionData.archives.length}`
-        );
-        allCombinedArchives = allCombinedArchives.concat(
-          suppressionData.archives
-        );
-      }
-
-      if (livraisonData.success && livraisonData.archives) {
-        console.log(
-          `[ARCHIVES] Dossiers livrés: ${livraisonData.archives.length}`
-        );
-        allCombinedArchives = allCombinedArchives.concat(
-          livraisonData.archives
-        );
-      }
-
-      if (miseEnLivraisonData.success && miseEnLivraisonData.archives) {
-        console.log(
-          `[ARCHIVES] Mise en livraison: ${miseEnLivraisonData.archives.length}`
-        );
-        allCombinedArchives = allCombinedArchives.concat(
-          miseEnLivraisonData.archives
-        );
-      }
-
-      if (ordreData.success && ordreData.archives) {
-        console.log(
-          `[ARCHIVES] Ordres de livraison: ${ordreData.archives.length}`
-        );
-        allCombinedArchives = allCombinedArchives.concat(ordreData.archives);
-      }
-
-      // Éliminer les doublons basés sur l'ID
-      const uniqueArchives = allCombinedArchives.filter(
-        (archive, index, self) =>
-          index === self.findIndex((a) => a.id === archive.id)
-      );
-
-      // Trier par date de création (plus récent en premier)
-      uniqueArchives.sort(
-        (a, b) => new Date(b.archived_at) - new Date(a.archived_at)
-      );
-
-      // Mettre à jour les données pour l'affichage
-      this.filteredArchives = uniqueArchives;
-      this.allArchives = uniqueArchives;
-
-      // Pagination simulée pour l'affichage
-      this.pagination = {
-        totalItems: uniqueArchives.length,
-        totalPages: Math.ceil(uniqueArchives.length / this.itemsPerPage),
-        currentPage: 1,
-        itemsPerPage: this.itemsPerPage,
-      };
-
-      console.log(`[ARCHIVES] ✅ Données combinées chargées avec succès:`);
-      console.log(
-        `[ARCHIVES] - Total d'archives uniques: ${uniqueArchives.length}`
-      );
-      console.log(
-        `[ARCHIVES] - Avant déduplication: ${allCombinedArchives.length}`
-      );
-      console.log(
-        `[ARCHIVES] - Doublons éliminés: ${
-          allCombinedArchives.length - uniqueArchives.length
-        }`
-      );
-
-      // Mettre à jour les compteurs aussi
-      await this.updateCounts();
-
-      // Afficher les résultats
-      this.renderCurrentView();
-      this.renderPagination();
-    } catch (error) {
-      console.error(
-        "[ARCHIVES] ❌ Erreur lors du chargement des données combinées:",
-        error
-      );
-      this.showNotification(
-        "Erreur lors du chargement des données combinées",
-        "error"
-      );
-
-      // Fallback : essayer de charger au moins les archives classiques
-      try {
-        console.log(
-          "[ARCHIVES] Tentative de fallback vers les archives classiques..."
-        );
-        const fallbackResponse = await fetch("/api/archives?limit=5000");
-        const fallbackData = await fallbackResponse.json();
-
-        if (fallbackData.success) {
-          this.filteredArchives = fallbackData.archives || [];
-          this.allArchives = fallbackData.archives || [];
-          this.pagination = fallbackData.pagination || {};
-          console.log(
-            `[ARCHIVES] Fallback réussi: ${this.filteredArchives.length} archives chargées`
-          );
-          this.renderCurrentView();
-          this.renderPagination();
-        }
-      } catch (fallbackError) {
-        console.error("[ARCHIVES] Échec du fallback:", fallbackError);
-      }
     } finally {
       this.showLoading(false);
     }
@@ -781,21 +622,10 @@ class ArchivesManager {
         livraison: livraisonData.pagination?.totalItems || 0,
         mise_en_livraison: miseEnLivraisonData.pagination?.totalItems || 0,
         ordre_livraison_etabli: ordreData.pagination?.totalItems || 0,
-        // Calculer le total comme la somme des autres compteurs
-        all: 0, // Sera calculé ci-dessous
+        all: allData.pagination?.totalItems || 0,
       };
 
-      // Calculer le vrai total comme somme des compteurs individuels
-      counts.all =
-        counts.suppression +
-        counts.livraison +
-        counts.mise_en_livraison +
-        counts.ordre_livraison_etabli;
-
       console.log("[ARCHIVES] Vrais compteurs backend récupérés:", counts);
-      console.log(
-        `[ARCHIVES] Total calculé: ${counts.suppression} + ${counts.livraison} + ${counts.mise_en_livraison} + ${counts.ordre_livraison_etabli} = ${counts.all}`
-      );
 
       // Mettre à jour l'affichage
       document.getElementById("allCount").textContent = counts.all;
@@ -809,6 +639,7 @@ class ArchivesManager {
       console.error("[ARCHIVES] Erreur lors du calcul des compteurs:", error);
       // Fallback vers l'ancienne méthode en cas d'erreur
       const fallbackCounts = {
+        all: this.allArchives.length,
         suppression: this.allArchives.filter(
           (a) => a.action_type === "suppression"
         ).length,
@@ -821,18 +652,6 @@ class ArchivesManager {
           (a) => a.action_type === "ordre_livraison_etabli"
         ).length,
       };
-
-      // Calculer le total comme somme des autres compteurs (fallback)
-      fallbackCounts.all =
-        fallbackCounts.suppression +
-        fallbackCounts.livraison +
-        fallbackCounts.mise_en_livraison +
-        fallbackCounts.ordre_livraison_etabli;
-
-      console.log(
-        "[ARCHIVES] Fallback - Total calculé:",
-        `${fallbackCounts.suppression} + ${fallbackCounts.livraison} + ${fallbackCounts.mise_en_livraison} + ${fallbackCounts.ordre_livraison_etabli} = ${fallbackCounts.all}`
-      );
 
       document.getElementById("allCount").textContent = fallbackCounts.all;
       document.getElementById("deletedCount").textContent =
@@ -2229,79 +2048,16 @@ window.archiveDossier = async function (
 class StorageManager {
   constructor(archivesManager) {
     this.archivesManager = archivesManager;
-    this.storageCapacity = 1024; // Valeur par défaut en MB, sera mise à jour via API
+    this.storageCapacity = 1024; // 1 GB en MB (modifiable)
     this.storageHistory = [];
     this.chart = null;
-    this.databaseInfo = null; // Informations de la base de données
 
     this.init();
   }
 
-  async init() {
+  init() {
     this.bindEvents();
-    await this.loadRealDatabaseCapacity(); // Charger la vraie capacité
-    console.log(
-      "✅ [STORAGE] Système de stockage initialisé avec capacité réelle"
-    );
-  }
-
-  /**
-   * Récupère la vraie capacité de la base de données depuis Render
-   */
-  async loadRealDatabaseCapacity() {
-    try {
-      console.log(
-        "🗄️ [STORAGE] Récupération de la capacité réelle de la base de données..."
-      );
-
-      const response = await fetch("/api/database/capacity");
-      const data = await response.json();
-
-      if (data.database && data.render_info) {
-        // Mettre à jour la capacité avec la vraie valeur en MB
-        this.storageCapacity = data.render_info.capacity_mb;
-        this.databaseInfo = data;
-
-        console.log("✅ [STORAGE] Capacité mise à jour:", {
-          plan: data.render_info.estimated_plan,
-          capacity: data.render_info.capacity_mb + " MB",
-          current_usage: data.render_info.current_usage_mb + " MB",
-          is_paid: data.render_info.is_paid_plan,
-        });
-
-        // Forcer la mise à jour de l'affichage avec les vraies données
-        this.updateDisplayWithRealData();
-      }
-    } catch (error) {
-      console.warn(
-        "⚠️ [STORAGE] Impossible de récupérer la capacité réelle, utilisation de la valeur par défaut:",
-        error
-      );
-    }
-  }
-
-  /**
-   * Met à jour l'affichage initial avec la vraie capacité (pas l'usage)
-   */
-  updateDisplayWithRealData() {
-    if (this.databaseInfo && this.databaseInfo.database) {
-      const realCapacity = this.databaseInfo.render_info.capacity_mb;
-
-      // Mise à jour initiale avec la capacité réelle, mais garder 0 pour l'usage
-      // L'usage sera calculé dynamiquement par les archives
-      const totalAvailableElement = document.getElementById(
-        "totalAvailableStorage"
-      );
-
-      if (totalAvailableElement) {
-        totalAvailableElement.textContent = `${realCapacity.toFixed(1)} MB`;
-      }
-
-      console.log("🎯 [STORAGE] Capacité initiale mise à jour:", {
-        capacity: realCapacity.toFixed(1) + " MB",
-        note: "L'usage sera calculé par les archives",
-      });
-    }
+    console.log("✅ [STORAGE] Système de stockage initialisé");
   }
 
   bindEvents() {
@@ -2599,9 +2355,6 @@ class StorageManager {
     console.log("📊 Données temps réel récupérées:", realTimeData);
     console.log("📊 Statistiques finales:", realStats);
 
-    // Mise à jour de l'interface principale avec les calculs d'archives
-    this.updateStorageInterface(totalSize, totalCount, realStats);
-
     // Mise à jour de l'interface avec les vraies données mixtes (si les éléments existent)
     const totalSizeMB = totalSize;
     const totalSizeFormatted = this.formatBytes(totalSizeMB * 1024 * 1024);
@@ -2748,26 +2501,18 @@ class StorageManager {
 
       // 3. Récupérer les ordres de livraison depuis l'API archives (comme pour mise_en_livraison)
       try {
-        const ordresResponse = await fetch(
-          "/api/archives?action_type=ordre_livraison_etabli"
-        );
+        const ordresResponse = await fetch("/api/archives?action_type=ordre_livraison_etabli");
         if (ordresResponse.ok) {
           const ordresData = await ordresResponse.json();
           if (ordresData.success && ordresData.total !== undefined) {
             realTimeData.ordres_livraison = ordresData.total;
-            console.log(
-              `📊 Ordres de livraison depuis API archives: ${realTimeData.ordres_livraison}`
-            );
+            console.log(`📊 Ordres de livraison depuis API archives: ${realTimeData.ordres_livraison}`);
           } else if (ordresData.archives) {
             realTimeData.ordres_livraison = ordresData.archives.length;
-            console.log(
-              `📊 Ordres de livraison comptés: ${realTimeData.ordres_livraison}`
-            );
+            console.log(`📊 Ordres de livraison comptés: ${realTimeData.ordres_livraison}`);
           }
         } else {
-          console.log(
-            "⚠️ Erreur lors de la récupération des ordres de livraison"
-          );
+          console.log("⚠️ Erreur lors de la récupération des ordres de livraison");
         }
       } catch (apiError) {
         console.warn("⚠️ API ordres de livraison non disponible");
@@ -3016,30 +2761,13 @@ class StorageManager {
   }
 
   updateStorageInterface(totalSize, totalCount, storageByType) {
-    // Utiliser les données calculées des archives pour l'espace utilisé
-    // et la vraie capacité de la base de données pour la capacité totale
-    let archiveUsedSize = totalSize; // Taille calculée des archives
-    let realCapacity = this.storageCapacity; // Capacité de la DB
+    // Mise à jour des valeurs principales
+    const usedPercent = Math.min((totalSize / this.storageCapacity) * 100, 100);
+    const availableSize = Math.max(this.storageCapacity - totalSize, 0);
 
-    if (this.databaseInfo && this.databaseInfo.database) {
-      // Utiliser la vraie capacité de la base de données
-      realCapacity = this.databaseInfo.render_info.capacity_mb;
-
-      console.log("📊 [STORAGE] Calcul hybride - Archives vs DB:", {
-        archiveUsedSize: archiveUsedSize.toFixed(1) + " MB",
-        dbTotalSize: this.databaseInfo.render_info.current_usage_mb + " MB",
-        realCapacity: realCapacity + " MB",
-      });
-    }
-
-    // Calculs basés sur les archives calculées et la vraie capacité
-    const usedPercent = Math.min((archiveUsedSize / realCapacity) * 100, 100);
-    const availableSize = Math.max(realCapacity - archiveUsedSize, 0);
-
-    // Mise à jour des valeurs avec les données d'archives calculées
     document.getElementById(
       "totalUsedStorage"
-    ).textContent = `${archiveUsedSize.toFixed(1)} MB`;
+    ).textContent = `${totalSize.toFixed(1)} MB`;
     document.getElementById(
       "totalAvailableStorage"
     ).textContent = `${availableSize.toFixed(1)} MB`;
@@ -3050,9 +2778,6 @@ class StorageManager {
     document.getElementById(
       "chartCenterValue"
     ).textContent = `${usedPercent.toFixed(0)}%`;
-
-    // Mise à jour des informations de capacité et plan Render si disponibles
-    this.updateDatabaseInfo();
 
     // Mise à jour de la barre de progression
     const progressBar = document.getElementById("storageProgressBar");
@@ -3290,72 +3015,6 @@ class StorageManager {
       // Si la modale est ouverte, mettre à jour en temps réel
       await this.calculateStorageData();
       this.createChart();
-    }
-  }
-
-  /**
-   * Met à jour les informations de la base de données Render dans l'interface
-   */
-  updateDatabaseInfo() {
-    if (this.databaseInfo) {
-      // Créer ou mettre à jour un élément d'info de base de données
-      let dbInfoElement = document.getElementById("databaseInfoContainer");
-
-      if (!dbInfoElement) {
-        // Créer l'élément s'il n'existe pas
-        const storageModal = document.getElementById("storageModal");
-        if (storageModal) {
-          const modalBody = storageModal.querySelector(".modal-body");
-          if (modalBody) {
-            dbInfoElement = document.createElement("div");
-            dbInfoElement.id = "databaseInfoContainer";
-            dbInfoElement.className = "alert alert-info mt-3";
-            modalBody.appendChild(dbInfoElement);
-          }
-        }
-      }
-
-      if (dbInfoElement) {
-        dbInfoElement.innerHTML = `
-          <h6 class="alert-heading mb-3">
-            <i class="fas fa-database me-2"></i>Informations Base de Données Render
-          </h6>
-          <div class="row">
-            <div class="col-md-6">
-              <strong>Plan:</strong> ${
-                this.databaseInfo.render_info.estimated_plan
-              }<br>
-              <strong>Capacité Totale:</strong> ${
-                this.databaseInfo.database.total_capacity_formatted
-              }<br>
-              <strong>Utilisation DB:</strong> ${
-                this.databaseInfo.database.current_size_formatted
-              }
-            </div>
-            <div class="col-md-6">
-              <strong>Base de Données:</strong> ${
-                this.databaseInfo.database.name
-              }<br>
-              <strong>Espace Disponible:</strong> ${
-                this.databaseInfo.database.available_space_formatted
-              }<br>
-              <strong>Pourcentage:</strong> ${
-                this.databaseInfo.database.usage_percentage
-              }%
-            </div>
-          </div>
-          <div class="progress mt-2" style="height: 8px;">
-            <div class="progress-bar ${
-              this.databaseInfo.database.usage_percentage > 80
-                ? "bg-warning"
-                : "bg-success"
-            }" 
-                 style="width: ${
-                   this.databaseInfo.database.usage_percentage
-                 }%"></div>
-          </div>
-        `;
-      }
     }
   }
 }
