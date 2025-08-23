@@ -4640,7 +4640,6 @@ app.get("/api/archives", async (req, res) => {
 
       let whereConditions = [
         "delivery_status_acconier = 'mise_en_livraison_acconier'",
-        "(delivery_status_acconier != 'livre' AND delivery_status_acconier != 'livré')",
       ];
       let queryParams = [];
       let paramIndex = 1;
@@ -4960,7 +4959,6 @@ app.get("/api/archives/counts", async (req, res) => {
         SELECT DISTINCT dossier_number
         FROM livraison_conteneur 
         WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
-        AND (delivery_status_acconier != 'livre' AND delivery_status_acconier != 'livré')
         AND dossier_number IS NOT NULL 
         AND dossier_number != ''
       ) unique_dossiers
@@ -5020,7 +5018,6 @@ app.get("/api/archives/counts", async (req, res) => {
         SELECT DISTINCT dossier_number 
         FROM livraison_conteneur 
         WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
-        AND (delivery_status_acconier != 'livre' AND delivery_status_acconier != 'livré')
         AND dossier_number IS NOT NULL AND dossier_number != ''
         
         UNION
