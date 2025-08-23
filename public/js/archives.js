@@ -2229,15 +2229,27 @@ class StorageManager {
       return;
     }
 
-    // Mettre à jour les éléments de l'interface avec les vraies données serveur
-    document.getElementById("totalStorageSize").textContent =
-      stats.summary.total_storage_formatted;
-    document.getElementById("archivesCount").textContent =
-      stats.summary.total_archives_count.toLocaleString();
-    document.getElementById("uploadsSize").textContent =
-      stats.summary.uploads_formatted;
-    document.getElementById("uploadsCount").textContent =
-      stats.summary.uploads_count.toLocaleString();
+    // Mettre à jour les éléments de l'interface avec les vraies données serveur (si ils existent)
+    const totalStorageEl = document.getElementById("totalStorageSize");
+    if (totalStorageEl) {
+      totalStorageEl.textContent = stats.summary.total_storage_formatted;
+    }
+
+    const archivesCountEl = document.getElementById("archivesCount");
+    if (archivesCountEl) {
+      archivesCountEl.textContent =
+        stats.summary.total_archives_count.toLocaleString();
+    }
+
+    const uploadsSizeEl = document.getElementById("uploadsSize");
+    if (uploadsSizeEl) {
+      uploadsSizeEl.textContent = stats.summary.uploads_formatted;
+    }
+
+    const uploadsCountEl = document.getElementById("uploadsCount");
+    if (uploadsCountEl) {
+      uploadsCountEl.textContent = stats.summary.uploads_count.toLocaleString();
+    }
 
     // Calculer le pourcentage d'utilisation (capacité par défaut: 1GB)
     const usagePercent =
