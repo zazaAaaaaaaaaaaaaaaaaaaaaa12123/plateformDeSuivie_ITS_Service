@@ -4640,6 +4640,8 @@ app.get("/api/archives", async (req, res) => {
 
       let whereConditions = [
         "delivery_status_acconier = 'mise_en_livraison_acconier'",
+        "delivery_status_acconier != 'livre'",
+        "delivery_status_acconier != 'livré'",
       ];
       let queryParams = [];
       let paramIndex = 1;
@@ -4675,7 +4677,7 @@ app.get("/api/archives", async (req, res) => {
       queryParams.push(limit, offset);
 
       const query = `
-        SELECT DISTINCT ON (dossier_number)
+        SELECT 
           id,
           id as dossier_id,
           dossier_number as dossier_reference,
@@ -4698,7 +4700,7 @@ app.get("/api/archives", async (req, res) => {
           ) as dossier_data
         FROM livraison_conteneur 
         ${whereClause}
-        ORDER BY dossier_number, created_at DESC 
+        ORDER BY created_at DESC 
         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
       `;
 
@@ -4706,12 +4708,10 @@ app.get("/api/archives", async (req, res) => {
 
       const result = await pool.query(query, queryParams);
 
-      // Compter le total pour la pagination
+      // Compter le total pour la pagination - TOUS les dossiers
       const countQuery = `
-        SELECT COUNT(*) as total FROM (
-          SELECT DISTINCT dossier_number
-          FROM livraison_conteneur ${whereClause}
-        ) unique_dossiers
+        SELECT COUNT(*) as total 
+        FROM livraison_conteneur ${whereClause}
       `;
       const countResult = await pool.query(
         countQuery,
@@ -4953,15 +4953,15 @@ app.get("/api/archives/counts", async (req, res) => {
 
     const archiveCountsResult = await pool.query(archiveCountsQuery);
 
-    // Compter les dossiers en cours de livraison (NON livrés de resp_liv.html)
+    // Compter TOUS les dossiers en cours de livraison (NON livrés de resp_liv.html)
     const activeDeliveryCountQuery = `
-      SELECT COUNT(*) as count FROM (
-        SELECT DISTINCT dossier_number
-        FROM livraison_conteneur 
-        WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
-        AND dossier_number IS NOT NULL 
-        AND dossier_number != ''
-      ) unique_dossiers
+      SELECT COUNT(*) as count 
+      FROM livraison_conteneur 
+      WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
+      AND delivery_status_acconier != 'livre'
+      AND delivery_status_acconier != 'livré'
+      AND dossier_number IS NOT NULL 
+      AND dossier_number != ''
     `;
 
     // Compter les dossiers livrés (de resp_liv.html avec statut livré)
@@ -5018,6 +5018,8 @@ app.get("/api/archives/counts", async (req, res) => {
         SELECT DISTINCT dossier_number 
         FROM livraison_conteneur 
         WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
+        AND delivery_status_acconier != 'livre'
+        AND delivery_status_acconier != 'livré'
         AND dossier_number IS NOT NULL AND dossier_number != ''
         
         UNION
