@@ -97,7 +97,7 @@ class ArchivesManager {
 
     // Onglets
     document.querySelectorAll('[data-bs-toggle="tab"]').forEach((tab) => {
-      tab.addEventListener("shown.bs.tab", (e) => {
+      tab.addEventListener("shown.bs.tab", async (e) => {
         this.selectedTab = e.target.id.replace("-tab", "");
         this.currentPage = 1;
 
@@ -129,10 +129,13 @@ class ArchivesManager {
             this.renderCurrentView();
           }
         } else if (actionFilter && this.selectedTab === "all") {
-          // Si on revient à "all", vider le filtre action_type
-          this.currentFilters.action_type = "";
+          // 🎯 CORRECTION: Pour "Toutes les Archives", charger TOUS les types combinés
+          console.log(
+            "[ARCHIVES] 🔄 Chargement de TOUTES les archives (tous types combinés)"
+          );
+          this.currentFilters.action_type = ""; // Garder vide pour l'affichage
           actionFilter.value = "";
-          this.performSearch();
+          await this.loadAllCombinedArchives(); // Nouvelle méthode
         } else {
           this.renderCurrentView();
         }
@@ -494,6 +497,94 @@ class ArchivesManager {
     } catch (error) {
       console.error("Erreur lors du chargement des archives:", error);
       this.showNotification("Erreur de connexion", "error");
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  // 🎯 NOUVELLE MÉTHODE: Charger toutes les archives combinées pour l'onglet "Toutes les Archives"
+  async loadAllCombinedArchives() {
+    try {
+      this.showLoading(true);
+      console.log(
+        "[ARCHIVES] 🔄 Chargement de TOUTES les archives combinées..."
+      );
+
+      // 📊 Faire des appels parallèles pour chaque type d'archive
+      const promises = [
+        fetch(
+          `/api/archives?action_type=suppression&limit=${this.itemsPerPage}&page=${this.currentPage}`
+        ).then((r) => r.json()),
+        fetch(
+          `/api/archives?action_type=livraison&limit=${this.itemsPerPage}&page=${this.currentPage}`
+        ).then((r) => r.json()),
+        fetch(
+          `/api/archives?action_type=mise_en_livraison&limit=${this.itemsPerPage}&page=${this.currentPage}`
+        ).then((r) => r.json()),
+        fetch(
+          `/api/archives?action_type=ordre_livraison_etabli&limit=${this.itemsPerPage}&page=${this.currentPage}`
+        ).then((r) => r.json()),
+      ];
+
+      const [suppressionData, livraisonData, miseEnLivraisonData, ordreData] =
+        await Promise.all(promises);
+
+      // 🔗 Combiner toutes les archives
+      let allCombinedArchives = [];
+
+      if (suppressionData.success && suppressionData.archives) {
+        allCombinedArchives = allCombinedArchives.concat(
+          suppressionData.archives
+        );
+      }
+      if (livraisonData.success && livraisonData.archives) {
+        allCombinedArchives = allCombinedArchives.concat(
+          livraisonData.archives
+        );
+      }
+      if (miseEnLivraisonData.success && miseEnLivraisonData.archives) {
+        allCombinedArchives = allCombinedArchives.concat(
+          miseEnLivraisonData.archives
+        );
+      }
+      if (ordreData.success && ordreData.archives) {
+        allCombinedArchives = allCombinedArchives.concat(ordreData.archives);
+      }
+
+      // 📅 Trier par date de création (plus récent en premier)
+      allCombinedArchives.sort(
+        (a, b) => new Date(b.archived_at) - new Date(a.archived_at)
+      );
+
+      // 📑 Calculer la pagination combinée
+      const totalItems =
+        (suppressionData.pagination?.totalItems || 0) +
+        (livraisonData.pagination?.totalItems || 0) +
+        (miseEnLivraisonData.pagination?.totalItems || 0) +
+        (ordreData.pagination?.totalItems || 0);
+
+      this.filteredArchives = allCombinedArchives;
+      this.pagination = {
+        currentPage: this.currentPage,
+        totalPages: Math.ceil(totalItems / this.itemsPerPage),
+        totalItems: totalItems,
+        itemsPerPage: this.itemsPerPage,
+      };
+
+      console.log(
+        `[ARCHIVES] ✅ ${allCombinedArchives.length} archives combinées chargées (Total: ${totalItems})`
+      );
+
+      // 🎯 Mettre à jour l'affichage
+      this.renderCurrentView();
+      this.renderPagination();
+      await this.updateCounts();
+    } catch (error) {
+      console.error(
+        "[ARCHIVES] ❌ Erreur lors du chargement des archives combinées:",
+        error
+      );
+      this.showNotification("Erreur lors du chargement des archives", "error");
     } finally {
       this.showLoading(false);
     }
