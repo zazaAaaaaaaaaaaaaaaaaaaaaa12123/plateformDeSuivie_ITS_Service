@@ -2829,7 +2829,7 @@ class StorageManager {
     }
   }
 
-  // 🔧 MÉTHODE UTILITAIRE: Mise à jour sécurisée d'un élément
+  // 🔧 MÉTHODE UTILITAIRE: Mise à jour sécurisée d'un élément000
   safeUpdateElement(elementId, value) {
     try {
       const element = document.getElementById(elementId);
