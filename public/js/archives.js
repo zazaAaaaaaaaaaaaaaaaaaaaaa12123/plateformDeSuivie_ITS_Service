@@ -304,12 +304,71 @@ class ArchivesManager {
     }
   }
 
+  async syncLocalStorageHistory() {
+    console.log(
+      "[ARCHIVES] 🔄 Synchronisation de l'historique localStorage..."
+    );
+
+    try {
+      // Récupérer l'historique depuis localStorage (même clé que resp_liv.html)
+      const historyKey = "professional_delivery_history";
+      const historyData = JSON.parse(localStorage.getItem(historyKey) || "[]");
+
+      if (historyData.length === 0) {
+        console.log("[ARCHIVES] Aucun historique trouvé dans localStorage");
+        return { success: true, synced_count: 0 };
+      }
+
+      console.log(
+        `[ARCHIVES] Trouvé ${historyData.length} entrées dans l'historique localStorage`
+      );
+
+      // Envoyer les données au backend pour synchronisation
+      const response = await fetch("/api/archives/sync-history", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          historyData: historyData,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log(
+          `[ARCHIVES] ✅ Synchronisation réussie: ${result.synced_count} dossiers synchronisés`
+        );
+        return result;
+      } else {
+        console.error(
+          "[ARCHIVES] ❌ Erreur lors de la synchronisation:",
+          result.message
+        );
+        return { success: false, error: result.message };
+      }
+    } catch (error) {
+      console.error(
+        "[ARCHIVES] ❌ Erreur lors de la synchronisation localStorage:",
+        error
+      );
+      return { success: false, error: error.message };
+    }
+  }
+
   async updateCounts() {
     console.log(
       "[ARCHIVES] Mise à jour des compteurs - appels backend séparés..."
     );
 
     try {
+      // D'abord synchroniser l'historique localStorage pour les dossiers livrés
+      console.log(
+        "[ARCHIVES] Synchronisation de l'historique avant calcul des compteurs..."
+      );
+      await this.syncLocalStorageHistory();
+
       // Faire des appels séparés pour chaque action_type pour obtenir les vrais compteurs
       const countPromises = [
         fetch("/api/archives?action_type=suppression&limit=1").then((r) =>

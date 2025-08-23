@@ -4721,26 +4721,24 @@ app.get("/api/archives", async (req, res) => {
 
     if (action_type === "livraison") {
       console.log(
-        "[ARCHIVES API] Requête spéciale pour 'livraison' - récupération des dossiers livrés de resp_liv.html"
+        "[ARCHIVES API] Requête spéciale pour 'livraison' - récupération depuis archives_dossiers"
       );
 
-      let specialWhereConditions = [
-        "(delivery_status_acconier = 'livre' OR delivery_status_acconier = 'livré')",
-      ];
+      let specialWhereConditions = ["action_type = 'livraison'"];
       let specialParams = [];
       let specialParamIndex = 1;
 
       // Ajouter les filtres de date si fournis
       if (date_start && date_start.trim()) {
         specialWhereConditions.push(
-          `DATE(created_at) >= $${specialParamIndex}`
+          `DATE(archived_at) >= $${specialParamIndex}`
         );
         specialParams.push(date_start);
         specialParamIndex++;
       }
       if (date_end && date_end.trim()) {
         specialWhereConditions.push(
-          `DATE(created_at) <= $${specialParamIndex}`
+          `DATE(archived_at) <= $${specialParamIndex}`
         );
         specialParams.push(date_end);
         specialParamIndex++;
@@ -4749,10 +4747,10 @@ app.get("/api/archives", async (req, res) => {
       // Ajouter la recherche si fournie
       if (search && search.trim()) {
         specialWhereConditions.push(`(
-          dossier_number ILIKE $${specialParamIndex} OR 
-          container_type_and_content ILIKE $${specialParamIndex} OR 
+          dossier_reference ILIKE $${specialParamIndex} OR 
+          intitule ILIKE $${specialParamIndex} OR 
           client_name ILIKE $${specialParamIndex} OR
-          employee_name ILIKE $${specialParamIndex}
+          archived_by ILIKE $${specialParamIndex}
         )`);
         specialParams.push(`%${search}%`);
         specialParamIndex++;
@@ -4762,31 +4760,10 @@ app.get("/api/archives", async (req, res) => {
       specialParams.push(limit, offset);
 
       const specialQuery = `
-        SELECT DISTINCT ON (dossier_number)
-          id,
-          id as dossier_id,
-          dossier_number as dossier_reference,
-          container_type_and_content as intitule,
-          client_name,
-          'Responsable Livraison' as role_source,
-          'resp_liv.html' as page_origine,
-          'livraison' as action_type,
-          employee_name as archived_by,
-          '' as archived_by_email,
-          created_at as archived_at,
-          '{"source": "delivered", "status": "livré"}'::json as metadata,
-          json_build_object(
-            'id', id,
-            'dossier_number', dossier_number,
-            'client_name', client_name,
-            'employee_name', employee_name,
-            'container_type_and_content', container_type_and_content,
-            'delivery_status_acconier', delivery_status_acconier,
-            'created_at', created_at
-          ) as dossier_data
-        FROM livraison_conteneur
+        SELECT *
+        FROM archives_dossiers
         WHERE ${specialWhereConditions.join(" AND ")}
-        ORDER BY dossier_number, created_at DESC
+        ORDER BY archived_at DESC
         LIMIT $${specialParamIndex} OFFSET $${specialParamIndex + 1}
       `;
 
@@ -4795,8 +4772,8 @@ app.get("/api/archives", async (req, res) => {
 
       // Compter le total pour la pagination
       const countQuery = `
-        SELECT COUNT(DISTINCT dossier_number) as total 
-        FROM livraison_conteneur 
+        SELECT COUNT(*) as total 
+        FROM archives_dossiers 
         WHERE ${specialWhereConditions.join(" AND ")}
       `;
       const countResult = await pool.query(
@@ -5260,6 +5237,124 @@ app.get("/api/archives/container-details/:dossierId", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la récupération des détails",
+    });
+  }
+});
+
+// Synchroniser l'historique localStorage avec les archives
+app.post("/api/archives/sync-history", async (req, res) => {
+  try {
+    const { historyData } = req.body;
+
+    console.log(
+      "📋 Synchronisation de l'historique localStorage vers les archives..."
+    );
+    console.log(`📊 Nombre d'éléments reçus: ${historyData?.length || 0}`);
+
+    if (!historyData || !Array.isArray(historyData)) {
+      return res.status(400).json({
+        success: false,
+        message: "Données d'historique invalides",
+      });
+    }
+
+    const syncedArchives = [];
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const item of historyData) {
+      try {
+        // Créer une référence unique pour ce dossier livré
+        const dossier_reference =
+          item.declaration_number ||
+          item.dossier_number ||
+          `delivery_${item.delivery_id}`;
+
+        // Vérifier si cet élément existe déjà dans les archives
+        const existingArchive = await pool.query(
+          `SELECT id FROM archives_dossiers 
+           WHERE dossier_reference = $1 AND action_type = 'livraison'`,
+          [dossier_reference]
+        );
+
+        if (existingArchive.rows.length > 0) {
+          console.log(`⏩ Dossier ${dossier_reference} déjà archivé, ignoré`);
+          continue;
+        }
+
+        // Insérer dans les archives
+        const archiveResult = await pool.query(
+          `INSERT INTO archives_dossiers (
+            dossier_reference, intitule, client_name, role_source, 
+            page_origine, action_type, archived_by, archived_by_email,
+            dossier_data, metadata, is_restorable
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          RETURNING *`,
+          [
+            dossier_reference,
+            item.container_type_and_content ||
+              `Livraison conteneur ${item.container_number}`,
+            item.client_name,
+            "Responsable Livraison",
+            "resp_liv.html",
+            "livraison",
+            item.employee_name || item.visitor_agent_name || "Système",
+            "",
+            JSON.stringify({
+              container_number: item.container_number,
+              delivery_date: item.delivery_date,
+              delivery_time: item.delivery_time,
+              client_name: item.client_name,
+              declaration_number: item.declaration_number,
+              dossier_number: item.dossier_number,
+              employee_name: item.employee_name,
+              visitor_agent_name: item.visitor_agent_name,
+              transporter: item.transporter,
+              container_type_and_content: item.container_type_and_content,
+              delivery_id: item.delivery_id,
+              original_history_data: item,
+            }),
+            JSON.stringify({
+              sync_source: "localStorage_history",
+              sync_date: new Date().toISOString(),
+              source_page: "resp_liv.html",
+              history_button: "historique",
+            }),
+            false, // Les livraisons ne sont pas restaurables
+          ]
+        );
+
+        syncedArchives.push(archiveResult.rows[0]);
+        successCount++;
+
+        console.log(`✅ Archivé: ${dossier_reference} - ${item.client_name}`);
+      } catch (itemError) {
+        console.error(
+          `❌ Erreur lors de l'archivage de ${
+            item.declaration_number || item.dossier_number
+          }:`,
+          itemError
+        );
+        errorCount++;
+      }
+    }
+
+    console.log(
+      `🎯 Synchronisation terminée: ${successCount} succès, ${errorCount} erreurs`
+    );
+
+    res.json({
+      success: true,
+      message: `Synchronisation terminée: ${successCount} dossiers archivés`,
+      synced_count: successCount,
+      error_count: errorCount,
+      synced_archives: syncedArchives,
+    });
+  } catch (err) {
+    console.error("🚨 Erreur lors de la synchronisation de l'historique:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la synchronisation",
     });
   }
 });
