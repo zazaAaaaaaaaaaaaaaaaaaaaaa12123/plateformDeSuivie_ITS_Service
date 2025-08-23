@@ -4050,36 +4050,6 @@ app.put("/deliveries/:id", async (req, res) => {
       }
     }
 
-    // ARCHIVAGE AUTOMATIQUE DES DOSSIERS LIVRÉS
-    // Vérifier si le statut est "livré" pour archiver automatiquement
-    if (updates.hasOwnProperty("delivery_status_acconier") && 
-        (updates.delivery_status_acconier === "livre" || 
-         updates.delivery_status_acconier === "livré")) {
-      
-      try {
-        console.log(`[AUTO-ARCHIVE] Archivage automatique du dossier livré: ${updatedDelivery.dossier_number}`);
-        
-        // Insérer dans archives_dossiers
-        const archiveQuery = `
-          INSERT INTO archives_dossiers (
-            dossier_number, action_type, dossier_data, archived_at
-          ) VALUES ($1, $2, $3, NOW())
-          ON CONFLICT (dossier_number, action_type) DO NOTHING
-        `;
-        
-        await pool.query(archiveQuery, [
-          updatedDelivery.dossier_number,
-          'livraison',
-          JSON.stringify(updatedDelivery)
-        ]);
-        
-        console.log(`[AUTO-ARCHIVE] Dossier ${updatedDelivery.dossier_number} archivé automatiquement dans "Dossiers Livrés"`);
-      } catch (archiveError) {
-        console.error("[AUTO-ARCHIVE] Erreur lors de l'archivage automatique:", archiveError);
-        // Ne pas faire échouer la mise à jour pour un problème d'archivage
-      }
-    }
-
     const payload = JSON.stringify({
       type: "delivery_update_alert",
       message: updateMessage,
@@ -4670,6 +4640,7 @@ app.get("/api/archives", async (req, res) => {
 
       let whereConditions = [
         "delivery_status_acconier = 'mise_en_livraison_acconier'",
+        "(delivery_status_acconier != 'livre' AND delivery_status_acconier != 'livré')",
       ];
       let queryParams = [];
       let paramIndex = 1;
@@ -4767,35 +4738,38 @@ app.get("/api/archives", async (req, res) => {
     }
     // *** FIN LOGIQUE SPÉCIALE POUR "MISE EN LIVRAISON" ***
 
-    // *** LOGIQUE SPÉCIALE POUR "LIVRAISON" (DOSSIERS LIVRÉS) ***
+    // *** LOGIQUE SPÉCIALE POUR "LIVRAISON" (DOSSIERS LIVRÉS DE RESP_LIV.HTML) ***
     if (action_type === "livraison") {
       console.log(
-        "[ARCHIVES API] Requête spéciale pour 'livraison' - récupération des dossiers livrés archivés"
+        "[ARCHIVES API] Requête spéciale pour 'livraison' - récupération des dossiers livrés de resp_liv.html"
       );
 
-      let whereConditions = ["action_type = 'livraison'"];
+      let whereConditions = [
+        "(delivery_status_acconier = 'livre' OR delivery_status_acconier = 'livré')",
+      ];
       let queryParams = [];
       let paramIndex = 1;
 
-      // Filtres de recherche pour les dossiers livrés archivés
+      // Filtres de recherche pour les dossiers livrés
       if (search && search.trim()) {
         whereConditions.push(`(
+          container_number ILIKE $${paramIndex} OR 
           dossier_number ILIKE $${paramIndex} OR 
-          dossier_data->>'client_name' ILIKE $${paramIndex} OR
-          archived_by ILIKE $${paramIndex}
+          client_name ILIKE $${paramIndex} OR
+          employee_name ILIKE $${paramIndex}
         )`);
         queryParams.push(`%${search}%`);
         paramIndex++;
       }
 
       if (date_start && date_start.trim()) {
-        whereConditions.push(`DATE(archived_at) >= $${paramIndex}`);
+        whereConditions.push(`DATE(created_at) >= $${paramIndex}`);
         queryParams.push(date_start);
         paramIndex++;
       }
 
       if (date_end && date_end.trim()) {
-        whereConditions.push(`DATE(archived_at) <= $${paramIndex}`);
+        whereConditions.push(`DATE(created_at) <= $${paramIndex}`);
         queryParams.push(date_end);
         paramIndex++;
       }
@@ -4807,22 +4781,31 @@ app.get("/api/archives", async (req, res) => {
       queryParams.push(limit, offset);
 
       const query = `
-        SELECT 
+        SELECT DISTINCT ON (dossier_number)
           id,
+          id as dossier_id,
           dossier_number as dossier_reference,
-          dossier_data->>'container_type_and_content' as intitule,
-          dossier_data->>'client_name' as client_name,
+          container_type_and_content as intitule,
+          client_name,
           'Responsable Livraison' as role_source,
           'resp_liv.html' as page_origine,
-          action_type,
-          archived_by,
-          archived_by_email,
-          archived_at,
-          metadata,
-          dossier_data
-        FROM archives_dossiers 
+          'livraison' as action_type,
+          employee_name as archived_by,
+          '' as archived_by_email,
+          created_at as archived_at,
+          '{"source": "delivered", "status": "livré"}'::json as metadata,
+          json_build_object(
+            'id', id,
+            'dossier_number', dossier_number,
+            'client_name', client_name,
+            'employee_name', employee_name,
+            'container_type_and_content', container_type_and_content,
+            'delivery_status_acconier', delivery_status_acconier,
+            'created_at', created_at
+          ) as dossier_data
+        FROM livraison_conteneur 
         ${whereClause}
-        ORDER BY archived_at DESC 
+        ORDER BY dossier_number, created_at DESC 
         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
       `;
 
@@ -4832,7 +4815,10 @@ app.get("/api/archives", async (req, res) => {
 
       // Compter le total pour la pagination
       const countQuery = `
-        SELECT COUNT(*) as total FROM archives_dossiers ${whereClause}
+        SELECT COUNT(*) as total FROM (
+          SELECT DISTINCT dossier_number
+          FROM livraison_conteneur ${whereClause}
+        ) unique_dossiers
       `;
       const countResult = await pool.query(
         countQuery,
@@ -4968,13 +4954,24 @@ app.get("/api/archives/counts", async (req, res) => {
 
     const archiveCountsResult = await pool.query(archiveCountsQuery);
 
-    // Compter les dossiers en cours de livraison (pour l'onglet "Mise en Livraison")
-    // Utiliser la même logique que pour l'affichage : DISTINCT ON (dossier_number)
+    // Compter les dossiers en cours de livraison (NON livrés de resp_liv.html)
     const activeDeliveryCountQuery = `
       SELECT COUNT(*) as count FROM (
         SELECT DISTINCT dossier_number
         FROM livraison_conteneur 
         WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
+        AND (delivery_status_acconier != 'livre' AND delivery_status_acconier != 'livré')
+        AND dossier_number IS NOT NULL 
+        AND dossier_number != ''
+      ) unique_dossiers
+    `;
+
+    // Compter les dossiers livrés (de resp_liv.html avec statut livré)
+    const deliveredCountQuery = `
+      SELECT COUNT(*) as count FROM (
+        SELECT DISTINCT dossier_number
+        FROM livraison_conteneur 
+        WHERE (delivery_status_acconier = 'livre' OR delivery_status_acconier = 'livré')
         AND dossier_number IS NOT NULL 
         AND dossier_number != ''
       ) unique_dossiers
@@ -4983,6 +4980,7 @@ app.get("/api/archives/counts", async (req, res) => {
     const activeDeliveryCountResult = await pool.query(
       activeDeliveryCountQuery
     );
+    const deliveredCountResult = await pool.query(deliveredCountQuery);
 
     // Initialiser les compteurs
     const counts = {
@@ -4992,33 +4990,45 @@ app.get("/api/archives/counts", async (req, res) => {
       ordre_livraison_etabli: 0,
     };
 
-    // Remplir les compteurs des archives
+    // Remplir les compteurs des archives (seulement suppression et ordre_livraison_etabli)
     archiveCountsResult.rows.forEach((row) => {
       if (counts.hasOwnProperty(row.action_type)) {
         counts[row.action_type] = parseInt(row.count);
       }
     });
 
-    // Ajouter les dossiers en cours pour "mise_en_livraison"
-    counts.mise_en_livraison += parseInt(
+    // Les dossiers "Mise en Livraison" viennent de resp_liv.html (non livrés)
+    counts.mise_en_livraison = parseInt(
       activeDeliveryCountResult.rows[0].count
     );
 
+    // Les dossiers "Livrés" viennent de resp_liv.html (avec statut livré)
+    counts.livraison = parseInt(deliveredCountResult.rows[0].count);
+
     // Calculer le vrai total de tous les dossiers uniques
-    // Compter les dossiers uniques à travers toutes les sources
     const totalUniqueQuery = `
       WITH all_dossiers AS (
-        -- Dossiers archivés
+        -- Dossiers archivés (suppression et ordre_livraison_etabli)
         SELECT DISTINCT dossier_number 
         FROM archives_dossiers 
-        WHERE dossier_number IS NOT NULL AND dossier_number != ''
+        WHERE action_type IN ('suppression', 'ordre_livraison_etabli')
+        AND dossier_number IS NOT NULL AND dossier_number != ''
         
         UNION
         
-        -- Dossiers actifs en livraison
+        -- Dossiers en cours de livraison (non livrés)
         SELECT DISTINCT dossier_number 
         FROM livraison_conteneur 
         WHERE delivery_status_acconier = 'mise_en_livraison_acconier'
+        AND (delivery_status_acconier != 'livre' AND delivery_status_acconier != 'livré')
+        AND dossier_number IS NOT NULL AND dossier_number != ''
+        
+        UNION
+        
+        -- Dossiers livrés
+        SELECT DISTINCT dossier_number 
+        FROM livraison_conteneur 
+        WHERE (delivery_status_acconier = 'livre' OR delivery_status_acconier = 'livré')
         AND dossier_number IS NOT NULL AND dossier_number != ''
       )
       SELECT COUNT(*) as count FROM all_dossiers
