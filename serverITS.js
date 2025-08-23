@@ -4883,10 +4883,26 @@ app.get("/api/archives/counts", async (req, res) => {
       activeDeliveryCountResult.rows[0].count
     );
 
-    // Calculer le total
-    counts.all = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    // Calculer le vrai total de tous les dossiers uniques (archives + dossiers actifs)
+    // Pour éviter de compter deux fois les dossiers mise_en_livraison
+    const totalArchivesQuery = `
+      SELECT COUNT(*) as count FROM archives_dossiers
+    `;
+
+    const totalArchivesResult = await pool.query(totalArchivesQuery);
+    const totalArchives = parseInt(totalArchivesResult.rows[0].count);
+    const activeDeliveries = parseInt(activeDeliveryCountResult.rows[0].count);
+
+    // Le total réel = archives + dossiers actifs de livraison
+    counts.all = totalArchives + activeDeliveries;
 
     console.log("[ARCHIVES COUNTS] Compteurs calculés:", counts);
+    console.log(
+      "[ARCHIVES COUNTS] Total archives:",
+      totalArchives,
+      "Active deliveries:",
+      activeDeliveries
+    );
 
     res.json({
       success: true,
