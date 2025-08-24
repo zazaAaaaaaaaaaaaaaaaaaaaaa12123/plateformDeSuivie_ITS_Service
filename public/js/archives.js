@@ -550,9 +550,19 @@ class ArchivesManager {
         await this.updateCounts();
 
         // Afficher les résultats filtrés
-
         this.renderCurrentView();
         this.renderPagination();
+
+        // 💾 NOUVEAU: Mettre à jour automatiquement l'interface de stockage après chargement
+        console.log(
+          "[ARCHIVES] 💾 Mise à jour automatique de l'interface de stockage..."
+        );
+        if (
+          window.storageManager &&
+          typeof window.storageManager.updateStorageData === "function"
+        ) {
+          await window.storageManager.updateStorageData();
+        }
 
         console.log(
           "[ARCHIVES] Rendu terminé - Archives filtrées:",
@@ -673,6 +683,17 @@ class ArchivesManager {
       this.renderCurrentView();
       this.renderPagination();
       await this.updateCounts();
+
+      // 💾 NOUVEAU: Mettre à jour automatiquement l'interface de stockage après chargement
+      console.log(
+        "[ARCHIVES] 💾 Mise à jour automatique de l'interface de stockage..."
+      );
+      if (
+        window.storageManager &&
+        typeof window.storageManager.updateStorageData === "function"
+      ) {
+        await window.storageManager.updateStorageData();
+      }
     } catch (error) {
       console.error(
         "[ARCHIVES] ❌ Erreur lors du chargement des archives combinées:",
@@ -862,6 +883,17 @@ class ArchivesManager {
       // 🎯 Mettre à jour l'affichage
       this.renderCurrentView();
       this.renderPagination();
+
+      // 💾 NOUVEAU: Mettre à jour automatiquement l'interface de stockage après chargement
+      console.log(
+        "[ARCHIVES] 💾 Mise à jour automatique de l'interface de stockage..."
+      );
+      if (
+        window.storageManager &&
+        typeof window.storageManager.updateStorageData === "function"
+      ) {
+        await window.storageManager.updateStorageData();
+      }
     } catch (error) {
       console.error("[ARCHIVES] ❌ Erreur lors du calcul du total:", error);
       this.showNotification("Erreur lors du calcul du total", "error");
@@ -3237,6 +3269,28 @@ class StorageManager {
     let totalSize = 0;
     let totalCount = archives.length;
 
+    // 🎯 PRIORITÉ: UTILISER LA VRAIE TAILLE DE LA BASE DE DONNÉES
+    if (realDatabaseInfo && realDatabaseInfo.database) {
+      // ✅ REMPLACER les estimations par la vraie taille DB
+      const realDbSizeMB =
+        realDatabaseInfo.database.current_size_bytes / (1024 * 1024);
+      totalSize = realDbSizeMB;
+
+      console.log(
+        `🎯 [STORAGE] VRAIE taille DB utilisée: ${realDbSizeMB.toFixed(
+          2
+        )} MB au lieu d'estimations`
+      );
+      console.log(
+        `📊 [STORAGE] Économie d'affichage: estimation évitée pour ${totalCount} archives`
+      );
+    } else {
+      console.warn(
+        "⚠️ [STORAGE] Données DB indisponibles, calcul d'estimations..."
+      );
+      // Fallback vers les estimations uniquement si la vraie taille n'est pas disponible
+    }
+
     // 🎯 NOUVEAU: Si on n'est pas sur l'onglet "all", filtrer pour ne montrer que le type actuel
     let archivesToProcess = archives;
 
@@ -3270,35 +3324,72 @@ class StorageManager {
       }
     }
 
-    // Calculer les données des archives
-    archivesToProcess.forEach((archive) => {
-      const archiveSize = this.estimateArchiveSize(archive);
-      const actionType = archive.action_type;
+    // Calculer les données des archives SEULEMENT si on n'a pas la vraie taille DB
+    if (!realDatabaseInfo || !realDatabaseInfo.database) {
+      console.log(
+        "🔄 [STORAGE] Calcul des estimations car vraie taille DB indisponible..."
+      );
 
-      if (realStats[actionType]) {
-        // Pour mise_en_livraison et ordre_livraison_etabli, on utilise les comptes réels quand on est sur "all"
-        // 🔧 CORRECTION: Vérifier que archivesManager existe avant d'accéder à selectedTab
-        if (
-          this.archivesManager &&
-          this.archivesManager.selectedTab === "all"
-        ) {
+      archivesToProcess.forEach((archive) => {
+        const archiveSize = this.estimateArchiveSize(archive);
+        const actionType = archive.action_type;
+
+        if (realStats[actionType]) {
+          // Pour mise_en_livraison et ordre_livraison_etabli, on utilise les comptes réels quand on est sur "all"
+          // 🔧 CORRECTION: Vérifier que archivesManager existe avant d'accéder à selectedTab
           if (
-            actionType !== "mise_en_livraison" &&
-            actionType !== "ordre_livraison_etabli"
+            this.archivesManager &&
+            this.archivesManager.selectedTab === "all"
           ) {
+            if (
+              actionType !== "mise_en_livraison" &&
+              actionType !== "ordre_livraison_etabli"
+            ) {
+              realStats[actionType].count++;
+            }
+          } else {
+            // Pour les onglets spécifiques, on compte normalement
             realStats[actionType].count++;
           }
-        } else {
-          // Pour les onglets spécifiques, on compte normalement
-          realStats[actionType].count++;
+
+          realStats[actionType].size += archiveSize;
+          realStats[actionType].archives.push(archive);
         }
 
-        realStats[actionType].size += archiveSize;
-        realStats[actionType].archives.push(archive);
-      }
+        totalSize += archiveSize;
+      });
+    } else {
+      // ✅ VRAIE TAILLE DB DISPONIBLE - juste compter les archives par type
+      console.log(
+        "✅ [STORAGE] Vraie taille DB utilisée, comptage des archives par type seulement..."
+      );
 
-      totalSize += archiveSize;
-    });
+      archivesToProcess.forEach((archive) => {
+        const actionType = archive.action_type;
+
+        if (realStats[actionType]) {
+          // Compter les archives par type sans calculer de taille estimée
+          if (
+            this.archivesManager &&
+            this.archivesManager.selectedTab === "all"
+          ) {
+            if (
+              actionType !== "mise_en_livraison" &&
+              actionType !== "ordre_livraison_etabli"
+            ) {
+              realStats[actionType].count++;
+            }
+          } else {
+            realStats[actionType].count++;
+          }
+
+          realStats[actionType].archives.push(archive);
+          // 📊 Répartir la vraie taille DB proportionnellement par type
+          const typeRatio = realStats[actionType].count / totalCount;
+          realStats[actionType].size = totalSize * typeRatio;
+        }
+      });
+    }
 
     console.log("📊 Données temps réel récupérées:", realTimeData);
     console.log("📊 Statistiques finales:", realStats);
