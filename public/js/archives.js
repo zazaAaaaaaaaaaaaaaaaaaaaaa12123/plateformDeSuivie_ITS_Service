@@ -2571,11 +2571,23 @@ class StorageManager {
   }
 
   init() {
+    // VÉRIFIER D'ABORD si nous sommes sur la page archives
+    const storageBtn = document.getElementById("storageStatusBtn");
+    const totalCapacityEl = document.getElementById("totalStorageCapacity");
+
+    if (!storageBtn || !totalCapacityEl) {
+      console.log(
+        "🔍 [STORAGE] Page non-archives détectée, initialisation limitée"
+      );
+      return; // NE PAS initialiser sur les autres pages
+    }
+
+    console.log("🔍 [STORAGE] Page archives détectée, initialisation complète");
+
     this.bindEvents();
 
     // Debug: Vérifier si nous sommes sur la bonne page
     console.log("🔍 [DEBUG] Initialisation StorageManager");
-    const totalCapacityEl = document.getElementById("totalStorageCapacity");
     const totalAvailableEl = document.getElementById("totalAvailableStorage");
     console.log("🔍 [DEBUG] Éléments trouvés:", {
       totalCapacityEl: !!totalCapacityEl,
@@ -2611,12 +2623,12 @@ class StorageManager {
       optimizeBtn.addEventListener("click", () => this.optimizeStorage());
     }
 
-    // Écouter les événements de mise à jour des archives
+    // Écouter les événements de mise à jour des archives SEULEMENT sur page archives
     document.addEventListener("archiveUpdated", () => {
       this.updateStorageData();
     });
 
-    // ⏰ MISE À JOUR AUTOMATIQUE EN TEMPS RÉEL toutes les 30 secondes
+    // ⏰ MISE À JOUR AUTOMATIQUE EN TEMPS RÉEL toutes les 30 secondes SEULEMENT sur page archives
     this.startAutoRefresh();
   }
 
@@ -2738,18 +2750,7 @@ class StorageManager {
   }
 
   async showStorageModal() {
-    console.log("📊 [STORAGE] Ouverture du modal de stockage");
-
-    // Afficher le spinner de chargement
-    if (this.archivesManager && this.archivesManager.showLoading) {
-      this.archivesManager.showLoading(true);
-    } else {
-      // Fallback: afficher directement le spinner
-      const spinner = document.getElementById("loadingSpinner");
-      if (spinner) {
-        spinner.style.display = "block";
-      }
-    }
+    console.log("📊 [STORAGE] Ouverture DIRECTE du modal - SANS SPINNER");
 
     // Nettoyer d'abord
     this.cleanupModalBackdrop();
@@ -2762,22 +2763,11 @@ class StorageManager {
       return;
     }
 
+    // IMMÉDIATEMENT mettre à jour les données AVANT d'afficher le modal
+    await this.updateModalWithSafeData();
+
     // Créer le modal
     const modal = new bootstrap.Modal(modalElement);
-
-    // Gestionnaire quand le modal est COMPLÈTEMENT affiché
-    modalElement.addEventListener(
-      "shown.bs.modal",
-      () => {
-        console.log("📊 [STORAGE] Modal affiché, mise à jour des données...");
-
-        // Délai plus long pour s'assurer que tous les éléments DOM sont présents
-        setTimeout(() => {
-          this.updateModalWithSafeData();
-        }, 500); // Augmenter le délai à 500ms
-      },
-      { once: true }
-    );
 
     // Gestionnaire de fermeture
     modalElement.addEventListener(
@@ -2788,8 +2778,10 @@ class StorageManager {
       { once: true }
     );
 
-    // Afficher le modal
+    // Afficher le modal - LES DONNÉES SONT DÉJÀ LÀ
     modal.show();
+
+    console.log("✅ [STORAGE] Modal affiché avec données instantanées");
   }
 
   // 🔧 MÉTHODE ULTRA-SIMPLE: Affichage direct sans attente
