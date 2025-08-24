@@ -2411,6 +2411,11 @@ window.archiveDossier = async function (
   pageOrigine
 ) {
   try {
+    // 🎯 SOLUTION SIMPLE : Pas de vérification préventive complexe, juste gérer l'erreur 409 proprement
+    console.log(
+      `[ARCHIVE] � Tentative d'archivage pour action "${actionType}"`
+    );
+
     // Récupérer les informations utilisateur correctes (vraies, pas génériques)
     let userName = "Utilisateur";
     let userEmail = "";
@@ -2529,12 +2534,13 @@ window.archiveDossier = async function (
 
       return true;
     } else {
-      // Gérer spécifiquement l'erreur 409 (doublon) - ne pas afficher d'erreur
+      // Gérer spécifiquement l'erreur 409 (doublon) - SILENCIEUX, pas de notification
       if (response.status === 409) {
+        // 🎯 SOLUTION FINALE: Traiter comme un succès silencieux
         console.log(
-          `[ARCHIVE] Dossier "${archiveData.dossier_reference}" déjà archivé pour l'action "${actionType}" - ignoré silencieusement`
+          `[ARCHIVE] ✅ Dossier déjà archivé - ignoré silencieusement`
         );
-        return true; // Considérer comme un succès car l'objectif est atteint
+        return true; // Succès silencieux - AUCUNE erreur visible
       } else {
         console.error("Erreur lors de l'archivage:", result.message);
         return false;
