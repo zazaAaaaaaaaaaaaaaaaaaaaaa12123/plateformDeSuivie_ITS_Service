@@ -2740,6 +2740,17 @@ class StorageManager {
   async showStorageModal() {
     console.log("📊 [STORAGE] Ouverture du modal de stockage");
 
+    // Afficher le spinner de chargement
+    if (this.archivesManager && this.archivesManager.showLoading) {
+      this.archivesManager.showLoading(true);
+    } else {
+      // Fallback: afficher directement le spinner
+      const spinner = document.getElementById("loadingSpinner");
+      if (spinner) {
+        spinner.style.display = "block";
+      }
+    }
+
     // Nettoyer d'abord
     this.cleanupModalBackdrop();
 
@@ -2760,10 +2771,10 @@ class StorageManager {
       () => {
         console.log("📊 [STORAGE] Modal affiché, mise à jour des données...");
 
-        // Délai pour s'assurer que tous les éléments DOM sont présents
+        // Délai plus long pour s'assurer que tous les éléments DOM sont présents
         setTimeout(() => {
           this.updateModalWithSafeData();
-        }, 100);
+        }, 500); // Augmenter le délai à 500ms
       },
       { once: true }
     );
@@ -2786,108 +2797,6 @@ class StorageManager {
     console.log("📊 [STORAGE] Mise à jour avec les vraies données du modal");
 
     try {
-      // 1. Récupérer le vrai nombre d'archives selon l'onglet actuel
-      let realArchiveCount = 0;
-      let realEstimatedSize = 0;
-
-      if (this.archivesManager) {
-        if (
-          this.archivesManager.selectedTab === "all" &&
-          this.archivesManager.allCombinedArchives
-        ) {
-          realArchiveCount = this.archivesManager.allCombinedArchives.length;
-          realEstimatedSize = this.archivesManager.allCombinedArchives.reduce(
-            (total, archive) => {
-              return total + this.estimateArchiveSize(archive);
-            },
-            0
-          );
-        } else if (this.archivesManager.allArchives) {
-          realArchiveCount = this.archivesManager.allArchives.length;
-          realEstimatedSize = this.archivesManager.allArchives.reduce(
-            (total, archive) => {
-              return total + this.estimateArchiveSize(archive);
-            },
-            0
-          );
-        }
-      }
-
-      // 2. Si pas de données locales, récupérer depuis l'API
-      if (realArchiveCount === 0) {
-        try {
-          console.log(
-            "📊 [STORAGE] Récupération des vraies données depuis l'API..."
-          );
-
-          // Récupérer tous les types d'archives
-          const promises = [
-            fetch("/api/archives?action_type=suppression&limit=9999").then(
-              (r) => r.json()
-            ),
-            fetch("/api/archives?action_type=livraison&limit=9999").then((r) =>
-              r.json()
-            ),
-            fetch(
-              "/api/archives?action_type=mise_en_livraison&limit=9999"
-            ).then((r) => r.json()),
-            fetch(
-              "/api/archives?action_type=ordre_livraison_etabli&limit=9999"
-            ).then((r) => r.json()),
-          ];
-
-          const [
-            suppressionData,
-            livraisonData,
-            miseEnLivraisonData,
-            ordreData,
-          ] = await Promise.all(promises);
-
-          // Compter toutes les archives
-          realArchiveCount =
-            (suppressionData.success ? suppressionData.archives.length : 0) +
-            (livraisonData.success ? livraisonData.archives.length : 0) +
-            (miseEnLivraisonData.success
-              ? miseEnLivraisonData.archives.length
-              : 0) +
-            (ordreData.success ? ordreData.archives.length : 0);
-
-          // Calculer la taille estimée
-          const allArchives = [
-            ...(suppressionData.success ? suppressionData.archives : []),
-            ...(livraisonData.success ? livraisonData.archives : []),
-            ...(miseEnLivraisonData.success
-              ? miseEnLivraisonData.archives
-              : []),
-            ...(ordreData.success ? ordreData.archives : []),
-          ];
-
-          realEstimatedSize = allArchives.reduce((total, archive) => {
-            return total + this.estimateArchiveSize(archive);
-          }, 0);
-
-          console.log(
-            `📊 [STORAGE] Données API: ${realArchiveCount} archives, ${realEstimatedSize.toFixed(
-              1
-            )} MB`
-          );
-        } catch (apiError) {
-          console.error(
-            "❌ [STORAGE] Erreur API, utilisation des données par défaut",
-            apiError
-          );
-          realArchiveCount = 10; // Valeur par défaut
-          realEstimatedSize = 5.0; // 5 MB par défaut
-        }
-      }
-
-      const totalCapacity = 10240; // 10 GB en MB
-      const usedPercent = Math.min(
-        (realEstimatedSize / totalCapacity) * 100,
-        100
-      );
-      const availableSize = totalCapacity - realEstimatedSize;
-
       // Vérifier que le modal est bien visible
       const modalElement = document.getElementById("storageModal");
       if (!modalElement || !modalElement.classList.contains("show")) {
@@ -2895,66 +2804,45 @@ class StorageManager {
         return;
       }
 
-      // Mise à jour avec les vraies données
-      const updates = [
-        { id: "totalArchiveCount", value: realArchiveCount.toString() },
-        { id: "totalUsedStorage", value: `${realEstimatedSize.toFixed(1)} MB` },
-        {
-          id: "totalAvailableStorage",
-          value: `${availableSize.toFixed(1)} MB`,
-        },
-        { id: "totalStorageCapacity", value: "10.0 GB" },
-        { id: "storagePercentage", value: `${usedPercent.toFixed(1)}%` },
-        { id: "chartCenterValue", value: `${usedPercent.toFixed(0)}%` },
-        { id: "lastUpdateTime", value: new Date().toLocaleString("fr-FR") },
-      ];
+      // Utiliser la méthode qui récupère les vraies données de la DB
+      await this.processRealArchiveData();
 
-      let successCount = 0;
-      updates.forEach((update) => {
-        if (this.safeUpdateElement(update.id, update.value)) {
-          successCount++;
+      // Attendre un petit délai pour que les données soient bien affichées
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // Forcer la mise à jour de l'affichage du modal après le chargement des données
+      if (this.archivesManager && this.archivesManager.showLoading) {
+        this.archivesManager.showLoading(false);
+      } else {
+        // Fallback: cacher directement le spinner
+        const spinner = document.getElementById("loadingSpinner");
+        if (spinner) {
+          spinner.style.display = "none";
         }
-      });
-
-      // Mise à jour de la barre de progression avec vérification
-      const progressBar = document.getElementById("storageProgressBar");
-      if (progressBar) {
-        progressBar.style.width = `${usedPercent}%`;
-        progressBar.setAttribute("aria-valuenow", usedPercent);
-
-        // Couleur selon le niveau
-        if (usedPercent > 90) {
-          progressBar.style.background =
-            "linear-gradient(90deg, #ef4444, #dc2626)";
-        } else if (usedPercent > 75) {
-          progressBar.style.background =
-            "linear-gradient(90deg, #f59e0b, #d97706)";
-        } else {
-          progressBar.style.background =
-            "linear-gradient(90deg, #10b981, #059669)";
-        }
-        successCount++;
       }
 
       console.log(
-        `✅ [STORAGE] ${successCount}/${
-          updates.length + 1
-        } éléments mis à jour avec succès`
-      );
-      console.log(
-        `📊 [STORAGE] Vraies données: ${realArchiveCount} archives, ${realEstimatedSize.toFixed(
-          1
-        )} MB utilisés`
+        "✅ [STORAGE] Données mises à jour avec les vraies valeurs de la DB"
       );
     } catch (error) {
       console.error(
         "❌ [STORAGE] Erreur lors de la mise à jour avec vraies données:",
         error
       );
+      // Cacher le spinner même en cas d'erreur
+      if (this.archivesManager && this.archivesManager.showLoading) {
+        this.archivesManager.showLoading(false);
+      } else {
+        // Fallback: cacher directement le spinner
+        const spinner = document.getElementById("loadingSpinner");
+        if (spinner) {
+          spinner.style.display = "none";
+        }
+      }
     }
   }
 
-  // 🔧 MÉTHODE UTILITAIRE: Mise à jour sécurisée d'un élément000
+  // 🔧 MÉTHODE UTILITAIRE: Mise à jour sécurisée d'un élément
   safeUpdateElement(elementId, value) {
     try {
       const element = document.getElementById(elementId);
