@@ -5716,38 +5716,6 @@
           }
         };
 
-        // Fonction de test pour simuler des utilisateurs connectés (à supprimer en production)
-        window.testActiveUsers = function () {
-          // Simuler un utilisateur sur resp_acconier.html
-          fetch(`${window.API_BASE_URL}/api/active-users/heartbeat`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              page: "resp_acconier.html",
-              userId: "test_acconier_1",
-              username: "TestAcconier",
-              nom: "Agent Acconier Test",
-            }),
-          });
-
-          // Simuler un utilisateur sur resp_liv.html
-          fetch(`${window.API_BASE_URL}/api/active-users/heartbeat`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              page: "resp_liv.html",
-              userId: "test_liv_1",
-              username: "TestLivraison",
-              nom: "Agent Livraison Test",
-            }),
-          });
-
-          console.log(
-            "✅ Utilisateurs de test ajoutés ! Attendez 3 secondes et regardez les indicateurs."
-          );
-          setTimeout(updateConnectedUsers, 3000);
-        };
-
         // Mettre à jour les utilisateurs connectés toutes les 15 secondes
         setInterval(updateConnectedUsers, 15000);
 

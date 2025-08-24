@@ -1831,7 +1831,18 @@
         function getUserInfo() {
           const userName = localStorage.getItem("userName") || "Utilisateur";
           const userEmail = localStorage.getItem("userEmail") || "";
-          const userId = userEmail || "user_" + Date.now();
+
+          // Générer ou récupérer un userId persistant
+          let userId = localStorage.getItem("userId") || userEmail;
+          if (!userId) {
+            // Créer un userId persistant s'il n'y en a pas
+            userId =
+              "user_" +
+              Date.now() +
+              "_" +
+              Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("userId", userId);
+          }
 
           return {
             userId: userId,
@@ -1904,8 +1915,18 @@
         function getUserInfo() {
           const userName = localStorage.getItem("userName") || "Utilisateur";
           const userEmail = localStorage.getItem("userEmail") || "";
-          const userId =
-            localStorage.getItem("userId") || userEmail || "user_" + Date.now();
+
+          // Générer ou récupérer un userId persistant
+          let userId = localStorage.getItem("userId") || userEmail;
+          if (!userId) {
+            // Créer un userId persistant s'il n'y en a pas
+            userId =
+              "user_" +
+              Date.now() +
+              "_" +
+              Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("userId", userId);
+          }
 
           return {
             userId: userId,

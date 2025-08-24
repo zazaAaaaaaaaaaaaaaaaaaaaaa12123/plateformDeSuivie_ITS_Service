@@ -1064,7 +1064,14 @@
           // Priorité aux nouvelles clés, puis aux anciennes pour compatibilité
           const userName = localStorage.getItem("userName") || localStorage.getItem("user_nom") || "Utilisateur";
           const userEmail = localStorage.getItem("userEmail") || localStorage.getItem("user_email") || "";
-          const userId = localStorage.getItem("userId") || userEmail || "user_" + Date.now();
+          
+          // Générer ou récupérer un userId persistant
+          let userId = localStorage.getItem("userId") || userEmail;
+          if (!userId) {
+            // Créer un userId persistant s'il n'y en a pas
+            userId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("userId", userId);
+          }
           
           return {
             userId: userId,
