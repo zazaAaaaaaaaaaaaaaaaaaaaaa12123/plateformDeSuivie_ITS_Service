@@ -559,9 +559,9 @@ class ArchivesManager {
         );
         if (
           window.storageManager &&
-          typeof window.storageManager.updateStorageData === "function"
+          typeof window.storageManager.refreshStorageData === "function"
         ) {
-          await window.storageManager.updateStorageData();
+          await window.storageManager.refreshStorageData();
         }
 
         console.log(
@@ -690,9 +690,9 @@ class ArchivesManager {
       );
       if (
         window.storageManager &&
-        typeof window.storageManager.updateStorageData === "function"
+        typeof window.storageManager.refreshStorageData === "function"
       ) {
-        await window.storageManager.updateStorageData();
+        await window.storageManager.refreshStorageData();
       }
     } catch (error) {
       console.error(
@@ -890,9 +890,9 @@ class ArchivesManager {
       );
       if (
         window.storageManager &&
-        typeof window.storageManager.updateStorageData === "function"
+        typeof window.storageManager.refreshStorageData === "function"
       ) {
-        await window.storageManager.updateStorageData();
+        await window.storageManager.refreshStorageData();
       }
     } catch (error) {
       console.error("[ARCHIVES] ❌ Erreur lors du calcul du total:", error);
