@@ -5099,7 +5099,7 @@ app.post("/api/archives/:id/restore", async (req, res) => {
       `✅ Dossier restauré avec succès dans livraison_conteneur - Nouveau ID: ${restoredId}`
     );
     console.log(
-      `� Le dossier sera visible dans l'interface employé: interfaceFormulaireEmployer.html`
+      `  Le dossier sera visible dans l'interface employé: interfaceFormulaireEmployer.html`
     );
 
     // Marquer l'archive comme non restaurable
@@ -5480,7 +5480,7 @@ app.post("/api/archives/repair-references", async (req, res) => {
           ]);
 
           console.log(
-            `�️ Supprimé: ID=${row.id}, Aucune ref valide, Client="${row.client_name}"`
+            ` ️ Supprimé: ID=${row.id}, Aucune ref valide, Client="${row.client_name}"`
           );
           deletedCount++;
         }

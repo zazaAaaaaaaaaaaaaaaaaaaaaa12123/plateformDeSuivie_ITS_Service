@@ -75,56 +75,6 @@ function supprimerDossiersSelectionnes() {
   refreshMiseEnLivList();
 }
 
-// Fonction pour ajouter un dossier à la liste des mises en livraison
-function ajouterDossierMiseEnLiv(dossier) {
-  console.log("Dossier reçu:", dossier); // Debug
-  const dossiers = getDossiersMisEnLiv();
-
-  // Assurons-nous que toutes les dates sont correctement formatées et présentes
-  dossier.date_mise_en_liv = new Date().toISOString();
-
-  // Récupérer les dates du formulaire si elles existent
-  const dateDOInput = document.querySelector('input[name="date_do"]');
-  const dateBADTInput = document.querySelector('input[name="date_badt"]');
-  const datePaiementAcconageInput = document.querySelector(
-    'input[name="date_paiement_acconage"]'
-  );
-
-  // Mise à jour des dates depuis le formulaire
-  if (dateDOInput && dateDOInput.value) {
-    dossier.date_do = new Date(dateDOInput.value).toISOString();
-  }
-  if (dateBADTInput && dateBADTInput.value) {
-    dossier.date_badt = new Date(dateBADTInput.value).toISOString();
-  }
-  if (datePaiementAcconageInput && datePaiementAcconageInput.value) {
-    dossier.date_paiement_acconage = new Date(
-      datePaiementAcconageInput.value
-    ).toISOString();
-  }
-
-  // Formatage des dates existantes
-  if (dossier.date_echange_bl) {
-    dossier.date_echange_bl = new Date(dossier.date_echange_bl).toISOString();
-  }
-  if (dossier.date_do && !dateDOInput) {
-    dossier.date_do = new Date(dossier.date_do).toISOString();
-  }
-  if (dossier.date_badt && !dateBADTInput) {
-    dossier.date_badt = new Date(dossier.date_badt).toISOString();
-  }
-  if (dossier.date_paiement_acconage && !datePaiementAcconageInput) {
-    dossier.date_paiement_acconage = new Date(
-      dossier.date_paiement_acconage
-    ).toISOString();
-  }
-
-  console.log("Dossier après formatage:", dossier); // Debug
-  dossiers.push(dossier);
-  saveDossiersMisEnLiv(dossiers);
-  refreshMiseEnLivList();
-}
-
 // Fonction pour afficher un dossier dans la modal
 function afficherDetailsDossier(dossier) {
   // Mapping des clés en anglais vers le français
@@ -293,47 +243,92 @@ function refreshMiseEnLivList() {
     document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
 
   const filteredDossiers = searchTerm
-    ? dossiers.filter((dossier) =>
-        Object.values(dossier).some((value) =>
+    ? dossiers.filter((dossier) => {
+        // Recherche prioritaire dans les champs principaux
+        const clientName = (
+          dossier.client_name ||
+          dossier.client ||
+          ""
+        ).toLowerCase();
+        const containerNumber = (
+          dossier.container_number ||
+          dossier.ref_conteneur ||
+          ""
+        ).toLowerCase();
+        const dossierNumber = (dossier.dossier_number || "").toLowerCase();
+        const blNumber = (dossier.bl_number || "").toLowerCase();
+
+        // Vérifier d'abord les champs principaux (nom client, conteneur, etc.)
+        if (
+          clientName.includes(searchTerm) ||
+          containerNumber.includes(searchTerm) ||
+          dossierNumber.includes(searchTerm) ||
+          blNumber.includes(searchTerm)
+        ) {
+          return true;
+        }
+
+        // Ensuite rechercher dans toutes les autres valeurs
+        return Object.values(dossier).some((value) =>
           String(value).toLowerCase().includes(searchTerm)
-        )
-      )
+        );
+      })
     : dossiers;
 
   miseEnLivList.innerHTML =
     filteredDossiers.length === 0
       ? '<div class="list-group-item text-center text-muted">Aucun dossier trouvé</div>'
       : filteredDossiers
-          .map(
-            (dossier) => `
+          .map((dossier) => {
+            // Fonction locale pour formater les dates de façon robuste
+            const formatDateLocal = (dateStr) => {
+              try {
+                if (!dateStr || dateStr === "null" || dateStr === "undefined")
+                  return null;
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return null;
+                return date.toLocaleDateString("fr-FR");
+              } catch (e) {
+                console.error("Erreur de formatage de date:", e);
+                return null;
+              }
+            };
+
+            return `
       <div class="list-group-item">
         <div class="d-flex justify-content-between align-items-center">
           <h6 class="mb-1">${
             dossier.container_number || dossier.ref_conteneur || "N/A"
           }</h6>
           <div>
-            <small class="text-muted">Date BL: ${new Date(
+            ${
               dossier.date_mise_en_liv
-            ).toLocaleDateString()}</small>
+                ? `<small class="text-muted">Date mise en livraison: ${
+                    formatDateLocal(dossier.date_mise_en_liv) ||
+                    "Non disponible"
+                  }</small>`
+                : ""
+            }
             ${
-              dossier.date_do
-                ? `<br><small class="text-muted">Date DO: ${new Date(
+              dossier.date_do && formatDateLocal(dossier.date_do)
+                ? `<br><small class="text-muted">Date DO: ${formatDateLocal(
                     dossier.date_do
-                  ).toLocaleDateString()}</small>`
+                  )}</small>`
                 : ""
             }
             ${
-              dossier.date_paiement_acconage
-                ? `<br><small class="text-muted">Date Paiement Acconage: ${new Date(
+              dossier.date_paiement_acconage &&
+              formatDateLocal(dossier.date_paiement_acconage)
+                ? `<br><small class="text-muted">Date Paiement Acconage: ${formatDateLocal(
                     dossier.date_paiement_acconage
-                  ).toLocaleDateString()}</small>`
+                  )}</small>`
                 : ""
             }
             ${
-              dossier.date_badt
-                ? `<br><small class="text-muted">Date BADT: ${new Date(
+              dossier.date_badt && formatDateLocal(dossier.date_badt)
+                ? `<br><small class="text-muted">Date BADT: ${formatDateLocal(
                     dossier.date_badt
-                  ).toLocaleDateString()}</small>`
+                  )}</small>`
                 : ""
             }
           </div>
@@ -350,8 +345,8 @@ function refreshMiseEnLivList() {
           Voir détails
         </button>
       </div>
-    `
-          )
+    `;
+          })
           .join("");
 }
 
@@ -386,25 +381,51 @@ function ajouterDossierMiseEnLiv(dossier) {
     return null;
   }
 
+  // Fonction pour convertir une date existante en ISO si elle n'est pas déjà formatée
+  function formatExistingDate(dateValue) {
+    if (!dateValue) return null;
+    try {
+      // Si c'est déjà un string ISO, le retourner tel quel
+      if (typeof dateValue === "string" && dateValue.includes("T")) {
+        return dateValue;
+      }
+      // Sinon, convertir en ISO
+      return new Date(dateValue).toISOString();
+    } catch (e) {
+      console.error("Erreur de formatage de date existante:", e);
+      return null;
+    }
+  }
+
   // Sauvegarder toutes les dates importantes
   dossier.date_mise_en_liv = new Date().toISOString();
 
-  // Récupérer les dates depuis le formulaire avec tous les sélecteurs possibles
-  const dateEchangeBL = getDateValue(
-    'input[name="date_echange_bl"], #date_echange_bl'
-  );
-  const dateDO = getDateValue('input[name="date_do"], #date_do');
-  const datePaiementAcconage = getDateValue(
-    'input[name="date_paiement_acconage"], #date_paiement_acconage'
-  );
-  const dateBADT = getDateValue('input[name="date_badt"], #date_badt');
+  // Récupérer les dates depuis le formulaire avec les vrais IDs
+  const dateEchangeBL = getDateValue("#dateEchangeBL");
+  const dateDO = getDateValue("#dateDO");
+  const datePaiementAcconage = getDateValue("#paiementAcconage");
+  const dateBADT = getDateValue("#dateBADT");
 
-  // Assigner les dates au dossier si elles existent
-  if (dateEchangeBL) dossier.date_echange_bl = dateEchangeBL;
-  if (dateDO) dossier.date_do = dateDO;
-  if (datePaiementAcconage)
-    dossier.date_paiement_acconage = datePaiementAcconage;
-  if (dateBADT) dossier.date_badt = dateBADT;
+  // Assigner les dates au dossier en priorité depuis le formulaire, sinon garder les existantes
+  dossier.date_echange_bl =
+    dateEchangeBL ||
+    formatExistingDate(dossier.date_echange_bl) ||
+    dossier.date_echange_bl;
+  dossier.date_do =
+    dateDO || formatExistingDate(dossier.date_do) || dossier.date_do;
+  dossier.date_paiement_acconage =
+    datePaiementAcconage ||
+    formatExistingDate(dossier.date_paiement_acconage) ||
+    dossier.date_paiement_acconage;
+  dossier.date_badt =
+    dateBADT || formatExistingDate(dossier.date_badt) || dossier.date_badt;
+
+  console.log("Dossier avec dates formatées:", {
+    date_do: dossier.date_do,
+    date_badt: dossier.date_badt,
+    date_echange_bl: dossier.date_echange_bl,
+    date_paiement_acconage: dossier.date_paiement_acconage,
+  });
 
   // Vérifier si le dossier n'existe pas déjà
   const existe = dossiers.some(
@@ -431,22 +452,54 @@ function refreshMiseEnLivList() {
     document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
 
   const filteredDossiers = searchTerm
-    ? dossiers.filter((dossier) =>
-        Object.values(dossier).some((value) =>
+    ? dossiers.filter((dossier) => {
+        // Recherche prioritaire dans les champs principaux
+        const clientName = (
+          dossier.client_name ||
+          dossier.client ||
+          ""
+        ).toLowerCase();
+        const containerNumber = (
+          dossier.container_number ||
+          dossier.ref_conteneur ||
+          ""
+        ).toLowerCase();
+        const dossierNumber = (dossier.dossier_number || "").toLowerCase();
+        const blNumber = (dossier.bl_number || "").toLowerCase();
+
+        // Vérifier d'abord les champs principaux (nom client, conteneur, etc.)
+        if (
+          clientName.includes(searchTerm) ||
+          containerNumber.includes(searchTerm) ||
+          dossierNumber.includes(searchTerm) ||
+          blNumber.includes(searchTerm)
+        ) {
+          return true;
+        }
+
+        // Ensuite rechercher dans toutes les autres valeurs
+        return Object.values(dossier).some((value) =>
           String(value).toLowerCase().includes(searchTerm)
-        )
-      )
+        );
+      })
     : dossiers;
 
-  // Fonction utilitaire pour formater les dates
+  // Fonction utilitaire pour formater les dates de manière robuste
   const formatDate = (dateStr) => {
     try {
-      if (!dateStr) return null;
+      if (!dateStr || dateStr === "null" || dateStr === "undefined")
+        return null;
+      // Vérifier si c'est une date valide
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return null;
-      return date.toLocaleDateString();
+      return date.toLocaleDateString("fr-FR");
     } catch (e) {
-      console.error("Erreur de formatage de date:", e);
+      console.error(
+        "Erreur de formatage de date:",
+        e,
+        "pour la valeur:",
+        dateStr
+      );
       return null;
     }
   };
@@ -543,37 +596,43 @@ function refreshMiseEnLivList() {
                   <i class="fas fa-check-circle me-1"></i>
                   Mis en livraison
                 </span>
+                ${
+                  dossier.date_echange_bl
+                    ? `
                 <small class="text-muted ms-2" style="font-size: 0.8rem;">
                   <i class="far fa-calendar-alt me-1"></i>
-                  ${new Date(dossier.date_echange_bl).toLocaleDateString()}
-                </small>
+                  ${
+                    formatDate(dossier.date_echange_bl) || "Date non disponible"
+                  }
+                </small>`
+                    : ""
+                }
               </div>
               ${
-                dossier.date_do
+                dossier.date_do && formatDate(dossier.date_do)
                   ? `
               <small class="text-muted" style="font-size: 0.8rem;">
                 <i class="far fa-calendar-check me-1"></i>
-                DO: ${new Date(dossier.date_do).toLocaleDateString()}
+                DO: ${formatDate(dossier.date_do)}
               </small>`
                   : ""
               }
               ${
-                dossier.date_paiement_acconage
+                dossier.date_paiement_acconage &&
+                formatDate(dossier.date_paiement_acconage)
                   ? `
               <small class="text-muted" style="font-size: 0.8rem;">
                 <i class="far fa-money-bill-alt me-1"></i>
-                Paiement Acconage: ${new Date(
-                  dossier.date_paiement_acconage
-                ).toLocaleDateString()}
+                Paiement Acconage: ${formatDate(dossier.date_paiement_acconage)}
               </small>`
                   : ""
               }
               ${
-                dossier.date_badt
+                dossier.date_badt && formatDate(dossier.date_badt)
                   ? `
               <small class="text-muted" style="font-size: 0.8rem;">
                 <i class="far fa-file-alt me-1"></i>
-                BADT: ${new Date(dossier.date_badt).toLocaleDateString()}
+                BADT: ${formatDate(dossier.date_badt)}
               </small>`
                   : ""
               }
@@ -4622,14 +4681,37 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               select.value === "aucun" ? "aucun" : select.value;
             // Si on veut mettre le statut à 'mise_en_livraison', demander confirmation
             if (statutToSend === "mise_en_livraison") {
-              // Ajouter le dossier à la liste des mises en livraison
+              // Récupérer les dates depuis les champs du formulaire
+              const dateEchangeBLField =
+                document.getElementById("dateEchangeBL");
+              const dateDOField = document.getElementById("dateDO");
+              const datePaiementAcconageField =
+                document.getElementById("paiementAcconage");
+              const dateBADTField = document.getElementById("dateBADT");
+
+              // Ajouter le dossier à la liste des mises en livraison avec les dates du formulaire
               const dossierToSave = {
                 ...delivery,
                 container_number: delivery.container_number || "",
                 client_name: delivery.client_name || delivery.client || "",
                 status: "Mis en livraison",
                 date_mise_en_liv: new Date().toISOString(),
+                // Inclure les dates depuis les champs du formulaire
+                date_echange_bl: dateEchangeBLField?.value
+                  ? new Date(dateEchangeBLField.value).toISOString()
+                  : delivery.date_echange_bl,
+                date_do: dateDOField?.value
+                  ? new Date(dateDOField.value).toISOString()
+                  : delivery.date_do,
+                date_paiement_acconage: datePaiementAcconageField?.value
+                  ? new Date(datePaiementAcconageField.value).toISOString()
+                  : delivery.date_paiement_acconage,
+                date_badt: dateBADTField?.value
+                  ? new Date(dateBADTField.value).toISOString()
+                  : delivery.date_badt,
               };
+
+              console.log("Dossier à sauvegarder avec dates:", dossierToSave); // Debug
               ajouterDossierMiseEnLiv(dossierToSave);
 
               // Popup de confirmation personnalisée
@@ -4746,6 +4828,14 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
 
                 // Si le statut est mise_en_livraison, ajouter à la liste des dossiers mis en livraison
                 if (statutToSend === "mise_en_livraison") {
+                  // Récupérer les dates depuis les champs du formulaire si disponibles
+                  const dateEchangeBLField =
+                    document.getElementById("dateEchangeBL");
+                  const dateDOField = document.getElementById("dateDO");
+                  const datePaiementAcconageField =
+                    document.getElementById("paiementAcconage");
+                  const dateBADTField = document.getElementById("dateBADT");
+
                   const dossierToSave = {
                     ...delivery,
                     container_number: delivery.container_number || "",
@@ -4753,12 +4843,24 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                     status: "Mis en livraison",
                     bl_number: blNumber,
                     date_mise_en_liv: new Date().toISOString(),
-                    // Ajout des dates d'échange
-                    paiement_acconage: delivery.paiement_acconage || "",
-                    date_do: delivery.date_do || "",
-                    date_badt: delivery.date_badt || "",
-                    date_echange_bl: delivery.date_echange_bl || "",
+                    // Récupérer les dates depuis les champs ou utiliser les valeurs existantes
+                    date_echange_bl: dateEchangeBLField?.value
+                      ? new Date(dateEchangeBLField.value).toISOString()
+                      : delivery.date_echange_bl,
+                    date_do: dateDOField?.value
+                      ? new Date(dateDOField.value).toISOString()
+                      : delivery.date_do,
+                    date_paiement_acconage: datePaiementAcconageField?.value
+                      ? new Date(datePaiementAcconageField.value).toISOString()
+                      : delivery.date_paiement_acconage,
+                    date_badt: dateBADTField?.value
+                      ? new Date(dateBADTField.value).toISOString()
+                      : delivery.date_badt,
                   };
+                  console.log(
+                    "Dossier à sauvegarder (finishBLStatusChange):",
+                    dossierToSave
+                  ); // Debug
                   ajouterDossierMiseEnLiv(dossierToSave);
                 }
                 // 2. MAJ instantanée de la colonne Statut Dossier dans la ligne du tableau
