@@ -13,6 +13,9 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Librairie SheetJS pour la génération de fichiers Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <!-- Les liens vers les fichiers CSS locaux sont conservés comme dans votre original.
          Assurez-vous que ces fichiers sont accessibles depuis le chemin relatif. -->
@@ -878,6 +881,9 @@
             <i class="fas fa-search search-icon" style="color:#2563eb;font-size:1.15em;"></i>
             <input type="search" id="searchInput" class="search-input" placeholder="Rechercher par N° Dossier, N° Déclaration, Compagnie Maritime, Agent Acconier, Nom Client ou Nom du Navire..." aria-label="Recherche" style="flex:1 1 80px;min-width:80px;max-width:100%;padding:6px 12px;border-radius:8px;border:2px solid #0e274e;background:rgba(255,230,0,0.10);color:#0e274e;font-weight:500;font-size:1em;" />
             <button id="searchButton" class="btn btn-primary" style="font-weight:700;font-size:1em;padding:6px 22px;border-radius:8px;background:linear-gradient(90deg,#ffe066 0%,#0e274e 100%);color:#0e274e;border:none;box-shadow:0 2px 8px #0e274e22;">Rechercher</button>
+            <button id="excelButton" onclick="genererExcelLivraisons()" class="btn btn-success" style="font-weight:700;font-size:1em;padding:6px 18px;border-radius:8px;background:linear-gradient(90deg,#10b981 0%,#047857 100%);color:#fff;border:none;box-shadow:0 2px 8px rgba(16,185,129,0.3);margin-left:8px;" title="Exporter les données en Excel">
+              <i class="fas fa-file-excel me-1"></i>Excel
+            </button>
           </div>
         </div>
 

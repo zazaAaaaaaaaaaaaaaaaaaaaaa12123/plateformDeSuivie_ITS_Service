@@ -565,6 +565,258 @@ function showNotification(message, type = "success") {
   }, 3000);
 }
 
+// Fonction pour générer et télécharger un fichier Excel des livraisons
+function genererExcelLivraisons() {
+  // Récupérer les filtres actifs
+  const searchInput = document.getElementById("searchInput");
+  const dateStartFilter = document.getElementById("mainTableDateStartFilter");
+  const dateEndFilter = document.getElementById("mainTableDateEndFilter");
+
+  const searchTerm = searchInput ? searchInput.value.trim() : "";
+  const dateStart = dateStartFilter ? dateStartFilter.value : "";
+  const dateEnd = dateEndFilter ? dateEndFilter.value : "";
+
+  let filterInfo = "";
+  if (searchTerm) filterInfo += `Recherche: "${searchTerm}"`;
+  if (dateStart || dateEnd) {
+    if (filterInfo) filterInfo += ", ";
+    filterInfo += `Période: ${dateStart || "début"} → ${dateEnd || "fin"}`;
+  }
+
+  // Récupérer les données actuellement affichées dans le tableau
+  const table = document.getElementById("deliveriesTable");
+  if (!table) {
+    showNotification("Aucun tableau de données trouvé.", "error");
+    return;
+  }
+
+  const tbody = table.querySelector("tbody");
+  if (!tbody || tbody.rows.length === 0) {
+    showNotification(
+      "Aucune donnée à exporter. Vérifiez que le tableau contient des données.",
+      "error"
+    );
+    return;
+  }
+
+  // Récupérer les en-têtes de colonnes
+  const headerRow = table.querySelector("thead tr:last-child");
+  const headers = Array.from(headerRow.cells).map((cell) =>
+    cell.textContent.trim().replace(/\s+/g, " ")
+  );
+
+  // Récupérer les données des lignes
+  const data = [];
+  for (let i = 0; i < tbody.rows.length; i++) {
+    const row = tbody.rows[i];
+    const rowData = {};
+
+    for (let j = 0; j < row.cells.length && j < headers.length; j++) {
+      const cellText = row.cells[j].textContent.trim().replace(/\s+/g, " ");
+      rowData[headers[j]] = cellText;
+    }
+
+    // Ajouter un numéro de ligne
+    rowData["N°"] = i + 1;
+    data.push(rowData);
+  }
+
+  if (data.length === 0) {
+    showNotification("Aucune donnée à exporter.", "error");
+    return;
+  }
+
+  // Réorganiser les colonnes pour mettre N° en premier
+  const excelData = data.map((row) => {
+    const orderedRow = { "N°": row["N°"] };
+    headers.forEach((header) => {
+      if (header !== "N°") {
+        orderedRow[header] = row[header] || "";
+      }
+    });
+    return orderedRow;
+  });
+
+  try {
+    // Utilisation de la librairie SheetJS (xlsx) si disponible
+    if (typeof XLSX !== "undefined") {
+      // Créer la feuille de calcul
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Amélioration du formatage Excel
+      const range = XLSX.utils.decode_range(ws["!ref"]);
+
+      // Ajustement automatique de la largeur des colonnes
+      const columnWidths = [];
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        let maxWidth = 10; // Largeur minimale
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+          const cell = ws[cellAddress];
+          if (cell && cell.v) {
+            const cellLength = String(cell.v).length;
+            maxWidth = Math.max(maxWidth, cellLength + 2);
+          }
+        }
+        columnWidths.push({ width: Math.min(maxWidth, 50) }); // Largeur maximale de 50
+      }
+      ws["!cols"] = columnWidths;
+
+      // Style pour l'en-tête
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const headerCellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (ws[headerCellAddress]) {
+          ws[headerCellAddress].s = {
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "0E274E" } },
+            alignment: { horizontal: "center", vertical: "center" },
+          };
+        }
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Données Livraisons");
+
+      // Générer le nom du fichier avec la date actuelle
+      const dateNow = new Date()
+        .toLocaleDateString("fr-FR")
+        .replace(/\//g, "-");
+      const timeNow = new Date()
+        .toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+        .replace(/:/g, "h");
+      const fileName = `Livraisons_ITS_${dateNow}_${timeNow}.xlsx`;
+
+      XLSX.writeFile(wb, fileName);
+
+      // Message de succès avec statistiques
+      const stats = `${data.length} ligne${
+        data.length > 1 ? "s" : ""
+      } exportée${data.length > 1 ? "s" : ""}`;
+      const appliedFilters = filterInfo ? ` (${filterInfo})` : "";
+      showNotification(
+        `📊 Fichier Excel généré avec succès : ${fileName} (${stats}${appliedFilters})`,
+        "success"
+      );
+    } else {
+      // Méthode alternative avec CSV si SheetJS n'est pas disponible
+      generateCSVFallback(excelData, filterInfo);
+    }
+  } catch (error) {
+    console.error("Erreur lors de la génération du fichier Excel:", error);
+    // Fallback vers CSV en cas d'erreur
+    generateCSVFallback(excelData, filterInfo);
+  }
+}
+
+// Fonction de fallback pour générer un CSV si Excel n'est pas disponible
+function generateCSVFallback(data, filterInfo = "") {
+  try {
+    if (data.length === 0) return;
+
+    // Créer l'en-tête CSV
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(";"),
+      ...data.map((row) =>
+        headers
+          .map((header) => {
+            const value = row[header] || "";
+            // Échapper les guillemets et encapsuler si nécessaire
+            return typeof value === "string" &&
+              (value.includes(";") ||
+                value.includes('"') ||
+                value.includes("\n"))
+              ? `"${value.replace(/"/g, '""')}"`
+              : value;
+          })
+          .join(";")
+      ),
+    ].join("\n");
+
+    // Créer et télécharger le fichier CSV
+    const blob = new Blob(["\ufeff" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    const dateNow = new Date().toLocaleDateString("fr-FR").replace(/\//g, "-");
+    const timeNow = new Date()
+      .toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+      .replace(/:/g, "h");
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Livraisons_ITS_${dateNow}_${timeNow}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    const stats = `${data.length} ligne${data.length > 1 ? "s" : ""} exportée${
+      data.length > 1 ? "s" : ""
+    }`;
+    const appliedFilters = filterInfo ? ` (${filterInfo})` : "";
+    showNotification(
+      `📄 Fichier CSV généré avec succès : Livraisons_ITS_${dateNow}_${timeNow}.csv (${stats}${appliedFilters})`,
+      "success"
+    );
+  } catch (error) {
+    console.error("Erreur lors de la génération du fichier CSV:", error);
+    showNotification(
+      "Erreur lors de la génération du fichier. Veuillez réessayer.",
+      "error"
+    );
+  }
+}
+
+// Fonction pour mettre à jour le texte du bouton Excel selon les filtres actifs
+function updateExcelButtonText() {
+  const excelButton = document.getElementById("excelButton");
+  const searchInput = document.getElementById("searchInput");
+  const dateStartFilter = document.getElementById("mainTableDateStartFilter");
+  const dateEndFilter = document.getElementById("mainTableDateEndFilter");
+
+  if (!excelButton) return;
+
+  const searchTerm = searchInput ? searchInput.value.trim() : "";
+  const dateStart = dateStartFilter ? dateStartFilter.value : "";
+  const dateEnd = dateEndFilter ? dateEndFilter.value : "";
+
+  const hasFilters = searchTerm || dateStart || dateEnd;
+
+  const iconHtml = '<i class="fas fa-file-excel me-1"></i>';
+  if (hasFilters) {
+    excelButton.innerHTML = `${iconHtml}Excel (filtrés)`;
+    excelButton.title = "Exporter les données filtrées en Excel";
+  } else {
+    excelButton.innerHTML = `${iconHtml}Excel`;
+    excelButton.title = "Exporter toutes les données en Excel";
+  }
+}
+
+// Initialiser les listeners pour la mise à jour du bouton Excel
+document.addEventListener("DOMContentLoaded", function () {
+  // Ajouter les listeners pour mettre à jour le bouton Excel
+  const searchInput = document.getElementById("searchInput");
+  const dateStartFilter = document.getElementById("mainTableDateStartFilter");
+  const dateEndFilter = document.getElementById("mainTableDateEndFilter");
+
+  if (searchInput) {
+    searchInput.addEventListener("input", updateExcelButtonText);
+    searchInput.addEventListener("keyup", updateExcelButtonText);
+  }
+
+  if (dateStartFilter) {
+    dateStartFilter.addEventListener("change", updateExcelButtonText);
+  }
+
+  if (dateEndFilter) {
+    dateEndFilter.addEventListener("change", updateExcelButtonText);
+  }
+
+  // Initialiser le texte du bouton
+  updateExcelButtonText();
+});
+
 // Fonction utilitaire pour récupérer les paramètres URL
 function getUrlParameter(name) {
   const urlParams = new URLSearchParams(window.location.search);
