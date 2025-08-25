@@ -21,6 +21,9 @@ class ArchivesManager {
     this.allArchivesData = null; // Cache pour toutes les données non filtrées
     this.lastDataRefresh = 0; // Timestamp du dernier rafraîchissement
     this.cacheTimeout = 30000; // 30 secondes de cache
+    this.loadingTimeout = null; // 🔧 CORRECTION: Timeout pour forcer l'arrêt du spinner
+    this.isLoading = false; // 🛡️ PROTECTION: Flag anti-boucle
+    this.loadingBlocked = false; // 🛡️ PROTECTION: Bloquer les appels multiples
 
     this.init();
   }
@@ -29,11 +32,19 @@ class ArchivesManager {
     this.bindEvents();
     this.setupRealTimeNotifications(); // Nouveau système de notifications
 
-    // Ne charger les archives que si nous sommes sur la page d'archives
+    // 🔧 CORRECTION: S'assurer que le spinner est arrêté au démarrage
+    this.forceStopLoading();
+
+    // � CORRECTION: Chargement sécurisé au démarrage (avec délai pour éviter les boucles)
     const searchBtn = document.getElementById("searchBtn");
     if (searchBtn) {
-      this.loadArchives();
       this.setDefaultDates();
+
+      // 🛡️ CHARGEMENT SÉCURISÉ: Avec délai et protection
+      setTimeout(() => {
+        console.log("[ARCHIVES] 🚀 Chargement initial sécurisé...");
+        this.safeInitialLoad();
+      }, 500); // Délai de 500ms pour éviter les conflits
     }
 
     // 🔧 CORRECTION: Nettoyer les backdrops au démarrage (après que toutes les méthodes soient définies)
@@ -247,19 +258,17 @@ class ArchivesManager {
       console.log("📋 [ARCHIVES] Onglet Ordres actif:", isOrdersTabActive);
 
       if (isOrdersTabActive) {
-        // Recharger immédiatement si on est sur l'onglet ordres
+        // 🛡️ PROTECTION: Ne pas recharger automatiquement pour éviter les boucles
         console.log(
-          "🔄 [ARCHIVES] Rechargement automatique de l'onglet Ordres..."
+          "⚠️ [ARCHIVES] Rechargement automatique BLOQUÉ pour éviter les boucles"
         );
-        this.currentFilters.action_type = "ordre_livraison_etabli";
-        await this.loadArchives();
 
-        // Notification visuelle
+        // Juste afficher la notification
         this.showNotificationToast(
-          "📋 Nouvel ordre de livraison ajouté aux archives !"
+          "📋 Nouvel ordre de livraison ajouté ! Cliquez sur 'Rechercher' pour actualiser."
         );
-        // Mise à jour du compteur en temps réel
-        await this.updateCounts();
+
+        // 🛡️ PROTECTION: Pas de updateCounts automatique pour éviter les boucles
 
         // *** NOTIFICATION STOCKAGE - AJOUT ***
         document.dispatchEvent(
@@ -401,6 +410,36 @@ class ArchivesManager {
     return date.toISOString().split("T")[0];
   }
 
+  // 🛡️ Chargement initial sécurisé (anti-boucle)
+  async safeInitialLoad() {
+    try {
+      // Vérifier qu'on n'est pas déjà en train de charger
+      if (this.isLoading) {
+        console.warn(
+          "[ARCHIVES] ⚠️ Chargement déjà en cours, abandon du chargement initial"
+        );
+        return;
+      }
+
+      console.log("[ARCHIVES] 🚀 Début du chargement initial sécurisé");
+
+      // Marquer temporairement comme bloqué pour éviter les appels multiples
+      this.loadingBlocked = true;
+
+      // Attendre un peu puis débloquer et charger
+      setTimeout(async () => {
+        this.loadingBlocked = false;
+        await this.loadArchives();
+      }, 200);
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur dans safeInitialLoad:", error);
+      this.loadingBlocked = false;
+      this.showEmptyState(
+        "Erreur de chargement - Cliquez sur 'Rechercher' pour réessayer"
+      );
+    }
+  }
+
   // Debounce pour la recherche en temps réel
   debounceSearch() {
     clearTimeout(this.searchTimeout);
@@ -408,27 +447,36 @@ class ArchivesManager {
   }
 
   async performSearch() {
-    this.showLoading(true);
+    try {
+      // 🛡️ DÉBLOCAGE FORCÉ: L'utilisateur veut chercher, on débloque
+      this.loadingBlocked = false;
 
-    // Collecter les filtres
-    this.currentFilters = {
-      search: document.getElementById("searchInput").value.trim(),
-      action_type: document.getElementById("actionFilter").value,
-      role_source: document.getElementById("roleFilter").value,
-      date_start: document.getElementById("dateStart").value,
-      date_end: document.getElementById("dateEnd").value,
-    };
+      this.showLoading(true);
 
-    console.log("[ARCHIVES] Recherche avec filtres:", this.currentFilters);
+      // Collecter les filtres
+      this.currentFilters = {
+        search: document.getElementById("searchInput").value.trim(),
+        action_type: document.getElementById("actionFilter").value,
+        role_source: document.getElementById("roleFilter").value,
+        date_start: document.getElementById("dateStart").value,
+        date_end: document.getElementById("dateEnd").value,
+      };
 
-    // Vérifier si au moins un filtre est défini
-    const hasFilters = Object.values(this.currentFilters).some(
-      (value) => value && value.trim() !== ""
-    );
-    console.log("[ARCHIVES] Des filtres sont-ils appliqués ?", hasFilters);
+      console.log("[ARCHIVES] Recherche avec filtres:", this.currentFilters);
 
-    this.currentPage = 1;
-    await this.loadArchives();
+      // Vérifier si au moins un filtre est défini
+      const hasFilters = Object.values(this.currentFilters).some(
+        (value) => value && value.trim() !== ""
+      );
+      console.log("[ARCHIVES] Des filtres sont-ils appliqués ?", hasFilters);
+
+      this.currentPage = 1;
+      await this.loadArchives();
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur dans performSearch:", error);
+      this.showLoading(false);
+      this.showNotification("Erreur lors de la recherche", "error");
+    }
   }
 
   resetFilters() {
@@ -447,29 +495,71 @@ class ArchivesManager {
     };
 
     this.currentPage = 1;
-    this.loadArchives();
+    // 🛡️ PROTECTION: Ne pas appeler loadArchives automatiquement
+    console.log(
+      "[ARCHIVES] 🔄 Filtres réinitialisés - Cliquez sur 'Rechercher' pour appliquer"
+    );
+    this.showEmptyState(
+      "Filtres réinitialisés - Cliquez sur 'Rechercher' pour charger les archives"
+    );
   }
 
   // Méthode pour forcer le rechargement complet des données
   async reload() {
-    console.log("[ARCHIVES] Rechargement forcé des données...");
-    this.allArchivesData = null; // Vider le cache
-    this.lastDataRefresh = 0; // Forcer le rafraîchissement
+    console.log(
+      "[ARCHIVES] 🛡️ Rechargement forcé BLOQUÉ pour éviter les boucles"
+    );
+    console.log(
+      "[ARCHIVES] Utilisez le bouton 'Rechercher' pour charger les données"
+    );
+
+    // Réinitialiser les caches seulement
+    this.allArchivesData = null;
+    this.lastDataRefresh = 0;
     this.currentPage = 1;
-    await this.loadArchives();
+
+    // Afficher un message d'invitation
+    this.showEmptyState(
+      "Données réinitialisées - Cliquez sur 'Rechercher' pour recharger"
+    );
   }
 
   async loadArchives() {
+    // 🛡️ PROTECTION ANTI-BOUCLE: Empêcher les appels multiples
+    if (this.isLoading) {
+      console.warn(
+        "[ARCHIVES] ⚠️ Chargement déjà en cours, ignoré pour éviter la boucle"
+      );
+      return;
+    }
+
+    if (this.loadingBlocked) {
+      console.warn(
+        "[ARCHIVES] 🚫 Chargement bloqué temporairement - Attente 1 seconde..."
+      );
+      // Attendre un peu et réessayer une fois
+      setTimeout(() => {
+        if (!this.isLoading) {
+          this.loadingBlocked = false;
+          this.loadArchives();
+        }
+      }, 1000);
+      return;
+    }
+
     try {
+      this.isLoading = true; // 🛡️ Marquer comme en cours
       this.showLoading(true);
 
-      // 🎯 NOUVEAU: Si on est sur l'onglet "Toutes les Archives", utiliser la méthode combinée
+      console.log("[ARCHIVES] 🚀 Début du chargement des archives...");
+
+      // 🎯 CORRECTION: Simplification - on évite les méthodes complexes qui créent des boucles
       if (this.selectedTab === "all") {
         console.log(
-          "[ARCHIVES] 🎯 Onglet 'Toutes les Archives' détecté - Utilisation de loadAllCombinedArchivesByAddition()"
+          "[ARCHIVES] 📊 Chargement simple pour 'Toutes les Archives'"
         );
-        await this.loadAllCombinedArchivesByAddition();
-        return; // Sortir tôt car loadAllCombinedArchivesByAddition() gère tout
+        await this.simpleLoadAllArchives(); // Nouvelle méthode simple
+        return;
       }
 
       // Vérifier si nous devons rafraîchir les données (cache expiré ou pas de données)
@@ -553,16 +643,8 @@ class ArchivesManager {
         this.renderCurrentView();
         this.renderPagination();
 
-        // 💾 NOUVEAU: Mettre à jour automatiquement l'interface de stockage après chargement
-        console.log(
-          "[ARCHIVES] 💾 Mise à jour automatique de l'interface de stockage..."
-        );
-        if (
-          window.storageManager &&
-          typeof window.storageManager.refreshStorageData === "function"
-        ) {
-          await window.storageManager.refreshStorageData();
-        }
+        // 💾 CORRECTION: Mise à jour simple et robuste du stockage
+        this.updateStorageSimple();
 
         console.log(
           "[ARCHIVES] Rendu terminé - Archives filtrées:",
@@ -580,10 +662,92 @@ class ArchivesManager {
       this.showNotification("Erreur de connexion", "error");
     } finally {
       this.showLoading(false);
+      this.isLoading = false; // 🛡️ PROTECTION: Libérer le flag
+      console.log("[ARCHIVES] ✅ Chargement terminé");
     }
   }
 
-  // 🎯 NOUVELLE MÉTHODE: Charger toutes les archives combinées pour l'onglet "Toutes les Archives"
+  // 🛡️ NOUVELLE MÉTHODE SIMPLE: Chargement sans boucle pour "Toutes les Archives"
+  async simpleLoadAllArchives() {
+    try {
+      console.log(
+        "[ARCHIVES] 📊 Chargement de TOUTES les archives (tous types)..."
+      );
+
+      // ✅ CORRECTION: Charger tous les types d'archives séparément pour avoir le vrai total
+      const archivePromises = [
+        fetch("/api/archives?action_type=suppression&limit=9999").then((r) =>
+          r.json()
+        ),
+        fetch("/api/archives?action_type=livraison&limit=9999").then((r) =>
+          r.json()
+        ),
+        fetch("/api/archives?action_type=mise_en_livraison&limit=9999").then(
+          (r) => r.json()
+        ),
+        fetch(
+          "/api/archives?action_type=ordre_livraison_etabli&limit=9999"
+        ).then((r) => r.json()),
+      ];
+
+      const [suppressionData, livraisonData, miseEnLivraisonData, ordreData] =
+        await Promise.all(archivePromises);
+
+      // Combiner toutes les archives
+      const allArchives = [
+        ...(suppressionData.archives || []),
+        ...(livraisonData.archives || []),
+        ...(miseEnLivraisonData.archives || []),
+        ...(ordreData.archives || []),
+      ];
+
+      // Trier par date (plus récent en premier)
+      allArchives.sort(
+        (a, b) => new Date(b.archived_at) - new Date(a.archived_at)
+      );
+
+      console.log(`[ARCHIVES] ✅ Toutes les archives chargées:`);
+      console.log(`  - Supprimées: ${suppressionData.archives?.length || 0}`);
+      console.log(`  - Livrées: ${livraisonData.archives?.length || 0}`);
+      console.log(
+        `  - Mise en livraison: ${miseEnLivraisonData.archives?.length || 0}`
+      );
+      console.log(`  - Ordres: ${ordreData.archives?.length || 0}`);
+      console.log(`  - TOTAL RÉEL: ${allArchives.length}`);
+
+      this.allArchives = allArchives;
+      this.filteredArchives = allArchives;
+      this.allCombinedArchives = allArchives;
+
+      // 📊 IMPORTANT: Stocker le vrai total pour les badges
+      this.realTotalCount = allArchives.length;
+      console.log("[ARCHIVES] 📊 Vrai total stocké:", this.realTotalCount);
+
+      // Rendu simple avec la bonne fonction
+      this.renderTable(allArchives);
+      this.renderPagination();
+
+      // 💾 CORRECTION: Mise à jour du niveau de stockage
+      this.updateStorageSimple();
+
+      // 🏷️ CORRECTION: Mise à jour des badges des onglets
+      await this.updateCounts();
+
+      console.log(
+        "[ARCHIVES] ✅ Chargement de TOUTES les archives terminé:",
+        allArchives.length,
+        "archives chargées et affichées"
+      );
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur dans simpleLoadAllArchives:", error);
+      this.showNotification("Erreur lors du chargement simple", "error");
+    } finally {
+      // 🛡️ IMPORTANT: Toujours cacher le spinner
+      this.showLoading(false);
+    }
+  }
+
+  // 🎯 MÉTHODE COMPLEXE (POTENTIELLEMENT PROBLÉMATIQUE): Charger toutes les archives combinées
   async loadAllCombinedArchives() {
     try {
       this.showLoading(true);
@@ -684,16 +848,8 @@ class ArchivesManager {
       this.renderPagination();
       await this.updateCounts();
 
-      // 💾 NOUVEAU: Mettre à jour automatiquement l'interface de stockage après chargement
-      console.log(
-        "[ARCHIVES] 💾 Mise à jour automatique de l'interface de stockage..."
-      );
-      if (
-        window.storageManager &&
-        typeof window.storageManager.refreshStorageData === "function"
-      ) {
-        await window.storageManager.refreshStorageData();
-      }
+      // 💾 CORRECTION: Mise à jour simple et robuste du stockage
+      this.updateStorageSimple();
     } catch (error) {
       console.error(
         "[ARCHIVES] ❌ Erreur lors du chargement des archives combinées:",
@@ -1030,18 +1186,21 @@ class ArchivesManager {
 
       console.log("[ARCHIVES] Vrais compteurs backend récupérés:", counts);
 
-      // CALCUL DU TOTAL : Addition des autres onglets
-      const totalCalcule =
+      // ✅ CORRECTION: Calculer le vrai total en additionnant tous les types
+      const vraiTotal =
         counts.suppression +
         counts.livraison +
         counts.mise_en_livraison +
         counts.ordre_livraison_etabli;
       console.log(
-        `[ARCHIVES] Total calculé: ${counts.suppression} + ${counts.livraison} + ${counts.mise_en_livraison} + ${counts.ordre_livraison_etabli} = ${totalCalcule}`
+        `[ARCHIVES] 🔢 CALCUL DU VRAI TOTAL: ${counts.suppression} + ${counts.livraison} + ${counts.mise_en_livraison} + ${counts.ordre_livraison_etabli} = ${vraiTotal}`
+      );
+      console.log(
+        `[ARCHIVES] ⚠️ Total API: ${counts.all} (incorrect car ne compte pas mise_en_livraison)`
       );
 
-      // Mettre à jour l'affichage
-      document.getElementById("allCount").textContent = totalCalcule;
+      // Mettre à jour l'affichage avec le vrai total calculé
+      document.getElementById("allCount").textContent = vraiTotal;
       document.getElementById("deletedCount").textContent = counts.suppression;
       document.getElementById("deliveredCount").textContent = counts.livraison;
       document.getElementById("shippingCount").textContent =
@@ -1065,14 +1224,14 @@ class ArchivesManager {
         ).length,
       };
 
-      // CALCUL DU TOTAL FALLBACK : Addition des autres onglets
+      // ✅ CORRECTION FALLBACK: Calculer le vrai total en additionnant tous les types
       const totalFallback =
         fallbackCounts.suppression +
         fallbackCounts.livraison +
         fallbackCounts.mise_en_livraison +
         fallbackCounts.ordre_livraison_etabli;
       console.log(
-        `[ARCHIVES] Total fallback calculé: ${fallbackCounts.suppression} + ${fallbackCounts.livraison} + ${fallbackCounts.mise_en_livraison} + ${fallbackCounts.ordre_livraison_etabli} = ${totalFallback}`
+        `[ARCHIVES] 🔢 Total fallback calculé: ${fallbackCounts.suppression} + ${fallbackCounts.livraison} + ${fallbackCounts.mise_en_livraison} + ${fallbackCounts.ordre_livraison_etabli} = ${totalFallback}`
       );
 
       document.getElementById("allCount").textContent = totalFallback;
@@ -2282,11 +2441,73 @@ class ArchivesManager {
       : text;
   }
 
+  // 🎨 NOUVEAU: Spinner élégant et robuste
   showLoading(show) {
     const spinner = document.getElementById("loadingSpinner");
-    spinner.style.display = show ? "block" : "none";
+    if (!spinner) {
+      console.warn("[ARCHIVES] ⚠️ Spinner element not found");
+      return;
+    }
+
+    // Clear any existing timeout first
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
+    if (show) {
+      // Show spinner with animation
+      spinner.style.display = "flex";
+      document.body.style.overflow = "hidden"; // Prevent scrolling
+
+      console.log("[ARCHIVES] 🎯 Spinner activé");
+
+      // Force stop after 8 seconds (reduced timeout)
+      this.loadingTimeout = setTimeout(() => {
+        console.warn(
+          "[ARCHIVES] ⚠️ Spinner forcé à s'arrêter après 8 secondes"
+        );
+        this.forceStopLoading();
+      }, 8000);
+    } else {
+      // Hide spinner
+      spinner.style.display = "none";
+      document.body.style.overflow = "auto"; // Restore scrolling
+      console.log("[ARCHIVES] ✅ Spinner désactivé");
+    }
   }
 
+  // 🔧 Force l'arrêt du spinner
+  forceStopLoading() {
+    const spinner = document.getElementById("loadingSpinner");
+    if (spinner) {
+      spinner.style.display = "none";
+      document.body.style.overflow = "auto";
+    }
+
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+    }
+
+    console.log("[ARCHIVES] 🛑 Spinner forcé à s'arrêter");
+  }
+
+  // 📝 Affichage d'un état vide avec message
+  showEmptyState(message = "Aucune donnée à afficher") {
+    const tableContainer = document.getElementById("archivesTableContainer");
+    if (tableContainer) {
+      tableContainer.innerHTML = `
+        <div class="text-center py-5">
+          <div class="mb-3">
+            <i class="fas fa-search fa-3x text-muted"></i>
+          </div>
+          <h4 class="text-muted">${message}</h4>
+          <p class="text-muted">Utilisez les filtres ci-dessus pour rechercher des archives</p>
+        </div>
+      `;
+    }
+  }
   showNotification(message, type = "info") {
     const toast = document.getElementById("notificationToast");
     const title = document.getElementById("toastTitle");
@@ -2306,6 +2527,34 @@ class ArchivesManager {
 
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
+  }
+
+  // 🔧 CORRECTION: Fonction simple pour mettre à jour le stockage
+  updateStorageSimple() {
+    try {
+      console.log("[ARCHIVES] 💾 Mise à jour simple du stockage...");
+
+      // Vérifier si le storageManager existe et est fonctionnel
+      if (
+        window.storageManager &&
+        typeof window.storageManager.refreshStorageData === "function"
+      ) {
+        // Appel asynchrone sans bloquer l'interface
+        window.storageManager.refreshStorageData().catch((error) => {
+          console.warn(
+            "[ARCHIVES] ⚠️ Erreur lors de la mise à jour du stockage:",
+            error
+          );
+        });
+      } else {
+        console.warn("[ARCHIVES] ⚠️ StorageManager non disponible");
+      }
+    } catch (error) {
+      console.warn(
+        "[ARCHIVES] ⚠️ Erreur lors de l'appel updateStorageSimple:",
+        error
+      );
+    }
   }
 
   getCurrentUser() {
