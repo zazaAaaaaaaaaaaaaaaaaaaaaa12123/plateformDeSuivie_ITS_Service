@@ -565,6 +565,79 @@ function showNotification(message, type = "success") {
   }, 3000);
 }
 
+// Fonction pour nettoyer le statut des conteneurs pour l'export Excel
+function cleanStatusForExcel(cellText, row) {
+  try {
+    // Récupérer l'ID de la livraison depuis l'attribut data
+    const deliveryId = row.getAttribute("data-delivery-id");
+    if (!deliveryId || !window.allDeliveries) {
+      return cellText; // Retourner le texte original si pas de données
+    }
+
+    // Trouver la livraison correspondante
+    const delivery = window.allDeliveries.find(
+      (d) => String(d.id) === String(deliveryId)
+    );
+    if (!delivery) {
+      return cellText;
+    }
+
+    // Extraire la liste des conteneurs
+    let tcList = [];
+    if (
+      delivery.container_numbers_list &&
+      Array.isArray(delivery.container_numbers_list)
+    ) {
+      tcList = delivery.container_numbers_list.filter(Boolean);
+    } else if (Array.isArray(delivery.container_number)) {
+      tcList = delivery.container_number.filter(Boolean);
+    } else if (typeof delivery.container_number === "string") {
+      tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+    }
+
+    // Extraire les statuts
+    const statuses =
+      delivery.container_statuses &&
+      typeof delivery.container_statuses === "object"
+        ? delivery.container_statuses
+        : {};
+
+    if (tcList.length === 0) {
+      return "Aucun conteneur";
+    }
+
+    // Organiser les conteneurs par statut pour Excel
+    const livres = [];
+    const nonLivres = [];
+
+    tcList.forEach((tc) => {
+      const status = statuses[tc] || "aucun";
+      if (status === "livre" || status === "livré") {
+        livres.push(tc);
+      } else {
+        nonLivres.push(tc);
+      }
+    });
+
+    // Construire le texte Excel organisé
+    let excelText = "";
+
+    if (livres.length > 0) {
+      excelText += `LIVRÉS (${livres.length}): ${livres.join(", ")}`;
+    }
+
+    if (nonLivres.length > 0) {
+      if (excelText) excelText += " | ";
+      excelText += `NON LIVRÉS (${nonLivres.length}): ${nonLivres.join(", ")}`;
+    }
+
+    return excelText || "Statut inconnu";
+  } catch (error) {
+    console.error("Erreur lors du nettoyage du statut pour Excel:", error);
+    return cellText; // Retourner le texte original en cas d'erreur
+  }
+}
+
 // Fonction pour générer et télécharger un fichier Excel des livraisons
 function genererExcelLivraisons() {
   // Récupérer les filtres actifs
@@ -612,7 +685,16 @@ function genererExcelLivraisons() {
     const rowData = {};
 
     for (let j = 0; j < row.cells.length && j < headers.length; j++) {
-      const cellText = row.cells[j].textContent.trim().replace(/\s+/g, " ");
+      let cellText = row.cells[j].textContent.trim().replace(/\s+/g, " ");
+
+      // Nettoyage spécial pour la colonne Statut (supprimer icônes et améliorer format)
+      if (
+        headers[j] === "Statut" ||
+        headers[j].toLowerCase().includes("statut")
+      ) {
+        cellText = cleanStatusForExcel(cellText, row);
+      }
+
       rowData[headers[j]] = cellText;
     }
 
