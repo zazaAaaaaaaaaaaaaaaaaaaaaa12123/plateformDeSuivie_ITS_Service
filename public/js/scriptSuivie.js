@@ -4467,10 +4467,46 @@ function mapStatus(status) {
           displayValue = value.toLocaleDateString("fr-FR");
         } else if (value instanceof Date && fieldName === "paiement_acconage") {
           displayValue = value.toLocaleDateString("fr-FR");
+        } else if (fieldName === "paiement_acconage" && value) {
+          // Forcer la conversion pour paiement_acconage même si ce n'est pas un objet Date
+          try {
+            const dateObj = new Date(value);
+            if (!isNaN(dateObj.getTime())) {
+              displayValue = dateObj.toLocaleDateString("fr-FR");
+            } else {
+              displayValue = value;
+            }
+          } catch (e) {
+            displayValue = value;
+          }
         } else if (value instanceof Date && fieldName === "date_do") {
           displayValue = value.toLocaleDateString("fr-FR");
+        } else if (fieldName === "date_do" && value) {
+          // Forcer la conversion pour date_do
+          try {
+            const dateObj = new Date(value);
+            if (!isNaN(dateObj.getTime())) {
+              displayValue = dateObj.toLocaleDateString("fr-FR");
+            } else {
+              displayValue = value;
+            }
+          } catch (e) {
+            displayValue = value;
+          }
         } else if (value instanceof Date && fieldName === "date_badt") {
           displayValue = value.toLocaleDateString("fr-FR");
+        } else if (fieldName === "date_badt" && value) {
+          // Forcer la conversion pour date_badt
+          try {
+            const dateObj = new Date(value);
+            if (!isNaN(dateObj.getTime())) {
+              displayValue = dateObj.toLocaleDateString("fr-FR");
+            } else {
+              displayValue = value;
+            }
+          } catch (e) {
+            displayValue = value;
+          }
         } else if (value instanceof Date) {
           displayValue = value.toLocaleDateString("fr-FR");
         } else if (fieldName === "status") {
@@ -8863,6 +8899,13 @@ function mapStatus(status) {
   let mainTableDateEndFilter = document.getElementById(
     "mainTableDateEndFilter"
   );
+
+  // Initialiser la date de fin à la date courante si elle est vide
+  if (mainTableDateEndFilter && !mainTableDateEndFilter.value) {
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0]; // Format YYYY-MM-DD
+    mainTableDateEndFilter.value = todayStr;
+  }
 
   // Ajouter les événements de style aux champs de date s'ils existent
   if (mainTableDateStartFilter) {
