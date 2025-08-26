@@ -35,7 +35,7 @@
       }
 
       body {
-        background: linear-gradient(145deg, #007bff, #0056b3);
+        background: #f8f9fa;
         color: #333;
         min-height: 90vh;
         padding: 20px;
@@ -475,7 +475,7 @@
         text-align: center;
         padding: 0 20px;
         background: linear-gradient(to right, #ffffff, #f3f4f6);
-        animation: fadeIn 1.2s ease-in-out;
+        /* animation: fadeIn 1.2s ease-in-out; Désactivé pour enlever l'animation */
       }
 
       .welcome-container h1 {
@@ -608,7 +608,7 @@
         background: #28a745;
         margin-left: 12px;
         box-shadow: 0 0 0 0 #28a745;
-        animation: greenDotPulse 1s infinite cubic-bezier(0.66, 0, 0, 1);
+        /* animation: greenDotPulse 1s infinite cubic-bezier(0.66, 0, 0, 1); Désactivé pour enlever l'animation */
         vertical-align: middle;
       }
       #btnResumeJoursPrecedents {
@@ -804,11 +804,11 @@
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         cursor: pointer;
         user-select: none;
-        animation: badgeBounce 0.6s ease-out;
+        /* animation: badgeBounce 0.6s ease-out; Désactivé pour enlever l'animation */
       }
 
       .card-counter:hover {
-        animation: badgeRotate 0.8s ease-in-out;
+        /* animation: badgeRotate 0.8s ease-in-out; Désactivé pour enlever l'animation */
       }
 
       /* Effet de brillance sur les badges */
@@ -833,8 +833,8 @@
       }
 
       .card-counter:hover::before {
-        opacity: 1;
-        animation: shimmer 1.5s ease-in-out infinite;
+        opacity: 0;
+        /* animation: shimmer 1.5s ease-in-out infinite; Désactivé pour enlever l'animation */
       }
 
       @keyframes shimmer {
@@ -879,7 +879,7 @@
 
       /* Animation de mise à jour des cartes */
       .card-updating {
-        animation: cardPulse 1s ease-in-out;
+        /* animation: cardPulse 1s ease-in-out; Désactivé pour enlever l'animation */
       }
 
       /* Effet de glow pour les badges actifs */
@@ -923,64 +923,14 @@
         overflow: hidden;
       }
 
-      /* Lignes de connexion animées avec transitions de couleurs fluides */
+      /* Lignes de connexion désactivées pour enlever les animations */
       .connection-line {
-        position: absolute;
-        height: 3px;
-        background: linear-gradient(
-          90deg,
-          transparent 0%,
-          var(--connection-color-1) 20%,
-          var(--connection-color-2) 40%,
-          var(--connection-color-3) 60%,
-          var(--connection-color-1) 80%,
-          transparent 100%
-        );
-        --connection-color-1: #3b82f6;
-        --connection-color-2: #06b6d4;
-        --connection-color-3: #8b5cf6;
-        opacity: 0.7;
-        transform-origin: left center;
-        animation: connectionPulse 4s ease-in-out infinite,
-          connectionColorShift 6s ease-in-out infinite;
-        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+        display: none !important; /* Supprime toutes les lignes de connexion animées */
       }
 
-      .connection-line::before {
-        content: "";
-        position: absolute;
-        top: -2px;
-        left: 0;
-        width: 100%;
-        height: 7px;
-        background: linear-gradient(
-          90deg,
-          transparent 0%,
-          rgba(59, 130, 246, 0.3) 25%,
-          rgba(6, 182, 212, 0.4) 50%,
-          rgba(139, 92, 246, 0.3) 75%,
-          transparent 100%
-        );
-        filter: blur(3px);
-        animation: connectionGlow 3s ease-in-out infinite;
-      }
-
+      .connection-line::before,
       .connection-line::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 0;
-        width: 12px;
-        height: 12px;
-        background: radial-gradient(
-          circle,
-          rgba(255, 255, 255, 0.9) 0%,
-          var(--connection-color-2) 50%,
-          transparent 100%
-        );
-        border-radius: 50%;
-        transform: translateY(-50%);
-        animation: sparkleTravel 4s linear infinite;
+        display: none !important; /* Supprime les effets de lueur et particules */
       }
 
       @keyframes connectionPulse {
@@ -1060,25 +1010,9 @@
         }
       }
 
-      /* Particules voyageuses avec couleurs fluides */
+      /* Particules de connexion désactivées */
       .connection-particle {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background: radial-gradient(
-          circle,
-          rgba(255, 255, 255, 0.9) 0%,
-          var(--particle-color-primary) 40%,
-          var(--particle-color-secondary) 100%
-        );
-        --particle-color-primary: #06b6d4;
-        --particle-color-secondary: #3b82f6;
-        border-radius: 50%;
-        box-shadow: 0 0 15px var(--particle-color-primary),
-          0 0 30px rgba(6, 182, 212, 0.6),
-          inset 0 0 5px rgba(255, 255, 255, 0.8);
-        z-index: 2;
-        filter: brightness(1.2);
+        display: none !important; /* Supprime toutes les particules animées */
       }
 
       .connection-particle::before {
@@ -1354,80 +1288,12 @@
         }
       }
 
-      /* Motifs géométriques en arrière-plan avec couleurs fluides */
+      /* Motifs géométriques en arrière-plan supprimés pour enlever l'animation */
       #welcomeSection::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: radial-gradient(
-            circle at 20% 20%,
-            var(--pattern-color-1) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 80% 80%,
-            var(--pattern-color-2) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 40% 70%,
-            var(--pattern-color-3) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 60% 30%,
-            var(--pattern-color-4) 0%,
-            transparent 40%
-          ),
-          radial-gradient(
-            circle at 10% 90%,
-            var(--pattern-color-5) 0%,
-            transparent 45%
-          );
-        --pattern-color-1: rgba(59, 130, 246, 0.08);
-        --pattern-color-2: rgba(6, 182, 212, 0.08);
-        --pattern-color-3: rgba(16, 185, 129, 0.06);
-        --pattern-color-4: rgba(139, 92, 246, 0.06);
-        --pattern-color-5: rgba(236, 72, 153, 0.05);
-        background-size: 300px 300px, 250px 250px, 400px 400px, 350px 350px,
-          280px 280px;
-        background-position: 0 0, 100px 100px, 200px 50px, 50px 200px,
-          300px 150px;
-        animation: floatingPatterns 15s linear infinite;
-        z-index: 0;
-        filter: blur(0.5px);
+        display: none; /* Animation de fond désactivée */
       }
 
-      @keyframes floatingPatterns {
-        0% {
-          transform: translate(0, 0) rotate(0deg);
-          background-position: 0 0, 100px 100px, 200px 50px, 50px 200px,
-            300px 150px;
-        }
-        25% {
-          transform: translate(-15px, -10px) rotate(90deg);
-          background-position: 20px 10px, 120px 110px, 220px 60px, 70px 210px,
-            320px 160px;
-        }
-        50% {
-          transform: translate(10px, -15px) rotate(180deg);
-          background-position: -10px 20px, 110px 90px, 210px 70px, 60px 190px,
-            310px 140px;
-        }
-        75% {
-          transform: translate(15px, 10px) rotate(270deg);
-          background-position: 15px -5px, 115px 105px, 215px 45px, 55px 205px,
-            315px 155px;
-        }
-        100% {
-          transform: translate(0, 0) rotate(360deg);
-          background-position: 0 0, 100px 100px, 200px 50px, 50px 200px,
-            300px 150px;
-        }
-      }
+      /* Animation de fond supprimée pour nettoyer l'interface */
 
       /* Effet glassmorphism sur les cartes avec couleurs fluides */
       .etat-card {
@@ -3257,7 +3123,7 @@
               // Attendre que les cartes soient bien positionnées
               setTimeout(() => {
                 createConnectionLines();
-                createFloatingParticles();
+                // createFloatingParticles(); // Désactivé pour enlever l'animation d'arrière-plan
                 startSynchronizationEffects();
               }, 1000);
             }
@@ -4333,7 +4199,7 @@
                     counterElement.style.transform = "scale(1.4) rotate(10deg)";
 
                     // Effet de particules
-                    createSuccessParticles(counterElement);
+                    // createSuccessParticles(counterElement); // Désactivé pour enlever l'animation
                   } else if (currentValue < oldValue) {
                     // Diminution - Animation rouge
                     counterElement.style.background =
