@@ -3027,8 +3027,8 @@
             );
             if (carteAttentePaiement) {
               carteAttentePaiement.addEventListener("click", function () {
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
+                // Redirection vers l'interface de suivi intégrée (comme le bouton Suivi)
+                window.afficherSuivi();
               });
             }
 
@@ -3101,24 +3101,26 @@
                   .then((dossiers) => {
                     if (!dossiers || dossiers.length === 0) {
                       contenuRetard.innerHTML = `
-                        <div style='text-align:center;padding:40px 20px;color:#6b7280;'>
-                          <i class="fas fa-check-circle" style="font-size:3em;color:#22c55e;margin-bottom:15px;"></i>
-                          <p style="font-size:1.2em;margin:0;">Aucun dossier en retard</p>
-                          <p style="font-size:1em;margin:8px 0 0 0;">Tous les dossiers sont à jour !</p>
-                        </div>
-                      `;
+                                  <div style='text-align:center;padding:40px 20px;color:#6b7280;'>
+                                    <i class="fas fa-check-circle" style="font-size:3em;color:#22c55e;margin-bottom:15px;"></i>
+                                    <p style="font-size:1.2em;margin:0;">Aucun dossier en retard</p>
+                                    <p style="font-size:1em;margin:8px 0 0 0;">Tous les dossiers sont à jour !</p>
+                                  </div>
+                                `;
                     } else {
                       let html = `
-                        <div style="margin-bottom:12px;">
-                          <p style="color:#374151;font-size:1.05em;margin:0;text-align:center;">
-                            <strong>${dossiers.length}</strong> dossier${
+                                  <div style="margin-bottom:12px;">
+                                    <p style="color:#374151;font-size:1.05em;margin:0;text-align:center;">
+                                      <strong>${
+                                        dossiers.length
+                                      }</strong> dossier${
                         dossiers.length > 1 ? "s" : ""
                       } en retard
-                          </p>
-                        </div>
-                        <div style="max-height:400px;overflow-y:auto;">
-                          <ul style='list-style:none;padding:0;margin:0;'>
-                      `;
+                                    </p>
+                                  </div>
+                                  <div style="max-height:400px;overflow-y:auto;">
+                                    <ul style='list-style:none;padding:0;margin:0;'>
+                                `;
 
                       dossiers.forEach((dossier, index) => {
                         const dossierId =
@@ -3137,65 +3139,65 @@
                           dossier.dossier_number || dossierId;
 
                         html += `
-                          <li style='
-                            background: linear-gradient(135deg, #fef2f2 80%, #fecaca 100%);
-                            border: 2px solid #fecaca;
-                            border-radius: 12px;
-                            margin-bottom: 12px;
-                            padding: 18px 20px;
-                            cursor: pointer;
-                            transition: all 0.2s ease;
-                            border-left: 4px solid #dc3545;
-                            position: relative;
-                          ' 
-                          onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.25)';"
-                          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
-                          onclick="window.location.href='https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?dossier=${encodeURIComponent(
-                            dossierId
-                          )}'">
-                            
-                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                              <span style="
-                                background:#dc3545;
-                                color:#fff;
-                                font-weight:700;
-                                font-size:0.9em;
-                                padding:4px 8px;
-                                border-radius:6px;
-                                min-width:30px;
-                                text-align:center;
-                              ">${index + 1}</span>
-                              
-                              <div style="flex:1;">
-                                <div style="font-size:1.15em; font-weight:700; color:#dc3545; margin-bottom:2px;">
-                                  <i class="fas fa-folder-open" style="margin-right:6px;"></i>
-                                  ${clientName}
-                                </div>
-                                <div style="font-size:0.95em; color:#6b7280;">
-                                  Dossier: <strong style="color:#374151;">${dossierNumber}</strong>
-                                </div>
-                              </div>
-                              
-                              <div style="text-align:right;">
-                                <div style="font-size:0.9em; color:#6b7280; margin-bottom:2px;">Agent</div>
-                                <div style="font-size:1em; font-weight:600; color:#374151;">${employeeName}</div>
-                              </div>
-                            </div>
-                            
-                            <div style="
-                              font-size:0.85em;
-                              color:#dc3545;
-                              background:#fff;
-                              padding:6px 10px;
-                              border-radius:6px;
-                              text-align:center;
-                              font-weight:600;
-                            ">
-                              <i class="fas fa-clock" style="margin-right:4px;"></i>
-                              Cliquez pour voir les détails
-                            </div>
-                          </li>
-                        `;
+                                    <li style='
+                                      background: linear-gradient(135deg, #fef2f2 80%, #fecaca 100%);
+                                      border: 2px solid #fecaca;
+                                      border-radius: 12px;
+                                      margin-bottom: 12px;
+                                      padding: 18px 20px;
+                                      cursor: pointer;
+                                      transition: all 0.2s ease;
+                                      border-left: 4px solid #dc3545;
+                                      position: relative;
+                                    '
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.25)';"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
+                                    onclick="window.location.href='https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?dossier=${encodeURIComponent(
+                                      dossierId
+                                    )}'">
+
+                                      <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                                        <span style="
+                                          background:#dc3545;
+                                          color:#fff;
+                                          font-weight:700;
+                                          font-size:0.9em;
+                                          padding:4px 8px;
+                                          border-radius:6px;
+                                          min-width:30px;
+                                          text-align:center;
+                                        ">${index + 1}</span>
+
+                                        <div style="flex:1;">
+                                          <div style="font-size:1.15em; font-weight:700; color:#dc3545; margin-bottom:2px;">
+                                            <i class="fas fa-folder-open" style="margin-right:6px;"></i>
+                                            ${clientName}
+                                          </div>
+                                          <div style="font-size:0.95em; color:#6b7280;">
+                                            Dossier: <strong style="color:#374151;">${dossierNumber}</strong>
+                                          </div>
+                                        </div>
+
+                                        <div style="text-align:right;">
+                                          <div style="font-size:0.9em; color:#6b7280; margin-bottom:2px;">Agent</div>
+                                          <div style="font-size:1em; font-weight:600; color:#374151;">${employeeName}</div>
+                                        </div>
+                                      </div>
+
+                                      <div style="
+                                        font-size:0.85em;
+                                        color:#dc3545;
+                                        background:#fff;
+                                        padding:6px 10px;
+                                        border-radius:6px;
+                                        text-align:center;
+                                        font-weight:600;
+                                      ">
+                                        <i class="fas fa-clock" style="margin-right:4px;"></i>
+                                        Cliquez pour voir les détails
+                                      </div>
+                                    </li>
+                                  `;
                       });
 
                       html += "</ul></div>";
@@ -3209,12 +3211,12 @@
                       error
                     );
                     contenuRetard.innerHTML = `
-                      <div style='text-align:center;padding:40px 20px;color:#dc3545;'>
-                        <i class="fas fa-exclamation-circle" style="font-size:3em;margin-bottom:15px;"></i>
-                        <p style="font-size:1.2em;margin:0;">Erreur de chargement</p>
-                        <p style="font-size:1em;margin:8px 0 0 0;color:#6b7280;">Impossible de récupérer les dossiers en retard</p>
-                      </div>
-                    `;
+                                <div style='text-align:center;padding:40px 20px;color:#dc3545;'>
+                                  <i class="fas fa-exclamation-circle" style="font-size:3em;margin-bottom:15px;"></i>
+                                  <p style="font-size:1.2em;margin:0;">Erreur de chargement</p>
+                                  <p style="font-size:1em;margin:8px 0 0 0;color:#6b7280;">Impossible de récupérer les dossiers en retard</p>
+                                </div>
+                              `;
                     popupRetard.style.display = "flex";
                   });
               });
@@ -3669,60 +3671,60 @@
                       const style = document.createElement("style");
                       style.id = "style-mois-cards-grid";
                       style.innerHTML = `
-                        #moisPasseSelector {
-                          display: grid !important;
-                          grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
-                          gap: 18px;
-                          margin-bottom: 18px;
-                        }
-                        .mois-resume-card {
-                          background: linear-gradient(135deg,#f7faff 60%,#e3e9f7 100%);
-                          border-radius: 16px;
-                          box-shadow: 0 4px 18px #2563eb18,0 2px 8px #0001;
-                          padding: 18px 12px 12px 12px;
-                          min-width: 0;
-                          max-width: 100%;
-                          display: flex;
-                          flex-direction: column;
-                          align-items: center;
-                          cursor: pointer;
-                          transition: box-shadow 0.2s,transform 0.2s;
-                          border: none;
-                          position: relative;
-                        }
-                        .mois-resume-card.active, .mois-resume-card:focus {
-                          box-shadow: 0 8px 28px #2563eb22,0 4px 16px #0002;
-                          outline: 2px solid #2563eb;
-                        }
-                        .mois-resume-card .mois-label {
-                          font-size: 1.08em;
-                          font-weight: 700;
-                          margin-bottom: 8px;
-                          letter-spacing: 0.5px;
-                          text-align: center;
-                          color: #222e3a;
-                        }
-                        .mois-resume-card .mois-total {
-                          font-size: 2.1em;
-                          font-weight: 900;
-                          margin-bottom: 7px;
-                          letter-spacing: 1px;
-                          color: #2563eb;
-                        }
-                        .mois-resume-card .mois-badges {
-                          margin-bottom: 8px;
-                        }
-                        .mois-resume-card .card-badge {
-                          display: inline-block;
-                          background: #eaf1fb;
-                          color: #2563eb;
-                          border-radius: 7px;
-                          padding: 2px 8px;
-                          font-size: 0.98em;
-                          margin: 0 4px 4px 0;
-                          font-weight: 600;
-                        }
-                      `;
+                                  #moisPasseSelector {
+                                    display: grid !important;
+                                    grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+                                    gap: 18px;
+                                    margin-bottom: 18px;
+                                  }
+                                  .mois-resume-card {
+                                    background: linear-gradient(135deg,#f7faff 60%,#e3e9f7 100%);
+                                    border-radius: 16px;
+                                    box-shadow: 0 4px 18px #2563eb18,0 2px 8px #0001;
+                                    padding: 18px 12px 12px 12px;
+                                    min-width: 0;
+                                    max-width: 100%;
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    cursor: pointer;
+                                    transition: box-shadow 0.2s,transform 0.2s;
+                                    border: none;
+                                    position: relative;
+                                  }
+                                  .mois-resume-card.active, .mois-resume-card:focus {
+                                    box-shadow: 0 8px 28px #2563eb22,0 4px 16px #0002;
+                                    outline: 2px solid #2563eb;
+                                  }
+                                  .mois-resume-card .mois-label {
+                                    font-size: 1.08em;
+                                    font-weight: 700;
+                                    margin-bottom: 8px;
+                                    letter-spacing: 0.5px;
+                                    text-align: center;
+                                    color: #222e3a;
+                                  }
+                                  .mois-resume-card .mois-total {
+                                    font-size: 2.1em;
+                                    font-weight: 900;
+                                    margin-bottom: 7px;
+                                    letter-spacing: 1px;
+                                    color: #2563eb;
+                                  }
+                                  .mois-resume-card .mois-badges {
+                                    margin-bottom: 8px;
+                                  }
+                                  .mois-resume-card .card-badge {
+                                    display: inline-block;
+                                    background: #eaf1fb;
+                                    color: #2563eb;
+                                    border-radius: 7px;
+                                    padding: 2px 8px;
+                                    font-size: 0.98em;
+                                    margin: 0 4px 4px 0;
+                                    font-weight: 600;
+                                  }
+                                `;
                       document.head.appendChild(style);
                     }
                     // On n'affiche que les mois terminés (pas le mois courant)
@@ -3772,20 +3774,20 @@
                       card.tabIndex = 0;
                       card.setAttribute("data-key", key);
                       card.innerHTML = `
-  <div class=\"mois-label\">${label}</div>
-  <div class=\"mois-total\">${totalLiv}</div>
-  <div class=\"mois-badges\">
-    ${Object.entries(statuts)
-      .map(([s, n]) => `<span class='card-badge'>${n} ${s}</span>`)
-      .join(" ")}
-  </div>
-  <div style='font-size:0.98em;color:#374151;margin-bottom:2px;'><strong>Agents :</strong> ${
-    agents.length
-  }</div>
-  <div style='font-size:0.98em;color:#374151;'><strong>Clients :</strong> ${
-    clients.length
-  }</div>
-`;
+            <div class=\"mois-label\">${label}</div>
+            <div class=\"mois-total\">${totalLiv}</div>
+            <div class=\"mois-badges\">
+              ${Object.entries(statuts)
+                .map(([s, n]) => `<span class='card-badge'>${n} ${s}</span>`)
+                .join(" ")}
+            </div>
+            <div style='font-size:0.98em;color:#374151;margin-bottom:2px;'><strong>Agents :</strong> ${
+              agents.length
+            }</div>
+            <div style='font-size:0.98em;color:#374151;'><strong>Clients :</strong> ${
+              clients.length
+            }</div>
+          `;
                       // (Suppression du bouton de suppression pour les cartes mois)
                       card.onclick = () => {
                         selectedIndex = idx;
@@ -3807,9 +3809,9 @@
                       navDiv.style.gap = "18px";
                       navDiv.style.margin = "18px 0 0 0";
                       navDiv.innerHTML = `
-                        <button id='btnMoisPrecedent' style='padding:8px 22px;font-size:1em;font-weight:600;background:#f7faff;color:#2563eb;border:1px solid #2563eb33;border-radius:8px;cursor:pointer;transition:background 0.18s;'>⟵ Précédent</button>
-                        <button id='btnMoisSuivant' style='padding:8px 22px;font-size:1em;font-weight:600;background:#f7faff;color:#2563eb;border:1px solid #2563eb33;border-radius:8px;cursor:pointer;transition:background 0.18s;'>Suivant ⟶</button>
-                      `;
+                                  <button id='btnMoisPrecedent' style='padding:8px 22px;font-size:1em;font-weight:600;background:#f7faff;color:#2563eb;border:1px solid #2563eb33;border-radius:8px;cursor:pointer;transition:background 0.18s;'>⟵ Précédent</button>
+                                  <button id='btnMoisSuivant' style='padding:8px 22px;font-size:1em;font-weight:600;background:#f7faff;color:#2563eb;border:1px solid #2563eb33;border-radius:8px;cursor:pointer;transition:background 0.18s;'>Suivant ⟶</button>
+                                `;
                       selector.parentNode.insertBefore(
                         navDiv,
                         selector.nextSibling
@@ -4070,55 +4072,65 @@
             window.updateCardCounters = function () {
               console.log("[DASHBOARD] 📊 Début mise à jour des compteurs...");
 
-              fetch("/api/deliveries/status-counts")
+              // Utiliser la même API que le tableau de suivi pour assurer la cohérence
+              fetch("/deliveries/status")
                 .then((response) => response.json())
                 .then((data) => {
-                  if (data.success) {
+                  if (data.success && data.deliveries) {
                     console.log(
-                      "[DASHBOARD] ✅ Compteurs reçus du serveur:",
-                      data.counts
+                      "[DASHBOARD] ✅ Données de livraisons reçues:",
+                      data.deliveries.length
                     );
+
+                    // Calculer les compteurs à partir des mêmes données que le tableau de suivi
+                    const counts = calculateCountsFromDeliveries(
+                      data.deliveries
+                    );
+
+                    console.log("[DASHBOARD] 📊 Compteurs calculés:", counts);
 
                     // Mise à jour de la carte "Dossier soumis"
                     const oldAttente = window.updateCardCounter(
                       "carteAttentePaiement",
-                      data.counts.en_attente_paiement || 0
+                      counts.en_attente_paiement || 0
                     );
                     console.log(
                       `[DASHBOARD] 📋 Dossier soumis: ${
-                        data.counts.en_attente_paiement || 0
+                        counts.en_attente_paiement || 0
                       }`
                     );
 
-                    // Mise à jour de la carte "Dossiers mis en livraison"
+                    // Mise à jour de la carte "Dossiers mis en livraison" avec format "mis en livraison / total"
+                    const miseEnLivraisonText = `${
+                      counts.mise_en_livraison || 0
+                    } / ${counts.en_attente_paiement || 0}`;
                     const oldMiseEnLivraison = window.updateCardCounter(
                       "carteMiseLivraison",
-                      data.counts.mise_en_livraison || 0
+                      miseEnLivraisonText
                     );
                     console.log(
-                      `[DASHBOARD] 🚛 Dossiers mis en livraison: ${
-                        data.counts.mise_en_livraison || 0
-                      }`
+                      `[DASHBOARD] 🚛 Dossiers mis en livraison: ${miseEnLivraisonText} (${counts.mise_en_livraison} sur ${counts.en_attente_paiement} total)`
                     );
 
-                    // Mise à jour de la carte "Dossiers livrés"
+                    // Mise à jour de la carte "Dossiers livrés" avec format "livrés / mis en livraison"
+                    const livresText = `${counts.livres || 0} / ${
+                      counts.mise_en_livraison || 0
+                    }`;
                     const oldLivres = window.updateCardCounter(
                       "carteLivre",
-                      data.counts.livres || 0
+                      livresText
                     );
                     console.log(
-                      `[DASHBOARD] ✅ Dossiers livrés: ${
-                        data.counts.livres || 0
-                      }`
+                      `[DASHBOARD] ✅ Dossiers livrés: ${livresText} (${counts.livres} dossiers livrés sur ${counts.mise_en_livraison} en livraison)`
                     );
 
                     console.log(
                       "[DASHBOARD] 🔄 Mise à jour terminée - Totaux:",
                       {
-                        "En attente": data.counts.en_attente_paiement || 0,
-                        "Mis en livraison": data.counts.mise_en_livraison || 0,
-                        Livrés: data.counts.livres || 0,
-                        "En retard": data.counts.en_retard || 0,
+                        "En attente": counts.en_attente_paiement || 0,
+                        "Mis en livraison": counts.mise_en_livraison || 0,
+                        Livrés: counts.livres || 0,
+                        "En retard": counts.en_retard || 0,
                       }
                     );
                   } else {
@@ -4130,11 +4142,113 @@
                 })
                 .catch((error) => {
                   console.error(
-                    "[DASHBOARD] ❌ Erreur lors de la récupération des compteurs:",
+                    "[DASHBOARD] ❌ Erreur lors de la récupération des données:",
                     error
                   );
                 });
             };
+
+            // Fonction pour calculer les compteurs à partir des données de livraison (comme dans le tableau de suivi)
+            window.calculateCountsFromDeliveries = function (deliveries) {
+              console.log(
+                "[DASHBOARD] 📋 Calcul des compteurs à partir de",
+                deliveries.length,
+                "livraisons"
+              );
+
+              // Le badge "Dossier soumis" doit toujours afficher le TOTAL des dossiers dans le tableau de suivi
+              // Il ne diminue que si un dossier est SUPPRIMÉ du tableau, pas quand il change de statut
+              const counts = {
+                en_attente_paiement: deliveries.length, // TOTAL des dossiers soumis (TOUS les dossiers du tableau)
+                mise_en_livraison: 0,
+                livres: 0,
+                en_retard: 0,
+              };
+
+              // Analyser chaque dossier pour les autres catégories (sous-ensembles du total)
+              deliveries.forEach((delivery) => {
+                // Debug pour voir les statuts
+                console.log(
+                  "[DEBUG] Dossier:",
+                  delivery.dossier_number,
+                  "Statut acconier:",
+                  delivery.delivery_status_acconier,
+                  "Statut container:",
+                  delivery.container_statuses
+                );
+
+                // 🎯 LOGIQUE SIMPLIFIÉE : Un dossier est livré si visible_resp_acconier = false
+                // Cette logique correspond exactement à ce que fait le serveur
+                let isLivre = false;
+
+                // Méthode principale: vérifier visible_resp_acconier (comme dans le serveur)
+                if (delivery.visible_resp_acconier === false) {
+                  isLivre = true;
+                  console.log(
+                    "[DEBUG] ✅ Dossier livré (visible_resp_acconier=false):",
+                    delivery.dossier_number
+                  );
+                }
+
+                // Méthode alternative: vérifier les statuts de conteneurs s'ils existent
+                if (!isLivre && delivery.container_statuses) {
+                  Object.values(delivery.container_statuses).forEach(
+                    (status) => {
+                      if (status === "livre" || status === "livré") {
+                        isLivre = true;
+                        console.log(
+                          "[DEBUG] ✅ Dossier livré (statut conteneur):",
+                          delivery.dossier_number
+                        );
+                      }
+                    }
+                  );
+                }
+
+                // Compter selon les catégories
+                if (isLivre) {
+                  counts.livres++;
+                } else if (
+                  delivery.delivery_status_acconier ===
+                  "mise_en_livraison_acconier"
+                ) {
+                  counts.mise_en_livraison++;
+                }
+
+                // Compter les dossiers en retard
+                if (delivery.created_at) {
+                  const diffDays = Math.floor(
+                    (new Date() - new Date(delivery.created_at)) /
+                      (1000 * 60 * 60 * 24)
+                  );
+                  if (diffDays > 2 && !isLivre) {
+                    counts.en_retard++;
+                  }
+                }
+              });
+
+              console.log(
+                "[DASHBOARD] 📊 Compteurs calculés (correspondant au tableau de suivi):",
+                {
+                  "🔢 TOTAL dossiers soumis (ne diminue que si suppression)":
+                    counts.en_attente_paiement,
+                  "🚛 Sous-ensemble mis en livraison": counts.mise_en_livraison,
+                  "✅ Sous-ensemble livrés": counts.livres,
+                  "⏰ Sous-ensemble en retard": counts.en_retard,
+                  "📋 Note":
+                    "Le badge 'Dossier soumis' affiche le TOTAL, les autres sont des sous-catégories",
+                }
+              );
+
+              return counts;
+            };
+
+            // Fonction utilitaire pour normaliser les dates (copiée de scriptSuivie.js)
+            function normalizeDateToMidnight(date) {
+              const normalized = new Date(date);
+              normalized.setHours(0, 0, 0, 0);
+              return normalized;
+            }
 
             // Fonction utilitaire pour mettre à jour un compteur spécifique (GLOBALE)
             window.updateCardCounter = function (cardId, count) {
@@ -4152,29 +4266,29 @@
                   let badgeStyle = getBadgeStyleForCard(cardId);
 
                   counterElement.style.cssText = `
-                    position: absolute;
-                    top: -8px;
-                    right: -8px;
-                    background: ${badgeStyle.background};
-                    color: ${badgeStyle.color};
-                    font-weight: 800;
-                    font-size: 0.9em;
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-                    padding: 8px 12px;
-                    border-radius: 20px;
-                    border: 3px solid #ffffff;
-                    box-shadow: 0 4px 16px ${badgeStyle.shadowColor}, 0 2px 8px rgba(0, 0, 0, 0.1);
-                    min-width: 28px;
-                    min-height: 28px;
-                    text-align: center;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    z-index: 10;
-                    backdrop-filter: blur(10px);
-                    transform-origin: center;
-                  `;
+                              position: absolute;
+                              top: -8px;
+                              right: -8px;
+                              background: ${badgeStyle.background};
+                              color: ${badgeStyle.color};
+                              font-weight: 800;
+                              font-size: 0.9em;
+                              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                              padding: 8px 12px;
+                              border-radius: 20px;
+                              border: 3px solid #ffffff;
+                              box-shadow: 0 4px 16px ${badgeStyle.shadowColor}, 0 2px 8px rgba(0, 0, 0, 0.1);
+                              min-width: 28px;
+                              min-height: 28px;
+                              text-align: center;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                              z-index: 10;
+                              backdrop-filter: blur(10px);
+                              transform-origin: center;
+                            `;
 
                   // Animation d'apparition
                   counterElement.style.opacity = "0";
@@ -4186,15 +4300,30 @@
                     counterElement.style.transform = "scale(1) rotate(0deg)";
                   }, 50);
                 } else {
-                  oldValue = parseInt(counterElement.textContent) || 0;
+                  // Pour les valeurs numériques simples, extraire l'ancien nombre
+                  const oldText = counterElement.textContent || "0";
+                  if (oldText.includes("/")) {
+                    // Si l'ancien texte contient "/", extraire le premier nombre
+                    oldValue = parseInt(oldText.split("/")[0]) || 0;
+                  } else {
+                    oldValue = parseInt(oldText) || 0;
+                  }
                 }
 
                 counterElement.textContent = count;
 
                 // Animation de mise à jour avec couleur selon le changement
-                if (count !== oldValue) {
+                let currentValue;
+                if (typeof count === "string" && count.includes("/")) {
+                  // Si c'est un format "X / Y", extraire X pour la comparaison
+                  currentValue = parseInt(count.split("/")[0]) || 0;
+                } else {
+                  currentValue = parseInt(count) || 0;
+                }
+
+                if (currentValue !== oldValue) {
                   // Animation de pulsation avec couleurs dynamiques
-                  if (count > oldValue) {
+                  if (currentValue > oldValue) {
                     // Augmentation - Animation verte
                     counterElement.style.background =
                       "linear-gradient(135deg, #10b981 0%, #059669 100%)";
@@ -4205,7 +4334,7 @@
 
                     // Effet de particules
                     createSuccessParticles(counterElement);
-                  } else if (count < oldValue) {
+                  } else if (currentValue < oldValue) {
                     // Diminution - Animation rouge
                     counterElement.style.background =
                       "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)";
@@ -4226,7 +4355,7 @@
                   }, 600);
 
                   console.log(
-                    `[CARD UPDATE] ${cardId}: ${oldValue} → ${count}`
+                    `[CARD UPDATE] ${cardId}: ${oldValue} → ${currentValue} (affiché: ${count})`
                   );
                 }
 
@@ -4289,16 +4418,16 @@
               for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement("div");
                 particle.style.cssText = `
-                  position: fixed;
-                  width: 4px;
-                  height: 4px;
-                  background: #10b981;
-                  border-radius: 50%;
-                  pointer-events: none;
-                  z-index: 9999;
-                  left: ${rect.left + rect.width / 2}px;
-                  top: ${rect.top + rect.height / 2}px;
-                `;
+                            position: fixed;
+                            width: 4px;
+                            height: 4px;
+                            background: #10b981;
+                            border-radius: 50%;
+                            pointer-events: none;
+                            z-index: 9999;
+                            left: ${rect.left + rect.width / 2}px;
+                            top: ${rect.top + rect.height / 2}px;
+                          `;
 
                 document.body.appendChild(particle);
 
@@ -4365,14 +4494,14 @@
               const successIndicator = document.createElement("div");
               successIndicator.innerHTML = "✨";
               successIndicator.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                font-size: 2em;
-                z-index: 9999;
-                animation: successPulse 2s ease-out forwards;
-                pointer-events: none;
-              `;
+                          position: fixed;
+                          top: 20px;
+                          right: 20px;
+                          font-size: 2em;
+                          z-index: 9999;
+                          animation: successPulse 2s ease-out forwards;
+                          pointer-events: none;
+                        `;
 
               document.body.appendChild(successIndicator);
               setTimeout(() => successIndicator.remove(), 2000);
@@ -4383,13 +4512,13 @@
               const style = document.createElement("style");
               style.id = "dynamic-animations";
               style.textContent = `
-                @keyframes successPulse {
-                  0% { opacity: 0; transform: scale(0) rotate(0deg); }
-                  20% { opacity: 1; transform: scale(1.5) rotate(180deg); }
-                  80% { opacity: 1; transform: scale(1) rotate(360deg); }
-                  100% { opacity: 0; transform: scale(0.5) rotate(540deg); }
-                }
-              `;
+                          @keyframes successPulse {
+                            0% { opacity: 0; transform: scale(0) rotate(0deg); }
+                            20% { opacity: 1; transform: scale(1.5) rotate(180deg); }
+                            80% { opacity: 1; transform: scale(1) rotate(360deg); }
+                            100% { opacity: 0; transform: scale(0.5) rotate(540deg); }
+                          }
+                        `;
               document.head.appendChild(style);
             }
 
@@ -4614,7 +4743,8 @@
                     setTimeout(() => {
                       window.updateCardCounters();
                     }, 100);
-                  } // Mise à jour standard avec léger délai
+                  }
+                  // Mise à jour standard avec léger délai
                   setTimeout(() => {
                     window.updateCardCounters();
                   }, 200);
