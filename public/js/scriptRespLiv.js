@@ -7518,4 +7518,625 @@ function restoreCountdownIfActive() {
 // ========================================================================
 // === FIN HISTORIQUE PROFESSIONNEL ===
 // ========================================================================
+
+// ========================================================================
+// === GESTION DES DOSSIERS EN RETARD ===
+// ========================================================================
+
+let lateDeliveriesData = [];
+
+// Fonction pour calculer les dossiers en retard
+function calculateLateDeliveries(deliveries) {
+  console.log(
+    "📊 DEBUG - Échantillon des données reçues:",
+    deliveries.slice(0, 1)
+  );
+  if (deliveries.length > 0) {
+    console.log(
+      "📊 DEBUG - Clés du premier objet:",
+      Object.keys(deliveries[0])
+    );
+  }
+
+  const now = new Date();
+  const twoDaysInMs = 2 * 24 * 60 * 60 * 1000; // 2 jours en millisecondes
+
+  console.log(
+    `📅 Date actuelle pour calcul: ${now.toLocaleDateString("fr-FR")}`
+  );
+
+  const lateDeliveries = deliveries.filter((delivery) => {
+    // Vérifier si le dossier est déjà livré - plusieurs conditions de vérification
+    const isDelivered =
+      delivery.statut === "Livré" ||
+      delivery.statut === "LIVRE" ||
+      delivery.statut === "livré" ||
+      delivery.statut === "livre" ||
+      delivery.statut === "delivered" ||
+      delivery.statut === "Delivered" ||
+      delivery.statut === "DELIVERED" ||
+      delivery.status === "delivered" ||
+      delivery.status === "Livré" ||
+      delivery.status === "LIVRE" ||
+      delivery.status === "Delivered" ||
+      delivery.status === "DELIVERED" ||
+      delivery.delivery_status === "delivered" ||
+      delivery.delivery_status === "Livré" ||
+      delivery.delivery_status_acconier === "delivered" ||
+      delivery.delivery_status_acconier === "livré" ||
+      delivery.delivery_status_acconier === "processed_acconier" ||
+      delivery.date_livraison ||
+      delivery.delivery_date ||
+      delivery.delivered_at;
+
+    if (isDelivered) {
+      console.log(`✅ Dossier livré exclu du tableau d'alerte:`, {
+        id: delivery.id || delivery.numero_dossier || "inconnu",
+        client: delivery.nom_client || delivery.client_name || "Client inconnu",
+        statut: delivery.statut || delivery.status,
+        delivery_status_acconier: delivery.delivery_status_acconier,
+        date_livraison: delivery.date_livraison || delivery.delivery_date,
+      });
+      return false;
+    }
+
+    // Trouver la date de référence (dernière mise à jour ou date de création)
+    let referenceDate = null;
+
+    // Priorité aux dates de mise à jour récentes
+    const dateFields = [
+      "updated_at",
+      "date_modification",
+      "last_updated",
+      "date_creation",
+      "created_at",
+      "date",
+      "date_do",
+      "date_badt",
+      "date_soumission",
+    ];
+
+    for (let field of dateFields) {
+      if (delivery[field]) {
+        const testDate = new Date(delivery[field]);
+        if (!isNaN(testDate.getTime())) {
+          referenceDate = testDate;
+          break;
+        }
+      }
+    }
+
+    if (!referenceDate) {
+      console.warn(
+        `⚠️ Aucune date trouvée pour le dossier ID: ${delivery.id || "inconnu"}`
+      );
+      return false;
+    }
+
+    // Calculer la différence en jours
+    const diffTime = now.getTime() - referenceDate.getTime();
+    const diffDays = Math.floor(diffTime / (24 * 60 * 60 * 1000));
+
+    const isLate = diffTime > twoDaysInMs;
+
+    if (isLate) {
+      console.log(`🚨 Dossier en retard trouvé:`, {
+        id: delivery.id || delivery.numero_dossier || "inconnu",
+        client: delivery.nom_client || delivery.client_name || "Client inconnu",
+        referenceDate: referenceDate.toLocaleDateString("fr-FR"),
+        diffDays: diffDays,
+        statut: delivery.statut || delivery.status,
+      });
+    }
+
+    return isLate;
+  });
+
+  console.log(
+    `📊 Résultat: ${lateDeliveries.length} dossiers en retard sur ${deliveries.length} total`
+  );
+  return lateDeliveries;
+}
+
+// Fonction pour mettre à jour l'alerte des dossiers en retard
+function updateLateDeliveriesAlert(deliveries) {
+  lateDeliveriesData = calculateLateDeliveries(deliveries);
+  const alertElement = document.getElementById("lateDeliveriesAlert");
+  const textElement = document.getElementById("lateDeliveriesText");
+
+  if (lateDeliveriesData.length > 0) {
+    textElement.textContent = `Alerte : ${lateDeliveriesData.length} dossier(s) en retard (plus de 2 jours)`;
+    alertElement.style.display = "block";
+
+    // Animation de pulsation pour attirer l'attention
+    alertElement.style.animation = "pulse 2s infinite";
+  } else {
+    alertElement.style.display = "none";
+  }
+}
+
+// Fonction pour créer le menu déroulant des numéros TC
+function createTCDropdown(tcNumbers) {
+  if (!tcNumbers || tcNumbers.length === 0) {
+    return "-";
+  }
+
+  if (tcNumbers.length === 1) {
+    return tcNumbers[0];
+  }
+
+  const selectId = `tc-select-${Math.random().toString(36).substr(2, 9)}`;
+  let html = `
+    <select id="${selectId}" style="
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.8em;
+      background: white;
+      cursor: pointer;
+      max-width: 120px;
+    ">
+      <option value="">Voir TC (${tcNumbers.length})</option>
+  `;
+
+  tcNumbers.forEach((tc, index) => {
+    html += `<option value="${tc}">TC ${index + 1}: ${tc}</option>`;
+  });
+
+  html += "</select>";
+  return html;
+}
+
+// Fonction pour formater les dates au format français
+function formatDate(dateValue) {
+  if (!dateValue || dateValue === "-" || dateValue === "") {
+    return "-";
+  }
+
+  try {
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) {
+      return dateValue; // Retourner la valeur originale si ce n'est pas une date valide
+    }
+
+    // Format français : JJ/MM/AAAA
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch (error) {
+    return dateValue; // Retourner la valeur originale en cas d'erreur
+  }
+}
+
+// Fonction pour afficher la modale des dossiers en retard
+function showLateDeliveriesModal() {
+  const modal = document.getElementById("lateDeliveriesModal");
+  const tableBody = document.getElementById("lateDeliveriesTableBody");
+  const countElement = document.getElementById("lateDeliveriesCount");
+
+  // Mettre à jour le compteur
+  countElement.textContent = `${lateDeliveriesData.length} dossier(s)`;
+
+  // Vider le tableau
+  tableBody.innerHTML = "";
+
+  console.log(
+    "🎯 Affichage de la modale avec",
+    lateDeliveriesData.length,
+    "dossiers en retard"
+  );
+
+  // Remplir le tableau avec les dossiers en retard
+  lateDeliveriesData.forEach((delivery, index) => {
+    console.log(`📋 Traitement dossier ${index + 1}:`, delivery);
+
+    // Traiter les numéros TC avec plusieurs variantes de noms de champs
+    let tcNumbers = [];
+    if (delivery.numero_tc) {
+      if (Array.isArray(delivery.numero_tc)) {
+        tcNumbers = delivery.numero_tc;
+      } else if (typeof delivery.numero_tc === "string") {
+        tcNumbers = delivery.numero_tc
+          .split(",")
+          .map((tc) => tc.trim())
+          .filter((tc) => tc);
+      }
+    } else if (delivery.container_number) {
+      if (Array.isArray(delivery.container_number)) {
+        tcNumbers = delivery.container_number;
+      } else if (typeof delivery.container_number === "string") {
+        tcNumbers = delivery.container_number
+          .split(",")
+          .map((tc) => tc.trim())
+          .filter((tc) => tc);
+      }
+    } else if (
+      delivery.container_numbers_list &&
+      Array.isArray(delivery.container_numbers_list)
+    ) {
+      tcNumbers = delivery.container_numbers_list;
+    }
+
+    // Fonction helper pour obtenir la valeur avec plusieurs variantes de noms et la convertir en MAJUSCULES
+    function getValue(obj, variants) {
+      for (let variant of variants) {
+        if (
+          obj[variant] !== undefined &&
+          obj[variant] !== null &&
+          obj[variant] !== ""
+        ) {
+          return String(obj[variant]).toUpperCase();
+        }
+      }
+
+      // Debug temporaire pour CONTENU uniquement
+      if (variants.includes("container_type_and_content")) {
+        console.log(
+          "🔍 DEBUG CONTENU - Clés disponibles:",
+          Object.keys(obj).filter(
+            (key) =>
+              key.toLowerCase().includes("content") ||
+              key.toLowerCase().includes("contenu") ||
+              key.toLowerCase().includes("container") ||
+              key.toLowerCase().includes("type")
+          )
+        );
+        console.log(
+          "🔍 DEBUG CONTENU - Valeurs testées:",
+          variants.map((v) => `${v}: ${obj[v]}`)
+        );
+      }
+
+      return "-";
+    }
+
+    // Fonction helper pour obtenir et formater les dates en MAJUSCULES
+    function getFormattedDate(obj, variants) {
+      const dateValue = getValue(obj, variants);
+      if (dateValue === "-") return "-";
+
+      // Extraire la valeur originale (non en majuscules) pour le formatage
+      let originalValue = null;
+      for (let variant of variants) {
+        if (
+          obj[variant] !== undefined &&
+          obj[variant] !== null &&
+          obj[variant] !== ""
+        ) {
+          originalValue = obj[variant];
+          break;
+        }
+      }
+
+      return formatDate(originalValue).toUpperCase();
+    }
+
+    const row = document.createElement("tr");
+    row.style.cssText =
+      "border-bottom: 1px solid #f1f5f9; transition: background 0.2s ease;";
+
+    row.onmouseover = function () {
+      this.style.background = "#f8fafc";
+    };
+    row.onmouseout = function () {
+      this.style.background = "white";
+    };
+
+    // Créer le contenu HTML de la ligne avec des informations complètes
+    const dateValue = getFormattedDate(delivery, [
+      "date",
+      "created_at",
+      "date_creation",
+      "updated_at",
+    ]);
+    const agentValue = getValue(delivery, [
+      "agent_acconier",
+      "responsible_acconier",
+      "resp_acconier",
+      "nom_agent_visiteur",
+      "employee_name",
+    ]);
+    const clientValue = getValue(delivery, [
+      "nom_client",
+      "client_name",
+      "client",
+    ]);
+    const clientNumberValue = getValue(delivery, [
+      "numero_client",
+      "client_number",
+      "client_id",
+    ]);
+    const lieuValue = getValue(delivery, ["lieu", "location", "port"]);
+    const typeConteneurValue = getValue(delivery, [
+      "container_foot_type",
+      "type_conteneur",
+      "container_type",
+      "tc_type",
+      "foot_type",
+      "container_size",
+    ]);
+    const contenuValue = getValue(delivery, [
+      "container_type_and_content",
+      "contenu",
+      "content",
+      "description",
+      "cargo_description",
+      "container_content",
+      "type_and_content",
+      "marchandise",
+      "goods",
+      "cargo",
+      "produit",
+      "product",
+    ]);
+    const modeTransportValue = getValue(delivery, [
+      "transporter_mode",
+      "mode_transport",
+      "transport_mode",
+      "transport_type",
+      "mode",
+      "modeTransport",
+      "typeTransport",
+      "mode_de_transport",
+      "transport",
+      "modalite_transport",
+      "moyen_transport",
+      "category",
+      "type_operation",
+      "operation_type",
+    ]);
+
+    // Dates formatées
+    const dateDOValue = getFormattedDate(delivery, [
+      "date_do",
+      "do_date",
+      "discharge_order_date",
+    ]);
+    const dateBADTValue = getFormattedDate(delivery, [
+      "date_badt",
+      "badt_date",
+      "customs_clearance_date",
+    ]);
+    const dateLivraisonValue = getFormattedDate(delivery, [
+      "date_livraison",
+      "delivery_date",
+      "delivered_at",
+    ]);
+
+    row.innerHTML =
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      (index + 1) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      dateValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      agentValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      clientValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      clientNumberValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      lieuValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      typeConteneurValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      contenuValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, [
+        "numero_declaration",
+        "declaration_number",
+        "decl_number",
+      ]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["numero_bl", "bl_number", "bill_of_lading"]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, [
+        "numero_dossier",
+        "dossier_number",
+        "folder_number",
+        "id",
+      ]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, [
+        "number_of_containers",
+        "nombre_conteneurs",
+        "container_count",
+        "nb_containers",
+      ]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, [
+        "compagnie_maritime",
+        "shipping_company",
+        "company",
+      ]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["poids", "weight", "gross_weight"]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["nom_navire", "vessel_name", "ship_name"]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["circuit", "flow", "direction"]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      modeTransportValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      dateDOValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      dateBADTValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, [
+        "nom_agent_visiteur",
+        "agent_visiteur",
+        "visitor_agent",
+        "employee_name",
+      ]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["transporteur", "transporter", "carrier"]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["inspecteur", "inspector", "controller"]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["agent_douanes", "customs_agent", "douane_agent"]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["chauffeur", "driver", "driver_name"]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["tel_chauffeur", "driver_phone", "phone_driver"]) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      dateLivraisonValue +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      createTCDropdown(tcNumbers) +
+      "</td>" +
+      '<td style="padding: 8px; white-space: nowrap;"><span style="background: #fef2f2; color: #dc2626; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 500;">EN RETARD</span></td>' +
+      '<td style="padding: 8px; white-space: nowrap;">' +
+      getValue(delivery, ["observations", "comments", "notes", "remarks"]) +
+      "</td>";
+
+    tableBody.appendChild(row);
+  });
+
+  // Afficher la modale
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+
+// Fonction pour fermer la modale des dossiers en retard
+function closeLateDeliveriesModal(event) {
+  if (event && event.target !== event.currentTarget) {
+    return;
+  }
+
+  const modal = document.getElementById("lateDeliveriesModal");
+  modal.style.display = "none";
+  document.body.style.overflow = "auto";
+}
+
+// Fonction pour intégrer la vérification des dossiers en retard dans le chargement des données
+function integrateLateBelliveriesCheck() {
+  // Surveillance de window.allDeliveries pour détecter les changements
+  let previousAllDeliveriesLength = 0;
+
+  function checkForDataChanges() {
+    if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+      if (window.allDeliveries.length !== previousAllDeliveriesLength) {
+        updateLateDeliveriesAlert(window.allDeliveries);
+        previousAllDeliveriesLength = window.allDeliveries.length;
+      }
+    }
+  }
+
+  // Vérifier toutes les 2 secondes si les données ont changé
+  setInterval(checkForDataChanges, 2000);
+
+  // Vérification initiale
+  setTimeout(checkForDataChanges, 1000);
+
+  // Hook pour MutationObserver sur le tableau principal pour détecter les changements
+  const targetNode = document.getElementById("deliveriesTableBody");
+  if (targetNode) {
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        if (mutation.type === "childList" && window.allDeliveries) {
+          updateLateDeliveriesAlert(window.allDeliveries);
+        }
+      });
+    });
+
+    observer.observe(targetNode, {
+      childList: true,
+      subtree: true,
+    });
+  }
+}
+
+// Ajouter les styles CSS pour l'animation de pulsation
+function addLateDeliveriesStyles() {
+  if (document.getElementById("lateDeliveriesStyles")) return;
+
+  const style = document.createElement("style");
+  style.id = "lateDeliveriesStyles";
+  style.textContent = `
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        transform: scale(1.02);
+      }
+      100% {
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        transform: scale(1);
+      }
+    }
+    
+    #lateDeliveriesAlert:hover {
+      background: linear-gradient(90deg, #fee2e2 0%, #fecaca 100%) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3) !important;
+    }
+    
+    #lateDeliveriesModal {
+      backdrop-filter: blur(4px);
+    }
+    
+    #lateDeliveriesTable tbody tr:nth-child(even) {
+      background-color: #f9fafb;
+    }
+    
+    #lateDeliveriesTable tbody tr:hover {
+      background-color: #f3f4f6 !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Initialiser le système de dossiers en retard
+document.addEventListener("DOMContentLoaded", function () {
+  addLateDeliveriesStyles();
+  integrateLateBelliveriesCheck();
+
+  // Vérifier périodiquement les dossiers en retard (toutes les 30 secondes)
+  setInterval(function () {
+    if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+      updateLateDeliveriesAlert(window.allDeliveries);
+    }
+  }, 30 * 1000);
+
+  // Vérification initiale après 3 secondes pour laisser le temps au chargement initial
+  setTimeout(function () {
+    if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
+      updateLateDeliveriesAlert(window.allDeliveries);
+    }
+  }, 3000);
+});
+
+// ========================================================================
+// === FIN GESTION DES DOSSIERS EN RETARD ===
+// ========================================================================
+
 /**JESUS MA FORCE  */

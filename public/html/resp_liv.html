@@ -787,6 +787,36 @@
             <h1 class="mb-1" style="font-size:2.1em;font-weight:900;color:#0e274e;letter-spacing:-1px;background:linear-gradient(90deg,#ffe066 0%,#0e274e 100%);padding:18px 32px;border-radius:18px;box-shadow:0 4px 24px #0e274e22;">Tableau - Responsable de Livraison</h1>
             <div style="font-size:1.13em;color:#0e274e;font-weight:600;background:rgba(255,230,0,0.13);padding:10px 24px;border-radius:12px;"> Livraison & Cotage des agent Visiteur pour la visite </div>
             
+            <!-- ALERTE DOSSIERS EN RETARD -->
+            <div 
+              id="lateDeliveriesAlert" 
+              style="
+                display: none;
+                margin-top: 12px;
+                padding: 12px 20px;
+                background: linear-gradient(90deg, #fef2f2 0%, #fee2e2 100%);
+                border: 2px solid #ef4444;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+                cursor: pointer;
+                transition: all 0.3s ease;
+              "
+              onclick="showLateDeliveriesModal()"
+            >
+              <div style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 1em;
+                font-weight: 600;
+                color: #dc2626;
+              ">
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.2em; color: #ef4444;"></i>
+                <span id="lateDeliveriesText">Alerte : 0 dossier(s) en retard (plus de 2 jours)</span>
+                <i class="fas fa-chevron-right" style="margin-left: auto; font-size: 0.9em;"></i>
+              </div>
+            </div>
+            
             <!-- BANDEAU D'INFORMATION UTILISATEUR CIBLÉ (affiché quand redirigé depuis le tableau de bord) -->
             <div 
               id="targetUserInfoBanner" 
@@ -1210,6 +1240,162 @@
         }
       })();
     </script>
+
+    <!-- MODALE DOSSIERS EN RETARD -->
+    <div 
+      id="lateDeliveriesModal" 
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      "
+      onclick="closeLateDeliveriesModal(event)"
+    >
+      <div 
+        style="
+          background: white;
+          border-radius: 16px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+          max-width: 95%;
+          max-height: 90%;
+          width: 1200px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        "
+        onclick="event.stopPropagation()"
+      >
+        <!-- En-tête de la modale -->
+        <div style="
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          padding: 20px 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        ">
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 1.5em;"></i>
+            <h3 style="margin: 0; font-size: 1.4em; font-weight: 700;">Dossiers en Retard</h3>
+            <span id="lateDeliveriesCount" style="
+              background: rgba(255,255,255,0.2);
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 0.9em;
+              font-weight: 600;
+            ">0 dossier(s)</span>
+          </div>
+          <button 
+            onclick="closeLateDeliveriesModal()"
+            style="
+              background: none;
+              border: none;
+              color: white;
+              font-size: 1.5em;
+              cursor: pointer;
+              padding: 8px;
+              border-radius: 50%;
+              transition: background 0.2s ease;
+            "
+            onmouseover="this.style.background='rgba(255,255,255,0.2)'"
+            onmouseout="this.style.background='none'"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Contenu de la modale -->
+        <div style="
+          flex: 1;
+          overflow: auto;
+          padding: 0;
+        ">
+          <div style="overflow-x: auto;">
+            <table id="lateDeliveriesTable" style="
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 0.85em;
+            ">
+              <thead style="background: #f8fafc; position: sticky; top: 0;">
+                <tr>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">N°</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">DATE</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">AGENT ACCONIER</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NOM CLIENT</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NUMÉRO CLIENT</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">LIEU</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">TYPE DE CONTENEUR</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">CONTENU</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NUMÉRO DÉCLARATION</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NUMÉRO BL</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NUMÉRO DOSSIER</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NOMBRE DE CONTENEURS</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">COMPAGNIE MARITIME</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">POIDS</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NOM DU NAVIRE</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">CIRCUIT</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">MODE DE TRANSPORT</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">DATE DE DO</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">DATE DE BADT</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NOM AGENT VISITEURS</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">TRANSPORTEUR</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">INSPECTEUR</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">AGENT EN DOUANES</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">CHAUFFEUR</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">TÉL CHAUFFEUR</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">DATE LIVRAISON</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NUMÉRO TC(S)</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">STATUT</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">OBSERVATIONS</th>
+                </tr>
+              </thead>
+              <tbody id="lateDeliveriesTableBody">
+                <!-- Les lignes seront ajoutées dynamiquement -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pied de page de la modale -->
+        <div style="
+          background: #f8fafc;
+          padding: 15px 30px;
+          border-top: 1px solid #e2e8f0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        ">
+          <span style="color: #6b7280; font-size: 0.9em;">
+            Dossiers avec plus de 2 jours sans livraison
+          </span>
+          <button 
+            onclick="closeLateDeliveriesModal()"
+            style="
+              background: #6b7280;
+              color: white;
+              border: none;
+              padding: 8px 20px;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: 500;
+              transition: background 0.2s ease;
+            "
+            onmouseover="this.style.background='#4b5563'"
+            onmouseout="this.style.background='#6b7280'"
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
