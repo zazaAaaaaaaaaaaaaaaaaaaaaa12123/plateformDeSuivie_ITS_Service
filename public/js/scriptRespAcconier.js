@@ -1004,115 +1004,197 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Variable globale pour stocker le dernier état des dossiers en retard
+  let lastLateDeliveriesCount = 0;
+
   // --- Toast dossiers en retard (>2 jours) ---
   function showLateDeliveriesToast(lateDeliveries) {
-    // Supprimer tout toast existant
-    const oldToast = document.getElementById("late-deliveries-toast");
-    if (oldToast) oldToast.remove();
-    if (!lateDeliveries || lateDeliveries.length === 0) return;
-    const toast = document.createElement("div");
-    toast.id = "late-deliveries-toast";
-    toast.style.position = "fixed";
-    toast.style.top = "32px";
-    toast.style.right = "32px";
-    toast.style.background = "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
-    toast.style.color = "#fff";
-    toast.style.fontWeight = "bold";
-    toast.style.fontSize = "1.08em";
-    toast.style.padding = "10px 28px";
-    toast.style.borderRadius = "16px";
-    toast.style.boxShadow = "0 6px 32px rgba(239,68,68,0.18)";
-    toast.style.zIndex = 99999;
-    toast.style.cursor = "pointer";
-    toast.style.opacity = "0";
-    toast.style.transition = "opacity 0.3s";
-    toast.textContent = `⚠️ ${lateDeliveries.length} dossier(s) en retard`;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = "1";
-    }, 10);
-    // Clic : affiche la liste détaillées
-    toast.onclick = function () {
-      // Supprimer popup existant
-      const oldPopup = document.getElementById("late-deliveries-popup");
-      if (oldPopup) oldPopup.remove();
-      const overlay = document.createElement("div");
-      overlay.id = "late-deliveries-popup";
-      overlay.style.position = "fixed";
-      overlay.style.top = 0;
-      overlay.style.left = 0;
-      overlay.style.width = "100vw";
-      overlay.style.height = "100vh";
-      overlay.style.background = "rgba(30,41,59,0.45)";
-      overlay.style.zIndex = 100000;
-      overlay.style.display = "flex";
-      overlay.style.alignItems = "flex-start";
-      overlay.style.justifyContent = "center";
-      overlay.style.paddingTop = "8vh";
-      const box = document.createElement("div");
-      box.style.background = "#fff";
-      box.style.borderRadius = "16px";
-      box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-      box.style.maxWidth = "420px";
-      box.style.width = "96vw";
-      box.style.maxHeight = "92vh";
-      box.style.overflowY = "auto";
-      box.style.padding = "0";
-      box.style.position = "relative";
-      box.style.display = "flex";
-      box.style.flexDirection = "column";
-      const header = document.createElement("div");
-      header.style.background = "#ef4444";
-      header.style.color = "#fff";
-      header.style.padding = "18px 28px 12px 28px";
-      header.style.fontWeight = "bold";
-      header.style.fontSize = "1.15rem";
-      header.style.display = "flex";
-      header.style.flexDirection = "column";
-      header.style.borderTopLeftRadius = "16px";
-      header.style.borderTopRightRadius = "16px";
-      header.innerHTML = `<span style='font-size:1.08em;'>Dossiers en retard</span>`;
-      const closeBtn = document.createElement("button");
-      closeBtn.innerHTML = "&times;";
-      closeBtn.style.background = "none";
-      closeBtn.style.border = "none";
-      closeBtn.style.color = "#fff";
-      closeBtn.style.fontSize = "2.1rem";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.style.position = "absolute";
-      closeBtn.style.top = "10px";
-      closeBtn.style.right = "18px";
-      closeBtn.setAttribute("aria-label", "Fermer");
-      closeBtn.onclick = () => overlay.remove();
-      header.appendChild(closeBtn);
-      box.appendChild(header);
-      const content = document.createElement("div");
-      content.style.padding = "24px 24px 24px 24px";
-      content.style.background = "#f8fafc";
-      content.style.flex = "1 1 auto";
-      content.style.overflowY = "auto";
-      if (lateDeliveries.length === 0) {
-        content.innerHTML =
-          "<div style='text-align:center;'>Aucun dossier en retard.</div>";
-      } else {
-        const ul = document.createElement("ul");
-        ul.className = "late-deliveries-list";
-        ul.style.listStyle = "none";
-        ul.style.padding = 0;
-        ul.style.margin = 0;
-        lateDeliveries.forEach((d, idx) => {
-          const li = document.createElement("li");
-          li.className = "late-delivery-item";
-          li.style.marginBottom = "18px";
-          li.style.cursor = "pointer";
-          li.style.borderRadius = "14px";
-          li.style.padding = "18px 18px 14px 18px";
-          li.style.background = "#fff";
-          li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
-          li.style.border = "2px solid #fee2e2";
-          li.style.transition =
-            "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
-          li.innerHTML = `
+    const existingToast = document.getElementById("late-deliveries-toast");
+    const currentCount = lateDeliveries ? lateDeliveries.length : 0;
+
+    console.log(
+      "[LATE ALERT DEBUG] Nombre de dossiers en retard:",
+      currentCount
+    );
+    console.log(
+      "[LATE ALERT DEBUG] Dernier nombre enregistré:",
+      lastLateDeliveriesCount
+    );
+
+    // Seulement supprimer l'alerte si on confirme qu'il n'y a vraiment plus de dossiers en retard
+    // ET que ce n'est pas juste un problème temporaire de données
+    if (currentCount === 0 && lastLateDeliveriesCount > 0) {
+      // Attendre un peu avant de supprimer pour éviter les suppressions temporaires
+      setTimeout(() => {
+        const recheckDeliveries = getLateDeliveries();
+        if (recheckDeliveries.length === 0) {
+          const toastToRemove = document.getElementById(
+            "late-deliveries-toast"
+          );
+          if (toastToRemove) {
+            console.log(
+              "[LATE ALERT DEBUG] Suppression confirmée de l'alerte - aucun dossier en retard"
+            );
+            toastToRemove.remove();
+            lastLateDeliveriesCount = 0;
+          }
+        }
+      }, 2000); // Attendre 2 secondes avant confirmation
+      return;
+    }
+
+    // Mettre à jour le compteur
+    if (currentCount > 0) {
+      lastLateDeliveriesCount = currentCount;
+    }
+
+    // Si pas de dossiers en retard et pas d'alerte existante, ne rien faire
+    if (currentCount === 0 && !existingToast) {
+      return;
+    }
+
+    // Si l'alerte existe déjà et qu'il y a encore des dossiers en retard, juste mettre à jour le contenu
+    if (existingToast && currentCount > 0) {
+      console.log("[LATE ALERT DEBUG] Mise à jour de l'alerte existante");
+      existingToast.textContent = `⚠️ ${currentCount} dossier(s) en retard`;
+      // S'assurer que l'alerte reste visible
+      existingToast.style.opacity = "1";
+      existingToast.style.display = "block";
+      return; // Ne pas recréer l'alerte, juste la mettre à jour
+    }
+
+    // Créer une nouvelle alerte seulement si elle n'existe pas ET qu'il y a des dossiers en retard
+    if (!existingToast && currentCount > 0) {
+      console.log("[LATE ALERT DEBUG] Création d'une nouvelle alerte");
+      // Créer une nouvelle alerte seulement si elle n'existe pas
+      const toast = document.createElement("div");
+      toast.id = "late-deliveries-toast";
+      toast.style.position = "fixed";
+      toast.style.top = "20px"; // Position en haut
+      toast.style.right = "280px"; // À gauche de l'avatar, entre la recherche et l'avatar
+      toast.style.background = "linear-gradient(90deg,#ef4444 0%,#b91c1c 100%)";
+      toast.style.color = "#fff";
+      toast.style.fontWeight = "bold";
+      toast.style.fontSize = "1.08em";
+      toast.style.padding = "10px 28px";
+      toast.style.borderRadius = "16px";
+      toast.style.boxShadow = "0 6px 32px rgba(239,68,68,0.18)";
+      toast.style.zIndex = 99999;
+      toast.style.cursor = "pointer";
+      toast.style.opacity = "0";
+      toast.style.transition = "opacity 0.3s";
+      toast.style.animation = "pulse 2s infinite"; // Animation de pulsation pour attirer l'attention
+      toast.textContent = `⚠️ ${currentCount} dossier(s) en retard`;
+      document.body.appendChild(toast);
+
+      // Ajouter les styles CSS pour l'animation de pulsation si pas déjà présent
+      if (!document.getElementById("late-toast-animation-style")) {
+        const style = document.createElement("style");
+        style.id = "late-toast-animation-style";
+        style.innerHTML = `
+        @keyframes pulse {
+          0% { 
+            transform: scale(1);
+            box-shadow: 0 6px 32px rgba(239,68,68,0.18);
+          }
+          50% { 
+            transform: scale(1.05);
+            box-shadow: 0 8px 40px rgba(239,68,68,0.35);
+          }
+          100% { 
+            transform: scale(1);
+            box-shadow: 0 6px 32px rgba(239,68,68,0.18);
+          }
+        }
+      `;
+        document.head.appendChild(style);
+      }
+
+      setTimeout(() => {
+        toast.style.opacity = "1";
+      }, 10);
+      // Clic : affiche la liste détaillée
+      toast.onclick = function () {
+        // Supprimer popup existant
+        const oldPopup = document.getElementById("late-deliveries-popup");
+        if (oldPopup) oldPopup.remove();
+        const overlay = document.createElement("div");
+        overlay.id = "late-deliveries-popup";
+        overlay.style.position = "fixed";
+        overlay.style.top = 0;
+        overlay.style.left = 0;
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.background = "rgba(30,41,59,0.45)";
+        overlay.style.zIndex = 100000;
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "flex-start";
+        overlay.style.justifyContent = "center";
+        overlay.style.paddingTop = "8vh";
+        const box = document.createElement("div");
+        box.style.background = "#fff";
+        box.style.borderRadius = "16px";
+        box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
+        box.style.maxWidth = "420px";
+        box.style.width = "96vw";
+        box.style.maxHeight = "92vh";
+        box.style.overflowY = "auto";
+        box.style.padding = "0";
+        box.style.position = "relative";
+        box.style.display = "flex";
+        box.style.flexDirection = "column";
+        const header = document.createElement("div");
+        header.style.background = "#ef4444";
+        header.style.color = "#fff";
+        header.style.padding = "18px 28px 12px 28px";
+        header.style.fontWeight = "bold";
+        header.style.fontSize = "1.15rem";
+        header.style.display = "flex";
+        header.style.flexDirection = "column";
+        header.style.borderTopLeftRadius = "16px";
+        header.style.borderTopRightRadius = "16px";
+        header.innerHTML = `<span style='font-size:1.08em;'>Dossiers en retard</span>`;
+        const closeBtn = document.createElement("button");
+        closeBtn.innerHTML = "&times;";
+        closeBtn.style.background = "none";
+        closeBtn.style.border = "none";
+        closeBtn.style.color = "#fff";
+        closeBtn.style.fontSize = "2.1rem";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.style.position = "absolute";
+        closeBtn.style.top = "10px";
+        closeBtn.style.right = "18px";
+        closeBtn.setAttribute("aria-label", "Fermer");
+        closeBtn.onclick = () => overlay.remove();
+        header.appendChild(closeBtn);
+        box.appendChild(header);
+        const content = document.createElement("div");
+        content.style.padding = "24px 24px 24px 24px";
+        content.style.background = "#f8fafc";
+        content.style.flex = "1 1 auto";
+        content.style.overflowY = "auto";
+        if (lateDeliveries.length === 0) {
+          content.innerHTML =
+            "<div style='text-align:center;'>Aucun dossier en retard.</div>";
+        } else {
+          const ul = document.createElement("ul");
+          ul.className = "late-deliveries-list";
+          ul.style.listStyle = "none";
+          ul.style.padding = 0;
+          ul.style.margin = 0;
+          lateDeliveries.forEach((d, idx) => {
+            const li = document.createElement("li");
+            li.className = "late-delivery-item";
+            li.style.marginBottom = "18px";
+            li.style.cursor = "pointer";
+            li.style.borderRadius = "14px";
+            li.style.padding = "18px 18px 14px 18px";
+            li.style.background = "#fff";
+            li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
+            li.style.border = "2px solid #fee2e2";
+            li.style.transition =
+              "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
+            li.innerHTML = `
             <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
               <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#ef4444 60%,#fca5a5 100%);color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #ef444433;'>${
                 idx + 1
@@ -1129,82 +1211,84 @@ document.addEventListener("DOMContentLoaded", function () {
               }</span>
             </div>
           `;
-          li.onmouseenter = function () {
-            li.style.background = "#fef2f2";
-            li.style.borderColor = "#fca5a5";
-            li.style.boxShadow = "0 6px 24px #ef444433";
-            li.style.transform = "translateY(-2px) scale(1.015)";
-          };
-          li.onmouseleave = function () {
-            li.style.background = "#fff";
-            li.style.borderColor = "#fee2e2";
-            li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
-            li.style.transform = "none";
-          };
-          // Ajout : au clic, scroll sur la ligne du tableau et flash
-          li.onclick = function (e) {
-            e.stopPropagation();
-            overlay.remove(); // ferme la popup
-            // Cherche la ligne du tableau avec le bon N° Dossier
-            const tableBody = document.getElementById("deliveriesTableBody");
-            if (tableBody) {
-              // On cherche la cellule qui contient le N° Dossier
-              const rows = tableBody.querySelectorAll("tr");
-              let foundRow = null;
-              rows.forEach((row) => {
-                const cells = row.querySelectorAll("td");
-                for (let i = 0; i < cells.length; i++) {
-                  if (
-                    cells[i].textContent &&
-                    String(cells[i].textContent).trim() ===
-                      String(d.dossier_number).trim()
-                  ) {
-                    foundRow = row;
-                  }
-                }
-              });
-              if (foundRow) {
-                foundRow.scrollIntoView({
-                  behavior: "smooth",
-                  block: "center",
-                });
-                // Clignotement 3 fois sur 3 secondes
-                const tds = foundRow.querySelectorAll("td");
-                let flashCount = 0;
-                const maxFlashes = 3;
-                function doFlash() {
-                  tds.forEach((td) => {
-                    td.classList.remove("flash-red-cell");
-                    void td.offsetWidth;
-                    td.classList.add("flash-red-cell");
-                  });
-                  setTimeout(() => {
-                    tds.forEach((td) => td.classList.remove("flash-red-cell"));
-                    flashCount++;
-                    if (flashCount < maxFlashes) {
-                      setTimeout(doFlash, 1000);
+            li.onmouseenter = function () {
+              li.style.background = "#fef2f2";
+              li.style.borderColor = "#fca5a5";
+              li.style.boxShadow = "0 6px 24px #ef444433";
+              li.style.transform = "translateY(-2px) scale(1.015)";
+            };
+            li.onmouseleave = function () {
+              li.style.background = "#fff";
+              li.style.borderColor = "#fee2e2";
+              li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
+              li.style.transform = "none";
+            };
+            // Ajout : au clic, scroll sur la ligne du tableau et flash
+            li.onclick = function (e) {
+              e.stopPropagation();
+              overlay.remove(); // ferme la popup
+              // Cherche la ligne du tableau avec le bon N° Dossier
+              const tableBody = document.getElementById("deliveriesTableBody");
+              if (tableBody) {
+                // On cherche la cellule qui contient le N° Dossier
+                const rows = tableBody.querySelectorAll("tr");
+                let foundRow = null;
+                rows.forEach((row) => {
+                  const cells = row.querySelectorAll("td");
+                  for (let i = 0; i < cells.length; i++) {
+                    if (
+                      cells[i].textContent &&
+                      String(cells[i].textContent).trim() ===
+                        String(d.dossier_number).trim()
+                    ) {
+                      foundRow = row;
                     }
-                  }, 1000);
+                  }
+                });
+                if (foundRow) {
+                  foundRow.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                  });
+                  // Clignotement 3 fois sur 3 secondes
+                  const tds = foundRow.querySelectorAll("td");
+                  let flashCount = 0;
+                  const maxFlashes = 3;
+                  function doFlash() {
+                    tds.forEach((td) => {
+                      td.classList.remove("flash-red-cell");
+                      void td.offsetWidth;
+                      td.classList.add("flash-red-cell");
+                    });
+                    setTimeout(() => {
+                      tds.forEach((td) =>
+                        td.classList.remove("flash-red-cell")
+                      );
+                      flashCount++;
+                      if (flashCount < maxFlashes) {
+                        setTimeout(doFlash, 1000);
+                      }
+                    }, 1000);
+                  }
+                  doFlash();
                 }
-                doFlash();
               }
-            }
-          };
-          ul.appendChild(li);
-        });
-        content.appendChild(ul);
-      }
-      box.appendChild(content);
-      overlay.appendChild(box);
-      document.body.appendChild(overlay);
-      overlay.onclick = (e) => {
-        if (e.target === overlay) overlay.remove();
-      };
-      // Ajout du style pour le flash rouge sur la ligne du tableau si pas déjà présent
-      if (!document.getElementById("flash-red-row-style")) {
-        const style = document.createElement("style");
-        style.id = "flash-red-row-style";
-        style.innerHTML = `
+            };
+            ul.appendChild(li);
+          });
+          content.appendChild(ul);
+        }
+        box.appendChild(content);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        overlay.onclick = (e) => {
+          if (e.target === overlay) overlay.remove();
+        };
+        // Ajout du style pour le flash rouge sur la ligne du tableau si pas déjà présent
+        if (!document.getElementById("flash-red-row-style")) {
+          const style = document.createElement("style");
+          style.id = "flash-red-row-style";
+          style.innerHTML = `
         .flash-red-cell {
           animation: flashRedCellAnim 1s cubic-bezier(0.4,0,0.2,1);
           background: #d49494ff !important;
@@ -1217,16 +1301,11 @@ document.addEventListener("DOMContentLoaded", function () {
           100% { background: transparent; }
         }
         `;
-        document.head.appendChild(style);
-      }
-    };
-    // Disparition auto après 8s
-    setTimeout(() => {
-      toast.style.opacity = "0";
-      setTimeout(() => {
-        if (toast.parentNode) toast.remove();
-      }, 400);
-    }, 8000);
+          document.head.appendChild(style);
+        }
+      };
+      // L'alerte reste maintenant permanente - pas de disparition automatique
+    }
   }
   // Ajout dynamique du bouton de suppression compact à côté des dates
   let deleteBtn = null;
@@ -2855,8 +2934,15 @@ document.addEventListener("DOMContentLoaded", function () {
       // Après chargement, détecter les dossiers en retard (>2 jours) mais uniquement ceux qui ne sont PAS en livraison
       function getLateDeliveries() {
         const now = new Date();
+        const allDeliveries = window.allDeliveries || [];
+
+        console.log(
+          "[LATE DELIVERIES DEBUG] Nombre total de livraisons:",
+          allDeliveries.length
+        );
+
         // Appliquer le même filtrage que le tableau principal
-        return (window.allDeliveries || []).filter((d) => {
+        const lateDeliveries = allDeliveries.filter((d) => {
           let dDate = d.delivery_date || d.created_at;
           if (!dDate) return false;
           let dateObj = new Date(dDate);
@@ -2891,12 +2977,18 @@ document.addEventListener("DOMContentLoaded", function () {
           }
           return true;
         });
+
+        console.log(
+          "[LATE DELIVERIES DEBUG] Dossiers en retard trouvés:",
+          lateDeliveries.length
+        );
+        return lateDeliveries;
       }
       showLateDeliveriesToast(getLateDeliveries());
-      // Affichage toutes les 40 secondes
+      // Vérification plus fréquente toutes les 10 secondes pour mise à jour en temps réel
       setInterval(() => {
         showLateDeliveriesToast(getLateDeliveries());
-      }, 40000);
+      }, 10000);
 
       // Met à jour la liste des dossiers en retard à chaque changement de statut livraison
       document.addEventListener("bl_status_update", function () {
