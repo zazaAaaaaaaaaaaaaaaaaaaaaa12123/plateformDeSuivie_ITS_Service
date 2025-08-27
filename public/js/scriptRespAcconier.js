@@ -1128,17 +1128,17 @@ document.addEventListener("DOMContentLoaded", function () {
         overlay.style.background = "rgba(30,41,59,0.45)";
         overlay.style.zIndex = 100000;
         overlay.style.display = "flex";
-        overlay.style.alignItems = "flex-start";
+        overlay.style.alignItems = "center";
         overlay.style.justifyContent = "center";
-        overlay.style.paddingTop = "8vh";
+        overlay.style.padding = "2vh";
         const box = document.createElement("div");
         box.style.background = "#fff";
         box.style.borderRadius = "16px";
         box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-        box.style.maxWidth = "420px";
-        box.style.width = "96vw";
-        box.style.maxHeight = "92vh";
-        box.style.overflowY = "auto";
+        box.style.maxWidth = "95vw";
+        box.style.width = "95vw";
+        box.style.maxHeight = "90vh";
+        box.style.height = "90vh";
         box.style.padding = "0";
         box.style.position = "relative";
         box.style.display = "flex";
@@ -1169,68 +1169,262 @@ document.addEventListener("DOMContentLoaded", function () {
         header.appendChild(closeBtn);
         box.appendChild(header);
         const content = document.createElement("div");
-        content.style.padding = "24px 24px 24px 24px";
-        content.style.background = "#f8fafc";
+        content.style.padding = "20px";
+        content.style.background =
+          "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)";
         content.style.flex = "1 1 auto";
         content.style.overflowY = "auto";
+        content.style.overflowX = "auto";
+        content.style.display = "flex";
+        content.style.flexDirection = "column";
+        content.style.alignItems = "center";
+        content.style.justifyContent = "flex-start";
+        content.style.minHeight = "0";
+        content.style.maxHeight = "100%";
+
         if (lateDeliveries.length === 0) {
           content.innerHTML =
-            "<div style='text-align:center;'>Aucun dossier en retard.</div>";
+            "<div style='text-align:center;padding:24px;color:#64748b;font-size:1.1rem;font-weight:600;'>AUCUN DOSSIER EN RETARD.</div>";
         } else {
-          const ul = document.createElement("ul");
-          ul.className = "late-deliveries-list";
-          ul.style.listStyle = "none";
-          ul.style.padding = 0;
-          ul.style.margin = 0;
-          lateDeliveries.forEach((d, idx) => {
-            const li = document.createElement("li");
-            li.className = "late-delivery-item";
-            li.style.marginBottom = "18px";
-            li.style.cursor = "pointer";
-            li.style.borderRadius = "14px";
-            li.style.padding = "18px 18px 14px 18px";
-            li.style.background = "#fff";
-            li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
-            li.style.border = "2px solid #fee2e2";
-            li.style.transition =
-              "background 0.18s, box-shadow 0.18s, border 0.18s, transform 0.18s";
-            li.innerHTML = `
-            <div style='display:flex;align-items:center;gap:10px;margin-bottom:6px;'>
-              <span style='display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:linear-gradient(135deg,#ef4444 60%,#fca5a5 100%);color:#fff;font-weight:bold;font-size:1.1em;border-radius:50%;box-shadow:0 2px 8px #ef444433;'>${
-                idx + 1
-              }</span>
-              <span style='color:#ef4444;font-weight:bold;font-size:1.08em;'><i class="fas fa-folder-open" style="margin-right:6px;color:#ef4444;"></i>N° Dossier :</span>
-              <span style='color:#b91c1c;font-weight:700;font-size:1.13em;'>${
-                d.dossier_number || "-"
-              }</span>
-            </div>
-            <div style='font-size:1em;margin-left:42px;'>
-              <span style='color:#2563eb;font-weight:600;'>Agent :</span>
-              <span style='color:#0e274e;font-weight:600;'>${
-                d.employee_name || "-"
-              }</span>
-            </div>
+          // Conteneur pour le tableau centré
+          const tableContainer = document.createElement("div");
+          tableContainer.style.width = "100%";
+          tableContainer.style.maxWidth = "95%";
+          tableContainer.style.margin = "auto";
+          tableContainer.style.backgroundColor = "#fff";
+          tableContainer.style.borderRadius = "12px";
+          tableContainer.style.boxShadow = "0 10px 30px rgba(0,0,0,0.15)";
+          tableContainer.style.overflow = "auto";
+          tableContainer.style.border = "2px solid #e2e8f0";
+          tableContainer.style.maxHeight = "70vh";
+          tableContainer.style.minHeight = "400px";
+
+          // Créer le tableau avec toutes les colonnes demandées
+          const table = document.createElement("table");
+          table.style.width = "100%";
+          table.style.borderCollapse = "collapse";
+          table.style.fontSize = "0.9rem";
+          table.style.backgroundColor = "#fff";
+          table.style.fontFamily =
+            "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+
+          // En-tête du tableau
+          const thead = document.createElement("thead");
+          thead.innerHTML = `
+            <tr style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%); color: #ffffff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 50px; color: #ffffff !important; font-weight: bold;">N°</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 100px; color: #ffffff !important; font-weight: bold;">DATE</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 120px; color: #ffffff !important; font-weight: bold;">AGENT</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 150px; color: #ffffff !important; font-weight: bold;">CLIENT (NOM)</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 120px; color: #ffffff !important; font-weight: bold;">CLIENT (TÉL)</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 130px; color: #ffffff !important; font-weight: bold;">NUMÉRO TC(S)</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 120px; color: #ffffff !important; font-weight: bold;">LIEU</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 140px; color: #ffffff !important; font-weight: bold;">TYPE CONTENEUR</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 120px; color: #ffffff !important; font-weight: bold;">CONTENU</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 130px; color: #ffffff !important; font-weight: bold;">N° DÉCLARATION</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 100px; color: #ffffff !important; font-weight: bold;">N° BL</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 120px; color: #ffffff !important; font-weight: bold;">N° DOSSIER</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 140px; color: #ffffff !important; font-weight: bold;">NB CONTENEURS</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 150px; color: #ffffff !important; font-weight: bold;">COMPAGNIE</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 100px; color: #ffffff !important; font-weight: bold;">POIDS</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 140px; color: #ffffff !important; font-weight: bold;">NOM NAVIRE</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 100px; color: #ffffff !important; font-weight: bold;">CIRCUIT</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 130px; color: #ffffff !important; font-weight: bold;">MODE TRANSPORT</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 140px; color: #ffffff !important; font-weight: bold;">STATUT DOSSIER</th>
+              <th style="padding: 16px 12px; border: 1px solid #dc2626; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; letter-spacing: 0.5px; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); min-width: 150px; color: #ffffff !important; font-weight: bold;">OBSERVATION</th>
+            </tr>
           `;
-            li.onmouseenter = function () {
-              li.style.background = "#fef2f2";
-              li.style.borderColor = "#fca5a5";
-              li.style.boxShadow = "0 6px 24px #ef444433";
-              li.style.transform = "translateY(-2px) scale(1.015)";
+          table.appendChild(thead);
+
+          // Corps du tableau
+          const tbody = document.createElement("tbody");
+
+          lateDeliveries.forEach((d, idx) => {
+            const tr = document.createElement("tr");
+            tr.style.backgroundColor = idx % 2 === 0 ? "#fff" : "#f9fafb";
+            tr.style.cursor = "pointer";
+            tr.style.transition = "all 0.3s ease";
+            tr.style.borderBottom = "1px solid #e2e8f0";
+
+            // Fonction pour formater les dates
+            function formatDate(dateStr) {
+              if (!dateStr) return "-";
+              try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString("fr-FR");
+              } catch {
+                return dateStr;
+              }
+            }
+
+            // Fonction pour créer un menu déroulant pour les TC multiples
+            function createTCDropdown(tcNumbers) {
+              if (!tcNumbers) return "-";
+
+              let tcList = [];
+              if (Array.isArray(tcNumbers)) {
+                tcList = tcNumbers.filter(Boolean);
+              } else if (typeof tcNumbers === "string") {
+                tcList = tcNumbers.split(/[,;\s]+/).filter(Boolean);
+              }
+
+              if (tcList.length === 0) return "-";
+              if (tcList.length === 1) return tcList[0].toUpperCase();
+
+              const select = document.createElement("select");
+              select.style.border = "1px solid #ccc";
+              select.style.borderRadius = "4px";
+              select.style.padding = "4px";
+              select.style.backgroundColor = "#fff";
+              select.style.fontSize = "0.8rem";
+              select.style.maxWidth = "120px";
+
+              const defaultOption = document.createElement("option");
+              defaultOption.value = "";
+              defaultOption.textContent = `${tcList.length} TC(S)`;
+              defaultOption.style.fontWeight = "bold";
+              select.appendChild(defaultOption);
+
+              tcList.forEach((tc) => {
+                const option = document.createElement("option");
+                option.value = tc;
+                option.textContent = tc.toUpperCase();
+                select.appendChild(option);
+              });
+
+              return select.outerHTML;
+            }
+
+            // Fonction pour mettre en majuscules et gérer les valeurs nulles
+            function formatValue(value, isUpperCase = true) {
+              if (!value || value === null || value === undefined) return "-";
+              const str = String(value);
+              return isUpperCase ? str.toUpperCase() : str;
+            }
+
+            // Fonction pour traduire le statut en français
+            function translateStatus(status) {
+              if (!status) return "EN ATTENTE";
+              const statusStr = status.toString().toLowerCase();
+
+              // Traductions des statuts courants
+              const translations = {
+                pending: "EN ATTENTE",
+                pending_acconier: "EN ATTENTE DE PAIEMENT",
+                awaiting_payment_acconier: "EN ATTENTE DE PAIEMENT",
+                en_attente_paiement: "EN ATTENTE DE PAIEMENT",
+                mise_en_livraison_acconier: "MIS EN LIVRAISON",
+                in_progress: "EN COURS",
+                delivered: "LIVRÉ",
+                livré: "LIVRÉ",
+                livre: "LIVRÉ",
+                cancelled: "ANNULÉ",
+                annule: "ANNULÉ",
+                delayed: "EN RETARD",
+                en_retard: "EN RETARD",
+                completed: "TERMINÉ",
+                complete: "TERMINÉ",
+                termine: "TERMINÉ",
+                processing: "EN TRAITEMENT",
+                shipped: "EXPÉDIÉ",
+                expedie: "EXPÉDIÉ",
+                received: "REÇU",
+                recu: "REÇU",
+                confirmed: "CONFIRMÉ",
+                confirme: "CONFIRMÉ",
+                rejected: "REJETÉ",
+                rejete: "REJETÉ",
+              };
+
+              return translations[statusStr] || status.toString().toUpperCase();
+            }
+
+            tr.innerHTML = `
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #dc2626; background-color: #fef2f2;">${
+                idx + 1
+              }</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">${formatDate(
+                d.delivery_date || d.created_at
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600; color: #1e40af;">${formatValue(
+                d.employee_name
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">${formatValue(
+                d.client_name || d.client
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500; font-family: monospace;">${formatValue(
+                d.client_phone
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center;">${createTCDropdown(
+                d.container_number
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">${formatValue(
+                d.lieu
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">${formatValue(
+                d.container_foot_type
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">${formatValue(
+                d.container_type_and_content
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500; font-family: monospace;">${formatValue(
+                d.numero_declaration
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500; font-family: monospace;">${formatValue(
+                d.bl_number
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #dc2626; background-color: #fef2f2;">${formatValue(
+                d.dossier_number
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600; color: #059669;">${formatValue(
+                d.number_of_containers
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">${formatValue(
+                d.shipping_company
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500; font-family: monospace;">${formatValue(
+                d.weight
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">${formatValue(
+                d.ship_name
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">${formatValue(
+                d.circuit
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500;">${formatValue(
+                d.transporter_mode
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #dc2626; background-color: #fef2f2;">${translateStatus(
+                d.delivery_status_acconier || d.status
+              )}</td>
+              <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500; font-style: italic;">${formatValue(
+                d.observation || d.notes
+              )}</td>
+            `;
+
+            // Ajouter l'effet hover amélioré
+            tr.onmouseenter = function () {
+              tr.style.backgroundColor = "#f3f4f6";
+              tr.style.transform = "scale(1.005)";
+              tr.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+              tr.style.borderLeft = "4px solid #dc2626";
             };
-            li.onmouseleave = function () {
-              li.style.background = "#fff";
-              li.style.borderColor = "#fee2e2";
-              li.style.boxShadow = "0 2px 12px rgba(239,68,68,0.10)";
-              li.style.transform = "none";
+
+            tr.onmouseleave = function () {
+              tr.style.backgroundColor = idx % 2 === 0 ? "#fff" : "#f9fafb";
+              tr.style.transform = "scale(1)";
+              tr.style.boxShadow = "none";
+              tr.style.borderLeft = "none";
             };
-            // Ajout : au clic, scroll sur la ligne du tableau et flash
-            li.onclick = function (e) {
+
+            // Au clic, aller à la ligne correspondante dans le tableau principal
+            tr.onclick = function (e) {
               e.stopPropagation();
               overlay.remove(); // ferme la popup
+
               // Cherche la ligne du tableau avec le bon N° Dossier
               const tableBody = document.getElementById("deliveriesTableBody");
               if (tableBody) {
-                // On cherche la cellule qui contient le N° Dossier
                 const rows = tableBody.querySelectorAll("tr");
                 let foundRow = null;
                 rows.forEach((row) => {
@@ -1274,9 +1468,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
               }
             };
-            ul.appendChild(li);
+
+            tbody.appendChild(tr);
           });
-          content.appendChild(ul);
+
+          table.appendChild(tbody);
+          tableContainer.appendChild(table);
+          content.appendChild(tableContainer);
         }
         box.appendChild(content);
         overlay.appendChild(box);
@@ -1299,6 +1497,26 @@ document.addEventListener("DOMContentLoaded", function () {
           30% { background: #f87171; }
           70% { background: #fecaca; }
           100% { background: transparent; }
+        }
+        /* Styles pour les barres de défilement */
+        *::-webkit-scrollbar {
+          width: 12px;
+          height: 12px;
+        }
+        *::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 6px;
+        }
+        *::-webkit-scrollbar-thumb {
+          background: linear-gradient(135deg, #dc2626, #b91c1c);
+          border-radius: 6px;
+          border: 2px solid #f1f5f9;
+        }
+        *::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(135deg, #b91c1c, #991b1b);
+        }
+        *::-webkit-scrollbar-corner {
+          background: #f1f5f9;
         }
         `;
           document.head.appendChild(style);
