@@ -1727,7 +1727,7 @@ document.addEventListener("DOMContentLoaded", function () {
           );
         });
 
-        // Filtrage pour le mode admin : ne montrer que les livraisons de l'utilisateur ciblé
+        // Filtrage pour le mode admin : affichage intelligent des livraisons
         if (isAdminMode && targetUser) {
           console.log(
             `🔍 [DEBUG RESP LIV FILTRAGE] Recherche pour l'utilisateur "${targetUser}"`
@@ -1742,183 +1742,203 @@ document.addEventListener("DOMContentLoaded", function () {
           // Charger l'historique des livraisons de l'utilisateur ciblé
           await loadUserDeliveryHistory(targetUser);
 
-          filteredDeliveries = filteredDeliveries.filter((delivery) => {
-            // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
-            const userFields = [
-              delivery.responsible_livreur,
-              delivery.resp_livreur,
-              delivery.responsible_acconier,
-              delivery.resp_acconier,
-              delivery.assigned_to,
-              delivery.created_by,
-              delivery.updated_by,
-              // Champs spécifiques à la livraison
-              delivery.nom_agent_visiteur,
-              delivery.driver_name,
-              delivery.transporter,
-              delivery.inspecteur,
-              delivery.agent_en_douanes,
-              delivery.chauffeur,
-              delivery.employee_name,
-              // Champs email
-              delivery.agent_email,
-              delivery.user_email,
-              delivery.created_by_email,
-              // Champs d'observation et notes
-              delivery.delivery_notes,
-              delivery.observation,
-              delivery.observations,
-              delivery.modified_by,
-              delivery.last_modified_by,
-            ];
+          // ✅ LOGIQUE AMÉLIORÉE : Si le nom est générique comme "Utilisateur", afficher TOUT
+          if (
+            targetUser.toLowerCase() === "utilisateur" ||
+            targetUser.toLowerCase() === "user"
+          ) {
+            console.log(
+              `📋 [MODE ADMIN RESP LIV] Nom générique détecté ("${targetUser}") - Affichage de TOUTES les livraisons disponibles`
+            );
+            // Ne pas filtrer, garder toutes les livraisons
+          } else {
+            // Filtrage normal pour les noms d'utilisateurs spécifiques
+            const originalCount = filteredDeliveries.length;
 
-            // Recherche par nom d'utilisateur avec différentes variantes
-            const targetUserLower = targetUser.toLowerCase();
-            const targetUserIdLower = targetUserId
-              ? targetUserId.toLowerCase()
-              : "";
-
-            const foundByName = userFields.some((field) => {
-              if (!field) return false;
-              const fieldLower = field.toString().toLowerCase();
-
-              // Recherche exacte
-              if (fieldLower === targetUserLower) return true;
-
-              // Recherche partielle (contient le nom)
-              if (fieldLower.includes(targetUserLower)) return true;
-
-              // Recherche inverse (le nom contient le champ)
-              if (targetUserLower.includes(fieldLower)) return true;
-
-              return false;
-            });
-
-            // Recherche par userId si disponible
-            const foundByUserId =
-              targetUserIdLower &&
-              userFields.some((field) => {
-                if (!field) return false;
-                const fieldLower = field.toString().toLowerCase();
-                return (
-                  fieldLower.includes(targetUserIdLower) ||
-                  targetUserIdLower.includes(fieldLower)
-                );
-              });
-
-            // Recherche dans les données locales sauvegardées
-            let foundInLocalData = false;
-            try {
-              // Vérifier les données spécifiques aux livraisons stockées localement
-              const deliveryKeys = [
-                `delivery_data_${delivery.id}`,
-                `delivery_notes_${delivery.id}`,
-                `agent_visiteur_${delivery.id}`,
-                `transporteur_${delivery.id}`,
-                `inspecteur_${delivery.id}`,
-                `agent_douanes_${delivery.id}`,
-                `chauffeur_${delivery.id}`,
-                `tel_chauffeur_${delivery.id}`,
-                `date_livraison_${delivery.id}`,
-                `observations_${delivery.id}`,
-              ];
-
-              for (const key of deliveryKeys) {
-                const storedValue = localStorage.getItem(key);
-                if (storedValue && storedValue.trim() !== "") {
-                  foundInLocalData = true;
-                  console.log(
-                    `📝 [DEBUG RESP LIV] Donnée trouvée avec clé ${key} pour livraison ${delivery.id}:`,
-                    storedValue
-                  );
-                  break;
-                }
-              }
-
-              // Vérifier aussi les champs de livraison directement
-              const deliveryDataFields = [
+            filteredDeliveries = filteredDeliveries.filter((delivery) => {
+              // Vérifier les différents champs où peut apparaître le nom de l'utilisateur
+              const userFields = [
+                delivery.responsible_livreur,
+                delivery.resp_livreur,
+                delivery.responsible_acconier,
+                delivery.resp_acconier,
+                delivery.assigned_to,
+                delivery.created_by,
+                delivery.updated_by,
+                // Champs spécifiques à la livraison
                 delivery.nom_agent_visiteur,
+                delivery.driver_name,
                 delivery.transporter,
                 delivery.inspecteur,
                 delivery.agent_en_douanes,
-                delivery.driver_name,
-                delivery.driver_phone,
-                delivery.delivery_date,
+                delivery.chauffeur,
+                delivery.employee_name,
+                // Champs email
+                delivery.agent_email,
+                delivery.user_email,
+                delivery.created_by_email,
+                // Champs d'observation et notes
                 delivery.delivery_notes,
                 delivery.observation,
+                delivery.observations,
+                delivery.modified_by,
+                delivery.last_modified_by,
               ];
 
-              for (const field of deliveryDataFields) {
-                if (field && field.toString().trim() !== "" && field !== "-") {
-                  foundInLocalData = true;
-                  console.log(
-                    `📝 [DEBUG RESP LIV] Donnée trouvée dans champ pour livraison ${delivery.id}:`,
-                    field
-                  );
-                  break;
-                }
-              }
-            } catch (e) {
-              // Ignorer les erreurs de parsing
-            }
+              // Recherche par nom d'utilisateur avec différentes variantes
+              const targetUserLower = targetUser.toLowerCase();
+              const targetUserIdLower = targetUserId
+                ? targetUserId.toLowerCase()
+                : "";
 
-            const finalFound = foundByName || foundByUserId || foundInLocalData;
+              const foundByName = userFields.some((field) => {
+                if (!field) return false;
+                const fieldLower = field.toString().toLowerCase();
 
-            if (finalFound) {
-              console.log(
-                `✅ [DEBUG RESP LIV] Livraison trouvée pour ${targetUser}:`,
-                delivery.id,
-                {
-                  foundByName,
-                  foundByUserId,
-                  foundInLocalData,
-                  nom_agent_visiteur: delivery.nom_agent_visiteur,
-                  transporter: delivery.transporter,
-                  delivery_notes: delivery.delivery_notes,
-                  matchingFields: userFields.filter(
-                    (f) =>
-                      f && f.toString().toLowerCase().includes(targetUserLower)
-                  ),
-                }
-              );
+                // Recherche exacte
+                if (fieldLower === targetUserLower) return true;
 
-              // 🔧 STOCKAGE IMMÉDIAT des données trouvées dans localStorage
-              const fieldsToStore = [
-                {
-                  key: "visitor_agent_name",
-                  value: delivery.nom_agent_visiteur,
-                },
-                { key: "transporter", value: delivery.transporter },
-                { key: "inspector", value: delivery.inspecteur },
-                { key: "customs_agent", value: delivery.agent_en_douanes },
-                { key: "driver", value: delivery.driver_name },
-                { key: "driver_phone", value: delivery.driver_phone },
-                { key: "delivery_date", value: delivery.delivery_date },
-                {
-                  key: "observation",
-                  value:
-                    delivery.delivery_notes || delivery.observation_acconier,
-                },
-              ];
+                // Recherche partielle (contient le nom)
+                if (fieldLower.includes(targetUserLower)) return true;
 
-              fieldsToStore.forEach((field) => {
-                if (
-                  field.value &&
-                  field.value.toString().trim() !== "" &&
-                  field.value !== "-"
-                ) {
-                  const storageKey = `deliverycell_${delivery.id}_${field.key}`;
-                  localStorage.setItem(storageKey, field.value);
-                  console.log(
-                    `📝 [ADMIN STORAGE] Donnée stockée ${field.key} pour livraison ${delivery.id}:`,
-                    field.value
-                  );
-                }
+                // Recherche inverse (le nom contient le champ)
+                if (targetUserLower.includes(fieldLower)) return true;
+
+                return false;
               });
-            }
 
-            return finalFound;
-          });
+              // Recherche par userId si disponible
+              const foundByUserId =
+                targetUserIdLower &&
+                userFields.some((field) => {
+                  if (!field) return false;
+                  const fieldLower = field.toString().toLowerCase();
+                  return (
+                    fieldLower.includes(targetUserIdLower) ||
+                    targetUserIdLower.includes(fieldLower)
+                  );
+                });
+
+              // Recherche dans les données locales sauvegardées
+              let foundInLocalData = false;
+              try {
+                // Vérifier les données spécifiques aux livraisons stockées localement
+                const deliveryKeys = [
+                  `delivery_data_${delivery.id}`,
+                  `delivery_notes_${delivery.id}`,
+                  `agent_visiteur_${delivery.id}`,
+                  `transporteur_${delivery.id}`,
+                  `inspecteur_${delivery.id}`,
+                  `agent_douanes_${delivery.id}`,
+                  `chauffeur_${delivery.id}`,
+                  `tel_chauffeur_${delivery.id}`,
+                  `date_livraison_${delivery.id}`,
+                  `observations_${delivery.id}`,
+                ];
+
+                for (const key of deliveryKeys) {
+                  const storedValue = localStorage.getItem(key);
+                  if (storedValue && storedValue.trim() !== "") {
+                    foundInLocalData = true;
+                    console.log(
+                      `📝 [DEBUG RESP LIV] Donnée trouvée avec clé ${key} pour livraison ${delivery.id}:`,
+                      storedValue
+                    );
+                    break;
+                  }
+                }
+
+                // Vérifier aussi les champs de livraison directement
+                const deliveryDataFields = [
+                  delivery.nom_agent_visiteur,
+                  delivery.transporter,
+                  delivery.inspecteur,
+                  delivery.agent_en_douanes,
+                  delivery.driver_name,
+                  delivery.driver_phone,
+                  delivery.delivery_date,
+                  delivery.delivery_notes,
+                  delivery.observation,
+                ];
+
+                for (const field of deliveryDataFields) {
+                  if (
+                    field &&
+                    field.toString().trim() !== "" &&
+                    field !== "-"
+                  ) {
+                    foundInLocalData = true;
+                    console.log(
+                      `📝 [DEBUG RESP LIV] Donnée trouvée dans champ pour livraison ${delivery.id}:`,
+                      field
+                    );
+                    break;
+                  }
+                }
+              } catch (e) {
+                // Ignorer les erreurs de parsing
+              }
+
+              const finalFound =
+                foundByName || foundByUserId || foundInLocalData;
+
+              if (finalFound) {
+                console.log(
+                  `✅ [DEBUG RESP LIV] Livraison trouvée pour ${targetUser}:`,
+                  delivery.id,
+                  {
+                    foundByName,
+                    foundByUserId,
+                    foundInLocalData,
+                    nom_agent_visiteur: delivery.nom_agent_visiteur,
+                    transporter: delivery.transporter,
+                    delivery_notes: delivery.delivery_notes,
+                    matchingFields: userFields.filter(
+                      (f) =>
+                        f &&
+                        f.toString().toLowerCase().includes(targetUserLower)
+                    ),
+                  }
+                );
+
+                // 🔧 STOCKAGE IMMÉDIAT des données trouvées dans localStorage
+                const fieldsToStore = [
+                  {
+                    key: "visitor_agent_name",
+                    value: delivery.nom_agent_visiteur,
+                  },
+                  { key: "transporter", value: delivery.transporter },
+                  { key: "inspector", value: delivery.inspecteur },
+                  { key: "customs_agent", value: delivery.agent_en_douanes },
+                  { key: "driver", value: delivery.driver_name },
+                  { key: "driver_phone", value: delivery.driver_phone },
+                  { key: "delivery_date", value: delivery.delivery_date },
+                  {
+                    key: "observation",
+                    value:
+                      delivery.delivery_notes || delivery.observation_acconier,
+                  },
+                ];
+
+                fieldsToStore.forEach((field) => {
+                  if (
+                    field.value &&
+                    field.value.toString().trim() !== "" &&
+                    field.value !== "-"
+                  ) {
+                    const storageKey = `deliverycell_${delivery.id}_${field.key}`;
+                    localStorage.setItem(storageKey, field.value);
+                    console.log(
+                      `📝 [ADMIN STORAGE] Donnée stockée ${field.key} pour livraison ${delivery.id}:`,
+                      field.value
+                    );
+                  }
+                });
+              }
+
+              return finalFound;
+            });
+          } // ✅ Fermeture de la condition else pour filtrage spécifique
 
           console.log(
             `[MODE ADMIN RESP LIV] Filtrage pour l'utilisateur "${targetUser}": ${filteredDeliveries.length} livraisons trouvées`
@@ -1930,7 +1950,7 @@ document.addEventListener("DOMContentLoaded", function () {
               `⚠️ [DEBUG RESP LIV] Aucune livraison trouvée pour "${targetUser}". Tentative de recherche élargie...`
             );
 
-            // Recherche élargie : livraisons avec activité récente ou données remplies
+            // Recherche élargie : livraisons avec activité récente ou données remplies (CRITÈRES ASSOUPLIS)
             filteredDeliveries = data.deliveries.filter((delivery) => {
               if (
                 delivery.delivery_status_acconier !==
@@ -1939,10 +1959,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 return false;
               }
 
-              // Recherche des livraisons avec des données remplies ou activité récente
+              // ✅ RECHERCHE PLUS INCLUSIVE : Recherche des livraisons avec des données remplies ou activité récente
               let hasUserActivity = false;
 
-              // 1. Vérifier les données dans les champs de livraison
+              // 1. Vérifier TOUS les champs de livraison (critère assoupli)
               const filledFields = [
                 delivery.nom_agent_visiteur,
                 delivery.transporter,
@@ -1952,6 +1972,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 delivery.driver_phone,
                 delivery.delivery_notes,
                 delivery.observation,
+                delivery.client_name,
+                delivery.container_number,
+                delivery.bl_number,
+                delivery.dossier_number,
               ].filter(
                 (field) =>
                   field && field.toString().trim() !== "" && field !== "-"
@@ -1965,15 +1989,33 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
               }
 
-              // 2. Vérifier l'activité récente (livraisons modifiées dans les 7 derniers jours)
+              // 2. Vérifier l'activité récente (étendue à 30 jours au lieu de 7)
               if (delivery.updated_at) {
                 const updatedDate = new Date(delivery.updated_at);
                 const now = new Date();
                 const daysDiff = (now - updatedDate) / (1000 * 60 * 60 * 24);
-                if (daysDiff <= 7) {
+                if (daysDiff <= 30) {
+                  // ✅ ASSOUPLI : 30 jours au lieu de 7
                   hasUserActivity = true;
                   console.log(
                     `⏰ [RECHERCHE ÉLARGIE RESP LIV] Activité récente pour ${
+                      delivery.id
+                    } (${daysDiff.toFixed(1)} jours)`
+                  );
+                }
+              }
+
+              // 3. ✅ NOUVEAU : Inclure toutes les livraisons récentes (moins de 60 jours)
+              if (delivery.created_at || delivery.delivery_date) {
+                const deliveryDate = new Date(
+                  delivery.created_at || delivery.delivery_date
+                );
+                const now = new Date();
+                const daysDiff = (now - deliveryDate) / (1000 * 60 * 60 * 24);
+                if (daysDiff <= 60) {
+                  hasUserActivity = true;
+                  console.log(
+                    `📅 [RECHERCHE ÉLARGIE RESP LIV] Livraison récente pour ${
                       delivery.id
                     } (${daysDiff.toFixed(1)} jours)`
                   );
@@ -1987,10 +2029,10 @@ document.addEventListener("DOMContentLoaded", function () {
               `📊 [RECHERCHE ÉLARGIE RESP LIV] ${filteredDeliveries.length} livraisons trouvées avec activité ou données`
             );
 
-            // Si toujours aucune livraison, afficher les plus récentes pour debug
+            // Si toujours aucune livraison, afficher TOUTES les livraisons disponibles
             if (filteredDeliveries.length === 0) {
               console.log(
-                `🔍 [DEBUG FINAL RESP LIV] Affichage des 10 livraisons les plus récentes pour debug`
+                `🔍 [DEBUG FINAL RESP LIV] Affichage de TOUTES les livraisons disponibles (pas de limitation)`
               );
               filteredDeliveries = data.deliveries
                 .filter(
@@ -2001,8 +2043,8 @@ document.addEventListener("DOMContentLoaded", function () {
                   (a, b) =>
                     new Date(b.created_at || b.delivery_date) -
                     new Date(a.created_at || a.delivery_date)
-                )
-                .slice(0, 10);
+                );
+              // ✅ SUPPRESSION DE LA LIMITATION .slice(0, 10) pour afficher TOUS les dossiers
             }
           }
         }
@@ -8138,5 +8180,5 @@ document.addEventListener("DOMContentLoaded", function () {
 // ========================================================================
 // === FIN GESTION DES DOSSIERS EN RETARD ===
 // ========================================================================
-
+/**12345 */
 /**JESUS MA FORCE  */
