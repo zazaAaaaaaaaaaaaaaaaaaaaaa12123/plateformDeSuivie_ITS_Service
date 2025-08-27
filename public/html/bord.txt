@@ -1,1 +1,3 @@
-Ensuite dans la carte de dossier en retard je veux tu fasse l'affichage en tableau dans une modale avec les dossier en retard . Actuellement les dossier en retard qui y sont a l'interieur sont ceux venat de https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html . Donc ce que je veux je veux que aussi les dossier en retard de livraison  venant de https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html soit aussi dans la modal de la carte de dossier en retard et aussi qu'au clique sur un dossier en retard de livraison on soit redirigé sur le dossier precis avec un flash de 5 seconde dessus . Pour le cas de https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html  lui il le fais deja donc fais le pour l'autre . Mais va pas a pas afin que tu fasse bien . Et je veux une modal centré et beau . 
+GET dossiv.ci/api/exchange/data
+PUT dossiv.ci/api/exchange/update/[ID]  
+POST dossiv.ci/api/exchange/bulk-update

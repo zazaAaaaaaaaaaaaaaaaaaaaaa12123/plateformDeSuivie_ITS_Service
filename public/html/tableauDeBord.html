@@ -3007,6 +3007,41 @@
                         const dossierNumber =
                           dossier.dossier_number || dossier.numero || dossierId;
 
+                        // 📅 Traitement des dates
+                        const createdAtDate = dossier.created_at
+                          ? new Date(dossier.created_at)
+                          : null;
+                        const deliveryDate = dossier.delivery_date
+                          ? new Date(dossier.delivery_date)
+                          : null;
+                        const now = new Date();
+
+                        // Calculer le nombre de jours de retard depuis la création
+                        let daysLate = 0;
+                        let formattedCreatedDate = "Date non disponible";
+                        let formattedDeliveryDate = "Non définie";
+
+                        if (createdAtDate) {
+                          daysLate = Math.floor(
+                            (now - createdAtDate) / (1000 * 60 * 60 * 24)
+                          );
+                          formattedCreatedDate =
+                            createdAtDate.toLocaleDateString("fr-FR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            });
+                        }
+
+                        if (deliveryDate) {
+                          formattedDeliveryDate =
+                            deliveryDate.toLocaleDateString("fr-FR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            });
+                        }
+
                         // 🚀 Différencier le type de dossier pour la redirection
                         const isLivraisonType = dossier.type === "livraison";
                         const redirectUrl = isLivraisonType
@@ -3087,8 +3122,87 @@
                                             <i class="${typeIcon}" style="margin-right:6px;"></i>
                                             ${clientName}
                                           </div>
-                                          <div style="font-size:0.95em; color:#6b7280;">
+                                          <div style="font-size:0.95em; color:#6b7280; margin-bottom:4px;">
                                             Dossier: <strong style="color:#374151;">${dossierNumber}</strong>
+                                          </div>
+                                          
+                                          <!-- 📅 Section des dates ajoutée -->
+                                          <div style="
+                                            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                                            border: 1px solid #cbd5e1;
+                                            border-radius: 8px;
+                                            padding: 8px 10px;
+                                            margin-top: 6px;
+                                            font-size: 0.85em;
+                                          ">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                              <span style="color: #475569; font-weight: 600;">
+                                                <i class="fas fa-calendar-plus" style="margin-right: 4px; color: #059669;"></i>
+                                                Créé le:
+                                              </span>
+                                              <span style="color: #374151; font-weight: 700;">${formattedCreatedDate}</span>
+                                            </div>
+                                            ${
+                                              deliveryDate
+                                                ? `
+                                              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                                <span style="color: #475569; font-weight: 600;">
+                                                  <i class="fas fa-calendar-check" style="margin-right: 4px; color: #2563eb;"></i>
+                                                  Livraison prévue:
+                                                </span>
+                                                <span style="color: #374151; font-weight: 700;">${formattedDeliveryDate}</span>
+                                              </div>
+                                            `
+                                                : ""
+                                            }
+                                            <div style="
+                                              display: flex; 
+                                              justify-content: space-between; 
+                                              align-items: center;
+                                              padding: 4px 8px;
+                                              background: ${
+                                                daysLate > 7
+                                                  ? "#fef2f2"
+                                                  : daysLate > 3
+                                                  ? "#fff7ed"
+                                                  : "#fefce8"
+                                              };
+                                              border: 1px solid ${
+                                                daysLate > 7
+                                                  ? "#fecaca"
+                                                  : daysLate > 3
+                                                  ? "#fed7aa"
+                                                  : "#fde68a"
+                                              };
+                                              border-radius: 6px;
+                                              margin-top: 4px;
+                                            ">
+                                              <span style="color: #475569; font-weight: 600;">
+                                                <i class="fas fa-clock" style="margin-right: 4px; color: ${
+                                                  daysLate > 7
+                                                    ? "#dc2626"
+                                                    : daysLate > 3
+                                                    ? "#ea580c"
+                                                    : "#d97706"
+                                                };"></i>
+                                                En retard depuis:
+                                              </span>
+                                              <span style="
+                                                color: ${
+                                                  daysLate > 7
+                                                    ? "#dc2626"
+                                                    : daysLate > 3
+                                                    ? "#ea580c"
+                                                    : "#d97706"
+                                                };
+                                                font-weight: 800;
+                                                font-size: 0.95em;
+                                              ">
+                                                ${daysLate} jour${
+                          daysLate > 1 ? "s" : ""
+                        }
+                                              </span>
+                                            </div>
                                           </div>
                                         </div>
 
@@ -3111,11 +3225,11 @@
                                         text-align:center;
                                         font-weight:600;
                                       ">
-                                        <i class="fas fa-clock" style="margin-right:4px;"></i>
+                                        <i class="fas fa-external-link-alt" style="margin-right:4px;"></i>
                                         ${
                                           isLivraisonType
-                                            ? "Livraison en retard - Cliquer pour voir"
-                                            : "Cliquez pour voir les détails"
+                                            ? "Livraison en retard - Cliquer pour ouvrir"
+                                            : "Dossier en retard - Cliquer pour gérer"
                                         }
                                       </div>
                                     </li>
