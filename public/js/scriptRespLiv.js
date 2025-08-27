@@ -1459,10 +1459,10 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
-  // � INJECTION DES STYLES CSS pour l'historique amélioré
+  //   INJECTION DES STYLES CSS pour l'historique amélioré
   injectHistoryStyles();
 
-  // �🆕 AJOUT : Vérification de l'historique professionnel au chargement
+  //  🆕 AJOUT : Vérification de l'historique professionnel au chargement
   // Création immédiate du bouton historique
   checkAndShowHistoryButton();
 
@@ -1511,11 +1511,32 @@ document.addEventListener("DOMContentLoaded", function () {
           const allMiseEnLivraison =
             blStatuses.length > 0 &&
             blStatuses.every((s) => s === "mise_en_livraison");
+
+          // 🔧 CORRECTION WEBSOCKET: Vérifier aussi que le dossier n'a pas de conteneurs livrés
+          let hasDeliveredContainers = false;
+          if (
+            data.delivery.container_statuses &&
+            typeof data.delivery.container_statuses === "object"
+          ) {
+            const containerStatuses = Object.values(
+              data.delivery.container_statuses
+            );
+            hasDeliveredContainers = containerStatuses.some(
+              (status) => status === "livre" || status === "livré"
+            );
+          }
+
+          // Le dossier est éligible pour "Mise en livraison" SEULEMENT si:
+          // 1. Tous les BL sont en mise_en_livraison ET
+          // 2. Aucun conteneur n'est livré
+          const isEligibleForMiseEnLivraison =
+            allMiseEnLivraison && !hasDeliveredContainers;
+
           // Cherche si la livraison est déjà dans allDeliveries
           const idx = window.allDeliveries.findIndex(
             (d) => d.id === data.delivery.id
           );
-          if (allMiseEnLivraison) {
+          if (isEligibleForMiseEnLivraison) {
             // Ajoute ou met à jour la livraison
             if (idx === -1) {
               window.allDeliveries.push(data.delivery);
@@ -1530,7 +1551,7 @@ document.addEventListener("DOMContentLoaded", function () {
               syncDeliveredContainersToHistory();
             }, 200);
           } else {
-            // Retire la livraison si elle n'est plus éligible
+            // Retire la livraison si elle n'est plus éligible (soit BL ne sont plus tous en mise_en_livraison, soit des conteneurs sont livrés)
             if (idx !== -1) {
               window.allDeliveries.splice(idx, 1);
               updateDeliveredForPdf();
@@ -1853,9 +1874,34 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
         let filteredDeliveries = data.deliveries.filter((delivery) => {
-          return (
-            delivery.delivery_status_acconier === "mise_en_livraison_acconier"
-          );
+          // Vérifier si le statut acconier est mise_en_livraison_acconier
+          if (
+            delivery.delivery_status_acconier !== "mise_en_livraison_acconier"
+          ) {
+            return false;
+          }
+
+          // 🔧 CORRECTION FILTRAGE: Exclure les dossiers qui ont des conteneurs déjà livrés
+          // Pour le filtrage "mise_en_livraison" uniquement, on ne doit pas inclure les dossiers
+          // qui contiennent des conteneurs avec le statut "livré"
+          if (
+            delivery.container_statuses &&
+            typeof delivery.container_statuses === "object"
+          ) {
+            const containerStatuses = Object.values(
+              delivery.container_statuses
+            );
+            const hasDeliveredContainers = containerStatuses.some(
+              (status) => status === "livre" || status === "livré"
+            );
+
+            // Si le dossier a des conteneurs livrés, ne pas l'inclure dans "Mise en livraison"
+            if (hasDeliveredContainers) {
+              return false;
+            }
+          }
+
+          return true;
         });
 
         // Filtrage pour le mode admin : affichage intelligent des livraisons
@@ -6683,7 +6729,7 @@ window.showHistoryEntryDetail = async function (entryId) {
 
   container.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 3px solid #059669; padding-bottom: 20px;">
-      <h3 style="margin: 0; color: #059669; font-size: 1.3em;">� Détails du Dossier ${
+      <h3 style="margin: 0; color: #059669; font-size: 1.3em;">  Détails du Dossier ${
         enrichedEntry.dossier_number ||
         enrichedEntry.file_number ||
         enrichedEntry.container_number
@@ -8023,323 +8069,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }, 3000);
 });
-
-// ========================================================================
-// === FILTRAGE AUTOMATIQUE DEPUIS TABLEAU DE BORD ===
-// ========================================================================
-
-// Fonction pour détecter et appliquer les filtres automatiques depuis l'URL
-function applyAutoFilterFromURL() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const filter = urlParams.get("filter");
-  const autoFilter = urlParams.get("autoFilter");
-
-  if (autoFilter === "true" && filter) {
-    console.log(`Filtrage automatique activé: ${filter}`);
-
-    // Attendre que le tableau soit chargé avant d'appliquer le filtre
-    setTimeout(() => {
-      // Debug: analyser la structure du tableau
-      debugTableStructure();
-      applyStatusFilter(filter);
-    }, 1500);
-  }
-}
-
-// Fonction de debug pour analyser la structure du tableau
-function debugTableStructure() {
-  const table = document.querySelector("#deliveryTable, #mainTable, table");
-  if (!table) {
-    console.log("❌ Aucun tableau trouvé");
-    return;
-  }
-
-  console.log("🔍 ANALYSE DE LA STRUCTURE DU TABLEAU:");
-  console.log("Table trouvée:", table);
-
-  const headers = table.querySelectorAll("thead th, thead td");
-  console.log(
-    "Headers:",
-    Array.from(headers).map((h, i) => `${i}: ${h.textContent.trim()}`)
-  );
-
-  const rows = table.querySelectorAll("tbody tr");
-  console.log(`Nombre de lignes: ${rows.length}`);
-
-  // Analyser les 3 premières lignes
-  rows.forEach((row, index) => {
-    if (index < 3) {
-      console.log(`\n--- LIGNE ${index} ---`);
-      const cells = row.querySelectorAll("td");
-      cells.forEach((cell, cellIndex) => {
-        console.log(
-          `Cellule ${cellIndex}: "${cell.textContent.trim()}" | HTML: ${
-            cell.innerHTML
-          }`
-        );
-      });
-    }
-  });
-}
-
-// Fonction pour appliquer le filtre de statut
-function applyStatusFilter(filterType) {
-  const table = document.querySelector("#deliveryTable, #mainTable, table");
-  if (!table) {
-    console.log("Tableau non trouvé pour le filtrage");
-    return;
-  }
-
-  console.log("Tableau trouvé:", table);
-  console.log("Type de filtre:", filterType);
-
-  const rows = table.querySelectorAll("tbody tr");
-  console.log("Nombre de lignes trouvées:", rows.length);
-
-  let filteredCount = 0;
-
-  rows.forEach((row, index) => {
-    let shouldShow = false;
-
-    if (filterType === "livre") {
-      // Filtrer pour afficher UNIQUEMENT les dossiers entièrement livrés
-      shouldShow = isRowCompletelyDelivered(row);
-    } else if (filterType === "mise_en_livraison") {
-      // Filtrer pour afficher UNIQUEMENT les dossiers en cours de livraison (non entièrement livrés)
-      shouldShow = isRowInDeliveryProgress(row);
-    }
-
-    console.log(`Ligne ${index}: ShouldShow=${shouldShow}`);
-
-    if (shouldShow) {
-      row.style.display = "";
-      filteredCount++;
-    } else {
-      row.style.display = "none";
-    }
-  });
-
-  console.log("Nombre total de lignes filtrées:", filteredCount);
-
-  // Ajouter un indicateur visuel du filtrage actif
-  addFilterIndicator(filterType, filteredCount);
-}
-
-// Fonction pour vérifier si un dossier est entièrement livré
-function isRowCompletelyDelivered(row) {
-  // Chercher la colonne STATUT spécifiquement (dernière colonne visible dans votre tableau)
-  const cells = row.querySelectorAll("td");
-  let statusCell = null;
-
-  // Chercher la cellule qui contient "Livré" ou un badge de statut
-  // En commençant par la fin (colonne STATUT est probablement la dernière)
-  for (let i = cells.length - 1; i >= 0; i--) {
-    const cell = cells[i];
-    const cellText = cell.textContent.toLowerCase().trim();
-    const cellHTML = cell.innerHTML.toLowerCase();
-
-    // Si la cellule contient des termes de statut, c'est probablement la bonne
-    if (
-      cellText.includes("livré") ||
-      cellText.includes("livre") ||
-      cellHTML.includes("livré") ||
-      cellHTML.includes("livre") ||
-      cellHTML.includes("badge") ||
-      cellHTML.includes("btn") ||
-      cell.querySelector('.badge, .btn, [class*="livr"], [class*="status"]')
-    ) {
-      statusCell = cell;
-      console.log(
-        `✅ Cellule de statut trouvée (colonne ${i}):`,
-        cellText,
-        "| HTML:",
-        cellHTML
-      );
-      break;
-    }
-  }
-
-  if (!statusCell) {
-    console.log("❌ Aucune cellule de statut trouvée pour la ligne");
-    return false;
-  }
-
-  const statusText = statusCell.textContent.toLowerCase().trim();
-  const statusHTML = statusCell.innerHTML.toLowerCase();
-
-  // Un dossier est considéré comme livré si:
-  // 1. Il contient explicitement "Livré" dans le texte ET c'est un badge vert
-  // 2. Il a un badge/bouton vert avec "Livré"
-  // 3. Il n'a pas d'indicateurs de livraison partielle
-
-  // Détecter de manière plus précise les badges verts "Livré"
-  const statusBadgeHTML = statusCell.innerHTML;
-  const isGreenLivreButton =
-    statusBadgeHTML.includes('class="') &&
-    statusBadgeHTML.includes("livré") &&
-    (statusBadgeHTML.includes("btn-success") ||
-      statusBadgeHTML.includes("green") ||
-      statusBadgeHTML.includes("badge-success"));
-
-  const hasLivreText =
-    statusText.includes("livré") && statusText.trim() === "livré";
-  const hasRedText =
-    statusText.includes("attente") || statusText.includes("mise");
-
-  const isDelivered = (hasLivreText || isGreenLivreButton) && !hasRedText;
-
-  // Exclure les cas de livraison partielle ou en cours
-  const isPartial =
-    statusText.includes("non livré") ||
-    statusText.includes("partiel") ||
-    statusText.includes("en cours") ||
-    statusText.includes("mise en livraison") ||
-    statusText.includes("attente") ||
-    statusHTML.includes("non livré") ||
-    statusHTML.includes("partiel") ||
-    hasRedText;
-
-  const result = isDelivered && !isPartial;
-  console.log(
-    `📊 Analyse Dossier Livré détaillée:
-    - StatusText: "${statusText}"
-    - IsGreenButton: ${isGreenLivreButton}
-    - HasLivreText: ${hasLivreText}
-    - HasRedText: ${hasRedText}
-    - IsDelivered: ${isDelivered}
-    - IsPartial: ${isPartial}
-    - Résultat final: ${result}`
-  );
-
-  return result;
-}
-
-// Fonction pour vérifier si un dossier est en cours de livraison
-function isRowInDeliveryProgress(row) {
-  console.log("🚛 === ANALYSE MISE EN LIVRAISON - NOUVELLE APPROCHE ===");
-  
-  // Examiner TOUTES les cellules pour détecter les badges verts "Livré"
-  const cells = row.querySelectorAll("td");
-  
-  for (let i = 0; i < cells.length; i++) {
-    const cell = cells[i];
-    const cellHTML = cell.innerHTML;
-    const cellText = cell.textContent.trim();
-    
-    // Détecter les badges verts "Livré" - Toutes les variantes possibles
-    const hasGreenLivreButton = 
-      // Boutons avec styles inline verts
-      (cellHTML.includes('<button') && 
-       cellHTML.includes('livré') && 
-       (cellHTML.includes('#22c55e') || cellHTML.includes('color:#22c55e') || cellHTML.includes('background:#e6fff5'))) ||
-      
-      // Badges avec classes CSS vertes
-      (cellHTML.includes('btn-success') && cellHTML.includes('livré')) ||
-      (cellHTML.includes('badge-success') && cellHTML.includes('livré')) ||
-      (cellHTML.includes('bg-success') && cellHTML.includes('livré')) ||
-      (cellHTML.includes('text-success') && cellHTML.includes('livré')) ||
-      
-      // Éléments avec classe "green" et texte "livré"
-      (cellHTML.includes('green') && cellHTML.includes('livré'));
-    
-    // Si on trouve un badge vert "Livré", ce dossier N'EST PAS en mise en livraison
-    if (hasGreenLivreButton) {
-      console.log(`🚛 BADGE VERT DÉTECTÉ - Cellule ${i}: "${cellText}" | HTML: ${cellHTML.substring(0, 150)}...`);
-      console.log("🚛 RÉSULTAT: EXCLU du filtre mise en livraison (dossier livré)");
-      return false; // Ce dossier est livré, donc PAS en mise en livraison
-    }
-  }
-  
-  // Si aucun badge vert "Livré" n'est détecté, le dossier est en mise en livraison
-  console.log("🚛 AUCUN BADGE VERT DÉTECTÉ");
-  console.log("🚛 RÉSULTAT: INCLUS dans le filtre mise en livraison");
-  return true;
-}
-
-// Fonction pour ajouter un indicateur visuel du filtrage
-function addFilterIndicator(filterType, count) {
-  // Supprimer l'ancien indicateur s'il existe
-  const existingIndicator = document.getElementById("autoFilterIndicator");
-  if (existingIndicator) {
-    existingIndicator.remove();
-  }
-
-  // Créer le nouvel indicateur
-  const indicator = document.createElement("div");
-  indicator.id = "autoFilterIndicator";
-  indicator.style.cssText = `
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    z-index: 1000;
-    font-weight: 600;
-    font-size: 0.9em;
-    border: 2px solid #1e40af;
-    animation: slideInRight 0.3s ease-out;
-  `;
-
-  const filterLabel =
-    filterType === "livre" ? "Dossiers Livrés" : "Mise en Livraison";
-  indicator.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <i class="fas fa-filter" style="color: #fbbf24;"></i>
-      <span>Filtre: <strong>${filterLabel}</strong></span>
-      <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 6px;">${count}</span>
-      <button onclick="clearAutoFilter()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 2px 6px; border-radius: 4px; cursor: pointer; margin-left: 8px;">✕</button>
-    </div>
-  `;
-
-  // Ajouter l'animation CSS
-  if (!document.getElementById("autoFilterStyles")) {
-    const style = document.createElement("style");
-    style.id = "autoFilterStyles";
-    style.textContent = `
-      @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  document.body.appendChild(indicator);
-}
-
-// Fonction pour supprimer le filtre automatique
-function clearAutoFilter() {
-  const table = document.querySelector("#deliveryTable, #mainTable, table");
-  if (table) {
-    const rows = table.querySelectorAll("tbody tr");
-    rows.forEach((row) => {
-      row.style.display = "";
-    });
-  }
-
-  const indicator = document.getElementById("autoFilterIndicator");
-  if (indicator) {
-    indicator.remove();
-  }
-
-  // Supprimer les paramètres de l'URL
-  const url = new URL(window.location);
-  url.searchParams.delete("filter");
-  url.searchParams.delete("autoFilter");
-  window.history.replaceState({}, document.title, url);
-}
-
-// Initialiser le filtrage automatique au chargement de la page
-document.addEventListener("DOMContentLoaded", function () {
-  applyAutoFilterFromURL();
-});
-
-// ========================================================================
-// === FIN FILTRAGE AUTOMATIQUE ===
-// ========================================================================
 
 // ========================================================================
 // === FIN GESTION DES DOSSIERS EN RETARD ===
