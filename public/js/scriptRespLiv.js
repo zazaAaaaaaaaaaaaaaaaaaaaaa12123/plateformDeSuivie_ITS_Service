@@ -8334,7 +8334,7 @@ function isRowInDeliveryProgress(row) {
   const result = !isCompletelyDelivered;
 
   console.log(
-    `🚛 Analyse mise en livraison ULTRA STRICTE:
+    `🚛 Analyse mise en livraison ULTRA STRICTE v2.0:
     - StatusText: "${statusText}"
     - StatusHTML (100 premiers chars): "${statusBadgeHTML.substring(0, 100)}..."
     - HasGreenLivreClass: ${hasGreenLivreClass}
