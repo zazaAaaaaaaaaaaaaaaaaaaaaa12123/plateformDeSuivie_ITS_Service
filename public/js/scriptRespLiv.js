@@ -8216,135 +8216,44 @@ function isRowCompletelyDelivered(row) {
 
 // Fonction pour vérifier si un dossier est en cours de livraison
 function isRowInDeliveryProgress(row) {
-  // Chercher la colonne STATUT spécifiquement (même logique que pour les dossiers livrés)
+  console.log("🚛 === ANALYSE MISE EN LIVRAISON - NOUVELLE APPROCHE ===");
+  
+  // Examiner TOUTES les cellules pour détecter les badges verts "Livré"
   const cells = row.querySelectorAll("td");
-  let statusCell = null;
-
-  // Chercher la cellule qui contient des informations de statut
-  for (let i = cells.length - 1; i >= 0; i--) {
+  
+  for (let i = 0; i < cells.length; i++) {
     const cell = cells[i];
-    const cellText = cell.textContent.toLowerCase().trim();
-    const cellHTML = cell.innerHTML.toLowerCase();
-
-    // Si la cellule contient des termes de statut, c'est probablement la bonne
-    if (
-      cellText.includes("livré") ||
-      cellText.includes("livre") ||
-      cellHTML.includes("livré") ||
-      cellHTML.includes("livre") ||
-      cellHTML.includes("badge") ||
-      cellHTML.includes("btn") ||
-      cell.querySelector('.badge, .btn, [class*="livr"], [class*="status"]') ||
-      cellText.includes("mise") ||
-      cellText.includes("cours") ||
-      cellText.includes("partiel")
-    ) {
-      statusCell = cell;
-      console.log(
-        `🚛 Cellule de statut trouvée (mise en livraison):`,
-        cellText
-      );
-      break;
+    const cellHTML = cell.innerHTML;
+    const cellText = cell.textContent.trim();
+    
+    // Détecter les badges verts "Livré" - Toutes les variantes possibles
+    const hasGreenLivreButton = 
+      // Boutons avec styles inline verts
+      (cellHTML.includes('<button') && 
+       cellHTML.includes('livré') && 
+       (cellHTML.includes('#22c55e') || cellHTML.includes('color:#22c55e') || cellHTML.includes('background:#e6fff5'))) ||
+      
+      // Badges avec classes CSS vertes
+      (cellHTML.includes('btn-success') && cellHTML.includes('livré')) ||
+      (cellHTML.includes('badge-success') && cellHTML.includes('livré')) ||
+      (cellHTML.includes('bg-success') && cellHTML.includes('livré')) ||
+      (cellHTML.includes('text-success') && cellHTML.includes('livré')) ||
+      
+      // Éléments avec classe "green" et texte "livré"
+      (cellHTML.includes('green') && cellHTML.includes('livré'));
+    
+    // Si on trouve un badge vert "Livré", ce dossier N'EST PAS en mise en livraison
+    if (hasGreenLivreButton) {
+      console.log(`🚛 BADGE VERT DÉTECTÉ - Cellule ${i}: "${cellText}" | HTML: ${cellHTML.substring(0, 150)}...`);
+      console.log("🚛 RÉSULTAT: EXCLU du filtre mise en livraison (dossier livré)");
+      return false; // Ce dossier est livré, donc PAS en mise en livraison
     }
   }
-
-  if (!statusCell) {
-    console.log("❌ Aucune cellule de statut trouvée pour mise en livraison");
-    // Si pas de statut trouvé, considérer comme en cours
-    return true;
-  }
-
-  const statusText = statusCell.textContent.toLowerCase().trim();
-  const statusHTML = statusCell.innerHTML.toLowerCase();
-
-  // Un dossier est en cours de livraison si:
-  // 1. Il n'est PAS marqué comme "Livré" complet
-  // 2. Il contient des termes de livraison partielle
-  // 3. Il n'a pas de statut "Livré" visible
-
-  // Détecter de manière plus précise si c'est un dossier livré
-  const isGreenLivreButton =
-    statusCell.innerHTML.includes('class="') &&
-    statusCell.innerHTML.includes("livré") &&
-    (statusCell.innerHTML.includes("btn-success") ||
-      statusCell.innerHTML.includes("green") ||
-      statusCell.innerHTML.includes("badge-success"));
-
-  const hasLivreText =
-    statusText.includes("livré") && statusText.trim() === "livré";
-  const hasRedText =
-    statusText.includes("attente") || statusText.includes("mise");
-
-  const hasLivreComplete =
-    (hasLivreText || isGreenLivreButton) &&
-    !statusText.includes("non livré") &&
-    !statusText.includes("partiel") &&
-    !statusText.includes("mise en livraison") &&
-    !statusText.includes("attente") &&
-    !hasRedText;
-
-  const hasPartialStatus =
-    statusText.includes("mise en livraison") ||
-    statusText.includes("partiel") ||
-    statusText.includes("en cours") ||
-    statusText.includes("non livré") ||
-    statusText.includes("attente") ||
-    statusHTML.includes("mise en livraison") ||
-    statusHTML.includes("partiel") ||
-    hasRedText;
-
-  // CORRECTION STRICTE: Pour "mise en livraison", on doit EXCLURE TOUS les dossiers avec badges verts "Livré"
-  // Un dossier est en cours de livraison SEULEMENT s'il:
-  // 1. N'a PAS de badge vert "Livré"
-  // 2. N'a PAS le texte exact "livré" seul
-  // 3. A des indicateurs de statut partiel/en cours
-
-  // CORRECTION ULTRA STRICTE: Détecter TOUS les types de boutons/badges verts "Livré"
-  // 1. Classes CSS (btn-success, badge-success, green)
-  // 2. Styles inline avec couleurs vertes (#22c55e, green, etc.)
-  // 3. Boutons HTML avec le texte "Livré"
-
-  const statusBadgeHTML = statusCell.innerHTML;
-
-  // Vérification des boutons verts "Livré" - Classes CSS
-  const hasGreenLivreClass =
-    (statusBadgeHTML.includes("btn-success") &&
-      statusBadgeHTML.includes("livré")) ||
-    (statusBadgeHTML.includes("badge-success") &&
-      statusBadgeHTML.includes("livré")) ||
-    (statusBadgeHTML.includes("green") && statusBadgeHTML.includes("livré"));
-
-  // Vérification des boutons verts "Livré" - Styles inline
-  const hasGreenLivreInlineStyle =
-    statusBadgeHTML.includes("<button") &&
-    statusBadgeHTML.includes("livré") &&
-    (statusBadgeHTML.includes("#22c55e") ||
-      statusBadgeHTML.includes("color:#22c55e") ||
-      statusBadgeHTML.includes("background:#e6fff5") ||
-      statusBadgeHTML.includes("border:1.5px solid #22c55e"));
-
-  // Vérification du texte exact "livré" seul
-  const isExactlyLivre = statusText.trim().toLowerCase() === "livré";
-
-  // TOUT dossier avec un badge/bouton vert "Livré" OU le texte exact "livré" est considéré comme complètement livré
-  const isCompletelyDelivered =
-    hasGreenLivreClass || hasGreenLivreInlineStyle || isExactlyLivre;
-
-  // Résultat: Mise en livraison = PAS complètement livré
-  const result = !isCompletelyDelivered;
-
-  console.log(
-    `🚛 Analyse mise en livraison ULTRA STRICTE v2.0:
-    - StatusText: "${statusText}"
-    - StatusHTML (100 premiers chars): "${statusBadgeHTML.substring(0, 100)}..."
-    - HasGreenLivreClass: ${hasGreenLivreClass}
-    - HasGreenLivreInlineStyle: ${hasGreenLivreInlineStyle}
-    - IsExactlyLivre: ${isExactlyLivre}
-    - IsCompletelyDelivered: ${isCompletelyDelivered}
-    - Résultat final (Mise en livraison): ${result}`
-  );
-
-  return result;
+  
+  // Si aucun badge vert "Livré" n'est détecté, le dossier est en mise en livraison
+  console.log("🚛 AUCUN BADGE VERT DÉTECTÉ");
+  console.log("🚛 RÉSULTAT: INCLUS dans le filtre mise en livraison");
+  return true;
 }
 
 // Fonction pour ajouter un indicateur visuel du filtrage
