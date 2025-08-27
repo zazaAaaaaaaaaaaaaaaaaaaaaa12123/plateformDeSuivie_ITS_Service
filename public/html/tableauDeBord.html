@@ -21,6 +21,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
+      /* Animation pour la modal */
+      @keyframes modalAppear {
+        0% {
+          opacity: 0;
+          transform: scale(0.8) translateY(-20px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      @keyframes modalBackdropAppear {
+        0% {
+          opacity: 0;
+          backdrop-filter: blur(0px);
+        }
+        100% {
+          opacity: 1;
+          backdrop-filter: blur(8px);
+        }
+      }
+
       /* Styles généraux pour le corps */
       html,
       body {
@@ -2188,7 +2211,7 @@
               class="etat-card dossier-mise-livraison animated-card"
               id="carteMiseLivraison"
               style="cursor: pointer"
-              title="💡 Synchronisation: Dossiers visibles dans resp_liv.html. Incrément quand un dossier quitte resp_acconier, décrément quand tous conteneurs sont livrés."
+              title="💡 Synchronisation: Dossiers visibles dans resp_liv.html. Incrément quand un dossier quitte resp_acconier, décrément quand tous conteneurs sont livrés. ✨ Cliquez pour voir uniquement les dossiers en cours de livraison."
             >
               <div class="etat-icon"><i class="fas fa-truck-loading"></i></div>
               <div class="etat-title">Dossiers mis en livraison</div>
@@ -2303,7 +2326,8 @@
             <div
               class="etat-card dossier-livre animated-card"
               id="carteLivre"
-              title="💡 Synchronisation: Incrément automatique quand tous les conteneurs d'un dossier sont marqués 'livré' dans resp_liv.html."
+              style="cursor: pointer"
+              title="💡 Synchronisation: Incrément automatique quand tous les conteneurs d'un dossier sont marqués 'livré' dans resp_liv.html. ✨ Cliquez pour voir uniquement les dossiers livrés."
             >
               <div class="etat-icon"><i class="fas fa-check-circle"></i></div>
               <div class="etat-title">Dossier livré</div>
@@ -2330,58 +2354,141 @@
                 left: 0;
                 width: 100vw;
                 height: 100vh;
-                background: rgba(220, 53, 69, 0.25);
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(8px);
                 z-index: 10001;
                 align-items: center;
                 justify-content: center;
+                padding: 20px;
+                box-sizing: border-box;
               "
             >
               <div
                 style="
-                  background: #fff;
-                  border-radius: 18px;
-                  box-shadow: 0 12px 40px rgba(220, 53, 69, 0.3);
-                  padding: 32px 28px 24px 28px;
-                  max-width: 680px;
-                  width: 95vw;
-                  max-height: 85vh;
+                  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+                  border-radius: 20px;
+                  box-shadow: 0 20px 60px rgba(220, 53, 69, 0.25),
+                    0 8px 32px rgba(0, 0, 0, 0.15),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+                  padding: 36px 32px 28px 32px;
+                  max-width: 750px;
+                  width: 100%;
+                  max-height: 90vh;
                   overflow-y: auto;
                   position: relative;
-                  border: 2.5px solid #dc3545;
+                  border: 3px solid transparent;
+                  background-clip: padding-box;
+                  transform: scale(1);
+                  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                  animation: modalAppear 0.4s ease-out;
                 "
               >
                 <button
                   id="closePopupDossiersRetard"
                   style="
                     position: absolute;
-                    top: 18px;
-                    right: 18px;
-                    background: none;
+                    top: 20px;
+                    right: 20px;
+                    background: linear-gradient(135deg, #dc3545, #c82333);
                     border: none;
-                    font-size: 1.5em;
-                    color: #dc3545;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    font-size: 1.4em;
+                    color: white;
                     cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+                    transition: all 0.3s ease;
                   "
+                  onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 20px rgba(220, 53, 69, 0.4)'"
+                  onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(220, 53, 69, 0.3)'"
                 >
                   &times;
                 </button>
                 <h2
                   style="
-                    font-size: 1.4em;
+                    font-size: 1.6em;
                     font-weight: 700;
+                    background: linear-gradient(135deg, #dc3545, #c82333);
+                    background-clip: text;
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
                     color: #dc3545;
-                    margin-bottom: 22px;
+                    margin-bottom: 28px;
                     text-align: center;
-                    border-bottom: 2px solid #dc3545;
-                    padding-bottom: 12px;
+                    position: relative;
+                    padding-bottom: 16px;
                   "
                 >
                   <i
                     class="fas fa-exclamation-triangle"
-                    style="margin-right: 8px"
+                    style="margin-right: 10px; color: #dc3545"
                   ></i>
                   Dossiers en retard
+                  <div
+                    style="
+                      position: absolute;
+                      bottom: 0;
+                      left: 50%;
+                      transform: translateX(-50%);
+                      width: 80px;
+                      height: 3px;
+                      background: linear-gradient(90deg, #dc3545, #c82333);
+                      border-radius: 2px;
+                    "
+                  ></div>
                 </h2>
+
+                <!-- Champ de recherche -->
+                <div style="margin-bottom: 24px; position: relative">
+                  <div
+                    style="
+                      position: absolute;
+                      left: 16px;
+                      top: 50%;
+                      transform: translateY(-50%);
+                      color: #999;
+                      font-size: 1.1em;
+                      pointer-events: none;
+                    "
+                  >
+                    <i class="fas fa-search"></i>
+                  </div>
+                  <input
+                    type="text"
+                    id="rechercheRetard"
+                    placeholder="Rechercher par client, agent ou dossier..."
+                    style="
+                      width: 100%;
+                      padding: 16px 20px 16px 50px;
+                      border: 2px solid #e8ecf4;
+                      border-radius: 12px;
+                      font-size: 1em;
+                      outline: none;
+                      transition: all 0.3s ease;
+                      background: #fafbfc;
+                      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                      box-sizing: border-box;
+                    "
+                    onkeyup="filtrerDossiers()"
+                    onfocus="
+                      this.style.borderColor='#dc3545';
+                      this.style.background='#fff';
+                      this.style.boxShadow='0 4px 16px rgba(220, 53, 69, 0.15)';
+                      this.style.transform='translateY(-2px)';
+                    "
+                    onblur="
+                      this.style.borderColor='#e8ecf4';
+                      this.style.background='#fafbfc';
+                      this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.08)';
+                      this.style.transform='translateY(0)';
+                    "
+                  />
+                </div>
+
                 <div id="contenuDossiersRetard"></div>
               </div>
             </div>
@@ -2905,8 +3012,9 @@
               document.getElementById("carteMiseLivraison");
             if (carteMiseLivraison) {
               carteMiseLivraison.addEventListener("click", function () {
+                // Redirection avec filtre pour dossiers en cours de livraison (non livrés)
                 window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
+                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?filter=mise_en_livraison&autoFilter=true";
               });
             }
             // --- Ajout gestion carte dossier en retard ---
@@ -2967,6 +3075,16 @@
                 fetch("/api/dossiers/retard")
                   .then((res) => res.json())
                   .then((dossiers) => {
+                    // Stocker les données pour le filtrage
+                    window.tousLesDossiersRetard = dossiers || [];
+
+                    // Réinitialiser le champ de recherche
+                    const champRecherche =
+                      document.getElementById("rechercheRetard");
+                    if (champRecherche) {
+                      champRecherche.value = "";
+                    }
+
                     if (!dossiers || dossiers.length === 0) {
                       contenuRetard.innerHTML = `
                                   <div style='text-align:center;padding:40px 20px;color:#6b7280;'>
@@ -3142,19 +3260,6 @@
                                               </span>
                                               <span style="color: #374151; font-weight: 700;">${formattedCreatedDate}</span>
                                             </div>
-                                            ${
-                                              deliveryDate
-                                                ? `
-                                              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                                <span style="color: #475569; font-weight: 600;">
-                                                  <i class="fas fa-calendar-check" style="margin-right: 4px; color: #2563eb;"></i>
-                                                  Livraison prévue:
-                                                </span>
-                                                <span style="color: #374151; font-weight: 700;">${formattedDeliveryDate}</span>
-                                              </div>
-                                            `
-                                                : ""
-                                            }
                                             <div style="
                                               display: flex; 
                                               justify-content: space-between; 
@@ -3271,8 +3376,9 @@
             if (carteLivre) {
               carteLivre.style.cursor = "pointer";
               carteLivre.addEventListener("click", function () {
+                // Redirection avec filtre pour dossiers livrés uniquement
                 window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
+                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?filter=livre&autoFilter=true";
               });
             }
 
@@ -5899,6 +6005,242 @@
           "🔍 [DIAGNOSTIC] Utilisez window.diagnosisConnectedUsers() pour diagnostiquer les problèmes"
         );
       })();
+    </script>
+
+    <!-- Script de filtrage pour la modal dossiers en retard -->
+    <script>
+      // Variable globale pour stocker tous les dossiers
+      window.tousLesDossiersRetard = [];
+
+      // Fonction de filtrage
+      function filtrerDossiers() {
+        const input = document.getElementById("rechercheRetard");
+        const recherche = input.value.toLowerCase().trim();
+        const contenu = document.getElementById("contenuDossiersRetard");
+
+        if (
+          !window.tousLesDossiersRetard ||
+          window.tousLesDossiersRetard.length === 0
+        ) {
+          return;
+        }
+
+        // Filtrer les dossiers
+        let dossiersFilters = window.tousLesDossiersRetard;
+        if (recherche) {
+          dossiersFilters = window.tousLesDossiersRetard.filter((dossier) => {
+            const client = (
+              dossier.client_name ||
+              dossier.client ||
+              ""
+            ).toLowerCase();
+            const agent = (
+              dossier.employee_name ||
+              dossier.agent ||
+              ""
+            ).toLowerCase();
+            const numeroDossier = (
+              dossier.dossier_number ||
+              dossier.numero ||
+              ""
+            )
+              .toString()
+              .toLowerCase();
+
+            return (
+              client.includes(recherche) ||
+              agent.includes(recherche) ||
+              numeroDossier.includes(recherche)
+            );
+          });
+        }
+
+        // Afficher les résultats
+        if (dossiersFilters.length === 0) {
+          contenu.innerHTML = `
+            <div style='text-align:center;padding:40px 20px;color:#6b7280;'>
+              <i class="fas fa-search" style="font-size:3em;color:#94a3b8;margin-bottom:15px;"></i>
+              <p style="font-size:1.2em;margin:0;">Aucun résultat trouvé</p>
+              <p style="font-size:1em;margin:8px 0 0 0;">Essayez avec d'autres mots-clés</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = `
+          <div style="margin-bottom:16px; padding: 12px 16px; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 12px; border-left: 4px solid #dc3545;">
+            <p style="color:#374151;font-size:1.05em;margin:0;text-align:center;font-weight:600;">
+              <i class="fas fa-exclamation-triangle" style="color:#dc3545;margin-right:8px;"></i>
+              <strong>${dossiersFilters.length}</strong> dossier${
+          dossiersFilters.length > 1 ? "s" : ""
+        } ${
+          recherche
+            ? "trouvé" + (dossiersFilters.length > 1 ? "s" : "")
+            : "en retard"
+        }
+            </p>
+          </div>
+          <div style="max-height:450px;overflow-y:auto;padding-right:8px;">
+            <div style="display:grid;gap:16px;">
+        `;
+
+        dossiersFilters.forEach((dossier, index) => {
+          const dossierId =
+            dossier.id ||
+            dossier.numero_bl ||
+            dossier.numero ||
+            dossier._id ||
+            "";
+          const clientName =
+            dossier.client_name ||
+            dossier.client ||
+            dossier.nom ||
+            "Client non défini";
+          const employeeName = dossier.employee_name || "Agent non défini";
+          const dossierNumber =
+            dossier.dossier_number || dossier.numero || dossierId;
+
+          const createdAtDate = dossier.created_at
+            ? new Date(dossier.created_at)
+            : null;
+          const deliveryDate = dossier.delivery_date
+            ? new Date(dossier.delivery_date)
+            : null;
+          const now = new Date();
+
+          let daysLate = 0;
+          let formattedCreatedDate = "Date non disponible";
+          let formattedDeliveryDate = "Non définie";
+
+          if (createdAtDate) {
+            daysLate = Math.floor(
+              (now - createdAtDate) / (1000 * 60 * 60 * 24)
+            );
+            formattedCreatedDate = createdAtDate.toLocaleDateString("fr-FR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            });
+          }
+
+          if (deliveryDate) {
+            formattedDeliveryDate = deliveryDate.toLocaleDateString("fr-FR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            });
+          }
+
+          const isLivraisonType = dossier.type === "livraison";
+          const redirectUrl = isLivraisonType
+            ? `https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?dossier=${encodeURIComponent(
+                dossierId
+              )}&flash=true`
+            : `https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?dossier=${encodeURIComponent(
+                dossierId
+              )}&flash=true`;
+
+          const typeColor = isLivraisonType ? "#2563eb" : "#dc3545";
+          const typeIcon = isLivraisonType
+            ? "fas fa-truck"
+            : "fas fa-folder-open";
+          const typeLabel = isLivraisonType ? "LIVRAISON" : "ACCONIER";
+
+          html += `
+            <li style='
+              background: linear-gradient(135deg, ${
+                isLivraisonType ? "#eff6ff" : "#fef2f2"
+              } 80%, ${isLivraisonType ? "#dbeafe" : "#fecaca"} 100%);
+              border: 2px solid ${isLivraisonType ? "#dbeafe" : "#fecaca"};
+              border-radius: 12px;
+              margin-bottom: 12px;
+              padding: 18px 20px;
+              cursor: pointer;
+              transition: all 0.2s ease;
+              border-left: 4px solid ${typeColor};
+              position: relative;
+            '
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(${
+              isLivraisonType ? "37, 99, 235" : "220, 53, 69"
+            }, 0.25)';"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
+            onclick="window.location.href='${redirectUrl}'">
+
+              <div style="position: absolute; top: 8px; right: 8px; background: ${typeColor}; color: white; font-size: 0.7em; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">
+                ${typeLabel}
+              </div>
+
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                <span style="background:${typeColor}; color:#fff; font-weight:700; font-size:0.9em; padding:4px 8px; border-radius:6px; min-width:30px; text-align:center;">${
+            index + 1
+          }</span>
+
+                <div style="flex:1;">
+                  <div style="font-size:1.15em; font-weight:700; color:${typeColor}; margin-bottom:2px;">
+                    <i class="${typeIcon}" style="margin-right:6px;"></i>
+                    ${clientName}
+                  </div>
+                  <div style="font-size:0.95em; color:#6b7280; margin-bottom:4px;">
+                    Dossier: <strong style="color:#374151;">${dossierNumber}</strong>
+                  </div>
+                  
+                  <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; margin-top: 6px; font-size: 0.85em;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                      <span style="color: #475569; font-weight: 600;"><i class="fas fa-calendar-plus" style="margin-right: 4px; color: #059669;"></i>Créé le:</span>
+                      <span style="color: #374151; font-weight: 700;">${formattedCreatedDate}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; background: ${
+                      daysLate > 7
+                        ? "#fef2f2"
+                        : daysLate > 3
+                        ? "#fff7ed"
+                        : "#fefce8"
+                    }; border: 1px solid ${
+            daysLate > 7 ? "#fecaca" : daysLate > 3 ? "#fed7aa" : "#fde68a"
+          }; border-radius: 6px; margin-top: 4px;">
+                      <span style="color: #475569; font-weight: 600;"><i class="fas fa-clock" style="margin-right: 4px; color: ${
+                        daysLate > 7
+                          ? "#dc2626"
+                          : daysLate > 3
+                          ? "#ea580c"
+                          : "#d97706"
+                      };"></i>En retard depuis:</span>
+                      <span style="color: ${
+                        daysLate > 7
+                          ? "#dc2626"
+                          : daysLate > 3
+                          ? "#ea580c"
+                          : "#d97706"
+                      }; font-weight: 800; font-size: 0.95em;">${daysLate} jour${
+            daysLate > 1 ? "s" : ""
+          }</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="text-align:right;">
+                  <div style="font-size:0.9em; color:#6b7280; margin-bottom:2px;">${
+                    isLivraisonType ? "Livreur" : "Agent"
+                  }</div>
+                  <div style="font-size:1em; font-weight:600; color:#374151;">${employeeName}</div>
+                </div>
+              </div>
+
+              <div style="font-size:0.85em; color:${typeColor}; background:#fff; padding:6px 10px; border-radius:6px; text-align:center; font-weight:600;">
+                <i class="fas fa-external-link-alt" style="margin-right:4px;"></i>
+                ${
+                  isLivraisonType
+                    ? "Livraison en retard - Cliquer pour ouvrir"
+                    : "Dossier en retard - Cliquer pour gérer"
+                }
+              </div>
+            </li>
+          `;
+        });
+
+        html += "</div></div>";
+        contenu.innerHTML = html;
+      }
     </script>
   </body>
 </html>
