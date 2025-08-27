@@ -4738,7 +4738,42 @@ function mapStatus(status) {
         // Set initial text content for non-dropdown cells (if not already set by specific logic above)
         if (cell.innerHTML === "") {
           // Only set if not already populated by specific logic
-          cell.textContent = displayValue;
+          // === TRANSFORMATION EN MAJUSCULES POUR LES COLONNES SPÉCIFIÉES ===
+          const fieldsToUppercase = [
+            "employee_name", // Agent
+            "client_name", // Client (Nom)
+            "client_phone", // Client (Tél)
+            "container_number", // Numéro TC(s)
+            "lieu", // Lieu
+            "container_foot_type", // Type Conteneur(pied)
+            "container_type_and_content", // Contenu
+            "declaration_number", // N° Déclaration
+            "bl_number", // N° BL
+            "dossier_number", // N° Dossier
+            "number_of_containers", // Nombre de conteneurs
+            "shipping_company", // Compagnie Maritime
+            "weight", // Poids
+            "ship_name", // Nom du navire
+            "circuit", // Circuit
+            "transporter_mode", // Mode de Transport
+            "observation_acconier", // Observation
+            "nom_agent_visiteur", // Nom agent visiteur
+            "transporter", // Transporteur
+            "inspecteur", // Inspecteur
+            "agent_en_douanes", // Agent en Douanes
+            "driver_name", // Chauffeur
+            "driver_phone", // Tél. Chauffeur
+          ];
+
+          let finalDisplayValue = displayValue;
+          if (
+            fieldsToUppercase.includes(fieldName) &&
+            finalDisplayValue !== "-"
+          ) {
+            finalDisplayValue = String(finalDisplayValue).toUpperCase();
+          }
+
+          cell.textContent = finalDisplayValue;
         }
 
         // Store original value for comparison in a consistent string format
@@ -5368,7 +5403,40 @@ function mapStatus(status) {
       }
     } else {
       // Default for other types, including new text fields, and if displayValue is null/undefined
-      cell.textContent = displayValue || "-";
+      let finalDisplayValue = displayValue || "-";
+
+      // === TRANSFORMATION EN MAJUSCULES POUR LES COLONNES SPÉCIFIÉES ===
+      const fieldsToUppercase = [
+        "employee_name", // Agent
+        "client_name", // Client (Nom)
+        "client_phone", // Client (Tél)
+        "container_number", // Numéro TC(s)
+        "lieu", // Lieu
+        "container_foot_type", // Type Conteneur(pied)
+        "container_type_and_content", // Contenu
+        "declaration_number", // N° Déclaration
+        "bl_number", // N° BL
+        "dossier_number", // N° Dossier
+        "number_of_containers", // Nombre de conteneurs
+        "shipping_company", // Compagnie Maritime
+        "weight", // Poids
+        "ship_name", // Nom du navire
+        "circuit", // Circuit
+        "transporter_mode", // Mode de Transport
+        "observation_acconier", // Observation
+        "nom_agent_visiteur", // Nom agent visiteur
+        "transporter", // Transporteur
+        "inspecteur", // Inspecteur
+        "agent_en_douanes", // Agent en Douanes
+        "driver_name", // Chauffeur
+        "driver_phone", // Tél. Chauffeur
+      ];
+
+      if (fieldsToUppercase.includes(fieldName) && finalDisplayValue !== "-") {
+        finalDisplayValue = String(finalDisplayValue).toUpperCase();
+      }
+
+      cell.textContent = finalDisplayValue;
     }
   }
   // =====================================================================
@@ -5616,7 +5684,7 @@ function mapStatus(status) {
     const searchTerm = searchInput.value.toLowerCase().trim();
     if (searchTerm !== "") {
       filteredData = filteredData.filter((delivery) => {
-        // Check container_number, declaration_number, bl_number, dossier_number
+        // Check container_number, declaration_number, bl_number, dossier_number, client_name
         const containerNumberMatch =
           delivery.container_number &&
           String(delivery.container_number).toLowerCase().includes(searchTerm);
@@ -5631,12 +5699,16 @@ function mapStatus(status) {
         const dossierNumberMatch =
           delivery.dossier_number &&
           String(delivery.dossier_number).toLowerCase().includes(searchTerm);
+        const clientNameMatch =
+          delivery.client_name &&
+          String(delivery.client_name).toLowerCase().includes(searchTerm);
 
         return (
           containerNumberMatch ||
           declarationNumberMatch ||
           blNumberMatch ||
-          dossierNumberMatch
+          dossierNumberMatch ||
+          clientNameMatch
         );
       });
     }
