@@ -8294,19 +8294,37 @@ function isRowInDeliveryProgress(row) {
     statusHTML.includes("partiel") ||
     hasRedText;
 
-  // CORRECTION: Pour "mise en livraison", on doit EXCLURE les dossiers complètement livrés
-  // Un dossier est en cours de livraison SEULEMENT s'il n'est PAS complètement livré
-  const result = !hasLivreComplete;
+  // CORRECTION STRICTE: Pour "mise en livraison", on doit EXCLURE TOUS les dossiers avec badges verts "Livré"
+  // Un dossier est en cours de livraison SEULEMENT s'il:
+  // 1. N'a PAS de badge vert "Livré"
+  // 2. N'a PAS le texte exact "livré" seul
+  // 3. A des indicateurs de statut partiel/en cours
+
+  // Vérification stricte des badges verts "Livré" à exclure
+  const hasGreenLivreBadge =
+    (statusBadgeHTML.includes("btn-success") &&
+      statusBadgeHTML.includes("livré")) ||
+    (statusBadgeHTML.includes("badge-success") &&
+      statusBadgeHTML.includes("livré")) ||
+    (statusBadgeHTML.includes("green") && statusBadgeHTML.includes("livré"));
+
+  // Vérification stricte du texte "livré" seul
+  const isExactlyLivre = statusText.trim() === "livré";
+
+  // Un dossier est en mise en livraison SEULEMENT s'il n'a AUCUN indicateur de livraison complète
+  const isCompletelyDelivered = hasGreenLivreBadge || isExactlyLivre;
+
+  // Résultat: Mise en livraison = PAS complètement livré
+  const result = !isCompletelyDelivered;
 
   console.log(
-    `🚛 Analyse mise en livraison détaillée:
+    `🚛 Analyse mise en livraison STRICTE:
     - StatusText: "${statusText}"
-    - IsGreenButton: ${isGreenLivreButton}
-    - HasLivreText: ${hasLivreText}
-    - HasRedText: ${hasRedText}
-    - LivréComplet: ${hasLivreComplete}
-    - Partiel: ${hasPartialStatus}
-    - Résultat: ${result}`
+    - StatusHTML contient: "${statusBadgeHTML.substring(0, 100)}..."
+    - HasGreenLivreBadge: ${hasGreenLivreBadge}
+    - IsExactlyLivre: ${isExactlyLivre}
+    - IsCompletelyDelivered: ${isCompletelyDelivered}
+    - Résultat final (Mise en livraison): ${result}`
   );
 
   return result;
