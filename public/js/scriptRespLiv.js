@@ -8168,19 +8168,25 @@ function isRowCompletelyDelivered(row) {
   const statusHTML = statusCell.innerHTML.toLowerCase();
 
   // Un dossier est considéré comme livré si:
-  // 1. Il contient explicitement "Livré" dans le texte
+  // 1. Il contient explicitement "Livré" dans le texte ET c'est un badge vert
   // 2. Il a un badge/bouton vert avec "Livré"
   // 3. Il n'a pas d'indicateurs de livraison partielle
 
-  const hasLivreText =
-    statusText.includes("livré") || statusText.includes("livre");
-  const hasLivreHTML =
-    statusHTML.includes("livré") || statusHTML.includes("livre");
-  const hasLivreButton =
-    statusHTML.includes("btn") &&
-    (statusHTML.includes("livré") || statusHTML.includes("livre"));
+  // Détecter de manière plus précise les badges verts "Livré"
+  const statusBadgeHTML = statusCell.innerHTML;
+  const isGreenLivreButton =
+    statusBadgeHTML.includes('class="') &&
+    statusBadgeHTML.includes("livré") &&
+    (statusBadgeHTML.includes("btn-success") ||
+      statusBadgeHTML.includes("green") ||
+      statusBadgeHTML.includes("badge-success"));
 
-  const isDelivered = hasLivreText || hasLivreHTML || hasLivreButton;
+  const hasLivreText =
+    statusText.includes("livré") && statusText.trim() === "livré";
+  const hasRedText =
+    statusText.includes("attente") || statusText.includes("mise");
+
+  const isDelivered = (hasLivreText || isGreenLivreButton) && !hasRedText;
 
   // Exclure les cas de livraison partielle ou en cours
   const isPartial =
@@ -8188,12 +8194,21 @@ function isRowCompletelyDelivered(row) {
     statusText.includes("partiel") ||
     statusText.includes("en cours") ||
     statusText.includes("mise en livraison") ||
+    statusText.includes("attente") ||
     statusHTML.includes("non livré") ||
-    statusHTML.includes("partiel");
+    statusHTML.includes("partiel") ||
+    hasRedText;
 
   const result = isDelivered && !isPartial;
   console.log(
-    `📊 Analyse: Livré=${isDelivered}, Partiel=${isPartial}, Résultat final=${result}`
+    `📊 Analyse Dossier Livré détaillée:
+    - StatusText: "${statusText}"
+    - IsGreenButton: ${isGreenLivreButton}
+    - HasLivreText: ${hasLivreText}
+    - HasRedText: ${hasRedText}
+    - IsDelivered: ${isDelivered}
+    - IsPartial: ${isPartial}
+    - Résultat final: ${result}`
   );
 
   return result;
@@ -8247,26 +8262,51 @@ function isRowInDeliveryProgress(row) {
   // 2. Il contient des termes de livraison partielle
   // 3. Il n'a pas de statut "Livré" visible
 
+  // Détecter de manière plus précise si c'est un dossier livré
+  const statusBadgeHTML = statusCell.innerHTML;
+  const isGreenLivreButton =
+    statusBadgeHTML.includes('class="') &&
+    statusBadgeHTML.includes("livré") &&
+    (statusBadgeHTML.includes("btn-success") ||
+      statusBadgeHTML.includes("green") ||
+      statusBadgeHTML.includes("badge-success"));
+
+  const hasLivreText =
+    statusText.includes("livré") && statusText.trim() === "livré";
+  const hasRedText =
+    statusText.includes("attente") || statusText.includes("mise");
+
   const hasLivreComplete =
-    (statusText.includes("livré") || statusText.includes("livre")) &&
+    (hasLivreText || isGreenLivreButton) &&
     !statusText.includes("non livré") &&
     !statusText.includes("partiel") &&
-    !statusText.includes("mise en livraison");
+    !statusText.includes("mise en livraison") &&
+    !statusText.includes("attente") &&
+    !hasRedText;
 
   const hasPartialStatus =
     statusText.includes("mise en livraison") ||
     statusText.includes("partiel") ||
     statusText.includes("en cours") ||
     statusText.includes("non livré") ||
+    statusText.includes("attente") ||
     statusHTML.includes("mise en livraison") ||
-    statusHTML.includes("partiel");
+    statusHTML.includes("partiel") ||
+    hasRedText;
 
   // CORRECTION: Pour "mise en livraison", on doit EXCLURE les dossiers complètement livrés
   // Un dossier est en cours de livraison SEULEMENT s'il n'est PAS complètement livré
   const result = !hasLivreComplete;
 
   console.log(
-    `🚛 Analyse mise en livraison: LivréComplet=${hasLivreComplete}, Partiel=${hasPartialStatus}, Résultat=${result}`
+    `🚛 Analyse mise en livraison détaillée:
+    - StatusText: "${statusText}"
+    - IsGreenButton: ${isGreenLivreButton}
+    - HasLivreText: ${hasLivreText}
+    - HasRedText: ${hasRedText}
+    - LivréComplet: ${hasLivreComplete}
+    - Partiel: ${hasPartialStatus}
+    - Résultat: ${result}`
   );
 
   return result;
