@@ -1398,7 +1398,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 d.delivery_status_acconier || d.status
               )}</td>
               <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500; font-style: italic;">${formatValue(
-                d.observation || d.notes
+                d.observation_acconier || d.observation || d.notes,
+                false
               )}</td>
             `;
 
@@ -3762,7 +3763,40 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
         } else if (cellValue !== "-") {
           value = cellValue;
         }
-        td.textContent = value;
+
+        // Liste des colonnes à convertir en MAJUSCULES
+        const upperCaseColumns = [
+          "employee_name",
+          "client_name",
+          "client_phone",
+          "container_number",
+          "lieu",
+          "container_foot_type",
+          "container_type_and_content",
+          "declaration_number",
+          "bl_number",
+          "dossier_number",
+          "number_of_containers",
+          "shipping_company",
+          "weight",
+          "ship_name",
+          "circuit",
+          "transporter_mode",
+          "container_status",
+          "observation",
+        ];
+
+        // Appliquer la transformation en majuscules si la colonne est dans la liste
+        if (
+          upperCaseColumns.includes(col.id) &&
+          value &&
+          value !== "-" &&
+          typeof value === "string"
+        ) {
+          td.textContent = value.toUpperCase();
+        } else {
+          td.textContent = value;
+        }
 
         // Système d'édition pour les colonnes modifiables
         if (EDITABLE_COLUMNS.includes(col.id)) {
@@ -5769,7 +5803,16 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             );
           }
 
-          td.textContent = displayValue;
+          // Appliquer la transformation en majuscules pour les observations
+          if (
+            displayValue &&
+            displayValue !== "-" &&
+            typeof displayValue === "string"
+          ) {
+            td.textContent = displayValue.toUpperCase();
+          } else {
+            td.textContent = displayValue;
+          }
           if (localObs && value && value !== "-" && value !== localObs) {
             // En mode admin, ne pas supprimer les observations de l'utilisateur ciblé
             if (!(isAdminMode || isAdminContext)) {
@@ -5901,7 +5944,39 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
               textarea.value.length;
           };
         } else {
-          td.textContent = value;
+          // Liste des colonnes à convertir en MAJUSCULES
+          const upperCaseColumns = [
+            "employee_name",
+            "client_name",
+            "client_phone",
+            "container_number",
+            "lieu",
+            "container_foot_type",
+            "container_type_and_content",
+            "declaration_number",
+            "bl_number",
+            "dossier_number",
+            "number_of_containers",
+            "shipping_company",
+            "weight",
+            "ship_name",
+            "circuit",
+            "transporter_mode",
+            "container_status",
+            "observation",
+          ];
+
+          // Appliquer la transformation en majuscules si la colonne est dans la liste
+          if (
+            upperCaseColumns.includes(col.id) &&
+            value &&
+            value !== "-" &&
+            typeof value === "string"
+          ) {
+            td.textContent = value.toUpperCase();
+          } else {
+            td.textContent = value;
+          }
           // Tooltip custom au survol si texte tronqué
           td.addEventListener("mouseenter", function (e) {
             setTimeout(() => {
