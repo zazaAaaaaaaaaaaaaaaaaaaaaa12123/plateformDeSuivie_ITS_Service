@@ -6643,12 +6643,15 @@ app.get("/api/dossiers/attente-paiement", async (req, res) => {
 // ===============================
 app.get("/api/dossiers/retard", async (req, res) => {
   try {
-    const result = await pool.query(
+    // Récupérer les dossiers en retard d'acconier (existant)
+    const resultAcconier = await pool.query(
       `SELECT * FROM livraison_conteneur ORDER BY created_at DESC`
     );
+
     const now = new Date();
-    // Logique métier identique à getLateDeliveries JS
-    const dossiersRetard = (result.rows || []).filter((d) => {
+
+    // Logique métier pour les dossiers acconier en retard
+    const dossiersRetardAcconier = (resultAcconier.rows || []).filter((d) => {
       let dDate = d.delivery_date || d.created_at;
       if (!dDate) return false;
       let dateObj = new Date(dDate);
@@ -6678,14 +6681,70 @@ app.get("/api/dossiers/retard", async (req, res) => {
       }
       return true;
     });
-    // Formatage minimal pour le frontend (numéro, client, date, statut)
-    const dossiersFormates = dossiersRetard.map((d) => ({
+
+    // 🚀 NOUVEAU : Récupérer les dossiers en retard de livraison
+    const dossiersRetardLivraison = (resultAcconier.rows || []).filter((d) => {
+      // Dossiers en statut "mise_en_livraison_acconier" mais en retard de livraison
+      if (d.delivery_status_acconier !== "mise_en_livraison_acconier") {
+        return false;
+      }
+
+      let dDate = d.delivery_date || d.created_at;
+      if (!dDate) return false;
+      let dateObj = new Date(dDate);
+      if (isNaN(dateObj.getTime())) return false;
+
+      // Critère de retard pour livraison : plus de 3 jours depuis la mise en livraison
+      const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 3) return false;
+
+      // Vérifier si pas encore livré (pas de données de livraison complétées)
+      const hasDeliveryData =
+        d.nom_agent_visiteur ||
+        d.transporter ||
+        d.driver_name ||
+        d.delivery_notes;
+
+      // En retard si en mise_en_livraison depuis plus de 3 jours ET pas de données de livraison
+      return !hasDeliveryData;
+    });
+
+    // Formatage des dossiers acconier en retard
+    const dossiersFormatesAcconier = dossiersRetardAcconier.map((d) => ({
+      id: d.id,
       numero: d.dossier_number || d.id,
-      client: d.client_name,
+      client: d.client_name || "Client non défini",
       created_at: d.created_at,
       statut: d.delivery_status_acconier,
+      type: "acconier", // Type pour différencier
+      employee_name: d.employee_name || "Agent non défini",
+      delivery_date: d.delivery_date,
     }));
-    res.json(dossiersFormates);
+
+    // 🚀 Formatage des dossiers livraison en retard
+    const dossiersFormatesLivraison = dossiersRetardLivraison.map((d) => ({
+      id: d.id,
+      numero: d.dossier_number || d.id,
+      client: d.client_name || "Client non défini",
+      created_at: d.created_at,
+      statut: "en_retard_livraison",
+      type: "livraison", // Type pour différencier
+      employee_name:
+        d.resp_livreur || d.responsible_livreur || "Livreur non défini",
+      delivery_date: d.delivery_date,
+    }));
+
+    // Combiner les deux listes
+    const tousLesDossiersRetard = [
+      ...dossiersFormatesAcconier,
+      ...dossiersFormatesLivraison,
+    ];
+
+    console.log(
+      `[API RETARD] 📋 Dossiers trouvés - Acconier: ${dossiersFormatesAcconier.length}, Livraison: ${dossiersFormatesLivraison.length}`
+    );
+
+    res.json(tousLesDossiersRetard);
   } catch (err) {
     console.error("Erreur /api/dossiers/retard :", err);
     res.json([]); // Renvoie un tableau vide en cas d'erreur pour éviter le crash frontend

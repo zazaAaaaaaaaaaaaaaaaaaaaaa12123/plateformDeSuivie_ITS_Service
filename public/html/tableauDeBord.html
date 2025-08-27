@@ -2999,34 +2999,80 @@
                           "";
                         const clientName =
                           dossier.client_name ||
+                          dossier.client ||
                           dossier.nom ||
                           "Client non défini";
                         const employeeName =
                           dossier.employee_name || "Agent non défini";
                         const dossierNumber =
-                          dossier.dossier_number || dossierId;
+                          dossier.dossier_number || dossier.numero || dossierId;
+
+                        // 🚀 Différencier le type de dossier pour la redirection
+                        const isLivraisonType = dossier.type === "livraison";
+                        const redirectUrl = isLivraisonType
+                          ? `https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?dossier=${encodeURIComponent(
+                              dossierId
+                            )}&flash=true`
+                          : `https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?dossier=${encodeURIComponent(
+                              dossierId
+                            )}&flash=true`;
+
+                        // Couleurs et icônes selon le type
+                        const typeColor = isLivraisonType
+                          ? "#2563eb"
+                          : "#dc3545"; // Bleu pour livraison, rouge pour acconier
+                        const typeIcon = isLivraisonType
+                          ? "fas fa-truck"
+                          : "fas fa-folder-open";
+                        const typeLabel = isLivraisonType
+                          ? "LIVRAISON"
+                          : "ACCONIER";
 
                         html += `
                                     <li style='
-                                      background: linear-gradient(135deg, #fef2f2 80%, #fecaca 100%);
-                                      border: 2px solid #fecaca;
+                                      background: linear-gradient(135deg, ${
+                                        isLivraisonType ? "#eff6ff" : "#fef2f2"
+                                      } 80%, ${
+                          isLivraisonType ? "#dbeafe" : "#fecaca"
+                        } 100%);
+                                      border: 2px solid ${
+                                        isLivraisonType ? "#dbeafe" : "#fecaca"
+                                      };
                                       border-radius: 12px;
                                       margin-bottom: 12px;
                                       padding: 18px 20px;
                                       cursor: pointer;
                                       transition: all 0.2s ease;
-                                      border-left: 4px solid #dc3545;
+                                      border-left: 4px solid ${typeColor};
                                       position: relative;
                                     '
-                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(220,53,69,0.25)';"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(${
+                                      isLivraisonType
+                                        ? "37, 99, 235"
+                                        : "220, 53, 69"
+                                    }, 0.25)';"
                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
-                                    onclick="window.location.href='https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?dossier=${encodeURIComponent(
-                                      dossierId
-                                    )}'">
+                                    onclick="window.location.href='${redirectUrl}'">
+
+                                      <!-- Badge type de dossier -->
+                                      <div style="
+                                        position: absolute;
+                                        top: 8px;
+                                        right: 8px;
+                                        background: ${typeColor};
+                                        color: white;
+                                        font-size: 0.7em;
+                                        font-weight: 700;
+                                        padding: 2px 6px;
+                                        border-radius: 4px;
+                                        text-transform: uppercase;
+                                      ">
+                                        ${typeLabel}
+                                      </div>
 
                                       <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
                                         <span style="
-                                          background:#dc3545;
+                                          background:${typeColor};
                                           color:#fff;
                                           font-weight:700;
                                           font-size:0.9em;
@@ -3037,8 +3083,8 @@
                                         ">${index + 1}</span>
 
                                         <div style="flex:1;">
-                                          <div style="font-size:1.15em; font-weight:700; color:#dc3545; margin-bottom:2px;">
-                                            <i class="fas fa-folder-open" style="margin-right:6px;"></i>
+                                          <div style="font-size:1.15em; font-weight:700; color:${typeColor}; margin-bottom:2px;">
+                                            <i class="${typeIcon}" style="margin-right:6px;"></i>
                                             ${clientName}
                                           </div>
                                           <div style="font-size:0.95em; color:#6b7280;">
@@ -3047,14 +3093,18 @@
                                         </div>
 
                                         <div style="text-align:right;">
-                                          <div style="font-size:0.9em; color:#6b7280; margin-bottom:2px;">Agent</div>
+                                          <div style="font-size:0.9em; color:#6b7280; margin-bottom:2px;">${
+                                            isLivraisonType
+                                              ? "Livreur"
+                                              : "Agent"
+                                          }</div>
                                           <div style="font-size:1em; font-weight:600; color:#374151;">${employeeName}</div>
                                         </div>
                                       </div>
 
                                       <div style="
                                         font-size:0.85em;
-                                        color:#dc3545;
+                                        color:${typeColor};
                                         background:#fff;
                                         padding:6px 10px;
                                         border-radius:6px;
@@ -3062,7 +3112,11 @@
                                         font-weight:600;
                                       ">
                                         <i class="fas fa-clock" style="margin-right:4px;"></i>
-                                        Cliquez pour voir les détails
+                                        ${
+                                          isLivraisonType
+                                            ? "Livraison en retard - Cliquer pour voir"
+                                            : "Cliquez pour voir les détails"
+                                        }
                                       </div>
                                     </li>
                                   `;
@@ -5615,6 +5669,7 @@
                       ${timeAgo}
                     </div>
                   </div>
+
                 `;
               });
 

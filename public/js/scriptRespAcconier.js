@@ -962,6 +962,133 @@ function getUrlParameter(name) {
   return urlParams.get(name);
 }
 
+// 🚀 Fonction pour faire clignoter un dossier spécifique en cas de redirection depuis le tableau de bord
+function flashTargetDelivery() {
+  const targetDossier = getUrlParameter("dossier");
+
+  if (!targetDossier) {
+    console.log(`❌ [FLASH ACCONIER] Pas de dossier à flash`);
+    return;
+  }
+
+  console.log(
+    `✨ [FLASH ACCONIER] Recherche du dossier à faire clignoter: ${targetDossier}`
+  );
+
+  // Fonction pour chercher le dossier
+  function searchAndFlash() {
+    const tableBody = document.getElementById("deliveriesTableBody");
+    if (!tableBody) {
+      console.log(
+        `❌ [FLASH ACCONIER] Element #deliveriesTableBody non trouvé`
+      );
+      return false;
+    }
+
+    // Chercher la ligne qui contient ce dossier
+    const rows = tableBody.querySelectorAll("tr");
+    let targetRow = null;
+
+    console.log(`🔍 [FLASH ACCONIER] Recherche dans ${rows.length} lignes...`);
+
+    rows.forEach((row, index) => {
+      const cells = row.querySelectorAll("td");
+      let rowText = "";
+      cells.forEach((cell) => {
+        rowText += cell.textContent + " ";
+      });
+
+      // Recherche plus flexible - par ID, numéro de dossier, ou contenu
+      if (
+        rowText.includes(targetDossier) ||
+        rowText.includes(targetDossier.toString()) ||
+        row.dataset.dossierId === targetDossier
+      ) {
+        targetRow = row;
+        console.log(
+          `✅ [FLASH ACCONIER] Dossier trouvé dans la ligne ${index}: ${rowText.trim()}`
+        );
+      }
+    });
+
+    if (targetRow) {
+      console.log(
+        `✨ [FLASH ACCONIER] Dossier trouvé, démarrage du clignotement de 10 secondes`
+      );
+
+      // Styles d'origine
+      const originalStyle = {
+        background: targetRow.style.background || "",
+        transform: targetRow.style.transform || "",
+        boxShadow: targetRow.style.boxShadow || "",
+        border: targetRow.style.border || "",
+      };
+
+      // Animation de flash pendant 10 secondes
+      let flashCount = 0;
+      const maxFlashes = 20; // 10 secondes à 500ms par flash
+
+      const flashInterval = setInterval(() => {
+        if (flashCount >= maxFlashes) {
+          // Remettre le style original
+          Object.keys(originalStyle).forEach((key) => {
+            targetRow.style[key] = originalStyle[key];
+          });
+          clearInterval(flashInterval);
+
+          // Supprimer les paramètres de l'URL pour éviter de re-flasher
+          const newUrl = new URL(window.location);
+          newUrl.searchParams.delete("dossier");
+          window.history.replaceState({}, "", newUrl);
+
+          console.log(`✨ [FLASH ACCONIER] Animation terminée`);
+          return;
+        }
+
+        // Alterner entre surbrillance et normal
+        if (flashCount % 2 === 0) {
+          targetRow.style.background =
+            "linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%)";
+          targetRow.style.transform = "scale(1.02)";
+          targetRow.style.boxShadow = "0 8px 25px rgba(245, 158, 11, 0.4)";
+          targetRow.style.border = "2px solid #f59e0b";
+        } else {
+          targetRow.style.background = originalStyle.background;
+          targetRow.style.transform = originalStyle.transform;
+          targetRow.style.boxShadow = originalStyle.boxShadow;
+          targetRow.style.border = originalStyle.border;
+        }
+
+        flashCount++;
+      }, 500);
+
+      // Scroll vers la ligne si elle n'est pas visible
+      targetRow.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      return true;
+    } else {
+      console.log(
+        `⚠️ [FLASH ACCONIER] Dossier ${targetDossier} non trouvé dans le tableau`
+      );
+      return false;
+    }
+  }
+
+  // Essayer plusieurs fois avec des délais différents
+  setTimeout(() => {
+    if (!searchAndFlash()) {
+      setTimeout(() => {
+        if (!searchAndFlash()) {
+          setTimeout(searchAndFlash, 2000); // Dernier essai après 2 secondes
+        }
+      }, 1000);
+    }
+  }, 500);
+}
+
 // Fonction utilitaire pour normaliser la date à minuit
 function normalizeDateToMidnight(date) {
   if (!(date instanceof Date)) date = new Date(date);
@@ -988,6 +1115,11 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // ✨ FLASH : Déclencher le flash pour les dossiers ciblés depuis le tableau de bord
+  setTimeout(() => {
+    flashTargetDelivery();
+  }, 2000); // Attendre 2 secondes pour que tout soit chargé
+
   // Initialisation de la recherche dans la modal Mise en Liv
   const searchMiseEnLiv = document.getElementById("searchMiseEnLiv");
   if (searchMiseEnLiv) {

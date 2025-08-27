@@ -905,6 +905,132 @@ function getUrlParameter(name) {
   return urlParams.get(name);
 }
 
+// 🚀 Fonction pour faire clignoter un dossier spécifique en cas de redirection depuis le tableau de bord
+function flashTargetDelivery() {
+  const targetDossier = getUrlParameter("dossier");
+  const shouldFlash = getUrlParameter("flash") === "true";
+
+  if (!targetDossier || !shouldFlash) {
+    console.log(
+      `❌ [FLASH] Pas de flash requis - dossier: ${targetDossier}, flash: ${shouldFlash}`
+    );
+    return;
+  }
+
+  console.log(
+    `✨ [FLASH] Recherche du dossier à faire clignoter: ${targetDossier}`
+  );
+
+  // Fonction pour chercher le dossier
+  function searchAndFlash() {
+    const tableBody = document.getElementById("deliveriesTableBody");
+    if (!tableBody) {
+      console.log(`❌ [FLASH] Element #deliveriesTableBody non trouvé`);
+      return false;
+    }
+
+    // Chercher la ligne qui contient ce dossier
+    const rows = tableBody.querySelectorAll("tr");
+    let targetRow = null;
+
+    console.log(`🔍 [FLASH] Recherche dans ${rows.length} lignes...`);
+
+    rows.forEach((row, index) => {
+      const cells = row.querySelectorAll("td");
+      let rowText = "";
+      cells.forEach((cell) => {
+        rowText += cell.textContent + " ";
+      });
+
+      // Recherche plus flexible - par ID, numéro de dossier, ou contenu
+      if (
+        rowText.includes(targetDossier) ||
+        rowText.includes(targetDossier.toString()) ||
+        row.dataset.dossierId === targetDossier
+      ) {
+        targetRow = row;
+        console.log(
+          `✅ [FLASH] Dossier trouvé dans la ligne ${index}: ${rowText.trim()}`
+        );
+      }
+    });
+
+    if (targetRow) {
+      console.log(`✨ [FLASH] Dossier trouvé, démarrage du clignotement`);
+
+      // Styles d'origine
+      const originalStyle = {
+        background: targetRow.style.background || "",
+        transform: targetRow.style.transform || "",
+        boxShadow: targetRow.style.boxShadow || "",
+        border: targetRow.style.border || "",
+      };
+
+      // Animation de flash pendant 5 secondes
+      let flashCount = 0;
+      const maxFlashes = 10; // 5 secondes à 500ms par flash
+
+      const flashInterval = setInterval(() => {
+        if (flashCount >= maxFlashes) {
+          // Remettre le style original
+          Object.keys(originalStyle).forEach((key) => {
+            targetRow.style[key] = originalStyle[key];
+          });
+          clearInterval(flashInterval);
+
+          // Supprimer les paramètres de l'URL pour éviter de re-flasher
+          const newUrl = new URL(window.location);
+          newUrl.searchParams.delete("flash");
+          window.history.replaceState({}, "", newUrl);
+
+          console.log(`✨ [FLASH] Animation terminée`);
+          return;
+        }
+
+        // Alterner entre surbrillance et normal
+        if (flashCount % 2 === 0) {
+          targetRow.style.background =
+            "linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%)";
+          targetRow.style.transform = "scale(1.02)";
+          targetRow.style.boxShadow = "0 8px 25px rgba(245, 158, 11, 0.4)";
+          targetRow.style.border = "2px solid #f59e0b";
+        } else {
+          targetRow.style.background = originalStyle.background;
+          targetRow.style.transform = originalStyle.transform;
+          targetRow.style.boxShadow = originalStyle.boxShadow;
+          targetRow.style.border = originalStyle.border;
+        }
+
+        flashCount++;
+      }, 500);
+
+      // Scroll vers la ligne si elle n'est pas visible
+      targetRow.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      return true;
+    } else {
+      console.log(
+        `⚠️ [FLASH] Dossier ${targetDossier} non trouvé dans le tableau`
+      );
+      return false;
+    }
+  }
+
+  // Essayer plusieurs fois avec des délais différents
+  setTimeout(() => {
+    if (!searchAndFlash()) {
+      setTimeout(() => {
+        if (!searchAndFlash()) {
+          setTimeout(searchAndFlash, 2000); // Dernier essai après 2 secondes
+        }
+      }, 1000);
+    }
+  }, 500);
+}
+
 // Fonction pour charger les données de livraison d'un utilisateur en mode admin
 async function loadUserDeliveryData(targetUser, targetUserId) {
   if (!targetUser) return;
@@ -1350,6 +1476,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ⏰ RESTAURATION du compte à rebours si actif
   restoreCountdownIfActive();
+
+  // ✨ FLASH : Déclencher le flash pour les dossiers ciblés depuis le tableau de bord
+  setTimeout(() => {
+    flashTargetDelivery();
+  }, 2000); // Attendre 2 secondes pour que tout soit chargé
 
   // --- AJOUT : Connexion WebSocket pour maj temps réel BL ---
   let ws;
@@ -1924,6 +2055,11 @@ document.addEventListener("DOMContentLoaded", function () {
         dateEndInput.value = today;
       }
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+
+      // 🚀 Déclencher le flash si un dossier spécifique est ciblé
+      setTimeout(() => {
+        flashTargetDelivery();
+      }, 1500); // Attendre que le tableau soit complètement rendu
     });
     dateStartInput.addEventListener("change", () => {
       updateTableForDateRange(dateStartInput.value, dateEndInput.value);
@@ -7867,6 +8003,11 @@ function addLateDeliveriesStyles() {
 document.addEventListener("DOMContentLoaded", function () {
   addLateDeliveriesStyles();
   integrateLateBelliveriesCheck();
+
+  // 🚀 Fonction de flash pour dossiers redirigés depuis le tableau de bord
+  setTimeout(() => {
+    flashTargetDelivery();
+  }, 2000); // Attendre 2 secondes que tout soit chargé
 
   // Vérifier périodiquement les dossiers en retard (toutes les 30 secondes)
   setInterval(function () {
