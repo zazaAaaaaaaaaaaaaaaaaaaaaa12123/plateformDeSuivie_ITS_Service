@@ -1863,7 +1863,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 d.container_type_and_content
               )}</td>
               <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500; font-family: monospace;">${formatValue(
-                d.numero_declaration
+                d.declaration_number
               )}</td>
               <td style="padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 500; font-family: monospace;">${formatValue(
                 d.bl_number
