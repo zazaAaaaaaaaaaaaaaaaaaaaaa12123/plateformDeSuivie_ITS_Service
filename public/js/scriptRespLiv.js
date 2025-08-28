@@ -1938,7 +1938,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return false;
               }
 
-              // Vérifier que TOUS les conteneurs sont livrés
+              // Vérifier que TOUS les conteneurs120 sont livrés
               const allDelivered = containerStatuses.every(
                 (status) => status === "livre" || status === "livré"
               );
