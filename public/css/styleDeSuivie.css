@@ -1,3 +1,257 @@
+/* === STYLES PLEIN ÉCRAN POUR MODAL === */
+.enterprise-modal-overlay {
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+}
+
+.enterprise-modal-container {
+  box-shadow: none !important;
+}
+
+.enterprise-modal-header {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+.enterprise-modal-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(37, 99, 235, 0.3) transparent;
+}
+
+.enterprise-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.enterprise-modal-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.enterprise-modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.3) 0%,
+    rgba(59, 130, 246, 0.5) 100%
+  );
+  border-radius: 4px;
+}
+
+.enterprise-modal-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.5) 0%,
+    rgba(59, 130, 246, 0.7) 100%
+  );
+}
+
+.enterprise-main-box {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(37, 99, 235, 0.2) transparent !important;
+}
+
+.enterprise-main-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.enterprise-main-box::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 3px;
+}
+
+.enterprise-main-box::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.2) 0%,
+    rgba(59, 130, 246, 0.4) 100%
+  );
+  border-radius: 3px;
+}
+
+.enterprise-main-box::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.4) 0%,
+    rgba(59, 130, 246, 0.6) 100%
+  );
+}
+
+/* Optimisation responsive pour plein écran et cartes compactes */
+@media (max-height: 800px) {
+  .enterprise-modal-header {
+    padding: 24px 48px !important;
+    min-height: 80px !important;
+  }
+
+  .enterprise-modal-body {
+    padding: 32px 48px !important;
+    height: calc(100vh - 120px) !important;
+  }
+
+  .enterprise-main-box {
+    min-height: calc(100vh - 240px) !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .enterprise-modal-body {
+    padding: 24px 32px !important;
+  }
+}
+
+/* STYLES POUR GRILLE DE CARTES ULTRA-COMPACTES */
+.dossiersGrid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+  gap: 16px !important;
+  max-height: calc(100vh - 320px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 6px !important;
+  margin-top: 12px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(37, 99, 235, 0.3) transparent !important;
+}
+
+.dossiersGrid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dossiersGrid::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 4px;
+}
+
+.dossiersGrid::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3b82f6 0%, #1e40af 100%);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.dossiersGrid::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  transform: scale(1.1);
+}
+
+/* CARTES CLIENTES ULTRA-COMPACTES */
+.clientBlock-compact {
+  min-height: 110px !important;
+  padding: 12px !important;
+  border-radius: 14px !important;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1) !important;
+}
+
+.clientBlock-compact:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+}
+
+/* Responsive pour grille ultra-compacte */
+@media (max-width: 768px) {
+  .dossiersGrid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+    gap: 12px !important;
+    max-height: calc(100vh - 280px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dossiersGrid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+/* === ANIMATIONS ET EFFETS ULTRA-MODERNES === */
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+  60% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.enterprise-card-animated {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.enterprise-card-animated:nth-child(2) {
+  animation-delay: 0.1s;
+  animation-fill-mode: both;
+}
+
+.enterprise-card-animated:nth-child(3) {
+  animation-delay: 0.2s;
+  animation-fill-mode: both;
+}
+
+.enterprise-card-animated:nth-child(4) {
+  animation-delay: 0.3s;
+  animation-fill-mode: both;
+}
+
 /* === EN-TÊTES COULEUR PERMANENTES TABLEAU DE SUIVI === */
 .header-agent-acconier {
   background: #2563eb !important;
@@ -3268,5 +3522,941 @@ tbody td:first-child {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+}
+
+/* ===== VUE DOSSIERS CLIENTS - DESIGN MODERNE ===== */
+
+/* Cartes d'agents améliorées */
+.modern-agent-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-agent-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.05) 0%,
+    rgba(234, 179, 8, 0.05) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+}
+
+.modern-agent-card:hover::before {
+  opacity: 1;
+}
+
+.modern-agent-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
+  border-color: #2563eb;
+}
+
+/* Avatar moderne avec animations */
+.modern-agent-avatar {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #eab308 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: white;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.modern-agent-avatar::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  background: linear-gradient(135deg, #2563eb, #eab308);
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modern-agent-card:hover .modern-agent-avatar::after {
+  opacity: 1;
+}
+
+.modern-agent-card:hover .modern-agent-avatar {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.4);
+}
+
+/* Badge de dossiers moderne */
+.modern-dossier-badge {
+  background: linear-gradient(135deg, #facc15 0%, #fde047 100%);
+  color: #78350f;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 8px 20px;
+  border-radius: 25px;
+  box-shadow: 0 4px 15px rgba(250, 204, 21, 0.3);
+  display: inline-block;
+  margin: 8px 0;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.modern-dossier-badge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.modern-agent-card:hover .modern-dossier-badge::before {
+  left: 100%;
+}
+
+/* Informations des clients */
+.modern-client-info {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  border-left: 4px solid #2563eb;
+  transition: all 0.3s ease;
+}
+
+.modern-client-info:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  transform: translateX(4px);
+}
+
+/* Dates récentes avec style moderne */
+.modern-dates-info {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  border-left: 3px solid #10b981;
+  font-size: 0.95rem;
+}
+
+/* Conteneur principal avec grid amélioré */
+.modern-agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  padding: 20px 0;
+}
+
+/* Barre de recherche moderne */
+.modern-search-bar {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 50px;
+  padding: 16px 24px;
+  font-size: 1.1rem;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.modern-search-bar:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.15);
+  background: #ffffff;
+}
+
+/* Animation de chargement */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Effets de pulsation pour les éléments interactifs */
+.pulse-effect {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Responsive design amélioré */
+@media (max-width: 768px) {
+  .modern-agents-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .modern-agent-card {
+    padding: 20px;
+  }
+
+  .modern-agent-avatar {
+    width: 70px;
+    height: 70px;
+    font-size: 1.6rem;
+  }
+}
+
+/* Icônes et boutons améliorés */
+.modern-action-btn {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.modern-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+/* ===== MODAL ENTERPRISE ULTRA-PREMIUM POUR DOSSIERS CLIENTS ===== */
+
+/* Animations ultra-modernes */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes particlesFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(120deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(240deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(360deg);
+  }
+}
+
+@keyframes iconShine {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-20deg);
+  }
+}
+
+@keyframes shine {
+  0% {
+    left: -150%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
+/* Overlay de la modal enterprise */
+.enterprise-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+      circle at 20% 20%,
+      rgba(37, 99, 235, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(6, 182, 212, 0.15) 0%,
+      transparent 50%
+    ),
+    rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px) saturate(150%) brightness(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(150%) brightness(1.1);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Container principal de la modal enterprise */
+.enterprise-modal-container {
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+
+.enterprise-modal-container::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(
+    45deg,
+    rgba(37, 99, 235, 0.3) 0%,
+    rgba(59, 130, 246, 0.3) 25%,
+    rgba(6, 182, 212, 0.3) 50%,
+    rgba(37, 99, 235, 0.3) 75%,
+    rgba(59, 130, 246, 0.3) 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 8s ease infinite;
+  border-radius: 34px;
+  z-index: -1;
+}
+
+/* Header enterprise ultra-premium */
+.enterprise-modal-header {
+  position: relative;
+  background-attachment: fixed;
+}
+
+.enterprise-modal-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+      circle at 30% 30%,
+      rgba(255, 255, 255, 0.25) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      circle at 70% 70%,
+      rgba(255, 255, 255, 0.15) 0%,
+      transparent 70%
+    ),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  border-top-left-radius: 32px;
+  border-top-right-radius: 32px;
+  z-index: 1;
+}
+
+/* Corps de la modal enterprise */
+.enterprise-modal-body {
+  position: relative;
+  background-attachment: fixed;
+}
+
+.enterprise-modal-body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(37, 99, 235, 0.1) 0%,
+    rgba(37, 99, 235, 0.6) 20%,
+    rgba(6, 182, 212, 0.6) 40%,
+    rgba(37, 99, 235, 0.6) 60%,
+    rgba(6, 182, 212, 0.6) 80%,
+    rgba(37, 99, 235, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: gradientShift 4s ease infinite;
+}
+
+/* Bouton de fermeture enterprise */
+.enterprise-close-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.enterprise-close-btn::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.4) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.enterprise-close-btn:hover::before {
+  width: 120px;
+  height: 120px;
+}
+
+/* Scrollbar ultra-moderne pour la modal enterprise */
+.enterprise-modal-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.enterprise-modal-body::-webkit-scrollbar-track {
+  background: linear-gradient(
+    180deg,
+    rgba(241, 245, 249, 0.8) 0%,
+    rgba(226, 232, 240, 0.8) 100%
+  );
+  border-radius: 12px;
+  margin: 8px 0;
+}
+
+.enterprise-modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #0891b2 100%);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.enterprise-modal-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 50%, #0e7490 100%);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Barre de recherche ultra-moderne */
+.enterprise-search-bar {
+  width: 100%;
+  padding: 16px 24px;
+  border: 2px solid rgba(37, 99, 235, 0.2);
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(248, 250, 252, 0.9) 100%
+    ),
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(37, 99, 235, 0.05) 0%,
+      transparent 50%
+    );
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  outline: none;
+  color: #1e293b;
+  margin-bottom: 24px;
+}
+
+.enterprise-search-bar::placeholder {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.enterprise-search-bar:focus {
+  border-color: rgba(37, 99, 235, 0.5);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2),
+    0 0 0 4px rgba(37, 99, 235, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+}
+
+/* Cartes d'agents ultra-modernes */
+.enterprise-agent-card {
+  background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(248, 250, 252, 0.9) 100%
+    ),
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(37, 99, 235, 0.05) 0%,
+      transparent 50%
+    );
+  border: 2px solid rgba(37, 99, 235, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  overflow: visible;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(37, 99, 235, 0.05);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.enterprise-agent-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.05) 0%,
+    rgba(6, 182, 212, 0.05) 50%,
+    rgba(37, 99, 235, 0.05) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  border-radius: 20px;
+}
+
+.enterprise-agent-card:hover::before {
+  opacity: 1;
+}
+
+.enterprise-agent-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(37, 99, 235, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15),
+    0 12px 24px rgba(37, 99, 235, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Avatar ultra-moderne */
+.enterprise-agent-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  margin: 0 auto 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.enterprise-agent-avatar::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  transform: rotate(45deg);
+  transition: transform 0.6s ease;
+}
+
+.enterprise-agent-card:hover .enterprise-agent-avatar {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.enterprise-agent-card:hover .enterprise-agent-avatar::before {
+  transform: rotate(45deg) translateX(100%);
+}
+
+/* Badge de dossiers ultra-moderne */
+.enterprise-dossier-badge {
+  background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%);
+  color: #78350f;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.enterprise-dossier-badge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.enterprise-agent-card:hover .enterprise-dossier-badge::before {
+  left: 100%;
+}
+
+/* Grille responsive ultra-moderne */
+.enterprise-agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* Boîte principale enterprise */
+.enterprise-main-box {
+  position: relative;
+}
+
+.enterprise-main-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(37, 99, 235, 0.1) 0%,
+    rgba(37, 99, 235, 0.6) 20%,
+    rgba(6, 182, 212, 0.6) 40%,
+    rgba(37, 99, 235, 0.6) 60%,
+    rgba(6, 182, 212, 0.6) 80%,
+    rgba(37, 99, 235, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: gradientShift 3s ease infinite;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+}
+
+/* Scrollbar pour la boîte principale */
+.enterprise-main-box::-webkit-scrollbar {
+  width: 8px;
+}
+
+.enterprise-main-box::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.6);
+  border-radius: 10px;
+  margin: 8px 0;
+}
+
+.enterprise-main-box::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+}
+
+.enterprise-main-box::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* Responsive design pour mobile */
+@media (max-width: 768px) {
+  .enterprise-modal-container {
+    max-width: 95%;
+    max-height: 95vh;
+    border-radius: 24px;
+  }
+
+  .enterprise-modal-header {
+    padding: 20px 24px;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+  }
+
+  .enterprise-modal-body {
+    padding: 24px;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+  }
+
+  .enterprise-agents-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .enterprise-agent-card {
+    padding: 14px;
+    min-height: 110px;
+  }
+}
+
+/* ===== MODAL PREMIUM ULTRA-MODERNE ===== */
+
+/* Animation de brillance pour le header */
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Overlay de la modal premium */
+.premium-modal-overlay {
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+/* Container principal de la modal */
+.premium-modal-container {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+}
+
+.premium-modal-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(248, 250, 252, 0.8) 100%
+  );
+  border-radius: 24px;
+  z-index: -1;
+}
+
+/* Header premium */
+.premium-modal-header {
+  position: relative;
+  background-attachment: fixed;
+}
+
+.premium-modal-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+      circle at 20% 20%,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 50%
+    );
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+}
+
+/* Corps de la modal */
+.premium-modal-body {
+  position: relative;
+}
+
+.premium-modal-body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(37, 99, 235, 0.1) 0%,
+    rgba(37, 99, 235, 0.5) 50%,
+    rgba(37, 99, 235, 0.1) 100%
+  );
+}
+
+/* Bouton de fermeture premium */
+.premium-close-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-close-btn::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+
+.premium-close-btn:hover::before {
+  width: 100px;
+  height: 100px;
+}
+
+/* Scrollbar personnalisée pour la modal */
+.premium-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.premium-modal-body::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+  border-radius: 10px;
+}
+
+.premium-modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.premium-modal-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%);
+}
+
+/* Effet de verre pour certains éléments */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Animation d'entrée pour les éléments de la modal */
+.fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Effet de particules pour le header */
+.premium-modal-header::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      circle at 10% 20%,
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px
+    ),
+    radial-gradient(
+      circle at 40% 40%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px
+    );
+  background-size: 50px 50px, 30px 30px, 70px 70px;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  pointer-events: none;
+}
+
+/* Responsive design pour la modal premium */
+@media (max-width: 768px) {
+  .premium-modal-container {
+    max-width: 95vw;
+    margin: 10px;
+    border-radius: 16px;
+  }
+
+  .premium-modal-header {
+    padding: 20px 24px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+  }
+
+  .premium-modal-body {
+    padding: 24px 20px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+  }
+
+  .premium-close-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
   }
 }

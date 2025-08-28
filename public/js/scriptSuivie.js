@@ -7756,46 +7756,46 @@ function mapStatus(status) {
 
       // Nouvelle version : chaque info dans une "carte" moderne, responsive, business-friendly
       modalContent.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px 28px;">
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Agent</span>
-            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px 20px;">
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:10px;box-shadow:0 2px 12px #2563eb11;padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.85em;color:#64748b;font-weight:600;margin-bottom:3px;">Agent</span>
+            <span style="font-size:1.0em;font-weight:700;color:#1e293b;">${
               op.employee_name || "-"
             }</span>
           </div>
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Date</span>
-            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:10px;box-shadow:0 2px 12px #2563eb11;padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.85em;color:#64748b;font-weight:600;margin-bottom:3px;">Date</span>
+            <span style="font-size:1.0em;font-weight:700;color:#1e293b;">${
               op.created_at
                 ? new Date(op.created_at).toLocaleDateString("fr-FR")
                 : "-"
             }</span>
           </div>
-          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:13px;box-shadow:0 2px 12px #facc1533;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
-            <span style="font-size:0.98em;color:#78350f;font-weight:600;margin-bottom:4px;">Client</span>
-            <span style="font-size:1.13em;font-weight:700;color:#78350f;">${
+          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:10px;box-shadow:0 2px 12px #facc1533;padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
+            <span style="font-size:0.85em;color:#78350f;font-weight:600;margin-bottom:3px;">Client</span>
+            <span style="font-size:1.0em;font-weight:700;color:#78350f;">${
               op.client_name || "-"
             }</span>
           </div>
-          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:13px;box-shadow:0 2px 12px #facc1533;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
-            <span style="font-size:0.98em;color:#78350f;font-weight:600;margin-bottom:4px;">N° Dossier</span>
-            <span style="font-size:1.13em;font-weight:800;color:#78350f;letter-spacing:0.5px;">${
+          <div style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);border-radius:10px;box-shadow:0 2px 12px #facc1533;padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;border:2px solid #eab308;">
+            <span style="font-size:0.85em;color:#78350f;font-weight:600;margin-bottom:3px;">N° Dossier</span>
+            <span style="font-size:1.0em;font-weight:800;color:#78350f;letter-spacing:0.5px;">${
               op.dossier_number || op.dossier || "-"
             }</span>
           </div>
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Conteneur</span>
-            <span style="font-size:1.13em;font-weight:700;color:#1e293b;">${
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:10px;box-shadow:0 2px 12px #2563eb11;padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.85em;color:#64748b;font-weight:600;margin-bottom:3px;">Conteneur</span>
+            <span style="font-size:1.0em;font-weight:700;color:#1e293b;">${
               op.container_number || "-"
             }</span>
           </div>
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Statut</span>
-            <span style="font-size:1.13em;font-weight:700;color:#2563eb;">${displayStatus}</span>
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:10px;box-shadow:0 2px 12px #2563eb11;padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.85em;color:#64748b;font-weight:600;margin-bottom:3px;">Statut</span>
+            <span style="font-size:1.0em;font-weight:700;color:#2563eb;">${displayStatus}</span>
           </div>
-          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:13px;box-shadow:0 2px 12px #2563eb11;padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;">
-            <span style="font-size:0.98em;color:#64748b;font-weight:600;margin-bottom:4px;">Observation</span>
-            <span style="font-size:1.13em;font-weight:500;color:#334155;">${
+          <div style="background:linear-gradient(90deg,#f1f5f9 60%,#e0e7ef 100%);border-radius:10px;box-shadow:0 2px 12px #2563eb11;padding:12px 14px;display:flex;flex-direction:column;align-items:flex-start;">
+            <span style="font-size:0.85em;color:#64748b;font-weight:600;margin-bottom:3px;">Observation</span>
+            <span style="font-size:1.0em;font-weight:500;color:#334155;">${
               op.observation_acconier || op.delivery_notes || "-"
             }</span>
           </div>
@@ -7888,10 +7888,7 @@ function mapStatus(status) {
       deliveriesTable.style.display = "table";
       dossiersBtn.style.display = "inline-block";
     }
-
-    dossiersBtn.addEventListener("click", showClientFoldersView);
-    // Remplace l'affichage classique par une modale flottante professionnelle
-    // Nouvelle version Vue Dossiers Clients : navigation agents/dossiers, layout pro, navigation retour
+    // === NOUVELLE MODAL ULTRA-MODERNE ET PROFESSIONNELLE POUR DOSSIERS CLIENTS ===
     function showClientFoldersModal() {
       // Supprime toute ancienne modale si présente
       const oldModal = document.getElementById("clientFoldersModal");
@@ -7903,210 +7900,592 @@ function mapStatus(status) {
       );
       if (clientFoldersContainer) clientFoldersContainer.style.display = "none";
 
-      // Création overlay et boîte modale
+      // Overlay ultra-moderne PLEIN ÉCRAN
       const overlay = document.createElement("div");
       overlay.id = "clientFoldersModal";
-      overlay.style.position = "fixed";
-      overlay.style.top = 0;
-      overlay.style.left = 0;
-      overlay.style.width = "100vw";
-      overlay.style.height = "100vh";
-      overlay.style.background = "rgba(30,41,59,0.45)";
-      overlay.style.zIndex = 9999;
-      overlay.style.display = "flex";
-      overlay.style.alignItems = "center";
-      overlay.style.justifyContent = "center";
-
-      const box = document.createElement("div");
-      box.style.background = "#fff";
-      box.style.borderRadius = "16px";
-      box.style.boxShadow = "0 12px 40px rgba(30,41,59,0.22)";
-      box.style.maxWidth = "1100px";
-      box.style.width = "98vw";
-      box.style.maxHeight = "92vh";
-      box.style.overflowY = "auto";
-      box.style.padding = "0";
-      box.style.position = "relative";
-      box.style.display = "flex";
-      box.style.flexDirection = "column";
-
-      // Header flottant
-      const header = document.createElement("div");
-      header.style.background =
-        "linear-gradient(90deg,#2563eb 0%,#1e293b 100%)";
-      header.style.color = "#fff";
-      header.style.padding = "28px 38px 18px 38px";
-      header.style.fontWeight = "bold";
-      header.style.fontSize = "1.7rem";
-      header.style.display = "flex";
-      header.style.justifyContent = "flex-start";
-      header.style.alignItems = "center";
-      header.style.borderTopLeftRadius = "16px";
-      header.style.borderTopRightRadius = "16px";
-      header.style.boxShadow = "0 4px 18px rgba(30,41,59,0.13)";
-      header.style.letterSpacing = "0.5px";
-      header.style.position = "relative";
-      header.innerHTML = `
-        <span style="display:flex;align-items:center;gap:14px;">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="background:linear-gradient(90deg,#facc15 60%,#fde047 100%);border-radius:8px;padding:3px;"><rect width="32" height="32" rx="8" fill="#fde047"/><path d="M8 10a2 2 0 0 1 2-2h3.17a2 2 0 0 1 1.41.59l1.83 1.83A2 2 0 0 0 18.83 11H22a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8z" fill="#facc15" stroke="#eab308" stroke-width="1.5"/><rect x="12" y="16" width="8" height="2" rx="1" fill="#eab308"/><rect x="12" y="13" width="5" height="2" rx="1" fill="#eab308"/></svg>
-          <span style="font-size:1.35em;font-weight:700;letter-spacing:0.5px;">Dossiers des clients</span>
-          <span style="background:linear-gradient(90deg,#facc15 60%,#fde047 100%);color:#78350f;font-size:0.95em;font-weight:600;padding:2px 12px;border-radius:7px;margin-left:8px;box-shadow:0 1px 6px #fde04755;">Vue entreprise</span>
-        </span>
+      overlay.className = "enterprise-modal-overlay";
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
+        backdrop-filter: blur(25px) saturate(160%);
+        -webkit-backdrop-filter: blur(25px) saturate(160%);
+        z-index: 10000;
+        display: flex;
+        align-items: stretch;
+        justify-content: stretch;
+        opacity: 0;
+        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
       `;
-      // Bouton de fermeture
-      const closeBtn = document.createElement("button");
-      closeBtn.innerHTML = "&times;";
-      closeBtn.style.background = "none";
-      closeBtn.style.border = "none";
-      closeBtn.style.color = "#fff";
-      closeBtn.style.fontSize = "2.2rem";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.style.marginLeft = "18px";
-      closeBtn.setAttribute("aria-label", "Fermer");
-      closeBtn.onclick = () => {
-        overlay.remove();
-        if (typeof deliveriesTable !== "undefined" && deliveriesTable)
-          deliveriesTable.style.display = "table";
-        if (clientFoldersContainer)
-          clientFoldersContainer.style.display = "none";
-        if (typeof dossiersBtn !== "undefined" && dossiersBtn)
-          dossiersBtn.style.display = "inline-block";
+
+      // Container principal PLEIN ÉCRAN avec design ultra-premium
+      const box = document.createElement("div");
+      box.className = "enterprise-modal-container";
+      box.style.cssText = `
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+        border-radius: 0;
+        box-shadow: 
+          inset 0 2px 0 rgba(255, 255, 255, 0.9),
+          inset 0 -2px 0 rgba(0, 0, 0, 0.05);
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+        transform: scale(0.85) translateY(80px);
+        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        border: none;
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(15px);
+        margin: 0;
+        padding: 0;
+      `;
+
+      // Header ultra-premium PLEIN ÉCRAN avec gradient animé
+      const header = document.createElement("div");
+      header.className = "enterprise-modal-header";
+      header.style.cssText = `
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 25%, #3b82f6 50%, #06b6d4 75%, #0891b2 100%);
+        background-size: 300% 300%;
+        animation: gradientShift 6s ease infinite;
+        padding: 32px 48px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 0;
+        box-shadow: 
+          inset 0 1px 0 rgba(255, 255, 255, 0.2),
+          0 4px 20px rgba(0, 0, 0, 0.15);
+        flex-shrink: 0;
+        min-height: 100px;
+      `;
+
+      // Effet de particules animées dans le header
+      const headerParticles = document.createElement("div");
+      headerParticles.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+          radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.15) 2px, transparent 2px),
+          radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+          radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+          radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+        background-size: 100px 100px, 60px 60px, 80px 80px, 120px 120px;
+        animation: particlesFloat 8s linear infinite;
+        opacity: 0.6;
+      `;
+      header.appendChild(headerParticles);
+
+      // Effet de brillance premium dans le header
+      const headerShine = document.createElement("div");
+      headerShine.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: -150%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+          transparent 0%, 
+          rgba(255, 255, 255, 0.4) 25%,
+          rgba(255, 255, 255, 0.6) 50%,
+          rgba(255, 255, 255, 0.4) 75%,
+          transparent 100%);
+        animation: shine 4s ease-in-out infinite;
+        transform: skewX(-20deg);
+      `;
+      header.appendChild(headerShine);
+
+      // Contenu du header avec design premium + contrôles
+      const headerContent = document.createElement("div");
+      headerContent.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        z-index: 3;
+        width: 100%;
+      `;
+
+      // Section gauche : Icône et titre
+      const headerLeft = document.createElement("div");
+      headerLeft.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        color: white;
+      `;
+
+      // Création du conteneur de titre modifiable
+      const headerTitle = document.createElement("div");
+      const headerTitleContent = `
+        <div style="text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">
+          <div style="
+            font-size: 1.75rem; 
+            font-weight: 800; 
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #ffffff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          ">
+            Dossiers des clients
+          </div>
+          <div style="
+            background: linear-gradient(90deg, #facc15 0%, #fbbf24 100%);
+            color: #78350f;
+            font-size: 0.95rem;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 25px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+            border: 1px solid rgba(120, 53, 15, 0.2);
+          ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
+            </svg>
+            Vue entreprise premium
+          </div>
+        </div>
+      `;
+      headerTitle.innerHTML = headerTitleContent;
+
+      headerLeft.innerHTML = `
+        <div style="
+          background: linear-gradient(135deg, #facc15 0%, #f59e0b 50%, #d97706 100%);
+          padding: 16px;
+          border-radius: 20px;
+          box-shadow: 
+            0 12px 24px rgba(251, 191, 36, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+          position: relative;
+          overflow: hidden;
+        ">
+          <div style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+            animation: iconShine 3s ease-in-out infinite;
+          "></div>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#78350f" stroke-width="2.5" style="position: relative; z-index: 1;">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            <path d="M8 11h8M8 15h6"/>
+            <circle cx="6" cy="6" r="2" fill="#78350f" opacity="0.3"/>
+          </svg>
+        </div>
+      `;
+
+      // Ajouter le titre au header gauche
+      headerLeft.appendChild(headerTitle);
+
+      // Section centre : Contrôles (recherche + boutons)
+      const headerCenter = document.createElement("div");
+      headerCenter.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex: 1;
+        max-width: 600px;
+        margin: 0 40px;
+      `;
+
+      // Barre de recherche dans le header
+      const headerSearchBar = document.createElement("input");
+      headerSearchBar.type = "text";
+      headerSearchBar.placeholder =
+        "🔍 Rechercher un agent, client ou dossier...";
+      headerSearchBar.style.cssText = `
+        flex: 1;
+        padding: 10px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        color: white;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.3s ease;
+        ::placeholder {
+          color: rgba(255, 255, 255, 0.7);
+        }
+      `;
+      headerSearchBar.setAttribute("autocomplete", "off");
+      headerSearchBar.setAttribute("spellcheck", "false");
+
+      headerSearchBar.onfocus = () => {
+        headerSearchBar.style.background = "rgba(255, 255, 255, 0.2)";
+        headerSearchBar.style.borderColor = "rgba(255, 255, 255, 0.4)";
+        headerSearchBar.style.boxShadow = "0 4px 12px rgba(255, 255, 255, 0.1)";
       };
-      header.appendChild(closeBtn);
-      box.appendChild(header);
+      headerSearchBar.onblur = () => {
+        headerSearchBar.style.background = "rgba(255, 255, 255, 0.1)";
+        headerSearchBar.style.borderColor = "rgba(255, 255, 255, 0.2)";
+        headerSearchBar.style.boxShadow = "none";
+      };
 
-      // Contenu scrollable
+      // Boutons Liste/Archives dans le header
+      const headerBtnContainer = document.createElement("div");
+      headerBtnContainer.style.cssText = `
+        display: flex;
+        gap: 8px;
+      `;
+
+      // Bouton Liste
+      const headerBtnListe = document.createElement("button");
+      headerBtnListe.textContent = "📋 Dossiers actifs";
+      headerBtnListe.style.cssText = `
+        padding: 8px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        background: rgba(37, 99, 235, 0.8);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      `;
+
+      // Bouton Archives
+      const headerBtnArchives = document.createElement("button");
+      headerBtnArchives.textContent = "📦 Archives";
+      headerBtnArchives.style.cssText = `
+        padding: 8px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      `;
+
+      headerBtnContainer.appendChild(headerBtnListe);
+      headerBtnContainer.appendChild(headerBtnArchives);
+
+      headerCenter.appendChild(headerSearchBar);
+      headerCenter.appendChild(headerBtnContainer);
+
+      // Section droite : Bouton fermeture
+      const headerRight = document.createElement("div");
+      headerRight.style.cssText = `
+        display: flex;
+        align-items: center;
+      `;
+
+      // Bouton de fermeture ultra-moderne
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "enterprise-close-btn";
+      closeBtn.style.cssText = `
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        backdrop-filter: blur(15px);
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 300;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      `;
+      closeBtn.innerHTML = "×";
+
+      headerRight.appendChild(closeBtn);
+
+      // Effet de hover ultra-premium pour le bouton fermer
+      closeBtn.onmouseover = () => {
+        closeBtn.style.background = "rgba(239, 68, 68, 0.9)";
+        closeBtn.style.transform = "scale(1.15) rotate(90deg)";
+        closeBtn.style.borderColor = "rgba(255, 255, 255, 0.6)";
+        closeBtn.style.boxShadow = "0 8px 24px rgba(239, 68, 68, 0.4)";
+      };
+      closeBtn.onmouseout = () => {
+        closeBtn.style.background = "rgba(255, 255, 255, 0.15)";
+        closeBtn.style.transform = "scale(1) rotate(0deg)";
+        closeBtn.style.borderColor = "rgba(255, 255, 255, 0.3)";
+        closeBtn.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
+      };
+
+      // Assemblage du header
+      headerContent.appendChild(headerLeft);
+      headerContent.appendChild(headerCenter);
+      headerContent.appendChild(headerRight);
+      header.appendChild(headerContent);
+
+      // Corps de la modal PLEIN ÉCRAN avec plus d'espace pour les cartes
       const content = document.createElement("div");
-      content.style.padding = "24px 24px 24px 24px";
-      content.style.background = "#f8fafc";
-      content.style.flex = "1 1 auto";
-      content.style.overflowY = "auto";
-      box.appendChild(content);
+      content.className = "enterprise-modal-body";
+      content.style.cssText = `
+        padding: 20px 48px 40px 48px;
+        overflow-y: hidden;
+        flex: 1;
+        background: 
+          linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%),
+          radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.03) 0%, transparent 50%),
+          radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.03) 0%, transparent 50%);
+        border-radius: 0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 120px);
+        max-height: none;
+      `;
 
-      // --- Barre de recherche dynamique ---
+      // Assemblage de la modal
+      box.appendChild(header);
+      box.appendChild(content);
+      overlay.appendChild(box);
+
+      // Animation d'entrée ultra-fluide
+      document.body.appendChild(overlay);
+      document.body.style.overflow = "hidden";
+
+      requestAnimationFrame(() => {
+        overlay.style.opacity = "1";
+        box.style.transform = "scale(1) translateY(0)";
+      });
+
+      // Gestion de la fermeture avec animation PLEIN ÉCRAN
+      closeBtn.onclick = () => {
+        overlay.style.opacity = "0";
+        box.style.transform = "scale(0.85) translateY(80px)";
+        setTimeout(() => {
+          overlay.remove();
+          document.body.style.overflow = "auto";
+          if (typeof deliveriesTable !== "undefined" && deliveriesTable)
+            deliveriesTable.style.display = "table";
+          if (clientFoldersContainer)
+            clientFoldersContainer.style.display = "none";
+          if (dossiersBtn) dossiersBtn.style.display = "inline-block";
+        }, 600);
+      };
+
+      // Fermeture par clic sur l'overlay
+      overlay.onclick = (e) => {
+        if (e.target === overlay) {
+          closeBtn.click();
+        }
+      };
+
+      // Fermeture par échap
+      document.addEventListener("keydown", function escapeHandler(e) {
+        if (e.key === "Escape") {
+          closeBtn.click();
+          document.removeEventListener("keydown", escapeHandler);
+        }
+      });
+
+      // --- Configuration des contrôles du header ---
       let currentAgent = null;
       let searchValue = "";
-      const searchBar = document.createElement("input");
-      searchBar.type = "text";
-      searchBar.placeholder = "Rechercher...";
-      searchBar.style.width = "100%";
-      searchBar.style.marginBottom = "18px";
-      searchBar.style.padding = "10px 14px";
-      searchBar.style.border = "1.5px solid #2563eb";
-      searchBar.style.borderRadius = "7px";
-      searchBar.style.fontSize = "1.08em";
-      searchBar.style.outline = "none";
-      searchBar.style.background = "#fff";
-      searchBar.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
-
-      // Affiche la liste des agents (vue initiale)
-      // Nouvelle version : la barre de recherche et la boîte principale sont créées une seule fois
       let agentListMainBox = null;
       let agentListTitle = null;
       let agentListNoResult = null;
       let agentListClientToggleBtn = null;
       let agentListClientListContainer = null;
       let showArchives = false;
+
+      // Connexion des événements des contrôles du header
+      headerSearchBar.oninput = (e) => {
+        searchValue = e.target.value;
+        renderAgentList(searchValue);
+      };
+
+      headerBtnListe.onclick = () => {
+        showArchives = false;
+        updateHeaderButtons();
+        renderAgentList(searchValue);
+      };
+
+      headerBtnArchives.onclick = () => {
+        showArchives = true;
+        updateHeaderButtons();
+        renderAgentList(searchValue);
+      };
+
+      function updateHeaderButtons() {
+        if (showArchives) {
+          headerBtnListe.style.background = "rgba(255, 255, 255, 0.1)";
+          headerBtnListe.style.color = "rgba(255, 255, 255, 0.8)";
+          headerBtnListe.style.borderColor = "rgba(255, 255, 255, 0.2)";
+
+          headerBtnArchives.style.background = "rgba(37, 99, 235, 0.8)";
+          headerBtnArchives.style.color = "white";
+          headerBtnArchives.style.borderColor = "rgba(255, 255, 255, 0.3)";
+        } else {
+          headerBtnListe.style.background = "rgba(37, 99, 235, 0.8)";
+          headerBtnListe.style.color = "white";
+          headerBtnListe.style.borderColor = "rgba(255, 255, 255, 0.3)";
+
+          headerBtnArchives.style.background = "rgba(255, 255, 255, 0.1)";
+          headerBtnArchives.style.color = "rgba(255, 255, 255, 0.8)";
+          headerBtnArchives.style.borderColor = "rgba(255, 255, 255, 0.2)";
+        }
+      }
+
       function renderAgentList(filter = "") {
         // Création unique des éléments DOM persistants
-        if (!content.querySelector(".agent-list-search-bar")) {
+        if (!agentListMainBox) {
           content.innerHTML = "";
           currentAgent = null;
-          // --- Barre boutons Liste/Archives ---
-          const btnBar = document.createElement("div");
-          btnBar.style.display = "flex";
-          btnBar.style.gap = "12px";
-          btnBar.style.marginBottom = "18px";
-          btnBar.style.alignItems = "center";
-          // Bouton Liste
-          const btnListe = document.createElement("button");
-          btnListe.textContent = "Retour vers les dossiers";
-          btnListe.className = "btn btn-primary";
-          btnListe.style.background = showArchives ? "#e5e7eb" : "#2563eb";
-          btnListe.style.color = showArchives ? "#222" : "#fff";
-          btnListe.style.fontWeight = "bold";
-          btnListe.style.borderRadius = "7px";
-          btnListe.style.padding = "8px 18px";
-          btnListe.onclick = () => {
-            showArchives = false;
-            renderAgentList(searchBar.value);
-          };
-          // Bouton Archives
-          const btnArchives = document.createElement("button");
-          btnArchives.textContent = "Archives";
-          btnArchives.className = "btn btn-secondary";
-          btnArchives.style.background = showArchives ? "#2563eb" : "#e5e7eb";
-          btnArchives.style.color = showArchives ? "#fff" : "#222";
-          btnArchives.style.fontWeight = "bold";
-          btnArchives.style.borderRadius = "7px";
-          btnArchives.style.padding = "8px 18px";
-          btnArchives.onclick = () => {
-            showArchives = true;
-            renderAgentList(searchBar.value);
-          };
-          btnBar.appendChild(btnListe);
-          btnBar.appendChild(btnArchives);
-          content.appendChild(btnBar);
-          // Crée la barre de recherche
-          searchBar.classList.add("agent-list-search-bar");
-          searchBar.value = filter;
-          searchBar.setAttribute("autocomplete", "off");
-          searchBar.setAttribute("spellcheck", "false");
-          searchBar.style.caretColor = "#2563eb";
-          searchBar.style.transition = "border 0.18s, box-shadow 0.18s";
-          searchBar.onfocus = () => {
-            searchBar.style.border = "2.5px solid #2563eb";
-            searchBar.style.boxShadow = "0 2px 12px rgba(37,99,235,0.13)";
-          };
-          searchBar.onblur = () => {
-            searchBar.style.border = "1.5px solid #2563eb";
-            searchBar.style.boxShadow = "0 1px 4px rgba(30,41,59,0.04)";
-          };
-          content.appendChild(searchBar);
-          // Titre
+
+          // Titre avec design premium
           agentListTitle = document.createElement("div");
-          agentListTitle.textContent = showArchives
-            ? "<span style='color:#2563eb;font-weight:700;'>Agents ayant des dossiers archivés</span> <span style='font-size:0.98em;color:#64748b;'>(plus de 40 jours, moins de 3 ans 6 mois)</span> :"
-            : `<span style='display:flex;align-items:center;gap:12px;'><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2"/></svg> <span style='font-weight:700;color:#2563eb;'>Sélectionnez un agent</span> <span style='font-size:0.98em;color:#64748b;'>pour voir ses dossiers clients</span> <span style='background:linear-gradient(90deg,#facc15 60%,#fde047 100%);color:#78350f;font-size:0.93em;font-weight:600;padding:2px 10px;border-radius:7px;margin-left:10px;box-shadow:0 1px 6px #fde04733;'>Mode entreprise</span></span>`;
-          agentListTitle.style.fontWeight = "600";
-          agentListTitle.style.fontSize = "1.18em";
-          agentListTitle.style.marginBottom = "1.2em";
-          agentListTitle.style.letterSpacing = "0.2px";
-          agentListTitle.style.lineHeight = "1.3";
-          agentListTitle.innerHTML = agentListTitle.textContent;
+          agentListTitle.style.cssText = `
+            font-weight: 700;
+            font-size: 1.3em;
+            margin-bottom: 24px;
+            letter-spacing: -0.3px;
+            line-height: 1.4;
+            text-align: center;
+            background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          `;
+
+          const titleContent = showArchives
+            ? `<div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span>Agents avec dossiers archivés</span>
+                <span style="background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); color: #ffffff; font-size: 0.8em; font-weight: 600; padding: 4px 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
+                  +40 jours
+                </span>
+              </div>`
+            : `<div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5">
+                  <circle cx="12" cy="8" r="5"/>
+                  <path d="M20 21a8 8 0 1 0-16 0"/>
+                </svg>
+                <span>Sélectionnez un agent</span>
+                <span style="background: linear-gradient(90deg, #facc15 0%, #f59e0b 100%); color: #78350f; font-size: 0.8em; font-weight: 700; padding: 4px 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);">
+                  Premium
+                </span>
+              </div>`;
+
+          agentListTitle.innerHTML = titleContent;
           content.appendChild(agentListTitle);
-          // Boîte principale
+
+          // Boîte principale ultra-moderne PLEIN ÉCRAN avec plus d'espace
           agentListMainBox = document.createElement("div");
-          agentListMainBox.className = "agent-list-main-box";
-          agentListMainBox.style.background = "#fff";
-          agentListMainBox.style.borderRadius = "14px";
-          agentListMainBox.style.boxShadow = "0 4px 18px rgba(30,41,59,0.10)";
-          agentListMainBox.style.border = "1px solid #e5e7eb";
-          agentListMainBox.style.padding = "18px 12px 18px 12px";
-          agentListMainBox.style.margin = "0 auto";
-          agentListMainBox.style.maxWidth = "900px";
-          agentListMainBox.style.width = "100%";
-          agentListMainBox.style.maxHeight = "54vh";
-          agentListMainBox.style.overflowY = "auto";
-          agentListMainBox.style.display = "flex";
-          agentListMainBox.style.flexDirection = "column";
-          agentListMainBox.style.gap = "1em";
+          agentListMainBox.className = "enterprise-main-box";
+          agentListMainBox.style.cssText = `
+            background: 
+              linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%),
+              radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+            border-radius: 16px;
+            box-shadow: 
+              0 8px 24px rgba(0, 0, 0, 0.08),
+              0 4px 12px rgba(37, 99, 235, 0.06),
+              inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(37, 99, 235, 0.08);
+            padding: 32px 24px;
+            margin: 0;
+            max-width: none;
+            width: 100%;
+            flex: 1;
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            backdrop-filter: blur(12px);
+            position: relative;
+          `;
           content.appendChild(agentListMainBox);
-          // Message "aucun résultat"
+
+          // Message "aucun résultat" ultra-moderne
           agentListNoResult = document.createElement("div");
-          agentListNoResult.style.textAlign = "center";
-          agentListNoResult.style.color = "#888";
-          agentListNoResult.style.fontSize = "1.1rem";
-          agentListNoResult.style.padding = "2em";
-          agentListNoResult.style.display = "none";
+          agentListNoResult.style.cssText = `
+            text-align: center;
+            padding: 48px 32px;
+            display: none;
+            background: 
+              linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%),
+              radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.05) 0%, transparent 70%);
+            border-radius: 20px;
+            border: 2px solid rgba(37, 99, 235, 0.1);
+            margin: 24px 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+          `;
+
+          agentListNoResult.innerHTML = `
+            <div style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 16px;
+            ">
+              <div style="
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 8px;
+              ">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                </svg>
+              </div>
+              <div style="
+                font-size: 1.3em;
+                font-weight: 700;
+                color: #1e293b;
+                margin-bottom: 8px;
+              ">Aucun résultat trouvé</div>
+              <div style="
+                font-size: 1em;
+                color: #64748b;
+                font-weight: 500;
+                max-width: 400px;
+                line-height: 1.5;
+              ">Aucun agent ou dossier ne correspond à votre recherche. Essayez avec des termes différents.</div>
+            </div>
+          `;
           content.appendChild(agentListNoResult);
           // Ajoute l'eventListener une seule fois
-          searchBar.oninput = (e) => {
+          headerSearchBar.oninput = (e) => {
             renderAgentList(e.target.value);
           };
         }
         // On met à jour la valeur du champ si besoin
-        if (searchBar.value !== filter) searchBar.value = filter;
+        if (headerSearchBar.value !== filter) headerSearchBar.value = filter;
         // On construit foldersData une seule fois ici pour toute la fonction
         let foldersData = buildClientFoldersData(deliveries);
         // Recherche avancée : filtre sur agent, client, N° BL, N° Déclaration + FILTRAGE ARCHIVES
@@ -8160,12 +8539,12 @@ function mapStatus(status) {
             return false;
           })
           .sort();
-        // Affichage "aucun résultat"
+        // Affichage "aucun résultat" avec animation
         if (agentNames.length === 0) {
           agentListMainBox.innerHTML = "";
-          agentListNoResult.textContent =
-            "Aucun agent ou dossier ne correspond à la recherche.";
           agentListNoResult.style.display = "block";
+          agentListNoResult.style.animation =
+            "fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1)";
           return;
         } else {
           agentListNoResult.style.display = "none";
@@ -8295,8 +8674,9 @@ function mapStatus(status) {
           agentListClientListContainer.style.flexWrap = "wrap";
           agentListClientListContainer.style.justifyContent = "flex-start";
         };
-        // --- Affichage agents XXL, responsive, regroupés par lettre, dans une boîte scrollable ---
+        // --- Affichage agents ultra-premium, responsive, regroupés par lettre ---
         agentListMainBox.innerHTML = "";
+
         // Regroupement alphabétique
         let grouped = {};
         agentNames.forEach((name) => {
@@ -8305,125 +8685,128 @@ function mapStatus(status) {
           grouped[firstLetter].push(name);
         });
         const letters = Object.keys(grouped).sort();
+
         letters.forEach((letter) => {
-          // Titre de la lettre (lettre alphabétique en noir, gras, taille 1.3em)
+          // Titre de la lettre avec design ultra-moderne
           const letterTitle = document.createElement("div");
           letterTitle.textContent = letter;
-          letterTitle.className = "agent-list-letter-title";
-          letterTitle.style.fontWeight = "bold";
-          letterTitle.style.fontSize = "1.3em";
-          letterTitle.style.margin = "1.2em 0 0.5em 0";
-          letterTitle.style.color = "#111";
+          letterTitle.style.cssText = `
+            font-weight: 800;
+            font-size: 1.8em;
+            margin: 32px 0 20px 0;
+            color: transparent;
+            background: linear-gradient(135deg, #1e293b 0%, #475569 50%, #64748b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            position: relative;
+            letter-spacing: 2px;
+          `;
           agentListMainBox.appendChild(letterTitle);
-          // Grille responsive pour les agents de cette lettre
+
+          // Grille ultra-moderne pour les agents
           const grid = document.createElement("div");
-          grid.style.display = "grid";
-          grid.style.gridTemplateColumns =
-            "repeat(auto-fit, minmax(340px, 1fr))";
-          grid.style.gap = "2em 2.5em";
+          grid.className = "enterprise-agents-grid";
+
           grouped[letter].forEach((agent) => {
-            // Carte agent XXL business (sans icône utilisateur)
+            // Carte agent ultra-premium
             const card = document.createElement("div");
-            card.style.display = "flex";
-            card.style.flexDirection = "column";
-            card.style.alignItems = "center";
-            card.style.background =
-              "linear-gradient(120deg,#f8fafc 60%,#e0e7ef 100%)";
-            card.style.border = "2.5px solid #2563eb22";
-            card.style.borderRadius = "18px";
-            card.style.boxShadow = "0 6px 24px #2563eb13, 0 2px 0 #2563eb11";
-            card.style.padding = "2.2em 1.7em 1.5em 1.7em";
-            card.style.marginBottom = "0.7em";
-            card.style.gap = "1.2em";
-            card.style.position = "relative";
-            card.style.cursor = "pointer";
-            card.style.transition =
-              "box-shadow 0.18s, border 0.18s, background 0.18s";
-            card.onmouseover = () => {
-              card.style.boxShadow = "0 12px 36px #2563eb22, 0 2px 0 #2563eb22";
-              card.style.background =
-                "linear-gradient(120deg,#e0e7ef 60%,#f8fafc 100%)";
-              card.style.border = "2.5px solid #2563eb55";
-            };
-            card.onmouseout = () => {
-              card.style.boxShadow = "0 6px 24px #2563eb13, 0 2px 0 #2563eb11";
-              card.style.background =
-                "linear-gradient(120deg,#f8fafc 60%,#e0e7ef 100%)";
-              card.style.border = "2.5px solid #2563eb22";
-            };
-            // Avatar XXL rond avec initiales (sans icône utilisateur)
+            card.className = "enterprise-agent-card";
+
+            // Avatar ultra-moderne
             const avatar = document.createElement("div");
-            avatar.className = "agent-avatar-xxl";
+            avatar.className = "enterprise-agent-avatar";
             avatar.textContent = agent
               .split(" ")
               .map((n) => n[0])
               .join("")
               .toUpperCase();
-            avatar.style.background =
-              "linear-gradient(135deg,#2563eb 60%,#eab308 100%)";
-            avatar.style.color = "#fff";
-            avatar.style.width = "64px";
-            avatar.style.height = "64px";
-            avatar.style.display = "flex";
-            avatar.style.alignItems = "center";
-            avatar.style.justifyContent = "center";
-            avatar.style.fontWeight = "bold";
-            avatar.style.fontSize = "2em";
-            avatar.style.borderRadius = "50%";
-            avatar.style.boxShadow = "0 2px 8px #b3c6e7";
-            avatar.style.marginBottom = "0.7em";
-            // On s'assure qu'aucune icône utilisateur n'est présente
-            while (avatar.firstChild && avatar.firstChild.nodeType !== 3) {
-              // 3 = TEXT_NODE
-              avatar.removeChild(avatar.firstChild);
-            }
             card.appendChild(avatar);
-            // Infos agent
+
+            // Container des informations
             const info = document.createElement("div");
-            info.style.flex = "1 1 auto";
-            info.style.display = "flex";
-            info.style.flexDirection = "column";
-            info.style.alignItems = "center";
-            // Nom agent + badge
+            info.style.cssText = `
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              text-align: center;
+              position: relative;
+              z-index: 2;
+            `;
+
+            // Nom agent avec typo premium
             const name = document.createElement("div");
             name.textContent = agent;
-            name.style.fontWeight = "700";
-            name.style.fontSize = "1.18em";
-            name.style.letterSpacing = "0.5px";
-            name.style.marginBottom = "0.2em";
-            name.style.textAlign = "center";
+            name.style.cssText = `
+              font-weight: 800;
+              font-size: 1.3em;
+              letter-spacing: -0.3px;
+              margin-bottom: 12px;
+              color: #1e293b;
+              background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+            `;
             info.appendChild(name);
-            // Nombre de dossiers clients
+
+            // Badge ultra-moderne de dossiers
             const badge = document.createElement("span");
             const clientCount = Object.keys(foldersData[agent] || {}).length;
             badge.textContent =
               clientCount + " dossier" + (clientCount > 1 ? "s" : "");
-            badge.style.background =
-              "linear-gradient(90deg,#facc15 60%,#fde047 100%)";
-            badge.style.color = "#78350f";
-            badge.style.fontWeight = "600";
-            badge.style.fontSize = "1.08em";
-            badge.style.padding = "0.4em 1.2em";
-            badge.style.borderRadius = "8px";
-            badge.style.margin = "0.5em 0 0.5em 0";
-            badge.style.boxShadow = "0 1px 6px #fde04733";
+            badge.className = "enterprise-dossier-badge";
             info.appendChild(badge);
-            // Aperçu des 3 derniers clients (dossiers)
+
+            // Aperçu des clients avec design ultra-premium
             const clientNames = Object.keys(foldersData[agent] || {});
             if (clientNames.length > 0) {
               const preview = document.createElement("div");
-              preview.style.fontSize = "1.01em";
-              preview.style.color = "#2563eb";
-              preview.style.margin = "0.5em 0 0.2em 0";
-              preview.style.textAlign = "center";
-              preview.innerHTML = `<b>Clients récents :</b> <span style='color:#1e293b;'>${clientNames
-                .slice(-3)
-                .reverse()
-                .join(", ")}${clientNames.length > 3 ? ", ..." : ""}</span>`;
+              preview.style.cssText = `
+                margin-top: 16px;
+                padding: 16px;
+                background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+                border-radius: 12px;
+                border: 1px solid rgba(37, 99, 235, 0.1);
+                width: 100%;
+              `;
+
+              const clientHeader = document.createElement("div");
+              clientHeader.style.cssText = `
+                font-weight: 700;
+                color: #2563eb;
+                margin-bottom: 8px;
+                font-size: 0.95em;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                justify-content: center;
+              `;
+              clientHeader.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                Clients récents
+              `;
+
+              const clientList = document.createElement("div");
+              clientList.style.cssText = `
+                color: #1e293b;
+                font-weight: 600;
+                font-size: 0.9em;
+                line-height: 1.4;
+              `;
+              clientList.textContent =
+                clientNames.slice(-3).reverse().join(", ") +
+                (clientNames.length > 3 ? "..." : "");
+
+              preview.appendChild(clientHeader);
+              preview.appendChild(clientList);
               info.appendChild(preview);
             }
-            // Dates (max 2)
-            // Regroupement des dossiers par date (tous clients)
+
+            // Dates avec design ultra-premium
             let dateMap = {};
             clientNames.forEach((client) => {
               Object.keys(foldersData[agent][client]).forEach((date) => {
@@ -8436,68 +8819,116 @@ function mapStatus(status) {
               const db = b.split("/").reverse().join("-");
               return db.localeCompare(da);
             });
+
             if (sortedDates.length > 0) {
               const datePreview = document.createElement("div");
-              datePreview.style.fontSize = "0.98em";
-              datePreview.style.color = "#666";
-              datePreview.style.marginTop = "0.2em";
-              datePreview.style.textAlign = "center";
-              let previewHtml = "<b>Dates récentes :</b> ";
-              previewHtml += sortedDates
-                .slice(0, 2)
-                .map(
-                  (date) =>
-                    `<span style='color:#2563eb;font-weight:500;'>${date}</span>`
-                )
-                .join(", ");
-              if (sortedDates.length > 2) previewHtml += `, ...`;
-              datePreview.innerHTML = previewHtml;
+              datePreview.style.cssText = `
+                margin-top: 12px;
+                padding: 12px;
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+                border-radius: 12px;
+                border: 1px solid rgba(16, 185, 129, 0.1);
+                width: 100%;
+              `;
+
+              const dateHeader = document.createElement("div");
+              dateHeader.style.cssText = `
+                font-weight: 700;
+                color: #10b981;
+                margin-bottom: 6px;
+                font-size: 0.9em;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                justify-content: center;
+              `;
+              dateHeader.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                </svg>
+                Dates récentes
+              `;
+
+              const dateList = document.createElement("div");
+              dateList.style.cssText = `
+                color: #1e293b;
+                font-weight: 500;
+                font-size: 0.85em;
+              `;
+              dateList.innerHTML =
+                sortedDates
+                  .slice(0, 2)
+                  .map(
+                    (date) =>
+                      `<span style="color:#10b981;font-weight:600;">${date}</span>`
+                  )
+                  .join(", ") + (sortedDates.length > 2 ? "..." : "");
+
+              datePreview.appendChild(dateHeader);
+              datePreview.appendChild(dateList);
               info.appendChild(datePreview);
             }
+
             card.appendChild(info);
-            // Bouton suppression agent (en bas à droite de la carte)
+
+            // Bouton suppression ultra-moderne
             const deleteBtn = document.createElement("button");
-            deleteBtn.className = "delete-agent-btn";
             deleteBtn.title = "Supprimer l'agent";
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-            deleteBtn.style.position = "absolute";
-            deleteBtn.style.bottom = "18px";
-            deleteBtn.style.right = "18px";
-            deleteBtn.style.background =
-              "linear-gradient(90deg,#facc15 60%,#fde047 100%)";
-            deleteBtn.style.color = "#78350f";
-            deleteBtn.style.border = "none";
-            deleteBtn.style.borderRadius = "50%";
-            deleteBtn.style.width = "38px";
-            deleteBtn.style.height = "38px";
-            deleteBtn.style.display = "flex";
-            deleteBtn.style.alignItems = "center";
-            deleteBtn.style.justifyContent = "center";
-            deleteBtn.style.fontSize = "1.2em";
-            deleteBtn.style.cursor = "pointer";
-            deleteBtn.style.boxShadow = "0 2px 8px #fde04755";
-            deleteBtn.style.transition = "background 0.18s";
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            deleteBtn.style.cssText = `
+              position: absolute;
+              bottom: 16px;
+              right: 16px;
+              background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%);
+              color: #78350f;
+              border: none;
+              border-radius: 50%;
+              width: 40px;
+              height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 14px;
+              cursor: pointer;
+              box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+              transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+              z-index: 10;
+            `;
+
             deleteBtn.onmouseover = () => {
-              deleteBtn.style.background = "#b45309";
-              deleteBtn.style.color = "#fff";
+              deleteBtn.style.transform = "scale(1.15)";
+              deleteBtn.style.background =
+                "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)";
+              deleteBtn.style.color = "#ffffff";
+              deleteBtn.style.boxShadow = "0 6px 20px rgba(220, 38, 38, 0.4)";
             };
             deleteBtn.onmouseout = () => {
+              deleteBtn.style.transform = "scale(1)";
               deleteBtn.style.background =
-                "linear-gradient(90deg,#facc15 60%,#fde047 100%)";
+                "linear-gradient(135deg, #facc15 0%, #f59e0b 100%)";
               deleteBtn.style.color = "#78350f";
+              deleteBtn.style.boxShadow = "0 4px 12px rgba(251, 191, 36, 0.3)";
             };
+
             deleteBtn.onclick = (e) => {
               e.stopPropagation();
               handleDeleteAgent(agent);
             };
             card.appendChild(deleteBtn);
-            // Clic sur la carte = voir dossiers de l'agent
+
+            // Clic sur1 la carte = voir dossiers de l'agent
             card.onclick = (e) => {
-              if (e.target === deleteBtn) return;
+              if (
+                e.target === deleteBtn ||
+                e.target.closest("button") === deleteBtn
+              )
+                return;
               renderAgentFolders(agent);
             };
+
             grid.appendChild(card);
           });
+
           agentListMainBox.appendChild(grid);
         });
       }
@@ -8506,24 +8937,64 @@ function mapStatus(status) {
       function renderAgentFolders(agentName, filter = "") {
         content.innerHTML = "";
         currentAgent = agentName;
-        // Bouton retour
-        const backBtn = document.createElement("button");
-        backBtn.innerHTML =
-          '<i class="fas fa-arrow-left"></i> Retour vers les dossiers';
-        backBtn.style.background = "#2563eb";
-        backBtn.style.color = "#fff";
-        backBtn.style.fontWeight = "600";
-        backBtn.style.fontSize = "1em";
-        backBtn.style.border = "none";
-        backBtn.style.borderRadius = "8px";
-        backBtn.style.padding = "0.5em 1.2em";
-        backBtn.style.cursor = "pointer";
-        backBtn.style.marginBottom = "1.2em";
-        backBtn.onclick = () => {
-          // On revient à la liste des agents dans la modale (vue professionnelle)
-          renderAgentList("");
+
+        // On met à jour le header pour indiquer qu'on est dans les dossiers d'un agent
+        headerTitle.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <button id="backToAgentList" style="
+              background: rgba(255, 255, 255, 0.2);
+              border: 1px solid rgba(255, 255, 255, 0.3);
+              border-radius: 10px;
+              padding: 8px 12px;
+              color: white;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              font-size: 0.9rem;
+              font-weight: 600;
+              transition: all 0.3s ease;
+            ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              Retour
+            </button>
+            <div style="
+              font-size: 1.5rem; 
+              font-weight: 800; 
+              color: white;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            ">
+              Dossiers de ${agentName}
+            </div>
+          </div>
+        `;
+
+        // Événement pour le bouton retour
+        document.getElementById("backToAgentList").onclick = () => {
+          // Remettre le titre original
+          headerTitle.innerHTML = headerTitleContent;
+          // Réinitialiser les variables d'état
+          currentAgent = null;
+          searchValue = "";
+          showArchives = false;
+          // Réinitialiser les éléments DOM pour forcer le recréation
+          agentListMainBox = null;
+          agentListTitle = null;
+          agentListNoResult = null;
+          // Retourner à la vue principale initiale (image 2 - liste des agents)
+          renderAgentList(
+            "",
+            content,
+            headerSearchBar,
+            foldersData,
+            headerTitleContent,
+            headerTitle
+          );
+          // Mettre à jour les boutons du header
+          updateHeaderButtons();
         };
-        content.appendChild(backBtn);
 
         // Barre de recherche dossiers
         // On crée un nouvel input pour la recherche dans les dossiers de l'agent
@@ -8574,48 +9045,192 @@ function mapStatus(status) {
           content.innerHTML += `<div style='text-align:center;color:#888;font-size:1.1rem;padding:2em;'>Aucun dossier trouvé pour cet agent.</div>`;
           return;
         }
-        // --- NOUVEL AFFICHAGE EN GRILLE DE BLOCS JAUNES ---
-        // --- NOUVEL AFFICHAGE EN GRILLE DE BLOCS JAUNES (amélioré) ---
+        // --- GRILLE ULTRA-COMPACTE AVEC SCROLL OPTIMISÉE ---
         const dossiersGrid = document.createElement("div");
         dossiersGrid.style.display = "grid";
         dossiersGrid.style.gridTemplateColumns =
-          "repeat(auto-fit, minmax(320px, 1fr))";
-        dossiersGrid.style.gap = "2.2em 2.5em";
-        dossiersGrid.style.marginTop = "1.5em";
-        dossiersGrid.style.marginBottom = "2em";
+          "repeat(auto-fill, minmax(280px, 1fr))";
+        dossiersGrid.style.gap = "16px";
+        dossiersGrid.style.marginTop = "12px";
+        dossiersGrid.style.padding = "6px";
+        dossiersGrid.style.maxHeight = "calc(100vh - 320px)";
+        dossiersGrid.style.overflowY = "auto";
+        dossiersGrid.style.overflowX = "hidden";
+        dossiersGrid.style.scrollbarWidth = "thin";
+        dossiersGrid.style.scrollbarColor =
+          "rgba(37, 99, 235, 0.3) transparent";
+
+        // Amélioration du scroll pour une expérience plus fluide
+        dossiersGrid.style.scrollBehavior = "smooth";
+        dossiersGrid.style.webkitOverflowScrolling = "touch";
+        dossiersGrid.style.overscrollBehavior = "contain";
+
+        // Styles personnalisés pour la scrollbar WebKit
+        const scrollbarStyle = document.createElement("style");
+        scrollbarStyle.textContent = `
+          .dossiers-grid::-webkit-scrollbar {
+            width: 12px;
+          }
+          .dossiers-grid::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 6px;
+          }
+          .dossiers-grid::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.4) 0%, rgba(59, 130, 246, 0.6) 100%);
+            border-radius: 6px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+          }
+          .dossiers-grid::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.6) 0%, rgba(59, 130, 246, 0.8) 100%);
+          }
+          .dossiers-grid::-webkit-scrollbar-thumb:active {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.8) 0%, rgba(59, 130, 246, 1) 100%);
+          }
+        `;
+        document.head.appendChild(scrollbarStyle);
+        dossiersGrid.classList.add("dossiers-grid");
+
+        // Support tactile amélioré pour les appareils mobiles seulement
+        let startY = 0;
+        let currentY = 0;
+        let isScrolling = false;
+
+        dossiersGrid.addEventListener(
+          "touchstart",
+          function (e) {
+            startY = e.touches[0].clientY;
+            isScrolling = true;
+            this.style.scrollBehavior = "auto";
+          },
+          { passive: true }
+        );
+
+        dossiersGrid.addEventListener(
+          "touchmove",
+          function (e) {
+            if (!isScrolling) return;
+            currentY = e.touches[0].clientY;
+            const deltaY = startY - currentY;
+            this.scrollTop += deltaY;
+            startY = currentY;
+          },
+          { passive: true }
+        );
+
+        dossiersGrid.addEventListener(
+          "touchend",
+          function () {
+            isScrolling = false;
+            this.style.scrollBehavior = "smooth";
+          },
+          { passive: true }
+        );
 
         clientNames.forEach((client) => {
-          // Bloc client (jaune)
+          // Bloc client ultra-moderne compact (cartes jaunes optimisées)
           const clientBlock = document.createElement("div");
-          clientBlock.style.background =
-            "linear-gradient(120deg,#fef08a 60%,#fde047 100%)";
-          clientBlock.style.border = "2.5px solid #eab308";
-          clientBlock.style.borderRadius = "18px";
-          clientBlock.style.boxShadow = "0 4px 24px rgba(234,179,8,0.13)";
-          clientBlock.style.padding = "1.2em 1.5em 1.1em 1.5em";
-          clientBlock.style.margin = "0";
-          clientBlock.style.display = "flex";
-          clientBlock.style.flexDirection = "column";
-          clientBlock.style.justifyContent = "flex-start";
-          clientBlock.style.alignItems = "stretch";
-          clientBlock.style.overflow = "hidden";
-          clientBlock.style.position = "relative";
-          clientBlock.style.transition = "box-shadow 0.18s";
+          clientBlock.style.cssText = `
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+            border: 2px solid rgba(217, 119, 6, 0.3);
+            border-radius: 12px;
+            box-shadow: 
+              0 4px 16px rgba(251, 191, 36, 0.12),
+              0 2px 8px rgba(217, 119, 6, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            padding: 16px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: stretch;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+            min-height: 160px;
+            backdrop-filter: blur(10px);
+          `;
+
+          // Effet de brillance
+          const shine = document.createElement("div");
+          shine.style.cssText = `
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+            transform: rotate(45deg);
+            transition: transform 0.6s ease;
+            pointer-events: none;
+          `;
+          clientBlock.appendChild(shine);
+
           clientBlock.onmouseover = () => {
-            clientBlock.style.boxShadow = "0 8px 32px rgba(234,179,8,0.22)";
+            clientBlock.style.transform = "translateY(-4px) scale(1.015)";
+            clientBlock.style.boxShadow = `
+              0 8px 24px rgba(251, 191, 36, 0.2),
+              0 4px 12px rgba(217, 119, 6, 0.15),
+              inset 0 1px 0 rgba(255, 255, 255, 0.4)
+            `;
+            shine.style.transform = "rotate(45deg) translateX(100%)";
           };
           clientBlock.onmouseout = () => {
-            clientBlock.style.boxShadow = "0 4px 24px rgba(234,179,8,0.13)";
+            clientBlock.style.transform = "translateY(0) scale(1)";
+            clientBlock.style.boxShadow = `
+              0 6px 24px rgba(251, 191, 36, 0.15),
+              0 3px 12px rgba(217, 119, 6, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3)
+            `;
+            shine.style.transform = "rotate(45deg) translateX(-100%)";
           };
 
-          // Titre client
+          // Header TRÈS compact avec icône et titre mini
+          const headerSection = document.createElement("div");
+          headerSection.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 2;
+          `;
+
+          const clientIcon = document.createElement("div");
+          clientIcon.style.cssText = `
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+          `;
+          clientIcon.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#78350f" stroke-width="2.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          `;
+
           const clientTitle = document.createElement("div");
           clientTitle.textContent = client;
-          clientTitle.style.fontWeight = "bold";
-          clientTitle.style.fontSize = "1.13em";
-          clientTitle.style.color = "#b45309";
-          clientTitle.style.marginBottom = "0.7em";
-          clientBlock.appendChild(clientTitle);
+          clientTitle.style.cssText = `
+            font-weight: 800;
+            font-size: 0.95em;
+            color: #78350f;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            letter-spacing: -0.1px;
+            flex: 1;
+            line-height: 1.2;
+          `;
+
+          headerSection.appendChild(clientIcon);
+          headerSection.appendChild(clientTitle);
+          clientBlock.appendChild(headerSection);
 
           // On stocke toutes les opérations de ce client pour cet agent (toutes dates)
           let allOps = [];
@@ -8626,34 +9241,114 @@ function mapStatus(status) {
             allOps = allOps.concat(foldersData[agentName][client][date]);
           });
 
-          // On affiche un résumé (ex : nombre d'opérations, dernières dates, etc.)
-          const summary = document.createElement("div");
-          summary.style.fontSize = "0.98em";
-          summary.style.color = "#a16207";
-          summary.style.marginBottom = "0.5em";
-          summary.textContent = `${allOps.length} opération${
-            allOps.length > 1 ? "s" : ""
-          } | Dernière date : ${dates[0] || "-"}`;
-          clientBlock.appendChild(summary);
+          // Section des statistiques modernes
+          const statsSection = document.createElement("div");
+          statsSection.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 2;
+          `;
 
-          // Bouton exporter CSV (pour tout le dossier)
+          const operationsCount = document.createElement("div");
+          operationsCount.style.cssText = `
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            padding: 16px;
+            flex: 1;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+          `;
+          operationsCount.innerHTML = `
+            <div style="font-size: 1.8em; font-weight: 800; color: #78350f; margin-bottom: 6px;">
+              ${allOps.length}
+            </div>
+            <div style="font-size: 0.9em; color: #92400e; font-weight: 600;">
+              Opération${allOps.length > 1 ? "s" : ""}
+            </div>
+          `;
+
+          const lastDate = document.createElement("div");
+          lastDate.style.cssText = `
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            padding: 16px;
+            flex: 1;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+          `;
+          lastDate.innerHTML = `
+            <div style="font-size: 1.3em; font-weight: 700; color: #78350f; margin-bottom: 6px;">
+              ${dates[0] || "-"}
+            </div>
+            <div style="font-size: 0.9em; color: #92400e; font-weight: 600;">
+              Dernière date
+            </div>
+          `;
+
+          statsSection.appendChild(operationsCount);
+          statsSection.appendChild(lastDate);
+          clientBlock.appendChild(statsSection);
+
+          // Footer avec bouton d'export moderne
+          const footerSection = document.createElement("div");
+          footerSection.style.cssText = `
+            margin-top: auto;
+            position: relative;
+            z-index: 2;
+          `;
+
           const exportBtn = document.createElement("button");
-          exportBtn.textContent = "Exporter CSV";
-          exportBtn.style.background = "#fde047";
-          exportBtn.style.color = "#78350f";
-          exportBtn.style.fontWeight = "600";
-          exportBtn.style.fontSize = "0.92em";
-          exportBtn.style.border = "none";
-          exportBtn.style.borderRadius = "6px";
-          exportBtn.style.padding = "3px 10px";
-          exportBtn.style.marginBottom = "0.2em";
-          exportBtn.style.cursor = "pointer";
-          exportBtn.style.boxShadow = "0 1px 4px rgba(234,179,8,0.10)";
+          exportBtn.style.cssText = `
+            width: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+            color: #78350f;
+            font-weight: 700;
+            font-size: 0.9em;
+            border: 2px solid rgba(120, 53, 15, 0.2);
+            border-radius: 10px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          `;
+          exportBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              <path d="M15,13H13V17H11V13H9L12,10L15,13Z"/>
+            </svg>
+            Export
+          `;
+
+          exportBtn.onmouseover = () => {
+            exportBtn.style.transform = "translateY(-2px)";
+            exportBtn.style.background =
+              "linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(248, 250, 252, 0.9) 100%)";
+            exportBtn.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.15)";
+          };
+          exportBtn.onmouseout = () => {
+            exportBtn.style.transform = "translateY(0)";
+            exportBtn.style.background =
+              "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)";
+            exportBtn.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
+          };
+
           exportBtn.onclick = (e) => {
             e.stopPropagation();
             exportClientFolderToCSV(agentName, client, allOps);
           };
-          clientBlock.appendChild(exportBtn);
+
+          footerSection.appendChild(exportBtn);
+          clientBlock.appendChild(footerSection);
 
           // Quand on clique sur le bloc jaune, on ouvre une popup avec le détail du dossier (toutes opérations)
           clientBlock.style.cursor = "pointer";
@@ -8697,34 +9392,94 @@ function mapStatus(status) {
             box.style.flexDirection = "column";
             box.style.animation = "popupFadeIn 0.25s";
 
-            // Header
+            // Header ultra-moderne
             const header = document.createElement("div");
-            header.style.background =
-              "linear-gradient(90deg,#2563eb 60%,#1e293b 100%)";
-            header.style.color = "#fff";
-            header.style.padding = "22px 40px 16px 40px";
-            header.style.fontWeight = "bold";
-            header.style.fontSize = "1.45rem";
-            header.style.display = "flex";
-            header.style.justifyContent = "space-between";
-            header.style.alignItems = "center";
-            header.style.borderTopLeftRadius = "18px";
-            header.style.borderTopRightRadius = "18px";
-            header.innerHTML = `<span style='letter-spacing:0.5px;'>Dossier client</span>`;
-            // Bouton fermeture
+            header.style.cssText = `
+              background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+              color: #fff;
+              padding: 24px 40px;
+              font-weight: 800;
+              font-size: 1.5rem;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-top-left-radius: 18px;
+              border-top-right-radius: 18px;
+              position: relative;
+              overflow: hidden;
+            `;
+
+            // Effet de brillance dans le header
+            const headerShine = document.createElement("div");
+            headerShine.style.cssText = `
+              position: absolute;
+              top: 0;
+              left: -100%;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+              animation: shine 3s infinite;
+            `;
+            header.appendChild(headerShine);
+
+            const headerContent = document.createElement("div");
+            headerContent.style.cssText = `
+              display: flex;
+              align-items: center;
+              gap: 16px;
+              position: relative;
+              z-index: 2;
+            `;
+            headerContent.innerHTML = `
+              <div style="
+                background: linear-gradient(135deg, #facc15 0%, #fbbf24 100%);
+                padding: 12px;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+              ">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#78350f" stroke-width="2.5">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  <path d="M8 11h8M8 15h6"/>
+                </svg>
+              </div>
+              <span style='letter-spacing: -0.3px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);'>Dossier client</span>
+            `;
+
+            // Bouton fermeture ultra-moderne
             const closeBtn = document.createElement("button");
             closeBtn.innerHTML = "&times;";
-            closeBtn.style.background = "none";
-            closeBtn.style.border = "none";
-            closeBtn.style.color = "#fff";
-            closeBtn.style.fontSize = "2.2rem";
-            closeBtn.style.cursor = "pointer";
-            closeBtn.style.marginLeft = "18px";
+            closeBtn.style.cssText = `
+              background: rgba(255, 255, 255, 0.15);
+              border: 2px solid rgba(255, 255, 255, 0.3);
+              border-radius: 50%;
+              color: #fff;
+              font-size: 2rem;
+              cursor: pointer;
+              width: 48px;
+              height: 48px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.3s ease;
+              backdrop-filter: blur(10px);
+              position: relative;
+              z-index: 2;
+            `;
             closeBtn.setAttribute("aria-label", "Fermer");
+            closeBtn.onmouseover = () => {
+              closeBtn.style.background = "rgba(239, 68, 68, 0.8)";
+              closeBtn.style.transform = "scale(1.1) rotate(90deg)";
+            };
+            closeBtn.onmouseout = () => {
+              closeBtn.style.background = "rgba(255, 255, 255, 0.15)";
+              closeBtn.style.transform = "scale(1) rotate(0deg)";
+            };
             closeBtn.onclick = () => {
               modal.remove();
               document.body.classList.remove("overflow-hidden");
             };
+
+            header.appendChild(headerContent);
             header.appendChild(closeBtn);
             box.appendChild(header);
 
@@ -8779,50 +9534,214 @@ function mapStatus(status) {
               opsHtml += `<ol style='display:flex;flex-direction:column;gap:22px;counter-reset:opnum;margin:0;padding:0;list-style:none;'>`;
               allOps.forEach((op, idx) => {
                 opsHtml += `
-      <li style="background:#fff;border-radius:14px;box-shadow:0 4px 18px #e0e7ef;padding:22px 28px 18px 28px;border-left:7px solid #2563eb;position:relative;counter-increment:opnum;">
-        <span style='position:absolute;left:-32px;top:24px;font-size:1.25em;font-weight:700;color:#2563eb;opacity:0.18;user-select:none;'>#${
-          idx + 1
-        }</span>
-        <div style="display:flex;align-items:center;gap:22px;margin-bottom:10px;flex-wrap:wrap;">
-          <span style="font-size:1.18em;font-weight:700;color:#2563eb;letter-spacing:0.5px;">${
-            op.created_at
-              ? new Date(op.created_at).toLocaleDateString("fr-FR")
-              : "-"
-          }</span>
-          <span style="background:linear-gradient(90deg,#fde047 60%,#facc15 100%);color:#78350f;padding:2px 16px;border-radius:7px;font-weight:700;border:2px solid #eab308;box-shadow:0 0 0 2px #fde047;">${
-            op.container_number || "-"
-          }</span>
+      <li style="
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 16px;
+        box-shadow: 
+          0 8px 32px rgba(37, 99, 235, 0.08),
+          0 2px 8px rgba(0, 0, 0, 0.04),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        padding: 24px 32px;
+        border-left: 6px solid #3b82f6;
+        position: relative;
+        counter-increment: opnum;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(59, 130, 246, 0.1);
+      " 
+      onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 16px 48px rgba(37, 99, 235, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)'; this.style.borderLeftColor='#1d4ed8';"
+      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 32px rgba(37, 99, 235, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)'; this.style.borderLeftColor='#3b82f6';">
+        
+        <!-- Badge numéro d'opération -->
+        <div style='
+          position: absolute;
+          left: -20px;
+          top: 20px;
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+          color: white;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.9rem;
+          font-weight: 700;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+          border: 3px solid white;
+        '>#${idx + 1}</div>
+
+        <!-- Header avec date et conteneur -->
+        <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px;flex-wrap:wrap;">
+          <div style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid #93c5fd;
+          ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span style="font-size:1.1rem;font-weight:700;color:#1e40af;">${
+              op.created_at
+                ? new Date(op.created_at).toLocaleDateString("fr-FR")
+                : "-"
+            }</span>
+          </div>
+          
+          <div style="
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            border: 2px solid #f59e0b;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+            ${op.container_number || "-"}
+          </div>
         </div>
-                <div style="display:grid;grid-template-columns:repeat(2, minmax(220px, 1fr));gap:10px 38px;margin-top:6px;">
-          <div style='display:flex;'><span style='display:inline-block;width:120px;font-weight:600;color:#64748b;'>Mise en livraison :</span><span style='color:#1e293b;font-weight:600;'>${
-            op.delivery_status_acconier_fr ||
-            mapStatus(op.delivery_status_acconier || op.status || "-")
-          }</span></div>
-          <div style='display:flex;'><span style='display:inline-block;width:120px;font-weight:600;color:#64748b;'>Observation :</span><span style='color:#334155;'>${
-            op.observation_acconier || op.delivery_notes || "-"
-          }</span></div>
-          <div style='display:flex;'><span style='display:inline-block;width:120px;font-weight:600;color:#64748b;'>N° BL :</span><span style='color:#334155;'>${
-            op.bl_number || "-"
-          }</span></div>
-          <div style='display:flex;'><span style='display:inline-block;width:120px;font-weight:600;color:#64748b;'>N° Déclaration :</span><span style='color:#334155;'>${
-            op.declaration_number || "-"
-          }</span></div>
-          <div style='display:flex;'><span style='display:inline-block;width:120px;font-weight:600;color:#64748b;'>Lieu :</span><span style='color:#334155;'>${
-            op.lieu || "-"
-          }</span></div>
-          <div style='display:flex;'><span style='display:inline-block;width:120px;font-weight:600;color:#64748b;'>Compagnie :</span><span style='color:#334155;'>${
-            op.shipping_company || "-"
-          }</span></div>
-          <div style='display:flex;'><span style='display:inline-block;width:120px;font-weight:600;color:#64748b;'>Navire :</span><span style='color:#334155;'>${
-            op.ship_name || "-"
-          }</span></div>
-          <div style='display:flex;'><span style='display:inline-block;width:120px;font-weight:600;color:#64748b;'>Contenu :</span><span style='color:#334155;'>${
-            op.container_type_and_content || "-"
-          }</span></div>
-          <div style='display:flex;'><span style='display:inline-block;width:120px;font-weight:600;color:#64748b;'>Transport :</span><span style='color:#334155;'>${
-            op.transporter_mode || "-"
-          }</span></div>
-        </div>
+                <!-- Grille d'informations moderne -->
+                <div style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                  gap: 14px;
+                  margin-top: 16px;
+                ">
+                  <div style='
+                    display: flex;
+                    flex-direction: column;
+                    gap: 3px;
+                    padding: 10px;
+                    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                    border-radius: 8px;
+                    border-left: 3px solid #64748b;
+                  '>
+                    <span style='font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Observation</span>
+                    <span style='color: #334155; font-weight: 500; word-break: break-word; font-size: 0.9rem;'>${
+                      op.observation_acconier || op.delivery_notes || "-"
+                    }</span>
+                  </div>
+                  
+                  <div style='
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    padding: 12px;
+                    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+                    border-radius: 10px;
+                    border-left: 3px solid #3b82f6;
+                  '>
+                    <span style='font-size: 0.75rem; color: #1e40af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>N° BL</span>
+                    <span style='color: #1e293b; font-weight: 600;'>${
+                      op.bl_number || "-"
+                    }</span>
+                  </div>
+                  
+                  <div style='
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    padding: 12px;
+                    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+                    border-radius: 10px;
+                    border-left: 3px solid #10b981;
+                  '>
+                    <span style='font-size: 0.75rem; color: #047857; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>N° Déclaration</span>
+                    <span style='color: #1e293b; font-weight: 500;'>${
+                      op.declaration_number || "-"
+                    }</span>
+                  </div>
+                  
+                  <div style='
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    padding: 12px;
+                    background: linear-gradient(135deg, #fef7cd 0%, #fde68a 100%);
+                    border-radius: 10px;
+                    border-left: 3px solid #f59e0b;
+                  '>
+                    <span style='font-size: 0.75rem; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Lieu</span>
+                    <span style='color: #1e293b; font-weight: 500;'>${
+                      op.lieu || "-"
+                    }</span>
+                  </div>
+                  
+                  <div style='
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    padding: 12px;
+                    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+                    border-radius: 10px;
+                    border-left: 3px solid #ec4899;
+                  '>
+                    <span style='font-size: 0.75rem; color: #be185d; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Compagnie</span>
+                    <span style='color: #1e293b; font-weight: 500;'>${
+                      op.shipping_company || "-"
+                    }</span>
+                  </div>
+                  
+                  <div style='
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    padding: 12px;
+                    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+                    border-radius: 10px;
+                    border-left: 3px solid #0284c7;
+                  '>
+                    <span style='font-size: 0.75rem; color: #0369a1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Navire</span>
+                    <span style='color: #1e293b; font-weight: 500;'>${
+                      op.ship_name || "-"
+                    }</span>
+                  </div>
+                  
+                  <div style='
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    padding: 12px;
+                    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+                    border-radius: 10px;
+                    border-left: 3px solid #8b5cf6;
+                  '>
+                    <span style='font-size: 0.75rem; color: #7c3aed; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Contenu</span>
+                    <span style='color: #1e293b; font-weight: 500;'>${
+                      op.container_type_and_content || "-"
+                    }</span>
+                  </div>
+                  
+                  <div style='
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    padding: 12px;
+                    background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+                    border-radius: 10px;
+                    border-left: 3px solid #ef4444;
+                  '>
+                    <span style='font-size: 0.75rem; color: #dc2626; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Transport</span>
+                    <span style='color: #1e293b; font-weight: 500;'>${
+                      op.transporter_mode || "-"
+                    }</span>
+                  </div>
+                </div>
       </li>
     `;
               });
