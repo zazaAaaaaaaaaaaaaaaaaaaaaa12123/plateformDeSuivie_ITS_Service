@@ -8030,27 +8030,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Fonction pour détecter et appliquer les filtres automatiques depuis l'URL
 function applyAutoFilterFromURL() {
-  console.log("🔥🔥🔥 DEBUT applyAutoFilterFromURL 🔥🔥🔥");
-
   const urlParams = new URLSearchParams(window.location.search);
   const filter = urlParams.get("filter");
   const autoFilter = urlParams.get("autoFilter");
 
-  console.log("🔥 URL params:", { filter, autoFilter });
-  console.log("🔥 URL complete:", window.location.href);
-
   if (autoFilter === "true" && filter) {
-    console.log(`🔥🔥🔥 FILTRAGE AUTOMATIQUE ACTIVE: ${filter} 🔥🔥🔥`);
+    console.log(`Filtrage automatique activé: ${filter}`);
 
     // Attendre que le tableau soit chargé avant d'appliquer le filtre
     setTimeout(() => {
-      console.log("🔥🔥🔥 TIMEOUT DECLENCHE - DEBUT FILTRAGE 🔥🔥🔥");
       // Debug: analyser la structure du tableau
       debugTableStructure();
       applyStatusFilter(filter);
     }, 1500);
-  } else {
-    console.log("🔥 FILTRAGE AUTO NON ACTIVE:", { autoFilter, filter });
   }
 }
 
@@ -8092,50 +8084,42 @@ function debugTableStructure() {
 
 // Fonction pour appliquer le filtre de statut
 function applyStatusFilter(filterType) {
-  console.log("*** DEBUT applyStatusFilter ***");
-  console.log("filterType recu:", filterType);
-
   const table = document.querySelector("#deliveryTable, #mainTable, table");
   if (!table) {
-    console.log("ERREUR: Tableau non trouve pour le filtrage");
+    console.log("Tableau non trouvé pour le filtrage");
     return;
   }
 
-  console.log("*** Tableau trouve:", table);
-  console.log("*** Type de filtre:", filterType);
+  console.log("Tableau trouvé:", table);
+  console.log("Type de filtre:", filterType);
 
   const rows = table.querySelectorAll("tbody tr");
-  console.log("*** Nombre de lignes trouvees:", rows.length);
+  console.log("Nombre de lignes trouvées:", rows.length);
 
   let filteredCount = 0;
 
   rows.forEach((row, index) => {
-    console.log(`*** ANALYSE LIGNE ${index} ***`);
     let shouldShow = false;
 
     if (filterType === "livre") {
-      console.log("  -> Appel isRowCompletelyDelivered");
+      // Filtrer pour afficher UNIQUEMENT les dossiers entièrement livrés
       shouldShow = isRowCompletelyDelivered(row);
     } else if (filterType === "mise_en_livraison") {
-      console.log("  -> Appel isRowInDeliveryProgress");
+      // Filtrer pour afficher UNIQUEMENT les dossiers en cours de livraison (non entièrement livrés)
       shouldShow = isRowInDeliveryProgress(row);
-      console.log("  -> Resultat isRowInDeliveryProgress:", shouldShow);
     }
 
-    console.log(`*** Ligne ${index}: ShouldShow=${shouldShow} ***`);
+    console.log(`Ligne ${index}: ShouldShow=${shouldShow}`);
 
     if (shouldShow) {
       row.style.display = "";
       filteredCount++;
-      console.log(`  -> AFFICHE ligne ${index}`);
     } else {
       row.style.display = "none";
-      console.log(`  -> CACHE ligne ${index}`);
     }
   });
 
-  console.log("*** FILTRAGE TERMINE ***");
-  console.log("Nombre total de lignes filtrees:", filteredCount);
+  console.log("Nombre total de lignes filtrées:", filteredCount);
 
   // Ajouter un indicateur visuel du filtrage actif
   addFilterIndicator(filterType, filteredCount);
@@ -8260,82 +8244,101 @@ function isRowCompletelyDelivered(row) {
 // Fonction pour vérifier si un dossier est en cours de livraison
 function isRowInDeliveryProgress(row) {
   const cells = row.querySelectorAll("td");
-  let hasAnyLivreStatus = false;
+  let hasAnyGreenLivreButton = false;
+  let hasAttenteMiseEnLivraison = false;
   let debugInfo = [];
-
-  console.log("=== DEBUT ANALYSE LIGNE ===");
-  console.log("Nombre de cellules:", cells.length);
 
   cells.forEach((cell, index) => {
     const cellText = cell.textContent.toLowerCase().trim();
     const cellHTML = cell.innerHTML;
 
-    console.log(`Cell ${index}:`);
-    console.log("  - Texte:", cellText);
-    console.log("  - HTML:", cellHTML);
+    // Detecter les boutons "Livre" avec le texte
+    const hasLivreText =
+      cellText.includes("livre") || cellHTML.toLowerCase().includes("livre");
 
-    // DETECTION ULTRA LARGE : Chercher "Livré" sous TOUTES ses formes
-
-    // 1. Detecter le texte "livre" exact
-    if (cellText === "livre") {
-      hasAnyLivreStatus = true;
-      debugInfo.push(`Cell ${index}: TEXTE LIVRE EXACT`);
-      console.log(`  *** DETECTION: TEXTE LIVRE EXACT ***`);
-    }
-
-    // 2. Detecter "livre" dans le texte (memedsd avec accents)
-    if (cellText.includes("livre") || cellText.includes("livré")) {
-      hasAnyLivreStatus = true;
-      debugInfo.push(`Cell ${index}: TEXTE CONTIENT LIVRE`);
-      console.log(`  *** DETECTION: TEXTE CONTIENT LIVRE ***`);
-    }
-
-    // 3. Detecter "Livre" dans le HTML (meme avec accents)
-    if (
-      cellHTML.includes("Livre") ||
-      cellHTML.includes("Livré") ||
-      cellHTML.includes("livre") ||
-      cellHTML.includes("livré")
-    ) {
-      hasAnyLivreStatus = true;
-      debugInfo.push(`Cell ${index}: HTML CONTIENT LIVRE`);
-      console.log(`  *** DETECTION: HTML CONTIENT LIVRE ***`);
-    }
-
-    // 4. Detecter TOUS les boutons verts (peu importe le texte)
-    if (
+    // Detecter les classes CSS vertes
+    const hasGreenClass =
       cellHTML.includes("btn-success") ||
       cellHTML.includes("badge-success") ||
       cellHTML.includes("bg-success") ||
+      cellHTML.includes("text-success") ||
+      cellHTML.includes("btn-primary") ||
+      cellHTML.includes("bg-green") ||
+      cellHTML.includes("green");
+
+    // Detecter les styles inline verts
+    const hasGreenStyle =
       cellHTML.includes("#22c55e") ||
       cellHTML.includes("color:#22c55e") ||
       cellHTML.includes("background:#e6fff5") ||
-      cellHTML.includes("green")
-    ) {
-      console.log(`  *** ELEMENT VERT TROUVE dans cellule ${index} ***`);
+      cellHTML.includes("border:1.5px solid #22c55e") ||
+      cellHTML.includes("background-color: green") ||
+      cellHTML.includes("color: green") ||
+      cellHTML.includes("rgb(34, 197, 94)") ||
+      cellHTML.includes("background: green");
 
-      // Si c'est vert ET contient "livre" sous n'importe quelle forme
-      if (
-        cellHTML.toLowerCase().includes("livre") ||
-        cellHTML.toLowerCase().includes("livré")
-      ) {
-        hasAnyLivreStatus = true;
-        debugInfo.push(`Cell ${index}: BOUTON VERT + LIVRE`);
-        console.log(`  *** DETECTION: BOUTON VERT + LIVRE ***`);
+    // Detecter elements avec selecteurs
+    const greenButton = cell.querySelector(
+      "button.btn-success, .badge-success, .bg-success, .text-success, .btn-primary"
+    );
+    const hasGreenElement = greenButton !== null;
+
+    const hasGreenStyleButton = cell.querySelector(
+      'button[style*="green"], button[style*="#22c55e"], .btn[style*="green"]'
+    );
+
+    // Si c'est un bouton "Livre" avec des indicateurs verts
+    if (
+      hasLivreText &&
+      (hasGreenClass || hasGreenStyle || hasGreenElement || hasGreenStyleButton)
+    ) {
+      hasAnyGreenLivreButton = true;
+      debugInfo.push("Cell " + index + ": BOUTON LIVRE DETECTE");
+    }
+
+    // Detecter aussi les badges simples "Livre"
+    if (
+      cellHTML.includes("Livre") &&
+      (cellHTML.includes("<button") ||
+        cellHTML.includes("badge") ||
+        cellHTML.includes("span"))
+    ) {
+      const potentialLivreStatus =
+        !cellText.includes("non livre") &&
+        !cellText.includes("mise en livraison") &&
+        !cellText.includes("attente") &&
+        !cellText.includes("partiel");
+
+      if (potentialLivreStatus) {
+        hasAnyGreenLivreButton = true;
+        debugInfo.push("Cell " + index + ": STATUT LIVRE SIMPLE DETECTE");
       }
     }
 
-    console.log(`  - Statut detecte: ${hasAnyLivreStatus ? "OUI" : "NON"}`);
+    // Detecter mise en livraison
+    if (
+      cellText.includes("en attente de mise en livraison") ||
+      cellText.includes("attente de mise") ||
+      (cellText.includes("attente") && cellText.includes("mise")) ||
+      cellText.includes("mise en livraison") ||
+      cellText.includes("en cours")
+    ) {
+      hasAttenteMiseEnLivraison = true;
+      debugInfo.push("Cell " + index + ": MISE EN LIVRAISON DETECTE");
+    }
   });
 
-  // REGLE ABSOLUE : Si il y a UN SEUL indicateur "Livre" -> EXCLURE COMPLETEMENT
-  const result = !hasAnyLivreStatus;
+  // REGLE: Si il y a un bouton "Livre" -> EXCLURE du filtre "Mise en livraison"
+  const result = !hasAnyGreenLivreButton;
 
-  console.log("=== RESULTAT FINAL ===");
-  console.log("hasAnyLivreStatus:", hasAnyLivreStatus);
-  console.log("result (inclure dans filtre):", result);
-  console.log("Debug:", debugInfo.join(" | "));
-  console.log("=== FIN ANALYSE LIGNE ===\n");
+  console.log("ANALYSE Mise en Livraison:", {
+    ligne: row.rowIndex || "N/A",
+    hasLivreButton: hasAnyGreenLivreButton,
+    hasMiseEnLivraison: hasAttenteMiseEnLivraison,
+    resultat: result,
+    debug:
+      debugInfo.length > 0 ? debugInfo.join(" | ") : "Aucun statut detecte",
+  });
 
   return result;
 }
@@ -8418,7 +8421,6 @@ function clearAutoFilter() {
 
 // Initialiser le filtrage automatique au chargement de la page
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("🔥🔥🔥 DOMContentLoaded DECLENCHE 🔥🔥🔥");
   applyAutoFilterFromURL();
 });
 
@@ -8429,5 +8431,5 @@ document.addEventListener("DOMContentLoaded", function () {
 // ========================================================================
 // === FIN GESTION DES DOSSIERS EN RETARD ===
 // ========================================================================
-/**12345 */
+/**12345678910 */
 /**JESUS MA FORCE  */
