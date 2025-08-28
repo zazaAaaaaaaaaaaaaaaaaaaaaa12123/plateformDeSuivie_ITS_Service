@@ -4,6 +4,23 @@
   -webkit-backdrop-filter: blur(25px) !important;
 }
 
+/* === MASQUER ÉLÉMENT DÉCORATIF BLANC === */
+/* Cache spécifiquement l'élément blanc décoratif dans le coin supérieur droit */
+body::before,
+body::after,
+.layout::before,
+.layout::after,
+.enterprise-intro::before,
+.enterprise-intro::after {
+  display: none !important;
+}
+
+/* Cache les éléments avec position absolue dans le coin supérieur droit ayant un background blanc */
+div[style*="position: absolute"][style*="top: "][style*="right: "][style*="background"],
+div[style*="position:absolute"][style*="top:"][style*="right:"][style*="background"] {
+  display: none !important;
+}
+
 .enterprise-modal-container {
   box-shadow: none !important;
 }
