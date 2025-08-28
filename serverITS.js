@@ -2486,20 +2486,55 @@ app.get("/deliveries/status", async (req, res) => {
 // ROUTE : GET - Récupération des données d'échange pour le système PHP
 app.get("/api/exchange/data", async (req, res) => {
   try {
-    const { dossier_number, bl_number, start_date, end_date } = req.query;
+    const {
+      dossier_number,
+      bl_number,
+      start_date,
+      end_date,
+      groupe_par_statut,
+    } = req.query;
 
     let query = `
       SELECT 
         id, 
+        employee_name,
+        delivery_date,
+        delivery_time,
+        client_name,
+        client_phone,
+        container_type_and_content,
+        lieu,
+        container_number,
+        container_foot_type,
+        declaration_number,
+        number_of_containers,
+        bl_number,
         dossier_number, 
-        bl_number, 
+        shipping_company,
+        transporter,
+        weight,
+        ship_name,
+        circuit,
+        number_of_packages,
+        transporter_mode,
+        nom_agent_visiteur,
+        inspecteur,
+        agent_en_douanes,
+        driver_name,
+        driver_phone,
+        truck_registration,
+        delivery_notes,
+        status,
+        is_eir_received,
+        delivery_status_acconier,
+        observation_acconier,
+        created_at,
+        container_statuses,
+        bl_statuses,
         paiement_acconage,
         date_echange_bl,
         date_do,
-        date_badt,
-        client_name,
-        created_at,
-        delivery_date
+        date_badt
       FROM livraison_conteneur 
       WHERE 1=1
     `;
@@ -2536,12 +2571,42 @@ app.get("/api/exchange/data", async (req, res) => {
 
     const result = await pool.query(query, queryParams);
 
-    res.json({
-      success: true,
-      data: result.rows,
-      count: result.rows.length,
-      timestamp: new Date().toISOString(),
-    });
+    // Si on demande un groupement par statut (API 3 en 1)
+    if (groupe_par_statut === "true") {
+      const allDossiers = result.rows;
+
+      const groupedData = {
+        // TOUS LES DOSSIERS (pas de filtre)
+        dossiers_soumis: allDossiers,
+
+        // FILTRÉ : Seulement mise en livraison
+        dossiers_mise_en_livraison: allDossiers.filter(
+          (d) =>
+            d.status === "mise_en_livraison" || d.status === "Mise en livraison"
+        ),
+
+        // FILTRÉ : Seulement livrés
+        dossiers_livres: allDossiers.filter(
+          (d) =>
+            d.status === "livre" || d.status === "Livré" || d.status === "livré"
+        ),
+      };
+
+      res.json({
+        success: true,
+        data: groupedData,
+        count: result.rows.length,
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      // Comportement original (sans groupement)
+      res.json({
+        success: true,
+        data: result.rows,
+        count: result.rows.length,
+        timestamp: new Date().toISOString(),
+      });
+    }
   } catch (err) {
     console.error("[GET /api/exchange/data] Erreur:", err);
     res.status(500).json({

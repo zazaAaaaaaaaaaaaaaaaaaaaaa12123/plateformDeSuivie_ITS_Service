@@ -1,8 +1,2 @@
-GET dossiv.ci/api/exchange/data
-PUT dossiv.ci/api/exchange/update/[ID]  
-POST dossiv.ci/api/exchange/bulk-update
-
-
-
-
-Ensuite dans le cas de archive L'onglet de "Toutes les archives" n'affiche pas le bon nombre dans son badge , je veux que le bon nombre soit afficher , ce nombre doit etre recuperer depuis le badge de la carte dossier soumis qui se trouve sur cette image 2 . C'ets aussi pareil pour l'onglet de "Dossier livré " qu'il prenne aussi le vrai nom depuis la carte dossier livré sur l'image 2 . C'est aussi pareil pour le cas de l'onglet "Mis en Livraison"  qu'il retourne lui aussi le vrai nombre depuis la carte de dossier Mise en livraison . Donc En gros de la maniere que les carte sur la deuxieme image interfere bien en terme de nombre il faus aussi que les onglet dans les archives , les nombre des dossier dan sles onglet interfer bien aussi Quand un dossier est ajouter ou retiré . Donc fais le . Et aussi une seconde chose , 
+Ensuite dans le cas de archive L'onglet de "Toutes les archives" n'affiche pas le bon nombre dans son badge , je veux que le bon nombre soit afficher , ce nombre doit etre recuperer depuis le badge de la carte dossier soumis qui se trouve sur cette image 2 . C'ets aussi pareil pour l'onglet de "Dossier livré " qu'il prenne aussi le vrai nom depuis la carte dossier livré sur l'image 2 . C'est aussi pareil pour le cas de l'onglet "Mis en Livraison"  qu'il retourne lui aussi le vrai nombre depuis la carte de dossier Mise en livraison . Donc En gros de la maniere que les carte sur la deuxieme image interfere bien en terme de nombre il faus aussi que les onglet dans les archives , les nombre des dossier dans les onglet interfer bien aussi Quand un dossier est ajouter ou retiré . Donc fais le . Et aussi une seconde chose , 
+2487-2609; Ligne pour l'API 3 en 1 

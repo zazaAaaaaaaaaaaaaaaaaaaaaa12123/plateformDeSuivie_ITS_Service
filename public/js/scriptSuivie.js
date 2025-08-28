@@ -6067,46 +6067,27 @@ function mapStatus(status) {
     }
 
     try {
-      if (
-        !agentActivityBox ||
-        !agentActivityHeaderTitle ||
-        !agentDailyDeliveriesTableBody ||
-        !agentSummarySection ||
-        !agentDailyDeliveriesTable // Added check for the full table element
-      ) {
-        console.error("Missing agent activity box DOM elements.");
-        showCustomAlert(
-          "Impossible d'afficher le suivi de l'agent (éléments manquants).",
-          "error"
-        );
-        return;
-      }
-
       dateToDisplay = normalizeDateToMidnight(dateToDisplay);
-      const nextDay = new Date(dateToDisplay);
-      nextDay.setDate(nextDay.getDate() + 1);
 
-      // MODIFICATION ICI : Filtrer par `created_at` au lieu de `delivery_date`
+      // Filtrer par `created_at` au lieu de `delivery_date`
       const agentDailyDeliveries = deliveries.filter((d) => {
-        // Ensure d.created_at is a valid Date object before comparison.
         const createdAtDate =
           d.created_at instanceof Date && !isNaN(d.created_at.getTime())
             ? normalizeDateToMidnight(d.created_at)
-            : null; // Set to null if not a valid Date
+            : null;
 
         return (
           d.employee_name === agentName &&
-          createdAtDate && // Ensure createdAtDate is not null
-          createdAtDate.getTime() === dateToDisplay.getTime() // Compare timestamps
+          createdAtDate &&
+          createdAtDate.getTime() === dateToDisplay.getTime()
         );
       });
 
-      // Calculate 3 years ago from today's date
+      // Calculer les données des 3 dernières années
       const threeYearsAgo = new Date();
       threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
-      threeYearsAgo.setHours(0, 0, 0, 0); // Normalize to start of the day
+      threeYearsAgo.setHours(0, 0, 0, 0);
 
-      // Filter all agent deliveries to only include those within the last 3 years
       const allAgentDeliveriesFilteredByDate = deliveries.filter(
         (d) =>
           d.employee_name === agentName &&
@@ -6116,381 +6097,18 @@ function mapStatus(status) {
       );
 
       agentDailyDeliveries.sort((a, b) => {
-        // Sort by created_at (submission time) for chronological order of agent's actions
-        const timeA = a.created_at || new Date(0); // Fallback to epoch if created_at is missing
-        const timeB = b.created_at || new Date(0); // Fallback to epoch if created_at is missing
+        const timeA = a.created_at || new Date(0);
+        const timeB = b.created_at || new Date(0);
         return timeA.getTime() - timeB.getTime();
       });
 
-      const formattedDate = dateToDisplay.toLocaleDateString("fr-FR");
-      // Update header title and buttons
-      agentActivityHeaderTitle.innerHTML = `
-        <div class="header-title">Suivi de l'agent : ${agentName} — ${formattedDate}</div>
-        <div class="header-buttons">
-          <!-- Removed "Gérer les colonnes" button -->
-          <button class="delete-daily-agent-deliveries-btn" title="Supprimer les opérations de cet agent pour cette journée">
-            <i class="fas fa-trash-alt mr-1"></i> Supprimer les opérations du jour
-          </button>
-        </div>
-      `;
-
-      // Get the new buttons by their specific classes
-      const deleteDailyDeliveriesButton =
-        agentActivityHeaderTitle.querySelector(
-          ".delete-daily-agent-deliveries-btn"
-        );
-      if (deleteDailyDeliveriesButton) {
-        deleteDailyDeliveriesButton.addEventListener("click", () => {
-          const deliveryIdsToDelete = agentDailyDeliveries.map((d) => d.id);
-          if (deliveryIdsToDelete.length === 0) {
-            showCustomAlert(
-              "Aucune opération à supprimer pour cette journée.",
-              "info"
-            );
-            return;
-          }
-          showConfirmationModal(
-            `Êtes-vous sûr de vouloir supprimer les ${deliveryIdsToDelete.length} opérations de l'agent "${agentName}" pour le ${formattedDate} ? Cette action est irréversible.`,
-            async () => {
-              await deleteDeliveries(deliveryIdsToDelete);
-              // After deletion, refresh the agent activity box to reflect changes
-              showAgentActivity(agentName, dateToDisplay);
-            }
-          );
-        });
-      }
-
-      // Removed manageColumnsBtn logic as the button is removed
-
-      // Total columns for agent activity table (should match the HTML's <thead> count)
-      // Count them manually from HTML: N°, Agent, Client (Nom), Client (Tél), Numéro TC(s), Lieu, Type Conteneur (pied), Contenu, N° Déclaration, N° BL, N° Dossier, Nombre de conteneurs, Compagnie Maritime, Poids, Nom du navire, Circuit, Mode de Transport, Statut de livraison (Resp. Aconiés), Observations (Resp. Aconiés), Nom agent visiteur, Transporteur, Inspecteur, Agent en Douanes, Chauffeur, Immatriculation, Tél. Chauffeur, Date Livraison, Statut, Observations
-      // Total: 28 columns + 1 (Action) = 29 columns
-      const AGENT_TABLE_COLUMN_COUNT = AGENT_TABLE_COLUMNS.length; // Use the defined array length
-
-      agentDailyDeliveriesTableBody.innerHTML = "";
-      // Appliquer la couleur sur les entêtes concernés (bleu, jaune, vert)
-      if (agentDailyDeliveriesTable && agentDailyDeliveriesTable.tHead) {
-        const ths = agentDailyDeliveriesTable.tHead.querySelectorAll("th");
-        AGENT_TABLE_COLUMNS.forEach((col, idx) => {
-          if (col.id === "employee_name" && ths[idx]) {
-            ths[idx].classList.add("th-agent-acconier");
-          }
-          if (col.id === "delivery_status_acconier" && ths[idx]) {
-            ths[idx].classList.add("th-resp-acconier");
-          }
-          if (col.id === "driver_name" && ths[idx]) {
-            ths[idx].classList.add("th-resp-livraison");
-          }
-        });
-      }
-      if (agentDailyDeliveries.length === 0) {
-        agentDailyDeliveriesTableBody.innerHTML = `
-                                <tr>
-                                    <td colspan="${AGENT_TABLE_COLUMN_COUNT}" class="text-center py-4 text-gray-500">Aucune livraison trouvée pour cet agent à cette date.</td>
-                                </tr>
-                            `;
-      } else {
-        agentDailyDeliveries.forEach((delivery, idx) => {
-          const row = agentDailyDeliveriesTableBody.insertRow();
-          // Populate cells based on AGENT_TABLE_COLUMNS definition
-          AGENT_TABLE_COLUMNS.forEach((col) => {
-            const cell = row.insertCell();
-            cell.dataset.columnId = col.id; // Add data attribute for column identification
-            if (col.id === "numero") {
-              cell.textContent = idx + 1;
-            } else if (col.id === "delivery_status_acconier") {
-              const acconierStatusInfo = getStatusInfo(
-                delivery.delivery_status_acconier
-              );
-              cell.innerHTML = `<span class="${acconierStatusInfo.tailwindColorClass}"><i class="fas ${acconierStatusInfo.iconClass} mr-1" style="color:${acconierStatusInfo.hexColor};"></i> ${acconierStatusInfo.text}</span>`;
-            } else if (col.id === "created_at") {
-              cell.textContent = delivery.created_at
-                ? delivery.created_at.toLocaleString("fr-FR")
-                : "-";
-            } else if (col.id === "statut" || col.id === "status") {
-              // Affichage du statut "X sur Y livrés" comme dans le tableau général
-              // On récupère toutes les livraisons du même dossier
-              const dossierNumber = delivery.dossier_number;
-              const allSameDossier = deliveries.filter(
-                (d) => d.dossier_number === dossierNumber
-              );
-              // Agrège tous les numéros de conteneur du dossier (pour éviter les doublons)
-              let allContainers = [];
-              allSameDossier.forEach((d) => {
-                let tcList = [];
-
-                // Prioriser container_numbers_list sur container_number
-                if (
-                  d.container_numbers_list &&
-                  Array.isArray(d.container_numbers_list) &&
-                  d.container_numbers_list.length > 0
-                ) {
-                  tcList = d.container_numbers_list.filter(Boolean);
-                } else if (d.container_number) {
-                  if (d.container_number.includes("+")) {
-                    console.warn(
-                      `[HISTORY SYNC] ⚠️ Données tronquées détectées pour ${d.id}: ${d.container_number}`
-                    );
-                    // Utiliser seulement le premier conteneur visible pour l'affichage
-                    tcList = [d.container_number.split("+")[0].trim()];
-                  } else if (Array.isArray(d.container_number)) {
-                    tcList = d.container_number.filter(Boolean);
-                  } else if (typeof d.container_number === "string") {
-                    tcList = d.container_number
-                      .split(/[,;\s]+/)
-                      .filter(Boolean);
-                  }
-                }
-
-                allContainers = allContainers.concat(tcList);
-              });
-              allContainers = Array.from(new Set(allContainers));
-              const total = allContainers.length;
-              // Statut de chaque conteneur : livré ou non ?
-              let delivered = 0;
-              allContainers.forEach((tc) => {
-                const found = allSameDossier.find((d) => {
-                  let tcList = [];
-                  if (Array.isArray(d.container_number)) {
-                    tcList = d.container_number.filter(Boolean);
-                  } else if (typeof d.container_number === "string") {
-                    tcList = d.container_number
-                      .split(/[,;\s]+/)
-                      .filter(Boolean);
-                  }
-                  return tcList.includes(tc);
-                });
-                let isDelivered = false;
-                if (found && found.container_statuses) {
-                  if (
-                    typeof found.container_statuses === "object" &&
-                    !Array.isArray(found.container_statuses)
-                  ) {
-                    const status = found.container_statuses[tc];
-                    if (
-                      typeof status === "string" &&
-                      ["delivered", "livré", "livree", "livreee"].includes(
-                        status.trim().toLowerCase()
-                      )
-                    ) {
-                      isDelivered = true;
-                    }
-                  } else if (Array.isArray(found.container_statuses)) {
-                    let tcList = [];
-                    if (Array.isArray(found.container_number)) {
-                      tcList = found.container_number.filter(Boolean);
-                    } else if (typeof found.container_number === "string") {
-                      tcList = found.container_number
-                        .split(/[,;\s]+/)
-                        .filter(Boolean);
-                    }
-                    const idx = tcList.indexOf(tc);
-                    if (
-                      idx !== -1 &&
-                      typeof found.container_statuses[idx] === "string" &&
-                      found.container_statuses[idx].trim().toLowerCase() ===
-                        "delivered"
-                    ) {
-                      isDelivered = true;
-                    }
-                  }
-                } else if (found && typeof found.status === "string") {
-                  const s = found.status.trim().toLowerCase();
-                  if (s === "livré" || s === "delivered") {
-                    isDelivered = true;
-                  }
-                }
-                if (isDelivered) {
-                  delivered++;
-                }
-              });
-              // Affichage dynamique
-              const box = document.createElement("div");
-              box.style.display = "inline-block";
-              box.style.padding = "4px 12px";
-              box.style.borderRadius = "8px";
-              box.style.fontWeight = "bold";
-              box.style.fontSize = "0.98em";
-              box.style.letterSpacing = "0.5px";
-              box.style.boxShadow = "0 1px 6px rgba(30,41,59,0.07)";
-              box.style.border = "1.5px solid #eab308";
-              box.style.background =
-                delivered === total && total > 0 ? "#dcfce7" : "#fef9c3";
-              box.style.color =
-                delivered === total && total > 0 ? "#15803d" : "#a16207";
-              if (total === 0) {
-                box.textContent = "-";
-              } else if (delivered === 0) {
-                box.textContent = `0 sur ${total} livrés`;
-              } else if (delivered === total) {
-                box.textContent =
-                  total === 1 ? "Livré" : `${total}/${total} livrés`;
-              } else {
-                box.textContent = `${delivered} sur ${total} livrés`;
-              }
-              // Ajout du tooltip flottant au survol du statut
-              box.style.cursor = "pointer";
-              box.addEventListener("mouseenter", function (e) {
-                // Supprimer tout tooltip existant
-                document
-                  .querySelectorAll(".agent-status-tooltip")
-                  .forEach((t) => t.remove());
-                const tooltip = document.createElement("div");
-                tooltip.className = "agent-status-tooltip";
-                tooltip.style.position = "fixed";
-                tooltip.style.zIndex = 9999;
-                tooltip.style.background = "#fffbe8";
-                tooltip.style.border = "1.5px solid #eab308";
-                tooltip.style.borderRadius = "10px";
-                tooltip.style.boxShadow = "0 4px 24px rgba(30,41,59,0.13)";
-                tooltip.style.padding = "12px 18px";
-                tooltip.style.fontSize = "1em";
-                tooltip.style.color = "#444";
-                tooltip.style.minWidth = "220px";
-                tooltip.style.maxWidth = "350px";
-                tooltip.style.pointerEvents = "none";
-                tooltip.style.transition = "opacity 0.18s";
-                // Construction du contenu détaillé
-                let html = `<div style='font-weight:bold;margin-bottom:6px;'>Détail des statuts des conteneurs :</div>`;
-                if (allContainers.length === 0) {
-                  html += `<div style='color:#888;'>Aucun conteneur trouvé pour ce dossier.</div>`;
-                } else {
-                  html += `<ul style='padding-left:0;margin:0;'>`;
-                  allContainers.forEach((tc) => {
-                    const found = allSameDossier.find((d) => {
-                      let tcList = [];
-                      if (Array.isArray(d.container_number)) {
-                        tcList = d.container_number.filter(Boolean);
-                      } else if (typeof d.container_number === "string") {
-                        tcList = d.container_number
-                          .split(/[,;\s]+/)
-                          .filter(Boolean);
-                      }
-                      return tcList.includes(tc);
-                    });
-                    let status = "-";
-                    let color = "#a16207";
-                    let icon = "fa-box";
-                    if (found && found.container_statuses) {
-                      if (
-                        typeof found.container_statuses === "object" &&
-                        !Array.isArray(found.container_statuses)
-                      ) {
-                        const s = found.container_statuses[tc];
-                        if (typeof s === "string") {
-                          if (
-                            [
-                              "delivered",
-                              "livré",
-                              "livree",
-                              "livreee",
-                            ].includes(s.trim().toLowerCase())
-                          ) {
-                            status = "Livré";
-                            color = "#15803d";
-                            icon = "fa-check-circle";
-                          } else {
-                            status = s;
-                          }
-                        }
-                      } else if (Array.isArray(found.container_statuses)) {
-                        let tcList = [];
-                        if (Array.isArray(found.container_number)) {
-                          tcList = found.container_number.filter(Boolean);
-                        } else if (typeof found.container_number === "string") {
-                          tcList = found.container_number
-                            .split(/[,;\s]+/)
-                            .filter(Boolean);
-                        }
-                        const idx = tcList.indexOf(tc);
-                        if (
-                          idx !== -1 &&
-                          typeof found.container_statuses[idx] === "string"
-                        ) {
-                          const s = found.container_statuses[idx];
-                          if (s.trim().toLowerCase() === "delivered") {
-                            status = "Livré";
-                            color = "#15803d";
-                            icon = "fa-check-circle";
-                          } else {
-                            status = s;
-                          }
-                        }
-                      }
-                    } else if (found && typeof found.status === "string") {
-                      const s = found.status.trim().toLowerCase();
-                      if (s === "livré" || s === "delivered") {
-                        status = "Livré";
-                        color = "#15803d";
-                        icon = "fa-check-circle";
-                      } else {
-                        status = found.status;
-                      }
-                    }
-                    html += `<li style='list-style:none;margin-bottom:2px;display:flex;align-items:center;'><i class='fas ${icon}' style='color:${color};margin-right:7px;'></i><span style='font-weight:500;'>${tc}</span> <span style='margin-left:10px;color:${color};font-weight:bold;'>${status}</span></li>`;
-                  });
-                  html += `</ul>`;
-                }
-                tooltip.innerHTML = html;
-                document.body.appendChild(tooltip);
-                // Positionnement du tooltip
-                const rect = box.getBoundingClientRect();
-                let top = rect.bottom + 8;
-                let left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
-                if (left < 8) left = 8;
-                if (left + tooltip.offsetWidth > window.innerWidth - 8)
-                  left = window.innerWidth - tooltip.offsetWidth - 8;
-                if (top + tooltip.offsetHeight > window.innerHeight - 8)
-                  top = rect.top - tooltip.offsetHeight - 8;
-                if (top < 8) top = 8;
-                tooltip.style.left = `${left}px`;
-                tooltip.style.top = `${top}px`;
-                tooltip.style.opacity = 1;
-                // Disparition automatique
-                const removeTooltip = () => {
-                  tooltip.style.opacity = 0;
-                  setTimeout(() => {
-                    tooltip.remove();
-                  }, 180);
-                };
-                box.addEventListener("mouseleave", removeTooltip, {
-                  once: true,
-                });
-                window.addEventListener("scroll", removeTooltip, {
-                  once: true,
-                });
-                window.addEventListener("resize", removeTooltip, {
-                  once: true,
-                });
-              });
-              cell.appendChild(box);
-            } else if (col.id === "actions") {
-              const deleteButton = document.createElement("button");
-              deleteButton.className =
-                "btn btn-sm btn-danger delete-individual-delivery-btn";
-              deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-              deleteButton.title = "Supprimer cette opération";
-              deleteButton.addEventListener("click", (e) => {
-                e.stopPropagation(); // Prevent row click from interfering
-                deleteDelivery(delivery.id); // Call the function to delete a single delivery
-              });
-              cell.appendChild(deleteButton);
-            } else {
-              cell.textContent = delivery[col.id] || "-";
-            }
-          });
-        });
-      }
-      // Apply column visibility after rendering the table - REMOVED
-      // applyColumnVisibility(agentDailyDeliveriesTable, loadColumnVisibility(agentName));
-
-      // Call updateAgentSummary AFTER the table is populated
-      updateAgentSummary(
+      // Créer la nouvelle modal moderne
+      createModernAgentModal(
         agentName,
+        dateToDisplay,
         agentDailyDeliveries,
         allAgentDeliveriesFilteredByDate
-      ); // Use filtered data here
-      showAgentActivityBox();
+      );
     } catch (error) {
       console.error("Error displaying agent activity:", error);
       showCustomAlert(`Erreur : ${error.message}`, "error");
@@ -6499,6 +6117,691 @@ function mapStatus(status) {
         loadingOverlay.style.display = "none";
       }
     }
+  }
+
+  function createModernAgentModal(
+    agentName,
+    dateToDisplay,
+    dailyDeliveries,
+    allDeliveries
+  ) {
+    // Supprimer toute modal existante
+    const existingModal = document.querySelector(".modern-agent-modal");
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    const formattedDate = dateToDisplay.toLocaleDateString("fr-FR");
+
+    // Créer l'overlay principal
+    const modalOverlay = document.createElement("div");
+    modalOverlay.className = "modern-agent-modal-overlay";
+    modalOverlay.innerHTML = `
+      <div class="modern-agent-modal">
+        <div class="modern-modal-header">
+          <div class="agent-header-info">
+            <div class="agent-avatar-circle">
+              <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="agent-title-section">
+              <h1 class="agent-modal-title">${agentName}</h1>
+              <div class="date-navigation">
+                <button class="date-nav-btn" id="prevDate" title="Jour précédent">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <p class="agent-modal-subtitle">Activité du ${formattedDate}</p>
+                <button class="date-nav-btn" id="nextDate" title="Jour suivant">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+              <div class="quick-stats">
+                <span class="stat-badge">
+                  <i class="fas fa-tasks"></i>
+                  ${dailyDeliveries.length} opération(s) aujourd'hui
+                </span>
+                <span class="stat-badge">
+                  <i class="fas fa-history"></i>
+                  ${allDeliveries.length} opérations totales
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="modern-btn danger-btn" id="deleteAllDailyOps">
+              <i class="fas fa-trash-alt"></i>
+              Supprimer les opérations du jour
+            </button>
+            <button class="modern-btn secondary-btn" id="closeAgentModal">
+              <i class="fas fa-times"></i>
+              Fermer
+            </button>
+          </div>
+        </div>
+
+        <div class="modern-modal-body">
+          <div class="tab-navigation">
+            <button class="tab-btn active" data-tab="operations">
+              <i class="fas fa-list"></i>
+              Opérations du jour
+            </button>
+            <button class="tab-btn" data-tab="analytics">
+              <i class="fas fa-chart-bar"></i>
+              Analyses & Statistiques
+            </button>
+            <button class="tab-btn" data-tab="history">
+              <i class="fas fa-history"></i>
+              Historique complet
+            </button>
+          </div>
+
+          <div class="tab-content">
+            <div class="tab-panel active" id="operations-panel">
+              <div class="operations-header">
+                <h3>Opérations du ${formattedDate}</h3>
+                <div class="operations-summary">
+                  ${
+                    dailyDeliveries.length > 0
+                      ? `
+                    <div class="summary-cards">
+                      <div class="summary-card operations-card">
+                        <i class="fas fa-shipping-fast"></i>
+                        <div class="card-content">
+                          <span class="card-number">${
+                            dailyDeliveries.length
+                          }</span>
+                          <span class="card-label">Opérations</span>
+                        </div>
+                      </div>
+                      <div class="summary-card containers-card">
+                        <i class="fas fa-boxes"></i>
+                        <div class="card-content">
+                          <span class="card-number">${dailyDeliveries.reduce(
+                            (sum, d) => sum + (d.number_of_containers || 0),
+                            0
+                          )}</span>
+                          <span class="card-label">Conteneurs</span>
+                        </div>
+                      </div>
+                      <div class="summary-card dossiers-card">
+                        <i class="fas fa-file-alt"></i>
+                        <div class="card-content">
+                          <span class="card-number">${
+                            new Set(
+                              dailyDeliveries
+                                .map((d) => d.dossier_number)
+                                .filter(Boolean)
+                            ).size
+                          }</span>
+                          <span class="card-label">Dossiers</span>
+                        </div>
+                      </div>
+                    </div>
+                  `
+                      : ""
+                  }
+                </div>
+              </div>
+              <div class="operations-table-container">
+                ${createOperationsTable(dailyDeliveries)}
+              </div>
+            </div>
+
+            <div class="tab-panel" id="analytics-panel">
+              ${createAnalyticsPanel(allDeliveries)}
+            </div>
+
+            <div class="tab-panel" id="history-panel">
+              ${createHistoryPanel(allDeliveries)}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modalOverlay);
+
+    // Ajouter les event listeners
+    setupModalEventListeners(
+      modalOverlay,
+      agentName,
+      dateToDisplay,
+      dailyDeliveries
+    );
+  }
+
+  function createOperationsTable(deliveries) {
+    if (deliveries.length === 0) {
+      return `
+        <div class="empty-state">
+          <i class="fas fa-clipboard-list"></i>
+          <h4>Aucune opération</h4>
+          <p>Aucune opération trouvée pour cette date.</p>
+        </div>
+      `;
+    }
+
+    let tableHTML = `
+      <div class="modern-table-wrapper">
+        <table class="modern-operations-table">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Client</th>
+              <th>Conteneurs</th>
+              <th>Lieu</th>
+              <th>Contenu</th>
+              <th>N° Dossier</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    deliveries.forEach((delivery, index) => {
+      const statusInfo = getStatusInfo(delivery.delivery_status_acconier);
+
+      tableHTML += `
+        <tr class="table-row" data-delivery-id="${delivery.id}">
+          <td><span class="row-number">${index + 1}</span></td>
+          <td>
+            <div class="client-info">
+              <div class="client-name">${delivery.client_name || "-"}</div>
+              ${
+                delivery.client_phone
+                  ? `<div class="client-phone">${delivery.client_phone}</div>`
+                  : ""
+              }
+            </div>
+          </td>
+          <td>
+            <div class="container-info">
+              <span class="container-count">${
+                delivery.number_of_containers || 1
+              }</span>
+              <span class="container-numbers">${
+                delivery.container_number || "-"
+              }</span>
+            </div>
+          </td>
+          <td><span class="location">${delivery.lieu || "-"}</span></td>
+          <td><span class="content">${
+            delivery.container_type_and_content || "-"
+          }</span></td>
+          <td><span class="dossier">${
+            delivery.dossier_number || "-"
+          }</span></td>
+          <td>
+            <span class="modern-status-badge" data-status="${
+              delivery.delivery_status_acconier || "unknown"
+            }" data-status-text="${statusInfo.text}">
+              <i class="fas ${statusInfo.iconClass}"></i>
+              <span class="status-text">${statusInfo.text}</span>
+            </span>
+          </td>
+          <td>
+            <button class="action-btn delete-btn" data-delivery-id="${
+              delivery.id
+            }" title="Supprimer">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    tableHTML += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    return tableHTML;
+  }
+
+  function createAnalyticsPanel(allDeliveries) {
+    const monthlyStats = calculateMonthlyStats(allDeliveries);
+    const statusDistribution = calculateStatusDistribution(allDeliveries);
+    const containerTypes = calculateContainerTypes(allDeliveries);
+
+    return `
+      <div class="analytics-container">
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <div class="card-header">
+              <h4><i class="fas fa-chart-line"></i> Statistiques générales</h4>
+            </div>
+            <div class="card-body">
+              <div class="stat-row">
+                <span class="stat-label">Total opérations :</span>
+                <span class="stat-value">${allDeliveries.length}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Conteneurs traités :</span>
+                <span class="stat-value">${allDeliveries.reduce(
+                  (sum, d) => sum + (d.number_of_containers || 0),
+                  0
+                )}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Dossiers uniques :</span>
+                <span class="stat-value">${
+                  new Set(
+                    allDeliveries.map((d) => d.dossier_number).filter(Boolean)
+                  ).size
+                }</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Première opération :</span>
+                <span class="stat-value">${
+                  allDeliveries.length > 0
+                    ? new Date(
+                        Math.min(
+                          ...allDeliveries.map(
+                            (d) => d.created_at?.getTime() || 0
+                          )
+                        )
+                      ).toLocaleDateString("fr-FR")
+                    : "-"
+                }</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <div class="card-header">
+              <h4><i class="fas fa-chart-pie"></i> Répartition des statuts</h4>
+            </div>
+            <div class="card-body">
+              ${Object.entries(statusDistribution)
+                .map(
+                  ([status, count]) => `
+                <div class="status-row">
+                  <span class="status-label">${status}</span>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${
+                      (count / allDeliveries.length) * 100
+                    }%"></div>
+                  </div>
+                  <span class="status-count">${count}</span>
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+          </div>
+
+          <div class="analytics-card full-width">
+            <div class="card-header">
+              <h4><i class="fas fa-boxes"></i> Types de conteneurs</h4>
+            </div>
+            <div class="card-body">
+              <div class="container-types-grid">
+                ${Object.entries(containerTypes)
+                  .map(
+                    ([type, count]) => `
+                  <div class="container-type-item">
+                    <span class="type-name">${type}</span>
+                    <span class="type-count">${count}</span>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function createHistoryPanel(allDeliveries) {
+    const dailyData = groupDeliveriesByDay(allDeliveries);
+    const sortedDays = Object.keys(dailyData).sort((a, b) =>
+      b.localeCompare(a)
+    );
+
+    return `
+      <div class="history-container">
+        <div class="history-header">
+          <h3><i class="fas fa-history"></i> Historique des opérations</h3>
+          <p class="history-subtitle">Consultez les opérations par date</p>
+          <div class="date-selector">
+            <label for="historyDatePicker">Sélectionner une date :</label>
+            <input type="date" id="historyDatePicker" class="date-picker-input" max="${
+              new Date().toISOString().split("T")[0]
+            }">
+            <button id="viewDateOperations" class="view-date-btn">
+              <i class="fas fa-search"></i>
+              Voir les opérations
+            </button>
+          </div>
+        </div>
+        
+        <div id="selectedDateOperations" class="selected-date-section" style="display: none;">
+          <!-- Les opérations de la date sélectionnée apparaîtront ici -->
+        </div>
+        
+        <div class="history-timeline">
+          <h4 class="timeline-title">Chronologie des dernières opérations</h4>
+          ${sortedDays
+            .slice(0, 10)
+            .map((date) => {
+              const deliveries = dailyData[date];
+              return `
+            <div class="timeline-item" data-date="${date}">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <h4>${formatDateFr(date)}</h4>
+                  <span class="timeline-count">${
+                    deliveries.length
+                  } opération(s)</span>
+                </div>
+                <div class="timeline-stats">
+                  <div class="timeline-stat">
+                    <i class="fas fa-boxes"></i>
+                    <span>${deliveries.reduce(
+                      (sum, d) => sum + (d.number_of_containers || 0),
+                      0
+                    )} conteneurs</span>
+                  </div>
+                  <div class="timeline-stat">
+                    <i class="fas fa-file-alt"></i>
+                    <span>${
+                      new Set(
+                        deliveries.map((d) => d.dossier_number).filter(Boolean)
+                      ).size
+                    } dossiers</span>
+                  </div>
+                </div>
+                <div class="timeline-details">
+                  <button class="view-day-btn" data-date="${date}">
+                    <i class="fas fa-eye"></i>
+                    Voir les opérations du jour
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+            })
+            .join("")}
+          ${
+            sortedDays.length > 10
+              ? `
+            <div class="timeline-more">
+              <p>Et ${
+                sortedDays.length - 10
+              } autres jours avec des opérations...</p>
+              <p class="text-small">Utilisez le sélecteur de date ci-dessus pour consulter une date spécifique.</p>
+            </div>
+          `
+              : ""
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  function setupModalEventListeners(
+    modalOverlay,
+    agentName,
+    dateToDisplay,
+    dailyDeliveries
+  ) {
+    // Fermeture de la modal
+    const closeBtn = modalOverlay.querySelector("#closeAgentModal");
+    const overlay = modalOverlay; // L'overlay est l'élément racine
+
+    closeBtn.addEventListener("click", () => {
+      modalOverlay.remove();
+      hideAgentActivityBox();
+    });
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        modalOverlay.remove();
+        hideAgentActivityBox();
+      }
+    });
+
+    // Navigation entre les dates
+    const prevDateBtn = modalOverlay.querySelector("#prevDate");
+    const nextDateBtn = modalOverlay.querySelector("#nextDate");
+
+    // Vérifier si nous sommes à la date d'aujourd'hui pour désactiver le bouton suivant
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const currentDisplayDate = new Date(dateToDisplay);
+    currentDisplayDate.setHours(0, 0, 0, 0);
+
+    if (currentDisplayDate.getTime() >= today.getTime()) {
+      nextDateBtn.disabled = true;
+      nextDateBtn.style.opacity = "0.5";
+      nextDateBtn.style.cursor = "not-allowed";
+    }
+
+    prevDateBtn.addEventListener("click", () => {
+      const newDate = new Date(dateToDisplay);
+      newDate.setDate(newDate.getDate() - 1);
+      modalOverlay.remove();
+      showAgentActivity(agentName, newDate);
+    });
+
+    nextDateBtn.addEventListener("click", () => {
+      const newDate = new Date(dateToDisplay);
+      newDate.setDate(newDate.getDate() + 1);
+      // Ne pas permettre d'aller dans le futur
+      if (newDate <= new Date()) {
+        modalOverlay.remove();
+        showAgentActivity(agentName, newDate);
+      }
+    });
+
+    // Suppression des opérations du jour
+    const deleteAllBtn = modalOverlay.querySelector("#deleteAllDailyOps");
+    deleteAllBtn.addEventListener("click", () => {
+      const deliveryIdsToDelete = dailyDeliveries.map((d) => d.id);
+      if (deliveryIdsToDelete.length === 0) {
+        showCustomAlert(
+          "Aucune opération à supprimer pour cette journée.",
+          "info"
+        );
+        return;
+      }
+
+      showConfirmationModal(
+        `Êtes-vous sûr de vouloir supprimer les ${
+          deliveryIdsToDelete.length
+        } opérations de l'agent "${agentName}" pour le ${dateToDisplay.toLocaleDateString(
+          "fr-FR"
+        )} ? Cette action est irréversible.`,
+        async () => {
+          await deleteDeliveries(deliveryIdsToDelete);
+          modalOverlay.remove();
+          showAgentActivity(agentName, dateToDisplay);
+        }
+      );
+    });
+
+    // Navigation par onglets
+    const tabBtns = modalOverlay.querySelectorAll(".tab-btn");
+    const tabPanels = modalOverlay.querySelectorAll(".tab-panel");
+
+    tabBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetTab = btn.dataset.tab;
+
+        // Mise à jour des boutons
+        tabBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        // Mise à jour des panneaux
+        tabPanels.forEach((panel) => {
+          panel.classList.remove("active");
+          if (panel.id === `${targetTab}-panel`) {
+            panel.classList.add("active");
+          }
+        });
+      });
+    });
+
+    // Suppression d'opérations individuelles
+    const deleteButtons = modalOverlay.querySelectorAll(".delete-btn");
+    deleteButtons.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const deliveryId = btn.dataset.deliveryId;
+        deleteDelivery(deliveryId);
+      });
+    });
+
+    // Gestion du sélecteur de date dans l'historique
+    const historyDatePicker = modalOverlay.querySelector("#historyDatePicker");
+    const viewDateBtn = modalOverlay.querySelector("#viewDateOperations");
+    const selectedDateSection = modalOverlay.querySelector(
+      "#selectedDateOperations"
+    );
+
+    if (historyDatePicker && viewDateBtn && selectedDateSection) {
+      viewDateBtn.addEventListener("click", () => {
+        const selectedDate = historyDatePicker.value;
+        if (selectedDate) {
+          // Filtrer les livraisons pour la date sélectionnée
+          const allAgentDeliveries = deliveries.filter(
+            (d) => d.employee_name === agentName
+          );
+          const selectedDateDeliveries = allAgentDeliveries.filter((d) => {
+            const createdDate = d.created_at?.toISOString().substring(0, 10);
+            return createdDate === selectedDate;
+          });
+
+          // Afficher les opérations de la date sélectionnée
+          selectedDateSection.style.display = "block";
+          selectedDateSection.innerHTML = `
+            <div class="selected-date-header">
+              <h4><i class="fas fa-calendar-day"></i> Opérations du ${formatDateFr(
+                selectedDate
+              )}</h4>
+              <span class="operation-count">${
+                selectedDateDeliveries.length
+              } opération(s)</span>
+            </div>
+            <div class="selected-date-operations">
+              ${createOperationsTable(selectedDateDeliveries)}
+            </div>
+          `;
+
+          // Scroll vers la section
+          selectedDateSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      });
+    }
+
+    // Gestion des boutons "Voir les opérations du jour"
+    const viewDayButtons = modalOverlay.querySelectorAll(".view-day-btn");
+    viewDayButtons.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const date = btn.dataset.date;
+        if (historyDatePicker && selectedDateSection) {
+          historyDatePicker.value = date;
+          viewDateBtn.click(); // Déclencher l'affichage
+        }
+      });
+    });
+
+    // Échapper pour fermer
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        modalOverlay.remove();
+        hideAgentActivityBox();
+      }
+    });
+  }
+
+  // Fonctions utilitaires pour les analyses
+  function calculateMonthlyStats(deliveries) {
+    const monthly = {};
+    deliveries.forEach((d) => {
+      const month = d.created_at?.toISOString().substring(0, 7) || "Unknown";
+      if (!monthly[month]) monthly[month] = 0;
+      monthly[month]++;
+    });
+    return monthly;
+  }
+
+  function calculateStatusDistribution(deliveries) {
+    const distribution = {};
+    deliveries.forEach((d) => {
+      const statusInfo = getStatusInfo(d.delivery_status_acconier);
+      const status = statusInfo.text || "Non défini";
+      distribution[status] = (distribution[status] || 0) + 1;
+    });
+    return distribution;
+  }
+
+  function calculateContainerTypes(deliveries) {
+    const types = {};
+    deliveries.forEach((d) => {
+      const type = d.container_type_and_content || "Non spécifié";
+      types[type] = (types[type] || 0) + (d.number_of_containers || 1);
+    });
+    return types;
+  }
+
+  function groupDeliveriesByMonth(deliveries) {
+    const monthly = {};
+    deliveries.forEach((d) => {
+      const month = d.created_at?.toISOString().substring(0, 7) || "Unknown";
+      if (!monthly[month]) monthly[month] = [];
+      monthly[month].push(d);
+    });
+    return monthly;
+  }
+
+  function formatMonthYear(monthStr) {
+    if (monthStr === "Unknown") return "Date inconnue";
+    const [year, month] = monthStr.split("-");
+    const monthNames = [
+      "Janvier",
+      "Février",
+      "Mars",
+      "Avril",
+      "Mai",
+      "Juin",
+      "Juillet",
+      "Août",
+      "Septembre",
+      "Octobre",
+      "Novembre",
+      "Décembre",
+    ];
+    return `${monthNames[parseInt(month) - 1]} ${year}`;
+  }
+
+  function groupDeliveriesByDay(deliveries) {
+    const daily = {};
+    deliveries.forEach((d) => {
+      const day = d.created_at?.toISOString().substring(0, 10) || "Unknown";
+      if (!daily[day]) daily[day] = [];
+      daily[day].push(d);
+    });
+    return daily;
+  }
+
+  function formatDateFr(dateStr) {
+    if (dateStr === "Unknown") return "Date inconnue";
+    const date = new Date(dateStr + "T12:00:00");
+    return date.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   }
   async function handleDeleteAgent(agentName) {
     if (!uniqueEmployees.includes(agentName)) {
@@ -6909,15 +7212,28 @@ function mapStatus(status) {
     // --- Daily Summary Calculations ---
     const dailySummaryData = calculateSummaryData(dailyDeliveries);
 
-    // --- Daily Summary Section ---
+    // --- Daily Summary Section with professional styling ---
     const currentDaySummaryBlock = document.createElement("div");
-    currentDaySummaryBlock.classList.add("summary-block"); // Add new styling class
+    currentDaySummaryBlock.classList.add(
+      "professional-summary-block",
+      "daily-summary"
+    );
 
-    const currentDayHeader = document.createElement("h4");
-    currentDayHeader.textContent = `Résumé du jour actuel (${currentAgentActivityDate.toLocaleDateString(
-      "fr-FR"
-    )})`;
-    currentDayHeader.classList.add("summary-block-header"); // Add new styling class
+    const currentDayHeader = document.createElement("div");
+    currentDayHeader.classList.add("professional-summary-header");
+    currentDayHeader.innerHTML = `
+      <div class="summary-header-content">
+        <div class="summary-icon">
+          <i class="fas fa-calendar-day"></i>
+        </div>
+        <div class="summary-title">
+          <h4>Résumé du jour actuel</h4>
+          <p class="summary-subtitle">${currentAgentActivityDate.toLocaleDateString(
+            "fr-FR"
+          )}</p>
+        </div>
+      </div>
+    `;
     currentDaySummaryBlock.appendChild(currentDayHeader);
     renderSummaryItems(currentDaySummaryBlock, dailySummaryData);
     agentSummarySection.appendChild(currentDaySummaryBlock);
@@ -6927,29 +7243,43 @@ function mapStatus(status) {
       allAgentDeliveriesFilteredByDate
     ); // Use filtered data here
 
-    // --- Grand Totals Section ---
+    // --- Grand Totals Section with professional styling ---
     const grandTotalContainer = document.createElement("div");
-    grandTotalContainer.classList.add("grand-total-summary"); // Existing class, now with enhanced styles
+    grandTotalContainer.classList.add(
+      "professional-summary-block",
+      "grand-total-summary"
+    );
 
-    const grandTotalHeader = document.createElement("h4");
-    grandTotalHeader.textContent = `Grand Total Historique`;
-    grandTotalHeader.classList.add("summary-block-header"); // Add new styling class
+    const grandTotalHeader = document.createElement("div");
+    grandTotalHeader.classList.add("professional-summary-header");
+    grandTotalHeader.innerHTML = `
+      <div class="summary-header-content">
+        <div class="summary-icon grand-total-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="summary-title">
+          <h4>Grand Total Historique</h4>
+          <p class="summary-subtitle">Données complètes sur 3 ans</p>
+        </div>
+      </div>
+    `;
     grandTotalContainer.appendChild(grandTotalHeader);
     renderSummaryItems(grandTotalContainer, grandTotalSummaryData);
     agentSummarySection.appendChild(grandTotalContainer);
 
-    // --- Add the "View Full History" button ---
+    // --- Add the professional "View Full History" button ---
     const toggleHistoryButton = document.createElement("button");
     toggleHistoryButton.id = "toggleMonthlyHistoryBtn";
     toggleHistoryButton.classList.add(
-      "btn",
-      "btn-primary",
-      "mt-3",
-      "mb-3",
-      "w-full",
-      "py-2"
+      "professional-btn",
+      "professional-btn-primary",
+      "history-toggle-btn"
     );
-    toggleHistoryButton.textContent = "Voir Historique Complet";
+    toggleHistoryButton.innerHTML = `
+      <i class="fas fa-history"></i>
+      <span>Voir Historique Complet</span>
+      <i class="fas fa-chevron-down toggle-icon"></i>
+    `;
     agentSummarySection.appendChild(toggleHistoryButton);
 
     // --- Monthly History (New Section) ---
@@ -6958,15 +7288,19 @@ function mapStatus(status) {
     monthlyHistoryContainer.id = "agentMonthlyHistorySection";
     monthlyHistoryContainer.style.display = "none"; // Initially hidden
 
-    const monthlyHistoryHeader = document.createElement("h4");
-    monthlyHistoryHeader.textContent = `Historique par mois`;
-    monthlyHistoryHeader.classList.add(
-      "text-lg",
-      "font-bold",
-      "text-gray-700",
-      "mt-4",
-      "mb-2"
-    );
+    const monthlyHistoryHeader = document.createElement("div");
+    monthlyHistoryHeader.classList.add("professional-summary-header");
+    monthlyHistoryHeader.innerHTML = `
+      <div class="summary-header-content">
+        <div class="summary-icon">
+          <i class="fas fa-history"></i>
+        </div>
+        <div class="summary-title">
+          <h4>Historique par mois</h4>
+          <p class="summary-subtitle">Détail des opérations sur 3 ans</p>
+        </div>
+      </div>
+    `;
     monthlyHistoryContainer.appendChild(monthlyHistoryHeader);
 
     const monthlyData = {}; // { 'YYYY-MM': { 'YYYY-MM-DD': { deliveries: [], eirValidated: 0, eirPending: 0 } } }
@@ -7050,14 +7384,14 @@ function mapStatus(status) {
 
     sortedMonthKeys.forEach((monthKey) => {
       const monthDiv = document.createElement("div");
-      monthDiv.classList.add("monthly-history-month");
+      monthDiv.classList.add("monthly-summary-item");
 
       const monthName = new Date(monthKey + "-01").toLocaleDateString("fr-FR", {
         year: "numeric",
         month: "long",
       });
       const monthHeader = document.createElement("h5");
-      monthHeader.textContent = monthName;
+      monthHeader.innerHTML = `<i class="fas fa-calendar-alt"></i> ${monthName}`;
       monthDiv.appendChild(monthHeader);
 
       const sortedDayKeys = Object.keys(monthlyData[monthKey]).sort().reverse();
@@ -7120,11 +7454,21 @@ function mapStatus(status) {
     toggleHistoryButton.onclick = () => {
       if (monthlyHistoryContainer.style.display === "none") {
         monthlyHistoryContainer.style.display = "block";
-        toggleHistoryButton.textContent = "Masquer Historique";
+        toggleHistoryButton.innerHTML = `
+          <i class="fas fa-history"></i>
+          <span>Masquer Historique</span>
+          <i class="fas fa-chevron-up toggle-icon"></i>
+        `;
+        toggleHistoryButton.classList.add("active");
         agentActivityBox.scrollTop = agentActivityBox.scrollHeight;
       } else {
         monthlyHistoryContainer.style.display = "none";
-        toggleHistoryButton.textContent = "Voir Historique Complet";
+        toggleHistoryButton.innerHTML = `
+          <i class="fas fa-history"></i>
+          <span>Voir Historique Complet</span>
+          <i class="fas fa-chevron-down toggle-icon"></i>
+        `;
+        toggleHistoryButton.classList.remove("active");
       }
     };
   }
