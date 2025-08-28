@@ -1511,11 +1511,32 @@ document.addEventListener("DOMContentLoaded", function () {
           const allMiseEnLivraison =
             blStatuses.length > 0 &&
             blStatuses.every((s) => s === "mise_en_livraison");
+
+          // 🔧 CORRECTION WEBSOCKET: Vérifier aussi que le dossier n'a pas de conteneurs livrés
+          let hasDeliveredContainers = false;
+          if (
+            data.delivery.container_statuses &&
+            typeof data.delivery.container_statuses === "object"
+          ) {
+            const containerStatuses = Object.values(
+              data.delivery.container_statuses
+            );
+            hasDeliveredContainers = containerStatuses.some(
+              (status) => status === "livre" || status === "livré"
+            );
+          }
+
+          // Le dossier est éligible pour "Mise en livraison" SEULEMENT si:
+          // 1. Tous les BL sont en mise_en_livraison ET
+          // 2. Aucun conteneur n'est livré
+          const isEligibleForMiseEnLivraison =
+            allMiseEnLivraison && !hasDeliveredContainers;
+
           // Cherche si la livraison est déjà dans allDeliveries
           const idx = window.allDeliveries.findIndex(
             (d) => d.id === data.delivery.id
           );
-          if (allMiseEnLivraison) {
+          if (isEligibleForMiseEnLivraison) {
             // Ajoute ou met à jour la livraison
             if (idx === -1) {
               window.allDeliveries.push(data.delivery);
@@ -1530,7 +1551,7 @@ document.addEventListener("DOMContentLoaded", function () {
               syncDeliveredContainersToHistory();
             }, 200);
           } else {
-            // Retire la livraison si elle n'est plus éligible
+            // Retire la livraison si elle n'est plus éligible (soit BL ne sont plus tous en mise_en_livraison, soit des conteneurs sont livrés)
             if (idx !== -1) {
               window.allDeliveries.splice(idx, 1);
               updateDeliveredForPdf();
@@ -1852,11 +1873,119 @@ document.addEventListener("DOMContentLoaded", function () {
           targetUserId
         );
 
+        // 🔧 NOUVEAU: Récupération du paramètre de filtrage depuis l'URL
+        const filterParam = getUrlParameter("filter");
+        const autoFilter = getUrlParameter("autoFilter") === "true";
+
+        console.log(
+          "🔄 [DEBUG RESP LIV] Paramètres de filtrage:",
+          "filter:",
+          filterParam,
+          "autoFilter:",
+          autoFilter
+        );
+
         let filteredDeliveries = data.deliveries.filter((delivery) => {
-          return (
-            delivery.delivery_status_acconier === "mise_en_livraison_acconier"
-          );
+          // Si pas de filtrage automatique, appliquer le filtrage par défaut (mise_en_livraison)
+          if (!autoFilter || !filterParam) {
+            // Logique par défaut : dossiers en mise_en_livraison_acconier sans conteneurs livrés
+            if (
+              delivery.delivery_status_acconier !== "mise_en_livraison_acconier"
+            ) {
+              return false;
+            }
+
+            if (
+              delivery.container_statuses &&
+              typeof delivery.container_statuses === "object"
+            ) {
+              const containerStatuses = Object.values(
+                delivery.container_statuses
+              );
+              const hasDeliveredContainers = containerStatuses.some(
+                (status) => status === "livre" || status === "livré"
+              );
+              if (hasDeliveredContainers) {
+                return false;
+              }
+            }
+            return true;
+          }
+
+          // 🆕 FILTRAGE SELON LE PARAMÈTRE URL
+          switch (filterParam) {
+            case "mise_en_livraison":
+              // Dossiers en mise_en_livraison_acconier SANS conteneurs livrés
+              if (
+                delivery.delivery_status_acconier !==
+                "mise_en_livraison_acconier"
+              ) {
+                return false;
+              }
+              if (
+                delivery.container_statuses &&
+                typeof delivery.container_statuses === "object"
+              ) {
+                const containerStatuses = Object.values(
+                  delivery.container_statuses
+                );
+                const hasDeliveredContainers = containerStatuses.some(
+                  (status) => status === "livre" || status === "livré"
+                );
+                if (hasDeliveredContainers) {
+                  return false;
+                }
+              }
+              return true;
+
+            case "livre":
+            case "livré":
+              // Dossiers avec TOUS les conteneurs livrés
+              if (
+                !delivery.container_statuses ||
+                typeof delivery.container_statuses !== "object"
+              ) {
+                return false;
+              }
+
+              const containerStatuses = Object.values(
+                delivery.container_statuses
+              );
+              if (containerStatuses.length === 0) {
+                return false;
+              }
+
+              // Vérifier que TOUS les conteneurs sont livrés
+              const allDelivered = containerStatuses.every(
+                (status) => status === "livre" || status === "livré"
+              );
+              return allDelivered;
+
+            case "en_attente_paiement":
+              // Dossiers en attente de paiement
+              return (
+                delivery.delivery_status_acconier === "en_attente_paiement" ||
+                delivery.delivery_status_acconier === "pending_acconier"
+              );
+
+            default:
+              // Si paramètre non reconnu, appliquer la logique par défaut
+              console.warn(`Paramètre de filtrage non reconnu: ${filterParam}`);
+              return (
+                delivery.delivery_status_acconier ===
+                "mise_en_livraison_acconier"
+              );
+          }
         });
+
+        console.log(
+          `🔄 [DEBUG RESP LIV] Filtrage appliqué: ${
+            filterParam || "défaut"
+          } (autoFilter: ${autoFilter})`
+        );
+        console.log(
+          `🔄 [DEBUG RESP LIV] Nombre de livraisons après filtrage: ${filteredDeliveries.length}`
+        );
 
         // Filtrage pour le mode admin : affichage intelligent des livraisons
         if (isAdminMode && targetUser) {
@@ -1881,11 +2010,13 @@ document.addEventListener("DOMContentLoaded", function () {
           // Pas de limitation, pas de filtrage par utilisateur
         }
 
-        // ✅ AFFICHAGE COMPLET - Conserver TOUS les dossiers sans filtrage
+        // ✅ AFFICHAGE FINAL - Appliquer le filtrage selon les paramètres URL
         window.allDeliveries = filteredDeliveries;
 
         console.log(
-          `[MODE ADMIN RESP LIV] Clic sur utilisateur "${targetUser}": TOUS les dossiers affichés (${filteredDeliveries.length} livraisons)`
+          `[RESP LIV] Filtrage "${filterParam || "défaut"}" appliqué: ${
+            filteredDeliveries.length
+          } dossier(s) affiché(s)`
         );
 
         // 🔄 Synchronisation automatique des conteneurs livrés vers l'historique
