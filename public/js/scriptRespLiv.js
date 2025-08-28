@@ -1886,33 +1886,16 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
         let filteredDeliveries = data.deliveries.filter((delivery) => {
-          // Si pas de filtrage automatique, appliquer le filtrage par défaut (mise_en_livraison)
+          // 🆕 NOUVELLE LOGIQUE: Si pas d'autoFilter avec paramètre spécifique, AFFICHER TOUS LES DOSSIERS
           if (!autoFilter || !filterParam) {
-            // Logique par défaut : dossiers en mise_en_livraison_acconier sans conteneurs livrés
-            if (
-              delivery.delivery_status_acconier !== "mise_en_livraison_acconier"
-            ) {
-              return false;
-            }
-
-            if (
-              delivery.container_statuses &&
-              typeof delivery.container_statuses === "object"
-            ) {
-              const containerStatuses = Object.values(
-                delivery.container_statuses
-              );
-              const hasDeliveredContainers = containerStatuses.some(
-                (status) => status === "livre" || status === "livré"
-              );
-              if (hasDeliveredContainers) {
-                return false;
-              }
-            }
+            console.log(
+              "🔄 [DEBUG] Pas de filtrage spécifique - Affichage de TOUS les dossiers (Mise en livraison + Livré)"
+            );
+            // Retourner true pour tous les dossiers (pas de filtrage par défaut)
             return true;
           }
 
-          // 🆕 FILTRAGE SELON LE PARAMÈTRE URL
+          // 🆕 FILTRAGE SELON LE PARAMÈTRE URL (uniquement si autoFilter=true ET filterParam existe)
           switch (filterParam) {
             case "mise_en_livraison":
               // Dossiers en mise_en_livraison_acconier SANS conteneurs livrés
