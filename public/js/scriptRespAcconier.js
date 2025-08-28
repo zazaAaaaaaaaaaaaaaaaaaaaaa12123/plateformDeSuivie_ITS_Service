@@ -555,7 +555,7 @@ function refreshMiseEnLivList() {
 
 // Stockage local pour les dossiers mis en livraison
 const STORAGE_KEY_LIVRAISON = "dossiersMisEnLiv";
-const STORAGE_KEY_LAST_ARCHIVE = "lastArchiveMiseEnLiv";
+// const STORAGE_KEY_LAST_ARCHIVE = "lastArchiveMiseEnLiv"; // 🚫 Plus utilisé - archivage basé sur les dates des dossiers
 
 // Fonction pour récupérer les dossiers mis en livraison
 function getDossiersMisEnLiv() {
@@ -567,71 +567,133 @@ function saveDossiersMisEnLiv(dossiers) {
   localStorage.setItem(STORAGE_KEY_LIVRAISON, JSON.stringify(dossiers));
 }
 
-// 🆕 FONCTION D'ARCHIVAGE AUTOMATIQUE
+// 🆕 FONCTION D'ARCHIVAGE AUTOMATIQUE BASÉE SUR LA DATE DES DOSSIERS
 function checkAndArchiveOldDossiers() {
   console.log("🗂️ [ARCHIVAGE] Vérification des dossiers à archiver...");
 
-  const lastArchive = localStorage.getItem(STORAGE_KEY_LAST_ARCHIVE);
   const now = new Date();
-  const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000; // 2 semaines en millisecondes
+  const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 1 semaine en millisecondes
+  const dossiers = getDossiersMisEnLiv();
 
-  // Si pas de dernière date d'archivage, l'initialiser à maintenant
-  if (!lastArchive) {
-    localStorage.setItem(STORAGE_KEY_LAST_ARCHIVE, now.toISOString());
-    console.log(
-      "🗂️ [ARCHIVAGE] Première initialisation de la date d'archivage"
-    );
+  if (dossiers.length === 0) {
+    console.log("🗂️ [ARCHIVAGE] Aucun dossier à vérifier");
     return;
   }
 
-  const lastArchiveDate = new Date(lastArchive);
-  const timeSinceLastArchive = now - lastArchiveDate;
+  // Séparer les dossiers anciens (> 2 semaines) des récents
+  const dossiersAnciens = [];
+  const dossiersRecents = [];
 
-  // Si ça fait plus de 2 semaines depuis le dernier archivage
-  if (timeSinceLastArchive >= twoWeeksInMs) {
-    const dossiers = getDossiersMisEnLiv();
+  dossiers.forEach((dossier) => {
+    // Récupérer la date de mise en livraison du dossier (priorité absolue)
+    const dateDossier =
+      dossier.date_mise_en_liv || // 🎯 DATE PRIORITAIRE : Date de mise en livraison
+      dossier.date_echange_bl || // Fallback 1 : Date d'échange BL
+      dossier.date_creation || // Fallback 2 : Date de création
+      dossier.created_at || // Fallback 3 : Date de création système
+      dossier.date; // Fallback 4 : Date générique
 
-    if (dossiers.length > 0) {
-      // Trier par date de mise en livraison (les plus anciens en premier)
-      const sortedDossiers = dossiers.sort((a, b) => {
-        const dateA = new Date(a.date_mise_en_liv || 0);
-        const dateB = new Date(b.date_mise_en_liv || 0);
-        return dateA - dateB;
-      });
-
-      // Archiver les 5 plus anciens (ou moins s'il y en a moins de 5)
-      const dossiersToArchive = sortedDossiers.slice(0, 5);
-      const remainingDossiers = sortedDossiers.slice(5);
+    if (dateDossier) {
+      const dossierDate = new Date(dateDossier);
+      const ageDossier = now - dossierDate;
 
       console.log(
-        `🗂️ [ARCHIVAGE] Archivage de ${dossiersToArchive.length} dossier(s)`
+        `🗂️ [ARCHIVAGE] Dossier ${
+          dossier.container_number || dossier.dossier_number
+        }:`
+      );
+      console.log(
+        `  📅 Date de mise en livraison: ${dossierDate.toLocaleDateString(
+          "fr-FR"
+        )}`
+      );
+      console.log(
+        `  ⏰ Âge depuis mise en livraison: ${Math.floor(
+          ageDossier / (24 * 60 * 60 * 1000)
+        )} jours`
       );
 
-      // Sauvegarder les dossiers restants
-      saveDossiersMisEnLiv(remainingDossiers);
+      if (ageDossier >= oneWeekInMs) {
+        dossiersAnciens.push(dossier);
+        console.log(`  🗂️ ANCIEN (≥ 7 jours) - À archiver automatiquement`);
+      } else {
+        dossiersRecents.push(dossier);
+        console.log(`  ✅ RÉCENT (< 7 jours) - À conserver dans "Mise en Liv"`);
+      }
+    } else {
+      // Si pas de date, considérer comme récent par sécurité
+      dossiersRecents.push(dossier);
+      console.log(
+        `🗂️ [ARCHIVAGE] Dossier ${
+          dossier.container_number || dossier.dossier_number
+        }: Pas de date - conservé`
+      );
+    }
+  });
 
-      // Mettre à jour la date du dernier archivage
-      localStorage.setItem(STORAGE_KEY_LAST_ARCHIVE, now.toISOString());
+  // Archiver TOUS les dossiers anciens (plus de limitation à 5)
+  if (dossiersAnciens.length > 0) {
+    // Trier les dossiers anciens par date (plus anciens en premier)
+    dossiersAnciens.sort((a, b) => {
+      const dateA = new Date(
+        a.date_mise_en_liv ||
+          a.date_echange_bl ||
+          a.date_creation ||
+          a.created_at ||
+          a.date ||
+          0
+      );
+      const dateB = new Date(
+        b.date_mise_en_liv ||
+          b.date_echange_bl ||
+          b.date_creation ||
+          b.created_at ||
+          b.date ||
+          0
+      );
+      return dateA - dateB;
+    });
 
-      // Afficher une notification
-      if (dossiersToArchive.length > 0) {
-        console.log(
-          "🗂️ [ARCHIVAGE] Dossiers archivés:",
-          dossiersToArchive.map((d) => d.container_number || d.dossier_number)
+    // Archiver TOUS les dossiers anciens (plus de 1 semaine)
+    const dossiersToArchive = dossiersAnciens; // Tous les dossiers anciens
+    const dossiersToKeep = dossiersRecents; // Garder seulement les récents
+
+    console.log(
+      `🗂️ [ARCHIVAGE] Archivage automatique de TOUS les ${dossiersToArchive.length} dossier(s) ancien(s) (> 1 semaine)`
+    );
+
+    // Sauvegarder seulement les dossiers récents
+    saveDossiersMisEnLiv(dossiersToKeep);
+
+    // Afficher une notification
+    if (dossiersToArchive.length > 0) {
+      console.log(
+        "🗂️ [ARCHIVAGE] TOUS les dossiers anciens archivés automatiquement:",
+        dossiersToArchive.map(
+          (d) =>
+            `${d.container_number || d.dossier_number} (${new Date(
+              d.date_mise_en_liv ||
+                d.date_echange_bl ||
+                d.date_creation ||
+                d.created_at ||
+                d.date
+            ).toLocaleDateString("fr-FR")})`
+        )
+      );
+
+      // Optionnel : Afficher une notification visuelle
+      if (typeof showNotification === "function") {
+        showNotification(
+          `${dossiersToArchive.length} dossier(s) de plus de 1 semaine ont été automatiquement archivés de la liste "Mis en livraison"`,
+          "info"
         );
-
-        // Optionnel : Afficher une notification visuelle
-        if (typeof showNotification === "function") {
-          showNotification(
-            `${dossiersToArchive.length} dossier(s) ont été automatiquement archivés de la liste "Mis en livraison"`,
-            "info"
-          );
-        }
       }
 
       // Rafraîchir la liste si elle est ouverte
       refreshMiseEnLivList();
     }
+  } else {
+    console.log("🗂️ [ARCHIVAGE] Aucun dossier ancien à archiver");
   }
 }
 
