@@ -3002,62 +3002,72 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
       "driver_phone",
       "delivery_date",
     ];
-    // Fonction pour vérifier si tous les champs obligatoires sont remplis
+    // 🚫 CONTRAINTE DÉSACTIVÉE : Fonction pour vérifier si tous les champs obligatoires sont remplis
+    // function isAllRequiredFilled(delivery, deliveryIndex) {
+    //   // Champs obligatoires à vérifier
+    //   const requiredFields = [
+    //     "visitor_agent_name",
+    //     "transporter",
+    //     "inspector",
+    //     "customs_agent",
+    //     "driver",
+    //     "driver_phone",
+    //     "delivery_date",
+    //   ];
+
+    //   // Fonction locale pour générer la clé de stockage
+    //   function getStorageKey(delivery, colId, index) {
+    //     return `deliverycell_${
+    //       delivery.id || delivery.dossier_number || index
+    //     }_${colId}`;
+    //   }
+
+    //   console.log(
+    //     `[VALIDATION] ⚠️ VÉRIFICATION STRICTE pour la livraison ${
+    //       delivery.id || delivery.dossier_number
+    //     }`
+    //   );
+
+    //   // Vérifier chaque champ obligatoire - VALIDATION STRICTE
+    //   for (const fieldId of requiredFields) {
+    //     const storageKey = getStorageKey(delivery, fieldId, deliveryIndex);
+    //     const savedValue = localStorage.getItem(storageKey);
+
+    //     console.log(`[VALIDATION] Champ ${fieldId}:`);
+    //     console.log(`  - Clé de stockage: ${storageKey}`);
+    //     console.log(`  - Valeur sauvegardée: "${savedValue}"`);
+
+    //     // VALIDATION STRICTE : On vérifie UNIQUEMENT ce qui a été saisi par l'utilisateur
+    //     // Si rien n'est sauvegardé dans localStorage, le champ est considéré comme vide
+    //     if (
+    //       !savedValue ||
+    //       savedValue.trim() === "" ||
+    //       savedValue === "-" ||
+    //       savedValue === "null"
+    //     ) {
+    //       console.log(`[VALIDATION] ❌ CHAMP MANQUANT: ${fieldId}`);
+    //       return false;
+    //     }
+
+    //     console.log(`[VALIDATION] ✅ Champ ${fieldId} OK`);
+    //   }
+
+    //   console.log(
+    //     `[VALIDATION] ✅ TOUS LES CHAMPS OBLIGATOIRES SONT REMPLIS pour la livraison ${
+    //       delivery.id || delivery.dossier_number
+    //     }`
+    //   );
+    //   return true;
+    // }
+
+    // 🔓 FONCTION DE REMPLACEMENT : Toujours retourner true (pas de validation)
     function isAllRequiredFilled(delivery, deliveryIndex) {
-      // Champs obligatoires à vérifier
-      const requiredFields = [
-        "visitor_agent_name",
-        "transporter",
-        "inspector",
-        "customs_agent",
-        "driver",
-        "driver_phone",
-        "delivery_date",
-      ];
-
-      // Fonction locale pour générer la clé de stockage
-      function getStorageKey(delivery, colId, index) {
-        return `deliverycell_${
-          delivery.id || delivery.dossier_number || index
-        }_${colId}`;
-      }
-
       console.log(
-        `[VALIDATION] ⚠️ VÉRIFICATION STRICTE pour la livraison ${
+        `[VALIDATION DÉSACTIVÉE] ✅ Validation automatiquement acceptée pour la livraison ${
           delivery.id || delivery.dossier_number
         }`
       );
-
-      // Vérifier chaque champ obligatoire - VALIDATION STRICTE
-      for (const fieldId of requiredFields) {
-        const storageKey = getStorageKey(delivery, fieldId, deliveryIndex);
-        const savedValue = localStorage.getItem(storageKey);
-
-        console.log(`[VALIDATION] Champ ${fieldId}:`);
-        console.log(`  - Clé de stockage: ${storageKey}`);
-        console.log(`  - Valeur sauvegardée: "${savedValue}"`);
-
-        // VALIDATION STRICTE : On vérifie UNIQUEMENT ce qui a été saisi par l'utilisateur
-        // Si rien n'est sauvegardé dans localStorage, le champ est considéré comme vide
-        if (
-          !savedValue ||
-          savedValue.trim() === "" ||
-          savedValue === "-" ||
-          savedValue === "null"
-        ) {
-          console.log(`[VALIDATION] ❌ CHAMP MANQUANT: ${fieldId}`);
-          return false;
-        }
-
-        console.log(`[VALIDATION] ✅ Champ ${fieldId} OK`);
-      }
-
-      console.log(
-        `[VALIDATION] ✅ TOUS LES CHAMPS OBLIGATOIRES SONT REMPLIS pour la livraison ${
-          delivery.id || delivery.dossier_number
-        }`
-      );
-      return true;
+      return true; // Toujours retourner true pour permettre la livraison
     }
     // Gestion dynamique du message d'accès
     let lastAccessState = null;
