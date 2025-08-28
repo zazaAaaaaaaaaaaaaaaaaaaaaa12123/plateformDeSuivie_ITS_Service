@@ -34,6 +34,209 @@ function toggleContainerList(dropdownId) {
 // Stockage local pour les dossiers mis en livraison
 const STORAGE_KEY = "dossiersMisEnLiv";
 
+// 🔒 FONCTION POUR DÉSACTIVER L'ÉDITION DES OBSERVATIONS EN MODE ADMIN
+function disableObservationEditingInAdminMode() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminMode = urlParams.get("mode") === "admin";
+  const fromDashboard = urlParams.get("fromDashboard") === "true";
+
+  if (isAdminMode && fromDashboard) {
+    console.log("🔒 [MODE ADMIN] Désactivation de l'édition des observations");
+
+    // Ajouter du CSS pour désactiver l'édition des cellules d'observation
+    const style = document.createElement("style");
+    style.innerHTML = `
+      /* Désactiver l'édition des observations en mode admin (21ème colonne) */
+      #deliveriesTable tbody td:nth-child(21) {
+        background-color: #f3f4f6 !important;
+        color: #6b7280 !important;
+        cursor: not-allowed !important;
+        user-select: none !important;
+        /* Permettre les événements de survol pour les tooltips */
+        pointer-events: auto !important;
+      }
+      
+      /* Désactiver spécifiquement les clics et la sélection */
+      #deliveriesTable tbody td:nth-child(21) * {
+        pointer-events: none !important;
+      }
+      
+      /* Ajouter une icône de cadenas pour indiquer que c'est non-éditable */
+      #deliveriesTable tbody td:nth-child(21)::before {
+        content: "🔒 ";
+        margin-right: 5px;
+      }
+      
+      /* Style sombre pour le mode admin */
+      [data-theme="dark"] #deliveriesTable tbody td:nth-child(21) {
+        background-color: #374151 !important;
+        color: #9ca3af !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+// 💬 FONCTION POUR AJOUTER DES TOOLTIPS SUR LES CELLULES D'OBSERVATION
+function addObservationTooltips() {
+  // Créer le style CSS pour les tooltips
+  const tooltipStyle = document.createElement("style");
+  tooltipStyle.innerHTML = `
+    /* Style pour les tooltips d'observation */
+    .observation-tooltip {
+      position: absolute;
+      background: #1f2937;
+      color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      max-width: 300px;
+      word-wrap: break-word;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      z-index: 10000;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+      border: 1px solid #374151;
+    }
+    
+    .observation-tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .observation-tooltip::before {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #1f2937 transparent transparent transparent;
+    }
+    
+    /* Style sombre pour les tooltips */
+    [data-theme="dark"] .observation-tooltip {
+      background: #0f172a;
+      border-color: #1e293b;
+    }
+    
+    [data-theme="dark"] .observation-tooltip::before {
+      border-top-color: #0f172a;
+    }
+    
+    /* Style clair pour les tooltips */
+    [data-theme="light"] .observation-tooltip {
+      background: #ffffff;
+      color: #1f2937;
+      border-color: #e5e7eb;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    [data-theme="light"] .observation-tooltip::before {
+      border-top-color: #ffffff;
+    }
+  `;
+  document.head.appendChild(tooltipStyle);
+
+  // Fonction pour créer et afficher le tooltip
+  function showTooltip(event, content) {
+    // Supprimer tout tooltip existant
+    const existingTooltip = document.querySelector(".observation-tooltip");
+    if (existingTooltip) {
+      existingTooltip.remove();
+    }
+
+    // Ne pas afficher de tooltip si le contenu est vide
+    if (!content || content.trim() === "" || content === "-") {
+      return;
+    }
+
+    // Créer le tooltip
+    const tooltip = document.createElement("div");
+    tooltip.className = "observation-tooltip";
+    tooltip.textContent = content;
+    document.body.appendChild(tooltip);
+
+    // Positionner le tooltip
+    const rect = event.target.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+
+    let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+    let top = rect.top - tooltipRect.height - 10;
+
+    // Ajuster si le tooltip dépasse à gauche
+    if (left < 10) {
+      left = 10;
+    }
+    // Ajuster si le tooltip dépasse à droite
+    if (left + tooltipRect.width > window.innerWidth - 10) {
+      left = window.innerWidth - tooltipRect.width - 10;
+    }
+    // Ajuster si le tooltip dépasse en haut
+    if (top < 10) {
+      top = rect.bottom + 10;
+    }
+
+    tooltip.style.left = left + "px";
+    tooltip.style.top = top + "px";
+
+    // Afficher le tooltip avec animation
+    setTimeout(() => {
+      tooltip.classList.add("show");
+    }, 10);
+  }
+
+  // Fonction pour masquer le tooltip
+  function hideTooltip() {
+    const tooltip = document.querySelector(".observation-tooltip");
+    if (tooltip) {
+      tooltip.classList.remove("show");
+      setTimeout(() => {
+        tooltip.remove();
+      }, 200);
+    }
+  }
+
+  // Ajouter les event listeners sur les cellules d'observation
+  function attachTooltipListeners() {
+    const observationCells = document.querySelectorAll(
+      "#deliveriesTable tbody td:nth-child(21)"
+    );
+
+    observationCells.forEach((cell) => {
+      // Supprimer les anciens listeners s'ils existent
+      cell.removeEventListener("mouseenter", cell._tooltipMouseEnter);
+      cell.removeEventListener("mouseleave", cell._tooltipMouseLeave);
+
+      // Ajouter les nouveaux listeners
+      cell._tooltipMouseEnter = (e) => showTooltip(e, cell.textContent);
+      cell._tooltipMouseLeave = hideTooltip;
+
+      cell.addEventListener("mouseenter", cell._tooltipMouseEnter);
+      cell.addEventListener("mouseleave", cell._tooltipMouseLeave);
+    });
+  }
+
+  // Attacher les listeners immédiatement et lors des mises à jour du tableau
+  attachTooltipListeners();
+
+  // Observer les changements dans le tableau pour réattacher les listeners
+  const tableBody = document.getElementById("deliveriesTableBody");
+  if (tableBody) {
+    const observer = new MutationObserver(() => {
+      setTimeout(attachTooltipListeners, 100);
+    });
+
+    observer.observe(tableBody, {
+      childList: true,
+      subtree: true,
+    });
+  }
+}
+
 // Fonction pour récupérer les dossiers mis en livraison
 function getDossiersMisEnLiv() {
   return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -1205,6 +1408,14 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 
 // Initialisation et gestion du filtre date
 document.addEventListener("DOMContentLoaded", function () {
+  // 🔒 Désactiver l'édition des observations en mode admin
+  disableObservationEditingInAdminMode();
+
+  // 💬 Ajouter les tooltips sur les cellules d'observation
+  setTimeout(() => {
+    addObservationTooltips();
+  }, 1000); // Attendre que le tableau soit chargé
+
   // ✨ FLASH : Déclencher le flash pour les dossiers ciblés depuis le tableau de bord
   setTimeout(() => {
     flashTargetDelivery();
