@@ -352,6 +352,7 @@ function refreshMiseEnLivList() {
 
 // Stockage local pour les dossiers mis en livraison
 const STORAGE_KEY_LIVRAISON = "dossiersMisEnLiv";
+const STORAGE_KEY_LAST_ARCHIVE = "lastArchiveMiseEnLiv";
 
 // Fonction pour récupérer les dossiers mis en livraison
 function getDossiersMisEnLiv() {
@@ -361,6 +362,86 @@ function getDossiersMisEnLiv() {
 // Fonction pour sauvegarder les dossiers mis en livraison
 function saveDossiersMisEnLiv(dossiers) {
   localStorage.setItem(STORAGE_KEY_LIVRAISON, JSON.stringify(dossiers));
+}
+
+// 🆕 FONCTION D'ARCHIVAGE AUTOMATIQUE
+function checkAndArchiveOldDossiers() {
+  console.log("🗂️ [ARCHIVAGE] Vérification des dossiers à archiver...");
+
+  const lastArchive = localStorage.getItem(STORAGE_KEY_LAST_ARCHIVE);
+  const now = new Date();
+  const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000; // 2 semaines en millisecondes
+
+  // Si pas de dernière date d'archivage, l'initialiser à maintenant
+  if (!lastArchive) {
+    localStorage.setItem(STORAGE_KEY_LAST_ARCHIVE, now.toISOString());
+    console.log(
+      "🗂️ [ARCHIVAGE] Première initialisation de la date d'archivage"
+    );
+    return;
+  }
+
+  const lastArchiveDate = new Date(lastArchive);
+  const timeSinceLastArchive = now - lastArchiveDate;
+
+  // Si ça fait plus de 2 semaines depuis le dernier archivage
+  if (timeSinceLastArchive >= twoWeeksInMs) {
+    const dossiers = getDossiersMisEnLiv();
+
+    if (dossiers.length > 0) {
+      // Trier par date de mise en livraison (les plus anciens en premier)
+      const sortedDossiers = dossiers.sort((a, b) => {
+        const dateA = new Date(a.date_mise_en_liv || 0);
+        const dateB = new Date(b.date_mise_en_liv || 0);
+        return dateA - dateB;
+      });
+
+      // Archiver les 5 plus anciens (ou moins s'il y en a moins de 5)
+      const dossiersToArchive = sortedDossiers.slice(0, 5);
+      const remainingDossiers = sortedDossiers.slice(5);
+
+      console.log(
+        `🗂️ [ARCHIVAGE] Archivage de ${dossiersToArchive.length} dossier(s)`
+      );
+
+      // Sauvegarder les dossiers restants
+      saveDossiersMisEnLiv(remainingDossiers);
+
+      // Mettre à jour la date du dernier archivage
+      localStorage.setItem(STORAGE_KEY_LAST_ARCHIVE, now.toISOString());
+
+      // Afficher une notification
+      if (dossiersToArchive.length > 0) {
+        console.log(
+          "🗂️ [ARCHIVAGE] Dossiers archivés:",
+          dossiersToArchive.map((d) => d.container_number || d.dossier_number)
+        );
+
+        // Optionnel : Afficher une notification visuelle
+        if (typeof showNotification === "function") {
+          showNotification(
+            `${dossiersToArchive.length} dossier(s) ont été automatiquement archivés de la liste "Mis en livraison"`,
+            "info"
+          );
+        }
+      }
+
+      // Rafraîchir la liste si elle est ouverte
+      refreshMiseEnLivList();
+    }
+  }
+}
+
+// 🆕 FONCTION POUR TRIER LES DOSSIERS PAR DATE (NOUVELLES DATES EN HAUT)
+function sortDossiersByDate(dossiers) {
+  return dossiers.sort((a, b) => {
+    // Utiliser la date de mise en livraison comme critère principal
+    const dateA = new Date(a.date_mise_en_liv || 0);
+    const dateB = new Date(b.date_mise_en_liv || 0);
+
+    // Tri décroissant : les plus récentes en haut
+    return dateB - dateA;
+  });
 }
 
 // Fonction pour ajouter un dossier à la liste des mises en livraison
@@ -445,13 +526,16 @@ function refreshMiseEnLivList() {
   const miseEnLivList = document.getElementById("miseEnLivList");
   if (!miseEnLivList) return;
 
+  // 🆕 VÉRIFICATION ARCHIVAGE AUTOMATIQUE à chaque rafraîchissement
+  checkAndArchiveOldDossiers();
+
   const dossiers = getDossiersMisEnLiv();
   console.log("Dossiers chargés:", dossiers); // Debug
 
   const searchTerm =
     document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
 
-  const filteredDossiers = searchTerm
+  let filteredDossiers = searchTerm
     ? dossiers.filter((dossier) => {
         // Recherche prioritaire dans les champs principaux
         const clientName = (
@@ -483,6 +567,12 @@ function refreshMiseEnLivList() {
         );
       })
     : dossiers;
+
+  // Vérifier et archiver les anciens dossiers automatiquement
+  checkAndArchiveOldDossiers();
+
+  // Trier les dossiers par date (plus récents en premier) après filtrage
+  filteredDossiers = sortDossiersByDate(filteredDossiers);
 
   // Fonction utilitaire pour formater les dates de manière robuste
   const formatDate = (dateStr) => {
