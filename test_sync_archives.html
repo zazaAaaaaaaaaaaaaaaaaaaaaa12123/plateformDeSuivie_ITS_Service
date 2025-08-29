@@ -1,0 +1,399 @@
+!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Synchronisation Archives</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .test-section h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        background: #007bff;
+        color: white;
+        border-radius: 15px;
+        font-weight: bold;
+        margin: 5px;
+      }
+      .badge.orange {
+        background: #ff8c00;
+      }
+      .badge.green {
+        background: #28a745;
+      }
+      .badge.blue {
+        background: #007bff;
+      }
+      .badge.red {
+        background: #dc3545;
+      }
+      .badge.purple {
+        background: #6f42c1;
+      }
+
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .log {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔄 Test de Synchronisation Archives</h1>
+
+      <div class="test-section">
+        <h3>📊 Simulation des Cartes Dashboard</h3>
+        <div>
+          <span class="badge orange" id="simCard1"
+            >Dossiers soumis: <span id="count1">168</span></span
+          >
+          <span class="badge blue" id="simCard2"
+            >Mis en livraison: <span id="count2">78</span></span
+          >
+          <span class="badge green" id="simCard3"
+            >Dossiers livrés: <span id="count3">50</span></span
+          >
+          <span class="badge red" id="simCard4"
+            >En retard: <span id="count4">25</span></span
+          >
+        </div>
+        <div style="margin-top: 10px">
+          <button onclick="simulateDashboardUpdate()">
+            🔄 Simuler Mise à Jour Dashboard
+          </button>
+          <button onclick="addRandomFile()">➕ Ajouter Dossier</button>
+          <button onclick="removeRandomFile()">➖ Supprimer Dossier</button>
+          <button onclick="changeRandomStatus()">🚛 Changer Statut</button>
+        </div>
+      </div>
+
+      <div class="test-section">
+        <h3>📁 Badges Archives (doivent se synchroniser automatiquement)</h3>
+        <div>
+          <span class="badge blue" id="allCount">Toutes les archives: 0</span>
+          <span class="badge red" id="deletedCount">Dossiers supprimés: 0</span>
+          <span class="badge green" id="deliveredCount"
+            >Dossiers livrés: 0</span
+          >
+          <span class="badge blue" id="shippingCount">Mis en livraison: 0</span>
+          <span class="badge purple" id="ordersCount"
+            >Ordres de livraison: 0</span
+          >
+        </div>
+        <div style="margin-top: 10px">
+          <button onclick="manualSyncArchives()">
+            🔄 Forcer Synchronisation Archives
+          </button>
+          <button onclick="testArchivesAPI()">📡 Tester API Archives</button>
+        </div>
+      </div>
+
+      <div class="test-section">
+        <h3>📋 Journal des Événements</h3>
+        <div class="log" id="eventLog"></div>
+        <button onclick="clearLog()">🗑️ Vider le Journal</button>
+      </div>
+    </div>
+
+    <script>
+      // Initialiser l'historique des événements
+      let eventHistory = [];
+
+      function logEvent(message, type = "info") {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+        eventHistory.push(logEntry);
+
+        const logElement = document.getElementById("eventLog");
+        logElement.innerHTML = eventHistory.slice(-20).join("\n");
+        logElement.scrollTop = logElement.scrollHeight;
+
+        console.log(logEntry);
+      }
+
+      // Écouter les événements de synchronisation
+      window.addEventListener("dashboardCardUpdated", (event) => {
+        logEvent(
+          `📊 Cartes dashboard mises à jour: ${JSON.stringify(
+            event.detail.counts
+          )}`,
+          "success"
+        );
+      });
+
+      window.addEventListener("suiviDataUpdated", (event) => {
+        logEvent(
+          `📋 Données tableau de suivi mises à jour: ${
+            event.detail.deliveries?.length || 0
+          } dossiers`,
+          "info"
+        );
+      });
+
+      window.addEventListener("archiveBadgesUpdated", (event) => {
+        logEvent(
+          `📁 Badges archives synchronisés depuis: ${event.detail.source}`,
+          "success"
+        );
+        updateArchiveBadgesDisplay(event.detail.counts);
+      });
+
+      window.addEventListener("deliveryStatusChanged", (event) => {
+        logEvent(
+          `🚛 Statut de livraison modifié: ${JSON.stringify(event.detail)}`,
+          "warning"
+        );
+      });
+
+      window.addEventListener("dossierAdded", (event) => {
+        logEvent(
+          `➕ Nouveau dossier ajouté: ${JSON.stringify(event.detail)}`,
+          "success"
+        );
+      });
+
+      window.addEventListener("dossierDeleted", (event) => {
+        logEvent(
+          `➖ Dossier supprimé: ${JSON.stringify(event.detail)}`,
+          "error"
+        );
+      });
+
+      // Simuler les mises à jour du dashboard
+      function simulateDashboardUpdate() {
+        const newCounts = {
+          en_attente_paiement: Math.floor(Math.random() * 200) + 100,
+          mise_en_livraison: Math.floor(Math.random() * 100) + 50,
+          livres: Math.floor(Math.random() * 80) + 20,
+          en_retard: Math.floor(Math.random() * 50) + 10,
+        };
+
+        // Mettre à jour l'affichage simulé
+        document.getElementById("count1").textContent =
+          newCounts.en_attente_paiement;
+        document.getElementById("count2").textContent =
+          newCounts.mise_en_livraison;
+        document.getElementById("count3").textContent = newCounts.livres;
+        document.getElementById("count4").textContent = newCounts.en_retard;
+
+        // Déclencher l'événement de synchronisation
+        window.dispatchEvent(
+          new CustomEvent("dashboardCardUpdated", {
+            detail: {
+              source: "test-simulation",
+              counts: newCounts,
+              timestamp: Date.now(),
+            },
+          })
+        );
+
+        logEvent(
+          `🎯 Simulation dashboard: ${JSON.stringify(newCounts)}`,
+          "info"
+        );
+      }
+
+      function addRandomFile() {
+        const dossierNumber = `TEST-${Math.floor(Math.random() * 10000)}`;
+        window.dispatchEvent(
+          new CustomEvent("dossierAdded", {
+            detail: {
+              dossier: dossierNumber,
+              timestamp: Date.now(),
+            },
+          })
+        );
+      }
+
+      function removeRandomFile() {
+        const dossierNumber = `TEST-${Math.floor(Math.random() * 10000)}`;
+        window.dispatchEvent(
+          new CustomEvent("dossierDeleted", {
+            detail: {
+              dossier: dossierNumber,
+              timestamp: Date.now(),
+            },
+          })
+        );
+      }
+
+      function changeRandomStatus() {
+        const statuses = [
+          "mise_en_livraison_acconier",
+          "livre",
+          "en_attente_paiement",
+        ];
+        const newStatus = statuses[Math.floor(Math.random() * statuses.length)];
+
+        window.dispatchEvent(
+          new CustomEvent("deliveryStatusChanged", {
+            detail: {
+              dossier: `TEST-${Math.floor(Math.random() * 10000)}`,
+              newStatus: newStatus,
+              timestamp: Date.now(),
+            },
+          })
+        );
+      }
+
+      function updateArchiveBadgesDisplay(counts) {
+        if (counts) {
+          document.getElementById(
+            "allCount"
+          ).innerHTML = `Toutes les archives: ${counts.all || 0}`;
+          document.getElementById(
+            "deletedCount"
+          ).innerHTML = `Dossiers supprimés: ${counts.suppression || 0}`;
+          document.getElementById(
+            "deliveredCount"
+          ).innerHTML = `Dossiers livrés: ${counts.livraison || 0}`;
+          document.getElementById(
+            "shippingCount"
+          ).innerHTML = `Mis en livraison: ${counts.mise_en_livraison || 0}`;
+          document.getElementById(
+            "ordersCount"
+          ).innerHTML = `Ordres de livraison: ${
+            counts.ordre_livraison_etabli || 0
+          }`;
+        }
+      }
+
+      async function manualSyncArchives() {
+        try {
+          logEvent("🔄 Démarrage synchronisation manuelle archives...", "info");
+
+          // Simuler l'appel à updateCounts des archives
+          const response = await fetch("/api/deliveries");
+          const data = await response.json();
+
+          if (data.success && data.deliveries) {
+            logEvent(
+              `📡 Récupéré ${data.deliveries.length} dossiers de l'API`,
+              "success"
+            );
+
+            // Simuler le calcul des compteurs (logique simplifiée)
+            const counts = {
+              en_attente_paiement: data.deliveries.length,
+              mise_en_livraison: data.deliveries.filter(
+                (d) =>
+                  d.delivery_status_acconier === "mise_en_livraison_acconier"
+              ).length,
+              livres: data.deliveries.filter(
+                (d) => d.visible_resp_acconier === false
+              ).length,
+              en_retard: 0,
+            };
+
+            logEvent(
+              `📊 Compteurs calculés: ${JSON.stringify(counts)}`,
+              "success"
+            );
+
+            // Déclencher l'événement de synchronisation
+            window.dispatchEvent(
+              new CustomEvent("archiveBadgesUpdated", {
+                detail: {
+                  source: "manual-test-sync",
+                  counts: {
+                    all: counts.en_attente_paiement,
+                    livraison: counts.livres,
+                    mise_en_livraison: counts.mise_en_livraison,
+                    suppression: Math.floor(Math.random() * 20),
+                    ordre_livraison_etabli: Math.floor(Math.random() * 15),
+                  },
+                  timestamp: Date.now(),
+                },
+              })
+            );
+          } else {
+            logEvent("❌ Erreur lors de la récupération des données", "error");
+          }
+        } catch (error) {
+          logEvent(`❌ Erreur synchronisation: ${error.message}`, "error");
+        }
+      }
+
+      async function testArchivesAPI() {
+        try {
+          logEvent("📡 Test des APIs archives...", "info");
+
+          const endpoints = [
+            "/api/archives?action_type=suppression&limit=1",
+            "/api/archives?action_type=livraison&limit=1",
+            "/api/archives?action_type=mise_en_livraison&limit=1",
+            "/api/archives?action_type=ordre_livraison_etabli&limit=1",
+          ];
+
+          for (const endpoint of endpoints) {
+            const response = await fetch(endpoint);
+            const data = await response.json();
+            const count = data.pagination?.totalItems || 0;
+            const actionType = endpoint.match(/action_type=([^&]+)/)[1];
+            logEvent(`📊 ${actionType}: ${count} éléments`, "info");
+          }
+
+          logEvent("✅ Test des APIs terminé", "success");
+        } catch (error) {
+          logEvent(`❌ Erreur test APIs: ${error.message}`, "error");
+        }
+      }
+
+      function clearLog() {
+        eventHistory = [];
+        document.getElementById("eventLog").innerHTML = "";
+        logEvent("🗑️ Journal vidé", "info");
+      }
+
+      // Initialisation
+      document.addEventListener("DOMContentLoaded", () => {
+        logEvent("🚀 Test de synchronisation archives initialisé", "success");
+        logEvent(
+          "📋 Événements écoutés: dashboardCardUpdated, suiviDataUpdated, archiveBadgesUpdated",
+          "info"
+        );
+      });
+    </script>
+  </body>
+</html>

@@ -26,6 +26,82 @@ class ArchivesManager {
     this.loadingBlocked = false; // 🛡️ PROTECTION: Bloquer les appels multiples
 
     this.init();
+
+    // 🔄 NOUVEAU: Écouter les événements de mise à jour des cartes du tableau de bord
+    this.setupDashboardCardSync();
+  }
+
+  // 🆕 NOUVEAU: Synchronisation PARFAITE avec les cartes du tableau de bord
+  setupDashboardCardSync() {
+    // Écouter les événements personnalisés de mise à jour des cartes
+    window.addEventListener("dashboardCardUpdated", (event) => {
+      console.log(
+        "[ARCHIVES] 📊 Carte du tableau de bord mise à jour:",
+        event.detail
+      );
+      // Mettre à jour les badges archives en conséquence (avec un délai pour éviter les conflits)
+      setTimeout(() => {
+        this.updateCounts();
+      }, 100);
+    });
+
+    // 🎯 NOUVEAU: Écouter spécifiquement les mises à jour du tableau de suivi
+    window.addEventListener("suiviDataUpdated", (event) => {
+      console.log(
+        "[ARCHIVES] 📋 Données du tableau de suivi mises à jour:",
+        event.detail
+      );
+      // Les cartes se basent sur le tableau de suivi, donc synchroniser immédiatement
+      setTimeout(() => {
+        this.updateCounts();
+      }, 200);
+    });
+
+    // 🎯 NOUVEAU: Écouter les événements de livraison/changement de statut
+    window.addEventListener("deliveryStatusChanged", (event) => {
+      console.log("[ARCHIVES] 🚛 Statut de livraison modifié:", event.detail);
+      // Synchroniser les badges car les compteurs ont pu changer
+      setTimeout(() => {
+        this.updateCounts();
+      }, 300);
+    });
+
+    // 🎯 NOUVEAU: Écouter les événements d'ajout/suppression de dossiers
+    window.addEventListener("dossierAdded", (event) => {
+      console.log("[ARCHIVES] ➕ Nouveau dossier ajouté:", event.detail);
+      setTimeout(() => {
+        this.updateCounts();
+      }, 100);
+    });
+
+    window.addEventListener("dossierDeleted", (event) => {
+      console.log("[ARCHIVES] ➖ Dossier supprimé:", event.detail);
+      setTimeout(() => {
+        this.updateCounts();
+      }, 100);
+    });
+
+    // Écouter les changements dans le localStorage pour les mises à jour inter-onglets
+    window.addEventListener("storage", (event) => {
+      if (event.key === "dashboardCountersUpdated" && event.newValue) {
+        try {
+          const counters = JSON.parse(event.newValue);
+          console.log(
+            "[ARCHIVES] 🔄 Compteurs tableau de bord mis à jour (localStorage):",
+            counters
+          );
+          setTimeout(() => {
+            this.updateCounts();
+          }, 150);
+        } catch (error) {
+          console.warn("[ARCHIVES] ⚠️ Erreur parsing compteurs:", error);
+        }
+      }
+    });
+
+    console.log(
+      "[ARCHIVES] ✅ Synchronisation cartes tableau de bord configurée"
+    );
   }
 
   init() {
@@ -35,8 +111,16 @@ class ArchivesManager {
     // 🔧 CORRECTION: S'assurer que le spinner est arrêté au démarrage
     this.forceStopLoading();
 
-    // � CORRECTION: Chargement sécurisé au démarrage (avec délai pour éviter les boucles)
+    // 📊 AJOUT: Mise à jour précoce des badges (avant même le chargement des archives)
     const searchBtn = document.getElementById("searchBtn");
+    if (searchBtn) {
+      console.log("[ARCHIVES] 🔄 Mise à jour précoce des badges...");
+      setTimeout(() => {
+        this.updateCounts();
+      }, 100); // Très rapide pour les badges
+    }
+
+    // 🛡️ CORRECTION: Chargement sécurisé au démarrage (avec délai pour éviter les boucles)
     if (searchBtn) {
       this.setDefaultDates();
 
@@ -144,39 +228,37 @@ class ArchivesManager {
         // Si on change d'onglet, adapter les filtres en conséquence
         const actionFilter = document.getElementById("actionFilter");
         if (actionFilter && this.selectedTab !== "all") {
-          // Mapper les onglets aux types d'action
-          const tabToActionMap = {
+          // 🎯 CORRECTION: Distinguer entre onglets d'archives et onglets de livraisons actives
+          const archiveTabsMap = {
             deleted: "suppression",
-            delivered: "livraison",
-            shipping: "mise_en_livraison",
-            orders: "ordre_livraison_etabli",
           };
 
-          if (tabToActionMap[this.selectedTab]) {
-            // Mettre à jour le filtre et appliquer la recherche
-            this.currentFilters.action_type = tabToActionMap[this.selectedTab];
-            actionFilter.value = tabToActionMap[this.selectedTab];
+          const activeDeliveryTabs = ["delivered", "shipping", "orders"];
+
+          if (archiveTabsMap[this.selectedTab]) {
+            // Pour les vrais onglets d'archives (seulement "deleted")
+            this.currentFilters.action_type = archiveTabsMap[this.selectedTab];
+            actionFilter.value = archiveTabsMap[this.selectedTab];
             console.log(
-              `[ARCHIVES] Onglet ${
+              `[ARCHIVES] Onglet archive ${
                 this.selectedTab
-              } sélectionné, filtrage par: ${tabToActionMap[this.selectedTab]}`
+              } sélectionné, filtrage par: ${archiveTabsMap[this.selectedTab]}`
             );
-
-            // 🔧 DEBUG SPÉCIAL pour l'onglet Ordres
-            if (this.selectedTab === "orders") {
-              console.log(
-                "🔍 [DEBUG ORDRES] Chargement de l'onglet Ordres de livraison..."
-              );
-              // Forcer le rechargement des données pour éviter le cache
-              this.allArchivesData = null;
-              this.lastDataRefresh = 0;
-            }
-
-            this.performSearch(); // Recharger avec le nouveau filtre
-          } else {
+            this.performSearch();
+          } else if (activeDeliveryTabs.includes(this.selectedTab)) {
+            // Pour les onglets de livraisons actives
             console.log(
-              `[ARCHIVES] Onglet ${this.selectedTab} non trouvé dans le mapping`
+              `[ARCHIVES] 🚀 Chargement des livraisons actives pour l'onglet: ${this.selectedTab}`
             );
+
+            // Réinitialiser les filtres d'archives
+            this.currentFilters.action_type = "";
+            actionFilter.value = "";
+
+            // Charger les données de livraisons actives
+            await this.loadActiveDeliveriesByTab(this.selectedTab);
+          } else {
+            console.log(`[ARCHIVES] Onglet ${this.selectedTab} non reconnu`);
             this.renderCurrentView();
           }
         } else if (actionFilter && this.selectedTab === "all") {
@@ -213,6 +295,12 @@ class ArchivesManager {
       return;
     }
 
+    // 🔄 NOUVEAU: Écouter les mises à jour des cartes du tableau de bord
+    console.log(
+      "[ARCHIVES] 📡 Configuration de la synchronisation temps réel avec le tableau de bord..."
+    );
+    this.setupDashboardSync();
+
     // Écouter les événements personnalisés (même onglet)
     window.addEventListener("orderValidated", (event) => {
       console.log(
@@ -245,6 +333,73 @@ class ArchivesManager {
     });
 
     console.log("✅ [ARCHIVES] Système de notifications en temps réel activé");
+  }
+
+  // 🆕 NOUVEAU: Configuration de la synchronisation avec le tableau de bord
+  setupDashboardSync() {
+    try {
+      // Écouter les WebSockets pour les mises à jour des cartes du tableau de bord
+      const wsUrl =
+        (window.location.protocol === "https:" ? "wss://" : "ws://") +
+        window.location.hostname +
+        ":3000";
+
+      console.log(
+        "[ARCHIVES] 🔌 Connexion WebSocket pour synchronisation:",
+        wsUrl
+      );
+
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log(
+          "[ARCHIVES] ✅ WebSocket connecté pour synchronisation tableau de bord"
+        );
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          // Filtrer les événements qui affectent les cartes du tableau de bord
+          const relevantEvents = [
+            "status-change",
+            "container_status_update",
+            "dossier-entre-en-livraison",
+            "dossier-quitte-acconier",
+            "bl_status_update",
+          ];
+
+          if (relevantEvents.includes(data.type)) {
+            console.log(
+              "[ARCHIVES] 🔄 Événement tableau de bord détecté:",
+              data.type,
+              "- Mise à jour des badges"
+            );
+
+            // Délai pour laisser le serveur mettre à jour les données
+            setTimeout(() => {
+              this.updateCounts();
+            }, 500);
+          }
+        } catch (error) {
+          console.warn("[ARCHIVES] ⚠️ Erreur traitement WebSocket:", error);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log(
+          "[ARCHIVES] 🔌 WebSocket fermé, tentative de reconnexion dans 5s..."
+        );
+        setTimeout(() => this.setupDashboardSync(), 5000);
+      };
+
+      ws.onerror = (error) => {
+        console.warn("[ARCHIVES] ⚠️ Erreur WebSocket:", error);
+      };
+    } catch (error) {
+      console.warn("[ARCHIVES] ⚠️ WebSocket non disponible:", error);
+    }
   }
 
   // Gérer la réception d'une notification de nouvel ordre
@@ -429,7 +584,15 @@ class ArchivesManager {
       // Attendre un peu puis débloquer et charger
       setTimeout(async () => {
         this.loadingBlocked = false;
+
+        // 🎯 CORRECTION: Charger les archives ET les badges au démarrage
         await this.loadArchives();
+
+        // 📊 AJOUT: Mettre à jour les compteurs des badges dès le démarrage
+        console.log(
+          "[ARCHIVES] 🔄 Mise à jour des badges au chargement initial..."
+        );
+        await this.updateCounts();
       }, 200);
     } catch (error) {
       console.error("[ARCHIVES] ❌ Erreur dans safeInitialLoad:", error);
@@ -524,6 +687,347 @@ class ArchivesManager {
     );
   }
 
+  // � NOUVELLE MÉTHODE: Charger TOUTES les archives en combinant dossiers actifs et supprimés
+  async loadAllCombinedFromActiveDeliveries() {
+    try {
+      console.log(
+        "[ARCHIVES] 🎯 Chargement de TOUTES les archives (dossiers actifs + supprimés)..."
+      );
+
+      // 1️⃣ Charger tous les dossiers ACTIFS (comme les badges)
+      const deliveriesResponse = await fetch("/deliveries/status");
+      const deliveriesData = await deliveriesResponse.json();
+
+      // 🔧 CORRECTION: L'API retourne {success: true, deliveries: [...]}
+      if (
+        !deliveriesData.success ||
+        !Array.isArray(deliveriesData.deliveries)
+      ) {
+        console.error(
+          "[ARCHIVES] ❌ Format de données actives invalide:",
+          deliveriesData
+        );
+        this.showNotification("Erreur: format de données invalide", "error");
+        return;
+      }
+
+      const activeDeliveries = deliveriesData.deliveries;
+
+      // 🔄 Transformer les données actives pour qu'elles aient la même structure que les archives
+      const transformedActiveDeliveries = activeDeliveries.map((delivery) => ({
+        id: delivery.id,
+        dossier_number: delivery.dossier_number,
+        dossier_data: delivery, // Tout l'objet delivery comme dossier_data
+        client_name: delivery.client_name,
+        action_type: "active", // Type d'action pour les données actives
+        role_source: "Système", // Rôle par défaut
+        page_origine: null, // Pas de page d'origine pour les données actives
+        archived_at: delivery.created_at, // Utiliser created_at comme date de référence
+        created_at: delivery.created_at,
+        intitule: delivery.container_type_and_content,
+        // Autres champs nécessaires avec des valeurs par défaut
+        date_soumission: delivery.created_at,
+        date_creation: delivery.created_at,
+      }));
+
+      // 2️⃣ Charger les dossiers SUPPRIMÉS depuis les archives
+      const deletedResponse = await fetch(
+        "/api/archives?action_type=suppression&limit=9999"
+      );
+      const deletedData = await deletedResponse.json();
+      const deletedDeliveries = deletedData.success
+        ? deletedData.archives || []
+        : [];
+
+      // 3️⃣ Combiner TOUS les dossiers
+      const allDeliveries = [
+        ...transformedActiveDeliveries,
+        ...deletedDeliveries,
+      ];
+
+      console.log(`[ARCHIVES] 📊 Total combiné:`);
+      console.log(`  - Dossiers actifs: ${transformedActiveDeliveries.length}`);
+      console.log(`  - Dossiers supprimés: ${deletedDeliveries.length}`);
+      console.log(`  - TOTAL: ${allDeliveries.length}`);
+
+      // 🔍 Appliquer la recherche si nécessaire
+      let filteredDeliveries = allDeliveries;
+      if (this.searchTerm && this.searchTerm.trim()) {
+        const searchLower = this.searchTerm.toLowerCase();
+        filteredDeliveries = allDeliveries.filter(
+          (delivery) =>
+            (delivery.declaration_number &&
+              delivery.declaration_number
+                .toLowerCase()
+                .includes(searchLower)) ||
+            (delivery.client_name &&
+              delivery.client_name.toLowerCase().includes(searchLower)) ||
+            (delivery.destination &&
+              delivery.destination.toLowerCase().includes(searchLower)) ||
+            (delivery.cargo_description &&
+              delivery.cargo_description.toLowerCase().includes(searchLower)) ||
+            (delivery.numero_dossier &&
+              delivery.numero_dossier.toLowerCase().includes(searchLower)) ||
+            (delivery.dossier_reference &&
+              delivery.dossier_reference.toLowerCase().includes(searchLower))
+        );
+        console.log(
+          `[ARCHIVES] 🔍 Après recherche: ${filteredDeliveries.length}/${allDeliveries.length}`
+        );
+      }
+
+      // 📅 Trier par date (plus récent en premier)
+      filteredDeliveries.sort((a, b) => {
+        const dateA = new Date(
+          a.created_at || a.date_soumission || a.archived_at || a.date_creation
+        );
+        const dateB = new Date(
+          b.created_at || b.date_soumission || b.archived_at || b.date_creation
+        );
+        return dateB - dateA;
+      });
+
+      // 📄 Pagination côté client
+      const totalItems = filteredDeliveries.length;
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+
+      this.filteredArchives = filteredDeliveries.slice(startIndex, endIndex);
+      this.pagination = {
+        currentPage: this.currentPage,
+        totalPages: Math.ceil(totalItems / this.itemsPerPage),
+        totalItems: totalItems,
+        itemsPerPage: this.itemsPerPage,
+      };
+
+      console.log(
+        `[ARCHIVES] ✅ Toutes les archives chargées: ${this.filteredArchives.length} affichées sur ${totalItems} total`
+      );
+
+      // 🎯 Mettre à jour l'affichage
+      this.renderCurrentView();
+      this.renderPagination();
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur lors du chargement combiné:", error);
+      this.showNotification("Erreur lors du chargement des archives", "error");
+    }
+  }
+
+  // �🌟 NOUVELLE MÉTHODE: Charger les dossiers ACTIFS selon l'onglet sélectionné
+  // pour synchroniser le tableau avec les badges
+  async loadActiveDeliveriesByTab() {
+    try {
+      console.log(
+        `[ARCHIVES] 🎯 Chargement des dossiers ACTIFS pour l'onglet: ${this.selectedTab}`
+      );
+
+      // Récupérer TOUS les dossiers actifs depuis le même endpoint que les badges
+      const response = await fetch("/deliveries/status");
+      const deliveriesData = await response.json();
+
+      // 🔧 CORRECTION: L'API retourne {success: true, deliveries: [...]}
+      if (
+        !deliveriesData.success ||
+        !Array.isArray(deliveriesData.deliveries)
+      ) {
+        console.error(
+          "[ARCHIVES] ❌ Format de données invalide:",
+          deliveriesData
+        );
+        this.showNotification("Erreur: données invalides", "error");
+        return;
+      }
+
+      const deliveries = deliveriesData.deliveries;
+
+      console.log(
+        `[ARCHIVES] 📦 ${deliveries.length} dossiers actifs récupérés au total`
+      );
+
+      // 🎯 Filtrer selon l'onglet sélectionné (même logique que les badges)
+      let filteredDeliveries = [];
+
+      switch (this.selectedTab) {
+        case "submitted":
+          // TOUS les dossiers soumis (équivalent au badge "Dossier soumis")
+          filteredDeliveries = deliveries;
+          console.log(
+            `[ARCHIVES] 📊 Onglet 'Dossier soumis': ${filteredDeliveries.length} dossiers (TOUS)`
+          );
+          break;
+
+        case "shipping":
+          // Dossiers mis en livraison (basé sur delivery_status_acconier)
+          filteredDeliveries = deliveries.filter((d) => {
+            return (
+              d.delivery_status_acconier === "mise_en_livraison_acconier" ||
+              d.delivery_status_acconier === "en_livraison" ||
+              (d.container_statuses &&
+                Object.values(d.container_statuses).some(
+                  (status) =>
+                    status === "mise_en_livraison" || status === "en_livraison"
+                ))
+            );
+          });
+          console.log(
+            `[ARCHIVES] 🚚 Onglet 'Mis en livraison': ${filteredDeliveries.length} dossiers`
+          );
+          break;
+
+        case "delivered":
+          // Dossiers livrés (basé sur container_statuses)
+          filteredDeliveries = deliveries.filter((d) => {
+            return (
+              d.delivery_status_acconier === "livre" ||
+              d.delivery_status_acconier === "livré" ||
+              (d.container_statuses &&
+                Object.values(d.container_statuses).some(
+                  (status) =>
+                    status === "livre" ||
+                    status === "livré" ||
+                    status === "delivered"
+                ))
+            );
+          });
+          console.log(
+            `[ARCHIVES] ✅ Onglet 'Dossier livré': ${filteredDeliveries.length} dossiers`
+          );
+          break;
+
+        case "orders":
+          // Ordres de livraison (tous les dossiers avec ordre établi)
+          filteredDeliveries = deliveries.filter((d) => {
+            return (
+              d.dossier_number && // A un numéro de dossier
+              (d.delivery_date ||
+                d.delivery_time || // Date/heure de livraison définie
+                d.status === "pending_acconier" || // En attente acconier (ordre créé)
+                d.bl_statuses) // A des statuts de BL
+            );
+          });
+          console.log(
+            `[ARCHIVES] 📋 Onglet 'Ordre de livraison': ${filteredDeliveries.length} dossiers`
+          );
+          break;
+
+        case "deleted":
+          // Pour les dossiers supprimés, on garde l'ancienne logique avec les archives
+          console.log(
+            "[ARCHIVES] 🗑️ Dossiers supprimés: utilisation de l'ancienne logique d'archives"
+          );
+          await this.loadArchivedDataByType("suppression");
+          return;
+
+        default:
+          console.warn(`[ARCHIVES] ⚠️ Onglet non reconnu: ${this.selectedTab}`);
+          return;
+      }
+
+      // 🔍 Appliquer la recherche si un terme est défini
+      if (this.searchTerm && this.searchTerm.trim()) {
+        const searchLower = this.searchTerm.toLowerCase();
+        const originalCount = filteredDeliveries.length;
+        filteredDeliveries = filteredDeliveries.filter(
+          (delivery) =>
+            (delivery.declaration_number &&
+              delivery.declaration_number
+                .toLowerCase()
+                .includes(searchLower)) ||
+            (delivery.client_name &&
+              delivery.client_name.toLowerCase().includes(searchLower)) ||
+            (delivery.destination &&
+              delivery.destination.toLowerCase().includes(searchLower)) ||
+            (delivery.cargo_description &&
+              delivery.cargo_description.toLowerCase().includes(searchLower)) ||
+            (delivery.numero_dossier &&
+              delivery.numero_dossier.toLowerCase().includes(searchLower))
+        );
+        console.log(
+          `[ARCHIVES] 🔍 Recherche '${this.searchTerm}': ${filteredDeliveries.length}/${originalCount} dossiers`
+        );
+      }
+
+      // 📅 Trier par date (plus récent en premier)
+      filteredDeliveries.sort((a, b) => {
+        const dateA = new Date(
+          a.created_at || a.date_soumission || a.date_creation
+        );
+        const dateB = new Date(
+          b.created_at || b.date_soumission || b.date_creation
+        );
+        return dateB - dateA;
+      });
+
+      // 📄 Pagination côté client
+      const totalItems = filteredDeliveries.length;
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+
+      this.filteredArchives = filteredDeliveries.slice(startIndex, endIndex);
+      this.pagination = {
+        currentPage: this.currentPage,
+        totalPages: Math.ceil(totalItems / this.itemsPerPage),
+        totalItems: totalItems,
+        itemsPerPage: this.itemsPerPage,
+      };
+
+      console.log(
+        `[ARCHIVES] ✅ Synchronisation réussie: ${this.filteredArchives.length} dossiers affichés sur ${totalItems} total (page ${this.currentPage}/${this.pagination.totalPages})`
+      );
+
+      // 🎯 Mettre à jour l'affichage avec les dossiers actifs
+      this.renderCurrentView();
+      this.renderPagination();
+    } catch (error) {
+      console.error(
+        "[ARCHIVES] ❌ Erreur lors du chargement des dossiers actifs:",
+        error
+      );
+      this.showNotification("Erreur lors du chargement des dossiers", "error");
+    }
+  }
+
+  // 📚 Méthode pour charger les données archivées par type (pour dossiers supprimés)
+  async loadArchivedDataByType(actionType) {
+    try {
+      const params = new URLSearchParams({
+        page: this.currentPage.toString(),
+        limit: this.itemsPerPage.toString(),
+        search: this.searchTerm || "",
+      });
+
+      const endpoint = `/api/archives?action_type=${actionType}&${params.toString()}`;
+      console.log(`[ARCHIVES] 📡 API Request pour ${actionType}: ${endpoint}`);
+
+      const response = await fetch(endpoint);
+      const data = await response.json();
+
+      if (data.success) {
+        this.filteredArchives = data.archives || [];
+        this.pagination = data.pagination || {};
+
+        console.log(
+          `[ARCHIVES] ✅ ${this.filteredArchives.length} archives ${actionType} chargées`
+        );
+
+        this.renderCurrentView();
+        this.renderPagination();
+      } else {
+        console.error("[ARCHIVES] ❌ Erreur API:", data.message);
+        this.showNotification(
+          `Erreur lors du chargement: ${data.message}`,
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error(
+        `[ARCHIVES] ❌ Erreur lors du chargement ${actionType}:`,
+        error
+      );
+      this.showNotification("Erreur lors du chargement", "error");
+    }
+  }
+
   async loadArchives() {
     // 🛡️ PROTECTION ANTI-BOUCLE: Empêcher les appels multiples
     if (this.isLoading) {
@@ -553,12 +1057,34 @@ class ArchivesManager {
 
       console.log("[ARCHIVES] 🚀 Début du chargement des archives...");
 
-      // 🎯 CORRECTION: Simplification - on évite les méthodes complexes qui créent des boucles
+      // 🎯 NOUVELLE LOGIQUE: Utiliser les dossiers ACTIFS pour synchroniser avec les badges
       if (this.selectedTab === "all") {
         console.log(
           "[ARCHIVES] 📊 Chargement simple pour 'Toutes les Archives'"
         );
-        await this.simpleLoadAllArchives(); // Nouvelle méthode simple
+        await this.loadAllCombinedFromActiveDeliveries();
+        return;
+      }
+
+      // 🌟 NOUVEAU: Charger les dossiers ACTIFS pour tous les onglets (sauf supprimés)
+      if (
+        ["submitted", "shipping", "delivered", "orders"].includes(
+          this.selectedTab
+        )
+      ) {
+        console.log(
+          `[ARCHIVES] 🎯 Chargement des dossiers ACTIFS pour l'onglet: ${this.selectedTab}`
+        );
+        await this.loadActiveDeliveriesByTab();
+        return;
+      }
+
+      // 📚 Pour les dossiers supprimés, utiliser l'ancienne logique d'archives
+      if (this.selectedTab === "deleted") {
+        console.log(
+          "[ARCHIVES] 🗑️ Chargement des dossiers supprimés depuis les archives"
+        );
+        await this.loadArchivedDataByType("suppression");
         return;
       }
 
@@ -1141,109 +1667,393 @@ class ArchivesManager {
 
   async updateCounts() {
     console.log(
-      "[ARCHIVES] Mise à jour des compteurs - appels backend séparés..."
+      "[ARCHIVES] 🔄 Synchronisation des badges avec les VRAIES cartes du tableau de bord..."
     );
 
     try {
-      // D'abord synchroniser l'historique localStorage pour les dossiers livrés
+      // 🎯 STRATÉGIE FINALE: Lire directement les valeurs affichées dans les cartes DOM
+      // Cela garantit une synchronisation 100% parfaite avec ce que l'utilisateur voit
       console.log(
-        "[ARCHIVES] Synchronisation de l'historique avant calcul des compteurs..."
+        "[ARCHIVES] 📡 Lecture directe des valeurs dans les cartes du dashboard..."
       );
-      await this.syncLocalStorageHistory();
 
-      // Faire des appels séparés pour chaque action_type pour obtenir les vrais compteurs
-      const countPromises = [
+      // Essayer de lire les valeurs directement depuis les cartes affichées
+      let dashboardCounts = null;
+
+      // Méthode 1: Lire depuis les éléments DOM des cartes (si on est sur la page du dashboard)
+      const carteAttentePaiement = document.getElementById(
+        "carteAttentePaiement"
+      );
+      const carteMiseLivraison = document.getElementById("carteMiseLivraison");
+      const carteLivre = document.getElementById("carteLivre");
+
+      if (carteAttentePaiement && carteMiseLivraison && carteLivre) {
+        console.log("[ARCHIVES] 📊 Lecture depuis les cartes DOM...");
+
+        // Extraire les valeurs depuis les badges des cartes
+        const soumisElement =
+          carteAttentePaiement.querySelector(".card-counter");
+        const miseEnLivraisonElement =
+          carteMiseLivraison.querySelector(".card-counter");
+        const livreElement = carteLivre.querySelector(".card-counter");
+
+        if (soumisElement && miseEnLivraisonElement && livreElement) {
+          const soumisText = soumisElement.textContent || "0";
+          const miseEnLivraisonText =
+            miseEnLivraisonElement.textContent || "0/0";
+          const livreText = livreElement.textContent || "0/0";
+
+          // Parser les valeurs (format peut être "78/168" ou juste "168")
+          const soumisValue = parseInt(soumisText.split("/").pop()) || 0;
+          const miseEnLivraisonValue =
+            parseInt(miseEnLivraisonText.split("/")[0]) || 0;
+          const livreValue = parseInt(livreText.split("/")[0]) || 0;
+
+          dashboardCounts = {
+            en_attente_paiement: soumisValue,
+            mise_en_livraison: miseEnLivraisonValue,
+            livres: livreValue,
+          };
+
+          console.log(
+            "[ARCHIVES] ✅ Valeurs lues depuis les cartes DOM:",
+            dashboardCounts
+          );
+        }
+      }
+
+      // Méthode 2: Si on n'est pas sur la page dashboard, utiliser l'API comme fallback
+      if (!dashboardCounts) {
+        console.log(
+          "[ARCHIVES] 📡 Fallback: Calcul depuis l'API /deliveries/status..."
+        );
+
+        const response = await fetch("/deliveries/status");
+        const data = await response.json();
+
+        if (data.success && data.deliveries) {
+          console.log(
+            "[ARCHIVES] ✅ Données API récupérées:",
+            data.deliveries.length,
+            "dossiers"
+          );
+
+          // Utiliser la fonction de calcul local
+          if (typeof window.calculateCountsFromDeliveries === "function") {
+            console.log(
+              "[ARCHIVES] 📊 Utilisation de la fonction globale du dashboard"
+            );
+            dashboardCounts = window.calculateCountsFromDeliveries(
+              data.deliveries
+            );
+          } else {
+            console.log(
+              "[ARCHIVES] 📊 Utilisation de la fonction locale des archives"
+            );
+            dashboardCounts = this.calculateCountsFromDeliveries(
+              data.deliveries
+            );
+          }
+        } else {
+          throw new Error("Impossible de récupérer les données de l'API");
+        }
+      }
+
+      if (!dashboardCounts) {
+        throw new Error("Impossible d'obtenir les compteurs du dashboard");
+      }
+
+      console.log(
+        "[ARCHIVES] 📊 Compteurs finaux du dashboard:",
+        dashboardCounts
+      );
+
+      // � Récupérer les compteurs spécifiques aux archives (suppression et ordres)
+      const [suppressionData, ordreData] = await Promise.all([
         fetch("/api/archives?action_type=suppression&limit=1").then((r) =>
-          r.json()
-        ),
-        fetch("/api/archives?action_type=livraison&limit=1").then((r) =>
-          r.json()
-        ),
-        fetch("/api/archives?action_type=mise_en_livraison&limit=1").then((r) =>
           r.json()
         ),
         fetch("/api/archives?action_type=ordre_livraison_etabli&limit=1").then(
           (r) => r.json()
         ),
-        fetch("/api/archives?limit=1").then((r) => r.json()), // Pour le total
-      ];
+      ]);
 
-      const [
-        suppressionData,
-        livraisonData,
-        miseEnLivraisonData,
-        ordreData,
-        allData,
-      ] = await Promise.all(countPromises);
-
-      const counts = {
+      // 🔗 SYNCHRONISATION PARFAITE: Mapper exactement comme les cartes AFFICHÉES
+      const archiveCounts = {
+        // Badge "Dossiers Livrés" = Total de la carte "Dossiers livrés"
+        livraison: dashboardCounts.livres || 0,
+        // Badge "Mis en Livraison" = Total de la carte "Dossiers mis en livraison"
+        mise_en_livraison: dashboardCounts.mise_en_livraison || 0,
+        // Badge "Dossiers Supprimés" = Appel séparé car pas dans le tableau de bord
         suppression: suppressionData.pagination?.totalItems || 0,
-        livraison: livraisonData.pagination?.totalItems || 0,
-        mise_en_livraison: miseEnLivraisonData.pagination?.totalItems || 0,
+        // Badge "Ordres de Livraison" = Appel séparé car pas dans le tableau de bord
         ordre_livraison_etabli: ordreData.pagination?.totalItems || 0,
-        all: allData.pagination?.totalItems || 0,
       };
 
-      console.log("[ARCHIVES] Vrais compteurs backend récupérés:", counts);
+      // 🎯 CORRECTION: Badge "Toutes les archives" = SOMME de tous les autres badges
+      archiveCounts.all =
+        archiveCounts.suppression +
+        archiveCounts.livraison +
+        archiveCounts.mise_en_livraison +
+        archiveCounts.ordre_livraison_etabli;
 
-      // ✅ CORRECTION: Calculer le vrai total en additionnant tous les types
-      const vraiTotal =
-        counts.suppression +
-        counts.livraison +
-        counts.mise_en_livraison +
-        counts.ordre_livraison_etabli;
       console.log(
-        `[ARCHIVES] 🔢 CALCUL DU VRAI TOTAL: ${counts.suppression} + ${counts.livraison} + ${counts.mise_en_livraison} + ${counts.ordre_livraison_etabli} = ${vraiTotal}`
-      );
-      console.log(
-        `[ARCHIVES] ⚠️ Total API: ${counts.all} (incorrect car ne compte pas mise_en_livraison)`
+        "[ARCHIVES] 🎯 Synchronisation PARFAITE avec les VRAIES cartes affichées:",
+        {
+          "Toutes les archives (= SOMME de tous les badges)": archiveCounts.all,
+          "Dossiers livrés (= Carte livrés AFFICHÉS)": archiveCounts.livraison,
+          "Mis en livraison (= Carte mise en livraison AFFICHÉS)":
+            archiveCounts.mise_en_livraison,
+          "Dossiers supprimés (spécifique archives)": archiveCounts.suppression,
+          "Ordres de livraison (spécifique archives)":
+            archiveCounts.ordre_livraison_etabli,
+        }
       );
 
-      // Mettre à jour l'affichage avec le vrai total calculé
-      document.getElementById("allCount").textContent = vraiTotal;
-      document.getElementById("deletedCount").textContent = counts.suppression;
-      document.getElementById("deliveredCount").textContent = counts.livraison;
-      document.getElementById("shippingCount").textContent =
-        counts.mise_en_livraison;
-      document.getElementById("ordersCount").textContent =
-        counts.ordre_livraison_etabli;
+      // 🔄 Mettre à jour tous les badges avec les compteurs synchronisés
+      const elements = {
+        allCount: document.getElementById("allCount"),
+        deletedCount: document.getElementById("deletedCount"),
+        deliveredCount: document.getElementById("deliveredCount"),
+        shippingCount: document.getElementById("shippingCount"),
+        ordersCount: document.getElementById("ordersCount"),
+      };
+
+      if (elements.allCount) elements.allCount.textContent = archiveCounts.all;
+      if (elements.deletedCount)
+        elements.deletedCount.textContent = archiveCounts.suppression;
+      if (elements.deliveredCount)
+        elements.deliveredCount.textContent = archiveCounts.livraison;
+      if (elements.shippingCount)
+        elements.shippingCount.textContent = archiveCounts.mise_en_livraison;
+      if (elements.ordersCount)
+        elements.ordersCount.textContent = archiveCounts.ordre_livraison_etabli;
+
+      console.log(
+        "[ARCHIVES] ✅ Badges mis à jour avec synchronisation PARFAITE des cartes AFFICHÉES"
+      );
+
+      // 🔔 NOTIFICATION: Déclencher un événement pour notifier les autres composants
+      window.dispatchEvent(
+        new CustomEvent("archiveBadgesUpdated", {
+          detail: {
+            source: "dashboard-dom-sync",
+            counts: archiveCounts,
+            timestamp: Date.now(),
+          },
+        })
+      );
     } catch (error) {
-      console.error("[ARCHIVES] Erreur lors du calcul des compteurs:", error);
-      // Fallback vers l'ancienne méthode en cas d'erreur
-      const fallbackCounts = {
-        suppression: this.allArchives.filter(
-          (a) => a.action_type === "suppression"
-        ).length,
-        livraison: this.allArchives.filter((a) => a.action_type === "livraison")
-          .length,
-        mise_en_livraison: this.allArchives.filter(
-          (a) => a.action_type === "mise_en_livraison"
-        ).length,
-        ordre_livraison_etabli: this.allArchives.filter(
-          (a) => a.action_type === "ordre_livraison_etabli"
-        ).length,
-      };
-
-      // ✅ CORRECTION FALLBACK: Calculer le vrai total en additionnant tous les types
-      const totalFallback =
-        fallbackCounts.suppression +
-        fallbackCounts.livraison +
-        fallbackCounts.mise_en_livraison +
-        fallbackCounts.ordre_livraison_etabli;
+      console.error(
+        "[ARCHIVES] ⚠️ Erreur synchronisation tableau de bord:",
+        error
+      );
       console.log(
-        `[ARCHIVES] 🔢 Total fallback calculé: ${fallbackCounts.suppression} + ${fallbackCounts.livraison} + ${fallbackCounts.mise_en_livraison} + ${fallbackCounts.ordre_livraison_etabli} = ${totalFallback}`
+        "[ARCHIVES] 🔄 Fallback vers la méthode archives classique..."
       );
 
-      document.getElementById("allCount").textContent = totalFallback;
-      document.getElementById("deletedCount").textContent =
-        fallbackCounts.suppression;
-      document.getElementById("deliveredCount").textContent =
-        fallbackCounts.livraison;
-      document.getElementById("shippingCount").textContent =
-        fallbackCounts.mise_en_livraison;
-      document.getElementById("ordersCount").textContent =
-        fallbackCounts.ordre_livraison_etabli;
+      // 🛡️ FALLBACK: Utiliser l'ancienne méthode archives en cas d'erreur
+      try {
+        // Synchroniser l'historique localStorage pour les dossiers livrés
+        await this.syncLocalStorageHistory();
+
+        // Faire des appels séparés pour chaque action_type
+        const [suppressionData, livraisonData, miseEnLivraisonData, ordreData] =
+          await Promise.all([
+            fetch("/api/archives?action_type=suppression&limit=1").then((r) =>
+              r.json()
+            ),
+            fetch("/api/archives?action_type=livraison&limit=1").then((r) =>
+              r.json()
+            ),
+            fetch("/api/archives?action_type=mise_en_livraison&limit=1").then(
+              (r) => r.json()
+            ),
+            fetch(
+              "/api/archives?action_type=ordre_livraison_etabli&limit=1"
+            ).then((r) => r.json()),
+          ]);
+
+        const fallbackCounts = {
+          suppression: suppressionData.pagination?.totalItems || 0,
+          livraison: livraisonData.pagination?.totalItems || 0,
+          mise_en_livraison: miseEnLivraisonData.pagination?.totalItems || 0,
+          ordre_livraison_etabli: ordreData.pagination?.totalItems || 0,
+        };
+
+        const totalFallback =
+          fallbackCounts.suppression +
+          fallbackCounts.livraison +
+          fallbackCounts.mise_en_livraison +
+          fallbackCounts.ordre_livraison_etabli;
+
+        console.log(
+          "[ARCHIVES] 🔢 Compteurs fallback:",
+          fallbackCounts,
+          "Total:",
+          totalFallback
+        );
+
+        document.getElementById("allCount").textContent = totalFallback;
+        document.getElementById("deletedCount").textContent =
+          fallbackCounts.suppression;
+        document.getElementById("deliveredCount").textContent =
+          fallbackCounts.livraison;
+        document.getElementById("shippingCount").textContent =
+          fallbackCounts.mise_en_livraison;
+        document.getElementById("ordersCount").textContent =
+          fallbackCounts.ordre_livraison_etabli;
+
+        // 🔔 NOTIFICATION: Déclencher un événement pour notifier les autres composants
+        window.dispatchEvent(
+          new CustomEvent("archiveBadgesUpdated", {
+            detail: {
+              source: "archives-fallback",
+              counts: fallbackCounts,
+              total: totalFallback,
+              timestamp: Date.now(),
+            },
+          })
+        );
+      } catch (fallbackError) {
+        console.error("[ARCHIVES] ❌ Erreur fallback:", fallbackError);
+
+        // Dernier recours: compteurs locaux
+        const localCounts = {
+          suppression: this.allArchives.filter(
+            (a) => a.action_type === "suppression"
+          ).length,
+          livraison: this.allArchives.filter(
+            (a) => a.action_type === "livraison"
+          ).length,
+          mise_en_livraison: this.allArchives.filter(
+            (a) => a.action_type === "mise_en_livraison"
+          ).length,
+          ordre_livraison_etabli: this.allArchives.filter(
+            (a) => a.action_type === "ordre_livraison_etabli"
+          ).length,
+        };
+
+        const localTotal =
+          localCounts.suppression +
+          localCounts.livraison +
+          localCounts.mise_en_livraison +
+          localCounts.ordre_livraison_etabli;
+
+        document.getElementById("allCount").textContent = localTotal;
+        document.getElementById("deletedCount").textContent =
+          localCounts.suppression;
+        document.getElementById("deliveredCount").textContent =
+          localCounts.livraison;
+        document.getElementById("shippingCount").textContent =
+          localCounts.mise_en_livraison;
+        document.getElementById("ordersCount").textContent =
+          localCounts.ordre_livraison_etabli;
+
+        // 🔔 NOTIFICATION: Déclencher un événement pour notifier les autres composants
+        window.dispatchEvent(
+          new CustomEvent("archiveBadgesUpdated", {
+            detail: {
+              source: "local-fallback",
+              counts: localCounts,
+              total: localTotal,
+              timestamp: Date.now(),
+            },
+          })
+        );
+      }
     }
+  }
+
+  // 🎯 MÉTHODE IDENTIQUE: Calculer les compteurs exactement comme les cartes du dashboard
+  calculateCountsFromDeliveries(deliveries) {
+    console.log(
+      "[ARCHIVES] 📋 Calcul des compteurs à partir de",
+      deliveries.length,
+      "livraisons (logique identique aux cartes)"
+    );
+
+    // Le badge "Dossier soumis" doit toujours afficher le TOTAL des dossiers dans le tableau de suivi
+    // Il ne diminue que si un dossier est SUPPRIMÉ du tableau, pas quand il change de statut
+    const counts = {
+      en_attente_paiement: deliveries.length, // TOTAL des dossiers soumis (TOUS les dossiers du tableau)
+      mise_en_livraison: 0,
+      livres: 0,
+      en_retard: 0,
+    };
+
+    // Analyser chaque dossier pour les autres catégories (sous-ensembles du total)
+    deliveries.forEach((delivery) => {
+      // Debug pour voir les statuts
+      console.log(
+        "[DEBUG] Dossier:",
+        delivery.dossier_number,
+        "Statut acconier:",
+        delivery.delivery_status_acconier,
+        "Statut container:",
+        delivery.container_statuses
+      );
+
+      // 🎯 LOGIQUE SIMPLIFIÉE : Un dossier est livré si visible_resp_acconier = false
+      // Cette logique correspond exactement à ce que fait le serveur
+      let isLivre = false;
+
+      // Méthode principale: vérifier visible_resp_acconier (comme dans le serveur)
+      if (delivery.visible_resp_acconier === false) {
+        isLivre = true;
+        console.log(
+          "[DEBUG] ✅ Dossier livré (visible_resp_acconier=false):",
+          delivery.dossier_number
+        );
+      }
+
+      // Méthode alternative: vérifier les statuts de conteneurs s'ils existent
+      if (!isLivre && delivery.container_statuses) {
+        Object.values(delivery.container_statuses).forEach((status) => {
+          if (status === "livre" || status === "livré") {
+            isLivre = true;
+            console.log(
+              "[DEBUG] ✅ Dossier livré (statut conteneur):",
+              delivery.dossier_number
+            );
+          }
+        });
+      }
+
+      // Compter selon les catégories
+      if (isLivre) {
+        counts.livres++;
+      } else if (
+        delivery.delivery_status_acconier === "mise_en_livraison_acconier"
+      ) {
+        counts.mise_en_livraison++;
+      }
+
+      // Compter les dossiers en retard
+      if (delivery.created_at) {
+        const diffDays = Math.floor(
+          (new Date() - new Date(delivery.created_at)) / (1000 * 60 * 60 * 24)
+        );
+        if (diffDays > 2 && !isLivre) {
+          counts.en_retard++;
+        }
+      }
+    });
+
+    console.log(
+      "[ARCHIVES] 📊 Compteurs calculés (correspondant EXACTEMENT au tableau de bord):",
+      {
+        "🔢 TOTAL dossiers soumis (ne diminue que si suppression)":
+          counts.en_attente_paiement,
+        "🚛 Sous-ensemble mis en livraison": counts.mise_en_livraison,
+        "✅ Sous-ensemble livrés": counts.livres,
+        "⏰ Sous-ensemble en retard": counts.en_retard,
+        "📋 Note":
+          "Le badge 'Dossier soumis' affiche le TOTAL, les autres sont des sous-catégories",
+      }
+    );
+
+    return counts;
   }
 
   renderCurrentView() {
@@ -1257,36 +2067,28 @@ class ArchivesManager {
       this.currentFilters.date_start ||
       this.currentFilters.date_end;
 
+    // 🎯 CORRECTION: Détecter si on utilise des livraisons actives (pas des archives)
+    const isActiveDeliveryTab = ["delivered", "shipping", "orders"].includes(
+      this.selectedTab
+    );
+
     console.log(
       "[ARCHIVES] Rendu - Onglet:",
       this.selectedTab,
       "| Filtres serveur:",
       hasServerFilters,
+      "| Livraisons actives:",
+      isActiveDeliveryTab,
       "| Données filtrées:",
       this.filteredArchives.length
     );
 
-    // Si aucun filtre serveur n'est appliqué, filtrer selon l'onglet actif
-    if (!hasServerFilters) {
+    // Si aucun filtre serveur n'est appliqué ET qu'on n'est pas sur des livraisons actives
+    if (!hasServerFilters && !isActiveDeliveryTab) {
       switch (this.selectedTab) {
         case "deleted":
           archivesToRender = this.filteredArchives.filter(
             (a) => a.action_type === "suppression"
-          );
-          break;
-        case "delivered":
-          archivesToRender = this.filteredArchives.filter(
-            (a) => a.action_type === "livraison"
-          );
-          break;
-        case "shipping":
-          archivesToRender = this.filteredArchives.filter(
-            (a) => a.action_type === "mise_en_livraison"
-          );
-          break;
-        case "orders":
-          archivesToRender = this.filteredArchives.filter(
-            (a) => a.action_type === "ordre_livraison_etabli"
           );
           break;
         default:
@@ -1294,6 +2096,12 @@ class ArchivesManager {
           archivesToRender = this.filteredArchives;
           break;
       }
+    } else if (isActiveDeliveryTab) {
+      // Pour les livraisons actives, utiliser directement les données déjà filtrées
+      archivesToRender = this.filteredArchives;
+      console.log(
+        `[ARCHIVES] 🚀 Affichage livraisons actives (${this.selectedTab}): ${archivesToRender.length} éléments`
+      );
     }
 
     console.log("[ARCHIVES] Archives à rendre:", archivesToRender.length);
@@ -1353,6 +2161,106 @@ class ArchivesManager {
     const isRecent = this.isRecentArchive(archive.archived_at);
     const rowClass = isRecent ? "recent-archive" : "";
 
+    // 🎯 DETECTION: Est-ce une livraison active (pas une archive) ?
+    const isActiveDelivery =
+      !archive.action_type && archive.delivery_status_acconier;
+
+    // 🔍 DEBUG: Affichage des propriétés pour diagnostiquer
+    console.log(`[DEBUG ROW] ID: ${archive.id}`, {
+      action_type: archive.action_type,
+      delivery_status_acconier: archive.delivery_status_acconier,
+      isActiveDelivery: isActiveDelivery,
+      hasActionType: !!archive.action_type,
+      actionTypeValue: archive.action_type,
+    });
+
+    if (isActiveDelivery) {
+      // 🚀 AFFICHAGE POUR LIVRAISONS ACTIVES
+      console.log(`[DEBUG] Rendu livraison active ID: ${archive.id}`);
+
+      // 🎯 Mapper le delivery_status_acconier au bon badge selon l'onglet
+      let actionBadgeType = "active"; // Par défaut
+
+      // 🔍 Priorité à l'onglet sélectionné pour déterminer le bon badge
+      if (this.selectedTab === "delivered") {
+        // Dans l'onglet "Dossiers Livrés", tous les dossiers sont considérés comme livrés
+        actionBadgeType = "livraison";
+      } else if (this.selectedTab === "shipping") {
+        // Dans l'onglet "Mis en Livraison", tous les dossiers sont en cours de livraison
+        actionBadgeType = "mise_en_livraison";
+      } else if (this.selectedTab === "orders") {
+        // Dans l'onglet "Ordres de Livraison", tous les dossiers ont un ordre établi
+        actionBadgeType = "ordre_livraison_etabli";
+      } else {
+        // Fallback: utiliser le delivery_status_acconier
+        if (archive.delivery_status_acconier === "mise_en_livraison_acconier") {
+          actionBadgeType = "mise_en_livraison";
+        } else if (
+          archive.delivery_status_acconier === "livraison" ||
+          archive.delivery_status_acconier === "livre"
+        ) {
+          actionBadgeType = "livraison";
+        } else if (
+          archive.delivery_status_acconier === "ordre_livraison_etabli"
+        ) {
+          actionBadgeType = "ordre_livraison_etabli";
+        }
+      }
+
+      console.log(
+        `[DEBUG] Statut: ${archive.delivery_status_acconier} -> Badge: ${actionBadgeType}`
+      );
+
+      return `
+            <tr class="${rowClass}">
+                <td class="col-id">
+                    <small class="text-muted">#${archive.id}</small>
+                </td>
+                <td class="col-reference" style="min-width: 120px;">
+                    <strong style="color: #000 !important; font-weight: bold !important; display: block !important;">${
+                      archive.dossier_number || "N/A"
+                    }</strong>
+                    ${
+                      archive.container_type_and_content &&
+                      archive.container_type_and_content.trim() !== ""
+                        ? `<br><span class="text-info" style="font-weight: 600; font-size: 0.9em;">${archive.container_type_and_content}</span>`
+                        : ""
+                    }
+                </td>
+                <td class="col-action">
+                    ${this.renderActionBadge(actionBadgeType)}
+                </td>
+                <td class="d-none d-md-table-cell">
+                    ${archive.client_name || "N/A"}
+                </td>
+                <td class="col-role d-none d-lg-table-cell">
+                    ${this.renderRoleSourceForActive(
+                      archive.delivery_status_acconier
+                    )}
+                </td>
+                <td class="col-date">
+                    ${this.formatDate(archive.created_at)}
+                    <br><small class="text-muted">${this.getTimeAgo(
+                      archive.created_at
+                    )}</small>
+                    ${this.renderActiveDeliveryStatus(archive)}
+                </td>
+                <td class="col-actions">
+                    <button class="btn btn-sm btn-outline-info" onclick="archivesManager.viewActiveDeliveryDetails(${
+                      archive.id
+                    })" title="Voir détails">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }
+
+    // 📚 AFFICHAGE POUR ARCHIVES CLASSIQUES
+    console.log(
+      `[DEBUG] Rendu archive classique ID: ${archive.id}, action_type: ${archive.action_type}`
+    );
+
     // 🔧 DEBUG: Afficher les données de la référence pour ordre_livraison_etabli
     if (archive.action_type === "ordre_livraison_etabli") {
       console.log("🔍 [DEBUG ORDRE] Archive:", {
@@ -1395,7 +2303,7 @@ class ArchivesManager {
                     }
                 </td>
                 <td class="col-action">
-                    ${this.renderActionBadge(archive.action_type)}
+                    ${this.renderActionBadge(archive.action_type || "unknown")}
                 </td>
                 <td class="d-none d-md-table-cell">
                     ${
@@ -1426,6 +2334,17 @@ class ArchivesManager {
   }
 
   renderActionBadge(actionType) {
+    console.log(
+      `[DEBUG BADGE] actionType reçu:`,
+      actionType,
+      typeof actionType
+    );
+
+    // Test temporaire pour diagnostiquer
+    if (!actionType || actionType === "undefined" || actionType === "") {
+      console.log(`[DEBUG BADGE] ❌ actionType vide/invalide!`);
+    }
+
     const badges = {
       suppression:
         '<span class="badge badge-suppression"><i class="fas fa-trash me-1"></i>Supprimé</span>',
@@ -1435,11 +2354,80 @@ class ArchivesManager {
         '<span class="badge badge-mise_en_livraison"><i class="fas fa-truck-loading me-1"></i>Mis en livraison</span>',
       ordre_livraison_etabli:
         '<span class="badge badge-ordre-livraison"><i class="fas fa-file-alt me-1"></i>Ordre établi</span>',
+      active:
+        '<span class="badge badge-success"><i class="fas fa-clock me-1"></i>En cours</span>',
+      unknown:
+        '<span class="badge bg-warning"><i class="fas fa-question me-1"></i>Non défini</span>',
     };
-    return (
+
+    // 🛡️ PROTECTION: Si actionType est null, undefined ou vide
+    if (!actionType || actionType.trim() === "") {
+      console.log(`[DEBUG BADGE] actionType vide/null, retour unknown badge`);
+      return badges.unknown;
+    }
+
+    const result =
       badges[actionType] ||
-      `<span class="badge bg-secondary">${actionType}</span>`
-    );
+      `<span class="badge bg-secondary"><i class="fas fa-tag me-1"></i>${actionType}</span>`;
+    console.log(`[DEBUG BADGE] Badge généré:`, result.substring(0, 50) + "...");
+    return result;
+  }
+
+  // 🏷️ Générer le badge Role/Source pour les livraisons actives
+  renderRoleSourceForActive(deliveryStatus) {
+    // 🎯 Prioriser l'onglet sélectionné pour le role/source
+    let effectiveStatus = deliveryStatus;
+
+    if (this.selectedTab === "delivered") {
+      effectiveStatus = "livraison"; // Onglet Dossiers Livrés
+    } else if (this.selectedTab === "shipping") {
+      effectiveStatus = "mise_en_livraison_acconier"; // Onglet Mis en Livraison
+    } else if (this.selectedTab === "orders") {
+      effectiveStatus = "ordre_livraison_etabli"; // Onglet Ordres de Livraison
+    }
+
+    const roleMapping = {
+      mise_en_livraison_acconier: {
+        badge: "badge text-white",
+        bgColor: "#ff8c00", // Orange foncé
+        icon: "fas fa-truck-loading",
+        label: "Responsable Acconier",
+        description: "Mise en livraison",
+      },
+      livraison: {
+        badge: "badge bg-primary text-white",
+        bgColor: "", // Utilise bg-primary
+        icon: "fas fa-check-circle",
+        label: "Responsable de Livraison",
+        description: "Livré",
+      },
+      ordre_livraison_etabli: {
+        badge: "badge bg-info text-white",
+        bgColor: "", // Utilise bg-info
+        icon: "fas fa-file-alt",
+        label: "Agent Acconier",
+        description: "Ordre établi",
+      },
+    };
+
+    const role = roleMapping[effectiveStatus] || {
+      badge: "badge bg-secondary text-white",
+      bgColor: "",
+      icon: "fas fa-clock",
+      label: "Livraison Active",
+      description: "En cours",
+    };
+
+    const badgeStyle = role.bgColor
+      ? `background-color: ${role.bgColor} !important; display: inline-block; padding: 0.25em 0.5em; font-size: 0.85em; border-radius: 0.25rem;`
+      : `display: inline-block; padding: 0.25em 0.5em; font-size: 0.85em; border-radius: 0.25rem;`;
+
+    return `
+      <span class="${role.badge}" style="${badgeStyle}">
+        <i class="${role.icon} me-1"></i>${role.label}
+      </span>
+      <br><small class="text-muted" style="font-size: 0.8em;">${role.description}</small>
+    `;
   }
 
   // Afficher le statut de livraison pour les dossiers mis en livraison
@@ -1449,6 +2437,25 @@ class ArchivesManager {
       if (deliveredArchive) {
         return `<br><small class="text-success"><i class="fas fa-check-circle me-1"></i>était mis en livraison - ${this.formatDate(
           deliveredArchive.archived_at
+        )}</small>`;
+      }
+    }
+    return "";
+  }
+
+  // 🚚 Afficher le statut pour les livraisons actives (était mis en livraison)
+  renderActiveDeliveryStatus(archive) {
+    // Si on est dans l'onglet "Dossiers Livrés" et que le statut est "mise_en_livraison_acconier",
+    // afficher quand le dossier a été mis en livraison (maintenant livré)
+    if (
+      this.selectedTab === "delivered" &&
+      archive.delivery_status_acconier === "mise_en_livraison_acconier"
+    ) {
+      // Chercher s'il y a une date de mise en livraison antérieure
+      if (archive.delivery_date || archive.created_at) {
+        const dateToShow = archive.delivery_date || archive.created_at;
+        return `<br><small class="text-success"><i class="fas fa-truck-loading me-1"></i>était mis en livraison - ${this.formatDate(
+          dateToShow
         )}</small>`;
       }
     }
@@ -2138,6 +3145,210 @@ class ArchivesManager {
         `;
   }
 
+  // 🚀 Afficher les détails d'une livraison active
+  viewActiveDeliveryDetails(deliveryId) {
+    console.log(
+      `[ARCHIVES] Affichage des détails pour la livraison active #${deliveryId}`
+    );
+
+    // Trouver la livraison dans les données filtrées
+    const delivery = this.filteredArchives.find((d) => d.id == deliveryId);
+
+    if (!delivery) {
+      alert(`Livraison #${deliveryId} non trouvée.`);
+      return;
+    }
+
+    // Créer le contenu de la modal
+    const modalBody = document.getElementById("detailsModalBody");
+    modalBody.innerHTML = this.renderActiveDeliveryDetailsContent(delivery);
+
+    // Changer le titre de la modal
+    const modalTitle = document.querySelector("#detailsModal .modal-title");
+    modalTitle.textContent = `Détails de la livraison active #${deliveryId}`;
+
+    // Afficher la modal
+    const modal = new bootstrap.Modal(document.getElementById("detailsModal"));
+    modal.show();
+  }
+
+  renderActiveDeliveryDetailsContent(delivery) {
+    return `
+      <div class="container-fluid">
+        <!-- Informations générales -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-primary border-bottom pb-2">
+              <i class="fas fa-info-circle me-2"></i>Informations générales
+            </h6>
+            <ul class="list-unstyled ms-3">
+              <li class="mb-2">
+                <i class="fas fa-hashtag text-muted me-2"></i>
+                <strong>ID:</strong> <span class="badge bg-secondary">#${
+                  delivery.id
+                }</span>
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-file-alt text-muted me-2"></i>
+                <strong>Référence:</strong> <span class="text-info">${
+                  delivery.dossier_number || "N/A"
+                }</span>
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-user text-muted me-2"></i>
+                <strong>Client:</strong> <span class="text-dark">${
+                  delivery.client_name || "N/A"
+                }</span>
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-flag text-muted me-2"></i>
+                <strong>Statut:</strong> 
+                <span class="badge bg-info ms-1">${
+                  delivery.delivery_status_acconier || "N/A"
+                }</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-success border-bottom pb-2">
+              <i class="fas fa-calendar me-2"></i>Informations temporelles
+            </h6>
+            <ul class="list-unstyled ms-3">
+              <li class="mb-2">
+                <i class="fas fa-plus-circle text-muted me-2"></i>
+                <strong>Créé le:</strong> <span class="text-dark">${this.formatDate(
+                  delivery.created_at
+                )}</span>
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-clock text-muted me-2"></i>
+                <strong>Il y a:</strong> <span class="text-muted">${this.getTimeAgo(
+                  delivery.created_at
+                )}</span>
+              </li>
+              ${
+                delivery.delivery_date
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-truck text-muted me-2"></i>
+                <strong>Date de livraison:</strong> <span class="text-success">${this.formatDate(
+                  delivery.delivery_date
+                )}</span>
+              </li>`
+                  : ""
+              }
+            </ul>
+          </div>
+        </div>
+
+        <!-- Conteneur et numéros officiels -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-warning border-bottom pb-2">
+              <i class="fas fa-box me-2"></i>Informations conteneur et références
+            </h6>
+            <ul class="list-unstyled ms-3">
+              ${
+                delivery.container_number
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-hashtag text-muted me-2"></i>
+                <strong>N° TC:</strong> 
+                <span class="badge bg-primary">${delivery.container_number}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.bl_number
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-file-contract text-muted me-2"></i>
+                <strong>N° BL:</strong> 
+                <span class="badge bg-success">${delivery.bl_number}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.dossier_number
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-folder text-muted me-2"></i>
+                <strong>N° Dossier:</strong> 
+                <span class="badge bg-info">${delivery.dossier_number}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.declaration_number
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-clipboard-list text-muted me-2"></i>
+                <strong>N° Déclaration:</strong> 
+                <span class="badge bg-warning text-dark">${delivery.declaration_number}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.container_type_and_content
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-cube text-muted me-2"></i>
+                <strong>Type et contenu:</strong> 
+                <span class="text-info">${delivery.container_type_and_content}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.number_of_containers
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-boxes text-muted me-2"></i>
+                <strong>Nombre de conteneurs:</strong> 
+                <span class="text-dark">${delivery.number_of_containers}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.container_foot_type
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-ruler text-muted me-2"></i>
+                <strong>Type de pied:</strong> 
+                <span class="text-secondary">${delivery.container_foot_type}</span>
+              </li>`
+                  : ""
+              }
+            </ul>
+          </div>
+        </div>
+
+        ${
+          delivery.cargo_description
+            ? `
+        <!-- Description du cargo -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <h6 class="text-info border-bottom pb-2">
+              <i class="fas fa-boxes me-2"></i>Description du cargo
+            </h6>
+            <ul class="list-unstyled ms-3">
+              <li class="mb-2">
+                <i class="fas fa-list-alt text-muted me-2"></i>
+                <span class="text-dark">${delivery.cargo_description}</span>
+              </li>
+            </ul>
+          </div>
+        </div>`
+            : ""
+        }
+      </div>
+    `;
+  }
+
   getTableContainerId() {
     const mapping = {
       all: "allArchivesTable",
@@ -2387,6 +3598,11 @@ class ArchivesManager {
   }
 
   getPageName(url) {
+    // Vérifier si url est défini
+    if (!url) {
+      return "Données actives";
+    }
+
     const pageNames = {
       "resp_liv.html": "Responsable Livraison",
       "resp_acconier.html": "Responsable Acconier",

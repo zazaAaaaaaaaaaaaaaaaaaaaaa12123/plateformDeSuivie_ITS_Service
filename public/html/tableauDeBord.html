@@ -5007,6 +5007,17 @@
                       data.deliveries.length
                     );
 
+                    // 🔔 NOUVEAU: Déclencher l'événement suiviDataUpdated
+                    window.dispatchEvent(
+                      new CustomEvent("suiviDataUpdated", {
+                        detail: {
+                          source: "dashboard-deliveries",
+                          deliveries: data.deliveries,
+                          timestamp: Date.now(),
+                        },
+                      })
+                    );
+
                     // Calculer les compteurs à partir des mêmes données que le tableau de suivi
                     const counts = calculateCountsFromDeliveries(
                       data.deliveries
@@ -5057,6 +5068,30 @@
                         Livrés: counts.livres || 0,
                         "En retard": counts.en_retard || 0,
                       }
+                    );
+
+                    // 🔔 NOUVEAU: Déclencher un événement pour synchroniser les archives
+                    window.dispatchEvent(
+                      new CustomEvent("dashboardCardUpdated", {
+                        detail: {
+                          source: "dashboard-cards",
+                          counts: counts,
+                          timestamp: Date.now(),
+                        },
+                      })
+                    );
+
+                    // 🔔 NOUVEAU: Stocker dans localStorage pour les autres onglets
+                    localStorage.setItem(
+                      "dashboardCountersUpdated",
+                      JSON.stringify({
+                        counts: counts,
+                        timestamp: Date.now(),
+                      })
+                    );
+
+                    console.log(
+                      "[DASHBOARD] 📡 Événements de synchronisation déclenchés pour les archives"
                     );
                   } else {
                     console.error(

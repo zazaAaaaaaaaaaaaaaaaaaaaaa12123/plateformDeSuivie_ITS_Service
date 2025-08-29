@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validation Synchronisation Archives</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .counter {
+        display: inline-block;
+        margin: 10px;
+        padding: 10px 15px;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        min-width: 120px;
+        text-align: center;
+      }
+      .counter.orange {
+        background: #ff8c00;
+      }
+      .counter.blue {
+        background: #007bff;
+      }
+      .counter.green {
+        background: #28a745;
+      }
+      .counter.red {
+        background: #dc3545;
+      }
+      .counter.purple {
+        background: #6f42c1;
+      }
+      .match {
+        color: #28a745;
+        font-weight: bold;
+      }
+      .mismatch {
+        color: #dc3545;
+        font-weight: bold;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .log {
+        background: #f8f9fa;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔍 Validation Synchronisation Archives vs Dashboard</h1>
+
+      <div class="section">
+        <h3>📊 Valeurs Attendues (d'après l'image)</h3>
+        <div>
+          <span class="counter orange">Dossiers soumis: 168</span>
+          <span class="counter blue">Mis en livraison: 78</span>
+          <span class="counter green">Dossiers livrés: 50</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>🔧 API Status-Counts (Incorrecte)</h3>
+        <div>
+          <span class="counter orange" id="apiAttente"
+            >en_attente_paiement: <span id="apiAttenteVal">-</span></span
+          >
+          <span class="counter blue" id="apiMise"
+            >mise_en_livraison: <span id="apiMiseVal">-</span></span
+          >
+          <span class="counter green" id="apiLivre"
+            >livres: <span id="apiLivreVal">-</span></span
+          >
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>📡 API Deliveries/Status (Calculée)</h3>
+        <div>
+          <span class="counter orange" id="calcAttente"
+            >Total dossiers: <span id="calcAttenteVal">-</span></span
+          >
+          <span class="counter blue" id="calcMise"
+            >Mis en livraison: <span id="calcMiseVal">-</span></span
+          >
+          <span class="counter green" id="calcLivre"
+            >Dossiers livrés: <span id="calcLivreVal">-</span></span
+          >
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>📁 Archives Synchronisées (Résultat final)</h3>
+        <div>
+          <span class="counter orange" id="archAttente"
+            >Toutes archives: <span id="archAttenteVal">-</span></span
+          >
+          <span class="counter blue" id="archMise"
+            >Mis en livraison: <span id="archMiseVal">-</span></span
+          >
+          <span class="counter green" id="archLivre"
+            >Dossiers livrés: <span id="archLivreVal">-</span></span
+          >
+          <span class="counter red" id="archSupp"
+            >Supprimés: <span id="archSuppVal">-</span></span
+          >
+          <span class="counter purple" id="archOrdre"
+            >Ordres: <span id="archOrdreVal">-</span></span
+          >
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>✅ Validation</h3>
+        <div id="validation"></div>
+      </div>
+
+      <div style="margin: 20px 0">
+        <button onclick="runFullTest()">🔄 Test Complet</button>
+        <button onclick="testArchiveSync()">📁 Test Sync Archives</button>
+        <button onclick="clearLog()">🗑️ Vider Log</button>
+      </div>
+
+      <div class="log" id="logArea"></div>
+    </div>
+
+    <script>
+      let logEntries = [];
+
+      function log(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        const entry = `[${timestamp}] ${message}`;
+        logEntries.push(entry);
+        document.getElementById("logArea").innerHTML = logEntries
+          .slice(-50)
+          .join("\n");
+        document.getElementById("logArea").scrollTop =
+          document.getElementById("logArea").scrollHeight;
+        console.log(entry);
+      }
+
+      function calculateCountsFromDeliveries(deliveries) {
+        const counts = {
+          en_attente_paiement: deliveries.length,
+          mise_en_livraison: 0,
+          livres: 0,
+          en_retard: 0,
+        };
+
+        deliveries.forEach((delivery) => {
+          let isLivre = false;
+
+          if (delivery.visible_resp_acconier === false) {
+            isLivre = true;
+          }
+
+          if (!isLivre && delivery.container_statuses) {
+            Object.values(delivery.container_statuses).forEach((status) => {
+              if (status === "livre" || status === "livré") {
+                isLivre = true;
+              }
+            });
+          }
+
+          if (isLivre) {
+            counts.livres++;
+          } else if (
+            delivery.delivery_status_acconier === "mise_en_livraison_acconier"
+          ) {
+            counts.mise_en_livraison++;
+          }
+
+          if (delivery.created_at) {
+            const diffDays = Math.floor(
+              (new Date() - new Date(delivery.created_at)) /
+                (1000 * 60 * 60 * 24)
+            );
+            if (diffDays > 2 && !isLivre) {
+              counts.en_retard++;
+            }
+          }
+        });
+
+        return counts;
+      }
+
+      async function testApiStatusCounts() {
+        try {
+          log("📡 Test API /api/deliveries/status-counts...");
+          const response = await fetch("/api/deliveries/status-counts");
+          const data = await response.json();
+
+          if (data.success) {
+            document.getElementById("apiAttenteVal").textContent =
+              data.counts.en_attente_paiement;
+            document.getElementById("apiMiseVal").textContent =
+              data.counts.mise_en_livraison;
+            document.getElementById("apiLivreVal").textContent =
+              data.counts.livres;
+
+            log(
+              `✅ API status-counts: ${data.counts.en_attente_paiement}/${data.counts.mise_en_livraison}/${data.counts.livres}`
+            );
+            return data.counts;
+          }
+        } catch (error) {
+          log(`❌ Erreur API status-counts: ${error.message}`);
+        }
+        return null;
+      }
+
+      async function testApiDeliveriesStatus() {
+        try {
+          log("📡 Test API /deliveries/status...");
+          const response = await fetch("/deliveries/status");
+          const data = await response.json();
+
+          if (data.success && data.deliveries) {
+            const counts = calculateCountsFromDeliveries(data.deliveries);
+
+            document.getElementById("calcAttenteVal").textContent =
+              counts.en_attente_paiement;
+            document.getElementById("calcMiseVal").textContent =
+              counts.mise_en_livraison;
+            document.getElementById("calcLivreVal").textContent = counts.livres;
+
+            log(
+              `✅ API deliveries/status calculé: ${counts.en_attente_paiement}/${counts.mise_en_livraison}/${counts.livres}`
+            );
+            return counts;
+          }
+        } catch (error) {
+          log(`❌ Erreur API deliveries/status: ${error.message}`);
+        }
+        return null;
+      }
+
+      async function testArchiveSync() {
+        try {
+          log("📁 Test synchronisation archives...");
+
+          // Simuler la logique des archives
+          const response = await fetch("/deliveries/status");
+          const data = await response.json();
+
+          if (data.success && data.deliveries) {
+            const dashboardCounts = calculateCountsFromDeliveries(
+              data.deliveries
+            );
+
+            // Récupérer les compteurs spécifiques aux archives
+            const [suppressionData, ordreData] = await Promise.all([
+              fetch("/api/archives?action_type=suppression&limit=1").then((r) =>
+                r.json()
+              ),
+              fetch(
+                "/api/archives?action_type=ordre_livraison_etabli&limit=1"
+              ).then((r) => r.json()),
+            ]);
+
+            const archiveCounts = {
+              all: dashboardCounts.en_attente_paiement,
+              livraison: dashboardCounts.livres,
+              mise_en_livraison: dashboardCounts.mise_en_livraison,
+              suppression: suppressionData.pagination?.totalItems || 0,
+              ordre_livraison_etabli: ordreData.pagination?.totalItems || 0,
+            };
+
+            document.getElementById("archAttenteVal").textContent =
+              archiveCounts.all;
+            document.getElementById("archMiseVal").textContent =
+              archiveCounts.mise_en_livraison;
+            document.getElementById("archLivreVal").textContent =
+              archiveCounts.livraison;
+            document.getElementById("archSuppVal").textContent =
+              archiveCounts.suppression;
+            document.getElementById("archOrdreVal").textContent =
+              archiveCounts.ordre_livraison_etabli;
+
+            log(
+              `✅ Archives synchronisées: ${archiveCounts.all}/${archiveCounts.mise_en_livraison}/${archiveCounts.livraison}`
+            );
+
+            return archiveCounts;
+          }
+        } catch (error) {
+          log(`❌ Erreur sync archives: ${error.message}`);
+        }
+        return null;
+      }
+
+      function validateResults() {
+        const expected = { soumis: 168, mise: 78, livres: 50 };
+
+        const apiStatusCounts = {
+          soumis:
+            parseInt(document.getElementById("apiAttenteVal").textContent) || 0,
+          mise:
+            parseInt(document.getElementById("apiMiseVal").textContent) || 0,
+          livres:
+            parseInt(document.getElementById("apiLivreVal").textContent) || 0,
+        };
+
+        const calculatedCounts = {
+          soumis:
+            parseInt(document.getElementById("calcAttenteVal").textContent) ||
+            0,
+          mise:
+            parseInt(document.getElementById("calcMiseVal").textContent) || 0,
+          livres:
+            parseInt(document.getElementById("calcLivreVal").textContent) || 0,
+        };
+
+        const archiveCounts = {
+          soumis:
+            parseInt(document.getElementById("archAttenteVal").textContent) ||
+            0,
+          mise:
+            parseInt(document.getElementById("archMiseVal").textContent) || 0,
+          livres:
+            parseInt(document.getElementById("archLivreVal").textContent) || 0,
+        };
+
+        let validationHtml = "<h4>Validation des résultats:</h4>";
+
+        // API Status-Counts vs Expected
+        validationHtml +=
+          "<p><strong>API Status-Counts vs Attendu:</strong></p>";
+        validationHtml += `<ul>`;
+        validationHtml += `<li>Soumis: ${apiStatusCounts.soumis} vs ${
+          expected.soumis
+        } ${
+          apiStatusCounts.soumis === expected.soumis
+            ? '<span class="match">✅</span>'
+            : '<span class="mismatch">❌</span>'
+        }</li>`;
+        validationHtml += `<li>Mis en livraison: ${apiStatusCounts.mise} vs ${
+          expected.mise
+        } ${
+          apiStatusCounts.mise === expected.mise
+            ? '<span class="match">✅</span>'
+            : '<span class="mismatch">❌</span>'
+        }</li>`;
+        validationHtml += `<li>Livrés: ${apiStatusCounts.livres} vs ${
+          expected.livres
+        } ${
+          apiStatusCounts.livres === expected.livres
+            ? '<span class="match">✅</span>'
+            : '<span class="mismatch">❌</span>'
+        }</li>`;
+        validationHtml += `</ul>`;
+
+        // Calculated vs Expected
+        validationHtml += "<p><strong>Calculé vs Attendu:</strong></p>";
+        validationHtml += `<ul>`;
+        validationHtml += `<li>Soumis: ${calculatedCounts.soumis} vs ${
+          expected.soumis
+        } ${
+          calculatedCounts.soumis === expected.soumis
+            ? '<span class="match">✅</span>'
+            : '<span class="mismatch">❌</span>'
+        }</li>`;
+        validationHtml += `<li>Mis en livraison: ${calculatedCounts.mise} vs ${
+          expected.mise
+        } ${
+          calculatedCounts.mise === expected.mise
+            ? '<span class="match">✅</span>'
+            : '<span class="mismatch">❌</span>'
+        }</li>`;
+        validationHtml += `<li>Livrés: ${calculatedCounts.livres} vs ${
+          expected.livres
+        } ${
+          calculatedCounts.livres === expected.livres
+            ? '<span class="match">✅</span>'
+            : '<span class="mismatch">❌</span>'
+        }</li>`;
+        validationHtml += `</ul>`;
+
+        // Archives vs Expected
+        validationHtml += "<p><strong>Archives vs Attendu:</strong></p>";
+        validationHtml += `<ul>`;
+        validationHtml += `<li>Soumis: ${archiveCounts.soumis} vs ${
+          expected.soumis
+        } ${
+          archiveCounts.soumis === expected.soumis
+            ? '<span class="match">✅</span>'
+            : '<span class="mismatch">❌</span>'
+        }</li>`;
+        validationHtml += `<li>Mis en livraison: ${archiveCounts.mise} vs ${
+          expected.mise
+        } ${
+          archiveCounts.mise === expected.mise
+            ? '<span class="match">✅</span>'
+            : '<span class="mismatch">❌</span>'
+        }</li>`;
+        validationHtml += `<li>Livrés: ${archiveCounts.livres} vs ${
+          expected.livres
+        } ${
+          archiveCounts.livres === expected.livres
+            ? '<span class="match">✅</span>'
+            : '<span class="mismatch">❌</span>'
+        }</li>`;
+        validationHtml += `</ul>`;
+
+        // Conclusion
+        const archivesMatch =
+          archiveCounts.soumis === expected.soumis &&
+          archiveCounts.mise === expected.mise &&
+          archiveCounts.livres === expected.livres;
+
+        if (archivesMatch) {
+          validationHtml +=
+            '<p class="match"><strong>🎉 SUCCÈS: Les archives sont parfaitement synchronisées avec les cartes du dashboard!</strong></p>';
+          log("🎉 VALIDATION RÉUSSIE: Synchronisation parfaite!");
+        } else {
+          validationHtml +=
+            '<p class="mismatch"><strong>⚠️ PROBLÈME: Les archives ne sont pas synchronisées avec les cartes attendues.</strong></p>';
+          log("⚠️ VALIDATION ÉCHOUÉE: Synchronisation incorrecte.");
+        }
+
+        document.getElementById("validation").innerHTML = validationHtml;
+      }
+
+      async function runFullTest() {
+        log("🚀 Démarrage du test complet...");
+
+        await testApiStatusCounts();
+        await testApiDeliveriesStatus();
+        await testArchiveSync();
+
+        validateResults();
+
+        log("✅ Test complet terminé");
+      }
+
+      function clearLog() {
+        logEntries = [];
+        document.getElementById("logArea").innerHTML = "";
+      }
+
+      // Auto-test au chargement
+      document.addEventListener("DOMContentLoaded", () => {
+        log("🚀 Page de validation chargée");
+        setTimeout(runFullTest, 1000);
+      });
+    </script>
+  </body>
+</html>
