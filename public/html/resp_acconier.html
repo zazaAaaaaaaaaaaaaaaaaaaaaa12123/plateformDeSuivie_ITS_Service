@@ -1051,8 +1051,32 @@
           </div>
           <div
             class="d-flex flex-column align-items-end flex-shrink-0"
-            style="min-width: 60px; position: relative"
+            style="min-width: 60px; position: relative; gap: 8px"
           >
+            <!-- Icône d'accueil pour retourner au tableau de bord -->
+            <div
+              id="homeButton"
+              onclick="window.location.href='tableauDeBord.html?direct=true'"
+              style="
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                position: relative;
+              "
+              onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.4)'"
+              onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.3)'"
+              title="Retour au tableau de bord"
+            >
+              <i class="fas fa-home" style="color: white; font-size: 1.3em"></i>
+            </div>
+
             <div
               id="profileAvatar"
               style="
@@ -2066,6 +2090,16 @@
               }
             } catch (e) {
               localStorage.removeItem("targetUserInfo");
+            }
+          }
+
+          // Contrôler l'affichage de l'icône d'accueil
+          const homeButton = document.getElementById("homeButton");
+          if (homeButton) {
+            if (fromDashboard === "true" || adminMode === "admin") {
+              homeButton.style.display = "flex";
+            } else {
+              homeButton.style.display = "none";
             }
           }
 
