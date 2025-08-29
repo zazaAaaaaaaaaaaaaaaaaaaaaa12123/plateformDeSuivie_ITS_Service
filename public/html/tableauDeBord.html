@@ -736,106 +736,113 @@
 
       /* --- Fin styles popup admin --- */
 
-      /* === STYLES AMÉLIORÉS POUR LES CARTES ET BADGES === */
+      /* === STYLES PREMIUM EXTRAORDINAIRES POUR LES CARTES ET BADGES === */
 
-      /* Animation de pulsation pour les cartes actives */
-      @keyframes cardPulse {
+      /* Animations premium fluides et élégantes */
+      @keyframes premiumCardHover {
         0% {
-          transform: translateY(0) scale(1);
+          transform: translateY(0) scale(1) rotateX(0deg);
+          filter: brightness(1) saturate(1);
+        }
+        100% {
+          transform: translateY(-12px) scale(1.02) rotateX(2deg);
+          filter: brightness(1.1) saturate(1.2);
+        }
+      }
+
+      @keyframes luxuryBadgeGlow {
+        0% {
+          box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4),
+            0 2px 10px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
         50% {
-          transform: translateY(-2px) scale(1.02);
+          box-shadow: 0 8px 32px rgba(99, 102, 241, 0.6),
+            0 4px 16px rgba(0, 0, 0, 0.15),
+            inset 0 2px 0 rgba(255, 255, 255, 0.4);
         }
         100% {
-          transform: translateY(0) scale(1);
+          box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4),
+            0 2px 10px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
       }
 
-      /* Animation de rotation douce pour les badges */
-      @keyframes badgeRotate {
+      @keyframes premiumShimmer {
         0% {
-          transform: rotate(0deg) scale(1);
-        }
-        25% {
-          transform: rotate(5deg) scale(1.1);
-        }
-        75% {
-          transform: rotate(-5deg) scale(1.1);
+          background-position: -200% 0;
         }
         100% {
-          transform: rotate(0deg) scale(1);
+          background-position: 200% 0;
         }
       }
 
-      /* Animation de bouncing pour les nouvelles valeurs */
-      @keyframes badgeBounce {
-        0% {
-          transform: scale(1) translateY(0);
-        }
-        30% {
-          transform: scale(1.3) translateY(-8px);
+      @keyframes floatingEffect {
+        0%,
+        100% {
+          transform: translateY(0px);
         }
         50% {
-          transform: scale(1.1) translateY(-4px);
-        }
-        70% {
-          transform: scale(1.2) translateY(-6px);
-        }
-        100% {
-          transform: scale(1) translateY(0);
+          transform: translateY(-6px);
         }
       }
 
-      /* Animation de particules flottantes */
-      @keyframes floatingParticle {
-        0% {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-        50% {
-          opacity: 0.7;
-          transform: translateY(-20px) scale(1.2);
-        }
-        100% {
-          opacity: 0;
-          transform: translateY(-40px) scale(0);
-        }
-      }
-
-      /* Styles pour les cartes avec effet glassmorphism */
+      /* Styles premium pour les cartes */
       .etat-card {
         position: relative;
-        backdrop-filter: blur(20px);
-        background: rgba(255, 255, 255, 0.25);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        overflow: visible;
-      }
-
-      .etat-card:hover {
-        transform: translateY(-8px) scale(1.03);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
-          0 8px 30px rgba(0, 0, 0, 0.1);
-        background: rgba(255, 255, 255, 0.35);
-      }
-
-      /* Amélioration des badges de compteurs */
-      .card-counter {
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif !important;
-        font-weight: 800 !important;
-        letter-spacing: -0.5px;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.95) 0%,
+          rgba(255, 255, 255, 0.85) 50%,
+          rgba(248, 250, 252, 0.9) 100%
+        );
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 20px;
+        padding: 32px 28px;
+        width: 300px;
+        height: 220px;
+        min-height: 220px;
+        max-height: 220px;
+        backdrop-filter: blur(25px) saturate(180%);
+        box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08),
+          0 4px 16px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
-        user-select: none;
-        /* animation: badgeBounce 0.6s ease-out; Désactivé pour enlever l'animation */
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        isolation: isolate;
+        animation: floatingEffect 6s ease-in-out infinite;
       }
 
-      .card-counter:hover {
-        /* animation: badgeRotate 0.8s ease-in-out; Désactivé pour enlever l'animation */
+      .etat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(99, 102, 241, 0.02) 0%,
+          rgba(59, 130, 246, 0.03) 25%,
+          rgba(16, 185, 129, 0.02) 50%,
+          rgba(245, 158, 11, 0.03) 75%,
+          rgba(239, 68, 68, 0.02) 100%
+        );
+        border-radius: inherit;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
       }
 
-      /* Effet de brillance sur les badges */
-      .card-counter::before {
+      .etat-card:hover::before {
+        opacity: 1;
+      }
+
+      .etat-card::after {
         content: "";
         position: absolute;
         top: -2px;
@@ -845,92 +852,527 @@
         background: linear-gradient(
           45deg,
           transparent 30%,
+          rgba(99, 102, 241, 0.1) 40%,
           rgba(255, 255, 255, 0.3) 50%,
+          rgba(59, 130, 246, 0.1) 60%,
           transparent 70%
         );
+        background-size: 400% 400%;
         border-radius: inherit;
         opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
+        animation: premiumShimmer 3s ease-in-out infinite;
         z-index: -1;
+        pointer-events: none;
+      }
+
+      .etat-card:hover {
+        transform: translateY(-12px) scale(1.02) rotateX(2deg);
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15),
+          0 12px 40px rgba(99, 102, 241, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06),
+          inset 0 1px 0 rgba(255, 255, 255, 0.95);
+        border-color: rgba(99, 102, 241, 0.2);
+      }
+
+      .etat-card:hover::after {
+        opacity: 1;
+      }
+
+      /* Styles pour les icônes des cartes */
+      .etat-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        position: relative;
+        background: linear-gradient(
+          135deg,
+          rgba(99, 102, 241, 0.1) 0%,
+          rgba(59, 130, 246, 0.1) 100%
+        );
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .etat-icon i {
+        font-size: 28px;
+        background: linear-gradient(
+          135deg,
+          #6366f1 0%,
+          #4f46e5 50%,
+          #3b82f6 100%
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        transition: all 0.3s ease;
+      }
+
+      .etat-card:hover .etat-icon {
+        transform: scale(1.1) rotate(2deg);
+        background: linear-gradient(
+          135deg,
+          rgba(99, 102, 241, 0.2) 0%,
+          rgba(59, 130, 246, 0.2) 100%
+        );
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+      }
+
+      /* Badges de compteur premium luxueux */
+      .card-counter {
+        position: absolute !important;
+        top: 20px !important;
+        right: 20px !important;
+        background: linear-gradient(
+          135deg,
+          #6366f1 0%,
+          #4f46e5 50%,
+          #4338ca 100%
+        ) !important;
+        color: white !important;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-size: 0.95em !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.3px;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        user-select: none;
+        padding: 12px 18px !important;
+        border-radius: 16px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35),
+          0 4px 12px rgba(0, 0, 0, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.25),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(12px) !important;
+        z-index: 10 !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card-counter::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.4) 50%,
+          transparent 100%
+        );
+        transition: left 0.6s ease;
       }
 
       .card-counter:hover::before {
-        opacity: 0;
-        /* animation: shimmer 1.5s ease-in-out infinite; Désactivé pour enlever l'animation */
+        left: 100%;
       }
 
-      @keyframes shimmer {
-        0% {
-          transform: translateX(-100%) rotate(45deg);
-        }
-        100% {
-          transform: translateX(100%) rotate(45deg);
-        }
+      .card-counter:hover {
+        transform: scale(1.08) translateY(-2px) !important;
+        box-shadow: 0 12px 35px rgba(99, 102, 241, 0.45),
+          0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.35),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.15) !important;
+        animation: luxuryBadgeGlow 2s ease-in-out infinite;
       }
 
-      /* Styles spécifiques selon le type de carte */
+      /* Styles spécifiques premium pour chaque type de carte */
+      #carteAttentePaiement {
+        background: linear-gradient(
+          145deg,
+          rgba(255, 251, 235, 0.95) 0%,
+          rgba(254, 243, 199, 0.9) 100%
+        );
+        border-color: rgba(245, 158, 11, 0.2);
+      }
+
+      #carteAttentePaiement .etat-icon {
+        background: linear-gradient(
+          135deg,
+          rgba(245, 158, 11, 0.15) 0%,
+          rgba(217, 119, 6, 0.15) 100%
+        );
+        border-color: rgba(245, 158, 11, 0.2);
+      }
+
+      #carteAttentePaiement .etat-icon i {
+        background: linear-gradient(
+          135deg,
+          #f59e0b 0%,
+          #d97706 50%,
+          #b45309 100%
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+
       #carteAttentePaiement .card-counter {
         background: linear-gradient(
           135deg,
           #f59e0b 0%,
-          #d97706 100%
+          #d97706 50%,
+          #b45309 100%
         ) !important;
-        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3),
-          0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.35),
+          0 4px 12px rgba(0, 0, 0, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+      }
+
+      #carteMiseLivraison {
+        background: linear-gradient(
+          145deg,
+          rgba(239, 246, 255, 0.95) 0%,
+          rgba(219, 234, 254, 0.9) 100%
+        );
+        border-color: rgba(59, 130, 246, 0.2);
+      }
+
+      #carteMiseLivraison .etat-icon {
+        background: linear-gradient(
+          135deg,
+          rgba(59, 130, 246, 0.15) 0%,
+          rgba(37, 99, 235, 0.15) 100%
+        );
+        border-color: rgba(59, 130, 246, 0.2);
+      }
+
+      #carteMiseLivraison .etat-icon i {
+        background: linear-gradient(
+          135deg,
+          #3b82f6 0%,
+          #2563eb 50%,
+          #1d4ed8 100%
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
       }
 
       #carteMiseLivraison .card-counter {
         background: linear-gradient(
           135deg,
           #3b82f6 0%,
-          #2563eb 100%
+          #2563eb 50%,
+          #1d4ed8 100%
         ) !important;
-        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3),
-          0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35),
+          0 4px 12px rgba(0, 0, 0, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+      }
+
+      #carteLivre {
+        background: linear-gradient(
+          145deg,
+          rgba(236, 253, 245, 0.95) 0%,
+          rgba(209, 250, 229, 0.9) 100%
+        );
+        border-color: rgba(16, 185, 129, 0.2);
+      }
+
+      #carteLivre .etat-icon {
+        background: linear-gradient(
+          135deg,
+          rgba(16, 185, 129, 0.15) 0%,
+          rgba(5, 150, 105, 0.15) 100%
+        );
+        border-color: rgba(16, 185, 129, 0.2);
+      }
+
+      #carteLivre .etat-icon i {
+        background: linear-gradient(
+          135deg,
+          #10b981 0%,
+          #059669 50%,
+          #047857 100%
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
       }
 
       #carteLivre .card-counter {
         background: linear-gradient(
           135deg,
           #10b981 0%,
-          #059669 100%
+          #059669 50%,
+          #047857 100%
         ) !important;
-        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3),
-          0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35),
+          0 4px 12px rgba(0, 0, 0, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
       }
 
-      /* Animation de mise à jour des cartes */
-      .card-updating {
-        /* animation: cardPulse 1s ease-in-out; Désactivé pour enlever l'animation */
+      #carteRetard {
+        background: linear-gradient(
+          145deg,
+          rgba(254, 242, 242, 0.95) 0%,
+          rgba(254, 226, 226, 0.9) 100%
+        );
+        border-color: rgba(239, 68, 68, 0.2);
       }
 
-      /* Effet de glow pour les badges actifs */
-      .card-counter.updating {
-        animation: badgeBounce 0.6s ease-out,
-          glow 2s ease-in-out infinite alternate;
+      #carteRetard .etat-icon {
+        background: linear-gradient(
+          135deg,
+          rgba(239, 68, 68, 0.15) 0%,
+          rgba(220, 38, 38, 0.15) 100%
+        );
+        border-color: rgba(239, 68, 68, 0.2);
       }
 
-      @keyframes glow {
-        from {
-          filter: drop-shadow(0 0 5px currentColor);
-        }
-        to {
-          filter: drop-shadow(0 0 15px currentColor);
-        }
+      #carteRetard .etat-icon i {
+        background: linear-gradient(
+          135deg,
+          #ef4444 0%,
+          #dc2626 50%,
+          #b91c1c 100%
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
       }
 
-      /* Responsive pour les badges */
+      /* Titres et descriptions premium */
+      .etat-title {
+        font-size: 1.25em;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 12px;
+        line-height: 1.3;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+
+      .etat-desc {
+        font-size: 0.95em;
+        color: #64748b;
+        line-height: 1.5;
+        font-weight: 500;
+        opacity: 0.9;
+        transition: opacity 0.3s ease;
+      }
+
+      .etat-card:hover .etat-desc {
+        opacity: 1;
+        color: #475569;
+      }
+
+      /* Responsive premium */
       @media (max-width: 768px) {
         .card-counter {
-          font-size: 0.8em !important;
-          padding: 6px 10px !important;
-          min-width: 24px !important;
-          min-height: 24px !important;
+          font-size: 0.85em !important;
+          padding: 10px 14px !important;
+          min-width: 36px !important;
+          min-height: 36px !important;
+          top: 16px !important;
+          right: 16px !important;
+        }
+
+        .etat-card {
+          padding: 24px 20px;
+          width: 280px;
+          height: 180px;
+          min-height: 180px;
+          max-height: 180px;
+        }
+
+        .etat-icon {
+          width: 56px;
+          height: 56px;
+        }
+
+        .etat-icon i {
+          font-size: 24px;
         }
       }
 
-      /* === FIN STYLES CARTES ET BADGES === */
+      /* === EFFETS SPÉCIAUX PREMIUM SUPPLÉMENTAIRES === */
+
+      /* Bordure animée premium pour les cartes */
+      .etat-card {
+        position: relative;
+      }
+
+      .etat-card::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px solid transparent;
+        border-radius: inherit;
+        background: linear-gradient(
+            45deg,
+            rgba(99, 102, 241, 0.3) 0%,
+            rgba(59, 130, 246, 0.3) 25%,
+            rgba(16, 185, 129, 0.3) 50%,
+            rgba(245, 158, 11, 0.3) 75%,
+            rgba(99, 102, 241, 0.3) 100%
+          )
+          border-box;
+        mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        -webkit-mask: linear-gradient(#fff 0 0) padding-box,
+          linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        background-size: 300% 300%;
+        animation: premiumBorderFlow 8s ease-in-out infinite;
+      }
+
+      .etat-card:hover::after {
+        opacity: 1;
+      }
+
+      @keyframes premiumBorderFlow {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      /* Effet de particules flottantes sur hover */
+      .etat-card:hover {
+        position: relative;
+        overflow: visible;
+      }
+
+      .etat-card:hover::before {
+        content: "";
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        right: -5px;
+        bottom: -5px;
+        background: radial-gradient(
+          circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+          rgba(99, 102, 241, 0.1) 0%,
+          transparent 50%
+        );
+        border-radius: inherit;
+        opacity: 0.7;
+        pointer-events: none;
+        z-index: -1;
+        filter: blur(20px);
+      }
+
+      /* Micro-interactions pour les titres */
+      .etat-title {
+        position: relative;
+        transition: all 0.3s ease;
+      }
+
+      .etat-card:hover .etat-title {
+        transform: translateY(-2px);
+        text-shadow: 0 2px 8px rgba(30, 41, 59, 0.1);
+      }
+
+      /* Effet de survol subtil pour les descriptions */
+      .etat-desc {
+        transition: all 0.3s ease;
+      }
+
+      .etat-card:hover .etat-desc {
+        transform: translateY(-1px);
+        color: #475569;
+        text-shadow: 0 1px 4px rgba(71, 85, 105, 0.1);
+      }
+
+      /* Animations retardées pour un effet cascade */
+      .etat-card:nth-child(1) {
+        animation-delay: 0s;
+      }
+
+      .etat-card:nth-child(2) {
+        animation-delay: 0.5s;
+      }
+
+      .etat-card:nth-child(3) {
+        animation-delay: 1s;
+      }
+
+      .etat-card:nth-child(4) {
+        animation-delay: 1.5s;
+      }
+
+      /* Optimisations ultra-rapides pour l'accès direct */
+      body.direct-access .etat-card,
+      html.direct-access .etat-card {
+        animation-duration: 0.1s !important;
+        animation-delay: 0s !important;
+        transition: all 0.15s ease !important;
+      }
+
+      body.direct-access .etat-card:nth-child(1),
+      body.direct-access .etat-card:nth-child(2),
+      body.direct-access .etat-card:nth-child(3),
+      body.direct-access .etat-card:nth-child(4) {
+        animation-delay: 0s !important;
+      }
+
+      /* Effet de focus premium pour l'accessibilité */
+      .etat-card:focus {
+        outline: none;
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15),
+          0 12px 40px rgba(99, 102, 241, 0.12),
+          0 0 0 3px rgba(99, 102, 241, 0.3);
+      }
+
+      /* Effet de brillance subtile en arrière-plan */
+      .etat-cards-row {
+        position: relative;
+      }
+
+      .etat-cards-row::before {
+        content: "";
+        position: absolute;
+        top: -50px;
+        left: -50px;
+        right: -50px;
+        bottom: -50px;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(99, 102, 241, 0.03) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+        z-index: -1;
+        animation: subtleBackgroundGlow 10s ease-in-out infinite alternate;
+      }
+
+      @keyframes subtleBackgroundGlow {
+        0% {
+          opacity: 0.3;
+          transform: scale(0.8);
+        }
+        100% {
+          opacity: 0.6;
+          transform: scale(1.2);
+        }
+      }
+
+      /* === FIN EFFETS SPÉCIAUX PREMIUM === */
+
+      /* === FIN STYLES PREMIUM EXTRAORDINAIRES === */
 
       /* === ANIMATIONS DE LIAISON DES CARTES SYNCHRONISÉES === */
 
@@ -1418,6 +1860,16 @@
         transition: all 0.8s ease;
       }
 
+      /* Cacher immédiatement l'intro si accès direct */
+      @media all {
+        body.direct-access .enterprise-intro,
+        html.direct-access .enterprise-intro {
+          display: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
+        }
+      }
+
       @keyframes enterpriseBgShift {
         0%,
         100% {
@@ -1611,9 +2063,142 @@
 
       /* === FIN ANIMATIONS DE LIAISON === */
     </style>
+
+    <!-- Script ultra-rapide pour éviter l'affichage de l'intro -->
+    <script>
+      // Vérification immédiate de l'URL avant tout chargement
+      if (window.location.search.includes("direct=true")) {
+        // Appliquer immédiatement la classe pour cacher l'intro
+        document.documentElement.classList.add("direct-access");
+        document.body && document.body.classList.add("direct-access");
+
+        // Style ultra-rapide injecté directement avec priorité maximale
+        const fastStyles = document.createElement("style");
+        fastStyles.textContent = `
+          .direct-access #enterpriseIntro {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            z-index: -1000 !important;
+          }
+          .direct-access * {
+            animation: none !important;
+            animation-duration: 0s !important;
+            animation-delay: 0s !important;
+            transition-duration: 0s !important;
+          }
+          .direct-access .etat-card {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
+          .direct-access .enterprise-intro {
+            display: none !important;
+          }
+        `;
+        document.head.appendChild(fastStyles);
+
+        // Forcer la suppression immédiate de l'intro si elle existe déjà
+        document.addEventListener("DOMContentLoaded", function () {
+          const intro = document.getElementById("enterpriseIntro");
+          if (intro) {
+            intro.style.display = "none";
+            intro.remove();
+          }
+          document.body.classList.add("direct-access");
+
+          // Forcer l'affichage immédiat des cartes
+          const cards = document.querySelectorAll(".etat-card");
+          cards.forEach((card) => {
+            card.style.animation = "none";
+            card.style.opacity = "1";
+            card.style.transform = "none";
+          });
+        });
+
+        // Supprimer l'intro immédiatement si le DOM est déjà chargé
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", function () {
+            const intro = document.getElementById("enterpriseIntro");
+            if (intro) intro.remove();
+          });
+        } else {
+          const intro = document.getElementById("enterpriseIntro");
+          if (intro) intro.remove();
+        }
+      }
+    </script>
+
+    <style>
+      /* Style conditionnel pour l'accès direct - ULTRA RAPIDE */
+      .direct-access #enterpriseIntro,
+      body.direct-access #enterpriseIntro,
+      html.direct-access #enterpriseIntro {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        z-index: -10000 !important;
+        position: absolute !important;
+        top: -100vh !important;
+      }
+
+      /* Optimisation ultra-rapide pour l'accès direct */
+      .direct-access .etat-card,
+      body.direct-access .etat-card,
+      html.direct-access .etat-card {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+
+      .direct-access .welcome-typewriter,
+      body.direct-access .welcome-typewriter,
+      html.direct-access .welcome-typewriter {
+        animation: none !important;
+      }
+
+      .direct-access *,
+      body.direct-access *,
+      html.direct-access * {
+        animation: none !important;
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+        transition-duration: 0s !important;
+      }
+
+      /* Force l'affichage immédiat des cartes */
+      .direct-access .etat-card:nth-child(1),
+      .direct-access .etat-card:nth-child(2),
+      .direct-access .etat-card:nth-child(3),
+      .direct-access .etat-card:nth-child(4) {
+        animation-delay: 0s !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    </style>
   </head>
 
   <body class="sidebar-expanded">
+    <!-- Script d'affichage immédiat pour accès direct -->
+    <script>
+      if (window.location.search.includes("direct=true")) {
+        // Masquer immédiatement l'intro au niveau du body
+        document.body.style.visibility = "hidden";
+        setTimeout(() => {
+          const intro = document.getElementById("enterpriseIntro");
+          if (intro) {
+            intro.style.display = "none";
+            intro.remove();
+          }
+          document.body.style.visibility = "visible";
+        }, 0);
+      }
+    </script>
+
     <!-- Animation d'introduction professionnelle -->
     <div id="enterpriseIntro" class="enterprise-intro">
       <div class="enterprise-logo">
@@ -1634,6 +2219,19 @@
         <span></span>
       </div>
     </div>
+
+    <!-- Script immédiat pour cacher l'intro si accès direct -->
+    <script>
+      if (window.location.search.includes("direct=true")) {
+        const intro = document.getElementById("enterpriseIntro");
+        if (intro) {
+          intro.style.display = "none";
+          intro.style.opacity = "0";
+          intro.style.visibility = "hidden";
+          intro.style.zIndex = "-10000";
+        }
+      }
+    </script>
 
     <div class="layout">
       <aside class="sidebar">
@@ -2205,6 +2803,7 @@
               <div class="etat-desc">
                 Dossiers en attente de règlement avant traitement.
               </div>
+              <div class="card-counter" id="compteurAttentePaiement">0</div>
             </div>
 
             <div
@@ -2218,6 +2817,7 @@
               <div class="etat-desc">
                 Dossiers prêts pour la livraison et en cours de traitement.
               </div>
+              <div class="card-counter" id="compteurMiseLivraison">0/0</div>
             </div>
             <!-- La pop-up dossiers en attentes de paiement a été supprimée -->
 
@@ -2334,8 +2934,12 @@
               <div class="etat-desc">
                 Dossiers livrés avec succès au client.
               </div>
+              <div class="card-counter" id="compteurLivre">0/0</div>
             </div>
-            <div class="etat-card dossier-retard animated-card">
+            <div
+              class="etat-card dossier-retard animated-card"
+              id="carteRetard"
+            >
               <div class="etat-icon">
                 <i class="fas fa-exclamation-triangle"></i>
               </div>
@@ -2495,195 +3099,156 @@
           </div>
         </div>
         <style>
-          /* Cartes états des dossiers (3D, moderne, esthétique) */
+          /* === STYLES PREMIUM HARMONISÉS POUR LA DISPOSITION DES CARTES === */
           .etat-cards-row {
             display: flex;
             flex-direction: row;
             justify-content: center;
-            align-items: center;
-            gap: 38px;
-            margin-bottom: 22px;
+            align-items: stretch;
+            gap: 40px;
+            margin-bottom: 32px;
+            position: relative;
+            padding: 0 20px;
           }
+
           /* Décalage vertical des cartes sous le message de bienvenue */
           .etat-cards-row:first-of-type {
-            margin-top: 18px;
+            margin-top: 24px;
           }
+
+          /* Styles harmonisés avec le nouveau design premium */
           .etat-card {
-            border-radius: 18px;
-            box-shadow: 0 8px 24px #2563eb18, 0 2px 0 #fff8;
-            padding: 28px 16px 22px 16px;
-            min-width: 240px;
+            /* Les styles principaux sont définis dans la section premium ci-dessus */
+            border-radius: 20px;
+            width: 300px;
+            height: 220px;
+            min-width: 300px;
             max-width: 300px;
-            min-height: 180px;
+            min-height: 220px;
+            max-height: 220px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            margin: 0 10px;
-            transition: transform 0.18s, box-shadow 0.18s;
-            position: relative;
-            cursor: default;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin: 0;
             opacity: 0;
-            animation: cardFadeInUp 0.7s cubic-bezier(0.23, 1.01, 0.32, 1)
-              forwards;
+            animation: premiumCardFadeInUp 0.8s
+              cubic-bezier(0.23, 1.01, 0.32, 1) forwards;
+            flex: 0 0 300px;
           }
-          .dossier-attente.etat-card {
-            background: linear-gradient(135deg, #fff7e3 80%, #f8fafc 100%);
-            border: 2.5px solid #f59e0b;
-          }
-          .dossier-mise-livraison.etat-card {
-            background: linear-gradient(135deg, #e3f2ff 80%, #f8fafc 100%);
-            border: 2.5px solid #0ea5e9;
-          }
-          .dossier-cours.etat-card {
-            background: linear-gradient(135deg, #e3f0ff 80%, #f8fafc 100%);
-            border: 2.5px solid #2563eb;
-          }
-          .dossier-livre.etat-card {
-            background: linear-gradient(135deg, #e3ffe3 80%, #f8fafc 100%);
-            border: 2.5px solid #059669;
-          }
-          .dossier-retard.etat-card {
-            background: linear-gradient(135deg, #ffe3e3 80%, #f8fafc 100%);
-            border: 2.5px solid #dc3545;
-          }
-          .etat-cards-row .etat-card:nth-child(1) {
-            animation-delay: 0.05s;
-          }
-          .etat-cards-row .etat-card:nth-child(2) {
-            animation-delay: 0.18s;
-          }
-          .etat-cards-row + .etat-cards-row .etat-card:nth-child(1) {
-            animation-delay: 0.32s;
-          }
-          .etat-cards-row + .etat-cards-row .etat-card:nth-child(2) {
-            animation-delay: 0.45s;
-          }
-          @keyframes cardFadeInUp {
+
+          /* Animation d'apparition premium */
+          @keyframes premiumCardFadeInUp {
             0% {
               opacity: 0;
-              transform: translateY(40px) scale(0.98);
-            }
-            60% {
-              opacity: 1;
-              transform: translateY(-8px) scale(1.03);
+              transform: translateY(30px) scale(0.95);
+              filter: blur(5px);
             }
             100% {
               opacity: 1;
               transform: translateY(0) scale(1);
+              filter: blur(0);
             }
           }
-          .etat-card:hover {
-            transform: translateY(-8px) scale(1.035) rotate(-1deg);
-            box-shadow: 0 16px 48px #2563eb33, 0 4px 16px #0002;
-            z-index: 2;
+
+          /* Timing des animations en cascade */
+          .etat-cards-row .etat-card:nth-child(1) {
+            animation-delay: 0.1s;
           }
-          .etat-icon {
-            font-size: 2.7em;
-            margin-bottom: 12px;
-            color: #2563eb;
-            filter: drop-shadow(0 2px 8px #2563eb22);
-            background: #fff;
-            border-radius: 50%;
-            width: 52px;
-            height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px #2563eb18, 0 1px 2px #0001;
-            margin-top: -28px;
-            margin-bottom: 12px;
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translate(-50%, -50%);
+          .etat-cards-row .etat-card:nth-child(2) {
+            animation-delay: 0.25s;
           }
-          .etat-title {
-            font-size: 1.45em;
-            font-weight: 700;
-            color: #1d3557;
-            margin-bottom: 10px;
-            text-align: center;
-            letter-spacing: 0.2px;
+          .etat-cards-row + .etat-cards-row .etat-card:nth-child(1) {
+            animation-delay: 0.4s;
           }
-          .etat-desc {
-            font-size: 1.18em;
-            color: #374151;
-            text-align: center;
-            margin-bottom: 0;
-            margin-top: 0;
-            line-height: 1.5;
+          .etat-cards-row + .etat-cards-row .etat-card:nth-child(2) {
+            animation-delay: 0.55s;
           }
-          .dossier-attente .etat-icon {
-            color: #f59e0b;
-            background: #fff7e3;
-            box-shadow: 0 2px 12px #f59e0b22, 0 1px 2px #0001;
-          }
-          .dossier-mise-livraison .etat-icon {
-            color: #0ea5e9;
-            background: #e3f2ff;
-            box-shadow: 0 2px 12px #0ea5e922, 0 1px 2px #0001;
-          }
-          .dossier-cours .etat-icon {
-            color: #2563eb;
-            background: #e3f0ff;
-            box-shadow: 0 2px 12px #2563eb22, 0 1px 2px #0001;
-          }
-          .dossier-livre .etat-icon {
-            color: #059669;
-            background: #e3ffe3;
-            box-shadow: 0 2px 12px #05966922, 0 1px 2px #0001;
-          }
-          .dossier-retard .etat-icon {
-            color: #dc3545;
-            background: #ffe3e3;
-            box-shadow: 0 2px 12px #dc354522, 0 1px 2px #0001;
-          }
-          .etat-card:not(:hover) {
-            will-change: auto;
-          }
+
+          /* === STYLES REMPLACÉS PAR LE DESIGN PREMIUM CI-DESSUS === */
+          /* Tous les anciens styles .etat-card, .etat-icon, .etat-title, .etat-desc 
+             sont maintenant définis dans la section "STYLES PREMIUM EXTRAORDINAIRES" */
+          /* === RESPONSIVE PREMIUM POUR LES CARTES === */
           @media (max-width: 1100px) {
             .etat-cards-row {
-              gap: 16px;
+              gap: 24px;
+              padding: 0 16px;
             }
             .etat-card {
-              min-width: 140px;
-              max-width: 98vw;
-              padding: 18px 6px 14px 6px;
+              width: 280px;
+              height: 200px;
+              min-width: 280px;
+              max-width: 280px;
+              min-height: 200px;
+              max-height: 200px;
+              flex: 0 0 280px;
+              padding: 28px 20px;
             }
-            .etat-icon {
-              font-size: 1.5em;
-              width: 38px;
-              height: 38px;
-              margin-top: -18px;
+            .card-counter {
+              top: 18px !important;
+              right: 18px !important;
+              padding: 10px 16px !important;
+              font-size: 0.9em !important;
             }
           }
+
+          @media (max-width: 900px) {
+            .etat-cards-row {
+              gap: 20px;
+              padding: 0 12px;
+            }
+            .etat-card {
+              width: 260px;
+              height: 190px;
+              min-width: 260px;
+              max-width: 260px;
+              min-height: 190px;
+              max-height: 190px;
+              flex: 0 0 260px;
+            }
+          }
+
           @media (max-width: 700px) {
             #welcomeSection {
               flex-direction: column;
               align-items: stretch;
               gap: 0;
               margin-top: 0;
-              padding-top: 8px;
+              padding-top: 12px;
             }
             .etat-cards-row {
               flex-direction: column;
-              gap: 16px;
-              margin-bottom: 0;
+              gap: 20px;
+              margin-bottom: 20px;
+              padding: 0 8px;
             }
             .etat-cards-row:first-of-type {
-              margin-top: 10px;
+              margin-top: 16px;
             }
             .etat-card {
-              min-width: 92vw;
-              max-width: 99vw;
-              padding: 14px 4px 10px 4px;
+              width: calc(100vw - 40px);
+              height: 180px;
+              min-width: calc(100vw - 40px);
+              max-width: calc(100vw - 40px);
+              min-height: 180px;
+              max-height: 180px;
+              flex: 0 0 180px;
+              padding: 24px 20px;
             }
             .etat-icon {
-              font-size: 1.4em;
-              width: 34px;
-              height: 34px;
-              margin-top: -12px;
+              width: 56px;
+              height: 56px;
+            }
+            .etat-icon i {
+              font-size: 24px;
+            }
+            .card-counter {
+              top: 16px !important;
+              right: 16px !important;
+              padding: 8px 14px !important;
+              font-size: 0.85em !important;
+              min-width: 36px !important;
+              min-height: 36px !important;
             }
           }
 
@@ -2896,6 +3461,56 @@
 
           // Message de bienvenue animé (typewriter)
           document.addEventListener("DOMContentLoaded", function () {
+            // === GESTION DE L'ÉCRAN D'INTRO ET REDIRECTION DIRECTE ===
+            const enterpriseIntro = document.getElementById("enterpriseIntro");
+            const urlParams = new URLSearchParams(window.location.search);
+            const directAccess = urlParams.get("direct") === "true";
+
+            if (directAccess) {
+              // Nettoyer l'URL immédiatement
+              window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname
+              );
+              // L'intro est déjà cachée par le CSS conditionnel
+
+              // FORCER L'AFFICHAGE IMMÉDIAT DES CARTES
+              setTimeout(() => {
+                const cards = document.querySelectorAll(".etat-card");
+                cards.forEach((card, index) => {
+                  card.style.animation = "none";
+                  card.style.opacity = "1";
+                  card.style.transform = "none";
+                  card.style.visibility = "visible";
+                  card.style.display = "block";
+                });
+
+                // Forcer l'affichage du contenu principal
+                const mainContent = document.querySelector(".main-content");
+                if (mainContent) {
+                  mainContent.style.opacity = "1";
+                  mainContent.style.visibility = "visible";
+                }
+
+                // Supprimer définitivement l'intro
+                if (enterpriseIntro) {
+                  enterpriseIntro.remove();
+                }
+              }, 0);
+            } else {
+              // Accès normal - cacher l'intro après 4 secondes
+              setTimeout(() => {
+                if (enterpriseIntro) {
+                  enterpriseIntro.style.opacity = "0";
+                  enterpriseIntro.style.visibility = "hidden";
+                  setTimeout(() => {
+                    enterpriseIntro.style.display = "none";
+                  }, 800); // Attendre la fin de la transition CSS
+                }
+              }, 4000);
+            }
+            /**FIN */
             // === MARQUER LA SESSION ADMIN POUR LES REDIRECTIONS ===
             // Marquer cette session comme étant une session administrateur
             // pour que les pages responsables sachent qu'elles sont accédées en mode visualisation
@@ -2981,6 +3596,15 @@
             var el = document.getElementById("welcomeTypewriter");
             if (el) {
               el.textContent = "";
+
+              // Si accès direct, afficher immédiatement le message
+              if (window.location.search.includes("direct=true")) {
+                el.textContent = message;
+                el.classList.remove("typing");
+                el.style.borderRight = "none";
+                return;
+              }
+
               let i = 0;
               function typeWriter() {
                 if (i <= message.length) {
@@ -6244,4 +6868,4 @@
     </script>
   </body>
 </html>
-<!--CODE123000-->
+<!--CODE123000 ACAC-->
