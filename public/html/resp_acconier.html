@@ -392,6 +392,30 @@
         }
       }
 
+      /* Styles du dropdown de profil */
+      #profileDropdown {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: var(--bg-dropdown);
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: var(--shadow-dropdown);
+        min-width: 200px;
+        padding: 16px 14px;
+        z-index: 9999;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0.2s, opacity 0.2s ease;
+        transform: translateY(-5px);
+      }
+
+      #profileDropdown.show {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
       /* Responsive header, avatar, dropdown, filtres et tableau */
       @media (max-width: 900px) {
         .card-section
@@ -1066,22 +1090,7 @@
               />
             </div>
             <!-- Dropdown profil -->
-            <div
-              id="profileDropdown"
-              style="
-                display: none;
-                position: absolute;
-                top: 76px;
-                right: 0;
-                min-width: 220px;
-                background: var(--bg-dropdown);
-                border-radius: 12px;
-                box-shadow: var(--shadow-dropdown);
-                padding: 18px 20px;
-                z-index: 1001;
-                border: 1px solid var(--border-color);
-              "
-            >
+            <div id="profileDropdown">
               <div
                 style="
                   display: flex;
@@ -1270,15 +1279,37 @@
 
             // Affichage du menu profil
             if (avatar && dropdown) {
+              console.log(
+                "🔧 [DEBUG] Avatar et dropdown trouvés, ajout du gestionnaire de clic"
+              );
+
+              // Initialisation des propriétés du dropdown
+              dropdown.classList.remove("show");
+              console.log(
+                "🎨 [DEBUG] Dropdown initialisé avec classe 'show' supprimée"
+              );
               avatar.onclick = function (e) {
+                console.log("👤 [DEBUG] Clic sur l'avatar détecté");
                 e.stopPropagation();
-                dropdown.style.display =
-                  dropdown.style.display === "block" ? "none" : "block";
+                const isVisible = dropdown.classList.contains("show");
+                dropdown.classList.toggle("show");
+                console.log(
+                  "📋 [DEBUG] Dropdown",
+                  isVisible ? "fermé" : "ouvert",
+                  "- Classe 'show':",
+                  dropdown.classList.contains("show")
+                );
               };
               document.addEventListener("click", function (e) {
                 if (!dropdown.contains(e.target) && e.target !== avatar) {
-                  dropdown.style.display = "none";
+                  dropdown.classList.remove("show");
+                  console.log("📋 [DEBUG] Dropdown fermé par clic extérieur");
                 }
+              });
+            } else {
+              console.error("❌ [ERROR] Avatar ou dropdown non trouvé", {
+                avatar,
+                dropdown,
               });
             }
             // Gestion photo de profil
@@ -1409,11 +1440,24 @@
               }
             }
             if (logoutBtn) {
+              console.log(
+                "🚪 [DEBUG] Bouton de déconnexion trouvé, ajout du gestionnaire"
+              );
               logoutBtn.onclick = function (e) {
+                console.log("🚪 [DEBUG] Clic sur déconnexion détecté");
                 e.preventDefault();
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/auth.html#login";
+                // Supprimer les données utilisateur du localStorage
+                localStorage.removeItem("user");
+                localStorage.removeItem("userSession");
+                localStorage.removeItem("authToken");
+                console.log(
+                  "🗑️ [DEBUG] Données utilisateur supprimées du localStorage"
+                );
+                // Redirection vers la page de connexion locale
+                window.location.href = "/html/auth.html";
               };
+            } else {
+              console.error("❌ [ERROR] Bouton de déconnexion non trouvé");
             }
             // Pour intégration future : remplacer ces valeurs dynamiquement après connexion
             // document.getElementById('profileName').textContent = 'Nom Prénom';
