@@ -3326,6 +3326,77 @@ class ArchivesManager {
           </div>
         </div>
 
+        <!-- Informations transport et logistique -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h6 class="text-secondary border-bottom pb-2">
+              <i class="fas fa-ship me-2"></i>Transport et logistique
+            </h6>
+            <ul class="list-unstyled ms-3">
+              ${
+                delivery.shipping_company
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-building text-muted me-2"></i>
+                <strong>Compagnie maritime:</strong> 
+                <span class="text-primary">${delivery.shipping_company}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.ship_name
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-ship text-muted me-2"></i>
+                <strong>Nom du navire:</strong> 
+                <span class="text-info">${delivery.ship_name}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.transporter
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-truck text-muted me-2"></i>
+                <strong>Transporteur:</strong> 
+                <span class="text-success">${delivery.transporter}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.lieu
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                <strong>Lieu:</strong> 
+                <span class="text-dark">${delivery.lieu}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.weight
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-weight-hanging text-muted me-2"></i>
+                <strong>Poids:</strong> 
+                <span class="text-warning">${delivery.weight}</span>
+              </li>`
+                  : ""
+              }
+              ${
+                delivery.number_of_packages
+                  ? `
+              <li class="mb-2">
+                <i class="fas fa-layer-group text-muted me-2"></i>
+                <strong>Nombre de colis:</strong> 
+                <span class="text-dark">${delivery.number_of_packages}</span>
+              </li>`
+                  : ""
+              }
+            </ul>
+          </div>
+        </div>
+
         ${
           delivery.cargo_description
             ? `
