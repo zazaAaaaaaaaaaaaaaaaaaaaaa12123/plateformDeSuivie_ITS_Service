@@ -268,7 +268,7 @@ class ArchivesManager {
           );
           this.currentFilters.action_type = ""; // Garder vide pour l'affichage
           actionFilter.value = "";
-          await this.loadAllCombinedArchivesByAddition(); // Nouvelle méthode simple
+          await this.loadAllArchivesWithProperMixing(); // Nouvelle méthode DÉFINITIVE
         } else {
           this.renderCurrentView();
         }
@@ -585,8 +585,24 @@ class ArchivesManager {
       setTimeout(async () => {
         this.loadingBlocked = false;
 
-        // 🎯 CORRECTION: Charger les archives ET les badges au démarrage
-        await this.loadArchives();
+        // 🎯 CORRECTION: Chargement selon l'onglet sélectionné
+        if (this.selectedTab === "all") {
+          console.log(
+            "[ARCHIVES] 🚀 Chargement initial avec mélange équilibré pour 'Toutes les Archives'..."
+          );
+          await this.loadAllArchivesWithProperMixing(); // Utiliser la nouvelle méthode !
+        } else {
+          // Pour les autres onglets, utiliser le chargement normal
+          await this.loadArchives();
+
+          // 🚀 NOUVEAU: Pour l'onglet "Toutes les Archives", charger aussi les livraisons actives
+          if (this.selectedTab === "all") {
+            console.log(
+              "[ARCHIVES] 🔄 Chargement des livraisons actives pour 'Toutes les Archives'..."
+            );
+            await this.loadActiveDeliveriesByTab();
+          }
+        }
 
         // 📊 AJOUT: Mettre à jour les compteurs des badges dès le démarrage
         console.log(
@@ -848,6 +864,14 @@ class ArchivesManager {
       let filteredDeliveries = [];
 
       switch (this.selectedTab) {
+        case "all":
+          // TOUS les dossiers actifs (pour l'onglet "Toutes les Archives")
+          filteredDeliveries = deliveries;
+          console.log(
+            `[ARCHIVES] 📊 Onglet 'Toutes les Archives': ${filteredDeliveries.length} dossiers actifs`
+          );
+          break;
+
         case "submitted":
           // TOUS les dossiers soumis (équivalent au badge "Dossier soumis")
           filteredDeliveries = deliveries;
@@ -1387,6 +1411,109 @@ class ArchivesManager {
     }
   }
 
+  // 🎯 MÉTHODE DÉFINITIVE: Chargement équilibré de toutes les archives
+  async loadAllArchivesWithProperMixing() {
+    try {
+      this.showLoading(true);
+      console.log(
+        "[ARCHIVES] 🚀 NOUVELLE MÉTHODE - Chargement équilibré DÉFINITIF..."
+      );
+
+      // 🔥 RÉCUPÉRER TOUTES LES ARCHIVES D'UN COUP
+      const cacheBuster = Date.now();
+      const response = await fetch(
+        `/api/archives?limit=99999&cb=${cacheBuster}`
+      );
+      const data = await response.json();
+
+      if (!data.success || !data.archives) {
+        throw new Error("Impossible de récupérer les archives");
+      }
+
+      console.log(`[ARCHIVES] 📊 ${data.archives.length} archives récupérées`);
+
+      // 🏷️ CLASSIFICATION en utilisant notre logique determineActionType
+      const classified = {
+        mise_en_livraison: [],
+        livraison: [],
+        ordre_livraison_etabli: [],
+        suppression: [],
+        autres: [],
+      };
+
+      data.archives.forEach((archive) => {
+        const type = this.determineActionType(archive);
+        if (classified[type]) {
+          classified[type].push(archive);
+        } else {
+          classified.autres.push(archive);
+        }
+      });
+
+      console.log(`[ARCHIVES] 🏷️ Classification:`);
+      Object.keys(classified).forEach((key) => {
+        console.log(`  - ${key}: ${classified[key].length}`);
+      });
+
+      // 🎯 MÉLANGE ÉQUILIBRÉ - Technique de distribution ronde
+      const allTypes = Object.keys(classified).filter(
+        (key) => classified[key].length > 0
+      );
+      let allCombinedArchives = [];
+      let maxIterations = Math.max(
+        ...allTypes.map((type) => classified[type].length)
+      );
+
+      for (let i = 0; i < maxIterations; i++) {
+        allTypes.forEach((type) => {
+          if (i < classified[type].length) {
+            allCombinedArchives.push(classified[type][i]);
+          }
+        });
+      }
+
+      console.log(
+        `[ARCHIVES] 🎯 ${allCombinedArchives.length} archives mélangées équitablement`
+      );
+
+      // 💾 STOCKER ET PAGINER
+      this.allCombinedArchives = allCombinedArchives;
+
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      this.filteredArchives = allCombinedArchives.slice(startIndex, endIndex);
+
+      this.pagination = {
+        currentPage: this.currentPage,
+        totalPages: Math.ceil(allCombinedArchives.length / this.itemsPerPage),
+        totalItems: allCombinedArchives.length,
+        itemsPerPage: this.itemsPerPage,
+      };
+
+      // 🎯 METTRE À JOUR LE BADGE "Toutes les Archives"
+      const allTabBadge = document.querySelector("#allCount");
+      if (allTabBadge) {
+        allTabBadge.textContent = allCombinedArchives.length;
+        console.log(
+          `[ARCHIVES] ✅ Badge mis à jour: ${allCombinedArchives.length}`
+        );
+      }
+
+      // 🖼️ AFFICHER
+      this.renderCurrentView();
+      this.renderPagination();
+
+      console.log(
+        `[ARCHIVES] 🎉 SUCCÈS! Page 1 affiche ${this.filteredArchives.length} archives mélangées`
+      );
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur:", error);
+      this.showNotification("Erreur lors du chargement", "error");
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
   // 🎯 MÉTHODE SIMPLE: Additionner les compteurs des autres onglets pour "Toutes les Archives"
   async loadAllCombinedArchivesByAddition() {
     try {
@@ -1495,45 +1622,64 @@ class ArchivesManager {
         pagination: ordreData.pagination,
       });
 
-      //  🔗 Combiner toutes les archives
+      // 🎯 NOUVEAU: Mélange équilibré des types pour afficher tous les badges dans l'onglet "Toutes les Archives"
+      console.log(
+        `[ARCHIVES] 🎲 Application d'un mélange équilibré des types de badges...`
+      );
+
+      // Grouper par type pour un mélange équilibré
+      const suppressionArchives =
+        suppressionData.success && suppressionData.archives
+          ? suppressionData.archives
+          : [];
+      const livraisonArchives =
+        livraisonData.success && livraisonData.archives
+          ? livraisonData.archives
+          : [];
+      const miseEnLivraisonArchives =
+        miseEnLivraisonData.success && miseEnLivraisonData.archives
+          ? miseEnLivraisonData.archives
+          : [];
+      const ordreArchives =
+        ordreData.success && ordreData.archives ? ordreData.archives : [];
+
+      console.log(`[ARCHIVES] 📊 Types disponibles:`);
+      console.log(`  - Suppression: ${suppressionArchives.length}`);
+      console.log(`  - Livraison: ${livraisonArchives.length}`);
+      console.log(`  - Mise en livraison: ${miseEnLivraisonArchives.length}`);
+      console.log(`  - Ordre: ${ordreArchives.length}`);
+
+      // 🎯 Mélange équilibré: distribuer les types de façon homogène
       let allCombinedArchives = [];
+      const maxLength = Math.max(
+        suppressionArchives.length,
+        livraisonArchives.length,
+        miseEnLivraisonArchives.length,
+        ordreArchives.length
+      );
 
-      if (suppressionData.success && suppressionData.archives) {
-        allCombinedArchives = allCombinedArchives.concat(
-          suppressionData.archives
-        );
-        console.log(
-          `[ARCHIVES] ➕ ${suppressionData.archives.length} archives supprimées récupérées`
-        );
-      }
-      if (livraisonData.success && livraisonData.archives) {
-        allCombinedArchives = allCombinedArchives.concat(
-          livraisonData.archives
-        );
-        console.log(
-          `[ARCHIVES] ➕ ${livraisonData.archives.length} archives livrées récupérées`
-        );
-      }
-      if (miseEnLivraisonData.success && miseEnLivraisonData.archives) {
-        allCombinedArchives = allCombinedArchives.concat(
-          miseEnLivraisonData.archives
-        );
-        console.log(
-          `[ARCHIVES] ➕ ${miseEnLivraisonData.archives.length} archives mises en livraison récupérées`
-        );
-      }
-      if (ordreData.success && ordreData.archives) {
-        allCombinedArchives = allCombinedArchives.concat(ordreData.archives);
-        console.log(
-          `[ARCHIVES] ➕ ${ordreData.archives.length} ordres de livraison récupérés`
-        );
+      // Intercaler les éléments de chaque type pour un mélange homogène
+      for (let i = 0; i < maxLength; i++) {
+        // Ajouter un élément de chaque type s'il existe
+        if (i < miseEnLivraisonArchives.length) {
+          allCombinedArchives.push(miseEnLivraisonArchives[i]);
+        }
+        if (i < livraisonArchives.length) {
+          allCombinedArchives.push(livraisonArchives[i]);
+        }
+        if (i < ordreArchives.length) {
+          allCombinedArchives.push(ordreArchives[i]);
+        }
+        if (i < suppressionArchives.length) {
+          allCombinedArchives.push(suppressionArchives[i]);
+        }
       }
 
-      // 📅 Trier par date (plus récent en premier)
-      allCombinedArchives.sort(
-        (a, b) =>
-          new Date(b.archived_at || b.created_at) -
-          new Date(a.archived_at || a.created_at)
+      console.log(
+        `[ARCHIVES] 🎯 Mélange terminé - Total: ${allCombinedArchives.length} archives`
+      );
+      console.log(
+        `[ARCHIVES] 🎨 Les badges devraient maintenant être variés dans l'affichage!`
       );
 
       console.log(
@@ -2068,9 +2214,12 @@ class ArchivesManager {
       this.currentFilters.date_end;
 
     // 🎯 CORRECTION: Détecter si on utilise des livraisons actives (pas des archives)
-    const isActiveDeliveryTab = ["delivered", "shipping", "orders"].includes(
-      this.selectedTab
-    );
+    const isActiveDeliveryTab = [
+      "all",
+      "delivered",
+      "shipping",
+      "orders",
+    ].includes(this.selectedTab);
 
     console.log(
       "[ARCHIVES] Rendu - Onglet:",
@@ -2163,7 +2312,8 @@ class ArchivesManager {
 
     // 🎯 DETECTION: Est-ce une livraison active (pas une archive) ?
     const isActiveDelivery =
-      !archive.action_type && archive.delivery_status_acconier;
+      (!archive.action_type && archive.delivery_status_acconier) ||
+      archive.action_type === "active";
 
     // 🔍 DEBUG: Affichage des propriétés pour diagnostiquer
     console.log(`[DEBUG ROW] ID: ${archive.id}`, {
@@ -2177,6 +2327,12 @@ class ArchivesManager {
     if (isActiveDelivery) {
       // 🚀 AFFICHAGE POUR LIVRAISONS ACTIVES
       console.log(`[DEBUG] Rendu livraison active ID: ${archive.id}`);
+
+      // 🔧 Accéder aux bonnes données selon la source (directe ou transformée)
+      const deliveryData = archive.dossier_data || archive;
+      const deliveryStatus =
+        deliveryData.delivery_status_acconier ||
+        archive.delivery_status_acconier;
 
       // 🎯 Mapper le delivery_status_acconier au bon badge selon l'onglet
       let actionBadgeType = "active"; // Par défaut
@@ -2192,23 +2348,21 @@ class ArchivesManager {
         // Dans l'onglet "Ordres de Livraison", tous les dossiers ont un ordre établi
         actionBadgeType = "ordre_livraison_etabli";
       } else {
-        // Fallback: utiliser le delivery_status_acconier
-        if (archive.delivery_status_acconier === "mise_en_livraison_acconier") {
+        // Fallback: utiliser le delivery_status_acconier pour déterminer le badge approprié
+        if (deliveryStatus === "mise_en_livraison_acconier") {
           actionBadgeType = "mise_en_livraison";
         } else if (
-          archive.delivery_status_acconier === "livraison" ||
-          archive.delivery_status_acconier === "livre"
+          deliveryStatus === "livraison" ||
+          deliveryStatus === "livre"
         ) {
           actionBadgeType = "livraison";
-        } else if (
-          archive.delivery_status_acconier === "ordre_livraison_etabli"
-        ) {
+        } else if (deliveryStatus === "ordre_livraison_etabli") {
           actionBadgeType = "ordre_livraison_etabli";
         }
       }
 
       console.log(
-        `[DEBUG] Statut: ${archive.delivery_status_acconier} -> Badge: ${actionBadgeType}`
+        `[DEBUG] Statut: ${deliveryStatus} -> Badge: ${actionBadgeType}`
       );
 
       return `
@@ -2218,12 +2372,21 @@ class ArchivesManager {
                 </td>
                 <td class="col-reference" style="min-width: 120px;">
                     <strong style="color: #000 !important; font-weight: bold !important; display: block !important;">${
-                      archive.dossier_number || "N/A"
+                      deliveryData.dossier_number ||
+                      archive.dossier_number ||
+                      "N/A"
                     }</strong>
                     ${
-                      archive.container_type_and_content &&
-                      archive.container_type_and_content.trim() !== ""
-                        ? `<br><span class="text-info" style="font-weight: 600; font-size: 0.9em;">${archive.container_type_and_content}</span>`
+                      (deliveryData.container_type_and_content ||
+                        archive.container_type_and_content) &&
+                      (
+                        deliveryData.container_type_and_content ||
+                        archive.container_type_and_content
+                      ).trim() !== ""
+                        ? `<br><span class="text-info" style="font-weight: 600; font-size: 0.9em;">${
+                            deliveryData.container_type_and_content ||
+                            archive.container_type_and_content
+                          }</span>`
                         : ""
                     }
                 </td>
@@ -2231,19 +2394,19 @@ class ArchivesManager {
                     ${this.renderActionBadge(actionBadgeType)}
                 </td>
                 <td class="d-none d-md-table-cell">
-                    ${archive.client_name || "N/A"}
+                    ${deliveryData.client_name || archive.client_name || "N/A"}
                 </td>
                 <td class="col-role d-none d-lg-table-cell">
-                    ${this.renderRoleSourceForActive(
-                      archive.delivery_status_acconier
-                    )}
+                    ${this.renderRoleSourceForActive(deliveryStatus)}
                 </td>
                 <td class="col-date">
-                    ${this.formatDate(archive.created_at)}
+                    ${this.formatDate(
+                      deliveryData.created_at || archive.created_at
+                    )}
                     <br><small class="text-muted">${this.getTimeAgo(
-                      archive.created_at
+                      deliveryData.created_at || archive.created_at
                     )}</small>
-                    ${this.renderActiveDeliveryStatus(archive)}
+                    ${this.renderActiveDeliveryStatus(deliveryData)}
                 </td>
                 <td class="col-actions">
                     <button class="btn btn-sm btn-outline-info" onclick="archivesManager.viewActiveDeliveryDetails(${
@@ -2303,7 +2466,7 @@ class ArchivesManager {
                     }
                 </td>
                 <td class="col-action">
-                    ${this.renderActionBadge(archive.action_type || "unknown")}
+                    ${this.renderActionBadge(this.determineActionType(archive))}
                 </td>
                 <td class="d-none d-md-table-cell">
                     ${
@@ -2333,6 +2496,137 @@ class ArchivesManager {
         `;
   }
 
+  // 🎯 NOUVELLE MÉTHODE: Détermine le type d'action pour TOUS les éléments
+  determineActionType(archive) {
+    console.log(`[DEBUG] determineActionType pour ID: ${archive.id}`, {
+      action_type: archive.action_type,
+      delivery_status_acconier: archive.delivery_status_acconier,
+      has_dossier_data: !!archive.dossier_data,
+      selectedTab: this.selectedTab,
+      // 🔍 VALEURS EXACTES pour debug
+      delivery_status_exact: `"${archive.delivery_status_acconier}"`,
+      action_type_exact: `"${archive.action_type}"`,
+    });
+
+    // 🔥 PRIORITÉ 1: Si c'est une livraison active (avec delivery_status_acconier)
+    if (archive.delivery_status_acconier) {
+      console.log(
+        `[DEBUG] Livraison active détectée - status: "${archive.delivery_status_acconier}"`
+      );
+
+      // 🎯 EXCEPTION: Dans l'onglet "Toutes les Archives", afficher le vrai statut
+      if (this.selectedTab === "all") {
+        console.log(
+          `[DEBUG] 📋 ONGLET "ALL" - Mapping statut réel: "${archive.delivery_status_acconier}"`
+        );
+        // Mapper selon le statut réel pour voir tous les types de badges
+        switch (archive.delivery_status_acconier) {
+          case "mise_en_livraison_acconier":
+          case "en_livraison":
+          case "mis_en_livraison":
+            console.log(`[DEBUG] ➡️ Badge: mise_en_livraison`);
+            return "mise_en_livraison";
+          case "livre":
+          case "livré":
+          case "livraison":
+          case "dossier_livre":
+          case "delivered":
+            console.log(`[DEBUG] ➡️ Badge: livraison`);
+            return "livraison";
+          case "ordre_livraison_etabli":
+          case "ordre_etabli":
+          case "order_established":
+            console.log(`[DEBUG] ➡️ Badge: ordre_livraison_etabli`);
+            return "ordre_livraison_etabli";
+          default:
+            console.log(
+              `[DEBUG] ➡️ Badge par défaut: active (statut inconnu: "${archive.delivery_status_acconier}")`
+            );
+            return "active";
+        }
+      }
+
+      // Pour les autres onglets spécifiques, mapper selon l'onglet sélectionné
+      if (this.selectedTab === "delivered") {
+        return "livraison";
+      } else if (this.selectedTab === "shipping") {
+        return "mise_en_livraison";
+      } else if (this.selectedTab === "orders") {
+        return "ordre_livraison_etabli";
+      }
+
+      // Fallback: mapper selon le statut réel
+      switch (archive.delivery_status_acconier) {
+        case "mise_en_livraison_acconier":
+        case "en_livraison":
+        case "mis_en_livraison":
+          return "mise_en_livraison";
+        case "livre":
+        case "livré":
+        case "livraison":
+        case "dossier_livre":
+        case "delivered":
+          return "livraison";
+        case "ordre_livraison_etabli":
+        case "ordre_etabli":
+        case "order_established":
+          return "ordre_livraison_etabli";
+        default:
+          return "active";
+      }
+    }
+
+    // 🔥 PRIORITÉ 2: Si action_type est défini
+    if (
+      archive.action_type &&
+      archive.action_type !== "undefined" &&
+      archive.action_type.trim() !== ""
+    ) {
+      console.log(`[DEBUG] action_type défini: ${archive.action_type}`);
+      return archive.action_type;
+    }
+
+    // 🔥 PRIORITÉ 3: Détecter selon les données disponibles
+    if (archive.dossier_data) {
+      console.log(`[DEBUG] Données dossier détectées`);
+      return "dossier";
+    }
+
+    // 🔥 PRIORITÉ 4: Détecter selon le rôle source
+    if (archive.role_source) {
+      switch (archive.role_source.toLowerCase()) {
+        case "acconier":
+          return "acconier";
+        case "responsable_livraison":
+          return "responsable_livraison";
+        case "administrateur":
+          return "admin";
+        default:
+          return "operation";
+      }
+    }
+
+    // 🔥 PRIORITÉ 5: Détecter selon la page d'origine
+    if (archive.page_origine) {
+      switch (archive.page_origine.toLowerCase()) {
+        case "tableau_de_bord":
+        case "dashboards":
+          return "dashboard";
+        case "formulaire_employer":
+          return "formulaire";
+        case "suivi":
+        case "suivie":
+          return "suivi";
+        default:
+          return "archive";
+      }
+    }
+
+    // 🔥 FALLBACK FINAL: Badge par défaut si rien n'est trouvé
+    console.log(`[DEBUG] ⚠️ Fallback vers 'archive' pour ID: ${archive.id}`);
+    return "archive";
+  }
+
   renderActionBadge(actionType) {
     console.log(
       `[DEBUG BADGE] actionType reçu:`,
@@ -2358,6 +2652,25 @@ class ArchivesManager {
         '<span class="badge badge-success"><i class="fas fa-clock me-1"></i>En cours</span>',
       unknown:
         '<span class="badge bg-warning"><i class="fas fa-question me-1"></i>Non défini</span>',
+      // 🆕 NOUVEAUX BADGES pour tous les types
+      dossier:
+        '<span class="badge bg-info"><i class="fas fa-folder me-1"></i>Dossier</span>',
+      acconier:
+        '<span class="badge bg-primary"><i class="fas fa-anchor me-1"></i>Acconier</span>',
+      responsable_livraison:
+        '<span class="badge bg-success"><i class="fas fa-user-tie me-1"></i>Resp. Livraison</span>',
+      admin:
+        '<span class="badge bg-danger"><i class="fas fa-crown me-1"></i>Admin</span>',
+      operation:
+        '<span class="badge bg-secondary"><i class="fas fa-cogs me-1"></i>Opération</span>',
+      dashboard:
+        '<span class="badge bg-primary"><i class="fas fa-chart-bar me-1"></i>Tableau de bord</span>',
+      formulaire:
+        '<span class="badge bg-info"><i class="fas fa-wpforms me-1"></i>Formulaire</span>',
+      suivi:
+        '<span class="badge bg-success"><i class="fas fa-search me-1"></i>Suivi</span>',
+      archive:
+        '<span class="badge bg-dark"><i class="fas fa-archive me-1"></i>Archive</span>',
     };
 
     // 🛡️ PROTECTION: Si actionType est null, undefined ou vide
