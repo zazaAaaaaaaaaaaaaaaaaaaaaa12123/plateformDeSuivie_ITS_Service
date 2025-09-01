@@ -795,107 +795,6 @@
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
-
-      /* Styles pour les en-têtes en mode admin */
-      .admin-view-mode .table thead tr:first-child th {
-        background: linear-gradient(90deg, #ffc107 0%, #e6b800 100%) !important;
-        color: #0e274e !important;
-        text-shadow: 0 1px 2px rgba(14, 39, 78, 0.3) !important;
-      }
-
-      /* Alternance bleu-jaune pour les colonnes du tableau principal */
-      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(odd) {
-        background: #0e274e !important; /* Bleu pour les colonnes impaires */
-        color: #ffc107 !important; /* Texte jaune */
-        font-weight: 700 !important;
-        border-right: 2px solid #ffc107 !important;
-      }
-
-      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(even) {
-        background: #ffc107 !important; /* Jaune pour les colonnes paires */
-        color: #0e274e !important; /* Texte bleu foncé */
-        font-weight: 700 !important;
-        border-right: 2px solid #e6b800 !important;
-      }
-
-      /* Alternance bleu-jaune pour le tableau des livraisons en retard */
-      .admin-view-mode #lateDeliveriesTable thead th:nth-child(odd) {
-        background: #0e274e !important; /* Bleu pour les colonnes impaires */
-        color: #ffc107 !important; /* Texte jaune */
-        font-weight: 600 !important;
-        border-bottom: 2px solid #ffc107 !important;
-      }
-
-      .admin-view-mode #lateDeliveriesTable thead th:nth-child(even) {
-        background: #ffc107 !important; /* Jaune pour les colonnes paires */
-        color: #0e274e !important; /* Texte bleu foncé */
-        font-weight: 600 !important;
-        border-bottom: 2px solid #e6b800 !important;
-      }
-
-      /* Styles spécifiques pour Mode de Transport en jaune */
-      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(17) {
-        background: #ffc107 !important; /* Jaune */
-        background-color: #ffc107 !important;
-        color: #0e274e !important; /* Texte bleu foncé */
-        font-weight: 700 !important;
-        border-right: 2px solid #e6b800 !important;
-        border-bottom: 2px solid #e6b800 !important;
-        border-left: 2px solid #e6b800 !important;
-        border-top: 2px solid #e6b800 !important;
-      }
-
-      /* Styles spécifiques pour Date de DO et Date de BADT en bleu ciel */
-      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(18),
-      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(19) {
-        background: #87CEEB !important; /* Bleu ciel */
-        background-color: #87CEEB !important;
-        color: #0e274e !important; /* Texte bleu foncé */
-        font-weight: 700 !important;
-        border-right: 2px solid #5DADE2 !important;
-        border-bottom: 2px solid #5DADE2 !important;
-        border-left: 2px solid #5DADE2 !important;
-        border-top: 2px solid #5DADE2 !important;
-      }
-
-      /* Styles pour les boutons autorisés en mode admin avec priorité maximale */
-      .admin-view-mode button[data-allow-admin] {
-        pointer-events: auto !important;
-        user-select: auto !important;
-        opacity: 1 !important;
-        cursor: pointer !important;
-        position: relative !important;
-        z-index: 9999 !important;
-      }
-
-      .admin-view-mode #homeButton[data-allow-admin] {
-        pointer-events: auto !important;
-        user-select: auto !important;
-        opacity: 1 !important;
-        cursor: pointer !important;
-        position: relative !important;
-        z-index: 9999 !important;
-        display: flex !important;
-      }
-
-      .admin-view-mode #excelButton[data-allow-admin] {
-        pointer-events: auto !important;
-        user-select: auto !important;
-        opacity: 1 !important;
-        cursor: pointer !important;
-        position: relative !important;
-        z-index: 9999 !important;
-        display: inline-block !important;
-      }
-
-      /* Forcer les styles pour les boutons même avec les restrictions adminMode.css */
-      .admin-view-mode #homeButton,
-      .admin-view-mode #excelButton {
-        pointer-events: auto !important;
-        opacity: 1 !important;
-        cursor: pointer !important;
-        z-index: 9999 !important;
-      }
     </style>  
     </head>
 
@@ -1022,8 +921,7 @@
               </div>
               
               <button 
-                id="closeBannerBtn"
-                onclick="document.getElementById('targetUserInfoBanner').style.display = 'none'; console.log('🎯 [MANUAL-CLOSE] Bandeau mode admin fermé manuellement');"
+                onclick="document.getElementById('targetUserInfoBanner').style.display='none'"
                 style="
                   background: none;
                   border: none;
@@ -1037,15 +935,10 @@
                   display: flex;
                   align-items: center;
                   justify-content: center;
-                  transition: background-color 0.2s ease;
                   flex-shrink: 0;
                 "
-                onmouseover="this.style.backgroundColor = 'rgba(21, 128, 61, 0.1)'"
-                onmouseout="this.style.backgroundColor = 'transparent'"
-                title="Fermer le bandeau"
-              >
-                ✕
-              </button>
+                title="Fermer"
+              >✕</button>
             </div>
             <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
             <div class="scrolling-message-bar" id="newAgentScrollingContainer" style="margin-top:10px;max-width:350px;width:100%;overflow-x:auto;">
@@ -1108,9 +1001,9 @@
                 <th style="min-width:90px;background:#0e274e;color:#ffc107;font-weight:700;border-right:2px solid #ffc107;">Poids</th>
                 <th style="min-width:110px;background:#e6b800;color:#fff;font-weight:700;border-right:2px solid #ffc107;">Nom du navire</th>
                 <th style="min-width:90px;background:#ffc107;color:#0e274e;font-weight:700;border-right:2px solid #e6b800;">Circuit</th>
-                <th style="min-width:150px;background:#ffc107;color:#0e274e;font-weight:700;border-right:2px solid #e6b800;">Mode de Transport</th>
-                <th style="min-width:140px;background:#87ceeb;color:#0e274e;font-weight:700;border-right:2px solid #7dd3fc;">Date de DO</th>
-                <th style="min-width:140px;background:#87ceeb;color:#0e274e;font-weight:700;border-right:2px solid #7dd3fc;">Date de BADT</th>
+                <th style="min-width:150px;background:#0e274e;color:#ffc107;font-weight:700;border-right:2px solid #ffc107;">Mode de Transport</th>
+                <th style="min-width:140px;background:#1e40af;color:#ffffff;font-weight:700;border-right:2px solid #3b82f6;">Date de DO</th>
+                <th style="min-width:140px;background:#1e40af;color:#ffffff;font-weight:700;border-right:2px solid #3b82f6;">Date de BADT</th>
                 <th style="min-width:120px;background:#e6b800;color:#fff;font-weight:700;border-right:2px solid #ffc107;">Agent Visiteur</th>
                 <th style="min-width:110px;background:#ffc107;color:#0e274e;font-weight:700;border-right:2px solid #e6b800;">Transporteur</th>
                 <th style="min-width:110px;background:#0e274e;color:#ffc107;font-weight:700;border-right:2px solid #ffc107;">Inspecteur</th>
@@ -1323,20 +1216,10 @@
       (function() {
         // Fonction pour afficher les informations de l'utilisateur ciblé
         function showTargetUserInfo() {
-          console.log('🎯 [RESP_LIV] Début de showTargetUserInfo');
-          
           const banner = document.getElementById('targetUserInfoBanner');
           const detailsDiv = document.getElementById('targetUserDetails');
           
-          console.log('🔍 [RESP_LIV] Éléments DOM:', {
-            banner: banner ? 'Trouvé' : 'Non trouvé',
-            detailsDiv: detailsDiv ? 'Trouvé' : 'Non trouvé'
-          });
-          
-          if (!banner || !detailsDiv) {
-            console.error('❌ [RESP_LIV] Éléments DOM manquants !');
-            return;
-          }
+          if (!banner || !detailsDiv) return;
 
           // Vérifier les paramètres URL
           const urlParams = new URLSearchParams(window.location.search);
@@ -1362,85 +1245,47 @@
             }
           }
 
-          // Contrôler l'affichage de l'icône d'accueil
-          const homeButton = document.getElementById("homeButton");
-          if (homeButton) {
-            if (fromDashboard === "true" || adminMode === "admin") {
-              homeButton.style.display = "flex";
-            } else {
-              homeButton.style.display = "none";
-            }
-          }
-
-          // Logs de débogage pour diagnostiquer le problème
-          console.log('🔍 [DEBUG RESP_LIV] Paramètres détectés:', {
-            fromDashboard,
-            adminMode,
-            targetUser,
-            userId,
-            userInfo: userInfo ? 'Présent' : 'Absent'
-          });
-
-          // Condition d'affichage plus permissive pour le débogage
-          const shouldShowBanner = (fromDashboard === 'true' || adminMode === 'admin');
-          console.log('🔍 [DEBUG RESP_LIV] Doit afficher le bandeau:', shouldShowBanner);
-
           // Afficher les informations si on vient du tableau de bord OU si on est en mode admin
-          if (shouldShowBanner) {
+          if ((fromDashboard === 'true' || adminMode === 'admin') && (targetUser || userInfo)) {
             const displayName = userInfo?.userName || targetUser || 'Utilisateur inconnu';
             const displayUserId = userInfo?.userId || userId || 'ID non disponible';
             const pageType = userInfo?.pageType || 'Responsable de Livraison';
             
-            // Message différent selon le mode avec plus d'informations
-            const modeText = adminMode === 'admin' ? '👑 Mode Admin' : '📋 Visualisation';
-            const timeInfo = new Date().toLocaleTimeString('fr-FR');
+            // Message différent selon le mode
+            const modeText = adminMode === 'admin' ? '👑 Mode Admin' : '📋';
             
             detailsDiv.innerHTML = `
-              <span><strong>👀 Consultation de la page utilisateur</strong></span>
+              <span><strong>Page de l'utilisateur connecté</strong></span>
               <span style="color: #22c55e;">•</span>
-              <span><strong>👤</strong> ${displayName}</span>
+              <span><strong>�</strong> ${displayName}</span>
               <span style="color: #22c55e;">•</span>
               <span><strong>🆔</strong> ${displayUserId}</span>
               <span style="color: #22c55e;">•</span>
               <span><strong>${modeText}</strong> ${pageType}</span>
-              <span style="color: #22c55e;">•</span>
-              <span><strong>⏰</strong> ${timeInfo}</span>
             `;
             
             banner.style.display = 'flex';
             
-            console.log('✅ [RESP_LIV] Bandeau affiché avec succès !');
             console.log('🎯 [TARGET USER] Affichage des informations utilisateur:', {
               displayName,
               displayUserId,
               pageType
             });
             
-            // Auto-masquer après 30 secondes (plus de temps pour voir le mode admin)
+            // Auto-masquer après 15 secondes
             setTimeout(() => {
               banner.style.display = 'none';
-              console.log('🎯 [AUTO-HIDE] Bandeau mode admin masqué automatiquement');
-            }, 30000);
+            }, 15000);
           }
         }
 
-        console.log('🚀 [RESP_LIV] Script de bandeau initialisé');
-
         // Exécuter au chargement de la page
-        document.addEventListener('DOMContentLoaded', function() {
-          console.log('📄 [RESP_LIV] DOMContentLoaded - Exécution de showTargetUserInfo');
-          showTargetUserInfo();
-        });
+        document.addEventListener('DOMContentLoaded', showTargetUserInfo);
         
         // Exécuter immédiatement si la page est déjà chargée
         if (document.readyState === 'loading') {
-          console.log('⏳ [RESP_LIV] Page en cours de chargement - attente DOMContentLoaded');
-          document.addEventListener('DOMContentLoaded', function() {
-            console.log('📄 [RESP_LIV] DOMContentLoaded (attente) - Exécution de showTargetUserInfo');
-            showTargetUserInfo();
-          });
+          document.addEventListener('DOMContentLoaded', showTargetUserInfo);
         } else {
-          console.log('✅ [RESP_LIV] Page déjà chargée - Exécution immédiate de showTargetUserInfo');
           showTargetUserInfo();
         }
       })();
@@ -1547,9 +1392,9 @@
                   <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">POIDS</th>
                   <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NOM DU NAVIRE</th>
                   <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">CIRCUIT</th>
-                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; background: #ffc107; color: #0e274e; text-align: left; white-space: nowrap;">MODE DE TRANSPORT</th>
-                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; background: #87ceeb; color: #0e274e; text-align: left; white-space: nowrap;">DATE DE DO</th>
-                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; background: #87ceeb; color: #0e274e; text-align: left; white-space: nowrap;">DATE DE BADT</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">MODE DE TRANSPORT</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">DATE DE DO</th>
+                  <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">DATE DE BADT</th>
                   <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">NOM AGENT VISITEURS</th>
                   <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">TRANSPORTEUR</th>
                   <th style="padding: 12px 8px; border-bottom: 2px solid #e2e8f0; font-weight: 600; color: #374151; text-align: left; white-space: nowrap;">INSPECTEUR</th>

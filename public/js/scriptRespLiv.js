@@ -1,75 +1,8 @@
-// === DÉTECTION ET APPLICATION DU MODE ADMIN ===
-// Cette fonction détecte si on est en mode admin et applique les styles appropriés
-function setupAdminMode() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAdminMode =
-    urlParams.get("mode") === "admin" ||
-    document.body.dataset.adminMode === "true";
-
-  if (isAdminMode) {
-    document.body.classList.add("admin-view-mode");
-    document.body.dataset.adminMode = "true";
-
-    console.log("🔧 [MODE ADMIN] Mode admin activé - Styles appliqués");
-  } else {
-    document.body.classList.remove("admin-view-mode");
-    document.body.dataset.adminMode = "false";
-  }
-}
-
-// Fonction pour rendre les boutons accessibles en mode admin
-function enableAdminButtons() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAdminMode =
-    urlParams.get("mode") === "admin" ||
-    document.body.dataset.adminMode === "true";
-
-  if (isAdminMode) {
-    console.log(
-      "🔧 [MODE ADMIN] Mode admin détecté - Tous les boutons restent fonctionnels"
-    );
-
-    // En mode admin, on ne fait RIEN de spécial - les boutons fonctionnent normalement
-    // comme en local, grâce à la modification du CSS adminMode.css
-
-    // Juste s'assurer que les boutons sont visibles
-    setTimeout(() => {
-      const buttons = document.querySelectorAll("button");
-      buttons.forEach((button) => {
-        if (
-          button.id === "excelButton" ||
-          button.id === "homeButton" ||
-          button.textContent.includes("PDF")
-        ) {
-          console.log(
-            `✅ [MODE ADMIN] Bouton trouvé et fonctionnel: ${
-              button.id || button.textContent
-            }`
-          );
-        }
-      });
-    }, 1000);
-  }
-}
-
 // === CONTRÔLE DE L'ICÔNE D'ACCUEIL SELON LE PARCOURS UTILISATEUR ===
 // Cette fonction détermine si l'icône d'accueil doit être affichée
 function controlHomeIconVisibility() {
   const homeButton = document.getElementById("homeButton");
   if (!homeButton) return;
-
-  // Vérifier si on est en mode admin
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAdminMode =
-    urlParams.get("mode") === "admin" ||
-    document.body.dataset.adminMode === "true";
-
-  // En mode admin, toujours afficher l'icône d'accueil
-  if (isAdminMode) {
-    homeButton.style.display = "flex";
-    console.log("🏠 [MODE ADMIN] Icône d'accueil affichée - Mode admin actif");
-    return;
-  }
 
   // Vérifier si l'utilisateur vient du parcours principal (index.html → sidebar)
   const isFromMainDashboard =
@@ -78,6 +11,7 @@ function controlHomeIconVisibility() {
     localStorage.getItem("userAccessLevel") === "main_dashboard";
 
   // Vérifier les paramètres URL pour détecter la navigation via sidebar
+  const urlParams = new URLSearchParams(window.location.search);
   const fromSidebar = urlParams.get("from") === "sidebar";
   const isDirect = urlParams.get("direct") === "true";
 
@@ -101,9 +35,7 @@ function controlHomeIconVisibility() {
 
 // Exécuter la vérification dès le chargement du DOM
 document.addEventListener("DOMContentLoaded", function () {
-  setupAdminMode(); // Détecter et appliquer le mode admin
   controlHomeIconVisibility();
-  enableAdminButtons(); // Mode admin simplifié - pas d'interférence avec les boutons
 });
 
 // === FIN CONTRÔLE ICÔNE D'ACCUEIL ===
