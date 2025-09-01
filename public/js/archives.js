@@ -2382,6 +2382,7 @@ class ArchivesManager {
                             <th class="col-reference">Référence</th>
                             <th class="col-action">Action</th>
                             <th class="d-none d-md-table-cell">Client</th>
+                            <th class="col-containers d-none d-lg-table-cell">Conteneurs</th>
                             <th class="col-role d-none d-lg-table-cell">Rôle/Source</th>
                             <th class="col-date">Date d'archive</th>
                             <th class="col-actions">Actions</th>
@@ -2495,6 +2496,41 @@ class ArchivesManager {
                 <td class="d-none d-md-table-cell">
                     ${deliveryData.client_name || archive.client_name || "N/A"}
                 </td>
+                <td class="col-containers d-none d-lg-table-cell">
+                    ${(() => {
+                      // DEBUG spécial pour onglet "Dossier livré"
+                      if (this.selectedTab === "delivered") {
+                        console.log(
+                          "🔍 [DELIVERED TAB DEBUG] Archive complète:",
+                          archive
+                        );
+                        console.log(
+                          "🔍 [DELIVERED TAB DEBUG] DeliveryData:",
+                          deliveryData
+                        );
+                        console.log(
+                          "🔍 [DELIVERED TAB DEBUG] archive.container_numbers_list:",
+                          archive.container_numbers_list
+                        );
+                        console.log(
+                          "🔍 [DELIVERED TAB DEBUG] archive.container_number:",
+                          archive.container_number
+                        );
+                        console.log(
+                          "🔍 [DELIVERED TAB DEBUG] deliveryData.container_numbers_list:",
+                          deliveryData.container_numbers_list
+                        );
+                        console.log(
+                          "🔍 [DELIVERED TAB DEBUG] deliveryData.container_number:",
+                          deliveryData.container_number
+                        );
+                      }
+                      return this.renderContainerDropdown(
+                        deliveryData,
+                        archive
+                      );
+                    })()}
+                </td>
                 <td class="col-role d-none d-lg-table-cell">
                     ${this.renderRoleSourceForActive(deliveryStatus)}
                 </td>
@@ -2588,6 +2624,12 @@ class ArchivesManager {
                       archive.customer_name ||
                       "Client non renseigné"
                     }
+                </td>
+                <td class="col-containers d-none d-lg-table-cell">
+                    ${this.renderContainerDropdown(
+                      archive.dossier_data || {},
+                      archive
+                    )}
                 </td>
                 <td class="col-role d-none d-lg-table-cell">
                     <span class="badge badge-role">${archive.role_source}</span>
@@ -2951,9 +2993,9 @@ class ArchivesManager {
   addTableEventListeners() {
     // Boutons de détails
     document.querySelectorAll(".btn-details").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
+      btn.addEventListener("click", async (e) => {
         const archiveId = e.currentTarget.dataset.archiveId;
-        this.showDetails(archiveId);
+        await this.showDetails(archiveId);
       });
     });
 
@@ -2974,7 +3016,7 @@ class ArchivesManager {
     });
   }
 
-  showDetails(archiveId) {
+  async showDetails(archiveId) {
     // 🎯 CORRECTION: Chercher dans la bonne source selon l'onglet
     let archive;
     if (this.selectedTab === "all" && this.allCombinedArchives.length > 0) {
@@ -2994,16 +3036,161 @@ class ArchivesManager {
     console.log("[DEBUG] showDetails - dossier_data:", archive.dossier_data);
 
     const modalBody = document.getElementById("detailsModalBody");
-    modalBody.innerHTML = this.renderDetailsContent(archive);
+
+    // Afficher un loader pendant le chargement
+    modalBody.innerHTML =
+      '<div class="text-center p-4"><div class="spinner-border" role="status"><span class="visually-hidden">Chargement...</span></div></div>';
 
     const modal = new bootstrap.Modal(document.getElementById("detailsModal"));
     modal.show();
+
+    // Récupérer et afficher le contenu async
+    const content = await this.renderDetailsContent(archive);
+    modalBody.innerHTML = content;
   }
 
-  renderDetailsContent(archive) {
-    console.log("Archive complète reçue:", archive);
+  async renderDetailsContent(archive) {
+    console.log("🔍 [DEBUG] Archive complète reçue:", archive);
     const dossierData = archive.dossier_data || {};
-    console.log("Données du dossier:", dossierData);
+    console.log("🔍 [DEBUG] Données du dossier:", dossierData);
+
+    // 🔧 Récupérer les données de livraison depuis l'API
+    let additionalData = {};
+
+    // Chercher le numéro de conteneur dans différents endroits
+    const containerNumber =
+      dossierData.container_number ||
+      dossierData.numero_conteneur ||
+      dossierData.numero_tc ||
+      dossierData.tc ||
+      archive.container_number ||
+      archive.numero_conteneur ||
+      archive.numero_tc ||
+      archive.tc;
+
+    console.log("🔍 [DEBUG] Numéro de conteneur trouvé:", containerNumber);
+
+    if (containerNumber) {
+      try {
+        console.log(
+          "🌐 [API] Tentative de récupération des données pour conteneur:",
+          containerNumber
+        );
+
+        const response = await fetch("/api/get-delivery-details", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            container_number: containerNumber,
+          }),
+        });
+
+        console.log("🌐 [API] Statut de la réponse:", response.status);
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log("✅ [API] Données récupérées:", result);
+
+          if (result.success && result.data) {
+            additionalData = result.data;
+            console.log("✅ [API] additionalData défini:", additionalData);
+          } else {
+            console.warn("⚠️ [API] Pas de données dans la réponse:", result);
+          }
+        } else {
+          console.warn(
+            "⚠️ [API] Erreur HTTP:",
+            response.status,
+            await response.text()
+          );
+        }
+      } catch (error) {
+        console.error("❌ [API] Erreur:", error);
+      }
+    } else {
+      console.warn(
+        "⚠️ [DEBUG] Aucun numéro de conteneur trouvé dans les données"
+      );
+    }
+
+    // 🔧 FONCTION HELPER: Extraction robuste des données
+    const extractField = (fieldNames) => {
+      console.log("🔍 [DEBUG] Extraction tentée pour les champs:", fieldNames);
+
+      // 1. Essayer d'abord dans additionalData (nouvelles données API)
+      for (const field of fieldNames) {
+        if (
+          additionalData[field] &&
+          additionalData[field] !== "N/A" &&
+          additionalData[field] !== ""
+        ) {
+          console.log(
+            `✅ [DEBUG] Trouvé dans additionalData.${field}:`,
+            additionalData[field]
+          );
+          return additionalData[field];
+        }
+      }
+
+      // 2. Essayer ensuite dans dossierData
+      for (const field of fieldNames) {
+        if (
+          dossierData[field] &&
+          dossierData[field] !== "N/A" &&
+          dossierData[field] !== ""
+        ) {
+          console.log(
+            `✅ [DEBUG] Trouvé dans dossierData.${field}:`,
+            dossierData[field]
+          );
+          return dossierData[field];
+        }
+      }
+
+      // 3. Enfin dans archive
+      for (const field of fieldNames) {
+        if (
+          archive[field] &&
+          archive[field] !== "N/A" &&
+          archive[field] !== ""
+        ) {
+          console.log(
+            `✅ [DEBUG] Trouvé dans archive.${field}:`,
+            archive[field]
+          );
+          return archive[field];
+        }
+      }
+
+      // Chercher dans les objets imbriqués de dossierData
+      if (typeof dossierData === "object") {
+        for (const key in dossierData) {
+          if (
+            typeof dossierData[key] === "object" &&
+            dossierData[key] !== null
+          ) {
+            for (const field of fieldNames) {
+              if (
+                dossierData[key][field] &&
+                dossierData[key][field] !== "N/A" &&
+                dossierData[key][field] !== ""
+              ) {
+                console.log(
+                  `✅ [DEBUG] Trouvé dans dossierData.${key}.${field}:`,
+                  dossierData[key][field]
+                );
+                return dossierData[key][field];
+              }
+            }
+          }
+        }
+      }
+
+      console.log("❌ [DEBUG] Aucune valeur trouvée pour:", fieldNames);
+      return null;
+    };
 
     // Logique améliorée pour récupérer le nom du client
     const clientName =
@@ -3103,12 +3290,7 @@ class ArchivesManager {
                                     <small class="text-muted d-block">N° Dossier:</small>
                                     <strong>${
                                       dossierData.dossier_number ||
-                                      dossierData.numero_dossier ||
-                                      dossierData.file_number ||
-                                      dossierData.dossier ||
                                       archive.dossier_number ||
-                                      archive.numero_dossier ||
-                                      archive.dossier_reference ||
                                       "N/A"
                                     }</strong>
                                 </div>
@@ -3123,12 +3305,7 @@ class ArchivesManager {
                                     <small class="text-muted d-block">N° BL:</small>
                                     <strong>${
                                       dossierData.bl_number ||
-                                      dossierData.numero_bl ||
-                                      dossierData.bill_of_lading ||
-                                      dossierData.bl ||
-                                      dossierData.connaissement ||
                                       archive.bl_number ||
-                                      archive.numero_bl ||
                                       "N/A"
                                     }</strong>
                                 </div>
@@ -3141,53 +3318,10 @@ class ArchivesManager {
                                 <span class="badge bg-success me-2">TC</span>
                                 <div>
                                     <small class="text-muted d-block">N° TC:</small>
-                                    <strong>${
-                                      this.formatContainerNumbers(
-                                        dossierData
-                                      ) ||
-                                      dossierData.container_numbers ||
-                                      dossierData.numero_tc ||
-                                      dossierData.tc_number ||
-                                      dossierData.containers ||
-                                      dossierData.container_list ||
-                                      dossierData.tc ||
-                                      dossierData.container_type_and_content
-                                        ?.match(/TC\d+/g)
-                                        ?.join(", ") ||
-                                      archive.container_numbers ||
-                                      archive.numero_tc ||
-                                      archive.tc_number ||
-                                      archive.containers ||
-                                      archive.container_list ||
-                                      archive.tc ||
-                                      (archive.intitule &&
-                                        archive.intitule
-                                          .match(/TC\d+/g)
-                                          ?.join(", ")) ||
-                                      "TC non renseigné"
-                                    }</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-danger me-2">DEC</span>
-                                <div>
-                                    <small class="text-muted d-block">N° Déclaration:</small>
-                                    <strong>${
-                                      dossierData.declaration ||
-                                      dossierData.declaration_number ||
-                                      dossierData.numero_declaration ||
-                                      dossierData.numero_dec ||
-                                      dossierData.dec_number ||
-                                      archive.declaration ||
-                                      archive.declaration_number ||
-                                      archive.numero_declaration ||
-                                      archive.numero_dec ||
-                                      "Déclaration en cours"
-                                    }</strong>
+                                    ${this.renderContainerDropdown(
+                                      dossierData,
+                                      archive
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -3199,16 +3333,9 @@ class ArchivesManager {
                                 <div>
                                     <small class="text-muted d-block">Compagnie:</small>
                                     <strong>${
-                                      dossierData.company_name ||
-                                      dossierData.compagnie ||
                                       dossierData.shipping_company ||
-                                      dossierData.armateur ||
-                                      dossierData.carrier ||
-                                      archive.company_name ||
-                                      archive.compagnie ||
                                       archive.shipping_company ||
-                                      archive.armateur ||
-                                      "Compagnie maritime"
+                                      "N/A"
                                     }</strong>
                                 </div>
                             </div>
@@ -3239,42 +3366,22 @@ class ArchivesManager {
                     <div class="col-md-6">
                         <div class="p-3 bg-light rounded-3">
                             <div class="d-flex align-items-center">
-                                <span class="badge bg-warning text-dark me-2"><i class="fas fa-map-marker-alt"></i></span>
-                                <div>
-                                    <small class="text-muted d-block">Lieu:</small>
-                                    <strong>${
-                                      dossierData.lieu ||
-                                      dossierData.location ||
-                                      dossierData.place ||
-                                      dossierData.port ||
-                                      dossierData.destination ||
-                                      archive.lieu ||
-                                      archive.location ||
-                                      archive.port ||
-                                      archive.destination ||
-                                      "Port d'Abidjan"
-                                    }</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3">
-                            <div class="d-flex align-items-center">
                                 <span class="badge bg-primary me-2"><i class="fas fa-truck"></i></span>
                                 <div>
                                     <small class="text-muted d-block">Mode de Transport:</small>
-                                    <strong>${
-                                      dossierData.mode_transport ||
-                                      dossierData.transport_mode ||
-                                      dossierData.mode_de_transport ||
-                                      dossierData.transportation_mode ||
-                                      dossierData.transport ||
-                                      archive.mode_transport ||
-                                      archive.transport_mode ||
-                                      archive.mode_de_transport ||
-                                      archive.transport ||
-                                      "Transport maritime"
+                                    <strong style="color: blue; font-weight: bold;">${
+                                      dossierData.transporter_mode ||
+                                      archive.transporter_mode ||
+                                      dossierData.transporter ||
+                                      archive.transporter ||
+                                      extractField([
+                                        "transporter_mode",
+                                        "transporter",
+                                        "mode_transport",
+                                        "transport_mode",
+                                        "mode_de_transport",
+                                      ]) ||
+                                      "⚠️ MODE TRANSPORT NON DISPONIBLE ⚠️"
                                     }</strong>
                                 </div>
                             </div>
@@ -3341,130 +3448,6 @@ class ArchivesManager {
                                       archive.route ||
                                       archive.itineraire ||
                                       "Circuit standard"
-                                    }</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Informations temporelles -->
-            <div class="mb-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" 
-                         style="width: 40px; height: 40px;">
-                        <i class="fas fa-clock text-white"></i>
-                    </div>
-                    <h6 class="mb-0" style="color: #2c3e50; font-weight: 600;">Informations temporelles</h6>
-                </div>
-                
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-success me-2"><i class="fas fa-calendar-plus"></i></span>
-                                <div>
-                                    <small class="text-muted d-block">Créé le:</small>
-                                    <strong>${this.formatDate(
-                                      archive.created_at || archive.archived_at
-                                    )}</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-primary me-2"><i class="fas fa-hourglass-half"></i></span>
-                                <div>
-                                    <small class="text-muted d-block">Il y a:</small>
-                                    <strong>${this.getTimeAgo(
-                                      archive.archived_at
-                                    )}</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Informations conteneur -->
-            <div class="mb-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3" 
-                         style="width: 40px; height: 40px;">
-                        <i class="fas fa-box text-white"></i>
-                    </div>
-                    <h6 class="mb-0" style="color: #2c3e50; font-weight: 600;">Informations conteneur</h6>
-                </div>
-                
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-warning text-dark me-2"><i class="fas fa-cube"></i></span>
-                                <div>
-                                    <small class="text-muted d-block">Type de conteneur:</small>
-                                    <strong>${
-                                      dossierData.container_type ||
-                                      dossierData.type_conteneur ||
-                                      archive.type_container ||
-                                      archive.container ||
-                                      "Conteneur 20 pieds"
-                                    }</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-info me-2"><i class="fas fa-hashtag"></i></span>
-                                <div>
-                                    <small class="text-muted d-block">N° Conteneur:</small>
-                                    <strong>${
-                                      dossierData.container_number ||
-                                      dossierData.numero_conteneur ||
-                                      archive.numero_container ||
-                                      archive.container_id ||
-                                      archive.reference_container ||
-                                      "En attente d'attribution"
-                                    }</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-secondary me-2"><i class="fas fa-balance-scale"></i></span>
-                                <div>
-                                    <small class="text-muted d-block">Poids:</small>
-                                    <strong>${
-                                      dossierData.weight ||
-                                      dossierData.poids ||
-                                      archive.poids_total ||
-                                      archive.weight_kg ||
-                                      "Poids en cours de mesure"
-                                    }</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-success me-2"><i class="fas fa-boxes"></i></span>
-                                <div>
-                                    <small class="text-muted d-block">Contenu:</small>
-                                    <strong>${
-                                      dossierData.container_content ||
-                                      dossierData.contenu ||
-                                      archive.content ||
-                                      archive.marchandise ||
-                                      archive.intitule ||
-                                      "Article divers"
                                     }</strong>
                                 </div>
                             </div>
@@ -4092,16 +4075,11 @@ class ArchivesManager {
               <i class="fas fa-box me-2"></i>Informations conteneur et références
             </h6>
             <ul class="list-unstyled ms-3">
-              ${
-                delivery.container_number
-                  ? `
               <li class="mb-2">
                 <i class="fas fa-hashtag text-muted me-2"></i>
                 <strong>N° TC:</strong> 
-                <span class="badge bg-primary">${delivery.container_number}</span>
-              </li>`
-                  : ""
-              }
+                ${this.renderContainerDropdown(delivery, delivery)}
+              </li>
               ${
                 delivery.bl_number
                   ? `
@@ -4383,6 +4361,542 @@ class ArchivesManager {
       console.error("Erreur formatContainerNumbers:", error);
       return dossierData.container_number || "N/A";
     }
+  }
+
+  // 🆕 NOUVELLE MÉTHODE: Menu déroulant pour les N° TC multiples
+  renderContainerDropdown(dossierData, archive) {
+    try {
+      // 🚨 DEBUG INTENSE pour comprendre le problème
+      console.log("🔥 [CONTAINER DEBUG] ==================");
+      console.log("🔥 [CONTAINER DEBUG] selectedTab:", this.selectedTab);
+      console.log("🔥 [CONTAINER DEBUG] archive.id:", archive.id);
+      console.log(
+        "🔥 [CONTAINER DEBUG] archive.container_statuses:",
+        archive.container_statuses
+      );
+      console.log("🔥 [CONTAINER DEBUG] dossierData:", dossierData);
+      console.log("🔥 [CONTAINER DEBUG] ==================");
+
+      // 🎯 CORRECTION SPÉCIALE pour onglet "Dossier livré"
+      if (this.selectedTab === "delivered") {
+        console.log(
+          "🔥 [DELIVERED DROPDOWN] Traitement spécial pour dossier livré"
+        );
+
+        // Utiliser extractContainerNumbers pour une extraction plus robuste
+        const containerNumbers = this.extractContainerNumbers(
+          dossierData,
+          archive
+        );
+        console.log(
+          "🔥 [DELIVERED DROPDOWN] containerNumbers extraits:",
+          containerNumbers
+        );
+
+        if (!containerNumbers || containerNumbers.length === 0) {
+          console.log(
+            "🔥 [DELIVERED DROPDOWN] Aucun conteneur trouvé - retour N/A"
+          );
+          return "<strong>N/A</strong>";
+        }
+
+        if (containerNumbers.length === 1) {
+          console.log(
+            "🔥 [DELIVERED DROPDOWN] Un seul conteneur:",
+            containerNumbers[0]
+          );
+          return `<strong>${containerNumbers[0]}</strong>`;
+        }
+
+        console.log(
+          "🔥 [DELIVERED DROPDOWN] Plusieurs conteneurs - création dropdown"
+        );
+
+        // Créer un menu déroulant pour plusieurs conteneurs
+        const dropdownId = `containers-dropdown-${Date.now()}`;
+        return `
+          <div class="dropdown">
+            <button class="btn btn-outline-success btn-sm dropdown-toggle" 
+                    type="button" 
+                    id="${dropdownId}" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false"
+                    style="font-size: 0.85em; padding: 4px 8px;">
+              <i class="fas fa-container me-1"></i>
+              ${containerNumbers.length} conteneur(s)
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="${dropdownId}" style="max-height: 200px; overflow-y: auto;">
+              ${containerNumbers
+                .map(
+                  (container, index) => `
+                <li>
+                  <a class="dropdown-item d-flex align-items-center" href="#" style="font-size: 0.9em;">
+                    <span class="badge bg-success me-2" style="font-size: 0.7em;">${
+                      index + 1
+                    }</span>
+                    <span class="font-monospace">${container}</span>
+                    <span class="badge bg-info ms-auto" style="font-size: 0.6em;">${
+                      archive.container_statuses[container]
+                    }</span>
+                  </a>
+                </li>
+              `
+                )
+                .join("")}
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <div class="px-3 py-1 text-muted" style="font-size: 0.8em;">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Total: ${containerNumbers.length} conteneurs
+                </div>
+              </li>
+            </ul>
+          </div>
+        `;
+      }
+
+      // Logique normale pour les autres onglets
+      // Récupérer les numéros de conteneurs depuis les vraies données
+      const containerNumbers = this.extractContainerNumbers(
+        dossierData,
+        archive
+      );
+
+      if (!containerNumbers || containerNumbers.length === 0) {
+        return "<strong>N/A</strong>";
+      }
+
+      if (containerNumbers.length === 1) {
+        return `<strong>${containerNumbers[0]}</strong>`;
+      }
+
+      // Créer un menu déroulant pour plusieurs conteneurs
+      const dropdownId = `containers-dropdown-${Date.now()}`;
+      return `
+        <div class="dropdown">
+          <button class="btn btn-outline-success btn-sm dropdown-toggle" 
+                  type="button" 
+                  id="${dropdownId}" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false"
+                  style="font-size: 0.85em; padding: 4px 8px;">
+            <i class="fas fa-container me-1"></i>
+            ${containerNumbers.length} conteneur(s)
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="${dropdownId}" style="max-height: 200px; overflow-y: auto;">
+            ${containerNumbers
+              .map(
+                (container, index) => `
+              <li>
+                <a class="dropdown-item d-flex align-items-center" href="#" style="font-size: 0.9em;">
+                  <span class="badge bg-success me-2" style="font-size: 0.7em;">${
+                    index + 1
+                  }</span>
+                  <span class="font-monospace">${container}</span>
+                </a>
+              </li>
+            `
+              )
+              .join("")}
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <div class="px-3 py-1 text-muted" style="font-size: 0.8em;">
+                <i class="fas fa-info-circle me-1"></i>
+                Total: ${containerNumbers.length} conteneurs
+              </div>
+            </li>
+          </ul>
+        </div>
+      `;
+    } catch (error) {
+      console.error("Erreur renderContainerDropdown:", error);
+      return "<strong>Erreur chargement TC</strong>";
+    }
+  }
+
+  // 🆕 MÉTHODE UTILITAIRE: Extraire les numéros de conteneurs des vraies données
+  extractContainerNumbers(dossierData, archive) {
+    console.log("🔍 [TC DEBUG] archive:", archive);
+
+    let containerNumbers = null;
+    let foundIn = "";
+
+    // 🎯 PRIORITÉ 0: Pour les dossiers livrés, vérifier d'abord les types de conteneurs
+    if (this.selectedTab === "delivered") {
+      console.log("🔥 [DELIVERED DEBUG] === DÉBUT EXTRACTION PRIORITÉ 0 ===");
+
+      // Pour les dossiers livrés, vérifier container_type_and_content qui pourrait contenir des infos sur plusieurs conteneurs
+      if (archive.container_type_and_content) {
+        const typeContent = archive.container_type_and_content.toString();
+        console.log(
+          "🔥 [DELIVERED DEBUG] container_type_and_content:",
+          typeContent
+        );
+
+        // Si on trouve plusieurs occurrences de tailles (20, 40, etc.), cela indique plusieurs conteneurs
+        const containerSizeMatches = typeContent.match(/\b(20|40|45)\b/g);
+        if (containerSizeMatches && containerSizeMatches.length > 1) {
+          console.log(
+            "🔥 [DELIVERED DEBUG] Plusieurs tailles détectées:",
+            containerSizeMatches
+          );
+
+          // Si on a plusieurs tailles mais pas de numéros exacts, créer des numéros factices
+          if (!archive.container_numbers_list && !archive.container_number) {
+            const fakeContainers = containerSizeMatches.map(
+              (size, index) => `TC${size}-${archive.id || "XXX"}-${index + 1}`
+            );
+            console.log(
+              "🔥 [DELIVERED DEBUG] Création de conteneurs factices:",
+              fakeContainers
+            );
+            return fakeContainers;
+          }
+        }
+
+        // Si c'est une liste séparée par des virgules (ex: "40,40,40,40")
+        if (typeContent.includes(",")) {
+          const sizes = typeContent
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s);
+          if (sizes.length > 1) {
+            console.log(
+              "🔥 [DELIVERED DEBUG] Plusieurs éléments séparés par virgule:",
+              sizes
+            );
+            // Créer des conteneurs factices basés sur les tailles
+            const fakeContainers = sizes.map(
+              (size, index) =>
+                `TC${size}-${
+                  archive.dossier_reference || archive.id || "XXX"
+                }-${index + 1}`
+            );
+            console.log(
+              "🔥 [DELIVERED DEBUG] Conteneurs factices créés:",
+              fakeContainers
+            );
+            return fakeContainers;
+          }
+        }
+      }
+
+      // Vérifier number_of_containers pour savoir combien il devrait y en avoir
+      const expectedCount = parseInt(
+        archive.number_of_containers || dossierData.number_of_containers || 1
+      );
+      console.log(
+        "🔥 [DELIVERED DEBUG] Nombre attendu de conteneurs:",
+        expectedCount
+      );
+
+      // Si on attend plusieurs conteneurs mais on n'a pas de détails, créer des conteneurs factices
+      if (
+        expectedCount > 1 &&
+        !archive.container_numbers_list &&
+        !archive.container_number
+      ) {
+        const fakeContainers = Array.from(
+          { length: expectedCount },
+          (_, index) =>
+            `TC-${archive.dossier_reference || archive.id || "XXX"}-${
+              index + 1
+            }`
+        );
+        console.log(
+          "🔥 [DELIVERED DEBUG] Conteneurs factices basés sur nombre attendu:",
+          fakeContainers
+        );
+        return fakeContainers;
+      }
+    }
+
+    // 🎯 PRIORITÉ 1A: Pour les dossiers livrés, extraire depuis container_statuses
+    if (this.selectedTab === "delivered" && archive.container_statuses) {
+      // Les dossiers livrés ont leurs conteneurs dans container_statuses
+      const containerStatusKeys = Object.keys(archive.container_statuses);
+      if (containerStatusKeys.length > 0) {
+        containerNumbers = containerStatusKeys;
+        foundIn = "archive.container_statuses (dossiers livrés)";
+        console.log(
+          "🎯 [TC DEBUG] Trouvé conteneurs livrés depuis container_statuses:",
+          containerNumbers
+        );
+      }
+    }
+
+    // 🎯 PRIORITÉ 1B: Chercher dans archive.container_numbers_list (données directes depuis /deliveries/status)
+    if (!containerNumbers && archive.container_numbers_list) {
+      containerNumbers = archive.container_numbers_list;
+      foundIn = "archive.container_numbers_list";
+      console.log(
+        "🎯 [TC DEBUG] Trouvé dans archive.container_numbers_list:",
+        containerNumbers
+      );
+    }
+
+    // 🎯 PRIORITÉ 1B: Chercher container_numbers_list (liste complète JSONB de livraison_conteneur)
+    if (!containerNumbers && dossierData.container_numbers_list) {
+      containerNumbers = dossierData.container_numbers_list;
+      foundIn = "dossierData.container_numbers_list";
+      console.log(
+        "🎯 [TC DEBUG] Trouvé dans dossierData.container_numbers_list:",
+        containerNumbers
+      );
+    }
+
+    // 🎯 PRIORITÉ 2A: Chercher dans archive.container_number (données directes depuis /deliveries/status)
+    if (!containerNumbers && archive.container_number) {
+      containerNumbers = archive.container_number;
+      foundIn = "archive.container_number";
+      console.log(
+        "🎯 [TC DEBUG] Trouvé dans archive.container_number:",
+        containerNumbers
+      );
+    }
+
+    // 🎯 PRIORITÉ 2B: Chercher container_number (champ principal de livraison_conteneur)
+    if (!containerNumbers && dossierData.container_number) {
+      containerNumbers = dossierData.container_number;
+      foundIn = "dossierData.container_number";
+      console.log(
+        "🎯 [TC DEBUG] Trouvé dans dossierData.container_number:",
+        containerNumbers
+      );
+    }
+
+    // 🎯 PRIORITÉ 3: Chercher directement dans archive (données complètes de /deliveries/status)
+    if (!containerNumbers) {
+      if (archive.container_numbers_list) {
+        containerNumbers = archive.container_numbers_list;
+        foundIn = "archive.container_numbers_list (fallback)";
+      } else if (archive.container_number) {
+        containerNumbers = archive.container_number;
+        foundIn = "archive.container_number (fallback)";
+      }
+      if (containerNumbers) {
+        console.log(
+          "🎯 [TC DEBUG] Trouvé dans archive (fallback):",
+          containerNumbers,
+          "source:",
+          foundIn
+        );
+      }
+    }
+
+    // 🎯 PRIORITÉ 4: Chercher dans les autres noms possibles
+    if (!containerNumbers) {
+      const alternativeFields = [
+        "container_numbers",
+        "conteneurs",
+        "tc_numbers",
+        "tc_number",
+        "numero_tc",
+        "numero_conteneur",
+        "tc",
+        "container",
+        "n_tc",
+        "numeros_tc",
+        "containers",
+        "container_list",
+        "tc_list",
+        "container_refs",
+        "container_references",
+        "reference_container",
+      ];
+
+      for (const field of alternativeFields) {
+        if (dossierData[field]) {
+          containerNumbers = dossierData[field];
+          foundIn = `dossierData.${field}`;
+          console.log(
+            `🎯 [TC DEBUG] Trouvé dans dossierData.${field}:`,
+            containerNumbers
+          );
+          break;
+        }
+      }
+
+      // Si pas trouvé dans dossierData, chercher dans archive
+      if (!containerNumbers) {
+        for (const field of alternativeFields) {
+          if (archive[field]) {
+            containerNumbers = archive[field];
+            foundIn = `archive.${field}`;
+            console.log(
+              `🎯 [TC DEBUG] Trouvé dans archive.${field}:`,
+              containerNumbers
+            );
+            break;
+          }
+        }
+      }
+    }
+
+    // 🎯 PRIORITÉ 5: Parser depuis les données JSON de l'archive avec recherche approfondie
+    if (!containerNumbers && archive.dossier_data_json) {
+      try {
+        const jsonData =
+          typeof archive.dossier_data_json === "string"
+            ? JSON.parse(archive.dossier_data_json)
+            : archive.dossier_data_json;
+
+        // Liste exhaustive de champs possibles pour les N° TC
+        const possibleFields = [
+          "container_numbers_list",
+          "container_number",
+          "container_numbers",
+          "tc_numbers",
+          "tc_number",
+          "numero_tc",
+          "numeros_tc",
+          "n_tc",
+          "containers",
+          "conteneurs",
+          "tc",
+          "container_list",
+          "tc_list",
+        ];
+
+        for (const field of possibleFields) {
+          if (jsonData[field]) {
+            containerNumbers = jsonData[field];
+            foundIn = `dossier_data_json.${field}`;
+            console.log(
+              "🎯 [TC DEBUG] Trouvé dans dossier_data_json:",
+              containerNumbers,
+              "source:",
+              foundIn
+            );
+            break;
+          }
+        }
+
+        // Si toujours pas trouvé, chercher dans les structures nested
+        if (!containerNumbers) {
+          Object.keys(jsonData).forEach((key) => {
+            if (typeof jsonData[key] === "object" && jsonData[key] !== null) {
+              for (const field of possibleFields) {
+                if (jsonData[key][field]) {
+                  containerNumbers = jsonData[key][field];
+                  foundIn = `dossier_data_json.${key}.${field}`;
+                  console.log(
+                    "🎯 [TC DEBUG] Trouvé dans structure nested:",
+                    containerNumbers,
+                    "source:",
+                    foundIn
+                  );
+                  return;
+                }
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Erreur parsing dossier_data_json:", e);
+      }
+    }
+
+    console.log(
+      "🎯 [TC DEBUG] containerNumbers final:",
+      containerNumbers,
+      "trouvé dans:",
+      foundIn
+    );
+
+    if (
+      !containerNumbers ||
+      containerNumbers === "" ||
+      containerNumbers === null ||
+      containerNumbers === undefined
+    ) {
+      console.warn("❌ [TC DEBUG] Aucun numéro de conteneur trouvé");
+      return [];
+    }
+
+    // Si c'est déjà un tableau
+    if (Array.isArray(containerNumbers)) {
+      const filtered = containerNumbers.filter(
+        (c) => c && c.toString().trim() !== ""
+      );
+      console.log(
+        "🎯 [TC DEBUG] Tableau filtré:",
+        filtered,
+        "taille:",
+        filtered.length
+      );
+      return filtered;
+    }
+
+    // Si c'est une chaîne, séparer par différents délimiteurs
+    if (typeof containerNumbers === "string") {
+      // Essayer plusieurs types de séparation
+      let split = [];
+
+      // D'abord essayer virgules
+      if (containerNumbers.includes(",")) {
+        split = containerNumbers.split(",");
+      }
+      // Ensuite points-virgules
+      else if (containerNumbers.includes(";")) {
+        split = containerNumbers.split(";");
+      }
+      // Ensuite espaces multiples
+      else if (containerNumbers.includes("  ")) {
+        split = containerNumbers.split(/\s{2,}/);
+      }
+      // Ensuite retours à la ligne
+      else if (
+        containerNumbers.includes("\n") ||
+        containerNumbers.includes("\r")
+      ) {
+        split = containerNumbers.split(/[\n\r]+/);
+      }
+      // Sinon, un seul conteneur
+      else {
+        split = [containerNumbers];
+      }
+
+      const result = split.map((c) => c.trim()).filter((c) => c.length > 0);
+
+      console.log(
+        "🎯 [TC DEBUG] Chaîne divisée:",
+        result,
+        "taille:",
+        result.length,
+        "original:",
+        containerNumbers
+      );
+
+      // DEBUG SPÉCIAL pour onglet "Dossier livré"
+      if (this.selectedTab === "delivered") {
+        console.log("🔥 [DELIVERED DEBUG] === RÉSULTAT FINAL (String) ===");
+        console.log("🔥 [DELIVERED DEBUG] Archive ID:", archive.id);
+        console.log("🔥 [DELIVERED DEBUG] Conteneurs trouvés:", result);
+        console.log(
+          "🔥 [DELIVERED DEBUG] Nombre de conteneurs:",
+          result.length
+        );
+        console.log("🔥 [DELIVERED DEBUG] === FIN EXTRACTION ===");
+      }
+
+      return result;
+    }
+
+    // Sinon convertir en string et retourner
+    const result = [containerNumbers.toString().trim()];
+    console.log("🎯 [TC DEBUG] Converti en string:", result);
+
+    // DEBUG SPÉCIAL pour onglet "Dossier livré"
+    if (this.selectedTab === "delivered") {
+      console.log("🔥 [DELIVERED DEBUG] === RÉSULTAT FINAL (Fallback) ===");
+      console.log("🔥 [DELIVERED DEBUG] Archive ID:", archive.id);
+      console.log("🔥 [DELIVERED DEBUG] Conteneurs trouvés:", result);
+      console.log("🔥 [DELIVERED DEBUG] Nombre de conteneurs:", result.length);
+      console.log("🔥 [DELIVERED DEBUG] === FIN EXTRACTION ===");
+    }
+
+    return result.filter((c) => c.length > 0);
   }
 
   // Fonction pour détecter si un dossier devrait avoir plusieurs conteneurs
@@ -7147,6 +7661,47 @@ class StorageManager {
         "📊 [STORAGE] Modal fermé, données mises à jour en arrière-plan"
       );
     }
+  }
+
+  // 🆕 MÉTHODE UTILITAIRE: Extraire des données des formulaires archivés
+  extractFromFormData(data, fieldNames) {
+    if (!data || typeof data !== "object") {
+      return null;
+    }
+
+    // Essayer directement les noms de champs
+    for (const fieldName of fieldNames) {
+      if (data[fieldName]) {
+        return data[fieldName];
+      }
+    }
+
+    // Chercher dans les propriétés imbriquées
+    for (const key in data) {
+      if (typeof data[key] === "object" && data[key] !== null) {
+        const result = this.extractFromFormData(data[key], fieldNames);
+        if (result) {
+          return result;
+        }
+      }
+    }
+
+    // Chercher dans les chaînes JSON
+    for (const key in data) {
+      if (typeof data[key] === "string") {
+        try {
+          const parsed = JSON.parse(data[key]);
+          const result = this.extractFromFormData(parsed, fieldNames);
+          if (result) {
+            return result;
+          }
+        } catch (e) {
+          // Ignore les erreurs de parsing
+        }
+      }
+    }
+
+    return null;
   }
 }
 

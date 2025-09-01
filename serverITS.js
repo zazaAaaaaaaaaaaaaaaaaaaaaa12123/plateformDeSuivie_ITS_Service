@@ -693,7 +693,7 @@ app.post("/api/get-delivery-details", async (req, res) => {
               circuit, shipping_company, nom_agent_visiteur, transporter, inspecteur, 
               agent_en_douanes, driver_name, driver_phone, delivery_date, delivery_notes,
               observation_acconier, employee_name, container_foot_type, weight, ship_name,
-              container_type_and_content, created_at
+              container_type_and_content, created_at, declaration_number, lieu, transporter_mode
        FROM livraison_conteneur 
        WHERE id = $1`,
       [delivery_id]
@@ -4741,7 +4741,21 @@ app.get("/api/archives", async (req, res) => {
             'client_name', client_name,
             'employee_name', employee_name,
             'container_type_and_content', container_type_and_content,
-            'created_at', created_at
+            'created_at', created_at,
+            'container_number', container_number,
+            'container_numbers_list', container_numbers_list,
+            'bl_number', bl_number,
+            'declaration_number', declaration_number,
+            'shipping_company', shipping_company,
+            'ship_name', ship_name,
+            'lieu', lieu,
+            'transporter_mode', transporter_mode,
+            'weight', weight,
+            'circuit', circuit,
+            'transporter', transporter,
+            'number_of_containers', number_of_containers,
+            'container_foot_type', container_foot_type,
+            'number_of_packages', number_of_packages
           ) as dossier_data
         FROM livraison_conteneur
         WHERE ${specialWhereConditions.join(" AND ")}
