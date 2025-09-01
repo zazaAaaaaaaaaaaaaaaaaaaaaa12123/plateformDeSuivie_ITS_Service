@@ -477,51 +477,216 @@
                       Total Utilisé
                     </h5>
 
-                    <!-- Barre de progression principale -->
-                    <div class="mb-3">
+                    <!-- 🎨 Barre de progression professionnelle améliorée -->
+                    <div class="mb-4">
+                      <!-- Header avec titre et pourcentage -->
                       <div
-                        class="d-flex justify-content-between align-items-center mb-2"
+                        class="d-flex justify-content-between align-items-center mb-3"
                       >
-                        <span style="font-weight: 600; color: #374151"
-                          >Utilisation globale</span
-                        >
-                        <span
-                          id="storagePercentage"
-                          style="
-                            font-weight: 700;
-                            color: #1e293b;
-                            font-size: 1.1em;
-                          "
-                          >0%</span
-                        >
+                        <div class="d-flex align-items-center">
+                          <div
+                            class="me-3"
+                            style="
+                              width: 40px;
+                              height: 40px;
+                              background: linear-gradient(
+                                135deg,
+                                #667eea 0%,
+                                #764ba2 100%
+                              );
+                              border-radius: 12px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                            "
+                          >
+                            <i
+                              class="fas fa-chart-pie"
+                              style="color: white; font-size: 1.1em"
+                            ></i>
+                          </div>
+                          <div>
+                            <h6
+                              style="
+                                margin: 0;
+                                font-weight: 700;
+                                color: #1e293b;
+                                font-size: 1.1em;
+                              "
+                            >
+                              Utilisation du Stockage
+                            </h6>
+                            <small style="color: #6b7280; font-weight: 500">
+                              Suivi en temps réel
+                            </small>
+                          </div>
+                        </div>
+                        <div class="text-end">
+                          <div
+                            id="storagePercentage"
+                            style="
+                              font-weight: 800;
+                              color: #1e293b;
+                              font-size: 1.8em;
+                              line-height: 1;
+                              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            "
+                          >
+                            0%
+                          </div>
+                          <small style="color: #6b7280; font-weight: 500"
+                            >utilisé</small
+                          >
+                        </div>
                       </div>
+
+                      <!-- Conteneur de la barre avec shadow et gradient -->
                       <div
-                        class="progress"
+                        class="progress position-relative"
                         style="
-                          height: 12px;
-                          border-radius: 6px;
-                          background: #e5e7eb;
+                          height: 20px;
+                          border-radius: 12px;
+                          background: linear-gradient(
+                            90deg,
+                            #f8fafc 0%,
+                            #e2e8f0 100%
+                          );
+                          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1),
+                            0 2px 8px rgba(0, 0, 0, 0.05);
+                          border: 1px solid #e2e8f0;
+                          overflow: hidden;
                         "
                       >
+                        <!-- Barre de progression principale -->
                         <div
                           id="storageProgressBar"
-                          class="progress-bar progress-bar-striped progress-bar-animated"
+                          class="progress-bar"
                           role="progressbar"
                           style="
                             width: 0%;
                             background: linear-gradient(
                               90deg,
-                              #10b981,
-                              #059669
+                              #10b981 0%,
+                              #059669 50%,
+                              #047857 100%
                             );
-                            border-radius: 6px;
+                            border-radius: 12px;
+                            position: relative;
+                            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+                            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3),
+                              inset 0 1px 0 rgba(255, 255, 255, 0.2);
                           "
                           aria-valuenow="0"
                           aria-valuemin="0"
                           aria-valuemax="100"
-                        ></div>
+                        >
+                          <!-- Effet de brillance animé -->
+                          <div
+                            style="
+                              position: absolute;
+                              top: 0;
+                              left: -100%;
+                              width: 100%;
+                              height: 100%;
+                              background: linear-gradient(
+                                90deg,
+                                transparent,
+                                rgba(255, 255, 255, 0.3),
+                                transparent
+                              );
+                              animation: progressShine 2s infinite;
+                            "
+                          ></div>
+                        </div>
+
+                        <!-- Indicateurs de niveau -->
+                        <div
+                          class="position-absolute w-100 h-100 top-0 start-0"
+                        >
+                          <!-- Marqueur 25% -->
+                          <div
+                            class="position-absolute"
+                            style="
+                              left: 25%;
+                              top: 0;
+                              bottom: 0;
+                              width: 1px;
+                              background: rgba(107, 114, 128, 0.3);
+                            "
+                          ></div>
+                          <!-- Marqueur 50% -->
+                          <div
+                            class="position-absolute"
+                            style="
+                              left: 50%;
+                              top: 0;
+                              bottom: 0;
+                              width: 1px;
+                              background: rgba(107, 114, 128, 0.4);
+                            "
+                          ></div>
+                          <!-- Marqueur 75% -->
+                          <div
+                            class="position-absolute"
+                            style="
+                              left: 75%;
+                              top: 0;
+                              bottom: 0;
+                              width: 1px;
+                              background: rgba(107, 114, 128, 0.5);
+                            "
+                          ></div>
+                        </div>
+                      </div>
+
+                      <!-- Légende des niveaux -->
+                      <div class="d-flex justify-content-between mt-2">
+                        <small style="color: #10b981; font-weight: 600">
+                          <i
+                            class="fas fa-circle me-1"
+                            style="font-size: 0.6em"
+                          ></i>
+                          Normal (0-75%)
+                        </small>
+                        <small style="color: #f59e0b; font-weight: 600">
+                          <i
+                            class="fas fa-circle me-1"
+                            style="font-size: 0.6em"
+                          ></i>
+                          Attention (75-90%)
+                        </small>
+                        <small style="color: #ef4444; font-weight: 600">
+                          <i
+                            class="fas fa-circle me-1"
+                            style="font-size: 0.6em"
+                          ></i>
+                          Critique (90-100%)
+                        </small>
                       </div>
                     </div>
+
+                    <!-- Styles CSS pour l'animation -->
+                    <style>
+                      @keyframes progressShine {
+                        0% {
+                          left: -100%;
+                        }
+                        100% {
+                          left: 100%;
+                        }
+                      }
+
+                      #storageProgressBar {
+                        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+                      }
+
+                      #storageProgressBar:hover {
+                        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.3);
+                        transform: translateY(-1px);
+                      }
+                    </style>
 
                     <!-- Détails numériques -->
                     <div class="row text-center">
@@ -542,7 +707,7 @@
                               color: #1e293b;
                             "
                           >
-                            0 MB    
+                            0 MB
                           </div>
                           <div
                             style="

@@ -5154,8 +5154,10 @@ class StorageManager {
         console.log("📊 [STORAGE] Modal affiché, mise à jour des données...");
 
         // Délai pour s'assurer que tous les éléments DOM sont présents
-        setTimeout(() => {
-          this.updateModalWithSafeData();
+        setTimeout(async () => {
+          await this.updateModalWithSafeData();
+          // 🎯 NOUVEAU: Mettre à jour le graphique donut automatiquement
+          await this.updateDonutChart();
         }, 100);
       },
       { once: true }
@@ -5179,34 +5181,53 @@ class StorageManager {
     console.log("📊 [STORAGE] Mise à jour avec les vraies données du modal");
 
     try {
-      // 1. Récupérer le vrai nombre d'archives selon l'onglet actuel
-      let realArchiveCount = 0;
-      let realEstimatedSize = 0;
+      // 1. 🎯 PRIORITÉ: Récupérer la vraie taille de la base de données
+      console.log(
+        "🔄 [STORAGE] Récupération des vraies données de la base de données..."
+      );
 
+      let realDatabaseSizeMB = 0;
+      let realTotalCapacityMB = 1024; // 1GB par défaut
+      let realArchiveCount = 0;
+
+      try {
+        const response = await fetch("/api/database/capacity");
+        if (response.ok) {
+          const capacityData = await response.json();
+
+          // ✅ UTILISER LA VRAIE TAILLE DE LA BASE DE DONNÉES
+          realDatabaseSizeMB = Math.round(
+            capacityData.database.current_size_bytes / (1024 * 1024)
+          );
+          realTotalCapacityMB = Math.round(
+            capacityData.database.total_capacity_bytes / (1024 * 1024)
+          );
+
+          console.log(
+            `🎯 [STORAGE] VRAIE taille DB: ${realDatabaseSizeMB} MB / ${realTotalCapacityMB} MB`
+          );
+          console.log(
+            `📊 [STORAGE] Plan détecté: ${capacityData.render_info.estimated_plan}`
+          );
+        }
+      } catch (error) {
+        console.error("❌ [STORAGE] Erreur récupération données DB:", error);
+      }
+
+      // 2. Récupérer le vrai nombre d'archives selon l'onglet actuel
       if (this.archivesManager) {
         if (
           this.archivesManager.selectedTab === "all" &&
           this.archivesManager.allCombinedArchives
         ) {
           realArchiveCount = this.archivesManager.allCombinedArchives.length;
-          realEstimatedSize = this.archivesManager.allCombinedArchives.reduce(
-            (total, archive) => {
-              return total + this.estimateArchiveSize(archive);
-            },
-            0
-          );
         } else if (this.archivesManager.allArchives) {
           realArchiveCount = this.archivesManager.allArchives.length;
-          realEstimatedSize = this.archivesManager.allArchives.reduce(
-            (total, archive) => {
-              return total + this.estimateArchiveSize(archive);
-            },
-            0
-          );
+          realArchiveCount = this.archivesManager.allArchives.length;
         }
       }
 
-      // 2. Si pas de données locales, récupérer depuis l'API
+      // 3. Si pas de données locales, récupérer depuis l'API
       if (realArchiveCount === 0) {
         try {
           console.log(
@@ -5245,41 +5266,27 @@ class StorageManager {
               : 0) +
             (ordreData.success ? ordreData.archives.length : 0);
 
-          // Calculer la taille estimée
-          const allArchives = [
-            ...(suppressionData.success ? suppressionData.archives : []),
-            ...(livraisonData.success ? livraisonData.archives : []),
-            ...(miseEnLivraisonData.success
-              ? miseEnLivraisonData.archives
-              : []),
-            ...(ordreData.success ? ordreData.archives : []),
-          ];
-
-          realEstimatedSize = allArchives.reduce((total, archive) => {
-            return total + this.estimateArchiveSize(archive);
-          }, 0);
-
-          console.log(
-            `📊 [STORAGE] Données API: ${realArchiveCount} archives, ${realEstimatedSize.toFixed(
-              1
-            )} MB`
-          );
+          console.log(`📊 [STORAGE] Données API: ${realArchiveCount} archives`);
         } catch (apiError) {
           console.error(
             "❌ [STORAGE] Erreur API, utilisation des données par défaut",
             apiError
           );
           realArchiveCount = 10; // Valeur par défaut
-          realEstimatedSize = 5.0; // 5 MB par défaut
         }
       }
 
-      const totalCapacity = 10240; // 10 GB en MB
-      const usedPercent = Math.min(
-        (realEstimatedSize / totalCapacity) * 100,
-        100
+      // 4. 🎯 CALCULS BASÉS SUR LES VRAIES DONNÉES
+      const usedSizeMB = realDatabaseSizeMB; // ✅ VRAIE taille de la DB
+      const totalCapacityMB = realTotalCapacityMB; // ✅ VRAIE capacité
+      const availableSizeMB = Math.max(totalCapacityMB - usedSizeMB, 0);
+      const usedPercent = Math.min((usedSizeMB / totalCapacityMB) * 100, 100);
+
+      console.log(
+        `📊 [STORAGE] RÉSUMÉ - Archives: ${realArchiveCount}, Utilisé: ${usedSizeMB}MB/${totalCapacityMB}MB (${usedPercent.toFixed(
+          1
+        )}%)`
       );
-      const availableSize = totalCapacity - realEstimatedSize;
 
       // Vérifier que le modal est bien visible
       const modalElement = document.getElementById("storageModal");
@@ -5288,15 +5295,18 @@ class StorageManager {
         return;
       }
 
-      // Mise à jour avec les vraies données
+      // 5. ✅ MISE À JOUR AVEC LES VRAIES DONNÉES
       const updates = [
         { id: "totalArchiveCount", value: realArchiveCount.toString() },
-        { id: "totalUsedStorage", value: `${realEstimatedSize.toFixed(1)} MB` },
+        { id: "totalUsedStorage", value: `${usedSizeMB.toFixed(1)} MB` },
         {
           id: "totalAvailableStorage",
-          value: `${availableSize.toFixed(1)} MB`,
+          value: `${availableSizeMB.toFixed(1)} MB`,
         },
-        { id: "totalStorageCapacity", value: "10.0 GB" },
+        {
+          id: "totalStorageCapacity",
+          value: `${(totalCapacityMB / 1024).toFixed(1)} GB`,
+        },
         { id: "storagePercentage", value: `${usedPercent.toFixed(1)}%` },
         { id: "chartCenterValue", value: `${usedPercent.toFixed(0)}%` },
         { id: "lastUpdateTime", value: new Date().toLocaleString("fr-FR") },
@@ -5309,42 +5319,375 @@ class StorageManager {
         }
       });
 
-      // Mise à jour de la barre de progression avec vérification
-      const progressBar = document.getElementById("storageProgressBar");
-      if (progressBar) {
-        progressBar.style.width = `${usedPercent}%`;
-        progressBar.setAttribute("aria-valuenow", usedPercent);
-
-        // Couleur selon le niveau
-        if (usedPercent > 90) {
-          progressBar.style.background =
-            "linear-gradient(90deg, #ef4444, #dc2626)";
-        } else if (usedPercent > 75) {
-          progressBar.style.background =
-            "linear-gradient(90deg, #f59e0b, #d97706)";
-        } else {
-          progressBar.style.background =
-            "linear-gradient(90deg, #10b981, #059669)";
-        }
-        successCount++;
-      }
+      // 6. ✅ MISE À JOUR DE LA BARRE DE PROGRESSION PROFESSIONNELLE
+      this.updateProfessionalProgressBar(usedPercent);
+      successCount++;
 
       console.log(
         `✅ [STORAGE] ${successCount}/${
           updates.length + 1
-        } éléments mis à jour avec succès`
+        } éléments mis à jour avec les VRAIES données`
       );
       console.log(
-        `📊 [STORAGE] Vraies données: ${realArchiveCount} archives, ${realEstimatedSize.toFixed(
+        `🎯 [STORAGE] RÉSUMÉ FINAL: ${realArchiveCount} archives, ${usedSizeMB}MB/${totalCapacityMB}MB utilisés (${usedPercent.toFixed(
           1
-        )} MB utilisés`
+        )}%)`
       );
+
+      // 7. 🆕 NOUVEAU: Récupérer et afficher les statistiques détaillées par type
+      await this.updateDetailedStatsByType();
     } catch (error) {
       console.error(
         "❌ [STORAGE] Erreur lors de la mise à jour avec vraies données:",
         error
       );
     }
+  }
+
+  // 🎨 NOUVELLE MÉTHODE: Mise à jour professionnelle de la barre de progression
+  updateProfessionalProgressBar(usedPercent) {
+    const progressBar = document.getElementById("storageProgressBar");
+    if (!progressBar) {
+      console.warn("⚠️ [STORAGE] Barre de progression non trouvée");
+      return;
+    }
+
+    // Animation fluide du pourcentage
+    const currentWidth = parseFloat(progressBar.style.width) || 0;
+    this.animateProgressBar(progressBar, currentWidth, usedPercent);
+
+    // Mise à jour des attributs ARIA pour l'accessibilité
+    progressBar.setAttribute("aria-valuenow", usedPercent);
+    progressBar.setAttribute(
+      "aria-valuetext",
+      `${usedPercent.toFixed(1)}% utilisé`
+    );
+
+    // 🎨 Couleurs et effets selon le niveau d'utilisation
+    let gradient, shadowColor, statusMessage, statusIcon;
+
+    if (usedPercent > 90) {
+      // 🔴 Niveau critique
+      gradient =
+        "linear-gradient(90deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%)";
+      shadowColor = "rgba(239, 68, 68, 0.4)";
+      statusMessage = "Critique";
+      statusIcon = "fas fa-exclamation-triangle";
+      console.log("🔴 [STORAGE] Niveau critique: > 90%");
+    } else if (usedPercent > 75) {
+      // 🟡 Niveau d'attention
+      gradient =
+        "linear-gradient(90deg, #f59e0b 0%, #d97706 50%, #b45309 100%)";
+      shadowColor = "rgba(245, 158, 11, 0.4)";
+      statusMessage = "Attention";
+      statusIcon = "fas fa-exclamation-circle";
+      console.log("🟡 [STORAGE] Niveau d'attention: > 75%");
+    } else {
+      // 🟢 Niveau normal
+      gradient =
+        "linear-gradient(90deg, #10b981 0%, #059669 50%, #047857 100%)";
+      shadowColor = "rgba(16, 185, 129, 0.4)";
+      statusMessage = "Normal";
+      statusIcon = "fas fa-check-circle";
+      console.log("🟢 [STORAGE] Niveau normal: < 75%");
+    }
+
+    // Application du style avec transition fluide
+    setTimeout(() => {
+      progressBar.style.background = gradient;
+      progressBar.style.boxShadow = `
+        0 2px 8px ${shadowColor},
+        inset 0 1px 0 rgba(255,255,255,0.2)
+      `;
+    }, 100);
+
+    // 🎯 Ajouter un indicateur de statut visuel
+    this.updateStorageStatusIndicator(usedPercent, statusMessage, statusIcon);
+  }
+
+  // 🎬 MÉTHODE: Animation fluide de la barre de progression
+  animateProgressBar(progressBar, fromPercent, toPercent) {
+    const duration = 1000; // 1 seconde
+    const startTime = performance.now();
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Fonction d'easing pour une animation fluide
+      const easeInOutCubic = (t) =>
+        t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+      const easedProgress = easeInOutCubic(progress);
+
+      const currentPercent =
+        fromPercent + (toPercent - fromPercent) * easedProgress;
+      progressBar.style.width = `${currentPercent}%`;
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }
+
+  // 🎯 MÉTHODE: Indicateur de statut du stockage
+  updateStorageStatusIndicator(usedPercent, statusMessage, statusIcon) {
+    // Chercher ou créer l'indicateur de statut
+    let statusIndicator = document.getElementById("storageStatusIndicator");
+
+    if (!statusIndicator) {
+      // Créer l'indicateur s'il n'existe pas
+      statusIndicator = document.createElement("div");
+      statusIndicator.id = "storageStatusIndicator";
+      statusIndicator.style.cssText = `
+        position: absolute;
+        top: -35px;
+        right: 0;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75em;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+        z-index: 10;
+      `;
+
+      // Ajouter l'indicateur au conteneur de la barre de progression
+      const progressContainer =
+        document.getElementById("storageProgressBar").parentNode;
+      if (progressContainer) {
+        progressContainer.style.position = "relative";
+        progressContainer.appendChild(statusIndicator);
+      }
+    }
+
+    // Mise à jour du contenu et du style
+    let backgroundColor, textColor;
+
+    if (usedPercent > 90) {
+      backgroundColor = "rgba(239, 68, 68, 0.1)";
+      textColor = "#dc2626";
+    } else if (usedPercent > 75) {
+      backgroundColor = "rgba(245, 158, 11, 0.1)";
+      textColor = "#d97706";
+    } else {
+      backgroundColor = "rgba(16, 185, 129, 0.1)";
+      textColor = "#059669";
+    }
+
+    statusIndicator.style.backgroundColor = backgroundColor;
+    statusIndicator.style.color = textColor;
+    statusIndicator.style.border = `1px solid ${textColor}30`;
+
+    statusIndicator.innerHTML = `
+      <i class="${statusIcon}" style="font-size: 0.9em;"></i>
+      ${statusMessage}
+    `;
+  }
+
+  // 🆕 NOUVELLE MÉTHODE: Mise à jour des statistiques détaillées par type
+  async updateDetailedStatsByType() {
+    try {
+      console.log(
+        "📊 [STORAGE] Récupération des statistiques depuis les badges des onglets..."
+      );
+
+      // 🎯 NOUVEAU: Récupérer les nombres depuis les badges des onglets (vraies données)
+      const getTabBadgeCount = (badgeId) => {
+        const badgeElement = document.getElementById(badgeId);
+        if (badgeElement) {
+          const count = parseInt(badgeElement.textContent.trim()) || 0;
+          console.log(`📊 Badge ${badgeId}: ${count}`);
+          return count;
+        }
+        console.warn(`⚠️ Badge non trouvé pour ${badgeId}`);
+        return 0;
+      };
+
+      // Récupérer les vrais nombres depuis les badges des onglets
+      const suppressionCount = getTabBadgeCount("deletedCount");
+      const livraisonCount = getTabBadgeCount("deliveredCount");
+      const miseEnLivraisonCount = getTabBadgeCount("shippingCount");
+      const ordreCount = getTabBadgeCount("ordersCount");
+
+      console.log("🎯 [STORAGE] Nombres récupérés depuis les badges:", {
+        suppression: suppressionCount,
+        livraison: livraisonCount,
+        mise_en_livraison: miseEnLivraisonCount,
+        ordre_livraison_etabli: ordreCount,
+      });
+
+      // Calculer les tailles estimées proportionnellement à la vraie taille DB
+      let realDatabaseSizeMB = 9; // Valeur par défaut
+      try {
+        const response = await fetch("/api/database/capacity");
+        if (response.ok) {
+          const capacityData = await response.json();
+          realDatabaseSizeMB = Math.round(
+            capacityData.database.current_size_bytes / (1024 * 1024)
+          );
+        }
+      } catch (error) {
+        console.warn(
+          "⚠️ [STORAGE] Impossible de récupérer taille DB, utilisation valeur par défaut"
+        );
+      }
+
+      const totalArchives =
+        suppressionCount + livraisonCount + miseEnLivraisonCount + ordreCount;
+      const sizePerArchive =
+        totalArchives > 0 ? realDatabaseSizeMB / totalArchives : 0;
+
+      // Calculer les statistiques par type avec les vrais nombres
+      const typeStats = {
+        suppression: {
+          count: suppressionCount,
+          size: suppressionCount * sizePerArchive,
+          archives: [],
+          newest_date: suppressionCount > 0 ? new Date().toISOString() : null,
+        },
+        livraison: {
+          count: livraisonCount,
+          size: livraisonCount * sizePerArchive,
+          archives: [],
+          newest_date: livraisonCount > 0 ? new Date().toISOString() : null,
+        },
+        mise_en_livraison: {
+          count: miseEnLivraisonCount,
+          size: miseEnLivraisonCount * sizePerArchive,
+          archives: [],
+          newest_date:
+            miseEnLivraisonCount > 0 ? new Date().toISOString() : null,
+        },
+        ordre_livraison_etabli: {
+          count: ordreCount,
+          size: ordreCount * sizePerArchive,
+          archives: [],
+          newest_date: ordreCount > 0 ? new Date().toISOString() : null,
+        },
+      };
+
+      console.log(
+        "📊 [STORAGE] Statistiques calculées depuis les badges:",
+        typeStats
+      );
+
+      // Mettre à jour l'affichage des statistiques détaillées
+      this.updateStorageDetails(typeStats);
+
+      // Mettre à jour le tableau des statistiques par type aussi
+      this.updateTypeTableInModal(typeStats);
+
+      console.log(
+        "✅ [STORAGE] Statistiques détaillées par type mises à jour depuis les badges des onglets"
+      );
+    } catch (error) {
+      console.error(
+        "❌ [STORAGE] Erreur lors de la mise à jour des stats par type:",
+        error
+      );
+    }
+  }
+
+  // 🆕 MÉTHODE UTILITAIRE: Calculer la taille des archives
+  calculateArchivesSize(archives) {
+    return archives.reduce((total, archive) => {
+      return total + this.estimateArchiveSize(archive);
+    }, 0);
+  }
+
+  // 🆕 MÉTHODE UTILITAIRE: Obtenir la date de la plus récente archive
+  getNewestArchiveDate(archives) {
+    if (!archives || archives.length === 0) return null;
+
+    const dates = archives
+      .map((archive) => new Date(archive.archived_at || archive.created_at))
+      .filter((date) => !isNaN(date.getTime()));
+
+    if (dates.length === 0) return null;
+
+    return new Date(Math.max(...dates)).toISOString();
+  }
+
+  // 🆕 MÉTHODE: Mise à jour du tableau dans le modal
+  updateTypeTableInModal(typeStats) {
+    // Chercher le bon tableau dans le modal
+    const tableBody = document.querySelector("#typeStatsTable tbody");
+    if (!tableBody) {
+      console.warn(
+        "⚠️ [STORAGE] Tableau des statistiques (#typeStatsTable tbody) non trouvé dans le modal"
+      );
+      return;
+    }
+
+    const typeLabels = {
+      suppression: "Dossiers Supprimés",
+      livraison: "Dossiers Livrés",
+      mise_en_livraison: "Mise en Livraison",
+      ordre_livraison_etabli: "Ordres de Livraison",
+    };
+
+    const tableHTML = Object.entries(typeStats)
+      .filter(([type, data]) => data.count > 0) // Ne montrer que les types avec des archives
+      .map(([type, data]) => {
+        const label = typeLabels[type] || type;
+        const sizeFormatted = `${data.size.toFixed(2)} MB`;
+        const lastArchive = data.newest_date
+          ? new Date(data.newest_date).toLocaleDateString("fr-FR")
+          : "Aucune";
+
+        return `
+          <tr>
+            <td>
+              <span class="badge" style="background-color: ${this.getTypeColor(
+                type
+              )}20; color: ${this.getTypeColor(
+          type
+        )}; padding: 6px 12px; border-radius: 20px; font-weight: 500;">
+                ${label}
+              </span>
+            </td>
+            <td><strong style="color: ${this.getTypeColor(type)};">${
+          data.count
+        }</strong></td>
+            <td><span style="color: #6b7280;">${sizeFormatted}</span></td>
+            <td><small class="text-muted">${lastArchive}</small></td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    // Ajouter une ligne par défaut si aucune donnée
+    const finalHTML =
+      tableHTML ||
+      `
+      <tr>
+        <td colspan="4" class="text-center text-muted" style="padding: 20px;">
+          <i class="fas fa-info-circle me-2"></i>Aucune archive trouvée
+        </td>
+      </tr>
+    `;
+
+    tableBody.innerHTML = finalHTML;
+    console.log(
+      `✅ [STORAGE] Tableau des statistiques mis à jour avec ${
+        Object.keys(typeStats).filter((k) => typeStats[k].count > 0).length
+      } types`
+    );
+  }
+
+  // 🆕 MÉTHODE UTILITAIRE: Obtenir la couleur d'un type
+  getTypeColor(type) {
+    const colors = {
+      suppression: "#ef4444",
+      livraison: "#10b981",
+      mise_en_livraison: "#f59e0b",
+      ordre_livraison_etabli: "#3b82f6",
+    };
+    return colors[type] || "#6b7280";
   }
 
   // 🔧 MÉTHODE UTILITAIRE: Mise à jour sécurisée d'un élément000
@@ -5588,10 +5931,15 @@ class StorageManager {
 
   // Traitement des vraies données d'archives locales avec données en temps réel
   async processRealArchiveData() {
-    console.log("📊 Utilisation des vraies données d'archives + temps réel");
+    console.log(
+      "📊 [STORAGE] Utilisation des VRAIES données DB + archives temps réel"
+    );
 
-    // 1. Récupérer les vraies données de capacité de la base de données
+    // 1. 🎯 PRIORITÉ: Récupérer les vraies données de capacité de la base de données
     let realDatabaseInfo = null;
+    let realDatabaseSizeMB = 0;
+    let realTotalCapacityMB = 1024; // 1GB par défaut
+
     try {
       const dbResponse = await fetch("/api/database/capacity");
       if (dbResponse.ok) {
@@ -5601,14 +5949,16 @@ class StorageManager {
           realDatabaseInfo
         );
 
-        // Mettre à jour la capacité avec les vraies données
-        this.realCapacity = Math.round(
+        // ✅ UTILISER LA VRAIE TAILLE DE LA BASE DE DONNÉES
+        realDatabaseSizeMB = Math.round(
+          realDatabaseInfo.database.current_size_bytes / (1024 * 1024)
+        );
+        realTotalCapacityMB = Math.round(
           realDatabaseInfo.database.total_capacity_bytes / (1024 * 1024)
         );
-        this.storageCapacity = this.realCapacity;
 
         console.log(
-          `📊 [STORAGE] Capacité mise à jour: ${this.realCapacity} MB (${realDatabaseInfo.render_info.estimated_plan})`
+          `🎯 [STORAGE] VRAIE taille DB: ${realDatabaseSizeMB} MB / ${realTotalCapacityMB} MB (${realDatabaseInfo.render_info.estimated_plan})`
         );
       }
     } catch (error) {
@@ -5616,15 +5966,13 @@ class StorageManager {
     }
 
     // 2. Récupérer les archives réelles selon l'onglet actuel
-    let archives;
+    let archives = [];
 
-    // 🎯 NOUVEAU: Utiliser les bonnes données selon l'onglet actuel
     // 🔧 CORRECTION: Vérifier que archivesManager existe avant d'y accéder
     if (!this.archivesManager) {
       console.warn(
         "⚠️ [STORAGE] ArchivesManager non disponible, utilisation de données par défaut"
       );
-      archives = [];
     } else if (
       this.archivesManager.selectedTab === "all" &&
       this.archivesManager.allCombinedArchives &&
@@ -5632,18 +5980,17 @@ class StorageManager {
     ) {
       archives = this.archivesManager.allCombinedArchives;
       console.log(
-        `📊 [STORAGE] Utilisation des archives combinées (onglet "Toutes les Archives"): ${archives.length} archives`
+        `📊 [STORAGE] Archives combinées (onglet "Toutes les Archives"): ${archives.length} archives`
       );
     } else if (this.archivesManager.allArchives) {
       archives = this.archivesManager.allArchives;
       console.log(
-        `📊 [STORAGE] Utilisation des archives standard (onglet "${
+        `📊 [STORAGE] Archives standard (onglet "${
           this.archivesManager.selectedTab || "unknown"
         }"): ${archives.length} archives`
       );
     } else {
       console.warn("⚠️ [STORAGE] Aucunes archives disponibles");
-      archives = [];
     }
 
     // 3. Récupérer les données en temps réel depuis les différentes sources
@@ -5665,30 +6012,14 @@ class StorageManager {
       },
     };
 
-    let totalSize = 0;
     let totalCount = archives.length;
 
-    // 🎯 PRIORITÉ: UTILISER LA VRAIE TAILLE DE LA BASE DE DONNÉES
-    if (realDatabaseInfo && realDatabaseInfo.database) {
-      // ✅ REMPLACER les estimations par la vraie taille DB
-      const realDbSizeMB =
-        realDatabaseInfo.database.current_size_bytes / (1024 * 1024);
-      totalSize = realDbSizeMB;
+    // 🎯 NOUVELLE LOGIQUE: TOUJOURS utiliser la vraie taille DB quand disponible
+    let totalSizeMB = realDatabaseSizeMB; // ✅ VRAIE taille de la DB
 
-      console.log(
-        `🎯 [STORAGE] VRAIE taille DB utilisée: ${realDbSizeMB.toFixed(
-          2
-        )} MB au lieu d'estimations`
-      );
-      console.log(
-        `📊 [STORAGE] Économie d'affichage: estimation évitée pour ${totalCount} archives`
-      );
-    } else {
-      console.warn(
-        "⚠️ [STORAGE] Données DB indisponibles, calcul d'estimations..."
-      );
-      // Fallback vers les estimations uniquement si la vraie taille n'est pas disponible
-    }
+    console.log(
+      `🎯 [STORAGE] VRAIE taille DB utilisée: ${realDatabaseSizeMB} MB au lieu d'estimations pour ${totalCount} archives`
+    );
 
     // 🎯 NOUVEAU: Si on n'est pas sur l'onglet "all", filtrer pour ne montrer que le type actuel
     let archivesToProcess = archives;
@@ -5723,138 +6054,47 @@ class StorageManager {
       }
     }
 
-    // Calculer les données des archives SEULEMENT si on n'a pas la vraie taille DB
-    if (!realDatabaseInfo || !realDatabaseInfo.database) {
-      console.log(
-        "🔄 [STORAGE] Calcul des estimations car vraie taille DB indisponible..."
-      );
+    // ✅ NOUVEAU: Compter les archives par type (sans calcul de taille puisqu'on utilise la vraie taille DB)
+    console.log(
+      "✅ [STORAGE] Vraie taille DB utilisée, comptage des archives par type seulement..."
+    );
 
-      archivesToProcess.forEach((archive) => {
-        const archiveSize = this.estimateArchiveSize(archive);
-        const actionType = archive.action_type;
+    archivesToProcess.forEach((archive) => {
+      const actionType = archive.action_type;
 
-        if (realStats[actionType]) {
-          // Pour mise_en_livraison et ordre_livraison_etabli, on utilise les comptes réels quand on est sur "all"
-          // 🔧 CORRECTION: Vérifier que archivesManager existe avant d'accéder à selectedTab
+      if (realStats[actionType]) {
+        // Compter les archives par type sans calculer de taille estimée
+        if (
+          this.archivesManager &&
+          this.archivesManager.selectedTab === "all"
+        ) {
           if (
-            this.archivesManager &&
-            this.archivesManager.selectedTab === "all"
+            actionType !== "mise_en_livraison" &&
+            actionType !== "ordre_livraison_etabli"
           ) {
-            if (
-              actionType !== "mise_en_livraison" &&
-              actionType !== "ordre_livraison_etabli"
-            ) {
-              realStats[actionType].count++;
-            }
-          } else {
-            // Pour les onglets spécifiques, on compte normalement
             realStats[actionType].count++;
           }
-
-          realStats[actionType].size += archiveSize;
-          realStats[actionType].archives.push(archive);
+        } else {
+          realStats[actionType].count++;
         }
 
-        totalSize += archiveSize;
-      });
-    } else {
-      // ✅ VRAIE TAILLE DB DISPONIBLE - juste compter les archives par type
-      console.log(
-        "✅ [STORAGE] Vraie taille DB utilisée, comptage des archives par type seulement..."
-      );
-
-      archivesToProcess.forEach((archive) => {
-        const actionType = archive.action_type;
-
-        if (realStats[actionType]) {
-          // Compter les archives par type sans calculer de taille estimée
-          if (
-            this.archivesManager &&
-            this.archivesManager.selectedTab === "all"
-          ) {
-            if (
-              actionType !== "mise_en_livraison" &&
-              actionType !== "ordre_livraison_etabli"
-            ) {
-              realStats[actionType].count++;
-            }
-          } else {
-            realStats[actionType].count++;
-          }
-
-          realStats[actionType].archives.push(archive);
-          // 📊 Répartir la vraie taille DB proportionnellement par type
+        realStats[actionType].archives.push(archive);
+        // 📊 Répartir la vraie taille DB proportionnellement par type
+        if (totalCount > 0) {
           const typeRatio = realStats[actionType].count / totalCount;
-          realStats[actionType].size = totalSize * typeRatio;
+          realStats[actionType].size = totalSizeMB * typeRatio;
         }
-      });
-    }
+      }
+    });
 
-    console.log("📊 Données temps réel récupérées:", realTimeData);
-    console.log("📊 Statistiques finales:", realStats);
+    console.log("📊 [STORAGE] Données temps réel récupérées:", realTimeData);
+    console.log("📊 [STORAGE] Statistiques finales:", realStats);
 
     // *** MISE À JOUR DE L'INTERFACE PRINCIPALE AVEC LES VRAIES DONNÉES ***
-    this.updateStorageInterface(totalSize, totalCount, realStats);
-
-    // Mise à jour des autres éléments spécifiques (si ils existent)
-    const totalSizeMB = totalSize;
-    const totalSizeFormatted = this.formatBytes(totalSizeMB * 1024 * 1024);
-
-    const totalStorageEl = document.getElementById("totalStorageSize");
-    if (totalStorageEl) {
-      totalStorageEl.textContent = totalSizeFormatted;
-    }
-
-    const archivesCountEl = document.getElementById("archivesCount");
-    if (archivesCountEl) {
-      archivesCountEl.textContent = totalCount.toLocaleString();
-    }
-
-    const uploadsSizeEl = document.getElementById("uploadsSize");
-    if (uploadsSizeEl) {
-      uploadsSizeEl.textContent = "Calcul en cours...";
-    }
-
-    const uploadsCountEl = document.getElementById("uploadsCount");
-    if (uploadsCountEl) {
-      uploadsCountEl.textContent = "N/A";
-    }
-
-    // Calculer le pourcentage d'utilisation avec la vraie capacité
-    const usagePercent = (totalSizeMB / this.storageCapacity) * 100;
-    const storageUsageEl = document.getElementById("storageUsagePercent");
-    if (storageUsageEl) {
-      storageUsageEl.textContent = Math.min(100, usagePercent).toFixed(1) + "%";
-    }
-
-    // Mettre à jour la barre de progression
-    const progressBar = document.getElementById("storageProgressBar");
-    if (progressBar) {
-      progressBar.style.width = Math.min(100, usagePercent) + "%";
-      progressBar.className = `progress-bar ${
-        usagePercent > 80
-          ? "bg-danger"
-          : usagePercent > 60
-          ? "bg-warning"
-          : "bg-success"
-      }`;
-    }
-
-    // Mettre à jour les détails par type avec les vraies données
-    this.updateRealStorageDetails(realStats);
-
-    // Mettre à jour le tableau des types avec les vraies données
-    this.updateRealTypeTable(realStats);
-
-    const growthPredictionEl = document.getElementById("growthPrediction");
-    if (growthPredictionEl) {
-      growthPredictionEl.textContent = "Basé sur données réelles";
-    }
+    this.updateStorageInterface(totalSizeMB, totalCount, realStats);
 
     console.log(
-      `📊 [STORAGE] Interface mise à jour - Utilisé: ${totalSize.toFixed(
-        1
-      )} MB / Total: ${(this.storageCapacity / 1024).toFixed(1)} GB`
+      `🎯 [STORAGE] RÉSUMÉ: ${totalCount} archives, ${totalSizeMB}MB/${realTotalCapacityMB}MB utilisés`
     );
   }
 
@@ -6236,77 +6476,99 @@ class StorageManager {
     totalCount = null,
     storageByType = null
   ) {
-    // Si pas de données fournies, utiliser les dernières données calculées
-    if (totalSize === null || totalCount === null || storageByType === null) {
-      console.log(
-        "📊 [STORAGE] Mise à jour de l'interface avec la nouvelle capacité"
-      );
-      // Si nous n'avons pas de données, ne pas mettre à jour l'interface pour le moment
-      return;
-    }
-
     try {
-      // Récupérer les vraies données de capacité depuis l'API
+      console.log(
+        "📊 [STORAGE] Mise à jour interface avec vraies données DB..."
+      );
+
+      // 🎯 PRIORITÉ: Récupérer les vraies données de capacité depuis l'API
       const response = await fetch("/api/database/capacity");
       const capacityData = await response.json();
 
       if (capacityData && capacityData.database) {
-        // Utiliser les vraies données de la base de données
-        const totalCapacityGB = capacityData.database.total_capacity_formatted;
-        const availableGB = capacityData.database.available_space_formatted;
+        // ✅ UTILISER LES VRAIES DONNÉES DE LA BASE DE DONNÉES
+        const realUsedBytes = capacityData.database.current_size_bytes;
+        const realTotalBytes = capacityData.database.total_capacity_bytes;
+        const realUsedMB = Math.round(realUsedBytes / (1024 * 1024));
+        const realTotalGB = (realTotalBytes / (1024 * 1024 * 1024)).toFixed(1);
+        const realAvailableBytes = capacityData.database.available_space_bytes;
+        const realUsedPercent = capacityData.database.usage_percentage || 0;
 
-        // Mise à jour avec les vraies données
+        console.log(
+          `🎯 [STORAGE] VRAIES données DB: ${realUsedMB}MB utilisés sur ${realTotalGB}GB (${realUsedPercent}%)`
+        );
+
         // 🔧 CORRECTION: Vérifier que les éléments existent avant de modifier leur contenu
         const totalUsedEl = document.getElementById("totalUsedStorage");
         if (totalUsedEl) {
-          totalUsedEl.textContent = `${totalSize.toFixed(1)} MB`;
-        } else {
-          console.warn("⚠️ [STORAGE] Élément 'totalUsedStorage' non trouvé");
+          totalUsedEl.textContent = `${realUsedMB} MB`;
+          console.log(`✅ Espace utilisé RÉEL: ${realUsedMB} MB`);
         }
 
         const totalAvailableEl = document.getElementById(
           "totalAvailableStorage"
         );
         if (totalAvailableEl) {
-          totalAvailableEl.textContent = availableGB;
-        } else {
-          console.warn(
-            "⚠️ [STORAGE] Élément 'totalAvailableStorage' non trouvé"
+          totalAvailableEl.textContent =
+            capacityData.database.available_space_formatted;
+          console.log(
+            `✅ Espace disponible RÉEL: ${capacityData.database.available_space_formatted}`
           );
         }
 
         // Afficher la vraie capacité totale
         const totalCapacityEl = document.getElementById("totalStorageCapacity");
         if (totalCapacityEl) {
-          totalCapacityEl.textContent = totalCapacityGB;
+          totalCapacityEl.textContent = `${realTotalGB} GB`;
+          console.log(`✅ Capacité totale RÉELLE: ${realTotalGB} GB`);
         }
 
-        // Calculer le pourcentage basé sur les vraies données
-        const totalCapacityBytes = capacityData.database.total_capacity_bytes;
-        const usedPercent = Math.min(
-          ((totalSize * 1024 * 1024) / totalCapacityBytes) * 100,
-          100
-        );
+        // Mise à jour sécurisée des autres éléments
+        if (totalCount !== null) {
+          this.safeUpdateElement("totalArchiveCount", totalCount.toString());
+        }
+        this.safeUpdateElement("storagePercentage", `${realUsedPercent}%`);
 
-        // Mise à jour sécurisée des éléments
-        this.safeUpdateElement("totalArchiveCount", totalCount.toString());
-        this.safeUpdateElement(
-          "storagePercentage",
-          `${usedPercent.toFixed(1)}%`
-        );
+        // ✅ MISE À JOUR DE LA BARRE DE PROGRESSION AVEC LES VRAIES DONNÉES
+        const progressBar = document.getElementById("storageProgressBar");
+        if (progressBar) {
+          progressBar.style.width = `${realUsedPercent}%`;
+          progressBar.setAttribute("aria-valuenow", realUsedPercent);
+
+          // Couleur de la barre selon le niveau RÉEL
+          if (realUsedPercent > 90) {
+            progressBar.style.background =
+              "linear-gradient(90deg, #ef4444, #dc2626)";
+            console.log("🔴 [STORAGE] Interface: Niveau critique > 90%");
+          } else if (realUsedPercent > 75) {
+            progressBar.style.background =
+              "linear-gradient(90deg, #f59e0b, #d97706)";
+            console.log("🟡 [STORAGE] Interface: Niveau attention > 75%");
+          } else {
+            progressBar.style.background =
+              "linear-gradient(90deg, #10b981, #059669)";
+            console.log("🟢 [STORAGE] Interface: Niveau normal < 75%");
+          }
+        }
 
         // Mise à jour du widget Render
         this.updateRenderWidget(capacityData);
 
         console.log(
-          `✅ Capacité réelle affichée: ${totalCapacityGB} (${availableGB} disponible)`
+          `✅ [STORAGE] Interface mise à jour avec VRAIES données: ${realUsedMB}MB/${realTotalGB}GB (${realUsedPercent}%)`
         );
       } else {
+        console.warn(
+          "⚠️ [STORAGE] Données DB indisponibles, utilisation fallback"
+        );
         // Fallback vers l'ancien système si l'API échoue
         this.fallbackStorageDisplay(totalSize, totalCount, storageByType);
       }
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération de la capacité:", error);
+      console.error(
+        "❌ [STORAGE] Erreur lors de la récupération de la capacité:",
+        error
+      );
       // Fallback vers l'ancien système
       this.fallbackStorageDisplay(totalSize, totalCount, storageByType);
     }
@@ -6536,15 +6798,32 @@ class StorageManager {
       .join("");
   }
 
-  createChart() {
+  createChart(customUsedPercent = null) {
     const canvas = document.getElementById("storageChart");
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
-    const totalUsed = parseFloat(
-      document.getElementById("totalUsedStorage").textContent
-    );
-    const usedPercent = (totalUsed / this.storageCapacity) * 100;
+
+    // Utiliser le pourcentage personnalisé ou calculer depuis les éléments DOM
+    let usedPercent;
+    if (customUsedPercent !== null) {
+      usedPercent = customUsedPercent;
+      console.log(
+        `🍩 [CHART] Utilisation d'un pourcentage personnalisé: ${usedPercent.toFixed(
+          1
+        )}%`
+      );
+    } else {
+      const totalUsed = parseFloat(
+        document.getElementById("totalUsedStorage").textContent
+      );
+      usedPercent = (totalUsed / this.storageCapacity) * 100;
+      console.log(
+        `🍩 [CHART] Calcul automatique du pourcentage: ${usedPercent.toFixed(
+          1
+        )}%`
+      );
+    }
 
     // Effacer le canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -6560,13 +6839,22 @@ class StorageManager {
     ctx.lineWidth = 12;
     ctx.stroke();
 
-    // Arc de progression
+    // Arc de progression avec couleur dynamique
     if (usedPercent > 0) {
       const startAngle = -Math.PI / 2;
       const endAngle = startAngle + (2 * Math.PI * usedPercent) / 100;
 
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+
+      // Couleur selon le niveau d'utilisation
+      if (usedPercent > 90) {
+        ctx.strokeStyle = "#ef4444"; // Rouge pour critique
+      } else if (usedPercent > 75) {
+        ctx.strokeStyle = "#f59e0b"; // Orange pour attention
+      } else {
+        ctx.strokeStyle = "#10b981"; // Vert pour normal
+      }
 
       // Couleur selon le niveau
       if (usedPercent > 90) {
@@ -6584,18 +6872,89 @@ class StorageManager {
   }
 
   async refreshStorageData() {
-    console.log("🔄 [STORAGE] Actualisation des données...");
+    console.log(
+      "🔄 [STORAGE] Actualisation des données avec vraies données..."
+    );
 
-    // Recharger les archives
-    await this.archivesManager.loadArchives();
+    try {
+      // Afficher un indicateur de chargement
+      const refreshBtn = document.getElementById("refreshStorageBtn");
+      if (refreshBtn) {
+        const originalText = refreshBtn.innerHTML;
+        refreshBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin me-2"></i>Actualisation...';
+        refreshBtn.disabled = true;
 
-    // Recalculer le stockage
-    await this.calculateStorageData();
+        // Recharger les archives
+        await this.archivesManager.loadArchives();
 
-    // Recréer le graphique
-    this.createChart();
+        // 🎯 UTILISER LES VRAIES DONNÉES au lieu des données calculées
+        await this.updateModalWithSafeData();
 
-    this.addToHistory("Données de stockage actualisées");
+        // Mettre à jour le graphique donut avec les vraies données
+        await this.updateDonutChart();
+
+        // Restaurer le bouton
+        refreshBtn.innerHTML = originalText;
+        refreshBtn.disabled = false;
+
+        this.addToHistory("Données réelles actualisées avec succès");
+        console.log("✅ [STORAGE] Actualisation terminée avec vraies données");
+      }
+    } catch (error) {
+      console.error("❌ [STORAGE] Erreur lors de l'actualisation:", error);
+      this.addToHistory("Erreur lors de l'actualisation");
+
+      // Restaurer le bouton en cas d'erreur
+      const refreshBtn = document.getElementById("refreshStorageBtn");
+      if (refreshBtn) {
+        refreshBtn.innerHTML =
+          '<i class="fas fa-sync-alt me-2"></i>Actualiser les Données';
+        refreshBtn.disabled = false;
+      }
+    }
+  }
+
+  // 🎯 NOUVELLE MÉTHODE: Mise à jour du graphique donut avec vraies données
+  async updateDonutChart() {
+    try {
+      console.log("🍩 [CHART] Mise à jour du graphique donut...");
+
+      // Récupérer les vraies données de capacité
+      let usedPercent = 0;
+      try {
+        const response = await fetch("/api/database/capacity");
+        if (response.ok) {
+          const capacityData = await response.json();
+          const usedSizeMB = Math.round(
+            capacityData.database.current_size_bytes / (1024 * 1024)
+          );
+          const totalCapacityMB = Math.round(
+            capacityData.database.total_capacity_bytes / (1024 * 1024)
+          );
+          usedPercent = Math.min((usedSizeMB / totalCapacityMB) * 100, 100);
+
+          console.log(
+            `🍩 [CHART] Données récupérées: ${usedPercent.toFixed(1)}% utilisé`
+          );
+        }
+      } catch (error) {
+        console.warn(
+          "⚠️ [CHART] Erreur récupération données, valeur par défaut utilisée"
+        );
+        usedPercent = 5; // Valeur par défaut
+      }
+
+      // Mettre à jour le centre du graphique
+      this.safeUpdateElement("chartCenterValue", `${usedPercent.toFixed(0)}%`);
+
+      // Recréer le graphique avec les nouvelles valeurs
+      this.createChart(usedPercent);
+
+      console.log("✅ [CHART] Graphique donut mis à jour avec vraies données");
+    } catch (error) {
+      console.error("❌ [CHART] Erreur mise à jour graphique donut:", error);
+    }
   }
 
   async optimizeStorage() {
