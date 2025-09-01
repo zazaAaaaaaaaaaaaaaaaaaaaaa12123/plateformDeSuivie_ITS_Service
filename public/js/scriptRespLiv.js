@@ -1,57 +1,3 @@
-// === DÉTECTION ET APPLICATION DU MODE ADMIN ===
-// Cette fonction détecte si on est en mode admin et applique les styles appropriés
-function setupAdminMode() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAdminMode =
-    urlParams.get("mode") === "admin" ||
-    document.body.dataset.adminMode === "true";
-
-  if (isAdminMode) {
-    document.body.classList.add("admin-view-mode");
-    document.body.dataset.adminMode = "true";
-
-    console.log("🔧 [MODE ADMIN] Mode admin activé - Styles appliqués");
-  } else {
-    document.body.classList.remove("admin-view-mode");
-    document.body.dataset.adminMode = "false";
-  }
-}
-
-// Fonction pour rendre les boutons accessibles en mode admin
-function enableAdminButtons() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAdminMode =
-    urlParams.get("mode") === "admin" ||
-    document.body.dataset.adminMode === "true";
-
-  if (isAdminMode) {
-    console.log(
-      "🔧 [MODE ADMIN] Mode admin détecté - Tous les boutons restent fonctionnels"
-    );
-
-    // En mode admin, on ne fait RIEN de spécial - les boutons fonctionnent normalement
-    // comme en local, grâce à la modification du CSS adminMode.css
-
-    // Juste s'assurer que les boutons sont visibles
-    setTimeout(() => {
-      const buttons = document.querySelectorAll("button");
-      buttons.forEach((button) => {
-        if (
-          button.id === "excelButton" ||
-          button.id === "homeButton" ||
-          button.textContent.includes("PDF")
-        ) {
-          console.log(
-            `✅ [MODE ADMIN] Bouton trouvé et fonctionnel: ${
-              button.id || button.textContent
-            }`
-          );
-        }
-      });
-    }, 1000);
-  }
-}
-
 // === CONTRÔLE DE L'ICÔNE D'ACCUEIL SELON LE PARCOURS UTILISATEUR ===
 // Cette fonction détermine si l'icône d'accueil doit être affichée
 function controlHomeIconVisibility() {
@@ -89,9 +35,7 @@ function controlHomeIconVisibility() {
 
 // Exécuter la vérification dès le chargement du DOM
 document.addEventListener("DOMContentLoaded", function () {
-  setupAdminMode(); // Détecter et appliquer le mode admin
   controlHomeIconVisibility();
-  enableAdminButtons(); // Mode admin simplifié - pas d'interférence avec les boutons
 });
 
 // === FIN CONTRÔLE ICÔNE D'ACCUEIL ===
