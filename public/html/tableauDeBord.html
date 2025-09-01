@@ -4378,19 +4378,6 @@
             // Appeler le nettoyage à l'initialisation
             cleanupAdminSession();
 
-            // === GESTION DE LA NAVIGATION SIDEBAR ===
-            // Gestionnaire pour le lien "Suivi des Livraisons" dans le sidebar
-            const lienSuivi = document.getElementById("lienSuivi");
-            if (lienSuivi) {
-              lienSuivi.addEventListener("click", function (e) {
-                e.preventDefault();
-                console.log(
-                  "🚀 Navigation vers Suivi des Livraisons depuis le sidebar"
-                );
-                redirectToResponsablePage("livraison");
-              });
-            }
-
             // Nettoyer périodiquement (toutes les 30 minutes)
             setInterval(cleanupAdminSession, 30 * 60 * 1000);
 
@@ -4422,7 +4409,7 @@
                 if (isAdmin) {
                   // Redirection en mode admin (visualisation uniquement)
                   targetUrl =
-                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?mode=admin&from=sidebar";
+                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?mode=admin";
                   // Marquer la session pour la page cible
                   localStorage.setItem("adminViewMode", "true");
                   localStorage.setItem(
@@ -4430,21 +4417,15 @@
                     Date.now().toString()
                   );
                   localStorage.setItem("adminViewTarget", "acconier");
-                  // Marquer que l'utilisateur vient du tableau de bord principal
-                  sessionStorage.setItem("fromMainDashboard", "true");
-                  localStorage.setItem("userAccessLevel", "main_dashboard");
                 } else {
-                  // Redirection normale pour les responsables avec paramètre sidebar
-                  targetUrl = "resp_acconier.html?from=sidebar";
-                  // Marquer que l'utilisateur vient du tableau de bord principal
-                  sessionStorage.setItem("fromMainDashboard", "true");
-                  localStorage.setItem("userAccessLevel", "main_dashboard");
+                  // Redirection normale pour les responsables
+                  targetUrl = "resp_acconier.html";
                 }
               } else if (pageType === "livraison") {
                 if (isAdmin) {
                   // Redirection en mode admin (visualisation uniquement)
                   targetUrl =
-                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?mode=admin&from=sidebar";
+                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?mode=admin";
                   // Marquer la session pour la page cible
                   localStorage.setItem("adminViewMode", "true");
                   localStorage.setItem(
@@ -4452,15 +4433,9 @@
                     Date.now().toString()
                   );
                   localStorage.setItem("adminViewTarget", "livraison");
-                  // Marquer que l'utilisateur vient du tableau de bord principal
-                  sessionStorage.setItem("fromMainDashboard", "true");
-                  localStorage.setItem("userAccessLevel", "main_dashboard");
                 } else {
-                  // Redirection normale pour les responsables avec paramètre sidebar
-                  targetUrl = "resp_liv.html?from=sidebar";
-                  // Marquer que l'utilisateur vient du tableau de bord principal
-                  sessionStorage.setItem("fromMainDashboard", "true");
-                  localStorage.setItem("userAccessLevel", "main_dashboard");
+                  // Redirection normale pour les responsables
+                  targetUrl = "resp_liv.html";
                 }
               }
 
@@ -5032,17 +5007,6 @@
                       data.deliveries.length
                     );
 
-                    // 🔔 NOUVEAU: Déclencher l'événement suiviDataUpdated
-                    window.dispatchEvent(
-                      new CustomEvent("suiviDataUpdated", {
-                        detail: {
-                          source: "dashboard-deliveries",
-                          deliveries: data.deliveries,
-                          timestamp: Date.now(),
-                        },
-                      })
-                    );
-
                     // Calculer les compteurs à partir des mêmes données que le tableau de suivi
                     const counts = calculateCountsFromDeliveries(
                       data.deliveries
@@ -5093,30 +5057,6 @@
                         Livrés: counts.livres || 0,
                         "En retard": counts.en_retard || 0,
                       }
-                    );
-
-                    // 🔔 NOUVEAU: Déclencher un événement pour synchroniser les archives
-                    window.dispatchEvent(
-                      new CustomEvent("dashboardCardUpdated", {
-                        detail: {
-                          source: "dashboard-cards",
-                          counts: counts,
-                          timestamp: Date.now(),
-                        },
-                      })
-                    );
-
-                    // 🔔 NOUVEAU: Stocker dans localStorage pour les autres onglets
-                    localStorage.setItem(
-                      "dashboardCountersUpdated",
-                      JSON.stringify({
-                        counts: counts,
-                        timestamp: Date.now(),
-                      })
-                    );
-
-                    console.log(
-                      "[DASHBOARD] 📡 Événements de synchronisation déclenchés pour les archives"
                     );
                   } else {
                     console.error(
