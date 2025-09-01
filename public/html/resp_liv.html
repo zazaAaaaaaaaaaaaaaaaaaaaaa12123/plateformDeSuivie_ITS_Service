@@ -795,6 +795,53 @@
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
+
+      /* Styles pour les en-têtes en mode admin */
+      .admin-view-mode .table thead tr:first-child th {
+        background: linear-gradient(90deg, #ffc107 0%, #e6b800 100%) !important;
+        color: #0e274e !important;
+        text-shadow: 0 1px 2px rgba(14, 39, 78, 0.3) !important;
+      }
+
+      /* Alternance bleu-jaune pour les colonnes du tableau principal */
+      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(odd) {
+        background: #0e274e !important; /* Bleu pour les colonnes impaires */
+        color: #ffc107 !important; /* Texte jaune */
+        font-weight: 700 !important;
+        border-right: 2px solid #ffc107 !important;
+      }
+
+      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(even) {
+        background: #ffc107 !important; /* Jaune pour les colonnes paires */
+        color: #0e274e !important; /* Texte bleu foncé */
+        font-weight: 700 !important;
+        border-right: 2px solid #e6b800 !important;
+      }
+
+      /* Alternance bleu-jaune pour le tableau des livraisons en retard */
+      .admin-view-mode #lateDeliveriesTable thead th:nth-child(odd) {
+        background: #0e274e !important; /* Bleu pour les colonnes impaires */
+        color: #ffc107 !important; /* Texte jaune */
+        font-weight: 600 !important;
+        border-bottom: 2px solid #ffc107 !important;
+      }
+
+      .admin-view-mode #lateDeliveriesTable thead th:nth-child(even) {
+        background: #ffc107 !important; /* Jaune pour les colonnes paires */
+        color: #0e274e !important; /* Texte bleu foncé */
+        font-weight: 600 !important;
+        border-bottom: 2px solid #e6b800 !important;
+      }
+
+      /* Styles spécifiques pour Date de DO et Date de BADT en bleu ciel */
+      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(18),
+      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(19) {
+        background: #87CEEB !important; /* Bleu ciel */
+        color: #0e274e !important; /* Texte bleu foncé */
+        font-weight: 700 !important;
+        border-right: 2px solid #5DADE2 !important;
+        border-bottom: 2px solid #5DADE2 !important;
+      }
     </style>  
     </head>
 

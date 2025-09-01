@@ -1,3 +1,21 @@
+// === DÉTECTION ET APPLICATION DU MODE ADMIN ===
+// Cette fonction détecte si on est en mode admin et applique les styles appropriés
+function setupAdminMode() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminMode =
+    urlParams.get("mode") === "admin" ||
+    document.body.dataset.adminMode === "true";
+
+  if (isAdminMode) {
+    document.body.classList.add("admin-view-mode");
+    document.body.dataset.adminMode = "true";
+    console.log("🔧 [MODE ADMIN] Mode admin activé - Styles appliqués");
+  } else {
+    document.body.classList.remove("admin-view-mode");
+    document.body.dataset.adminMode = "false";
+  }
+}
+
 // === CONTRÔLE DE L'ICÔNE D'ACCUEIL SELON LE PARCOURS UTILISATEUR ===
 // Cette fonction détermine si l'icône d'accueil doit être affichée
 function controlHomeIconVisibility() {
@@ -35,6 +53,7 @@ function controlHomeIconVisibility() {
 
 // Exécuter la vérification dès le chargement du DOM
 document.addEventListener("DOMContentLoaded", function () {
+  setupAdminMode(); // Détecter et appliquer le mode admin
   controlHomeIconVisibility();
 });
 
