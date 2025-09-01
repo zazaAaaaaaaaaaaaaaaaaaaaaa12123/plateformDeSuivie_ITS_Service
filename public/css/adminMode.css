@@ -81,6 +81,18 @@
   user-select: none !important;
 }
 
+/* Exception spécifique pour les boutons autorisés en mode admin */
+.admin-view-mode button[data-allow-admin="true"],
+.admin-view-mode #homeButton[data-allow-admin="true"],
+.admin-view-mode #excelButton[data-allow-admin="true"] {
+  pointer-events: auto !important;
+  user-select: auto !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  z-index: 9999 !important;
+  position: relative !important;
+}
+
 /* Effet de croix rouge sur les éléments désactivés */
 .admin-view-mode input:disabled::after,
 .admin-view-mode select:disabled::after,
