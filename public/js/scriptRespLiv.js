@@ -10,40 +10,44 @@ function setupAdminMode() {
     document.body.classList.add("admin-view-mode");
     document.body.dataset.adminMode = "true";
 
-    // Permettre l'interaction avec l'icône d'accueil et le bouton Excel en mode admin
-    const homeButton = document.getElementById("homeButton");
-    const excelButton = document.getElementById("excelButton");
-
-    if (homeButton) {
-      homeButton.setAttribute("data-allow-admin", "true");
-      homeButton.style.pointerEvents = "auto";
-      homeButton.style.opacity = "1";
-    }
-
-    if (excelButton) {
-      excelButton.setAttribute("data-allow-admin", "true");
-      excelButton.style.pointerEvents = "auto";
-      excelButton.style.opacity = "1";
-    }
-
-    console.log(
-      "🔧 [MODE ADMIN] Mode admin activé - Styles appliqués, boutons accessibles"
-    );
+    console.log("🔧 [MODE ADMIN] Mode admin activé - Styles appliqués");
   } else {
     document.body.classList.remove("admin-view-mode");
     document.body.dataset.adminMode = "false";
+  }
+}
 
-    // Retirer les attributs en mode normal
-    const homeButton = document.getElementById("homeButton");
-    const excelButton = document.getElementById("excelButton");
+// Fonction pour rendre les boutons accessibles en mode admin
+function enableAdminButtons() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminMode =
+    urlParams.get("mode") === "admin" ||
+    document.body.dataset.adminMode === "true";
 
-    if (homeButton) {
-      homeButton.removeAttribute("data-allow-admin");
-    }
+  if (isAdminMode) {
+    // Attendre que les éléments soient créés
+    setTimeout(() => {
+      const homeButton = document.getElementById("homeButton");
+      const excelButton = document.getElementById("excelButton");
 
-    if (excelButton) {
-      excelButton.removeAttribute("data-allow-admin");
-    }
+      if (homeButton) {
+        homeButton.setAttribute("data-allow-admin", "true");
+        homeButton.style.pointerEvents = "auto !important";
+        homeButton.style.opacity = "1 !important";
+        homeButton.style.cursor = "pointer !important";
+        homeButton.style.zIndex = "9999 !important";
+        console.log("🏠 [MODE ADMIN] Bouton accueil rendu accessible");
+      }
+
+      if (excelButton) {
+        excelButton.setAttribute("data-allow-admin", "true");
+        excelButton.style.pointerEvents = "auto !important";
+        excelButton.style.opacity = "1 !important";
+        excelButton.style.cursor = "pointer !important";
+        excelButton.style.zIndex = "9999 !important";
+        console.log("📊 [MODE ADMIN] Bouton Excel rendu accessible");
+      }
+    }, 1000); // Attendre 1 seconde pour que tout soit chargé
   }
 }
 
@@ -98,6 +102,7 @@ function controlHomeIconVisibility() {
 document.addEventListener("DOMContentLoaded", function () {
   setupAdminMode(); // Détecter et appliquer le mode admin
   controlHomeIconVisibility();
+  enableAdminButtons(); // Rendre les boutons accessibles en mode admin
 });
 
 // === FIN CONTRÔLE ICÔNE D'ACCUEIL ===

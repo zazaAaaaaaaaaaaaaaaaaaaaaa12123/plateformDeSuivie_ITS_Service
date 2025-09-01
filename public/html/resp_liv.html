@@ -837,28 +837,52 @@
       .admin-view-mode .table thead tr:nth-child(2) th:nth-child(18),
       .admin-view-mode .table thead tr:nth-child(2) th:nth-child(19) {
         background: #87CEEB !important; /* Bleu ciel */
+        background-color: #87CEEB !important;
         color: #0e274e !important; /* Texte bleu foncé */
         font-weight: 700 !important;
         border-right: 2px solid #5DADE2 !important;
         border-bottom: 2px solid #5DADE2 !important;
+        border-left: 2px solid #5DADE2 !important;
+        border-top: 2px solid #5DADE2 !important;
       }
 
-      /* Styles pour les boutons autorisés en mode admin */
+      /* Styles pour les boutons autorisés en mode admin avec priorité maximale */
       .admin-view-mode button[data-allow-admin] {
         pointer-events: auto !important;
         user-select: auto !important;
         opacity: 1 !important;
         cursor: pointer !important;
+        position: relative !important;
+        z-index: 9999 !important;
       }
 
-      .admin-view-mode #homeButton[data-allow-admin],
+      .admin-view-mode #homeButton[data-allow-admin] {
+        pointer-events: auto !important;
+        user-select: auto !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+        position: relative !important;
+        z-index: 9999 !important;
+        display: flex !important;
+      }
+
       .admin-view-mode #excelButton[data-allow-admin] {
         pointer-events: auto !important;
         user-select: auto !important;
         opacity: 1 !important;
         cursor: pointer !important;
         position: relative !important;
-        z-index: 1000 !important;
+        z-index: 9999 !important;
+        display: inline-block !important;
+      }
+
+      /* Forcer les styles pour les boutons même avec les restrictions adminMode.css */
+      .admin-view-mode #homeButton,
+      .admin-view-mode #excelButton {
+        pointer-events: auto !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+        z-index: 9999 !important;
       }
     </style>  
     </head>
