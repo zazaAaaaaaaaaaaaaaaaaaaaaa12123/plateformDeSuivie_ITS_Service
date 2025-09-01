@@ -4378,6 +4378,19 @@
             // Appeler le nettoyage à l'initialisation
             cleanupAdminSession();
 
+            // === GESTION DE LA NAVIGATION SIDEBAR ===
+            // Gestionnaire pour le lien "Suivi des Livraisons" dans le sidebar
+            const lienSuivi = document.getElementById("lienSuivi");
+            if (lienSuivi) {
+              lienSuivi.addEventListener("click", function (e) {
+                e.preventDefault();
+                console.log(
+                  "🚀 Navigation vers Suivi des Livraisons depuis le sidebar"
+                );
+                redirectToResponsablePage("livraison");
+              });
+            }
+
             // Nettoyer périodiquement (toutes les 30 minutes)
             setInterval(cleanupAdminSession, 30 * 60 * 1000);
 
@@ -4409,7 +4422,7 @@
                 if (isAdmin) {
                   // Redirection en mode admin (visualisation uniquement)
                   targetUrl =
-                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?mode=admin";
+                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?mode=admin&from=sidebar";
                   // Marquer la session pour la page cible
                   localStorage.setItem("adminViewMode", "true");
                   localStorage.setItem(
@@ -4417,15 +4430,21 @@
                     Date.now().toString()
                   );
                   localStorage.setItem("adminViewTarget", "acconier");
+                  // Marquer que l'utilisateur vient du tableau de bord principal
+                  sessionStorage.setItem("fromMainDashboard", "true");
+                  localStorage.setItem("userAccessLevel", "main_dashboard");
                 } else {
-                  // Redirection normale pour les responsables
-                  targetUrl = "resp_acconier.html";
+                  // Redirection normale pour les responsables avec paramètre sidebar
+                  targetUrl = "resp_acconier.html?from=sidebar";
+                  // Marquer que l'utilisateur vient du tableau de bord principal
+                  sessionStorage.setItem("fromMainDashboard", "true");
+                  localStorage.setItem("userAccessLevel", "main_dashboard");
                 }
               } else if (pageType === "livraison") {
                 if (isAdmin) {
                   // Redirection en mode admin (visualisation uniquement)
                   targetUrl =
-                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?mode=admin";
+                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?mode=admin&from=sidebar";
                   // Marquer la session pour la page cible
                   localStorage.setItem("adminViewMode", "true");
                   localStorage.setItem(
@@ -4433,9 +4452,15 @@
                     Date.now().toString()
                   );
                   localStorage.setItem("adminViewTarget", "livraison");
+                  // Marquer que l'utilisateur vient du tableau de bord principal
+                  sessionStorage.setItem("fromMainDashboard", "true");
+                  localStorage.setItem("userAccessLevel", "main_dashboard");
                 } else {
-                  // Redirection normale pour les responsables
-                  targetUrl = "resp_liv.html";
+                  // Redirection normale pour les responsables avec paramètre sidebar
+                  targetUrl = "resp_liv.html?from=sidebar";
+                  // Marquer que l'utilisateur vient du tableau de bord principal
+                  sessionStorage.setItem("fromMainDashboard", "true");
+                  localStorage.setItem("userAccessLevel", "main_dashboard");
                 }
               }
 

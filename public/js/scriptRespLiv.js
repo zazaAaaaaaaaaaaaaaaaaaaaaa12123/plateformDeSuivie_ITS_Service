@@ -1,3 +1,45 @@
+// === CONTRÔLE DE L'ICÔNE D'ACCUEIL SELON LE PARCOURS UTILISATEUR ===
+// Cette fonction détermine si l'icône d'accueil doit être affichée
+function controlHomeIconVisibility() {
+  const homeButton = document.getElementById("homeButton");
+  if (!homeButton) return;
+
+  // Vérifier si l'utilisateur vient du parcours principal (index.html → sidebar)
+  const isFromMainDashboard =
+    sessionStorage.getItem("fromMainDashboard") === "true";
+  const hasMainDashboardAccess =
+    localStorage.getItem("userAccessLevel") === "main_dashboard";
+
+  // Vérifier les paramètres URL pour détecter la navigation via sidebar
+  const urlParams = new URLSearchParams(window.location.search);
+  const fromSidebar = urlParams.get("from") === "sidebar";
+  const isDirect = urlParams.get("direct") === "true";
+
+  // Afficher l'icône seulement si :
+  // 1. L'utilisateur vient du tableau de bord principal, OU
+  // 2. Il a navigué via le sidebar, OU
+  // 3. Il a un niveau d'accès "main_dashboard"
+  if (
+    isFromMainDashboard ||
+    fromSidebar ||
+    hasMainDashboardAccess ||
+    isDirect
+  ) {
+    homeButton.style.display = "flex";
+    console.log("🏠 Icône d'accueil affichée - Parcours principal détecté");
+  } else {
+    homeButton.style.display = "none";
+    console.log("🚫 Icône d'accueil masquée - Connexion directe détectée");
+  }
+}
+
+// Exécuter la vérification dès le chargement du DOM
+document.addEventListener("DOMContentLoaded", function () {
+  controlHomeIconVisibility();
+});
+
+// === FIN CONTRÔLE ICÔNE D'ACCUEIL ===
+
 // Injection des styles CSS pour l'historique amélioré
 function injectHistoryStyles() {
   if (document.getElementById("historyEnhancedStyles")) return;
@@ -5018,7 +5060,7 @@ if (window.allDeliveries) updateDeliveredForPdf();
 window.addEventListener("allDeliveriesUpdated", updateDeliveredForPdf);
 
 // --- Modale de filtre PDF ---
-function showPdfFilterModal() {
+function showPdfFilterModal(userChoice = null) {
   const oldModal = document.getElementById("pdfFilterModal");
   if (oldModal) oldModal.remove();
   const overlay = document.createElement("div");
@@ -5189,6 +5231,14 @@ function showPdfFilterModal() {
       }
     });
     generateEtatSortiePdf(filtered, date1, date2);
+
+    // Exécuter l'action choisie par l'utilisateur APRÈS génération du PDF
+    if (userChoice) {
+      setTimeout(() => {
+        handlePDFAction(userChoice);
+      }, 500); // Petit délai pour laisser le PDF se générer
+    }
+
     overlay.remove();
   };
   content.appendChild(validateBtn);
@@ -5208,11 +5258,8 @@ pdfBtn.onclick = async function () {
   // Mettre à jour les données livrées
   updateDeliveredForPdf();
 
-  // Gérer l'action choisie
-  handlePDFAction(choice);
-
-  // Afficher la modal de filtre PDF dans tous les cas
-  showPdfFilterModal();
+  // Afficher la modal de filtre PDF avec l'action choisie
+  showPdfFilterModal(choice);
 };
 
 /**
@@ -5221,22 +5268,43 @@ pdfBtn.onclick = async function () {
 function handlePDFAction(choice) {
   switch (choice) {
     case "yes":
-      // Supprimer immédiatement les livraisons du tableau
+      // Supprimer les livraisons du tableau APRÈS génération du PDF
+      const removedCount = deliveredForPdf.length;
       removeDeliveredFromMainTable();
+
+      // Mettre à jour la notification avec le nombre d'éléments supprimés
       showNotification(
-        "Livraisons supprimées du tableau (conservées dans l'historique)",
+        `PDF généré ! ${removedCount} livraison(s) supprimée(s) du tableau (conservées dans l'historique)`,
         "success"
       );
+
+      // Forcer une mise à jour de l'affichage après un court délai
+      setTimeout(() => {
+        updateDeliveredForPdf();
+        const dateStartInput = document.getElementById(
+          "mainTableDateStartFilter"
+        );
+        const dateEndInput = document.getElementById("mainTableDateEndFilter");
+        if (dateStartInput && dateEndInput) {
+          updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+        }
+      }, 100);
       break;
 
     case "no":
       // Ne rien faire, garder les livraisons
-      showNotification("Livraisons conservées dans le tableau", "success");
+      showNotification(
+        "PDF généré ! Livraisons conservées dans le tableau",
+        "success"
+      );
       break;
 
     case "delay":
       // Le compte à rebours a déjà été démarré dans showPDFConfirmationModal
-      showNotification("Compte à rebours de 1 semaine démarré", "success");
+      showNotification(
+        "PDF généré ! Compte à rebours de 1 semaine démarré",
+        "success"
+      );
       break;
   }
 }
@@ -7447,14 +7515,34 @@ function removeDeliveredFromMainTable() {
 
   // Filtrer pour garder seulement les livraisons non entièrement livrées
   window.allDeliveries = window.allDeliveries.filter((delivery) => {
-    if (!delivery.container_statuses) return true;
+    // Utiliser la même logique que updateDeliveredForPdf pour déterminer si livré
+    let tcList =
+      delivery.container_numbers_list &&
+      Array.isArray(delivery.container_numbers_list)
+        ? delivery.container_numbers_list.filter(Boolean)
+        : Array.isArray(delivery.container_number)
+        ? delivery.container_number.filter(Boolean)
+        : typeof delivery.container_number === "string"
+        ? delivery.container_number.split(/[,;\s]+/).filter(Boolean)
+        : [];
 
-    const statuses = Object.values(delivery.container_statuses);
-    const allDelivered =
-      statuses.length > 0 &&
-      statuses.every((status) => status === "livre" || status === "livré");
+    let allTcLivres =
+      tcList.length > 0 &&
+      tcList.every((tc) => {
+        let s = delivery.container_statuses && delivery.container_statuses[tc];
+        return s === "livre" || s === "livré";
+      });
 
-    if (allDelivered) {
+    let globalLivree =
+      (delivery.status &&
+        (delivery.status === "livre" || delivery.status === "livré")) ||
+      (delivery.delivery_status_acconier &&
+        (delivery.delivery_status_acconier === "livre" ||
+          delivery.delivery_status_acconier === "livré"));
+
+    const isDelivered = allTcLivres || globalLivree;
+
+    if (isDelivered) {
       removedCount++;
       deliveredToArchive.push(delivery);
       return false; // Supprimer du tableau
@@ -7495,6 +7583,14 @@ function removeDeliveredFromMainTable() {
   const dateEndInput = document.getElementById("mainTableDateEndFilter");
   if (dateStartInput && dateEndInput) {
     updateTableForDateRange(dateStartInput.value, dateEndInput.value);
+  }
+
+  // Déclencher un événement de mise à jour pour informer tous les composants
+  window.dispatchEvent(new CustomEvent("allDeliveriesUpdated"));
+
+  // Forcer un rafraîchissement supplémentaire si une fonction de rafraîchissement existe
+  if (typeof refreshTableInAdminModeRespLiv === "function") {
+    setTimeout(() => refreshTableInAdminModeRespLiv(), 100);
   }
 
   console.log(
