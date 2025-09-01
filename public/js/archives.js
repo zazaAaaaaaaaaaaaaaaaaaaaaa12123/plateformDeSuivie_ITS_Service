@@ -6662,24 +6662,57 @@ class StorageManager {
         dbUsageEl.textContent = `${currentSize} / ${totalSize}`;
       }
 
-      // Mise à jour de la barre de progression
+      // 🎨 AMÉLIORATION: Mise à jour professionnelle de la barre de progression Render
       const progressBarEl = document.getElementById("renderProgressBar");
       if (progressBarEl && capacityData.database) {
         const usagePercent = capacityData.database.usage_percentage || 0;
-        progressBarEl.style.width = `${usagePercent}%`;
-        progressBarEl.setAttribute("aria-valuenow", usagePercent);
 
-        // Couleur de la barre selon l'usage
+        // 🎬 Animation fluide de la barre de progression
+        this.animateRenderProgressBar(progressBarEl, usagePercent);
+
+        // 🎯 Mise à jour des attributs ARIA pour l'accessibilité
+        progressBarEl.setAttribute("aria-valuenow", usagePercent);
+        progressBarEl.setAttribute(
+          "aria-valuetext",
+          `${usagePercent.toFixed(1)}% de la base de données utilisé`
+        );
+
+        // 🎨 Couleurs et effets selon le niveau d'utilisation
+        let gradient, shadowColor;
+
         if (usagePercent > 90) {
-          progressBarEl.style.background =
-            "linear-gradient(90deg, #ef4444, #dc2626)";
+          // 🔴 Niveau critique
+          gradient =
+            "linear-gradient(90deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%)";
+          shadowColor = "rgba(239, 68, 68, 0.4)";
+          console.log("🔴 [RENDER] Niveau critique: > 90%");
         } else if (usagePercent > 75) {
-          progressBarEl.style.background =
-            "linear-gradient(90deg, #f59e0b, #d97706)";
+          // 🟡 Niveau d'attention
+          gradient =
+            "linear-gradient(90deg, #f59e0b 0%, #d97706 50%, #b45309 100%)";
+          shadowColor = "rgba(245, 158, 11, 0.4)";
+          console.log("🟡 [RENDER] Niveau d'attention: > 75%");
         } else {
-          progressBarEl.style.background =
-            "linear-gradient(90deg, #10b981, #059669)";
+          // 🟢 Niveau normal
+          gradient =
+            "linear-gradient(90deg, #10b981 0%, #059669 50%, #047857 100%)";
+          shadowColor = "rgba(16, 185, 129, 0.4)";
+          console.log("🟢 [RENDER] Niveau normal: < 75%");
         }
+
+        // Application du style avec transition fluide et ombres
+        setTimeout(() => {
+          progressBarEl.style.background = gradient;
+          progressBarEl.style.boxShadow = `
+            0 2px 8px ${shadowColor},
+            inset 0 1px 0 rgba(255,255,255,0.2),
+            0 0 15px ${shadowColor}40
+          `;
+          progressBarEl.style.borderRadius = "4px";
+
+          // 🎯 Mettre à jour l'indicateur de statut Render
+          this.updateRenderStatusIndicator(usagePercent);
+        }, 100);
       }
 
       // Mise à jour de la capacité totale
@@ -6703,6 +6736,86 @@ class StorageManager {
         error
       );
     }
+  }
+
+  // 🎬 NOUVELLE MÉTHODE: Animation fluide de la barre de progression Render
+  animateRenderProgressBar(progressBar, targetPercent) {
+    const currentWidth = parseFloat(progressBar.style.width) || 0;
+    const duration = 1200; // 1.2 secondes pour un effet plus fluide
+    const startTime = performance.now();
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Fonction d'easing avancée pour une animation plus naturelle
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      const currentPercent =
+        currentWidth + (targetPercent - currentWidth) * easeOutQuart;
+
+      progressBar.style.width = `${currentPercent}%`;
+
+      // Effet de brillance pendant l'animation
+      if (progress < 1) {
+        const shimmer = Math.sin(progress * Math.PI * 2) * 0.1 + 0.1;
+        progressBar.style.filter = `brightness(${1 + shimmer})`;
+        requestAnimationFrame(animate);
+      } else {
+        // Restaurer la brillance normale à la fin
+        progressBar.style.filter = "brightness(1)";
+      }
+    };
+
+    requestAnimationFrame(animate);
+    console.log(
+      `🎬 [RENDER] Animation de ${currentWidth}% vers ${targetPercent}%`
+    );
+  }
+
+  // 🎯 NOUVELLE MÉTHODE: Mise à jour de l'indicateur de statut Render
+  updateRenderStatusIndicator(usagePercent) {
+    const statusIndicator = document.getElementById("renderStatusIndicator");
+    if (!statusIndicator) return;
+
+    let statusMessage, statusIcon, backgroundColor, textColor;
+
+    if (usagePercent > 90) {
+      statusMessage = "Critique";
+      statusIcon = "fas fa-exclamation-triangle";
+      backgroundColor = "rgba(239, 68, 68, 0.1)";
+      textColor = "#dc2626";
+    } else if (usagePercent > 75) {
+      statusMessage = "Attention";
+      statusIcon = "fas fa-exclamation-circle";
+      backgroundColor = "rgba(245, 158, 11, 0.1)";
+      textColor = "#d97706";
+    } else if (usagePercent > 50) {
+      statusMessage = "Modéré";
+      statusIcon = "fas fa-info-circle";
+      backgroundColor = "rgba(59, 130, 246, 0.1)";
+      textColor = "#2563eb";
+    } else {
+      statusMessage = "Optimal";
+      statusIcon = "fas fa-check-circle";
+      backgroundColor = "rgba(16, 185, 129, 0.1)";
+      textColor = "#059669";
+    }
+
+    // Mise à jour du style et du contenu
+    statusIndicator.style.backgroundColor = backgroundColor;
+    statusIndicator.style.color = textColor;
+    statusIndicator.style.borderColor = `${textColor}30`;
+
+    statusIndicator.innerHTML = `
+      <i class="${statusIcon}" style="font-size: 0.9em;"></i>
+      ${statusMessage}
+    `;
+
+    console.log(
+      `🎯 [RENDER] Statut mis à jour: ${statusMessage} (${usagePercent.toFixed(
+        1
+      )}%)`
+    );
   }
 
   updateStorageDetails(typeStats) {
