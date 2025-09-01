@@ -72,25 +72,21 @@
   position: relative;
 }
 
-/* Overlay pour tous les éléments interactifs en mode admin */
+/* Overlay pour tous les éléments interactifs en mode admin - BOUTONS EXCLUS */
 .admin-view-mode input,
 .admin-view-mode select,
-.admin-view-mode textarea,
-.admin-view-mode button:not([data-allow-admin]) {
+.admin-view-mode textarea {
   pointer-events: none !important;
   user-select: none !important;
 }
 
-/* Exception spécifique pour les boutons autorisés en mode admin */
-.admin-view-mode button[data-allow-admin="true"],
-.admin-view-mode #homeButton[data-allow-admin="true"],
-.admin-view-mode #excelButton[data-allow-admin="true"] {
+/* IMPORTANT: Les boutons restent TOUJOURS fonctionnels en mode admin */
+/* Cette règle permet aux boutons Excel, PDF, Recherche, etc. de fonctionner normalement */
+.admin-view-mode button {
   pointer-events: auto !important;
   user-select: auto !important;
   opacity: 1 !important;
   cursor: pointer !important;
-  z-index: 9999 !important;
-  position: relative !important;
 }
 
 /* Effet de croix rouge sur les éléments désactivés */

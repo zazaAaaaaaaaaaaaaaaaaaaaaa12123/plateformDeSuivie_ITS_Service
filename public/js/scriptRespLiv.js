@@ -25,56 +25,30 @@ function enableAdminButtons() {
     document.body.dataset.adminMode === "true";
 
   if (isAdminMode) {
-    console.log("🔧 [MODE ADMIN] Activation des boutons en cours...");
+    console.log(
+      "🔧 [MODE ADMIN] Mode admin détecté - Tous les boutons restent fonctionnels"
+    );
 
-    // Fonction pour activer un bouton
-    function activateButton(button, name) {
-      if (button) {
-        // Définir l'attribut data-allow-admin
-        button.setAttribute("data-allow-admin", "true");
+    // En mode admin, on ne fait RIEN de spécial - les boutons fonctionnent normalement
+    // comme en local, grâce à la modification du CSS adminMode.css
 
-        // Forcer les styles CSS
-        button.style.setProperty("pointer-events", "auto", "important");
-        button.style.setProperty("opacity", "1", "important");
-        button.style.setProperty("cursor", "pointer", "important");
-        button.style.setProperty("z-index", "9999", "important");
-        button.style.setProperty("position", "relative", "important");
-
-        // Supprimer les événements bloquants
-        button.style.userSelect = "auto";
-
-        console.log(`✅ [MODE ADMIN] ${name} activé avec succès`);
-        return true;
-      } else {
-        console.warn(`⚠️ [MODE ADMIN] ${name} non trouvé`);
-        return false;
-      }
-    }
-
-    // Attendre que les éléments soient créés et essayer plusieurs fois
-    let attempts = 0;
-    const maxAttempts = 10;
-
-    function tryActivateButtons() {
-      attempts++;
-      console.log(`🔄 [MODE ADMIN] Tentative ${attempts}/${maxAttempts}`);
-
-      const homeButton = document.getElementById("homeButton");
-      const excelButton = document.getElementById("excelButton");
-
-      const homeSuccess = activateButton(homeButton, "Bouton accueil");
-      const excelSuccess = activateButton(excelButton, "Bouton Excel");
-
-      // Si les deux boutons ne sont pas trouvés et qu'il reste des tentatives
-      if ((!homeSuccess || !excelSuccess) && attempts < maxAttempts) {
-        setTimeout(tryActivateButtons, 500); // Réessayer dans 500ms
-      } else {
-        console.log("🎯 [MODE ADMIN] Activation des boutons terminée");
-      }
-    }
-
-    // Commencer immédiatement puis réessayer si nécessaire
-    tryActivateButtons();
+    // Juste s'assurer que les boutons sont visibles
+    setTimeout(() => {
+      const buttons = document.querySelectorAll("button");
+      buttons.forEach((button) => {
+        if (
+          button.id === "excelButton" ||
+          button.id === "homeButton" ||
+          button.textContent.includes("PDF")
+        ) {
+          console.log(
+            `✅ [MODE ADMIN] Bouton trouvé et fonctionnel: ${
+              button.id || button.textContent
+            }`
+          );
+        }
+      });
+    }, 1000);
   }
 }
 
@@ -129,81 +103,7 @@ function controlHomeIconVisibility() {
 document.addEventListener("DOMContentLoaded", function () {
   setupAdminMode(); // Détecter et appliquer le mode admin
   controlHomeIconVisibility();
-  enableAdminButtons(); // Rendre les boutons accessibles en mode admin
-
-  // Ajouter les gestionnaires d'événements pour les boutons en mode admin
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAdminMode =
-    urlParams.get("mode") === "admin" ||
-    document.body.dataset.adminMode === "true";
-
-  if (isAdminMode) {
-    console.log("🔧 [MODE ADMIN] Configuration des gestionnaires d'événements");
-
-    // Attendre que les boutons soient disponibles
-    setTimeout(() => {
-      const homeButton = document.getElementById("homeButton");
-      const excelButton = document.getElementById("excelButton");
-
-      if (homeButton) {
-        // Enlever l'ancien gestionnaire onclick et en ajouter un nouveau
-        homeButton.onclick = function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log("🏠 [MODE ADMIN] Clic sur bouton accueil détecté");
-          window.location.href = "/html/tableauDeBord.html?direct=true";
-        };
-
-        // Ajouter aussi un gestionnaire d'événement addEventListener pour être sûr
-        homeButton.addEventListener("click", function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log(
-            "🏠 [MODE ADMIN] Event listener - Clic sur bouton accueil"
-          );
-          window.location.href = "/html/tableauDeBord.html?direct=true";
-        });
-
-        console.log(
-          "🏠 [MODE ADMIN] Gestionnaire d'événements ajouté au bouton accueil"
-        );
-      }
-
-      if (excelButton) {
-        // Enlever l'ancien gestionnaire onclick et en ajouter un nouveau
-        excelButton.onclick = function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log("📊 [MODE ADMIN] Clic sur bouton Excel détecté");
-          if (typeof genererExcelLivraisons === "function") {
-            genererExcelLivraisons();
-          } else {
-            console.error(
-              "❌ [MODE ADMIN] Fonction genererExcelLivraisons non trouvée"
-            );
-          }
-        };
-
-        // Ajouter aussi un gestionnaire d'événement addEventListener pour être sûr
-        excelButton.addEventListener("click", function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log("📊 [MODE ADMIN] Event listener - Clic sur bouton Excel");
-          if (typeof genererExcelLivraisons === "function") {
-            genererExcelLivraisons();
-          } else {
-            console.error(
-              "❌ [MODE ADMIN] Fonction genererExcelLivraisons non trouvée"
-            );
-          }
-        });
-
-        console.log(
-          "📊 [MODE ADMIN] Gestionnaire d'événements ajouté au bouton Excel"
-        );
-      }
-    }, 1500); // Attendre un peu plus longtemps
-  }
+  enableAdminButtons(); // Mode admin simplifié - pas d'interférence avec les boutons
 });
 
 // === FIN CONTRÔLE ICÔNE D'ACCUEIL ===
