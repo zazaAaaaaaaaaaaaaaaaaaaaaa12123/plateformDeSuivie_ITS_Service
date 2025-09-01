@@ -126,7 +126,11 @@ class ArchivesManager {
 
       // 🛡️ CHARGEMENT SÉCURISÉ: Avec délai et protection
       setTimeout(() => {
-        console.log("[ARCHIVES] 🚀 Chargement initial sécurisé...");
+        // 🛡️ DÉSACTIVATION DU CHARGEMENT AUTOMATIQUE
+        // ✅ CHARGEMENT INITIAL AUTOMATIQUE - Toujours charger au démarrage
+        console.log(
+          "[ARCHIVES] 🚀 Chargement initial automatique au démarrage..."
+        );
         this.safeInitialLoad();
       }, 500); // Délai de 500ms pour éviter les conflits
     }
@@ -248,27 +252,61 @@ class ArchivesManager {
           } else if (activeDeliveryTabs.includes(this.selectedTab)) {
             // Pour les onglets de livraisons actives
             console.log(
-              `[ARCHIVES] 🚀 Chargement des livraisons actives pour l'onglet: ${this.selectedTab}`
+              `[ARCHIVES] 🚀 Chargement automatique pour l'onglet: ${this.selectedTab}`
             );
 
-            // Réinitialiser les filtres d'archives
-            this.currentFilters.action_type = "";
-            actionFilter.value = "";
+            // ✅ APPLIQUER LE BON FILTRE selon l'onglet sélectionné
+            let targetActionType = "";
+            switch (this.selectedTab) {
+              case "delivered":
+                targetActionType = "livraison";
+                break;
+              case "shipping":
+                targetActionType = "mise_en_livraison";
+                break;
+              case "orders":
+                targetActionType = "ordre_livraison_etabli";
+                break;
+            }
 
-            // Charger les données de livraisons actives
-            await this.loadActiveDeliveriesByTab(this.selectedTab);
+            // Appliquer le filtre spécifique
+            this.currentFilters.action_type = targetActionType;
+            actionFilter.value = targetActionType;
+
+            console.log(
+              `[ARCHIVES] 🎯 Filtre appliqué pour ${this.selectedTab}: ${targetActionType}`
+            );
+
+            // ✅ CHARGEMENT AUTOMATIQUE SILENCIEUX avec le bon filtre
+            this.loadArchivesQuietly();
           } else {
             console.log(`[ARCHIVES] Onglet ${this.selectedTab} non reconnu`);
-            this.renderCurrentView();
+            this.showEmptyState(
+              "Cliquez sur 'Niveau de stockage' pour charger les archives"
+            );
           }
         } else if (actionFilter && this.selectedTab === "all") {
-          // 🎯 CORRECTION: Pour "Toutes les Archives", additionner les compteurs des autres onglets
+          // 🎯 AFFICHAGE INTELLIGENT: Utiliser les données déjà chargées pour "Toutes les Archives"
           console.log(
-            "[ARCHIVES] 🔄 Chargement de TOUTES les archives (addition des compteurs)"
+            "[ARCHIVES] 🔄 Onglet 'Toutes les Archives' - Affichage des données chargées"
           );
           this.currentFilters.action_type = ""; // Garder vide pour l'affichage
           actionFilter.value = "";
-          await this.loadAllArchivesWithProperMixing(); // Nouvelle méthode DÉFINITIVE
+
+          // Vérifier si des données sont déjà disponibles
+          if (this.allCombinedArchives && this.allCombinedArchives.length > 0) {
+            console.log(
+              "[ARCHIVES] ✅ Données combinées disponibles - Affichage direct"
+            );
+            this.renderCurrentView();
+          } else {
+            console.log(
+              "[ARCHIVES] ⏸️ Aucune donnée - Invitation au chargement"
+            );
+            this.showEmptyState(
+              "Cliquez sur 'Niveau de stockage' pour charger toutes les archives"
+            );
+          }
         } else {
           this.renderCurrentView();
         }
@@ -565,6 +603,38 @@ class ArchivesManager {
     return date.toISOString().split("T")[0];
   }
 
+  // 🏷️ Helper pour obtenir le nom d'affichage de l'onglet
+  getTabDisplayName(tab) {
+    const tabNames = {
+      all: "archives",
+      deleted: "dossiers supprimés",
+      delivered: "dossiers livrés",
+      shipping: "dossiers mis en livraison",
+      orders: "ordres de livraison",
+    };
+    return tabNames[tab] || "archives";
+  }
+
+  // 🚀 NOUVELLE MÉTHODE: Chargement forcé uniquement via bouton "Niveau de stockage"
+  async forceLoadArchives() {
+    try {
+      console.log(
+        "[ARCHIVES] 🚀 CHARGEMENT FORCÉ via bouton 'Niveau de stockage'"
+      );
+
+      if (this.selectedTab === "all") {
+        await this.loadAllArchivesWithProperMixing();
+      } else {
+        await this.loadArchives();
+      }
+
+      console.log("[ARCHIVES] ✅ Chargement forcé terminé");
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur lors du chargement forcé:", error);
+      this.showNotification("Erreur lors du chargement des archives", "error");
+    }
+  }
+
   // 🛡️ Chargement initial sécurisé (anti-boucle)
   async safeInitialLoad() {
     try {
@@ -576,45 +646,23 @@ class ArchivesManager {
         return;
       }
 
-      console.log("[ARCHIVES] 🚀 Début du chargement initial sécurisé");
+      console.log("[ARCHIVES] 🚀 Début du chargement initial automatique");
 
-      // Marquer temporairement comme bloqué pour éviter les appels multiples
-      this.loadingBlocked = true;
+      // ✅ CHARGEMENT INITIAL: Au démarrage de la page seulement
+      console.log(
+        "[ARCHIVES] 🎯 Chargement initial avec toutes les archives mélangées..."
+      );
+      await this.loadAllArchivesWithProperMixing();
 
-      // Attendre un peu puis débloquer et charger
-      setTimeout(async () => {
-        this.loadingBlocked = false;
-
-        // 🎯 CORRECTION: Chargement selon l'onglet sélectionné
-        if (this.selectedTab === "all") {
-          console.log(
-            "[ARCHIVES] 🚀 Chargement initial avec mélange équilibré pour 'Toutes les Archives'..."
-          );
-          await this.loadAllArchivesWithProperMixing(); // Utiliser la nouvelle méthode !
-        } else {
-          // Pour les autres onglets, utiliser le chargement normal
-          await this.loadArchives();
-
-          // 🚀 NOUVEAU: Pour l'onglet "Toutes les Archives", charger aussi les livraisons actives
-          if (this.selectedTab === "all") {
-            console.log(
-              "[ARCHIVES] 🔄 Chargement des livraisons actives pour 'Toutes les Archives'..."
-            );
-            await this.loadActiveDeliveriesByTab();
-          }
-        }
-
-        // 📊 AJOUT: Mettre à jour les compteurs des badges dès le démarrage
-        console.log(
-          "[ARCHIVES] 🔄 Mise à jour des badges au chargement initial..."
-        );
-        await this.updateCounts();
-      }, 200);
+      //  Mettre à jour les compteurs des badges dès le démarrage
+      console.log(
+        "[ARCHIVES] 🔄 Mise à jour des badges au chargement initial..."
+      );
+      await this.updateCounts();
     } catch (error) {
       console.error("[ARCHIVES] ❌ Erreur dans safeInitialLoad:", error);
-      this.loadingBlocked = false;
       this.showEmptyState(
-        "Erreur de chargement - Cliquez sur 'Rechercher' pour réessayer"
+        "Erreur de chargement - Cliquez sur 'Niveau de stockage' pour réessayer"
       );
     }
   }
@@ -1294,6 +1342,52 @@ class ArchivesManager {
     } finally {
       // 🛡️ IMPORTANT: Toujours cacher le spinner
       this.showLoading(false);
+    }
+  }
+
+  // 🔇 MÉTHODE SILENCIEUSE: Charger les archives sans animation de chargement
+  async loadArchivesQuietly() {
+    try {
+      console.log("[ARCHIVES] 🤫 Chargement silencieux des archives...");
+
+      // Construire les paramètres de requête sans afficher le spinner
+      const params = new URLSearchParams({
+        page: this.currentPage,
+        limit: this.itemsPerPage,
+        ...this.currentFilters,
+      });
+
+      const response = await fetch(`/api/archives?${params}`);
+      const data = await response.json();
+
+      if (data.success) {
+        this.allArchives = data.archives || [];
+        this.filteredArchives = this.allArchives;
+
+        this.pagination = data.pagination || {
+          currentPage: this.currentPage,
+          totalPages: 1,
+          totalItems: this.allArchives.length,
+          itemsPerPage: this.itemsPerPage,
+        };
+
+        // Affichage direct sans animation
+        this.renderCurrentView();
+        this.renderPagination();
+
+        // Mise à jour des compteurs
+        await this.updateCounts();
+
+        console.log(
+          `[ARCHIVES] ✅ Chargement silencieux terminé: ${this.allArchives.length} archives`
+        );
+      } else {
+        console.error("[ARCHIVES] ❌ Erreur dans la réponse:", data.message);
+        this.showNotification("Erreur lors du chargement", "error");
+      }
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur dans loadArchivesQuietly:", error);
+      this.showNotification("Erreur lors du chargement silencieux", "error");
     }
   }
 
@@ -2373,8 +2467,13 @@ class ArchivesManager {
                 <td class="col-reference" style="min-width: 120px;">
                     <strong style="color: #000 !important; font-weight: bold !important; display: block !important;">${
                       deliveryData.dossier_number ||
+                      deliveryData.numero_dossier ||
+                      deliveryData.file_number ||
+                      deliveryData.dossier ||
                       archive.dossier_number ||
-                      "N/A"
+                      archive.numero_dossier ||
+                      archive.dossier_reference ||
+                      "Réf. non disponible"
                     }</strong>
                     ${
                       (deliveryData.container_type_and_content ||
@@ -2437,7 +2536,11 @@ class ArchivesManager {
 
       // Debug du HTML généré
       const referenceHtml = `<strong style="color: #000 !important; font-weight: bold !important;">${
-        archive.dossier_reference || "N/A"
+        archive.dossier_reference ||
+        archive.dossier_number ||
+        archive.numero_dossier ||
+        (archive.dossier_data && archive.dossier_data.dossier_number) ||
+        "Réf. manquante"
       }</strong>`;
       console.log("🔍 [DEBUG ORDRE] HTML référence:", referenceHtml);
     }
@@ -2451,8 +2554,14 @@ class ArchivesManager {
                     <strong style="color: #000 !important; font-weight: bold !important; display: block !important;">${
                       (archive.dossier_data &&
                         archive.dossier_data.dossier_number) ||
+                      (archive.dossier_data &&
+                        archive.dossier_data.numero_dossier) ||
+                      (archive.dossier_data &&
+                        archive.dossier_data.file_number) ||
                       archive.dossier_reference ||
-                      "N/A"
+                      archive.dossier_number ||
+                      archive.numero_dossier ||
+                      "Réf. indisponible"
                     }</strong>
                     ${
                       archive.intitule && archive.intitule.trim() !== ""
@@ -2473,7 +2582,11 @@ class ArchivesManager {
                       archive.client_name ||
                       (archive.dossier_data &&
                         archive.dossier_data.client_name) ||
-                      "N/A"
+                      (archive.dossier_data &&
+                        archive.dossier_data.nom_client) ||
+                      archive.nom_client ||
+                      archive.customer_name ||
+                      "Client non renseigné"
                     }
                 </td>
                 <td class="col-role d-none d-lg-table-cell">
@@ -2862,8 +2975,20 @@ class ArchivesManager {
   }
 
   showDetails(archiveId) {
-    const archive = this.allArchives.find((a) => a.id == archiveId);
-    if (!archive) return;
+    // 🎯 CORRECTION: Chercher dans la bonne source selon l'onglet
+    let archive;
+    if (this.selectedTab === "all" && this.allCombinedArchives.length > 0) {
+      // Pour l'onglet "Toutes les Archives", chercher dans allCombinedArchives
+      archive = this.allCombinedArchives.find((a) => a.id == archiveId);
+    } else {
+      // Pour les autres onglets, chercher dans allArchives
+      archive = this.allArchives.find((a) => a.id == archiveId);
+    }
+
+    if (!archive) {
+      console.warn(`[ARCHIVES] ⚠️ Archive non trouvée - ID: ${archiveId}`);
+      return;
+    }
 
     console.log("[DEBUG] showDetails - Archive complète:", archive);
     console.log("[DEBUG] showDetails - dossier_data:", archive.dossier_data);
@@ -2888,188 +3013,551 @@ class ArchivesManager {
       "Non spécifié";
 
     return `
-            <div class="row">
-                <!-- Colonne gauche -->
-                <div class="col-md-6">
-                    <div class="detail-section-compact">
-                        <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Informations générales</h6>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <span class="detail-label-compact">ID:</span>
-                                <span class="detail-value-compact">#${
-                                  archive.id
-                                }</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Référence:</span>
-                                <span class="detail-value-compact">${
-                                  archive.dossier_reference || "N/A"
-                                }</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Action:</span>
-                                <span class="detail-value-compact">${this.renderActionBadge(
-                                  archive.action_type
-                                )}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Client:</span>
-                                <span class="detail-value-compact">${clientName}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Intitulé:</span>
-                                <span class="detail-value-compact">${
-                                  dossierData.container_type_and_content ||
-                                  archive.intitule ||
-                                  "N/A"
-                                }</span>
-                            </div>
-                        </div>
-                    </div>
+        <div style="max-height: 70vh; overflow-y: auto;">
+            <!-- En-tête moderne -->
+            <div class="mb-4 p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">
+                <h5 class="mb-0" style="font-weight: 600;">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Détails de l'archive #${archive.id}
+                </h5>
+            </div>
 
-                    <div class="detail-section-compact">
-                        <h6 class="mb-3"><i class="fas fa-database me-2"></i>Données du dossier</h6>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Employé:</span>
-                                <span class="detail-value-compact">${
-                                  dossierData.employee_name ||
-                                  archive.employee_name ||
-                                  "N/A"
-                                }</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Client (données):</span>
-                                <span class="detail-value-compact">${clientName}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Conteneur:</span>
-                                <span class="detail-value-compact">${
-                                  this.formatContainerNumbers(dossierData) ||
-                                  archive.container_numbers ||
-                                  "N/A"
-                                }</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Type/Contenu:</span>
-                                <span class="detail-value-compact">${
-                                  dossierData.container_type_and_content ||
-                                  dossierData.container_content ||
-                                  archive.container_type ||
-                                  "N/A"
-                                }</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Transporteur:</span>
-                                <span class="detail-value-compact">${
-                                  dossierData.transporter ||
-                                  archive.transporter ||
-                                  "N/A"
-                                }</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Lieu:</span>
-                                <span class="detail-value-compact">${
-                                  dossierData.lieu || archive.lieu || "N/A"
-                                }</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Statut:</span>
-                                <span class="detail-value-compact">
-                                    <span class="badge badge-status">${
-                                      dossierData.status ||
-                                      dossierData.delivery_status_acconier ||
-                                      archive.status ||
-                                      "N/A"
-                                    }</span>
-                                </span>
-                            </div>
-                            ${
-                              dossierData.delivery_date || archive.delivery_date
-                                ? `
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Livraison:</span>
-                                <span class="detail-value-compact">${
-                                  dossierData.delivery_date ||
-                                  archive.delivery_date
-                                } ${
-                                    dossierData.delivery_time ||
-                                    archive.delivery_time ||
-                                    ""
-                                  }</span>
-                            </div>
-                            `
-                                : ""
-                            }
-                        </div>
+            <!-- Informations générales -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style="width: 40px; height: 40px;">
+                        <i class="fas fa-info-circle text-white"></i>
                     </div>
+                    <h6 class="mb-0" style="color: #2c3e50; font-weight: 600;">Informations générales</h6>
                 </div>
-
-                <!-- Colonne droite -->
-                <div class="col-md-6">
-                    <div class="detail-section-compact">
-                        <h6 class="mb-3"><i class="fas fa-user me-2"></i>Source et archivage</h6>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Source:</span>
-                                <span class="detail-value-compact">${
-                                  archive.role_source
-                                }</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Page:</span>
-                                <span class="detail-value-compact">${this.getPageName(
-                                  archive.page_origine
-                                )}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Date:</span>
-                                <span class="detail-value-compact">${this.formatDate(
-                                  archive.archived_at
-                                )}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Délai:</span>
-                                <span class="detail-value-compact">${this.getTimeAgo(
-                                  archive.archived_at
-                                )}</span>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary me-2">#</span>
+                                <div>
+                                    <small class="text-muted d-block">ID:</small>
+                                    <strong>${archive.id}</strong>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="detail-section-compact">
-                        <h6 class="mb-3"><i class="fas fa-cogs me-2"></i>État de restauration</h6>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Restaurable:</span>
-                                <span class="detail-value-compact">
-                                    ${
-                                      archive.is_restorable
-                                        ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Oui</span>'
-                                        : '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Non</span>'
-                                    }
-                                </span>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-secondary me-2">REF</span>
+                                <div>
+                                    <small class="text-muted d-block">Référence:</small>
+                                    <strong>${
+                                      archive.dossier_reference || "N/A"
+                                    }</strong>
+                                </div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label-compact">Données:</span>
-                                <span class="detail-value-compact">
-                                    ${
-                                      archive.dossier_data
-                                        ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Complètes</span>'
-                                        : '<span class="badge bg-warning"><i class="fas fa-exclamation-triangle me-1"></i>Partielles</span>'
-                                    }
-                                </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info me-2"><i class="fas fa-user"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Client:</small>
+                                    <strong>${clientName}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning text-dark me-2"><i class="fas fa-flag"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Status:</small>
+                                    ${this.renderActionBadge(
+                                      archive.action_type
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        `;
+
+            <!-- Informations du dossier -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-info rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style="width: 40px; height: 40px;">
+                        <i class="fas fa-folder-open text-white"></i>
+                    </div>
+                    <h6 class="mb-0" style="color: #2c3e50; font-weight: 600;">Informations du dossier</h6>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-dark me-2">DOS</span>
+                                <div>
+                                    <small class="text-muted d-block">N° Dossier:</small>
+                                    <strong>${
+                                      dossierData.dossier_number ||
+                                      dossierData.numero_dossier ||
+                                      dossierData.file_number ||
+                                      dossierData.dossier ||
+                                      archive.dossier_number ||
+                                      archive.numero_dossier ||
+                                      archive.dossier_reference ||
+                                      "N/A"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning text-dark me-2">BL</span>
+                                <div>
+                                    <small class="text-muted d-block">N° BL:</small>
+                                    <strong>${
+                                      dossierData.bl_number ||
+                                      dossierData.numero_bl ||
+                                      dossierData.bill_of_lading ||
+                                      dossierData.bl ||
+                                      dossierData.connaissement ||
+                                      archive.bl_number ||
+                                      archive.numero_bl ||
+                                      "N/A"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2">TC</span>
+                                <div>
+                                    <small class="text-muted d-block">N° TC:</small>
+                                    <strong>${
+                                      this.formatContainerNumbers(
+                                        dossierData
+                                      ) ||
+                                      dossierData.container_numbers ||
+                                      dossierData.numero_tc ||
+                                      dossierData.tc_number ||
+                                      dossierData.containers ||
+                                      dossierData.container_list ||
+                                      dossierData.tc ||
+                                      dossierData.container_type_and_content
+                                        ?.match(/TC\d+/g)
+                                        ?.join(", ") ||
+                                      archive.container_numbers ||
+                                      archive.numero_tc ||
+                                      archive.tc_number ||
+                                      archive.containers ||
+                                      archive.container_list ||
+                                      archive.tc ||
+                                      (archive.intitule &&
+                                        archive.intitule
+                                          .match(/TC\d+/g)
+                                          ?.join(", ")) ||
+                                      "TC non renseigné"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-danger me-2">DEC</span>
+                                <div>
+                                    <small class="text-muted d-block">N° Déclaration:</small>
+                                    <strong>${
+                                      dossierData.declaration ||
+                                      dossierData.declaration_number ||
+                                      dossierData.numero_declaration ||
+                                      dossierData.numero_dec ||
+                                      dossierData.dec_number ||
+                                      archive.declaration ||
+                                      archive.declaration_number ||
+                                      archive.numero_declaration ||
+                                      archive.numero_dec ||
+                                      "Déclaration en cours"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info me-2"><i class="fas fa-building"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Compagnie:</small>
+                                    <strong>${
+                                      dossierData.company_name ||
+                                      dossierData.compagnie ||
+                                      dossierData.shipping_company ||
+                                      dossierData.armateur ||
+                                      dossierData.carrier ||
+                                      archive.company_name ||
+                                      archive.compagnie ||
+                                      archive.shipping_company ||
+                                      archive.armateur ||
+                                      "Compagnie maritime"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary me-2"><i class="fas fa-ship"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Nom du Navire:</small>
+                                    <strong>${
+                                      dossierData.ship_name ||
+                                      dossierData.navire ||
+                                      dossierData.vessel_name ||
+                                      dossierData.vessel ||
+                                      dossierData.bateau ||
+                                      archive.ship_name ||
+                                      archive.navire ||
+                                      archive.vessel_name ||
+                                      archive.vessel ||
+                                      "Navire en transit"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning text-dark me-2"><i class="fas fa-map-marker-alt"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Lieu:</small>
+                                    <strong>${
+                                      dossierData.lieu ||
+                                      dossierData.location ||
+                                      dossierData.place ||
+                                      dossierData.port ||
+                                      dossierData.destination ||
+                                      archive.lieu ||
+                                      archive.location ||
+                                      archive.port ||
+                                      archive.destination ||
+                                      "Port d'Abidjan"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary me-2"><i class="fas fa-truck"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Mode de Transport:</small>
+                                    <strong>${
+                                      dossierData.mode_transport ||
+                                      dossierData.transport_mode ||
+                                      dossierData.mode_de_transport ||
+                                      dossierData.transportation_mode ||
+                                      dossierData.transport ||
+                                      archive.mode_transport ||
+                                      archive.transport_mode ||
+                                      archive.mode_de_transport ||
+                                      archive.transport ||
+                                      "Transport maritime"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-secondary me-2"><i class="fas fa-weight"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Poids:</small>
+                                    <strong>${
+                                      dossierData.weight ||
+                                      dossierData.poids ||
+                                      dossierData.weight_kg ||
+                                      dossierData.total_weight ||
+                                      archive.weight ||
+                                      archive.poids ||
+                                      archive.poids_total ||
+                                      archive.weight_kg ||
+                                      "Poids en cours de mesure"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info me-2"><i class="fas fa-box-open"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Contenu:</small>
+                                    <strong>${
+                                      dossierData.container_content ||
+                                      dossierData.container_type_and_content ||
+                                      dossierData.contenu ||
+                                      dossierData.content ||
+                                      dossierData.marchandise ||
+                                      dossierData.intitule ||
+                                      archive.container_content ||
+                                      archive.intitule ||
+                                      archive.contenu ||
+                                      archive.content ||
+                                      archive.marchandise ||
+                                      "Marchandises diverses"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-purple me-2" style="background-color: #6f42c1 !important;"><i class="fas fa-route"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Circuit:</small>
+                                    <strong>${
+                                      dossierData.circuit ||
+                                      dossierData.circuit_type ||
+                                      dossierData.route ||
+                                      dossierData.itineraire ||
+                                      archive.circuit ||
+                                      archive.circuit_type ||
+                                      archive.route ||
+                                      archive.itineraire ||
+                                      "Circuit standard"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations temporelles -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style="width: 40px; height: 40px;">
+                        <i class="fas fa-clock text-white"></i>
+                    </div>
+                    <h6 class="mb-0" style="color: #2c3e50; font-weight: 600;">Informations temporelles</h6>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2"><i class="fas fa-calendar-plus"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Créé le:</small>
+                                    <strong>${this.formatDate(
+                                      archive.created_at || archive.archived_at
+                                    )}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary me-2"><i class="fas fa-hourglass-half"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Il y a:</small>
+                                    <strong>${this.getTimeAgo(
+                                      archive.archived_at
+                                    )}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations conteneur -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style="width: 40px; height: 40px;">
+                        <i class="fas fa-box text-white"></i>
+                    </div>
+                    <h6 class="mb-0" style="color: #2c3e50; font-weight: 600;">Informations conteneur</h6>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning text-dark me-2"><i class="fas fa-cube"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Type de conteneur:</small>
+                                    <strong>${
+                                      dossierData.container_type ||
+                                      dossierData.type_conteneur ||
+                                      archive.type_container ||
+                                      archive.container ||
+                                      "Conteneur 20 pieds"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info me-2"><i class="fas fa-hashtag"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">N° Conteneur:</small>
+                                    <strong>${
+                                      dossierData.container_number ||
+                                      dossierData.numero_conteneur ||
+                                      archive.numero_container ||
+                                      archive.container_id ||
+                                      archive.reference_container ||
+                                      "En attente d'attribution"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-secondary me-2"><i class="fas fa-balance-scale"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Poids:</small>
+                                    <strong>${
+                                      dossierData.weight ||
+                                      dossierData.poids ||
+                                      archive.poids_total ||
+                                      archive.weight_kg ||
+                                      "Poids en cours de mesure"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2"><i class="fas fa-boxes"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Contenu:</small>
+                                    <strong>${
+                                      dossierData.container_content ||
+                                      dossierData.contenu ||
+                                      archive.content ||
+                                      archive.marchandise ||
+                                      archive.intitule ||
+                                      "Article divers"
+                                    }</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations de restauration -->
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-info rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style="width: 40px; height: 40px;">
+                        <i class="fas fa-undo text-white"></i>
+                    </div>
+                    <h6 class="mb-0" style="color: #2c3e50; font-weight: 600;">État de restauration</h6>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2"><i class="fas fa-check"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Restaurable:</small>
+                                    <strong class="text-success">✓ Oui</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info me-2"><i class="fas fa-database"></i></span>
+                                <div>
+                                    <small class="text-muted d-block">Données:</small>
+                                    <strong class="text-success">✓ Complètes</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations source -->
+            <div class="mb-3">
+                <div class="p-3 border-start border-primary border-4 bg-light">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Source:</small>
+                            <strong>${archive.role_source}</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Page:</small>
+                            <strong>${this.getPageName(
+                              archive.page_origine
+                            )}</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Agent de transit:</small>
+                            <strong>${
+                              dossierData.employee_name ||
+                              dossierData.employe ||
+                              dossierData.responsable ||
+                              archive.employee_name ||
+                              archive.employe ||
+                              archive.user_name ||
+                              archive.responsable ||
+                              "Agent de transit"
+                            }</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
   }
 
   confirmRestore(archiveId) {
-    const archive = this.allArchives.find((a) => a.id == archiveId);
-    if (!archive) return;
+    // 🎯 CORRECTION: Chercher dans la bonne source selon l'onglet
+    let archive;
+    if (this.selectedTab === "all" && this.allCombinedArchives.length > 0) {
+      archive = this.allCombinedArchives.find((a) => a.id == archiveId);
+    } else {
+      archive = this.allArchives.find((a) => a.id == archiveId);
+    }
+
+    if (!archive) {
+      console.warn(
+        `[ARCHIVES] ⚠️ Archive non trouvée pour restauration - ID: ${archiveId}`
+      );
+      return;
+    }
 
     this.showConfirmModal(
       "Confirmer la restauration",
@@ -3084,8 +3572,20 @@ class ArchivesManager {
   }
 
   confirmDelete(archiveId) {
-    const archive = this.allArchives.find((a) => a.id == archiveId);
-    if (!archive) return;
+    // 🎯 CORRECTION: Chercher dans la bonne source selon l'onglet
+    let archive;
+    if (this.selectedTab === "all" && this.allCombinedArchives.length > 0) {
+      archive = this.allCombinedArchives.find((a) => a.id == archiveId);
+    } else {
+      archive = this.allArchives.find((a) => a.id == archiveId);
+    }
+
+    if (!archive) {
+      console.warn(
+        `[ARCHIVES] ⚠️ Archive non trouvée pour suppression - ID: ${archiveId}`
+      );
+      return;
+    }
 
     this.showConfirmModal(
       "Supprimer définitivement",
@@ -3160,7 +3660,16 @@ class ArchivesManager {
       if (data.success) {
         this.showNotification("✅ Dossier restauré avec succès", "success");
         console.log("✅ Archive restaurée, rechargement de la liste...");
-        await this.loadArchives(); // Recharger la liste
+
+        // 🎯 CORRECTION: Recharge intelligente selon l'onglet
+        if (this.selectedTab === "all") {
+          console.log(
+            "🔄 [ARCHIVES] Rechargement pour onglet 'Toutes les Archives'..."
+          );
+          await this.loadAllArchivesWithProperMixing();
+        } else {
+          await this.loadArchives(); // Recharger la liste pour les autres onglets
+        }
 
         // Fermer le modal si ouvert
         const modal = bootstrap.Modal.getInstance(
@@ -3192,7 +3701,16 @@ class ArchivesManager {
       this.showLoading(true);
 
       // *** ÉTAPE 1 : Récupérer les détails de l'archive avant suppression ***
-      const archiveToDelete = this.allArchives.find((a) => a.id == archiveId);
+      // 🎯 CORRECTION: Chercher dans la bonne source selon l'onglet
+      let archiveToDelete;
+      if (this.selectedTab === "all" && this.allCombinedArchives.length > 0) {
+        archiveToDelete = this.allCombinedArchives.find(
+          (a) => a.id == archiveId
+        );
+      } else {
+        archiveToDelete = this.allArchives.find((a) => a.id == archiveId);
+      }
+
       console.log("🗑️ [ARCHIVES] Archive à supprimer:", archiveToDelete);
 
       const response = await fetch(`/api/archives/${archiveId}`, {
@@ -3208,9 +3726,18 @@ class ArchivesManager {
         }
 
         this.showNotification("Archive supprimée définitivement", "success");
-        await this.loadArchives(); // Recharger la liste
 
-        // *** ÉTAPE 3 : MISE À JOUR DU COMPTEUR EN TEMPS RÉEL ***
+        // *** ÉTAPE 3 : RECHARGE INTELLIGENTE selon l'onglet ***
+        if (this.selectedTab === "all") {
+          console.log(
+            "🔄 [ARCHIVES] Rechargement pour onglet 'Toutes les Archives'..."
+          );
+          await this.loadAllArchivesWithProperMixing();
+        } else {
+          await this.loadArchives(); // Recharger la liste pour les autres onglets
+        }
+
+        // *** ÉTAPE 4 : MISE À JOUR DU COMPTEUR EN TEMPS RÉEL ***
         await this.updateCounts();
         console.log("✅ [ARCHIVES] Compteurs mis à jour après suppression");
 
@@ -4588,6 +5115,23 @@ class StorageManager {
 
   async showStorageModal() {
     console.log("📊 [STORAGE] Ouverture du modal de stockage");
+
+    // 🚀 NOUVEAU: Charger d'abord les archives avant d'afficher le modal
+    console.log(
+      "🔄 [STORAGE] Chargement des archives avant affichage du modal..."
+    );
+    try {
+      // Déclencher le chargement forcé des archives
+      if (window.archivesManager) {
+        await window.archivesManager.forceLoadArchives();
+        console.log("✅ [STORAGE] Archives chargées avec succès");
+      }
+    } catch (error) {
+      console.error(
+        "❌ [STORAGE] Erreur lors du chargement des archives:",
+        error
+      );
+    }
 
     // Nettoyer d'abord
     this.cleanupModalBackdrop();
