@@ -921,7 +921,8 @@
               </div>
               
               <button 
-                onclick="document.getElementById('targetUserInfoBanner').style.display='none'"
+                id="closeBannerBtn"
+                onclick="document.getElementById('targetUserInfoBanner').style.display = 'none'; console.log('🎯 [MANUAL-CLOSE] Bandeau mode admin fermé manuellement');"
                 style="
                   background: none;
                   border: none;
@@ -935,10 +936,15 @@
                   display: flex;
                   align-items: center;
                   justify-content: center;
+                  transition: background-color 0.2s ease;
                   flex-shrink: 0;
                 "
-                title="Fermer"
-              >✕</button>
+                onmouseover="this.style.backgroundColor = 'rgba(21, 128, 61, 0.1)'"
+                onmouseout="this.style.backgroundColor = 'transparent'"
+                title="Fermer le bandeau"
+              >
+                ✕
+              </button>
             </div>
             <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
             <div class="scrolling-message-bar" id="newAgentScrollingContainer" style="margin-top:10px;max-width:350px;width:100%;overflow-x:auto;">
@@ -1216,10 +1222,20 @@
       (function() {
         // Fonction pour afficher les informations de l'utilisateur ciblé
         function showTargetUserInfo() {
+          console.log('🎯 [RESP_LIV] Début de showTargetUserInfo');
+          
           const banner = document.getElementById('targetUserInfoBanner');
           const detailsDiv = document.getElementById('targetUserDetails');
           
-          if (!banner || !detailsDiv) return;
+          console.log('🔍 [RESP_LIV] Éléments DOM:', {
+            banner: banner ? 'Trouvé' : 'Non trouvé',
+            detailsDiv: detailsDiv ? 'Trouvé' : 'Non trouvé'
+          });
+          
+          if (!banner || !detailsDiv) {
+            console.error('❌ [RESP_LIV] Éléments DOM manquants !');
+            return;
+          }
 
           // Vérifier les paramètres URL
           const urlParams = new URLSearchParams(window.location.search);
@@ -1245,47 +1261,85 @@
             }
           }
 
+          // Contrôler l'affichage de l'icône d'accueil
+          const homeButton = document.getElementById("homeButton");
+          if (homeButton) {
+            if (fromDashboard === "true" || adminMode === "admin") {
+              homeButton.style.display = "flex";
+            } else {
+              homeButton.style.display = "none";
+            }
+          }
+
+          // Logs de débogage pour diagnostiquer le problème
+          console.log('🔍 [DEBUG RESP_LIV] Paramètres détectés:', {
+            fromDashboard,
+            adminMode,
+            targetUser,
+            userId,
+            userInfo: userInfo ? 'Présent' : 'Absent'
+          });
+
+          // Condition d'affichage plus permissive pour le débogage
+          const shouldShowBanner = (fromDashboard === 'true' || adminMode === 'admin');
+          console.log('🔍 [DEBUG RESP_LIV] Doit afficher le bandeau:', shouldShowBanner);
+
           // Afficher les informations si on vient du tableau de bord OU si on est en mode admin
-          if ((fromDashboard === 'true' || adminMode === 'admin') && (targetUser || userInfo)) {
+          if (shouldShowBanner) {
             const displayName = userInfo?.userName || targetUser || 'Utilisateur inconnu';
             const displayUserId = userInfo?.userId || userId || 'ID non disponible';
             const pageType = userInfo?.pageType || 'Responsable de Livraison';
             
-            // Message différent selon le mode
-            const modeText = adminMode === 'admin' ? '👑 Mode Admin' : '📋';
+            // Message différent selon le mode avec plus d'informations
+            const modeText = adminMode === 'admin' ? '👑 Mode Admin' : '📋 Visualisation';
+            const timeInfo = new Date().toLocaleTimeString('fr-FR');
             
             detailsDiv.innerHTML = `
-              <span><strong>Page de l'utilisateur connecté</strong></span>
+              <span><strong>👀 Consultation de la page utilisateur</strong></span>
               <span style="color: #22c55e;">•</span>
-              <span><strong>�</strong> ${displayName}</span>
+              <span><strong>👤</strong> ${displayName}</span>
               <span style="color: #22c55e;">•</span>
               <span><strong>🆔</strong> ${displayUserId}</span>
               <span style="color: #22c55e;">•</span>
               <span><strong>${modeText}</strong> ${pageType}</span>
+              <span style="color: #22c55e;">•</span>
+              <span><strong>⏰</strong> ${timeInfo}</span>
             `;
             
             banner.style.display = 'flex';
             
+            console.log('✅ [RESP_LIV] Bandeau affiché avec succès !');
             console.log('🎯 [TARGET USER] Affichage des informations utilisateur:', {
               displayName,
               displayUserId,
               pageType
             });
             
-            // Auto-masquer après 15 secondes
+            // Auto-masquer après 30 secondes (plus de temps pour voir le mode admin)
             setTimeout(() => {
               banner.style.display = 'none';
-            }, 15000);
+              console.log('🎯 [AUTO-HIDE] Bandeau mode admin masqué automatiquement');
+            }, 30000);
           }
         }
 
+        console.log('🚀 [RESP_LIV] Script de bandeau initialisé');
+
         // Exécuter au chargement de la page
-        document.addEventListener('DOMContentLoaded', showTargetUserInfo);
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('📄 [RESP_LIV] DOMContentLoaded - Exécution de showTargetUserInfo');
+          showTargetUserInfo();
+        });
         
         // Exécuter immédiatement si la page est déjà chargée
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', showTargetUserInfo);
+          console.log('⏳ [RESP_LIV] Page en cours de chargement - attente DOMContentLoaded');
+          document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 [RESP_LIV] DOMContentLoaded (attente) - Exécution de showTargetUserInfo');
+            showTargetUserInfo();
+          });
         } else {
+          console.log('✅ [RESP_LIV] Page déjà chargée - Exécution immédiate de showTargetUserInfo');
           showTargetUserInfo();
         }
       })();

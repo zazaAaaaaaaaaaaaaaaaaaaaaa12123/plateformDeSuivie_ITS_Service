@@ -1031,6 +1031,33 @@
                   <!-- Les détails de l'utilisateur seront insérés ici -->
                 </div>
               </div>
+
+              <!-- Bouton de fermeture du bandeau -->
+              <button
+                id="closeBannerBtn"
+                onclick="document.getElementById('targetUserInfoBanner').style.display = 'none'; console.log('🎯 [MANUAL-CLOSE] Bandeau mode admin fermé manuellement');"
+                style="
+                  background: none;
+                  border: none;
+                  color: #1565c0;
+                  font-size: 16px;
+                  cursor: pointer;
+                  padding: 4px;
+                  border-radius: 50%;
+                  width: 28px;
+                  height: 28px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  transition: background-color 0.2s ease;
+                  flex-shrink: 0;
+                "
+                onmouseover="this.style.backgroundColor = 'rgba(21, 101, 192, 0.1)'"
+                onmouseout="this.style.backgroundColor = 'transparent'"
+                title="Fermer le bandeau"
+              >
+                ✕
+              </button>
             </div>
             <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
             <div
@@ -2114,17 +2141,21 @@
               userInfo?.userId || userId || "ID non disponible";
             const pageType = userInfo?.pageType || "Responsable Acconier";
 
-            // Message différent selon le mode
-            const modeText = adminMode === "admin" ? "👑 Mode Admin" : "📋";
+            // Message différent selon le mode avec plus d'informations
+            const modeText =
+              adminMode === "admin" ? "👑 Mode Admin" : "📋 Visualisation";
+            const timeInfo = new Date().toLocaleTimeString("fr-FR");
 
             detailsDiv.innerHTML = `
-              <span><strong>Page de l'utilisateur connecté</strong></span>
+              <span><strong>👀 Consultation de la page utilisateur</strong></span>
               <span style="color: #1976d2;">•</span>
               <span><strong>👤</strong> ${displayName}</span>
               <span style="color: #1976d2;">•</span>
               <span><strong>🆔</strong> ${displayUserId}</span>
               <span style="color: #1976d2;">•</span>
               <span><strong>${modeText}</strong> ${pageType}</span>
+              <span style="color: #1976d2;">•</span>
+              <span><strong>⏰</strong> ${timeInfo}</span>
             `;
 
             banner.style.display = "flex";
@@ -2138,10 +2169,13 @@
               }
             );
 
-            // Auto-masquer après 15 secondes
+            // Auto-masquer après 30 secondes (plus de temps pour voir le mode admin)
             setTimeout(() => {
               banner.style.display = "none";
-            }, 15000);
+              console.log(
+                "🎯 [AUTO-HIDE] Bandeau mode admin masqué automatiquement"
+              );
+            }, 30000);
           }
         }
 
