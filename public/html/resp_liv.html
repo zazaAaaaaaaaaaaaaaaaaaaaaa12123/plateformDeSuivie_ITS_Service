@@ -795,6 +795,118 @@
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
+
+      /* ===== STYLES POUR LE MODE ADMIN ===== */
+      /* Couleurs alternées pour les en-têtes en mode admin */
+      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(odd) {
+        background: #0e274e !important; /* Bleu foncé pour les colonnes impaires */
+        color: #ffc107 !important; /* Texte jaune */
+        font-weight: 600 !important;
+        border-bottom: 2px solid #ffc107 !important;
+      }
+
+      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(even) {
+        background: #ffc107 !important; /* Jaune pour les colonnes paires */
+        color: #0e274e !important; /* Texte bleu foncé */
+        font-weight: 600 !important;
+        border-bottom: 2px solid #e6b800 !important;
+      }
+
+      /* Styles spécifiques pour Mode de Transport en jaune */
+      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(17) {
+        background: #ffc107 !important; /* Jaune */
+        background-color: #ffc107 !important;
+        color: #0e274e !important; /* Texte bleu foncé */
+        font-weight: 700 !important;
+        border-right: 2px solid #e6b800 !important;
+        border-bottom: 2px solid #e6b800 !important;
+        border-left: 2px solid #e6b800 !important;
+        border-top: 2px solid #e6b800 !important;
+      }
+
+      /* Styles spécifiques pour Date de DO et Date de BADT en bleu ciel */
+      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(18),
+      .admin-view-mode .table thead tr:nth-child(2) th:nth-child(19) {
+        background: #87CEEB !important; /* Bleu ciel */
+        background-color: #87CEEB !important;
+        color: #0e274e !important; /* Texte bleu foncé */
+        font-weight: 700 !important;
+        border-right: 2px solid #5DADE2 !important;
+        border-bottom: 2px solid #5DADE2 !important;
+        border-left: 2px solid #5DADE2 !important;
+        border-top: 2px solid #5DADE2 !important;
+      }
+
+      /* Styles pour les boutons autorisés en mode admin avec priorité maximale */
+      .admin-view-mode button[data-allow-admin] {
+        pointer-events: auto !important;
+        user-select: auto !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+        position: relative !important;
+        z-index: 9999 !important;
+        display: inline-block !important;
+      }
+
+      .admin-view-mode #homeButton[data-allow-admin] {
+        pointer-events: auto !important;
+        user-select: auto !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+        position: relative !important;
+        z-index: 9999 !important;
+        display: flex !important;
+      }
+
+      .admin-view-mode #excelButton[data-allow-admin] {
+        pointer-events: auto !important;
+        user-select: auto !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+        position: relative !important;
+        z-index: 9999 !important;
+        display: inline-block !important;
+      }
+
+      /* Forcer les styles pour les boutons même avec les restrictions adminMode.css */
+      .admin-view-mode #homeButton,
+      .admin-view-mode #excelButton,
+      .admin-view-mode #searchButton {
+        pointer-events: auto !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+        z-index: 99999 !important;
+        display: inline-block !important;
+        visibility: visible !important;
+      }
+
+      /* Force spéciale pour le bouton Excel en mode admin */
+      .admin-view-mode #excelButton {
+        background: linear-gradient(90deg,#10b981 0%,#047857 100%) !important;
+        color: #fff !important;
+        border: none !important;
+        font-weight: 700 !important;
+        padding: 6px 18px !important;
+        border-radius: 8px !important;
+      }
+
+      /* Force spéciale pour le bouton Home en mode admin */
+      .admin-view-mode #homeButton {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+        color: white !important;
+        display: flex !important;
+      }
+
+      /* Protection anti-cache - Version avec timestamp */
+      .admin-buttons-force-v2024 button[data-allow-admin],
+      body.admin-view-mode button[data-allow-admin] {
+        pointer-events: auto !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+        z-index: 99999 !important;
+      }
     </style>  
     </head>
 
