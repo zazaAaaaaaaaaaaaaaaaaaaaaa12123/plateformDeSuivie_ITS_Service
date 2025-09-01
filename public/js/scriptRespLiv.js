@@ -9,10 +9,41 @@ function setupAdminMode() {
   if (isAdminMode) {
     document.body.classList.add("admin-view-mode");
     document.body.dataset.adminMode = "true";
-    console.log("🔧 [MODE ADMIN] Mode admin activé - Styles appliqués");
+
+    // Permettre l'interaction avec l'icône d'accueil et le bouton Excel en mode admin
+    const homeButton = document.getElementById("homeButton");
+    const excelButton = document.getElementById("excelButton");
+
+    if (homeButton) {
+      homeButton.setAttribute("data-allow-admin", "true");
+      homeButton.style.pointerEvents = "auto";
+      homeButton.style.opacity = "1";
+    }
+
+    if (excelButton) {
+      excelButton.setAttribute("data-allow-admin", "true");
+      excelButton.style.pointerEvents = "auto";
+      excelButton.style.opacity = "1";
+    }
+
+    console.log(
+      "🔧 [MODE ADMIN] Mode admin activé - Styles appliqués, boutons accessibles"
+    );
   } else {
     document.body.classList.remove("admin-view-mode");
     document.body.dataset.adminMode = "false";
+
+    // Retirer les attributs en mode normal
+    const homeButton = document.getElementById("homeButton");
+    const excelButton = document.getElementById("excelButton");
+
+    if (homeButton) {
+      homeButton.removeAttribute("data-allow-admin");
+    }
+
+    if (excelButton) {
+      excelButton.removeAttribute("data-allow-admin");
+    }
   }
 }
 
@@ -22,6 +53,19 @@ function controlHomeIconVisibility() {
   const homeButton = document.getElementById("homeButton");
   if (!homeButton) return;
 
+  // Vérifier si on est en mode admin
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminMode =
+    urlParams.get("mode") === "admin" ||
+    document.body.dataset.adminMode === "true";
+
+  // En mode admin, toujours afficher l'icône d'accueil
+  if (isAdminMode) {
+    homeButton.style.display = "flex";
+    console.log("🏠 [MODE ADMIN] Icône d'accueil affichée - Mode admin actif");
+    return;
+  }
+
   // Vérifier si l'utilisateur vient du parcours principal (index.html → sidebar)
   const isFromMainDashboard =
     sessionStorage.getItem("fromMainDashboard") === "true";
@@ -29,7 +73,6 @@ function controlHomeIconVisibility() {
     localStorage.getItem("userAccessLevel") === "main_dashboard";
 
   // Vérifier les paramètres URL pour détecter la navigation via sidebar
-  const urlParams = new URLSearchParams(window.location.search);
   const fromSidebar = urlParams.get("from") === "sidebar";
   const isDirect = urlParams.get("direct") === "true";
 
