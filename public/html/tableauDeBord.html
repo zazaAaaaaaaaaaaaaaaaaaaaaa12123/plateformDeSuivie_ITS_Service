@@ -3533,8 +3533,7 @@
 
         <script>
           // === SOLUTION DÉFINITIVE POUR LES UTILISATEURS CONNECTÉS ===
-          window.API_BASE_URL =
-            "https://plateformdesuivie-its-service-1cjx.onrender.com";
+          window.API_BASE_URL = window.location.origin;
 
           function updateConnectedUsersNow() {
             fetch(`${window.API_BASE_URL}/api/active-users/stats`)
@@ -3795,9 +3794,9 @@
               document.getElementById("carteMiseLivraison");
             if (carteMiseLivraison) {
               carteMiseLivraison.addEventListener("click", function () {
-                // Redirection avec filtre pour dossiers en cours de livraison (non livrés)
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?filter=mise_en_livraison&autoFilter=true";
+                // Redirection avec filtre pour dossiers en cours de livraison (non livrés) - URL dynamique
+                const baseUrl = window.location.origin;
+                window.location.href = `${baseUrl}/html/resp_liv.html?filter=mise_en_livraison&autoFilter=true`;
               });
             }
             // --- Ajout gestion carte dossier en retard ---
@@ -3943,13 +3942,14 @@
                             });
                         }
 
-                        // 🚀 Différencier le type de dossier pour la redirection
+                        // 🚀 Différencier le type de dossier pour la redirection - URL dynamique
+                        const baseUrl = window.location.origin;
                         const isLivraisonType = dossier.type === "livraison";
                         const redirectUrl = isLivraisonType
-                          ? `https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?dossier=${encodeURIComponent(
+                          ? `${baseUrl}/html/resp_liv.html?dossier=${encodeURIComponent(
                               dossierId
                             )}&flash=true`
-                          : `https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?dossier=${encodeURIComponent(
+                          : `${baseUrl}/html/resp_acconier.html?dossier=${encodeURIComponent(
                               dossierId
                             )}&flash=true`;
 
@@ -4159,9 +4159,9 @@
             if (carteLivre) {
               carteLivre.style.cursor = "pointer";
               carteLivre.addEventListener("click", function () {
-                // Redirection avec filtre pour dossiers livrés uniquement
-                window.location.href =
-                  "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?filter=livre&autoFilter=true";
+                // Redirection avec filtre pour dossiers livrés uniquement - URL dynamique
+                const baseUrl = window.location.origin;
+                window.location.href = `${baseUrl}/html/resp_liv.html?filter=livre&autoFilter=true`;
               });
             }
 
@@ -4325,17 +4325,17 @@
           document.addEventListener("DOMContentLoaded", function () {
             // Propagation automatique de la session admin vers les interfaces responsables
             function autoConnectResponsableInterfaces() {
-              // Méthode 1 : iframes cachées (si la session/cookie est partagée)
+              // Méthode 1 : iframes cachées (si la session/cookie est partagée) - URL dynamique
+              const baseUrl = window.location.origin;
+
               const acconierFrame = document.createElement("iframe");
-              acconierFrame.src =
-                "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
+              acconierFrame.src = `${baseUrl}/html/resp_acconier.html`;
               acconierFrame.style.display = "none";
               acconierFrame.setAttribute("aria-hidden", "true");
               document.body.appendChild(acconierFrame);
 
               const livFrame = document.createElement("iframe");
-              livFrame.src =
-                "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html";
+              livFrame.src = `${baseUrl}/html/resp_liv.html`;
               livFrame.style.display = "none";
               livFrame.setAttribute("aria-hidden", "true");
               document.body.appendChild(livFrame);
@@ -4420,9 +4420,9 @@
 
               if (pageType === "acconier") {
                 if (isAdmin) {
-                  // Redirection en mode admin (visualisation uniquement)
-                  targetUrl =
-                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?mode=admin&from=sidebar";
+                  // Redirection en mode admin (visualisation uniquement) - URL dynamique
+                  const baseUrl = window.location.origin;
+                  targetUrl = `${baseUrl}/html/resp_acconier.html?mode=admin&from=sidebar`;
                   // Marquer la session pour la page cible
                   localStorage.setItem("adminViewMode", "true");
                   localStorage.setItem(
@@ -4442,9 +4442,9 @@
                 }
               } else if (pageType === "livraison") {
                 if (isAdmin) {
-                  // Redirection en mode admin (visualisation uniquement)
-                  targetUrl =
-                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?mode=admin&from=sidebar";
+                  // Redirection en mode admin (visualisation uniquement) - URL dynamique
+                  const baseUrl = window.location.origin;
+                  targetUrl = `${baseUrl}/html/resp_liv.html?mode=admin&from=sidebar`;
                   // Marquer la session pour la page cible
                   localStorage.setItem("adminViewMode", "true");
                   localStorage.setItem(
@@ -6169,7 +6169,7 @@
           const wsUrl =
             window.location.hostname === "localhost"
               ? "ws://localhost:3000"
-              : "wss://plateformdesuivie-its-service-1cjx.onrender.com";
+              : `wss://${window.location.hostname}`;
           ws = new WebSocket(wsUrl);
           ws.onopen = function () {};
           ws.onmessage = function (event) {
@@ -6796,9 +6796,8 @@
               JSON.stringify(targetUserInfo)
             );
 
-            // Déterminer l'URL complète avec le domaine Render et le mode admin
-            const baseUrl =
-              "https://plateformdesuivie-its-service-1cjx.onrender.com";
+            // Déterminer l'URL complète avec le domaine dynamique et le mode admin
+            const baseUrl = window.location.origin;
             const fullPageUrl =
               pageName === "resp_acconier.html"
                 ? `${baseUrl}/html/resp_acconier.html`
@@ -6975,11 +6974,12 @@
           }
 
           const isLivraisonType = dossier.type === "livraison";
+          const baseUrl = window.location.origin;
           const redirectUrl = isLivraisonType
-            ? `https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_liv.html?dossier=${encodeURIComponent(
+            ? `${baseUrl}/html/resp_liv.html?dossier=${encodeURIComponent(
                 dossierId
               )}&flash=true`
-            : `https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?dossier=${encodeURIComponent(
+            : `${baseUrl}/html/resp_acconier.html?dossier=${encodeURIComponent(
                 dossierId
               )}&flash=true`;
 

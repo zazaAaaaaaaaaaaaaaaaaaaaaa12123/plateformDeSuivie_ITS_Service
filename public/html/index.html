@@ -515,9 +515,9 @@
                   localStorage.setItem("user", JSON.stringify(userData));
                   // Stocke l'email pour le message de bienvenue personnalisé sur le dashboard
                   localStorage.setItem("userEmail", email);
-                  // Redirige vers le tableau de bord principalshydjs
-                  window.location.href =
-                    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/tableauDeBord.html";
+                  // Redirige vers le tableau de bord principal - URL dynamique
+                  const baseUrl = window.location.origin;
+                  window.location.href = `${baseUrl}/html/tableauDeBord.html`;
                 } else {
                   // Affiche une alerte ou un message d'erreur
                   const alertMsg =
