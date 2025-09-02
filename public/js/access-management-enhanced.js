@@ -723,10 +723,25 @@ async function approveRequest() {
       const updateData = await updateResponse.json();
 
       if (updateData.success) {
-        showNotification(
-          "✅ Demande approuvée avec succès ! Email envoyé.",
-          "success"
+        const isOutlookEmail = request.email.toLowerCase().includes("outlook");
+        const message = isOutlookEmail
+          ? `✅ Demande approuvée avec succès ! Email Outlook envoyé à ${request.email}`
+          : "✅ Demande approuvée avec succès ! Email envoyé.";
+
+        console.log(
+          `🎉 Approbation réussie pour ${request.email} (Outlook: ${isOutlookEmail})`
         );
+        showNotification(message, "success");
+
+        // Pour les comptes Outlook, ajouter une confirmation supplémentaire
+        if (isOutlookEmail) {
+          setTimeout(() => {
+            alert(
+              `✅ CONFIRMÉ: Le compte Outlook ${request.email} a été créé avec succès!\n\nLe code d'accès a été envoyé par email.`
+            );
+          }, 1000);
+        }
+
         closeModal();
         loadAccessRequests(); // Recharger la liste
       } else {
@@ -854,9 +869,11 @@ function showNotification(message, type = "success") {
   // Vérification si les éléments existent
   if (!notification || !notificationText) {
     console.warn("⚠️ Éléments de notification non trouvés dans le DOM");
-    alert(message); // Fallback
+    alert(message); // Fallback avec alerte visible
     return;
   }
+
+  console.log(`🔔 Affichage notification: [${type.toUpperCase()}] ${message}`);
 
   notificationText.textContent = message;
 
@@ -886,26 +903,38 @@ function showNotification(message, type = "success") {
   }
 
   notification.innerHTML = `
-        <div class="${bgClass} text-white px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300">
+        <div class="${bgClass} text-white px-6 py-4 rounded-lg shadow-2xl transform transition-all duration-300 border-2 border-white" style="min-width: 300px; max-width: 500px;">
             ${icon}${message}
         </div>
     `;
 
   notification.classList.remove("hidden");
   notification.style.transform = "translateX(100%)";
+  notification.style.zIndex = "9999"; // Z-index très élevé
 
   // Animation d'entrée
   setTimeout(() => {
     notification.style.transform = "translateX(0)";
   }, 10);
 
+  // Pour les comptes Outlook et les approbations importantes, garder plus longtemps
+  const isOutlookOrApproval =
+    message.includes("outlook") ||
+    message.includes("Outlook") ||
+    message.includes("approuvé") ||
+    message.includes("Email envoyé");
+  const displayTime = isOutlookOrApproval ? 8000 : 5000; // 8 secondes pour Outlook/approbations, 5 pour les autres
+
+  console.log(`⏰ Notification affichée pour ${displayTime / 1000} secondes`);
+
   // Animation de sortie
   setTimeout(() => {
     notification.style.transform = "translateX(100%)";
     setTimeout(() => {
       notification.classList.add("hidden");
+      console.log("🔔 Notification masquée");
     }, 300);
-  }, 4000);
+  }, displayTime);
 }
 
 function logout() {
