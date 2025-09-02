@@ -111,19 +111,19 @@ function manageHomeButtonVisibility() {
     return;
   }
 
-  // NOUVELLE LOGIQUE BASÉE SUR LA RÉALITÉ :
-  // - Si on a targetUser SANS fromDashboard → VIENT DU SIDEBAR → MONTRER l'icône
-  // - Si on a fromDashboard=true → VIENT DE AUTH.HTML → CACHER l'icône
+  // LOGIQUE CORRIGÉE POUR DE BON :
+  // - Si fromDashboard=true ET pas de targetUser → CONNEXION AUTH.HTML → CACHER l'icône
+  // - Si targetUser existe (peu importe fromDashboard) → VIENT DU SIDEBAR → MONTRER l'icône
   // - Sinon → ACCÈS DIRECT → MONTRER l'icône
 
-  if (fromDashboard === true) {
-    // Vient de auth.html → CACHER l'icône
+  if (fromDashboard === true && !targetUser) {
+    // Connexion depuis auth.html (fromDashboard=true sans targetUser) → CACHER l'icône
     console.log(
       "🏠 [HOME BUTTON] ❌ MASQUAGE de l'icône (connexion depuis auth.html)"
     );
     homeButton.style.display = "none";
-  } else if (targetUser && !fromDashboard) {
-    // A un targetUser mais pas fromDashboard → VIENT DU SIDEBAR → MONTRER l'icône
+  } else if (targetUser) {
+    // A un targetUser (vient du sidebar) → MONTRER l'icône
     console.log(
       "🏠 [HOME BUTTON] ✅ AFFICHAGE de l'icône (accès depuis le sidebar)"
     );
