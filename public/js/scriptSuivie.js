@@ -7643,35 +7643,44 @@ function mapStatus(status) {
     // === AJOUT BOUTON VUE DOSSIERS CLIENTS ===
     const toggleSelectionBtn = document.getElementById("toggleSelectionBtn");
 
-    const dossiersBtn = document.createElement("button");
-    dossiersBtn.id = "viewClientFoldersBtn";
-    dossiersBtn.innerHTML =
-      '<i class="fas fa-folder" style="color: #f59e0b;"></i> Vue Dossiers Clients';
-    dossiersBtn.className = "icon-btn-company-color";
-    dossiersBtn.style.fontSize = "0.8em";
-    dossiersBtn.style.padding = "6px 12px";
-    dossiersBtn.style.marginLeft = "20px";
-    dossiersBtn.style.marginRight = "20px";
-    dossiersBtn.addEventListener("click", showClientFoldersModal);
+    // Vérifier si le bouton existe déjà pour éviter la duplication
+    let dossiersBtn = document.getElementById("viewClientFoldersBtn");
+    if (!dossiersBtn) {
+      dossiersBtn = document.createElement("button");
+      dossiersBtn.id = "viewClientFoldersBtn";
+      dossiersBtn.innerHTML =
+        '<i class="fas fa-folder" style="color: #f59e0b;"></i> Vue Dossiers Clients';
+      dossiersBtn.className = "icon-btn-company-color";
+      dossiersBtn.style.fontSize = "0.8em";
+      dossiersBtn.style.padding = "6px 12px";
+      dossiersBtn.style.marginLeft = "20px";
+      dossiersBtn.style.marginRight = "20px";
+      dossiersBtn.addEventListener("click", showClientFoldersModal);
 
-    // Insère le bouton après Activer Sélection
-    if (toggleSelectionBtn && toggleSelectionBtn.parentNode) {
-      toggleSelectionBtn.parentNode.insertBefore(
-        dossiersBtn,
-        toggleSelectionBtn.nextSibling
-      );
-    } else if (deliveriesTable && deliveriesTable.parentNode) {
-      deliveriesTable.parentNode.insertBefore(dossiersBtn, deliveriesTable);
+      // Insère le bouton après Activer Sélection
+      if (toggleSelectionBtn && toggleSelectionBtn.parentNode) {
+        toggleSelectionBtn.parentNode.insertBefore(
+          dossiersBtn,
+          toggleSelectionBtn.nextSibling
+        );
+      } else if (deliveriesTable && deliveriesTable.parentNode) {
+        deliveriesTable.parentNode.insertBefore(dossiersBtn, deliveriesTable);
+      }
     }
 
-    // Crée un conteneur pour la vue dossiers (masqué par défaut)
-    const clientFoldersContainer = document.createElement("div");
-    clientFoldersContainer.id = "clientFoldersContainer";
-    clientFoldersContainer.style.display = "none";
-    deliveriesTable.parentNode.insertBefore(
-      clientFoldersContainer,
-      deliveriesTable
+    // Crée un conteneur pour la vue dossiers (masqué par défaut) - vérifier s'il existe déjà
+    let clientFoldersContainer = document.getElementById(
+      "clientFoldersContainer"
     );
+    if (!clientFoldersContainer) {
+      clientFoldersContainer = document.createElement("div");
+      clientFoldersContainer.id = "clientFoldersContainer";
+      clientFoldersContainer.style.display = "none";
+      deliveriesTable.parentNode.insertBefore(
+        clientFoldersContainer,
+        deliveriesTable
+      );
+    }
 
     // Fonction pour regrouper les opérations par agent > client > date
     function buildClientFoldersData(deliveries) {
@@ -10438,38 +10447,44 @@ function mapStatus(status) {
   }
 
   // Event listener for "Suivi spécifique agent" button
-  if (employeeTrackingBtn) {
+  if (employeeTrackingBtn && !employeeTrackingBtn.hasEventListener) {
     employeeTrackingBtn.addEventListener("click", toggleEmployeePopup);
+    employeeTrackingBtn.hasEventListener = true; // Marquer que le gestionnaire a été attaché
   }
 
   // Event listener for closing employee popup button
-  if (closeEmployeePopupBtn) {
+  if (closeEmployeePopupBtn && !closeEmployeePopupBtn.hasEventListener) {
     closeEmployeePopupBtn.addEventListener("click", hideEmployeePopup);
+    closeEmployeePopupBtn.hasEventListener = true;
   }
 
   // Global click listener to close employee popup if clicking outside
-  document.addEventListener("click", (e) => {
-    // Ensure employeePopup, employeeTrackingBtn, and codeEntryPopup exist before checking contains
-    const isClickInsideEmployeePopup =
-      employeePopup && employeePopup.contains(e.target);
-    const isClickOnEmployeeTrackingBtn =
-      employeeTrackingBtn && employeeTrackingBtn.contains(e.target);
-    const isClickInsideCodeEntryPopup =
-      codeEntryPopup && codeEntryPopup.contains(e.target);
+  if (!window.employeePopupGlobalListenerAttached) {
+    document.addEventListener("click", (e) => {
+      // Ensure employeePopup, employeeTrackingBtn, and codeEntryPopup exist before checking contains
+      const isClickInsideEmployeePopup =
+        employeePopup && employeePopup.contains(e.target);
+      const isClickOnEmployeeTrackingBtn =
+        employeeTrackingBtn && employeeTrackingBtn.contains(e.target);
+      const isClickInsideCodeEntryPopup =
+        codeEntryPopup && codeEntryPopup.contains(e.target);
 
-    if (
-      employeePopup &&
-      employeePopup.classList.contains("is-visible") &&
-      !isClickInsideEmployeePopup &&
-      !isClickOnEmployeeTrackingBtn &&
-      !isClickInsideCodeEntryPopup
-    ) {
-      hideEmployeePopup();
-    }
-  });
+      if (
+        employeePopup &&
+        employeePopup.classList.contains("is-visible") &&
+        !isClickInsideEmployeePopup &&
+        !isClickOnEmployeeTrackingBtn &&
+        !isClickInsideCodeEntryPopup
+      ) {
+        hideEmployeePopup();
+      }
+    });
+    window.employeePopupGlobalListenerAttached = true;
+  }
 
-  if (employeeSearchInput) {
+  if (employeeSearchInput && !employeeSearchInput.hasEventListener) {
     employeeSearchInput.addEventListener("input", filterEmployeeList);
+    employeeSearchInput.hasEventListener = true;
   }
 
   if (closeAgentActivityBoxBtn) {
