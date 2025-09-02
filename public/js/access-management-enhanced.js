@@ -74,7 +74,7 @@ async function loadAccessRequests() {
     // Afficher un indicateur de chargement
     showLoadingIndicator(true);
 
-    const response = await fetch("/api/get-new-access-requests", {
+    const response = await fetch("/api/admin/access-requests", {
       headers: {
         "Cache-Control": "no-cache",
       },
