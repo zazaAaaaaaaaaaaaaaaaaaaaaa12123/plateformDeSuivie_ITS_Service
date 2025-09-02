@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestion des Accès - ITS Service</title>
+    <!-- TAILWIND CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FONT AWESOME -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- CSS personnalisé amélioré -->
+    <link rel="stylesheet" href="../css/access-management-enhanced.css" />
+    <style>
+      .access-card {
+        transition: all 0.3s ease; 
+      }
+      .access-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+      .status-pending {
+        background: linear-gradient(45deg, #fbbf24, #f59e0b);
+      }
+      .status-approved {
+        background: linear-gradient(45deg, #10b981, #059669);
+      }
+      .status-rejected {
+        background: linear-gradient(45deg, #ef4444, #dc2626);
+      }
+      .password-generate {
+        font-family: "Courier New", monospace;
+        letter-spacing: 2px;
+      }
+      .stat-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+      }
+      .stat-card.active {
+        border: 2px solid #3b82f6;
+        transform: translateY(-2px);
+      }
+      .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        margin-bottom: 1rem;
+      }
+      .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0.5rem;
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 50%;
+        background: #3b82f6;
+      }
+      .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 0.875rem;
+        top: 1.25rem;
+        width: 2px;
+        height: calc(100% - 1rem);
+        background: #e5e7eb;
+      }
+      .timeline-item:last-child::after {
+        display: none;
+      }
+    </style>
+  </head>
+  <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- HEADER -->
+    <header class="bg-blue-900 shadow-lg sticky top-0 z-40">
+      <div class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-key text-yellow-400 text-2xl"></i>
+            <h1 class="text-2xl font-bold text-white">Gestion des Accès ITS</h1>
+          </div>
+          <div class="flex items-center space-x-4">
+            <span class="text-yellow-300 font-medium">Admin Panel</span>
+            <button
+              onclick="logout()"
+              class="bg-yellow-400 hover:bg-yellow-300 text-blue-900 px-4 py-2 rounded-lg font-medium transition"
+            >
+              <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="container mx-auto px-6 py-8">
+      <!-- STATISTICS -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div
+          class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-400 hover:shadow-lg"
+          onclick="filterRequests('all')"
+          data-filter="all"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Total Demandes</p>
+              <p class="text-2xl font-bold text-gray-900" id="totalRequests">
+                0
+              </p>
+            </div>
+            <i class="fas fa-inbox text-yellow-400 text-2xl"></i>
+          </div>
+        </div>
+        <div
+          class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-400 hover:shadow-lg"
+          onclick="filterRequests('pending')"
+          data-filter="pending"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">En Attente</p>
+              <p
+                class="text-2xl font-bold text-orange-600"
+                id="pendingRequests"
+              >
+                0
+              </p>
+            </div>
+            <i class="fas fa-clock text-orange-400 text-2xl"></i>
+          </div>
+        </div>
+        <div
+          class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-green-400 hover:shadow-lg"
+          onclick="filterRequests('approved')"
+          data-filter="approved"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Approuvées</p>
+              <p
+                class="text-2xl font-bold text-green-600"
+                id="approvedRequests"
+              >
+                0
+              </p>
+            </div>
+            <i class="fas fa-check-circle text-green-400 text-2xl"></i>
+          </div>
+        </div>
+        <div
+          class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-red-400 hover:shadow-lg"
+          onclick="filterRequests('rejected')"
+          data-filter="rejected"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Rejetées</p>
+              <p class="text-2xl font-bold text-red-600" id="rejectedRequests">
+                0
+              </p>
+            </div>
+            <i class="fas fa-times-circle text-red-400 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIQUE PAR DATE -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Historique journalier -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">
+              <i class="fas fa-calendar-day mr-2 text-blue-600"></i>
+              Historique Journalier
+            </h3>
+            <select id="dateFilter" class="text-sm border rounded-lg px-3 py-1">
+              <option value="today">Aujourd'hui</option>
+              <option value="yesterday">Hier</option>
+              <option value="week">Cette semaine</option>
+              <option value="month">Ce mois</option>
+            </select>
+          </div>
+          <div id="dailyHistory" class="space-y-3 max-h-64 overflow-y-auto">
+            <!-- L'historique sera affiché ici -->
+          </div>
+        </div>
+
+        <!-- Activité récente -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <h3 class="text-lg font-bold text-gray-800 mb-4">
+            <i class="fas fa-clock mr-2 text-green-600"></i>
+            Activité Récente
+          </h3>
+          <div id="recentActivity" class="space-y-3 max-h-64 overflow-y-auto">
+            <!-- L'activité récente sera affichée ici -->
+          </div>
+        </div>
+
+        <!-- Statistiques avancées -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <h3 class="text-lg font-bold text-gray-800 mb-4">
+            <i class="fas fa-chart-bar mr-2 text-purple-600"></i>
+            Statistiques
+          </h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Taux d'approbation</span>
+              <span class="font-bold text-green-600" id="approvalRate">0%</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Temps de traitement moyen</span>
+              <span class="font-bold text-blue-600" id="avgProcessingTime">0h</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Demandes aujourd'hui</span>
+              <span class="font-bold text-orange-600" id="todayRequests">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+              >
+                0
+              </p>
+            </div>
+            <i class="fas fa-check-circle text-green-400 text-2xl"></i>
+          </div>
+        </div>
+        <div
+          class="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-400"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600">Rejetées</p>
+              <p class="text-2xl font-bold text-red-600" id="rejectedRequests">
+                0
+              </p>
+            </div>
+            <i class="fas fa-times-circle text-red-400 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- REQUESTS LIST -->
+      <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 bg-blue-900 text-white">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold flex items-center">
+              <i class="fas fa-list-alt mr-3"></i>
+              <span id="requestsTitle">Demandes d'Accès</span>
+            </h2>
+            <div class="flex items-center space-x-3">
+              <button 
+                onclick="clearFilter()" 
+                id="clearFilterBtn"
+                class="bg-yellow-400 hover:bg-yellow-300 text-blue-900 px-3 py-1 rounded text-sm font-medium hidden"
+              >
+                Tout Afficher
+              </button>
+              <div class="text-sm bg-blue-800 px-3 py-1 rounded">
+                <span id="requestsCount">0</span> demande(s)
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-6">
+          <div id="requestsList" class="space-y-4">
+            <!-- Les demandes seront ajoutées ici dynamiquement -->
+          </div>
+          <div id="noRequests" class="text-center py-12 text-gray-500">
+            <i class="fas fa-inbox text-4xl mb-4"></i>
+            <p class="text-lg" id="noRequestsMessage">Aucune demande d'accès en attente</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL DE TRAITEMENT -->
+    <div
+      id="processModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+    >
+      <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 bg-blue-900 text-white rounded-t-xl">
+          <h3 class="text-lg font-bold">Traiter la Demande d'Accès</h3>
+        </div>
+        <div class="p-6">
+          <div class="mb-4">
+            <h4 class="font-semibold text-gray-800 mb-2">
+              Informations Utilisateur
+            </h4>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p><strong>Nom:</strong> <span id="modalUserName"></span></p>
+              <p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
+              <p>
+                <strong>Date demande:</strong>
+                <span id="modalRequestDate"></span>
+              </p>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Email de l'utilisateur</label
+            >
+            <input
+              type="email"
+              id="userEmailInput"
+              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              readonly
+            />
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Mot de passe généré</label
+            >
+            <div class="flex items-center space-x-2">
+              <input
+                type="text"
+                id="generatedPassword"
+                class="flex-1 p-3 border border-gray-300 rounded-lg password-generate bg-gray-50"
+                readonly
+              />
+              <button
+                onclick="generatePassword()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition"
+              >
+                <i class="fas fa-refresh"></i>
+              </button>
+              <button
+                onclick="copyPassword()"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg transition"
+              >
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex space-x-3">
+            <button
+              onclick="approveRequest()"
+              class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition"
+            >
+              <i class="fas fa-check mr-2"></i>Approuver
+            </button>
+            <button
+              onclick="rejectRequest()"
+              class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition"
+            >
+              <i class="fas fa-times mr-2"></i>Rejeter
+            </button>
+            <button
+              onclick="closeModal()"
+              class="px-6 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg font-medium transition"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATION -->
+    <div id="notification" class="fixed top-4 right-4 z-50 hidden">
+      <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        <span id="notificationText"></span>
+      </div>
+    </div>
+
+    <script src="../js/access-management-enhanced.js"></script>
+  </body>
+</html>

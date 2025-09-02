@@ -2,7 +2,36 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device        <div
+          class="flex fle      <div class="flex gap-4">
+        <button
+          id="accessRequestBtn"
+          class="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold py-2 px-6 rounded-lg shadow transition duration-200"
+        >
+          <i class="fa-solid fa-key mr-2"></i>Demande d'accès
+        </button>
+        <button
+          id="openLoginBtn"
+          class="bg-blue-700 hover:bg-yellow-400 hover:text-blue-900 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200"
+        >
+          <i class="fa-solid fa-right-to-bracket mr-2"></i>Se connecter
+        </button>
+        <button
+          id="logoutBtn"
+          class="hidden bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold py-2 px-6 rounded-lg shadow transition duration-200"
+        >
+          <i class="fa-solid fa-right-from-bracket mr-2"></i>Déconnexion
+        </button>
+      </div>stify-center gap-8 mt-4 animate-fade-in"
+          style="animation-delay: 1s"
+        >
+          <button
+            id="ctaLogin"
+            class="bg-blue-700 hover:bg-yellow-400 hover:text-blue-900 text-white font-bold py-4 px-12 rounded-2xl shadow-xl text-2xl transition duration-200"
+          >
+            Se connecter
+          </button>
+        </div>cale=1.0" />
     <title>Portail Client - Société de Transit</title>
     <!-- TAILWIND CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -130,6 +159,12 @@
           >
             Se connecter
           </button>
+          <button
+            id="ctaSignup"
+            class="bg-yellow-400 hover:bg-blue-700 hover:text-white text-blue-900 font-bold py-4 px-12 rounded-2xl shadow-xl text-2xl transition duration-200"
+          >
+            S’inscrire
+          </button>
         </div>
       </div>
     </section>
@@ -145,10 +180,10 @@
       </a>
       <div class="flex gap-4">
         <button
-          id="accessRequestBtn"
+          id="openSignupBtn"
           class="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold py-2 px-6 rounded-lg shadow transition duration-200"
         >
-          <i class="fa-solid fa-key mr-2"></i>Demande d'accès
+          <i class="fa-solid fa-user-plus mr-2"></i>S’inscrire
         </button>
         <button
           id="openLoginBtn"
@@ -183,9 +218,7 @@
           <h2 class="text-3xl font-extrabold text-blue-900 mb-2">
             Connexion Utilisateur
           </h2>
-          <p class="text-blue-700">
-            Accédez à votre espace personnel avec vos identifiants
-          </p>
+          <p class="text-blue-700">Accédez à votre espace personnel</p>
         </div>
         <form id="loginForm" autocomplete="off" class="flex flex-col gap-4">
           <div>
@@ -206,7 +239,7 @@
             <label
               for="loginPassword"
               class="block text-blue-900 font-semibold mb-1"
-              >Code d'accès</label
+              >Mot de passe</label
             >
             <div class="relative">
               <input
@@ -214,7 +247,7 @@
                 id="loginPassword"
                 maxlength="15"
                 class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition pr-12"
-                placeholder="Code d'accès fourni"
+                placeholder="Mot de passe"
                 required
               />
               <button
@@ -225,13 +258,120 @@
                 <i class="fa-solid fa-eye"></i>
               </button>
             </div>
+            <div class="text-right mt-1">
+              <a
+                href="#"
+                id="forgotPwLink"
+                class="text-sm text-blue-700 hover:text-yellow-500 font-medium transition"
+                >Mot de passe oublié ?</a
+              >
+            </div>
           </div>
-          <div id="loginError" class="text-sm text-red-600"></div>
           <button
             type="submit"
             class="bg-blue-700 hover:bg-yellow-400 hover:text-blue-900 text-white font-bold py-2 rounded-lg shadow transition duration-200"
           >
             Se connecter
+          </button>
+        </form>
+        <!-- Formulaire mot de passe oublié (masqué par défaut) -->
+        <form
+          id="forgotPwForm"
+          autocomplete="off"
+          class="flex flex-col gap-4 hidden"
+        >
+          <div>
+            <label
+              for="forgotPwEmail"
+              class="block text-blue-900 font-semibold mb-1"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="forgotPwEmail"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Votre email"
+              required
+            />
+          </div>
+          <div id="forgotPwMsg" class="text-sm mt-1"></div>
+          <button
+            type="submit"
+            class="bg-yellow-400 hover:bg-blue-700 hover:text-white text-blue-900 font-bold py-2 rounded-lg shadow transition duration-200"
+          >
+            Recevoir un lien/code de réinitialisation
+          </button>
+          <button
+            type="button"
+            id="backToLoginBtn"
+            class="text-blue-700 hover:text-yellow-500 text-sm mt-2"
+          >
+            Retour à la connexion
+          </button>
+        </form>
+        <!-- Formulaire de réinitialisation du mot de passe (étape 2) -->
+        <form
+          id="resetPwForm"
+          autocomplete="off"
+          class="flex flex-col gap-4 hidden"
+        >
+          <div>
+            <label
+              for="resetPwEmail"
+              class="block text-blue-900 font-semibold mb-1"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="resetPwEmail"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Votre email"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="resetPwCode"
+              class="block text-blue-900 font-semibold mb-1"
+              >Code reçu</label
+            >
+            <input
+              type="text"
+              id="resetPwCode"
+              maxlength="6"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Code à 6 chiffres"
+              required
+            />
+          </div>
+          <div>
+            <label
+              for="resetPwNew"
+              class="block text-blue-900 font-semibold mb-1"
+              >Nouveau mot de passe</label
+            >
+            <input
+              type="password"
+              id="resetPwNew"
+              maxlength="15"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Nouveau mot de passe"
+              required
+            />
+          </div>
+          <div id="resetPwMsg" class="text-sm mt-1"></div>
+          <button
+            type="submit"
+            class="bg-blue-700 hover:bg-yellow-400 hover:text-blue-900 text-white font-bold py-2 rounded-lg shadow transition duration-200"
+          >
+            Réinitialiser le mot de passe
+          </button>
+          <button
+            type="button"
+            id="backToForgotBtn"
+            class="text-blue-700 hover:text-yellow-500 text-sm mt-2"
+          >
+            Retour
           </button>
         </form>
       </div>
@@ -246,7 +386,7 @@
         class="w-full max-w-md bg-white/90 rounded-2xl shadow-2xl p-8 flex flex-col gap-6 relative"
       >
         <button
-          onclick="closeAccessRequestModal()"
+          onclick="closeSignupModal()"
           class="absolute top-3 right-4 text-blue-700 hover:text-yellow-500 text-xl"
         >
           <i class="fa-solid fa-xmark"></i>
@@ -259,61 +399,64 @@
             Demandez un accès à votre espace ITS Service
           </p>
         </div>
-        <form
-          id="accessRequestForm"
-          autocomplete="off"
-          class="flex flex-col gap-4"
-        >
+        <form id="accessRequestForm" autocomplete="off" class="flex flex-col gap-4">
           <div>
             <label
-              for="requestName"
+              for="signupName"
               class="block text-blue-900 font-semibold mb-1"
               >Nom complet</label
             >
             <input
               type="text"
-              id="requestName"
+              id="signupName"
               class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
-              placeholder="Votre nom complet"
+              placeholder="Votre nom"
               required
             />
           </div>
           <div>
             <label
-              for="requestEmail"
+              for="signupEmail"
               class="block text-blue-900 font-semibold mb-1"
-              >Email professionnel</label
+              >Email</label
             >
             <input
               type="email"
-              id="requestEmail"
+              id="signupEmail"
               class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
-              placeholder="votre.email@entreprise.com"
+              placeholder="Votre email"
               required
             />
           </div>
           <div>
             <label
-              for="requestDate"
+              for="signupPassword"
               class="block text-blue-900 font-semibold mb-1"
-              >Date de la demande</label
+              >Mot de passe</label
             >
-            <input
-              type="date"
-              id="requestDate"
-              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
-              required
-            />
+            <div class="relative">
+              <input
+                type="password"
+                id="signupPassword"
+                maxlength="15"
+                class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition pr-12"
+                placeholder="Mot de passe"
+                required
+              />
+              <button
+                type="button"
+                onclick="togglePw(this, 'signupPassword')"
+                class="absolute right-2 top-2 text-blue-700 hover:text-yellow-500"
+              >
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
           </div>
           <button
             type="submit"
-            id="sendRequestBtn"
-            class="bg-yellow-400 hover:bg-blue-700 hover:text-white text-blue-900 font-bold py-2 rounded-lg shadow transition duration-200 flex items-center justify-center"
+            class="bg-yellow-400 hover:bg-blue-700 hover:text-white text-blue-900 font-bold py-2 rounded-lg shadow transition duration-200"
           >
-            <span id="sendRequestText">Envoyer la requête</span>
-            <span id="sendRequestLoading" class="hidden">
-              <i class="fa-solid fa-spinner fa-spin mr-2"></i>Envoi en cours...
-            </span>
+            S’inscrire
           </button>
         </form>
       </div>
@@ -334,9 +477,7 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
         <div class="text-center">
-          <div
-            class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
-          >
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="fa-solid fa-check text-green-600 text-2xl"></i>
           </div>
           <h2 class="text-2xl font-extrabold text-blue-900 mb-2">
@@ -346,8 +487,7 @@
             Votre demande d'accès a été envoyée avec succès.
           </p>
           <p class="text-sm text-blue-600">
-            Nous traitons votre requête... Vous recevrez vos identifiants de
-            connexion par email une fois votre demande approuvée.
+            Nous traitons votre requête... Vous recevrez vos identifiants de connexion par email une fois votre demande approuvée.
           </p>
         </div>
         <button
@@ -369,19 +509,16 @@
 
     <!-- SCRIPTS -->
     <script src="/js/script.js"></script>
+    <!-- Script d'authentification supprimé ici car déjà géré dans /js/script.js -->
     <script>
       // Ouvre/ferme les modales
       document.getElementById("openLoginBtn").onclick = () => {
         document.getElementById("loginModal").classList.remove("hidden");
       };
       document.getElementById("accessRequestBtn").onclick = () => {
-        document
-          .getElementById("accessRequestModal")
-          .classList.remove("hidden");
+        document.getElementById("accessRequestModal").classList.remove("hidden");
         // Définir la date d'aujourd'hui par défaut
-        document.getElementById("requestDate").value = new Date()
-          .toISOString()
-          .split("T")[0];
+        document.getElementById("requestDate").value = new Date().toISOString().split('T')[0];
       };
       function closeLoginModal() {
         document.getElementById("loginModal").classList.add("hidden");
@@ -390,11 +527,8 @@
         document.getElementById("accessRequestModal").classList.add("hidden");
       }
       function closeAccessRequestSuccessModal() {
-        document
-          .getElementById("accessRequestSuccessModal")
-          .classList.add("hidden");
+        document.getElementById("accessRequestSuccessModal").classList.add("hidden");
       }
-
       // Fermer modale au clic sur fond noir
       document.getElementById("loginModal").onclick = (e) => {
         if (e.target.id === "loginModal") closeLoginModal();
@@ -403,10 +537,8 @@
         if (e.target.id === "accessRequestModal") closeAccessRequestModal();
       };
       document.getElementById("accessRequestSuccessModal").onclick = (e) => {
-        if (e.target.id === "accessRequestSuccessModal")
-          closeAccessRequestSuccessModal();
+        if (e.target.id === "accessRequestSuccessModal") closeAccessRequestSuccessModal();
       };
-
       // Affichage/Masquage mot de passe
       window.togglePw = function (btn, inputId) {
         const input = document.getElementById(inputId);
@@ -420,62 +552,10 @@
           btn.querySelector("i").classList.add("fa-eye");
         }
       };
-
       // Animation : boutons de présentation
       document.getElementById("ctaLogin").onclick = () => {
         document.getElementById("openLoginBtn").click();
       };
-
-      // Gestion du formulaire de demande d'accès
-      document
-        .getElementById("accessRequestForm")
-        .addEventListener("submit", function (e) {
-          e.preventDefault();
-
-          const name = document.getElementById("requestName").value.trim();
-          const email = document.getElementById("requestEmail").value.trim();
-          const date = document.getElementById("requestDate").value;
-
-          if (!name || !email || !date) {
-            alert("Veuillez remplir tous les champs.");
-            return;
-          }
-
-          // Afficher le chargement
-          document.getElementById("sendRequestText").classList.add("hidden");
-          document
-            .getElementById("sendRequestLoading")
-            .classList.remove("hidden");
-          document.getElementById("sendRequestBtn").disabled = true;
-
-          // Simuler l'envoi de la requête (6 secondes)
-          setTimeout(() => {
-            // Appeler la fonction pour soumettre la demande
-            if (window.submitAccessRequest) {
-              window.submitAccessRequest({ name, email, date });
-            }
-
-            // Cacher le chargement
-            document
-              .getElementById("sendRequestText")
-              .classList.remove("hidden");
-            document
-              .getElementById("sendRequestLoading")
-              .classList.add("hidden");
-            document.getElementById("sendRequestBtn").disabled = false;
-
-            // Fermer la modale de demande
-            closeAccessRequestModal();
-
-            // Afficher la modale de succès
-            document
-              .getElementById("accessRequestSuccessModal")
-              .classList.remove("hidden");
-
-            // Réinitialiser le formulaire
-            document.getElementById("accessRequestForm").reset();
-          }, 6000); // 6 secondes de chargement
-        });
 
       // Redirection automatique vers tableauDeBord.html après connexion réussie
       document.addEventListener("DOMContentLoaded", function () {
@@ -483,16 +563,10 @@
         if (loginForm) {
           loginForm.addEventListener("submit", function (e) {
             e.preventDefault();
+            // ... récupération des champs ...
             const email = document.getElementById("loginEmail").value.trim();
             const password = document.getElementById("loginPassword").value;
-
-            if (!email || !password) {
-              document.getElementById("loginError").textContent =
-                "Veuillez remplir tous les champs.";
-              return;
-            }
-
-            // Appel API pour la connexion avec le nouveau système
+            // Appel API ou vérification locale (à adapter selon ton backend)
             fetch("/api/login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -501,30 +575,109 @@
               .then((res) => res.json())
               .then((data) => {
                 if (data.success) {
-                  // Stocke les infos utilisateur pour le dashboard
+                  // Stocke toutes les infos utilisateur dans localStorage pour le dashboard
                   const userData = {
                     nom: data.nom || email.split("@")[0],
                     email: email,
                     profil: data.profil || "Responsable",
                     photo: data.photo || "",
+                    // Ajoute d'autres champs si besoin
                   };
                   localStorage.setItem("user", JSON.stringify(userData));
+                  // Stocke l'email pour le message de bienvenue personnalisé sur le dashboard
                   localStorage.setItem("userEmail", email);
-
-                  // Redirige vers le tableau de bord
+                  // Redirige vers le tableau de bord principalshydjs
                   window.location.href =
                     "https://dossiv.ci/html/tableauDeBord.html";
                 } else {
-                  document.getElementById("loginError").textContent =
-                    data.message || "Identifiants incorrects.";
+                  // Affiche une alerte ou un message d'erreur
+                  const alertMsg =
+                    document.getElementById("customAlertMessage");
+                  if (alertMsg) {
+                    alertMsg.textContent =
+                      data.message || "Identifiants incorrects.";
+                    document
+                      .getElementById("customAlert")
+                      .classList.remove("hidden");
+                    setTimeout(() => {
+                      document
+                        .getElementById("customAlert")
+                        .classList.add("hidden");
+                    }, 2500);
+                  }
                 }
               })
               .catch(() => {
-                document.getElementById("loginError").textContent =
-                  "Erreur réseau.";
+                const alertMsg = document.getElementById("customAlertMessage");
+                if (alertMsg) {
+                  alertMsg.textContent = "Erreur réseau.";
+                  document
+                    .getElementById("customAlert")
+                    .classList.remove("hidden");
+                  setTimeout(() => {
+                    document
+                      .getElementById("customAlert")
+                      .classList.add("hidden");
+                  }, 2500);
+                }
               });
           });
         }
+      });
+
+      // Gestion du formulaire de demande d'accès
+      document.getElementById("accessRequestForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById("requestName").value.trim();
+        const email = document.getElementById("requestEmail").value.trim();
+        const date = document.getElementById("requestDate").value;
+        
+        if (!name || !email || !date) {
+          alert("Veuillez remplir tous les champs.");
+          return;
+        }
+        
+        // Afficher le chargement
+        document.getElementById("sendRequestText").classList.add("hidden");
+        document.getElementById("sendRequestLoading").classList.remove("hidden");
+        document.getElementById("sendRequestBtn").disabled = true;
+        
+        // Simuler l'envoi de la requête (6 secondes)
+        setTimeout(() => {
+          // Envoyer la demande d'accès au serveur
+          fetch("/api/access-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, date }),
+          })
+          .then(res => res.json())
+          .then(data => {
+            // Cacher le chargement
+            document.getElementById("sendRequestText").classList.remove("hidden");
+            document.getElementById("sendRequestLoading").classList.add("hidden");
+            document.getElementById("sendRequestBtn").disabled = false;
+            
+            // Fermer la modale de demande
+            closeAccessRequestModal();
+            
+            // Afficher la modale de succès
+            document.getElementById("accessRequestSuccessModal").classList.remove("hidden");
+            
+            // Réinitialiser le formulaire
+            document.getElementById("accessRequestForm").reset();
+          })
+          .catch(() => {
+            // En cas d'erreur, toujours afficher le succès pour l'UX
+            document.getElementById("sendRequestText").classList.remove("hidden");
+            document.getElementById("sendRequestLoading").classList.add("hidden");
+            document.getElementById("sendRequestBtn").disabled = false;
+            
+            closeAccessRequestModal();
+            document.getElementById("accessRequestSuccessModal").classList.remove("hidden");
+            document.getElementById("accessRequestForm").reset();
+          });
+        }, 6000); // 6 secondes de chargement
       });
     </script>
   </body>

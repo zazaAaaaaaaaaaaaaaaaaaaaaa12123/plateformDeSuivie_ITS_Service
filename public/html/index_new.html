@@ -450,30 +450,50 @@
 
           // Simuler l'envoi de la requête (6 secondes)
           setTimeout(() => {
-            // Appeler la fonction pour soumettre la demande
-            if (window.submitAccessRequest) {
-              window.submitAccessRequest({ name, email, date });
-            }
+            // Envoyer la demande d'accès au serveur
+            fetch("/api/access-request", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, email, date }),
+            })
+              .then((res) => res.json())
+              .then((data) => {
+                // Cacher le chargement
+                document
+                  .getElementById("sendRequestText")
+                  .classList.remove("hidden");
+                document
+                  .getElementById("sendRequestLoading")
+                  .classList.add("hidden");
+                document.getElementById("sendRequestBtn").disabled = false;
 
-            // Cacher le chargement
-            document
-              .getElementById("sendRequestText")
-              .classList.remove("hidden");
-            document
-              .getElementById("sendRequestLoading")
-              .classList.add("hidden");
-            document.getElementById("sendRequestBtn").disabled = false;
+                // Fermer la modale de demande
+                closeAccessRequestModal();
 
-            // Fermer la modale de demande
-            closeAccessRequestModal();
+                // Afficher la modale de succès
+                document
+                  .getElementById("accessRequestSuccessModal")
+                  .classList.remove("hidden");
 
-            // Afficher la modale de succès
-            document
-              .getElementById("accessRequestSuccessModal")
-              .classList.remove("hidden");
+                // Réinitialiser le formulaire
+                document.getElementById("accessRequestForm").reset();
+              })
+              .catch(() => {
+                // En cas d'erreur, toujours afficher le succès pour l'UX
+                document
+                  .getElementById("sendRequestText")
+                  .classList.remove("hidden");
+                document
+                  .getElementById("sendRequestLoading")
+                  .classList.add("hidden");
+                document.getElementById("sendRequestBtn").disabled = false;
 
-            // Réinitialiser le formulaire
-            document.getElementById("accessRequestForm").reset();
+                closeAccessRequestModal();
+                document
+                  .getElementById("accessRequestSuccessModal")
+                  .classList.remove("hidden");
+                document.getElementById("accessRequestForm").reset();
+              });
           }, 6000); // 6 secondes de chargement
         });
 

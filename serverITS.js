@@ -83,6 +83,209 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
 });
 
+// ===============================
+// API ADMIN REGISTER & LOGIN - PRIORITÉ HAUTE
+// ===============================
+
+// Route pour l'inscription des administrateurs
+app.post("/api/admin-register", async (req, res) => {
+  const { name, email, password, adminCode } = req.body;
+
+  console.log("[ADMIN-REGISTER][API] Tentative d'inscription admin:", {
+    name,
+    email,
+  });
+
+  // DEBUG: Afficher tous les champs reçus pour déboguer
+  console.log("[ADMIN-REGISTER][DEBUG] Données reçues complètes:", {
+    name,
+    email,
+    password: password ? "***DÉFINI***" : "NON DÉFINI",
+    adminCode: adminCode
+      ? `"${adminCode}" (longueur: ${adminCode.length})`
+      : "NON DÉFINI",
+    body: req.body,
+  });
+
+  if (!name || !email || !password || !adminCode) {
+    return res.status(400).json({
+      success: false,
+      message: "Tous les champs sont requis.",
+    });
+  }
+
+  // Vérifier le code administrateur
+  const ADMIN_CODE = "ITS2025ADMIN";
+  // Nettoyer le code reçu (supprimer espaces en début/fin)
+  const cleanAdminCode = adminCode ? adminCode.trim() : "";
+
+  console.log("[ADMIN-REGISTER][DEBUG] Comparaison des codes:", {
+    recu: `"${adminCode}"`,
+    recu_nettoye: `"${cleanAdminCode}"`,
+    attendu: `"${ADMIN_CODE}"`,
+    identique: cleanAdminCode === ADMIN_CODE,
+  });
+
+  if (cleanAdminCode !== ADMIN_CODE) {
+    console.log("[ADMIN-REGISTER][ERROR] Code administrateur incorrect!");
+    return res.status(401).json({
+      success: false,
+      message: "Code administrateur incorrect.",
+    });
+  }
+
+  // Vérifier la force du mot de passe
+  if (password.length < 8) {
+    return res.status(400).json({
+      success: false,
+      message: "Le mot de passe doit contenir au moins 8 caractères.",
+    });
+  }
+
+  try {
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      const user = existingUser.rows[0];
+
+      // Si c'est déjà un admin, on refuse
+      if (user.role === "admin") {
+        console.log(
+          "[ADMIN-REGISTER][INFO] Utilisateur déjà administrateur:",
+          email
+        );
+        return res.status(400).json({
+          success: false,
+          message: "Cet email est déjà enregistré comme administrateur.",
+        });
+      }
+
+      // Si c'est un utilisateur normal, on le promeut au rôle d'admin
+      console.log(
+        "[ADMIN-REGISTER][INFO] Promotion utilisateur existant vers admin:",
+        email
+      );
+
+      // Hasher le nouveau mot de passe
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Mettre à jour l'utilisateur existant (nom, mot de passe et rôle)
+      const result = await pool.query(
+        `UPDATE users SET name = $1, password = $2, role = 'admin' 
+         WHERE email = $3 RETURNING id, name, email, role`,
+        [name, hashedPassword, email]
+      );
+
+      console.log(
+        "[ADMIN-REGISTER][API] Utilisateur promu admin avec succès:",
+        result.rows[0]
+      );
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Compte existant mis à jour et promu administrateur avec succès.",
+        admin: result.rows[0],
+      });
+    }
+
+    // Si l'utilisateur n'existe pas, créer un nouveau compte admin
+    console.log("[ADMIN-REGISTER][INFO] Création nouveau compte admin:", email);
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Créer l'administrateur
+    const result = await pool.query(
+      `INSERT INTO users (name, email, password, role, created_at) 
+       VALUES ($1, $2, $3, 'admin', CURRENT_TIMESTAMP) RETURNING id, name, email, role`,
+      [name, email, hashedPassword]
+    );
+
+    console.log(
+      "[ADMIN-REGISTER][API] Nouveau compte admin créé avec succès:",
+      result.rows[0]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Nouveau compte administrateur créé avec succès.",
+      admin: result.rows[0],
+    });
+  } catch (err) {
+    console.error(
+      "[ADMIN-REGISTER][API] Erreur lors de la création du compte admin:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la création du compte.",
+    });
+  }
+});
+
+// API admin-login
+app.post("/api/admin-login", async (req, res) => {
+  const { email, password } = req.body;
+
+  console.log("[ADMIN-LOGIN][API] Tentative de connexion admin:", { email });
+
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Email et mot de passe requis.",
+    });
+  }
+
+  try {
+    // Rechercher l'admin
+    const result = await pool.query(
+      "SELECT * FROM users WHERE email = $1 AND role = 'admin'",
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Aucun administrateur trouvé avec cet email.",
+      });
+    }
+
+    const admin = result.rows[0];
+
+    // Vérifier le mot de passe
+    const passwordValid = await bcrypt.compare(password, admin.password);
+
+    if (!passwordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Mot de passe incorrect.",
+      });
+    }
+
+    console.log("[ADMIN-LOGIN][API] Connexion admin réussie:", admin.email);
+
+    res.json({
+      success: true,
+      message: "Connexion réussie.",
+      isAdmin: true,
+      email: admin.email,
+      name: admin.name,
+      id: admin.id,
+    });
+  } catch (err) {
+    console.error("[ADMIN-LOGIN][API] Erreur lors de la connexion:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la connexion.",
+    });
+  }
+});
+
 // === AUTO-CRÉATION DES COLONNES JSON AU DÉMARRAGE ===
 async function initializeJsonColumns() {
   try {
@@ -1937,6 +2140,7 @@ const createUsersTable = `
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'user',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
   );
 `;
@@ -1945,10 +2149,37 @@ async function ensureUsersTable() {
   try {
     await pool.query(createUsersTable);
     console.log("Table 'users' vérifiée/créée.");
+
+    // Ajouter la colonne role si elle n'existe pas
+    try {
+      await pool.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'user'`
+      );
+      console.log("Colonne 'role' ajoutée à la table users.");
+    } catch (err) {
+      console.log(
+        "La colonne 'role' existe déjà ou erreur mineure:",
+        err.message
+      );
+    }
+
+    // Appel d'admin par défaut désactivé - utiliser l'API /api/admin-register
+    console.log(
+      "ℹ️  Pour créer un administrateur, utilisez l'API /api/admin-register"
+    );
   } catch (err) {
     console.error("Erreur création table users:", err);
   }
 }
+
+// Supprimer la création d'admin statique - maintenant dynamique via API
+async function createDefaultAdmin() {
+  // Fonction désactivée - utiliser l'API /api/admin-register
+  console.log(
+    "ℹ️  Utilisez l'API /api/admin-register pour créer un compte administrateur"
+  );
+}
+
 ensureUsersTable();
 
 // Définition de la table livraison_conteneur
@@ -2884,20 +3115,26 @@ app.post("/api/login", async (req, res) => {
   const { email, password } = req.body || {};
   console.log("[LOGIN][API] Données reçues:", {
     email,
-    password,
-    body: req.body,
+    password: password ? "***MASQUÉ***" : undefined,
+    body: { ...req.body, password: password ? "***MASQUÉ***" : undefined },
   });
+
   if (!email || !password) {
-    console.warn("[LOGIN][API] Champs manquants:", { email, password });
+    console.warn("[LOGIN][API] Champs manquants:", {
+      email,
+      password: !!password,
+    });
     return res
       .status(400)
-      .json({ success: false, message: "Tous les champs sont requis." });
+      .json({ success: false, message: "Email et code d'accès requis." });
   }
+
   try {
     const userRes = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
-    console.log("[LOGIN][API] Résultat recherche utilisateur:", userRes.rows);
+    console.log("[LOGIN][API] Recherche utilisateur pour:", email);
+
     if (userRes.rows.length === 0) {
       console.warn(
         "[LOGIN][API] Aucun utilisateur trouvé pour cet email:",
@@ -2905,29 +3142,473 @@ app.post("/api/login", async (req, res) => {
       );
       return res
         .status(401)
-        .json({ success: false, message: "Email ou mot de passe incorrect." });
+        .json({ success: false, message: "Email ou code d'accès incorrect." });
     }
+
     const user = userRes.rows[0];
     const match = await bcrypt.compare(password, user.password);
-    console.log("[LOGIN][API] Résultat comparaison mot de passe:", match);
+    console.log(
+      "[LOGIN][API] Vérification code d'accès:",
+      match ? "✅ Valide" : "❌ Invalide"
+    );
+
     if (!match) {
-      console.warn("[LOGIN][API] Mot de passe incorrect pour:", email);
+      console.warn("[LOGIN][API] Code d'accès incorrect pour:", email);
       return res
         .status(401)
-        .json({ success: false, message: "Email ou mot de passe incorrect." });
+        .json({ success: false, message: "Email ou code d'accès incorrect." });
     }
-    // Connexion réussie : renvoyer aussi le nom et l'email
+
+    // Connexion réussie
     console.log("[LOGIN][API] Connexion réussie pour:", email);
+
+    // Vérifier si c'est un admin en se basant uniquement sur le rôle
+    const isAdmin = user.role === "admin";
+
     return res.status(200).json({
       success: true,
-      nom: user.name, // renvoie le nom sous la clé 'nom' pour compatibilité frontend
+      nom: user.name,
       email: user.email,
+      isAdmin: isAdmin,
+      profil: user.role || "Responsable",
+      // Ajouter l'URL de redirection pour les utilisateurs normaux
+      redirectUrl: isAdmin ? null : "https://dossiv.ci/html/tableauDeBord.html",
     });
   } catch (err) {
     console.error("[LOGIN][API] Erreur serveur lors de la connexion:", err);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la connexion.",
+    });
+  }
+});
+
+// ===============================
+// ROUTES POUR LE SYSTÈME DE DEMANDE D'ACCÈS
+// ===============================
+
+// Route pour recevoir les demandes d'accès
+app.post("/api/access-request", async (req, res) => {
+  const { name, email, date } = req.body;
+
+  console.log("[ACCESS-REQUEST][API] Nouvelle demande d'accès:", {
+    name,
+    email,
+    date,
+  });
+
+  if (!name || !email || !date) {
+    return res.status(400).json({
+      success: false,
+      message: "Tous les champs sont requis.",
+    });
+  }
+
+  try {
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Un compte existe déjà avec cet email.",
+      });
+    }
+
+    // Créer ou mettre à jour la table des demandes d'accès si elle n'existe pas
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS access_requests (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        request_date DATE NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        processed_at TIMESTAMP NULL,
+        processed_by VARCHAR(255) NULL
+      )
+    `);
+
+    // Vérifier si une demande existe déjà pour cet email
+    const existingRequest = await pool.query(
+      "SELECT * FROM access_requests WHERE email = $1 AND status = 'pending'",
+      [email]
+    );
+
+    if (existingRequest.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Une demande d'accès est déjà en cours pour cet email.",
+      });
+    }
+
+    // Insérer la nouvelle demande
+    const result = await pool.query(
+      `INSERT INTO access_requests (name, email, request_date, status) 
+       VALUES ($1, $2, $3, 'pending') RETURNING *`,
+      [name, email, date]
+    );
+
+    console.log(
+      "[ACCESS-REQUEST][API] Demande créée avec succès:",
+      result.rows[0]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Demande d'accès reçue avec succès.",
+      request: result.rows[0],
+    });
+  } catch (err) {
+    console.error(
+      "[ACCESS-REQUEST][API] Erreur lors de la création de la demande:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la création de la demande.",
+    });
+  }
+});
+
+// Route pour récupérer les nouvelles demandes d'accès
+app.get("/api/get-new-access-requests", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM access_requests WHERE status = 'pending' ORDER BY created_at DESC"
+    );
+
+    res.json({
+      success: true,
+      requests: result.rows,
+    });
+  } catch (err) {
+    console.error("[GET-ACCESS-REQUESTS][API] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération des demandes.",
+    });
+  }
+});
+
+// Route pour créer un compte utilisateur après approbation
+app.post("/api/create-user-account", async (req, res) => {
+  const { name, email, password } = req.body;
+
+  console.log("[CREATE-USER][API] Création de compte pour:", { name, email });
+
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Tous les champs sont requis.",
+    });
+  }
+
+  try {
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      const user = existingUser.rows[0];
+
+      // Si c'est déjà un admin, on considère la demande comme traitée avec succès
+      if (user.role === "admin") {
+        console.log(
+          "[CREATE-USER][INFO] Email appartient déjà à un admin, demande marquée comme approuvée:",
+          email
+        );
+
+        // Mettre à jour la demande d'accès comme approuvée
+        await pool.query(
+          `UPDATE access_requests 
+           SET status = 'approved', processed_at = CURRENT_TIMESTAMP, processed_by = 'admin'
+           WHERE email = $1`,
+          [email]
+        );
+
+        return res.status(200).json({
+          success: true,
+          message:
+            "Demande approuvée. L'utilisateur a déjà un compte administrateur.",
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          },
+        });
+      }
+
+      // Si c'est un utilisateur normal, on refuse (doublon réel)
+      return res.status(400).json({
+        success: false,
+        message: "Un compte utilisateur existe déjà avec cet email.",
+      });
+    }
+
+    // Si l'utilisateur n'existe pas, créer un nouveau compte utilisateur normal
+    console.log(
+      "[CREATE-USER][INFO] Création nouveau compte utilisateur:",
+      email
+    );
+
+    // Récupérer le code d'entreprise dynamique
+    const codeRes = await pool.query(
+      "SELECT code FROM company_code ORDER BY updated_at DESC LIMIT 1"
+    );
+    const codeEntreprise =
+      codeRes.rows.length > 0 ? codeRes.rows[0].code : "ITS2010";
+
+    // Générer un code d'accès aléatoire (6 caractères)
+    const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    console.log("[CREATE-USER][DEBUG] Code d'accès généré:", accessCode);
+
+    // Hasher le code d'accès pour le stocker en base (au lieu du mot de passe)
+    const hashedAccessCode = await bcrypt.hash(accessCode, 10);
+
+    // Créer l'utilisateur avec le code d'accès hashé
+    const result = await pool.query(
+      `INSERT INTO users (name, email, password, role, created_at) 
+       VALUES ($1, $2, $3, 'user', CURRENT_TIMESTAMP) RETURNING id, name, email, role`,
+      [name, email, hashedAccessCode]
+    );
+
+    // Envoyer le code d'accès par email
+    const emailSent = await sendMail({
+      to: email,
+      subject: "Votre code d'accès - ITS Service",
+      text: `Bonjour ${name},\n\nVotre demande d'accès a été approuvée !\n\nVoici vos identifiants de connexion :\n\nEmail : ${email}\nCode d'accès : ${accessCode}\n\nCode d'entreprise : ${codeEntreprise}\n\nVous pouvez maintenant vous connecter sur la plateforme.\n\nCordialement,\nL'équipe ITS Service`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #2563eb; text-align: center;">Accès Approuvé - ITS Service</h2>
+          
+          <p>Bonjour <strong>${name}</strong>,</p>
+          
+          <p style="color: #059669; font-weight: bold;">✅ Votre demande d'accès a été approuvée !</p>
+          
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #374151; margin-top: 0;">🔐 Vos identifiants de connexion :</h3>
+            
+            <p><strong>Email :</strong> ${email}</p>
+            <p><strong>Code d'accès :</strong> <span style="font-size: 1.2em; font-weight: bold; color: #dc2626; background: #fee2e2; padding: 4px 8px; border-radius: 4px;">${accessCode}</span></p>
+            <p><strong>Code d'entreprise :</strong> <span style="font-size: 1.1em; font-weight: bold; color: #2563eb;">${codeEntreprise}</span></p>
+          </div>
+          
+          <p>Vous pouvez maintenant vous connecter sur la plateforme en utilisant votre email et le code d'accès fourni.</p>
+          
+          <p style="color: #6b7280; font-size: 0.9em; margin-top: 30px;">
+            Cordialement,<br>
+            L'équipe ITS Service
+          </p>
+        </div>
+      `,
+    });
+
+    if (!emailSent) {
+      console.log("[CREATE-USER][WARNING] Échec envoi email, mais compte créé");
+    } else {
+      console.log(
+        "[CREATE-USER][INFO] Email avec code d'accès envoyé à:",
+        email
+      );
+    }
+
+    // Mettre à jour la demande d'accès
+    await pool.query(
+      `UPDATE access_requests 
+       SET status = 'approved', processed_at = CURRENT_TIMESTAMP, processed_by = 'admin'
+       WHERE email = $1`,
+      [email]
+    );
+
+    console.log("[CREATE-USER][API] Compte créé avec succès:", result.rows[0]);
+
+    res.status(201).json({
+      success: true,
+      message: `Compte utilisateur créé avec succès. Le code d'accès a été envoyé par email à ${email}.`,
+      user: result.rows[0],
+      emailSent: emailSent,
+    });
+  } catch (err) {
+    console.error(
+      "[CREATE-USER][API] Erreur lors de la création du compte:",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la création du compte.",
+    });
+  }
+});
+
+// Route pour l'authentification admin
+app.post("/api/admin-login", async (req, res) => {
+  const { email, password } = req.body;
+
+  console.log("[ADMIN-LOGIN][API] Tentative de connexion admin:", { email });
+
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Email et mot de passe requis.",
+    });
+  }
+
+  try {
+    // Rechercher l'utilisateur admin
+    const result = await pool.query(
+      "SELECT * FROM users WHERE email = $1 AND role = 'admin'",
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      console.log("[ADMIN-LOGIN][API] Admin non trouvé pour:", email);
+      return res.status(401).json({
+        success: false,
+        message: "Identifiants incorrects ou accès non autorisé.",
+      });
+    }
+
+    const admin = result.rows[0];
+
+    // Vérifier le mot de passe
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+
+    if (!isPasswordValid) {
+      console.log("[ADMIN-LOGIN][API] Mot de passe incorrect pour:", email);
+      return res.status(401).json({
+        success: false,
+        message: "Identifiants incorrects.",
+      });
+    }
+
+    // Connexion réussie
+    console.log("[ADMIN-LOGIN][API] Connexion admin réussie:", {
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+    });
+
+    res.json({
+      success: true,
+      message: "Connexion admin réussie.",
+      admin: {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
+    });
+  } catch (err) {
+    console.error("[ADMIN-LOGIN][API] Erreur lors de la connexion admin:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la connexion.",
+    });
+  }
+});
+
+// Route pour récupérer toutes les demandes d'accès (admin seulement)
+app.get("/api/admin/access-requests", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, email, request_date, status, created_at, processed_at, processed_by 
+       FROM access_requests 
+       ORDER BY created_at DESC`
+    );
+
+    res.json({
+      success: true,
+      requests: result.rows,
+    });
+  } catch (err) {
+    console.error("[ADMIN-ACCESS-REQUESTS][API] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération des demandes.",
+    });
+  }
+});
+
+// Route pour traiter une demande d'accès (approuver/rejeter)
+app.post("/api/admin/process-request", async (req, res) => {
+  const { requestId, action, adminEmail } = req.body; // action: 'approve' ou 'reject'
+
+  console.log("[ADMIN-PROCESS][API] Traitement de demande:", {
+    requestId,
+    action,
+    adminEmail,
+  });
+
+  if (!requestId || !action || !adminEmail) {
+    return res.status(400).json({
+      success: false,
+      message: "ID de demande, action et email admin requis.",
+    });
+  }
+
+  if (!["approve", "reject"].includes(action)) {
+    return res.status(400).json({
+      success: false,
+      message: "Action non valide. Utilisez 'approve' ou 'reject'.",
+    });
+  }
+
+  try {
+    // Vérifier que la demande existe et est en attente
+    const requestResult = await pool.query(
+      "SELECT * FROM access_requests WHERE id = $1 AND status = 'pending'",
+      [requestId]
+    );
+
+    if (requestResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Demande introuvable ou déjà traitée.",
+      });
+    }
+
+    const request = requestResult.rows[0];
+    const newStatus = action === "approve" ? "approved" : "rejected";
+
+    // Mettre à jour le statut de la demande
+    await pool.query(
+      `UPDATE access_requests 
+       SET status = $1, processed_at = CURRENT_TIMESTAMP, processed_by = $2 
+       WHERE id = $3`,
+      [newStatus, adminEmail, requestId]
+    );
+
+    console.log(`[ADMIN-PROCESS][API] Demande ${action}e avec succès:`, {
+      requestId,
+      email: request.email,
+      name: request.name,
+    });
+
+    res.json({
+      success: true,
+      message: `Demande ${
+        action === "approve" ? "approuvée" : "rejetée"
+      } avec succès.`,
+      request: {
+        id: requestId,
+        status: newStatus,
+        name: request.name,
+        email: request.email,
+      },
+    });
+  } catch (err) {
+    console.error("[ADMIN-PROCESS][API] Erreur lors du traitement:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors du traitement de la demande.",
     });
   }
 });
