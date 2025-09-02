@@ -323,11 +323,6 @@
         .card-section > .d-flex > div {
           max-width: 100% !important;
         }
-        
-        /* Style responsive pour le bouton d'accueil sur tablette */
-        .header-title-container {
-          gap: 12px !important;
-        }
       }
       @media (max-width: 600px) {
         .card-section > .d-flex.align-items-center.justify-content-between.flex-wrap {
@@ -371,21 +366,6 @@
         #searchButton {
           font-size: 0.98em !important;
           padding: 5px 10px !important;
-        }
-        
-        /* Style responsive pour le bouton d'accueil sur mobile */
-        .header-title-container {
-          flex-direction: column !important;
-          align-items: flex-start !important;
-          gap: 10px !important;
-        }
-        .home-button-mobile {
-          padding: 8px 12px !important;
-          font-size: 0.9em !important;
-          align-self: flex-end !important;
-        }
-        .home-button-mobile span {
-          font-size: 0.8em !important;
         }
       }
 
@@ -804,37 +784,7 @@
         <!-- EN-TÊTE MODERNE AVEC AVATAR À DROITE -->
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4" style="background:#fff;border-radius:18px;padding:24px 32px 18px 32px;box-shadow:0 4px 24px rgba(30,41,59,0.07);position:relative;">
           <div style="min-width:0;flex:1 1 0;">
-            <div class="header-title-container" style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
-              <h1 class="mb-1" style="font-size:2.1em;font-weight:900;color:#0e274e;letter-spacing:-1px;background:linear-gradient(90deg,#ffe066 0%,#0e274e 100%);padding:18px 32px;border-radius:18px;box-shadow:0 4px 24px #0e274e22;margin:0;">Tableau - Responsable de Livraison</h1>
-              
-              <!-- Icône d'accueil pour retourner au tableau de bord -->
-              <button 
-                id="homeButton"
-                class="home-button-mobile"
-                onclick="window.location.href='/html/tableauDeBord.html?direct=true'" 
-                style="
-                  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-                  border: none;
-                  border-radius: 12px;
-                  padding: 12px 16px;
-                  color: white;
-                  font-size: 1.2em;
-                  cursor: pointer;
-                  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-                  transition: all 0.3s ease;
-                  display: none;
-                  align-items: center;
-                  gap: 8px;
-                  min-width: auto;
-                  flex-shrink: 0;
-                "
-                onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(59, 130, 246, 0.4)'"
-                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)'"
-                title="Retourner au tableau de bord"
-              >
-                <i class="fas fa-home"></i>
-              </button>
-            </div>
+            <h1 class="mb-1" style="font-size:2.1em;font-weight:900;color:#0e274e;letter-spacing:-1px;background:linear-gradient(90deg,#ffe066 0%,#0e274e 100%);padding:18px 32px;border-radius:18px;box-shadow:0 4px 24px #0e274e22;">Tableau - Responsable de Livraison</h1>
             <div style="font-size:1.13em;color:#0e274e;font-weight:600;background:rgba(255,230,0,0.13);padding:10px 24px;border-radius:12px;"> Livraison & Cotage des agent Visiteur pour la visite </div>
             
             <!-- ALERTE DOSSIERS EN RETARD -->
@@ -1257,7 +1207,7 @@
             detailsDiv.innerHTML = `
               <span><strong>Page de l'utilisateur connecté</strong></span>
               <span style="color: #22c55e;">•</span>
-              <span><strong>�</strong> ${displayName}</span>
+              <span><strong> </strong> ${displayName}</span>
               <span style="color: #22c55e;">•</span>
               <span><strong>🆔</strong> ${displayUserId}</span>
               <span style="color: #22c55e;">•</span>
