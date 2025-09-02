@@ -4387,7 +4387,9 @@
                 console.log(
                   "🚀 Navigation vers Suivi des Livraisons depuis le sidebar"
                 );
-                redirectToResponsablePage("livraison");
+                // Redirection directe vers l'interface de suivi des livraisons
+                const baseUrl = window.location.origin;
+                window.location.href = `${baseUrl}/html/interfaceSuivie.html`;
               });
             }
 

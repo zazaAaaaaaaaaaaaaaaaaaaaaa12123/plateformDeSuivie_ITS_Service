@@ -1876,16 +1876,54 @@ document.addEventListener("DOMContentLoaded", function () {
         // 🔧 NOUVEAU: Récupération du paramètre de filtrage depuis l'URL
         const filterParam = getUrlParameter("filter");
         const autoFilter = getUrlParameter("autoFilter") === "true";
+        const fromSidebar = getUrlParameter("from") === "sidebar";
+        const fromDashboard = getUrlParameter("fromDashboard") === "true";
 
         console.log(
           "🔄 [DEBUG RESP LIV] Paramètres de filtrage:",
           "filter:",
           filterParam,
           "autoFilter:",
-          autoFilter
+          autoFilter,
+          "fromSidebar:",
+          fromSidebar,
+          "fromDashboard:",
+          fromDashboard
         );
 
         let filteredDeliveries = data.deliveries.filter((delivery) => {
+          // 🆕 NOUVEAU: Si on vient du sidebar OU du dashboard, afficher TOUS les dossiers (livrés ET en cours de livraison)
+          if (fromSidebar || fromDashboard) {
+            // Afficher les dossiers qui sont soit:
+            // 1. En mise_en_livraison_acconier (avec ou sans conteneurs livrés)
+            // 2. Avec tous les conteneurs livrés
+            const isMiseEnLivraison =
+              delivery.delivery_status_acconier ===
+              "mise_en_livraison_acconier";
+
+            if (isMiseEnLivraison) {
+              return true; // Afficher tous les dossiers en mise en livraison
+            }
+
+            // Vérifier si tous les conteneurs sont livrés
+            if (
+              delivery.container_statuses &&
+              typeof delivery.container_statuses === "object"
+            ) {
+              const containerStatuses = Object.values(
+                delivery.container_statuses
+              );
+              if (containerStatuses.length > 0) {
+                const allDelivered = containerStatuses.every(
+                  (status) => status === "livre" || status === "livré"
+                );
+                return allDelivered;
+              }
+            }
+
+            return false;
+          }
+
           // Si pas de filtrage automatique, appliquer le filtrage par défaut (mise_en_livraison)
           if (!autoFilter || !filterParam) {
             // Logique par défaut : dossiers en mise_en_livraison_acconier sans conteneurs livrés
