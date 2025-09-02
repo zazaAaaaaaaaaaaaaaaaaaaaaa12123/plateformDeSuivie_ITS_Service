@@ -22,9 +22,6 @@
     <link rel="stylesheet" href="../css/styleDeSuivie.css" />
     <link rel="stylesheet" href="../css/styledeTabBord.css" />
     <link rel="stylesheet" href="../css/style.css" />
-    
-    <!-- CSS pour le mode admin (visualisation uniquement) -->
-    <link rel="stylesheet" href="../css/adminMode.css" />
 
     <style>
       /* Alignement amélioré des filtres date sur tablette */
@@ -817,79 +814,6 @@
               </div>
             </div>
             
-            <!-- BANDEAU D'INFORMATION UTILISATEUR CIBLÉ (affiché quand redirigé depuis le tableau de bord) -->
-            <div 
-              id="targetUserInfoBanner" 
-              style="
-                display: none;
-                margin-top: 8px;
-                padding: 8px 20px;
-                background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%);
-                border: 1px solid #22c55e;
-                border-radius: 20px;
-                box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
-                width: 100%;
-                max-width: 100%;
-                min-height: 36px;
-                align-items: center;
-                justify-content: space-between;
-              "
-            >
-              <div style="
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                font-size: 0.9em;
-                font-weight: 500;
-                color: #15803d;
-                flex: 1;
-                min-width: 0;
-              ">
-                <span style="
-                  background: #22c55e;
-                  color: white;
-                  border-radius: 50%;
-                  width: 24px;
-                  height: 24px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 12px;
-                  flex-shrink: 0;
-                ">🎯</span>
-                
-                <div id="targetUserDetails" style="
-                  display: flex;
-                  align-items: center;
-                  gap: 15px;
-                  flex: 1;
-                  overflow: hidden;
-                  white-space: nowrap;
-                ">
-                  <!-- Les détails de l'utilisateur seront insérés ici -->
-                </div>
-              </div>
-              
-              <button 
-                onclick="document.getElementById('targetUserInfoBanner').style.display='none'"
-                style="
-                  background: none;
-                  border: none;
-                  color: #15803d;
-                  font-size: 16px;
-                  cursor: pointer;
-                  padding: 4px;
-                  border-radius: 50%;
-                  width: 28px;
-                  height: 28px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  flex-shrink: 0;
-                "
-                title="Fermer"
-              >✕</button>
-            </div>
             <!-- BARRE DE DÉFILEMENT POUR LES AGENTS (conservée) -->
             <div class="scrolling-message-bar" id="newAgentScrollingContainer" style="margin-top:10px;max-width:350px;width:100%;overflow-x:auto;">
               <div class="scrolling-message-content" id="newAgentScrollingContent"></div>
@@ -1008,9 +932,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Script de gestion du mode admin (doit être chargé AVANT le script principal) -->
-    <script src="../js/adminModeManager.js"></script>
     
     <script src="../js/scriptRespLiv.js"></script>
     <script>
@@ -1158,86 +1079,6 @@
         });
 
         console.log('✅ [TRACKING] Système de tracking utilisateur initialisé pour resp_liv.html');
-      })();
-    </script>
-
-    <!-- SCRIPT POUR AFFICHER LES INFORMATIONS DE L'UTILISATEUR CIBLÉ -->
-    <script>
-      (function() {
-        // Fonction pour afficher les informations de l'utilisateur ciblé
-        function showTargetUserInfo() {
-          const banner = document.getElementById('targetUserInfoBanner');
-          const detailsDiv = document.getElementById('targetUserDetails');
-          
-          if (!banner || !detailsDiv) return;
-
-          // Vérifier les paramètres URL
-          const urlParams = new URLSearchParams(window.location.search);
-          const fromDashboard = urlParams.get('fromDashboard');
-          const targetUser = urlParams.get('targetUser');
-          const userId = urlParams.get('userId');
-          const adminMode = urlParams.get('mode');
-          
-          // Vérifier localStorage
-          const targetUserInfo = localStorage.getItem('targetUserInfo');
-          let userInfo = null;
-          
-          if (targetUserInfo) {
-            try {
-              userInfo = JSON.parse(targetUserInfo);
-              // Vérifier si l'info n'est pas trop ancienne (30 secondes max)
-              if (Date.now() - userInfo.redirectTime > 30000) {
-                localStorage.removeItem('targetUserInfo');
-                userInfo = null;
-              }
-            } catch (e) {
-              localStorage.removeItem('targetUserInfo');
-            }
-          }
-
-          // Afficher les informations si on vient du tableau de bord OU si on est en mode admin
-          if ((fromDashboard === 'true' || adminMode === 'admin') && (targetUser || userInfo)) {
-            const displayName = userInfo?.userName || targetUser || 'Utilisateur inconnu';
-            const displayUserId = userInfo?.userId || userId || 'ID non disponible';
-            const pageType = userInfo?.pageType || 'Responsable de Livraison';
-            
-            // Message différent selon le mode
-            const modeText = adminMode === 'admin' ? '👑 Mode Admin' : '📋';
-            
-            detailsDiv.innerHTML = `
-              <span><strong>Page de l'utilisateur connecté</strong></span>
-              <span style="color: #22c55e;">•</span>
-              <span><strong> </strong> ${displayName}</span>
-              <span style="color: #22c55e;">•</span>
-              <span><strong>🆔</strong> ${displayUserId}</span>
-              <span style="color: #22c55e;">•</span>
-              <span><strong>${modeText}</strong> ${pageType}</span>
-            `;
-            
-            banner.style.display = 'flex';
-            
-            console.log('🎯 [TARGET USER] Affichage des informations utilisateur:', {
-              displayName,
-              displayUserId,
-              pageType
-            });
-            
-            // Auto-masquer après 15 secondes
-            setTimeout(() => {
-              banner.style.display = 'none';
-            }, 15000);
-          }
-        }
-
-        // Exécuter au chargement de la page
-        document.addEventListener('DOMContentLoaded', showTargetUserInfo);
-        
-        // Exécuter immédiatement si la page est déjà chargée
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', showTargetUserInfo);
-        } else {
-          showTargetUserInfo();
-        }
       })();
     </script>
 

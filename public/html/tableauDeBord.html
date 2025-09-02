@@ -4396,90 +4396,31 @@
 
             // === FONCTION UTILITAIRE POUR LA REDIRECTION RESPONSABLES ===
             function redirectToResponsablePage(pageType) {
-              const adminUser = localStorage.getItem("user");
-              let isAdmin = false;
-
-              try {
-                if (adminUser) {
-                  const user = JSON.parse(adminUser);
-                  // TOUTE personne avec une session "user" depuis index.html est considérée comme admin
-                  isAdmin =
-                    user && (user.role === "admin" || user.nom || user.email);
-                }
-              } catch (e) {
-                console.log(
-                  "Erreur lors de la vérification de la session admin:",
-                  e
-                );
-              }
-
-              // Forcer le mode admin si on vient du tableau de bord
-              isAdmin = true; // FORCE ADMIN MODE pour tous les utilisateurs du tableau de bord
-
               let targetUrl;
 
               if (pageType === "acconier") {
-                if (isAdmin) {
-                  // Redirection en mode admin (visualisation uniquement) - URL dynamique
-                  const baseUrl = window.location.origin;
-                  targetUrl = `${baseUrl}/html/resp_acconier.html?mode=admin&from=sidebar`;
-                  // Marquer la session pour la page cible
-                  localStorage.setItem("adminViewMode", "true");
-                  localStorage.setItem(
-                    "adminViewTimestamp",
-                    Date.now().toString()
-                  );
-                  localStorage.setItem("adminViewTarget", "acconier");
-                  // Marquer que l'utilisateur vient du tableau de bord principal
-                  sessionStorage.setItem("fromMainDashboard", "true");
-                  localStorage.setItem("userAccessLevel", "main_dashboard");
-                } else {
-                  // Redirection normale pour les responsables avec paramètre sidebar
-                  targetUrl = "resp_acconier.html?from=sidebar";
-                  // Marquer que l'utilisateur vient du tableau de bord principal
-                  sessionStorage.setItem("fromMainDashboard", "true");
-                  localStorage.setItem("userAccessLevel", "main_dashboard");
-                }
+                // Redirection normale vers la page acconier
+                const baseUrl = window.location.origin;
+                targetUrl = `${baseUrl}/html/resp_acconier.html?from=sidebar`;
+                // Marquer que l'utilisateur vient du tableau de bord principal
+                sessionStorage.setItem("fromMainDashboard", "true");
+                localStorage.setItem("userAccessLevel", "main_dashboard");
               } else if (pageType === "livraison") {
-                if (isAdmin) {
-                  // Redirection en mode admin (visualisation uniquement) - URL dynamique
-                  const baseUrl = window.location.origin;
-                  targetUrl = `${baseUrl}/html/resp_liv.html?mode=admin&from=sidebar`;
-                  // Marquer la session pour la page cible
-                  localStorage.setItem("adminViewMode", "true");
-                  localStorage.setItem(
-                    "adminViewTimestamp",
-                    Date.now().toString()
-                  );
-                  localStorage.setItem("adminViewTarget", "livraison");
-                  // Marquer que l'utilisateur vient du tableau de bord principal
-                  sessionStorage.setItem("fromMainDashboard", "true");
-                  localStorage.setItem("userAccessLevel", "main_dashboard");
-                } else {
-                  // Redirection normale pour les responsables avec paramètre sidebar
-                  targetUrl = "resp_liv.html?from=sidebar";
-                  // Marquer que l'utilisateur vient du tableau de bord principal
-                  sessionStorage.setItem("fromMainDashboard", "true");
-                  localStorage.setItem("userAccessLevel", "main_dashboard");
-                }
+                // Redirection normale vers la page livraison
+                const baseUrl = window.location.origin;
+                targetUrl = `${baseUrl}/html/resp_liv.html?from=sidebar`;
+                // Marquer que l'utilisateur vient du tableau de bord principal
+                sessionStorage.setItem("fromMainDashboard", "true");
+                localStorage.setItem("userAccessLevel", "main_dashboard");
               }
 
               if (targetUrl) {
                 console.log("🔧 [DEBUG] Redirection Details:", {
                   pageType,
-                  isAdmin,
                   targetUrl,
                   userInStorage: !!localStorage.getItem("user"),
-                  adminViewMode: localStorage.getItem("adminViewMode"),
-                  adminViewTimestamp:
-                    localStorage.getItem("adminViewTimestamp"),
-                  adminViewTarget: localStorage.getItem("adminViewTarget"),
                 });
-                console.log(
-                  `Redirection vers ${targetUrl} - Mode: ${
-                    isAdmin ? "Admin (Visualisation)" : "Responsable"
-                  }`
-                );
+                console.log(`Redirection vers ${targetUrl}`);
                 window.location.href = targetUrl;
               }
             }
@@ -6777,35 +6718,19 @@
               ? "Responsable Acconier"
               : "Responsable Livraison";
           const confirmed = confirm(
-            `Voulez-vous aller à la page de ${userName} (${pageType}) ?\n\n` +
-              `Vous allez être redirigé vers la page correspondante en mode admin.`
+            `Voulez-vous aller à la page de ${userName} (${pageType}) ?`
           );
 
           if (confirmed) {
-            // Stocker les informations de l'utilisateur ciblé dans le localStorage temporairement
-            const targetUserInfo = {
-              userName: userName,
-              userId: userId,
-              pageType: pageType,
-              redirectTime: Date.now(),
-              isRedirectedFromDashboard: true,
-            };
-
-            localStorage.setItem(
-              "targetUserInfo",
-              JSON.stringify(targetUserInfo)
-            );
-
-            // Déterminer l'URL complète avec le domaine dynamique et le mode admin
+            // Déterminer l'URL complète avec le domaine dynamique
             const baseUrl = window.location.origin;
             const fullPageUrl =
               pageName === "resp_acconier.html"
                 ? `${baseUrl}/html/resp_acconier.html`
                 : `${baseUrl}/html/resp_liv.html`;
 
-            // Créer une URL avec les paramètres pour plus de clarté
+            // Créer une URL avec les paramètres de base
             const urlParams = new URLSearchParams({
-              mode: "admin",
               fromDashboard: "true",
               targetUser: userName,
               userId: userId || "",
@@ -6814,18 +6739,13 @@
 
             const finalUrl = `${fullPageUrl}?${urlParams.toString()}`;
 
-            console.log(`🎯 [ADMIN REDIRECT] Redirection vers: ${finalUrl}`);
+            console.log(`🎯 [REDIRECT] Redirection vers: ${finalUrl}`);
             console.log(
-              `👤 [ADMIN REDIRECT] Utilisateur ciblé: ${userName} (${pageType})`
+              `👤 [REDIRECT] Utilisateur ciblé: ${userName} (${pageType})`
             );
 
-            // Redirection dans la même fenêtre pour assurer la transmission des paramètres
+            // Redirection dans la même fenêtre
             window.location.href = finalUrl;
-
-            // Nettoyer les informations après 30 secondes
-            setTimeout(() => {
-              localStorage.removeItem("targetUserInfo");
-            }, 30000);
           } else {
             console.log(`❌ [REDIRECT] Redirection annulée par l'utilisateur`);
           }
