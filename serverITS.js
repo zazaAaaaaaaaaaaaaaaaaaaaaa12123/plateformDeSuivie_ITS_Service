@@ -2182,6 +2182,73 @@ async function createDefaultAdmin() {
 
 ensureUsersTable();
 
+// Fonction d'initialisation complète
+async function initializeDatabase() {
+  try {
+    console.log("🔧 Initialisation complète de la base de données...");
+
+    // Attendre que toutes les tables soient créées
+    await ensureUsersTable();
+    await ensureAccessRequestsTable();
+
+    console.log("✅ Base de données initialisée avec succès");
+  } catch (error) {
+    console.error(
+      "❌ Erreur lors de l'initialisation de la base de données:",
+      error
+    );
+  }
+}
+
+// Initialiser la base de données
+initializeDatabase();
+
+// TABLE ACCESS_REQUESTS (demandes d'accès)
+// ===============================
+const createAccessRequestsTable = `
+  CREATE TABLE IF NOT EXISTS access_requests (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    request_date DATE NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP NULL,
+    processed_by VARCHAR(255) NULL
+  );
+`;
+
+async function ensureAccessRequestsTable() {
+  try {
+    // Vérifier si la table existe et la créer seulement si elle n'existe pas
+    console.log("🔧 Vérification de la table access_requests...");
+
+    // Vérifier si la table existe
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'access_requests'
+      );
+    `);
+
+    if (!tableCheck.rows[0].exists) {
+      // La table n'existe pas, la créer
+      await pool.query(createAccessRequestsTable);
+      console.log("✅ Table 'access_requests' créée avec succès.");
+    } else {
+      console.log(
+        "✅ Table 'access_requests' existe déjà - données préservées."
+      );
+    }
+  } catch (err) {
+    console.error(
+      "Erreur lors de la création de la table access_requests:",
+      err
+    );
+  }
+}
+
 // Définition de la table livraison_conteneur
 const creationTableLivraisonConteneur = `
     CREATE TABLE IF NOT EXISTS livraison_conteneur (
@@ -3218,20 +3285,6 @@ app.post("/api/access-request", async (req, res) => {
       });
     }
 
-    // Créer ou mettre à jour la table des demandes d'accès si elle n'existe pas
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS access_requests (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        request_date DATE NOT NULL,
-        status VARCHAR(50) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        processed_at TIMESTAMP NULL,
-        processed_by VARCHAR(255) NULL
-      )
-    `);
-
     // Vérifier si une demande existe déjà pour cet email
     const existingRequest = await pool.query(
       "SELECT * FROM access_requests WHERE email = $1 AND status = 'pending'",
@@ -3518,6 +3571,9 @@ app.post("/api/admin-login", async (req, res) => {
 // Route pour récupérer toutes les demandes d'accès (admin seulement)
 app.get("/api/admin/access-requests", async (req, res) => {
   try {
+    // S'assurer que la table existe
+    await ensureAccessRequestsTable();
+
     const result = await pool.query(
       `SELECT id, name, email, request_date, status, created_at, processed_at, processed_by 
        FROM access_requests 

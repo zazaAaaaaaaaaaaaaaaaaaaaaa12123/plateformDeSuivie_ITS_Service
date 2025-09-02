@@ -1,566 +1,667 @@
-// Gestion de l'interface d'administration des accès - Version Améliorée
+// Variables globales
+let currentRequests = [];
 let currentRequestId = null;
-let requests = [];
-let currentFilter = "pending";
-let activities = [];
+let currentFilter = "all";
+let autoRefreshInterval;
+let isAutoRefreshEnabled = true;
+let lastDataHash = null; // Pour éviter les rechargements inutiles
 
-// Initialisation
+// Charger les demandes au démarrage
 document.addEventListener("DOMContentLoaded", function () {
-  // Vérifier l'authentification admin
-  checkAdminAuth();
-
-  loadRequests();
-  updateStatistics();
-  updateDailyHistory();
-  updateRecentActivity();
-  updateAdvancedStats();
-
-  // Gestionnaire pour le filtre de date
-  document
-    .getElementById("dateFilter")
-    .addEventListener("change", updateDailyHistory);
-
-  // Vérification des nouvelles demandes toutes les 30 secondes
-  setInterval(checkForNewRequests, 30000);
+  console.log("🚀 Initialisation de la gestion d'accès avancée...");
+  initializeAccessManagement();
 });
 
-// Vérifier l'authentification admin
-function checkAdminAuth() {
-  const isAdminLoggedIn = localStorage.getItem("isAdminLoggedIn");
-  if (isAdminLoggedIn !== "true") {
-    window.location.href = "/html/admin-login.html";
-    return;
+// Fonction d'initialisation
+async function initializeAccessManagement() {
+  try {
+    // Charger les demandes
+    await loadAccessRequests();
+
+    // Démarrer l'actualisation automatique
+    startAutoRefresh();
+
+    // Initialiser les événements
+    initializeEventListeners();
+
+    console.log("✅ Gestion d'accès initialisée avec succès");
+  } catch (error) {
+    console.error("❌ Erreur lors de l'initialisation:", error);
+    showNotification("Erreur lors de l'initialisation", "error");
   }
 }
 
-// Charger les demandes
-function loadRequests() {
-  // Charger depuis l'API backend
-  fetch("/api/access-requests")
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        requests = data.requests || [];
-      } else {
-        requests = [];
-      }
-      displayRequests();
-      updateStatistics();
-    })
-    .catch((error) => {
-      console.error("Erreur lors du chargement des demandes:", error);
-      requests = [];
-      displayRequests();
-      updateStatistics();
+// Fonction pour initialiser les événements
+function initializeEventListeners() {
+  // Filtre par date
+  const dateFilter = document.getElementById("dateFilter");
+  if (dateFilter) {
+    dateFilter.addEventListener("change", function () {
+      updateDailyHistory(this.value);
+    });
+  }
+
+  // Raccourcis clavier
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeModal();
+    }
+    if (event.ctrlKey && event.key === "r") {
+      event.preventDefault();
+      loadAccessRequests();
+    }
+  });
+}
+
+// Fonction pour démarrer l'actualisation automatique
+function startAutoRefresh() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+  }
+
+  if (isAutoRefreshEnabled) {
+    // Actualisation toutes les 2 minutes au lieu de 30 secondes
+    autoRefreshInterval = setInterval(loadAccessRequests, 120000);
+    console.log("🔄 Actualisation automatique activée (2 min)");
+  }
+}
+
+// Fonction pour charger les demandes d'accès
+async function loadAccessRequests() {
+  try {
+    console.log("📥 Chargement des demandes d'accès...");
+
+    // Afficher un indicateur de chargement
+    showLoadingIndicator(true);
+
+    const response = await fetch("/api/get-new-access-requests", {
+      headers: {
+        "Cache-Control": "no-cache",
+      },
     });
 
-  // Charger les activités depuis localStorage
-  const storedActivities = localStorage.getItem("adminActivities");
-  if (storedActivities) {
-    activities = JSON.parse(storedActivities);
-  } else {
-    activities = [];
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      const newRequests = data.requests || [];
+
+      // Créer un hash simple des données pour détecter les changements
+      const newDataHash = JSON.stringify(
+        newRequests.map((req) => ({
+          id: req.id,
+          status: req.status,
+          processed_at: req.processed_at,
+        }))
+      );
+
+      // Ne mettre à jour que si les données ont changé
+      if (newDataHash !== lastDataHash) {
+        currentRequests = newRequests;
+        lastDataHash = newDataHash;
+
+        console.log(
+          `✅ ${currentRequests.length} demandes chargées (données mises à jour)`
+        );
+
+        // Mettre à jour l'interface
+        updateStatistics();
+        displayRequests();
+        updateDailyHistory();
+        updateRecentActivity();
+
+        // Mettre à jour le timestamp de dernière actualisation
+        updateLastRefreshTime();
+      } else {
+        console.log(
+          `📋 ${newRequests.length} demandes - aucun changement détecté`
+        );
+      }
+    } else {
+      throw new Error(data.message || "Erreur inconnue");
+    }
+  } catch (error) {
+    console.error("❌ Erreur lors du chargement:", error);
+    showNotification(`Erreur: ${error.message}`, "error");
+  } finally {
+    showLoadingIndicator(false);
+  }
+}
+
+// Fonction pour afficher/masquer l'indicateur de chargement
+function showLoadingIndicator(show) {
+  // Créer l'indicateur s'il n'existe pas
+  let indicator = document.getElementById("loadingIndicator");
+  if (!indicator && show) {
+    indicator = document.createElement("div");
+    indicator.id = "loadingIndicator";
+    indicator.className =
+      "fixed top-20 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-40";
+    indicator.innerHTML =
+      '<i class="fas fa-spinner fa-spin mr-2"></i>Chargement...';
+    document.body.appendChild(indicator);
   }
 
-  displayRequests();
-  updateStatistics();
+  if (indicator) {
+    indicator.style.display = show ? "block" : "none";
+  }
 }
 
-// Sauvegarder les données
-function saveRequests() {
-  localStorage.setItem("accessRequests", JSON.stringify(requests));
-}
+// Fonction pour mettre à jour le temps de dernière actualisation
+function updateLastRefreshTime() {
+  let lastRefreshElement = document.getElementById("lastRefreshTime");
+  if (!lastRefreshElement) {
+    // Créer l'élément s'il n'existe pas
+    lastRefreshElement = document.createElement("div");
+    lastRefreshElement.id = "lastRefreshTime";
+    lastRefreshElement.className = "text-sm text-gray-500 text-center mt-4";
 
-function saveActivities() {
-  localStorage.setItem("adminActivities", JSON.stringify(activities));
-}
-
-// Filtrer les demandes selon le statut
-function filterRequests(status) {
-  currentFilter = status;
-
-  // Mettre à jour l'apparence des cartes
-  document.querySelectorAll(".stat-card").forEach((card) => {
-    card.classList.remove("active");
-  });
-  document.querySelector(`[data-filter="${status}"]`).classList.add("active");
-
-  displayRequests();
-  updateRequestsTitle();
-}
-
-// Effacer le filtre
-function clearFilter() {
-  currentFilter = "pending";
-  document.querySelectorAll(".stat-card").forEach((card) => {
-    card.classList.remove("active");
-  });
-  displayRequests();
-  updateRequestsTitle();
-}
-
-// Mettre à jour le titre de la section des demandes
-function updateRequestsTitle() {
-  const titleElement = document.getElementById("requestsTitle");
-  const clearBtn = document.getElementById("clearFilterBtn");
-  const countElement = document.getElementById("requestsCount");
-
-  let filteredRequests;
-  let title;
-
-  switch (currentFilter) {
-    case "all":
-      filteredRequests = requests;
-      title = "Toutes les Demandes";
-      clearBtn.classList.remove("hidden");
-      break;
-    case "pending":
-      filteredRequests = requests.filter((req) => req.status === "pending");
-      title = "Demandes en Attente";
-      clearBtn.classList.add("hidden");
-      break;
-    case "approved":
-      filteredRequests = requests.filter((req) => req.status === "approved");
-      title = "Demandes Approuvées";
-      clearBtn.classList.remove("hidden");
-      break;
-    case "rejected":
-      filteredRequests = requests.filter((req) => req.status === "rejected");
-      title = "Demandes Rejetées";
-      clearBtn.classList.remove("hidden");
-      break;
-    default:
-      filteredRequests = requests.filter((req) => req.status === "pending");
-      title = "Demandes d'Accès";
+    const requestsList = document.getElementById("requestsList");
+    if (requestsList && requestsList.parentNode) {
+      requestsList.parentNode.appendChild(lastRefreshElement);
+    }
   }
 
-  titleElement.textContent = title;
-  countElement.textContent = filteredRequests.length;
+  const now = new Date();
+  lastRefreshElement.textContent = `Dernière actualisation: ${now.toLocaleTimeString(
+    "fr-FR"
+  )}`;
 }
 
-// Afficher les demandes selon le filtre actuel
-function displayRequests() {
-  const requestsList = document.getElementById("requestsList");
-  const noRequests = document.getElementById("noRequests");
-  const noRequestsMessage = document.getElementById("noRequestsMessage");
+// Fonction pour mettre à jour les statistiques avancées
+function updateStatistics() {
+  const total = currentRequests.length;
+  const pending = currentRequests.filter(
+    (req) => req.status === "pending"
+  ).length;
+  const approved = currentRequests.filter(
+    (req) => req.status === "approved"
+  ).length;
+  const rejected = currentRequests.filter(
+    (req) => req.status === "rejected"
+  ).length;
 
-  let filteredRequests;
-  let message;
+  // Statistiques de base
+  document.getElementById("totalRequests").textContent = total;
+  document.getElementById("pendingRequests").textContent = pending;
+  document.getElementById("approvedRequests").textContent = approved;
+  document.getElementById("rejectedRequests").textContent = rejected;
 
-  switch (currentFilter) {
-    case "all":
-      filteredRequests = requests;
-      message = "Aucune demande d'accès";
+  // Calculs avancés
+  const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+  document.getElementById("approvalRate").textContent = approvalRate + "%";
+
+  // Demandes d'aujourd'hui
+  const today = new Date().toISOString().split("T")[0];
+  const todayRequests = currentRequests.filter((req) => {
+    const requestDate = new Date(req.created_at).toISOString().split("T")[0];
+    return requestDate === today;
+  }).length;
+  document.getElementById("todayRequests").textContent = todayRequests;
+
+  // Temps de traitement moyen (simulé pour l'instant)
+  document.getElementById("avgProcessingTime").textContent = "2h";
+
+  console.log(
+    `📊 Statistiques: Total=${total}, En attente=${pending}, Approuvées=${approved}, Rejetées=${rejected}, Aujourd'hui=${todayRequests}`
+  );
+}
+
+// Fonction pour mettre à jour l'historique journalier
+function updateDailyHistory(period = "today") {
+  const historyContainer = document.getElementById("dailyHistory");
+  if (!historyContainer) return;
+
+  let filteredRequests = [];
+  const now = new Date();
+
+  switch (period) {
+    case "today":
+      const today = now.toISOString().split("T")[0];
+      filteredRequests = currentRequests.filter((req) => {
+        const requestDate = new Date(req.created_at)
+          .toISOString()
+          .split("T")[0];
+        return requestDate === today;
+      });
       break;
-    case "pending":
-      filteredRequests = requests.filter((req) => req.status === "pending");
-      message = "Aucune demande en attente";
+    case "yesterday":
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+      filteredRequests = currentRequests.filter((req) => {
+        const requestDate = new Date(req.created_at)
+          .toISOString()
+          .split("T")[0];
+        return requestDate === yesterdayStr;
+      });
       break;
-    case "approved":
-      filteredRequests = requests.filter((req) => req.status === "approved");
-      message = "Aucune demande approuvée";
+    case "week":
+      const weekAgo = new Date(now);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      filteredRequests = currentRequests.filter((req) => {
+        const requestDate = new Date(req.created_at);
+        return requestDate >= weekAgo;
+      });
       break;
-    case "rejected":
-      filteredRequests = requests.filter((req) => req.status === "rejected");
-      message = "Aucune demande rejetée";
+    case "month":
+      const monthAgo = new Date(now);
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      filteredRequests = currentRequests.filter((req) => {
+        const requestDate = new Date(req.created_at);
+        return requestDate >= monthAgo;
+      });
       break;
-    default:
-      filteredRequests = requests.filter((req) => req.status === "pending");
-      message = "Aucune demande en attente";
   }
 
   if (filteredRequests.length === 0) {
+    historyContainer.innerHTML =
+      '<div class="text-center text-gray-500 py-4">Aucune activité pour cette période</div>';
+    return;
+  }
+
+  historyContainer.innerHTML = filteredRequests
+    .slice(0, 5)
+    .map(
+      (req) => `
+        <div class="timeline-item">
+            <div class="text-sm font-medium text-gray-800">${req.name}</div>
+            <div class="text-xs text-gray-500">${formatDateTime(
+              req.created_at
+            )}</div>
+            <span class="text-xs px-2 py-1 rounded-full ${getStatusClass(
+              req.status
+            )}">${getStatusText(req.status)}</span>
+        </div>
+    `
+    )
+    .join("");
+}
+
+// Fonction pour mettre à jour l'activité récente
+function updateRecentActivity() {
+  const activityContainer = document.getElementById("recentActivity");
+  if (!activityContainer) return;
+
+  // Trier par date de création (plus récent en premier)
+  const recentRequests = [...currentRequests]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5);
+
+  if (recentRequests.length === 0) {
+    activityContainer.innerHTML =
+      '<div class="text-center text-gray-500 py-4">Aucune activité récente</div>';
+    return;
+  }
+
+  activityContainer.innerHTML = recentRequests
+    .map(
+      (req) => `
+        <div class="timeline-item">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-sm font-medium text-gray-800">${
+                      req.name
+                    }</div>
+                    <div class="text-xs text-gray-500">${req.email}</div>
+                    <div class="text-xs text-gray-500">${getRelativeTime(
+                      req.created_at
+                    )}</div>
+                </div>
+                <span class="text-xs px-2 py-1 rounded-full ${getStatusClass(
+                  req.status
+                )}">${getStatusText(req.status)}</span>
+            </div>
+        </div>
+    `
+    )
+    .join("");
+}
+
+// Fonction pour obtenir le temps relatif
+function getRelativeTime(dateString) {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffInSeconds = Math.floor((now - date) / 1000);
+
+  if (diffInSeconds < 60) return "À l'instant";
+  if (diffInSeconds < 3600)
+    return `Il y a ${Math.floor(diffInSeconds / 60)} min`;
+  if (diffInSeconds < 86400)
+    return `Il y a ${Math.floor(diffInSeconds / 3600)}h`;
+  return `Il y a ${Math.floor(diffInSeconds / 86400)} jour(s)`;
+}
+
+// Fonction pour afficher les demandes avec pagination
+function displayRequests() {
+  const requestsList = document.getElementById("requestsList");
+  const noRequestsDiv = document.getElementById("noRequests");
+  const requestsCount = document.getElementById("requestsCount");
+
+  // Filtrer les demandes selon le filtre actuel
+  let filteredRequests = currentRequests;
+  if (currentFilter !== "all") {
+    filteredRequests = currentRequests.filter(
+      (req) => req.status === currentFilter
+    );
+  }
+
+  // Trier par date de création (plus récent en premier)
+  filteredRequests.sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+
+  requestsCount.textContent = filteredRequests.length;
+
+  if (filteredRequests.length === 0) {
     requestsList.style.display = "none";
-    noRequests.style.display = "block";
-    noRequestsMessage.textContent = message;
+    noRequestsDiv.style.display = "block";
+
+    const message = document.getElementById("noRequestsMessage");
+    if (currentFilter === "all") {
+      message.textContent = "Aucune demande d'accès trouvée";
+    } else {
+      message.textContent = `Aucune demande ${getFilterLabel(
+        currentFilter
+      )} trouvée`;
+    }
     return;
   }
 
   requestsList.style.display = "block";
-  noRequests.style.display = "none";
+  noRequestsDiv.style.display = "none";
 
-  requestsList.innerHTML = filteredRequests
-    .map((request) => {
-      const statusClass = getStatusClass(request.status);
-      const statusText = getStatusText(request.status);
-      const actionButton = getActionButton(request);
+  requestsList.innerHTML = "";
 
-      return `
-            <div class="access-card bg-gray-50 rounded-lg p-6 border border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user text-blue-600 text-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-800">${
-                              request.name
-                            }</h3>
-                            <p class="text-sm text-gray-600">${
-                              request.email
-                            }</p>
-                            <p class="text-xs text-gray-500">Demandé le ${formatDate(
-                              request.date
-                            )}</p>
-                            ${
-                              request.processedAt
-                                ? `<p class="text-xs text-gray-400">Traité le ${formatDateTime(
-                                    request.processedAt
-                                  )}</p>`
-                                : ""
-                            }
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <span class="px-3 py-1 rounded-full text-xs font-medium ${statusClass} text-white">
-                            ${statusText}
-                        </span>
-                        ${actionButton}
-                    </div>
-                </div>
-                <div class="mt-4 text-sm text-gray-600">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    ${getRequestDescription(request)}
-                </div>
-            </div>
-        `;
-    })
-    .join("");
-
-  updateRequestsTitle();
+  filteredRequests.forEach((request) => {
+    const requestCard = createEnhancedRequestCard(request);
+    requestsList.appendChild(requestCard);
+  });
 }
 
-// Fonctions utilitaires pour l'affichage
+// Fonction pour créer une carte de demande améliorée
+function createEnhancedRequestCard(request) {
+  const div = document.createElement("div");
+  div.className =
+    "access-card bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-300";
+
+  const statusClass = getStatusClass(request.status);
+  const statusText = getStatusText(request.status);
+  const formattedDate = formatDate(request.request_date);
+  const createdAt = formatDateTime(request.created_at);
+  const relativeTime = getRelativeTime(request.created_at);
+
+  div.innerHTML = `
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">${
+                          request.name
+                        }</h3>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 text-sm">
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-envelope w-4 mr-3 text-gray-400"></i>
+                        <span class="font-medium">${request.email}</span>
+                    </p>
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-calendar w-4 mr-3 text-gray-400"></i>
+                        <span>Demande pour le: <strong>${formattedDate}</strong></span>
+                    </p>
+                    <p class="text-gray-500 flex items-center">
+                        <i class="fas fa-clock w-4 mr-3 text-gray-400"></i>
+                        <span>Créée ${relativeTime} (${createdAt})</span>
+                    </p>
+                    ${
+                      request.processed_at
+                        ? `
+                        <p class="text-gray-500 flex items-center">
+                            <i class="fas fa-check w-4 mr-3 text-gray-400"></i>
+                            <span>Traitée le: ${formatDateTime(
+                              request.processed_at
+                            )}</span>
+                        </p>
+                    `
+                        : ""
+                    }
+                </div>
+            </div>
+            
+            <div class="flex flex-col space-y-2 ml-4">
+                ${
+                  request.status === "pending"
+                    ? `
+                    <button 
+                        onclick="openProcessModal(${request.id})"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center space-x-2 transform hover:scale-105"
+                        title="Traiter cette demande"
+                    >
+                        <i class="fas fa-cog"></i>
+                        <span>Traiter</span>
+                    </button>
+                `
+                    : ""
+                }
+                <button 
+                    onclick="viewRequestDetails(${request.id})"
+                    class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition transform hover:scale-105"
+                    title="Voir les détails"
+                >
+                    <i class="fas fa-eye"></i>
+                </button>
+                ${
+                  request.status === "approved"
+                    ? `
+                    <button 
+                        onclick="resendCredentials(${request.id})"
+                        class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg transition transform hover:scale-105"
+                        title="Renvoyer les identifiants"
+                    >
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                `
+                    : ""
+                }
+            </div>
+        </div>
+    `;
+
+  return div;
+}
+
+// Fonction pour renvoyer les identifiants
+async function resendCredentials(requestId) {
+  if (!confirm("Voulez-vous renvoyer les identifiants à cet utilisateur ?")) {
+    return;
+  }
+
+  try {
+    // Implémenter l'API de renvoi d'identifiants
+    showNotification(
+      "Fonctionnalité de renvoi en cours de développement",
+      "info"
+    );
+  } catch (error) {
+    console.error("❌ Erreur lors du renvoi:", error);
+    showNotification("Erreur lors du renvoi des identifiants", "error");
+  }
+}
+
+// Fonction pour ouvrir le modal de traitement (version améliorée)
+function openProcessModal(requestId) {
+  currentRequestId = requestId;
+  const request = currentRequests.find((req) => req.id === requestId);
+
+  if (!request) {
+    showNotification("Demande non trouvée", "error");
+    return;
+  }
+
+  // Remplir les champs du modal
+  document.getElementById("modalUserName").textContent = request.name;
+  document.getElementById("modalUserEmail").textContent = request.email;
+  document.getElementById("modalRequestDate").textContent = formatDate(
+    request.request_date
+  );
+  document.getElementById("userEmailInput").value = request.email;
+
+  // Générer un mot de passe sécurisé
+  generateSecurePassword();
+
+  // Afficher le modal avec animation
+  const modal = document.getElementById("processModal");
+  modal.classList.remove("hidden");
+
+  // Ajouter une classe pour l'animation
+  setTimeout(() => {
+    modal.firstElementChild.style.transform = "scale(1)";
+    modal.firstElementChild.style.opacity = "1";
+  }, 10);
+}
+
+// Fonction pour générer un mot de passe sécurisé
+function generateSecurePassword() {
+  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const lowercase = "abcdefghijklmnopqrstuvwxyz";
+  const numbers = "0123456789";
+  const symbols = "!@#$%^&*";
+
+  let password = "";
+
+  // Assurer au moins un caractère de chaque type
+  password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+  password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+
+  // Compléter avec des caractères aléatoires
+  const allChars = uppercase + numbers;
+  for (let i = 2; i < 6; i++) {
+    password += allChars.charAt(Math.floor(Math.random() * allChars.length));
+  }
+
+  // Mélanger le mot de passe
+  password = password
+    .split("")
+    .sort(() => Math.random() - 0.5)
+    .join("");
+
+  document.getElementById("generatedPassword").value = password;
+}
+
+// Fonctions héritées avec améliorations
 function getStatusClass(status) {
   switch (status) {
     case "pending":
-      return "status-pending";
+      return "bg-yellow-100 text-yellow-800 border border-yellow-200";
     case "approved":
-      return "status-approved";
+      return "bg-green-100 text-green-800 border border-green-200";
     case "rejected":
-      return "status-rejected";
+      return "bg-red-100 text-red-800 border border-red-200";
     default:
-      return "bg-gray-500";
+      return "bg-gray-100 text-gray-800 border border-gray-200";
   }
 }
 
 function getStatusText(status) {
   switch (status) {
     case "pending":
-      return '<i class="fas fa-clock mr-1"></i>En attente';
+      return "En attente";
     case "approved":
-      return '<i class="fas fa-check mr-1"></i>Approuvée';
+      return "Approuvée";
     case "rejected":
-      return '<i class="fas fa-times mr-1"></i>Rejetée';
+      return "Rejetée";
     default:
       return status;
   }
 }
 
-function getActionButton(request) {
-  if (request.status === "pending") {
-    return `<button onclick="openProcessModal(${request.id})" 
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition font-medium">
-                <i class="fas fa-cog mr-2"></i>Traiter
-            </button>`;
-  } else {
-    return `<span class="text-xs text-gray-500">Traité</span>`;
+function getFilterLabel(filter) {
+  switch (filter) {
+    case "pending":
+      return "en attente";
+    case "approved":
+      return "approuvées";
+    case "rejected":
+      return "rejetées";
+    default:
+      return "";
   }
 }
 
-function getRequestDescription(request) {
-  if (request.status === "pending") {
-    return `Un utilisateur "${request.name}" a fait une demande d'accès`;
-  } else if (request.status === "approved") {
-    return `Accès approuvé pour "${request.name}" - Compte créé`;
-  } else {
-    return `Demande de "${request.name}" rejetée`;
-  }
-}
-
-// Mettre à jour les statistiques
-function updateStatistics() {
-  const total = requests.length;
-  const pending = requests.filter((req) => req.status === "pending").length;
-  const approved = requests.filter((req) => req.status === "approved").length;
-  const rejected = requests.filter((req) => req.status === "rejected").length;
-
-  document.getElementById("totalRequests").textContent = total;
-  document.getElementById("pendingRequests").textContent = pending;
-  document.getElementById("approvedRequests").textContent = approved;
-  document.getElementById("rejectedRequests").textContent = rejected;
-}
-
-// Mettre à jour l'historique journalier
-function updateDailyHistory() {
-  const historyElement = document.getElementById("dailyHistory");
-  const dateFilter = document.getElementById("dateFilter").value;
-
-  const filteredHistory = getFilteredHistory(dateFilter);
-
-  if (filteredHistory.length === 0) {
-    historyElement.innerHTML = `
-            <div class="text-center text-gray-500 py-4">
-                <i class="fas fa-calendar-times text-2xl mb-2"></i>
-                <p>Aucune activité pour cette période</p>
-            </div>
-        `;
-    return;
-  }
-
-  historyElement.innerHTML = filteredHistory
-    .map(
-      (item) => `
-        <div class="timeline-item">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="font-medium text-gray-800">${item.action}</p>
-                    <p class="text-sm text-gray-600">${item.user}</p>
-                    <p class="text-xs text-gray-500">${formatDateTime(
-                      item.timestamp
-                    )}</p>
-                </div>
-                <div class="text-right">
-                    <span class="px-2 py-1 rounded text-xs ${
-                      item.type === "approval"
-                        ? "bg-green-100 text-green-800"
-                        : item.type === "rejection"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-blue-100 text-blue-800"
-                    }">
-                        ${
-                          item.type === "approval"
-                            ? "Approuvé"
-                            : item.type === "rejection"
-                            ? "Rejeté"
-                            : "Demande"
-                        }
-                    </span>
-                </div>
-            </div>
-        </div>
-    `
-    )
-    .join("");
-}
-
-// Obtenir l'historique filtré par date
-function getFilteredHistory(filter) {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-  let history = [];
-
-  // Ajouter les demandes comme historique
-  requests.forEach((request) => {
-    const requestDate = new Date(request.createdAt || request.timestamp);
-
-    let shouldInclude = false;
-    switch (filter) {
-      case "today":
-        shouldInclude = requestDate >= today;
-        break;
-      case "yesterday":
-        shouldInclude = requestDate >= yesterday && requestDate < today;
-        break;
-      case "week":
-        shouldInclude = requestDate >= weekAgo;
-        break;
-      case "month":
-        shouldInclude = requestDate >= monthAgo;
-        break;
-    }
-
-    if (shouldInclude) {
-      history.push({
-        action: "Nouvelle demande d'accès",
-        user: request.name,
-        timestamp:
-          request.createdAt || new Date(request.timestamp).toISOString(),
-        type: "request",
-      });
-
-      if (request.processedAt) {
-        const processedDate = new Date(request.processedAt);
-        let processedShouldInclude = false;
-
-        switch (filter) {
-          case "today":
-            processedShouldInclude = processedDate >= today;
-            break;
-          case "yesterday":
-            processedShouldInclude =
-              processedDate >= yesterday && processedDate < today;
-            break;
-          case "week":
-            processedShouldInclude = processedDate >= weekAgo;
-            break;
-          case "month":
-            processedShouldInclude = processedDate >= monthAgo;
-            break;
-        }
-
-        if (processedShouldInclude) {
-          history.push({
-            action:
-              request.status === "approved"
-                ? "Demande approuvée"
-                : "Demande rejetée",
-            user: request.name,
-            timestamp: request.processedAt,
-            type: request.status === "approved" ? "approval" : "rejection",
-          });
-        }
-      }
-    }
-  });
-
-  return history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-}
-
-// Mettre à jour l'activité récente
-function updateRecentActivity() {
-  const activityElement = document.getElementById("recentActivity");
-
-  const recentActivities = activities.slice(-5).reverse();
-
-  if (recentActivities.length === 0) {
-    activityElement.innerHTML = `
-            <div class="text-center text-gray-500 py-4">
-                <i class="fas fa-history text-2xl mb-2"></i>
-                <p>Aucune activité récente</p>
-            </div>
-        `;
-    return;
-  }
-
-  activityElement.innerHTML = recentActivities
-    .map(
-      (activity) => `
-        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center ${
-              activity.type === "approval" ? "bg-green-100" : "bg-red-100"
-            }">
-                <i class="fas ${
-                  activity.type === "approval"
-                    ? "fa-check text-green-600"
-                    : "fa-times text-red-600"
-                } text-sm"></i>
-            </div>
-            <div class="flex-1">
-                <p class="text-sm font-medium text-gray-800">${
-                  activity.message
-                }</p>
-                <p class="text-xs text-gray-500">${formatDateTime(
-                  activity.timestamp
-                )}</p>
-            </div>
-        </div>
-    `
-    )
-    .join("");
-}
-
-// Mettre à jour les statistiques avancées
-function updateAdvancedStats() {
-  const total = requests.length;
-  const approved = requests.filter((req) => req.status === "approved").length;
-  const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
-
-  // Calculer le temps de traitement moyen
-  const processedRequests = requests.filter(
-    (req) => req.processedAt && req.createdAt
-  );
-  let avgProcessingTime = 0;
-
-  if (processedRequests.length > 0) {
-    const totalTime = processedRequests.reduce((sum, req) => {
-      const created = new Date(req.createdAt);
-      const processed = new Date(req.processedAt);
-      return sum + (processed - created);
-    }, 0);
-
-    avgProcessingTime = Math.round(
-      totalTime / processedRequests.length / (1000 * 60 * 60)
-    ); // en heures
-  }
-
-  // Demandes aujourd'hui
-  const today = new Date();
-  const todayStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const todayRequests = requests.filter((req) => {
-    const requestDate = new Date(req.createdAt || req.timestamp);
-    return requestDate >= todayStart;
-  }).length;
-
-  document.getElementById("approvalRate").textContent = `${approvalRate}%`;
-  document.getElementById(
-    "avgProcessingTime"
-  ).textContent = `${avgProcessingTime}h`;
-  document.getElementById("todayRequests").textContent = todayRequests;
-}
-
-// Fonctions utilitaires pour les dates
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString("fr-FR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  if (!dateString) return "Non spécifiée";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("fr-FR");
 }
 
 function formatDateTime(dateString) {
-  return new Date(dateString).toLocaleString("fr-FR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  if (!dateString) return "Non spécifiée";
+  const date = new Date(dateString);
+  return date.toLocaleString("fr-FR");
+}
+
+function filterRequests(filter) {
+  currentFilter = filter;
+
+  // Mettre à jour l'apparence des boutons de filtre
+  document.querySelectorAll(".stat-card").forEach((card) => {
+    card.classList.remove("active");
   });
+
+  const activeCard = document.querySelector(`[data-filter="${filter}"]`);
+  if (activeCard) {
+    activeCard.classList.add("active");
+  }
+
+  // Mettre à jour le titre
+  const requestsTitle = document.getElementById("requestsTitle");
+  if (filter === "all") {
+    requestsTitle.textContent = "Toutes les Demandes d'Accès";
+    document.getElementById("clearFilterBtn").classList.add("hidden");
+  } else {
+    requestsTitle.textContent = `Demandes ${getFilterLabel(filter)}`;
+    document.getElementById("clearFilterBtn").classList.remove("hidden");
+  }
+
+  displayRequests();
 }
 
-// Ouvrir la modale de traitement
-function openProcessModal(requestId) {
-  const request = requests.find((req) => req.id === requestId);
-  if (!request) return;
-
-  currentRequestId = requestId;
-
-  document.getElementById("modalUserName").textContent = request.name;
-  document.getElementById("modalUserEmail").textContent = request.email;
-  document.getElementById("modalRequestDate").textContent = formatDate(
-    request.date
-  );
-  document.getElementById("userEmailInput").value = request.email;
-
-  generatePassword();
-  document.getElementById("processModal").classList.remove("hidden");
+function clearFilter() {
+  filterRequests("all");
 }
 
-// Fermer la modale
 function closeModal() {
-  document.getElementById("processModal").classList.add("hidden");
+  const modal = document.getElementById("processModal");
+  const modalContent = modal.firstElementChild;
+
+  // Animation de fermeture
+  modalContent.style.transform = "scale(0.9)";
+  modalContent.style.opacity = "0";
+
+  setTimeout(() => {
+    modal.classList.add("hidden");
+    modalContent.style.transform = "scale(1)";
+    modalContent.style.opacity = "1";
+  }, 200);
+
   currentRequestId = null;
 }
 
-// Générer un mot de passe
 function generatePassword() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  let password = "";
-  for (let i = 0; i < 8; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  document.getElementById("generatedPassword").value = password;
+  generateSecurePassword();
 }
 
-// Copier le mot de passe
 function copyPassword() {
   const passwordField = document.getElementById("generatedPassword");
   passwordField.select();
@@ -568,206 +669,303 @@ function copyPassword() {
   showNotification("Mot de passe copié dans le presse-papiers", "success");
 }
 
-// Approuver une demande
-function approveRequest() {
+async function approveRequest() {
   if (!currentRequestId) return;
 
-  const request = requests.find((req) => req.id === currentRequestId);
-  if (!request) return;
-
-  const email = document.getElementById("userEmailInput").value;
+  const request = currentRequests.find((req) => req.id === currentRequestId);
   const password = document.getElementById("generatedPassword").value;
 
-  if (!email || !password) {
-    showNotification("Veuillez remplir tous les champs", "error");
+  if (!password) {
+    showNotification("Veuillez générer un mot de passe", "error");
     return;
   }
 
-  request.status = "approved";
-  request.processedAt = new Date().toISOString();
-  request.processedBy = "admin";
-  request.generatedPassword = password;
+  // Désactiver le bouton pendant le traitement
+  const approveBtn = document.querySelector(
+    'button[onclick="approveRequest()"]'
+  );
+  const originalText = approveBtn.innerHTML;
+  approveBtn.innerHTML =
+    '<i class="fas fa-spinner fa-spin mr-2"></i>Traitement...';
+  approveBtn.disabled = true;
 
-  // Ajouter à l'activité
-  activities.push({
-    id: Date.now(),
-    type: "approval",
-    message: `Demande de ${request.name} approuvée`,
-    timestamp: new Date().toISOString(),
-    user: request.name,
-  });
+  try {
+    console.log(`✅ Approbation de la demande ${currentRequestId}...`);
 
-  // Envoyer à l'API
-  fetch("/api/create-user-account", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: request.name,
-      email: email,
-      password: password,
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        showNotification(
-          `Accès approuvé pour ${request.name}. Compte créé avec succès.`,
-          "success"
-        );
-      } else {
-        showNotification("Erreur lors de la création du compte", "error");
-      }
-    })
-    .catch((error) => {
-      console.error("Erreur:", error);
-      showNotification(
-        "Accès approuvé. Informations sauvegardées localement.",
-        "success"
-      );
+    const response = await fetch("/api/create-user-account", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: request.name,
+        email: request.email,
+        password: password,
+      }),
     });
 
-  saveRequests();
-  saveActivities();
-  displayRequests();
-  updateStatistics();
-  updateDailyHistory();
-  updateRecentActivity();
-  updateAdvancedStats();
-  closeModal();
+    const data = await response.json();
+
+    if (data.success) {
+      // Maintenant mettre à jour le statut de la demande vers "approved"
+      const updateResponse = await fetch("/api/admin/process-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          requestId: currentRequestId,
+          action: "approve",
+          adminEmail: "admin@its-service.com",
+        }),
+      });
+
+      const updateData = await updateResponse.json();
+
+      if (updateData.success) {
+        showNotification(
+          "✅ Demande approuvée avec succès ! Email envoyé.",
+          "success"
+        );
+        closeModal();
+        loadAccessRequests(); // Recharger la liste
+      } else {
+        console.warn(
+          "⚠️ Compte créé mais statut non mis à jour:",
+          updateData.message
+        );
+        showNotification(
+          "✅ Compte créé mais statut non mis à jour",
+          "warning"
+        );
+        closeModal();
+        loadAccessRequests();
+      }
+    } else {
+      showNotification(`❌ Erreur: ${data.message}`, "error");
+    }
+  } catch (error) {
+    console.error("❌ Erreur lors de l'approbation:", error);
+    showNotification("❌ Erreur lors de l'approbation", "error");
+  } finally {
+    // Restaurer le bouton
+    approveBtn.innerHTML = originalText;
+    approveBtn.disabled = false;
+  }
 }
 
-// Rejeter une demande
-function rejectRequest() {
+async function rejectRequest() {
   if (!currentRequestId) return;
 
-  const request = requests.find((req) => req.id === currentRequestId);
-  if (!request) return;
+  const reason = prompt("Raison du rejet (optionnel):");
+  if (reason === null) return; // Utilisateur a annulé
 
-  request.status = "rejected";
-  request.processedAt = new Date().toISOString();
-  request.processedBy = "admin";
+  if (!confirm("Êtes-vous sûr de vouloir rejeter cette demande ?")) {
+    return;
+  }
 
-  // Ajouter à l'activité
-  activities.push({
-    id: Date.now(),
-    type: "rejection",
-    message: `Demande de ${request.name} rejetée`,
-    timestamp: new Date().toISOString(),
-    user: request.name,
-  });
+  // Désactiver le bouton pendant le traitement
+  const rejectBtn = document.querySelector('button[onclick="rejectRequest()"]');
+  if (!rejectBtn) {
+    console.error("❌ Bouton reject non trouvé");
+    showNotification("❌ Erreur d'interface", "error");
+    return;
+  }
 
-  saveRequests();
-  saveActivities();
-  displayRequests();
-  updateStatistics();
-  updateDailyHistory();
-  updateRecentActivity();
-  updateAdvancedStats();
-  closeModal();
+  const originalText = rejectBtn.innerHTML;
+  rejectBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rejet...';
+  rejectBtn.disabled = true;
 
-  showNotification(`Demande de ${request.name} rejetée`, "warning");
+  try {
+    console.log(`❌ Rejet de la demande ${currentRequestId}...`);
+
+    const response = await fetch("/api/admin/process-request", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requestId: currentRequestId,
+        action: "reject",
+        adminEmail: "admin@its-service.com", // À remplacer par l'email de l'admin connecté
+        reason: reason,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showNotification("✅ Demande rejetée avec succès", "success");
+      closeModal();
+      loadAccessRequests(); // Recharger la liste
+    } else {
+      showNotification(`❌ Erreur: ${data.message}`, "error");
+    }
+  } catch (error) {
+    console.error("❌ Erreur lors du rejet:", error);
+    showNotification("Erreur lors du rejet", "error");
+  } finally {
+    // Restaurer le bouton
+    if (rejectBtn && originalText) {
+      rejectBtn.innerHTML = originalText;
+      rejectBtn.disabled = false;
+    }
+  }
 }
 
-// Afficher une notification
+function viewRequestDetails(requestId) {
+  const request = currentRequests.find((req) => req.id === requestId);
+  if (!request) return;
+
+  const details = `
+Détails de la demande:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 INFORMATIONS UTILISATEUR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Nom: ${request.name}
+Email: ${request.email}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 INFORMATIONS DEMANDE  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Date de demande: ${formatDate(request.request_date)}
+Statut: ${getStatusText(request.status)}
+Créée le: ${formatDateTime(request.created_at)}
+${
+  request.processed_at
+    ? `Traitée le: ${formatDateTime(request.processed_at)}`
+    : ""
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔗 IDENTIFIANT DEMANDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ID: ${request.id}
+    `;
+
+  alert(details);
+}
+
 function showNotification(message, type = "success") {
   const notification = document.getElementById("notification");
   const notificationText = document.getElementById("notificationText");
 
+  // Vérification si les éléments existent
+  if (!notification || !notificationText) {
+    console.warn("⚠️ Éléments de notification non trouvés dans le DOM");
+    alert(message); // Fallback
+    return;
+  }
+
   notificationText.textContent = message;
 
-  notification.querySelector(
-    "div"
-  ).className = `px-6 py-3 rounded-lg shadow-lg ${
-    type === "success"
-      ? "bg-green-500"
-      : type === "error"
-      ? "bg-red-500"
-      : type === "warning"
-      ? "bg-orange-500"
-      : "bg-blue-500"
-  } text-white`;
+  // Changer la couleur et l'icône selon le type
+  notification.className =
+    "fixed top-4 right-4 z-50 transform transition-all duration-300";
+  let bgClass = "";
+  let icon = "";
+
+  switch (type) {
+    case "success":
+      bgClass = "bg-green-500";
+      icon = '<i class="fas fa-check-circle mr-2"></i>';
+      break;
+    case "error":
+      bgClass = "bg-red-500";
+      icon = '<i class="fas fa-exclamation-circle mr-2"></i>';
+      break;
+    case "info":
+      bgClass = "bg-blue-500";
+      icon = '<i class="fas fa-info-circle mr-2"></i>';
+      break;
+    case "warning":
+      bgClass = "bg-yellow-500";
+      icon = '<i class="fas fa-exclamation-triangle mr-2"></i>';
+      break;
+  }
+
+  notification.innerHTML = `
+        <div class="${bgClass} text-white px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300">
+            ${icon}${message}
+        </div>
+    `;
 
   notification.classList.remove("hidden");
+  notification.style.transform = "translateX(100%)";
 
+  // Animation d'entrée
   setTimeout(() => {
-    notification.classList.add("hidden");
-  }, 3000);
+    notification.style.transform = "translateX(0)";
+  }, 10);
+
+  // Animation de sortie
+  setTimeout(() => {
+    notification.style.transform = "translateX(100%)";
+    setTimeout(() => {
+      notification.classList.add("hidden");
+    }, 300);
+  }, 4000);
 }
 
-// Vérifier les nouvelles demandes
-function checkForNewRequests() {
-  fetch("/api/get-new-access-requests")
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.requests && data.requests.length > 0) {
-        data.requests.forEach((newRequest) => {
-          const exists = requests.find(
-            (req) => req.email === newRequest.email && req.status === "pending"
-          );
-          if (!exists) {
-            requests.push({
-              id: Date.now() + Math.random(),
-              name: newRequest.name,
-              email: newRequest.email,
-              date: newRequest.request_date || newRequest.date,
-              status: "pending",
-              timestamp: new Date().getTime(),
-              createdAt: new Date().toISOString(),
-            });
-          }
-        });
-
-        saveRequests();
-        displayRequests();
-        updateStatistics();
-        updateDailyHistory();
-        updateAdvancedStats();
-      }
-    })
-    .catch((error) => {
-      console.log("Aucune nouvelle demande ou erreur de connexion");
-    });
-}
-
-// Ajouter une nouvelle demande
-function addNewAccessRequest(requestData) {
-  const newRequest = {
-    id: Date.now() + Math.random(),
-    name: requestData.name,
-    email: requestData.email,
-    date: requestData.date,
-    status: "pending",
-    timestamp: new Date().getTime(),
-    createdAt: new Date().toISOString(),
-  };
-
-  requests.push(newRequest);
-  saveRequests();
-  displayRequests();
-  updateStatistics();
-  updateDailyHistory();
-  updateAdvancedStats();
-
-  showNotification(`Nouvelle demande d'accès de ${requestData.name}`, "info");
-}
-
-// Déconnexion
 function logout() {
   if (confirm("Êtes-vous sûr de vouloir vous déconnecter ?")) {
-    localStorage.removeItem("isAdminLoggedIn");
-    localStorage.removeItem("adminUser");
     window.location.href = "/html/admin-login.html";
   }
 }
 
-// Exposer les fonctions globalement
-window.openProcessModal = openProcessModal;
-window.closeModal = closeModal;
-window.generatePassword = generatePassword;
-window.copyPassword = copyPassword;
-window.approveRequest = approveRequest;
-window.rejectRequest = rejectRequest;
-window.logout = logout;
-window.addNewAccessRequest = addNewAccessRequest;
-window.filterRequests = filterRequests;
-window.clearFilter = clearFilter;
+// Fonctions de contrôle de l'actualisation automatique
+function stopAutoRefresh() {
+  isAutoRefreshEnabled = false;
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+  }
+  console.log("⏸️ Actualisation automatique désactivée");
+  showNotification("Actualisation automatique désactivée", "info");
+}
+
+function resumeAutoRefresh() {
+  isAutoRefreshEnabled = true;
+  startAutoRefresh();
+  console.log("▶️ Actualisation automatique réactivée");
+  showNotification("Actualisation automatique réactivée", "success");
+}
+
+function forceRefresh() {
+  lastDataHash = null; // Force la mise à jour
+  loadAccessRequests();
+  console.log("🔄 Actualisation forcée");
+}
+
+// Exposer les fonctions de contrôle dans la console pour debug
+window.accessManagement = {
+  stop: stopAutoRefresh,
+  start: resumeAutoRefresh,
+  refresh: forceRefresh,
+  status: () =>
+    console.log(
+      `Auto-refresh: ${isAutoRefreshEnabled ? "ON" : "OFF"}, Requests: ${
+        currentRequests.length
+      }`
+    ),
+};
+
+// Écouter les clics en dehors du modal pour le fermer
+document.addEventListener("click", function (event) {
+  const modal = document.getElementById("processModal");
+  if (event.target === modal) {
+    closeModal();
+  }
+});
+
+// Fonction pour basculer l'actualisation automatique
+function toggleAutoRefresh() {
+  isAutoRefreshEnabled = !isAutoRefreshEnabled;
+  if (isAutoRefreshEnabled) {
+    startAutoRefresh();
+    showNotification("Actualisation automatique activée", "info");
+  } else {
+    clearInterval(autoRefreshInterval);
+    showNotification("Actualisation automatique désactivée", "warning");
+  }
+}
