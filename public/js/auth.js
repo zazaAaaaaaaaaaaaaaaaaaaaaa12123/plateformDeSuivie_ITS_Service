@@ -139,8 +139,7 @@ if (loginForm) {
 
         showMessage(loginMessage, "Connexion réussie ! Redirection...", true);
         setTimeout(() => {
-          window.location.href =
-            "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html";
+          window.location.href = "https://dossiv.ci/html/resp_acconier.html";
         }, 1000);
       } else {
         showMessage(

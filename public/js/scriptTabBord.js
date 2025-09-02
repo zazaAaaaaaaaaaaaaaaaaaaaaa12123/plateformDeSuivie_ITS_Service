@@ -1186,8 +1186,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lienArchive.addEventListener("click", (e) => {
       e.preventDefault();
       // Redirection vers la page des archives
-      window.location.href =
-        "https://plateformdesuivie-its-service-1cjx.onrender.com/html/archives.html";
+      window.location.href = "https://dossiv.ci/html/archives.html";
     });
   }
 

@@ -4589,8 +4589,7 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.removeItem("user_nom");
         localStorage.removeItem("user_email");
         localStorage.removeItem("user_photo");
-        window.location.href =
-          "https://plateformdesuivie-its-service-1cjx.onrender.com/html/repoLivAuth.html";
+        window.location.href = "https://dossiv.ci/html/repoLivAuth.html";
       };
       profilePopup.appendChild(logoutBtn);
       document.body.appendChild(profilePopup);

@@ -1102,7 +1102,7 @@ class AdminModeManager {
     // Rediriger vers l'URL spécifique après un délai
     setTimeout(() => {
       window.location.href =
-        "https://plateformdesuivie-its-service-1cjx.onrender.com/html/resp_acconier.html?mode=admin";
+        "https://dossiv.ci/html/resp_acconier.html?mode=admin";
     }, 1200);
   }
 

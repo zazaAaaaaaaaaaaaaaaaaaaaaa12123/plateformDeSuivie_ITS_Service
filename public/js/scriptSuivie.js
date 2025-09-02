@@ -1066,8 +1066,8 @@ function mapStatus(status) {
   if (wsHost === "localhost" || wsHost === "127.0.0.1") {
     wsUrl = `${wsProtocol}://${wsHost}:3000`;
   } else {
-    // Production : onrender.com ou autre domaine
-    wsUrl = `${wsProtocol}://plateformdesuivie-its-service-1cjx.onrender.com`;
+    // Production : dossiv.ci
+    wsUrl = `${wsProtocol}://dossiv.ci`;
   }
   let ws = null;
   let pollingInterval = null;

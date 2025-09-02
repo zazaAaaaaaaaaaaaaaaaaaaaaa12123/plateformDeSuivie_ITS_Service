@@ -1214,8 +1214,7 @@ window.displayProfileAvatar = function () {
     if (logoutBtn) {
       logoutBtn.onclick = function () {
         localStorage.removeItem("acconier_user");
-        window.location.href =
-          "https://plateformdesuivie-its-service-1cjx.onrender.com/html/acconier_auth.html";
+        window.location.href = "https://dossiv.ci/html/acconier_auth.html";
       };
     }
   }
@@ -1262,7 +1261,7 @@ window.saveAcconierUserToLocalStorage = function (acconier) {
   localStorage.setItem("acconier_user", JSON.stringify(acconierToSave));
   // Redirection directe vers l'ordre de livraison après connexion
   window.location.href =
-    "https://plateformdesuivie-its-service-1cjx.onrender.com/html/interfaceFormulaireEmployer.html";
+    "https://dossiv.ci/html/interfaceFormulaireEmployer.html";
 };
 
 // Initialisation de l'affichage historique et avatar au chargement
@@ -2675,9 +2674,8 @@ async function submitDeliveryForm(status) {
     ) {
       apiUrl = "http://localhost:3000/deliveries/validate";
     } else {
-      // Remplace ci-dessous par TON vrai sous-domaine Render !
-      apiUrl =
-        "https://plateformdesuivie-its-service-1cjx.onrender.com/deliveries/validate";
+      // Remplace ci-dessous par TON vrai domaine !
+      apiUrl = "https://dossiv.ci/deliveries/validate";
     }
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -2828,8 +2826,7 @@ async function submitDeliveryForm(status) {
           ) {
             archiveApiUrl = "http://localhost:3000/api/archives";
           } else {
-            archiveApiUrl =
-              "https://plateformdesuivie-its-service-1cjx.onrender.com/api/archives";
+            archiveApiUrl = "https://dossiv.ci/api/archives";
           }
 
           // Envoyer vers les archives
@@ -3293,7 +3290,7 @@ window.testArchivageSuppressions = async function () {
       console.log("[TEST] ✅ Test d'archivage réussi");
       console.log(
         "[TEST] 💡 Vérifiez la page des archives pour voir le test:",
-        "https://plateformdesuivie-its-service-1cjx.onrender.com/html/archives.html"
+        "https://dossiv.ci/html/archives.html"
       );
       return true;
     } else {
