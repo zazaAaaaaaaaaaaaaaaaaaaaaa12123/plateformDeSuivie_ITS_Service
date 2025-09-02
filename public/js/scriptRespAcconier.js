@@ -34,19 +34,32 @@ function toggleContainerList(dropdownId) {
 // Stockage local pour les dossiers mis en livraison
 const STORAGE_KEY = "dossiersMisEnLiv";
 
-// 🔒 FONCTION POUR DÉSACTIVER L'ÉDITION DES OBSERVATIONS EN MODE ADMIN
+// 🔒 FONCTION POUR DÉSACTIVER L'ÉDITION DES OBSERVATIONS EN MODE ADMIN OU DEPUIS LE SIDEBAR
 function disableObservationEditingInAdminMode() {
   const urlParams = new URLSearchParams(window.location.search);
   const isAdminMode = urlParams.get("mode") === "admin";
   const fromDashboard = urlParams.get("fromDashboard") === "true";
+  const fromSidebar = urlParams.get("from") === "sidebar";
 
-  if (isAdminMode && fromDashboard) {
-    console.log("🔒 [MODE ADMIN] Désactivation de l'édition des observations");
+  // Désactiver l'édition si c'est le mode admin avec fromDashboard OU si on vient du sidebar OU si on vient du dashboard (même sans mode admin)
+  if ((isAdminMode && fromDashboard) || fromSidebar || fromDashboard) {
+    let reasonText =
+      "🔒 [MODE ADMIN] Désactivation de l'édition des observations";
+
+    if (fromSidebar) {
+      reasonText =
+        "🔒 [FROM SIDEBAR] Désactivation de l'édition des observations (accès depuis le sidebar)";
+    } else if (fromDashboard && !isAdminMode) {
+      reasonText =
+        "🔒 [FROM DASHBOARD] Désactivation de l'édition des observations (accès depuis le dashboard)";
+    }
+
+    console.log(reasonText);
 
     // Ajouter du CSS pour désactiver l'édition des cellules d'observation
     const style = document.createElement("style");
     style.innerHTML = `
-      /* Désactiver l'édition des observations en mode admin (21ème colonne) */
+      /* Désactiver l'édition des observations en mode admin/sidebar/dashboard (21ème colonne) */
       #deliveriesTable tbody td:nth-child(21) {
         background-color: #f3f4f6 !important;
         color: #6b7280 !important;
@@ -67,13 +80,60 @@ function disableObservationEditingInAdminMode() {
         margin-right: 5px;
       }
       
-      /* Style sombre pour le mode admin */
+      /* Style sombre pour le mode admin/sidebar/dashboard */
       [data-theme="dark"] #deliveriesTable tbody td:nth-child(21) {
         background-color: #374151 !important;
         color: #9ca3af !important;
       }
     `;
     document.head.appendChild(style);
+  }
+}
+
+// 🏠 FONCTION POUR GÉRER L'AFFICHAGE DE L'ICÔNE D'ACCUEIL
+function manageHomeButtonVisibility() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const fromDashboard = urlParams.get("fromDashboard") === "true";
+  const fromSidebar = urlParams.get("from") === "sidebar";
+  const targetUser = urlParams.get("targetUser");
+
+  console.log("🏠 [HOME BUTTON] ANALYSE COMPLÈTE:", {
+    fromDashboard: fromDashboard,
+    fromSidebar: fromSidebar,
+    targetUser: targetUser,
+    fullURL: window.location.href,
+    allParams: Object.fromEntries(urlParams),
+  });
+
+  const homeButton = document.getElementById("homeButton");
+  if (!homeButton) {
+    console.warn("🏠 [HOME BUTTON] Élément homeButton non trouvé");
+    return;
+  }
+
+  // NOUVELLE LOGIQUE BASÉE SUR LA RÉALITÉ :
+  // - Si on a targetUser SANS fromDashboard → VIENT DU SIDEBAR → MONTRER l'icône
+  // - Si on a fromDashboard=true → VIENT DE AUTH.HTML → CACHER l'icône
+  // - Sinon → ACCÈS DIRECT → MONTRER l'icône
+
+  if (fromDashboard === true) {
+    // Vient de auth.html → CACHER l'icône
+    console.log(
+      "🏠 [HOME BUTTON] ❌ MASQUAGE de l'icône (connexion depuis auth.html)"
+    );
+    homeButton.style.display = "none";
+  } else if (targetUser && !fromDashboard) {
+    // A un targetUser mais pas fromDashboard → VIENT DU SIDEBAR → MONTRER l'icône
+    console.log(
+      "🏠 [HOME BUTTON] ✅ AFFICHAGE de l'icône (accès depuis le sidebar)"
+    );
+    homeButton.style.display = "flex";
+  } else {
+    // Cas par défaut (accès direct) → MONTRER l'icône
+    console.log(
+      "🏠 [HOME BUTTON] ℹ️ AFFICHAGE par défaut de l'icône (accès direct)"
+    );
+    homeButton.style.display = "flex";
   }
 }
 
@@ -1472,6 +1532,9 @@ function showDeliveriesByDate(deliveries, selectedDate, tableBodyElement) {
 document.addEventListener("DOMContentLoaded", function () {
   // 🔒 Désactiver l'édition des observations en mode admin
   disableObservationEditingInAdminMode();
+
+  // 🏠 Gérer l'affichage de l'icône d'accueil selon la source d'accès
+  manageHomeButtonVisibility();
 
   // 💬 Ajouter les tooltips sur les cellules d'observation
   setTimeout(() => {
