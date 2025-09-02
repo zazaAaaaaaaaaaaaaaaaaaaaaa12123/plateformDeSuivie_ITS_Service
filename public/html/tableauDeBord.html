@@ -4387,9 +4387,12 @@
                 console.log(
                   "🚀 Navigation vers Suivi des Livraisons depuis le sidebar"
                 );
-                // Redirection directe vers l'interface de suivi des livraisons
-                const baseUrl = window.location.origin;
-                window.location.href = `${baseUrl}/html/interfaceSuivie.html`;
+                // Utiliser la même fonction que le bouton bleu "Suivi"
+                if (typeof window.afficherSuivi === "function") {
+                  window.afficherSuivi();
+                } else {
+                  console.error("Fonction afficherSuivi non disponible");
+                }
               });
             }
 
