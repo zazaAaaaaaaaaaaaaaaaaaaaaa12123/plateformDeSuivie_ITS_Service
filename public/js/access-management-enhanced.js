@@ -175,7 +175,7 @@ function updateLastRefreshTime() {
 function updateStatistics() {
   const total = currentRequests.length;
   const pending = currentRequests.filter(
-    (req) => req.status === "pending"
+    (req) => req.status === "pending" || req.status === "forgot_code"
   ).length;
   const approved = currentRequests.filter(
     (req) => req.status === "approved"
@@ -344,9 +344,13 @@ function displayRequests() {
   // Filtrer les demandes selon le filtre actuel
   let filteredRequests = currentRequests;
   if (currentFilter !== "all") {
-    filteredRequests = currentRequests.filter(
-      (req) => req.status === currentFilter
-    );
+    filteredRequests = currentRequests.filter((req) => {
+      if (currentFilter === "pending") {
+        // Le filtre "pending" inclut aussi les demandes "forgot_code"
+        return req.status === "pending" || req.status === "forgot_code";
+      }
+      return req.status === currentFilter;
+    });
   }
 
   // Trier par date de création (plus récent en premier)
@@ -394,20 +398,31 @@ function createEnhancedRequestCard(request) {
   const createdAt = formatDateTime(request.created_at);
   const relativeTime = getRelativeTime(request.created_at);
 
+  // Déterminer le type de demande et l'icône correspondante
+  const requestType = request.request_type || "new_access";
+  const typeInfo = getRequestTypeInfo(requestType);
+
   div.innerHTML = `
         <div class="flex items-start justify-between">
             <div class="flex-1">
                 <div class="flex items-center space-x-3 mb-3">
                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-user text-blue-600"></i>
+                        <i class="fas ${typeInfo.icon} text-blue-600"></i>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800">${
                           request.name
                         }</h3>
-                        <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
-                            ${statusText}
-                        </span>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <span class="px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
+                                ${statusText}
+                            </span>
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${
+                              typeInfo.colorClass
+                            }">
+                                ${typeInfo.label}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 
@@ -441,7 +456,8 @@ function createEnhancedRequestCard(request) {
             
             <div class="flex flex-col space-y-2 ml-4">
                 ${
-                  request.status === "pending"
+                  request.status === "pending" ||
+                  request.status === "forgot_code"
                     ? `
                     <button 
                         onclick="openProcessModal(${request.id})"
@@ -454,6 +470,31 @@ function createEnhancedRequestCard(request) {
                 `
                     : ""
                 }
+                <!-- Le bouton vert apparaît pour TOUTES les demandes (pending, forgot_code ET approved) -->
+                ${
+                  request.status === "pending" ||
+                  request.status === "approved" ||
+                  request.status === "forgot_code"
+                    ? `
+                    <button 
+                        onclick="openSendAccessCodeModal(${request.id})"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition flex items-center space-x-2 transform hover:scale-105"
+                        title="${
+                          request.status === "approved"
+                            ? "Renvoyer code d'accès"
+                            : "Envoyer code d'accès"
+                        }"
+                    >
+                        <i class="fas fa-paper-plane"></i>
+                        <span>${
+                          request.status === "approved"
+                            ? "Renvoyer Code"
+                            : "Envoyer Code"
+                        }</span>
+                    </button>
+                `
+                    : ""
+                }
                 <button 
                     onclick="viewRequestDetails(${request.id})"
                     class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition transform hover:scale-105"
@@ -461,19 +502,6 @@ function createEnhancedRequestCard(request) {
                 >
                     <i class="fas fa-eye"></i>
                 </button>
-                ${
-                  request.status === "approved"
-                    ? `
-                    <button 
-                        onclick="resendCredentials(${request.id})"
-                        class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg transition transform hover:scale-105"
-                        title="Renvoyer les identifiants"
-                    >
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                `
-                    : ""
-                }
             </div>
         </div>
     `;
@@ -497,6 +525,34 @@ async function resendCredentials(requestId) {
     console.error("❌ Erreur lors du renvoi:", error);
     showNotification("Erreur lors du renvoi des identifiants", "error");
   }
+}
+
+// Fonction pour obtenir les informations du type de demande
+function getRequestTypeInfo(requestType) {
+  const types = {
+    new_access: {
+      label: "Nouvel accès",
+      icon: "fa-user-plus",
+      colorClass: "bg-blue-100 text-blue-800",
+    },
+    forgot_password: {
+      label: "Code oublié",
+      icon: "fa-key",
+      colorClass: "bg-orange-100 text-orange-800",
+    },
+    forgot_code: {
+      label: "Code oublié",
+      icon: "fa-key",
+      colorClass: "bg-orange-100 text-orange-800",
+    },
+    access_request: {
+      label: "Demande d'accès",
+      icon: "fa-user-plus",
+      colorClass: "bg-blue-100 text-blue-800",
+    },
+  };
+
+  return types[requestType] || types.new_access;
 }
 
 // Fonction pour ouvrir le modal de traitement (version améliorée)
@@ -568,6 +624,8 @@ function getStatusClass(status) {
       return "bg-green-100 text-green-800 border border-green-200";
     case "rejected":
       return "bg-red-100 text-red-800 border border-red-200";
+    case "forgot_code":
+      return "bg-orange-100 text-orange-800 border border-orange-200";
     default:
       return "bg-gray-100 text-gray-800 border border-gray-200";
   }
@@ -581,6 +639,8 @@ function getStatusText(status) {
       return "Approuvée";
     case "rejected":
       return "Rejetée";
+    case "forgot_code":
+      return "Code oublié";
     default:
       return status;
   }
@@ -998,3 +1058,153 @@ function toggleAutoRefresh() {
     showNotification("Actualisation automatique désactivée", "warning");
   }
 }
+
+// === NOUVELLES FONCTIONS POUR L'ENVOI DE CODE D'ACCÈS ===
+
+// Variable globale pour stocker l'ID de la demande en cours de traitement
+let currentSendRequestId = null;
+
+// Fonction pour ouvrir la modal d'envoi de code d'accès
+function openSendAccessCodeModal(requestId) {
+  currentSendRequestId = requestId;
+  const request = currentRequests.find((req) => req.id === requestId);
+
+  if (!request) {
+    showNotification("Demande non trouvée", "error");
+    return;
+  }
+
+  // Remplir les champs du modal
+  document.getElementById("sendModalUserName").textContent = request.name;
+  document.getElementById("sendModalUserEmail").textContent = request.email;
+  document.getElementById("sendUserEmailInput").value = request.email;
+
+  // Afficher le type de demande
+  const typeInfo = getRequestTypeInfo(request.request_type || "new_access");
+  const typeElement = document.getElementById("sendModalRequestType");
+  typeElement.textContent = typeInfo.label;
+  typeElement.className = `px-2 py-1 rounded-full text-xs font-medium ${typeInfo.colorClass}`;
+
+  // Générer un nouveau code d'accès
+  generateNewAccessCode();
+
+  // Afficher le modal
+  const modal = document.getElementById("sendAccessCodeModal");
+  modal.classList.remove("hidden");
+}
+
+// Fonction pour fermer la modal d'envoi de code d'accès
+function closeSendAccessCodeModal() {
+  const modal = document.getElementById("sendAccessCodeModal");
+  modal.classList.add("hidden");
+  currentSendRequestId = null;
+
+  // Réinitialiser le formulaire
+  document.getElementById("newAccessCode").value = "";
+  document.getElementById("sendAccessCodeText").classList.remove("hidden");
+  document.getElementById("sendAccessCodeLoading").classList.add("hidden");
+  document.getElementById("sendAccessCodeBtn").disabled = false;
+}
+
+// Fonction pour générer un nouveau code d'accès
+function generateNewAccessCode() {
+  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const lowercase = "abcdefghijklmnopqrstuvwxyz";
+  const numbers = "0123456789";
+
+  let password = "";
+
+  // Assurer au moins un caractère de chaque type
+  password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+  password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+
+  // Compléter avec des caractères aléatoires (8 caractères au total)
+  const allChars = uppercase + numbers;
+  for (let i = 2; i < 8; i++) {
+    password += allChars.charAt(Math.floor(Math.random() * allChars.length));
+  }
+
+  // Mélanger le mot de passe
+  password = password
+    .split("")
+    .sort(() => Math.random() - 0.5)
+    .join("");
+
+  document.getElementById("newAccessCode").value = password;
+}
+
+// Fonction pour copier le nouveau code d'accès
+function copyNewAccessCode() {
+  const codeInput = document.getElementById("newAccessCode");
+  codeInput.select();
+  codeInput.setSelectionRange(0, 99999); // Pour mobile
+
+  try {
+    document.execCommand("copy");
+    showNotification("Code d'accès copié dans le presse-papiers", "success");
+  } catch (err) {
+    console.error("Erreur lors de la copie:", err);
+    showNotification("Erreur lors de la copie", "error");
+  }
+}
+
+// Fonction pour envoyer le code d'accès par email
+async function sendAccessCodeByEmail() {
+  if (!currentSendRequestId) {
+    showNotification("Aucune demande sélectionnée", "error");
+    return;
+  }
+
+  const newPassword = document.getElementById("newAccessCode").value;
+  if (!newPassword) {
+    showNotification("Veuillez générer un code d'accès", "error");
+    return;
+  }
+
+  // Afficher le chargement
+  document.getElementById("sendAccessCodeText").classList.add("hidden");
+  document.getElementById("sendAccessCodeLoading").classList.remove("hidden");
+  document.getElementById("sendAccessCodeBtn").disabled = true;
+
+  try {
+    const response = await fetch("/api/admin/send-access-code", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requestId: currentSendRequestId,
+        newPassword: newPassword,
+        adminEmail: "admin@itsservice.com", // Vous pouvez récupérer l'email admin du localStorage si nécessaire
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showNotification("Code d'accès envoyé avec succès !", "success");
+      closeSendAccessCodeModal();
+
+      // Recharger les demandes pour mettre à jour le statut
+      await loadAccessRequests();
+    } else {
+      throw new Error(data.message || "Erreur lors de l'envoi");
+    }
+  } catch (error) {
+    console.error("❌ Erreur lors de l'envoi du code d'accès:", error);
+    showNotification(`Erreur: ${error.message}`, "error");
+  } finally {
+    // Cacher le chargement
+    document.getElementById("sendAccessCodeText").classList.remove("hidden");
+    document.getElementById("sendAccessCodeLoading").classList.add("hidden");
+    document.getElementById("sendAccessCodeBtn").disabled = false;
+  }
+}
+
+// Ajouter les gestionnaires d'événements pour fermer les modales en cliquant à l'extérieur
+document.addEventListener("click", function (event) {
+  const sendModal = document.getElementById("sendAccessCodeModal");
+  if (event.target === sendModal) {
+    closeSendAccessCodeModal();
+  }
+});

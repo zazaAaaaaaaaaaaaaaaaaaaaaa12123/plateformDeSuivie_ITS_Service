@@ -237,7 +237,112 @@
           >
             Se connecter
           </button>
+          <div class="text-center mt-4">
+            <button
+              type="button"
+              onclick="openForgotPasswordModal()"
+              class="text-blue-700 hover:text-yellow-500 text-sm underline"
+            >
+              Code d'accès oublié ?
+            </button>
+          </div>
         </form>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD MODAL -->
+    <div
+      id="forgotPasswordModal"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden"
+    >
+      <div
+        class="w-full max-w-md bg-white/90 rounded-2xl shadow-2xl p-8 flex flex-col gap-6 relative"
+      >
+        <button
+          onclick="closeForgotPasswordModal()"
+          class="absolute top-3 right-4 text-blue-700 hover:text-yellow-500 text-xl"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="text-center">
+          <h2 class="text-3xl font-extrabold text-blue-900 mb-2">
+            Code d'accès oublié
+          </h2>
+          <p class="text-blue-700">
+            Saisissez votre email pour demander un nouveau code d'accès
+          </p>
+        </div>
+        <form
+          id="forgotPasswordForm"
+          autocomplete="off"
+          class="flex flex-col gap-4"
+        >
+          <div>
+            <label
+              for="forgotEmail"
+              class="block text-blue-900 font-semibold mb-1"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="forgotEmail"
+              class="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-yellow-400 transition"
+              placeholder="Votre email"
+              required
+            />
+          </div>
+          <div id="forgotError" class="text-sm text-red-600"></div>
+          <button
+            type="submit"
+            id="sendForgotRequestBtn"
+            class="bg-yellow-400 hover:bg-blue-700 hover:text-white text-blue-900 font-bold py-2 rounded-lg shadow transition duration-200 flex items-center justify-center"
+          >
+            <span id="sendForgotText">Demander un nouveau code</span>
+            <span id="sendForgotLoading" class="hidden">
+              <i class="fa-solid fa-spinner fa-spin mr-2"></i>Envoi en cours...
+            </span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD SUCCESS MODAL -->
+    <div
+      id="forgotPasswordSuccessModal"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden"
+    >
+      <div
+        class="w-full max-w-md bg-white/90 rounded-2xl shadow-2xl p-8 flex flex-col gap-6 relative text-center"
+      >
+        <button
+          onclick="closeForgotPasswordSuccessModal()"
+          class="absolute top-3 right-4 text-blue-700 hover:text-yellow-500 text-xl"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="text-center">
+          <div
+            class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fa-solid fa-envelope text-blue-600 text-2xl"></i>
+          </div>
+          <h2 class="text-2xl font-extrabold text-blue-900 mb-2">
+            Demande envoyée !
+          </h2>
+          <p class="text-blue-700 mb-4">
+            Le nouveau code d'accès sera disponible sur votre email
+          </p>
+          <p class="text-sm text-blue-600">
+            Veuillez vérifier votre boîte de réception. Si la demande est
+            approuvée, vous recevrez votre nouveau code d'accès par email.
+          </p>
+        </div>
+        <button
+          onclick="closeForgotPasswordSuccessModal()"
+          class="bg-blue-700 hover:bg-yellow-400 hover:text-blue-900 text-white font-bold py-2 rounded-lg shadow transition duration-200"
+        >
+          Compris
+        </button>
       </div>
     </div>
 
@@ -398,6 +503,20 @@
           .getElementById("accessRequestSuccessModal")
           .classList.add("hidden");
       }
+      function openForgotPasswordModal() {
+        document.getElementById("loginModal").classList.add("hidden");
+        document
+          .getElementById("forgotPasswordModal")
+          .classList.remove("hidden");
+      }
+      function closeForgotPasswordModal() {
+        document.getElementById("forgotPasswordModal").classList.add("hidden");
+      }
+      function closeForgotPasswordSuccessModal() {
+        document
+          .getElementById("forgotPasswordSuccessModal")
+          .classList.add("hidden");
+      }
 
       // Fermer modale au clic sur fond noir
       document.getElementById("loginModal").onclick = (e) => {
@@ -409,6 +528,13 @@
       document.getElementById("accessRequestSuccessModal").onclick = (e) => {
         if (e.target.id === "accessRequestSuccessModal")
           closeAccessRequestSuccessModal();
+      };
+      document.getElementById("forgotPasswordModal").onclick = (e) => {
+        if (e.target.id === "forgotPasswordModal") closeForgotPasswordModal();
+      };
+      document.getElementById("forgotPasswordSuccessModal").onclick = (e) => {
+        if (e.target.id === "forgotPasswordSuccessModal")
+          closeForgotPasswordSuccessModal();
       };
 
       // Affichage/Masquage code d'accès
@@ -479,6 +605,76 @@
             // Réinitialiser le formulaire
             document.getElementById("accessRequestForm").reset();
           }, 2000); // 2 secondes de chargement
+        });
+
+      // Gestion du formulaire "code d'accès oublié"
+      document
+        .getElementById("forgotPasswordForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const email = document.getElementById("forgotEmail").value.trim();
+
+          if (!email) {
+            document.getElementById("forgotError").textContent =
+              "Veuillez saisir votre email.";
+            return;
+          }
+
+          // Afficher le chargement
+          document.getElementById("sendForgotText").classList.add("hidden");
+          document
+            .getElementById("sendForgotLoading")
+            .classList.remove("hidden");
+          document.getElementById("sendForgotRequestBtn").disabled = true;
+
+          // Envoyer la demande de nouveau code d'accès
+          fetch("/api/forgot-access-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              // Cacher le chargement
+              document
+                .getElementById("sendForgotText")
+                .classList.remove("hidden");
+              document
+                .getElementById("sendForgotLoading")
+                .classList.add("hidden");
+              document.getElementById("sendForgotRequestBtn").disabled = false;
+
+              if (data.success) {
+                // Fermer la modale de demande
+                closeForgotPasswordModal();
+
+                // Afficher la modale de succès
+                document
+                  .getElementById("forgotPasswordSuccessModal")
+                  .classList.remove("hidden");
+
+                // Réinitialiser le formulaire
+                document.getElementById("forgotPasswordForm").reset();
+                document.getElementById("forgotError").textContent = "";
+              } else {
+                document.getElementById("forgotError").textContent =
+                  data.message || "Erreur lors de l'envoi de la demande.";
+              }
+            })
+            .catch(() => {
+              // Cacher le chargement
+              document
+                .getElementById("sendForgotText")
+                .classList.remove("hidden");
+              document
+                .getElementById("sendForgotLoading")
+                .classList.add("hidden");
+              document.getElementById("sendForgotRequestBtn").disabled = false;
+
+              document.getElementById("forgotError").textContent =
+                "Erreur réseau.";
+            });
         });
 
       // Redirection automatique vers tableauDeBord.html après connexion réussie

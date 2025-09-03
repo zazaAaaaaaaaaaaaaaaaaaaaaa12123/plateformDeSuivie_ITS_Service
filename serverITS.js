@@ -2214,7 +2214,8 @@ const createAccessRequestsTable = `
     status VARCHAR(50) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMP NULL,
-    processed_by VARCHAR(255) NULL
+    processed_by VARCHAR(255) NULL,
+    request_type VARCHAR(50) DEFAULT 'new_access'
   );
 `;
 
@@ -2238,12 +2239,35 @@ async function ensureAccessRequestsTable() {
       console.log("✅ Table 'access_requests' créée avec succès.");
     } else {
       console.log(
-        "✅ Table 'access_requests' existe déjà - données préservées."
+        "✅ Table 'access_requests' existe déjà - vérification des colonnes..."
       );
+
+      // Vérifier si la colonne request_type existe
+      const columnCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'access_requests' 
+          AND column_name = 'request_type'
+        );
+      `);
+
+      if (!columnCheck.rows[0].exists) {
+        // Ajouter la colonne request_type
+        await pool.query(`
+          ALTER TABLE access_requests 
+          ADD COLUMN request_type VARCHAR(50) DEFAULT 'new_access';
+        `);
+        console.log(
+          "✅ Colonne 'request_type' ajoutée à la table access_requests."
+        );
+      } else {
+        console.log("✅ Colonne 'request_type' existe déjà.");
+      }
     }
   } catch (err) {
     console.error(
-      "Erreur lors de la création de la table access_requests:",
+      "Erreur lors de la création/modification de la table access_requests:",
       err
     );
   }
@@ -3196,19 +3220,19 @@ app.post("/api/login", async (req, res) => {
       .json({ success: false, message: "Email et code d'accès requis." });
   }
 
-  // ✅ NOUVELLE VALIDATION: Accepter uniquement les codes d'accès de 6 caractères alphanumériques
+  // ✅ NOUVELLE VALIDATION: Accepter les codes d'accès de 6 à 8 caractères alphanumériques
   // Rejeter les mots de passe email (qui contiennent généralement des caractères spéciaux)
-  const accessCodePattern = /^[A-Z0-9]{6}$/; // Exactement 6 caractères alphanumériques majuscules
+  const accessCodePattern = /^[A-Z0-9]{6,8}$/; // Entre 6 et 8 caractères alphanumériques majuscules
 
   if (!accessCodePattern.test(password)) {
     console.warn(
-      "[LOGIN][API] Format de code d'accès invalide. Doit être 6 caractères alphanumériques:",
+      "[LOGIN][API] Format de code d'accès invalide. Doit être 6-8 caractères alphanumériques:",
       password
     );
     return res.status(401).json({
       success: false,
       message:
-        "Code d'accès invalide. Utilisez uniquement le code à 6 caractères envoyé par email.",
+        "Code d'accès invalide. Utilisez uniquement le code à 6-8 caractères envoyé par email.",
     });
   }
 
@@ -3609,7 +3633,7 @@ app.get("/api/admin/access-requests", async (req, res) => {
     await ensureAccessRequestsTable();
 
     const result = await pool.query(
-      `SELECT id, name, email, request_date, status, created_at, processed_at, processed_by 
+      `SELECT id, name, email, request_date, status, created_at, processed_at, processed_by, request_type 
        FROM access_requests 
        ORDER BY created_at DESC`
     );
@@ -3699,6 +3723,253 @@ app.post("/api/admin/process-request", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Erreur serveur lors du traitement de la demande.",
+    });
+  }
+});
+
+// Route pour demander un nouveau code d'accès (code d'accès oublié)
+app.post("/api/forgot-access-code", async (req, res) => {
+  const { email } = req.body;
+
+  console.log("[FORGOT-ACCESS-CODE][API] Demande de nouveau code:", { email });
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email requis.",
+    });
+  }
+
+  try {
+    // S'assurer que la table existe
+    await ensureAccessRequestsTable();
+
+    // Vérifier si l'utilisateur existe déjà avec un accès approuvé
+    const userResult = await pool.query(
+      "SELECT * FROM access_requests WHERE email = $1 AND status = 'approved' ORDER BY created_at DESC LIMIT 1",
+      [email]
+    );
+
+    let requestType = "new_access";
+    if (userResult.rows.length > 0) {
+      requestType = "forgot_password";
+    }
+
+    // Créer une nouvelle demande de type "récupération de code"
+    const insertResult = await pool.query(
+      `INSERT INTO access_requests (name, email, request_date, status, created_at, request_type) 
+       VALUES ($1, $2, $3, 'pending', CURRENT_TIMESTAMP, $4) 
+       RETURNING id`,
+      [
+        userResult.rows.length > 0 ? userResult.rows[0].name : "Utilisateur",
+        email,
+        new Date().toISOString().split("T")[0],
+        requestType,
+      ]
+    );
+
+    console.log("[FORGOT-ACCESS-CODE][API] Demande créée avec succès:", {
+      requestId: insertResult.rows[0].id,
+      email,
+      requestType,
+    });
+
+    res.json({
+      success: true,
+      message: "Demande de nouveau code d'accès enregistrée avec succès.",
+      requestId: insertResult.rows[0].id,
+      requestType,
+    });
+  } catch (err) {
+    console.error("[FORGOT-ACCESS-CODE][API] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'enregistrement de la demande.",
+    });
+  }
+});
+
+// Route de test pour les variables d'environnement email
+app.get("/api/test-email-config", (req, res) => {
+  res.json({
+    EMAIL_USER: process.env.EMAIL_USER || "NOT_SET",
+    EMAIL_PASS: process.env.EMAIL_PASS ? "SET" : "NOT_SET",
+    GMAIL_USER: process.env.GMAIL_USER || "NOT_SET",
+    GMAIL_PASS: process.env.GMAIL_PASS ? "SET" : "NOT_SET",
+    SMTP_HOST: process.env.SMTP_HOST || "NOT_SET",
+    SMTP_PORT: process.env.SMTP_PORT || "NOT_SET",
+    SMTP_USER: process.env.SMTP_USER || "NOT_SET",
+    SMTP_PASS: process.env.SMTP_PASS ? "SET" : "NOT_SET",
+    SMTP_FROM: process.env.SMTP_FROM || "NOT_SET",
+  });
+});
+
+// Route pour envoyer un nouveau code d'accès par email (bouton vert admin)
+app.post("/api/admin/send-access-code", async (req, res) => {
+  const { requestId, newPassword, adminEmail } = req.body;
+
+  console.log("[SEND-ACCESS-CODE][API] Envoi de nouveau code:", {
+    requestId,
+    adminEmail,
+    hasPassword: !!newPassword,
+    emailUser: !!process.env.EMAIL_USER,
+    emailPass: !!process.env.EMAIL_PASS,
+    actualEmailUser: process.env.EMAIL_USER,
+    actualEmailPass: process.env.EMAIL_PASS ? "SET" : "NOT_SET",
+  });
+
+  if (!requestId || !newPassword || !adminEmail) {
+    return res.status(400).json({
+      success: false,
+      message: "ID de demande, nouveau mot de passe et email admin requis.",
+    });
+  }
+
+  try {
+    // Récupérer les informations de la demande
+    const requestResult = await pool.query(
+      "SELECT * FROM access_requests WHERE id = $1",
+      [requestId]
+    );
+
+    if (requestResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Demande introuvable.",
+      });
+    }
+
+    const request = requestResult.rows[0];
+
+    // Vérifier si l'utilisateur existe déjà dans la table users
+    let userResult = await pool.query("SELECT * FROM users WHERE email = $1", [
+      request.email,
+    ]);
+
+    if (userResult.rows.length > 0) {
+      // Mettre à jour le mot de passe existant
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await pool.query("UPDATE users SET password = $1 WHERE email = $2", [
+        hashedPassword,
+        request.email,
+      ]);
+    } else {
+      // Créer un nouveau utilisateur
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await pool.query(
+        `INSERT INTO users (name, email, password, role) 
+         VALUES ($1, $2, $3, 'user')`,
+        [request.name, request.email, hashedPassword]
+      );
+    }
+
+    // Marquer la demande comme approuvée
+    await pool.query(
+      `UPDATE access_requests 
+       SET status = 'approved', processed_at = CURRENT_TIMESTAMP, processed_by = $1 
+       WHERE id = $2`,
+      [adminEmail, requestId]
+    );
+
+    // Vérifier si les variables d'environnement email sont configurées
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.log(
+        "[SEND-ACCESS-CODE][API] Configuration email manquante - simulation d'envoi"
+      );
+
+      res.json({
+        success: true,
+        message:
+          "Code d'accès mis à jour avec succès ! (Email non configuré - mode développement)",
+        request: {
+          id: requestId,
+          email: request.email,
+          name: request.name,
+          newPassword: newPassword,
+        },
+      });
+      return;
+    }
+
+    // Envoyer l'email avec le nouveau code d'accès
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: request.email,
+      subject: "Votre nouveau code d'accès - ITS Service",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 20px; text-align: center;">
+            <h1>ITS Service</h1>
+            <h2>Votre nouveau code d'accès</h2>
+          </div>
+          <div style="padding: 20px; background: #f8fafc;">
+            <p>Bonjour <strong>${request.name}</strong>,</p>
+            <p>Votre demande de nouveau code d'accès a été approuvée.</p>
+            
+            <div style="background: white; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+              <h3 style="color: #1e40af; margin-bottom: 10px;">Votre nouveau code d'accès :</h3>
+              <div style="background: #fbbf24; color: #1e40af; font-family: monospace; font-size: 18px; font-weight: bold; padding: 15px; border-radius: 5px; letter-spacing: 2px;">
+                ${newPassword}
+              </div>
+            </div>
+            
+            <p><strong>Informations de connexion :</strong></p>
+            <ul>
+              <li><strong>Email :</strong> ${request.email}</li>
+              <li><strong>Code d'accès :</strong> ${newPassword}</li>
+            </ul>
+            
+            <p>Vous pouvez maintenant vous connecter à votre espace ITS Service avec ces identifiants.</p>
+            
+            <div style="background: #fef3cd; border: 1px solid #fbbf24; border-radius: 5px; padding: 15px; margin: 20px 0;">
+              <strong>Important :</strong> Pour des raisons de sécurité, conservez ce code d'accès en lieu sûr et ne le partagez avec personne.
+            </div>
+          </div>
+          <div style="background: #374151; color: white; padding: 15px; text-align: center; font-size: 12px;">
+            <p>© ${new Date().getFullYear()} ITS Service - Service de Transit</p>
+            <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    console.log("[SEND-ACCESS-CODE][API] Email envoyé avec succès:", {
+      requestId,
+      email: request.email,
+      adminEmail,
+    });
+
+    res.json({
+      success: true,
+      message: "Nouveau code d'accès envoyé par email avec succès.",
+      request: {
+        id: requestId,
+        email: request.email,
+        name: request.name,
+      },
+    });
+  } catch (err) {
+    console.error("[SEND-ACCESS-CODE][API] Erreur détaillée:", {
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      requestId,
+      adminEmail,
+    });
+    res.status(500).json({
+      success: false,
+      message: `Erreur serveur lors de l'envoi du code d'accès: ${err.message}`,
+      error: err.code || "UNKNOWN_ERROR",
     });
   }
 });
