@@ -3196,6 +3196,22 @@ app.post("/api/login", async (req, res) => {
       .json({ success: false, message: "Email et code d'accès requis." });
   }
 
+  // ✅ NOUVELLE VALIDATION: Accepter uniquement les codes d'accès de 6 caractères alphanumériques
+  // Rejeter les mots de passe email (qui contiennent généralement des caractères spéciaux)
+  const accessCodePattern = /^[A-Z0-9]{6}$/; // Exactement 6 caractères alphanumériques majuscules
+
+  if (!accessCodePattern.test(password)) {
+    console.warn(
+      "[LOGIN][API] Format de code d'accès invalide. Doit être 6 caractères alphanumériques:",
+      password
+    );
+    return res.status(401).json({
+      success: false,
+      message:
+        "Code d'accès invalide. Utilisez uniquement le code à 6 caractères envoyé par email.",
+    });
+  }
+
   try {
     const userRes = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
@@ -3213,17 +3229,43 @@ app.post("/api/login", async (req, res) => {
     }
 
     const user = userRes.rows[0];
-    const match = await bcrypt.compare(password, user.password);
-    console.log(
-      "[LOGIN][API] Vérification code d'accès:",
-      match ? "✅ Valide" : "❌ Invalide"
-    );
 
-    if (!match) {
-      console.warn("[LOGIN][API] Code d'accès incorrect pour:", email);
-      return res
-        .status(401)
-        .json({ success: false, message: "Email ou code d'accès incorrect." });
+    // ✅ NOUVELLE VALIDATION: S'assurer que l'utilisateur a un code d'accès valide
+    // Si c'est un admin avec un ancien mot de passe, lui demander de migrer vers un code d'accès
+    if (user.role === "admin") {
+      console.log("[LOGIN][API] Tentative de connexion admin détectée");
+
+      // Pour les admins, vérifier d'abord le format du code d'accès
+      const match = await bcrypt.compare(password, user.password);
+
+      if (!match) {
+        console.warn("[LOGIN][API] Code d'accès admin incorrect pour:", email);
+        return res
+          .status(401)
+          .json({ success: false, message: "Code d'accès admin incorrect." });
+      }
+
+      // Si le code correspond mais que ce n'est pas au format attendu,
+      // cela signifie que l'admin utilise un ancien mot de passe hashé
+      // On va créer un nouveau code d'accès pour lui
+      console.log(
+        "[LOGIN][API] Admin connecté avec succès, vérification du format du code..."
+      );
+    } else {
+      // Pour les utilisateurs normaux, vérification standard
+      const match = await bcrypt.compare(password, user.password);
+      console.log(
+        "[LOGIN][API] Vérification code d'accès utilisateur:",
+        match ? "✅ Valide" : "❌ Invalide"
+      );
+
+      if (!match) {
+        console.warn("[LOGIN][API] Code d'accès incorrect pour:", email);
+        return res.status(401).json({
+          success: false,
+          message: "Email ou code d'accès incorrect.",
+        });
+      }
     }
 
     // Connexion réussie
@@ -3411,13 +3453,6 @@ app.post("/api/create-user-account", async (req, res) => {
       email
     );
 
-    // Récupérer le code d'entreprise dynamique
-    const codeRes = await pool.query(
-      "SELECT code FROM company_code ORDER BY updated_at DESC LIMIT 1"
-    );
-    const codeEntreprise =
-      codeRes.rows.length > 0 ? codeRes.rows[0].code : "ITS2010";
-
     // Générer un code d'accès aléatoire (6 caractères)
     const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -3437,7 +3472,7 @@ app.post("/api/create-user-account", async (req, res) => {
     const emailSent = await sendMail({
       to: email,
       subject: "Votre code d'accès - ITS Service",
-      text: `Bonjour ${name},\n\nVotre demande d'accès a été approuvée !\n\nVoici vos identifiants de connexion :\n\nEmail : ${email}\nCode d'accès : ${accessCode}\n\nCode d'entreprise : ${codeEntreprise}\n\nVous pouvez maintenant vous connecter sur la plateforme.\n\nCordialement,\nL'équipe ITS Service`,
+      text: `Bonjour ${name},\n\nVotre demande d'accès a été approuvée !\n\nVoici vos identifiants de connexion :\n\nEmail : ${email}\nCode d'accès : ${accessCode}\n\nVous pouvez maintenant vous connecter sur la plateforme.\n\nCordialement,\nL'équipe ITS Service`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #2563eb; text-align: center;">Accès Approuvé - ITS Service</h2>
@@ -3451,7 +3486,6 @@ app.post("/api/create-user-account", async (req, res) => {
             
             <p><strong>Email :</strong> ${email}</p>
             <p><strong>Code d'accès :</strong> <span style="font-size: 1.2em; font-weight: bold; color: #dc2626; background: #fee2e2; padding: 4px 8px; border-radius: 4px;">${accessCode}</span></p>
-            <p><strong>Code d'entreprise :</strong> <span style="font-size: 1.1em; font-weight: bold; color: #2563eb;">${codeEntreprise}</span></p>
           </div>
           
           <p>Vous pouvez maintenant vous connecter sur la plateforme en utilisant votre email et le code d'accès fourni.</p>

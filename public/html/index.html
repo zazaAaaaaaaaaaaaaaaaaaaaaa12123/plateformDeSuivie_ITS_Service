@@ -208,6 +208,10 @@
               class="block text-blue-900 font-semibold mb-1"
               >Code d'accès</label
             >
+            <p class="text-xs text-gray-600 mb-2">
+              Utilisez uniquement le code d'accès envoyé par email après
+              approbation de votre demande
+            </p>
             <div class="relative">
               <input
                 type="password"
@@ -407,7 +411,7 @@
           closeAccessRequestSuccessModal();
       };
 
-      // Affichage/Masquage mot de passe
+      // Affichage/Masquage code d'accès
       window.togglePw = function (btn, inputId) {
         const input = document.getElementById(inputId);
         if (input.type === "password") {
@@ -484,9 +488,9 @@
           loginForm.addEventListener("submit", function (e) {
             e.preventDefault();
             const email = document.getElementById("loginEmail").value.trim();
-            const password = document.getElementById("loginPassword").value;
+            const accessCode = document.getElementById("loginPassword").value;
 
-            if (!email || !password) {
+            if (!email || !accessCode) {
               document.getElementById("loginError").textContent =
                 "Veuillez remplir tous les champs.";
               return;
@@ -496,7 +500,7 @@
             fetch("/api/login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password }),
+              body: JSON.stringify({ email, password: accessCode }),
             })
               .then((res) => res.json())
               .then((data) => {
@@ -516,7 +520,7 @@
                     "https://dossiv.ci/html/tableauDeBord.html";
                 } else {
                   document.getElementById("loginError").textContent =
-                    data.message || "Identifiants incorrects.";
+                    data.message || "Email ou code d'accès incorrect.";
                 }
               })
               .catch(() => {

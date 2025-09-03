@@ -8,12 +8,12 @@ document.addEventListener("DOMContentLoaded", function () {
     loginForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       const email = document.getElementById("loginEmail").value.trim();
-      const password = document.getElementById("loginPassword").value;
+      const accessCode = document.getElementById("loginPassword").value;
       const errorDiv = document.getElementById("loginError");
-      
+
       if (errorDiv) errorDiv.textContent = "";
-      
-      if (!email || !password) {
+
+      if (!email || !accessCode) {
         if (errorDiv) {
           errorDiv.textContent = "Veuillez remplir tous les champs.";
         } else {
@@ -21,15 +21,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         return;
       }
-      
+
       try {
         const res = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password: accessCode }),
         });
         const data = await res.json();
-        
+
         if (res.ok && data.success) {
           // Stocke le profil complet dans localStorage pour le dashboard
           if (data.name && data.email) {
@@ -44,14 +44,14 @@ document.addEventListener("DOMContentLoaded", function () {
             localStorage.setItem("showSuccessMessage", "true");
             localStorage.setItem("userEmail", email);
           }
-          
+
           // Vérification si c'est un admin
           if (data.isAdmin) {
             localStorage.setItem("isAdminLoggedIn", "true");
           } else {
             localStorage.removeItem("isAdminLoggedIn");
           }
-          
+
           // Redirection selon le type d'utilisateur
           if (data.isAdmin) {
             window.location.href = "/html/access-management.html";
@@ -86,46 +86,53 @@ function submitAccessRequest(requestData) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestData),
   })
-  .then(response => response.json())
-  .then(data => {
-    console.log("Demande d'accès envoyée:", data);
-    
-    // Notifier l'interface d'administration si elle est ouverte
-    if (window.addNewAccessRequest && typeof window.addNewAccessRequest === 'function') {
-      window.addNewAccessRequest(requestData);
-    }
-    
-    // Sauvegarder localement aussi pour la démo
-    const existingRequests = JSON.parse(localStorage.getItem('accessRequests') || '[]');
-    const newRequest = {
-      id: Date.now() + Math.random(),
-      name: requestData.name,
-      email: requestData.email,
-      date: requestData.date,
-      status: 'pending',
-      timestamp: new Date().getTime()
-    };
-    
-    existingRequests.push(newRequest);
-    localStorage.setItem('accessRequests', JSON.stringify(existingRequests));
-  })
-  .catch(error => {
-    console.error("Erreur lors de l'envoi:", error);
-    
-    // Même en cas d'erreur, sauvegarder localement pour la démo
-    const existingRequests = JSON.parse(localStorage.getItem('accessRequests') || '[]');
-    const newRequest = {
-      id: Date.now() + Math.random(),
-      name: requestData.name,
-      email: requestData.email,
-      date: requestData.date,
-      status: 'pending',
-      timestamp: new Date().getTime()
-    };
-    
-    existingRequests.push(newRequest);
-    localStorage.setItem('accessRequests', JSON.stringify(existingRequests));
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Demande d'accès envoyée:", data);
+
+      // Notifier l'interface d'administration si elle est ouverte
+      if (
+        window.addNewAccessRequest &&
+        typeof window.addNewAccessRequest === "function"
+      ) {
+        window.addNewAccessRequest(requestData);
+      }
+
+      // Sauvegarder localement aussi pour la démo
+      const existingRequests = JSON.parse(
+        localStorage.getItem("accessRequests") || "[]"
+      );
+      const newRequest = {
+        id: Date.now() + Math.random(),
+        name: requestData.name,
+        email: requestData.email,
+        date: requestData.date,
+        status: "pending",
+        timestamp: new Date().getTime(),
+      };
+
+      existingRequests.push(newRequest);
+      localStorage.setItem("accessRequests", JSON.stringify(existingRequests));
+    })
+    .catch((error) => {
+      console.error("Erreur lors de l'envoi:", error);
+
+      // Même en cas d'erreur, sauvegarder localement pour la démo
+      const existingRequests = JSON.parse(
+        localStorage.getItem("accessRequests") || "[]"
+      );
+      const newRequest = {
+        id: Date.now() + Math.random(),
+        name: requestData.name,
+        email: requestData.email,
+        date: requestData.date,
+        status: "pending",
+        timestamp: new Date().getTime(),
+      };
+
+      existingRequests.push(newRequest);
+      localStorage.setItem("accessRequests", JSON.stringify(existingRequests));
+    });
 }
 
 // Exposer la fonction globalement
