@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Responsable Livraison</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .test-container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      .test-button {
+        display: block;
+        width: 100%;
+        padding: 15px;
+        margin: 10px 0;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        text-align: center;
+        border-radius: 5px;
+        font-weight: bold;
+      }
+      .test-button:hover {
+        background-color: #0056b3;
+      }
+      .info {
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="test-container">
+      <h1>🚚 Test - Responsable Livraison</h1>
+
+      <div class="info">
+        <strong>Problème:</strong> Quand vous vous connectez via
+        l'authentification, vous ne voyez que les dossiers en cours de
+        livraison, mais pas les dossiers déjà livrés.
+      </div>
+
+      <div class="info">
+        <strong>✅ SOLUTION IMPLEMENTÉE:</strong>
+        <ul>
+          <li>
+            🔧 Modifié <code>repoLivAuth.html</code> pour ajouter le paramètre
+            <code>?fromAuth=true</code>
+          </li>
+          <li>
+            🔧 Modifié <code>scriptRespLiv.js</code> pour détecter ce paramètre
+          </li>
+          <li>
+            🎯 Quand <code>fromAuth=true</code> : Affiche TOUS les dossiers
+            (livrés + en cours)
+          </li>
+          <li>
+            🎯 Quand pas de paramètre : Affiche seulement les dossiers en cours
+            (ancien comportement)
+          </li>
+        </ul>
+      </div>
+
+      <h2>Tests:</h2>
+
+      <a href="resp_liv.html?fromAuth=true" class="test-button">
+        ✅ Nouvelle version - TOUS les dossiers (via authentification)
+      </a>
+
+      <a href="resp_liv.html" class="test-button">
+        ❌ Ancienne version - Seulement dossiers en cours
+      </a>
+
+      <a
+        href="resp_liv.html?filter=mise_en_livraison&autoFilter=true"
+        class="test-button"
+      >
+        🟡 Filtré - Seulement mise en livraison
+      </a>
+
+      <a href="resp_liv.html?filter=livre&autoFilter=true" class="test-button">
+        🟢 Filtré - Seulement dossiers livrés
+      </a>
+
+      <div class="info">
+        <strong>Instructions:</strong>
+        <ol>
+          <li>Cliquez sur le premier lien (✅ Nouvelle version)</li>
+          <li>Ouvrez la console du navigateur (F12)</li>
+          <li>Cherchez les logs qui commencent par "🔐 [RESP LIV]"</li>
+          <li>
+            Vérifiez que vous voyez maintenant TOUS les dossiers (livrés ET en
+            cours)
+          </li>
+        </ol>
+      </div>
+    </div>
+  </body>
+</html>

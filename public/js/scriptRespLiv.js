@@ -1878,6 +1878,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const autoFilter = getUrlParameter("autoFilter") === "true";
         const fromSidebar = getUrlParameter("from") === "sidebar";
         const fromDashboard = getUrlParameter("fromDashboard") === "true";
+        const fromAuth = getUrlParameter("fromAuth") === "true"; // Nouveau paramètre pour authentification
 
         console.log(
           "🔄 [DEBUG RESP LIV] Paramètres de filtrage:",
@@ -1888,12 +1889,21 @@ document.addEventListener("DOMContentLoaded", function () {
           "fromSidebar:",
           fromSidebar,
           "fromDashboard:",
-          fromDashboard
+          fromDashboard,
+          "fromAuth:",
+          fromAuth
         );
 
+        // 🎯 LOG POUR DEBUG - Affichage des paramètres détectés
+        if (fromAuth) {
+          console.log(
+            "🔐 [RESP LIV] Connexion depuis l'authentification détectée - Affichage de TOUS les dossiers"
+          );
+        }
+
         let filteredDeliveries = data.deliveries.filter((delivery) => {
-          // 🆕 NOUVEAU: Si on vient du sidebar OU du dashboard, afficher TOUS les dossiers (livrés ET en cours de livraison)
-          if (fromSidebar || fromDashboard) {
+          // 🆕 NOUVEAU: Si on vient du sidebar OU du dashboard OU de l'authentification, afficher TOUS les dossiers (livrés ET en cours de livraison)
+          if (fromSidebar || fromDashboard || fromAuth) {
             // Afficher les dossiers qui sont soit:
             // 1. En mise_en_livraison_acconier (avec ou sans conteneurs livrés)
             // 2. Avec tous les conteneurs livrés
@@ -1924,15 +1934,25 @@ document.addEventListener("DOMContentLoaded", function () {
             return false;
           }
 
-          // Si pas de filtrage automatique, appliquer le filtrage par défaut (mise_en_livraison)
+          // 🆕 NOUVEAU: Si pas de filtrage automatique, afficher TOUS les dossiers (par défaut depuis l'authentification)
           if (!autoFilter || !filterParam) {
-            // Logique par défaut : dossiers en mise_en_livraison_acconier sans conteneurs livrés
-            if (
-              delivery.delivery_status_acconier !== "mise_en_livraison_acconier"
-            ) {
-              return false;
+            // 🎯 LOGIQUE MODIFIÉE : Afficher TOUS les dossiers de livraison (livrés ET en cours)
+            console.log(
+              "🔄 [DEBUG RESP LIV] Mode par défaut - Affichage de TOUS les dossiers de livraison"
+            );
+
+            // Afficher les dossiers qui sont soit:
+            // 1. En mise_en_livraison_acconier (en cours de livraison)
+            // 2. Avec tous les conteneurs livrés (dossiers terminés)
+            const isMiseEnLivraison =
+              delivery.delivery_status_acconier ===
+              "mise_en_livraison_acconier";
+
+            if (isMiseEnLivraison) {
+              return true; // Inclure tous les dossiers en mise en livraison
             }
 
+            // Vérifier si tous les conteneurs sont livrés (dossiers terminés)
             if (
               delivery.container_statuses &&
               typeof delivery.container_statuses === "object"
@@ -1940,14 +1960,17 @@ document.addEventListener("DOMContentLoaded", function () {
               const containerStatuses = Object.values(
                 delivery.container_statuses
               );
-              const hasDeliveredContainers = containerStatuses.some(
-                (status) => status === "livre" || status === "livré"
-              );
-              if (hasDeliveredContainers) {
-                return false;
+              if (containerStatuses.length > 0) {
+                const allDelivered = containerStatuses.every(
+                  (status) => status === "livre" || status === "livré"
+                );
+                if (allDelivered) {
+                  return true; // Inclure les dossiers entièrement livrés
+                }
               }
             }
-            return true;
+
+            return false; // Exclure les autres statuts
           }
 
           // 🆕 FILTRAGE SELON LE PARAMÈTRE URL
@@ -2019,11 +2042,26 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(
           `🔄 [DEBUG RESP LIV] Filtrage appliqué: ${
             filterParam || "défaut"
-          } (autoFilter: ${autoFilter})`
+          } (autoFilter: ${autoFilter}, fromAuth: ${fromAuth})`
         );
         console.log(
           `🔄 [DEBUG RESP LIV] Nombre de livraisons après filtrage: ${filteredDeliveries.length}`
         );
+
+        // 🎯 LOG DÉTAILLÉ pour comprendre quels dossiers sont inclus/exclus
+        if (fromAuth) {
+          console.log("📋 [RESP LIV] DÉTAIL DES DOSSIERS AFFICHÉS:");
+          filteredDeliveries.forEach((delivery, index) => {
+            if (index < 5) {
+              // Afficher les 5 premiers pour debug
+              console.log(
+                `  ${index + 1}. ID: ${delivery.id}, Statut: ${
+                  delivery.delivery_status_acconier
+                }, Conteneurs: ${JSON.stringify(delivery.container_statuses)}`
+              );
+            }
+          });
+        }
 
         // Filtrage pour le mode admin : affichage intelligent des livraisons
         if (isAdminMode && targetUser) {
