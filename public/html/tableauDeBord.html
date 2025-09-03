@@ -3796,7 +3796,7 @@
               carteMiseLivraison.addEventListener("click", function () {
                 // Redirection avec filtre pour dossiers en cours de livraison (non livrés) - URL dynamique
                 const baseUrl = window.location.origin;
-                window.location.href = `${baseUrl}/html/resp_liv.html?filter=mise_en_livraison&autoFilter=true`;
+                window.location.href = `${baseUrl}/html/resp_liv.html?filter=mise_en_livraison&autoFilter=true&fromDashboard=true`;
               });
             }
             // --- Ajout gestion carte dossier en retard ---
@@ -3948,10 +3948,10 @@
                         const redirectUrl = isLivraisonType
                           ? `${baseUrl}/html/resp_liv.html?dossier=${encodeURIComponent(
                               dossierId
-                            )}&flash=true`
+                            )}&flash=true&fromDashboard=true`
                           : `${baseUrl}/html/resp_acconier.html?dossier=${encodeURIComponent(
                               dossierId
-                            )}&flash=true`;
+                            )}&flash=true&fromDashboard=true`;
 
                         // Couleurs et icônes selon le type
                         const typeColor = isLivraisonType
@@ -4161,7 +4161,7 @@
               carteLivre.addEventListener("click", function () {
                 // Redirection avec filtre pour dossiers livrés uniquement - URL dynamique
                 const baseUrl = window.location.origin;
-                window.location.href = `${baseUrl}/html/resp_liv.html?filter=livre&autoFilter=true`;
+                window.location.href = `${baseUrl}/html/resp_liv.html?filter=livre&autoFilter=true&fromDashboard=true`;
               });
             }
 
@@ -4335,7 +4335,7 @@
               document.body.appendChild(acconierFrame);
 
               const livFrame = document.createElement("iframe");
-              livFrame.src = `${baseUrl}/html/resp_liv.html`;
+              livFrame.src = `${baseUrl}/html/resp_liv.html?fromDashboard=true`;
               livFrame.style.display = "none";
               livFrame.setAttribute("aria-hidden", "true");
               document.body.appendChild(livFrame);
@@ -4412,7 +4412,7 @@
               } else if (pageType === "livraison") {
                 // Redirection normale vers la page livraison
                 const baseUrl = window.location.origin;
-                targetUrl = `${baseUrl}/html/resp_liv.html?from=sidebar`;
+                targetUrl = `${baseUrl}/html/resp_liv.html?from=sidebar&fromDashboard=true`;
                 // Marquer que l'utilisateur vient du tableau de bord principal
                 sessionStorage.setItem("fromMainDashboard", "true");
                 localStorage.setItem("userAccessLevel", "main_dashboard");
@@ -6627,7 +6627,7 @@
                 const targetPageUrl =
                   pageName === "resp_acconier.html"
                     ? "/html/resp_acconier.html"
-                    : "/html/resp_liv.html";
+                    : "/html/resp_liv.html?fromDashboard=true";
 
                 // Ne pas ajouter de paramètres ici, on les ajoutera dans redirectToUserPage
                 const fullUrl = targetPageUrl;
@@ -6902,10 +6902,10 @@
           const redirectUrl = isLivraisonType
             ? `${baseUrl}/html/resp_liv.html?dossier=${encodeURIComponent(
                 dossierId
-              )}&flash=true`
+              )}&flash=true&fromDashboard=true`
             : `${baseUrl}/html/resp_acconier.html?dossier=${encodeURIComponent(
                 dossierId
-              )}&flash=true`;
+              )}&flash=true&fromDashboard=true`;
 
           const typeColor = isLivraisonType ? "#2563eb" : "#dc3545";
           const typeIcon = isLivraisonType

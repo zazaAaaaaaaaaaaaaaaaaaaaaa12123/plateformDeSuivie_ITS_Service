@@ -897,12 +897,39 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Initialiser le texte du bouton
   updateExcelButtonText();
+
+  // 🏠 Gérer l'affichage de l'icône d'accueil selon la source de connexion
+  manageHomeButtonVisibility();
 });
 
 // Fonction utilitaire pour récupérer les paramètres URL
 function getUrlParameter(name) {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(name);
+}
+
+// 🏠 Fonction pour gérer l'affichage de l'icône d'accueil selon la source de connexion
+function manageHomeButtonVisibility() {
+  const fromDashboard = getUrlParameter("fromDashboard") === "true";
+  const homeButton = document.getElementById("homeButton");
+
+  if (homeButton) {
+    if (fromDashboard) {
+      // Afficher l'icône d'accueil seulement si on vient du tableau de bord
+      homeButton.style.display = "flex";
+      console.log(
+        "🏠 [HOME BUTTON] Icône d'accueil visible - Connexion depuis le tableau de bord"
+      );
+    } else {
+      // Cacher l'icône d'accueil dans tous les autres cas (accès direct, auth, etc.)
+      homeButton.style.display = "none";
+      console.log(
+        "🏠 [HOME BUTTON] Icône d'accueil cachée - Accès direct ou depuis authentification"
+      );
+    }
+  } else {
+    console.log("⚠️ [HOME BUTTON] Élément homeButton non trouvé dans le DOM");
+  }
 }
 
 // 🚀 Fonction pour faire clignoter un dossier spécifique en cas de redirection depuis le tableau de bord
@@ -8241,7 +8268,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // ========================================================================
-// === FIN GESTION DES DOSSIERS EN RETARD ===
+// === FIN GESTION DES DOSSIERS EN RETARD =================================
 // ========================================================================
 /**12345 */
 /**JESUS MA FORCE  */
