@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="../css/access-management-enhanced.css" />
     <style>
       .access-card {
-        transition: all 0.3s ease; 
+        transition: all 0.3s ease;
       }
       .access-card:hover {
         transform: translateY(-2px);
@@ -52,7 +52,7 @@
         margin-bottom: 1rem;
       }
       .timeline-item::before {
-        content: '';
+        content: "";
         position: absolute;
         left: 0.5rem;
         top: 0.5rem;
@@ -62,7 +62,7 @@
         background: #3b82f6;
       }
       .timeline-item::after {
-        content: '';
+        content: "";
         position: absolute;
         left: 0.875rem;
         top: 1.25rem;
@@ -213,34 +213,19 @@
               <span class="font-bold text-green-600" id="approvalRate">0%</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Temps de traitement moyen</span>
-              <span class="font-bold text-blue-600" id="avgProcessingTime">0h</span>
+              <span class="text-sm text-gray-600"
+                >Temps de traitement moyen</span
+              >
+              <span class="font-bold text-blue-600" id="avgProcessingTime"
+                >0h</span
+              >
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600">Demandes aujourd'hui</span>
-              <span class="font-bold text-orange-600" id="todayRequests">0</span>
-            </div>
-          </div>
-        </div>
-      </div>
+              <span class="font-bold text-orange-600" id="todayRequests"
+                >0</span
               >
-                0
-              </p>
             </div>
-            <i class="fas fa-check-circle text-green-400 text-2xl"></i>
-          </div>
-        </div>
-        <div
-          class="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-400"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-gray-600">Rejetées</p>
-              <p class="text-2xl font-bold text-red-600" id="rejectedRequests">
-                0
-              </p>
-            </div>
-            <i class="fas fa-times-circle text-red-400 text-2xl"></i>
           </div>
         </div>
       </div>
@@ -254,8 +239,8 @@
               <span id="requestsTitle">Demandes d'Accès</span>
             </h2>
             <div class="flex items-center space-x-3">
-              <button 
-                onclick="clearFilter()" 
+              <button
+                onclick="clearFilter()"
                 id="clearFilterBtn"
                 class="bg-yellow-400 hover:bg-yellow-300 text-blue-900 px-3 py-1 rounded text-sm font-medium hidden"
               >
@@ -273,7 +258,9 @@
           </div>
           <div id="noRequests" class="text-center py-12 text-gray-500">
             <i class="fas fa-inbox text-4xl mb-4"></i>
-            <p class="text-lg" id="noRequestsMessage">Aucune demande d'accès en attente</p>
+            <p class="text-lg" id="noRequestsMessage">
+              Aucune demande d'accès en attente
+            </p>
           </div>
         </div>
       </div>
