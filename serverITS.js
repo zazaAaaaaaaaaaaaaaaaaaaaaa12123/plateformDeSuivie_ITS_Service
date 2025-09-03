@@ -3427,6 +3427,23 @@ app.post("/api/create-user-account", async (req, res) => {
   }
 
   try {
+    // Récupérer le type de demande depuis la base de données
+    const requestResult = await pool.query(
+      "SELECT request_type FROM access_requests WHERE email = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1",
+      [email]
+    );
+
+    const isPasswordReset =
+      requestResult.rows.length > 0 &&
+      (requestResult.rows[0].request_type === "forgot_password" ||
+        requestResult.rows[0].request_type === "forgot_code");
+
+    console.log("[CREATE-USER][API] Type de demande:", {
+      email,
+      requestType: requestResult.rows[0]?.request_type || "new_access",
+      isPasswordReset,
+    });
+
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await pool.query(
       "SELECT * FROM users WHERE email = $1",
@@ -3464,7 +3481,80 @@ app.post("/api/create-user-account", async (req, res) => {
         });
       }
 
-      // Si c'est un utilisateur normal, on refuse (doublon réel)
+      // Si c'est une demande de code oublié, on met à jour le mot de passe et on envoie l'email
+      if (isPasswordReset) {
+        console.log(
+          "[CREATE-USER][INFO] Demande de code oublié pour utilisateur existant:",
+          email
+        );
+
+        // Mettre à jour le mot de passe de l'utilisateur existant
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await pool.query("UPDATE users SET password = $1 WHERE email = $2", [
+          hashedPassword,
+          email,
+        ]);
+
+        // Envoyer le nouveau code d'accès par email
+        const emailSent = await sendMail({
+          to: email,
+          subject: "Votre nouveau code d'accès - ITS Service",
+          text: `Bonjour ${user.name},\n\nVotre demande de nouveau code d'accès a été approuvée !\n\nVoici vos identifiants de connexion :\n\nEmail : ${email}\nCode d'accès : ${password}\n\nVous pouvez maintenant vous connecter sur la plateforme.\n\nCordialement,\nL'équipe ITS Service`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #2563eb; text-align: center;">Code d'Accès Mis à Jour - ITS Service</h2>
+              
+              <p>Bonjour <strong>${user.name}</strong>,</p>
+              
+              <p style="color: #059669; font-weight: bold;">✅ Votre demande de nouveau code d'accès a été approuvée !</p>
+              
+              <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #374151; margin-top: 0;">🔐 Vos identifiants de connexion :</h3>
+                
+                <p><strong>Email :</strong> ${email}</p>
+                <p><strong>Code d'accès :</strong> <span style="font-size: 1.2em; font-weight: bold; color: #dc2626; background: #fee2e2; padding: 4px 8px; border-radius: 4px;">${password}</span></p>
+              </div>
+              
+              <p>Vous pouvez maintenant vous connecter sur la plateforme en utilisant votre email et le nouveau code d'accès fourni.</p>
+              
+              <p style="color: #6b7280; font-size: 0.9em; margin-top: 30px;">
+                Cordialement,<br>
+                L'équipe ITS Service
+              </p>
+            </div>
+          `,
+        });
+
+        // Mettre à jour la demande d'accès
+        await pool.query(
+          `UPDATE access_requests 
+           SET status = 'approved', processed_at = CURRENT_TIMESTAMP, processed_by = 'admin'
+           WHERE email = $1`,
+          [email]
+        );
+
+        console.log(
+          "[CREATE-USER][INFO] Code d'accès mis à jour et email envoyé:",
+          {
+            email,
+            emailSent,
+          }
+        );
+
+        return res.status(200).json({
+          success: true,
+          message: `Code d'accès mis à jour avec succès. Le nouveau code a été envoyé par email à ${email}.`,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          },
+          emailSent: emailSent,
+        });
+      }
+
+      // Si c'est un utilisateur normal et une nouvelle demande d'accès, on refuse (doublon réel)
       return res.status(400).json({
         success: false,
         message: "Un compte utilisateur existe déjà avec cet email.",
