@@ -286,25 +286,27 @@ class ArchivesManager {
             );
           }
         } else if (actionFilter && this.selectedTab === "all") {
-          // 🎯 AFFICHAGE INTELLIGENT: Utiliser les données déjà chargées pour "Toutes les Archives"
+          // 🎯 AFFICHAGE INTELLIGENT: Pour "Toutes les Archives", forcer le rechargement
           console.log(
-            "[ARCHIVES] 🔄 Onglet 'Toutes les Archives' - Affichage des données chargées"
+            "[ARCHIVES] 🔄 Onglet 'Toutes les Archives' - Rechargement des données"
           );
           this.currentFilters.action_type = ""; // Garder vide pour l'affichage
           actionFilter.value = "";
 
-          // Vérifier si des données sont déjà disponibles
-          if (this.allCombinedArchives && this.allCombinedArchives.length > 0) {
+          // 🔧 CORRECTION: Toujours recharger les données combinées pour s'assurer qu'elles sont à jour
+          console.log(
+            "[ARCHIVES] 🎯 Rechargement forcé des données combinées..."
+          );
+
+          try {
+            await this.loadAllCombinedByAddition();
             console.log(
-              "[ARCHIVES] ✅ Données combinées disponibles - Affichage direct"
+              "[ARCHIVES] ✅ Données combinées rechargées avec succès"
             );
-            this.renderCurrentView();
-          } else {
-            console.log(
-              "[ARCHIVES] ⏸️ Aucune donnée - Invitation au chargement"
-            );
+          } catch (error) {
+            console.error("[ARCHIVES] ❌ Erreur lors du rechargement:", error);
             this.showEmptyState(
-              "Cliquez sur 'Niveau de stockage' pour charger toutes les archives"
+              "Erreur lors du chargement - Cliquez sur 'Niveau de stockage' pour réessayer"
             );
           }
         } else {
@@ -733,22 +735,57 @@ class ArchivesManager {
 
   // Méthode pour forcer le rechargement complet des données
   async reload() {
-    console.log(
-      "[ARCHIVES] 🛡️ Rechargement forcé BLOQUÉ pour éviter les boucles"
-    );
-    console.log(
-      "[ARCHIVES] Utilisez le bouton 'Rechercher' pour charger les données"
-    );
+    console.log("[ARCHIVES] � Rechargement intelligent des données...");
 
-    // Réinitialiser les caches seulement
-    this.allArchivesData = null;
-    this.lastDataRefresh = 0;
-    this.currentPage = 1;
+    try {
+      // Réinitialiser les caches
+      this.allArchivesData = null;
+      this.allCombinedArchives = [];
+      this.allArchives = [];
+      this.filteredArchives = [];
+      this.lastDataRefresh = 0;
+      this.currentPage = 1;
 
-    // Afficher un message d'invitation
-    this.showEmptyState(
-      "Données réinitialisées - Cliquez sur 'Rechercher' pour recharger"
-    );
+      // Afficher le loader
+      this.showLoading(true);
+
+      // Déterminer quelle méthode de chargement utiliser selon l'onglet actuel
+      if (this.selectedTab === "all") {
+        console.log("[ARCHIVES] 🎯 Rechargement pour 'Toutes les Archives'");
+        await this.loadAllCombinedByAddition();
+      } else {
+        console.log(
+          `[ARCHIVES] 🎯 Rechargement pour l'onglet: ${this.selectedTab}`
+        );
+
+        // Pour les autres onglets, charger avec le filtre approprié
+        const archiveTabsMap = {
+          deleted: "suppression",
+          delivered: "livraison",
+          shipping: "mise_en_livraison",
+          orders: "ordre_livraison_etabli",
+        };
+
+        if (archiveTabsMap[this.selectedTab]) {
+          this.currentFilters.action_type = archiveTabsMap[this.selectedTab];
+          const actionFilter = document.getElementById("actionFilter");
+          if (actionFilter) {
+            actionFilter.value = archiveTabsMap[this.selectedTab];
+          }
+          await this.loadArchivesQuietly();
+        }
+      }
+
+      // Cacher le loader
+      this.showLoading(false);
+
+      console.log("[ARCHIVES] ✅ Rechargement terminé");
+      this.showNotification("Données rechargées avec succès", "success");
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur lors du rechargement:", error);
+      this.showLoading(false);
+      this.showNotification("Erreur lors du rechargement", "error");
+    }
   }
 
   // � NOUVELLE MÉTHODE: Charger TOUTES les archives en combinant dossiers actifs et supprimés
@@ -2155,57 +2192,62 @@ class ArchivesManager {
   }
 
   renderCurrentView() {
-    let archivesToRender = this.filteredArchives;
-
-    // Si des filtres sont appliqués côté serveur, utiliser directement les données filtrées
-    const hasServerFilters =
-      this.currentFilters.search ||
-      this.currentFilters.action_type ||
-      this.currentFilters.role_source ||
-      this.currentFilters.date_start ||
-      this.currentFilters.date_end;
-
-    // 🎯 CORRECTION: Détecter si on utilise des livraisons actives (pas des archives)
-    const isActiveDeliveryTab = [
-      "all",
-      "delivered",
-      "shipping",
-      "orders",
-    ].includes(this.selectedTab);
-
     console.log(
-      "[ARCHIVES] Rendu - Onglet:",
+      "[ARCHIVES] 🎬 renderCurrentView - Onglet:",
       this.selectedTab,
-      "| Filtres serveur:",
-      hasServerFilters,
-      "| Livraisons actives:",
-      isActiveDeliveryTab,
-      "| Données filtrées:",
-      this.filteredArchives.length
+      "| AllCombined:",
+      this.allCombinedArchives?.length || 0,
+      "| Filtered:",
+      this.filteredArchives?.length || 0
     );
 
-    // Si aucun filtre serveur n'est appliqué ET qu'on n'est pas sur des livraisons actives
-    if (!hasServerFilters && !isActiveDeliveryTab) {
-      switch (this.selectedTab) {
-        case "deleted":
-          archivesToRender = this.filteredArchives.filter(
-            (a) => a.action_type === "suppression"
-          );
-          break;
-        default:
-          // Pour "all", garder toutes les données filtrées
-          archivesToRender = this.filteredArchives;
-          break;
+    let archivesToRender = [];
+
+    // 🎯 LOGIQUE SPÉCIALE POUR L'ONGLET "TOUTES LES ARCHIVES"
+    if (this.selectedTab === "all") {
+      // Pour "Toutes les Archives", utiliser les données combinées
+      if (this.allCombinedArchives && this.allCombinedArchives.length > 0) {
+        archivesToRender = this.allCombinedArchives;
+        console.log(
+          "[ARCHIVES] ✅ Utilisation des données combinées:",
+          archivesToRender.length
+        );
+      } else {
+        console.log("[ARCHIVES] ⚠️ Pas de données combinées disponibles");
+        this.showEmptyState(
+          "Cliquez sur 'Niveau de stockage' pour charger toutes les archives"
+        );
+        return;
       }
-    } else if (isActiveDeliveryTab) {
-      // Pour les livraisons actives, utiliser directement les données déjà filtrées
-      archivesToRender = this.filteredArchives;
-      console.log(
-        `[ARCHIVES] 🚀 Affichage livraisons actives (${this.selectedTab}): ${archivesToRender.length} éléments`
-      );
+    } else {
+      // Pour les autres onglets, utiliser les données filtrées
+      archivesToRender = this.filteredArchives || [];
+
+      // Si aucune donnée filtrée, essayer de filtrer depuis les données combinées
+      if (
+        archivesToRender.length === 0 &&
+        this.allCombinedArchives?.length > 0
+      ) {
+        const filterMap = {
+          deleted: "suppression",
+          delivered: "livraison",
+          shipping: "mise_en_livraison",
+          orders: "ordre_livraison_etabli",
+        };
+
+        if (filterMap[this.selectedTab]) {
+          archivesToRender = this.allCombinedArchives.filter(
+            (item) => item.action_type === filterMap[this.selectedTab]
+          );
+          console.log(
+            `[ARCHIVES] � Filtrage depuis données combinées (${this.selectedTab}):`,
+            archivesToRender.length
+          );
+        }
+      }
     }
 
-    console.log("[ARCHIVES] Archives à rendre:", archivesToRender.length);
+    console.log("[ARCHIVES] 🎯 Archives à rendre:", archivesToRender.length);
     this.renderTable(archivesToRender);
     this.updatePaginationInfo();
   }
