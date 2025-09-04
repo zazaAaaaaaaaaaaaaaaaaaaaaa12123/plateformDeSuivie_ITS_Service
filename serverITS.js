@@ -104,7 +104,7 @@ app.post("/api/admin-register", async (req, res) => {
   }
 
   // Vérifier le code administrateur
-  const ADMIN_CODE = "ITS2025ADMIN";
+  const ADMIN_CODE = "DOSSIVCI-0767039921";
   // Nettoyer le code reçu (supprimer espaces en début/fin)
   const cleanAdminCode = adminCode ? adminCode.trim() : "";
 
