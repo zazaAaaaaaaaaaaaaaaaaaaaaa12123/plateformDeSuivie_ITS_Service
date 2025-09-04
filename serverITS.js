@@ -2794,7 +2794,48 @@ app.get("/deliveries/status", async (req, res) => {
 
     // On sélectionne explicitement bl_statuses (et container_statuses) + NOUVEAUX CHAMPS JSON si disponibles
     const result = await pool.query(query);
-    res.json({ success: true, deliveries: result.rows });
+    
+    // NORMALISATION DES DATES POUR RENDER - FIX POUR LES DATES DO ET BADT
+    const normalizedDeliveries = result.rows.map(delivery => {
+      // Fonction pour normaliser les dates
+      const normalizeDate = (dateValue) => {
+        if (!dateValue) return null;
+        try {
+          const date = new Date(dateValue);
+          if (isNaN(date.getTime())) return null;
+          // Retourner la date au format ISO (YYYY-MM-DD) pour éviter les problèmes de timezone
+          return date.toISOString().split('T')[0];
+        } catch (e) {
+          console.error("Erreur de normalisation de date:", e, "pour la valeur:", dateValue);
+          return null;
+        }
+      };
+
+      return {
+        ...delivery,
+        // Normaliser toutes les dates importantes
+        delivery_date: normalizeDate(delivery.delivery_date),
+        date_do: normalizeDate(delivery.date_do),
+        date_badt: normalizeDate(delivery.date_badt),
+        date_echange_bl: normalizeDate(delivery.date_echange_bl),
+        created_at: delivery.created_at // Garder created_at au format complet pour l'ordre
+      };
+    });
+    
+    // DEBUG: Logging pour diagnostic Render - vérifier les dates normalisées
+    const hasDateDo = normalizedDeliveries.filter(d => d.date_do).length;
+    const hasDateBadt = normalizedDeliveries.filter(d => d.date_badt).length;
+    console.log(`🔍 RENDER DEBUG - Livraisons avec date_do: ${hasDateDo}, avec date_badt: ${hasDateBadt}`);
+    if (hasDateDo > 0 || hasDateBadt > 0) {
+      const sample = normalizedDeliveries.find(d => d.date_do || d.date_badt);
+      console.log(`🔍 RENDER DEBUG - Échantillon:`, {
+        id: sample.id,
+        date_do_original: sample.date_do,
+        date_badt_original: sample.date_badt
+      });
+    }
+    
+    res.json({ success: true, deliveries: normalizedDeliveries });
   } catch (err) {
     console.error("[GET /deliveries/status] Erreur:", err);
     res.status(500).json({ success: false, deliveries: [] });
@@ -2895,20 +2936,42 @@ app.get("/api/exchange/data", async (req, res) => {
 
     // Si on demande un groupement par statut (API 3 en 1)
     if (groupe_par_statut === "true") {
-      const allDossiers = result.rows;
+      // NORMALISATION DES DATES POUR RENDER - FIX POUR LES DATES DO ET BADT
+      const normalizeDate = (dateValue) => {
+        if (!dateValue) return null;
+        try {
+          const date = new Date(dateValue);
+          if (isNaN(date.getTime())) return null;
+          // Retourner la date au format ISO (YYYY-MM-DD) pour éviter les problèmes de timezone
+          return date.toISOString().split('T')[0];
+        } catch (e) {
+          console.error("Erreur de normalisation de date:", e, "pour la valeur:", dateValue);
+          return null;
+        }
+      };
+
+      const normalizedDossiers = result.rows.map(delivery => ({
+        ...delivery,
+        // Normaliser toutes les dates importantes
+        delivery_date: normalizeDate(delivery.delivery_date),
+        date_do: normalizeDate(delivery.date_do),
+        date_badt: normalizeDate(delivery.date_badt),
+        date_echange_bl: normalizeDate(delivery.date_echange_bl),
+        created_at: delivery.created_at // Garder created_at au format complet pour l'ordre
+      }));
 
       const groupedData = {
         // TOUS LES DOSSIERS (pas de filtre)
-        dossiers_soumis: allDossiers,
+        dossiers_soumis: normalizedDossiers,
 
         // FILTRÉ : Seulement mise en livraison
-        dossiers_mise_en_livraison: allDossiers.filter(
+        dossiers_mise_en_livraison: normalizedDossiers.filter(
           (d) =>
             d.status === "mise_en_livraison" || d.status === "Mise en livraison"
         ),
 
         // FILTRÉ : Seulement livrés
-        dossiers_livres: allDossiers.filter(
+        dossiers_livres: normalizedDossiers.filter(
           (d) =>
             d.status === "livre" || d.status === "Livré" || d.status === "livré"
         ),
@@ -2921,10 +2984,33 @@ app.get("/api/exchange/data", async (req, res) => {
         timestamp: new Date().toISOString(),
       });
     } else {
-      // Comportement original (sans groupement)
+      // Comportement original (sans groupement) - AVEC NORMALISATION DES DATES
+      const normalizeDate = (dateValue) => {
+        if (!dateValue) return null;
+        try {
+          const date = new Date(dateValue);
+          if (isNaN(date.getTime())) return null;
+          // Retourner la date au format ISO (YYYY-MM-DD) pour éviter les problèmes de timezone
+          return date.toISOString().split('T')[0];
+        } catch (e) {
+          console.error("Erreur de normalisation de date:", e, "pour la valeur:", dateValue);
+          return null;
+        }
+      };
+
+      const normalizedData = result.rows.map(delivery => ({
+        ...delivery,
+        // Normaliser toutes les dates importantes
+        delivery_date: normalizeDate(delivery.delivery_date),
+        date_do: normalizeDate(delivery.date_do),
+        date_badt: normalizeDate(delivery.date_badt),
+        date_echange_bl: normalizeDate(delivery.date_echange_bl),
+        created_at: delivery.created_at // Garder created_at au format complet pour l'ordre
+      }));
+
       res.json({
         success: true,
-        data: result.rows,
+        data: normalizedData,
         count: result.rows.length,
         timestamp: new Date().toISOString(),
       });
@@ -3008,19 +3094,57 @@ app.put("/api/exchange/update/:id", async (req, res) => {
     // Broadcast WebSocket pour mise à jour en temps réel
     wsClients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
+        // Normaliser les dates avant d'envoyer via WebSocket
+        const normalizeDate = (dateValue) => {
+          if (!dateValue) return null;
+          try {
+            const date = new Date(dateValue);
+            if (isNaN(date.getTime())) return null;
+            return date.toISOString().split('T')[0];
+          } catch (e) {
+            return null;
+          }
+        };
+
+        const normalizedFields = {
+          ...result.rows[0],
+          date_do: normalizeDate(result.rows[0].date_do),
+          date_badt: normalizeDate(result.rows[0].date_badt),
+          date_echange_bl: normalizeDate(result.rows[0].date_echange_bl)
+        };
+
         client.send(
           JSON.stringify({
             type: "exchange_data_update",
             deliveryId: id,
-            updatedFields: result.rows[0],
+            updatedFields: normalizedFields,
           })
         );
       }
     });
 
+    // Normaliser les dates dans la réponse
+    const normalizeDate = (dateValue) => {
+      if (!dateValue) return null;
+      try {
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) return null;
+        return date.toISOString().split('T')[0];
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const normalizedData = {
+      ...result.rows[0],
+      date_do: normalizeDate(result.rows[0].date_do),
+      date_badt: normalizeDate(result.rows[0].date_badt),
+      date_echange_bl: normalizeDate(result.rows[0].date_echange_bl)
+    };
+
     res.json({
       success: true,
-      data: result.rows[0],
+      data: normalizedData,
       message: "Données d'échange mises à jour avec succès",
     });
   } catch (err) {
