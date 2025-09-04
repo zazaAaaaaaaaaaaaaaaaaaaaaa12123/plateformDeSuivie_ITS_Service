@@ -780,7 +780,9 @@ function updateExistingDossiersWithMissingDates() {
     {
       totalDossiers: dossiers.length,
       sessionProcessed: dateExtractionSessionProcessed,
-      environment: window.location.hostname.includes('render') ? 'PRODUCTION' : 'LOCAL'
+      environment: window.location.hostname.includes("render")
+        ? "PRODUCTION"
+        : "LOCAL",
     }
   );
 
@@ -789,10 +791,10 @@ function updateExistingDossiersWithMissingDates() {
     const originalBADT = dossier.date_badt;
 
     console.log(`📋 [${index + 1}/${dossiers.length}] Analyse dossier:`, {
-      container: dossier.container_number || dossier.ref_conteneur || 'N/A',
+      container: dossier.container_number || dossier.ref_conteneur || "N/A",
       date_do: originalDO,
       date_badt: originalBADT,
-      allFields: Object.keys(dossier)
+      allFields: Object.keys(dossier),
     });
 
     // Essayer d'extraire la date DO si manquante
@@ -839,7 +841,7 @@ function updateExistingDossiersWithMissingDates() {
   if (updated) {
     saveDossiersMisEnLiv(dossiers);
     console.log("PRODUCTION: Dossiers mis a jour avec les dates extraites");
-    
+
     // Forcer le rafraîchissement uniquement si on a fait des mises à jour
     setTimeout(() => {
       refreshMiseEnLivList();
@@ -852,25 +854,25 @@ function updateExistingDossiersWithMissingDates() {
 }
 
 // FONCTION DE FORCAGE POUR PRODUCTION - peut etre appelee depuis la console
-window.forceExtractMissingDates = function() {
-  console.log('PRODUCTION: Forcage de extraction des dates manquantes...');
+window.forceExtractMissingDates = function () {
+  console.log("PRODUCTION: Forcage de extraction des dates manquantes...");
   dateExtractionSessionProcessed = false;
   updateExistingDossiersWithMissingDates();
   refreshMiseEnLivList();
-  console.log('PRODUCTION: Extraction forcee terminee');
+  console.log("PRODUCTION: Extraction forcee terminee");
 };
 
 // FONCTION DEBUG POUR PRODUCTION
-window.debugMiseEnLivData = function() {
+window.debugMiseEnLivData = function () {
   const dossiers = getDossiersMisEnLiv();
-  console.log('DEBUG PRODUCTION: Donnees actuelles:', {
+  console.log("DEBUG PRODUCTION: Donnees actuelles:", {
     totalDossiers: dossiers.length,
-    dossiers: dossiers.map(d => ({
+    dossiers: dossiers.map((d) => ({
       container: d.container_number || d.ref_conteneur,
       date_do: d.date_do,
       date_badt: d.date_badt,
-      fields: Object.keys(d)
-    }))
+      fields: Object.keys(d),
+    })),
   });
   return dossiers;
 };
@@ -7531,9 +7533,11 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log(
         "📅 [PRODUCTION-READY] Modal Mise en Livraison ouverte - Extraction des dates manquantes...",
         {
-          environment: window.location.hostname.includes('render') ? 'PRODUCTION (Render)' : 'LOCAL',
+          environment: window.location.hostname.includes("render")
+            ? "PRODUCTION (Render)"
+            : "LOCAL",
           hostname: window.location.hostname,
-          currentFlag: dateExtractionSessionProcessed
+          currentFlag: dateExtractionSessionProcessed,
         }
       );
       dateExtractionSessionProcessed = false; // Réinitialiser le flag pour cette ouverture
