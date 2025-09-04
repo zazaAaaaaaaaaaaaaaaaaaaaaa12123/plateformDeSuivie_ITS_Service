@@ -1545,9 +1545,80 @@ function voirDetailsDossier(dossier) {
       const label = propertyLabels[keyFr] || formattedKey;
       let displayValue = value;
 
+      // 🆕 GESTION SPÉCIALE POUR LES CONTENEURS MULTIPLES
+      if (
+        key === "container_number" ||
+        key === "ref_conteneur" ||
+        keyFr === "Numéro de Conteneur"
+      ) {
+        if (value && typeof value === "string" && value.includes(",")) {
+          // Diviser les conteneurs et créer un menu déroulant
+          const containers = value
+            .split(",")
+            .map((c) => c.trim())
+            .filter((c) => c && c !== "");
+          const dropdownId = `containers-dropdown-${Date.now()}-${Math.random()
+            .toString(36)
+            .substr(2, 9)}`;
+
+          displayValue = `
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-primary dropdown-toggle w-100 text-start position-relative" 
+                      type="button" 
+                      id="${dropdownId}"
+                      data-bs-toggle="dropdown" 
+                      data-bs-auto-close="outside"
+                      aria-expanded="false"
+                      style="font-size: 0.85rem; min-height: 38px;">
+                <i class="fas fa-cube me-2 text-primary"></i>
+                <strong>${containers.length} conteneur${
+            containers.length > 1 ? "s" : ""
+          }</strong>
+                <br><small class="text-muted">${containers[0]}${
+            containers.length > 1 ? "..." : ""
+          }</small>
+              </button>
+              <ul class="dropdown-menu shadow-lg border-0 w-100" 
+                  aria-labelledby="${dropdownId}" 
+                  style="max-height: 250px; overflow-y: auto; min-width: 300px; z-index: 9999;">
+                <li class="dropdown-header bg-light">
+                  <i class="fas fa-list me-2"></i>Liste des ${
+                    containers.length
+                  } conteneurs
+                </li>
+                ${containers
+                  .map(
+                    (container, index) => `
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center py-2 container-item" 
+                       href="#" 
+                       onclick="event.preventDefault(); copyToClipboard('${container}'); return false;"
+                       data-container="${container}"
+                       style="transition: all 0.2s;">
+                      <span class="badge bg-primary me-3" style="font-size: 0.7rem; min-width: 25px;">${
+                        index + 1
+                      }</span>
+                      <span class="font-monospace flex-grow-1" style="font-size: 0.9rem; color: #2c3e50;">${container}</span>
+                      <i class="fas fa-copy text-muted" style="font-size: 0.8rem;" title="Cliquer pour copier"></i>
+                    </a>
+                  </li>
+                `
+                  )
+                  .join("")}
+                <li><hr class="dropdown-divider"></li>
+                <li class="dropdown-header text-muted" style="font-size: 0.75rem;">
+                  <i class="fas fa-info-circle me-1"></i>Cliquez sur un conteneur pour le copier
+                </li>
+              </ul>
+            </div>
+          `;
+        } else {
+          // Un seul conteneur, affichage normal avec icône
+          displayValue = `<span class="font-monospace"><i class="fas fa-cube me-2 text-primary"></i>${value}</span>`;
+        }
+      }
       // Formater les dates si la valeur ressemble à une date
-      // Formatage des dates
-      if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+      else if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
         try {
           displayValue = new Date(value).toLocaleDateString("fr-FR");
         } catch (e) {
@@ -1610,9 +1681,115 @@ function voirDetailsDossier(dossier) {
   const modal = new bootstrap.Modal(detailsModal);
   modal.show();
 
+  // 🆕 INITIALISER LES DROPDOWNS APRÈS CRÉATION DE LA MODAL
+  initializeContainerDropdowns(detailsModal);
+
   detailsModal.addEventListener("hidden.bs.modal", () => {
     document.body.removeChild(detailsModal);
   });
+}
+
+// 🆕 FONCTION POUR INITIALISER LES DROPDOWNS DE CONTENEURS
+function initializeContainerDropdowns(modalElement) {
+  setTimeout(() => {
+    console.log("🎯 Initialisation des dropdowns conteneurs...");
+
+    // Forcer l'initialisation des dropdowns Bootstrap
+    const dropdowns = modalElement.querySelectorAll(
+      '[data-bs-toggle="dropdown"]'
+    );
+    dropdowns.forEach((dropdown) => {
+      try {
+        if (!bootstrap.Dropdown.getInstance(dropdown)) {
+          new bootstrap.Dropdown(dropdown);
+          console.log("✅ Dropdown initialisé pour:", dropdown.id);
+        }
+      } catch (e) {
+        console.warn(
+          "Erreur initialisation dropdown Bootstrap, utilisation du fallback:",
+          e
+        );
+        // Fallback : créer un dropdown manuel
+        createFallbackDropdown(dropdown);
+      }
+    });
+
+    // Ajouter des styles CSS pour améliorer l'interaction
+    if (!document.querySelector("#containerDropdownStyles")) {
+      const style = document.createElement("style");
+      style.id = "containerDropdownStyles";
+      style.textContent = `
+        .container-item:hover {
+          background-color: #f8f9fa !important;
+          transform: translateX(5px);
+          transition: all 0.2s ease;
+        }
+        .dropdown-menu {
+          box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+          border: 1px solid #e9ecef !important;
+        }
+        .dropdown-toggle::after {
+          transition: transform 0.2s ease;
+        }
+        .dropdown-toggle[aria-expanded="true"]::after {
+          transform: rotate(180deg);
+        }
+        .badge {
+          transition: all 0.2s ease;
+        }
+        .container-item:hover .badge {
+          transform: scale(1.1);
+        }
+        .dropdown-menu.show {
+          display: block !important;
+        }
+        .dropdown-manual {
+          position: relative;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, 500);
+}
+
+// 🆕 FONCTION FALLBACK POUR CRÉER UN DROPDOWN MANUEL
+function createFallbackDropdown(button) {
+  const dropdownMenu = button.nextElementSibling;
+  if (!dropdownMenu || !dropdownMenu.classList.contains("dropdown-menu"))
+    return;
+
+  button.addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Fermer tous les autres dropdowns
+    document.querySelectorAll(".dropdown-menu.show").forEach((menu) => {
+      if (menu !== dropdownMenu) {
+        menu.classList.remove("show");
+        menu.previousElementSibling.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    // Toggle ce dropdown
+    const isOpen = dropdownMenu.classList.contains("show");
+    if (isOpen) {
+      dropdownMenu.classList.remove("show");
+      button.setAttribute("aria-expanded", "false");
+    } else {
+      dropdownMenu.classList.add("show");
+      button.setAttribute("aria-expanded", "true");
+    }
+  });
+
+  // Fermer le dropdown en cliquant ailleurs
+  document.addEventListener("click", function (e) {
+    if (!button.contains(e.target) && !dropdownMenu.contains(e.target)) {
+      dropdownMenu.classList.remove("show");
+      button.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  console.log("✅ Dropdown fallback créé pour:", button.id);
 }
 
 // Fonction utilitaire pour récupérer les paramètres URL
@@ -7320,5 +7497,104 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+// 🆕 FONCTION POUR COPIER LES NUMÉROS DE CONTENEUR
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    // Méthode moderne pour HTTPS
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        displayCopyNotification(`Conteneur ${text} copié !`);
+      })
+      .catch((err) => {
+        console.error("Erreur de copie:", err);
+        fallbackCopyTextToClipboard(text);
+      });
+  } else {
+    // Méthode de fallback pour HTTP
+    fallbackCopyTextToClipboard(text);
+  }
+}
+
+// Fonction de fallback pour la copie
+function fallbackCopyTextToClipboard(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.left = "-999999px";
+  textArea.style.top = "-999999px";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    const successful = document.execCommand("copy");
+    if (successful) {
+      displayCopyNotification(`Conteneur ${text} copié !`);
+    } else {
+      console.error("Copie échouée");
+    }
+  } catch (err) {
+    console.error("Erreur de copie:", err);
+  } finally {
+    document.body.removeChild(textArea);
+  }
+}
+
+// Fonction pour afficher la notification de copie
+function displayCopyNotification(message) {
+  // Essayer d'utiliser showNotification si elle existe
+  if (typeof showNotification === "function") {
+    showNotification(message, "success");
+    return;
+  }
+
+  // Sinon créer une notification simple
+  const notification = document.createElement("div");
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 9999;
+    font-size: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease-out;
+  `;
+  notification.innerHTML = `<i class="fas fa-check me-2"></i>${message}`;
+
+  // Ajouter les styles d'animation
+  if (!document.querySelector("#copyNotificationStyles")) {
+    const style = document.createElement("style");
+    style.id = "copyNotificationStyles";
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(notification);
+
+  // Supprimer après 3 secondes
+  setTimeout(() => {
+    notification.style.animation = "slideOut 0.3s ease-in";
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+}
 
 /***MON JESUS EST LE SEUL DIEU */
