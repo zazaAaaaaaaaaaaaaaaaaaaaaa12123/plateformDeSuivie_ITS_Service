@@ -311,13 +311,22 @@ function saveDossiersMisEnLiv(dossiers) {
 // Fonction pour supprimer les dossiers sélectionnés
 function supprimerDossiersSelectionnes() {
   const dossiers = getDossiersMisEnLiv();
-  const searchTerm = document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
-  
+  const searchTerm =
+    document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
+
   // Obtenir la liste filtrée des dossiers (même logique que dans refreshMiseEnLivList)
   const filteredDossiers = searchTerm
     ? dossiers.filter((dossier) => {
-        const clientName = (dossier.client_name || dossier.client || "").toLowerCase();
-        const containerNumber = (dossier.container_number || dossier.ref_conteneur || "").toLowerCase();
+        const clientName = (
+          dossier.client_name ||
+          dossier.client ||
+          ""
+        ).toLowerCase();
+        const containerNumber = (
+          dossier.container_number ||
+          dossier.ref_conteneur ||
+          ""
+        ).toLowerCase();
         const dossierNumber = (dossier.dossier_number || "").toLowerCase();
         const blNumber = (dossier.bl_number || "").toLowerCase();
 
@@ -351,7 +360,11 @@ function supprimerDossiersSelectionnes() {
   }
 
   // Demander confirmation avec détails
-  const containerNames = dossiersASupprimer.map(d => d.container_number || d.ref_conteneur || d.dossier_number || 'N/A').join(', ');
+  const containerNames = dossiersASupprimer
+    .map(
+      (d) => d.container_number || d.ref_conteneur || d.dossier_number || "N/A"
+    )
+    .join(", ");
   if (
     !confirm(
       `Êtes-vous sûr de vouloir supprimer ${dossiersASupprimer.length} dossier(s) ?\n\nDossiers: ${containerNames}`
@@ -361,14 +374,22 @@ function supprimerDossiersSelectionnes() {
   }
 
   // Supprimer en excluant les dossiers sélectionnés de la liste complète
-  const nouveauxDossiers = dossiers.filter(dossier => {
+  const nouveauxDossiers = dossiers.filter((dossier) => {
     // Comparer par une propriété unique (container_number + date)
-    const dossierId = (dossier.container_number || dossier.ref_conteneur || dossier.dossier_number) + 
-                     (dossier.date_mise_en_liv || dossier.dateAjoutMiseEnLiv || '');
-    
-    return !dossiersASupprimer.some(dossierASupprimer => {
-      const aSupprImerId = (dossierASupprimer.container_number || dossierASupprimer.ref_conteneur || dossierASupprimer.dossier_number) + 
-                           (dossierASupprimer.date_mise_en_liv || dossierASupprimer.dateAjoutMiseEnLiv || '');
+    const dossierId =
+      (dossier.container_number ||
+        dossier.ref_conteneur ||
+        dossier.dossier_number) +
+      (dossier.date_mise_en_liv || dossier.dateAjoutMiseEnLiv || "");
+
+    return !dossiersASupprimer.some((dossierASupprimer) => {
+      const aSupprImerId =
+        (dossierASupprimer.container_number ||
+          dossierASupprimer.ref_conteneur ||
+          dossierASupprimer.dossier_number) +
+        (dossierASupprimer.date_mise_en_liv ||
+          dossierASupprimer.dateAjoutMiseEnLiv ||
+          "");
       return dossierId === aSupprImerId;
     });
   });
@@ -376,10 +397,12 @@ function supprimerDossiersSelectionnes() {
   // Sauvegarder et rafraîchir
   saveDossiersMisEnLiv(nouveauxDossiers);
   refreshMiseEnLivList();
-  
+
   // Message de confirmation
-  console.log(`🗑️ [SUPPRESSION MANUELLE] ${dossiersASupprimer.length} dossier(s) supprimé(s) avec succès`);
-  
+  console.log(
+    `🗑️ [SUPPRESSION MANUELLE] ${dossiersASupprimer.length} dossier(s) supprimé(s) avec succès`
+  );
+
   // Notification visuelle si disponible
   if (typeof showNotification === "function") {
     showNotification(
