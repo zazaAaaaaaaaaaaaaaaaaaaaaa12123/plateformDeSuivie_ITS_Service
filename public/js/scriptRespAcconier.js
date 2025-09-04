@@ -35,6 +35,60 @@ function toggleContainerList(dropdownId) {
 // Stockage local pour les dossiers mis en livraison
 const STORAGE_KEY = "dossiersMisEnLiv";
 
+// 🗑️ NOUVELLE FONCTIONNALITÉ : Blacklist des dossiers supprimés pour éviter qu'ils se ré-ajoutent
+const DELETED_STORAGE_KEY = "dossiersSupprimesMisEnLiv";
+
+// Fonction pour récupérer la liste des dossiers supprimés
+function getDossiersSupprimes() {
+  return JSON.parse(localStorage.getItem(DELETED_STORAGE_KEY) || "[]");
+}
+
+// Fonction pour sauvegarder la liste des dossiers supprimés
+function saveDossiersSupprimes(dossiersSupprimes) {
+  localStorage.setItem(DELETED_STORAGE_KEY, JSON.stringify(dossiersSupprimes));
+}
+
+// Fonction pour ajouter un dossier à la blacklist
+function ajouterDossierSupprime(dossier) {
+  const dossiersSupprimes = getDossiersSupprimes();
+  const identifiant =
+    (dossier.container_number ||
+      dossier.ref_conteneur ||
+      dossier.dossier_number) + (dossier.id || "");
+
+  if (!dossiersSupprimes.includes(identifiant)) {
+    dossiersSupprimes.push(identifiant);
+    saveDossiersSupprimes(dossiersSupprimes);
+    console.log(`🚫 [BLACKLIST] Dossier ajouté à la blacklist: ${identifiant}`);
+  }
+}
+
+// Fonction pour vérifier si un dossier est dans la blacklist
+function estDossierSupprime(dossier) {
+  const dossiersSupprimes = getDossiersSupprimes();
+  const identifiant =
+    (dossier.container_number ||
+      dossier.ref_conteneur ||
+      dossier.dossier_number) + (dossier.id || "");
+  return dossiersSupprimes.includes(identifiant);
+}
+
+// 🧹 Fonction pour nettoyer la blacklist (supprimer les entrées trop anciennes)
+function nettoyerBlacklistAncienne() {
+  // Pour éviter que la blacklist devienne trop grosse, on pourrait la limiter
+  const dossiersSupprimes = getDossiersSupprimes();
+  if (dossiersSupprimes.length > 1000) {
+    // Garder seulement les 500 plus récents
+    const dossiersRecents = dossiersSupprimes.slice(-500);
+    saveDossiersSupprimes(dossiersRecents);
+    console.log(
+      `🧹 [BLACKLIST] Nettoyage effectué - ${
+        dossiersSupprimes.length - 500
+      } entrées supprimées`
+    );
+  }
+}
+
 // 🔒 FONCTION POUR DÉSACTIVER L'ÉDITION DES OBSERVATIONS EN MODE ADMIN OU DEPUIS LE SIDEBAR
 function disableObservationEditingInAdminMode() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -305,7 +359,29 @@ function getDossiersMisEnLiv() {
 
 // Fonction pour sauvegarder les dossiers mis en livraison
 function saveDossiersMisEnLiv(dossiers) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(dossiers));
+  try {
+    const dataString = JSON.stringify(dossiers);
+    localStorage.setItem(STORAGE_KEY, dataString);
+    console.log(
+      `💾 [STORAGE] Sauvegarde réussie - ${dossiers.length} dossiers sauvegardés`
+    );
+    console.log(`💾 [STORAGE] Clé utilisée: ${STORAGE_KEY}`);
+    console.log(
+      `💾 [STORAGE] Taille des données: ${dataString.length} caractères`
+    );
+
+    // Vérification immédiate
+    const verification = localStorage.getItem(STORAGE_KEY);
+    if (verification) {
+      console.log(`✅ [STORAGE] Vérification OK - Données bien enregistrées`);
+    } else {
+      console.error(
+        `❌ [STORAGE] ERREUR - Aucune donnée trouvée après sauvegarde !`
+      );
+    }
+  } catch (error) {
+    console.error(`❌ [STORAGE] Erreur lors de la sauvegarde:`, error);
+  }
 }
 
 // Fonction pour supprimer les dossiers sélectionnés
@@ -373,6 +449,26 @@ function supprimerDossiersSelectionnes() {
     return;
   }
 
+  // 🎯 SUPPRESSION VISUELLE IMMÉDIATE - Cacher les dossiers sélectionnés avant la suppression effective
+  filteredDossiers.forEach((dossierFiltre, indexFiltre) => {
+    const checkbox = document.getElementById(`dossier-checkbox-${indexFiltre}`);
+    if (checkbox && checkbox.checked) {
+      const dossierElement = checkbox.closest(".list-group-item");
+      if (dossierElement) {
+        dossierElement.style.transition =
+          "opacity 0.3s ease-out, height 0.3s ease-out";
+        dossierElement.style.opacity = "0.3";
+        dossierElement.style.backgroundColor = "#ffebee";
+        dossierElement.style.border = "1px solid #f44336";
+        console.log(
+          `🗑️ [VISUAL] Masquage visuel du dossier: ${
+            dossierFiltre.container_number || dossierFiltre.ref_conteneur
+          }`
+        );
+      }
+    }
+  });
+
   // Supprimer en excluant les dossiers sélectionnés de la liste complète
   const nouveauxDossiers = dossiers.filter((dossier) => {
     // Comparer par une propriété unique (container_number + date)
@@ -395,8 +491,49 @@ function supprimerDossiersSelectionnes() {
   });
 
   // Sauvegarder et rafraîchir
+  console.log(
+    `🗑️ [DEBUG] Avant suppression - Nombre de dossiers: ${dossiers.length}`
+  );
+  console.log(
+    `🗑️ [DEBUG] Dossiers à supprimer:`,
+    dossiersASupprimer.map((d) => d.container_number || d.ref_conteneur)
+  );
+  console.log(
+    `🗑️ [DEBUG] Après filtrage - Nombre de dossiers restants: ${nouveauxDossiers.length}`
+  );
+
+  // 🚫 AJOUTER LES DOSSIERS SUPPRIMÉS À LA BLACKLIST pour éviter qu'ils se ré-ajoutent
+  dossiersASupprimer.forEach((dossier) => {
+    ajouterDossierSupprime(dossier);
+  });
+
   saveDossiersMisEnLiv(nouveauxDossiers);
+
+  // Vérifier que la sauvegarde a fonctionné
+  const dossiersVerification = getDossiersMisEnLiv();
+  console.log(
+    `🗑️ [DEBUG] Vérification localStorage - Nombre de dossiers: ${dossiersVerification.length}`
+  );
+
+  // Forcer le rafraîchissement multiple pour s'assurer que l'affichage se met à jour
   refreshMiseEnLivList();
+
+  // Rafraîchissement secondaire après un délai court
+  setTimeout(() => {
+    refreshMiseEnLivList();
+    console.log(`🗑️ [DEBUG] Rafraîchissement secondaire terminé`);
+
+    // Vérification finale
+    const dossiersFinaux = getDossiersMisEnLiv();
+    console.log(
+      `🗑️ [DEBUG] État final - Nombre de dossiers: ${dossiersFinaux.length}`
+    );
+    dossiersFinaux.forEach((d) => {
+      console.log(
+        `📦 [FINAL] Dossier restant: ${d.container_number || d.ref_conteneur}`
+      );
+    });
+  }, 100);
 
   // Message de confirmation
   console.log(
@@ -410,6 +547,11 @@ function supprimerDossiersSelectionnes() {
       "success"
     );
   }
+
+  // Décocher toutes les checkboxes visibles
+  document.querySelectorAll('[id^="dossier-checkbox-"]').forEach((checkbox) => {
+    checkbox.checked = false;
+  });
 }
 
 // Fonction pour afficher un dossier dans la modal
@@ -1157,6 +1299,19 @@ function ajouterDossierMiseEnLiv(dossier) {
     date_echange_bl: dossier.date_echange_bl,
     date_paiement_acconage: dossier.date_paiement_acconage,
   });
+
+  // 🚫 VÉRIFICATION BLACKLIST : Ne pas ré-ajouter un dossier supprimé
+  if (estDossierSupprime(dossier)) {
+    const containerNum =
+      dossier.container_number ||
+      dossier.ref_conteneur ||
+      dossier.dossier_number ||
+      "N/A";
+    console.log(
+      `🚫 [BLACKLIST] Dossier ignoré (supprimé précédemment): ${containerNum}`
+    );
+    return; // Ne pas ajouter le dossier
+  }
 
   // Vérifier si le dossier n'existe pas déjà
   const existe = dossiers.some(
