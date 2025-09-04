@@ -382,30 +382,35 @@ function afficherDetailsDossier(dossier) {
   const formatDate = (dateStr) => {
     try {
       if (!dateStr || dateStr === "null" || dateStr === "undefined") return "-";
-      
+
       // Gestion spéciale pour les chaînes ISO et différents formats
       let dateObj;
-      if (typeof dateStr === 'string' && dateStr.includes('T')) {
+      if (typeof dateStr === "string" && dateStr.includes("T")) {
         // Format ISO string
         dateObj = new Date(dateStr);
-      } else if (typeof dateStr === 'string' && dateStr.includes('-')) {
+      } else if (typeof dateStr === "string" && dateStr.includes("-")) {
         // Format YYYY-MM-DD
-        dateObj = new Date(dateStr + 'T00:00:00');
+        dateObj = new Date(dateStr + "T00:00:00");
       } else {
         dateObj = new Date(dateStr);
       }
-      
+
       if (isNaN(dateObj.getTime())) return "-";
-      
+
       // Formatage consistant pour local ET production
       return dateObj.toLocaleDateString("fr-FR", {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        timeZone: 'UTC'
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        timeZone: "UTC",
       });
     } catch (e) {
-      console.error("Erreur de formatage de date:", e, "pour la valeur:", dateStr);
+      console.error(
+        "Erreur de formatage de date:",
+        e,
+        "pour la valeur:",
+        dateStr
+      );
       return "-";
     }
   };
@@ -567,30 +572,38 @@ function refreshMiseEnLivList() {
               try {
                 if (!dateStr || dateStr === "null" || dateStr === "undefined")
                   return null;
-                
+
                 // Gestion spéciale pour les chaînes ISO et différents formats
                 let dateObj;
-                if (typeof dateStr === 'string' && dateStr.includes('T')) {
+                if (typeof dateStr === "string" && dateStr.includes("T")) {
                   // Format ISO string
                   dateObj = new Date(dateStr);
-                } else if (typeof dateStr === 'string' && dateStr.includes('-')) {
+                } else if (
+                  typeof dateStr === "string" &&
+                  dateStr.includes("-")
+                ) {
                   // Format YYYY-MM-DD
-                  dateObj = new Date(dateStr + 'T00:00:00');
+                  dateObj = new Date(dateStr + "T00:00:00");
                 } else {
                   dateObj = new Date(dateStr);
                 }
-                
+
                 if (isNaN(dateObj.getTime())) return null;
-                
+
                 // Formatage consistant pour local ET production
                 return dateObj.toLocaleDateString("fr-FR", {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  timeZone: 'UTC'
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  timeZone: "UTC",
                 });
               } catch (e) {
-                console.error("Erreur de formatage de date:", e, "pour la valeur:", dateStr);
+                console.error(
+                  "Erreur de formatage de date:",
+                  e,
+                  "pour la valeur:",
+                  dateStr
+                );
                 return null;
               }
             };
@@ -621,7 +634,13 @@ function refreshMiseEnLivList() {
               // DEBUG: Logging pour diagnostic Render
               (() => {
                 if (dossier.date_do) {
-                  console.log(`🔍 DEBUG DATE_DO - Valeur brute: "${dossier.date_do}", Type: ${typeof dossier.date_do}, Formatée: "${formatDateLocal(dossier.date_do)}"`);
+                  console.log(
+                    `🔍 DEBUG DATE_DO - Valeur brute: "${
+                      dossier.date_do
+                    }", Type: ${typeof dossier.date_do}, Formatée: "${formatDateLocal(
+                      dossier.date_do
+                    )}"`
+                  );
                 }
                 return "";
               })()
@@ -645,7 +664,13 @@ function refreshMiseEnLivList() {
               // DEBUG: Logging pour diagnostic Render
               (() => {
                 if (dossier.date_badt) {
-                  console.log(`🔍 DEBUG DATE_BADT - Valeur brute: "${dossier.date_badt}", Type: ${typeof dossier.date_badt}, Formatée: "${formatDateLocal(dossier.date_badt)}"`);
+                  console.log(
+                    `🔍 DEBUG DATE_BADT - Valeur brute: "${
+                      dossier.date_badt
+                    }", Type: ${typeof dossier.date_badt}, Formatée: "${formatDateLocal(
+                      dossier.date_badt
+                    )}"`
+                  );
                 }
                 return "";
               })()
@@ -960,27 +985,27 @@ function refreshMiseEnLivList() {
     try {
       if (!dateStr || dateStr === "null" || dateStr === "undefined")
         return null;
-      
+
       // Gestion spéciale pour les chaînes ISO et différents formats
       let dateObj;
-      if (typeof dateStr === 'string' && dateStr.includes('T')) {
+      if (typeof dateStr === "string" && dateStr.includes("T")) {
         // Format ISO string
         dateObj = new Date(dateStr);
-      } else if (typeof dateStr === 'string' && dateStr.includes('-')) {
+      } else if (typeof dateStr === "string" && dateStr.includes("-")) {
         // Format YYYY-MM-DD
-        dateObj = new Date(dateStr + 'T00:00:00');
+        dateObj = new Date(dateStr + "T00:00:00");
       } else {
         dateObj = new Date(dateStr);
       }
-      
+
       if (isNaN(dateObj.getTime())) return null;
-      
+
       // Formatage consistant pour local ET production
       return dateObj.toLocaleDateString("fr-FR", {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        timeZone: 'UTC'
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        timeZone: "UTC",
       });
     } catch (e) {
       console.error(
@@ -1110,7 +1135,13 @@ function refreshMiseEnLivList() {
                 // DEBUG: Logging pour diagnostic Render (fonction 2)
                 (() => {
                   if (dossier.date_do) {
-                    console.log(`🔍 DEBUG DATE_DO (Fonction 2) - Valeur brute: "${dossier.date_do}", Type: ${typeof dossier.date_do}, Formatée: "${formatDate(dossier.date_do)}"`);
+                    console.log(
+                      `🔍 DEBUG DATE_DO (Fonction 2) - Valeur brute: "${
+                        dossier.date_do
+                      }", Type: ${typeof dossier.date_do}, Formatée: "${formatDate(
+                        dossier.date_do
+                      )}"`
+                    );
                   }
                   return "";
                 })()
@@ -1138,7 +1169,13 @@ function refreshMiseEnLivList() {
                 // DEBUG: Logging pour diagnostic Render (fonction 2)
                 (() => {
                   if (dossier.date_badt) {
-                    console.log(`🔍 DEBUG DATE_BADT (Fonction 2) - Valeur brute: "${dossier.date_badt}", Type: ${typeof dossier.date_badt}, Formatée: "${formatDate(dossier.date_badt)}"`);
+                    console.log(
+                      `🔍 DEBUG DATE_BADT (Fonction 2) - Valeur brute: "${
+                        dossier.date_badt
+                      }", Type: ${typeof dossier.date_badt}, Formatée: "${formatDate(
+                        dossier.date_badt
+                      )}"`
+                    );
                   }
                   return "";
                 })()
@@ -1898,31 +1935,40 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Fonction pour formater les dates - OPTIMISÉE POUR RENDER
             function formatDate(dateStr) {
-              if (!dateStr || dateStr === "null" || dateStr === "undefined") return "-";
+              if (!dateStr || dateStr === "null" || dateStr === "undefined")
+                return "-";
               try {
                 // Gestion spéciale pour les chaînes ISO et différents formats
                 let dateObj;
-                if (typeof dateStr === 'string' && dateStr.includes('T')) {
+                if (typeof dateStr === "string" && dateStr.includes("T")) {
                   // Format ISO string
                   dateObj = new Date(dateStr);
-                } else if (typeof dateStr === 'string' && dateStr.includes('-')) {
+                } else if (
+                  typeof dateStr === "string" &&
+                  dateStr.includes("-")
+                ) {
                   // Format YYYY-MM-DD
-                  dateObj = new Date(dateStr + 'T00:00:00');
+                  dateObj = new Date(dateStr + "T00:00:00");
                 } else {
                   dateObj = new Date(dateStr);
                 }
-                
+
                 if (isNaN(dateObj.getTime())) return "-";
-                
+
                 // Formatage consistant pour local ET production
                 return dateObj.toLocaleDateString("fr-FR", {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  timeZone: 'UTC'
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  timeZone: "UTC",
                 });
               } catch (e) {
-                console.error("Erreur de formatage de date:", e, "pour la valeur:", dateStr);
+                console.error(
+                  "Erreur de formatage de date:",
+                  e,
+                  "pour la valeur:",
+                  dateStr
+                );
                 return dateStr;
               }
             }
