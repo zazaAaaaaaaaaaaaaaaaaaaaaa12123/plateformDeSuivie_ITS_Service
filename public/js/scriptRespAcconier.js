@@ -378,7 +378,7 @@ function afficherDetailsDossier(dossier) {
     container_type_and_content: "Type et contenu du conteneur",
   };
 
-  // Fonction pour formater les dates - OPTIMISÉE POUR RENDER
+  // Fonction pour formater les dates - SOLUTION UNIVERSELLE RENDER/LOCAL
   const formatDate = (dateStr) => {
     try {
       if (!dateStr || dateStr === "null" || dateStr === "undefined") return "-";
@@ -403,21 +403,15 @@ function afficherDetailsDossier(dossier) {
         return "-";
       }
 
-      // ESSAI 1: Version simplifiée sans timezone
-      const result1 = dateObj.toLocaleDateString("fr-FR");
-      console.log(`🔍 formatDate RÉSULTAT SIMPLE: "${result1}"`);
+      // SOLUTION UNIVERSELLE : Formatage manuel pour éviter les problèmes de timezone
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const result = `${day}/${month}/${year}`;
+      
+      console.log(`🔍 formatDate RÉSULTAT UNIVERSEL: "${result}"`);
 
-      // ESSAI 2: Version avec timezone UTC 
-      const result2 = dateObj.toLocaleDateString("fr-FR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        timeZone: "UTC",
-      });
-      console.log(`🔍 formatDate RÉSULTAT UTC: "${result2}"`);
-
-      // Retourner la version simple pour le moment
-      return result1;
+      return result;
     } catch (e) {
       console.error(
         "Erreur de formatage de date:",
@@ -581,7 +575,7 @@ function refreshMiseEnLivList() {
       ? '<div class="list-group-item text-center text-muted">Aucun dossier trouvé</div>'
       : filteredDossiers
           .map((dossier) => {
-            // Fonction locale pour formater les dates de façon robuste - OPTIMISÉE POUR RENDER
+            // Fonction locale pour formater les dates - SOLUTION UNIVERSELLE RENDER/LOCAL
             const formatDateLocal = (dateStr) => {
               try {
                 if (!dateStr || dateStr === "null" || dateStr === "undefined")
@@ -610,21 +604,15 @@ function refreshMiseEnLivList() {
                   return null;
                 }
 
-                // ESSAI 1: Version simplifiée sans timezone
-                const result1 = dateObj.toLocaleDateString("fr-FR");
-                console.log(`🔍 formatDateLocal RÉSULTAT SIMPLE: "${result1}"`);
+                // SOLUTION UNIVERSELLE : Formatage manuel pour éviter les problèmes de timezone
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const result = `${day}/${month}/${year}`;
+                
+                console.log(`🔍 formatDateLocal RÉSULTAT UNIVERSEL: "${result}"`);
 
-                // ESSAI 2: Version avec timezone UTC 
-                const result2 = dateObj.toLocaleDateString("fr-FR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  timeZone: "UTC",
-                });
-                console.log(`🔍 formatDateLocal RÉSULTAT UTC: "${result2}"`);
-
-                // Retourner la version simple pour le moment
-                return result1;
+                return result;
               } catch (e) {
                 console.error(
                   "Erreur de formatage de date:",
@@ -1008,7 +996,7 @@ function refreshMiseEnLivList() {
   // Trier les dossiers par date (plus récents en premier) après filtrage
   filteredDossiers = sortDossiersByDate(filteredDossiers);
 
-  // Fonction utilitaire pour formater les dates de manière robuste - OPTIMISÉE POUR RENDER
+  // Fonction utilitaire pour formater les dates - SOLUTION UNIVERSELLE RENDER/LOCAL
   const formatDate = (dateStr) => {
     try {
       if (!dateStr || dateStr === "null" || dateStr === "undefined")
@@ -1028,13 +1016,11 @@ function refreshMiseEnLivList() {
 
       if (isNaN(dateObj.getTime())) return null;
 
-      // Formatage consistant pour local ET production
-      return dateObj.toLocaleDateString("fr-FR", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        timeZone: "UTC",
-      });
+      // SOLUTION UNIVERSELLE : Formatage manuel pour éviter les problèmes de timezone
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${day}/${month}/${year}`;
     } catch (e) {
       console.error(
         "Erreur de formatage de date:",
@@ -1961,7 +1947,7 @@ document.addEventListener("DOMContentLoaded", function () {
             tr.style.transition = "all 0.3s ease";
             tr.style.borderBottom = "1px solid #e2e8f0";
 
-            // Fonction pour formater les dates - OPTIMISÉE POUR RENDER
+            // Fonction pour formater les dates - SOLUTION UNIVERSELLE RENDER/LOCAL
             function formatDate(dateStr) {
               if (!dateStr || dateStr === "null" || dateStr === "undefined")
                 return "-";
@@ -1983,13 +1969,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 if (isNaN(dateObj.getTime())) return "-";
 
-                // Formatage consistant pour local ET production
-                return dateObj.toLocaleDateString("fr-FR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  timeZone: "UTC",
-                });
+                // SOLUTION UNIVERSELLE : Formatage manuel pour éviter les problèmes de timezone
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                return `${day}/${month}/${year}`;
               } catch (e) {
                 console.error(
                   "Erreur de formatage de date:",
