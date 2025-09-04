@@ -96,17 +96,6 @@ app.post("/api/admin-register", async (req, res) => {
     email,
   });
 
-  // DEBUG: Afficher tous les champs reçus pour déboguer
-  console.log("[ADMIN-REGISTER][DEBUG] Données reçues complètes:", {
-    name,
-    email,
-    password: password ? "***DÉFINI***" : "NON DÉFINI",
-    adminCode: adminCode
-      ? `"${adminCode}" (longueur: ${adminCode.length})`
-      : "NON DÉFINI",
-    body: req.body,
-  });
-
   if (!name || !email || !password || !adminCode) {
     return res.status(400).json({
       success: false,
@@ -118,13 +107,6 @@ app.post("/api/admin-register", async (req, res) => {
   const ADMIN_CODE = "ITS2025ADMIN";
   // Nettoyer le code reçu (supprimer espaces en début/fin)
   const cleanAdminCode = adminCode ? adminCode.trim() : "";
-
-  console.log("[ADMIN-REGISTER][DEBUG] Comparaison des codes:", {
-    recu: `"${adminCode}"`,
-    recu_nettoye: `"${cleanAdminCode}"`,
-    attendu: `"${ADMIN_CODE}"`,
-    identique: cleanAdminCode === ADMIN_CODE,
-  });
 
   if (cleanAdminCode !== ADMIN_CODE) {
     console.log("[ADMIN-REGISTER][ERROR] Code administrateur incorrect!");
@@ -2513,13 +2495,6 @@ async function cleanArchivesDuplicates() {
       return;
     }
 
-    console.log(`🔍 ${duplicates.length} groupes de doublons trouvés:`);
-    duplicates.forEach((dup) => {
-      console.log(
-        `   - ${dup.dossier_reference} (${dup.action_type}): ${dup.count_duplicates} doublons`
-      );
-    });
-
     let totalDeleted = 0;
 
     // Étape 2: Pour chaque groupe de doublons, garder le plus récent et supprimer les autres
@@ -2827,21 +2802,6 @@ app.get("/deliveries/status", async (req, res) => {
       };
     });
 
-    // DEBUG: Logging pour diagnostic Render - vérifier les dates normalisées
-    const hasDateDo = normalizedDeliveries.filter((d) => d.date_do).length;
-    const hasDateBadt = normalizedDeliveries.filter((d) => d.date_badt).length;
-    console.log(
-      `🔍 RENDER DEBUG - Livraisons avec date_do: ${hasDateDo}, avec date_badt: ${hasDateBadt}`
-    );
-    if (hasDateDo > 0 || hasDateBadt > 0) {
-      const sample = normalizedDeliveries.find((d) => d.date_do || d.date_badt);
-      console.log(`🔍 RENDER DEBUG - Échantillon:`, {
-        id: sample.id,
-        date_do_original: sample.date_do,
-        date_badt_original: sample.date_badt,
-      });
-    }
-
     res.json({ success: true, deliveries: normalizedDeliveries });
   } catch (err) {
     console.error("[GET /deliveries/status] Erreur:", err);
@@ -2849,98 +2809,7 @@ app.get("/deliveries/status", async (req, res) => {
   }
 });
 
-// ROUTE DE DEBUG POUR TESTER LES DATES DO ET BADT
-app.get("/debug/dates", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT id, dossier_number, date_do, date_badt, 
-             EXTRACT(EPOCH FROM date_do) as date_do_timestamp,
-             EXTRACT(EPOCH FROM date_badt) as date_badt_timestamp
-      FROM livraison_conteneur 
-      WHERE date_do IS NOT NULL OR date_badt IS NOT NULL 
-      ORDER BY id DESC 
-      LIMIT 10
-    `);
-
-    console.log(
-      "🔍 DEBUG DATES - Trouvé",
-      result.rows.length,
-      "enregistrements avec dates"
-    );
-
-    res.json({
-      success: true,
-      message: `Trouvé ${result.rows.length} enregistrements avec dates DO/BADT`,
-      data: result.rows,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error("Erreur debug dates:", err);
-    res.status(500).json({
-      success: false,
-      error: err.message,
-    });
-  }
-});
-
-// ROUTE DE TEST SPÉCIFIQUE POUR VÉRIFIER L'AFFICHAGE DES DATES DANS "MISE EN LIVRAISON"
-app.get("/test/mise-en-livraison-dates", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT id, dossier_number, client_name, container_number, 
-             date_do, date_badt, delivery_status_acconier,
-             created_at
-      FROM livraison_conteneur 
-      WHERE (date_do IS NOT NULL OR date_badt IS NOT NULL)
-        AND delivery_status_acconier = 'mise_en_livraison_acconier'
-      ORDER BY id DESC 
-      LIMIT 5
-    `);
-
-    // Simulation du formatage comme dans le frontend
-    const formatDateTest = (dateStr) => {
-      if (!dateStr) return null;
-      const dateObj = new Date(dateStr);
-      if (isNaN(dateObj.getTime())) return null;
-      const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-      const day = String(dateObj.getDate()).padStart(2, "0");
-      return `${day}/${month}/${year}`;
-    };
-
-    const formattedResults = result.rows.map((row) => ({
-      ...row,
-      date_do_formatted: formatDateTest(row.date_do),
-      date_badt_formatted: formatDateTest(row.date_badt),
-      display_text: `Dossier ${row.dossier_number} - Client: ${
-        row.client_name || "N/A"
-      }${row.date_do ? ` - Date DO: ${formatDateTest(row.date_do)}` : ""}${
-        row.date_badt ? ` - Date BADT: ${formatDateTest(row.date_badt)}` : ""
-      }`,
-    }));
-
-    console.log(
-      "🔍 TEST MISE EN LIVRAISON - Trouvé",
-      result.rows.length,
-      "dossiers mis en livraison avec dates"
-    );
-
-    res.json({
-      success: true,
-      message: `Test Mise en Livraison: ${result.rows.length} dossiers avec dates DO/BADT`,
-      note: "Ce test simule l'affichage des dates dans l'interface 'Mise en Livraison'",
-      data: formattedResults,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error("Erreur test mise en livraison:", err);
-    res.status(500).json({
-      success: false,
-      error: err.message,
-    });
-  }
-});
-
+// ===============================
 // ===============================
 // API DÉDIÉE POUR ÉCHANGE DE DONNÉES AVEC SYSTÈME PHP
 // ===============================
@@ -3803,8 +3672,6 @@ app.post("/api/create-user-account", async (req, res) => {
     // Générer un code d'accès aléatoire (6 caractères)
     const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    console.log("[CREATE-USER][DEBUG] Code d'accès généré:", accessCode);
-
     // Hasher le code d'accès pour le stocker en base (au lieu du mot de passe)
     const hashedAccessCode = await bcrypt.hash(accessCode, 10);
 
@@ -4112,21 +3979,6 @@ app.post("/api/forgot-access-code", async (req, res) => {
   }
 });
 
-// Route de test pour les variables d'environnement email
-app.get("/api/test-email-config", (req, res) => {
-  res.json({
-    EMAIL_USER: process.env.EMAIL_USER || "NOT_SET",
-    EMAIL_PASS: process.env.EMAIL_PASS ? "SET" : "NOT_SET",
-    GMAIL_USER: process.env.GMAIL_USER || "NOT_SET",
-    GMAIL_PASS: process.env.GMAIL_PASS ? "SET" : "NOT_SET",
-    SMTP_HOST: process.env.SMTP_HOST || "NOT_SET",
-    SMTP_PORT: process.env.SMTP_PORT || "NOT_SET",
-    SMTP_USER: process.env.SMTP_USER || "NOT_SET",
-    SMTP_PASS: process.env.SMTP_PASS ? "SET" : "NOT_SET",
-    SMTP_FROM: process.env.SMTP_FROM || "NOT_SET",
-  });
-});
-
 // Route pour envoyer un nouveau code d'accès par email (bouton vert admin)
 app.post("/api/admin/send-access-code", async (req, res) => {
   const { requestId, newPassword, adminEmail } = req.body;
@@ -4391,27 +4243,6 @@ app.post(
 
     const is_eir_received = !!req.file;
 
-    // *** DÉBOGAGE : AFFICHER LES VALEURS DES CHAMPS OBLIGATOIRES REÇUES PAR LE BACKEND ***
-    console.log("Backend Validation Debug - Basic fields:");
-    console.log("   employee_name:", employee_name);
-    console.log("   client_name:", client_name);
-    console.log("   client_phone:", client_phone);
-    console.log("   container_type_and_content:", container_type_and_content);
-    console.log("   status (from employee form):", status);
-    console.log("   lieu:", lieu);
-    console.log(
-      "   container_number (normalized):",
-      normalized_container_number
-    );
-    console.log("   container_foot_type:", container_foot_type);
-    console.log("   declaration_number:", declaration_number);
-    console.log("   number_of_containers:", number_of_containers);
-    console.log("   dossier_number:", dossier_number);
-    console.log("   bl_number:", bl_number);
-    console.log("   shipping_company:", shipping_company);
-    console.log("   delivery_status_acconier:", delivery_status_acconier);
-    // *** FIN DÉBOGAGE BASIC FIELDS ***
-
     // Validation des champs obligatoires (MIS À JOUR)
     if (
       !employee_name ||
@@ -4584,16 +4415,6 @@ app.post(
           container_statuses = mapping;
         }
       }
-
-      // *** DÉBOGAGE : AFFICHER LES VALEURS DES NOUVEAUX CHAMPS APRÈS TRAITEMENT ***
-      console.log("Backend Validation Debug - Processed JSON fields:");
-      console.log(
-        "   full_container_numbers_list:",
-        full_container_numbers_list
-      );
-      console.log("   container_foot_types_map:", container_foot_types_map);
-      console.log("   container_statuses:", container_statuses);
-      // *** FIN DÉBOGAGE PROCESSED FIELDS ***
 
       // Vérifier si les colonnes JSON et d'échange existent avant de les utiliser
       const columnsCheck = await pool.query(`
@@ -4884,7 +4705,6 @@ app.post(
           type: "new_delivery_created",
           delivery: newDelivery, // On envoie tout l'objet newDelivery (tous les champs)
         };
-        console.log("[WebSocket][DEBUG] Payload envoyé :", payloadObj);
         const payload = JSON.stringify(payloadObj);
         let clientCount = 0;
         wss.clients.forEach((client, idx) => {
