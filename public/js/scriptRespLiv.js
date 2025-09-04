@@ -5405,124 +5405,231 @@ function generateEtatSortiePdf(rows, date1, date2) {
       unit: "mm",
       format: "a4",
     });
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    // Centrer le titre sur la largeur de la page
+
     const pageWidth = doc.internal.pageSize.getWidth();
-    const title = "État des sorties de conteneurs";
-    const titleWidth = doc.getTextWidth(title);
-    doc.text(title, (pageWidth - titleWidth) / 2, 18);
-    // Réduire la taille du texte des entêtes du tableau PDF
-    doc.setFontSize(10); // taille plus petite pour les entêtes
-    doc.setFont("helvetica", "normal");
-    let dateText = "";
-    if (date1 && !date2) dateText = `Date : ${date1}`;
-    else if (date1 && date2) dateText = `Du ${date1} au ${date2}`;
-    if (dateText) {
-      const dateTextWidth = doc.getTextWidth(dateText);
-      doc.text(dateText, (pageWidth - dateTextWidth) / 2, 26);
-    }
-    // Colonnes avec des largeurs personnalisées pour un tableau large mais lisible
-    // Largeur totale disponible (A4 paysage, marges incluses)
-    // On répartit pour que la colonne OBSERVATION ne déborde pas et que le tableau soit équilibré
-    const columns = [
-      { header: "CIRCUIT", dataKey: "circuit", width: 23 },
-      { header: "NOM CLIENT", dataKey: "client_name", width: 38 },
-      { header: "Numéro Dossier", dataKey: "dossier_number", width: 32 },
-      { header: "Numéro TC(s)", dataKey: "container_number", width: 36 },
-      {
-        header: "NOM Agent Visiteur",
-        dataKey: "nom_agent_visiteur",
-        width: 32,
-      },
-      { header: "Compagnie Maritime", dataKey: "shipping_company", width: 32 },
-      { header: "INSPECTEUR", dataKey: "inspecteur", width: 28 },
-      { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes", width: 32 },
-      { header: "OBSERVATION", dataKey: "observation_acconier", width: 25 }, // large mais jamais collée
+
+    // 🖼️ AJOUT DU LOGO À GAUCHE
+    // Charger et ajouter le logo Inter Transit Services
+    const logoImg = new Image();
+    logoImg.crossOrigin = "anonymous"; // Pour éviter les problèmes CORS
+
+    logoImg.onload = function () {
+      console.log("✅ Logo chargé avec succès");
+      // Ajouter le logo à gauche (position x=10, y=8, largeur=25, hauteur=15)
+      try {
+        doc.addImage(logoImg, "JPEG", 10, 8, 25, 15);
+        console.log("✅ Logo ajouté au PDF");
+      } catch (error) {
+        console.error("❌ Erreur lors de l'ajout du logo:", error);
+      }
+
+      // Continuer avec le reste du PDF après le chargement du logo
+      generatePdfContent();
+    };
+
+    logoImg.onerror = function () {
+      console.warn(
+        "⚠️ Impossible de charger le logo, génération du PDF sans logo"
+      );
+      console.warn("Chemin testé:", logoImg.src);
+      generatePdfContent();
+    };
+
+    // Essayer plusieurs chemins possibles pour le logo
+    const logoPaths = [
+      "./public/html/logo-inter-transit-services-cote-d-ivoire.jpg",
+      "/public/html/logo-inter-transit-services-cote-d-ivoire.jpg",
+      "public/html/logo-inter-transit-services-cote-d-ivoire.jpg",
+      "./logo-inter-transit-services-cote-d-ivoire.jpg",
     ];
-    // Correction : récupérer les valeurs éditées danshdgs le DOM si elles existent
-    const dataRows = rows.map((d) => {
-      // Utilitaire pour récupérer la valeur éditée dans le tableau si présente, avec gestion des alias
-      function getEditedValue(delivery, fields) {
-        if (!Array.isArray(fields)) fields = [fields];
-        const tr = document.querySelector(
-          `tr[data-delivery-id='${delivery.id}']`
+
+    let currentPathIndex = 0;
+
+    function tryLoadLogo() {
+      if (currentPathIndex < logoPaths.length) {
+        console.log(
+          `🔍 Tentative de chargement du logo: ${logoPaths[currentPathIndex]}`
         );
-        if (tr) {
-          for (const field of fields) {
-            const td = tr.querySelector(`td[data-col-id='${field}']`);
-            if (td) {
-              const input = td.querySelector("input,textarea");
-              if (input && input.value && input.value.trim() !== "") {
-                return input.value.trim();
-              }
-              if (td.textContent && td.textContent.trim() !== "-") {
-                return td.textContent.trim();
+        logoImg.src = logoPaths[currentPathIndex];
+
+        // Si le logo ne se charge pas dans les 2 secondes, essayer le chemin suivant
+        setTimeout(() => {
+          if (!logoImg.complete || logoImg.naturalWidth === 0) {
+            currentPathIndex++;
+            if (currentPathIndex < logoPaths.length) {
+              tryLoadLogo();
+            } else {
+              console.warn(
+                "❌ Aucun chemin de logo n'a fonctionné, génération sans logo"
+              );
+              generatePdfContent();
+            }
+          }
+        }, 2000);
+      }
+    }
+
+    tryLoadLogo();
+
+    function generatePdfContent() {
+      // 📄 TITRE CENTRÉ
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      const title = "État des sorties de conteneurs";
+      const titleWidth = doc.getTextWidth(title);
+      doc.text(title, (pageWidth - titleWidth) / 2, 18);
+
+      // 👤 CHAMP NOM À DROITE
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      const nomText = "Nom : .......................................";
+      const nomTextWidth = doc.getTextWidth(nomText);
+      doc.text(nomText, pageWidth - nomTextWidth - 10, 18);
+
+      // 🏢 FALLBACK: Si le logo ne s'est pas chargé, dessiner un rectangle avec texte
+      if (!logoImg.complete || logoImg.naturalWidth === 0) {
+        console.log("🎨 Création d'un logo de fallback");
+        // Dessiner un rectangle pour représenter le logo
+        doc.setFillColor(70, 130, 180); // Bleu
+        doc.rect(10, 8, 25, 15, "F");
+
+        // Ajouter le texte "ITS" dans le rectangle
+        doc.setTextColor(255, 255, 255); // Blanc
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("ITS", 18, 18);
+
+        // Remettre la couleur de texte normale
+        doc.setTextColor(0, 0, 0); // Noir
+      }
+
+      // 📅 DATE (position ajustée pour laisser place au logo et nom)
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      let dateText = "";
+      if (date1 && !date2) dateText = `Date : ${date1}`;
+      else if (date1 && date2) dateText = `Du ${date1} au ${date2}`;
+      if (dateText) {
+        const dateTextWidth = doc.getTextWidth(dateText);
+        doc.text(dateText, (pageWidth - dateTextWidth) / 2, 28);
+      }
+
+      // 📊 GÉNÉRATION DU TABLEAU
+      // Réduire la taille du texte des entêtes du tableau PDF
+      doc.setFontSize(10); // taille plus petite pour les entêtes
+      doc.setFont("helvetica", "normal");
+
+      // Colonnes avec des largeurs personnalisées pour un tableau large mais lisible
+      // Largeur totale disponible (A4 paysage, marges incluses)
+      // On répartit pour que la colonne OBSERVATION ne déborde pas et que le tableau soit équilibré
+      const columns = [
+        { header: "CIRCUIT", dataKey: "circuit", width: 23 },
+        { header: "NOM CLIENT", dataKey: "client_name", width: 38 },
+        { header: "Numéro Dossier", dataKey: "dossier_number", width: 32 },
+        { header: "Numéro TC(s)", dataKey: "container_number", width: 36 },
+        {
+          header: "NOM Agent Visiteur",
+          dataKey: "nom_agent_visiteur",
+          width: 32,
+        },
+        {
+          header: "Compagnie Maritime",
+          dataKey: "shipping_company",
+          width: 32,
+        },
+        { header: "INSPECTEUR", dataKey: "inspecteur", width: 28 },
+        { header: "AGENT EN DOUANE", dataKey: "agent_en_douanes", width: 32 },
+        { header: "OBSERVATION", dataKey: "observation_acconier", width: 25 }, // large mais jamais collée
+      ];
+
+      // Correction : récupérer les valeurs éditées dans le DOM si elles existent
+      const dataRows = rows.map((d) => {
+        // Utilitaire pour récupérer la valeur éditée dans le tableau si présente, avec gestion des alias
+        function getEditedValue(delivery, fields) {
+          if (!Array.isArray(fields)) fields = [fields];
+          const tr = document.querySelector(
+            `tr[data-delivery-id='${delivery.id}']`
+          );
+          if (tr) {
+            for (const field of fields) {
+              const td = tr.querySelector(`td[data-col-id='${field}']`);
+              if (td) {
+                const input = td.querySelector("input,textarea");
+                if (input && input.value && input.value.trim() !== "") {
+                  return input.value.trim();
+                }
+                if (td.textContent && td.textContent.trim() !== "-") {
+                  return td.textContent.trim();
+                }
               }
             }
           }
-        }
-        // Sinon, valeur brute (prend le premier champ trouvé)
-        for (const field of fields) {
-          if (delivery[field] && String(delivery[field]).trim() !== "") {
-            return delivery[field];
+          // Sinon, valeur brute (prend le premier champ trouvé)
+          for (const field of fields) {
+            if (delivery[field] && String(delivery[field]).trim() !== "") {
+              return delivery[field];
+            }
           }
+          return "-";
         }
-        return "-";
-      }
-      return {
-        circuit: d.circuit || "-",
-        client_name: d.client_name || "-",
-        dossier_number: d.dossier_number || "-",
-        container_number:
-          d.container_numbers_list && Array.isArray(d.container_numbers_list)
-            ? d.container_numbers_list.join(", ")
-            : Array.isArray(d.container_number)
-            ? d.container_number.join(", ")
-            : d.container_number || "-",
-        nom_agent_visiteur: getEditedValue(d, [
-          "nom_agent_visiteur",
-          "visitor_agent_name",
-        ]),
-        shipping_company: d.shipping_company || "-",
-        inspecteur: getEditedValue(d, ["inspecteur", "inspector"]),
-        agent_en_douanes: getEditedValue(d, [
-          "agent_en_douanes",
-          "customs_agent",
-        ]),
-        observation_acconier: getEditedValue(d, [
-          "observation_acconier",
-          "observation",
-        ]),
-        // Suppression du champ delivery_date pour le PDF
-      };
-    });
-    doc.autoTable({
-      startY: 32,
-      head: [columns.map((c) => c.header)],
-      body: dataRows.map((row) => columns.map((c) => row[c.dataKey])),
-      styles: { font: "helvetica", fontSize: 10 },
-      headStyles: {
-        fillColor: [0, 0, 0], // noir
-        textColor: 255,
-        fontStyle: "bold",
-        fontSize: 7, // taille réduite pour les entêtes du tableau
-      },
-      alternateRowStyles: { fillColor: [240, 245, 255] },
-      // Marges égales à gauche et à droite pour un centrage parfaits
-      margin: { left: 10, right: 10 },
-      theme: "grid",
-      columnStyles: columns.reduce((acc, col, idx) => {
-        acc[idx] = { cellWidth: col.width };
-        return acc;
-      }, {}),
-      tableWidth: "auto",
-      horizontalAlign: "center", // Centrage horizontal du tableau
-      didDrawPage: function (data) {
-        // Rien à faire ici normalement
-      },
-    });
-    doc.save("Etat_sorties_conteneurs.pdf");
+        return {
+          circuit: d.circuit || "-",
+          client_name: d.client_name || "-",
+          dossier_number: d.dossier_number || "-",
+          container_number:
+            d.container_numbers_list && Array.isArray(d.container_numbers_list)
+              ? d.container_numbers_list.join(", ")
+              : Array.isArray(d.container_number)
+              ? d.container_number.join(", ")
+              : d.container_number || "-",
+          nom_agent_visiteur: getEditedValue(d, [
+            "nom_agent_visiteur",
+            "visitor_agent_name",
+          ]),
+          shipping_company: d.shipping_company || "-",
+          inspecteur: getEditedValue(d, ["inspecteur", "inspector"]),
+          agent_en_douanes: getEditedValue(d, [
+            "agent_en_douanes",
+            "customs_agent",
+          ]),
+          observation_acconier: getEditedValue(d, [
+            "observation_acconier",
+            "observation",
+          ]),
+        };
+      });
+
+      // Position Y de départ du tableau (ajustée pour laisser place au logo et au nom)
+      const startY = dateText ? 35 : 32;
+
+      doc.autoTable({
+        startY: startY,
+        head: [columns.map((c) => c.header)],
+        body: dataRows.map((row) => columns.map((c) => row[c.dataKey])),
+        styles: { font: "helvetica", fontSize: 10 },
+        headStyles: {
+          fillColor: [0, 0, 0], // noir
+          textColor: 255,
+          fontStyle: "bold",
+          fontSize: 7, // taille réduite pour les entêtes du tableau
+        },
+        alternateRowStyles: { fillColor: [240, 245, 255] },
+        // Marges égales à gauche et à droite pour un centrage parfait
+        margin: { left: 10, right: 10 },
+        theme: "grid",
+        columnStyles: columns.reduce((acc, col, idx) => {
+          acc[idx] = { cellWidth: col.width };
+          return acc;
+        }, {}),
+        tableWidth: "auto",
+        horizontalAlign: "center", // Centrage horizontal du tableau
+        didDrawPage: function (data) {
+          // Rien à faire ici normalement
+        },
+      });
+
+      doc.save("Etat_sorties_conteneurs.pdf");
+    } // Fin de generatePdfContent()
   });
 }
 
