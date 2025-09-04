@@ -1,3 +1,4 @@
+/***MON JESUS EST LE SEUL DIEU */
 // Fonction pour gérer l'affichage des listes de conteneurs
 function toggleContainerList(dropdownId) {
   const dropdown = document.getElementById(dropdownId);
@@ -865,6 +866,7 @@ function nettoyerDossiersExpires() {
   const maintenant = new Date();
   const dossiersActifs = [];
   let dossiersSupprimes = 0;
+  let dossiersModifies = 0;
 
   dossiers.forEach((dossier) => {
     // Vérifier si le dossier a une date d'expiration
@@ -884,38 +886,51 @@ function nettoyerDossiersExpires() {
         dossiersActifs.push(dossier);
       }
     } else {
-      // Dossier sans date d'expiration (ancien système), ajouter une date d'expiration
-      dossier.dateAjoutMiseEnLiv =
-        dossier.date_mise_en_liv || new Date().toISOString();
-      dossier.dateExpirationMiseEnLiv = new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ).toISOString();
+      // ⚠️ DOSSIER SANS DATE D'EXPIRATION (ancien système) - AJOUTER LES DATES MANQUANTES
+      console.log(`🔧 [MIGRATION] Ajout des dates pour dossier existant: ${dossier.container_number || dossier.dossier_number}`);
+      
+      // Utiliser la date de mise en livraison existante ou la date actuelle
+      dossier.dateAjoutMiseEnLiv = dossier.date_mise_en_liv || new Date().toISOString();
+      
+      // Calculer la date d'expiration (7 jours à partir de la date d'ajout)
+      const dateAjout = new Date(dossier.dateAjoutMiseEnLiv);
+      dossier.dateExpirationMiseEnLiv = new Date(dateAjout.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      
+      dossiersModifies++;
       dossiersActifs.push(dossier);
     }
   });
 
-  // Sauvegarder la liste nettoyée
-  if (dossiersSupprimes > 0) {
+  // Sauvegarder la liste mise à jour (même s'il n'y a que des modifications)
+  if (dossiersSupprimes > 0 || dossiersModifies > 0) {
     saveDossiersMisEnLiv(dossiersActifs);
-    console.log(
-      `🧹 [NETTOYAGE AUTO] ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`
-    );
-
+    
+    if (dossiersSupprimes > 0) {
+      console.log(`🧹 [NETTOYAGE AUTO] ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`);
+    }
+    
+    if (dossiersModifies > 0) {
+      console.log(`🔧 [MIGRATION] ${dossiersModifies} dossier(s) existant(s) mis à jour avec dates d'expiration`);
+    }
+    
     // Rafraîchir la liste si elle est ouverte
     refreshMiseEnLivList();
-
-    // Afficher une notification si des dossiers ont été supprimés
-    if (typeof showNotification === "function") {
-      showNotification(
-        `🧹 Nettoyage automatique : ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`,
-        "info"
-      );
+    
+    // Afficher une notification si des dossiers ont été modifiés
+    if (typeof showNotification === 'function' && (dossiersSupprimes > 0 || dossiersModifies > 0)) {
+      let message = "";
+      if (dossiersSupprimes > 0) message += `🧹 ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`;
+      if (dossiersModifies > 0) {
+        if (message) message += " • ";
+        message += `🔧 ${dossiersModifies} dossier(s) mis à jour`;
+      }
+      showNotification(message, "info");
     }
   } else {
-    console.log("✅ [NETTOYAGE AUTO] Aucun dossier expiré à supprimer");
+    console.log("✅ [NETTOYAGE AUTO] Aucun dossier à traiter");
   }
 
-  return dossiersSupprimes;
+  return { dossiersSupprimes, dossiersModifies };
 }
 
 // ⏰ FONCTION UTILITAIRE : Calculer le temps restant avant expiration (VERSION AMÉLIORÉE)
@@ -926,15 +941,18 @@ function calculerTempsRestant(dateExpiration) {
   const expiration = new Date(dateExpiration);
   const diffMs = expiration - maintenant;
 
-  if (diffMs <= 0) return { 
-    expire: true, 
-    texte: "⚠️ EXPIRÉ", 
-    couleur: "danger",
-    details: "Ce dossier sera supprimé automatiquement"
-  };
+  if (diffMs <= 0)
+    return {
+      expire: true,
+      texte: "⚠️ EXPIRÉ",
+      couleur: "danger",
+      details: "Ce dossier sera supprimé automatiquement",
+    };
 
   const jours = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-  const heures = Math.floor((diffMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  const heures = Math.floor(
+    (diffMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000)
+  );
   const minutes = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
 
   let texte = "";
@@ -944,7 +962,11 @@ function calculerTempsRestant(dateExpiration) {
   if (jours > 0) {
     texte = `🕐 ${jours}j ${heures}h ${minutes}m restants`;
     couleur = jours <= 1 ? "warning" : "info";
-    details = `Suppression automatique le ${new Date(expiration).toLocaleDateString('fr-FR')} à ${new Date(expiration).toLocaleTimeString('fr-FR')}`;
+    details = `Suppression automatique le ${new Date(
+      expiration
+    ).toLocaleDateString("fr-FR")} à ${new Date(expiration).toLocaleTimeString(
+      "fr-FR"
+    )}`;
   } else if (heures > 0) {
     texte = `⏰ ${heures}h ${minutes}m restantes`;
     couleur = heures <= 6 ? "danger" : "warning";
@@ -962,7 +984,7 @@ function calculerTempsRestant(dateExpiration) {
     details,
     jours,
     heures,
-    minutes
+    minutes,
   };
 }
 
@@ -1057,27 +1079,32 @@ function ajouterDossierMiseEnLiv(dossier) {
   if (!existe) {
     dossiers.push(dossier);
     saveDossiersMisEnLiv(dossiers);
-    
+
     // ⏰ NOTIFICATION IMMÉDIATE DE L'AJOUT AVEC DÉTAILS
     const tempsRestant = calculerTempsRestant(dossier.dateExpirationMiseEnLiv);
-    const containerNum = dossier.container_number || dossier.dossier_number || "N/A";
-    
+    const containerNum =
+      dossier.container_number || dossier.dossier_number || "N/A";
+
     console.log(`✅ [AJOUT DOSSIER] ${containerNum} ajouté avec succès:`, {
-      dateAjout: new Date(dossier.dateAjoutMiseEnLiv).toLocaleString('fr-FR'),
-      dateExpiration: new Date(dossier.dateExpirationMiseEnLiv).toLocaleString('fr-FR'),
+      dateAjout: new Date(dossier.dateAjoutMiseEnLiv).toLocaleString("fr-FR"),
+      dateExpiration: new Date(dossier.dateExpirationMiseEnLiv).toLocaleString(
+        "fr-FR"
+      ),
       tempsRestant: tempsRestant ? tempsRestant.texte : "Erreur calcul",
-      suppressionDans: "7 jours exactement"
+      suppressionDans: "7 jours exactement",
     });
-    
+
     // Afficher une notification visible à l'utilisateur
-    if (typeof showNotification === 'function') {
+    if (typeof showNotification === "function") {
       showNotification(
-        `✅ Dossier ${containerNum} ajouté ! ${tempsRestant ? tempsRestant.texte : '7 jours restants'}`,
+        `✅ Dossier ${containerNum} ajouté ! ${
+          tempsRestant ? tempsRestant.texte : "7 jours restants"
+        }`,
         "success"
       );
     } else {
       // Notification alternative si showNotification n'existe pas
-      const notification = document.createElement('div');
+      const notification = document.createElement("div");
       notification.style.cssText = `
         position: fixed; top: 20px; right: 20px; z-index: 9999;
         background: linear-gradient(135deg, #28a745, #20c997);
@@ -1090,14 +1117,16 @@ function ajouterDossierMiseEnLiv(dossier) {
           <i class="fas fa-check-circle me-2"></i>
           <div>
             <div>Dossier ${containerNum} ajouté !</div>
-            <small style="opacity: 0.9;">${tempsRestant ? tempsRestant.texte : '7 jours restants'}</small>
+            <small style="opacity: 0.9;">${
+              tempsRestant ? tempsRestant.texte : "7 jours restants"
+            }</small>
           </div>
         </div>
       `;
       document.body.appendChild(notification);
       setTimeout(() => notification.remove(), 5000);
     }
-    
+
     refreshMiseEnLivList(); // Rafraîchir la liste après l'ajout
   }
 }
@@ -1332,9 +1361,13 @@ function refreshMiseEnLivList() {
                   );
                   if (tempsRestant) {
                     return `
-                    <div class="mt-2 p-2 rounded-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 3px solid var(--bs-${tempsRestant.couleur});">
+                    <div class="mt-2 p-2 rounded-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 3px solid var(--bs-${
+                      tempsRestant.couleur
+                    });">
                       <div class="d-flex align-items-center justify-content-between">
-                        <span class="badge bg-${tempsRestant.couleur} text-white px-3 py-2" style="font-size: 0.75rem; font-weight: 500;">
+                        <span class="badge bg-${
+                          tempsRestant.couleur
+                        } text-white px-3 py-2" style="font-size: 0.75rem; font-weight: 500;">
                           ${tempsRestant.texte}
                         </span>
                         <small class="text-muted" style="font-size: 0.7rem;">
@@ -1348,12 +1381,17 @@ function refreshMiseEnLivList() {
                       </div>
                       ${(() => {
                         // LOG DÉTAILLÉ POUR DEBUG
-                        console.log(`⏰ [TEMPS RESTANT] Dossier ${dossier.container_number || dossier.dossier_number}:`, {
-                          dateAjout: dossier.dateAjoutMiseEnLiv,
-                          dateExpiration: dossier.dateExpirationMiseEnLiv,
-                          tempsRestant: `${tempsRestant.jours}j ${tempsRestant.heures}h ${tempsRestant.minutes}m`,
-                          couleur: tempsRestant.couleur
-                        });
+                        console.log(
+                          `⏰ [TEMPS RESTANT] Dossier ${
+                            dossier.container_number || dossier.dossier_number
+                          }:`,
+                          {
+                            dateAjout: dossier.dateAjoutMiseEnLiv,
+                            dateExpiration: dossier.dateExpirationMiseEnLiv,
+                            tempsRestant: `${tempsRestant.jours}j ${tempsRestant.heures}h ${tempsRestant.minutes}m`,
+                            couleur: tempsRestant.couleur,
+                          }
+                        );
                         return "";
                       })()}
                     </div>`;
@@ -7331,7 +7369,7 @@ if (bodyElement) {
   });
 }
 
-/***MON JESUS EST LE SEUL DIEU */
+
 
 // ⏰ INITIALISATION DU NETTOYAGE AUTOMATIQUE DES DOSSIERS EXPIRÉS
 // Nettoyage toutes les heures (3600000 ms)
@@ -7342,9 +7380,11 @@ setInterval(() => {
 // 🔄 MISE À JOUR EN TEMPS RÉEL DE L'AFFICHAGE (toutes les minutes)
 setInterval(() => {
   const miseEnLivList = document.getElementById("miseEnLivList");
-  if (miseEnLivList && !miseEnLivList.classList.contains('d-none')) {
+  if (miseEnLivList && !miseEnLivList.classList.contains("d-none")) {
     // Ne rafraîchir que si la modal est ouverte
-    console.log("🔄 [MISE À JOUR TEMPS RÉEL] Rafraîchissement des indicateurs de temps...");
+    console.log(
+      "🔄 [MISE À JOUR TEMPS RÉEL] Rafraîchissement des indicateurs de temps..."
+    );
     refreshMiseEnLivList();
   }
 }, 60000); // Toutes les minutes
@@ -7354,7 +7394,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Petit délai pour s'assurer que tout est chargé
   setTimeout(() => {
     nettoyerDossiersExpires();
-    console.log("📊 [INITIALISATION] Système de nettoyage automatique activé !");
+    console.log(
+      "📊 [INITIALISATION] Système de nettoyage automatique activé !"
+    );
   }, 2000);
 });
 
@@ -7364,19 +7406,54 @@ document.addEventListener("visibilitychange", () => {
     nettoyerDossiersExpires();
     // Rafraîchir l'affichage si la modal est ouverte
     const miseEnLivList = document.getElementById("miseEnLivList");
-    if (miseEnLivList && !miseEnLivList.classList.contains('d-none')) {
+    if (miseEnLivList && !miseEnLivList.classList.contains("d-none")) {
       refreshMiseEnLivList();
     }
   }
 });
 
 // 📊 FONCTION DE TEST POUR VÉRIFIER LE FONCTIONNEMENT
-window.testerSuppressionAutomatique = function() {
+window.testerSuppressionAutomatique = function () {
   const dossiers = getDossiersMisEnLiv();
-  console.log("🧪 [TEST] État actuel des dossiers:", dossiers.map(d => ({
-    container: d.container_number || d.dossier_number,
-    dateAjout: new Date(d.dateAjoutMiseEnLiv).toLocaleString('fr-FR'),
-    dateExpiration: new Date(d.dateExpirationMiseEnLiv).toLocaleString('fr-FR'),
-    tempsRestant: calculerTempsRestant(d.dateExpirationMiseEnLiv)?.texte
-  })));
+  console.log(
+    "🧪 [TEST] État actuel des dossiers:",
+    dossiers.map((d) => ({
+      container: d.container_number || d.dossier_number,
+      dateAjout: new Date(d.dateAjoutMiseEnLiv).toLocaleString("fr-FR"),
+      dateExpiration: new Date(d.dateExpirationMiseEnLiv).toLocaleString(
+        "fr-FR"
+      ),
+      tempsRestant: calculerTempsRestant(d.dateExpirationMiseEnLiv)?.texte,
+    }))
+  );
 };
+
+// 🔧 FORCE LA MIGRATION DES DOSSIERS EXISTANTS AU CHARGEMENT DE LA PAGE
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 [INIT] Démarrage de la migration des dossiers existants...');
+  
+  // Attendre un peu que la page soit totalement chargée
+  setTimeout(() => {
+    try {
+      // Forcer la migration des anciens dossiers
+      const resultats = nettoyerDossiersExpires();
+      console.log('✅ [INIT] Migration terminée:', resultats);
+      
+      // Afficher les dossiers actuels avec leurs dates
+      const dossiersActuels = getDossiersMisEnLiv();
+      console.log('📋 [INIT] Dossiers actuels après migration:', dossiersActuels.length);
+      
+      dossiersActuels.forEach(dossier => {
+        console.log(`📦 ${dossier.container_number || dossier.dossier_number}: 
+          - Date ajout: ${dossier.dateAjoutMiseEnLiv}
+          - Date expiration: ${dossier.dateExpirationMiseEnLiv}
+          - Temps restant: ${calculerTempsRestant(dossier.dateExpirationMiseEnLiv)?.texte || 'N/A'}`);
+      });
+      
+    } catch (error) {
+      console.error('❌ [INIT] Erreur lors de la migration:', error);
+    }
+  }, 1000); // Délai de 1 seconde
+});
+
+/***MON JESUS EST LE SEUL DIEU */
