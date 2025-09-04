@@ -572,13 +572,7 @@ function refreshMiseEnLivList() {
                   }</small>`
                 : ""
             }
-            ${
-              dossier.date_do && formatDateLocal(dossier.date_do)
-                ? `<br><small class="text-muted">Date DO: ${formatDateLocal(
-                    dossier.date_do
-                  )}</small>`
-                : ""
-            }
+            ${extractAndDisplayDate(dossier, "do", "Date DO")}
             ${
               dossier.date_paiement_acconage &&
               formatDateLocal(dossier.date_paiement_acconage)
@@ -587,13 +581,7 @@ function refreshMiseEnLivList() {
                   )}</small>`
                 : ""
             }
-            ${
-              dossier.date_badt && formatDateLocal(dossier.date_badt)
-                ? `<br><small class="text-muted">Date BADT: ${formatDateLocal(
-                    dossier.date_badt
-                  )}</small>`
-                : ""
-            }
+            ${extractAndDisplayDate(dossier, "badt", "Date BADT")}
           </div>
         </div>
         <p class="mb-1">Client: ${
@@ -620,6 +608,231 @@ const STORAGE_KEY_LIVRAISON = "dossiersMisEnLiv";
 // Fonction pour récupérer les dossiers mis en livraison
 function getDossiersMisEnLiv() {
   return JSON.parse(localStorage.getItem(STORAGE_KEY_LIVRAISON) || "[]");
+}
+
+// 🆕 FONCTION AVANCÉE POUR EXTRAIRE ET AFFICHER LES DATES DO/BADT
+function extractAndDisplayDate(dossier, dateType, displayLabel) {
+  let dateValue = null;
+
+  // 1. Vérifier d'abord les champs standards
+  if (dateType === "do") {
+    dateValue = dossier.date_do;
+  } else if (dateType === "badt") {
+    dateValue = dossier.date_badt;
+  }
+
+  // 2. Si pas trouvé, chercher dans d'autres propriétés possibles
+  if (!dateValue || dateValue === "N/A" || dateValue === "") {
+    const searchFields = [];
+
+    if (dateType === "do") {
+      searchFields.push(
+        "date_do",
+        "dateDO",
+        "date_livraison_do",
+        "do_date",
+        "date_demande_origine",
+        "date_origine",
+        "delivery_order_date"
+      );
+    } else if (dateType === "badt") {
+      searchFields.push(
+        "date_badt",
+        "dateBADT",
+        "date_badp",
+        "badt_date",
+        "date_livraison_badt",
+        "bon_a_delivrer_date"
+      );
+    }
+
+    // Chercher dans toutes les propriétés possibles
+    for (const field of searchFields) {
+      if (dossier[field] && dossier[field] !== "N/A" && dossier[field] !== "") {
+        dateValue = dossier[field];
+        break;
+      }
+    }
+  }
+
+  // 3. Si toujours pas trouvé, chercher dans les textes (delivery_notes, observation, etc.)
+  if (!dateValue || dateValue === "N/A" || dateValue === "") {
+    const textFields = [
+      "delivery_notes",
+      "observation_acconier",
+      "observation",
+      "notes",
+      "remarques",
+      "details_livraison",
+      "commentaire",
+    ];
+
+    for (const field of textFields) {
+      if (dossier[field]) {
+        const extractedDate = extractDateFromText(dossier[field], dateType);
+        if (extractedDate) {
+          dateValue = extractedDate;
+          break;
+        }
+      }
+    }
+  }
+
+  // 4. Afficher la date si trouvée
+  if (dateValue && dateValue !== "N/A" && dateValue !== "") {
+    const formattedDate = formatDateLocal(dateValue);
+    if (formattedDate && formattedDate !== "Date invalide") {
+      return `<br><small class="text-muted">${displayLabel}: ${formattedDate}</small>`;
+    }
+  }
+
+  return "";
+}
+
+// 🆕 FONCTION POUR EXTRAIRE DES DATES DEPUIS LE TEXTE
+function extractDateFromText(text, dateType) {
+  if (!text || typeof text !== "string") return null;
+
+  const normalizedText = text.toLowerCase();
+
+  // Patterns de recherche pour DO
+  if (dateType === "do") {
+    const doPatterns = [
+      /(?:date?\s*)?(?:do|delivery\s*order|demande\s*origine)\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+      /(?:do\s*du?\s*|do\s*:?\s*)(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+      /delivery\s*order\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+    ];
+
+    for (const pattern of doPatterns) {
+      const match = normalizedText.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+  }
+
+  // Patterns de recherche pour BADT
+  if (dateType === "badt") {
+    const badtPatterns = [
+      /(?:date?\s*)?(?:badt|bon\s*a\s*delivrer|badp)\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+      /(?:badt\s*du?\s*|badt\s*:?\s*)(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+      /bon\s*a\s*delivrer\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
+    ];
+
+    for (const pattern of badtPatterns) {
+      const match = normalizedText.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+  }
+
+  return null;
+}
+
+// 🆕 FONCTION AUXILIAIRE POUR EXTRAIRE DES DATES DEPUIS LES CHAMPS TEXTUELS
+function extractDateFromTextFields(dossier, dateType) {
+  // Chercher dans tous les champs textuels possibles
+  const textFields = [
+    "delivery_notes",
+    "observation_acconier",
+    "observation",
+    "notes",
+    "remarques",
+    "details_livraison",
+    "commentaire",
+    "description",
+    "details",
+    "infos_livraison",
+  ];
+
+  for (const field of textFields) {
+    if (dossier[field]) {
+      const extractedDate = extractDateFromText(dossier[field], dateType);
+      if (extractedDate) {
+        try {
+          // Valider que la date est correcte
+          const testDate = new Date(extractedDate);
+          if (!isNaN(testDate.getTime())) {
+            return testDate.toISOString();
+          }
+        } catch (e) {
+          console.warn(
+            `Date extraite invalide pour ${dateType}:`,
+            extractedDate
+          );
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+// 🆕 FONCTION POUR METTRE À JOUR LES DOSSIERS EXISTANTS AVEC LES DATES MANQUANTES
+let dateExtractionProcessed = false; // Flag pour éviter les boucles infinies
+function updateExistingDossiersWithMissingDates() {
+  // Ne traiter qu'une seule fois lors de l'ouverture de la modal
+  if (dateExtractionProcessed) return;
+
+  const dossiers = getDossiersMisEnLiv();
+  let updated = false;
+
+  console.log(
+    "🔍 Vérification des dossiers existants pour les dates manquantes..."
+  );
+
+  dossiers.forEach((dossier) => {
+    const originalDO = dossier.date_do;
+    const originalBADT = dossier.date_badt;
+
+    // Essayer d'extraire la date DO si manquante
+    if (
+      !dossier.date_do ||
+      dossier.date_do === "N/A" ||
+      dossier.date_do === ""
+    ) {
+      const extractedDateDO = extractDateFromTextFields(dossier, "do");
+      if (extractedDateDO) {
+        dossier.date_do = extractedDateDO;
+        updated = true;
+        console.log(
+          `✅ Date DO extraite pour ${
+            dossier.container_number || dossier.dossier_number
+          }:`,
+          extractedDateDO
+        );
+      }
+    }
+
+    // Essayer d'extraire la date BADT si manquante
+    if (
+      !dossier.date_badt ||
+      dossier.date_badt === "N/A" ||
+      dossier.date_badt === ""
+    ) {
+      const extractedDateBADT = extractDateFromTextFields(dossier, "badt");
+      if (extractedDateBADT) {
+        dossier.date_badt = extractedDateBADT;
+        updated = true;
+        console.log(
+          `✅ Date BADT extraite pour ${
+            dossier.container_number || dossier.dossier_number
+          }:`,
+          extractedDateBADT
+        );
+      }
+    }
+  });
+
+  if (updated) {
+    saveDossiersMisEnLiv(dossiers);
+    console.log("✅ Dossiers mis à jour avec les dates extraites");
+  } else {
+    console.log("ℹ️ Aucune date manquante trouvée à extraire");
+  }
+
+  dateExtractionProcessed = true; // Marquer comme traité
 }
 
 // Fonction pour sauvegarder les dossiers mis en livraison
@@ -825,6 +1038,37 @@ function ajouterDossierMiseEnLiv(dossier) {
     dossier.date_paiement_acconage;
   dossier.date_badt =
     dateBADT || formatExistingDate(dossier.date_badt) || dossier.date_badt;
+
+  // 🆕 AMÉLIORATION : Si les dates DO ou BADT sont toujours manquantes, essayer de les extraire
+  if (!dossier.date_do || dossier.date_do === "N/A" || dossier.date_do === "") {
+    const extractedDateDO = extractDateFromTextFields(dossier, "do");
+    if (extractedDateDO) {
+      dossier.date_do = extractedDateDO;
+      console.log(
+        `✅ Date DO extraite pour ${
+          dossier.container_number || dossier.dossier_number
+        }:`,
+        extractedDateDO
+      );
+    }
+  }
+
+  if (
+    !dossier.date_badt ||
+    dossier.date_badt === "N/A" ||
+    dossier.date_badt === ""
+  ) {
+    const extractedDateBADT = extractDateFromTextFields(dossier, "badt");
+    if (extractedDateBADT) {
+      dossier.date_badt = extractedDateBADT;
+      console.log(
+        `✅ Date BADT extraite pour ${
+          dossier.container_number || dossier.dossier_number
+        }:`,
+        extractedDateBADT
+      );
+    }
+  }
 
   console.log("Dossier avec dates formatées:", {
     date_do: dossier.date_do,
@@ -7060,5 +7304,21 @@ if (bodyElement) {
     subtree: true,
   });
 }
+
+// 🆕 INITIALISATION POUR L'EXTRACTION DES DATES MANQUANTES
+document.addEventListener("DOMContentLoaded", function () {
+  // Écouter l'ouverture de la modal "Mise en Livraison"
+  const modalMiseEnLiv = document.getElementById("modalMiseEnLiv");
+  if (modalMiseEnLiv) {
+    modalMiseEnLiv.addEventListener("shown.bs.modal", function () {
+      console.log(
+        "📅 Modal Mise en Livraison ouverte - Extraction des dates manquantes..."
+      );
+      dateExtractionProcessed = false; // Réinitialiser le flag
+      updateExistingDossiersWithMissingDates();
+      refreshMiseEnLivList();
+    });
+  }
+});
 
 /***MON JESUS EST LE SEUL DIEU */
