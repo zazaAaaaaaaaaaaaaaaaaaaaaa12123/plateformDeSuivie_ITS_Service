@@ -859,6 +859,84 @@ function checkAndArchiveOldDossiers() {
   }
 }
 
+// ⏰ NOUVELLE FONCTIONNALITÉ : Nettoyage automatique des dossiers expirés (après 1 semaine)
+function nettoyerDossiersExpires() {
+  const dossiers = getDossiersMisEnLiv();
+  const maintenant = new Date();
+  const dossiersActifs = [];
+  let dossiersSupprimes = 0;
+
+  dossiers.forEach(dossier => {
+    // Vérifier si le dossier a une date d'expiration
+    if (dossier.dateExpirationMiseEnLiv) {
+      const dateExpiration = new Date(dossier.dateExpirationMiseEnLiv);
+      
+      if (maintenant >= dateExpiration) {
+        // Dossier expiré, ne pas le garder
+        dossiersSupprimes++;
+        console.log(`🗑️ [NETTOYAGE AUTO] Dossier expiré supprimé: ${dossier.container_number || dossier.dossier_number}`);
+      } else {
+        // Dossier encore valide
+        dossiersActifs.push(dossier);
+      }
+    } else {
+      // Dossier sans date d'expiration (ancien système), ajouter une date d'expiration
+      dossier.dateAjoutMiseEnLiv = dossier.date_mise_en_liv || new Date().toISOString();
+      dossier.dateExpirationMiseEnLiv = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString();
+      dossiersActifs.push(dossier);
+    }
+  });
+
+  // Sauvegarder la liste nettoyée
+  if (dossiersSupprimes > 0) {
+    saveDossiersMisEnLiv(dossiersActifs);
+    console.log(`🧹 [NETTOYAGE AUTO] ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`);
+    
+    // Rafraîchir la liste si elle est ouverte
+    refreshMiseEnLivList();
+    
+    // Afficher une notification si des dossiers ont été supprimés
+    if (typeof showNotification === 'function') {
+      showNotification(
+        `🧹 Nettoyage automatique : ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`,
+        "info"
+      );
+    }
+  } else {
+    console.log("✅ [NETTOYAGE AUTO] Aucun dossier expiré à supprimer");
+  }
+
+  return dossiersSupprimes;
+}
+
+// ⏰ FONCTION UTILITAIRE : Calculer le temps restant avant expiration
+function calculerTempsRestant(dateExpiration) {
+  if (!dateExpiration) return null;
+  
+  const maintenant = new Date();
+  const expiration = new Date(dateExpiration);
+  const diffMs = expiration - maintenant;
+  
+  if (diffMs <= 0) return { expire: true, texte: "Expiré" };
+  
+  const jours = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+  const heures = Math.floor((diffMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  
+  if (jours > 0) {
+    return { 
+      expire: false, 
+      texte: `${jours}j ${heures}h restant${jours > 1 ? 's' : ''}`,
+      couleur: jours <= 1 ? 'warning' : 'info'
+    };
+  } else {
+    return { 
+      expire: false, 
+      texte: `${heures}h restant${heures > 1 ? 's' : ''}`,
+      couleur: 'danger'
+    };
+  }
+}
+
 // 🆕 FONCTION POUR TRIER LES DOSSIERS PAR DATE (NOUVELLES DATES EN HAUT)
 function sortDossiersByDate(dossiers) {
   return dossiers.sort((a, b) => {
@@ -907,6 +985,10 @@ function ajouterDossierMiseEnLiv(dossier) {
 
   // Sauvegarder toutes les dates importantes
   dossier.date_mise_en_liv = new Date().toISOString();
+  
+  // ⏰ NOUVELLE FONCTIONNALITÉ : Date d'ajout pour suppression automatique après 1 semaine
+  dossier.dateAjoutMiseEnLiv = new Date().toISOString();
+  dossier.dateExpirationMiseEnLiv = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString(); // +7 jours
 
   // Récupérer les dates depuis le formulaire avec les vrais IDs
   const dateEchangeBL = getDateValue("#dateEchangeBL");
@@ -955,6 +1037,9 @@ function refreshMiseEnLivList() {
 
   // 🆕 VÉRIFICATION ARCHIVAGE AUTOMATIQUE à chaque rafraîchissement
   checkAndArchiveOldDossiers();
+  
+  // ⏰ NOUVEAU : Nettoyage automatique des dossiers expirés (1 semaine)
+  nettoyerDossiersExpires();
 
   const dossiers = getDossiersMisEnLiv();
   const searchTerm =
@@ -1149,21 +1234,6 @@ function refreshMiseEnLivList() {
                   : ""
               }
               ${
-                // DEBUG: Logging pour diagnostic Render (fonction 2)
-                (() => {
-                  if (dossier.date_do) {
-                    console.log(
-                      `🔍 DEBUG DATE_DO (Fonction 2) - Valeur brute: "${
-                        dossier.date_do
-                      }", Type: ${typeof dossier.date_do}, Formatée: "${formatDate(
-                        dossier.date_do
-                      )}"`
-                    );
-                  }
-                  return "";
-                })()
-              }
-              ${
                 dossier.date_paiement_acconage &&
                 formatDate(dossier.date_paiement_acconage)
                   ? `
@@ -1183,16 +1253,17 @@ function refreshMiseEnLivList() {
                   : ""
               }
               ${
-                // DEBUG: Logging pour diagnostic Render (fonction 2)
+                // ⏰ AFFICHAGE DU TEMPS RESTANT AVANT SUPPRESSION AUTOMATIQUE
                 (() => {
-                  if (dossier.date_badt) {
-                    console.log(
-                      `🔍 DEBUG DATE_BADT (Fonction 2) - Valeur brute: "${
-                        dossier.date_badt
-                      }", Type: ${typeof dossier.date_badt}, Formatée: "${formatDate(
-                        dossier.date_badt
-                      )}"`
-                    );
+                  const tempsRestant = calculerTempsRestant(dossier.dateExpirationMiseEnLiv);
+                  if (tempsRestant) {
+                    return `
+                    <div class="mt-2">
+                      <span class="badge bg-${tempsRestant.couleur}-subtle text-${tempsRestant.couleur} rounded-pill" style="font-size: 0.75rem;">
+                        <i class="far fa-clock me-1"></i>
+                        ${tempsRestant.texte}
+                      </span>
+                    </div>`;
                   }
                   return "";
                 })()
@@ -7168,3 +7239,24 @@ if (bodyElement) {
 }
 
 /***MON JESUS EST LE SEUL DIEU */
+
+// ⏰ INITIALISATION DU NETTOYAGE AUTOMATIQUE DES DOSSIERS EXPIRÉS
+// Nettoyage toutes les heures (3600000 ms)
+setInterval(() => {
+  nettoyerDossiersExpires();
+}, 3600000);
+
+// Nettoyage immédiat au chargement de la page
+document.addEventListener('DOMContentLoaded', () => {
+  // Petit délai pour s'assurer que tout est chargé
+  setTimeout(() => {
+    nettoyerDossiersExpires();
+  }, 2000);
+});
+
+// Nettoyage également quand la page devient visible (changement d'onglet)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    nettoyerDossiersExpires();
+  }
+});
