@@ -770,21 +770,30 @@ function extractDateFromTextFields(dossier, dateType) {
 }
 
 // 🆕 FONCTION POUR METTRE À JOUR LES DOSSIERS EXISTANTS AVEC LES DATES MANQUANTES
-let dateExtractionProcessed = false; // Flag pour éviter les boucles infinies
+let dateExtractionSessionProcessed = false; // Flag pour éviter les boucles infinies par session
 function updateExistingDossiersWithMissingDates() {
-  // Ne traiter qu'une seule fois lors de l'ouverture de la modal
-  if (dateExtractionProcessed) return;
-
   const dossiers = getDossiersMisEnLiv();
   let updated = false;
 
   console.log(
-    "🔍 Vérification des dossiers existants pour les dates manquantes..."
+    "🔍 [PRODUCTION-READY] Vérification des dossiers existants pour les dates manquantes...",
+    {
+      totalDossiers: dossiers.length,
+      sessionProcessed: dateExtractionSessionProcessed,
+      environment: window.location.hostname.includes('render') ? 'PRODUCTION' : 'LOCAL'
+    }
   );
 
-  dossiers.forEach((dossier) => {
+  dossiers.forEach((dossier, index) => {
     const originalDO = dossier.date_do;
     const originalBADT = dossier.date_badt;
+
+    console.log(`📋 [${index + 1}/${dossiers.length}] Analyse dossier:`, {
+      container: dossier.container_number || dossier.ref_conteneur || 'N/A',
+      date_do: originalDO,
+      date_badt: originalBADT,
+      allFields: Object.keys(dossier)
+    });
 
     // Essayer d'extraire la date DO si manquante
     if (
@@ -822,18 +831,49 @@ function updateExistingDossiersWithMissingDates() {
           extractedDateBADT
         );
       }
+    } else {
+      console.log(`ℹ️ Date BADT déjà présente:`, dossier.date_badt);
     }
   });
 
   if (updated) {
     saveDossiersMisEnLiv(dossiers);
-    console.log("✅ Dossiers mis à jour avec les dates extraites");
+    console.log("✅ [PRODUCTION] Dossiers mis à jour avec les dates extraites");
+    
+    // Forcer le rafraîchissement uniquement si on a fait des mises à jour
+    setTimeout(() => {
+      refreshMiseEnLivList();
+    }, 100);
   } else {
-    console.log("ℹ️ Aucune date manquante trouvée à extraire");
+    console.log("ℹ️ [PRODUCTION] Aucune date manquante trouvée à extraire");
   }
 
-  dateExtractionProcessed = true; // Marquer comme traité
+  dateExtractionSessionProcessed = true; // Marquer comme traité pour cette session
 }
+
+// 🆕 FONCTION DE FORÇAGE POUR PRODUCTION - peut être appelée depuis la console
+window.forceExtractMissingDates = function() {
+  console.log('🔧 [PRODUCTION] Forçage de l'extraction des dates manquantes...');
+  dateExtractionSessionProcessed = false;
+  updateExistingDossiersWithMissingDates();
+  refreshMiseEnLivList();
+  console.log('✅ [PRODUCTION] Extraction forcée terminée');
+};
+
+// 🆕 FONCTION DEBUG POUR PRODUCTION
+window.debugMiseEnLivData = function() {
+  const dossiers = getDossiersMisEnLiv();
+  console.log('🔍 [DEBUG PRODUCTION] Données actuelles:', {
+    totalDossiers: dossiers.length,
+    dossiers: dossiers.map(d => ({
+      container: d.container_number || d.ref_conteneur,
+      date_do: d.date_do,
+      date_badt: d.date_badt,
+      fields: Object.keys(d)
+    }))
+  });
+  return dossiers;
+};
 
 // Fonction pour sauvegarder les dossiers mis en livraison
 function saveDossiersMisEnLiv(dossiers) {
@@ -7489,9 +7529,14 @@ document.addEventListener("DOMContentLoaded", function () {
   if (modalMiseEnLiv) {
     modalMiseEnLiv.addEventListener("shown.bs.modal", function () {
       console.log(
-        "📅 Modal Mise en Livraison ouverte - Extraction des dates manquantes..."
+        "📅 [PRODUCTION-READY] Modal Mise en Livraison ouverte - Extraction des dates manquantes...",
+        {
+          environment: window.location.hostname.includes('render') ? 'PRODUCTION (Render)' : 'LOCAL',
+          hostname: window.location.hostname,
+          currentFlag: dateExtractionSessionProcessed
+        }
       );
-      dateExtractionProcessed = false; // Réinitialiser le flag
+      dateExtractionSessionProcessed = false; // Réinitialiser le flag pour cette ouverture
       updateExistingDossiersWithMissingDates();
       refreshMiseEnLivList();
     });
