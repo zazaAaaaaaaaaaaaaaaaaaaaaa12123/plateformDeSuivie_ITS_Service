@@ -2804,96 +2804,15 @@ class ArchivesManager {
 
   // Afficher le statut de livraison pour les dossiers mis en livraison
   renderDeliveryStatus(archive) {
-    // 🚚 AFFICHAGE DES DATES DO ET BADT pour Mise en Livraison
-    if (
-      archive.action_type === "mise_en_livraison" ||
-      (archive.delivery_status_acconier &&
-        archive.delivery_status_acconier.includes("livraison"))
-    ) {
-      let statusHTML = "";
-
-      // Récupérer les dates DO et BADT
-      const datesDO_BADT = this.extractDatesFromArchive(archive);
-
-      if (datesDO_BADT.do || datesDO_BADT.badt) {
-        statusHTML += `<br><small class="text-primary">`;
-
-        if (datesDO_BADT.do) {
-          statusHTML += `<i class="fas fa-calendar me-1"></i>DO: ${this.formatDate(
-            datesDO_BADT.do
-          )}`;
-        }
-
-        if (datesDO_BADT.do && datesDO_BADT.badt) {
-          statusHTML += ` | `;
-        }
-
-        if (datesDO_BADT.badt) {
-          statusHTML += `<i class="fas fa-calendar-check me-1"></i>BADT: ${this.formatDate(
-            datesDO_BADT.badt
-          )}`;
-        }
-
-        statusHTML += `</small>`;
-      }
-
-      // Vérifier si le dossier a été livré plus tard
+    if (archive.action_type === "mise_en_livraison") {
       const deliveredArchive = this.findCorrespondingDeliveredArchive(archive);
       if (deliveredArchive) {
-        statusHTML += `<br><small class="text-success"><i class="fas fa-check-circle me-1"></i>était mis en livraison - ${this.formatDate(
+        return `<br><small class="text-success"><i class="fas fa-check-circle me-1"></i>était mis en livraison - ${this.formatDate(
           deliveredArchive.archived_at
         )}</small>`;
       }
-
-      return statusHTML;
     }
-
     return "";
-  }
-
-  // 🗓️ NOUVELLE MÉTHODE: Extraire les dates DO et BADT des données d'archive
-  extractDatesFromArchive(archive) {
-    const dates = { do: null, badt: null };
-
-    // Chercher dans dossier_data
-    if (archive.dossier_data) {
-      // Dates directes
-      if (archive.dossier_data.do_date || archive.dossier_data.date_do) {
-        dates.do = archive.dossier_data.do_date || archive.dossier_data.date_do;
-      }
-
-      if (archive.dossier_data.badt_date || archive.dossier_data.date_badt) {
-        dates.badt =
-          archive.dossier_data.badt_date || archive.dossier_data.date_badt;
-      }
-
-      // Chercher dans les champs de texte
-      const dossierText = JSON.stringify(archive.dossier_data).toLowerCase();
-
-      // Pattern pour DO: 31/08/2025
-      const doMatch = dossierText.match(/do[^\d]*(\d{2}\/\d{2}\/\d{4})/);
-      if (doMatch && !dates.do) {
-        dates.do = doMatch[1];
-      }
-
-      // Pattern pour BADT: 03/09/2025
-      const badtMatch = dossierText.match(/badt[^\d]*(\d{2}\/\d{2}\/\d{4})/);
-      if (badtMatch && !dates.badt) {
-        dates.badt = badtMatch[1];
-      }
-    }
-
-    // Chercher dans les métadonnées de l'archive
-    if (archive.delivery_date && !dates.do) {
-      dates.do = archive.delivery_date;
-    }
-
-    if (archive.completion_date && !dates.badt) {
-      dates.badt = archive.completion_date;
-    }
-
-    console.log(`[DATES] Extraites pour ${archive.dossier_reference}:`, dates);
-    return dates;
   }
 
   // 🚚 Afficher le statut pour les livraisons actives (était mis en livraison)
