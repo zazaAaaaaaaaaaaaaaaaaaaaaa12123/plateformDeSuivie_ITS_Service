@@ -1030,30 +1030,45 @@ function ajouterDossierMiseEnLiv(dossier) {
 
   // 🎯 PRIORITÉ 1: Récupérer les dates DO/BADT depuis les données globales du tableau
   if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
-    const dossierSource = window.allDeliveries.find(d => 
-      d.container_number === dossier.container_number || 
-      d.dossier_number === dossier.dossier_number ||
-      d.id === dossier.id
+    const dossierSource = window.allDeliveries.find(
+      (d) =>
+        d.container_number === dossier.container_number ||
+        d.dossier_number === dossier.dossier_number ||
+        d.id === dossier.id
     );
-    
+
     if (dossierSource) {
-      console.log('DATES RECUPEREES depuis le tableau principal:', {
+      console.log("DATES RECUPEREES depuis le tableau principal:", {
         container: dossierSource.container_number,
         date_do_tableau: dossierSource.date_do,
         date_badt_tableau: dossierSource.date_badt,
         date_do_dossier: dossier.date_do,
-        date_badt_dossier: dossier.date_badt
+        date_badt_dossier: dossier.date_badt,
       });
-      
+
       // Récupérer les dates depuis le tableau principal si elles existent
-      if (dossierSource.date_do && dossierSource.date_do !== 'N/A' && dossierSource.date_do !== '') {
+      if (
+        dossierSource.date_do &&
+        dossierSource.date_do !== "N/A" &&
+        dossierSource.date_do !== ""
+      ) {
         dossier.date_do = dossierSource.date_do;
-        console.log('Date DO récupérée depuis tableau principal:', dossierSource.date_do);
+        console.log(
+          "Date DO récupérée depuis tableau principal:",
+          dossierSource.date_do
+        );
       }
-      
-      if (dossierSource.date_badt && dossierSource.date_badt !== 'N/A' && dossierSource.date_badt !== '') {
+
+      if (
+        dossierSource.date_badt &&
+        dossierSource.date_badt !== "N/A" &&
+        dossierSource.date_badt !== ""
+      ) {
         dossier.date_badt = dossierSource.date_badt;
-        console.log('Date BADT récupérée depuis tableau principal:', dossierSource.date_badt);
+        console.log(
+          "Date BADT récupérée depuis tableau principal:",
+          dossierSource.date_badt
+        );
       }
     }
   }
@@ -1102,27 +1117,29 @@ function ajouterDossierMiseEnLiv(dossier) {
     dateEchangeBL ||
     formatExistingDate(dossier.date_echange_bl) ||
     dossier.date_echange_bl;
-  
+
   // Pour DO et BADT, garder les dates récupérées du tableau principal si le formulaire est vide
   if (!dateDO && dossier.date_do) {
     // Garder la date DO récupérée du tableau principal
-    console.log('Conservation date DO du tableau:', dossier.date_do);
+    console.log("Conservation date DO du tableau:", dossier.date_do);
   } else {
-    dossier.date_do = dateDO || formatExistingDate(dossier.date_do) || dossier.date_do;
+    dossier.date_do =
+      dateDO || formatExistingDate(dossier.date_do) || dossier.date_do;
   }
-  
+
   dossier.date_paiement_acconage =
     datePaiementAcconage ||
     formatExistingDate(dossier.date_paiement_acconage) ||
     dossier.date_paiement_acconage;
-    
+
   if (!dateBADT && dossier.date_badt) {
     // Garder la date BADT récupérée du tableau principal
-    console.log('Conservation date BADT du tableau:', dossier.date_badt);
+    console.log("Conservation date BADT du tableau:", dossier.date_badt);
   } else {
-    dossier.date_badt = dateBADT || formatExistingDate(dossier.date_badt) || dossier.date_badt;
+    dossier.date_badt =
+      dateBADT || formatExistingDate(dossier.date_badt) || dossier.date_badt;
   }
-    
+
   // � PRIORITÉ 3: Si les dates DO ou BADT sont toujours manquantes, essayer de les extraire
   if (!dossier.date_do || dossier.date_do === "N/A" || dossier.date_do === "") {
     const extractedDateDO = extractDateFromTextFields(dossier, "do");
