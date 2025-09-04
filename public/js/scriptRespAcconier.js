@@ -384,7 +384,9 @@ function afficherDetailsDossier(dossier) {
       if (!dateStr || dateStr === "null" || dateStr === "undefined") return "-";
 
       // LOG DE DEBUG DÉTAILLÉ
-      console.log(`🔍 formatDate INPUT: "${dateStr}" (type: ${typeof dateStr})`);
+      console.log(
+        `🔍 formatDate INPUT: "${dateStr}" (type: ${typeof dateStr})`
+      );
 
       // Gestion spéciale pour les chaînes ISO et différents formats
       let dateObj;
@@ -405,10 +407,10 @@ function afficherDetailsDossier(dossier) {
 
       // SOLUTION UNIVERSELLE : Formatage manuel pour éviter les problèmes de timezone
       const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getDate()).padStart(2, "0");
       const result = `${day}/${month}/${year}`;
-      
+
       console.log(`🔍 formatDate RÉSULTAT UNIVERSEL: "${result}"`);
 
       return result;
@@ -582,7 +584,9 @@ function refreshMiseEnLivList() {
                   return null;
 
                 // LOG DE DEBUG DÉTAILLÉ
-                console.log(`🔍 formatDateLocal INPUT: "${dateStr}" (type: ${typeof dateStr})`);
+                console.log(
+                  `🔍 formatDateLocal INPUT: "${dateStr}" (type: ${typeof dateStr})`
+                );
 
                 // Gestion spéciale pour les chaînes ISO et différents formats
                 let dateObj;
@@ -600,17 +604,21 @@ function refreshMiseEnLivList() {
                 }
 
                 if (isNaN(dateObj.getTime())) {
-                  console.log(`🔍 formatDateLocal ÉCHEC - Date invalide: "${dateStr}"`);
+                  console.log(
+                    `🔍 formatDateLocal ÉCHEC - Date invalide: "${dateStr}"`
+                  );
                   return null;
                 }
 
                 // SOLUTION UNIVERSELLE : Formatage manuel pour éviter les problèmes de timezone
                 const year = dateObj.getFullYear();
-                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                const day = String(dateObj.getDate()).padStart(2, '0');
+                const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+                const day = String(dateObj.getDate()).padStart(2, "0");
                 const result = `${day}/${month}/${year}`;
-                
-                console.log(`🔍 formatDateLocal RÉSULTAT UNIVERSEL: "${result}"`);
+
+                console.log(
+                  `🔍 formatDateLocal RÉSULTAT UNIVERSEL: "${result}"`
+                );
 
                 return result;
               } catch (e) {
@@ -1018,8 +1026,8 @@ function refreshMiseEnLivList() {
 
       // SOLUTION UNIVERSELLE : Formatage manuel pour éviter les problèmes de timezone
       const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getDate()).padStart(2, "0");
       return `${day}/${month}/${year}`;
     } catch (e) {
       console.error(
@@ -1971,8 +1979,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 // SOLUTION UNIVERSELLE : Formatage manuel pour éviter les problèmes de timezone
                 const year = dateObj.getFullYear();
-                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                const day = String(dateObj.getDate()).padStart(2, '0');
+                const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+                const day = String(dateObj.getDate()).padStart(2, "0");
                 return `${day}/${month}/${year}`;
               } catch (e) {
                 console.error(
@@ -3083,31 +3091,35 @@ document.addEventListener("DOMContentLoaded", function () {
       if (data.success && Array.isArray(data.deliveries)) {
         // DEBUG DÉTAILLÉ POUR RENDER
         console.log("🔍 TOTAL LIVRAISONS REÇUES:", data.deliveries.length);
-        
+
         // Vérifier combien ont des dates DO et BADT
-        const withDateDo = data.deliveries.filter(d => d.date_do && d.date_do !== null && d.date_do !== "null");
-        const withDateBadt = data.deliveries.filter(d => d.date_badt && d.date_badt !== null && d.date_badt !== "null");
-        
+        const withDateDo = data.deliveries.filter(
+          (d) => d.date_do && d.date_do !== null && d.date_do !== "null"
+        );
+        const withDateBadt = data.deliveries.filter(
+          (d) => d.date_badt && d.date_badt !== null && d.date_badt !== "null"
+        );
+
         console.log("🔍 LIVRAISONS AVEC DATE_DO:", withDateDo.length);
         console.log("🔍 LIVRAISONS AVEC DATE_BADT:", withDateBadt.length);
-        
+
         // Échantillon détaillé
         if (withDateDo.length > 0) {
           console.log("🔍 ÉCHANTILLON DATE_DO:", {
             id: withDateDo[0].id,
             date_do_brute: withDateDo[0].date_do,
-            type: typeof withDateDo[0].date_do
+            type: typeof withDateDo[0].date_do,
           });
         }
-        
+
         if (withDateBadt.length > 0) {
           console.log("🔍 ÉCHANTILLON DATE_BADT:", {
             id: withDateBadt[0].id,
             date_badt_brute: withDateBadt[0].date_badt,
-            type: typeof withDateBadt[0].date_badt
+            type: typeof withDateBadt[0].date_badt,
           });
         }
-        
+
         // Récupération des paramètres pour le mode admin
         const isAdminMode = getUrlParameter("mode") === "admin";
         const targetUser =

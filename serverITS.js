@@ -2861,17 +2861,75 @@ app.get("/debug/dates", async (req, res) => {
       ORDER BY id DESC 
       LIMIT 10
     `);
-    
-    console.log("🔍 DEBUG DATES - Trouvé", result.rows.length, "enregistrements avec dates");
-    
+
+    console.log(
+      "🔍 DEBUG DATES - Trouvé",
+      result.rows.length,
+      "enregistrements avec dates"
+    );
+
     res.json({
       success: true,
       message: `Trouvé ${result.rows.length} enregistrements avec dates DO/BADT`,
       data: result.rows,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (err) {
     console.error("Erreur debug dates:", err);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+});
+
+// ROUTE DE TEST SPÉCIFIQUE POUR VÉRIFIER L'AFFICHAGE DES DATES DANS "MISE EN LIVRAISON"
+app.get("/test/mise-en-livraison-dates", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, dossier_number, client_name, container_number, 
+             date_do, date_badt, delivery_status_acconier,
+             created_at
+      FROM livraison_conteneur 
+      WHERE (date_do IS NOT NULL OR date_badt IS NOT NULL)
+        AND delivery_status_acconier = 'mise_en_livraison_acconier'
+      ORDER BY id DESC 
+      LIMIT 5
+    `);
+    
+    // Simulation du formatage comme dans le frontend
+    const formatDateTest = (dateStr) => {
+      if (!dateStr) return null;
+      const dateObj = new Date(dateStr);
+      if (isNaN(dateObj.getTime())) return null;
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${day}/${month}/${year}`;
+    };
+
+    const formattedResults = result.rows.map(row => ({
+      ...row,
+      date_do_formatted: formatDateTest(row.date_do),
+      date_badt_formatted: formatDateTest(row.date_badt),
+      display_text: `Dossier ${row.dossier_number} - Client: ${row.client_name || 'N/A'}${
+        row.date_do ? ` - Date DO: ${formatDateTest(row.date_do)}` : ''
+      }${
+        row.date_badt ? ` - Date BADT: ${formatDateTest(row.date_badt)}` : ''
+      }`
+    }));
+
+    console.log("🔍 TEST MISE EN LIVRAISON - Trouvé", result.rows.length, "dossiers mis en livraison avec dates");
+    
+    res.json({
+      success: true,
+      message: `Test Mise en Livraison: ${result.rows.length} dossiers avec dates DO/BADT`,
+      note: "Ce test simule l'affichage des dates dans l'interface 'Mise en Livraison'",
+      data: formattedResults,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error("Erreur test mise en livraison:", err);
     res.status(500).json({
       success: false,
       error: err.message
