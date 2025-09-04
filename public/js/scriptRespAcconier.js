@@ -383,6 +383,9 @@ function afficherDetailsDossier(dossier) {
     try {
       if (!dateStr || dateStr === "null" || dateStr === "undefined") return "-";
 
+      // LOG DE DEBUG DÉTAILLÉ
+      console.log(`🔍 formatDate INPUT: "${dateStr}" (type: ${typeof dateStr})`);
+
       // Gestion spéciale pour les chaînes ISO et différents formats
       let dateObj;
       if (typeof dateStr === "string" && dateStr.includes("T")) {
@@ -395,15 +398,26 @@ function afficherDetailsDossier(dossier) {
         dateObj = new Date(dateStr);
       }
 
-      if (isNaN(dateObj.getTime())) return "-";
+      if (isNaN(dateObj.getTime())) {
+        console.log(`🔍 formatDate ÉCHEC - Date invalide: "${dateStr}"`);
+        return "-";
+      }
 
-      // Formatage consistant pour local ET production
-      return dateObj.toLocaleDateString("fr-FR", {
+      // ESSAI 1: Version simplifiée sans timezone
+      const result1 = dateObj.toLocaleDateString("fr-FR");
+      console.log(`🔍 formatDate RÉSULTAT SIMPLE: "${result1}"`);
+
+      // ESSAI 2: Version avec timezone UTC 
+      const result2 = dateObj.toLocaleDateString("fr-FR", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
         timeZone: "UTC",
       });
+      console.log(`🔍 formatDate RÉSULTAT UTC: "${result2}"`);
+
+      // Retourner la version simple pour le moment
+      return result1;
     } catch (e) {
       console.error(
         "Erreur de formatage de date:",
@@ -573,6 +587,9 @@ function refreshMiseEnLivList() {
                 if (!dateStr || dateStr === "null" || dateStr === "undefined")
                   return null;
 
+                // LOG DE DEBUG DÉTAILLÉ
+                console.log(`🔍 formatDateLocal INPUT: "${dateStr}" (type: ${typeof dateStr})`);
+
                 // Gestion spéciale pour les chaînes ISO et différents formats
                 let dateObj;
                 if (typeof dateStr === "string" && dateStr.includes("T")) {
@@ -588,15 +605,26 @@ function refreshMiseEnLivList() {
                   dateObj = new Date(dateStr);
                 }
 
-                if (isNaN(dateObj.getTime())) return null;
+                if (isNaN(dateObj.getTime())) {
+                  console.log(`🔍 formatDateLocal ÉCHEC - Date invalide: "${dateStr}"`);
+                  return null;
+                }
 
-                // Formatage consistant pour local ET production
-                return dateObj.toLocaleDateString("fr-FR", {
+                // ESSAI 1: Version simplifiée sans timezone
+                const result1 = dateObj.toLocaleDateString("fr-FR");
+                console.log(`🔍 formatDateLocal RÉSULTAT SIMPLE: "${result1}"`);
+
+                // ESSAI 2: Version avec timezone UTC 
+                const result2 = dateObj.toLocaleDateString("fr-FR", {
                   year: "numeric",
                   month: "2-digit",
                   day: "2-digit",
                   timeZone: "UTC",
                 });
+                console.log(`🔍 formatDateLocal RÉSULTAT UTC: "${result2}"`);
+
+                // Retourner la version simple pour le moment
+                return result1;
               } catch (e) {
                 console.error(
                   "Erreur de formatage de date:",
@@ -3069,6 +3097,33 @@ document.addEventListener("DOMContentLoaded", function () {
       );
 
       if (data.success && Array.isArray(data.deliveries)) {
+        // DEBUG DÉTAILLÉ POUR RENDER
+        console.log("🔍 TOTAL LIVRAISONS REÇUES:", data.deliveries.length);
+        
+        // Vérifier combien ont des dates DO et BADT
+        const withDateDo = data.deliveries.filter(d => d.date_do && d.date_do !== null && d.date_do !== "null");
+        const withDateBadt = data.deliveries.filter(d => d.date_badt && d.date_badt !== null && d.date_badt !== "null");
+        
+        console.log("🔍 LIVRAISONS AVEC DATE_DO:", withDateDo.length);
+        console.log("🔍 LIVRAISONS AVEC DATE_BADT:", withDateBadt.length);
+        
+        // Échantillon détaillé
+        if (withDateDo.length > 0) {
+          console.log("🔍 ÉCHANTILLON DATE_DO:", {
+            id: withDateDo[0].id,
+            date_do_brute: withDateDo[0].date_do,
+            type: typeof withDateDo[0].date_do
+          });
+        }
+        
+        if (withDateBadt.length > 0) {
+          console.log("🔍 ÉCHANTILLON DATE_BADT:", {
+            id: withDateBadt[0].id,
+            date_badt_brute: withDateBadt[0].date_badt,
+            type: typeof withDateBadt[0].date_badt
+          });
+        }
+        
         // Récupération des paramètres pour le mode admin
         const isAdminMode = getUrlParameter("mode") === "admin";
         const targetUser =

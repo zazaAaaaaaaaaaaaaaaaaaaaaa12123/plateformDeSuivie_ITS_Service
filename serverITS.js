@@ -2849,6 +2849,36 @@ app.get("/deliveries/status", async (req, res) => {
   }
 });
 
+// ROUTE DE DEBUG POUR TESTER LES DATES DO ET BADT
+app.get("/debug/dates", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, dossier_number, date_do, date_badt, 
+             EXTRACT(EPOCH FROM date_do) as date_do_timestamp,
+             EXTRACT(EPOCH FROM date_badt) as date_badt_timestamp
+      FROM livraison_conteneur 
+      WHERE date_do IS NOT NULL OR date_badt IS NOT NULL 
+      ORDER BY id DESC 
+      LIMIT 10
+    `);
+    
+    console.log("🔍 DEBUG DATES - Trouvé", result.rows.length, "enregistrements avec dates");
+    
+    res.json({
+      success: true,
+      message: `Trouvé ${result.rows.length} enregistrements avec dates DO/BADT`,
+      data: result.rows,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error("Erreur debug dates:", err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
 // ===============================
 // API DÉDIÉE POUR ÉCHANGE DE DONNÉES AVEC SYSTÈME PHP
 // ===============================
