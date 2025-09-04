@@ -776,7 +776,7 @@ function updateExistingDossiersWithMissingDates() {
   let updated = false;
 
   console.log(
-    "🔍 [PRODUCTION-READY] Vérification des dossiers existants pour les dates manquantes...",
+    "PRODUCTION-READY: Verification des dossiers existants pour les dates manquantes...",
     {
       totalDossiers: dossiers.length,
       sessionProcessed: dateExtractionSessionProcessed,
@@ -806,7 +806,7 @@ function updateExistingDossiersWithMissingDates() {
         dossier.date_do = extractedDateDO;
         updated = true;
         console.log(
-          `✅ Date DO extraite pour ${
+          `Date DO extraite pour ${
             dossier.container_number || dossier.dossier_number
           }:`,
           extractedDateDO
@@ -825,20 +825,20 @@ function updateExistingDossiersWithMissingDates() {
         dossier.date_badt = extractedDateBADT;
         updated = true;
         console.log(
-          `✅ Date BADT extraite pour ${
+          `Date BADT extraite pour ${
             dossier.container_number || dossier.dossier_number
           }:`,
           extractedDateBADT
         );
       }
     } else {
-      console.log(`ℹ️ Date BADT déjà présente:`, dossier.date_badt);
+      console.log(`Date BADT deja presente:`, dossier.date_badt);
     }
   });
 
   if (updated) {
     saveDossiersMisEnLiv(dossiers);
-    console.log("✅ [PRODUCTION] Dossiers mis à jour avec les dates extraites");
+    console.log("PRODUCTION: Dossiers mis a jour avec les dates extraites");
     
     // Forcer le rafraîchissement uniquement si on a fait des mises à jour
     setTimeout(() => {
@@ -851,19 +851,19 @@ function updateExistingDossiersWithMissingDates() {
   dateExtractionSessionProcessed = true; // Marquer comme traité pour cette session
 }
 
-// 🆕 FONCTION DE FORÇAGE POUR PRODUCTION - peut être appelée depuis la console
+// FONCTION DE FORCAGE POUR PRODUCTION - peut etre appelee depuis la console
 window.forceExtractMissingDates = function() {
-  console.log('🔧 [PRODUCTION] Forçage de l'extraction des dates manquantes...');
+  console.log('PRODUCTION: Forcage de extraction des dates manquantes...');
   dateExtractionSessionProcessed = false;
   updateExistingDossiersWithMissingDates();
   refreshMiseEnLivList();
-  console.log('✅ [PRODUCTION] Extraction forcée terminée');
+  console.log('PRODUCTION: Extraction forcee terminee');
 };
 
-// 🆕 FONCTION DEBUG POUR PRODUCTION
+// FONCTION DEBUG POUR PRODUCTION
 window.debugMiseEnLivData = function() {
   const dossiers = getDossiersMisEnLiv();
-  console.log('🔍 [DEBUG PRODUCTION] Données actuelles:', {
+  console.log('DEBUG PRODUCTION: Donnees actuelles:', {
     totalDossiers: dossiers.length,
     dossiers: dossiers.map(d => ({
       container: d.container_number || d.ref_conteneur,
