@@ -572,7 +572,13 @@ function refreshMiseEnLivList() {
                   }</small>`
                 : ""
             }
-            ${extractAndDisplayDate(dossier, "do", "Date DO")}
+            ${
+              dossier.date_do && formatDateLocal(dossier.date_do)
+                ? `<br><small class="text-muted">Date DO: ${formatDateLocal(
+                    dossier.date_do
+                  )}</small>`
+                : ""
+            }
             ${
               dossier.date_paiement_acconage &&
               formatDateLocal(dossier.date_paiement_acconage)
@@ -581,7 +587,13 @@ function refreshMiseEnLivList() {
                   )}</small>`
                 : ""
             }
-            ${extractAndDisplayDate(dossier, "badt", "Date BADT")}
+            ${
+              dossier.date_badt && formatDateLocal(dossier.date_badt)
+                ? `<br><small class="text-muted">Date BADT: ${formatDateLocal(
+                    dossier.date_badt
+                  )}</small>`
+                : ""
+            }
           </div>
         </div>
         <p class="mb-1">Client: ${
@@ -609,273 +621,6 @@ const STORAGE_KEY_LIVRAISON = "dossiersMisEnLiv";
 function getDossiersMisEnLiv() {
   return JSON.parse(localStorage.getItem(STORAGE_KEY_LIVRAISON) || "[]");
 }
-
-// 🆕 FONCTION AVANCÉE POUR EXTRAIRE ET AFFICHER LES DATES DO/BADT
-function extractAndDisplayDate(dossier, dateType, displayLabel) {
-  let dateValue = null;
-
-  // 1. Vérifier d'abord les champs standards
-  if (dateType === "do") {
-    dateValue = dossier.date_do;
-  } else if (dateType === "badt") {
-    dateValue = dossier.date_badt;
-  }
-
-  // 2. Si pas trouvé, chercher dans d'autres propriétés possibles
-  if (!dateValue || dateValue === "N/A" || dateValue === "") {
-    const searchFields = [];
-
-    if (dateType === "do") {
-      searchFields.push(
-        "date_do",
-        "dateDO",
-        "date_livraison_do",
-        "do_date",
-        "date_demande_origine",
-        "date_origine",
-        "delivery_order_date"
-      );
-    } else if (dateType === "badt") {
-      searchFields.push(
-        "date_badt",
-        "dateBADT",
-        "date_badp",
-        "badt_date",
-        "date_livraison_badt",
-        "bon_a_delivrer_date"
-      );
-    }
-
-    // Chercher dans toutes les propriétés possibles
-    for (const field of searchFields) {
-      if (dossier[field] && dossier[field] !== "N/A" && dossier[field] !== "") {
-        dateValue = dossier[field];
-        break;
-      }
-    }
-  }
-
-  // 3. Si toujours pas trouvé, chercher dans les textes (delivery_notes, observation, etc.)
-  if (!dateValue || dateValue === "N/A" || dateValue === "") {
-    const textFields = [
-      "delivery_notes",
-      "observation_acconier",
-      "observation",
-      "notes",
-      "remarques",
-      "details_livraison",
-      "commentaire",
-    ];
-
-    for (const field of textFields) {
-      if (dossier[field]) {
-        const extractedDate = extractDateFromText(dossier[field], dateType);
-        if (extractedDate) {
-          dateValue = extractedDate;
-          break;
-        }
-      }
-    }
-  }
-
-  // 4. Afficher la date si trouvée
-  if (dateValue && dateValue !== "N/A" && dateValue !== "") {
-    const formattedDate = formatDateLocal(dateValue);
-    if (formattedDate && formattedDate !== "Date invalide") {
-      return `<br><small class="text-muted">${displayLabel}: ${formattedDate}</small>`;
-    }
-  }
-
-  return "";
-}
-
-// 🆕 FONCTION POUR EXTRAIRE DES DATES DEPUIS LE TEXTE
-function extractDateFromText(text, dateType) {
-  if (!text || typeof text !== "string") return null;
-
-  const normalizedText = text.toLowerCase();
-
-  // Patterns de recherche pour DO
-  if (dateType === "do") {
-    const doPatterns = [
-      /(?:date?\s*)?(?:do|delivery\s*order|demande\s*origine)\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-      /(?:do\s*du?\s*|do\s*:?\s*)(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-      /delivery\s*order\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-    ];
-
-    for (const pattern of doPatterns) {
-      const match = normalizedText.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
-    }
-  }
-
-  // Patterns de recherche pour BADT
-  if (dateType === "badt") {
-    const badtPatterns = [
-      /(?:date?\s*)?(?:badt|bon\s*a\s*delivrer|badp)\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-      /(?:badt\s*du?\s*|badt\s*:?\s*)(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-      /bon\s*a\s*delivrer\s*:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/i,
-    ];
-
-    for (const pattern of badtPatterns) {
-      const match = normalizedText.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
-    }
-  }
-
-  return null;
-}
-
-// 🆕 FONCTION AUXILIAIRE POUR EXTRAIRE DES DATES DEPUIS LES CHAMPS TEXTUELS
-function extractDateFromTextFields(dossier, dateType) {
-  // Chercher dans tous les champs textuels possibles
-  const textFields = [
-    "delivery_notes",
-    "observation_acconier",
-    "observation",
-    "notes",
-    "remarques",
-    "details_livraison",
-    "commentaire",
-    "description",
-    "details",
-    "infos_livraison",
-  ];
-
-  for (const field of textFields) {
-    if (dossier[field]) {
-      const extractedDate = extractDateFromText(dossier[field], dateType);
-      if (extractedDate) {
-        try {
-          // Valider que la date est correcte
-          const testDate = new Date(extractedDate);
-          if (!isNaN(testDate.getTime())) {
-            return testDate.toISOString();
-          }
-        } catch (e) {
-          console.warn(
-            `Date extraite invalide pour ${dateType}:`,
-            extractedDate
-          );
-        }
-      }
-    }
-  }
-
-  return null;
-}
-
-// 🆕 FONCTION POUR METTRE À JOUR LES DOSSIERS EXISTANTS AVEC LES DATES MANQUANTES
-let dateExtractionSessionProcessed = false; // Flag pour éviter les boucles infinies par session
-function updateExistingDossiersWithMissingDates() {
-  const dossiers = getDossiersMisEnLiv();
-  let updated = false;
-
-  console.log(
-    "PRODUCTION-READY: Verification des dossiers existants pour les dates manquantes...",
-    {
-      totalDossiers: dossiers.length,
-      sessionProcessed: dateExtractionSessionProcessed,
-      environment: window.location.hostname.includes("render")
-        ? "PRODUCTION"
-        : "LOCAL",
-    }
-  );
-
-  dossiers.forEach((dossier, index) => {
-    const originalDO = dossier.date_do;
-    const originalBADT = dossier.date_badt;
-
-    console.log(`📋 [${index + 1}/${dossiers.length}] Analyse dossier:`, {
-      container: dossier.container_number || dossier.ref_conteneur || "N/A",
-      date_do: originalDO,
-      date_badt: originalBADT,
-      allFields: Object.keys(dossier),
-    });
-
-    // Essayer d'extraire la date DO si manquante
-    if (
-      !dossier.date_do ||
-      dossier.date_do === "N/A" ||
-      dossier.date_do === ""
-    ) {
-      const extractedDateDO = extractDateFromTextFields(dossier, "do");
-      if (extractedDateDO) {
-        dossier.date_do = extractedDateDO;
-        updated = true;
-        console.log(
-          `Date DO extraite pour ${
-            dossier.container_number || dossier.dossier_number
-          }:`,
-          extractedDateDO
-        );
-      }
-    }
-
-    // Essayer d'extraire la date BADT si manquante
-    if (
-      !dossier.date_badt ||
-      dossier.date_badt === "N/A" ||
-      dossier.date_badt === ""
-    ) {
-      const extractedDateBADT = extractDateFromTextFields(dossier, "badt");
-      if (extractedDateBADT) {
-        dossier.date_badt = extractedDateBADT;
-        updated = true;
-        console.log(
-          `Date BADT extraite pour ${
-            dossier.container_number || dossier.dossier_number
-          }:`,
-          extractedDateBADT
-        );
-      }
-    } else {
-      console.log(`Date BADT deja presente:`, dossier.date_badt);
-    }
-  });
-
-  if (updated) {
-    saveDossiersMisEnLiv(dossiers);
-    console.log("PRODUCTION: Dossiers mis a jour avec les dates extraites");
-
-    // Forcer le rafraîchissement uniquement si on a fait des mises à jour
-    setTimeout(() => {
-      refreshMiseEnLivList();
-    }, 100);
-  } else {
-    console.log("ℹ️ [PRODUCTION] Aucune date manquante trouvée à extraire");
-  }
-
-  dateExtractionSessionProcessed = true; // Marquer comme traité pour cette session
-}
-
-// FONCTION DE FORCAGE POUR PRODUCTION - peut etre appelee depuis la console
-window.forceExtractMissingDates = function () {
-  console.log("PRODUCTION: Forcage de extraction des dates manquantes...");
-  dateExtractionSessionProcessed = false;
-  updateExistingDossiersWithMissingDates();
-  refreshMiseEnLivList();
-  console.log("PRODUCTION: Extraction forcee terminee");
-};
-
-// FONCTION DEBUG POUR PRODUCTION
-window.debugMiseEnLivData = function () {
-  const dossiers = getDossiersMisEnLiv();
-  console.log("DEBUG PRODUCTION: Donnees actuelles:", {
-    totalDossiers: dossiers.length,
-    dossiers: dossiers.map((d) => ({
-      container: d.container_number || d.ref_conteneur,
-      date_do: d.date_do,
-      date_badt: d.date_badt,
-      fields: Object.keys(d),
-    })),
-  });
-  return dossiers;
-};
 
 // Fonction pour sauvegarder les dossiers mis en livraison
 function saveDossiersMisEnLiv(dossiers) {
@@ -1028,51 +773,6 @@ function sortDossiersByDate(dossiers) {
 function ajouterDossierMiseEnLiv(dossier) {
   const dossiers = getDossiersMisEnLiv();
 
-  // 🎯 PRIORITÉ 1: Récupérer les dates DO/BADT depuis les données globales du tableau
-  if (window.allDeliveries && Array.isArray(window.allDeliveries)) {
-    const dossierSource = window.allDeliveries.find(
-      (d) =>
-        d.container_number === dossier.container_number ||
-        d.dossier_number === dossier.dossier_number ||
-        d.id === dossier.id
-    );
-
-    if (dossierSource) {
-      console.log("DATES RECUPEREES depuis le tableau principal:", {
-        container: dossierSource.container_number,
-        date_do_tableau: dossierSource.date_do,
-        date_badt_tableau: dossierSource.date_badt,
-        date_do_dossier: dossier.date_do,
-        date_badt_dossier: dossier.date_badt,
-      });
-
-      // Récupérer les dates depuis le tableau principal si elles existent
-      if (
-        dossierSource.date_do &&
-        dossierSource.date_do !== "N/A" &&
-        dossierSource.date_do !== ""
-      ) {
-        dossier.date_do = dossierSource.date_do;
-        console.log(
-          "Date DO récupérée depuis tableau principal:",
-          dossierSource.date_do
-        );
-      }
-
-      if (
-        dossierSource.date_badt &&
-        dossierSource.date_badt !== "N/A" &&
-        dossierSource.date_badt !== ""
-      ) {
-        dossier.date_badt = dossierSource.date_badt;
-        console.log(
-          "Date BADT récupérée depuis tableau principal:",
-          dossierSource.date_badt
-        );
-      }
-    }
-  }
-
   // Fonction utilitaire pour récupérer et convertir une date
   function getDateValue(selector) {
     const input = document.querySelector(selector);
@@ -1106,7 +806,7 @@ function ajouterDossierMiseEnLiv(dossier) {
   // Sauvegarder toutes les dates importantes
   dossier.date_mise_en_liv = new Date().toISOString();
 
-  // 🎯 PRIORITÉ 2: Récupérer les dates depuis le formulaire avec les vrais IDs
+  // Récupérer les dates depuis le formulaire avec les vrais IDs
   const dateEchangeBL = getDateValue("#dateEchangeBL");
   const dateDO = getDateValue("#dateDO");
   const datePaiementAcconage = getDateValue("#paiementAcconage");
@@ -1117,59 +817,14 @@ function ajouterDossierMiseEnLiv(dossier) {
     dateEchangeBL ||
     formatExistingDate(dossier.date_echange_bl) ||
     dossier.date_echange_bl;
-
-  // Pour DO et BADT, garder les dates récupérées du tableau principal si le formulaire est vide
-  if (!dateDO && dossier.date_do) {
-    // Garder la date DO récupérée du tableau principal
-    console.log("Conservation date DO du tableau:", dossier.date_do);
-  } else {
-    dossier.date_do =
-      dateDO || formatExistingDate(dossier.date_do) || dossier.date_do;
-  }
-
+  dossier.date_do =
+    dateDO || formatExistingDate(dossier.date_do) || dossier.date_do;
   dossier.date_paiement_acconage =
     datePaiementAcconage ||
     formatExistingDate(dossier.date_paiement_acconage) ||
     dossier.date_paiement_acconage;
-
-  if (!dateBADT && dossier.date_badt) {
-    // Garder la date BADT récupérée du tableau principal
-    console.log("Conservation date BADT du tableau:", dossier.date_badt);
-  } else {
-    dossier.date_badt =
-      dateBADT || formatExistingDate(dossier.date_badt) || dossier.date_badt;
-  }
-
-  // � PRIORITÉ 3: Si les dates DO ou BADT sont toujours manquantes, essayer de les extraire
-  if (!dossier.date_do || dossier.date_do === "N/A" || dossier.date_do === "") {
-    const extractedDateDO = extractDateFromTextFields(dossier, "do");
-    if (extractedDateDO) {
-      dossier.date_do = extractedDateDO;
-      console.log(
-        `Date DO extraite pour ${
-          dossier.container_number || dossier.dossier_number
-        }:`,
-        extractedDateDO
-      );
-    }
-  }
-
-  if (
-    !dossier.date_badt ||
-    dossier.date_badt === "N/A" ||
-    dossier.date_badt === ""
-  ) {
-    const extractedDateBADT = extractDateFromTextFields(dossier, "badt");
-    if (extractedDateBADT) {
-      dossier.date_badt = extractedDateBADT;
-      console.log(
-        `Date BADT extraite pour ${
-          dossier.container_number || dossier.dossier_number
-        }:`,
-        extractedDateBADT
-      );
-    }
-  }
+  dossier.date_badt =
+    dateBADT || formatExistingDate(dossier.date_badt) || dossier.date_badt;
 
   console.log("Dossier avec dates formatées:", {
     date_do: dossier.date_do,
@@ -1646,80 +1301,9 @@ function voirDetailsDossier(dossier) {
       const label = propertyLabels[keyFr] || formattedKey;
       let displayValue = value;
 
-      // 🆕 GESTION SPÉCIALE POUR LES CONTENEURS MULTIPLES
-      if (
-        key === "container_number" ||
-        key === "ref_conteneur" ||
-        keyFr === "Numéro de Conteneur"
-      ) {
-        if (value && typeof value === "string" && value.includes(",")) {
-          // Diviser les conteneurs et créer un menu déroulant
-          const containers = value
-            .split(",")
-            .map((c) => c.trim())
-            .filter((c) => c && c !== "");
-          const dropdownId = `containers-dropdown-${Date.now()}-${Math.random()
-            .toString(36)
-            .substr(2, 9)}`;
-
-          displayValue = `
-            <div class="dropdown">
-              <button class="btn btn-sm btn-outline-primary dropdown-toggle w-100 text-start position-relative" 
-                      type="button" 
-                      id="${dropdownId}"
-                      data-bs-toggle="dropdown" 
-                      data-bs-auto-close="outside"
-                      aria-expanded="false"
-                      style="font-size: 0.85rem; min-height: 38px;">
-                <i class="fas fa-cube me-2 text-primary"></i>
-                <strong>${containers.length} conteneur${
-            containers.length > 1 ? "s" : ""
-          }</strong>
-                <br><small class="text-muted">${containers[0]}${
-            containers.length > 1 ? "..." : ""
-          }</small>
-              </button>
-              <ul class="dropdown-menu shadow-lg border-0 w-100" 
-                  aria-labelledby="${dropdownId}" 
-                  style="max-height: 250px; overflow-y: auto; min-width: 300px; z-index: 9999;">
-                <li class="dropdown-header bg-light">
-                  <i class="fas fa-list me-2"></i>Liste des ${
-                    containers.length
-                  } conteneurs
-                </li>
-                ${containers
-                  .map(
-                    (container, index) => `
-                  <li>
-                    <a class="dropdown-item d-flex align-items-center py-2 container-item" 
-                       href="#" 
-                       onclick="event.preventDefault(); copyToClipboard('${container}'); return false;"
-                       data-container="${container}"
-                       style="transition: all 0.2s;">
-                      <span class="badge bg-primary me-3" style="font-size: 0.7rem; min-width: 25px;">${
-                        index + 1
-                      }</span>
-                      <span class="font-monospace flex-grow-1" style="font-size: 0.9rem; color: #2c3e50;">${container}</span>
-                      <i class="fas fa-copy text-muted" style="font-size: 0.8rem;" title="Cliquer pour copier"></i>
-                    </a>
-                  </li>
-                `
-                  )
-                  .join("")}
-                <li><hr class="dropdown-divider"></li>
-                <li class="dropdown-header text-muted" style="font-size: 0.75rem;">
-                  <i class="fas fa-info-circle me-1"></i>Cliquez sur un conteneur pour le copier
-                </li>
-              </ul>
-            </div>
-          `;
-        } else {
-          // Un seul conteneur, affichage normal avec icône
-          displayValue = `<span class="font-monospace"><i class="fas fa-cube me-2 text-primary"></i>${value}</span>`;
-        }
-      }
       // Formater les dates si la valeur ressemble à une date
-      else if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+      // Formatage des dates
+      if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
         try {
           displayValue = new Date(value).toLocaleDateString("fr-FR");
         } catch (e) {
@@ -1782,115 +1366,9 @@ function voirDetailsDossier(dossier) {
   const modal = new bootstrap.Modal(detailsModal);
   modal.show();
 
-  // 🆕 INITIALISER LES DROPDOWNS APRÈS CRÉATION DE LA MODAL
-  initializeContainerDropdowns(detailsModal);
-
   detailsModal.addEventListener("hidden.bs.modal", () => {
     document.body.removeChild(detailsModal);
   });
-}
-
-// 🆕 FONCTION POUR INITIALISER LES DROPDOWNS DE CONTENEURS
-function initializeContainerDropdowns(modalElement) {
-  setTimeout(() => {
-    console.log("🎯 Initialisation des dropdowns conteneurs...");
-
-    // Forcer l'initialisation des dropdowns Bootstrap
-    const dropdowns = modalElement.querySelectorAll(
-      '[data-bs-toggle="dropdown"]'
-    );
-    dropdowns.forEach((dropdown) => {
-      try {
-        if (!bootstrap.Dropdown.getInstance(dropdown)) {
-          new bootstrap.Dropdown(dropdown);
-          console.log("✅ Dropdown initialisé pour:", dropdown.id);
-        }
-      } catch (e) {
-        console.warn(
-          "Erreur initialisation dropdown Bootstrap, utilisation du fallback:",
-          e
-        );
-        // Fallback : créer un dropdown manuel
-        createFallbackDropdown(dropdown);
-      }
-    });
-
-    // Ajouter des styles CSS pour améliorer l'interaction
-    if (!document.querySelector("#containerDropdownStyles")) {
-      const style = document.createElement("style");
-      style.id = "containerDropdownStyles";
-      style.textContent = `
-        .container-item:hover {
-          background-color: #f8f9fa !important;
-          transform: translateX(5px);
-          transition: all 0.2s ease;
-        }
-        .dropdown-menu {
-          box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
-          border: 1px solid #e9ecef !important;
-        }
-        .dropdown-toggle::after {
-          transition: transform 0.2s ease;
-        }
-        .dropdown-toggle[aria-expanded="true"]::after {
-          transform: rotate(180deg);
-        }
-        .badge {
-          transition: all 0.2s ease;
-        }
-        .container-item:hover .badge {
-          transform: scale(1.1);
-        }
-        .dropdown-menu.show {
-          display: block !important;
-        }
-        .dropdown-manual {
-          position: relative;
-        }
-      `;
-      document.head.appendChild(style);
-    }
-  }, 500);
-}
-
-// 🆕 FONCTION FALLBACK POUR CRÉER UN DROPDOWN MANUEL
-function createFallbackDropdown(button) {
-  const dropdownMenu = button.nextElementSibling;
-  if (!dropdownMenu || !dropdownMenu.classList.contains("dropdown-menu"))
-    return;
-
-  button.addEventListener("click", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Fermer tous les autres dropdowns
-    document.querySelectorAll(".dropdown-menu.show").forEach((menu) => {
-      if (menu !== dropdownMenu) {
-        menu.classList.remove("show");
-        menu.previousElementSibling.setAttribute("aria-expanded", "false");
-      }
-    });
-
-    // Toggle ce dropdown
-    const isOpen = dropdownMenu.classList.contains("show");
-    if (isOpen) {
-      dropdownMenu.classList.remove("show");
-      button.setAttribute("aria-expanded", "false");
-    } else {
-      dropdownMenu.classList.add("show");
-      button.setAttribute("aria-expanded", "true");
-    }
-  });
-
-  // Fermer le dropdown en cliquant ailleurs
-  document.addEventListener("click", function (e) {
-    if (!button.contains(e.target) && !dropdownMenu.contains(e.target)) {
-      dropdownMenu.classList.remove("show");
-      button.setAttribute("aria-expanded", "false");
-    }
-  });
-
-  console.log("✅ Dropdown fallback créé pour:", button.id);
 }
 
 // Fonction utilitaire pour récupérer les paramètres URL
@@ -7581,128 +7059,6 @@ if (bodyElement) {
     childList: true,
     subtree: true,
   });
-}
-
-// 🆕 INITIALISATION POUR L'EXTRACTION DES DATES MANQUANTES
-document.addEventListener("DOMContentLoaded", function () {
-  // Écouter l'ouverture de la modal "Mise en Livraison"
-  const modalMiseEnLiv = document.getElementById("modalMiseEnLiv");
-  if (modalMiseEnLiv) {
-    modalMiseEnLiv.addEventListener("shown.bs.modal", function () {
-      console.log(
-        "📅 [PRODUCTION-READY] Modal Mise en Livraison ouverte - Extraction des dates manquantes...",
-        {
-          environment: window.location.hostname.includes("render")
-            ? "PRODUCTION (Render)"
-            : "LOCAL",
-          hostname: window.location.hostname,
-          currentFlag: dateExtractionSessionProcessed,
-        }
-      );
-      dateExtractionSessionProcessed = false; // Réinitialiser le flag pour cette ouverture
-      updateExistingDossiersWithMissingDates();
-      refreshMiseEnLivList();
-    });
-  }
-});
-
-// 🆕 FONCTION POUR COPIER LES NUMÉROS DE CONTENEUR
-function copyToClipboard(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    // Méthode moderne pour HTTPS
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        displayCopyNotification(`Conteneur ${text} copié !`);
-      })
-      .catch((err) => {
-        console.error("Erreur de copie:", err);
-        fallbackCopyTextToClipboard(text);
-      });
-  } else {
-    // Méthode de fallback pour HTTP
-    fallbackCopyTextToClipboard(text);
-  }
-}
-
-// Fonction de fallback pour la copie
-function fallbackCopyTextToClipboard(text) {
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.position = "fixed";
-  textArea.style.left = "-999999px";
-  textArea.style.top = "-999999px";
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try {
-    const successful = document.execCommand("copy");
-    if (successful) {
-      displayCopyNotification(`Conteneur ${text} copié !`);
-    } else {
-      console.error("Copie échouée");
-    }
-  } catch (err) {
-    console.error("Erreur de copie:", err);
-  } finally {
-    document.body.removeChild(textArea);
-  }
-}
-
-// Fonction pour afficher la notification de copie
-function displayCopyNotification(message) {
-  // Essayer d'utiliser showNotification si elle existe
-  if (typeof showNotification === "function") {
-    showNotification(message, "success");
-    return;
-  }
-
-  // Sinon créer une notification simple
-  const notification = document.createElement("div");
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #28a745;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    z-index: 9999;
-    font-size: 14px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    animation: slideIn 0.3s ease-out;
-  `;
-  notification.innerHTML = `<i class="fas fa-check me-2"></i>${message}`;
-
-  // Ajouter les styles d'animation
-  if (!document.querySelector("#copyNotificationStyles")) {
-    const style = document.createElement("style");
-    style.id = "copyNotificationStyles";
-    style.textContent = `
-      @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-      }
-      @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  document.body.appendChild(notification);
-
-  // Supprimer après 3 secondes
-  setTimeout(() => {
-    notification.style.animation = "slideOut 0.3s ease-in";
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 300);
-  }, 3000);
 }
 
 /***MON JESUS EST LE SEUL DIEU */
