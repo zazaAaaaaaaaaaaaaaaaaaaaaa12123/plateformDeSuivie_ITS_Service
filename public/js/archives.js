@@ -1477,15 +1477,11 @@ class ArchivesManager {
         `[ARCHIVES] ✅ ${allCombinedArchives.length} archives TOTALES chargées, affichage de ${this.filteredArchives.length} (page ${this.currentPage})`
       );
 
-      // 🎯 Mettre à jour le badge de l'onglet "Toutes les Archives" avec le total
-      const allTabBadge = document.querySelector("#all-tab .badge");
-      if (allTabBadge) {
-        allTabBadge.textContent = totalItems;
-        allTabBadge.title = `${totalItems} archives au total`;
-        console.log(
-          `[ARCHIVES] 📊 Badge "Toutes les Archives" mis à jour: ${totalItems}`
-        );
-      }
+      // 🎯 NE PAS METTRE À JOUR LE BADGE "Toutes les Archives" ICI
+      // Le badge total sera mis à jour par updateCounts() avec le vrai total depuis la DB
+      console.log(
+        `[ARCHIVES] 📊 ${totalItems} archives chargées pour affichage (badge total géré par updateCounts)`
+      );
 
       // 🎯 Mettre à jour l'affichage
       this.renderCurrentView();
@@ -1584,14 +1580,11 @@ class ArchivesManager {
         itemsPerPage: this.itemsPerPage,
       };
 
-      // 🎯 METTRE À JOUR LE BADGE "Toutes les Archives"
-      const allTabBadge = document.querySelector("#allCount");
-      if (allTabBadge) {
-        allTabBadge.textContent = allCombinedArchives.length;
-        console.log(
-          `[ARCHIVES] ✅ Badge mis à jour: ${allCombinedArchives.length}`
-        );
-      }
+      // 🎯 NE PAS METTRE À JOUR LE BADGE "Toutes les Archives" ICI
+      // Le badge total sera mis à jour par updateCounts() avec le vrai total depuis la DB
+      console.log(
+        `[ARCHIVES] 📊 ${allCombinedArchives.length} archives chargées pour affichage (badge total géré par updateCounts)`
+      );
 
       // 🖼️ AFFICHER
       this.renderCurrentView();
@@ -1608,26 +1601,24 @@ class ArchivesManager {
     }
   }
 
-  // 🎯 MÉTHODE SIMPLE: Additionner les compteurs des autres onglets pour "Toutes les Archives"
+  // 🎯 MÉTHODE CORRIGÉE: Utiliser la SOMME comme demandé
   async loadAllCombinedArchivesByAddition() {
     try {
       this.showLoading(true);
       console.log(
-        "[ARCHIVES] 🔄 Calcul du total par addition des compteurs des onglets..."
+        "[ARCHIVES] 🔄 Calcul du total par SOMME des compteurs des onglets..."
       );
 
       //   D'abord s'assurer que tous les compteurs sont chargés
       await this.updateCounts();
 
-      //  📊 Récupérer les badges des autres onglets pour additionner leurs valeurs
+      //  📊 Récupérer les badges des autres onglets pour calculer la SOMME
       const deletedBadge = document.querySelector("#deletedCount");
       const deliveredBadge = document.querySelector("#deliveredCount");
       const shippingBadge = document.querySelector("#shippingCount");
       const ordersBadge = document.querySelector("#ordersCount");
 
-      // 🧮 Additionner les valeurs des badges
-      let totalCount = 0;
-
+      // 🧮 Calculer la SOMME
       const deletedCount = deletedBadge
         ? parseInt(deletedBadge.textContent) || 0
         : 0;
@@ -1641,172 +1632,27 @@ class ArchivesManager {
         ? parseInt(ordersBadge.textContent) || 0
         : 0;
 
-      totalCount = deletedCount + deliveredCount + shippingCount + ordersCount;
+      const totalSum =
+        deletedCount + deliveredCount + shippingCount + ordersCount;
 
-      console.log(`[ARCHIVES] 📊 Calcul du total:`);
+      console.log(`[ARCHIVES] 📊 Calcul de la SOMME:`);
       console.log(`  - Dossiers supprimés: ${deletedCount}`);
       console.log(`  - Dossiers livrés: ${deliveredCount}`);
       console.log(`  - Mis en livraison: ${shippingCount}`);
       console.log(`  - Ordres de livraison: ${ordersCount}`);
-      console.log(`  - TOTAL ADDITIONNÉ: ${totalCount}`);
+      console.log(`  - SOMME TOTALE: ${totalSum}`);
 
-      // 🎯 Mettre à jour le badge de l'onglet "Toutes les Archives" avec le total additionné
+      // 🎯 METTRE À JOUR LE BADGE avec la SOMME
       const allTabBadge = document.querySelector("#allCount");
       if (allTabBadge) {
-        allTabBadge.textContent = totalCount;
-        allTabBadge.title = `${totalCount} archives au total (${deletedCount}+${deliveredCount}+${shippingCount}+${ordersCount})`;
+        allTabBadge.textContent = totalSum;
+        allTabBadge.title = `${totalSum} archives au total (somme des badges)`;
         console.log(
-          `[ARCHIVES] ✅ Badge "Toutes les Archives" mis à jour: ${totalCount}`
+          `[ARCHIVES] ✅ Badge "Toutes les Archives" mis à jour avec SOMME: ${totalSum}`
         );
-      } else {
-        console.warn("[ARCHIVES] ⚠️ Badge #allCount non trouvé !");
       }
 
-      // 📑 Pour l'affichage, charger TOUTES les archives de tous les types pour respecter le badge
-      console.log(
-        "[ARCHIVES] 🔄 Chargement de TOUTES les archives pour affichage..."
-      );
-
-      // 📊 Faire des appels parallèles pour récupérer TOUTES les archives de chaque type
-      const cacheBuster = Date.now(); // Cache buster pour forcer le rechargement
-      const promises = [
-        fetch(
-          `/api/archives?action_type=suppression&limit=99999&page=1&cb=${cacheBuster}`
-        ).then((r) => r.json()),
-        fetch(
-          `/api/archives?action_type=livraison&limit=99999&page=1&cb=${cacheBuster}`
-        ).then((r) => r.json()),
-        fetch(
-          `/api/archives?action_type=mise_en_livraison&limit=99999&page=1&cb=${cacheBuster}`
-        ).then((r) => r.json()),
-        fetch(
-          `/api/archives?action_type=ordre_livraison_etabli&limit=99999&page=1&cb=${cacheBuster}`
-        ).then((r) => r.json()),
-      ];
-
-      const [suppressionData, livraisonData, miseEnLivraisonData, ordreData] =
-        await Promise.all(promises);
-
-      //   DIAGNOSTIC: Afficher les résultats détaillés
-      console.log("[ARCHIVES] 🔍 DIAGNOSTIC des données récupérées:");
-      console.log("  - suppressionData:", {
-        success: suppressionData.success,
-        archivesLength: suppressionData.archives
-          ? suppressionData.archives.length
-          : 0,
-        pagination: suppressionData.pagination,
-      });
-      console.log("  - livraisonData:", {
-        success: livraisonData.success,
-        archivesLength: livraisonData.archives
-          ? livraisonData.archives.length
-          : 0,
-        pagination: livraisonData.pagination,
-      });
-      console.log("  - miseEnLivraisonData:", {
-        success: miseEnLivraisonData.success,
-        archivesLength: miseEnLivraisonData.archives
-          ? miseEnLivraisonData.archives.length
-          : 0,
-        pagination: miseEnLivraisonData.pagination,
-      });
-      console.log("  - ordreData:", {
-        success: ordreData.success,
-        archivesLength: ordreData.archives ? ordreData.archives.length : 0,
-        pagination: ordreData.pagination,
-      });
-
-      // 🎯 NOUVEAU: Mélange équilibré des types pour afficher tous les badges dans l'onglet "Toutes les Archives"
-      console.log(
-        `[ARCHIVES] 🎲 Application d'un mélange équilibré des types de badges...`
-      );
-
-      // Grouper par type pour un mélange équilibré
-      const suppressionArchives =
-        suppressionData.success && suppressionData.archives
-          ? suppressionData.archives
-          : [];
-      const livraisonArchives =
-        livraisonData.success && livraisonData.archives
-          ? livraisonData.archives
-          : [];
-      const miseEnLivraisonArchives =
-        miseEnLivraisonData.success && miseEnLivraisonData.archives
-          ? miseEnLivraisonData.archives
-          : [];
-      const ordreArchives =
-        ordreData.success && ordreData.archives ? ordreData.archives : [];
-
-      console.log(`[ARCHIVES] 📊 Types disponibles:`);
-      console.log(`  - Suppression: ${suppressionArchives.length}`);
-      console.log(`  - Livraison: ${livraisonArchives.length}`);
-      console.log(`  - Mise en livraison: ${miseEnLivraisonArchives.length}`);
-      console.log(`  - Ordre: ${ordreArchives.length}`);
-
-      // 🎯 Mélange équilibré: distribuer les types de façon homogène
-      let allCombinedArchives = [];
-      const maxLength = Math.max(
-        suppressionArchives.length,
-        livraisonArchives.length,
-        miseEnLivraisonArchives.length,
-        ordreArchives.length
-      );
-
-      // Intercaler les éléments de chaque type pour un mélange homogène
-      for (let i = 0; i < maxLength; i++) {
-        // Ajouter un élément de chaque type s'il existe
-        if (i < miseEnLivraisonArchives.length) {
-          allCombinedArchives.push(miseEnLivraisonArchives[i]);
-        }
-        if (i < livraisonArchives.length) {
-          allCombinedArchives.push(livraisonArchives[i]);
-        }
-        if (i < ordreArchives.length) {
-          allCombinedArchives.push(ordreArchives[i]);
-        }
-        if (i < suppressionArchives.length) {
-          allCombinedArchives.push(suppressionArchives[i]);
-        }
-      }
-
-      console.log(
-        `[ARCHIVES] 🎯 Mélange terminé - Total: ${allCombinedArchives.length} archives`
-      );
-      console.log(
-        `[ARCHIVES] 🎨 Les badges devraient maintenant être variés dans l'affichage!`
-      );
-
-      console.log(
-        `[ARCHIVES] 🎯 Total d'archives combinées: ${allCombinedArchives.length} (doit correspondre au badge: ${totalCount})`
-      );
-
-      // 💾 Stocker toutes les archives combinées pour la pagination
-      this.allCombinedArchives = allCombinedArchives;
-
-      // 🎯 Appliquer la pagination côté client pour l'affichage
-      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-      const endIndex = startIndex + this.itemsPerPage;
-      this.filteredArchives = this.allCombinedArchives.slice(
-        startIndex,
-        endIndex
-      );
-
-      this.pagination = {
-        currentPage: this.currentPage,
-        totalPages: Math.ceil(allCombinedArchives.length / this.itemsPerPage),
-        totalItems: allCombinedArchives.length, // Utiliser le nombre réel d'archives récupérées
-        itemsPerPage: this.itemsPerPage,
-      };
-
-      console.log(
-        `[ARCHIVES] ✅ Affichage: ${this.filteredArchives.length} archives sur ${allCombinedArchives.length} (page ${this.currentPage}/${this.pagination.totalPages})`
-      );
-
-      // 🎯 Mettre à jour l'affichage
-      this.renderCurrentView();
-      this.renderPagination();
-
-      // 💾 NOUVEAU: Mettre à jour automatiquement l'interface de stockage après chargement
+      // 💾 Mise à jour automatique de l'interface de stockage
       console.log(
         "[ARCHIVES] 💾 Mise à jour automatique de l'interface de stockage..."
       );
@@ -2008,7 +1854,7 @@ class ArchivesManager {
         dashboardCounts
       );
 
-      // � Récupérer les compteurs spécifiques aux archives (suppression et ordres)
+      // 📊 Récupérer les compteurs spécifiques aux archives (suppression et ordres)
       const [suppressionData, ordreData] = await Promise.all([
         fetch("/api/archives?action_type=suppression&limit=1").then((r) =>
           r.json()
@@ -2030,12 +1876,16 @@ class ArchivesManager {
         ordre_livraison_etabli: ordreData.pagination?.totalItems || 0,
       };
 
-      // 🎯 CORRECTION: Badge "Toutes les archives" = SOMME de tous les autres badges
+      // 🎯 CORRECTION: Badge "Toutes les archives" = SOMME des badges individuels (comme demandé)
       archiveCounts.all =
         archiveCounts.suppression +
         archiveCounts.livraison +
         archiveCounts.mise_en_livraison +
         archiveCounts.ordre_livraison_etabli;
+
+      console.log(
+        `[ARCHIVES] ✅ SOMME des badges: ${archiveCounts.suppression} + ${archiveCounts.livraison} + ${archiveCounts.mise_en_livraison} + ${archiveCounts.ordre_livraison_etabli} = ${archiveCounts.all}`
+      );
 
       console.log(
         "[ARCHIVES] 🎯 Synchronisation PARFAITE avec les VRAIES cartes affichées:",
@@ -2121,6 +1971,7 @@ class ArchivesManager {
           ordre_livraison_etabli: ordreData.pagination?.totalItems || 0,
         };
 
+        // 🎯 CORRECTION: Utiliser la SOMME des badges comme demandé
         const totalFallback =
           fallbackCounts.suppression +
           fallbackCounts.livraison +
@@ -2130,10 +1981,9 @@ class ArchivesManager {
         console.log(
           "[ARCHIVES] 🔢 Compteurs fallback:",
           fallbackCounts,
-          "Total:",
+          "SOMME Total:",
           totalFallback
         );
-
         document.getElementById("allCount").textContent = totalFallback;
         document.getElementById("deletedCount").textContent =
           fallbackCounts.suppression;
@@ -2174,11 +2024,19 @@ class ArchivesManager {
           ).length,
         };
 
+        // 🎯 CORRECTION: Utiliser la SOMME des archives locales comme demandé
         const localTotal =
           localCounts.suppression +
           localCounts.livraison +
           localCounts.mise_en_livraison +
           localCounts.ordre_livraison_etabli;
+
+        console.log(
+          "[ARCHIVES] 🔢 Compteurs locaux (dernier recours):",
+          localCounts,
+          "SOMME Total local:",
+          localTotal
+        );
 
         document.getElementById("allCount").textContent = localTotal;
         document.getElementById("deletedCount").textContent =
@@ -5728,39 +5586,61 @@ class StorageManager {
         console.error("❌ [STORAGE] Erreur récupération données DB:", error);
       }
 
-      // 2. Récupérer le vrai nombre d'archives selon l'onglet actuel
-      if (this.archivesManager) {
-        if (
-          this.archivesManager.selectedTab === "all" &&
-          this.archivesManager.allCombinedArchives
-        ) {
-          realArchiveCount = this.archivesManager.allCombinedArchives.length;
-        } else if (this.archivesManager.allArchives) {
-          realArchiveCount = this.archivesManager.allArchives.length;
-          realArchiveCount = this.archivesManager.allArchives.length;
-        }
-      }
+      // 2. 🎯 FORCER l'utilisation de la SOMME des badges archives (comme demandé)
+      console.log(
+        "🎯 [STORAGE] Calcul du nombre d'archives via SOMME des badges..."
+      );
 
-      // 3. Si pas de données locales, récupérer depuis l'API
+      // Récupérer les valeurs des badges directement depuis le DOM
+      const deletedBadge = document.querySelector("#deletedCount");
+      const deliveredBadge = document.querySelector("#deliveredCount");
+      const shippingBadge = document.querySelector("#shippingCount");
+      const ordersBadge = document.querySelector("#ordersCount");
+
+      const deletedCount = deletedBadge
+        ? parseInt(deletedBadge.textContent) || 0
+        : 0;
+      const deliveredCount = deliveredBadge
+        ? parseInt(deliveredBadge.textContent) || 0
+        : 0;
+      const shippingCount = shippingBadge
+        ? parseInt(shippingBadge.textContent) || 0
+        : 0;
+      const ordersCount = ordersBadge
+        ? parseInt(ordersBadge.textContent) || 0
+        : 0;
+
+      // 🎯 CALCULER LA SOMME (comme demandé par l'utilisateur)
+      realArchiveCount =
+        deletedCount + deliveredCount + shippingCount + ordersCount;
+
+      console.log(`📊 [STORAGE] SOMME des badges:`);
+      console.log(`  - Dossiers supprimés: ${deletedCount}`);
+      console.log(`  - Dossiers livrés: ${deliveredCount}`);
+      console.log(`  - Mis en livraison: ${shippingCount}`);
+      console.log(`  - Ordres de livraison: ${ordersCount}`);
+      console.log(`  - TOTAL (SOMME): ${realArchiveCount}`);
+
+      // 3. Si pas de badges visibles, utiliser l'API en dernier recours
       if (realArchiveCount === 0) {
         try {
           console.log(
-            "📊 [STORAGE] Récupération des vraies données depuis l'API..."
+            "📊 [STORAGE] Pas de badges visibles, récupération API en fallback..."
           );
 
-          // Récupérer tous les types d'archives
+          // Récupérer uniquement les compteurs (pas toutes les archives)
           const promises = [
-            fetch("/api/archives?action_type=suppression&limit=9999").then(
-              (r) => r.json()
-            ),
-            fetch("/api/archives?action_type=livraison&limit=9999").then((r) =>
+            fetch("/api/archives?action_type=suppression&limit=1").then((r) =>
               r.json()
             ),
+            fetch("/api/archives?action_type=livraison&limit=1").then((r) =>
+              r.json()
+            ),
+            fetch("/api/archives?action_type=mise_en_livraison&limit=1").then(
+              (r) => r.json()
+            ),
             fetch(
-              "/api/archives?action_type=mise_en_livraison&limit=9999"
-            ).then((r) => r.json()),
-            fetch(
-              "/api/archives?action_type=ordre_livraison_etabli&limit=9999"
+              "/api/archives?action_type=ordre_livraison_etabli&limit=1"
             ).then((r) => r.json()),
           ];
 
@@ -5771,22 +5651,31 @@ class StorageManager {
             ordreData,
           ] = await Promise.all(promises);
 
-          // Compter toutes les archives
-          realArchiveCount =
-            (suppressionData.success ? suppressionData.archives.length : 0) +
-            (livraisonData.success ? livraisonData.archives.length : 0) +
-            (miseEnLivraisonData.success
-              ? miseEnLivraisonData.archives.length
-              : 0) +
-            (ordreData.success ? ordreData.archives.length : 0);
+          // Calculer la SOMME des compteurs (pas du contenu des archives)
+          const suppressionCount = suppressionData.pagination?.totalItems || 0;
+          const livraisonCount = livraisonData.pagination?.totalItems || 0;
+          const miseEnLivraisonCount =
+            miseEnLivraisonData.pagination?.totalItems || 0;
+          const ordreCount = ordreData.pagination?.totalItems || 0;
 
-          console.log(`📊 [STORAGE] Données API: ${realArchiveCount} archives`);
+          realArchiveCount =
+            suppressionCount +
+            livraisonCount +
+            miseEnLivraisonCount +
+            ordreCount;
+
+          console.log(`📊 [STORAGE] SOMME API fallback:`);
+          console.log(`  - Suppression: ${suppressionCount}`);
+          console.log(`  - Livraison: ${livraisonCount}`);
+          console.log(`  - Mise en livraison: ${miseEnLivraisonCount}`);
+          console.log(`  - Ordres: ${ordreCount}`);
+          console.log(`  - TOTAL SOMME: ${realArchiveCount}`);
         } catch (apiError) {
           console.error(
             "❌ [STORAGE] Erreur API, utilisation des données par défaut",
             apiError
           );
-          realArchiveCount = 10; // Valeur par défaut
+          realArchiveCount = 0; // Pas de valeur par défaut fantaisiste
         }
       }
 
@@ -6050,8 +5939,12 @@ class StorageManager {
         );
       }
 
+      // 🎯 CORRECTION: Utiliser la SOMME des badges au lieu de l'API
       const totalArchives =
         suppressionCount + livraisonCount + miseEnLivraisonCount + ordreCount;
+      console.log(
+        `📊 [STORAGE] SOMME des badges pour totalArchives: ${suppressionCount} + ${livraisonCount} + ${miseEnLivraisonCount} + ${ordreCount} = ${totalArchives}`
+      );
       const sizePerArchive =
         totalArchives > 0 ? realDatabaseSizeMB / totalArchives : 0;
 
@@ -6087,6 +5980,12 @@ class StorageManager {
       console.log(
         "📊 [STORAGE] Statistiques calculées depuis les badges:",
         typeStats
+      );
+
+      // 🚫 SUPPRIMÉ: Cette mise à jour est en conflit avec updateModalWithSafeData()
+      // La mise à jour se fait maintenant UNIQUEMENT dans updateModalWithSafeData() avec la SOMME des badges
+      console.log(
+        `📊 [STORAGE] Total calculé: ${totalArchives} (mis à jour via updateModalWithSafeData)`
       );
 
       // Mettre à jour l'affichage des statistiques détaillées
@@ -6377,8 +6276,38 @@ class StorageManager {
 
     const archivesCountEl = document.getElementById("archivesCount");
     if (archivesCountEl) {
-      archivesCountEl.textContent =
-        stats.summary.total_archives_count.toLocaleString();
+      // 🎯 CORRECTION: Utiliser la SOMME des badges au lieu de l'API pour la modal
+      const suppressionBadge = document.querySelector(
+        '.tab-badge[data-tab="deleted"]'
+      );
+      const livraisonBadge = document.querySelector(
+        '.tab-badge[data-tab="delivered"]'
+      );
+      const miseEnLivraisonBadge = document.querySelector(
+        '.tab-badge[data-tab="shipping"]'
+      );
+      const ordreBadge = document.querySelector(
+        '.tab-badge[data-tab="orders"]'
+      );
+
+      const suppressionCount = suppressionBadge
+        ? parseInt(suppressionBadge.textContent) || 0
+        : 0;
+      const livraisonCount = livraisonBadge
+        ? parseInt(livraisonBadge.textContent) || 0
+        : 0;
+      const miseEnLivraisonCount = miseEnLivraisonBadge
+        ? parseInt(miseEnLivraisonBadge.textContent) || 0
+        : 0;
+      const ordreCount = ordreBadge ? parseInt(ordreBadge.textContent) || 0 : 0;
+
+      const totalBadgeSum =
+        suppressionCount + livraisonCount + miseEnLivraisonCount + ordreCount;
+
+      archivesCountEl.textContent = totalBadgeSum.toLocaleString();
+      console.log(
+        `📊 [MODAL] Archives Totales depuis SOMME badges: ${suppressionCount} + ${livraisonCount} + ${miseEnLivraisonCount} + ${ordreCount} = ${totalBadgeSum}`
+      );
     }
 
     const uploadsSizeEl = document.getElementById("uploadsSize");
@@ -6514,16 +6443,8 @@ class StorageManager {
     let realStats = {
       suppression: { count: 0, size: 0, archives: [] },
       livraison: { count: 0, size: 0, archives: [] },
-      mise_en_livraison: {
-        count: realTimeData.mise_en_livraison || 0,
-        size: 0,
-        archives: [],
-      },
-      ordre_livraison_etabli: {
-        count: realTimeData.ordres_livraison || 0,
-        size: 0,
-        archives: [],
-      },
+      mise_en_livraison: { count: 0, size: 0, archives: [] },
+      ordre_livraison_etabli: { count: 0, size: 0, archives: [] },
     };
 
     let totalCount = archives.length;
