@@ -401,7 +401,6 @@ function afficherDetailsDossier(dossier) {
       }
 
       if (isNaN(dateObj.getTime())) {
-        console.log(`🔍 formatDate ÉCHEC - Date invalide: "${dateStr}"`);
         return "-";
       }
 
@@ -410,8 +409,6 @@ function afficherDetailsDossier(dossier) {
       const month = String(dateObj.getMonth() + 1).padStart(2, "0");
       const day = String(dateObj.getDate()).padStart(2, "0");
       const result = `${day}/${month}/${year}`;
-
-      console.log(`🔍 formatDate RÉSULTAT UNIVERSEL: "${result}"`);
 
       return result;
     } catch (e) {
@@ -960,8 +957,6 @@ function refreshMiseEnLivList() {
   checkAndArchiveOldDossiers();
 
   const dossiers = getDossiersMisEnLiv();
-  console.log("Dossiers chargés:", dossiers); // Debug
-
   const searchTerm =
     document.getElementById("searchMiseEnLiv")?.value?.toLowerCase() || "";
 
@@ -1555,8 +1550,6 @@ function flashTargetDelivery() {
     const rows = tableBody.querySelectorAll("tr");
     let targetRow = null;
 
-    console.log(`🔍 [FLASH ACCONIER] Recherche dans ${rows.length} lignes...`);
-
     rows.forEach((row, index) => {
       const cells = row.querySelectorAll("td");
       let rowText = "";
@@ -1764,7 +1757,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Si l'alerte existe déjà et qu'il y a encore des dossiers en retard, juste mettre à jour le contenu
     if (existingToast && currentCount > 0) {
-      console.log("[LATE ALERT DEBUG] Mise à jour de l'alerte existante");
       existingToast.textContent = `⚠️ ${currentCount} dossier(s) en retard`;
       // S'assurer que l'alerte reste visible
       existingToast.style.opacity = "1";
@@ -1774,7 +1766,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Créer une nouvelle alerte seulement si elle n'existe pas ET qu'il y a des dossiers en retard
     if (!existingToast && currentCount > 0) {
-      console.log("[LATE ALERT DEBUG] Création d'une nouvelle alerte");
       // Créer une nouvelle alerte seulement si elle n'existe pas
       const toast = document.createElement("div");
       toast.id = "late-deliveries-toast";
@@ -2713,16 +2704,8 @@ document.addEventListener("DOMContentLoaded", function () {
     ws = new WebSocket(wsUrl);
     ws.onopen = function () {};
     ws.onmessage = function (event) {
-      console.log("[DEBUG] ws.onmessage triggered", event.data);
-
       try {
         const data = JSON.parse(event.data);
-        console.log(
-          "[DEBUG] data.type:",
-          data.type,
-          "data.status:",
-          data.status
-        );
 
         if (
           data.type === "bl_status_update" &&
@@ -3073,13 +3056,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function loadAllDeliveries() {
     try {
-      console.log("🔄 [DEBUG] Début du chargement des livraisons...");
       const response = await fetch("/deliveries/status");
-      console.log(
-        "🔄 [DEBUG] Réponse reçue:",
-        response.status,
-        response.statusText
-      );
       const data = await response.json();
       console.log(
         "🔄 [DEBUG] Données reçues:",
@@ -3089,51 +3066,11 @@ document.addEventListener("DOMContentLoaded", function () {
       );
 
       if (data.success && Array.isArray(data.deliveries)) {
-        // DEBUG DÉTAILLÉ POUR RENDER
-        console.log("🔍 TOTAL LIVRAISONS REÇUES:", data.deliveries.length);
-
-        // Vérifier combien ont des dates DO et BADT
-        const withDateDo = data.deliveries.filter(
-          (d) => d.date_do && d.date_do !== null && d.date_do !== "null"
-        );
-        const withDateBadt = data.deliveries.filter(
-          (d) => d.date_badt && d.date_badt !== null && d.date_badt !== "null"
-        );
-
-        console.log("🔍 LIVRAISONS AVEC DATE_DO:", withDateDo.length);
-        console.log("🔍 LIVRAISONS AVEC DATE_BADT:", withDateBadt.length);
-
-        // Échantillon détaillé
-        if (withDateDo.length > 0) {
-          console.log("🔍 ÉCHANTILLON DATE_DO:", {
-            id: withDateDo[0].id,
-            date_do_brute: withDateDo[0].date_do,
-            type: typeof withDateDo[0].date_do,
-          });
-        }
-
-        if (withDateBadt.length > 0) {
-          console.log("🔍 ÉCHANTILLON DATE_BADT:", {
-            id: withDateBadt[0].id,
-            date_badt_brute: withDateBadt[0].date_badt,
-            type: typeof withDateBadt[0].date_badt,
-          });
-        }
-
         // Récupération des paramètres pour le mode admin
         const isAdminMode = getUrlParameter("mode") === "admin";
         const targetUser =
           getUrlParameter("targetUser") || getUrlParameter("user");
         const targetUserId = getUrlParameter("userId"); // Récupérer aussi l'userId
-
-        console.log(
-          "🔄 [DEBUG] Mode admin:",
-          isAdminMode,
-          "Target user:",
-          targetUser,
-          "Target userId:",
-          targetUserId
-        );
 
         let processedDeliveries = data.deliveries.map((delivery) => {
           // On ne touche pas à delivery.bl_statuses : il vient du backend et doit être conservé
@@ -3207,22 +3144,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
           // Charger les observations de l'utilisateur ciblé
           await loadUserObservations(targetUser, targetUserId);
-
-          // Afficher quelques exemples de données pour comprendre la structure
-          if (processedDeliveries.length > 0) {
-            console.log(`🔍 [DEBUG] Exemple de livraison:`, {
-              responsible_acconier: processedDeliveries[0].responsible_acconier,
-              resp_acconier: processedDeliveries[0].resp_acconier,
-              responsible_livreur: processedDeliveries[0].responsible_livreur,
-              resp_livreur: processedDeliveries[0].resp_livreur,
-              assigned_to: processedDeliveries[0].assigned_to,
-              created_by: processedDeliveries[0].created_by,
-              updated_by: processedDeliveries[0].updated_by,
-              nom_agent_visiteur: processedDeliveries[0].nom_agent_visiteur,
-              employee_name: processedDeliveries[0].employee_name,
-              driver_name: processedDeliveries[0].driver_name,
-            });
-          }
 
           // 🔧 MODIFICATION ADMIN : En mode admin, afficher TOUS les dossiers sans exception
           // Supprimer le filtrage restrictif et laisser tous les dossiers visibles
@@ -5822,7 +5743,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
                   : delivery.date_badt,
               };
 
-              console.log("Dossier à sauvegarder avec dates:", dossierToSave); // Debug
               ajouterDossierMiseEnLiv(dossierToSave);
 
               // Popup de confirmation personnalisée
@@ -6513,15 +6433,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
           let localObs = localStorage.getItem(localKey);
           let displayValue = value;
 
-          // 🔧 DEBUG INTENSIF : Vérifier exactement ce qui se passe
-          console.log(`🔍 [DEBUG OBSERVATION] Livraison ${delivery.id}:`, {
-            localKey,
-            localObs,
-            value,
-            hasLocalObs: !!localObs,
-            localObsLength: localObs ? localObs.length : 0,
-          });
-
           // 🔧 CORRECTION MODE ADMIN : Priorité aux observations de l'utilisateur ciblé
           const urlParams = new URLSearchParams(window.location.search);
           const isAdminMode = urlParams.get("mode") === "admin";
@@ -6532,20 +6443,6 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
             isAdminMode ||
             window.location.href.includes("mode=admin") ||
             window.location.href.includes("targetUser=");
-
-          console.log(`🔍 [DEBUG MODE] Pour livraison ${delivery.id}:`, {
-            currentUrl: window.location.href,
-            isAdminMode,
-            isAdminContext,
-            targetUser,
-            hasLocalObs: !!localObs,
-            localObsTrimmed: localObs ? localObs.trim() : null,
-            willUseLocalObs:
-              (isAdminMode || isAdminContext) &&
-              localObs &&
-              localObs.trim() !== "" &&
-              localObs !== "-",
-          });
 
           if (
             (isAdminMode || isAdminContext) &&
