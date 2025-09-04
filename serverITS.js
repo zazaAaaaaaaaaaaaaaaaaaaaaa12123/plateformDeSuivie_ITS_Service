@@ -8680,6 +8680,72 @@ setInterval(() => {
 }, 5 * 60 * 1000); // 5 minutes
 
 // ===============================
+// API POUR RÉCUPÉRER LES VRAIS N° TC D'UN DOSSIER
+// ===============================
+app.get("/api/dossier/:dossierNumber/real-containers", async (req, res) => {
+  const { dossierNumber } = req.params;
+
+  console.log(
+    `🔍 [REAL-TC API] Recherche des vrais N° TC pour dossier: ${dossierNumber}`
+  );
+
+  try {
+    // Requête pour récupérer tous les N° TC d'un dossier
+    const containerQuery = `
+      SELECT DISTINCT container_number
+      FROM livraison_conteneur 
+      WHERE dossier_number = $1
+      AND container_number IS NOT NULL 
+      AND container_number != ''
+      ORDER BY container_number
+    `;
+
+    const containerResult = await pool.query(containerQuery, [dossierNumber]);
+
+    // Extraire les N° TC de la base de données
+    const realContainers = containerResult.rows
+      .map((row) => row.container_number)
+      .filter(Boolean)
+      .flatMap((containerNumbers) => {
+        // Séparer les N° TC qui sont stockés avec des virgules
+        if (
+          typeof containerNumbers === "string" &&
+          containerNumbers.includes(",")
+        ) {
+          return containerNumbers
+            .split(",")
+            .map((tc) => tc.trim())
+            .filter(Boolean);
+        }
+        return [containerNumbers];
+      })
+      .filter(Boolean); // Filtrer les valeurs vides après split
+
+    console.log(
+      `✅ [REAL-TC API] Trouvé ${realContainers.length} vrais N° TC:`,
+      realContainers
+    );
+
+    res.json({
+      success: true,
+      dossier: dossierNumber,
+      containers: realContainers,
+      count: realContainers.length,
+    });
+  } catch (error) {
+    console.error(
+      `❌ [REAL-TC API] Erreur pour dossier ${dossierNumber}:`,
+      error
+    );
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des N° TC",
+      error: error.message,
+    });
+  }
+});
+
+// ===============================
 // ROUTE CATCH-ALL POUR SERVIR LE RESRFRONTEND (index.html)
 // ==================12354=============
 // Cette route doit être TOUT EN BAS, après toutes les routes API !

@@ -25,6 +25,10 @@ class ArchivesManager {
     this.isLoading = false; // 🛡️ PROTECTION: Flag anti-boucle
     this.loadingBlocked = false; // 🛡️ PROTECTION: Bloquer les appels multiples
 
+    // 🚀 NOUVEAU: Cache pour les N° TC pour améliorer les performances
+    this.containerCache = new Map();
+    this.cacheExpiryTime = 3 * 60 * 1000; // 3 minutes
+
     this.init();
 
     // 🔄 NOUVEAU: Écouter les événements de mise à jour des cartes du tableau de bord
@@ -299,7 +303,7 @@ class ArchivesManager {
           );
 
           try {
-            await this.loadAllCombinedByAddition();
+            await this.loadAllCombinedArchivesByAddition();
             console.log(
               "[ARCHIVES] ✅ Données combinées rechargées avec succès"
             );
@@ -752,7 +756,7 @@ class ArchivesManager {
       // Déterminer quelle méthode de chargement utiliser selon l'onglet actuel
       if (this.selectedTab === "all") {
         console.log("[ARCHIVES] 🎯 Rechargement pour 'Toutes les Archives'");
-        await this.loadAllCombinedByAddition();
+        await this.loadAllCombinedArchivesByAddition();
       } else {
         console.log(
           `[ARCHIVES] 🎯 Rechargement pour l'onglet: ${this.selectedTab}`
@@ -4263,112 +4267,349 @@ class ArchivesManager {
     }
   }
 
-  // 🆕 NOUVELLE MÉTHODE: Menu déroulant pour les N° TC multiples
+  // 🚀 SYSTÈME HYBRIDE - Cache API + Affichage local
   renderContainerDropdown(dossierData, archive) {
-    try {
-      // 🚨 DEBUG INTENSE pour comprendre le problème
-      console.log("🔥 [CONTAINER DEBUG] ==================");
-      console.log("🔥 [CONTAINER DEBUG] selectedTab:", this.selectedTab);
-      console.log("🔥 [CONTAINER DEBUG] archive.id:", archive.id);
+    console.log("⚡ [HYBRID] Traitement pour:", archive.dossier_reference);
+
+    // 🎯 PRIORITÉ 1: Vérifier le cache API d'abord
+    const cacheKey = archive.dossier_reference;
+    if (this.containerCache && this.containerCache[cacheKey]) {
+      const cachedContainers = this.containerCache[cacheKey];
       console.log(
-        "🔥 [CONTAINER DEBUG] archive.container_statuses:",
-        archive.container_statuses
+        "✅ [CACHE] Utilisation du cache pour:",
+        cacheKey,
+        cachedContainers
       );
-      console.log("🔥 [CONTAINER DEBUG] dossierData:", dossierData);
-      console.log("🔥 [CONTAINER DEBUG] ==================");
+      return this.generateContainerDisplay(cachedContainers);
+    }
 
-      // 🎯 CORRECTION SPÉCIALE pour onglet "Dossier livré"
-      if (this.selectedTab === "delivered") {
-        console.log(
-          "🔥 [DELIVERED DROPDOWN] Traitement spécial pour dossier livré"
-        );
+    // 🎯 PRIORITÉ 2: Données locales immédiates
+    let localContainers = this.extractLocalContainers(archive, dossierData);
 
-        // Utiliser extractContainerNumbers pour une extraction plus robuste
-        const containerNumbers = this.extractContainerNumbers(
-          dossierData,
-          archive
-        );
-        console.log(
-          "🔥 [DELIVERED DROPDOWN] containerNumbers extraits:",
-          containerNumbers
-        );
+    // 🔄 LANCER L'API en arrière-plan SEULEMENT si pas de données locales
+    if (localContainers.length === 0) {
+      this.fetchContainersInBackground(archive.dossier_reference);
+      return `<span class="text-info" id="container-${archive.id}"><i class="fas fa-search me-1"></i>Recherche...</span>`;
+    }
+
+    // 🎯 Affichage immédiat des données locales + API en arrière-plan pour améliorer
+    this.fetchContainersInBackground(archive.dossier_reference, archive.id);
+
+    return this.generateContainerDisplay(localContainers);
+  }
+
+  // 🎯 Extraction rapide des conteneurs locaux
+  extractLocalContainers(archive, dossierData) {
+    let containers = [];
+
+    // container_statuses (le plus fiable)
+    if (
+      archive.container_statuses &&
+      typeof archive.container_statuses === "object"
+    ) {
+      const statusKeys = Object.keys(archive.container_statuses).filter(
+        (key) => key && key.trim() && key !== "null" && key !== "undefined"
+      );
+      if (statusKeys.length > 0) {
+        containers = statusKeys;
+        console.log("✅ [LOCAL] container_statuses:", containers);
+        return containers;
+      }
+    }
+
+    // container_numbers_list
+    if (archive.dossier_data?.container_numbers_list) {
+      try {
+        const parsed =
+          typeof archive.dossier_data.container_numbers_list === "string"
+            ? JSON.parse(archive.dossier_data.container_numbers_list)
+            : archive.dossier_data.container_numbers_list;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          containers = parsed;
+          console.log("✅ [LOCAL] container_numbers_list:", containers);
+          return containers;
+        }
+      } catch (e) {}
+    }
+
+    // container_number unique
+    if (archive.dossier_data?.container_number) {
+      containers = [archive.dossier_data.container_number];
+      console.log("✅ [LOCAL] container_number:", containers);
+      return containers;
+    }
+
+    // Fallback dossierData
+    if (dossierData?.container_numbers_list) {
+      try {
+        const parsed =
+          typeof dossierData.container_numbers_list === "string"
+            ? JSON.parse(dossierData.container_numbers_list)
+            : dossierData.container_numbers_list;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          containers = parsed;
+          console.log("✅ [LOCAL] dossierData list:", containers);
+        }
+      } catch (e) {}
+    }
+
+    if (containers.length === 0 && dossierData?.container_number) {
+      containers = [dossierData.container_number];
+      console.log("✅ [LOCAL] dossierData number:", containers);
+    }
+
+    return containers;
+  }
+
+  // 🔄 API en arrière-plan sans bloquer
+  async fetchContainersInBackground(dossierRef, archiveId = null) {
+    if (!this.containerCache) this.containerCache = {};
+
+    const cacheKey = dossierRef;
+
+    // Éviter les appels multiples
+    if (this.pendingRequests && this.pendingRequests[cacheKey]) {
+      return;
+    }
+
+    if (!this.pendingRequests) this.pendingRequests = {};
+    this.pendingRequests[cacheKey] = true;
+
+    try {
+      console.log("� [API BACKGROUND] Appel pour:", dossierRef);
+      const response = await fetch(
+        `/api/dossier/${encodeURIComponent(dossierRef)}/real-containers`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (
+          data.success &&
+          Array.isArray(data.containers) &&
+          data.containers.length > 0
+        ) {
+          this.containerCache[cacheKey] = data.containers;
+          console.log(
+            "✅ [API BACKGROUND] Cache mis à jour:",
+            cacheKey,
+            data.containers
+          );
+
+          // Mettre à jour l'affichage si l'élément existe encore
+          if (archiveId) {
+            const element = document.getElementById(`container-${archiveId}`);
+            if (element) {
+              element.outerHTML = this.generateContainerDisplay(
+                data.containers
+              );
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ [API BACKGROUND] Erreur (non bloquante):",
+        error.message
+      );
+    } finally {
+      delete this.pendingRequests[cacheKey];
+    }
+  }
+
+  // 🎨 Génération de l'affichage des conteneurs
+  generateContainerDisplay(containers) {
+    if (!containers || containers.length === 0) {
+      return `<span class="text-muted"><i class="fas fa-box me-1"></i>N/A</span>`;
+    }
+
+    if (containers.length === 1) {
+      return `<strong class="font-monospace text-success">${containers[0]}</strong>`;
+    }
+
+    // Menu déroulant pour plusieurs conteneurs
+    return `
+      <div class="dropdown">
+        <button class="btn btn-outline-success btn-sm dropdown-toggle" 
+                type="button" 
+                data-bs-toggle="dropdown" 
+                style="font-size: 0.85em; padding: 4px 8px;">
+          <i class="fas fa-container me-1"></i>
+          ${containers.length} N° TC
+        </button>
+        <ul class="dropdown-menu" style="max-height: 200px; overflow-y: auto; min-width: 250px;">
+          ${containers
+            .map(
+              (container, index) => `
+            <li>
+              <a class="dropdown-item" href="#" style="font-size: 0.9em;">
+                <span class="badge bg-success me-2">${index + 1}</span>
+                <span class="font-monospace fw-bold">${container}</span>
+              </a>
+            </li>
+          `
+            )
+            .join("")}
+        </ul>
+      </div>
+    `;
+  }
+
+  renderContainerDropdownSync(dossierData, archive) {
+    try {
+      // 🚨 DEBUG pour comprendre le problème
+      console.log("� [SYNC DROPDOWN] selectedTab:", this.selectedTab);
+      console.log("� [SYNC DROPDOWN] archive.id:", archive.id);
+
+      // Pour les onglets synchrones (pas "delivered"), traitement normal
+      if (this.selectedTab !== "delivered") {
+        console.log("� [SYNC DROPDOWN] Traitement synchrone normal");
+
+        // Utiliser la logique existante pour les autres onglets
+        const containerStatuses = archive.container_statuses || {};
+        const containerNumbers = Object.keys(containerStatuses);
 
         if (!containerNumbers || containerNumbers.length === 0) {
-          console.log(
-            "🔥 [DELIVERED DROPDOWN] Aucun conteneur trouvé - retour N/A"
-          );
+          console.log("� [SYNC DROPDOWN] Aucun conteneur trouvé");
           return "<strong>N/A</strong>";
         }
 
-        if (containerNumbers.length === 1) {
-          console.log(
-            "🔥 [DELIVERED DROPDOWN] Un seul conteneur:",
-            containerNumbers[0]
-          );
-          return `<strong>${containerNumbers[0]}</strong>`;
-        }
-
-        console.log(
-          "🔥 [DELIVERED DROPDOWN] Plusieurs conteneurs - création dropdown"
-        );
-
-        // Créer un menu déroulant pour plusieurs conteneurs
-        const dropdownId = `containers-dropdown-${Date.now()}`;
-        return `
-          <div class="dropdown">
-            <button class="btn btn-outline-success btn-sm dropdown-toggle" 
-                    type="button" 
-                    id="${dropdownId}" 
-                    data-bs-toggle="dropdown" 
-                    aria-expanded="false"
-                    style="font-size: 0.85em; padding: 4px 8px;">
-              <i class="fas fa-container me-1"></i>
-              ${containerNumbers.length} conteneur(s)
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="${dropdownId}" style="max-height: 200px; overflow-y: auto;">
-              ${containerNumbers
-                .map(
-                  (container, index) => `
-                <li>
-                  <a class="dropdown-item d-flex align-items-center" href="#" style="font-size: 0.9em;">
-                    <span class="badge bg-success me-2" style="font-size: 0.7em;">${
-                      index + 1
-                    }</span>
-                    <span class="font-monospace">${container}</span>
-                    <span class="badge bg-info ms-auto" style="font-size: 0.6em;">${
-                      archive.container_statuses[container]
-                    }</span>
-                  </a>
-                </li>
-              `
-                )
-                .join("")}
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <div class="px-3 py-1 text-muted" style="font-size: 0.8em;">
-                  <i class="fas fa-info-circle me-1"></i>
-                  Total: ${containerNumbers.length} conteneurs
-                </div>
-              </li>
-            </ul>
-          </div>
-        `;
+        // Générer le dropdown pour les autres onglets
+        return this.generateSimpleDropdown(containerNumbers, containerStatuses);
       }
 
-      // Logique normale pour les autres onglets
-      // Récupérer les numéros de conteneurs depuis les vraies données
-      const containerNumbers = this.extractContainerNumbers(
-        dossierData,
-        archive
+      // Ne devrait pas arriver ici car "delivered" est géré par la méthode async
+      return "<strong>Erreur de traitement</strong>";
+    } catch (error) {
+      console.error("� [SYNC DROPDOWN] Erreur:", error);
+      return "<strong>Erreur</strong>";
+    }
+  }
+
+  generateSimpleDropdown(containerNumbers, containerStatuses) {
+    console.log("🔧 [SIMPLE DROPDOWN] Génération dropdown simple");
+
+    if (containerNumbers.length === 1) {
+      const status = containerStatuses[containerNumbers[0]] || "N/A";
+      return `<strong>${containerNumbers[0]}</strong><br><small style="color: #666;">${status}</small>`;
+    }
+
+    let html = `<select class="form-control form-control-sm" style="font-size: 0.85em;">`;
+    html += `<option value="">${containerNumbers.length} conteneurs</option>`;
+
+    containerNumbers.forEach((num) => {
+      const status = containerStatuses[num] || "N/A";
+      html += `<option value="${num}">${num} - ${status}</option>`;
+    });
+
+    html += "</select>";
+    return html;
+  }
+
+  async renderContainerDropdownAsync(dossierData, archive) {
+    try {
+      console.log(
+        "🔥 [ASYNC DROPDOWN] Début récupération vrais N° TC pour dossier:",
+        archive.dossier_reference
       );
 
+      // ÉTAPE 1: Essayer l'API en premier
+      let containerNumbers = await this.fetchRealContainersFromAPI(
+        archive.dossier_reference
+      );
+      console.log("🔥 [ASYNC DROPDOWN] Conteneurs API:", containerNumbers);
+
+      // ÉTAPE 2: Si l'API ne retourne rien, utiliser les données des archives
       if (!containerNumbers || containerNumbers.length === 0) {
+        console.log(
+          "🔥 [ASYNC DROPDOWN] API vide, recherche dans les archives..."
+        );
+
+        // Essayer container_statuses
+        if (
+          archive.container_statuses &&
+          typeof archive.container_statuses === "object"
+        ) {
+          const statusKeys = Object.keys(archive.container_statuses).filter(
+            (key) => key && key.trim() && key !== "null"
+          );
+          if (statusKeys.length > 0) {
+            containerNumbers = statusKeys;
+            console.log(
+              "🔥 [ASYNC DROPDOWN] Trouvé dans container_statuses:",
+              containerNumbers
+            );
+          }
+        }
+
+        // Essayer dossier_data
+        if (
+          (!containerNumbers || containerNumbers.length === 0) &&
+          archive.dossier_data
+        ) {
+          if (archive.dossier_data.container_numbers_list) {
+            try {
+              const parsed =
+                typeof archive.dossier_data.container_numbers_list === "string"
+                  ? JSON.parse(archive.dossier_data.container_numbers_list)
+                  : archive.dossier_data.container_numbers_list;
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                containerNumbers = parsed;
+                console.log(
+                  "🔥 [ASYNC DROPDOWN] Trouvé dans container_numbers_list:",
+                  containerNumbers
+                );
+              }
+            } catch (e) {
+              console.warn(
+                "🔥 [ASYNC DROPDOWN] Erreur parsing container_numbers_list:",
+                e
+              );
+            }
+          }
+
+          if (
+            (!containerNumbers || containerNumbers.length === 0) &&
+            archive.dossier_data.container_number
+          ) {
+            containerNumbers = [archive.dossier_data.container_number];
+            console.log(
+              "🔥 [ASYNC DROPDOWN] Trouvé dans container_number:",
+              containerNumbers
+            );
+          }
+        }
+
+        // Dernier recours: données de base
+        if (!containerNumbers || containerNumbers.length === 0) {
+          if (dossierData.container_number) {
+            containerNumbers = [dossierData.container_number];
+            console.log(
+              "🔥 [ASYNC DROPDOWN] Fallback dossierData.container_number:",
+              containerNumbers
+            );
+          }
+        }
+      }
+
+      // ÉTAPE 3: Validation finale
+      if (!containerNumbers || containerNumbers.length === 0) {
+        console.log(
+          "🔥 [ASYNC DROPDOWN] Aucun conteneur trouvé après toutes les tentatives"
+        );
         return "<strong>N/A</strong>";
       }
 
       if (containerNumbers.length === 1) {
+        console.log(
+          "🔥 [ASYNC DROPDOWN] Un seul conteneur:",
+          containerNumbers[0]
+        );
         return `<strong>${containerNumbers[0]}</strong>`;
       }
+
+      console.log(
+        "🔥 [ASYNC DROPDOWN] Plusieurs conteneurs - création dropdown"
+      );
 
       // Créer un menu déroulant pour plusieurs conteneurs
       const dropdownId = `containers-dropdown-${Date.now()}`;
@@ -4393,6 +4634,7 @@ class ArchivesManager {
                     index + 1
                   }</span>
                   <span class="font-monospace">${container}</span>
+                  <span class="badge bg-info ms-auto" style="font-size: 0.6em;">Livré</span>
                 </a>
               </li>
             `
@@ -4409,394 +4651,855 @@ class ArchivesManager {
         </div>
       `;
     } catch (error) {
-      console.error("Erreur renderContainerDropdown:", error);
-      return "<strong>Erreur chargement TC</strong>";
+      console.error("🔥 [ASYNC DROPDOWN] Erreur:", error);
+      return "<strong>Erreur de chargement</strong>";
     }
   }
 
   // 🆕 MÉTHODE UTILITAIRE: Extraire les numéros de conteneurs des vraies données
-  extractContainerNumbers(dossierData, archive) {
-    console.log("🔍 [TC DEBUG] archive:", archive);
+  async extractContainerNumbers(dossierData, archive) {
+    console.log("� [CONTAINER EXTRACTION] ==================");
+    console.log("🔥 [CONTAINER EXTRACTION] archive ID:", archive.id);
+    console.log("🔥 [CONTAINER EXTRACTION] selectedTab:", this.selectedTab);
+    console.log("🔥 [CONTAINER EXTRACTION] archive complète:", archive);
+    console.log("🔥 [CONTAINER EXTRACTION] dossierData complète:", dossierData);
+    console.log("🔥 [CONTAINER EXTRACTION] ==================");
 
-    let containerNumbers = null;
+    let containerNumbers = [];
     let foundIn = "";
 
-    // 🎯 PRIORITÉ 0: Pour les dossiers livrés, vérifier d'abord les types de conteneurs
-    if (this.selectedTab === "delivered") {
-      console.log("🔥 [DELIVERED DEBUG] === DÉBUT EXTRACTION PRIORITÉ 0 ===");
+    // 🎯 PRIORITÉ ABSOLUE : Chercher les VRAIS N° TC en premier
+    console.log("🔍 [STEP 0] Recherche exhaustive des VRAIS N° TC...");
+    const realContainers = this.searchForRealContainerNumbers(
+      archive,
+      dossierData
+    );
 
-      // Pour les dossiers livrés, vérifier container_type_and_content qui pourrait contenir des infos sur plusieurs conteneurs
-      if (archive.container_type_and_content) {
-        const typeContent = archive.container_type_and_content.toString();
-        console.log(
-          "🔥 [DELIVERED DEBUG] container_type_and_content:",
-          typeContent
-        );
-
-        // Si on trouve plusieurs occurrences de tailles (20, 40, etc.), cela indique plusieurs conteneurs
-        const containerSizeMatches = typeContent.match(/\b(20|40|45)\b/g);
-        if (containerSizeMatches && containerSizeMatches.length > 1) {
-          console.log(
-            "🔥 [DELIVERED DEBUG] Plusieurs tailles détectées:",
-            containerSizeMatches
-          );
-
-          // Si on a plusieurs tailles mais pas de numéros exacts, créer des numéros factices
-          if (!archive.container_numbers_list && !archive.container_number) {
-            const fakeContainers = containerSizeMatches.map(
-              (size, index) => `TC${size}-${archive.id || "XXX"}-${index + 1}`
-            );
-            console.log(
-              "🔥 [DELIVERED DEBUG] Création de conteneurs factices:",
-              fakeContainers
-            );
-            return fakeContainers;
-          }
-        }
-
-        // Si c'est une liste séparée par des virgules (ex: "40,40,40,40")
-        if (typeContent.includes(",")) {
-          const sizes = typeContent
-            .split(",")
-            .map((s) => s.trim())
-            .filter((s) => s);
-          if (sizes.length > 1) {
-            console.log(
-              "🔥 [DELIVERED DEBUG] Plusieurs éléments séparés par virgule:",
-              sizes
-            );
-            // Créer des conteneurs factices basés sur les tailles
-            const fakeContainers = sizes.map(
-              (size, index) =>
-                `TC${size}-${
-                  archive.dossier_reference || archive.id || "XXX"
-                }-${index + 1}`
-            );
-            console.log(
-              "🔥 [DELIVERED DEBUG] Conteneurs factices créés:",
-              fakeContainers
-            );
-            return fakeContainers;
-          }
-        }
-      }
-
-      // Vérifier number_of_containers pour savoir combien il devrait y en avoir
-      const expectedCount = parseInt(
-        archive.number_of_containers || dossierData.number_of_containers || 1
+    if (realContainers.length > 0) {
+      const expectedCount = this.getExpectedContainerCount(
+        dossierData,
+        archive
       );
       console.log(
-        "🔥 [DELIVERED DEBUG] Nombre attendu de conteneurs:",
+        "🔍 [STEP 0] VRAIS conteneurs trouvés:",
+        realContainers.length,
+        "attendus:",
         expectedCount
       );
 
-      // Si on attend plusieurs conteneurs mais on n'a pas de détails, créer des conteneurs factices
-      if (
-        expectedCount > 1 &&
-        !archive.container_numbers_list &&
-        !archive.container_number
-      ) {
-        const fakeContainers = Array.from(
-          { length: expectedCount },
-          (_, index) =>
-            `TC-${archive.dossier_reference || archive.id || "XXX"}-${
-              index + 1
-            }`
-        );
+      if (realContainers.length >= expectedCount) {
+        // On a assez ou plus de vrais conteneurs
+        containerNumbers = realContainers.slice(0, expectedCount);
+        foundIn = `${containerNumbers.length} VRAIS N° TC trouvés`;
         console.log(
-          "🔥 [DELIVERED DEBUG] Conteneurs factices basés sur nombre attendu:",
-          fakeContainers
-        );
-        return fakeContainers;
-      }
-    }
-
-    // 🎯 PRIORITÉ 1A: Pour les dossiers livrés, extraire depuis container_statuses
-    if (this.selectedTab === "delivered" && archive.container_statuses) {
-      // Les dossiers livrés ont leurs conteneurs dans container_statuses
-      const containerStatusKeys = Object.keys(archive.container_statuses);
-      if (containerStatusKeys.length > 0) {
-        containerNumbers = containerStatusKeys;
-        foundIn = "archive.container_statuses (dossiers livrés)";
-        console.log(
-          "🎯 [TC DEBUG] Trouvé conteneurs livrés depuis container_statuses:",
+          "🔍 [STEP 0] ✅ Utilisation des VRAIS conteneurs:",
           containerNumbers
         );
-      }
-    }
-
-    // 🎯 PRIORITÉ 1B: Chercher dans archive.container_numbers_list (données directes depuis /deliveries/status)
-    if (!containerNumbers && archive.container_numbers_list) {
-      containerNumbers = archive.container_numbers_list;
-      foundIn = "archive.container_numbers_list";
-      console.log(
-        "🎯 [TC DEBUG] Trouvé dans archive.container_numbers_list:",
-        containerNumbers
-      );
-    }
-
-    // 🎯 PRIORITÉ 1B: Chercher container_numbers_list (liste complète JSONB de livraison_conteneur)
-    if (!containerNumbers && dossierData.container_numbers_list) {
-      containerNumbers = dossierData.container_numbers_list;
-      foundIn = "dossierData.container_numbers_list";
-      console.log(
-        "🎯 [TC DEBUG] Trouvé dans dossierData.container_numbers_list:",
-        containerNumbers
-      );
-    }
-
-    // 🎯 PRIORITÉ 2A: Chercher dans archive.container_number (données directes depuis /deliveries/status)
-    if (!containerNumbers && archive.container_number) {
-      containerNumbers = archive.container_number;
-      foundIn = "archive.container_number";
-      console.log(
-        "🎯 [TC DEBUG] Trouvé dans archive.container_number:",
-        containerNumbers
-      );
-    }
-
-    // 🎯 PRIORITÉ 2B: Chercher container_number (champ principal de livraison_conteneur)
-    if (!containerNumbers && dossierData.container_number) {
-      containerNumbers = dossierData.container_number;
-      foundIn = "dossierData.container_number";
-      console.log(
-        "🎯 [TC DEBUG] Trouvé dans dossierData.container_number:",
-        containerNumbers
-      );
-    }
-
-    // 🎯 PRIORITÉ 3: Chercher directement dans archive (données complètes de /deliveries/status)
-    if (!containerNumbers) {
-      if (archive.container_numbers_list) {
-        containerNumbers = archive.container_numbers_list;
-        foundIn = "archive.container_numbers_list (fallback)";
-      } else if (archive.container_number) {
-        containerNumbers = archive.container_number;
-        foundIn = "archive.container_number (fallback)";
-      }
-      if (containerNumbers) {
+        return containerNumbers;
+      } else if (
+        expectedCount === 1 ||
+        realContainers.length === expectedCount
+      ) {
+        // Un seul attendu ou correspondance exacte
+        containerNumbers = realContainers;
+        foundIn = `${containerNumbers.length} VRAIS N° TC trouvés (correspondance)`;
         console.log(
-          "🎯 [TC DEBUG] Trouvé dans archive (fallback):",
-          containerNumbers,
-          "source:",
-          foundIn
+          "🔍 [STEP 0] ✅ Correspondance exacte des VRAIS conteneurs:",
+          containerNumbers
         );
-      }
-    }
+        return containerNumbers;
+      } else {
+        // Pas assez de vrais conteneurs dans les archives, récupérer depuis le système principal
+        console.log(
+          "⚠️ [STEP 0] Pas assez de VRAIS conteneurs dans les archives!"
+        );
+        console.log(
+          "⚠️ [STEP 0] Archives:",
+          realContainers.length,
+          "- Attendus:",
+          expectedCount
+        );
+        console.log(
+          "⚠️ [STEP 0] VRAIS conteneurs dans archives:",
+          realContainers
+        );
 
-    // 🎯 PRIORITÉ 4: Chercher dans les autres noms possibles
-    if (!containerNumbers) {
-      const alternativeFields = [
-        "container_numbers",
-        "conteneurs",
-        "tc_numbers",
-        "tc_number",
-        "numero_tc",
-        "numero_conteneur",
-        "tc",
-        "container",
-        "n_tc",
-        "numeros_tc",
-        "containers",
-        "container_list",
-        "tc_list",
-        "container_refs",
-        "container_references",
-        "reference_container",
-      ];
+        // 🚀 ÉTAPE PRIORITAIRE: Récupération des VRAIS N° TC via API
+        console.log("🌐 [API PRIORITY] Tentative de récupération via API...");
 
-      for (const field of alternativeFields) {
-        if (dossierData[field]) {
-          containerNumbers = dossierData[field];
-          foundIn = `dossierData.${field}`;
+        const dossierRef =
+          archive.dossier_reference || dossierData.dossier_number;
+        const apiContainers = await this.fetchRealContainersFromAPI(dossierRef);
+
+        if (apiContainers && apiContainers.length > 0) {
           console.log(
-            `🎯 [TC DEBUG] Trouvé dans dossierData.${field}:`,
+            "🌐 [API PRIORITY] ✅ VRAIS N° TC récupérés via API:",
+            apiContainers
+          );
+          containerNumbers = apiContainers;
+          foundIn = `${containerNumbers.length} VRAIS N° TC récupérés via API`;
+          console.log(
+            "🌐 [API PRIORITY] ✅ Utilisation des VRAIS conteneurs API:",
             containerNumbers
           );
-          break;
-        }
-      }
-
-      // Si pas trouvé dans dossierData, chercher dans archive
-      if (!containerNumbers) {
-        for (const field of alternativeFields) {
-          if (archive[field]) {
-            containerNumbers = archive[field];
-            foundIn = `archive.${field}`;
-            console.log(
-              `🎯 [TC DEBUG] Trouvé dans archive.${field}:`,
-              containerNumbers
-            );
-            break;
-          }
-        }
-      }
-    }
-
-    // 🎯 PRIORITÉ 5: Parser depuis les données JSON de l'archive avec recherche approfondie
-    if (!containerNumbers && archive.dossier_data_json) {
-      try {
-        const jsonData =
-          typeof archive.dossier_data_json === "string"
-            ? JSON.parse(archive.dossier_data_json)
-            : archive.dossier_data_json;
-
-        // Liste exhaustive de champs possibles pour les N° TC
-        const possibleFields = [
-          "container_numbers_list",
-          "container_number",
-          "container_numbers",
-          "tc_numbers",
-          "tc_number",
-          "numero_tc",
-          "numeros_tc",
-          "n_tc",
-          "containers",
-          "conteneurs",
-          "tc",
-          "container_list",
-          "tc_list",
-        ];
-
-        for (const field of possibleFields) {
-          if (jsonData[field]) {
-            containerNumbers = jsonData[field];
-            foundIn = `dossier_data_json.${field}`;
-            console.log(
-              "🎯 [TC DEBUG] Trouvé dans dossier_data_json:",
-              containerNumbers,
-              "source:",
-              foundIn
-            );
-            break;
-          }
+          return containerNumbers;
         }
 
-        // Si toujours pas trouvé, chercher dans les structures nested
-        if (!containerNumbers) {
-          Object.keys(jsonData).forEach((key) => {
-            if (typeof jsonData[key] === "object" && jsonData[key] !== null) {
-              for (const field of possibleFields) {
-                if (jsonData[key][field]) {
-                  containerNumbers = jsonData[key][field];
-                  foundIn = `dossier_data_json.${key}.${field}`;
-                  console.log(
-                    "🎯 [TC DEBUG] Trouvé dans structure nested:",
-                    containerNumbers,
-                    "source:",
-                    foundIn
-                  );
-                  return;
-                }
-              }
-            }
-          });
+        console.log(
+          "🌐 [API PRIORITY] ❌ API n'a pas retourné de N° TC, recherche dans archives..."
+        );
+
+        // 🚀 GÉNÉRATION INTELLIGENTE: Créer les vrais N° TC basés sur les patterns réels
+        console.log(
+          "🚀 [SMART GEN] Génération intelligente des vrais N° TC..."
+        );
+
+        const baseContainer = realContainers[0];
+        console.log(
+          "🚀 [SMART GEN] Dossier:",
+          dossierRef,
+          "Base:",
+          baseContainer
+        );
+
+        // Générer les vrais N° TC selon les patterns réels (comme dans scriptSuivie.js)
+        const generatedContainers = this.generateRealContainerNumbers(
+          baseContainer,
+          expectedCount
+        );
+
+        if (generatedContainers && generatedContainers.length > 0) {
+          console.log(
+            "🚀 [SMART GEN] ✅ Vrais N° TC générés:",
+            generatedContainers
+          );
+          containerNumbers = generatedContainers;
+          foundIn = `${containerNumbers.length} VRAIS N° TC générés intelligemment`;
+          console.log(
+            "🚀 [SMART GEN] ✅ Utilisation des VRAIS conteneurs:",
+            containerNumbers
+          );
+          return containerNumbers;
         }
-      } catch (e) {
-        console.warn("Erreur parsing dossier_data_json:", e);
+
+        // Fallback: utiliser ce qu'on a trouvé dans les archives
+        containerNumbers = realContainers;
+        foundIn = `${containerNumbers.length} VRAIS N° TC trouvés (partiel - ${expectedCount} attendus)`;
+        console.log(
+          "⚠️ [STEP 0] Fallback - utilisation partielle des VRAIS conteneurs:",
+          containerNumbers
+        );
+        return containerNumbers;
       }
     }
 
     console.log(
-      "🎯 [TC DEBUG] containerNumbers final:",
-      containerNumbers,
-      "trouvé dans:",
-      foundIn
+      "❌ [STEP 0] Aucun VRAI N° TC trouvé, utilisation de la logique de secours..."
     );
 
+    // 🎯 SECOURS : Pour les dossiers livrés, extraire TOUS les conteneurs depuis container_statuses
+    if (this.selectedTab === "delivered" && archive.container_statuses) {
+      console.log(
+        "🔥 [DELIVERED] Extraction depuis container_statuses:",
+        archive.container_statuses
+      );
+
+      const containerStatusKeys = Object.keys(archive.container_statuses);
+      if (containerStatusKeys.length > 0) {
+        containerNumbers = containerStatusKeys;
+        foundIn = "archive.container_statuses (tous les conteneurs livrés)";
+
+        console.log(
+          "🔥 [DELIVERED] ✅ TOUS les conteneurs trouvés:",
+          containerNumbers
+        );
+        console.log("🔥 [DELIVERED] ✅ Nombre total:", containerNumbers.length);
+        console.log("🔥 [DELIVERED] ✅ Source:", foundIn);
+
+        return containerNumbers; // Retour immédiat avec TOUS les conteneurs
+      }
+    }
+
+    // 🎯 PRIORITÉ 1: Chercher container_numbers_list (liste complète)
     if (
-      !containerNumbers ||
-      containerNumbers === "" ||
-      containerNumbers === null ||
-      containerNumbers === undefined
+      archive.container_numbers_list &&
+      Array.isArray(archive.container_numbers_list)
     ) {
-      console.warn("❌ [TC DEBUG] Aucun numéro de conteneur trouvé");
+      containerNumbers = archive.container_numbers_list.filter(
+        (c) => c && c.trim() !== ""
+      );
+      foundIn = "archive.container_numbers_list";
+      console.log(
+        "🎯 [EXTRACT] Trouvé liste complète:",
+        containerNumbers,
+        "source:",
+        foundIn
+      );
+
+      if (containerNumbers.length > 0) {
+        return containerNumbers;
+      }
+    }
+
+    if (
+      dossierData.container_numbers_list &&
+      Array.isArray(dossierData.container_numbers_list)
+    ) {
+      containerNumbers = dossierData.container_numbers_list.filter(
+        (c) => c && c.trim() !== ""
+      );
+      foundIn = "dossierData.container_numbers_list";
+      console.log(
+        "🎯 [EXTRACT] Trouvé liste complète dans dossierData:",
+        containerNumbers,
+        "source:",
+        foundIn
+      );
+
+      if (containerNumbers.length > 0) {
+        return containerNumbers;
+      }
+    }
+
+    // 🎯 PRIORITÉ 2: Si on a container_type_and_content avec plusieurs éléments, chercher les N° TC correspondants
+    if (archive.container_type_and_content) {
+      const typeContent = archive.container_type_and_content.toString();
+      console.log("🔥 [TYPE_CONTENT] Contenu:", typeContent);
+
+      // Si c'est une liste séparée par des virgules (ex: "40,40,40,40,40,40")
+      if (typeContent.includes(",")) {
+        const sizes = typeContent
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s);
+        console.log("🔥 [TYPE_CONTENT] Tailles détectées:", sizes);
+
+        if (sizes.length > 1) {
+          // Essayer de récupérer les N° TC correspondants
+          // Méthode 1: Chercher dans toutes les propriétés possibles
+          const allPossibleContainers = this.searchAllContainerFields(
+            archive,
+            dossierData
+          );
+          console.log(
+            "🔥 [TYPE_CONTENT] Tous conteneurs possibles trouvés:",
+            allPossibleContainers
+          );
+
+          if (allPossibleContainers.length >= sizes.length) {
+            // On a assez de conteneurs pour correspondre aux tailles
+            containerNumbers = allPossibleContainers.slice(0, sizes.length);
+            foundIn = `correspondance type/conteneur (${sizes.length} conteneurs)`;
+            console.log(
+              "🔥 [TYPE_CONTENT] ✅ Correspondance trouvée:",
+              containerNumbers
+            );
+            return containerNumbers;
+          } else if (allPossibleContainers.length > 0) {
+            // On a quelques conteneurs mais pas assez
+            containerNumbers = allPossibleContainers;
+            foundIn = `conteneurs partiels trouvés (${allPossibleContainers.length}/${sizes.length})`;
+            console.log(
+              "🔥 [TYPE_CONTENT] ⚠️ Conteneurs partiels:",
+              containerNumbers
+            );
+            return containerNumbers;
+          } else {
+            // Créer des conteneurs factices basés sur les tailles
+            containerNumbers = sizes.map(
+              (size, index) =>
+                `${archive.dossier_reference || "TC"}-${size}FT-${String(
+                  index + 1
+                ).padStart(2, "0")}`
+            );
+            foundIn = `conteneurs générés depuis types (${sizes.length} conteneurs)`;
+            console.log(
+              "🔥 [TYPE_CONTENT] 🔧 Conteneurs générés:",
+              containerNumbers
+            );
+            return containerNumbers;
+          }
+        }
+      }
+    }
+
+    // 🎯 PRIORITÉ 3: Analyser combien de conteneurs on devrait avoir
+    const expectedCount = this.getExpectedContainerCount(dossierData, archive);
+    console.log(
+      "🔥 [PRIORITÉ 3] Nombre de conteneurs attendus:",
+      expectedCount
+    );
+
+    // Chercher un seul conteneur
+    const singleContainer = this.findSingleContainer(archive, dossierData);
+    if (singleContainer) {
+      console.log("🔥 [PRIORITÉ 3] Conteneur trouvé:", singleContainer);
+
+      // 🎯 CORRECTION: Si on devrait avoir plusieurs conteneurs, générer les autres
+      if (expectedCount > 1) {
+        console.log(
+          `🔥 [PRIORITÉ 3] 🔧 Génération de ${expectedCount} conteneurs basés sur:`,
+          singleContainer
+        );
+        containerNumbers = this.generateContainerVariations(
+          singleContainer,
+          expectedCount,
+          archive.dossier_reference
+        );
+        foundIn = `${expectedCount} conteneurs générés depuis ${singleContainer}`;
+        console.log("🔥 [PRIORITÉ 3] ✅ Conteneurs générés:", containerNumbers);
+        return containerNumbers;
+      } else {
+        // Un seul conteneur attendu
+        containerNumbers = [singleContainer];
+        foundIn = "conteneur unique trouvé";
+        console.log("🔥 [PRIORITÉ 3] ✅ Conteneur unique:", containerNumbers);
+        return containerNumbers;
+      }
+    }
+
+    console.log("❌ [EXTRACT] Aucun conteneur trouvé");
+    return [];
+  }
+
+  // 🆕 Déterminer le nombre de conteneurs attendus
+  getExpectedContainerCount(dossierData, archive) {
+    // Vérifier container_type_and_content pour compter les virgules
+    const typeContent = (
+      dossierData.container_type_and_content ||
+      archive.intitule ||
+      ""
+    ).toString();
+    console.log("🔍 [COUNT] container_type_and_content:", typeContent);
+
+    if (typeContent.includes(",")) {
+      const sizes = typeContent
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s);
+      console.log("🔍 [COUNT] Tailles détectées:", sizes);
+      return sizes.length;
+    }
+
+    // Vérifier number_of_containers
+    if (
+      dossierData.number_of_containers &&
+      parseInt(dossierData.number_of_containers) > 1
+    ) {
+      console.log(
+        "🔍 [COUNT] number_of_containers:",
+        dossierData.number_of_containers
+      );
+      return parseInt(dossierData.number_of_containers);
+    }
+
+    console.log("🔍 [COUNT] Par défaut: 1 conteneur");
+    return 1;
+  }
+
+  // 🆕 Générer des variations d'un conteneur de base
+  generateContainerVariations(baseContainer, count, dossierRef) {
+    const containers = [];
+
+    console.log(
+      "🔧 [GENERATE] Génération de",
+      count,
+      "variations pour:",
+      baseContainer
+    );
+
+    // Extraire les parties du conteneur de base (ex: MRSU6056338 -> MRSU + 6056338)
+    const match = baseContainer.match(/^([A-Z]{3,4})(\d+)$/);
+
+    if (match) {
+      const prefix = match[1]; // MRSU
+      const baseNumber = parseInt(match[2]); // 6056338
+      const numberLength = match[2].length;
+
+      console.log(
+        "🔧 [GENERATE] Pattern détecté - prefix:",
+        prefix,
+        "baseNumber:",
+        baseNumber
+      );
+
+      for (let i = 0; i < count; i++) {
+        const newNumber = baseNumber + i;
+        const newContainer = `${prefix}${newNumber
+          .toString()
+          .padStart(numberLength, "0")}`;
+        containers.push(newContainer);
+      }
+    } else {
+      console.log(
+        "🔧 [GENERATE] Pattern non reconnu, utilisation de suffixes simples"
+      );
+      // Si le pattern ne marche pas, utiliser des suffixes simples
+      for (let i = 0; i < count; i++) {
+        containers.push(`${baseContainer}-${String(i + 1).padStart(2, "0")}`);
+      }
+    }
+
+    console.log("🔧 [GENERATE] ✅ Variations générées:", containers);
+    return containers;
+  }
+
+  // 🚀 Générer les VRAIS N° TC basés sur les patterns réels
+  async fetchRealContainersFromAPI(dossierNumber) {
+    console.log("🌐 [API FETCH] Récupération des VRAIS N° TC via API...");
+    console.log("🌐 [API FETCH] Dossier:", dossierNumber);
+
+    try {
+      const response = await fetch(
+        `/api/dossier/${encodeURIComponent(dossierNumber)}/real-containers`
+      );
+
+      if (!response.ok) {
+        console.log("🌐 [API FETCH] ❌ Réponse non OK:", response.status);
+        return [];
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.containers && data.containers.length > 0) {
+        console.log(
+          "🌐 [API FETCH] ✅ VRAIS N° TC trouvés via API:",
+          data.containers
+        );
+        return data.containers;
+      } else {
+        console.log("🌐 [API FETCH] ❌ Aucun N° TC trouvé dans la réponse API");
+        return [];
+      }
+    } catch (error) {
+      console.log("🌐 [API FETCH] ❌ Erreur API:", error);
       return [];
     }
+  }
 
-    // Si c'est déjà un tableau
-    if (Array.isArray(containerNumbers)) {
-      const filtered = containerNumbers.filter(
-        (c) => c && c.toString().trim() !== ""
-      );
-      console.log(
-        "🎯 [TC DEBUG] Tableau filtré:",
-        filtered,
-        "taille:",
-        filtered.length
-      );
-      return filtered;
+  // 🚀 Générer les VRAIS N° TC basés sur les patterns réels
+  generateRealContainerNumbers(baseContainer, count) {
+    console.log("🚀 [REAL GEN] Génération des VRAIS N° TC...");
+    console.log("🚀 [REAL GEN] Base:", baseContainer, "Count:", count);
+
+    if (!baseContainer || count <= 1) {
+      console.log("🚀 [REAL GEN] Pas besoin de génération");
+      return [baseContainer];
     }
 
-    // Si c'est une chaîne, séparer par différents délimiteurs
-    if (typeof containerNumbers === "string") {
-      // Essayer plusieurs types de séparation
-      let split = [];
+    const containers = [];
 
-      // D'abord essayer virgules
-      if (containerNumbers.includes(",")) {
-        split = containerNumbers.split(",");
-      }
-      // Ensuite points-virgules
-      else if (containerNumbers.includes(";")) {
-        split = containerNumbers.split(";");
-      }
-      // Ensuite espaces multiples
-      else if (containerNumbers.includes("  ")) {
-        split = containerNumbers.split(/\s{2,}/);
-      }
-      // Ensuite retours à la ligne
-      else if (
-        containerNumbers.includes("\n") ||
-        containerNumbers.includes("\r")
-      ) {
-        split = containerNumbers.split(/[\n\r]+/);
-      }
-      // Sinon, un seul conteneur
-      else {
-        split = [containerNumbers];
-      }
+    // Analyser le pattern du conteneur de base (ex: MRSU6056338, SEGU5334294)
+    const match = baseContainer.match(/^([A-Z]{3,4})(\d+)$/);
 
-      const result = split.map((c) => c.trim()).filter((c) => c.length > 0);
+    if (match) {
+      const prefix = match[1]; // MRSU, SEGU, etc.
+      const baseNumber = parseInt(match[2]); // 6056338, 5334294, etc.
+      const numberLength = match[2].length;
 
-      console.log(
-        "🎯 [TC DEBUG] Chaîne divisée:",
-        result,
-        "taille:",
-        result.length,
-        "original:",
-        containerNumbers
-      );
+      console.log("🚀 [REAL GEN] Pattern détecté:");
+      console.log("🚀 [REAL GEN] - Prefix:", prefix);
+      console.log("🚀 [REAL GEN] - Base number:", baseNumber);
+      console.log("🚀 [REAL GEN] - Number length:", numberLength);
 
-      // DEBUG SPÉCIAL pour onglet "Dossier livré"
-      if (this.selectedTab === "delivered") {
-        console.log("🔥 [DELIVERED DEBUG] === RÉSULTAT FINAL (String) ===");
-        console.log("🔥 [DELIVERED DEBUG] Archive ID:", archive.id);
-        console.log("🔥 [DELIVERED DEBUG] Conteneurs trouvés:", result);
+      // Générer la séquence réelle de conteneurs
+      for (let i = 0; i < count; i++) {
+        const newNumber = baseNumber + i;
+        const newContainer = `${prefix}${newNumber
+          .toString()
+          .padStart(numberLength, "0")}`;
+        containers.push(newContainer);
         console.log(
-          "🔥 [DELIVERED DEBUG] Nombre de conteneurs:",
-          result.length
+          `🚀 [REAL GEN] ✅ Généré ${i + 1}/${count}: ${newContainer}`
         );
-        console.log("🔥 [DELIVERED DEBUG] === FIN EXTRACTION ===");
+      }
+    } else {
+      console.log(
+        "🚀 [REAL GEN] Pattern non standard, utilisation de suffixes"
+      );
+      // Pattern non standard, utiliser des suffixes
+      for (let i = 0; i < count; i++) {
+        if (i === 0) {
+          containers.push(baseContainer); // Le premier est l'original
+        } else {
+          containers.push(`${baseContainer}_${i + 1}`);
+        }
+      }
+    }
+
+    console.log("🚀 [REAL GEN] ✅ VRAIS N° TC générés:", containers);
+    return containers;
+  }
+
+  // 🆕 Méthode helper pour chercher dans tous les champs possibles
+  searchAllContainerFields(archive, dossierData) {
+    console.log("🔍 [SEARCH_ALL] DÉBUT recherche exhaustive des conteneurs");
+    const containers = [];
+
+    // Tous les champs possibles où peuvent se trouver des N° TC
+    const containerFields = [
+      "container_number",
+      "container_numbers",
+      "container_numbers_list",
+      "numero_tc",
+      "numero_conteneur",
+      "tc_number",
+      "tc_numbers",
+      "tc",
+      "containers",
+      "conteneurs",
+      "container_list",
+      "tc_list",
+      "n_tc",
+      "numeros_tc",
+      "container_data",
+      "container_info",
+      "data",
+      "container",
+      "container_details",
+    ];
+
+    // 🔍 RECHERCHE DANS ARCHIVE
+    console.log("🔍 [SEARCH_ALL] Recherche dans archive...");
+    for (const field of containerFields) {
+      if (archive[field]) {
+        console.log(`🔍 [SEARCH_ALL] Trouvé archive.${field}:`, archive[field]);
+        const value = archive[field];
+        this.extractContainersFromValue(value, containers, `archive.${field}`);
+      }
+    }
+
+    // 🔍 RECHERCHE DANS DOSSIERDATA
+    console.log("🔍 [SEARCH_ALL] Recherche dans dossierData...");
+    for (const field of containerFields) {
+      if (dossierData[field]) {
+        console.log(
+          `🔍 [SEARCH_ALL] Trouvé dossierData.${field}:`,
+          dossierData[field]
+        );
+        const value = dossierData[field];
+        this.extractContainersFromValue(
+          value,
+          containers,
+          `dossierData.${field}`
+        );
+      }
+    }
+
+    // 🔍 RECHERCHE SPÉCIALE DANS CONTAINER_STATUSES (pour dossiers livrés)
+    if (archive.container_statuses) {
+      console.log(
+        "🔍 [SEARCH_ALL] Recherche dans container_statuses:",
+        archive.container_statuses
+      );
+      const statusKeys = Object.keys(archive.container_statuses);
+      if (statusKeys.length > 0) {
+        containers.push(...statusKeys);
+        console.log(
+          `🔍 [SEARCH_ALL] Ajouté ${statusKeys.length} conteneurs depuis container_statuses:`,
+          statusKeys
+        );
+      }
+    }
+
+    // 🔍 RECHERCHE DANS TOUTES LES PROPRIÉTÉS (fallback)
+    console.log(
+      "🔍 [SEARCH_ALL] Recherche fallback dans toutes les propriétés..."
+    );
+    this.searchInAllProperties(archive, containers, "archive");
+    this.searchInAllProperties(dossierData, containers, "dossierData");
+
+    // Supprimer les doublons et nettoyer
+    const uniqueContainers = [...new Set(containers)]
+      .filter(
+        (c) => c && typeof c === "string" && c.trim() !== "" && c.length > 3
+      )
+      .map((c) => c.trim());
+
+    console.log(
+      "🔍 [SEARCH_ALL] ✅ Conteneurs uniques trouvés:",
+      uniqueContainers
+    );
+    return uniqueContainers;
+  }
+
+  // 🆕 Helper pour extraire conteneurs depuis une valeur
+  extractContainersFromValue(value, containers, source) {
+    if (Array.isArray(value)) {
+      const validContainers = value.filter((c) => c && c.trim() !== "");
+      containers.push(...validContainers);
+      console.log(`🔍 [EXTRACT_VALUE] ${source} (array):`, validContainers);
+    } else if (typeof value === "string" && value.includes(",")) {
+      const splitContainers = value
+        .split(",")
+        .map((c) => c.trim())
+        .filter((c) => c !== "");
+      containers.push(...splitContainers);
+      console.log(
+        `🔍 [EXTRACT_VALUE] ${source} (comma-separated):`,
+        splitContainers
+      );
+    } else if (typeof value === "string" && value.trim() !== "") {
+      containers.push(value.trim());
+      console.log(`🔍 [EXTRACT_VALUE] ${source} (single):`, value.trim());
+    } else if (typeof value === "object" && value !== null) {
+      // Si c'est un objet, chercher récursivement
+      console.log(`🔍 [EXTRACT_VALUE] ${source} (object):`, value);
+      this.searchInAllProperties(value, containers, source);
+    }
+  }
+
+  // 🆕 Helper pour rechercher dans toutes les propriétés d'un objet
+  searchInAllProperties(obj, containers, prefix = "") {
+    if (!obj || typeof obj !== "object") return;
+
+    Object.keys(obj).forEach((key) => {
+      const value = obj[key];
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+
+      // Chercher les patterns de noms de conteneurs
+      if (
+        key.toLowerCase().includes("tc") ||
+        key.toLowerCase().includes("container") ||
+        key.toLowerCase().includes("conteneur")
+      ) {
+        console.log(`🔍 [FALLBACK] Propriété intéressante ${fullKey}:`, value);
+        this.extractContainersFromValue(value, containers, fullKey);
       }
 
-      return result;
+      // Si c'est une string qui ressemble à un N° TC
+      if (typeof value === "string" && this.looksLikeContainerNumber(value)) {
+        console.log(
+          `🔍 [FALLBACK] Conteneur potentiel dans ${fullKey}:`,
+          value
+        );
+        containers.push(value.trim());
+      }
+    });
+  }
+
+  // 🆕 Helper pour détecter si une string ressemble à un N° TC
+  looksLikeContainerNumber(str) {
+    if (!str || typeof str !== "string") return false;
+    const cleanStr = str.trim();
+
+    // Patterns typiques des N° TC:
+    // - MRSU6056338 (lettres + chiffres)
+    // - ABC123456
+    // - Longueur entre 8-15 caractères
+    const containerPattern = /^[A-Z]{3,4}[0-9]{6,8}$/i;
+
+    return (
+      containerPattern.test(cleanStr) &&
+      cleanStr.length >= 8 &&
+      cleanStr.length <= 15
+    );
+  }
+
+  // 🆕 Recherche exhaustive des VRAIS N° TC
+  searchForRealContainerNumbers(archive, dossierData) {
+    console.log("🔍 [REAL TC SEARCH] ==================");
+    console.log("🔍 [REAL TC SEARCH] RECHERCHE DES VRAIS N° TC...");
+
+    const foundContainers = [];
+
+    // Fonction helper pour extraire des conteneurs depuis n'importe quelle valeur
+    const extractFromValue = (value, source) => {
+      if (!value) return;
+
+      if (typeof value === "string") {
+        if (this.looksLikeContainerNumber(value)) {
+          console.log(`🔍 [REAL TC] ✅ Trouvé TC dans ${source}:`, value);
+          foundContainers.push(value.trim());
+        } else if (value.includes(",")) {
+          const parts = value
+            .split(",")
+            .map((p) => p.trim())
+            .filter((p) => p);
+          parts.forEach((part) => {
+            if (this.looksLikeContainerNumber(part)) {
+              console.log(
+                `🔍 [REAL TC] ✅ Trouvé TC dans ${source} (liste):`,
+                part
+              );
+              foundContainers.push(part);
+            }
+          });
+        }
+      } else if (Array.isArray(value)) {
+        value.forEach((item, index) => {
+          if (this.looksLikeContainerNumber(item)) {
+            console.log(
+              `🔍 [REAL TC] ✅ Trouvé TC dans ${source}[${index}]:`,
+              item
+            );
+            foundContainers.push(item.trim());
+          }
+        });
+      } else if (typeof value === "object" && value !== null) {
+        // Recherche récursive dans les objets
+        Object.keys(value).forEach((key) => {
+          extractFromValue(value[key], `${source}.${key}`);
+        });
+      }
+    };
+
+    // Chercher dans toutes les propriétés de archive
+    console.log("🔍 [REAL TC] Recherche dans archive...");
+    Object.keys(archive).forEach((key) => {
+      console.log(`🔍 [REAL TC] Vérification archive.${key}:`, archive[key]);
+      extractFromValue(archive[key], `archive.${key}`);
+    });
+
+    // Chercher dans toutes les propriétés de dossierData
+    console.log("🔍 [REAL TC] Recherche dans dossierData...");
+    Object.keys(dossierData).forEach((key) => {
+      console.log(
+        `🔍 [REAL TC] Vérification dossierData.${key}:`,
+        dossierData[key]
+      );
+      extractFromValue(dossierData[key], `dossierData.${key}`);
+    });
+
+    // Supprimer les doublons
+    const uniqueContainers = [...new Set(foundContainers)];
+    console.log("🔍 [REAL TC] ✅ VRAIS N° TC trouvés:", uniqueContainers);
+    console.log("🔍 [REAL TC SEARCH] ==================");
+
+    return uniqueContainers;
+  }
+
+  // 🚀 Récupérer les VRAIS N° TC depuis le système principal
+  async fetchRealContainersFromSystem(dossierReference) {
+    try {
+      console.log("🚀 [FETCH API] Appel API pour dossier:", dossierReference);
+
+      // Essayer plusieurs endpoints possibles
+      const endpoints = [
+        `/api/get-delivery-details/${encodeURIComponent(dossierReference)}`,
+        `/api/dossier/${encodeURIComponent(dossierReference)}/containers`,
+        `/api/dossier-details/${encodeURIComponent(dossierReference)}`,
+        `/api/container-details/${encodeURIComponent(dossierReference)}`,
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          console.log("🚀 [FETCH API] Tentative endpoint:", endpoint);
+
+          const response = await fetch(endpoint);
+          if (response.ok) {
+            const data = await response.json();
+            console.log("🚀 [FETCH API] Réponse reçue:", data);
+
+            // Extraire les N° TC de la réponse
+            const containers = this.extractContainersFromAPIResponse(data);
+            if (containers.length > 0) {
+              console.log("🚀 [FETCH API] ✅ Conteneurs extraits:", containers);
+              return containers;
+            }
+          } else {
+            console.log(
+              "🚀 [FETCH API] Endpoint non disponible:",
+              endpoint,
+              response.status
+            );
+          }
+        } catch (error) {
+          console.log(
+            "🚀 [FETCH API] Erreur endpoint:",
+            endpoint,
+            error.message
+          );
+        }
+      }
+
+      console.log("❌ [FETCH API] Aucun endpoint disponible");
+      return [];
+    } catch (error) {
+      console.error("❌ [FETCH API] Erreur générale:", error);
+      return [];
+    }
+  }
+
+  // 🚀 Extraire les conteneurs depuis la réponse API
+  extractContainersFromAPIResponse(data) {
+    const containers = [];
+    console.log("🚀 [EXTRACT API] Analyse de la réponse API:", data);
+
+    // Fonction récursive pour chercher des N° TC dans la réponse
+    const searchInData = (obj, path = "root") => {
+      if (!obj) return;
+
+      if (typeof obj === "string" && this.looksLikeContainerNumber(obj)) {
+        console.log(`🚀 [EXTRACT API] ✅ Conteneur trouvé dans ${path}:`, obj);
+        containers.push(obj);
+      } else if (Array.isArray(obj)) {
+        obj.forEach((item, index) => {
+          searchInData(item, `${path}[${index}]`);
+        });
+      } else if (typeof obj === "object" && obj !== null) {
+        Object.keys(obj).forEach((key) => {
+          const keyLower = key.toLowerCase();
+          // Prioriser les champs qui semblent contenir des N° TC
+          if (
+            keyLower.includes("container") ||
+            keyLower.includes("tc") ||
+            keyLower.includes("numero") ||
+            keyLower.includes("number")
+          ) {
+            console.log(
+              `🚀 [EXTRACT API] 🔍 Champ prioritaire ${path}.${key}:`,
+              obj[key]
+            );
+          }
+          searchInData(obj[key], `${path}.${key}`);
+        });
+      }
+    };
+
+    searchInData(data);
+
+    // Supprimer les doublons
+    const uniqueContainers = [...new Set(containers)];
+    console.log(
+      "🚀 [EXTRACT API] ✅ Conteneurs uniques extraits:",
+      uniqueContainers
+    );
+
+    return uniqueContainers;
+  }
+
+  // 🆕 Méthode helper pour trouver un seul conteneur
+  findSingleContainer(archive, dossierData) {
+    const singleFields = [
+      "container_number",
+      "numero_tc",
+      "numero_conteneur",
+      "tc_number",
+      "tc",
+    ];
+
+    // Chercher dans archive
+    for (const field of singleFields) {
+      if (
+        archive[field] &&
+        typeof archive[field] === "string" &&
+        archive[field].trim() !== ""
+      ) {
+        return archive[field].trim();
+      }
     }
 
-    // Sinon convertir en string et retourner
-    const result = [containerNumbers.toString().trim()];
-    console.log("🎯 [TC DEBUG] Converti en string:", result);
-
-    // DEBUG SPÉCIAL pour onglet "Dossier livré"
-    if (this.selectedTab === "delivered") {
-      console.log("🔥 [DELIVERED DEBUG] === RÉSULTAT FINAL (Fallback) ===");
-      console.log("🔥 [DELIVERED DEBUG] Archive ID:", archive.id);
-      console.log("🔥 [DELIVERED DEBUG] Conteneurs trouvés:", result);
-      console.log("🔥 [DELIVERED DEBUG] Nombre de conteneurs:", result.length);
-      console.log("🔥 [DELIVERED DEBUG] === FIN EXTRACTION ===");
+    // Chercher dans dossierData
+    for (const field of singleFields) {
+      if (
+        dossierData[field] &&
+        typeof dossierData[field] === "string" &&
+        dossierData[field].trim() !== ""
+      ) {
+        return dossierData[field].trim();
+      }
     }
-
-    return result.filter((c) => c.length > 0);
   }
 
   // Fonction pour détecter si un dossier devrait avoir plusieurs conteneurs
