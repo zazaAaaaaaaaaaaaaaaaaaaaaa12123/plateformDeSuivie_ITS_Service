@@ -887,15 +887,22 @@ function nettoyerDossiersExpires() {
       }
     } else {
       // ⚠️ DOSSIER SANS DATE D'EXPIRATION (ancien système) - AJOUTER LES DATES MANQUANTES
-      console.log(`🔧 [MIGRATION] Ajout des dates pour dossier existant: ${dossier.container_number || dossier.dossier_number}`);
-      
+      console.log(
+        `🔧 [MIGRATION] Ajout des dates pour dossier existant: ${
+          dossier.container_number || dossier.dossier_number
+        }`
+      );
+
       // Utiliser la date de mise en livraison existante ou la date actuelle
-      dossier.dateAjoutMiseEnLiv = dossier.date_mise_en_liv || new Date().toISOString();
-      
+      dossier.dateAjoutMiseEnLiv =
+        dossier.date_mise_en_liv || new Date().toISOString();
+
       // Calculer la date d'expiration (7 jours à partir de la date d'ajout)
       const dateAjout = new Date(dossier.dateAjoutMiseEnLiv);
-      dossier.dateExpirationMiseEnLiv = new Date(dateAjout.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      
+      dossier.dateExpirationMiseEnLiv = new Date(
+        dateAjout.getTime() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
       dossiersModifies++;
       dossiersActifs.push(dossier);
     }
@@ -904,22 +911,30 @@ function nettoyerDossiersExpires() {
   // Sauvegarder la liste mise à jour (même s'il n'y a que des modifications)
   if (dossiersSupprimes > 0 || dossiersModifies > 0) {
     saveDossiersMisEnLiv(dossiersActifs);
-    
+
     if (dossiersSupprimes > 0) {
-      console.log(`🧹 [NETTOYAGE AUTO] ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`);
+      console.log(
+        `🧹 [NETTOYAGE AUTO] ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`
+      );
     }
-    
+
     if (dossiersModifies > 0) {
-      console.log(`🔧 [MIGRATION] ${dossiersModifies} dossier(s) existant(s) mis à jour avec dates d'expiration`);
+      console.log(
+        `🔧 [MIGRATION] ${dossiersModifies} dossier(s) existant(s) mis à jour avec dates d'expiration`
+      );
     }
-    
+
     // Rafraîchir la liste si elle est ouverte
     refreshMiseEnLivList();
-    
+
     // Afficher une notification si des dossiers ont été modifiés
-    if (typeof showNotification === 'function' && (dossiersSupprimes > 0 || dossiersModifies > 0)) {
+    if (
+      typeof showNotification === "function" &&
+      (dossiersSupprimes > 0 || dossiersModifies > 0)
+    ) {
       let message = "";
-      if (dossiersSupprimes > 0) message += `🧹 ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`;
+      if (dossiersSupprimes > 0)
+        message += `🧹 ${dossiersSupprimes} dossier(s) expiré(s) supprimé(s)`;
       if (dossiersModifies > 0) {
         if (message) message += " • ";
         message += `🔧 ${dossiersModifies} dossier(s) mis à jour`;
@@ -7369,8 +7384,6 @@ if (bodyElement) {
   });
 }
 
-
-
 // ⏰ INITIALISATION DU NETTOYAGE AUTOMATIQUE DES DOSSIERS EXPIRÉS
 // Nettoyage toutes les heures (3600000 ms)
 setInterval(() => {
@@ -7429,29 +7442,34 @@ window.testerSuppressionAutomatique = function () {
 };
 
 // 🔧 FORCE LA MIGRATION DES DOSSIERS EXISTANTS AU CHARGEMENT DE LA PAGE
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 [INIT] Démarrage de la migration des dossiers existants...');
-  
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("🚀 [INIT] Démarrage de la migration des dossiers existants...");
+
   // Attendre un peu que la page soit totalement chargée
   setTimeout(() => {
     try {
       // Forcer la migration des anciens dossiers
       const resultats = nettoyerDossiersExpires();
-      console.log('✅ [INIT] Migration terminée:', resultats);
-      
+      console.log("✅ [INIT] Migration terminée:", resultats);
+
       // Afficher les dossiers actuels avec leurs dates
       const dossiersActuels = getDossiersMisEnLiv();
-      console.log('📋 [INIT] Dossiers actuels après migration:', dossiersActuels.length);
-      
-      dossiersActuels.forEach(dossier => {
+      console.log(
+        "📋 [INIT] Dossiers actuels après migration:",
+        dossiersActuels.length
+      );
+
+      dossiersActuels.forEach((dossier) => {
         console.log(`📦 ${dossier.container_number || dossier.dossier_number}: 
           - Date ajout: ${dossier.dateAjoutMiseEnLiv}
           - Date expiration: ${dossier.dateExpirationMiseEnLiv}
-          - Temps restant: ${calculerTempsRestant(dossier.dateExpirationMiseEnLiv)?.texte || 'N/A'}`);
+          - Temps restant: ${
+            calculerTempsRestant(dossier.dateExpirationMiseEnLiv)?.texte ||
+            "N/A"
+          }`);
       });
-      
     } catch (error) {
-      console.error('❌ [INIT] Erreur lors de la migration:', error);
+      console.error("❌ [INIT] Erreur lors de la migration:", error);
     }
   }, 1000); // Délai de 1 seconde
 });
