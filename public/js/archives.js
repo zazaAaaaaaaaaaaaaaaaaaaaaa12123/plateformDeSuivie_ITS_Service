@@ -5567,19 +5567,23 @@ class StorageManager {
         if (response.ok) {
           const capacityData = await response.json();
 
-          // ✅ UTILISER LA VRAIE TAILLE DE LA BASE DE DONNÉES
-          realDatabaseSizeMB = Math.round(
-            capacityData.database.current_size_bytes / (1024 * 1024)
-          );
+          // ✅ UTILISER LA VRAIE TAILLE FORMATÉE DE LA BASE DE DONNÉES (pas arrondie)
+          const realSizeBytes = capacityData.database.current_size_bytes;
+          realDatabaseSizeMB = realSizeBytes / (1024 * 1024); // Pas de Math.round() pour garder les décimales
           realTotalCapacityMB = Math.round(
             capacityData.database.total_capacity_bytes / (1024 * 1024)
           );
 
           console.log(
-            `🎯 [STORAGE] VRAIE taille DB: ${realDatabaseSizeMB} MB / ${realTotalCapacityMB} MB`
+            `🎯 [STORAGE] VRAIE taille DB: ${realDatabaseSizeMB.toFixed(
+              2
+            )} MB / ${realTotalCapacityMB} MB`
           );
           console.log(
             `📊 [STORAGE] Plan détecté: ${capacityData.render_info.estimated_plan}`
+          );
+          console.log(
+            `📊 [STORAGE] Taille formatée API: ${capacityData.database.current_size_formatted}`
           );
         }
       } catch (error) {
@@ -5701,7 +5705,10 @@ class StorageManager {
       // 5. ✅ MISE À JOUR AVEC LES VRAIES DONNÉES
       const updates = [
         { id: "totalArchiveCount", value: realArchiveCount.toString() },
-        { id: "totalUsedStorage", value: `${usedSizeMB.toFixed(1)} MB` },
+        {
+          id: "totalUsedStorage",
+          value: `${realDatabaseSizeMB.toFixed(2)} MB`,
+        },
         {
           id: "totalAvailableStorage",
           value: `${availableSizeMB.toFixed(1)} MB`,
@@ -6921,23 +6928,25 @@ class StorageManager {
       const capacityData = await response.json();
 
       if (capacityData && capacityData.database) {
-        // ✅ UTILISER LES VRAIES DONNÉES DE LA BASE DE DONNÉES
+        // ✅ UTILISER LES VRAIES DONNÉES DE LA BASE DE DONNÉES (sans arrondir)
         const realUsedBytes = capacityData.database.current_size_bytes;
         const realTotalBytes = capacityData.database.total_capacity_bytes;
-        const realUsedMB = Math.round(realUsedBytes / (1024 * 1024));
+        const realUsedMB = realUsedBytes / (1024 * 1024); // Pas de Math.round()
         const realTotalGB = (realTotalBytes / (1024 * 1024 * 1024)).toFixed(1);
         const realAvailableBytes = capacityData.database.available_space_bytes;
         const realUsedPercent = capacityData.database.usage_percentage || 0;
 
         console.log(
-          `🎯 [STORAGE] VRAIES données DB: ${realUsedMB}MB utilisés sur ${realTotalGB}GB (${realUsedPercent}%)`
+          `🎯 [STORAGE] VRAIES données DB: ${realUsedMB.toFixed(
+            2
+          )}MB utilisés sur ${realTotalGB}GB (${realUsedPercent}%)`
         );
 
         // 🔧 CORRECTION: Vérifier que les éléments existent avant de modifier leur contenu
         const totalUsedEl = document.getElementById("totalUsedStorage");
         if (totalUsedEl) {
-          totalUsedEl.textContent = `${realUsedMB} MB`;
-          console.log(`✅ Espace utilisé RÉEL: ${realUsedMB} MB`);
+          totalUsedEl.textContent = `${realUsedMB.toFixed(2)} MB`;
+          console.log(`✅ Espace utilisé RÉEL: ${realUsedMB.toFixed(2)} MB`);
         }
 
         const totalAvailableEl = document.getElementById(
