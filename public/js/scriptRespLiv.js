@@ -1929,39 +1929,113 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         let filteredDeliveries = data.deliveries.filter((delivery) => {
-          // 🆕 NOUVEAU: Si on vient du sidebar OU du dashboard OU de l'authentification, afficher TOUS les dossiers (livrés ET en cours de livraison)
-          if (fromSidebar || fromDashboard || fromAuth) {
-            // Afficher les dossiers qui sont soit:
-            // 1. En mise_en_livraison_acconier (avec ou sans conteneurs livrés)
-            // 2. Avec tous les conteneurs livrés
-            const isMiseEnLivraison =
-              delivery.delivery_status_acconier ===
-              "mise_en_livraison_acconier";
+          // 🆕 PRIORITÉ AU FILTRAGE AUTOMATIQUE : Si autoFilter=true et filter est spécifié, respecter le filtre même depuis le dashboard
+          if (autoFilter && filterParam) {
+            console.log(
+              `🎯 [RESP LIV] Filtrage automatique actif: ${filterParam} (depuis: ${
+                fromDashboard
+                  ? "dashboard"
+                  : fromSidebar
+                  ? "sidebar"
+                  : fromAuth
+                  ? "auth"
+                  : "direct"
+              })`
+            );
 
-            if (isMiseEnLivraison) {
-              return true; // Afficher tous les dossiers en mise en livraison
-            }
+            // 🆕 FILTRAGE SELON LE PARAMÈTRE URL (PRIORITAIRE)
+            switch (filterParam) {
+              case "mise_en_livraison":
+                // Dossiers en mise_en_livraison_acconier SANS conteneurs livrés
+                if (
+                  delivery.delivery_status_acconier !==
+                  "mise_en_livraison_acconier"
+                ) {
+                  return false;
+                }
+                if (
+                  delivery.container_statuses &&
+                  typeof delivery.container_statuses === "object"
+                ) {
+                  const containerStatuses = Object.values(
+                    delivery.container_statuses
+                  );
+                  const hasDeliveredContainers = containerStatuses.some(
+                    (status) => status === "livre" || status === "livré"
+                  );
+                  if (hasDeliveredContainers) {
+                    return false;
+                  }
+                }
+                return true;
 
-            // Vérifier si tous les conteneurs sont livrés
-            if (
-              delivery.container_statuses &&
-              typeof delivery.container_statuses === "object"
-            ) {
-              const containerStatuses = Object.values(
-                delivery.container_statuses
-              );
-              if (containerStatuses.length > 0) {
+              case "livre":
+              case "livré":
+                // Dossiers avec TOUS les conteneurs livrés
+                console.log(
+                  `📦 [LIVRE FILTER] Vérification dossier: ${
+                    delivery.dossier_number || delivery.id
+                  }`,
+                  {
+                    container_statuses: delivery.container_statuses,
+                    delivery_status_acconier: delivery.delivery_status_acconier,
+                  }
+                );
+
+                if (
+                  !delivery.container_statuses ||
+                  typeof delivery.container_statuses !== "object"
+                ) {
+                  console.log(
+                    `❌ [LIVRE FILTER] Pas de statuts de conteneurs pour: ${
+                      delivery.dossier_number || delivery.id
+                    }`
+                  );
+                  return false;
+                }
+
+                const containerStatuses = Object.values(
+                  delivery.container_statuses
+                );
+                if (containerStatuses.length === 0) {
+                  console.log(
+                    `❌ [LIVRE FILTER] Aucun conteneur pour: ${
+                      delivery.dossier_number || delivery.id
+                    }`
+                  );
+                  return false;
+                }
+
+                // Vérifier que TOUS les conteneurs sont livrés
                 const allDelivered = containerStatuses.every(
                   (status) => status === "livre" || status === "livré"
                 );
-                return allDelivered;
-              }
-            }
 
-            return false;
+                console.log(
+                  `${allDelivered ? "✅" : "❌"} [LIVRE FILTER] Dossier ${
+                    delivery.dossier_number || delivery.id
+                  }: ${
+                    allDelivered ? "INCLUS" : "EXCLU"
+                  } (statuts: ${containerStatuses.join(", ")})`
+                );
+                return allDelivered;
+
+              case "en_attente_paiement":
+                // Dossiers en attente de paiement
+                return (
+                  delivery.delivery_status_acconier === "en_attente_paiement" ||
+                  delivery.delivery_status_acconier === "pending_acconier"
+                );
+
+              default:
+                console.warn(
+                  `Paramètre de filtrage non reconnu: ${filterParam}`
+                );
+                return false;
+            }
           }
 
-          // 🆕 NOUVEAU: Si pas de filtrage automatique, afficher TOUS les dossiers (par défaut depuis l'authentification)
+          // Si pas de filtrage automatique, afficher TOUS les dossiers (par défaut)
           if (!autoFilter || !filterParam) {
             // 🎯 LOGIQUE MODIFIÉE : Afficher TOUS les dossiers de livraison (livrés ET en cours)
             console.log(
