@@ -2896,43 +2896,47 @@ app.get("/test/mise-en-livraison-dates", async (req, res) => {
       ORDER BY id DESC 
       LIMIT 5
     `);
-    
+
     // Simulation du formatage comme dans le frontend
     const formatDateTest = (dateStr) => {
       if (!dateStr) return null;
       const dateObj = new Date(dateStr);
       if (isNaN(dateObj.getTime())) return null;
       const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getDate()).padStart(2, "0");
       return `${day}/${month}/${year}`;
     };
 
-    const formattedResults = result.rows.map(row => ({
+    const formattedResults = result.rows.map((row) => ({
       ...row,
       date_do_formatted: formatDateTest(row.date_do),
       date_badt_formatted: formatDateTest(row.date_badt),
-      display_text: `Dossier ${row.dossier_number} - Client: ${row.client_name || 'N/A'}${
-        row.date_do ? ` - Date DO: ${formatDateTest(row.date_do)}` : ''
-      }${
-        row.date_badt ? ` - Date BADT: ${formatDateTest(row.date_badt)}` : ''
-      }`
+      display_text: `Dossier ${row.dossier_number} - Client: ${
+        row.client_name || "N/A"
+      }${row.date_do ? ` - Date DO: ${formatDateTest(row.date_do)}` : ""}${
+        row.date_badt ? ` - Date BADT: ${formatDateTest(row.date_badt)}` : ""
+      }`,
     }));
 
-    console.log("🔍 TEST MISE EN LIVRAISON - Trouvé", result.rows.length, "dossiers mis en livraison avec dates");
-    
+    console.log(
+      "🔍 TEST MISE EN LIVRAISON - Trouvé",
+      result.rows.length,
+      "dossiers mis en livraison avec dates"
+    );
+
     res.json({
       success: true,
       message: `Test Mise en Livraison: ${result.rows.length} dossiers avec dates DO/BADT`,
       note: "Ce test simule l'affichage des dates dans l'interface 'Mise en Livraison'",
       data: formattedResults,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (err) {
     console.error("Erreur test mise en livraison:", err);
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 });
