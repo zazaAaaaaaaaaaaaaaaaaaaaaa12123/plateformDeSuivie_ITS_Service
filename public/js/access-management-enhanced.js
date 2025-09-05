@@ -1310,7 +1310,7 @@ function loadUserProfileData() {
       };
     }
 
-    // Mettre à jour l'affichage avec les vrais IDs du HTML
+    // Mettre à jour l'affichage avec les vrais IDs du HTML .
     const adminNameEl = document.getElementById("adminName");
     const adminRoleEl = document.getElementById("adminRole");
     const profileNameEl = document.getElementById("profileName");
