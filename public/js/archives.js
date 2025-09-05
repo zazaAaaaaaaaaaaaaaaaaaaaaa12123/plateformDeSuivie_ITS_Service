@@ -209,13 +209,16 @@ class ArchivesManager {
             `[ARCHIVES] 📊 Changement de taille de page: ${this.itemsPerPage} (onglet: Toutes les Archives)`
           );
 
+          // 🎯 CORRECTION: Utiliser le nombre du badge pour la pagination
+          const badgeCount = this.getCurrentTabBadgeCount();
+          const effectiveTotal =
+            badgeCount !== null ? badgeCount : this.allCombinedArchives.length;
+
           // Recalculer la pagination avec la nouvelle taille
           this.pagination = {
             currentPage: this.currentPage,
-            totalPages: Math.ceil(
-              this.allCombinedArchives.length / this.itemsPerPage
-            ),
-            totalItems: this.allCombinedArchives.length,
+            totalPages: Math.ceil(effectiveTotal / this.itemsPerPage),
+            totalItems: effectiveTotal, // Utiliser le nombre du badge
             itemsPerPage: this.itemsPerPage,
           };
 
@@ -654,17 +657,23 @@ class ArchivesManager {
 
       console.log("[ARCHIVES] 🚀 Début du chargement initial automatique");
 
-      // ✅ CHARGEMENT INITIAL: Au démarrage de la page seulement
+      // 🎯 ÉTAPE 1: Mettre à jour les badges AVANT le chargement des archives
+      console.log(
+        "[ARCHIVES] 🔄 Mise à jour des badges AVANT chargement pour pagination correcte..."
+      );
+      await this.updateCounts();
+
+      // ✅ ÉTAPE 2: Chargement initial après mise à jour des badges
       console.log(
         "[ARCHIVES] 🎯 Chargement initial avec toutes les archives mélangées..."
       );
       await this.loadAllArchivesWithProperMixing();
 
-      //  Mettre à jour les compteurs des badges dès le démarrage
+      // 🔄 ÉTAPE 3: Forcer une nouvelle mise à jour de la pagination avec les badges corrects
       console.log(
-        "[ARCHIVES] 🔄 Mise à jour des badges au chargement initial..."
+        "[ARCHIVES] � Mise à jour finale de la pagination avec badges corrects..."
       );
-      await this.updateCounts();
+      this.updatePaginationInfo();
     } catch (error) {
       console.error("[ARCHIVES] ❌ Erreur dans safeInitialLoad:", error);
       this.showEmptyState(
@@ -3799,6 +3808,46 @@ class ArchivesManager {
     });
   }
 
+  // 🎯 CORRECTION: Obtenir le nombre RÉEL affiché dans le badge de l'onglet actuel
+  getCurrentTabBadgeCount() {
+    let badgeSelector;
+
+    switch (this.selectedTab) {
+      case "all":
+        badgeSelector = "#allCount";
+        break;
+      case "deleted":
+        badgeSelector = "#deletedCount";
+        break;
+      case "delivered":
+        badgeSelector = "#deliveredCount";
+        break;
+      case "shipping":
+        badgeSelector = "#shippingCount";
+        break;
+      case "orders":
+        badgeSelector = "#ordersCount";
+        break;
+      default:
+        return null;
+    }
+
+    const badgeElement = document.querySelector(badgeSelector);
+    if (badgeElement) {
+      const badgeText = badgeElement.textContent || "0";
+      const count = parseInt(badgeText.replace(/[^\d]/g, "")) || 0;
+      console.log(
+        `[ARCHIVES] 📊 Badge "${this.selectedTab}": ${count} (texte: "${badgeText}")`
+      );
+      return count;
+    }
+
+    console.warn(
+      `[ARCHIVES] ⚠️ Badge non trouvé pour l'onglet: ${this.selectedTab}`
+    );
+    return null;
+  }
+
   updatePaginationInfo() {
     const info = document.getElementById("paginationInfo");
     if (!this.pagination) {
@@ -3806,7 +3855,17 @@ class ArchivesManager {
       return;
     }
 
-    const { currentPage, itemsPerPage, totalItems } = this.pagination;
+    const { currentPage, itemsPerPage } = this.pagination;
+
+    // 🎯 CORRECTION: Utiliser le nombre du badge plutôt que this.pagination.totalItems
+    const badgeCount = this.getCurrentTabBadgeCount();
+    const totalItems =
+      badgeCount !== null ? badgeCount : this.pagination.totalItems;
+
+    console.log(
+      `[ARCHIVES] 📊 Pagination - Badge: ${badgeCount}, Pagination: ${this.pagination.totalItems}, Utilisé: ${totalItems}`
+    );
+
     const startItem = (currentPage - 1) * itemsPerPage + 1;
     const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
@@ -3827,6 +3886,15 @@ class ArchivesManager {
         return;
       }
 
+      // 🎯 CORRECTION: Utiliser le nombre du badge pour calculer les pages
+      const badgeCount = this.getCurrentTabBadgeCount();
+      const effectiveTotal =
+        badgeCount !== null ? badgeCount : this.allCombinedArchives.length;
+
+      console.log(
+        `[ARCHIVES] 📊 Total effectif pour pagination: ${effectiveTotal} (badge: ${badgeCount}, archives: ${this.allCombinedArchives.length})`
+      );
+
       // 🎯 Appliquer la pagination côté client
       const startIndex = (this.currentPage - 1) * this.itemsPerPage;
       const endIndex = startIndex + this.itemsPerPage;
@@ -3835,13 +3903,21 @@ class ArchivesManager {
         endIndex
       );
 
+      // 🎯 CORRECTION: Mettre à jour la pagination avec le bon total
+      this.pagination = {
+        currentPage: this.currentPage,
+        totalPages: Math.ceil(effectiveTotal / this.itemsPerPage),
+        totalItems: effectiveTotal, // Utiliser le nombre du badge
+        itemsPerPage: this.itemsPerPage,
+      };
+
       console.log(
         `[ARCHIVES] ✅ Page ${this.currentPage}: Affichage de ${
           this.filteredArchives.length
         } archives (${startIndex + 1}-${Math.min(
           endIndex,
           this.allCombinedArchives.length
-        )} sur ${this.allCombinedArchives.length})`
+        )} sur ${effectiveTotal})`
       );
 
       // 🎯 Mettre à jour l'affichage
