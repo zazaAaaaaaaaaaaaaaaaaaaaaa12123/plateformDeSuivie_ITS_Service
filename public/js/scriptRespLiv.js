@@ -5484,68 +5484,52 @@ function generateEtatSortiePdf(rows, date1, date2) {
 
     // 🖼️ AJOUT DU LOGO À GAUCHE
     // Charger et ajouter le logo Inter Transit Services
-    const logoImg = new Image();
-    logoImg.crossOrigin = "anonymous"; // Pour éviter les problèmes CORS
+    console.log("🔄 Chargement du logo pour le PDF...");
 
-    logoImg.onload = function () {
-      console.log("✅ Logo chargé avec succès");
-      // Ajouter le logo à gauche (position x=10, y=8, largeur=25, hauteur=15)
-      try {
-        doc.addImage(logoImg, "JPEG", 10, 8, 25, 15);
-        console.log("✅ Logo ajouté au PDF");
-      } catch (error) {
-        console.error("❌ Erreur lors de l'ajout du logo:", error);
-      }
+    // 🎯 SOLUTION: Charger le logo depuis le serveur et le convertir en base64
+    async function loadLogoAsBase64() {
+      const logoPaths = [
+        "/public/html/logo-inter-transit-services-cote-d-ivoire.jpg",
+        "./public/html/logo-inter-transit-services-cote-d-ivoire.jpg",
+        "public/html/logo-inter-transit-services-cote-d-ivoire.jpg",
+        "/html/logo-inter-transit-services-cote-d-ivoire.jpg",
+      ];
 
-      // Continuer avec le reste du PDF après le chargement du logo
-      generatePdfContent();
-    };
+      for (const logoPath of logoPaths) {
+        try {
+          console.log(`🔍 Tentative de chargement: ${logoPath}`);
 
-    logoImg.onerror = function () {
-      console.warn(
-        "⚠️ Impossible de charger le logo, génération du PDF sans logo"
-      );
-      console.warn("Chemin testé:", logoImg.src);
-      generatePdfContent();
-    };
+          const response = await fetch(logoPath);
+          if (response.ok) {
+            const blob = await response.blob();
 
-    // Essayer plusieurs chemins possibles pour le logo
-    const logoPaths = [
-      "./public/html/logo-inter-transit-services-cote-d-ivoire.jpg",
-      "/public/html/logo-inter-transit-services-cote-d-ivoire.jpg",
-      "public/html/logo-inter-transit-services-cote-d-ivoire.jpg",
-      "./logo-inter-transit-services-cote-d-ivoire.jpg",
-    ];
-
-    let currentPathIndex = 0;
-
-    function tryLoadLogo() {
-      if (currentPathIndex < logoPaths.length) {
-        console.log(
-          `🔍 Tentative de chargement du logo: ${logoPaths[currentPathIndex]}`
-        );
-        logoImg.src = logoPaths[currentPathIndex];
-
-        // Si le logo ne se charge pas dans les 2 secondes, essayer le chemin suivant
-        setTimeout(() => {
-          if (!logoImg.complete || logoImg.naturalWidth === 0) {
-            currentPathIndex++;
-            if (currentPathIndex < logoPaths.length) {
-              tryLoadLogo();
-            } else {
-              console.warn(
-                "❌ Aucun chemin de logo n'a fonctionné, génération sans logo"
-              );
-              generatePdfContent();
-            }
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = function (e) {
+                console.log("✅ Logo converti en base64 avec succès");
+                resolve(e.target.result);
+              };
+              reader.onerror = function () {
+                console.warn(`❌ Erreur conversion base64 pour: ${logoPath}`);
+                resolve(null);
+              };
+              reader.readAsDataURL(blob);
+            });
           }
-        }, 2000);
+        } catch (error) {
+          console.warn(`❌ Échec chargement ${logoPath}:`, error.message);
+        }
       }
+
+      return null; // Aucun chemin n'a fonctionné
     }
 
-    tryLoadLogo();
+    // 🚀 Charger le logo et générer le PDF
+    loadLogoAsBase64().then((logoBase64) => {
+      generatePdfContent(logoBase64);
+    });
 
-    function generatePdfContent() {
+    function generatePdfContent(logoBase64 = null) {
       // 📄 TITRE CENTRÉ
       doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
@@ -5556,12 +5540,27 @@ function generateEtatSortiePdf(rows, date1, date2) {
       // 👤 CHAMP NOM À DROITE
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
-      const nomText = "Nom : .......................................";
+      const nomText = "Responsable: .......................................";
       const nomTextWidth = doc.getTextWidth(nomText);
       doc.text(nomText, pageWidth - nomTextWidth - 10, 18);
 
-      // 🏢 FALLBACK: Si le logo ne s'est pas chargé, dessiner un rectangle avec texte
-      if (!logoImg.complete || logoImg.naturalWidth === 0) {
+      // 🏢 LOGO: Utiliser le logo base64 si disponible, sinon fallback
+      if (logoBase64) {
+        try {
+          console.log("✅ Ajout du logo base64 au PDF");
+          doc.addImage(logoBase64, "JPEG", 10, 8, 25, 15);
+          console.log("✅ Logo persistant ajouté avec succès au PDF");
+        } catch (error) {
+          console.error("❌ Erreur lors de l'ajout du logo base64:", error);
+          // Fallback en cas d'erreur
+          addFallbackLogo();
+        }
+      } else {
+        console.log("⚠️ Logo base64 non disponible, utilisation du fallback");
+        addFallbackLogo();
+      }
+
+      function addFallbackLogo() {
         console.log("🎨 Création d'un logo de fallback");
         // Dessiner un rectangle pour représenter le logo
         doc.setFillColor(70, 130, 180); // Bleu
