@@ -167,6 +167,9 @@ async function initializeAccessManagement() {
 
       // Forcer les icônes de suppression en rouge dès le démarrage
       forceDeleteIconsToRed();
+
+      // Forcer les icônes spécifiques en blanc dès le démarrage
+      forceSpecificIconsToWhite();
     }, 1000);
 
     // Application supplémentaire après 3 secondes pour être sûr
@@ -182,6 +185,9 @@ async function initializeAccessManagement() {
 
       // Re-forcer les icônes de suppression en rouge après l'application des thèmes
       forceDeleteIconsToRed();
+
+      // Re-forcer les icônes spécifiques en blanc après l'application des thèmes
+      forceSpecificIconsToWhite();
     }, 3000);
 
     // OBSERVATEUR DOM TEMPORAIREMENT DÉSACTIVÉ pour éviter la boucle infinie
@@ -680,6 +686,7 @@ function applyTheme(theme) {
   // Forcer les icônes de suppression en rouge après l'application du thème
   setTimeout(() => {
     forceDeleteIconsToRed();
+    forceSpecificIconsToWhite();
   }, 500);
 
   console.log("✅ Thème appliqué avec succès:", theme);
@@ -822,11 +829,68 @@ function applyColorsToCardElements(cardElements, textColor, cardName) {
         (el.getAttribute("aria-label") &&
           el.getAttribute("aria-label").toLowerCase().includes("supprimer"));
 
+      // Vérifier si c'est une icône qui doit être blanche (flèches, navigation, clés, utilisateurs, etc.)
+      const isWhiteIcon =
+        el.classList.contains("fa-arrow-right") ||
+        el.classList.contains("fa-arrow-left") ||
+        el.classList.contains("fa-arrow-up") ||
+        el.classList.contains("fa-arrow-down") ||
+        el.classList.contains("fa-chevron-right") ||
+        el.classList.contains("fa-chevron-left") ||
+        el.classList.contains("fa-chevron-up") ||
+        el.classList.contains("fa-chevron-down") ||
+        el.classList.contains("fa-angle-right") ||
+        el.classList.contains("fa-angle-left") ||
+        el.classList.contains("fa-caret-right") ||
+        el.classList.contains("fa-caret-left") ||
+        el.classList.contains("fa-key") ||
+        el.classList.contains("fa-unlock") ||
+        el.classList.contains("fa-lock") ||
+        el.classList.contains("fa-unlock-alt") ||
+        el.classList.contains("fa-user") ||
+        el.classList.contains("fa-user-circle") ||
+        el.classList.contains("fa-user-o") ||
+        el.classList.contains("fa-users") ||
+        el.classList.contains("fa-user-plus") ||
+        el.classList.contains("fa-user-check") ||
+        el.classList.contains("white-icon") ||
+        el.classList.contains("arrow-icon") ||
+        el.classList.contains("key-icon") ||
+        el.classList.contains("user-icon") ||
+        (el.getAttribute("title") &&
+          el.getAttribute("title").toLowerCase().includes("flèche")) ||
+        (el.getAttribute("aria-label") &&
+          el.getAttribute("aria-label").toLowerCase().includes("flèche")) ||
+        (el.getAttribute("title") &&
+          el.getAttribute("title").toLowerCase().includes("clé")) ||
+        (el.getAttribute("aria-label") &&
+          el.getAttribute("aria-label").toLowerCase().includes("clé")) ||
+        (el.getAttribute("title") &&
+          el.getAttribute("title").toLowerCase().includes("key")) ||
+        (el.getAttribute("aria-label") &&
+          el.getAttribute("aria-label").toLowerCase().includes("key")) ||
+        (el.getAttribute("title") &&
+          el.getAttribute("title").toLowerCase().includes("utilisateur")) ||
+        (el.getAttribute("aria-label") &&
+          el
+            .getAttribute("aria-label")
+            .toLowerCase()
+            .includes("utilisateur")) ||
+        (el.getAttribute("title") &&
+          el.getAttribute("title").toLowerCase().includes("user")) ||
+        (el.getAttribute("aria-label") &&
+          el.getAttribute("aria-label").toLowerCase().includes("user"));
+
       // Si c'est une icône de suppression, la forcer en rouge
       if (isDeleteIcon) {
         el.style.setProperty("color", "#ef4444", "important");
         el.style.setProperty("opacity", "1", "important");
         console.log("🗑️ Icône de suppression forcée en rouge:", el);
+      } else if (isWhiteIcon) {
+        // Si c'est une icône qui doit être blanche, la forcer en blanc
+        el.style.setProperty("color", "#ffffff", "important");
+        el.style.setProperty("opacity", "1", "important");
+        console.log("⚪ Icône forcée en blanc:", el);
       } else {
         // Déterminer la couleur d'icône selon le type de carte pour les autres icônes
         let iconColor = textColor; // Par défaut, utiliser la couleur de texte
@@ -1098,6 +1162,7 @@ function applyCustomCardColorsToAllThemes(customColors) {
   // Forcer les icônes de suppression en rouge après l'application des couleurs
   setTimeout(() => {
     forceDeleteIconsToRed();
+    forceSpecificIconsToWhite();
   }, 200);
 }
 
@@ -2078,6 +2143,87 @@ function forceDeleteIconsToRed() {
   console.log("🗑️ Icônes de suppression forcées en rouge");
 }
 
+// Fonction pour forcer la couleur blanche sur certaines icônes spécifiques
+function forceSpecificIconsToWhite() {
+  // Sélectionner toutes les icônes qui doivent être blanches
+  const whiteIconSelectors = [
+    ".fa-arrow-right",
+    ".fa-arrow-left",
+    ".fa-arrow-up",
+    ".fa-arrow-down",
+    ".fa-chevron-right",
+    ".fa-chevron-left",
+    ".fa-chevron-up",
+    ".fa-chevron-down",
+    ".fa-angle-right",
+    ".fa-angle-left",
+    ".fa-caret-right",
+    ".fa-caret-left",
+    ".fa-key",
+    ".fa-unlock",
+    ".fa-lock",
+    ".fa-unlock-alt",
+    ".fa-user",
+    ".fa-user-circle",
+    ".fa-user-o",
+    ".fa-users",
+    ".fa-user-plus",
+    ".fa-user-check",
+    ".white-icon",
+    ".arrow-icon",
+    ".key-icon",
+    ".user-icon",
+    'i[title*="flèche" i]',
+    'i[aria-label*="flèche" i]',
+    'i[title*="clé" i]',
+    'i[aria-label*="clé" i]',
+    'i[title*="key" i]',
+    'i[aria-label*="key" i]',
+    'i[title*="utilisateur" i]',
+    'i[aria-label*="utilisateur" i]',
+    'i[title*="user" i]',
+    'i[aria-label*="user" i]',
+  ];
+
+  whiteIconSelectors.forEach((selector) => {
+    const icons = document.querySelectorAll(selector);
+    icons.forEach((icon) => {
+      icon.style.setProperty("color", "#ffffff", "important");
+      icon.style.setProperty("opacity", "1", "important");
+    });
+  });
+
+  // Rechercher aussi dans tous les éléments avec des classes FontAwesome pour les flèches, clés et utilisateurs
+  const allIcons = document.querySelectorAll('i[class*="fa-"]');
+  allIcons.forEach((icon) => {
+    const classes = icon.className.toLowerCase();
+    if (
+      classes.includes("arrow") ||
+      classes.includes("chevron") ||
+      classes.includes("angle") ||
+      classes.includes("caret") ||
+      classes.includes("key") ||
+      classes.includes("lock") ||
+      classes.includes("unlock") ||
+      classes.includes("user")
+    ) {
+      // Vérifier si l'icône est dans un contexte où elle doit être blanche
+      const parentCard = icon.closest(".stat-card");
+      const parentElement = icon.closest(
+        '[class*="bg-"], [style*="background"]'
+      );
+
+      // Si l'icône est dans une carte ou un élément avec un fond sombre, la rendre blanche
+      if (parentCard || parentElement) {
+        icon.style.setProperty("color", "#ffffff", "important");
+        icon.style.setProperty("opacity", "1", "important");
+      }
+    }
+  });
+
+  console.log("⚪ Icônes spécifiques forcées en blanc");
+}
+
 // Démarrer la surveillance de persistance des couleurs
 function startColorPersistenceMonitor() {
   console.log("🔍 Démarrage de la surveillance de persistance des couleurs");
@@ -2116,6 +2262,9 @@ function startColorPersistenceMonitor() {
 
     // Toujours forcer les icônes de suppression en rouge
     forceDeleteIconsToRed();
+
+    // Toujours forcer les icônes spécifiques en blanc
+    forceSpecificIconsToWhite();
   }, 2000);
 }
 
@@ -2407,11 +2556,132 @@ function testDeleteIcons() {
   }
 }
 
+// Fonction pour tester spécifiquement les icônes blanches
+function testWhiteIcons() {
+  console.log("⚪ TEST DES ICÔNES BLANCHES");
+
+  // Rechercher toutes les icônes qui doivent être blanches
+  const whiteSelectors = [
+    ".fa-arrow-right",
+    ".fa-arrow-left",
+    ".fa-arrow-up",
+    ".fa-arrow-down",
+    ".fa-chevron-right",
+    ".fa-chevron-left",
+    ".fa-chevron-up",
+    ".fa-chevron-down",
+    ".fa-angle-right",
+    ".fa-angle-left",
+    ".fa-caret-right",
+    ".fa-caret-left",
+    ".fa-key",
+    ".fa-unlock",
+    ".fa-lock",
+    ".fa-unlock-alt",
+    ".fa-user",
+    ".fa-user-circle",
+    ".fa-user-o",
+    ".fa-users",
+    ".fa-user-plus",
+    ".fa-user-check",
+    ".white-icon",
+    ".arrow-icon",
+    ".key-icon",
+    ".user-icon",
+    'i[title*="flèche" i]',
+    'i[aria-label*="flèche" i]',
+    'i[title*="clé" i]',
+    'i[aria-label*="clé" i]',
+    'i[title*="key" i]',
+    'i[aria-label*="key" i]',
+    'i[title*="utilisateur" i]',
+    'i[aria-label*="utilisateur" i]',
+    'i[title*="user" i]',
+    'i[aria-label*="user" i]',
+  ];
+
+  let totalWhiteIcons = 0;
+  let actualWhiteIcons = 0;
+
+  whiteSelectors.forEach((selector) => {
+    const icons = document.querySelectorAll(selector);
+    icons.forEach((icon) => {
+      totalWhiteIcons++;
+      const iconColor = window.getComputedStyle(icon).color;
+      const isWhite =
+        iconColor.includes("255, 255, 255") ||
+        iconColor.includes("#ffffff") ||
+        iconColor.includes("rgb(255, 255, 255)") ||
+        iconColor.includes("white");
+
+      console.log(
+        `   ⚪ Icône ${selector}: ${iconColor} ${
+          isWhite ? "✅ BLANC" : "❌ PAS BLANC"
+        }`
+      );
+
+      if (isWhite) {
+        actualWhiteIcons++;
+      }
+    });
+  });
+
+  // Rechercher aussi dans tous les éléments avec des classes FontAwesome pour les flèches, clés et utilisateurs
+  const allIcons = document.querySelectorAll('i[class*="fa-"]');
+  allIcons.forEach((icon) => {
+    const classes = icon.className.toLowerCase();
+    if (
+      classes.includes("arrow") ||
+      classes.includes("chevron") ||
+      classes.includes("angle") ||
+      classes.includes("caret") ||
+      classes.includes("key") ||
+      classes.includes("lock") ||
+      classes.includes("unlock") ||
+      classes.includes("user")
+    ) {
+      totalWhiteIcons++;
+      const iconColor = window.getComputedStyle(icon).color;
+      const isWhite =
+        iconColor.includes("255, 255, 255") ||
+        iconColor.includes("#ffffff") ||
+        iconColor.includes("rgb(255, 255, 255)") ||
+        iconColor.includes("white");
+
+      console.log(
+        `   ⚪ Icône FA-white: ${iconColor} ${
+          isWhite ? "✅ BLANC" : "❌ PAS BLANC"
+        }`
+      );
+
+      if (isWhite) {
+        actualWhiteIcons++;
+      }
+    }
+  });
+
+  console.log(
+    `📊 RÉSUMÉ: ${actualWhiteIcons}/${totalWhiteIcons} icônes en blanc`
+  );
+
+  if (totalWhiteIcons === 0) {
+    console.log("⚠️ Aucune icône blanche trouvée dans le DOM");
+  } else if (actualWhiteIcons === totalWhiteIcons) {
+    console.log("✅ Toutes les icônes spécifiées sont correctement en blanc");
+  } else {
+    console.log("❌ Certaines icônes ne sont pas en blanc");
+    // Forcer l'application
+    forceSpecificIconsToWhite();
+    console.log("🔧 Application forcée des couleurs blanches");
+  }
+}
+
 // Rendre accessibles globalement
 window.testColorPersistence = testColorPersistence;
 window.testThemeChange = testThemeChange;
 window.testIconColors = testIconColors;
 window.testDeleteIcons = testDeleteIcons;
+window.testWhiteIcons = testWhiteIcons;
 
 // =================== GESTION PHOTO DE PROFIL ===================
 
