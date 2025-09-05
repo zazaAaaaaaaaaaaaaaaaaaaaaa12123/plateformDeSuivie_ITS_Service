@@ -23,6 +23,11 @@ try {
       accent: "#f59e0b",
       background: "#ffffff",
       surface: "#f9fafb",
+      // Couleurs des cartes de statistiques
+      cardTotal: "#f97316", // Orange pour "Total Demandes"
+      cardPending: "#f59e0b", // Orange pour "En Attente"
+      cardApproved: "#10b981", // Vert pour "Approuvées"
+      cardRejected: "#ef4444", // Rouge pour "Rejetées"
     };
   }
 } catch (error) {
@@ -33,6 +38,11 @@ try {
     accent: "#f59e0b",
     background: "#ffffff",
     surface: "#f9fafb",
+    // Couleurs des cartes de statistiques
+    cardTotal: "#f97316", // Orange pour "Total Demandes"
+    cardPending: "#f59e0b", // Orange pour "En Attente"
+    cardApproved: "#10b981", // Vert pour "Approuvées"
+    cardRejected: "#ef4444", // Rouge pour "Rejetées"
   };
 }
 
@@ -120,6 +130,87 @@ async function initializeAccessManagement() {
     setTimeout(() => {
       debugThemeButtons();
     }, 500);
+
+    // S'assurer que les couleurs par défaut des cartes sont appliquées après tout
+    setTimeout(() => {
+      console.log("🔄 Application finale des couleurs des cartes");
+
+      // Vérifier s'il y a des couleurs personnalisées sauvegardées
+      const savedCustomTheme = localStorage.getItem("customTheme");
+      let hasCustomCardColors = false;
+
+      if (savedCustomTheme) {
+        try {
+          const savedColors = JSON.parse(savedCustomTheme);
+          hasCustomCardColors =
+            savedColors.cardTotal ||
+            savedColors.cardPending ||
+            savedColors.cardApproved ||
+            savedColors.cardRejected;
+        } catch (error) {
+          console.error(
+            "❌ Erreur lors de la vérification initiale des couleurs:",
+            error
+          );
+        }
+      }
+
+      // Appliquer les couleurs appropriées
+      if (hasCustomCardColors) {
+        console.log("🎨 Couleurs personnalisées détectées au démarrage");
+        applyThemeToStatCards(); // Cela utilisera les couleurs personnalisées
+        startColorPersistenceMonitor();
+      } else {
+        console.log("🎨 Application des couleurs par défaut");
+        applyDefaultStatCardsColors();
+      }
+
+      // Forcer les icônes de suppression en rouge dès le démarrage
+      forceDeleteIconsToRed();
+    }, 1000);
+
+    // Application supplémentaire après 3 secondes pour être sûr
+    setTimeout(() => {
+      console.log(
+        "🔄 Application de sécurité des couleurs par défaut des cartes"
+      );
+      if (currentTheme === "custom") {
+        applyThemeToStatCards();
+      } else {
+        applyDefaultStatCardsColors();
+      }
+
+      // Re-forcer les icônes de suppression en rouge après l'application des thèmes
+      forceDeleteIconsToRed();
+    }, 3000);
+
+    // OBSERVATEUR DOM TEMPORAIREMENT DÉSACTIVÉ pour éviter la boucle infinie
+    // const observer = new MutationObserver((mutations) => {
+    //   mutations.forEach((mutation) => {
+    //     if (mutation.type === "childList" || mutation.type === "attributes") {
+    //       const statCards = document.querySelectorAll(".stat-card");
+    //       if (statCards.length > 0) {
+    //         console.log(
+    //           "🔄 DOM modifié, réapplication des couleurs par défaut"
+    //         );
+    //         setTimeout(() => {
+    //           applyDefaultStatCardsColors();
+    //         }, 100);
+    //       }
+    //     }
+    //   });
+    // });
+
+    // // Observer les changements dans le conteneur des cartes
+    // const cardContainer = document.querySelector("main") || document.body;
+    // if (cardContainer) {
+    //   observer.observe(cardContainer, {
+    //     childList: true,
+    //     subtree: true,
+    //     attributes: true,
+    //     attributeFilter: ["class", "style"],
+    //   });
+    // }
 
     console.log("✅ Gestion d'accès initialisée avec succès");
   } catch (error) {
@@ -396,6 +487,15 @@ function initializeThemeSystem() {
     updateThemeIcon();
     applyThemeToHeaders();
 
+    // TOUJOURS appliquer les couleurs par défaut des cartes au début
+    // (elles ne seront écrasées que si on est en mode custom)
+    applyDefaultStatCardsColors();
+
+    // Si on est en mode custom, alors écraser avec les couleurs personnalisées
+    if (currentTheme === "custom") {
+      applyThemeToStatCards();
+    }
+
     // Pré-remplir les champs du modal avec les couleurs actuelles
     if (currentTheme === "custom") {
       populateThemeInputs();
@@ -446,11 +546,27 @@ function populateThemeInputs() {
     const backgroundColor = document.getElementById("backgroundColor");
     const surfaceColor = document.getElementById("surfaceColor");
 
+    // Champs des cartes de statistiques
+    const cardTotalColor = document.getElementById("cardTotalColor");
+    const cardPendingColor = document.getElementById("cardPendingColor");
+    const cardApprovedColor = document.getElementById("cardApprovedColor");
+    const cardRejectedColor = document.getElementById("cardRejectedColor");
+
     if (primaryColor) primaryColor.value = customThemeData.primary;
     if (secondaryColor) secondaryColor.value = customThemeData.secondary;
     if (accentColor) accentColor.value = customThemeData.accent;
     if (backgroundColor) backgroundColor.value = customThemeData.background;
     if (surfaceColor) surfaceColor.value = customThemeData.surface;
+
+    // Pré-remplir les champs des cartes (avec valeurs par défaut si nécessaire)
+    if (cardTotalColor)
+      cardTotalColor.value = customThemeData.cardTotal || "#f97316";
+    if (cardPendingColor)
+      cardPendingColor.value = customThemeData.cardPending || "#f59e0b";
+    if (cardApprovedColor)
+      cardApprovedColor.value = customThemeData.cardApproved || "#10b981";
+    if (cardRejectedColor)
+      cardRejectedColor.value = customThemeData.cardRejected || "#ef4444";
 
     console.log("✅ Champs pré-remplis avec:", customThemeData);
   }, 100);
@@ -484,6 +600,11 @@ function applyTheme(theme) {
       root.style.setProperty("--header-text", "#ffffff");
       root.style.setProperty("--section-header-bg", "#2563eb");
       root.style.setProperty("--section-header-text", "#ffffff");
+      // Couleurs des cartes de statistiques par défaut
+      root.style.setProperty("--card-total-bg", "#f97316");
+      root.style.setProperty("--card-pending-bg", "#f59e0b");
+      root.style.setProperty("--card-approved-bg", "#10b981");
+      root.style.setProperty("--card-rejected-bg", "#ef4444");
       break;
 
     case "dark":
@@ -503,6 +624,11 @@ function applyTheme(theme) {
       root.style.setProperty("--header-text", "#f1f5f9");
       root.style.setProperty("--section-header-bg", "#1e293b");
       root.style.setProperty("--section-header-text", "#f1f5f9");
+      // Couleurs des cartes de statistiques par défaut
+      root.style.setProperty("--card-total-bg", "#f97316");
+      root.style.setProperty("--card-pending-bg", "#f59e0b");
+      root.style.setProperty("--card-approved-bg", "#10b981");
+      root.style.setProperty("--card-rejected-bg", "#ef4444");
       break;
 
     case "custom":
@@ -514,8 +640,48 @@ function applyTheme(theme) {
   currentTheme = theme;
   localStorage.setItem("theme", theme);
 
+  // Gestion de la surveillance de persistance des couleurs
+  // Vérifier s'il y a des couleurs personnalisées sauvegardées
+  const savedCustomTheme = localStorage.getItem("customTheme");
+  let hasCustomCardColors = false;
+
+  if (savedCustomTheme) {
+    try {
+      const savedColors = JSON.parse(savedCustomTheme);
+      hasCustomCardColors =
+        savedColors.cardTotal ||
+        savedColors.cardPending ||
+        savedColors.cardApproved ||
+        savedColors.cardRejected;
+    } catch (error) {
+      console.error("❌ Erreur lors de la vérification des couleurs:", error);
+    }
+  }
+
+  // Démarrer la surveillance si des couleurs personnalisées existent (tous thèmes)
+  if (hasCustomCardColors) {
+    setTimeout(() => {
+      console.log(
+        "🔍 Couleurs personnalisées détectées, démarrage surveillance (thème:",
+        theme,
+        ")"
+      );
+      startColorPersistenceMonitor();
+    }, 1000);
+  } else {
+    // Arrêter la surveillance s'il n'y a pas de couleurs personnalisées
+    stopColorPersistenceMonitor();
+  }
+
   // Appliquer immédiatement le thème aux éléments spécifiques
   applyThemeToHeaders();
+  applyThemeToStatCards();
+
+  // Forcer les icônes de suppression en rouge après l'application du thème
+  setTimeout(() => {
+    forceDeleteIconsToRed();
+  }, 500);
+
   console.log("✅ Thème appliqué avec succès:", theme);
 }
 
@@ -530,6 +696,21 @@ function applyCustomTheme(themeData) {
   root.style.setProperty("--color-accent", themeData.accent);
   root.style.setProperty("--bg-primary", themeData.background);
   root.style.setProperty("--bg-secondary", themeData.surface);
+
+  // Couleurs des cartes de statistiques
+  root.style.setProperty("--card-total-bg", themeData.cardTotal || "#f97316");
+  root.style.setProperty(
+    "--card-pending-bg",
+    themeData.cardPending || "#f59e0b"
+  );
+  root.style.setProperty(
+    "--card-approved-bg",
+    themeData.cardApproved || "#10b981"
+  );
+  root.style.setProperty(
+    "--card-rejected-bg",
+    themeData.cardRejected || "#ef4444"
+  );
 
   // Appliquer les couleurs aux headers
   root.style.setProperty("--header-bg", themeData.primary);
@@ -548,8 +729,9 @@ function applyCustomTheme(themeData) {
   localStorage.setItem("customTheme", JSON.stringify(themeData));
   console.log("💾 Données personnalisées sauvegardées:", themeData);
 
-  // Appliquer immédiatement aux headers
+  // Appliquer immédiatement aux headers et cartes
   applyThemeToHeaders();
+  applyThemeToStatCards();
   console.log("✅ Thème personnalisé appliqué");
 }
 
@@ -614,6 +796,309 @@ function applyThemeToHeaders() {
   }
 
   console.log("✅ Thème appliqué aux headers");
+}
+
+// Fonction utilitaire pour appliquer les couleurs aux éléments enfants avec gestion des icônes
+function applyColorsToCardElements(cardElements, textColor, cardName) {
+  cardElements.forEach((el) => {
+    // Préserver les couleurs spécifiques des icônes selon le type de carte
+    const isIcon =
+      el.tagName === "I" ||
+      el.classList.contains("fa") ||
+      el.classList.contains("icon") ||
+      el.tagName === "SVG";
+
+    if (isIcon) {
+      // Vérifier d'abord si c'est une icône de suppression/trash
+      const isDeleteIcon =
+        el.classList.contains("fa-trash") ||
+        el.classList.contains("fa-trash-alt") ||
+        el.classList.contains("fa-delete") ||
+        el.classList.contains("fa-times") ||
+        el.classList.contains("delete-icon") ||
+        el.classList.contains("trash-icon") ||
+        (el.getAttribute("title") &&
+          el.getAttribute("title").toLowerCase().includes("supprimer")) ||
+        (el.getAttribute("aria-label") &&
+          el.getAttribute("aria-label").toLowerCase().includes("supprimer"));
+
+      // Si c'est une icône de suppression, la forcer en rouge
+      if (isDeleteIcon) {
+        el.style.setProperty("color", "#ef4444", "important");
+        el.style.setProperty("opacity", "1", "important");
+        console.log("🗑️ Icône de suppression forcée en rouge:", el);
+      } else {
+        // Déterminer la couleur d'icône selon le type de carte pour les autres icônes
+        let iconColor = textColor; // Par défaut, utiliser la couleur de texte
+
+        // Pour les cartes spécifiques, appliquer les bonnes couleurs
+        if (cardName === "Total") {
+          iconColor = textColor; // Icône en couleur de texte
+        } else if (cardName === "En Attente") {
+          iconColor = textColor; // Icône horloge en couleur de texte
+        } else if (cardName === "Approuvées") {
+          iconColor = "#ffffff"; // Icône check en blanc sur fond vert
+        } else if (cardName === "Rejetées") {
+          iconColor = "#ffffff"; // Icône X en blanc sur fond rouge
+        }
+
+        el.style.setProperty("color", iconColor, "important");
+      }
+    } else {
+      // Pour tous les autres éléments (texte), utiliser la couleur de texte calculée
+      el.style.setProperty("color", textColor, "important");
+    }
+
+    el.style.setProperty("background", "transparent", "important");
+  });
+}
+
+// Appliquer les couleurs par défaut des cartes de statistiques
+// Cette fonction applique des couleurs fixes qui persistent même lors du changement de thème
+function applyDefaultStatCardsColors() {
+  console.log(
+    "🎨 Application des couleurs par défaut des cartes de statistiques"
+  );
+
+  // Couleurs par défaut fixes pour chaque carte avec leurs couleurs de texte correspondantes
+  const defaultCardColors = {
+    total: { bg: "#f97316", text: "#ffffff" }, // Orange avec texte blanc
+    pending: { bg: "#f59e0b", text: "#1f2937" }, // Orange/Jaune avec texte sombre
+    approved: { bg: "#10b981", text: "#ffffff" }, // Vert avec texte blanc
+    rejected: { bg: "#ef4444", text: "#ffffff" }, // Rouge avec texte blanc
+  };
+
+  // Sélectionner toutes les cartes de statistiques dans l'ordre
+  const statCards = document.querySelectorAll(".stat-card");
+  console.log(`🔍 ${statCards.length} cartes de statistiques trouvées`);
+
+  if (statCards.length >= 4) {
+    // Carte 1: Total Demandes
+    const totalCard = statCards[0];
+    const totalColor = defaultCardColors.total;
+
+    totalCard.style.background = `linear-gradient(135deg, ${totalColor.bg}, ${totalColor.bg}cc)`;
+    totalCard.style.borderLeftColor = totalColor.bg;
+    totalCard.style.color = totalColor.text;
+
+    // Styliser l'icône et les éléments internes avec couleur fixe
+    const totalIcon = totalCard.querySelector("i");
+    const totalElements = totalCard.querySelectorAll("*");
+    if (totalIcon) totalIcon.style.color = totalColor.text;
+    applyColorsToCardElements(totalElements, totalColor.text, "Total");
+
+    console.log(
+      `✅ Carte Total stylée: ${totalColor.bg} avec texte ${totalColor.text}`
+    );
+
+    // Carte 2: En Attente
+    const pendingCard = statCards[1];
+    const pendingColor = defaultCardColors.pending;
+
+    pendingCard.style.background = `linear-gradient(135deg, ${pendingColor.bg}, ${pendingColor.bg}cc)`;
+    pendingCard.style.borderLeftColor = pendingColor.bg;
+    pendingCard.style.color = pendingColor.text;
+
+    const pendingIcon = pendingCard.querySelector("i");
+    const pendingElements = pendingCard.querySelectorAll("*");
+    if (pendingIcon) pendingIcon.style.color = pendingColor.text;
+    applyColorsToCardElements(pendingElements, pendingColor.text, "En Attente");
+
+    console.log(
+      `✅ Carte En Attente stylée: ${pendingColor.bg} avec texte ${pendingColor.text}`
+    );
+
+    // Carte 3: Approuvées
+    const approvedCard = statCards[2];
+    const approvedColor = defaultCardColors.approved;
+
+    approvedCard.style.background = `linear-gradient(135deg, ${approvedColor.bg}, ${approvedColor.bg}cc)`;
+    approvedCard.style.borderLeftColor = approvedColor.bg;
+    approvedCard.style.color = approvedColor.text;
+
+    const approvedIcon = approvedCard.querySelector("i");
+    const approvedElements = approvedCard.querySelectorAll("*");
+    if (approvedIcon) approvedIcon.style.color = "#ffffff"; // Forcer l'icône en blanc
+    applyColorsToCardElements(
+      approvedElements,
+      approvedColor.text,
+      "Approuvées"
+    );
+
+    console.log(
+      `✅ Carte Approuvées stylée: ${approvedColor.bg} avec texte ${approvedColor.text}`
+    );
+
+    // Carte 4: Rejetées
+    const rejectedCard = statCards[3];
+    const rejectedColor = defaultCardColors.rejected;
+
+    rejectedCard.style.background = `linear-gradient(135deg, ${rejectedColor.bg}, ${rejectedColor.bg}cc)`;
+    rejectedCard.style.borderLeftColor = rejectedColor.bg;
+    rejectedCard.style.color = rejectedColor.text;
+
+    const rejectedIcon = rejectedCard.querySelector("i");
+    const rejectedElements = rejectedCard.querySelectorAll("*");
+    if (rejectedIcon) rejectedIcon.style.color = "#ffffff"; // Forcer l'icône en blanc
+    applyColorsToCardElements(rejectedElements, rejectedColor.text, "Rejetées");
+
+    console.log(
+      `✅ Carte Rejetées stylée: ${rejectedColor.bg} avec texte ${rejectedColor.text}`
+    );
+
+    // Ajouter une classe pour marquer que les couleurs par défaut sont appliquées
+    statCards.forEach((card) => {
+      card.classList.add("default-colors-applied");
+      card.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.1)";
+      card.style.transition = "all 0.3s ease";
+    });
+  } else {
+    console.warn("⚠️ Impossible de trouver toutes les cartes de statistiques");
+  }
+
+  console.log("✅ Couleurs par défaut appliquées aux cartes de statistiques");
+}
+
+// Appliquer le thème spécifiquement aux cartes de statistiques
+function applyThemeToStatCards() {
+  console.log("📊 Application du thème aux cartes de statistiques");
+
+  // Toujours vérifier s'il y a des couleurs personnalisées sauvegardées
+  const savedCustomTheme = localStorage.getItem("customTheme");
+  let useCustomCardColors = false;
+  let customColors = null;
+
+  if (savedCustomTheme) {
+    try {
+      customColors = JSON.parse(savedCustomTheme);
+      // Vérifier si des couleurs de cartes personnalisées existent
+      if (
+        customColors.cardTotal ||
+        customColors.cardPending ||
+        customColors.cardApproved ||
+        customColors.cardRejected
+      ) {
+        useCustomCardColors = true;
+        console.log(
+          "🎨 Couleurs personnalisées détectées, application dans tous les thèmes"
+        );
+      }
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la lecture des couleurs personnalisées:",
+        error
+      );
+    }
+  }
+
+  // Si on a des couleurs personnalisées, les utiliser quel que soit le thème
+  if (useCustomCardColors && customColors) {
+    console.log("🎨 Application des couleurs personnalisées des cartes");
+    applyCustomCardColorsToAllThemes(customColors);
+    return;
+  }
+
+  // Sinon, appliquer les couleurs par défaut
+  console.log("🎨 Application des couleurs par défaut des cartes");
+  applyDefaultStatCardsColors();
+}
+
+// Nouvelle fonction pour appliquer les couleurs personnalisées dans tous les thèmes
+function applyCustomCardColorsToAllThemes(customColors) {
+  console.log(
+    "🎨 Application des couleurs personnalisées aux cartes (tous thèmes)"
+  );
+
+  const statCards = document.querySelectorAll(".stat-card");
+  console.log(`🔍 ${statCards.length} cartes de statistiques trouvées`);
+
+  if (statCards.length >= 4) {
+    // Fonction utilitaire pour déterminer la couleur de texte optimale
+    function getOptimalTextColor(hexColor) {
+      const hex = hexColor.replace("#", "");
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.5 ? "#1f2937" : "#ffffff";
+    }
+
+    // Configuration des cartes avec couleurs personnalisées ou par défaut
+    const cardConfigs = [
+      {
+        card: statCards[0],
+        bg: customColors.cardTotal || "#f97316",
+        name: "Total",
+      },
+      {
+        card: statCards[1],
+        bg: customColors.cardPending || "#f59e0b",
+        name: "En Attente",
+      },
+      {
+        card: statCards[2],
+        bg: customColors.cardApproved || "#10b981",
+        name: "Approuvées",
+      },
+      {
+        card: statCards[3],
+        bg: customColors.cardRejected || "#ef4444",
+        name: "Rejetées",
+      },
+    ];
+
+    cardConfigs.forEach(({ card, bg, name }) => {
+      const textColor = getOptimalTextColor(bg);
+
+      // Nettoyer TOUS les styles existants
+      card.style.cssText = "";
+
+      // Appliquer les styles avec !important pour forcer l'affichage
+      card.style.setProperty(
+        "background",
+        `linear-gradient(135deg, ${bg}, ${bg}cc)`,
+        "important"
+      );
+      card.style.setProperty("background-color", bg, "important");
+      card.style.setProperty("border-left-color", bg, "important");
+      card.style.setProperty("border-left-width", "4px", "important");
+      card.style.setProperty("color", textColor, "important");
+      card.style.setProperty("padding", "1.5rem", "important");
+      card.style.setProperty("border-radius", "0.5rem", "important");
+      card.style.setProperty(
+        "box-shadow",
+        "0 4px 15px rgba(0, 0, 0, 0.2)",
+        "important"
+      );
+      card.style.setProperty("display", "block", "important");
+      card.style.setProperty("visibility", "visible", "important");
+      card.style.setProperty("opacity", "1", "important");
+      card.style.setProperty("transition", "all 0.3s ease", "important");
+
+      // Appliquer à TOUS les éléments enfants avec !important, sauf les icônes spécifiques
+      const allElements = card.querySelectorAll("*");
+      applyColorsToCardElements(allElements, textColor, name);
+
+      console.log(
+        `✅ Carte ${name} appliquée avec couleur personnalisée: ${bg} avec texte ${textColor}`
+      );
+    });
+
+    console.log(
+      "🎯 Application des couleurs personnalisées terminée avec succès !"
+    );
+  } else {
+    console.warn("⚠️ Impossible de trouver toutes les cartes de statistiques");
+  }
+
+  console.log(
+    "✅ Couleurs personnalisées appliquées aux cartes de statistiques"
+  );
+
+  // Forcer les icônes de suppression en rouge après l'application des couleurs
+  setTimeout(() => {
+    forceDeleteIconsToRed();
+  }, 200);
 }
 
 // Basculer entre les thèmes (cycle complet: light → dark → custom → light)
@@ -871,7 +1356,54 @@ function showThemeStatus() {
 window.testThemeSystem = testThemeSystem;
 window.showThemeStatus = showThemeStatus;
 
-// Fonction pour activer directement le thème personnalisé
+// Fonction pour tester immédiatement les cartes de statistiques
+function testStatCardsTheme() {
+  console.log("🧪 Test des cartes de statistiques...");
+  applyThemeToStatCards();
+
+  setTimeout(() => {
+    const cards = document.querySelectorAll(".stat-card");
+    cards.forEach((card, index) => {
+      const bg = window.getComputedStyle(card).background;
+      const color = window.getComputedStyle(card).color;
+      console.log(`Carte ${index + 1}:`, { background: bg, color: color });
+    });
+  }, 500);
+}
+
+// Fonction de test complète pour les couleurs par défaut
+function testDefaultCardColors() {
+  console.log("🧪 Test complet des couleurs par défaut des cartes...");
+
+  // Forcer l'application des couleurs par défaut
+  applyDefaultStatCardsColors();
+
+  setTimeout(() => {
+    const cards = document.querySelectorAll(".stat-card");
+    const expectedColors = ["#f97316", "#f59e0b", "#10b981", "#ef4444"];
+    const cardNames = [
+      "Total Demandes",
+      "En Attente",
+      "Approuvées",
+      "Rejetées",
+    ];
+
+    cards.forEach((card, index) => {
+      const bg = window.getComputedStyle(card).backgroundColor;
+      const color = window.getComputedStyle(card).color;
+      const borderLeft = window.getComputedStyle(card).borderLeftColor;
+
+      console.log(`📊 ${cardNames[index]}:`, {
+        background: bg,
+        textColor: color,
+        borderLeft: borderLeft,
+        expectedColor: expectedColors[index],
+      });
+    });
+
+    console.log("✅ Test des couleurs par défaut terminé");
+  }, 500);
+} // Fonction pour activer directement le thème personnalisé
 function activateCustomTheme() {
   console.log("🎨 Activation directe du thème personnalisé...");
 
@@ -915,6 +1447,177 @@ window.updateThemeIcon = updateThemeIcon;
 window.openThemeCustomizer = openThemeCustomizer;
 window.closeThemeCustomizer = closeThemeCustomizer;
 window.activateCustomTheme = activateCustomTheme;
+// Fonction de débogage rapide pour forcer les couleurs
+window.fixCardColors = function () {
+  console.log("🛠️ Correction forcée des couleurs des cartes...");
+
+  const statCards = document.querySelectorAll(".stat-card");
+  console.log(`🔍 ${statCards.length} cartes trouvées`);
+
+  if (statCards.length >= 4) {
+    // Couleurs fixes avec contraste approprié
+    const colors = [
+      { bg: "#f97316", text: "#ffffff" }, // Orange - Total (texte blanc)
+      { bg: "#f59e0b", text: "#1f2937" }, // Jaune - En Attente (texte sombre)
+      { bg: "#10b981", text: "#ffffff" }, // Vert - Approuvées (texte blanc)
+      { bg: "#ef4444", text: "#ffffff" }, // Rouge - Rejetées (texte blanc)
+    ];
+
+    statCards.forEach((card, index) => {
+      if (colors[index]) {
+        const color = colors[index];
+
+        // Nettoyer d'abord tous les styles pour éviter les conflits
+        card.style.cssText = "";
+
+        // Appliquer le nouveau style avec !important pour forcer l'affichage
+        card.style.setProperty(
+          "background",
+          `linear-gradient(135deg, ${color.bg}, ${color.bg}cc)`,
+          "important"
+        );
+        card.style.setProperty("background-color", color.bg, "important");
+        card.style.setProperty("border-left-color", color.bg, "important");
+        card.style.setProperty("border-left-width", "4px", "important");
+        card.style.setProperty("color", color.text, "important");
+        card.style.setProperty("padding", "1.5rem", "important");
+        card.style.setProperty("border-radius", "0.5rem", "important");
+        card.style.setProperty(
+          "box-shadow",
+          "0 4px 15px rgba(0, 0, 0, 0.2)",
+          "important"
+        );
+        card.style.setProperty("display", "block", "important");
+        card.style.setProperty("visibility", "visible", "important");
+        card.style.setProperty("opacity", "1", "important");
+
+        // Forcer la couleur sur tous les éléments enfants avec !important
+        const allElements = card.querySelectorAll("*");
+        allElements.forEach((el) => {
+          el.style.setProperty("color", color.text, "important");
+          el.style.setProperty("background", "transparent", "important");
+        });
+
+        console.log(
+          `✅ Carte ${index + 1} corrigée AVEC FORCE: ${color.bg} avec texte ${
+            color.text
+          }`
+        );
+      }
+    });
+
+    console.log(
+      "✅ Correction terminée - les cartes devraient maintenant être visibles !"
+    );
+  } else {
+    console.warn("⚠️ Impossible de trouver 4 cartes de statistiques");
+  }
+};
+
+// Fonction de test simple pour appliquer des couleurs de test
+window.testCustomCardColors = function () {
+  console.log("🧪 Test des couleurs personnalisées...");
+
+  // Couleurs de test distinctes
+  const testColors = {
+    cardTotal: "#ff0000", // Rouge vif
+    cardPending: "#00ff00", // Vert vif
+    cardApproved: "#0000ff", // Bleu vif
+    cardRejected: "#ff00ff", // Magenta vif
+  };
+
+  const statCards = document.querySelectorAll(".stat-card");
+
+  if (statCards.length >= 4) {
+    const configs = [
+      { card: statCards[0], bg: testColors.cardTotal, name: "Total (Rouge)" },
+      {
+        card: statCards[1],
+        bg: testColors.cardPending,
+        name: "En Attente (Vert)",
+      },
+      {
+        card: statCards[2],
+        bg: testColors.cardApproved,
+        name: "Approuvées (Bleu)",
+      },
+      {
+        card: statCards[3],
+        bg: testColors.cardRejected,
+        name: "Rejetées (Magenta)",
+      },
+    ];
+
+    configs.forEach(({ card, bg, name }) => {
+      card.style.cssText = "";
+      card.style.setProperty("background", bg, "important");
+      card.style.setProperty("color", "#ffffff", "important");
+      card.style.setProperty("padding", "1.5rem", "important");
+      card.style.setProperty("border-radius", "0.5rem", "important");
+      card.style.setProperty("border-left-color", bg, "important");
+      card.style.setProperty("border-left-width", "4px", "important");
+      card.style.setProperty("font-weight", "bold", "important");
+      card.style.setProperty("display", "block", "important");
+      card.style.setProperty("visibility", "visible", "important");
+      card.style.setProperty("opacity", "1", "important");
+
+      const allElements = card.querySelectorAll("*");
+      allElements.forEach((el) => {
+        el.style.setProperty("color", "#ffffff", "important");
+        el.style.setProperty("background", "transparent", "important");
+      });
+
+      console.log(`✅ ${name} appliquée AVEC FORCE`);
+    });
+
+    console.log(
+      "🎯 Si vous voyez les cartes en couleurs vives, le système fonctionne !"
+    );
+  }
+};
+
+window.testStatCardsTheme = testStatCardsTheme;
+window.applyDefaultStatCardsColors = applyDefaultStatCardsColors;
+window.testDefaultCardColors = testDefaultCardColors;
+
+// Fonction de test pour déboguer les cartes
+window.testStatCards = function () {
+  console.log("🧪 Test des cartes de statistiques:");
+
+  const statCards = document.querySelectorAll(".stat-card");
+  console.log(`📊 ${statCards.length} cartes trouvées`);
+
+  statCards.forEach((card, index) => {
+    console.log(`Carte ${index + 1}:`, {
+      classes: card.className,
+      textContent: card.textContent.trim().substring(0, 50),
+      currentBorderColor: card.style.borderLeftColor || "non défini",
+      currentBackground: card.style.background || "non défini",
+    });
+  });
+
+  console.log("Variables CSS actuelles:");
+  const root = document.documentElement;
+  console.log(
+    "--card-total-bg:",
+    getComputedStyle(root).getPropertyValue("--card-total-bg")
+  );
+  console.log(
+    "--card-pending-bg:",
+    getComputedStyle(root).getPropertyValue("--card-pending-bg")
+  );
+  console.log(
+    "--card-approved-bg:",
+    getComputedStyle(root).getPropertyValue("--card-approved-bg")
+  );
+  console.log(
+    "--card-rejected-bg:",
+    getComputedStyle(root).getPropertyValue("--card-rejected-bg")
+  );
+
+  // Appliquer manuellement
+  applyThemeToStatCards();
+};
 
 // Fonction de test rapide
 window.quickThemeTest = function () {
@@ -984,12 +1687,22 @@ function openThemeCustomizer() {
     const backgroundColor = document.getElementById("backgroundColor");
     const surfaceColor = document.getElementById("surfaceColor");
 
+    // Charger les valeurs des cartes de statistiques
+    const cardTotalColor = document.getElementById("cardTotalColor");
+    const cardPendingColor = document.getElementById("cardPendingColor");
+    const cardApprovedColor = document.getElementById("cardApprovedColor");
+    const cardRejectedColor = document.getElementById("cardRejectedColor");
+
     console.log("🎨 Éléments de couleur trouvés:", {
       primaryColor: !!primaryColor,
       secondaryColor: !!secondaryColor,
       accentColor: !!accentColor,
       backgroundColor: !!backgroundColor,
       surfaceColor: !!surfaceColor,
+      cardTotalColor: !!cardTotalColor,
+      cardPendingColor: !!cardPendingColor,
+      cardApprovedColor: !!cardApprovedColor,
+      cardRejectedColor: !!cardRejectedColor,
     });
 
     if (primaryColor) primaryColor.value = customThemeData.primary;
@@ -997,6 +1710,102 @@ function openThemeCustomizer() {
     if (accentColor) accentColor.value = customThemeData.accent;
     if (backgroundColor) backgroundColor.value = customThemeData.background;
     if (surfaceColor) surfaceColor.value = customThemeData.surface;
+
+    // Charger les valeurs des cartes
+    if (cardTotalColor)
+      cardTotalColor.value = customThemeData.cardTotal || "#f97316";
+    if (cardPendingColor)
+      cardPendingColor.value = customThemeData.cardPending || "#f59e0b";
+    if (cardApprovedColor)
+      cardApprovedColor.value = customThemeData.cardApproved || "#10b981";
+    if (cardRejectedColor)
+      cardRejectedColor.value = customThemeData.cardRejected || "#ef4444";
+
+    // Ajouter des event listeners pour la prévisualisation en temps réel des cartes
+    const previewCardColors = () => {
+      console.log("🎨 Prévisualisation des couleurs des cartes...");
+
+      // Mettre à jour temporairement les données du thème
+      const tempThemeData = {
+        ...customThemeData,
+        cardTotal: cardTotalColor
+          ? cardTotalColor.value
+          : customThemeData.cardTotal,
+        cardPending: cardPendingColor
+          ? cardPendingColor.value
+          : customThemeData.cardPending,
+        cardApproved: cardApprovedColor
+          ? cardApprovedColor.value
+          : customThemeData.cardApproved,
+        cardRejected: cardRejectedColor
+          ? cardRejectedColor.value
+          : customThemeData.cardRejected,
+      };
+
+      // Sauvegarder temporairement
+      const originalThemeData = customThemeData;
+      customThemeData = tempThemeData;
+
+      // Appliquer aux cartes immédiatement
+      const statCards = document.querySelectorAll(".stat-card");
+      if (statCards.length >= 4) {
+        // Fonction pour calculer la couleur de texte
+        function getTextColor(hexColor) {
+          const hex = hexColor.replace("#", "");
+          const r = parseInt(hex.substr(0, 2), 16);
+          const g = parseInt(hex.substr(2, 2), 16);
+          const b = parseInt(hex.substr(4, 2), 16);
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          return luminance > 0.5 ? "#1f2937" : "#ffffff";
+        }
+
+        // Appliquer aux cartes
+        const colors = [
+          tempThemeData.cardTotal,
+          tempThemeData.cardPending,
+          tempThemeData.cardApproved,
+          tempThemeData.cardRejected,
+        ];
+
+        statCards.forEach((card, index) => {
+          if (colors[index]) {
+            const bgColor = colors[index];
+            const textColor = getTextColor(bgColor);
+
+            card.style.background = `linear-gradient(135deg, ${bgColor}, ${bgColor}cc)`;
+            card.style.borderLeftColor = bgColor;
+            card.style.color = textColor;
+
+            // Appliquer à tous les éléments enfants
+            const allElements = card.querySelectorAll("*");
+            allElements.forEach((el) => {
+              el.style.setProperty("color", textColor, "important");
+            });
+          }
+        });
+      }
+
+      // Restaurer les données originales (la vraie sauvegarde se fait avec applyCustomColors)
+      customThemeData = originalThemeData;
+    };
+
+    // Attacher les event listeners aux inputs des cartes
+    if (cardTotalColor) {
+      cardTotalColor.addEventListener("input", previewCardColors);
+      cardTotalColor.addEventListener("change", previewCardColors);
+    }
+    if (cardPendingColor) {
+      cardPendingColor.addEventListener("input", previewCardColors);
+      cardPendingColor.addEventListener("change", previewCardColors);
+    }
+    if (cardApprovedColor) {
+      cardApprovedColor.addEventListener("input", previewCardColors);
+      cardApprovedColor.addEventListener("change", previewCardColors);
+    }
+    if (cardRejectedColor) {
+      cardRejectedColor.addEventListener("input", previewCardColors);
+      cardRejectedColor.addEventListener("change", previewCardColors);
+    }
 
     console.log("🎨 Modal ouvert avec succès!");
   } else {
@@ -1025,6 +1834,11 @@ function applyCustomColors() {
     accent: document.getElementById("accentColor").value,
     background: document.getElementById("backgroundColor").value,
     surface: document.getElementById("surfaceColor").value,
+    // Couleurs des cartes de statistiques
+    cardTotal: document.getElementById("cardTotalColor").value,
+    cardPending: document.getElementById("cardPendingColor").value,
+    cardApproved: document.getElementById("cardApprovedColor").value,
+    cardRejected: document.getElementById("cardRejectedColor").value,
   };
 
   console.log("🎨 Nouvelles couleurs:", newTheme);
@@ -1046,11 +1860,95 @@ function applyCustomColors() {
   // ÉTAPE 4: Appliquer le thème
   applyTheme("custom");
 
-  // ÉTAPE 5: Forcer la mise à jour de l'interface
+  // ÉTAPE 5: Appliquer IMMÉDIATEMENT les couleurs des cartes avec les nouvelles données
+  setTimeout(() => {
+    console.log(
+      "🎨 Application FORCÉE des couleurs personnalisées aux cartes..."
+    );
+
+    // Utiliser directement les nouvelles couleurs
+    const statCards = document.querySelectorAll(".stat-card");
+    console.log(
+      `🔍 ${statCards.length} cartes trouvées pour application personnalisée`
+    );
+
+    if (statCards.length >= 4) {
+      // Fonction pour calculer la couleur de texte optimale
+      function getOptimalTextColor(hexColor) {
+        const hex = hexColor.replace("#", "");
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? "#1f2937" : "#ffffff";
+      }
+
+      // Cartes avec leurs nouvelles couleurs
+      const cardConfigs = [
+        { card: statCards[0], bg: newTheme.cardTotal, name: "Total" },
+        { card: statCards[1], bg: newTheme.cardPending, name: "En Attente" },
+        { card: statCards[2], bg: newTheme.cardApproved, name: "Approuvées" },
+        { card: statCards[3], bg: newTheme.cardRejected, name: "Rejetées" },
+      ];
+
+      cardConfigs.forEach(({ card, bg, name }) => {
+        const textColor = getOptimalTextColor(bg);
+
+        // Nettoyer TOUS les styles existants
+        card.style.cssText = "";
+
+        // Appliquer les styles avec !important pour forcer l'affichage
+        card.style.setProperty(
+          "background",
+          `linear-gradient(135deg, ${bg}, ${bg}cc)`,
+          "important"
+        );
+        card.style.setProperty("background-color", bg, "important");
+        card.style.setProperty("border-left-color", bg, "important");
+        card.style.setProperty("border-left-width", "4px", "important");
+        card.style.setProperty("color", textColor, "important");
+        card.style.setProperty("padding", "1.5rem", "important");
+        card.style.setProperty("border-radius", "0.5rem", "important");
+        card.style.setProperty(
+          "box-shadow",
+          "0 4px 15px rgba(0, 0, 0, 0.2)",
+          "important"
+        );
+        card.style.setProperty("display", "block", "important");
+        card.style.setProperty("visibility", "visible", "important");
+        card.style.setProperty("opacity", "1", "important");
+        card.style.setProperty("transition", "all 0.3s ease", "important");
+
+        // Appliquer à TOUS les éléments enfants avec !important
+        const allElements = card.querySelectorAll("*");
+        allElements.forEach((el) => {
+          el.style.setProperty("color", textColor, "important");
+          el.style.setProperty("background", "transparent", "important");
+        });
+
+        console.log(
+          `✅ Carte ${name} appliquée AVEC FORCE: ${bg} avec texte ${textColor}`
+        );
+      });
+
+      console.log("🎯 Application DIRECTE terminée avec succès !");
+    }
+  }, 100);
+
+  // ÉTAPE 6: Application de sécurité après 500ms
+  setTimeout(() => {
+    console.log("🔄 Application de sécurité des couleurs personnalisées...");
+    applyThemeToStatCards();
+  }, 500);
+
+  // ÉTAPE 7: Surveillance continue pour maintenir les couleurs
+  startColorPersistenceMonitor();
+
+  // ÉTAPE 8: Forcer la mise à jour de l'interface
   setTimeout(() => {
     applyThemeToHeaders();
     updateThemeIcon();
-  }, 100);
+  }, 300);
 
   closeThemeCustomizer();
   showNotification("Thème personnalisé appliqué avec succès!", "success");
@@ -1066,6 +1964,11 @@ function resetToDefaultColors() {
     accent: "#f59e0b",
     background: "#ffffff",
     surface: "#f9fafb",
+    // Couleurs par défaut des cartes
+    cardTotal: "#f97316",
+    cardPending: "#f59e0b",
+    cardApproved: "#10b981",
+    cardRejected: "#ef4444",
   };
 
   // Mettre à jour les champs du formulaire uniquement
@@ -1074,6 +1977,14 @@ function resetToDefaultColors() {
   document.getElementById("accentColor").value = defaultTheme.accent;
   document.getElementById("backgroundColor").value = defaultTheme.background;
   document.getElementById("surfaceColor").value = defaultTheme.surface;
+
+  // Mettre à jour les champs des cartes de statistiques
+  document.getElementById("cardTotalColor").value = defaultTheme.cardTotal;
+  document.getElementById("cardPendingColor").value = defaultTheme.cardPending;
+  document.getElementById("cardApprovedColor").value =
+    defaultTheme.cardApproved;
+  document.getElementById("cardRejectedColor").value =
+    defaultTheme.cardRejected;
 
   showNotification("Couleurs du formulaire réinitialisées!", "success");
 }
@@ -1121,6 +2032,386 @@ function resetAllThemes() {
 
 // Rendre la fonction accessible globalement
 window.resetAllThemes = resetAllThemes;
+
+// =================== SURVEILLANCE DE PERSISTANCE DES COULEURS ===================
+
+let colorPersistenceInterval = null;
+
+// Fonction pour forcer la couleur rouge sur toutes les icônes de suppression
+function forceDeleteIconsToRed() {
+  // Sélectionner toutes les icônes de suppression possibles
+  const deleteSelectors = [
+    ".fa-trash",
+    ".fa-trash-alt",
+    ".fa-delete",
+    ".fa-times",
+    ".delete-icon",
+    ".trash-icon",
+    'i[title*="supprimer" i]',
+    'i[aria-label*="supprimer" i]',
+    ".fa-trash-o",
+    ".fa-remove",
+  ];
+
+  deleteSelectors.forEach((selector) => {
+    const icons = document.querySelectorAll(selector);
+    icons.forEach((icon) => {
+      icon.style.setProperty("color", "#ef4444", "important");
+      icon.style.setProperty("opacity", "1", "important");
+    });
+  });
+
+  // Rechercher aussi dans tous les éléments avec des classes FontAwesome
+  const allIcons = document.querySelectorAll('i[class*="fa-"]');
+  allIcons.forEach((icon) => {
+    const classes = icon.className.toLowerCase();
+    if (
+      classes.includes("trash") ||
+      classes.includes("delete") ||
+      classes.includes("remove")
+    ) {
+      icon.style.setProperty("color", "#ef4444", "important");
+      icon.style.setProperty("opacity", "1", "important");
+    }
+  });
+
+  console.log("🗑️ Icônes de suppression forcées en rouge");
+}
+
+// Démarrer la surveillance de persistance des couleurs
+function startColorPersistenceMonitor() {
+  console.log("🔍 Démarrage de la surveillance de persistance des couleurs");
+
+  // Arrêter toute surveillance précédente
+  if (colorPersistenceInterval) {
+    clearInterval(colorPersistenceInterval);
+  }
+
+  // Surveiller et réappliquer les couleurs toutes les 2 secondes
+  colorPersistenceInterval = setInterval(() => {
+    // Vérifier s'il y a des couleurs personnalisées sauvegardées
+    const savedCustomTheme = localStorage.getItem("customTheme");
+    if (savedCustomTheme) {
+      try {
+        const savedColors = JSON.parse(savedCustomTheme);
+        // Si des couleurs de cartes sont définies, les maintenir quel que soit le thème
+        if (
+          savedColors.cardTotal ||
+          savedColors.cardPending ||
+          savedColors.cardApproved ||
+          savedColors.cardRejected
+        ) {
+          console.log(
+            "🔄 Vérification et maintien des couleurs personnalisées (tous thèmes)..."
+          );
+          forceApplyCustomCardColors();
+        }
+      } catch (error) {
+        console.error(
+          "❌ Erreur lors de la vérification des couleurs sauvegardées:",
+          error
+        );
+      }
+    }
+
+    // Toujours forcer les icônes de suppression en rouge
+    forceDeleteIconsToRed();
+  }, 2000);
+}
+
+// Arrêter la surveillance de persistance des couleurs
+function stopColorPersistenceMonitor() {
+  if (colorPersistenceInterval) {
+    clearInterval(colorPersistenceInterval);
+    colorPersistenceInterval = null;
+    console.log("⏹️ Surveillance de persistance des couleurs arrêtée");
+  }
+}
+
+// Forcer l'application des couleurs personnalisées aux cartes
+function forceApplyCustomCardColors() {
+  const statCards = document.querySelectorAll(".stat-card");
+
+  // Récupérer les couleurs personnalisées sauvegardées
+  const savedCustomTheme = localStorage.getItem("customTheme");
+  let savedColors = null;
+
+  if (savedCustomTheme) {
+    try {
+      savedColors = JSON.parse(savedCustomTheme);
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la lecture des couleurs sauvegardées:",
+        error
+      );
+      return;
+    }
+  }
+
+  if (statCards.length >= 4 && savedColors) {
+    // Fonction pour calculer la couleur de texte optimale
+    function getOptimalTextColor(hexColor) {
+      const hex = hexColor.replace("#", "");
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.5 ? "#1f2937" : "#ffffff";
+    }
+
+    // Configuration des cartes avec couleurs personnalisées sauvegardées
+    const cardConfigs = [
+      {
+        card: statCards[0],
+        bg: savedColors.cardTotal || "#f97316",
+        name: "Total",
+      },
+      {
+        card: statCards[1],
+        bg: savedColors.cardPending || "#f59e0b",
+        name: "En Attente",
+      },
+      {
+        card: statCards[2],
+        bg: savedColors.cardApproved || "#10b981",
+        name: "Approuvées",
+      },
+      {
+        card: statCards[3],
+        bg: savedColors.cardRejected || "#ef4444",
+        name: "Rejetées",
+      },
+    ];
+
+    let changesApplied = false;
+
+    cardConfigs.forEach(({ card, bg, name }) => {
+      // Vérifier si la couleur actuelle est différente de celle souhaitée
+      const currentBg = card.style.getPropertyValue("background-color");
+      const expectedBg = bg;
+
+      if (!currentBg.includes(expectedBg.replace("#", ""))) {
+        const textColor = getOptimalTextColor(bg);
+
+        // Réappliquer avec force
+        card.style.setProperty(
+          "background",
+          `linear-gradient(135deg, ${bg}, ${bg}cc)`,
+          "important"
+        );
+        card.style.setProperty("background-color", bg, "important");
+        card.style.setProperty("border-left-color", bg, "important");
+        card.style.setProperty("border-left-width", "4px", "important");
+        card.style.setProperty("color", textColor, "important");
+        card.style.setProperty("padding", "1.5rem", "important");
+        card.style.setProperty("border-radius", "0.5rem", "important");
+        card.style.setProperty(
+          "box-shadow",
+          "0 4px 15px rgba(0, 0, 0, 0.2)",
+          "important"
+        );
+        card.style.setProperty("display", "block", "important");
+        card.style.setProperty("visibility", "visible", "important");
+        card.style.setProperty("opacity", "1", "important");
+
+        // Appliquer aux éléments enfants avec préservation des couleurs d'icônes
+        const allElements = card.querySelectorAll("*");
+        applyColorsToCardElements(allElements, textColor, name);
+
+        changesApplied = true;
+        console.log(
+          `🔄 Carte ${name} restaurée: ${bg} avec texte ${textColor}`
+        );
+      }
+    });
+
+    if (changesApplied) {
+      console.log("✅ Couleurs personnalisées restaurées avec succès");
+    }
+  }
+}
+
+// Rendre les fonctions accessibles globalement pour debugging
+window.startColorPersistenceMonitor = startColorPersistenceMonitor;
+window.stopColorPersistenceMonitor = stopColorPersistenceMonitor;
+window.forceApplyCustomCardColors = forceApplyCustomCardColors;
+
+// Fonction de test rapide pour vérifier la persistance
+function testColorPersistence() {
+  console.log("🧪 TEST DE PERSISTANCE DES COULEURS");
+  console.log("   - Thème actuel:", currentTheme);
+  console.log("   - Données custom:", customThemeData);
+  console.log("   - Surveillance active:", colorPersistenceInterval !== null);
+
+  // Vérifier les couleurs sauvegardées
+  const savedCustomTheme = localStorage.getItem("customTheme");
+  if (savedCustomTheme) {
+    try {
+      const savedColors = JSON.parse(savedCustomTheme);
+      console.log("   - Couleurs sauvegardées:", savedColors);
+      console.log("   - Couleurs cartes définies:", {
+        cardTotal: !!savedColors.cardTotal,
+        cardPending: !!savedColors.cardPending,
+        cardApproved: !!savedColors.cardApproved,
+        cardRejected: !!savedColors.cardRejected,
+      });
+    } catch (error) {
+      console.error("   - Erreur lecture couleurs:", error);
+    }
+  } else {
+    console.log("   - Aucune couleur sauvegardée");
+  }
+
+  console.log("🔄 Forçage des couleurs appropriées...");
+  applyThemeToStatCards();
+
+  // Vérifier si les cartes existent
+  const statCards = document.querySelectorAll(".stat-card");
+  console.log(`📊 ${statCards.length} cartes trouvées`);
+
+  statCards.forEach((card, index) => {
+    const currentBg = card.style.backgroundColor;
+    const currentColor = card.style.color;
+    console.log(`   Carte ${index + 1}: bg=${currentBg}, text=${currentColor}`);
+  });
+}
+
+// Fonction pour tester le changement de thème avec persistance des couleurs
+function testThemeChange() {
+  console.log("🧪 TEST DE CHANGEMENT DE THÈME");
+  const currentT = currentTheme;
+  console.log("   - Thème actuel:", currentT);
+
+  // Changer de thème
+  const newTheme = currentT === "light" ? "dark" : "light";
+  console.log("   - Changement vers:", newTheme);
+
+  applyTheme(newTheme);
+
+  setTimeout(() => {
+    console.log("   - Nouveau thème appliqué:", currentTheme);
+    testColorPersistence();
+  }, 1000);
+}
+
+// Fonction pour tester spécifiquement les couleurs des icônes
+function testIconColors() {
+  console.log("🧪 TEST DES COULEURS D'ICÔNES");
+
+  const statCards = document.querySelectorAll(".stat-card");
+  console.log(`📊 ${statCards.length} cartes trouvées`);
+
+  statCards.forEach((card, index) => {
+    const cardName = ["Total", "En Attente", "Approuvées", "Rejetées"][index];
+    const icons = card.querySelectorAll("i, .fa, svg");
+
+    console.log(`   Carte ${cardName}:`);
+    console.log(`     - Fond: ${card.style.backgroundColor}`);
+    console.log(`     - Texte: ${card.style.color}`);
+
+    icons.forEach((icon, iconIndex) => {
+      const iconColor = window.getComputedStyle(icon).color;
+      console.log(`     - Icône ${iconIndex + 1}: ${iconColor}`);
+    });
+  });
+
+  console.log("✅ Test des couleurs d'icônes terminé");
+}
+
+// Fonction pour tester spécifiquement les icônes de suppression
+function testDeleteIcons() {
+  console.log("🗑️ TEST DES ICÔNES DE SUPPRESSION");
+
+  // Rechercher toutes les icônes de suppression possibles
+  const deleteSelectors = [
+    ".fa-trash",
+    ".fa-trash-alt",
+    ".fa-delete",
+    ".fa-times",
+    ".delete-icon",
+    ".trash-icon",
+    'i[title*="supprimer" i]',
+    'i[aria-label*="supprimer" i]',
+    ".fa-trash-o",
+    ".fa-remove",
+  ];
+
+  let totalDeleteIcons = 0;
+  let redDeleteIcons = 0;
+
+  deleteSelectors.forEach((selector) => {
+    const icons = document.querySelectorAll(selector);
+    icons.forEach((icon) => {
+      totalDeleteIcons++;
+      const iconColor = window.getComputedStyle(icon).color;
+      const isRed =
+        iconColor.includes("239, 68, 68") ||
+        iconColor.includes("#ef4444") ||
+        iconColor.includes("rgb(239, 68, 68)");
+
+      console.log(
+        `   🗑️ Icône ${selector}: ${iconColor} ${
+          isRed ? "✅ ROUGE" : "❌ PAS ROUGE"
+        }`
+      );
+
+      if (isRed) {
+        redDeleteIcons++;
+      }
+    });
+  });
+
+  // Rechercher aussi dans tous les éléments avec des classes FontAwesome
+  const allIcons = document.querySelectorAll('i[class*="fa-"]');
+  allIcons.forEach((icon) => {
+    const classes = icon.className.toLowerCase();
+    if (
+      classes.includes("trash") ||
+      classes.includes("delete") ||
+      classes.includes("remove")
+    ) {
+      totalDeleteIcons++;
+      const iconColor = window.getComputedStyle(icon).color;
+      const isRed =
+        iconColor.includes("239, 68, 68") ||
+        iconColor.includes("#ef4444") ||
+        iconColor.includes("rgb(239, 68, 68)");
+
+      console.log(
+        `   🗑️ Icône FA-delete: ${iconColor} ${
+          isRed ? "✅ ROUGE" : "❌ PAS ROUGE"
+        }`
+      );
+
+      if (isRed) {
+        redDeleteIcons++;
+      }
+    }
+  });
+
+  console.log(
+    `📊 RÉSUMÉ: ${redDeleteIcons}/${totalDeleteIcons} icônes de suppression en rouge`
+  );
+
+  if (totalDeleteIcons === 0) {
+    console.log("⚠️ Aucune icône de suppression trouvée dans le DOM");
+  } else if (redDeleteIcons === totalDeleteIcons) {
+    console.log(
+      "✅ Toutes les icônes de suppression sont correctement en rouge"
+    );
+  } else {
+    console.log("❌ Certaines icônes de suppression ne sont pas en rouge");
+    // Forcer l'application
+    forceDeleteIconsToRed();
+    console.log("🔧 Application forcée des couleurs rouges");
+  }
+}
+
+// Rendre accessibles globalement
+window.testColorPersistence = testColorPersistence;
+window.testThemeChange = testThemeChange;
+window.testIconColors = testIconColors;
+window.testDeleteIcons = testDeleteIcons;
 
 // =================== GESTION PHOTO DE PROFIL ===================
 

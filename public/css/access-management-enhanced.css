@@ -20,6 +20,12 @@
   --section-header-bg: #2563eb;
   --section-header-text: #ffffff;
 
+  /* Variables pour les cartes de statistiques */
+  --card-total-bg: #f97316; /* Orange pour Total Demandes */
+  --card-pending-bg: #f59e0b; /* Orange pour En Attente */
+  --card-approved-bg: #10b981; /* Vert pour Approuvées */
+  --card-rejected-bg: #ef4444; /* Rouge pour Rejetées */
+
   /* Ombres */
   --shadow-light: rgba(0, 0, 0, 0.1);
   --shadow-medium: rgba(0, 0, 0, 0.15);
@@ -349,6 +355,110 @@ select option:focus {
 
 .status-rejected {
   background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* =================== STYLES POUR LES CARTES DE STATISTIQUES =================== */
+/* Cartes de statistiques avec variables CSS personnalisables */
+.stat-card:nth-child(1),
+.stat-card[data-stat="total"] {
+  background: linear-gradient(
+    135deg,
+    var(--card-total-bg),
+    var(--card-total-bg) dd
+  ) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-card:nth-child(2),
+.stat-card[data-stat="pending"] {
+  background: linear-gradient(
+    135deg,
+    var(--card-pending-bg),
+    var(--card-pending-bg) dd
+  ) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-card:nth-child(3),
+.stat-card[data-stat="approved"] {
+  background: linear-gradient(
+    135deg,
+    var(--card-approved-bg),
+    var(--card-approved-bg) dd
+  ) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-card:nth-child(4),
+.stat-card[data-stat="rejected"] {
+  background: linear-gradient(
+    135deg,
+    var(--card-rejected-bg),
+    var(--card-rejected-bg) dd
+  ) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Effets hover pour les cartes colorées */
+.stat-card:nth-child(1):hover,
+.stat-card:nth-child(2):hover,
+.stat-card:nth-child(3):hover,
+.stat-card:nth-child(4):hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Assurer que le texte et les icônes restent blancs */
+.stat-card:nth-child(1) *,
+.stat-card:nth-child(2) *,
+.stat-card:nth-child(3) *,
+.stat-card:nth-child(4) * {
+  color: white !important;
+}
+
+/* Styles alternatifs utilisant les classes d'arrière-plan */
+.bg-orange-500 {
+  background: linear-gradient(
+    135deg,
+    var(--card-total-bg),
+    var(--card-total-bg) dd
+  ) !important;
+  color: white !important;
+}
+
+.bg-yellow-500 {
+  background: linear-gradient(
+    135deg,
+    var(--card-pending-bg),
+    var(--card-pending-bg) dd
+  ) !important;
+  color: white !important;
+}
+
+.bg-green-500 {
+  background: linear-gradient(
+    135deg,
+    var(--card-approved-bg),
+    var(--card-approved-bg) dd
+  ) !important;
+  color: white !important;
+}
+
+.bg-red-500 {
+  background: linear-gradient(
+    135deg,
+    var(--card-rejected-bg),
+    var(--card-rejected-bg) dd
+  ) !important;
+  color: white !important;
 }
 
 .timeline-item {

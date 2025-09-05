@@ -722,6 +722,90 @@
             </div>
           </div>
 
+          <!-- Section Couleurs des Cartes de Statistiques -->
+          <div class="px-6 py-4 border-t border-gray-200">
+            <h4
+              class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+            >
+              <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
+              Couleurs des Cartes de Statistiques
+            </h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Couleur Total Demandes -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Total Demandes
+                </label>
+                <div class="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    id="cardTotalColor"
+                    value="#f97316"
+                    class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer"
+                  />
+                  <span class="text-sm text-gray-600"
+                    >Couleur de la carte "Total Demandes"</span
+                  >
+                </div>
+              </div>
+
+              <!-- Couleur En Attente -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  En Attente
+                </label>
+                <div class="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    id="cardPendingColor"
+                    value="#f59e0b"
+                    class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer"
+                  />
+                  <span class="text-sm text-gray-600"
+                    >Couleur de la carte "En Attente"</span
+                  >
+                </div>
+              </div>
+
+              <!-- Couleur Approuvées -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Approuvées
+                </label>
+                <div class="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    id="cardApprovedColor"
+                    value="#10b981"
+                    class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer"
+                  />
+                  <span class="text-sm text-gray-600"
+                    >Couleur de la carte "Approuvées"</span
+                  >
+                </div>
+              </div>
+
+              <!-- Couleur Rejetées -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Rejetées
+                </label>
+                <div class="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    id="cardRejectedColor"
+                    value="#ef4444"
+                    class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer"
+                  />
+                  <span class="text-sm text-gray-600"
+                    >Couleur de la carte "Rejetées"</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Boutons d'action du modal -->
           <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
             <!-- Ligne de boutons de réinitialisation -->
