@@ -1512,6 +1512,8 @@ window.updateThemeIcon = updateThemeIcon;
 window.openThemeCustomizer = openThemeCustomizer;
 window.closeThemeCustomizer = closeThemeCustomizer;
 window.activateCustomTheme = activateCustomTheme;
+window.viewRequestDetails = viewRequestDetails;
+window.closeDetailsModal = closeDetailsModal;
 // Fonction de débogage rapide pour forcer les couleurs
 window.fixCardColors = function () {
   console.log("🛠️ Correction forcée des couleurs des cartes...");
@@ -3529,9 +3531,17 @@ async function rejectRequest() {
 
 function viewRequestDetails(requestId) {
   const request = currentRequests.find((req) => req.id === requestId);
-  if (!request) return;
+  if (!request) {
+    console.error("❌ Demande non trouvée:", requestId);
+    return;
+  }
 
-  const details = `
+  // Ouvrir le modal
+  const modal = document.getElementById("detailsModal");
+  if (!modal) {
+    console.error("❌ Modal de détails non trouvé");
+    // Fallback vers l'ancienne méthode
+    const details = `
 Détails de la demande:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3557,8 +3567,217 @@ ${
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ID: ${request.id}
     `;
+    alert(details);
+    return;
+  }
 
-  alert(details);
+  // Remplir les informations de base
+  document.getElementById("detailsUserName").textContent =
+    request.name || "Non renseigné";
+  document.getElementById("detailsUserEmail").textContent =
+    request.email || "Non renseigné";
+  document.getElementById("detailsRequestDate").textContent = formatDate(
+    request.request_date
+  );
+  document.getElementById("detailsCreatedAt").textContent = formatDateTime(
+    request.created_at
+  );
+  document.getElementById("detailsRequestId").textContent = request.id;
+
+  // Gestion de la date de traitement
+  const processedContainer = document.getElementById(
+    "detailsProcessedAtContainer"
+  );
+  if (request.processed_at) {
+    document.getElementById("detailsProcessedAt").textContent = formatDateTime(
+      request.processed_at
+    );
+    processedContainer.classList.remove("hidden");
+  } else {
+    processedContainer.classList.add("hidden");
+  }
+
+  // Configuration du statut avec couleurs et icônes
+  const statusBanner = document.getElementById("detailsStatusBanner");
+  const statusIcon = document.getElementById("detailsStatusIcon");
+  const statusText = document.getElementById("detailsStatusText");
+  const statusSubtext = document.getElementById("detailsStatusSubtext");
+  const statusBadge = document.getElementById("detailsStatusBadge");
+
+  switch (request.status) {
+    case "pending":
+      statusBanner.className =
+        "mb-6 p-4 rounded-lg border-l-4 border-l-yellow-500 bg-yellow-50";
+      statusIcon.className = "fa fa-clock text-2xl text-yellow-600";
+      statusText.textContent = "En Attente de Traitement";
+      statusSubtext.textContent =
+        "Cette demande est en cours d'analyse par l'équipe d'administration.";
+      statusBadge.className =
+        "px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800";
+      statusBadge.textContent = "EN ATTENTE";
+      break;
+    case "approved":
+      statusBanner.className =
+        "mb-6 p-4 rounded-lg border-l-4 border-l-green-500 bg-green-50";
+      statusIcon.className = "fa fa-check-circle text-2xl text-green-600";
+      statusText.textContent = "Demande Approuvée";
+      statusSubtext.textContent =
+        "Cette demande a été approuvée et l'accès a été accordé.";
+      statusBadge.className =
+        "px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800";
+      statusBadge.textContent = "APPROUVÉE";
+      break;
+    case "rejected":
+      statusBanner.className =
+        "mb-6 p-4 rounded-lg border-l-4 border-l-red-500 bg-red-50";
+      statusIcon.className = "fa fa-times-circle text-2xl text-red-600";
+      statusText.textContent = "Demande Rejetée";
+      statusSubtext.textContent =
+        "Cette demande a été rejetée par l'équipe d'administration.";
+      statusBadge.className =
+        "px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800";
+      statusBadge.textContent = "REJETÉE";
+      break;
+    default:
+      statusBanner.className =
+        "mb-6 p-4 rounded-lg border-l-4 border-l-gray-500 bg-gray-50";
+      statusIcon.className = "fa fa-question-circle text-2xl text-gray-600";
+      statusText.textContent = "Statut Inconnu";
+      statusSubtext.textContent =
+        "Le statut de cette demande n'est pas défini.";
+      statusBadge.className =
+        "px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800";
+      statusBadge.textContent = "INCONNU";
+  }
+
+  // Générer l'historique des actions
+  generateActionHistory(request);
+
+  // Afficher le modal
+  modal.classList.remove("hidden");
+
+  // Ajouter les gestionnaires d'événements pour fermer le modal
+  modal.addEventListener("click", handleModalBackdropClick);
+  document.addEventListener("keydown", handleModalKeydown);
+
+  // Appliquer les couleurs des icônes après l'affichage
+  setTimeout(() => {
+    forceSpecificIconsToWhite();
+  }, 100);
+
+  console.log("📋 Détails affichés pour la demande:", request.id);
+}
+
+// Fonction pour générer l'historique des actions
+function generateActionHistory(request) {
+  const actionsList = document.getElementById("detailsActionsList");
+  actionsList.innerHTML = "";
+
+  const actions = [];
+
+  // Action de création
+  actions.push({
+    icon: "fa fa-plus-circle text-blue-600",
+    title: "Demande créée",
+    description: `Demande d'accès soumise par ${request.name}`,
+    date: request.created_at,
+    type: "creation",
+  });
+
+  // Action de traitement si elle existe
+  if (request.processed_at) {
+    const actionType = request.status === "approved" ? "approval" : "rejection";
+    actions.push({
+      icon:
+        request.status === "approved"
+          ? "fa fa-check-circle text-green-600"
+          : "fa fa-times-circle text-red-600",
+      title:
+        request.status === "approved" ? "Demande approuvée" : "Demande rejetée",
+      description: `La demande a été ${
+        request.status === "approved" ? "approuvée" : "rejetée"
+      } par l'administration`,
+      date: request.processed_at,
+      type: actionType,
+    });
+  }
+
+  // Trier les actions par date (plus récent en premier)
+  actions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Créer les éléments HTML pour chaque action
+  actions.forEach((action, index) => {
+    const actionElement = document.createElement("div");
+    actionElement.className =
+      "flex items-start space-x-3 p-3 rounded-lg border bg-white";
+
+    actionElement.innerHTML = `
+      <div class="flex-shrink-0 mt-1">
+        <i class="${action.icon}"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between">
+          <h5 class="font-medium text-gray-900">${action.title}</h5>
+          <span class="text-xs text-gray-500">${formatDateTime(
+            action.date
+          )}</span>
+        </div>
+        <p class="text-sm text-gray-600 mt-1">${action.description}</p>
+      </div>
+    `;
+
+    actionsList.appendChild(actionElement);
+  });
+
+  // Si aucune action de traitement, ajouter un message
+  if (actions.length === 1) {
+    const pendingElement = document.createElement("div");
+    pendingElement.className =
+      "flex items-start space-x-3 p-3 rounded-lg border border-dashed border-yellow-300 bg-yellow-50";
+
+    pendingElement.innerHTML = `
+      <div class="flex-shrink-0 mt-1">
+        <i class="fa fa-hourglass-half text-yellow-600"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h5 class="font-medium text-yellow-800">En attente de traitement</h5>
+        <p class="text-sm text-yellow-700 mt-1">La demande est en cours d'analyse par l'équipe d'administration.</p>
+      </div>
+    `;
+
+    actionsList.appendChild(pendingElement);
+  }
+}
+
+// Fonction pour fermer le modal de détails
+function closeDetailsModal() {
+  const modal = document.getElementById("detailsModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    console.log("📋 Modal de détails fermé");
+
+    // Nettoyer les gestionnaires d'événements
+    modal.removeEventListener("click", handleModalBackdropClick);
+    document.removeEventListener("keydown", handleModalKeydown);
+  }
+}
+
+// Gestionnaire d'événements pour fermer le modal en cliquant à l'extérieur
+function handleModalBackdropClick(event) {
+  const modal = document.getElementById("detailsModal");
+  const modalContent = modal.querySelector(".bg-white, .bg-gray-800");
+
+  // Fermer seulement si on clique sur le backdrop, pas sur le contenu
+  if (event.target === modal || !modalContent.contains(event.target)) {
+    closeDetailsModal();
+  }
+}
+
+// Gestionnaire d'événements pour fermer le modal avec la touche Escape
+function handleModalKeydown(event) {
+  if (event.key === "Escape") {
+    closeDetailsModal();
+  }
 }
 
 function showNotification(message, type = "success") {

@@ -934,6 +934,138 @@
       </div>
     </div>
 
+    <!-- MODAL DE DÉTAILS AMÉLIORÉ -->
+    <div
+      id="detailsModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+    >
+      <div
+        class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+      >
+        <div
+          class="px-6 py-4 bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-t-xl"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <i class="fa fa-file-text text-xl"></i>
+              <h3 class="text-lg font-bold">Détails de la Demande</h3>
+            </div>
+            <button
+              onclick="closeDetailsModal()"
+              class="text-white hover:text-gray-200 text-xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <!-- En-tête avec statut -->
+          <div class="mb-6 p-4 rounded-lg border-l-4" id="detailsStatusBanner">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <i id="detailsStatusIcon" class="text-2xl"></i>
+                <div>
+                  <h4 class="font-semibold text-lg" id="detailsStatusText"></h4>
+                  <p
+                    class="text-sm text-gray-600"
+                    id="detailsStatusSubtext"
+                  ></p>
+                </div>
+              </div>
+              <span
+                class="px-3 py-1 rounded-full text-sm font-medium"
+                id="detailsStatusBadge"
+              ></span>
+            </div>
+          </div>
+
+          <!-- Informations utilisateur -->
+          <div class="mb-6">
+            <div class="flex items-center space-x-2 mb-3">
+              <i class="fa fa-user text-blue-600"></i>
+              <h4 class="font-semibold text-gray-800">
+                Informations Utilisateur
+              </h4>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span class="text-sm text-gray-600">Nom complet</span>
+                  <p class="font-medium" id="detailsUserName"></p>
+                </div>
+                <div>
+                  <span class="text-sm text-gray-600">Adresse email</span>
+                  <p
+                    class="font-medium text-blue-600"
+                    id="detailsUserEmail"
+                  ></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Informations de la demande -->
+          <div class="mb-6">
+            <div class="flex items-center space-x-2 mb-3">
+              <i class="fa fa-calendar text-green-600"></i>
+              <h4 class="font-semibold text-gray-800">
+                Informations de la Demande
+              </h4>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span class="text-sm text-gray-600">Date de demande</span>
+                  <p class="font-medium" id="detailsRequestDate"></p>
+                </div>
+                <div>
+                  <span class="text-sm text-gray-600">Date de création</span>
+                  <p class="font-medium" id="detailsCreatedAt"></p>
+                </div>
+                <div id="detailsProcessedAtContainer" class="hidden">
+                  <span class="text-sm text-gray-600">Date de traitement</span>
+                  <p class="font-medium" id="detailsProcessedAt"></p>
+                </div>
+                <div>
+                  <span class="text-sm text-gray-600">Identifiant</span>
+                  <p
+                    class="font-mono text-sm bg-white px-2 py-1 rounded border"
+                    id="detailsRequestId"
+                  ></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Historique et actions -->
+          <div class="mb-6" id="detailsActionsContainer">
+            <div class="flex items-center space-x-2 mb-3">
+              <i class="fa fa-history text-purple-600"></i>
+              <h4 class="font-semibold text-gray-800">Historique et Actions</h4>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <div class="space-y-2" id="detailsActionsList">
+                <!-- Les actions seront ajoutées dynamiquement -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pied du modal avec boutons -->
+        <div class="px-6 py-4 bg-gray-50 rounded-b-xl border-t">
+          <div class="flex justify-end space-x-3">
+            <button
+              onclick="closeDetailsModal()"
+              class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-200"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- NOTIFICATION -->
     <div id="notification" class="fixed top-4 right-4 z-50 hidden">
       <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
