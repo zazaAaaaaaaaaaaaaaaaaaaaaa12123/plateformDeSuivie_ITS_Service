@@ -421,6 +421,17 @@ function initializeThemeSystem() {
     console.log(
       "⌨️ Raccourci clavier ajouté: Ctrl+Shift+T pour changer de thème"
     );
+
+    // Tentatives supplémentaires de mise à jour de l'icône
+    setTimeout(() => {
+      console.log("🔄 Mise à jour de l'icône - tentative 2");
+      updateThemeIcon();
+    }, 500);
+
+    setTimeout(() => {
+      console.log("🔄 Mise à jour de l'icône - tentative 3");
+      updateThemeIcon();
+    }, 1000);
   }, 300);
 }
 
@@ -532,12 +543,21 @@ function applyCustomTheme(themeData) {
   root.style.setProperty("--text-secondary", isDarkBg ? "#d1d5db" : "#6b7280");
   root.style.setProperty("--border-color", isDarkBg ? "#374151" : "#e5e7eb");
 
+  // Sauvegarder TOUJOURS les données personnalisées même si on n'est pas en mode custom
   customThemeData = themeData;
   localStorage.setItem("customTheme", JSON.stringify(themeData));
+  console.log("💾 Données personnalisées sauvegardées:", themeData);
 
   // Appliquer immédiatement aux headers
   applyThemeToHeaders();
   console.log("✅ Thème personnalisé appliqué");
+}
+
+// Fonction pour sauvegarder le thème personnalisé sans l'appliquer
+function saveCustomTheme(themeData) {
+  console.log("💾 Sauvegarde du thème personnalisé:", themeData);
+  customThemeData = themeData;
+  localStorage.setItem("customTheme", JSON.stringify(themeData));
 }
 
 // Fonction utilitaire pour déterminer si une couleur est sombre
@@ -596,7 +616,8 @@ function applyThemeToHeaders() {
   console.log("✅ Thème appliqué aux headers");
 }
 
-// Basculer entre les thèmes (cycle: light → dark → custom → light)
+// Basculer entre les thèmes (cycle complet: light → dark → custom → light)
+// Si aucun thème personnalisé n'existe, cycle simple light ↔ dark
 function toggleTheme() {
   console.log("🎨 toggleTheme appelé, thème actuel:", currentTheme);
 
@@ -609,40 +630,67 @@ function toggleTheme() {
       localStorage.getItem("customTheme") &&
       localStorage.getItem("customTheme") !== "null";
 
-    switch (currentTheme) {
-      case "light":
-        newTheme = "dark";
-        themeDisplayName = "Sombre";
-        break;
-      case "dark":
-        // Si un thème personnalisé existe, aller vers custom, sinon retour à light
-        if (hasCustomTheme) {
+    console.log("🎨 Thème personnalisé disponible:", hasCustomTheme);
+
+    // Cycle selon la disponibilité du thème personnalisé
+    if (hasCustomTheme) {
+      // Cycle complet: light → dark → custom → light
+      switch (currentTheme) {
+        case "light":
+          newTheme = "dark";
+          themeDisplayName = "Sombre";
+          break;
+        case "dark":
           newTheme = "custom";
           themeDisplayName = "Personnalisé";
-        } else {
+          break;
+        case "custom":
+        default:
           newTheme = "light";
           themeDisplayName = "Clair";
-        }
-        break;
-      case "custom":
-        newTheme = "light";
-        themeDisplayName = "Clair";
-        break;
-      default:
-        newTheme = "light";
-        themeDisplayName = "Clair";
+          break;
+      }
+    } else {
+      // Cycle simple: light ↔ dark
+      switch (currentTheme) {
+        case "light":
+          newTheme = "dark";
+          themeDisplayName = "Sombre";
+          break;
+        case "dark":
+        case "custom":
+        default:
+          newTheme = "light";
+          themeDisplayName = "Clair";
+          break;
+      }
     }
 
     console.log("🎨 Changement vers le thème:", newTheme);
 
-    // Sauvegarder le nouveau thème (mais CONSERVER le thème personnalisé)
+    // Sauvegarder le nouveau thème (IMPORTANT: ne PAS effacer customTheme)
     currentTheme = newTheme;
     localStorage.setItem("theme", newTheme);
-    // Note: customTheme reste dans localStorage même si on n'est pas en mode custom
     console.log("💾 Thème sauvegardé:", localStorage.getItem("theme"));
+    console.log(
+      "💾 Thème personnalisé préservé:",
+      localStorage.getItem("customTheme")
+    );
 
+    // Appliquer le thème
     applyTheme(newTheme);
-    updateThemeIcon();
+
+    // Mettre à jour l'icône avec délai pour s'assurer que le DOM est à jour
+    setTimeout(() => {
+      updateThemeIcon();
+      console.log("🔄 Icône mise à jour après délai");
+    }, 100);
+
+    // Seconde tentative au cas où
+    setTimeout(() => {
+      updateThemeIcon();
+      console.log("🔄 Icône mise à jour - seconde tentative");
+    }, 500);
 
     // Afficher une notification simple
     try {
@@ -660,34 +708,104 @@ function updateThemeIcon() {
   console.log(`🔄 Mise à jour de l'icône pour le thème: ${currentTheme}`);
 
   // Chercher le bouton de thème de plusieurs façons
-  const themeButton = document.querySelector('[onclick="toggleTheme()"]');
-  const themeIcon = themeButton ? themeButton.querySelector("i") : null;
+  const themeButton =
+    document.querySelector('[onclick="toggleTheme()"]') ||
+    document.querySelector('[title*="thème"]') ||
+    document.querySelector('button[onclick*="toggleTheme"]');
 
-  if (!themeIcon) {
+  console.log("🔍 Bouton trouvé:", !!themeButton);
+
+  if (!themeButton) {
     console.warn("⚠️ Bouton de thème non trouvé dans le DOM");
+    // Retry après un délai
+    setTimeout(() => {
+      console.log("🔄 Nouvelle tentative de mise à jour de l'icône...");
+      updateThemeIcon();
+    }, 500);
     return;
   }
 
+  const themeIcon = themeButton.querySelector("i");
+  console.log("🔍 Icône trouvée:", !!themeIcon);
+
+  if (!themeIcon) {
+    console.warn("⚠️ Icône de thème non trouvée dans le bouton");
+    return;
+  }
+
+  console.log("🔍 Classes actuelles de l'icône:", themeIcon.className);
+
+  // Réinitialiser toutes les classes d'icône
+  themeIcon.className = "";
+
   // Mettre à jour l'icône selon le thème actuel
   switch (currentTheme) {
-    case "dark":
-      themeIcon.className = "fas fa-sun text-yellow-400";
-      themeButton.title = "Changer vers thème personnalisé";
-      console.log("🌞 Icône changée vers soleil (mode sombre actif)");
-      break;
-    case "custom":
-      themeIcon.className = "fas fa-palette text-purple-400";
-      themeButton.title = "Changer vers thème clair";
-      console.log("🎨 Icône changée vers palette (mode personnalisé actif)");
-      break;
     case "light":
-    default:
       themeIcon.className = "fas fa-moon text-gray-400";
       themeButton.title = "Changer vers thème sombre";
       console.log("🌙 Icône changée vers lune (mode clair actif)");
       break;
+    case "dark":
+      themeIcon.className = "fas fa-palette text-purple-400";
+      themeButton.title = "Changer vers thème personnalisé";
+      console.log("� Icône changée vers palette (mode sombre actif)");
+      break;
+    case "custom":
+      themeIcon.className = "fas fa-sun text-yellow-400";
+      themeButton.title = "Changer vers thème clair";
+      console.log("� Icône changée vers soleil (mode personnalisé actif)");
+      break;
+    default:
+      themeIcon.className = "fas fa-moon text-gray-400";
+      themeButton.title = "Changer de thème";
+      console.log("🔄 Icône par défaut (lune)");
+      break;
   }
+
+  console.log("✅ Nouvelles classes de l'icône:", themeIcon.className);
+
+  // Forcer le rendu
+  themeIcon.offsetHeight; // Force reflow
 }
+
+// Fonction pour forcer la mise à jour de l'icône (debugging)
+function forceUpdateThemeIcon() {
+  console.log("🔧 Forçage de la mise à jour de l'icône...");
+  console.log("🔧 Thème actuel:", currentTheme);
+
+  // Attendre que le DOM soit prêt
+  setTimeout(() => {
+    updateThemeIcon();
+  }, 100);
+}
+
+// Rendre accessible globalement pour debugging
+window.forceUpdateThemeIcon = forceUpdateThemeIcon;
+
+// Fonction de debug pour tester l'icône
+function debugThemeIcon() {
+  console.log("🧪 DEBUG de l'icône du thème:");
+  console.log("- Thème actuel:", currentTheme);
+
+  const button = document.querySelector('[onclick="toggleTheme()"]');
+  console.log("- Bouton trouvé:", !!button);
+  if (button) {
+    console.log("- Bouton HTML:", button.outerHTML);
+    const icon = button.querySelector("i");
+    console.log("- Icône trouvée:", !!icon);
+    if (icon) {
+      console.log("- Classes actuelles:", icon.className);
+      console.log("- Icône HTML:", icon.outerHTML);
+    }
+  }
+
+  // Essayer de mettre à jour
+  console.log("🔄 Tentative de mise à jour...");
+  updateThemeIcon();
+}
+
+// Rendre accessible globalement
+window.debugThemeIcon = debugThemeIcon;
 
 // =================== FONCTION DE TEST POUR LE THÈME ===================
 function testThemeSystem() {
@@ -724,20 +842,23 @@ function showThemeStatus() {
   console.log(
     `   - Thème personnalisé sauvegardé: ${hasCustomTheme ? "Oui" : "Non"}`
   );
-  console.log(
-    `   - Cycle de thèmes: light → dark ${
-      hasCustomTheme ? "→ custom " : ""
-    }→ light`
-  );
+
+  const cycleText = hasCustomTheme
+    ? "light → dark → custom → light"
+    : "light ↔ dark";
+  console.log(`   - Cycle de thèmes: ${cycleText}`);
+
+  const currentDisplayName =
+    currentTheme === "light"
+      ? "Clair"
+      : currentTheme === "dark"
+      ? "Sombre"
+      : currentTheme === "custom"
+      ? "Personnalisé"
+      : "Inconnu";
 
   showNotification(
-    `Thème actuel: ${
-      currentTheme === "light"
-        ? "Clair"
-        : currentTheme === "dark"
-        ? "Sombre"
-        : "Personnalisé"
-    }${
+    `Thème actuel: ${currentDisplayName}${
       hasCustomTheme && currentTheme !== "custom"
         ? " (Personnalisé disponible)"
         : ""
@@ -750,6 +871,42 @@ function showThemeStatus() {
 window.testThemeSystem = testThemeSystem;
 window.showThemeStatus = showThemeStatus;
 
+// Fonction pour activer directement le thème personnalisé
+function activateCustomTheme() {
+  console.log("🎨 Activation directe du thème personnalisé...");
+
+  // Vérifier si un thème personnalisé existe
+  const savedCustomTheme = localStorage.getItem("customTheme");
+  if (!savedCustomTheme || savedCustomTheme === "null") {
+    console.log("❌ Aucun thème personnalisé sauvegardé");
+    showNotification("Aucun thème personnalisé configuré!", "warning");
+    return;
+  }
+
+  try {
+    // Charger et appliquer le thème personnalisé
+    const customData = JSON.parse(savedCustomTheme);
+    currentTheme = "custom";
+    localStorage.setItem("theme", "custom");
+
+    applyTheme("custom");
+
+    setTimeout(() => {
+      updateThemeIcon();
+      applyThemeToHeaders();
+    }, 100);
+
+    showNotification("Thème personnalisé activé!", "success");
+    console.log("✅ Thème personnalisé activé:", customData);
+  } catch (error) {
+    console.error(
+      "❌ Erreur lors de l'activation du thème personnalisé:",
+      error
+    );
+    showNotification("Erreur lors de l'activation du thème!", "error");
+  }
+}
+
 // =================== FONCTIONS GLOBALES POUR TESTS ===================
 // Rendre les fonctions accessibles globalement pour le débogage
 window.toggleTheme = toggleTheme;
@@ -757,6 +914,7 @@ window.applyTheme = applyTheme;
 window.updateThemeIcon = updateThemeIcon;
 window.openThemeCustomizer = openThemeCustomizer;
 window.closeThemeCustomizer = closeThemeCustomizer;
+window.activateCustomTheme = activateCustomTheme;
 
 // Fonction de test rapide
 window.quickThemeTest = function () {
@@ -871,23 +1029,24 @@ function applyCustomColors() {
 
   console.log("🎨 Nouvelles couleurs:", newTheme);
 
-  // ÉTAPE 1: Sauvegarder dans les variables globales
-  currentTheme = "custom";
+  // ÉTAPE 1: Sauvegarder TOUJOURS les données personnalisées dans les variables globales
   customThemeData = newTheme;
 
-  // ÉTAPE 2: Sauvegarder dans localStorage
-  localStorage.setItem("theme", "custom");
+  // ÉTAPE 2: Sauvegarder TOUJOURS dans localStorage (même si on n'active pas le thème custom)
   localStorage.setItem("customTheme", JSON.stringify(newTheme));
+
+  // ÉTAPE 3: Basculer vers le thème custom ET l'appliquer
+  currentTheme = "custom";
+  localStorage.setItem("theme", "custom");
 
   console.log("💾 Données sauvegardées dans localStorage:");
   console.log("   - theme:", localStorage.getItem("theme"));
   console.log("   - customTheme:", localStorage.getItem("customTheme"));
 
-  // ÉTAPE 3: Appliquer le thème
+  // ÉTAPE 4: Appliquer le thème
   applyTheme("custom");
-  applyCustomTheme(newTheme);
 
-  // ÉTAPE 4: Forcer la mise à jour de l'interface
+  // ÉTAPE 5: Forcer la mise à jour de l'interface
   setTimeout(() => {
     applyThemeToHeaders();
     updateThemeIcon();
