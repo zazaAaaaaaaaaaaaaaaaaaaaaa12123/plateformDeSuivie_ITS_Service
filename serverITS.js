@@ -4149,6 +4149,71 @@ app.post("/api/admin/send-access-code", async (req, res) => {
   }
 });
 
+// Endpoint pour supprimer des demandes d'accès
+app.post("/api/admin/delete-requests", async (req, res) => {
+  try {
+    console.log("[DELETE-REQUESTS][API] Nouvelle demande de suppression...");
+
+    const { requestIds } = req.body;
+
+    // Validation des données
+    if (!requestIds || !Array.isArray(requestIds) || requestIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Liste des IDs de demandes requise et non vide",
+      });
+    }
+
+    // Validation que tous les IDs sont des nombres
+    const validIds = requestIds.filter((id) => !isNaN(parseInt(id)));
+    if (validIds.length !== requestIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Tous les IDs doivent être des nombres valides",
+      });
+    }
+
+    console.log("[DELETE-REQUESTS][API] Suppression des demandes:", validIds);
+
+    // Supprimer les demandes de la base de données (syntaxe PostgreSQL)
+    const placeholders = validIds.map((_, index) => `$${index + 1}`).join(",");
+    const deleteQuery = `DELETE FROM access_requests WHERE id IN (${placeholders})`;
+
+    const result = await pool.query(deleteQuery, validIds);
+
+    console.log("[DELETE-REQUESTS][API] Résultat de la suppression:", {
+      affectedRows: result.rowCount || result.affectedRows,
+      requestIds: validIds,
+    });
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucune demande trouvée avec les IDs fournis",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `${result.rowCount} demande(s) supprimée(s) avec succès`,
+      deletedCount: result.rowCount,
+      deletedIds: validIds,
+    });
+  } catch (err) {
+    console.error("[DELETE-REQUESTS][API] Erreur:", {
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+    });
+
+    res.status(500).json({
+      success: false,
+      message: `Erreur serveur lors de la suppression: ${err.message}`,
+      error: err.code || "UNKNOWN_ERROR",
+    });
+  }
+});
+
 // POST deliveries/validate
 app.post(
   "/deliveries/validate",

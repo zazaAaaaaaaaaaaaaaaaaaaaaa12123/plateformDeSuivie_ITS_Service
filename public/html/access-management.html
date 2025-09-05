@@ -85,7 +85,85 @@
             <h1 class="text-2xl font-bold text-white">Gestion des Accès ITS</h1>
           </div>
           <div class="flex items-center space-x-4">
-            <span class="text-yellow-300 font-medium">Admin Panel</span>
+            <!-- 👤 AVATAR ADMINISTRATEUR -->
+            <div id="adminAvatar" class="relative">
+              <div
+                class="flex items-center cursor-pointer bg-blue-800 hover:bg-blue-700 rounded-full px-4 py-2 transition-all duration-200"
+                onclick="toggleUserProfile()"
+              >
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/1048/1048953.png"
+                  alt="Avatar Admin"
+                  class="w-8 h-8 rounded-full mr-3 border-2 border-yellow-400"
+                />
+                <div class="text-left">
+                  <div
+                    id="adminName"
+                    class="text-yellow-300 font-medium text-sm"
+                  >
+                    Admin
+                  </div>
+                  <div id="adminRole" class="text-yellow-200 text-xs">
+                    Administrateur
+                  </div>
+                </div>
+                <i
+                  class="fas fa-chevron-down text-yellow-300 ml-2 text-sm"
+                  id="avatarChevron"
+                ></i>
+              </div>
+
+              <!-- 📋 POPUP PROFIL UTILISATEUR -->
+              <div
+                id="userProfilePopup"
+                class="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 hidden"
+              >
+                <div class="p-4 border-b border-gray-100">
+                  <div class="flex items-center space-x-3">
+                    <img
+                      src="https://cdn-icons-png.flaticon.com/512/1048/1048953.png"
+                      alt="Avatar Admin"
+                      class="w-12 h-12 rounded-full border-2 border-blue-500"
+                    />
+                    <div>
+                      <h3 id="profileName" class="font-bold text-gray-800">
+                        Administrateur
+                      </h3>
+                      <p id="profileEmail" class="text-gray-600 text-sm">
+                        admin@itservice.ci
+                      </p>
+                      <span
+                        class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mt-1"
+                      >
+                        Accès Complet
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-4">
+                  <div class="space-y-3">
+                    <div class="flex items-center text-gray-700">
+                      <i class="fas fa-clock w-5 text-blue-500 mr-3"></i>
+                      <span class="text-sm"
+                        >Dernière connexion:
+                        <span id="lastLoginTime">Maintenant</span></span
+                      >
+                    </div>
+                    <div class="flex items-center text-gray-700">
+                      <i class="fas fa-shield-alt w-5 text-green-500 mr-3"></i>
+                      <span class="text-sm"
+                        >Niveau d'accès: Administrateur</span
+                      >
+                    </div>
+                    <div class="flex items-center text-gray-700">
+                      <i class="fas fa-server w-5 text-purple-500 mr-3"></i>
+                      <span class="text-sm">Système: Gestion d'Accès ITS</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <button
               onclick="logout()"
               class="bg-yellow-400 hover:bg-yellow-300 text-blue-900 px-4 py-2 rounded-lg font-medium transition"
@@ -239,6 +317,24 @@
               <span id="requestsTitle">Demandes d'Accès</span>
             </h2>
             <div class="flex items-center space-x-3">
+              <!-- 🗑️ BOUTON SUPPRESSION MULTIPLE -->
+              <button
+                onclick="deleteSelectedRequests()"
+                id="deleteSelectedBtn"
+                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hidden transition"
+              >
+                <i class="fas fa-trash mr-2"></i>Supprimer Sélectionnées
+              </button>
+
+              <!-- ✅ BOUTON SÉLECTIONNER TOUT -->
+              <button
+                onclick="toggleSelectAll()"
+                id="selectAllBtn"
+                class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition"
+              >
+                <i class="fas fa-check-square mr-2"></i>Tout Sélectionner
+              </button>
+
               <button
                 onclick="clearFilter()"
                 id="clearFilterBtn"
@@ -248,6 +344,11 @@
               </button>
               <div class="text-sm bg-blue-800 px-3 py-1 rounded">
                 <span id="requestsCount">0</span> demande(s)
+                <span
+                  id="selectedCount"
+                  class="hidden ml-2 bg-red-600 px-2 py-1 rounded"
+                  >0 sélectionnée(s)</span
+                >
               </div>
             </div>
           </div>

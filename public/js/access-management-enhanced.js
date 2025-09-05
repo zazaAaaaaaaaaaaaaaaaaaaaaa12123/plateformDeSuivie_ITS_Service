@@ -9,12 +9,28 @@ let lastDataHash = null; // Pour éviter les rechargements inutiles
 // Charger les demandes au démarrage
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 Initialisation de la gestion d'accès avancée...");
+
+  // Vérifier si l'utilisateur est connecté
+  const isLoggedIn = localStorage.getItem("isAdminLoggedIn");
+  if (isLoggedIn !== "true") {
+    console.log("⚠️ Utilisateur non connecté, redirection vers login...");
+    window.location.href = "/html/admin-login.html";
+    return;
+  }
+
   initializeAccessManagement();
 });
 
 // Fonction d'initialisation
 async function initializeAccessManagement() {
   try {
+    // 🧪 FONCTION DE TEST - Simuler des données de connexion
+    // Décommentez cette ligne pour tester avec des données fictives
+    // simulateLoginData();
+
+    // Charger les données du profil utilisateur
+    loadUserProfileData();
+
     // Charger les demandes
     await loadAccessRequests();
 
@@ -29,6 +45,20 @@ async function initializeAccessManagement() {
     console.error("❌ Erreur lors de l'initialisation:", error);
     showNotification("Erreur lors de l'initialisation", "error");
   }
+}
+
+// 🧪 Fonction de test pour simuler des données de connexion
+function simulateLoginData() {
+  const testUserData = {
+    name: "Marie Martin",
+    email: "marie.martin@itsservice.com",
+    loginTime: new Date().toISOString(),
+  };
+
+  localStorage.setItem("adminUser", JSON.stringify(testUserData));
+  localStorage.setItem("isAdminLoggedIn", "true");
+
+  console.log("🧪 Données de test simulées:", testUserData);
 }
 
 // Fonction pour initialiser les événements
@@ -341,6 +371,11 @@ function displayRequests() {
   const noRequestsDiv = document.getElementById("noRequests");
   const requestsCount = document.getElementById("requestsCount");
 
+  // Réinitialiser la sélection lors du rechargement
+  selectedRequests.clear();
+  updateSelectionUI();
+  updateSelectAllButtonState();
+
   // Filtrer les demandes selon le filtre actuel
   let filteredRequests = currentRequests;
   if (currentFilter !== "all") {
@@ -404,6 +439,16 @@ function createEnhancedRequestCard(request) {
 
   div.innerHTML = `
         <div class="flex items-start justify-between">
+            <!-- 🔲 CHECKBOX DE SÉLECTION -->
+            <div class="flex items-center mr-4 mt-2">
+                <input
+                    type="checkbox"
+                    class="request-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    data-request-id="${request.id}"
+                    onchange="toggleRequestSelection(this)"
+                />
+            </div>
+            
             <div class="flex-1">
                 <div class="flex items-center space-x-3 mb-3">
                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -447,8 +492,7 @@ function createEnhancedRequestCard(request) {
                             <span>Traitée le: ${formatDateTime(
                               request.processed_at
                             )}</span>
-                        </p>
-                    `
+                        </p>`
                         : ""
                     }
                 </div>
@@ -495,6 +539,15 @@ function createEnhancedRequestCard(request) {
                 `
                     : ""
                 }
+                <!-- 🗑️ BOUTON SUPPRIMER INDIVIDUEL -->
+                <button 
+                    onclick="deleteIndividualRequest(${request.id})"
+                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition transform hover:scale-105"
+                    title="Supprimer cette demande"
+                >
+                    <i class="fas fa-trash"></i>
+                </button>
+                
                 <button 
                     onclick="viewRequestDetails(${request.id})"
                     class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg transition transform hover:scale-105"
@@ -1208,3 +1261,290 @@ document.addEventListener("click", function (event) {
     closeSendAccessCodeModal();
   }
 });
+
+// =================== FONCTIONNALITÉS DE SUPPRESSION ===================
+
+let selectedRequests = new Set(); // Utiliser un Set pour éviter les doublons
+
+// =================== FONCTIONNALITÉS AVATAR UTILISATEUR ===================
+
+// Fonction pour basculer l'affichage du profil utilisateur
+function toggleUserProfile() {
+  const userProfile = document.getElementById("userProfilePopup");
+  if (userProfile && userProfile.classList.contains("hidden")) {
+    userProfile.classList.remove("hidden");
+    // Charger les données utilisateur si nécessaire
+    loadUserProfileData();
+  } else if (userProfile) {
+    userProfile.classList.add("hidden");
+  }
+}
+
+// Fonction pour charger les données du profil utilisateur
+function loadUserProfileData() {
+  try {
+    // Récupérer les informations de l'admin depuis le localStorage (données de connexion)
+    const adminUserData = localStorage.getItem("adminUser");
+    let adminData;
+
+    if (adminUserData) {
+      // Utiliser les données réelles de la connexion
+      const userData = JSON.parse(adminUserData);
+      adminData = {
+        name: userData.name || "Administrateur ITS",
+        email: userData.email || "admin@itsservice.com",
+        role: "Administrateur",
+        lastLogin: userData.loginTime
+          ? formatDateTime(new Date(userData.loginTime))
+          : formatDateTime(new Date()),
+        accessLevel: "Complet",
+      };
+    } else {
+      // Données par défaut si pas de connexion
+      adminData = {
+        name: "Administrateur ITS",
+        email: "admin@itsservice.com",
+        role: "Super Admin",
+        lastLogin: formatDateTime(new Date()),
+        accessLevel: "Complet",
+      };
+    }
+
+    // Mettre à jour l'affichage avec les vrais IDs du HTML
+    const adminNameEl = document.getElementById("adminName");
+    const adminRoleEl = document.getElementById("adminRole");
+    const profileNameEl = document.getElementById("profileName");
+    const profileEmailEl = document.getElementById("profileEmail");
+    const lastLoginTimeEl = document.getElementById("lastLoginTime");
+
+    if (adminNameEl) adminNameEl.textContent = adminData.name;
+    if (adminRoleEl) adminRoleEl.textContent = adminData.role;
+    if (profileNameEl) profileNameEl.textContent = adminData.name;
+    if (profileEmailEl) profileEmailEl.textContent = adminData.email;
+    if (lastLoginTimeEl) lastLoginTimeEl.textContent = adminData.lastLogin;
+
+    console.log("✅ Profil utilisateur chargé:", adminData);
+  } catch (error) {
+    console.error("❌ Erreur lors du chargement du profil:", error);
+  }
+}
+
+// Fermer le profil utilisateur en cliquant à l'extérieur
+document.addEventListener("click", function (event) {
+  const userAvatar = document.getElementById("adminAvatar");
+  const userProfile = document.getElementById("userProfilePopup");
+
+  if (userAvatar && userProfile && !userAvatar.contains(event.target)) {
+    userProfile.classList.add("hidden");
+  }
+});
+
+// Fonction de déconnexion
+function logout() {
+  if (confirm("Êtes-vous sûr de vouloir vous déconnecter ?")) {
+    // Nettoyer les données de session
+    localStorage.removeItem("adminSession");
+    localStorage.removeItem("adminUser");
+    localStorage.removeItem("isAdminLoggedIn");
+    sessionStorage.clear();
+
+    console.log("🚪 Déconnexion effectuée, redirection vers login...");
+
+    // Rediriger vers la page de connexion
+    window.location.href = "/html/admin-login.html";
+  }
+}
+
+// Fonction pour basculer la sélection de toutes les checkboxes
+function toggleAllCheckboxes(masterCheckbox) {
+  const checkboxes = document.querySelectorAll(".request-checkbox");
+  checkboxes.forEach((checkbox) => {
+    checkbox.checked = masterCheckbox.checked;
+    if (masterCheckbox.checked) {
+      selectedRequests.add(checkbox.dataset.requestId);
+    } else {
+      selectedRequests.delete(checkbox.dataset.requestId);
+    }
+  });
+  updateSelectionUI();
+}
+
+// Fonction pour gérer la sélection individuelle
+function toggleRequestSelection(checkbox) {
+  const requestId = checkbox.dataset.requestId;
+  if (checkbox.checked) {
+    selectedRequests.add(requestId);
+  } else {
+    selectedRequests.delete(requestId);
+  }
+
+  // Mettre à jour l'état du bouton "Tout Sélectionner" (pas besoin de masterCheckbox)
+  updateSelectAllButtonState();
+  updateSelectionUI();
+}
+
+// Fonction pour mettre à jour l'état du bouton "Tout Sélectionner"
+function updateSelectAllButtonState() {
+  const selectAllBtn = document.getElementById("selectAllBtn");
+  const allCheckboxes = document.querySelectorAll(".request-checkbox");
+  const checkedBoxes = document.querySelectorAll(".request-checkbox:checked");
+
+  if (selectAllBtn) {
+    if (
+      checkedBoxes.length === allCheckboxes.length &&
+      allCheckboxes.length > 0
+    ) {
+      selectAllBtn.innerHTML =
+        '<i class="fas fa-square mr-2"></i>Tout Désélectionner';
+    } else {
+      selectAllBtn.innerHTML =
+        '<i class="fas fa-check-square mr-2"></i>Tout Sélectionner';
+    }
+  }
+}
+
+// Fonction pour mettre à jour l'interface de sélection
+function updateSelectionUI() {
+  const selectedCount = selectedRequests.size;
+  const selectedCountElement = document.getElementById("selectedCount");
+  const deleteButton = document.getElementById("deleteSelectedBtn");
+
+  if (selectedCount > 0) {
+    selectedCountElement.textContent = `${selectedCount} sélectionnée(s)`;
+    selectedCountElement.classList.remove("hidden");
+    deleteButton.classList.remove("hidden");
+  } else {
+    selectedCountElement.classList.add("hidden");
+    deleteButton.classList.add("hidden");
+  }
+}
+
+// Fonction pour sélectionner/désélectionner tout
+function toggleSelectAll() {
+  const checkboxes = document.querySelectorAll(".request-checkbox");
+
+  if (selectedRequests.size === checkboxes.length && checkboxes.length > 0) {
+    // Tout désélectionner
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = false;
+      selectedRequests.delete(checkbox.dataset.requestId);
+    });
+  } else {
+    // Tout sélectionner
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = true;
+      selectedRequests.add(checkbox.dataset.requestId);
+    });
+  }
+
+  updateSelectAllButtonState();
+  updateSelectionUI();
+}
+
+// Fonction principale pour supprimer les demandes sélectionnées
+async function deleteSelectedRequests() {
+  if (selectedRequests.size === 0) {
+    showNotification("Aucune demande sélectionnée", "warning");
+    return;
+  }
+
+  // Confirmation de suppression
+  const confirmMessage = `Êtes-vous sûr de vouloir supprimer ${selectedRequests.size} demande(s) sélectionnée(s) ?\n\nCette action est irréversible.`;
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  try {
+    console.log("🗑️ Suppression de", selectedRequests.size, "demandes...");
+
+    // Afficher un indicateur de chargement
+    const deleteButton = document.getElementById("deleteSelectedBtn");
+    const originalText = deleteButton.innerHTML;
+    deleteButton.innerHTML =
+      '<i class="fas fa-spinner fa-spin mr-2"></i>Suppression...';
+    deleteButton.disabled = true;
+
+    // Envoyer la requête de suppression au serveur
+    const response = await fetch("/api/admin/delete-requests", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requestIds: Array.from(selectedRequests),
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showNotification(
+        `${selectedRequests.size} demande(s) supprimée(s) avec succès`,
+        "success"
+      );
+
+      // Réinitialiser la sélection
+      selectedRequests.clear();
+      const masterCheckbox = document.getElementById("masterCheckbox");
+      masterCheckbox.checked = false;
+      masterCheckbox.indeterminate = false;
+
+      // Recharger les demandes
+      await loadAccessRequests();
+    } else {
+      throw new Error(data.message || "Erreur lors de la suppression");
+    }
+  } catch (error) {
+    console.error("❌ Erreur lors de la suppression:", error);
+    showNotification(`Erreur: ${error.message}`, "error");
+  } finally {
+    // Restaurer le bouton
+    const deleteButton = document.getElementById("deleteSelectedBtn");
+    deleteButton.innerHTML = originalText;
+    deleteButton.disabled = false;
+    updateSelectionUI();
+  }
+}
+
+// Fonction pour supprimer une demande individuelle
+async function deleteIndividualRequest(requestId) {
+  const confirmMessage =
+    "Êtes-vous sûr de vouloir supprimer cette demande ?\n\nCette action est irréversible.";
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  try {
+    console.log("🗑️ Suppression de la demande:", requestId);
+
+    const response = await fetch("/api/admin/delete-requests", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requestIds: [requestId],
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showNotification("Demande supprimée avec succès", "success");
+
+      // Retirer de la sélection si elle était sélectionnée
+      selectedRequests.delete(requestId);
+      updateSelectionUI();
+
+      // Recharger les demandes
+      await loadAccessRequests();
+    } else {
+      throw new Error(data.message || "Erreur lors de la suppression");
+    }
+  } catch (error) {
+    console.error("❌ Erreur lors de la suppression:", error);
+    showNotification(`Erreur: ${error.message}`, "error");
+  }
+}
