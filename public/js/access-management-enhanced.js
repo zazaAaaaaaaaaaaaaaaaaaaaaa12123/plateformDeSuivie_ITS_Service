@@ -6,6 +6,21 @@ let autoRefreshInterval;
 let isAutoRefreshEnabled = true;
 let lastDataHash = null; // Pour éviter les rechargements inutiles
 
+// =================== SYSTÈME DE THÈME ===================
+let currentTheme = localStorage.getItem("theme") || "light";
+let customThemeData = JSON.parse(localStorage.getItem("customTheme")) || {
+  primary: "#3b82f6",
+  secondary: "#1f2937",
+  accent: "#f59e0b",
+  background: "#ffffff",
+  surface: "#f9fafb",
+};
+
+// =================== GESTION PHOTO DE PROFIL ===================
+let userProfileImage =
+  localStorage.getItem("userProfileImage") ||
+  "https://cdn-icons-png.flaticon.com/512/1048/1048953.png";
+
 // Charger les demandes au démarrage
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 Initialisation de la gestion d'accès avancée...");
@@ -28,6 +43,9 @@ async function initializeAccessManagement() {
     // Décommentez cette ligne pour tester avec des données fictives
     // simulateLoginData();
 
+    // Initialiser le système de thème
+    initializeThemeSystem();
+
     // Charger les données du profil utilisateur
     loadUserProfileData();
 
@@ -39,6 +57,11 @@ async function initializeAccessManagement() {
 
     // Initialiser les événements
     initializeEventListeners();
+
+    // Débogage des boutons de thème après initialisation complète
+    setTimeout(() => {
+      debugThemeButtons();
+    }, 500);
 
     console.log("✅ Gestion d'accès initialisée avec succès");
   } catch (error) {
@@ -71,14 +94,81 @@ function initializeEventListeners() {
     });
   }
 
+  // Bouton de basculement de thème
+  const themeButton = document.querySelector('[onclick="toggleTheme()"]');
+  if (themeButton) {
+    // Supprimer l'attribut onclick et ajouter un event listener
+    themeButton.removeAttribute("onclick");
+    themeButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Empêcher la propagation
+      console.log("🎨 Bouton de thème cliqué via addEventListener");
+      toggleTheme();
+    });
+    console.log("✅ Event listener ajouté au bouton de thème");
+  } else {
+    console.warn("⚠️ Bouton de thème non trouvé lors de l'initialisation");
+  }
+
+  // Bouton de personnalisation de thème
+  const customizeButton = document.querySelector(
+    '[onclick="openThemeCustomizer()"]'
+  );
+  if (customizeButton) {
+    customizeButton.removeAttribute("onclick");
+    customizeButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Empêcher la propagation
+      console.log("🎨 Bouton de personnalisation cliqué");
+      openThemeCustomizer();
+    });
+  }
+
   // Raccourcis clavier
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
       closeModal();
+      closeThemeCustomizer();
+      closeProfilePhotoModal();
     }
     if (event.ctrlKey && event.key === "r") {
       event.preventDefault();
       loadAccessRequests();
+    }
+    // Raccourci pour basculer le thème (Ctrl + Shift + T)
+    if (event.ctrlKey && event.shiftKey && event.key === "T") {
+      event.preventDefault();
+      toggleTheme();
+    }
+  });
+
+  // Fermeture des modaux en cliquant à l'extérieur
+  document.addEventListener("click", function (event) {
+    // Modal de personnalisation du thème
+    const themeModal = document.getElementById("themeCustomizerModal");
+    if (themeModal && !themeModal.classList.contains("hidden")) {
+      const modalContent = themeModal.querySelector(".bg-white");
+      // Fermer seulement si on clique sur l'overlay (pas sur le contenu)
+      if (event.target === themeModal) {
+        closeThemeCustomizer();
+      }
+    }
+
+    // Modal de changement de photo
+    const photoModal = document.getElementById("profilePhotoModal");
+    if (photoModal && !photoModal.classList.contains("hidden")) {
+      const modalContent = photoModal.querySelector(".bg-white");
+      // Fermer seulement si on clique sur l'overlay
+      if (event.target === photoModal) {
+        closeProfilePhotoModal();
+      }
+    }
+
+    // Fermeture du profil utilisateur
+    const userAvatar = document.getElementById("adminAvatar");
+    const userProfile = document.getElementById("userProfilePopup");
+    if (userAvatar && userProfile && !userAvatar.contains(event.target)) {
+      userProfile.classList.add("hidden");
     }
   });
 }
@@ -187,7 +277,8 @@ function updateLastRefreshTime() {
     // Créer l'élément s'il n'existe pas
     lastRefreshElement = document.createElement("div");
     lastRefreshElement.id = "lastRefreshTime";
-    lastRefreshElement.className = "text-sm text-gray-500 text-center mt-4";
+    lastRefreshElement.className = "text-sm text-center mt-4 theme-transition";
+    lastRefreshElement.style.color = "var(--text-secondary)";
 
     const requestsList = document.getElementById("requestsList");
     if (requestsList && requestsList.parentNode) {
@@ -199,6 +290,520 @@ function updateLastRefreshTime() {
   lastRefreshElement.textContent = `Dernière actualisation: ${now.toLocaleTimeString(
     "fr-FR"
   )}`;
+}
+
+// =================== SYSTÈME DE THÈME ===================
+
+// Initialiser le système de thème
+function initializeThemeSystem() {
+  // Appliquer le thème sauvegardé
+  applyTheme(currentTheme);
+
+  // Appliquer les couleurs personnalisées si nécessaire
+  if (currentTheme === "custom") {
+    applyCustomTheme(customThemeData);
+  }
+
+  // Mettre à jour l'icône du bouton de thème avec un délai pour s'assurer que le DOM est chargé
+  setTimeout(() => {
+    updateThemeIcon();
+    // Appliquer le thème aux headers après que le DOM soit complètement chargé
+    applyThemeToHeaders();
+  }, 200);
+
+  console.log(`🎨 Thème initialisé: ${currentTheme}`);
+}
+
+// Appliquer un thème
+function applyTheme(theme) {
+  console.log("🎨 Application du thème:", theme);
+  const body = document.body;
+  const root = document.documentElement;
+
+  // Supprimer toutes les classes de thème
+  body.classList.remove("theme-light", "theme-dark", "theme-custom");
+
+  // Appliquer le nouveau thème
+  switch (theme) {
+    case "light":
+      body.classList.add("theme-light");
+      // Variables de base
+      root.style.setProperty("--bg-primary", "#ffffff");
+      root.style.setProperty("--bg-secondary", "#f9fafb");
+      root.style.setProperty("--text-primary", "#1f2937");
+      root.style.setProperty("--text-secondary", "#6b7280");
+      root.style.setProperty("--border-color", "#e5e7eb");
+      // Variables de couleur
+      root.style.setProperty("--color-primary", "#3b82f6");
+      root.style.setProperty("--color-secondary", "#1f2937");
+      root.style.setProperty("--color-accent", "#f59e0b");
+      // Headers spécifiques
+      root.style.setProperty("--header-bg", "#1e3a8a");
+      root.style.setProperty("--header-text", "#ffffff");
+      root.style.setProperty("--section-header-bg", "#2563eb");
+      root.style.setProperty("--section-header-text", "#ffffff");
+      break;
+
+    case "dark":
+      body.classList.add("theme-dark");
+      // Variables de base
+      root.style.setProperty("--bg-primary", "#1f2937");
+      root.style.setProperty("--bg-secondary", "#111827");
+      root.style.setProperty("--text-primary", "#f9fafb");
+      root.style.setProperty("--text-secondary", "#d1d5db");
+      root.style.setProperty("--border-color", "#374151");
+      // Variables de couleur
+      root.style.setProperty("--color-primary", "#60a5fa");
+      root.style.setProperty("--color-secondary", "#374151");
+      root.style.setProperty("--color-accent", "#fbbf24");
+      // Headers spécifiques
+      root.style.setProperty("--header-bg", "#0f172a");
+      root.style.setProperty("--header-text", "#f1f5f9");
+      root.style.setProperty("--section-header-bg", "#1e293b");
+      root.style.setProperty("--section-header-text", "#f1f5f9");
+      break;
+
+    case "custom":
+      body.classList.add("theme-custom");
+      applyCustomTheme(customThemeData);
+      break;
+  }
+
+  currentTheme = theme;
+  localStorage.setItem("theme", theme);
+
+  // Appliquer immédiatement le thème aux éléments spécifiques
+  applyThemeToHeaders();
+  console.log("✅ Thème appliqué avec succès:", theme);
+}
+
+// Appliquer un thème personnalisé
+function applyCustomTheme(themeData) {
+  console.log("🎨 Application du thème personnalisé:", themeData);
+  const root = document.documentElement;
+
+  // Couleurs principales
+  root.style.setProperty("--color-primary", themeData.primary);
+  root.style.setProperty("--color-secondary", themeData.secondary);
+  root.style.setProperty("--color-accent", themeData.accent);
+  root.style.setProperty("--bg-primary", themeData.background);
+  root.style.setProperty("--bg-secondary", themeData.surface);
+
+  // Appliquer les couleurs aux headers
+  root.style.setProperty("--header-bg", themeData.primary);
+  root.style.setProperty("--header-text", "#ffffff");
+  root.style.setProperty("--section-header-bg", themeData.secondary);
+  root.style.setProperty("--section-header-text", "#ffffff");
+
+  // Couleurs de texte adaptées
+  const isDarkBg = isColorDark(themeData.background);
+  root.style.setProperty("--text-primary", isDarkBg ? "#f9fafb" : "#1f2937");
+  root.style.setProperty("--text-secondary", isDarkBg ? "#d1d5db" : "#6b7280");
+  root.style.setProperty("--border-color", isDarkBg ? "#374151" : "#e5e7eb");
+
+  customThemeData = themeData;
+  localStorage.setItem("customTheme", JSON.stringify(themeData));
+
+  // Appliquer immédiatement aux headers
+  applyThemeToHeaders();
+  console.log("✅ Thème personnalisé appliqué");
+}
+
+// Fonction utilitaire pour déterminer si une couleur est sombre
+function isColorDark(hexColor) {
+  const hex = hexColor.replace("#", "");
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness < 128;
+}
+
+// Appliquer le thème spécifiquement aux headers
+function applyThemeToHeaders() {
+  console.log("🎯 Application du thème aux headers");
+
+  // Header principal "Gestion des Accès ITS"
+  const mainHeader = document.querySelector("header");
+  if (mainHeader) {
+    mainHeader.style.background = `var(--header-bg)`;
+    mainHeader.style.color = `var(--header-text)`;
+
+    // Titre principal
+    const title = mainHeader.querySelector("h1, .text-xl, .font-bold");
+    if (title) {
+      title.style.color = `var(--header-text)`;
+    }
+  }
+
+  // Header section "Demandes d'Accès"
+  const sectionHeaders = document.querySelectorAll(
+    '.bg-blue-600, .bg-blue-500, [class*="bg-blue"]'
+  );
+  sectionHeaders.forEach((header) => {
+    header.style.background = `var(--section-header-bg)`;
+    header.style.color = `var(--section-header-text)`;
+
+    // Texte dans le header
+    const headerText = header.querySelectorAll(
+      "h2, h3, .text-white, .font-semibold"
+    );
+    headerText.forEach((text) => {
+      text.style.color = `var(--section-header-text)`;
+    });
+  });
+
+  // Headers spécifiques par ID ou classe
+  const demandesHeader = document.querySelector(
+    '[class*="Demandes"], #demandesHeader, .section-header'
+  );
+  if (demandesHeader) {
+    demandesHeader.style.background = `var(--section-header-bg)`;
+    demandesHeader.style.color = `var(--section-header-text)`;
+  }
+
+  console.log("✅ Thème appliqué aux headers");
+}
+
+// Basculer entre les thèmes
+function toggleTheme() {
+  console.log("🎨 toggleTheme appelé, thème actuel:", currentTheme);
+
+  try {
+    let newTheme;
+    switch (currentTheme) {
+      case "light":
+        newTheme = "dark";
+        break;
+      case "dark":
+        newTheme = "light";
+        break;
+      default:
+        newTheme = "light";
+    }
+
+    console.log("🎨 Changement vers le thème:", newTheme);
+    applyTheme(newTheme);
+    updateThemeIcon();
+
+    // Afficher une notification simple
+    try {
+      showNotification(
+        `Thème changé vers: ${newTheme === "light" ? "Clair" : "Sombre"}`,
+        "success"
+      );
+    } catch (error) {
+      console.log("🎨 Thème changé vers:", newTheme);
+    }
+  } catch (error) {
+    console.error("❌ Erreur dans toggleTheme:", error);
+  }
+}
+
+// Mettre à jour l'icône du bouton de thème
+function updateThemeIcon() {
+  console.log(`🔄 Mise à jour de l'icône pour le thème: ${currentTheme}`);
+
+  // Chercher le bouton de thème de plusieurs façons
+  const themeButton = document.querySelector('[onclick="toggleTheme()"]');
+  const themeIcon = themeButton ? themeButton.querySelector("i") : null;
+
+  if (!themeIcon) {
+    console.warn("⚠️ Bouton de thème non trouvé dans le DOM");
+    return;
+  }
+
+  if (currentTheme === "dark") {
+    themeIcon.className = "fas fa-sun text-yellow-400";
+    console.log("🌞 Icône changée vers soleil (mode sombre actif)");
+  } else {
+    themeIcon.className = "fas fa-moon text-yellow-400";
+    console.log("🌙 Icône changée vers lune (mode clair actif)");
+  }
+}
+
+// =================== FONCTION DE TEST POUR LE THÈME ===================
+function testThemeSystem() {
+  console.log("🧪 Test du système de thème");
+  console.log("Thème actuel:", currentTheme);
+
+  const button = document.querySelector('[onclick="toggleTheme()"]');
+  console.log("Bouton trouvé:", !!button);
+
+  if (button) {
+    const icon = button.querySelector("i");
+    console.log("Icône trouvée:", !!icon);
+    if (icon) {
+      console.log("Classes de l'icône:", icon.className);
+    }
+  }
+
+  // Test de basculement
+  console.log("🧪 Test de basculement...");
+  toggleTheme();
+}
+
+// Rendre la fonction accessible globalement pour les tests
+window.testThemeSystem = testThemeSystem;
+
+// =================== FONCTIONS GLOBALES POUR TESTS ===================
+// Rendre les fonctions accessibles globalement pour le débogage
+window.toggleTheme = toggleTheme;
+window.applyTheme = applyTheme;
+window.updateThemeIcon = updateThemeIcon;
+window.openThemeCustomizer = openThemeCustomizer;
+window.closeThemeCustomizer = closeThemeCustomizer;
+
+// Fonction de test rapide
+window.quickThemeTest = function () {
+  console.log("🔥 Test rapide du système de thème");
+  console.log("Thème actuel:", currentTheme);
+  toggleTheme();
+  console.log("Nouveau thème:", currentTheme);
+};
+
+// Fonction de débogage pour vérifier l'état des boutons
+function debugThemeButtons() {
+  console.log("🔍 Débogage des boutons de thème:");
+  console.log("Theme actuel:", currentTheme);
+
+  const themeButton = document.querySelector('[onclick="toggleTheme()"]');
+  const themeIcon = themeButton ? themeButton.querySelector("i") : null;
+
+  console.log("Bouton trouvé:", !!themeButton);
+  console.log("Icône trouvée:", !!themeIcon);
+
+  if (themeIcon) {
+    console.log("Classes actuelles de l'icône:", themeIcon.className);
+  }
+
+  // Tester manuellement la fonction
+  if (window.toggleTheme) {
+    console.log("✅ Fonction toggleTheme disponible");
+  } else {
+    console.error("❌ Fonction toggleTheme non disponible");
+  }
+}
+
+// Ouvrir le modal de personnalisation du thème
+function openThemeCustomizer() {
+  console.log("🎨 Ouverture du modal de personnalisation...");
+  const modal = document.getElementById("themeCustomizerModal");
+  console.log("🎨 Modal trouvé:", modal);
+
+  if (modal) {
+    console.log("🎨 Classes avant:", modal.className);
+    modal.classList.remove("hidden");
+
+    // Forcer l'affichage avec des styles en ligne
+    modal.style.display = "flex";
+    modal.style.position = "fixed";
+    modal.style.inset = "0";
+    modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+    modal.style.zIndex = "9999";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+
+    console.log("🎨 Classes après:", modal.className);
+    console.log("🎨 Style display:", modal.style.display);
+
+    // Empêcher la fermeture quand on clique sur le contenu du modal
+    const modalContent = modal.querySelector(".bg-white");
+    if (modalContent) {
+      modalContent.addEventListener("click", function (e) {
+        e.stopPropagation();
+      });
+    }
+
+    // Charger les valeurs actuelles
+    const primaryColor = document.getElementById("primaryColor");
+    const secondaryColor = document.getElementById("secondaryColor");
+    const accentColor = document.getElementById("accentColor");
+    const backgroundColor = document.getElementById("backgroundColor");
+    const surfaceColor = document.getElementById("surfaceColor");
+
+    console.log("🎨 Éléments de couleur trouvés:", {
+      primaryColor: !!primaryColor,
+      secondaryColor: !!secondaryColor,
+      accentColor: !!accentColor,
+      backgroundColor: !!backgroundColor,
+      surfaceColor: !!surfaceColor,
+    });
+
+    if (primaryColor) primaryColor.value = customThemeData.primary;
+    if (secondaryColor) secondaryColor.value = customThemeData.secondary;
+    if (accentColor) accentColor.value = customThemeData.accent;
+    if (backgroundColor) backgroundColor.value = customThemeData.background;
+    if (surfaceColor) surfaceColor.value = customThemeData.surface;
+
+    console.log("🎨 Modal ouvert avec succès!");
+  } else {
+    console.error("❌ Modal de personnalisation non trouvé!");
+  }
+}
+
+// Fermer le modal de personnalisation du thème
+function closeThemeCustomizer() {
+  console.log("🎨 Fermeture du modal de personnalisation...");
+  const modal = document.getElementById("themeCustomizerModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.style.display = "none"; // Force le masquage
+    console.log("🎨 Modal fermé avec succès!");
+  }
+}
+
+// Appliquer les couleurs personnalisées
+function applyCustomColors() {
+  console.log("🎨 Application des couleurs personnalisées...");
+
+  const newTheme = {
+    primary: document.getElementById("primaryColor").value,
+    secondary: document.getElementById("secondaryColor").value,
+    accent: document.getElementById("accentColor").value,
+    background: document.getElementById("backgroundColor").value,
+    surface: document.getElementById("surfaceColor").value,
+  };
+
+  console.log("🎨 Nouvelles couleurs:", newTheme);
+
+  // Forcer le changement vers le thème personnalisé
+  currentTheme = "custom";
+  customThemeData = newTheme;
+
+  applyTheme("custom");
+  applyCustomTheme(newTheme);
+
+  // Forcer la mise à jour de l'interface
+  setTimeout(() => {
+    applyThemeToHeaders();
+    updateThemeIcon();
+  }, 100);
+
+  closeThemeCustomizer();
+  showNotification("Thème personnalisé appliqué avec succès!", "success");
+}
+
+// Réinitialiser les couleurs par défaut
+function resetToDefaultColors() {
+  const defaultTheme = {
+    primary: "#3b82f6",
+    secondary: "#1f2937",
+    accent: "#f59e0b",
+    background: "#ffffff",
+    surface: "#f9fafb",
+  };
+
+  applyCustomTheme(defaultTheme);
+
+  // Mettre à jour les champs du formulaire
+  document.getElementById("primaryColor").value = defaultTheme.primary;
+  document.getElementById("secondaryColor").value = defaultTheme.secondary;
+  document.getElementById("accentColor").value = defaultTheme.accent;
+  document.getElementById("backgroundColor").value = defaultTheme.background;
+  document.getElementById("surfaceColor").value = defaultTheme.surface;
+
+  showNotification("Couleurs réinitialisées!", "success");
+}
+
+// =================== GESTION PHOTO DE PROFIL ===================
+
+// Ouvrir le modal de changement de photo de profil
+function openProfilePhotoModal() {
+  const modal = document.getElementById("profilePhotoModal");
+  if (modal) {
+    modal.classList.remove("hidden");
+  }
+}
+
+// Fermer le modal de changement de photo de profil
+function closeProfilePhotoModal() {
+  const modal = document.getElementById("profilePhotoModal");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
+}
+
+// Gérer la sélection de fichier photo
+function handlePhotoSelection(event) {
+  const file = event.target.files[0];
+  if (file) {
+    // Vérifier le type de fichier
+    if (!file.type.startsWith("image/")) {
+      showNotification(
+        "Veuillez sélectionner un fichier image valide",
+        "error"
+      );
+      return;
+    }
+
+    // Vérifier la taille (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification(
+        "La taille de l'image ne doit pas dépasser 5MB",
+        "error"
+      );
+      return;
+    }
+
+    // Lire le fichier et créer un aperçu
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const imageUrl = e.target.result;
+
+      // Afficher l'aperçu
+      const preview = document.getElementById("photoPreview");
+      if (preview) {
+        preview.src = imageUrl;
+        preview.classList.remove("hidden");
+      }
+
+      // Activer le bouton de sauvegarde
+      const saveBtn = document.getElementById("savePhotoBtn");
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.dataset.imageUrl = imageUrl;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// Sauvegarder la nouvelle photo de profil
+function saveProfilePhoto() {
+  const saveBtn = document.getElementById("savePhotoBtn");
+  const imageUrl = saveBtn?.dataset.imageUrl;
+
+  if (imageUrl) {
+    userProfileImage = imageUrl;
+    localStorage.setItem("userProfileImage", imageUrl);
+
+    // Mettre à jour toutes les images d'avatar
+    updateProfileImages();
+
+    closeProfilePhotoModal();
+    showNotification("Photo de profil mise à jour!", "success");
+  }
+}
+
+// Mettre à jour toutes les images de profil dans l'interface
+function updateProfileImages() {
+  const avatarImages = document.querySelectorAll(".profile-avatar");
+  avatarImages.forEach((img) => {
+    img.src = userProfileImage;
+  });
+}
+
+// Supprimer la photo de profil (retour à l'image par défaut)
+function removeProfilePhoto() {
+  const defaultImage =
+    "https://cdn-icons-png.flaticon.com/512/1048/1048953.png";
+  userProfileImage = defaultImage;
+  localStorage.setItem("userProfileImage", defaultImage);
+
+  updateProfileImages();
+  closeProfilePhotoModal();
+  showNotification("Photo de profil supprimée", "success");
 }
 
 // Fonction pour mettre à jour les statistiques avancées
@@ -289,7 +894,7 @@ function updateDailyHistory(period = "today") {
 
   if (filteredRequests.length === 0) {
     historyContainer.innerHTML =
-      '<div class="text-center text-gray-500 py-4">Aucune activité pour cette période</div>';
+      '<div class="text-center theme-transition py-4" style="color: var(--text-secondary);">Aucune activité pour cette période</div>';
     return;
   }
 
@@ -298,8 +903,10 @@ function updateDailyHistory(period = "today") {
     .map(
       (req) => `
         <div class="timeline-item">
-            <div class="text-sm font-medium text-gray-800">${req.name}</div>
-            <div class="text-xs text-gray-500">${formatDateTime(
+            <div class="text-sm font-medium theme-transition" style="color: var(--text-primary);">${
+              req.name
+            }</div>
+            <div class="text-xs theme-transition" style="color: var(--text-secondary);">${formatDateTime(
               req.created_at
             )}</div>
             <span class="text-xs px-2 py-1 rounded-full ${getStatusClass(
@@ -323,7 +930,7 @@ function updateRecentActivity() {
 
   if (recentRequests.length === 0) {
     activityContainer.innerHTML =
-      '<div class="text-center text-gray-500 py-4">Aucune activité récente</div>';
+      '<div class="text-center theme-transition py-4" style="color: var(--text-secondary);">Aucune activité récente</div>';
     return;
   }
 
@@ -333,11 +940,13 @@ function updateRecentActivity() {
         <div class="timeline-item">
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="text-sm font-medium text-gray-800">${
+                    <div class="text-sm font-medium theme-transition" style="color: var(--text-primary);">${
                       req.name
                     }</div>
-                    <div class="text-xs text-gray-500">${req.email}</div>
-                    <div class="text-xs text-gray-500">${getRelativeTime(
+                    <div class="text-xs theme-transition" style="color: var(--text-secondary);">${
+                      req.email
+                    }</div>
+                    <div class="text-xs theme-transition" style="color: var(--text-secondary);">${getRelativeTime(
                       req.created_at
                     )}</div>
                 </div>
@@ -1323,21 +1932,17 @@ function loadUserProfileData() {
     if (profileEmailEl) profileEmailEl.textContent = adminData.email;
     if (lastLoginTimeEl) lastLoginTimeEl.textContent = adminData.lastLogin;
 
+    // Mettre à jour les photos de profil
+    updateProfileImages();
+
+    // Mettre à jour l'icône du thème (au cas où elle ne se serait pas mise à jour)
+    updateThemeIcon();
+
     console.log("✅ Profil utilisateur chargé:", adminData);
   } catch (error) {
     console.error("❌ Erreur lors du chargement du profil:", error);
   }
 }
-
-// Fermer le profil utilisateur en cliquant à l'extérieur
-document.addEventListener("click", function (event) {
-  const userAvatar = document.getElementById("adminAvatar");
-  const userProfile = document.getElementById("userProfilePopup");
-
-  if (userAvatar && userProfile && !userAvatar.contains(event.target)) {
-    userProfile.classList.add("hidden");
-  }
-});
 
 // Fonction de déconnexion
 function logout() {
@@ -1548,3 +2153,58 @@ async function deleteIndividualRequest(requestId) {
     showNotification(`Erreur: ${error.message}`, "error");
   }
 }
+
+// =================== FONCTIONS DE TEST GLOBAL ===================
+// Fonction de test que vous pouvez appeler depuis la console
+window.testThemeModal = function () {
+  console.log("🧪 Test du modal de thème...");
+  const modal = document.getElementById("themeCustomizerModal");
+  console.log("🧪 Modal element:", modal);
+
+  if (modal) {
+    console.log("🧪 Classes initiales:", modal.className);
+    console.log("🧪 Style display initial:", modal.style.display);
+
+    // Test d'ouverture
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+
+    console.log("🧪 Classes après ouverture:", modal.className);
+    console.log("🧪 Style display après ouverture:", modal.style.display);
+
+    // Test avec timeout pour fermer
+    setTimeout(() => {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+      console.log("🧪 Modal fermé automatiquement après 3 secondes");
+    }, 3000);
+  } else {
+    console.error("🧪 ❌ Modal non trouvé!");
+  }
+};
+
+// Test de toutes les fonctions de thème
+window.testAllThemeFunctions = function () {
+  console.log("🧪 Test de toutes les fonctions de thème...");
+  console.log("🧪 currentTheme:", currentTheme);
+  console.log("🧪 customThemeData:", customThemeData);
+  console.log("🧪 userProfileImage:", userProfileImage);
+
+  // Test toggle theme
+  console.log("🧪 Test toggleTheme...");
+  try {
+    toggleTheme();
+    console.log("🧪 ✅ toggleTheme fonctionne");
+  } catch (e) {
+    console.error("🧪 ❌ toggleTheme erreur:", e);
+  }
+
+  // Test open customizer
+  console.log("🧪 Test openThemeCustomizer...");
+  try {
+    openThemeCustomizer();
+    console.log("🧪 ✅ openThemeCustomizer fonctionne");
+  } catch (e) {
+    console.error("🧪 ❌ openThemeCustomizer erreur:", e);
+  }
+};
