@@ -5537,12 +5537,12 @@ function generateEtatSortiePdf(rows, date1, date2) {
       const titleWidth = doc.getTextWidth(title);
       doc.text(title, (pageWidth - titleWidth) / 2, 18);
 
-      // 👤 CHAMP NOM À DROITE (décalé vers le bas)
+      // 👤 CHAMP NOM À DROITE (décalé plus vers le bas)
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
       const nomText = "Responsable: .......................................";
       const nomTextWidth = doc.getTextWidth(nomText);
-      doc.text(nomText, pageWidth - nomTextWidth - 10, 25); // Décalé de 18 à 25
+      doc.text(nomText, pageWidth - nomTextWidth - 10, 30); // Décalé de 18 à 30
 
       // 🏢 LOGO: Utiliser le logo base64 si disponible, sinon fallback
       if (logoBase64) {
@@ -5686,7 +5686,8 @@ function generateEtatSortiePdf(rows, date1, date2) {
           fontStyle: "bold",
           fontSize: 7, // taille réduite pour les entêtes du tableau
         },
-        alternateRowStyles: { fillColor: [255, 255, 255] }, // ✅ BLANC au lieu de bleu
+        alternateRowStyles: { fillColor: [255, 255, 255] }, // ✅ TOUT EN BLANC
+        bodyStyles: { fillColor: [255, 255, 255] }, // ✅ FORCER TOUTES LES LIGNES EN BLANC
         // Marges égales à gauche et à droite pour un centrage parfait
         margin: { left: 10, right: 10 },
         theme: "grid",
@@ -5700,79 +5701,6 @@ function generateEtatSortiePdf(rows, date1, date2) {
           // Rien à faire ici normalement
         },
       });
-
-      // 🏢 FOOTER ÉLÉGANT - Informations de l'entreprise
-      const finalY = doc.lastAutoTable.finalY || startY + 100; // Position après le tableau
-      const footerStartY = finalY + 30; // Espacement généreux après le tableau
-
-      // 🎨 LIGNE DÉCORATIVE SUPÉRIEURE
-      doc.setDrawColor(70, 130, 180); // Bleu
-      doc.setLineWidth(1);
-      doc.line(50, footerStartY - 5, pageWidth - 50, footerStartY - 5);
-
-      // Ligne 1: "Inter Transit & Service S.A.R.L" (TITRE PRINCIPAL)
-      doc.setTextColor(30, 60, 114); // Bleu foncé professionnel
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      const line1 = "Inter Transit & Service S.A.R.L";
-      const line1Width = doc.getTextWidth(line1);
-      const line1X = (pageWidth - line1Width) / 2;
-      doc.text(line1, line1X, footerStartY + 8);
-
-      // Ligne 2: "Commissionnaire Agréé en Douane" (SOUS-TITRE)
-      doc.setTextColor(42, 82, 152); // Bleu moyen
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      const line2 = "Commissionnaire Agréé en Douane";
-      const line2Width = doc.getTextWidth(line2);
-      const line2X = (pageWidth - line2Width) / 2;
-      doc.text(line2, line2X, footerStartY + 22);
-
-      // 🎨 LIGNE DÉCORATIVE CENTRALE
-      doc.setDrawColor(42, 82, 152); // Bleu moyen
-      doc.setLineWidth(0.5);
-      const centralLineY = footerStartY + 28;
-      const centralLineWidth = Math.max(line1Width, line2Width) * 0.7;
-      const centralLineX = (pageWidth - centralLineWidth) / 2;
-      doc.line(
-        centralLineX,
-        centralLineY,
-        centralLineX + centralLineWidth,
-        centralLineY
-      );
-
-      // Ligne 3: "Transit - Maritime - Aérien - Ferroviaire - Terrestre" (SERVICES)
-      doc.setTextColor(34, 139, 34); // Vert foncé
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "normal");
-      const line3 = "Transit - Maritime - Aérien - Ferroviaire - Terrestre";
-      const line3Width = doc.getTextWidth(line3);
-      const line3X = (pageWidth - line3Width) / 2;
-      doc.text(line3, line3X, footerStartY + 38);
-
-      // 🎨 LIGNE DÉCORATIVE INFÉRIEURE
-      doc.setDrawColor(34, 139, 34); // Vert
-      doc.setLineWidth(0.5);
-      doc.line(50, footerStartY + 45, pageWidth - 50, footerStartY + 45);
-
-      // 🎨 AJOUT DE PETITES DÉCORATIONS (POINTS DÉCORATIFS)
-      doc.setFillColor(70, 130, 180); // Bleu
-      // Points décoratifs à gauche et à droite du titre principal
-      doc.circle(line1X - 15, footerStartY + 8, 2, "F");
-      doc.circle(line1X + line1Width + 15, footerStartY + 8, 2, "F");
-
-      // Points décoratifs pour les services
-      doc.setFillColor(34, 139, 34); // Vert
-      doc.circle(line3X - 10, footerStartY + 38, 1.5, "F");
-      doc.circle(line3X + line3Width + 10, footerStartY + 38, 1.5, "F");
-
-      // Remettre la couleur de texte normale
-      doc.setTextColor(0, 0, 0); // Noir
-
-      console.log("✅ Footer élégant avec décorations ajouté au PDF");
-      console.log(
-        `📐 Positions footer - Y: ${footerStartY}, Ligne1: ${line1X}, Ligne2: ${line2X}, Ligne3: ${line3X}`
-      );
 
       doc.save("Etat_sorties_conteneurs.pdf");
     } // Fin de generatePdfContent()
