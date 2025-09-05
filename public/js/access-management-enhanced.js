@@ -1298,12 +1298,12 @@ function updateThemeIcon() {
     case "dark":
       themeIcon.className = "fas fa-palette text-purple-400";
       themeButton.title = "Changer vers thème personnalisé";
-      console.log("� Icône changée vers palette (mode sombre actif)");
+      console.log("  Icône changée vers palette (mode sombre actif)");
       break;
     case "custom":
       themeIcon.className = "fas fa-sun text-yellow-400";
       themeButton.title = "Changer vers thème clair";
-      console.log("� Icône changée vers soleil (mode personnalisé actif)");
+      console.log("  Icône changée vers soleil (mode personnalisé actif)");
       break;
     default:
       themeIcon.className = "fas fa-moon text-gray-400";
