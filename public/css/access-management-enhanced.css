@@ -401,6 +401,99 @@ select option:focus {
   border-color: #1f2937;
 }
 
+/* =================== STYLES POUR LES BOUTONS DU MODAL =================== */
+
+/* Améliorations des boutons du modal de thème */
+#themeCustomizerModal .bg-gray-50 {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+#themeCustomizerModal button {
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#themeCustomizerModal button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#themeCustomizerModal button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Bouton de réinitialisation du formulaire */
+#themeCustomizerModal .bg-gray-500 {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+#themeCustomizerModal .bg-gray-500:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+}
+
+/* Bouton de réinitialisation complète */
+#themeCustomizerModal .bg-red-500 {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+#themeCustomizerModal .bg-red-500:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+/* Bouton Annuler */
+#themeCustomizerModal .bg-gray-300 {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  border: 1px solid #d1d5db;
+}
+
+#themeCustomizerModal .bg-gray-300:hover {
+  background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+  border-color: #9ca3af;
+}
+
+/* Bouton Appliquer */
+#themeCustomizerModal .bg-blue-600 {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: 1px solid #2563eb;
+}
+
+#themeCustomizerModal .bg-blue-600:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #1d4ed8;
+}
+
+/* Responsive pour les boutons sur mobile */
+@media (max-width: 640px) {
+  #themeCustomizerModal button {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px; /* Taille minimale pour mobile */
+  }
+
+  #themeCustomizerModal .bg-gray-50 {
+    padding: 1rem;
+  }
+}
+
+/* Styles pour les thèmes sombre et personnalisé dans le modal */
+.theme-dark #themeCustomizerModal .bg-gray-50 {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  border-color: #4b5563;
+}
+
+.theme-custom #themeCustomizerModal .bg-gray-50 {
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary) 0%,
+    var(--bg-primary) 100%
+  );
+  border-color: var(--border-color);
+}
+
+/* =================== STYLES EXISTANTS =================== */
 .access-card {
   transition: all 0.2s ease;
 }

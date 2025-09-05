@@ -713,25 +713,38 @@
             </div>
           </div>
 
-          <div class="flex justify-between p-6 border-t border-gray-200">
-            <button
-              onclick="resetToDefaultColors()"
-              class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
-            >
-              <i class="fas fa-undo mr-2"></i>Réinitialiser
-            </button>
-            <div class="space-x-3">
+          <!-- Boutons d'action du modal -->
+          <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <!-- Ligne de boutons de réinitialisation -->
+            <div class="flex flex-col sm:flex-row gap-3 mb-4">
+              <button
+                onclick="resetToDefaultColors()"
+                class="flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white px-4 py-2.5 rounded-lg transition duration-200 text-sm font-medium"
+              >
+                <i class="fas fa-undo mr-2"></i>Réinitialiser le formulaire
+              </button>
+              <button
+                onclick="resetAllThemes()"
+                class="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-lg transition duration-200 text-sm font-medium"
+                title="Supprimer tous les thèmes sauvegardés et revenir aux paramètres par défaut"
+              >
+                <i class="fas fa-trash mr-2"></i>Réinitialiser tous les thèmes
+              </button>
+            </div>
+
+            <!-- Ligne de boutons principaux -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-end">
               <button
                 onclick="closeThemeCustomizer()"
-                class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition"
+                class="flex items-center justify-center bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2.5 rounded-lg transition duration-200 font-medium"
               >
-                Annuler
+                <i class="fas fa-times mr-2"></i>Annuler
               </button>
               <button
                 onclick="applyCustomColors()"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
+                class="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition duration-200 font-medium shadow-lg"
               >
-                <i class="fas fa-check mr-2"></i>Appliquer
+                <i class="fas fa-check mr-2"></i>Appliquer le thème
               </button>
             </div>
           </div>

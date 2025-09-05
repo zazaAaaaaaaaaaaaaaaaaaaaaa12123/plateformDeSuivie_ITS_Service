@@ -8,13 +8,71 @@ let lastDataHash = null; // Pour éviter les rechargements inutiles
 
 // =================== SYSTÈME DE THÈME ===================
 let currentTheme = localStorage.getItem("theme") || "light";
-let customThemeData = JSON.parse(localStorage.getItem("customTheme")) || {
-  primary: "#3b82f6",
-  secondary: "#1f2937",
-  accent: "#f59e0b",
-  background: "#ffffff",
-  surface: "#f9fafb",
-};
+let customThemeData;
+
+// Récupération sécurisée du thème personnalisé
+try {
+  const savedCustomTheme = localStorage.getItem("customTheme");
+  if (savedCustomTheme) {
+    customThemeData = JSON.parse(savedCustomTheme);
+    console.log("🎨 Thème personnalisé récupéré:", customThemeData);
+  } else {
+    customThemeData = {
+      primary: "#3b82f6",
+      secondary: "#1f2937",
+      accent: "#f59e0b",
+      background: "#ffffff",
+      surface: "#f9fafb",
+    };
+  }
+} catch (error) {
+  console.error("❌ Erreur lors de la récupération du thème:", error);
+  customThemeData = {
+    primary: "#3b82f6",
+    secondary: "#1f2937",
+    accent: "#f59e0b",
+    background: "#ffffff",
+    surface: "#f9fafb",
+  };
+}
+
+console.log("🎨 Thème au démarrage:", currentTheme, customThemeData);
+
+// Fonction de test de persistance
+function testThemePersistence() {
+  console.log("🧪 Test de persistance du thème:");
+  console.log("   - currentTheme variable:", currentTheme);
+  console.log("   - theme dans localStorage:", localStorage.getItem("theme"));
+  console.log(
+    "   - customTheme dans localStorage:",
+    localStorage.getItem("customTheme")
+  );
+  console.log("   - customThemeData variable:", customThemeData);
+
+  try {
+    const parsedCustomTheme = JSON.parse(
+      localStorage.getItem("customTheme") || "{}"
+    );
+    console.log("   - customTheme parsé:", parsedCustomTheme);
+  } catch (e) {
+    console.error("   - Erreur lors du parsing:", e);
+  }
+}
+
+// Fonction pour forcer la sauvegarde du thème
+function forceSaveTheme() {
+  console.log("💾 Sauvegarde forcée du thème...");
+  localStorage.setItem("theme", currentTheme);
+  localStorage.setItem("customTheme", JSON.stringify(customThemeData));
+  console.log("✅ Thème sauvegardé:", {
+    theme: currentTheme,
+    customTheme: customThemeData,
+  });
+}
+
+// Rendre la fonction accessible globalement pour debugging
+window.testThemePersistence = testThemePersistence;
+window.forceSaveTheme = forceSaveTheme;
 
 // =================== GESTION PHOTO DE PROFIL ===================
 let userProfileImage =
@@ -296,22 +354,95 @@ function updateLastRefreshTime() {
 
 // Initialiser le système de thème
 function initializeThemeSystem() {
+  console.log("🎨 Initialisation du système de thème...");
+  console.log(
+    "📱 Thème actuel depuis localStorage:",
+    localStorage.getItem("theme")
+  );
+  console.log(
+    "📱 Données personnalisées depuis localStorage:",
+    localStorage.getItem("customTheme")
+  );
+
+  // Récupérer les données persistantes
+  const savedTheme = localStorage.getItem("theme") || "light";
+  currentTheme = savedTheme;
+
+  // Récupérer les données du thème personnalisé
+  try {
+    const savedCustomTheme = localStorage.getItem("customTheme");
+    if (savedCustomTheme) {
+      customThemeData = JSON.parse(savedCustomTheme);
+      console.log("✅ Thème personnalisé récupéré:", customThemeData);
+    }
+  } catch (error) {
+    console.error(
+      "❌ Erreur lors de la récupération du thème personnalisé:",
+      error
+    );
+  }
+
   // Appliquer le thème sauvegardé
   applyTheme(currentTheme);
 
-  // Appliquer les couleurs personnalisées si nécessaire
-  if (currentTheme === "custom") {
+  // Si c'est un thème personnalisé, appliquer les couleurs personnalisées
+  if (currentTheme === "custom" && customThemeData) {
+    console.log("🎨 Application du thème personnalisé...");
     applyCustomTheme(customThemeData);
   }
 
-  // Mettre à jour l'icône du bouton de thème avec un délai pour s'assurer que le DOM est chargé
+  // Mettre à jour l'interface avec un délai pour s'assurer que le DOM est chargé
   setTimeout(() => {
     updateThemeIcon();
-    // Appliquer le thème aux headers après que le DOM soit complètement chargé
     applyThemeToHeaders();
-  }, 200);
 
-  console.log(`🎨 Thème initialisé: ${currentTheme}`);
+    // Pré-remplir les champs du modal avec les couleurs actuelles
+    if (currentTheme === "custom") {
+      populateThemeInputs();
+    }
+
+    console.log("✅ Système de thème initialisé avec:", {
+      theme: currentTheme,
+      customData: customThemeData,
+    });
+
+    // Test de persistance
+    testThemePersistence();
+
+    // Ajouter un écouteur de raccourci clavier pour changer de thème (Ctrl+Shift+T)
+    document.addEventListener("keydown", function (e) {
+      if (e.ctrlKey && e.shiftKey && e.key === "T") {
+        e.preventDefault();
+        toggleTheme();
+        showThemeStatus();
+      }
+    });
+
+    console.log(
+      "⌨️ Raccourci clavier ajouté: Ctrl+Shift+T pour changer de thème"
+    );
+  }, 300);
+}
+
+// Pré-remplir les champs de couleur avec les valeurs actuelles
+function populateThemeInputs() {
+  console.log("🎨 Pré-remplissage des champs de couleur...");
+
+  setTimeout(() => {
+    const primaryColor = document.getElementById("primaryColor");
+    const secondaryColor = document.getElementById("secondaryColor");
+    const accentColor = document.getElementById("accentColor");
+    const backgroundColor = document.getElementById("backgroundColor");
+    const surfaceColor = document.getElementById("surfaceColor");
+
+    if (primaryColor) primaryColor.value = customThemeData.primary;
+    if (secondaryColor) secondaryColor.value = customThemeData.secondary;
+    if (accentColor) accentColor.value = customThemeData.accent;
+    if (backgroundColor) backgroundColor.value = customThemeData.background;
+    if (surfaceColor) surfaceColor.value = customThemeData.surface;
+
+    console.log("✅ Champs pré-remplis avec:", customThemeData);
+  }, 100);
 }
 
 // Appliquer un thème
@@ -465,35 +596,59 @@ function applyThemeToHeaders() {
   console.log("✅ Thème appliqué aux headers");
 }
 
-// Basculer entre les thèmes
+// Basculer entre les thèmes (cycle: light → dark → custom → light)
 function toggleTheme() {
   console.log("🎨 toggleTheme appelé, thème actuel:", currentTheme);
 
   try {
     let newTheme;
+    let themeDisplayName;
+
+    // Vérifier si un thème personnalisé existe
+    const hasCustomTheme =
+      localStorage.getItem("customTheme") &&
+      localStorage.getItem("customTheme") !== "null";
+
     switch (currentTheme) {
       case "light":
         newTheme = "dark";
+        themeDisplayName = "Sombre";
         break;
       case "dark":
+        // Si un thème personnalisé existe, aller vers custom, sinon retour à light
+        if (hasCustomTheme) {
+          newTheme = "custom";
+          themeDisplayName = "Personnalisé";
+        } else {
+          newTheme = "light";
+          themeDisplayName = "Clair";
+        }
+        break;
+      case "custom":
         newTheme = "light";
+        themeDisplayName = "Clair";
         break;
       default:
         newTheme = "light";
+        themeDisplayName = "Clair";
     }
 
     console.log("🎨 Changement vers le thème:", newTheme);
+
+    // Sauvegarder le nouveau thème (mais CONSERVER le thème personnalisé)
+    currentTheme = newTheme;
+    localStorage.setItem("theme", newTheme);
+    // Note: customTheme reste dans localStorage même si on n'est pas en mode custom
+    console.log("💾 Thème sauvegardé:", localStorage.getItem("theme"));
+
     applyTheme(newTheme);
     updateThemeIcon();
 
     // Afficher une notification simple
     try {
-      showNotification(
-        `Thème changé vers: ${newTheme === "light" ? "Clair" : "Sombre"}`,
-        "success"
-      );
+      showNotification(`Thème changé vers: ${themeDisplayName}`, "success");
     } catch (error) {
-      console.log("🎨 Thème changé vers:", newTheme);
+      console.log("🎨 Thème changé vers:", themeDisplayName);
     }
   } catch (error) {
     console.error("❌ Erreur dans toggleTheme:", error);
@@ -513,12 +668,24 @@ function updateThemeIcon() {
     return;
   }
 
-  if (currentTheme === "dark") {
-    themeIcon.className = "fas fa-sun text-yellow-400";
-    console.log("🌞 Icône changée vers soleil (mode sombre actif)");
-  } else {
-    themeIcon.className = "fas fa-moon text-yellow-400";
-    console.log("🌙 Icône changée vers lune (mode clair actif)");
+  // Mettre à jour l'icône selon le thème actuel
+  switch (currentTheme) {
+    case "dark":
+      themeIcon.className = "fas fa-sun text-yellow-400";
+      themeButton.title = "Changer vers thème personnalisé";
+      console.log("🌞 Icône changée vers soleil (mode sombre actif)");
+      break;
+    case "custom":
+      themeIcon.className = "fas fa-palette text-purple-400";
+      themeButton.title = "Changer vers thème clair";
+      console.log("🎨 Icône changée vers palette (mode personnalisé actif)");
+      break;
+    case "light":
+    default:
+      themeIcon.className = "fas fa-moon text-gray-400";
+      themeButton.title = "Changer vers thème sombre";
+      console.log("🌙 Icône changée vers lune (mode clair actif)");
+      break;
   }
 }
 
@@ -526,6 +693,9 @@ function updateThemeIcon() {
 function testThemeSystem() {
   console.log("🧪 Test du système de thème");
   console.log("Thème actuel:", currentTheme);
+  console.log("Données personnalisées:", customThemeData);
+  console.log("localStorage theme:", localStorage.getItem("theme"));
+  console.log("localStorage customTheme:", localStorage.getItem("customTheme"));
 
   const button = document.querySelector('[onclick="toggleTheme()"]');
   console.log("Bouton trouvé:", !!button);
@@ -543,8 +713,42 @@ function testThemeSystem() {
   toggleTheme();
 }
 
-// Rendre la fonction accessible globalement pour les tests
+// Afficher le statut actuel du thème
+function showThemeStatus() {
+  const hasCustomTheme =
+    localStorage.getItem("customTheme") &&
+    localStorage.getItem("customTheme") !== "null";
+
+  console.log("📊 Statut du système de thème:");
+  console.log(`   - Thème actuel: ${currentTheme}`);
+  console.log(
+    `   - Thème personnalisé sauvegardé: ${hasCustomTheme ? "Oui" : "Non"}`
+  );
+  console.log(
+    `   - Cycle de thèmes: light → dark ${
+      hasCustomTheme ? "→ custom " : ""
+    }→ light`
+  );
+
+  showNotification(
+    `Thème actuel: ${
+      currentTheme === "light"
+        ? "Clair"
+        : currentTheme === "dark"
+        ? "Sombre"
+        : "Personnalisé"
+    }${
+      hasCustomTheme && currentTheme !== "custom"
+        ? " (Personnalisé disponible)"
+        : ""
+    }`,
+    "info"
+  );
+}
+
+// Rendre les fonctions accessibles globalement pour les tests
 window.testThemeSystem = testThemeSystem;
+window.showThemeStatus = showThemeStatus;
 
 // =================== FONCTIONS GLOBALES POUR TESTS ===================
 // Rendre les fonctions accessibles globalement pour le débogage
@@ -667,14 +871,23 @@ function applyCustomColors() {
 
   console.log("🎨 Nouvelles couleurs:", newTheme);
 
-  // Forcer le changement vers le thème personnalisé
+  // ÉTAPE 1: Sauvegarder dans les variables globales
   currentTheme = "custom";
   customThemeData = newTheme;
 
+  // ÉTAPE 2: Sauvegarder dans localStorage
+  localStorage.setItem("theme", "custom");
+  localStorage.setItem("customTheme", JSON.stringify(newTheme));
+
+  console.log("💾 Données sauvegardées dans localStorage:");
+  console.log("   - theme:", localStorage.getItem("theme"));
+  console.log("   - customTheme:", localStorage.getItem("customTheme"));
+
+  // ÉTAPE 3: Appliquer le thème
   applyTheme("custom");
   applyCustomTheme(newTheme);
 
-  // Forcer la mise à jour de l'interface
+  // ÉTAPE 4: Forcer la mise à jour de l'interface
   setTimeout(() => {
     applyThemeToHeaders();
     updateThemeIcon();
@@ -682,9 +895,11 @@ function applyCustomColors() {
 
   closeThemeCustomizer();
   showNotification("Thème personnalisé appliqué avec succès!", "success");
+
+  console.log("✅ Thème personnalisé appliqué et sauvegardé!");
 }
 
-// Réinitialiser les couleurs par défaut
+// Réinitialiser les couleurs par défaut du modal
 function resetToDefaultColors() {
   const defaultTheme = {
     primary: "#3b82f6",
@@ -694,17 +909,59 @@ function resetToDefaultColors() {
     surface: "#f9fafb",
   };
 
-  applyCustomTheme(defaultTheme);
-
-  // Mettre à jour les champs du formulaire
+  // Mettre à jour les champs du formulaire uniquement
   document.getElementById("primaryColor").value = defaultTheme.primary;
   document.getElementById("secondaryColor").value = defaultTheme.secondary;
   document.getElementById("accentColor").value = defaultTheme.accent;
   document.getElementById("backgroundColor").value = defaultTheme.background;
   document.getElementById("surfaceColor").value = defaultTheme.surface;
 
-  showNotification("Couleurs réinitialisées!", "success");
+  showNotification("Couleurs du formulaire réinitialisées!", "success");
 }
+
+// Réinitialiser COMPLÈTEMENT tous les thèmes (retour à l'état initial)
+function resetAllThemes() {
+  console.log("🔄 Réinitialisation complète des thèmes...");
+
+  // Supprimer toutes les données de thème du localStorage
+  localStorage.removeItem("theme");
+  localStorage.removeItem("customTheme");
+
+  // Réinitialiser les variables globales
+  currentTheme = "light";
+  customThemeData = {
+    primary: "#3b82f6",
+    secondary: "#1f2937",
+    accent: "#f59e0b",
+    background: "#ffffff",
+    surface: "#f9fafb",
+  };
+
+  // Appliquer le thème par défaut
+  applyTheme("light");
+  updateThemeIcon();
+
+  // Mettre à jour les champs du modal si ils existent
+  setTimeout(() => {
+    const primaryColor = document.getElementById("primaryColor");
+    const secondaryColor = document.getElementById("secondaryColor");
+    const accentColor = document.getElementById("accentColor");
+    const backgroundColor = document.getElementById("backgroundColor");
+    const surfaceColor = document.getElementById("surfaceColor");
+
+    if (primaryColor) primaryColor.value = customThemeData.primary;
+    if (secondaryColor) secondaryColor.value = customThemeData.secondary;
+    if (accentColor) accentColor.value = customThemeData.accent;
+    if (backgroundColor) backgroundColor.value = customThemeData.background;
+    if (surfaceColor) surfaceColor.value = customThemeData.surface;
+  }, 100);
+
+  showNotification("Tous les thèmes ont été réinitialisés!", "success");
+  console.log("✅ Réinitialisation complète terminée");
+}
+
+// Rendre la fonction accessible globalement
+window.resetAllThemes = resetAllThemes;
 
 // =================== GESTION PHOTO DE PROFIL ===================
 
