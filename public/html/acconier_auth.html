@@ -196,83 +196,63 @@
       Se déconnecter
     </button>
     <div class="auth-container">
-      <div id="form-inscription">
-        <div class="auth-title">Inscription Agent Transit</div>
-        <div class="error-msg" id="register-error"></div>
-        <div class="success-msg" id="register-success"></div>
-        <form id="registerForm">
-          <div class="form-group">
-            <label for="register-nom">Nom complet</label>
-            <input type="text" id="register-nom" name="nom" required />
-          </div>
-          <div class="form-group">
-            <label for="register-email">Email</label>
-            <input type="email" id="register-email" name="email" required />
-          </div>
-          <div class="form-group">
-            <!-- Champ téléphone supprimé -->
-          </div>
-          <div class="form-group">
-            <label for="register-password">Mot de passe</label>
-            <input
-              type="password"
-              id="register-password"
-              name="password"
-              required
-            />
-            <i
-              class="fas fa-eye toggle-password-fa"
-              data-target="register-password"
-            ></i>
-          </div>
-          <button type="submit" class="btn">S'inscrire</button>
-        </form>
-        <span class="switch-link" id="to-login"
-          >Déjà inscrit ? Se connecter</span
-        >
-      </div>
-      <div id="form-connexion" style="display: none">
+      <div id="form-connexion">
         <div class="auth-title">Connexion Agent Transit</div>
         <div class="error-msg" id="login-error"></div>
+        <div class="success-msg" id="login-success"></div>
         <form id="loginForm">
           <div class="form-group">
             <label for="login-email">Email</label>
             <input type="email" id="login-email" name="email" required />
           </div>
           <div class="form-group">
-            <label for="login-password">Mot de passe</label>
-            <input
-              type="password"
-              id="login-password"
-              name="password"
-              required
-            />
+            <label for="login-code">Code d'accès</label>
+            <input type="password" id="login-code" name="code" required />
             <i
               class="fas fa-eye toggle-password-fa"
-              data-target="login-password"
+              data-target="login-code"
             ></i>
           </div>
           <button type="submit" class="btn">Se connecter</button>
         </form>
-        <span class="switch-link" id="to-register">Créer un compte</span>
-        <span class="switch-link" id="to-forgot-password"
-          >Mot de passe oublié ?</span
+        <span class="switch-link" id="request-access">Demander l'accès</span>
+        <span class="switch-link" id="to-forgot-code"
+          >Code d'accès oublié ?</span
         >
       </div>
 
-      <!-- Formulaire de récupération de mot de passe -->
-      <div id="form-forgot-password" style="display: none">
-        <div class="auth-title">Récupération du mot de passe</div>
+      <!-- Formulaire de demande d'accès -->
+      <div id="form-request-access" style="display: none">
+        <div class="auth-title">Demande d'Accès Agent Transit</div>
+        <div class="error-msg" id="request-error"></div>
+        <div class="success-msg" id="request-success"></div>
+        <form id="requestAccessForm">
+          <div class="form-group">
+            <label for="request-nom">Nom complet</label>
+            <input type="text" id="request-nom" name="nom" required />
+          </div>
+          <div class="form-group">
+            <label for="request-email">Email</label>
+            <input type="email" id="request-email" name="email" required />
+          </div>
+          <button type="submit" class="btn">Demander l'accès</button>
+        </form>
+        <span class="switch-link" id="to-login-from-request"
+          >Retour à la connexion</span
+        >
+      </div>
+
+      <!-- Formulaire de récupération de code d'accès -->
+      <div id="form-forgot-code" style="display: none">
+        <div class="auth-title">Code d'accès oublié</div>
         <div class="error-msg" id="forgot-error"></div>
         <div class="success-msg" id="forgot-success"></div>
-        <form id="forgotPasswordForm">
+        <form id="forgotCodeForm">
           <div class="form-group">
             <label for="forgot-email">Votre email</label>
             <input type="email" id="forgot-email" name="email" required />
           </div>
-          <button type="submit" class="btn">
-            Envoyer le lien de réinitialisation
-          </button>
+          <button type="submit" class="btn">Demander un nouveau code</button>
         </form>
         <span class="switch-link" id="to-login-from-forgot"
           >Retour à la connexion</span
@@ -288,13 +268,13 @@
           loginForm.addEventListener("submit", async function (e) {
             e.preventDefault();
             const email = document.getElementById("login-email").value.trim();
-            const password = document.getElementById("login-password").value;
-            // Envoi de la requête de connexion
+            const code = document.getElementById("login-code").value;
+            // Envoi de la requête de connexion avec code d'accès
             try {
-              const res = await fetch("/acconier/login", {
+              const res = await fetch("/api/acconier-login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, code }),
               });
               const data = await res.json();
               if (data.success && data.nom && data.email) {
@@ -314,7 +294,7 @@
                 window.location.href = "/html/interfaceFormulaireEmployer.html";
               } else {
                 document.getElementById("login-error").textContent =
-                  data.message || "Erreur de connexion";
+                  data.message || "Code d'accès incorrect";
               }
             } catch (err) {
               document.getElementById("login-error").textContent =

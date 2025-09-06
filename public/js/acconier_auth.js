@@ -1,59 +1,101 @@
-// Gestion du formulaire d'inscription/connexion Acconier
-const formInscription = document.getElementById("form-inscription");
+// Gestion du formulaire de connexion/demande d'accès Acconier
 const formConnexion = document.getElementById("form-connexion");
-const formForgot = document.getElementById("form-forgot-password");
-const toLogin = document.getElementById("to-login");
-const toRegister = document.getElementById("to-register");
-const toForgot = document.getElementById("to-forgot-password");
+const formRequestAccess = document.getElementById("form-request-access");
+const formForgotCode = document.getElementById("form-forgot-code");
+const requestAccess = document.getElementById("request-access");
+const toForgotCode = document.getElementById("to-forgot-code");
+const toLoginFromRequest = document.getElementById("to-login-from-request");
 const toLoginFromForgot = document.getElementById("to-login-from-forgot");
-const registerForm = document.getElementById("registerForm");
 const loginForm = document.getElementById("loginForm");
-const forgotForm = document.getElementById("forgotPasswordForm");
-const registerError = document.getElementById("register-error");
-const registerSuccess = document.getElementById("register-success");
+const requestAccessForm = document.getElementById("requestAccessForm");
+const forgotCodeForm = document.getElementById("forgotCodeForm");
 const loginError = document.getElementById("login-error");
+const loginSuccess = document.getElementById("login-success");
+const requestError = document.getElementById("request-error");
+const requestSuccess = document.getElementById("request-success");
 const forgotError = document.getElementById("forgot-error");
 const forgotSuccess = document.getElementById("forgot-success");
 
-// Switch entre inscription et connexion
-if (toLogin)
-  toLogin.onclick = () => {
-    formInscription.style.display = "none";
-    formConnexion.style.display = "block";
-    if (formForgot) formForgot.style.display = "none";
-    registerError.textContent = "";
-    registerSuccess.textContent = "";
-  };
-if (toRegister)
-  toRegister.onclick = () => {
-    formInscription.style.display = "block";
+// Switch vers demande d'accès
+if (requestAccess)
+  requestAccess.onclick = () => {
     formConnexion.style.display = "none";
-    if (formForgot) formForgot.style.display = "none";
+    formRequestAccess.style.display = "block";
+    if (formForgotCode) formForgotCode.style.display = "none";
     loginError.textContent = "";
+    loginSuccess.textContent = "";
+    requestError.textContent = "";
+    requestSuccess.textContent = "";
   };
 
-// Switch vers mot de passe oublié
-if (toForgot)
-  toForgot.onclick = () => {
-    formInscription.style.display = "none";
+// Switch vers code d'accès oublié
+if (toForgotCode)
+  toForgotCode.onclick = () => {
     formConnexion.style.display = "none";
-    if (formForgot) formForgot.style.display = "block";
+    formRequestAccess.style.display = "none";
+    if (formForgotCode) formForgotCode.style.display = "block";
     loginError.textContent = "";
+    loginSuccess.textContent = "";
     forgotError.textContent = "";
     forgotSuccess.textContent = "";
   };
+
+// Retour à la connexion depuis demande d'accès
+if (toLoginFromRequest)
+  toLoginFromRequest.onclick = () => {
+    formConnexion.style.display = "block";
+    formRequestAccess.style.display = "none";
+    if (formForgotCode) formForgotCode.style.display = "none";
+    requestError.textContent = "";
+    requestSuccess.textContent = "";
+  };
+
+// Retour à la connexion depuis code oublié
 if (toLoginFromForgot)
   toLoginFromForgot.onclick = () => {
-    formInscription.style.display = "none";
     formConnexion.style.display = "block";
-    if (formForgot) formForgot.style.display = "none";
+    formRequestAccess.style.display = "none";
+    if (formForgotCode) formForgotCode.style.display = "none";
     forgotError.textContent = "";
     forgotSuccess.textContent = "";
   };
 
-// Envoi du formulaire de récupération de mot de passe
-if (forgotForm)
-  forgotForm.onsubmit = async (e) => {
+// Envoi du formulaire de demande d'accès
+if (requestAccessForm)
+  requestAccessForm.onsubmit = async (e) => {
+    e.preventDefault();
+    requestError.textContent = "";
+    requestSuccess.textContent = "";
+    const nom = document.getElementById("request-nom").value.trim();
+    const email = document.getElementById("request-email").value.trim();
+    if (!nom || !email) {
+      requestError.textContent = "Tous les champs sont obligatoires.";
+      return;
+    }
+    try {
+      const res = await fetch("/api/acconier/request-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nom, email, type: "access_request" }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        requestSuccess.textContent =
+          "Votre demande d'accès a été envoyée. Vous recevrez votre code par email une fois approuvée.";
+        document.getElementById("request-nom").value = "";
+        document.getElementById("request-email").value = "";
+      } else {
+        requestError.textContent =
+          data.message || "Erreur lors de l'envoi de la demande.";
+      }
+    } catch (err) {
+      requestError.textContent = "Erreur réseau.";
+    }
+  };
+
+// Envoi du formulaire de récupération de code d'accès
+if (forgotCodeForm)
+  forgotCodeForm.onsubmit = async (e) => {
     e.preventDefault();
     forgotError.textContent = "";
     forgotSuccess.textContent = "";
@@ -63,74 +105,42 @@ if (forgotForm)
       return;
     }
     try {
-      const res = await fetch("/acconier/forgot-password", {
+      const res = await fetch("/api/acconier/request-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, type: "forgot_code" }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         forgotSuccess.textContent =
-          "Un email de réinitialisation a été envoyé si l'adresse existe.";
+          "Une demande de nouveau code a été envoyée. Vous recevrez votre nouveau code par email une fois approuvée.";
+        document.getElementById("forgot-email").value = "";
       } else {
-        forgotError.textContent = data.message || "Erreur lors de l'envoi.";
+        forgotError.textContent =
+          data.message || "Erreur lors de l'envoi de la demande.";
       }
     } catch (err) {
       forgotError.textContent = "Erreur réseau.";
     }
   };
 
-// Inscription
-if (registerForm)
-  registerForm.onsubmit = async (e) => {
-    e.preventDefault();
-    registerError.textContent = "";
-    registerSuccess.textContent = "";
-    const nom = document.getElementById("register-nom").value.trim();
-    const email = document.getElementById("register-email").value.trim();
-    const password = document.getElementById("register-password").value;
-    if (!nom || !email || !password) {
-      registerError.textContent = "Tous les champs sont obligatoires.";
-      return;
-    }
-    try {
-      const res = await fetch("/acconier/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nom, email, password }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        registerSuccess.textContent = "Inscription réussie ! Connectez-vous.";
-        setTimeout(() => {
-          formInscription.style.display = "none";
-          formConnexion.style.display = "block";
-        }, 1200);
-      } else {
-        registerError.textContent =
-          data.message || "Erreur lors de l'inscription.";
-      }
-    } catch (err) {
-      registerError.textContent = "Erreur réseau.";
-    }
-  };
-
-// Connexion
+// Connexion avec code d'accès
 if (loginForm)
   loginForm.onsubmit = async (e) => {
     e.preventDefault();
     loginError.textContent = "";
+    loginSuccess.textContent = "";
     const email = document.getElementById("login-email").value.trim();
-    const password = document.getElementById("login-password").value;
-    if (!email || !password) {
+    const code = document.getElementById("login-code").value;
+    if (!email || !code) {
       loginError.textContent = "Tous les champs sont obligatoires.";
       return;
     }
     try {
-      const res = await fetch("/acconier/login", {
+      const res = await fetch("/api/acconier-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, code }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -155,14 +165,14 @@ if (loginForm)
         // Redirige vers l'interface employeur après connexion
         window.location.href = "../html/interfaceFormulaireEmployer.html";
       } else {
-        loginError.textContent = data.message || "Identifiants invalides.";
+        loginError.textContent = data.message || "Code d'accès invalide.";
       }
     } catch (err) {
       loginError.textContent = "Erreur réseau.";
     }
   };
 
-// Gestion de l'icône œil déjà présente dans le HTML pour afficher/masquer le mot de passe
+// Gestion de l'icône œil pour afficher/masquer le code d'accès
 document.addEventListener("DOMContentLoaded", function () {
   const toggles = document.querySelectorAll(".toggle-password-fa");
   toggles.forEach(function (toggle) {

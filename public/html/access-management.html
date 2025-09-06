@@ -51,6 +51,46 @@
         padding-left: 2rem;
         margin-bottom: 1rem;
       }
+
+      /* Indicateur de nouvelle demande sur les onglets */
+      .section-tab {
+        position: relative;
+      }
+
+      .section-tab .notification-indicator {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        width: 12px;
+        height: 12px;
+        background: #ef4444;
+        border: 2px solid white;
+        border-radius: 50%;
+        animation: pulse-notification 2s infinite;
+        z-index: 10;
+      }
+
+      @keyframes pulse-notification {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* Style pour les onglets avec notifications */
+      .section-tab.has-notification {
+        background: linear-gradient(45deg, #fef3c7, #fbbf24) !important;
+        color: #92400e !important;
+        font-weight: 600;
+      }
       .timeline-item::before {
         content: "";
         position: absolute;
@@ -296,6 +336,7 @@
               onclick="switchSection('global')"
               class="section-tab flex-1 px-6 py-4 text-center font-medium text-sm border-b-2 transition-all duration-200 border-blue-500 text-blue-600 bg-blue-50"
               data-section="global"
+              id="tab-global"
             >
               <i class="fas fa-tachometer-alt mr-2"></i>
               Vue Globale
@@ -304,6 +345,7 @@
               onclick="switchSection('responsable-acconier')"
               class="section-tab flex-1 px-6 py-4 text-center font-medium text-sm border-b-2 transition-all duration-200 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               data-section="responsable-acconier"
+              id="tab-responsable-acconier"
             >
               <i class="fas fa-anchor mr-2"></i>
               Responsable Acconier
@@ -312,6 +354,7 @@
               onclick="switchSection('responsable-livraison')"
               class="section-tab flex-1 px-6 py-4 text-center font-medium text-sm border-b-2 transition-all duration-200 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               data-section="responsable-livraison"
+              id="tab-responsable-livraison"
             >
               <i class="fas fa-truck mr-2"></i>
               Responsable de Livraison
@@ -320,6 +363,7 @@
               onclick="switchSection('agent-transit')"
               class="section-tab flex-1 px-6 py-4 text-center font-medium text-sm border-b-2 transition-all duration-200 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               data-section="agent-transit"
+              id="tab-agent-transit"
             >
               <i class="fas fa-user-tie mr-2"></i>
               Agent Transit (Acconier)
@@ -687,9 +731,20 @@
 
           <!-- Liste des demandes Agent Transit -->
           <div class="bg-gray-50 rounded-lg p-4">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-              <i class="fas fa-list mr-2"></i>Demandes Agent Transit (Acconier)
-            </h3>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-list mr-2"></i>Demandes Agent Transit
+                (Acconier)
+              </h3>
+              <button
+                onclick="forceRefreshRequests()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition flex items-center space-x-2"
+                title="Actualiser les demandes"
+              >
+                <i class="fas fa-sync-alt"></i>
+                <span class="hidden sm:inline">Actualiser</span>
+              </button>
+            </div>
             <div id="agentsRequestsList" class="space-y-3">
               <!-- Les demandes seront affichées ici -->
             </div>

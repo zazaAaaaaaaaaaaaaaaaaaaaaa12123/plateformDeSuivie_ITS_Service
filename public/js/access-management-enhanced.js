@@ -6,6 +6,8 @@ let currentSection = "global"; // Section actuellement active
 let autoRefreshInterval;
 let isAutoRefreshEnabled = true;
 let lastDataHash = null; // Pour éviter les rechargements inutiles
+let lastKnownRequestCount = 0; // Pour détecter les nouvelles demandes
+let lastRequestTimestamp = null; // Pour éviter les notifications en double
 
 // Données spécifiques par acteur
 let actorData = {
@@ -63,6 +65,10 @@ console.log("🎨 Thème au démarrage:", currentTheme, customThemeData);
  */
 function switchSection(sectionName) {
   console.log(`🔄 Changement vers la section: ${sectionName}`);
+
+  // Supprimer l'indicateur de notification de l'onglet cliqué
+  const tabId = `tab-${sectionName}`;
+  removeTabNotificationIndicator(tabId);
 
   // Mettre à jour la section courante
   currentSection = sectionName;
@@ -142,9 +148,11 @@ function filterRequestsByActor(actorType) {
     } else if (actorType === "agent-transit") {
       return (
         request.actor_type === "agent-transit" ||
+        request.actor_type === "acconier" ||
         request.role === "Agent Transit" ||
         request.request_type === "agent-transit" ||
-        request.actorType === "agent-transit"
+        request.actorType === "agent-transit" ||
+        request.actorType === "acconier"
       );
     }
     return false;
@@ -261,9 +269,11 @@ function updateActorStatistics(actorType) {
     } else if (actorType === "agent-transit") {
       return (
         request.actor_type === "agent-transit" ||
+        request.actor_type === "acconier" ||
         request.role === "Agent Transit" ||
         request.request_type === "agent-transit" ||
-        request.actorType === "agent-transit"
+        request.actorType === "agent-transit" ||
+        request.actorType === "acconier"
       );
     }
     return false;
@@ -435,6 +445,9 @@ async function initializeAccessManagement() {
 
     // Démarrer l'actualisation automatique
     startAutoRefresh();
+
+    // Démarrer la vérification rapide des notifications
+    startFastNotificationCheck();
 
     // Initialiser les événements
     initializeEventListeners();
@@ -731,9 +744,9 @@ function startAutoRefresh() {
   }
 
   if (isAutoRefreshEnabled) {
-    // Actualisation toutes les 2 minutes au lieu de 30 secondes
-    autoRefreshInterval = setInterval(loadAccessRequests, 120000);
-    console.log("🔄 Actualisation automatique activée (2 min)");
+    // Actualisation toutes les 30 secondes pour des notifications plus rapides
+    autoRefreshInterval = setInterval(loadAccessRequests, 30000);
+    console.log("🔄 Actualisation automatique activée (30 sec)");
   }
 }
 
@@ -760,6 +773,9 @@ async function loadAccessRequests() {
 
     if (data.success) {
       const newRequests = data.requests || [];
+
+      // 🔔 Détecter et notifier les nouvelles demandes AVANT de traiter les données
+      detectAndNotifyNewRequests(newRequests);
 
       // Créer un hash simple des données pour détecter les changements
       const newDataHash = JSON.stringify(
@@ -795,6 +811,10 @@ async function loadAccessRequests() {
           `📋 ${newRequests.length} demandes - aucun changement détecté`
         );
       }
+
+      // Toujours forcer la mise à jour des statistiques d'acteurs
+      // pour s'assurer que les compteurs sont corrects
+      updateAllActorStatistics();
     } else {
       throw new Error(data.message || "Erreur inconnue");
     }
@@ -4302,6 +4322,202 @@ function showNotification(message, type = "success") {
   }, displayTime);
 }
 
+/**
+ * Détecte et affiche une notification pour les nouvelles demandes
+ */
+function detectAndNotifyNewRequests(newRequests) {
+  // Si c'est le premier chargement, ne pas afficher de notifications
+  if (lastKnownRequestCount === 0) {
+    lastKnownRequestCount = newRequests.length;
+    return;
+  }
+
+  // Vérifier s'il y a de nouvelles demandes
+  if (newRequests.length > lastKnownRequestCount) {
+    const newRequestsCount = newRequests.length - lastKnownRequestCount;
+
+    // Trouver les nouvelles demandes (les plus récentes)
+    const sortedRequests = newRequests.sort(
+      (a, b) =>
+        new Date(b.created_at || b.request_date) -
+        new Date(a.created_at || a.request_date)
+    );
+
+    // Prendre les nouvelles demandes
+    const newestRequests = sortedRequests.slice(0, newRequestsCount);
+
+    // Créer une notification pour chaque nouvelle demande
+    newestRequests.forEach((request, index) => {
+      setTimeout(() => {
+        const source = getRequestSource(request);
+        const sourceName = getSourceDisplayName(source);
+        const actorType = getActorTypeDisplay(request);
+
+        const message = `🔔 Nouvelle demande d'accès ${actorType} depuis ${sourceName}`;
+        showNotification(message, "info");
+
+        console.log(`📢 Nouvelle demande détectée:`, {
+          nom: request.name,
+          email: request.email,
+          source: sourceName,
+          actorType: actorType,
+          timestamp: request.created_at || request.request_date,
+        });
+      }, index * 1500); // Délai entre les notifications pour éviter la surcharge
+    });
+
+    lastKnownRequestCount = newRequests.length;
+  }
+}
+
+/**
+ * Détermine la source de la demande basée sur les données
+ */
+function getRequestSource(request) {
+  // Analyser l'actor_type et d'autres indices pour déterminer la source
+  if (request.actor_type === "acconier" || request.actorType === "acconier") {
+    return "acconier_auth"; // Image 4
+  }
+
+  if (
+    request.actor_type === "responsable-livraison" ||
+    request.role === "Responsable de Livraison" ||
+    request.request_type === "responsable-livraison"
+  ) {
+    return "repoLivAuth"; // Image 3
+  }
+
+  if (
+    request.actor_type === "responsable-acconier" ||
+    request.role === "Responsable Acconier" ||
+    request.request_type === "responsable-acconier"
+  ) {
+    return "auth"; // Image 2
+  }
+
+  // Si aucun type spécifique, probablement de la page principale
+  return "index"; // Image 1
+}
+
+/**
+ * Retourne le nom d'affichage de la source
+ */
+function getSourceDisplayName(source) {
+  const sourceNames = {
+    index: "Page Principale (index.html)",
+    auth: "Authentification Générale (auth.html)",
+    repoLivAuth: "Responsable Livraison (repoLivAuth.html)",
+    acconier_auth: "Agent Transit (acconier_auth.html)",
+  };
+
+  return sourceNames[source] || "Source Inconnue";
+}
+
+/**
+ * Retourne le type d'acteur pour l'affichage
+ */
+function getActorTypeDisplay(request) {
+  if (request.actor_type === "acconier" || request.actorType === "acconier") {
+    return "Agent Transit";
+  }
+
+  if (
+    request.actor_type === "responsable-livraison" ||
+    request.role === "Responsable de Livraison"
+  ) {
+    return "Responsable Livraison";
+  }
+
+  if (
+    request.actor_type === "responsable-acconier" ||
+    request.role === "Responsable Acconier"
+  ) {
+    return "Responsable Acconier";
+  }
+
+  return "Utilisateur";
+}
+
+/**
+ * ===== GESTION DES INDICATEURS D'ONGLETS =====
+ */
+
+/**
+ * Mapping entre les sources et les onglets correspondants
+ */
+function getTabIdFromSource(source) {
+  const sourceToTabMapping = {
+    acconier_auth: "tab-agent-transit", // Image 1 → Agent Transit (Acconier)
+    repoLivAuth: "tab-responsable-livraison", // Image 3 → Responsable de Livraison
+    index: "tab-global", // Image 4 → Vue Globale
+    auth: "tab-responsable-acconier", // Image 5 → Responsable Acconier
+  };
+
+  return sourceToTabMapping[source] || "tab-global";
+}
+
+/**
+ * Ajouter un indicateur de notification sur un onglet
+ */
+function addTabNotificationIndicator(source) {
+  const tabId = getTabIdFromSource(source);
+  const tabElement = document.getElementById(tabId);
+
+  if (tabElement) {
+    // Vérifier si l'indicateur existe déjà
+    let indicator = tabElement.querySelector(".notification-indicator");
+
+    if (!indicator) {
+      // Créer l'indicateur
+      indicator = document.createElement("div");
+      indicator.className = "notification-indicator";
+      indicator.title = "Nouvelle demande non vue";
+
+      // Ajouter l'indicateur à l'onglet
+      tabElement.appendChild(indicator);
+
+      // Ajouter la classe de notification à l'onglet
+      tabElement.classList.add("has-notification");
+
+      console.log(`🔴 Indicateur ajouté sur l'onglet: ${tabId}`);
+    }
+  }
+}
+
+/**
+ * Supprimer l'indicateur de notification d'un onglet
+ */
+function removeTabNotificationIndicator(tabId) {
+  const tabElement = document.getElementById(tabId);
+
+  if (tabElement) {
+    // Supprimer l'indicateur
+    const indicator = tabElement.querySelector(".notification-indicator");
+    if (indicator) {
+      indicator.remove();
+    }
+
+    // Supprimer la classe de notification
+    tabElement.classList.remove("has-notification");
+
+    console.log(`🔴 Indicateur supprimé de l'onglet: ${tabId}`);
+  }
+}
+
+/**
+ * Supprimer tous les indicateurs de notification
+ */
+function clearAllTabNotificationIndicators() {
+  const tabs = [
+    "tab-global",
+    "tab-responsable-acconier",
+    "tab-responsable-livraison",
+    "tab-agent-transit",
+  ];
+  tabs.forEach((tabId) => removeTabNotificationIndicator(tabId));
+  console.log("🔴 Tous les indicateurs supprimés");
+}
+
 function logout() {
   if (confirm("Êtes-vous sûr de vouloir vous déconnecter ?")) {
     window.location.href = "/html/admin-login.html";
@@ -4362,6 +4578,60 @@ function toggleAutoRefresh() {
     clearInterval(autoRefreshInterval);
     showNotification("Actualisation automatique désactivée", "warning");
   }
+}
+
+/**
+ * Vérification rapide des nouvelles demandes (toutes les 10 secondes)
+ * pour une notification plus immédiate
+ */
+function startFastNotificationCheck() {
+  // Vérification FORCÉE toutes les 5 secondes pour les notifications
+  setInterval(async () => {
+    try {
+      const response = await fetch("/api/admin/access-requests", {
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          const newRequests = data.requests || [];
+
+          // FORCER la détection même si le hash n'a pas changé
+          if (newRequests.length !== lastKnownRequestCount) {
+            console.log(
+              `🚨 NOUVELLE DEMANDE DÉTECTÉE! Avant: ${lastKnownRequestCount}, Maintenant: ${newRequests.length}`
+            );
+
+            // Si nouvelle demande
+            if (newRequests.length > lastKnownRequestCount) {
+              const latestRequest = newRequests[newRequests.length - 1];
+
+              // Afficher immédiatement la notification
+              const source = getRequestSource(latestRequest);
+              const sourceName = getSourceDisplayName(source);
+              const actorType = getActorTypeDisplay(latestRequest);
+
+              const message = `🔔 NOUVELLE DEMANDE: ${actorType} depuis ${sourceName}`;
+
+              // Forcer l'affichage de la notification + indicateur onglet
+              showNotification(message, "info");
+              console.log("🚨 NOTIFICATION AFFICHÉE:", message);
+
+              // Ajouter l'indicateur sur l'onglet correspondant
+              addTabNotificationIndicator(source);
+
+              lastKnownRequestCount = newRequests.length;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.log("⚠️ Erreur lors de la vérification rapide:", error.message);
+    }
+  }, 5000); // Toutes les 5 secondes maintenant
+
+  console.log("⚡ Vérification rapide des notifications activée (10 sec)");
 }
 
 // === NOUVELLES FONCTIONS POUR L'ENVOI DE CODE D'ACCÈS ===
@@ -4866,3 +5136,95 @@ window.testAllThemeFunctions = function () {
     console.error("🧪 ❌ openThemeCustomizer erreur:", e);
   }
 };
+
+// =================== FONCTION DE RAFRAÎCHISSEMENT FORCÉ ===================
+
+/**
+ * Force le rafraîchissement des demandes d'accès
+ */
+async function forceRefreshRequests() {
+  console.log("🔄 Rafraîchissement forcé des demandes...");
+
+  // Réinitialiser le hash pour forcer le rechargement
+  lastDataHash = null;
+
+  // Afficher un indicateur de chargement
+  showLoadingIndicator(true);
+
+  try {
+    // Recharger les demandes
+    await loadAccessRequests();
+
+    // Force la mise à jour de toutes les statistiques d'acteurs
+    updateAllActorStatistics();
+
+    // Afficher une notification de succès
+    showNotification("✅ Demandes actualisées avec succès!", "success");
+
+    console.log("✅ Rafraîchissement forcé terminé");
+  } catch (error) {
+    console.error("❌ Erreur lors du rafraîchissement forcé:", error);
+    showNotification("❌ Erreur lors de l'actualisation", "error");
+  } finally {
+    showLoadingIndicator(false);
+  }
+}
+
+/**
+ * Met à jour toutes les statistiques des acteurs
+ */
+function updateAllActorStatistics() {
+  console.log("📊 Mise à jour de toutes les statistiques d'acteurs...");
+
+  // Liste des types d'acteurs
+  const actorTypes = [
+    "responsable-acconier",
+    "responsable-livraison",
+    "agent-transit",
+  ];
+
+  // Mettre à jour les statistiques pour chaque type d'acteur
+  actorTypes.forEach((actorType) => {
+    updateActorStatistics(actorType);
+  });
+
+  console.log("✅ Toutes les statistiques d'acteurs mises à jour");
+}
+
+/**
+ * Affiche une notification temporaire
+ */
+function showNotification(message, type = "info") {
+  // Créer l'élément de notification
+  const notification = document.createElement("div");
+  notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+
+  // Styles selon le type
+  if (type === "success") {
+    notification.classList.add("bg-green-500", "text-white");
+  } else if (type === "error") {
+    notification.classList.add("bg-red-500", "text-white");
+  } else {
+    notification.classList.add("bg-blue-500", "text-white");
+  }
+
+  notification.textContent = message;
+
+  // Ajouter au DOM
+  document.body.appendChild(notification);
+
+  // Animation d'entrée
+  setTimeout(() => {
+    notification.classList.remove("translate-x-full");
+  }, 100);
+
+  // Animation de sortie et suppression
+  setTimeout(() => {
+    notification.classList.add("translate-x-full");
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+}

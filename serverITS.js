@@ -1590,93 +1590,25 @@ pool
     );
   });
 // ===============================
-// ROUTES AUTHENTIFICATION ACCONIER
+// ROUTES AUTHENTIFICATION ACCONIER (SUPPRIMÉES - REMPLACÉES PAR LE SYSTÈME DE CODES D'ACCÈS)
 // ===============================
 
-// Inscription acconier
+// Inscription acconier (route supprimée)
 app.post("/acconier/register", async (req, res) => {
-  let { nom, email, password } = req.body || {};
-  if (typeof email === "string") {
-    email = email.trim().toLowerCase();
-  }
-  if (!nom || !email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: "Tous les champs sont requis (nom, email, mot de passe).",
-    });
-  }
-  try {
-    // Vérifie si l'email existe déjà
-    const check = await pool.query("SELECT id FROM acconier WHERE email = $1", [
-      email,
-    ]);
-    if (check.rows.length > 0) {
-      return res
-        .status(409)
-        .json({ success: false, message: "Cet email est déjà utilisé." });
-    }
-    const hashedPw = await bcrypt.hash(password, 10);
-    await pool.query(
-      "INSERT INTO acconier (nom, email, password) VALUES ($1, $2, $3)",
-      [nom, email, hashedPw]
-    );
-    return res
-      .status(201)
-      .json({ success: true, message: "Inscription réussie." });
-  } catch (err) {
-    console.error("[ACCONIER][REGISTER] Erreur:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur lors de l'inscription.",
-    });
-  }
+  return res.status(410).json({
+    success: false,
+    message:
+      "L'inscription directe n'est plus supportée. Utilisez la demande d'accès via la nouvelle interface.",
+  });
 });
 
-// Connexion acconier
+// Connexion acconier (ancienne route - remplacée)
 app.post("/acconier/login", async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) {
-    return ress
-      .status(400)
-      .json({ success: false, message: "Tous les champs sont requis." });
-  }
-  try {
-    const userRes = await pool.query(
-      "SELECT * FROM acconier WHERE email = $1",
-      [email]
-    );
-    console.log("[ACCONIER][LOGIN] Recherche utilisateur:", userRes.rows);
-    if (userRes.rows.length === 0) {
-      console.warn("[ACCONIER][LOGIN] Aucun utilisateur trouvé pour:", email);
-      return res
-        .status(401)
-        .json({ success: false, message: "Email ou mot de passe incorrect." });
-    }
-    const user = userRes.rows[0];
-    console.log("[ACCONIER][LOGIN] Utilisateur trouvé:", user);
-    console.log("[ACCONIER][LOGIN] Mot de passe reçu:", password);
-    console.log("[ACCONIER][LOGIN] Mot de passe hashé en base:", user.password);
-    const match = await bcrypt.compare(password, user.password);
-    console.log("[ACCONIER][LOGIN] Résultat comparaison mot de passe:", match);
-    if (!match) {
-      console.warn("[ACCONIER][LOGIN] Mot de passe incorrect pour:", email);
-      return res
-        .status(401)
-        .json({ success: false, message: "Email ou mot de passe incorrect." });
-    }
-    return res.status(200).json({
-      success: true,
-      message: "Connexion réussie.",
-      nom: user.nom,
-      email: user.email,
-    });
-  } catch (err) {
-    console.error("[ACCONIER][LOGIN] Erreur:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur lors de la connexion.",
-    });
-  }
+  return res.status(410).json({
+    success: false,
+    message:
+      "Cette méthode de connexion n'est plus supportée. Utilisez la nouvelle interface avec code d'accès.",
+  });
 });
 
 // ===============================
@@ -4698,13 +4630,11 @@ app.post("/api/forgot-access-code", async (req, res) => {
 
 // Route pour la connexion des Responsables Acconier
 app.post("/api/acconier-login", async (req, res) => {
-  const { email, accessCode, actorType } = req.body;
+  const { email, code } = req.body;
 
   console.log("[ACCONIER-LOGIN][API] Tentative de connexion:", {
     email,
-    actorType,
-    hasAccessCode: !!accessCode,
-    accessCodeValue: accessCode,
+    hasCode: !!code,
   });
 
   if (!email) {
@@ -4714,7 +4644,7 @@ app.post("/api/acconier-login", async (req, res) => {
     });
   }
 
-  if (!accessCode) {
+  if (!code) {
     return res.status(400).json({
       success: false,
       message: "Code d'accès requis pour la connexion.",
@@ -4722,27 +4652,25 @@ app.post("/api/acconier-login", async (req, res) => {
   }
 
   try {
-    // Rechercher l'utilisateur avec ce type d'acteur - privilégier les comptes approuvés avec access_code
+    // Rechercher l'utilisateur avec le code d'accès - privilégier les comptes approuvés avec access_code
     const userResult = await pool.query(
       `SELECT ar.*, u.name, u.email 
        FROM access_requests ar 
        LEFT JOIN users u ON ar.email = u.email 
-       WHERE ar.email = $1 AND ar.actor_type = $2 AND ar.status = 'approved' AND ar.access_code IS NOT NULL
+       WHERE ar.email = $1 AND ar.actor_type = 'acconier' AND ar.status = 'approved' AND ar.access_code IS NOT NULL
        ORDER BY ar.created_at DESC
        LIMIT 1`,
-      [email, actorType]
+      [email]
     );
 
     console.log("[ACCONIER-LOGIN][API] Résultat de recherche:", {
       email,
-      actorType,
       foundUsers: userResult.rows.length,
       users: userResult.rows.map((user) => ({
         id: user.id,
         email: user.email,
         status: user.status,
         hasAccessCode: !!user.access_code,
-        accessCode: user.access_code,
       })),
     });
 
@@ -4782,9 +4710,9 @@ app.post("/api/acconier-login", async (req, res) => {
       });
     }
 
-    if (accessCode !== user.access_code) {
+    if (code !== user.access_code) {
       console.log("[ACCONIER-LOGIN][API] Code incorrect:", {
-        fourni: accessCode,
+        fourni: code,
         attendu: user.access_code,
         email,
       });
@@ -4803,26 +4731,142 @@ app.post("/api/acconier-login", async (req, res) => {
 
     console.log("[ACCONIER-LOGIN][API] Connexion réussie:", {
       email,
-      actorType,
       userId: user.id,
     });
 
     res.json({
       success: true,
       message: "Connexion réussie !",
-      user: {
-        id: user.id,
-        name: user.name || user.email.split("@")[0],
-        email: user.email,
-        actorType: user.actor_type,
-        role: user.role,
-      },
+      nom: user.name || user.email.split("@")[0],
+      email: user.email,
     });
   } catch (err) {
     console.error("[ACCONIER-LOGIN][API] Erreur:", err);
     res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la connexion.",
+    });
+  }
+});
+
+// ===============================
+// NOUVELLE ROUTE POUR LES DEMANDES D'ACCÈS ACCONIER
+// ===============================
+
+// Route pour traiter les demandes d'accès et codes oubliés
+app.post("/api/acconier/request-access", async (req, res) => {
+  const { nom, email, type } = req.body;
+
+  console.log("[ACCONIER-REQUEST][API] Nouvelle demande:", {
+    nom,
+    email,
+    type,
+  });
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email requis.",
+    });
+  }
+
+  if (!type || !["access_request", "forgot_code"].includes(type)) {
+    return res.status(400).json({
+      success: false,
+      message: "Type de demande invalide.",
+    });
+  }
+
+  if (type === "access_request" && !nom) {
+    return res.status(400).json({
+      success: false,
+      message: "Nom requis pour une demande d'accès.",
+    });
+  }
+
+  try {
+    // Vérifier si une demande existe déjà pour cet email
+    const existingRequest = await pool.query(
+      "SELECT * FROM access_requests WHERE email = $1 AND actor_type = 'acconier' ORDER BY created_at DESC LIMIT 1",
+      [email]
+    );
+
+    if (type === "access_request") {
+      // Pour une nouvelle demande d'accès
+      if (existingRequest.rows.length > 0) {
+        const existing = existingRequest.rows[0];
+        if (existing.status === "pending") {
+          return res.status(409).json({
+            success: false,
+            message: "Une demande d'accès est déjà en cours pour cet email.",
+          });
+        } else if (existing.status === "approved") {
+          return res.status(409).json({
+            success: false,
+            message:
+              "Vous avez déjà un accès approuvé. Utilisez 'Code d'accès oublié' si nécessaire.",
+          });
+        }
+      }
+
+      // Créer une nouvelle demande d'accès
+      const currentDate = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
+      const result = await pool.query(
+        `INSERT INTO access_requests (name, email, actor_type, status, request_type, request_date, created_at) 
+         VALUES ($1, $2, 'acconier', 'pending', 'access_request', $3, CURRENT_TIMESTAMP) 
+         RETURNING id`,
+        [nom, email, currentDate]
+      );
+
+      console.log("[ACCONIER-REQUEST][API] Demande d'accès créée:", {
+        id: result.rows[0].id,
+        nom,
+        email,
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Votre demande d'accès a été enregistrée. Vous recevrez votre code par email une fois approuvée.",
+      });
+    } else if (type === "forgot_code") {
+      // Pour un code oublié
+      if (
+        existingRequest.rows.length === 0 ||
+        existingRequest.rows[0].status !== "approved"
+      ) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Aucun compte approuvé trouvé pour cet email. Veuillez d'abord faire une demande d'accès.",
+        });
+      }
+
+      // Créer une demande de nouveau code
+      const currentDate = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
+      const result = await pool.query(
+        `INSERT INTO access_requests (name, email, actor_type, status, request_type, request_date, created_at) 
+         VALUES ($1, $2, 'acconier', 'pending', 'forgot_code', $3, CURRENT_TIMESTAMP) 
+         RETURNING id`,
+        [existingRequest.rows[0].name, email, currentDate]
+      );
+
+      console.log("[ACCONIER-REQUEST][API] Demande de nouveau code créée:", {
+        id: result.rows[0].id,
+        email,
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Votre demande de nouveau code a été enregistrée. Vous recevrez votre nouveau code par email une fois approuvée.",
+      });
+    }
+  } catch (err) {
+    console.error("[ACCONIER-REQUEST][API] Erreur:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors du traitement de la demande.",
     });
   }
 });
