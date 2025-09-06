@@ -4205,7 +4205,36 @@ function showNotification(message, type = "success") {
   // Vérification si les éléments existent
   if (!notification || !notificationText) {
     console.warn("⚠️ Éléments de notification non trouvés dans le DOM");
-    alert(message); // Fallback avec alerte visible
+    // Créer une notification simple en fallback
+    const fallbackNotification = document.createElement("div");
+    fallbackNotification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      padding: 12px 20px;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      max-width: 300px;
+      background: ${
+        type === "error"
+          ? "#ef4444"
+          : type === "warning"
+          ? "#f59e0b"
+          : "#10b981"
+      };
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    fallbackNotification.textContent = message;
+    document.body.appendChild(fallbackNotification);
+
+    // Supprimer après 4 secondes
+    setTimeout(() => {
+      if (fallbackNotification.parentNode) {
+        fallbackNotification.parentNode.removeChild(fallbackNotification);
+      }
+    }, 4000);
     return;
   }
 
@@ -4629,12 +4658,20 @@ function updateSelectionUI() {
   const deleteButton = document.getElementById("deleteSelectedBtn");
 
   if (selectedCount > 0) {
-    selectedCountElement.textContent = `${selectedCount} sélectionnée(s)`;
-    selectedCountElement.classList.remove("hidden");
-    deleteButton.classList.remove("hidden");
+    if (selectedCountElement) {
+      selectedCountElement.textContent = `${selectedCount} sélectionnée(s)`;
+      selectedCountElement.classList.remove("hidden");
+    }
+    if (deleteButton) {
+      deleteButton.classList.remove("hidden");
+    }
   } else {
-    selectedCountElement.classList.add("hidden");
-    deleteButton.classList.add("hidden");
+    if (selectedCountElement) {
+      selectedCountElement.classList.add("hidden");
+    }
+    if (deleteButton) {
+      deleteButton.classList.add("hidden");
+    }
   }
 }
 
@@ -4674,15 +4711,19 @@ async function deleteSelectedRequests() {
     return;
   }
 
+  // Stocker les références aux éléments et leurs états
+  const deleteButton = document.getElementById("deleteSelectedBtn");
+  const originalText = deleteButton ? deleteButton.innerHTML : "Supprimer";
+
   try {
     console.log("🗑️ Suppression de", selectedRequests.size, "demandes...");
 
     // Afficher un indicateur de chargement
-    const deleteButton = document.getElementById("deleteSelectedBtn");
-    const originalText = deleteButton.innerHTML;
-    deleteButton.innerHTML =
-      '<i class="fas fa-spinner fa-spin mr-2"></i>Suppression...';
-    deleteButton.disabled = true;
+    if (deleteButton) {
+      deleteButton.innerHTML =
+        '<i class="fas fa-spinner fa-spin mr-2"></i>Suppression...';
+      deleteButton.disabled = true;
+    }
 
     // Envoyer la requête de suppression au serveur
     const response = await fetch("/api/admin/delete-requests", {
@@ -4706,8 +4747,10 @@ async function deleteSelectedRequests() {
       // Réinitialiser la sélection
       selectedRequests.clear();
       const masterCheckbox = document.getElementById("masterCheckbox");
-      masterCheckbox.checked = false;
-      masterCheckbox.indeterminate = false;
+      if (masterCheckbox) {
+        masterCheckbox.checked = false;
+        masterCheckbox.indeterminate = false;
+      }
 
       // Recharger les demandes
       await loadAccessRequests();
@@ -4719,9 +4762,10 @@ async function deleteSelectedRequests() {
     showNotification(`Erreur: ${error.message}`, "error");
   } finally {
     // Restaurer le bouton
-    const deleteButton = document.getElementById("deleteSelectedBtn");
-    deleteButton.innerHTML = originalText;
-    deleteButton.disabled = false;
+    if (deleteButton) {
+      deleteButton.innerHTML = originalText;
+      deleteButton.disabled = false;
+    }
     updateSelectionUI();
   }
 }
