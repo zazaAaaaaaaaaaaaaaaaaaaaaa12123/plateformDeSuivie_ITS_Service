@@ -116,16 +116,20 @@ if (loginForm) {
     e.preventDefault();
     showMessage(loginMessage, "");
     const email = loginForm["login-email"].value.trim();
-    const password = loginForm["login-password"].value;
-    if (!email || !password) {
+    const accessCode = loginForm["login-access-code"].value;
+    if (!email || !accessCode) {
       showMessage(loginMessage, "Tous les champs sont requis.");
       return;
     }
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch("/api/acconier-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          accessCode,
+          actorType: "responsable-acconier",
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -139,7 +143,7 @@ if (loginForm) {
 
         showMessage(loginMessage, "Connexion réussie ! Redirection...", true);
         setTimeout(() => {
-          window.location.href = "https://dossiv.ci/html/resp_acconier.html";
+          window.location.href = "resp_acconier.html";
         }, 1000);
       } else {
         showMessage(

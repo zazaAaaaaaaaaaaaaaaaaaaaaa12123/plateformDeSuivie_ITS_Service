@@ -4596,9 +4596,9 @@ document.addEventListener("DOMContentLoaded", function () {
   infoDiv.style.fontWeight = "700";
 
   // Récupère nom et email depuis localStorage
-  let userEmail = localStorage.getItem("user_email") || "-";
-  let userName = localStorage.getItem("user_nom");
-  if (!userName || userName === "Utilisateur") {
+  let userEmail = localStorage.getItem("userEmail") || "-";
+  let userName = localStorage.getItem("userName");
+  if (!userName || userName === "Utilisateur" || userName === "") {
     // Si le nom n'est pas défini, utiliser la partie avant le @ de l'email
     if (userEmail && userEmail.includes("@")) {
       userName = userEmail.split("@")[0];
@@ -4725,8 +4725,10 @@ document.addEventListener("DOMContentLoaded", function () {
       logoutBtn.style.cursor = "pointer";
       logoutBtn.style.fontSize = "1.08em";
       logoutBtn.onclick = function () {
-        localStorage.removeItem("user_nom");
-        localStorage.removeItem("user_email");
+        localStorage.removeItem("userName");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("userRole");
         localStorage.removeItem("user_photo");
         window.location.href = "https://dossiv.ci/html/repoLivAuth.html";
       };

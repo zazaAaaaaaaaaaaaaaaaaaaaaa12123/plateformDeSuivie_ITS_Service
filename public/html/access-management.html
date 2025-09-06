@@ -73,6 +73,72 @@
       .timeline-item:last-child::after {
         display: none;
       }
+
+      /* Styles pour les sections d'acteurs */
+      .section-tab {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .section-tab.active {
+        background-color: #eff6ff;
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+      }
+
+      .section-content {
+        transition: all 0.3s ease-in-out;
+      }
+
+      .section-content.hidden {
+        display: none;
+      }
+
+      /* Animations pour les cartes d'acteurs */
+      .actor-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+      }
+
+      .actor-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      .actor-card.responsable-acconier {
+        border-left-color: #3b82f6;
+      }
+
+      .actor-card.responsable-livraison {
+        border-left-color: #10b981;
+      }
+
+      .actor-card.agent-transit {
+        border-left-color: #8b5cf6;
+      }
+
+      /* Badge pour le type d'acteur */
+      .actor-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-weight: 500;
+      }
+
+      .actor-badge.responsable-acconier {
+        background-color: #dbeafe;
+        color: #1e40af;
+      }
+
+      .actor-badge.responsable-livraison {
+        background-color: #d1fae5;
+        color: #065f46;
+      }
+
+      .actor-badge.agent-transit {
+        background-color: #ede9fe;
+        color: #5b21b6;
+      }
     </style>
   </head>
   <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -222,156 +288,420 @@
 
     <!-- MAIN CONTENT -->
     <main class="container mx-auto px-6 py-8">
-      <!-- STATISTICS -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div
-          class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-400 hover:shadow-lg"
-          onclick="filterRequests('all')"
-          data-filter="all"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-gray-600">Total Demandes</p>
-              <p class="text-2xl font-bold text-gray-900" id="totalRequests">
-                0
-              </p>
-            </div>
-            <i class="fas fa-inbox text-yellow-400 text-2xl"></i>
-          </div>
-        </div>
-        <div
-          class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-400 hover:shadow-lg"
-          onclick="filterRequests('pending')"
-          data-filter="pending"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-gray-600">En Attente</p>
-              <p
-                class="text-2xl font-bold text-orange-600"
-                id="pendingRequests"
-              >
-                0
-              </p>
-            </div>
-            <i class="fas fa-clock text-orange-400 text-2xl"></i>
-          </div>
-        </div>
-        <div
-          class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-green-400 hover:shadow-lg"
-          onclick="filterRequests('approved')"
-          data-filter="approved"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-gray-600">Approuvées</p>
-              <p
-                class="text-2xl font-bold text-green-600"
-                id="approvedRequests"
-              >
-                0
-              </p>
-            </div>
-            <i class="fas fa-check-circle text-green-400 text-2xl"></i>
-          </div>
-        </div>
-        <div
-          class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-red-400 hover:shadow-lg"
-          onclick="filterRequests('rejected')"
-          data-filter="rejected"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-gray-600">Rejetées</p>
-              <p class="text-2xl font-bold text-red-600" id="rejectedRequests">
-                0
-              </p>
-            </div>
-            <i class="fas fa-times-circle text-red-400 text-2xl"></i>
-          </div>
+      <!-- SECTIONS DE NAVIGATION PAR ACTEUR -->
+      <div class="bg-white rounded-xl shadow-lg mb-8 overflow-hidden">
+        <div class="border-b border-gray-200">
+          <nav class="flex space-x-0" aria-label="Sections par acteur">
+            <button
+              onclick="switchSection('global')"
+              class="section-tab flex-1 px-6 py-4 text-center font-medium text-sm border-b-2 transition-all duration-200 border-blue-500 text-blue-600 bg-blue-50"
+              data-section="global"
+            >
+              <i class="fas fa-tachometer-alt mr-2"></i>
+              Vue Globale
+            </button>
+            <button
+              onclick="switchSection('responsable-acconier')"
+              class="section-tab flex-1 px-6 py-4 text-center font-medium text-sm border-b-2 transition-all duration-200 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              data-section="responsable-acconier"
+            >
+              <i class="fas fa-anchor mr-2"></i>
+              Responsable Acconier
+            </button>
+            <button
+              onclick="switchSection('responsable-livraison')"
+              class="section-tab flex-1 px-6 py-4 text-center font-medium text-sm border-b-2 transition-all duration-200 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              data-section="responsable-livraison"
+            >
+              <i class="fas fa-truck mr-2"></i>
+              Responsable de Livraison
+            </button>
+            <button
+              onclick="switchSection('agent-transit')"
+              class="section-tab flex-1 px-6 py-4 text-center font-medium text-sm border-b-2 transition-all duration-200 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              data-section="agent-transit"
+            >
+              <i class="fas fa-user-tie mr-2"></i>
+              Agent Transit (Acconier)
+            </button>
+          </nav>
         </div>
       </div>
 
-      <!-- HISTORIQUE PAR DATE -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <!-- Historique journalier -->
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-gray-800">
-              <i class="fas fa-calendar-day mr-2 text-blue-600"></i>
-              Historique Journalier
+      <!-- SECTION VUE GLOBALE -->
+      <div id="section-global" class="section-content">
+        <!-- STATISTICS -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div
+            class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-400 hover:shadow-lg"
+            onclick="filterRequests('all')"
+            data-filter="all"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Total Demandes</p>
+                <p class="text-2xl font-bold text-gray-900" id="totalRequests">
+                  0
+                </p>
+              </div>
+              <i class="fas fa-inbox text-yellow-400 text-2xl"></i>
+            </div>
+          </div>
+          <div
+            class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-400 hover:shadow-lg"
+            onclick="filterRequests('pending')"
+            data-filter="pending"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">En Attente</p>
+                <p
+                  class="text-2xl font-bold text-orange-600"
+                  id="pendingRequests"
+                >
+                  0
+                </p>
+              </div>
+              <i class="fas fa-clock text-orange-400 text-2xl"></i>
+            </div>
+          </div>
+          <div
+            class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-green-400 hover:shadow-lg"
+            onclick="filterRequests('approved')"
+            data-filter="approved"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Approuvées</p>
+                <p
+                  class="text-2xl font-bold text-green-600"
+                  id="approvedRequests"
+                >
+                  0
+                </p>
+              </div>
+              <i class="fas fa-check-circle text-green-400 text-2xl"></i>
+            </div>
+          </div>
+          <div
+            class="stat-card bg-white rounded-xl shadow-md p-6 border-l-4 border-red-400 hover:shadow-lg"
+            onclick="filterRequests('rejected')"
+            data-filter="rejected"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Rejetées</p>
+                <p
+                  class="text-2xl font-bold text-red-600"
+                  id="rejectedRequests"
+                >
+                  0
+                </p>
+              </div>
+              <i class="fas fa-times-circle text-red-400 text-2xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORIQUE PAR DATE -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <!-- Historique journalier -->
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold text-gray-800">
+                <i class="fas fa-calendar-day mr-2 text-blue-600"></i>
+                Historique Journalier
+              </h3>
+              <div class="relative">
+                <select
+                  id="dateFilter"
+                  class="appearance-none bg-blue-50 border-2 border-blue-200 text-blue-800 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-pointer hover:bg-blue-100"
+                >
+                  <option value="today" class="bg-white text-blue-800">
+                    Aujourd'hui
+                  </option>
+                  <option value="yesterday" class="bg-white text-blue-800">
+                    Hier
+                  </option>
+                  <option value="week" class="bg-white text-blue-800">
+                    Cette semaine
+                  </option>
+                  <option value="month" class="bg-white text-blue-800">
+                    Ce mois
+                  </option>
+                </select>
+                <div
+                  class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-600"
+                >
+                  <i class="fas fa-chevron-down text-sm"></i>
+                </div>
+              </div>
+            </div>
+            <div id="dailyHistory" class="space-y-3 max-h-64 overflow-y-auto">
+              <!-- L'historique sera affiché ici -->
+            </div>
+          </div>
+
+          <!-- Activité récente -->
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+              <i class="fas fa-clock mr-2 text-green-600"></i>
+              Activité Récente
             </h3>
-            <div class="relative">
-              <select
-                id="dateFilter"
-                class="appearance-none bg-blue-50 border-2 border-blue-200 text-blue-800 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-pointer hover:bg-blue-100"
-              >
-                <option value="today" class="bg-white text-blue-800">
-                  Aujourd'hui
-                </option>
-                <option value="yesterday" class="bg-white text-blue-800">
-                  Hier
-                </option>
-                <option value="week" class="bg-white text-blue-800">
-                  Cette semaine
-                </option>
-                <option value="month" class="bg-white text-blue-800">
-                  Ce mois
-                </option>
-              </select>
-              <div
-                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-600"
-              >
-                <i class="fas fa-chevron-down text-sm"></i>
+            <div id="recentActivity" class="space-y-3 max-h-64 overflow-y-auto">
+              <!-- L'activité récente sera affichée ici -->
+            </div>
+          </div>
+
+          <!-- Statistiques avancées -->
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+              <i class="fas fa-chart-bar mr-2 text-purple-600"></i>
+              Statistiques
+            </h3>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Taux d'approbation</span>
+                <span class="font-bold text-green-600" id="approvalRate"
+                  >0%</span
+                >
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600"
+                  >Temps de traitement moyen</span
+                >
+                <span class="font-bold text-blue-600" id="avgProcessingTime"
+                  >0h</span
+                >
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Demandes aujourd'hui</span>
+                <span class="font-bold text-orange-600" id="todayRequests"
+                  >0</span
+                >
               </div>
             </div>
           </div>
-          <div id="dailyHistory" class="space-y-3 max-h-64 overflow-y-auto">
-            <!-- L'historique sera affiché ici -->
-          </div>
         </div>
+      </div>
 
-        <!-- Activité récente -->
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <h3 class="text-lg font-bold text-gray-800 mb-4">
-            <i class="fas fa-clock mr-2 text-green-600"></i>
-            Activité Récente
-          </h3>
-          <div id="recentActivity" class="space-y-3 max-h-64 overflow-y-auto">
-            <!-- L'activité récente sera affichée ici -->
+      <!-- SECTION RESPONSABLE ACCONIER -->
+      <div id="section-responsable-acconier" class="section-content hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div class="flex items-center mb-6">
+            <div class="bg-blue-100 p-3 rounded-full mr-4">
+              <i class="fas fa-anchor text-blue-600 text-2xl"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-800">
+                Gestion des Accès - Responsable Acconier
+              </h2>
+              <p class="text-gray-600">
+                Demandes d'accès pour les responsables acconiers
+              </p>
+            </div>
           </div>
-        </div>
 
-        <!-- Statistiques avancées -->
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <h3 class="text-lg font-bold text-gray-800 mb-4">
-            <i class="fas fa-chart-bar mr-2 text-purple-600"></i>
-            Statistiques
-          </h3>
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Taux d'approbation</span>
-              <span class="font-bold text-green-600" id="approvalRate">0%</span>
+          <!-- Statistiques spécifiques aux Responsables Acconier -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div
+              class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-blue-100 text-sm">Total Demandes Acconier</p>
+                  <p class="text-2xl font-bold" id="acconiersTotal">0</p>
+                </div>
+                <i class="fas fa-anchor text-3xl text-blue-200"></i>
+              </div>
             </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600"
-                >Temps de traitement moyen</span
-              >
-              <span class="font-bold text-blue-600" id="avgProcessingTime"
-                >0h</span
-              >
+            <div
+              class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-orange-100 text-sm">En Attente</p>
+                  <p class="text-2xl font-bold" id="acconiersPending">0</p>
+                </div>
+                <i class="fas fa-clock text-3xl text-orange-200"></i>
+              </div>
             </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Demandes aujourd'hui</span>
-              <span class="font-bold text-orange-600" id="todayRequests"
-                >0</span
-              >
+            <div
+              class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-green-100 text-sm">Approuvées</p>
+                  <p class="text-2xl font-bold" id="acconiersApproved">0</p>
+                </div>
+                <i class="fas fa-check-circle text-3xl text-green-200"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste des demandes Responsable Acconier -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+              <i class="fas fa-list mr-2"></i>Demandes Responsable Acconier
+            </h3>
+            <div id="acconiersRequestsList" class="space-y-3">
+              <!-- Les demandes seront affichées ici -->
+            </div>
+            <div
+              id="noAcconiersRequests"
+              class="text-center py-8 text-gray-500"
+            >
+              <i class="fas fa-anchor text-4xl mb-4"></i>
+              <p>Aucune demande de responsable acconier</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- REQUESTS LIST -->
+      <!-- SECTION RESPONSABLE DE LIVRAISON -->
+      <div id="section-responsable-livraison" class="section-content hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div class="flex items-center mb-6">
+            <div class="bg-green-100 p-3 rounded-full mr-4">
+              <i class="fas fa-truck text-green-600 text-2xl"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-800">
+                Gestion des Accès - Responsable de Livraison
+              </h2>
+              <p class="text-gray-600">
+                Demandes d'accès pour les responsables de livraison
+              </p>
+            </div>
+          </div>
+
+          <!-- Statistiques spécifiques aux Responsables de Livraison -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div
+              class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-green-100 text-sm">Total Demandes Livraison</p>
+                  <p class="text-2xl font-bold" id="livraisonTotal">0</p>
+                </div>
+                <i class="fas fa-truck text-3xl text-green-200"></i>
+              </div>
+            </div>
+            <div
+              class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-orange-100 text-sm">En Attente</p>
+                  <p class="text-2xl font-bold" id="livraisonPending">0</p>
+                </div>
+                <i class="fas fa-clock text-3xl text-orange-200"></i>
+              </div>
+            </div>
+            <div
+              class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-blue-100 text-sm">Approuvées</p>
+                  <p class="text-2xl font-bold" id="livraisonApproved">0</p>
+                </div>
+                <i class="fas fa-check-circle text-3xl text-blue-200"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste des demandes Responsable de Livraison -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+              <i class="fas fa-list mr-2"></i>Demandes Responsable de Livraison
+            </h3>
+            <div id="livraisonRequestsList" class="space-y-3">
+              <!-- Les demandes seront affichées ici -->
+            </div>
+            <div
+              id="noLivraisonRequests"
+              class="text-center py-8 text-gray-500"
+            >
+              <i class="fas fa-truck text-4xl mb-4"></i>
+              <p>Aucune demande de responsable de livraison</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION AGENT TRANSIT (ACCONIER) -->
+      <div id="section-agent-transit" class="section-content hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div class="flex items-center mb-6">
+            <div class="bg-purple-100 p-3 rounded-full mr-4">
+              <i class="fas fa-user-tie text-purple-600 text-2xl"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-800">
+                Gestion des Accès - Agent Transit (Acconier)
+              </h2>
+              <p class="text-gray-600">
+                Demandes d'accès pour les agents transit acconiers
+              </p>
+            </div>
+          </div>
+
+          <!-- Statistiques spécifiques aux Agents Transit -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div
+              class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-purple-100 text-sm">Total Demandes Agents</p>
+                  <p class="text-2xl font-bold" id="agentsTotal">0</p>
+                </div>
+                <i class="fas fa-user-tie text-3xl text-purple-200"></i>
+              </div>
+            </div>
+            <div
+              class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-orange-100 text-sm">En Attente</p>
+                  <p class="text-2xl font-bold" id="agentsPending">0</p>
+                </div>
+                <i class="fas fa-clock text-3xl text-orange-200"></i>
+              </div>
+            </div>
+            <div
+              class="bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl p-6 text-white"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-teal-100 text-sm">Approuvées</p>
+                  <p class="text-2xl font-bold" id="agentsApproved">0</p>
+                </div>
+                <i class="fas fa-check-circle text-3xl text-teal-200"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste des demandes Agent Transit -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+              <i class="fas fa-list mr-2"></i>Demandes Agent Transit (Acconier)
+            </h3>
+            <div id="agentsRequestsList" class="space-y-3">
+              <!-- Les demandes seront affichées ici -->
+            </div>
+            <div id="noAgentsRequests" class="text-center py-8 text-gray-500">
+              <i class="fas fa-user-tie text-4xl mb-4"></i>
+              <p>Aucune demande d'agent transit</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REQUESTS LIST (section globale existante) -->
       <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         <div class="px-6 py-4 bg-blue-900 text-white">
           <div class="flex items-center justify-between">

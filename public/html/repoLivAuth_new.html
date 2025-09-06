@@ -450,6 +450,28 @@
                 required
               />
             </div>
+            <div class="form-group">
+              <span class="input-icon"><i class="fa fa-building"></i></span>
+              <label for="request-societe">Société</label>
+              <input
+                type="text"
+                id="request-societe"
+                name="societe"
+                placeholder="Nom de votre société"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <span class="input-icon"><i class="fa fa-comment"></i></span>
+              <label for="request-justification">Justification</label>
+              <input
+                type="text"
+                id="request-justification"
+                name="justification"
+                placeholder="Raison de votre demande d'accès"
+                required
+              />
+            </div>
             <button type="submit" class="btn" style="width: 100%">
               Envoyer la demande
             </button>
@@ -546,8 +568,12 @@
 
         var nom = document.getElementById("request-nom").value.trim();
         var email = document.getElementById("request-email").value.trim();
+        var societe = document.getElementById("request-societe").value.trim();
+        var justification = document
+          .getElementById("request-justification")
+          .value.trim();
 
-        if (!nom || !email) {
+        if (!nom || !email || !societe || !justification) {
           document.getElementById("request-message").textContent =
             "Veuillez remplir tous les champs.";
           document
@@ -566,6 +592,8 @@
           body: JSON.stringify({
             nom: nom,
             email: email,
+            societe: societe,
+            justification: justification,
             role: "responsable_livraison",
           }),
         })

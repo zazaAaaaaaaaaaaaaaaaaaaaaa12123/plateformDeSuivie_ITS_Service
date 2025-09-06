@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inscription & Connexion - ITS Service</title>
+    <title>Connexion Responsable Acconier - ITS Service</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
       rel="stylesheet"
@@ -216,103 +216,445 @@
           font-size: 1rem;
         }
       }
+
+      /* Styles pour le bouton de demande d'accès */
+      .btn-access-request {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+        color: #fff;
+        border: none;
+        border-radius: 7px;
+        padding: 0.8rem 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 0.5rem;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+        transition: background 0.2s, box-shadow 0.2s;
+      }
+      .btn-access-request:hover {
+        background: linear-gradient(90deg, #d97706, #f59e0b);
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+      }
+
+      /* Amélioration du titre */
+      .page-title {
+        text-align: center;
+        color: #1e3c72;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .page-title i {
+        color: #2a5298;
+        font-size: 2rem;
+      }
+
+      /* Styles pour le lien "Code d'accès oublié" */
+      .forgot-code-link {
+        text-align: center;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .forgot-code-link a {
+        color: #2a5298;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+
+      .forgot-code-link a:hover {
+        color: #1e3c72;
+        text-decoration: underline;
+      }
+
+      /* Styles pour la popup de code oublié */
+      .forgot-popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .forgot-popup-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .forgot-popup h3 {
+        color: #1e3c72;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+
+      .forgot-popup .btn-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .forgot-popup .btn-group button {
+        flex: 1;
+        padding: 0.7rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .btn-cancel {
+        background: #6b7280;
+        color: white;
+      }
+
+      .btn-cancel:hover {
+        background: #4b5563;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="tabs">
-        <div class="tab active" id="tab-signup">Inscription</div>
-        <div class="tab" id="tab-login">Connexion</div>
+      <!-- Titre de la page -->
+      <div class="page-title">
+        <i class="fas fa-anchor"></i>
+        Responsable Acconier
       </div>
-      <form id="signup-form" class="active" autocomplete="off">
-        <div class="form-group">
-          <label for="signup-nom"><i class="fa fa-user"></i> Nom complet</label>
-          <input
-            type="text"
-            id="signup-nom"
-            name="nom"
-            placeholder="Votre nom complet"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="signup-email"><i class="fa fa-envelope"></i> Email</label>
-          <input
-            type="email"
-            id="signup-email"
-            name="email"
-            placeholder="Votre email"
-            required
-          />
-        </div>
-        <div class="form-group password-group">
-          <label for="signup-password"
-            ><i class="fa fa-lock"></i> Mot de passe</label
-          >
-          <input
-            type="password"
-            id="signup-password"
-            name="password"
-            placeholder="Mot de passe"
-            required
-          />
-          <span
-            class="show-password"
-            onclick="togglePassword('signup-password', this)"
-            ><i class="fa fa-eye"></i
-          ></span>
-        </div>
-        <button type="submit" class="btn">S'inscrire</button>
-        <div class="message" id="signup-message"></div>
-      </form>
-      <form id="login-form">
+
+      <!-- Formulaire de connexion uniquement -->
+      <form id="login-form" class="active" style="display: flex">
         <div class="form-group">
           <label for="login-email"><i class="fa fa-envelope"></i> Email</label>
           <input
             type="email"
             id="login-email"
             name="email"
-            placeholder="Votre email"
+            placeholder="Votre email professionnel"
             required
           />
         </div>
         <div class="form-group password-group">
-          <label for="login-password"
-            ><i class="fa fa-lock"></i> Mot de passe</label
-          >
+          <label for="login-access-code">
+            <i class="fa fa-key"></i> Code d'accès
+          </label>
           <input
             type="password"
-            id="login-password"
-            name="password"
-            placeholder="Mot de passe"
+            id="login-access-code"
+            name="access_code"
+            placeholder="Votre code d'accès"
             required
           />
           <span
             class="show-password"
-            onclick="togglePassword('login-password', this)"
+            onclick="togglePassword('login-access-code', this)"
             ><i class="fa fa-eye"></i
           ></span>
         </div>
-        <button type="submit" class="btn">Se connecter</button>
+        <button type="submit" class="btn">
+          <i class="fas fa-sign-in-alt"></i> Se connecter
+        </button>
+
+        <!-- Lien pour code d'accès oublié -->
+        <div class="forgot-code-link">
+          <a onclick="openForgotCodePopup()">
+            <i class="fas fa-key"></i> Code d'accès oublié ?
+          </a>
+        </div>
+
+        <!-- Bouton de demande d'accès -->
+        <button
+          type="button"
+          class="btn-access-request"
+          onclick="requestAccess()"
+        >
+          <i class="fas fa-user-plus"></i> Demander l'accès
+        </button>
+
         <div class="message" id="login-message"></div>
       </form>
     </div>
+
+    <!-- Popup pour code d'accès oublié -->
+    <div id="forgotCodePopup" class="forgot-popup">
+      <div class="forgot-popup-content">
+        <h3><i class="fas fa-key"></i> Code d'accès oublié</h3>
+        <p style="color: #6b7280; margin-bottom: 1rem; text-align: center">
+          Saisissez votre email pour recevoir un nouveau code d'accès
+        </p>
+        <div class="form-group">
+          <label for="forgot-email">Email</label>
+          <input
+            type="email"
+            id="forgot-email"
+            placeholder="Votre email professionnel"
+            required
+          />
+        </div>
+        <div class="btn-group">
+          <button
+            type="button"
+            class="btn-cancel"
+            onclick="closeForgotCodePopup()"
+          >
+            Annuler
+          </button>
+          <button type="button" class="btn" onclick="sendForgotCodeRequest()">
+            Envoyer
+          </button>
+        </div>
+        <div class="message" id="forgot-message" style="margin-top: 1rem"></div>
+      </div>
+    </div>
     <script src="/js/auth.js"></script>
     <script>
-      // Tab switching (évite la redéclaration des variables déjà utilisées dans le JS externe)
-      document.getElementById("tab-signup").onclick = function () {
-        this.classList.add("active");
-        document.getElementById("tab-login").classList.remove("active");
-        document.getElementById("signup-form").classList.add("active");
-        document.getElementById("login-form").classList.remove("active");
-      };
-      document.getElementById("tab-login").onclick = function () {
-        this.classList.add("active");
-        document.getElementById("tab-signup").classList.remove("active");
-        document.getElementById("login-form").classList.add("active");
-        document.getElementById("signup-form").classList.remove("active");
-      };
-      // La fonction togglePassword est dans le JS externe
+      // Fonction pour basculer la visibilité du mot de passe
+      function togglePassword(inputId, icon) {
+        const input = document.getElementById(inputId);
+        const i = icon.querySelector("i");
+
+        if (input.type === "password") {
+          input.type = "text";
+          i.className = "fa fa-eye-slash";
+        } else {
+          input.type = "password";
+          i.className = "fa fa-eye";
+        }
+      }
+
+      // Fonctions pour la popup de code oublié
+      function openForgotCodePopup() {
+        const popup = document.getElementById("forgotCodePopup");
+        const emailField = document.getElementById("forgot-email");
+        const messageDiv = document.getElementById("forgot-message");
+
+        // Réinitialiser la popup
+        emailField.value = "";
+        messageDiv.textContent = "";
+
+        // Afficher la popup
+        popup.style.display = "flex";
+        emailField.focus();
+      }
+
+      function closeForgotCodePopup() {
+        document.getElementById("forgotCodePopup").style.display = "none";
+      }
+
+      // Fonction pour envoyer la demande de code oublié
+      async function sendForgotCodeRequest() {
+        const email = document.getElementById("forgot-email").value.trim();
+        const messageDiv = document.getElementById("forgot-message");
+
+        if (!email) {
+          messageDiv.textContent = "Veuillez saisir votre email.";
+          messageDiv.style.color = "#e74c3c";
+          return;
+        }
+
+        // Vérifier le format email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          messageDiv.textContent = "Veuillez saisir un email valide.";
+          messageDiv.style.color = "#e74c3c";
+          return;
+        }
+
+        try {
+          messageDiv.textContent = "Envoi en cours...";
+          messageDiv.style.color = "#2a5298";
+
+          const response = await fetch("/api/forgot-access-code", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              name: email.split("@")[0],
+              actorType: "responsable-acconier",
+              role: "Responsable Acconier",
+              requestType: "forgot_code",
+              requestDate: new Date().toISOString(),
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            messageDiv.textContent =
+              "Demande envoyée ! Un administrateur traitera votre demande.";
+            messageDiv.style.color = "#27ae60";
+
+            setTimeout(() => {
+              closeForgotCodePopup();
+            }, 2000);
+          } else {
+            messageDiv.textContent = data.message || "Erreur lors de l'envoi.";
+            messageDiv.style.color = "#e74c3c";
+          }
+        } catch (error) {
+          console.error("Erreur:", error);
+          messageDiv.textContent = "Erreur de connexion. Veuillez réessayer.";
+          messageDiv.style.color = "#e74c3c";
+        }
+      }
+
+      // Fermer la popup en cliquant à l'extérieur
+      document
+        .getElementById("forgotCodePopup")
+        .addEventListener("click", function (e) {
+          if (e.target === this) {
+            closeForgotCodePopup();
+          }
+        });
+
+      // Fonction pour gérer la demande d'accès
+      function requestAccess() {
+        const email = document.getElementById("login-email").value;
+
+        if (!email) {
+          document.getElementById("login-message").textContent =
+            "Veuillez saisir votre email avant de faire une demande d'accès.";
+          document.getElementById("login-message").style.color = "#e74c3c";
+          return;
+        }
+
+        // Vérifier le format email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          document.getElementById("login-message").textContent =
+            "Veuillez saisir un email valide.";
+          document.getElementById("login-message").style.color = "#e74c3c";
+          return;
+        }
+
+        // Envoyer la demande d'accès
+        sendAccessRequest(email);
+      }
+
+      // Fonction pour envoyer la demande d'accès
+      async function sendAccessRequest(email) {
+        try {
+          const messageDiv = document.getElementById("login-message");
+          messageDiv.textContent = "Envoi de la demande en cours...";
+          messageDiv.style.color = "#2a5298";
+
+          const response = await fetch("/api/access-request", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              name: email.split("@")[0], // Nom temporaire basé sur l'email
+              actorType: "responsable-acconier",
+              role: "Responsable Acconier",
+              requestDate: new Date().toISOString(),
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            messageDiv.textContent =
+              "Demande d'accès envoyée avec succès ! Vous recevrez un code d'accès par email.";
+            messageDiv.style.color = "#27ae60";
+
+            // Vider le champ email après succès
+            document.getElementById("login-email").value = "";
+          } else {
+            messageDiv.textContent =
+              data.message || "Erreur lors de l'envoi de la demande.";
+            messageDiv.style.color = "#e74c3c";
+          }
+        } catch (error) {
+          console.error("Erreur:", error);
+          document.getElementById("login-message").textContent =
+            "Erreur de connexion. Veuillez réessayer.";
+          document.getElementById("login-message").style.color = "#e74c3c";
+        }
+      }
+
+      // Gestionnaire du formulaire de connexion
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const email = document.getElementById("login-email").value;
+          const accessCode = document.getElementById("login-access-code").value;
+          const messageDiv = document.getElementById("login-message");
+
+          if (!email) {
+            messageDiv.textContent = "Veuillez saisir votre email.";
+            messageDiv.style.color = "#e74c3c";
+            return;
+          }
+
+          // Si pas de code d'accès, proposer de faire une demande
+          if (!accessCode) {
+            messageDiv.innerHTML =
+              "Vous n'avez pas de code d'accès ? <br><strong>Cliquez sur \"Demander l'accès\" ci-dessous.</strong>";
+            messageDiv.style.color = "#f59e0b";
+            return;
+          }
+
+          try {
+            messageDiv.textContent = "Connexion en cours...";
+            messageDiv.style.color = "#2a5298";
+
+            const response = await fetch("/api/acconier-login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: email,
+                accessCode: accessCode,
+                actorType: "responsable-acconier",
+              }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              messageDiv.textContent = "Connexion réussie ! Redirection...";
+              messageDiv.style.color = "#27ae60";
+
+              // Sauvegarder les infos utilisateur
+              localStorage.setItem("connectedUser", JSON.stringify(data.user));
+
+              // Redirection vers l'interface de suivi après 1 seconde
+              setTimeout(() => {
+                window.location.href = "/html/resp_acconier.html";
+              }, 1000);
+            } else {
+              messageDiv.textContent =
+                data.message || "Code d'accès incorrect ou accès non approuvé.";
+              messageDiv.style.color = "#e74c3c";
+            }
+          } catch (error) {
+            console.error("Erreur:", error);
+            messageDiv.textContent = "Erreur de connexion. Veuillez réessayer.";
+            messageDiv.style.color = "#e74c3c";
+          }
+        });
     </script>
   </body>
 </html>

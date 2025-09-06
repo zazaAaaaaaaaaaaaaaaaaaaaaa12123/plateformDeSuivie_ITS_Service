@@ -1410,6 +1410,12 @@
                 localStorage.removeItem("user");
                 localStorage.removeItem("userSession");
                 localStorage.removeItem("authToken");
+                localStorage.removeItem("connectedUser");
+                localStorage.removeItem("userName");
+                localStorage.removeItem("userEmail");
+                localStorage.removeItem("userId");
+                localStorage.removeItem("userRole");
+                localStorage.removeItem("profilePhotoDataUrl");
                 console.log(
                   "🗑️ [DEBUG] Données utilisateur supprimées du localStorage"
                 );
@@ -1706,8 +1712,24 @@
     <script>
       // Injection du nom et email dans l'avatar et le dropdown profil après connexion
       document.addEventListener("DOMContentLoaded", function () {
-        const userName = localStorage.getItem("userName");
-        const userEmail = localStorage.getItem("userEmail");
+        // Récupération des données utilisateur depuis localStorage
+        let userName = localStorage.getItem("userName");
+        let userEmail = localStorage.getItem("userEmail");
+
+        // Si pas trouvé, essayer de récupérer depuis connectedUser (responsable acconier)
+        if (!userName || !userEmail) {
+          const connectedUser = localStorage.getItem("connectedUser");
+          if (connectedUser) {
+            try {
+              const user = JSON.parse(connectedUser);
+              userName = user.name || user.nom || userName;
+              userEmail = user.email || userEmail;
+            } catch (e) {
+              console.log("Erreur parsing connectedUser:", e);
+            }
+          }
+        }
+
         if (userName && userEmail) {
           // Affiche le nom et l'email dans le dropdown profil
           const nameEl = document.getElementById("profileName");
@@ -1752,6 +1774,13 @@
             initialsSpan.textContent = initials;
             avatarEl.style.position = "relative";
           }
+        }
+
+        // Masquer l'icône d'accueil quand on arrive depuis la connexion
+        const homeButton = document.getElementById("homeButton");
+        if (homeButton) {
+          homeButton.style.display = "none";
+          console.log("🏠 [DEBUG] Icône d'accueil masquée après connexion");
         }
       });
     </script>

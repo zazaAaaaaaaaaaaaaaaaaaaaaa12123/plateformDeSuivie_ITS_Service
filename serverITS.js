@@ -2246,6 +2246,134 @@ async function ensureAccessRequestsTable() {
       } else {
         console.log("✅ Colonne 'request_type' existe déjà.");
       }
+
+      // Vérifier et ajouter la colonne actor_type
+      const actorTypeCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'access_requests' 
+          AND column_name = 'actor_type'
+        );
+      `);
+
+      if (!actorTypeCheck.rows[0].exists) {
+        await pool.query(`
+          ALTER TABLE access_requests 
+          ADD COLUMN actor_type VARCHAR(100);
+        `);
+        console.log(
+          "✅ Colonne 'actor_type' ajoutée à la table access_requests."
+        );
+      } else {
+        console.log("✅ Colonne 'actor_type' existe déjà.");
+      }
+
+      // Vérifier et ajouter la colonne role
+      const roleCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'access_requests' 
+          AND column_name = 'role'
+        );
+      `);
+
+      if (!roleCheck.rows[0].exists) {
+        await pool.query(`
+          ALTER TABLE access_requests 
+          ADD COLUMN role VARCHAR(100);
+        `);
+        console.log("✅ Colonne 'role' ajoutée à la table access_requests.");
+      } else {
+        console.log("✅ Colonne 'role' existe déjà.");
+      }
+
+      // Vérifier et ajouter la colonne last_login
+      const lastLoginCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'access_requests' 
+          AND column_name = 'last_login'
+        );
+      `);
+
+      if (!lastLoginCheck.rows[0].exists) {
+        await pool.query(`
+          ALTER TABLE access_requests 
+          ADD COLUMN last_login TIMESTAMP;
+        `);
+        console.log(
+          "✅ Colonne 'last_login' ajoutée à la table access_requests."
+        );
+      } else {
+        console.log("✅ Colonne 'last_login' existe déjà.");
+      }
+
+      // Vérifier et ajouter la colonne access_code
+      const accessCodeCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'access_requests' 
+          AND column_name = 'access_code'
+        );
+      `);
+
+      if (!accessCodeCheck.rows[0].exists) {
+        await pool.query(`
+          ALTER TABLE access_requests 
+          ADD COLUMN access_code VARCHAR(20);
+        `);
+        console.log(
+          "✅ Colonne 'access_code' ajoutée à la table access_requests."
+        );
+      } else {
+        console.log("✅ Colonne 'access_code' existe déjà.");
+      }
+
+      // Vérifier et ajouter la colonne societe
+      const societeCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'access_requests' 
+          AND column_name = 'societe'
+        );
+      `);
+
+      if (!societeCheck.rows[0].exists) {
+        await pool.query(`
+          ALTER TABLE access_requests 
+          ADD COLUMN societe VARCHAR(255);
+        `);
+        console.log("✅ Colonne 'societe' ajoutée à la table access_requests.");
+      } else {
+        console.log("✅ Colonne 'societe' existe déjà.");
+      }
+
+      // Vérifier et ajouter la colonne justification
+      const justificationCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_schema = 'public' 
+          AND table_name = 'access_requests' 
+          AND column_name = 'justification'
+        );
+      `);
+
+      if (!justificationCheck.rows[0].exists) {
+        await pool.query(`
+          ALTER TABLE access_requests 
+          ADD COLUMN justification TEXT;
+        `);
+        console.log(
+          "✅ Colonne 'justification' ajoutée à la table access_requests."
+        );
+      } else {
+        console.log("✅ Colonne 'justification' existe déjà.");
+      }
     }
   } catch (err) {
     console.error(
@@ -3422,79 +3550,6 @@ app.post("/api/login", async (req, res) => {
 // ROUTES POUR LE SYSTÈME DE DEMANDE D'ACCÈS
 // ===============================
 
-// Route pour recevoir les demandes d'accès
-app.post("/api/access-request", async (req, res) => {
-  const { name, email, date } = req.body;
-
-  console.log("[ACCESS-REQUEST][API] Nouvelle demande d'accès:", {
-    name,
-    email,
-    date,
-  });
-
-  if (!name || !email || !date) {
-    return res.status(400).json({
-      success: false,
-      message: "Tous les champs sont requis.",
-    });
-  }
-
-  try {
-    // Vérifier si l'utilisateur existe déjà
-    const existingUser = await pool.query(
-      "SELECT * FROM users WHERE email = $1",
-      [email]
-    );
-
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Un compte existe déjà avec cet email.",
-      });
-    }
-
-    // Vérifier si une demande existe déjà pour cet email
-    const existingRequest = await pool.query(
-      "SELECT * FROM access_requests WHERE email = $1 AND status = 'pending'",
-      [email]
-    );
-
-    if (existingRequest.rows.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Une demande d'accès est déjà en cours pour cet email.",
-      });
-    }
-
-    // Insérer la nouvelle demande
-    const result = await pool.query(
-      `INSERT INTO access_requests (name, email, request_date, status) 
-       VALUES ($1, $2, $3, 'pending') RETURNING *`,
-      [name, email, date]
-    );
-
-    console.log(
-      "[ACCESS-REQUEST][API] Demande créée avec succès:",
-      result.rows[0]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: "Demande d'accès reçue avec succès.",
-      request: result.rows[0],
-    });
-  } catch (err) {
-    console.error(
-      "[ACCESS-REQUEST][API] Erreur lors de la création de la demande:",
-      err
-    );
-    res.status(500).json({
-      success: false,
-      message: "Erreur serveur lors de la création de la demande.",
-    });
-  }
-});
-
 // Route pour récupérer les nouvelles demandes d'accès
 app.get("/api/get-new-access-requests", async (req, res) => {
   try {
@@ -3823,7 +3878,7 @@ app.get("/api/admin/access-requests", async (req, res) => {
     await ensureAccessRequestsTable();
 
     const result = await pool.query(
-      `SELECT id, name, email, request_date, status, created_at, processed_at, processed_by, request_type 
+      `SELECT id, name, email, request_date, status, created_at, processed_at, processed_by, request_type, actor_type, role, societe, justification
        FROM access_requests 
        ORDER BY created_at DESC`
     );
@@ -3840,6 +3895,66 @@ app.get("/api/admin/access-requests", async (req, res) => {
     });
   }
 });
+
+// =================== FONCTIONS UTILITAIRES ===================
+
+/**
+ * Générer un code d'accès aléatoire
+ */
+function generateAccessCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+/**
+ * Envoyer un code d'accès par email
+ */
+async function sendAccessCodeEmail(userEmail, userName, accessCode) {
+  const transporter = nodemailer.createTransporter({
+    service: "gmail",
+    auth: {
+      user: "batienemohamed330@gmail.com",
+      pass: "mnmf xtsi nkot ggdn",
+    },
+  });
+
+  const mailOptions = {
+    from: "batienemohamed330@gmail.com",
+    to: userEmail,
+    subject: "Code d'accès - Plateforme ITS Service",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1e3c72;">Votre demande d'accès a été approuvée !</h2>
+        <p>Bonjour <strong>${userName}</strong>,</p>
+        <p>Votre demande d'accès à la plateforme ITS Service a été approuvée avec succès.</p>
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #1e3c72; margin-top: 0;">Votre code d'accès :</h3>
+          <div style="font-size: 24px; font-weight: bold; color: #2563eb; background-color: white; padding: 15px; border-radius: 5px; text-align: center; letter-spacing: 2px;">
+            ${accessCode}
+          </div>
+        </div>
+        <p><strong>Instructions :</strong></p>
+        <ol>
+          <li>Rendez-vous sur la page de connexion</li>
+          <li>Saisissez votre email : ${userEmail}</li>
+          <li>Entrez votre code d'accès : <strong>${accessCode}</strong></li>
+          <li>Cliquez sur "Se connecter"</li>
+        </ol>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          Ce code d'accès est personnel et confidentiel. Ne le partagez avec personne.
+        </p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        <p style="color: #999; font-size: 12px;">
+          Équipe ITS Service<br>
+          Ce message a été envoyé automatiquement, merci de ne pas y répondre.
+        </p>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+
+// =================== ROUTES D'ADMINISTRATION ===================
 
 // Route pour traiter une demande d'accès (approuver/rejeter)
 app.post("/api/admin/process-request", async (req, res) => {
@@ -3889,6 +4004,35 @@ app.post("/api/admin/process-request", async (req, res) => {
        WHERE id = $3`,
       [newStatus, adminEmail, requestId]
     );
+
+    // Si la demande est approuvée, générer et envoyer un code d'accès
+    if (action === "approve") {
+      try {
+        // Générer un code d'accès
+        const accessCode = generateAccessCode();
+
+        // Mettre à jour le code d'accès dans la base de données
+        await pool.query(
+          `UPDATE access_requests SET access_code = $1 WHERE id = $2`,
+          [accessCode, requestId]
+        );
+
+        // Envoyer le code d'accès par email
+        await sendAccessCodeEmail(request.email, request.name, accessCode);
+
+        console.log(`[ADMIN-PROCESS][API] Code d'accès généré et envoyé:`, {
+          requestId,
+          email: request.email,
+          accessCode: accessCode,
+        });
+      } catch (emailError) {
+        console.error(
+          "[ADMIN-PROCESS][API] Erreur lors de l'envoi du code d'accès:",
+          emailError
+        );
+        // Ne pas faire échouer la requête même si l'email échoue
+      }
+    }
 
     console.log(`[ADMIN-PROCESS][API] Demande ${action}e avec succès:`, {
       requestId,
@@ -3941,20 +4085,27 @@ app.post("/api/forgot-access-code", async (req, res) => {
     );
 
     let requestType = "new_access";
+    let actorType = null;
+    let role = null;
+
     if (userResult.rows.length > 0) {
       requestType = "forgot_password";
+      actorType = userResult.rows[0].actor_type;
+      role = userResult.rows[0].role;
     }
 
     // Créer une nouvelle demande de type "récupération de code"
     const insertResult = await pool.query(
-      `INSERT INTO access_requests (name, email, request_date, status, created_at, request_type) 
-       VALUES ($1, $2, $3, 'pending', CURRENT_TIMESTAMP, $4) 
+      `INSERT INTO access_requests (name, email, request_date, status, created_at, request_type, actor_type, role) 
+       VALUES ($1, $2, $3, 'pending', CURRENT_TIMESTAMP, $4, $5, $6) 
        RETURNING id`,
       [
         userResult.rows.length > 0 ? userResult.rows[0].name : "Utilisateur",
         email,
         new Date().toISOString().split("T")[0],
         requestType,
+        actorType,
+        role,
       ]
     );
 
@@ -3981,70 +4132,180 @@ app.post("/api/forgot-access-code", async (req, res) => {
 
 // Route pour envoyer un nouveau code d'accès par email (bouton vert admin)
 app.post("/api/admin/send-access-code", async (req, res) => {
-  const { requestId, newPassword, adminEmail } = req.body;
+  const { requestId, adminEmail, email, role } = req.body;
 
-  console.log("[SEND-ACCESS-CODE][API] Envoi de nouveau code:", {
+  console.log("[SEND-ACCESS-CODE][API] Requête reçue:", {
     requestId,
+    email,
+    role,
     adminEmail,
-    hasPassword: !!newPassword,
     emailUser: !!process.env.EMAIL_USER,
     emailPass: !!process.env.EMAIL_PASS,
-    actualEmailUser: process.env.EMAIL_USER,
-    actualEmailPass: process.env.EMAIL_PASS ? "SET" : "NOT_SET",
   });
 
-  if (!requestId || !newPassword || !adminEmail) {
+  // Support de deux modes : par requestId OU par email+role
+  if (!requestId && (!email || !role)) {
     return res.status(400).json({
       success: false,
-      message: "ID de demande, nouveau mot de passe et email admin requis.",
+      message: "ID de demande OU (email + rôle) requis.",
     });
   }
 
   try {
-    // Récupérer les informations de la demande
-    const requestResult = await pool.query(
-      "SELECT * FROM access_requests WHERE id = $1",
-      [requestId]
-    );
+    let request = null;
 
-    if (requestResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Demande introuvable.",
+    if (requestId) {
+      // Mode 1: Par requestId (mode admin existant) - ENVOI DIRECT DU CODE
+
+      // Générer automatiquement un nouveau code d'accès
+      const newPassword = Math.random()
+        .toString(36)
+        .substring(2, 10)
+        .toUpperCase();
+
+      console.log(
+        "[SEND-ACCESS-CODE][API] Mode admin - envoi direct du code:",
+        {
+          requestId,
+          newGeneratedCode: newPassword,
+        }
+      );
+
+      const requestResult = await pool.query(
+        "SELECT * FROM access_requests WHERE id = $1",
+        [requestId]
+      );
+
+      if (requestResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Demande introuvable.",
+        });
+      }
+
+      request = requestResult.rows[0];
+    } else {
+      // Mode 2: Par email + rôle (mode "code oublié") - CRÉER UNE DEMANDE DE VALIDATION
+      console.log(
+        "[SEND-ACCESS-CODE][API] Mode code oublié - création d'une demande:",
+        {
+          email,
+          role,
+        }
+      );
+
+      // Vérifier si l'utilisateur a déjà un accès approuvé
+      const existingRequestResult = await pool.query(
+        `SELECT * FROM access_requests 
+         WHERE email = $1 
+         AND (request_type = $2 OR actor_type = $2 OR role = $2)
+         AND status = 'approved' 
+         ORDER BY created_at DESC LIMIT 1`,
+        [email, role]
+      );
+
+      if (existingRequestResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Aucun accès approuvé trouvé pour cet email et ce rôle.",
+        });
+      }
+
+      const originalRequest = existingRequestResult.rows[0];
+
+      // Créer une nouvelle demande de type "forgot_code"
+      const newRequestResult = await pool.query(
+        `INSERT INTO access_requests 
+         (name, email, societe, justification, request_type, actor_type, role, status, created_at, request_date)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'forgot_code', CURRENT_TIMESTAMP, CURRENT_DATE)
+         RETURNING id`,
+        [
+          originalRequest.name,
+          originalRequest.email,
+          originalRequest.societe,
+          "Demande de nouveau code d'accès (code oublié)",
+          originalRequest.request_type || role,
+          originalRequest.actor_type || role,
+          originalRequest.role || role,
+        ]
+      );
+
+      console.log("[SEND-ACCESS-CODE][API] Demande de code oublié créée:", {
+        newRequestId: newRequestResult.rows[0].id,
+        email: originalRequest.email,
+        role: role,
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Demande de nouveau code d'accès créée. En attente d'approbation par l'administrateur.",
+        requestId: newRequestResult.rows[0].id,
+        needsApproval: true,
       });
     }
 
-    const request = requestResult.rows[0];
+    // Si on arrive ici, c'est le mode admin (requestId) - Continuer avec l'envoi direct du code
+    // Générer automatiquement un nouveau code d'accès
+    const newPassword = Math.random()
+      .toString(36)
+      .substring(2, 10)
+      .toUpperCase();
 
     // Vérifier si l'utilisateur existe déjà dans la table users
     let userResult = await pool.query("SELECT * FROM users WHERE email = $1", [
       request.email,
     ]);
 
+    // IMPORTANT: Hasher le nouveau code d'accès pour la table users
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
     if (userResult.rows.length > 0) {
-      // Mettre à jour le mot de passe existant
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      // Mettre à jour le mot de passe existant dans la table users
       await pool.query("UPDATE users SET password = $1 WHERE email = $2", [
         hashedPassword,
         request.email,
       ]);
+      console.log(
+        "[SEND-ACCESS-CODE][DEBUG] Table users mise à jour pour:",
+        request.email
+      );
     } else {
       // Créer un nouveau utilisateur
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
       await pool.query(
         `INSERT INTO users (name, email, password, role) 
          VALUES ($1, $2, $3, 'user')`,
         [request.name, request.email, hashedPassword]
       );
+      console.log(
+        "[SEND-ACCESS-CODE][DEBUG] Nouvel utilisateur créé dans table users pour:",
+        request.email
+      );
     }
 
-    // Marquer la demande comme approuvée
-    await pool.query(
+    // Si on est en mode requestId, marquer la demande comme approuvée
+    if (requestId) {
+      await pool.query(
+        `UPDATE access_requests 
+         SET status = 'approved', processed_at = CURRENT_TIMESTAMP, processed_by = $1, access_code = $2 
+         WHERE id = $3`,
+        [adminEmail || "system", newPassword, requestId]
+      );
+    }
+
+    // Mettre à jour TOUS les enregistrements approuvés de cet utilisateur avec le nouveau code
+    const updateResult = await pool.query(
       `UPDATE access_requests 
-       SET status = 'approved', processed_at = CURRENT_TIMESTAMP, processed_by = $1 
-       WHERE id = $2`,
-      [adminEmail, requestId]
+       SET access_code = $1 
+       WHERE email = $2 AND status = 'approved'`,
+      [newPassword, request.email]
     );
+
+    console.log("[SEND-ACCESS-CODE][DEBUG] Résultat mise à jour globale:", {
+      rowCount: updateResult.rowCount,
+      newCode: newPassword,
+      email: request.email,
+    });
 
     // Vérifier si les variables d'environnement email sont configurées
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -4210,6 +4471,358 @@ app.post("/api/admin/delete-requests", async (req, res) => {
       success: false,
       message: `Erreur serveur lors de la suppression: ${err.message}`,
       error: err.code || "UNKNOWN_ERROR",
+    });
+  }
+});
+
+// ===============================
+// NOUVELLES ROUTES POUR RESPONSABLE ACCONIER
+// ===============================
+
+// Route pour recevoir une demande d'accès de Responsable Acconier
+app.post("/api/access-request", async (req, res) => {
+  const { email, name, actorType, role, requestDate } = req.body;
+
+  console.log("[ACCESS-REQUEST][API] Nouvelle demande d'accès:", {
+    email,
+    name,
+    actorType,
+    role,
+  });
+
+  if (!email || !actorType) {
+    return res.status(400).json({
+      success: false,
+      message: "Email et type d'acteur requis.",
+    });
+  }
+
+  try {
+    // S'assurer que la table existe
+    await ensureAccessRequestsTable();
+
+    // Vérifier si une demande existe déjà pour cet email et ce type d'acteur
+    const existingRequest = await pool.query(
+      `SELECT id, status FROM access_requests 
+       WHERE email = $1 AND request_type = $2 AND status = 'pending'`,
+      [email, actorType]
+    );
+
+    if (existingRequest.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Une demande d'accès est déjà en cours de traitement pour cet email.",
+      });
+    }
+
+    // Créer la nouvelle demande
+    const result = await pool.query(
+      `INSERT INTO access_requests (name, email, request_date, status, created_at, request_type, actor_type, role) 
+       VALUES ($1, $2, $3, 'pending', CURRENT_TIMESTAMP, $4, $5, $6) 
+       RETURNING id`,
+      [
+        name || email.split("@")[0],
+        email,
+        new Date().toISOString(),
+        actorType,
+        actorType,
+        role || "Responsable Acconier",
+      ]
+    );
+
+    console.log("[ACCESS-REQUEST][API] Demande créée avec succès:", {
+      requestId: result.rows[0].id,
+      email,
+      actorType,
+    });
+
+    res.json({
+      success: true,
+      message:
+        "Demande d'accès envoyée avec succès ! Vous recevrez un code d'accès par email une fois approuvée.",
+      requestId: result.rows[0].id,
+    });
+  } catch (err) {
+    console.error("[ACCESS-REQUEST][API] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'enregistrement de la demande.",
+    });
+  }
+});
+
+// Route pour recevoir une demande d'accès de Responsable de Livraison
+app.post("/api/admin/access-request", async (req, res) => {
+  const { nom, email, role } = req.body;
+
+  console.log(
+    "[ADMIN-ACCESS-REQUEST][API] Nouvelle demande d'accès responsable livraison:",
+    {
+      nom,
+      email,
+      role,
+    }
+  );
+
+  if (!nom || !email) {
+    return res.status(400).json({
+      success: false,
+      message: "Nom et email requis.",
+    });
+  }
+
+  try {
+    // S'assurer que la table existe
+    await ensureAccessRequestsTable();
+
+    // Vérifier si une demande existe déjà pour cet email
+    const existingRequest = await pool.query(
+      `SELECT id, status FROM access_requests 
+       WHERE email = $1 AND request_type = $2 AND status = 'pending'`,
+      [email, "responsable_livraison"]
+    );
+
+    if (existingRequest.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Une demande d'accès est déjà en cours de traitement pour cet email.",
+      });
+    }
+
+    // Créer la nouvelle demande
+    const result = await pool.query(
+      `INSERT INTO access_requests (name, email, request_date, status, created_at, request_type, actor_type, role) 
+       VALUES ($1, $2, $3, 'pending', CURRENT_TIMESTAMP, $4, $5, $6) 
+       RETURNING id`,
+      [
+        nom,
+        email,
+        new Date().toISOString(),
+        "responsable_livraison",
+        "responsable_livraison",
+        role || "Responsable de Livraison",
+      ]
+    );
+
+    console.log("[ADMIN-ACCESS-REQUEST][API] Demande créée avec succès:", {
+      requestId: result.rows[0].id,
+      email,
+      nom,
+    });
+
+    res.json({
+      success: true,
+      message:
+        "Demande d'accès envoyée avec succès ! Vous recevrez votre code d'accès par email une fois approuvé.",
+      requestId: result.rows[0].id,
+    });
+  } catch (err) {
+    console.error("[ADMIN-ACCESS-REQUEST][API] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'enregistrement de la demande.",
+    });
+  }
+});
+
+// Route pour les demandes de code d'accès oublié
+app.post("/api/forgot-access-code", async (req, res) => {
+  const { email, name, actorType, role, requestType } = req.body;
+
+  console.log("[FORGOT-CODE][API] Nouvelle demande de code oublié:", {
+    email,
+    name,
+    actorType,
+    role,
+    requestType,
+  });
+
+  if (!email || !name || !actorType) {
+    return res.status(400).json({
+      success: false,
+      message: "Email, nom et type d'acteur requis.",
+    });
+  }
+
+  try {
+    // Vérifier que la demande existe et est approuvée
+    const existingRequest = await pool.query(
+      `SELECT * FROM access_requests 
+       WHERE email = $1 AND status = 'approved' AND (actor_type = $2 OR request_type = $2 OR actorType = $2)
+       ORDER BY created_at DESC LIMIT 1`,
+      [email, actorType]
+    );
+
+    if (existingRequest.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Aucun compte approuvé trouvé pour cet email. Veuillez d'abord faire une demande d'accès.",
+      });
+    }
+
+    // Vérifier la table access_requests
+    await ensureAccessRequestsTable();
+
+    // Créer une nouvelle demande de type "forgot_code"
+    const result = await pool.query(
+      `INSERT INTO access_requests (email, name, request_date, status, request_type, actor_type, role) 
+       VALUES ($1, $2, CURRENT_DATE, 'pending', 'forgot_code', $3, $4) 
+       RETURNING id`,
+      [email, name, actorType, role || "Responsable Acconier"]
+    );
+
+    console.log("[FORGOT-CODE][API] Demande créée avec succès:", {
+      requestId: result.rows[0].id,
+      email,
+      actorType,
+      requestType: "forgot_code",
+    });
+
+    res.json({
+      success: true,
+      message:
+        "Demande de nouveau code d'accès envoyée ! Un administrateur la traitera bientôt.",
+      requestId: result.rows[0].id,
+    });
+  } catch (err) {
+    console.error("[FORGOT-CODE][API] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'enregistrement de la demande.",
+    });
+  }
+});
+
+// Route pour la connexion des Responsables Acconier
+app.post("/api/acconier-login", async (req, res) => {
+  const { email, accessCode, actorType } = req.body;
+
+  console.log("[ACCONIER-LOGIN][API] Tentative de connexion:", {
+    email,
+    actorType,
+    hasAccessCode: !!accessCode,
+    accessCodeValue: accessCode,
+  });
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email requis.",
+    });
+  }
+
+  if (!accessCode) {
+    return res.status(400).json({
+      success: false,
+      message: "Code d'accès requis pour la connexion.",
+    });
+  }
+
+  try {
+    // Rechercher l'utilisateur avec ce type d'acteur - privilégier les comptes approuvés avec access_code
+    const userResult = await pool.query(
+      `SELECT ar.*, u.name, u.email 
+       FROM access_requests ar 
+       LEFT JOIN users u ON ar.email = u.email 
+       WHERE ar.email = $1 AND ar.actor_type = $2 AND ar.status = 'approved' AND ar.access_code IS NOT NULL
+       ORDER BY ar.created_at DESC
+       LIMIT 1`,
+      [email, actorType]
+    );
+
+    console.log("[ACCONIER-LOGIN][API] Résultat de recherche:", {
+      email,
+      actorType,
+      foundUsers: userResult.rows.length,
+      users: userResult.rows.map((user) => ({
+        id: user.id,
+        email: user.email,
+        status: user.status,
+        hasAccessCode: !!user.access_code,
+        accessCode: user.access_code,
+      })),
+    });
+
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Aucune demande d'accès trouvée pour cet email. Veuillez d'abord faire une demande d'accès.",
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Vérifier si l'accès est approuvé
+    if (user.status !== "approved") {
+      if (user.status === "pending") {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Votre demande d'accès est en cours de traitement. Veuillez patienter.",
+        });
+      } else if (user.status === "rejected") {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Votre demande d'accès a été rejetée. Contactez l'administrateur.",
+        });
+      }
+    }
+
+    // Vérifier le code d'accès depuis la base de données
+    if (!user.access_code) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Aucun code d'accès généré pour ce compte. Contactez l'administrateur.",
+      });
+    }
+
+    if (accessCode !== user.access_code) {
+      console.log("[ACCONIER-LOGIN][API] Code incorrect:", {
+        fourni: accessCode,
+        attendu: user.access_code,
+        email,
+      });
+
+      return res.status(401).json({
+        success: false,
+        message: "Code d'accès incorrect.",
+      });
+    }
+
+    // Mettre à jour la dernière connexion
+    await pool.query(
+      `UPDATE access_requests SET last_login = CURRENT_TIMESTAMP WHERE id = $1`,
+      [user.id]
+    );
+
+    console.log("[ACCONIER-LOGIN][API] Connexion réussie:", {
+      email,
+      actorType,
+      userId: user.id,
+    });
+
+    res.json({
+      success: true,
+      message: "Connexion réussie !",
+      user: {
+        id: user.id,
+        name: user.name || user.email.split("@")[0],
+        email: user.email,
+        actorType: user.actor_type,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("[ACCONIER-LOGIN][API] Erreur:", err);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la connexion.",
     });
   }
 });

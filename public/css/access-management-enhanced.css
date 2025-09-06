@@ -49,6 +49,179 @@ header .font-bold,
   color: var(--header-text) !important;
 }
 
+/* =================== STYLES POUR LES SECTIONS D'ACTEURS =================== */
+
+/* Navigation par onglets */
+.section-tab {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f8fafc;
+  border-bottom: 2px solid transparent;
+}
+
+.section-tab:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.section-tab.active {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  border-bottom-color: #2563eb !important;
+  font-weight: 600;
+}
+
+.section-tab i {
+  transition: transform 0.3s ease;
+}
+
+.section-tab:hover i {
+  transform: scale(1.1);
+}
+
+/* Conteneurs de sections */
+.section-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.section-content.hidden {
+  display: none !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Cartes d'acteurs */
+.actor-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-left: 4px solid #e5e7eb;
+}
+
+.actor-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.actor-card.responsable-acconier {
+  border-left-color: #3b82f6;
+  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+}
+
+.actor-card.responsable-livraison {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
+}
+
+.actor-card.agent-transit {
+  border-left-color: #8b5cf6;
+  background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+}
+
+/* Badges d'acteurs */
+.actor-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.actor-badge.responsable-acconier {
+  background: linear-gradient(45deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.actor-badge.responsable-livraison {
+  background: linear-gradient(45deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.actor-badge.agent-transit {
+  background: linear-gradient(45deg, #ede9fe, #ddd6fe);
+  color: #5b21b6;
+  border: 1px solid #c4b5fd;
+}
+
+/* Statistiques par acteur */
+.actor-stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.actor-stats-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Icônes d'acteurs */
+.actor-icon {
+  transition: all 0.3s ease;
+}
+
+.actor-card:hover .actor-icon {
+  transform: scale(1.1);
+}
+
+/* Conteneurs vides */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Animations d'apparition */
+.animate-slide-in {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive design pour les sections */
+@media (max-width: 768px) {
+  .section-tab {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .section-tab i {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .actor-card {
+    margin-bottom: 1rem;
+  }
+}
+
 /* Headers de section */
 .bg-blue-600,
 .bg-blue-500,

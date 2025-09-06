@@ -2,9 +2,17 @@
 let currentRequests = [];
 let currentRequestId = null;
 let currentFilter = "all";
+let currentSection = "global"; // Section actuellement active
 let autoRefreshInterval;
 let isAutoRefreshEnabled = true;
 let lastDataHash = null; // Pour éviter les rechargements inutiles
+
+// Données spécifiques par acteur
+let actorData = {
+  "responsable-acconier": [],
+  "responsable-livraison": [],
+  "agent-transit": [],
+};
 
 // =================== SYSTÈME DE THÈME ===================
 let currentTheme = localStorage.getItem("theme") || "light";
@@ -47,6 +55,308 @@ try {
 }
 
 console.log("🎨 Thème au démarrage:", currentTheme, customThemeData);
+
+// =================== GESTION DES SECTIONS PAR ACTEUR ===================
+
+/**
+ * Fonction pour changer de section d'acteur
+ */
+function switchSection(sectionName) {
+  console.log(`🔄 Changement vers la section: ${sectionName}`);
+
+  // Mettre à jour la section courante
+  currentSection = sectionName;
+
+  // Gérer l'affichage des onglets
+  const tabs = document.querySelectorAll(".section-tab");
+  tabs.forEach((tab) => {
+    const tabSection = tab.dataset.section;
+    if (tabSection === sectionName) {
+      tab.classList.add("active");
+      tab.classList.remove("border-transparent", "text-gray-500");
+      tab.classList.add("border-blue-500", "text-blue-600", "bg-blue-50");
+    } else {
+      tab.classList.remove("active");
+      tab.classList.remove("border-blue-500", "text-blue-600", "bg-blue-50");
+      tab.classList.add("border-transparent", "text-gray-500");
+    }
+  });
+
+  // Gérer l'affichage des contenus de section
+  const sections = document.querySelectorAll(".section-content");
+  sections.forEach((section) => {
+    const sectionId = section.id.replace("section-", "");
+    if (sectionId === sectionName) {
+      section.classList.remove("hidden");
+    } else {
+      section.classList.add("hidden");
+    }
+  });
+
+  // Charger les données spécifiques à la section
+  loadSectionData(sectionName);
+}
+
+/**
+ * Charger les données spécifiques à une section
+ */
+function loadSectionData(sectionName) {
+  if (sectionName === "global") {
+    // Recharger toutes les données pour la vue globale
+    loadAccessRequests();
+  } else {
+    // Filtrer et afficher les données pour l'acteur spécifique
+    filterRequestsByActor(sectionName);
+    updateActorStatistics(sectionName);
+  }
+}
+
+/**
+ * Filtrer les demandes par type d'acteur
+ */
+function filterRequestsByActor(actorType) {
+  console.log(`🔍 Filtrage des demandes pour: ${actorType}`);
+  console.log("📋 Toutes les demandes:", currentRequests);
+
+  const filteredRequests = currentRequests.filter((request) => {
+    // Vérifier avec les nouveaux champs (actor_type, role) ET les anciens champs (request_type)
+    if (actorType === "responsable-acconier") {
+      return (
+        request.actor_type === "responsable-acconier" ||
+        request.role === "Responsable Acconier" ||
+        request.request_type === "responsable-acconier" ||
+        request.actorType === "responsable-acconier"
+      );
+    } else if (actorType === "responsable-livraison") {
+      return (
+        request.actor_type === "responsable-livraison" ||
+        request.role === "Responsable de Livraison" ||
+        request.role === "responsable_livraison" ||
+        request.request_type === "responsable-livraison" ||
+        request.request_type === "responsable_livraison" ||
+        request.actorType === "responsable-livraison" ||
+        (request.role && request.role.toLowerCase().includes("livraison")) ||
+        (request.request_type &&
+          request.request_type.toLowerCase().includes("livraison"))
+      );
+    } else if (actorType === "agent-transit") {
+      return (
+        request.actor_type === "agent-transit" ||
+        request.role === "Agent Transit" ||
+        request.request_type === "agent-transit" ||
+        request.actorType === "agent-transit"
+      );
+    }
+    return false;
+  });
+
+  console.log(`✅ Demandes filtrées pour ${actorType}:`, filteredRequests);
+
+  // Mettre à jour l'affichage pour cet acteur
+  displayActorRequests(actorType, filteredRequests);
+}
+
+/**
+ * Afficher les demandes pour un acteur spécifique
+ */
+function displayActorRequests(actorType, requests) {
+  const listContainerId = getActorListContainerId(actorType);
+  const noRequestsId = getActorNoRequestsId(actorType);
+
+  const listContainer = document.getElementById(listContainerId);
+  const noRequestsDiv = document.getElementById(noRequestsId);
+
+  if (!listContainer || !noRequestsDiv) {
+    console.error(`Conteneurs non trouvés pour ${actorType}`);
+    return;
+  }
+
+  if (requests.length === 0) {
+    listContainer.innerHTML = "";
+    noRequestsDiv.classList.remove("hidden");
+  } else {
+    noRequestsDiv.classList.add("hidden");
+    listContainer.innerHTML = requests
+      .map((request) => createActorRequestCard(request, actorType))
+      .join("");
+  }
+
+  // Mettre à jour les statistiques/compteurs pour cet acteur
+  updateActorStatistics(actorType);
+}
+
+/**
+ * Créer une carte de demande pour un acteur spécifique
+ */
+function createActorRequestCard(request, actorType) {
+  const statusColors = {
+    pending: "bg-orange-100 text-orange-800",
+    approved: "bg-green-100 text-green-800",
+    rejected: "bg-red-100 text-red-800",
+  };
+
+  const actorColors = {
+    "responsable-acconier": "border-l-blue-500",
+    "responsable-livraison": "border-l-green-500",
+    "agent-transit": "border-l-purple-500",
+  };
+
+  return `
+    <div class="actor-card ${actorType} bg-white rounded-lg shadow-md p-4 border-l-4 ${
+    actorColors[actorType]
+  }">
+      <div class="flex items-center justify-between">
+        <div class="flex-1">
+          <div class="flex items-center space-x-2 mb-2">
+            <h4 class="font-semibold text-gray-800">${request.name}</h4>
+            <span class="actor-badge ${actorType}">${getActorLabel(
+    actorType
+  )}</span>
+          </div>
+          <p class="text-sm text-gray-600 mb-1">Email: ${request.email}</p>
+          <p class="text-xs text-gray-500">Demande le: ${formatDate(
+            request.requestDate ||
+              request.request_date ||
+              request.created_at ||
+              request.createdAt
+          )}</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="px-2 py-1 rounded-full text-xs font-medium ${
+            statusColors[request.status]
+          }">
+            ${getStatusLabel(request.status)}
+          </span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Mettre à jour les statistiques pour un acteur
+ */
+function updateActorStatistics(actorType) {
+  // Utiliser le même filtrage que filterRequestsByActor
+  const actorRequests = currentRequests.filter((request) => {
+    if (actorType === "responsable-acconier") {
+      return (
+        request.actor_type === "responsable-acconier" ||
+        request.role === "Responsable Acconier" ||
+        request.request_type === "responsable-acconier" ||
+        request.actorType === "responsable-acconier"
+      );
+    } else if (actorType === "responsable-livraison") {
+      return (
+        request.actor_type === "responsable-livraison" ||
+        request.role === "Responsable de Livraison" ||
+        request.role === "responsable_livraison" ||
+        request.request_type === "responsable-livraison" ||
+        request.request_type === "responsable_livraison" ||
+        request.actorType === "responsable-livraison" ||
+        (request.role && request.role.toLowerCase().includes("livraison")) ||
+        (request.request_type &&
+          request.request_type.toLowerCase().includes("livraison"))
+      );
+    } else if (actorType === "agent-transit") {
+      return (
+        request.actor_type === "agent-transit" ||
+        request.role === "Agent Transit" ||
+        request.request_type === "agent-transit" ||
+        request.actorType === "agent-transit"
+      );
+    }
+    return false;
+  });
+
+  console.log(`📊 Statistiques pour ${actorType}:`, {
+    total: actorRequests.length,
+    pending: actorRequests.filter(
+      (r) => r.status === "pending" || r.status === "forgot_code"
+    ).length,
+    approved: actorRequests.filter((r) => r.status === "approved").length,
+  });
+
+  const pending = actorRequests.filter(
+    (r) => r.status === "pending" || r.status === "forgot_code"
+  ).length;
+  const approved = actorRequests.filter((r) => r.status === "approved").length;
+  const total = actorRequests.length;
+
+  // Mettre à jour les éléments du DOM
+  const prefix = getActorPrefix(actorType);
+  const totalElement = document.getElementById(`${prefix}Total`);
+  const pendingElement = document.getElementById(`${prefix}Pending`);
+  const approvedElement = document.getElementById(`${prefix}Approved`);
+
+  if (totalElement) totalElement.textContent = total;
+  if (pendingElement) pendingElement.textContent = pending;
+  if (approvedElement) approvedElement.textContent = approved;
+}
+
+/**
+ * Fonctions utilitaires pour les acteurs
+ */
+function getActorListContainerId(actorType) {
+  const prefixes = {
+    "responsable-acconier": "acconiersRequestsList",
+    "responsable-livraison": "livraisonRequestsList",
+    "agent-transit": "agentsRequestsList",
+  };
+  return prefixes[actorType];
+}
+
+function getActorNoRequestsId(actorType) {
+  const prefixes = {
+    "responsable-acconier": "noAcconiersRequests",
+    "responsable-livraison": "noLivraisonRequests",
+    "agent-transit": "noAgentsRequests",
+  };
+  return prefixes[actorType];
+}
+
+function getActorPrefix(actorType) {
+  const prefixes = {
+    "responsable-acconier": "acconiers",
+    "responsable-livraison": "livraison",
+    "agent-transit": "agents",
+  };
+  return prefixes[actorType];
+}
+
+function getActorLabel(actorType) {
+  const labels = {
+    "responsable-acconier": "Resp. Acconier",
+    "responsable-livraison": "Resp. Livraison",
+    "agent-transit": "Agent Transit",
+  };
+  return labels[actorType];
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    pending: "En attente",
+    approved: "Approuvée",
+    rejected: "Rejetée",
+  };
+  return labels[status] || status;
+}
+
+/**
+ * Mettre à jour toutes les sections d'acteurs
+ */
+function updateAllActorSections() {
+  const actorTypes = [
+    "responsable-acconier",
+    "responsable-livraison",
+    "agent-transit",
+  ];
+
+  actorTypes.forEach((actorType) => {
+    updateActorStatistics(actorType);
+    filterRequestsByActor(actorType);
+  });
+}
 
 // Fonction de test de persistance
 function testThemePersistence() {
@@ -119,6 +429,9 @@ async function initializeAccessManagement() {
 
     // Charger les demandes
     await loadAccessRequests();
+
+    // Initialiser la section par défaut (vue globale)
+    switchSection("global");
 
     // Démarrer l'actualisation automatique
     startAutoRefresh();
@@ -233,10 +546,93 @@ function simulateLoginData() {
     loginTime: new Date().toISOString(),
   };
 
+  // Données de test pour différents acteurs
+  const testRequests = [
+    {
+      id: "req_001",
+      name: "Jean Kouadio",
+      email: "j.kouadio@itsservice.ci",
+      requestDate: new Date(Date.now() - 86400000).toISOString(), // Hier
+      status: "pending",
+      actorType: "responsable-acconier",
+      role: "Responsable Acconier",
+    },
+    {
+      id: "req_002",
+      name: "Marie Yao",
+      email: "m.yao@itsservice.ci",
+      requestDate: new Date(Date.now() - 172800000).toISOString(), // Il y a 2 jours
+      status: "approved",
+      actorType: "responsable-acconier",
+      role: "Responsable Acconier",
+    },
+    {
+      id: "req_003",
+      name: "Paul N'Guessan",
+      email: "p.nguessan@itsservice.ci",
+      requestDate: new Date(Date.now() - 259200000).toISOString(), // Il y a 3 jours
+      status: "pending",
+      actorType: "responsable-livraison",
+      role: "Responsable de Livraison",
+    },
+    {
+      id: "req_004",
+      name: "Aisha Traoré",
+      email: "a.traore@itsservice.ci",
+      requestDate: new Date(Date.now() - 345600000).toISOString(), // Il y a 4 jours
+      status: "approved",
+      actorType: "responsable-livraison",
+      role: "Responsable de Livraison",
+    },
+    {
+      id: "req_005",
+      name: "Koffi Diabaté",
+      email: "k.diabate@itsservice.ci",
+      requestDate: new Date(Date.now() - 432000000).toISOString(), // Il y a 5 jours
+      status: "pending",
+      actorType: "agent-transit",
+      role: "Agent Transit",
+    },
+    {
+      id: "req_006",
+      name: "Fatou Sanogo",
+      email: "f.sanogo@itsservice.ci",
+      requestDate: new Date(Date.now() - 518400000).toISOString(), // Il y a 6 jours
+      status: "rejected",
+      actorType: "agent-transit",
+      role: "Agent Transit",
+    },
+    {
+      id: "req_007",
+      name: "Mamadou Diouf",
+      email: "m.diouf@itsservice.ci",
+      requestDate: new Date().toISOString(),
+      status: "pending",
+      actorType: "responsable-acconier",
+      role: "Responsable Acconier",
+    },
+    {
+      id: "req_008",
+      name: "Awa Koné",
+      email: "a.kone@itsservice.ci",
+      requestDate: new Date().toISOString(),
+      status: "pending",
+      actorType: "agent-transit",
+      role: "Agent Transit",
+    },
+  ];
+
   localStorage.setItem("adminUser", JSON.stringify(testUserData));
   localStorage.setItem("isAdminLoggedIn", "true");
+  localStorage.setItem("testRequests", JSON.stringify(testRequests));
 
-  console.log("🧪 Données de test simulées:", testUserData);
+  // Simuler la réponse des demandes pour les tests
+  currentRequests = testRequests;
+
+  console.log("🧪 Données de test simulées:", {
+    user: testUserData,
+    requests: testRequests.length + " demandes",
+  });
 }
 
 // Fonction pour initialiser les événements
@@ -348,7 +744,6 @@ async function loadAccessRequests() {
 
     // Afficher un indicateur de chargement
     showLoadingIndicator(true);
-
     const response = await fetch("/api/admin/access-requests", {
       headers: {
         "Cache-Control": "no-cache",
@@ -360,6 +755,8 @@ async function loadAccessRequests() {
     }
 
     const data = await response.json();
+    console.log("📋 Données reçues du serveur:", data);
+    console.log("🔍 Première demande pour analyse:", data[0]);
 
     if (data.success) {
       const newRequests = data.requests || [];
@@ -387,6 +784,9 @@ async function loadAccessRequests() {
         displayRequests();
         updateDailyHistory();
         updateRecentActivity();
+
+        // Mettre à jour les sections d'acteurs
+        updateAllActorSections();
 
         // Mettre à jour le timestamp de dernière actualisation
         updateLastRefreshTime();
@@ -3088,8 +3488,13 @@ function createEnhancedRequestCard(request) {
             
             <div class="flex flex-col space-y-2 ml-4">
                 ${
-                  request.status === "pending" ||
-                  request.status === "forgot_code"
+                  (request.status === "pending" ||
+                    request.status === "forgot_code") &&
+                  !(
+                    request.actor_type === "responsable-acconier" ||
+                    request.request_type === "responsable-acconier" ||
+                    request.actorType === "responsable-acconier"
+                  )
                     ? `
                     <button 
                         onclick="openProcessModal(${request.id})"
@@ -3302,8 +3707,21 @@ function getFilterLabel(filter) {
 
 function formatDate(dateString) {
   if (!dateString) return "Non spécifiée";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("fr-FR");
+
+  try {
+    const date = new Date(dateString);
+
+    // Vérifier si la date est valide
+    if (isNaN(date.getTime())) {
+      console.warn("⚠️ Date invalide:", dateString);
+      return "Date invalide";
+    }
+
+    return date.toLocaleDateString("fr-FR");
+  } catch (error) {
+    console.error("❌ Erreur lors du formatage de la date:", error, dateString);
+    return "Erreur de date";
+  }
 }
 
 function formatDateTime(dateString) {
