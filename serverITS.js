@@ -118,6 +118,10 @@ app.post("/api/admin-register", async (req, res) => {
 
   // Vérifier la force du mot de passe
   if (password.length < 8) {
+    console.log(
+      "[ADMIN-REGISTER][ERROR] Mot de passe trop court:",
+      password.length
+    );
     return res.status(400).json({
       success: false,
       message: "Le mot de passe doit contenir au moins 8 caractères.",
@@ -134,7 +138,7 @@ app.post("/api/admin-register", async (req, res) => {
     if (existingUser.rows.length > 0) {
       const user = existingUser.rows[0];
 
-      // Si c'est déjà un admin, on refuse
+      // Si c'est déjà un admin, on refuse complètement
       if (user.role === "admin") {
         console.log(
           "[ADMIN-REGISTER][INFO] Utilisateur déjà administrateur:",
@@ -142,7 +146,8 @@ app.post("/api/admin-register", async (req, res) => {
         );
         return res.status(400).json({
           success: false,
-          message: "Cet email est déjà enregistré comme administrateur.",
+          message:
+            "Cet email est déjà enregistré comme administrateur. Utilisez la page de connexion.",
         });
       }
 
@@ -231,6 +236,7 @@ app.post("/api/admin-login", async (req, res) => {
     );
 
     if (result.rows.length === 0) {
+      console.log("[ADMIN-LOGIN][API] Aucun admin trouvé avec cet email");
       return res.status(401).json({
         success: false,
         message: "Aucun administrateur trouvé avec cet email.",
@@ -243,6 +249,7 @@ app.post("/api/admin-login", async (req, res) => {
     const passwordValid = await bcrypt.compare(password, admin.password);
 
     if (!passwordValid) {
+      console.log("[ADMIN-LOGIN][API] Mot de passe incorrect");
       return res.status(401).json({
         success: false,
         message: "Mot de passe incorrect.",
@@ -3618,72 +3625,7 @@ app.post("/api/create-user-account", async (req, res) => {
   }
 });
 
-// Route pour l'authentification admin
-app.post("/api/admin-login", async (req, res) => {
-  const { email, password } = req.body;
-
-  console.log("[ADMIN-LOGIN][API] Tentative de connexion admin:", { email });
-
-  if (!email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: "Email et mot de passe requis.",
-    });
-  }
-
-  try {
-    // Rechercher l'utilisateur admin
-    const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1 AND role = 'admin'",
-      [email]
-    );
-
-    if (result.rows.length === 0) {
-      console.log("[ADMIN-LOGIN][API] Admin non trouvé pour:", email);
-      return res.status(401).json({
-        success: false,
-        message: "Identifiants incorrects ou accès non autorisé.",
-      });
-    }
-
-    const admin = result.rows[0];
-
-    // Vérifier le mot de passe
-    const isPasswordValid = await bcrypt.compare(password, admin.password);
-
-    if (!isPasswordValid) {
-      console.log("[ADMIN-LOGIN][API] Mot de passe incorrect pour:", email);
-      return res.status(401).json({
-        success: false,
-        message: "Identifiants incorrects.",
-      });
-    }
-
-    // Connexion réussie
-    console.log("[ADMIN-LOGIN][API] Connexion admin réussie:", {
-      id: admin.id,
-      name: admin.name,
-      email: admin.email,
-    });
-
-    res.json({
-      success: true,
-      message: "Connexion admin réussie.",
-      admin: {
-        id: admin.id,
-        name: admin.name,
-        email: admin.email,
-        role: admin.role,
-      },
-    });
-  } catch (err) {
-    console.error("[ADMIN-LOGIN][API] Erreur lors de la connexion admin:", err);
-    res.status(500).json({
-      success: false,
-      message: "Erreur serveur lors de la connexion.",
-    });
-  }
-});
+// Route dupliquée supprimée - utiliser la route principale ligne 214
 
 // Route pour récupérer toutes les demandes d'accès (admin seulement)
 app.get("/api/admin/access-requests", async (req, res) => {

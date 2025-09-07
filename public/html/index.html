@@ -711,6 +711,10 @@
                   localStorage.setItem("user", JSON.stringify(userData));
                   localStorage.setItem("userEmail", email);
 
+                  // Pour la connexion depuis index.html, on redirige toujours vers le tableau de bord
+                  // C'est l'interface utilisateur normal, pas l'interface admin
+                  localStorage.removeItem("isAdminLoggedIn");
+
                   // Redirige vers le tableau de bord
                   window.location.href =
                     "https://dossiv.ci/html/tableauDeBord.html";

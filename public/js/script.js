@@ -52,12 +52,9 @@ document.addEventListener("DOMContentLoaded", function () {
             localStorage.removeItem("isAdminLoggedIn");
           }
 
-          // Redirection selon le type d'utilisateur
-          if (data.isAdmin) {
-            window.location.href = "/html/access-management.html";
-          } else {
-            window.location.href = "https://dossiv.ci/html/tableauDeBord.html";
-          }
+          // Redirection depuis index.html - toujours vers le tableau de bord
+          // Peu importe si c'est un admin ou non, depuis index.html on va au tableau de bord
+          window.location.href = "https://dossiv.ci/html/tableauDeBord.html";
         } else {
           if (errorDiv) {
             errorDiv.textContent =
