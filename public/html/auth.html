@@ -637,8 +637,19 @@
               messageDiv.textContent = "Connexion réussie ! Redirection...";
               messageDiv.style.color = "#27ae60";
 
-              // Sauvegarder les infos utilisateur
+              // Sauvegarder les infos utilisateur dans les bonnes clés pour l'affichage
               localStorage.setItem("connectedUser", JSON.stringify(data.user));
+
+              // Stocker aussi dans les clés spécifiques utilisées par l'interface
+              if (data.user) {
+                localStorage.setItem(
+                  "userName",
+                  data.user.name || data.user.nom || "Responsable Acconier"
+                );
+                localStorage.setItem("userEmail", data.user.email);
+                localStorage.setItem("userId", data.user.id);
+                localStorage.setItem("userRole", "Responsable Acconier");
+              }
 
               // Redirection vers l'interface de suivi après 1 seconde
               setTimeout(() => {

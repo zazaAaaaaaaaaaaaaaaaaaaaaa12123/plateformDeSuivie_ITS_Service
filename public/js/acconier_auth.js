@@ -73,10 +73,15 @@ if (requestAccessForm)
       return;
     }
     try {
-      const res = await fetch("/api/acconier/request-access", {
+      const res = await fetch("/api/access-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nom, email, type: "access_request" }),
+        body: JSON.stringify({
+          name: nom,
+          email,
+          actorType: "agent-transit",
+          role: "Agent Transit",
+        }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -85,8 +90,14 @@ if (requestAccessForm)
         document.getElementById("request-nom").value = "";
         document.getElementById("request-email").value = "";
       } else {
-        requestError.textContent =
-          data.message || "Erreur lors de l'envoi de la demande.";
+        // Gestion spéciale pour l'erreur 409 (conflit)
+        if (res.status === 409) {
+          requestError.textContent =
+            "Une demande d'accès existe déjà pour cet email. Si vous avez déjà reçu votre code d'accès, utilisez le formulaire de connexion.";
+        } else {
+          requestError.textContent =
+            data.message || "Erreur lors de l'envoi de la demande.";
+        }
       }
     } catch (err) {
       requestError.textContent = "Erreur réseau.";
@@ -108,7 +119,12 @@ if (forgotCodeForm)
       const res = await fetch("/api/acconier/request-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, type: "forgot_code" }),
+        body: JSON.stringify({
+          email,
+          type: "forgot_code",
+          actor_type: "agent-transit",
+          source: "acconier_auth",
+        }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -140,7 +156,11 @@ if (loginForm)
       const res = await fetch("/api/acconier-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({
+          email,
+          code,
+          actorType: "agent-transit",
+        }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -148,18 +168,18 @@ if (loginForm)
         localStorage.setItem(
           "acconier_user",
           JSON.stringify({
-            nom: data.nom,
-            email: data.email,
+            nom: data.user.name,
+            email: data.user.email,
           })
         );
 
         // Également sauvegarder dans les anciennes clés pour la compatibilité
-        localStorage.setItem("currentUser", data.nom);
-        localStorage.setItem("currentUserEmail", data.email);
+        localStorage.setItem("currentUser", data.user.name);
+        localStorage.setItem("currentUserEmail", data.user.email);
 
         console.log("[AUTH] Informations utilisateur sauvegardées:", {
-          nom: data.nom,
-          email: data.email,
+          nom: data.user.name,
+          email: data.user.email,
         });
 
         // Redirige vers l'interface employeur après connexion

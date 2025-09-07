@@ -6,8 +6,72 @@ let currentSection = "global"; // Section actuellement active
 let autoRefreshInterval;
 let isAutoRefreshEnabled = true;
 let lastDataHash = null; // Pour éviter les rechargements inutiles
-let lastKnownRequestCount = 0; // Pour détecter les nouvelles demandes
-let lastRequestTimestamp = null; // Pour éviter les notifications en double
+// Variables pour le système de notifications
+let lastAgentTransitCount = 0;
+let lastResponsableLivraisonCount = 0;
+let lastResponsableAcconierCount = 0;
+let lastVueGlobaleCount = 0;
+let notificationSound = null;
+
+// Variables pour gérer l'état "vu" des demandes (persiste après rafraîchissement)
+let viewedRequestIds = new Set();
+
+// Charger les IDs des demandes vues depuis localStorage
+function loadViewedRequestIds() {
+  try {
+    const saved = localStorage.getItem("viewedRequestIds");
+    if (saved) {
+      viewedRequestIds = new Set(JSON.parse(saved));
+      console.log(
+        "👁️ IDs des demandes vues chargés:",
+        Array.from(viewedRequestIds)
+      );
+    }
+  } catch (error) {
+    console.error("❌ Erreur lors du chargement des demandes vues:", error);
+    viewedRequestIds = new Set();
+  }
+}
+
+// Sauvegarder les IDs des demandes vues dans localStorage
+function saveViewedRequestIds() {
+  try {
+    localStorage.setItem(
+      "viewedRequestIds",
+      JSON.stringify(Array.from(viewedRequestIds))
+    );
+    console.log(
+      "💾 IDs des demandes vues sauvegardés:",
+      Array.from(viewedRequestIds)
+    );
+  } catch (error) {
+    console.error("❌ Erreur lors de la sauvegarde des demandes vues:", error);
+  }
+}
+
+// Nettoyer les anciens IDs vus qui ne correspondent plus aux demandes actuelles
+function cleanupViewedRequestIds() {
+  const currentRequestIds = new Set();
+
+  // Créer un set avec tous les IDs actuels
+  currentRequests.forEach((req) => {
+    const requestId =
+      req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+    currentRequestIds.add(requestId);
+  });
+
+  // Supprimer les IDs vus qui ne correspondent plus aux demandes actuelles
+  const originalSize = viewedRequestIds.size;
+  viewedRequestIds = new Set(
+    [...viewedRequestIds].filter((id) => currentRequestIds.has(id))
+  );
+
+  const cleaned = originalSize - viewedRequestIds.size;
+  if (cleaned > 0) {
+    console.log(`🧹 ${cleaned} anciens IDs nettoyés du cache`);
+    saveViewedRequestIds();
+  }
+}
 
 // Données spécifiques par acteur
 let actorData = {
@@ -66,10 +130,6 @@ console.log("🎨 Thème au démarrage:", currentTheme, customThemeData);
 function switchSection(sectionName) {
   console.log(`🔄 Changement vers la section: ${sectionName}`);
 
-  // Supprimer l'indicateur de notification de l'onglet cliqué
-  const tabId = `tab-${sectionName}`;
-  removeTabNotificationIndicator(tabId);
-
   // Mettre à jour la section courante
   currentSection = sectionName;
 
@@ -81,6 +141,16 @@ function switchSection(sectionName) {
       tab.classList.add("active");
       tab.classList.remove("border-transparent", "text-gray-500");
       tab.classList.add("border-blue-500", "text-blue-600", "bg-blue-50");
+
+      // SUPPRIMER LE BADGE QUAND ON CLIQUE SUR L'ONGLET
+      const badge = tab.querySelector(".notification-badge");
+      if (badge) {
+        console.log(`🗑️ Suppression du badge de l'onglet ${sectionName}`);
+        badge.remove();
+
+        // Marquer les demandes de cette section comme "vues"
+        markSectionRequestsAsViewed(sectionName);
+      }
     } else {
       tab.classList.remove("active");
       tab.classList.remove("border-blue-500", "text-blue-600", "bg-blue-50");
@@ -101,6 +171,87 @@ function switchSection(sectionName) {
 
   // Charger les données spécifiques à la section
   loadSectionData(sectionName);
+}
+
+/**
+ * Marquer les demandes d'une section comme vues (pour éviter la réapparition du badge)
+ */
+function markSectionRequestsAsViewed(sectionName) {
+  console.log(
+    `👁️ Marquage des demandes de la section ${sectionName} comme vues`
+  );
+
+  if (sectionName === "agent-transit") {
+    // Marquer les demandes Agent Transit comme vues
+    const agentTransitRequests = currentRequests.filter(
+      (req) => req.actor_type === "agent-transit" && req.status === "pending"
+    );
+
+    agentTransitRequests.forEach((req) => {
+      // Créer un ID unique pour la demande si elle n'en a pas
+      const requestId =
+        req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+      viewedRequestIds.add(requestId);
+      req.viewed = true;
+    });
+
+    console.log(
+      `👁️ ${agentTransitRequests.length} demandes Agent Transit marquées comme vues`
+    );
+
+    // Réinitialiser le compteur pour éviter les nouvelles notifications
+    lastAgentTransitCount = agentTransitRequests.length;
+  } else if (sectionName === "responsable-livraison") {
+    // Marquer les demandes Responsable Livraison comme vues
+    const responsableLivraisonRequests = currentRequests.filter(
+      (req) =>
+        (req.actor_type === "responsable-livraison" ||
+          req.actor_type === "responsable_livraison") &&
+        req.status === "pending"
+    );
+
+    responsableLivraisonRequests.forEach((req) => {
+      // Créer un ID unique pour la demande si elle n'en a pas
+      const requestId =
+        req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+      viewedRequestIds.add(requestId);
+      req.viewed = true;
+    });
+
+    console.log(
+      `👁️ ${responsableLivraisonRequests.length} demandes Responsable Livraison marquées comme vues`
+    );
+
+    // Réinitialiser le compteur pour éviter les nouvelles notifications
+    lastResponsableLivraisonCount = responsableLivraisonRequests.length;
+  } else if (sectionName === "responsable-acconier") {
+    // Marquer les demandes Responsable Acconier comme vues
+    const responsableAcconierRequests = currentRequests.filter(
+      (req) =>
+        (req.actor_type === "responsable-acconier" ||
+          req.request_type === "responsable-acconier" ||
+          req.actorType === "responsable-acconier") &&
+        req.status === "pending"
+    );
+
+    responsableAcconierRequests.forEach((req) => {
+      // Créer un ID unique pour la demande si elle n'en a pas
+      const requestId =
+        req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+      viewedRequestIds.add(requestId);
+      req.viewed = true;
+    });
+
+    console.log(
+      `👁️ ${responsableAcconierRequests.length} demandes Responsable Acconier marquées comme vues`
+    );
+
+    // Réinitialiser le compteur pour éviter les nouvelles notifications
+    lastResponsableAcconierCount = responsableAcconierRequests.length;
+  }
+
+  // Sauvegarder l'état dans localStorage
+  saveViewedRequestIds();
 }
 
 /**
@@ -148,11 +299,16 @@ function filterRequestsByActor(actorType) {
     } else if (actorType === "agent-transit") {
       return (
         request.actor_type === "agent-transit" ||
-        request.actor_type === "acconier" ||
         request.role === "Agent Transit" ||
         request.request_type === "agent-transit" ||
-        request.actorType === "agent-transit" ||
-        request.actorType === "acconier"
+        request.actorType === "agent-transit"
+      );
+    } else if (actorType === "vue-globale") {
+      return (
+        request.actor_type === "vue-globale" ||
+        request.request_type === "vue-globale" ||
+        request.actorType === "vue-globale" ||
+        request.source === "index.html"
       );
     }
     return false;
@@ -184,9 +340,41 @@ function displayActorRequests(actorType, requests) {
     noRequestsDiv.classList.remove("hidden");
   } else {
     noRequestsDiv.classList.add("hidden");
-    listContainer.innerHTML = requests
-      .map((request) => createActorRequestCard(request, actorType))
-      .join("");
+
+    // Créer les contrôles de sélection et suppression
+    const controlsHtml = `
+      <div class="mb-4 p-3 bg-gray-50 rounded-lg border">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center space-x-3">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input 
+                type="checkbox" 
+                id="selectAll_${actorType}" 
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                onchange="toggleSelectAll('${actorType}')"
+              >
+              <span class="text-sm font-medium text-gray-700">Tout sélectionner</span>
+            </label>
+            <span id="selectedCount_${actorType}" class="text-xs text-gray-500">(0 sélectionné)</span>
+          </div>
+          <button 
+            id="deleteSelected_${actorType}"
+            onclick="deleteSelectedRequests('${actorType}')"
+            class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            disabled
+          >
+            <i class="fas fa-trash-alt mr-2"></i>
+            Supprimer la sélection
+          </button>
+        </div>
+      </div>
+    `;
+
+    listContainer.innerHTML =
+      controlsHtml +
+      requests
+        .map((request) => createActorRequestCard(request, actorType))
+        .join("");
   }
 
   // Mettre à jour les statistiques/compteurs pour cet acteur
@@ -209,32 +397,52 @@ function createActorRequestCard(request, actorType) {
     "agent-transit": "border-l-purple-500",
   };
 
+  const requestId = request.id || `${request.email}_${Date.now()}`;
+
   return `
     <div class="actor-card ${actorType} bg-white rounded-lg shadow-md p-4 border-l-4 ${
     actorColors[actorType]
-  }">
-      <div class="flex items-center justify-between">
+  } mb-3">
+      <div class="flex items-start space-x-3">
+        <!-- Checkbox de sélection -->
+        <div class="flex-shrink-0 pt-1">
+          <input 
+            type="checkbox" 
+            class="request-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+            data-request-id="${requestId}"
+            data-actor-type="${actorType}"
+            onchange="updateSelectionCount('${actorType}')"
+          >
+        </div>
+        
+        <!-- Contenu de la carte -->
         <div class="flex-1">
-          <div class="flex items-center space-x-2 mb-2">
-            <h4 class="font-semibold text-gray-800">${request.name}</h4>
-            <span class="actor-badge ${actorType}">${getActorLabel(
+          <div class="flex items-center justify-between">
+            <div class="flex-1">
+              <div class="flex items-center space-x-2 mb-2">
+                <h4 class="font-semibold text-gray-800">${
+                  request.name || request.nom || "Nom non spécifié"
+                }</h4>
+                <span class="actor-badge ${actorType}">${getActorLabel(
     actorType
   )}</span>
+              </div>
+              <p class="text-sm text-gray-600 mb-1">Email: ${request.email}</p>
+              <p class="text-xs text-gray-500">Demande le: ${formatDate(
+                request.requestDate ||
+                  request.request_date ||
+                  request.created_at ||
+                  request.createdAt
+              )}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-1 rounded-full text-xs font-medium ${
+                statusColors[request.status]
+              }">
+                ${getStatusLabel(request.status)}
+              </span>
+            </div>
           </div>
-          <p class="text-sm text-gray-600 mb-1">Email: ${request.email}</p>
-          <p class="text-xs text-gray-500">Demande le: ${formatDate(
-            request.requestDate ||
-              request.request_date ||
-              request.created_at ||
-              request.createdAt
-          )}</p>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="px-2 py-1 rounded-full text-xs font-medium ${
-            statusColors[request.status]
-          }">
-            ${getStatusLabel(request.status)}
-          </span>
         </div>
       </div>
     </div>
@@ -269,11 +477,9 @@ function updateActorStatistics(actorType) {
     } else if (actorType === "agent-transit") {
       return (
         request.actor_type === "agent-transit" ||
-        request.actor_type === "acconier" ||
         request.role === "Agent Transit" ||
         request.request_type === "agent-transit" ||
-        request.actorType === "agent-transit" ||
-        request.actorType === "acconier"
+        request.actorType === "agent-transit"
       );
     }
     return false;
@@ -312,6 +518,7 @@ function getActorListContainerId(actorType) {
     "responsable-acconier": "acconiersRequestsList",
     "responsable-livraison": "livraisonRequestsList",
     "agent-transit": "agentsRequestsList",
+    "vue-globale": "globalRequestsList", // Ajout pour Vue Globale
   };
   return prefixes[actorType];
 }
@@ -321,6 +528,7 @@ function getActorNoRequestsId(actorType) {
     "responsable-acconier": "noAcconiersRequests",
     "responsable-livraison": "noLivraisonRequests",
     "agent-transit": "noAgentsRequests",
+    "vue-globale": "noGlobalRequests", // Ajout pour Vue Globale
   };
   return prefixes[actorType];
 }
@@ -330,6 +538,7 @@ function getActorPrefix(actorType) {
     "responsable-acconier": "acconiers",
     "responsable-livraison": "livraison",
     "agent-transit": "agents",
+    "vue-globale": "global", // Ajout pour Vue Globale
   };
   return prefixes[actorType];
 }
@@ -339,6 +548,7 @@ function getActorLabel(actorType) {
     "responsable-acconier": "Resp. Acconier",
     "responsable-livraison": "Resp. Livraison",
     "agent-transit": "Agent Transit",
+    "vue-globale": "Vue Globale", // Ajout pour Vue Globale
   };
   return labels[actorType];
 }
@@ -413,6 +623,9 @@ let userProfileImage =
 document.addEventListener("DOMContentLoaded", function () {
   console.log("🚀 Initialisation de la gestion d'accès avancée...");
 
+  // Charger l'état des demandes vues depuis localStorage
+  loadViewedRequestIds();
+
   // Vérifier si l'utilisateur est connecté
   const isLoggedIn = localStorage.getItem("isAdminLoggedIn");
   if (isLoggedIn !== "true") {
@@ -437,6 +650,9 @@ async function initializeAccessManagement() {
     // Charger les données du profil utilisateur
     loadUserProfileData();
 
+    // Initialiser le système de notifications
+    initializeNotificationSystem();
+
     // Charger les demandes
     await loadAccessRequests();
 
@@ -445,9 +661,6 @@ async function initializeAccessManagement() {
 
     // Démarrer l'actualisation automatique
     startAutoRefresh();
-
-    // Démarrer la vérification rapide des notifications
-    startFastNotificationCheck();
 
     // Initialiser les événements
     initializeEventListeners();
@@ -744,7 +957,7 @@ function startAutoRefresh() {
   }
 
   if (isAutoRefreshEnabled) {
-    // Actualisation toutes les 30 secondes pour des notifications plus rapides
+    // Actualisation toutes les 30 secondes pour une détection rapide des nouvelles demandes
     autoRefreshInterval = setInterval(loadAccessRequests, 30000);
     console.log("🔄 Actualisation automatique activée (30 sec)");
   }
@@ -774,9 +987,6 @@ async function loadAccessRequests() {
     if (data.success) {
       const newRequests = data.requests || [];
 
-      // 🔔 Détecter et notifier les nouvelles demandes AVANT de traiter les données
-      detectAndNotifyNewRequests(newRequests);
-
       // Créer un hash simple des données pour détecter les changements
       const newDataHash = JSON.stringify(
         newRequests.map((req) => ({
@@ -791,9 +1001,39 @@ async function loadAccessRequests() {
         currentRequests = newRequests;
         lastDataHash = newDataHash;
 
+        // Nettoyer les anciens IDs vus après avoir chargé les nouvelles demandes
+        cleanupViewedRequestIds();
+
         console.log(
           `✅ ${currentRequests.length} demandes chargées (données mises à jour)`
         );
+
+        // DÉBOGAGE : Afficher toutes les demandes Agent Transit reçues
+        const allAgentTransitRequests = newRequests.filter(
+          (req) => req.actor_type === "agent-transit"
+        );
+        console.log("🚛 TOUTES les demandes Agent Transit reçues du serveur:");
+        allAgentTransitRequests.forEach((req, index) => {
+          console.log(`📋 Agent Transit ${index + 1}:`, {
+            nom: req.nom || req.name,
+            email: req.email,
+            status: req.status,
+            date: req.demande_le || req.created_at || req.date,
+            id: req.id,
+          });
+        });
+
+        // Vérifier les nouvelles demandes d'Agent Transit pour les notifications
+        checkForNewAgentTransitRequests(newRequests);
+
+        // Vérifier les nouvelles demandes de Responsable de Livraison pour les notifications
+        checkForNewResponsableLivraisonRequests(newRequests);
+
+        // Vérifier les nouvelles demandes de Responsable Acconier pour les notifications
+        checkForNewResponsableAcconierRequests(newRequests);
+
+        // Vérifier les nouvelles demandes de Vue Globale pour les notifications
+        checkForNewVueGlobaleRequests(newRequests);
 
         // Mettre à jour l'interface
         updateStatistics();
@@ -804,17 +1044,26 @@ async function loadAccessRequests() {
         // Mettre à jour les sections d'acteurs
         updateAllActorSections();
 
+        // Mettre à jour le badge de l'onglet Agent Transit (toujours)
+        updateAgentTransitBadge();
+
+        // Mettre à jour le badge de l'onglet Responsable de Livraison (toujours)
+        updateResponsableLivraisonBadge();
+
+        // Mettre à jour le badge de l'onglet Responsable Acconier (toujours)
+        updateResponsableAcconierBadge();
+
         // Mettre à jour le timestamp de dernière actualisation
         updateLastRefreshTime();
       } else {
         console.log(
           `📋 ${newRequests.length} demandes - aucun changement détecté`
         );
+        // Même sans changements, mettre à jour le badge au cas où
+        updateAgentTransitBadge();
+        updateResponsableLivraisonBadge();
+        updateResponsableAcconierBadge();
       }
-
-      // Toujours forcer la mise à jour des statistiques d'acteurs
-      // pour s'assurer que les compteurs sont corrects
-      updateAllActorStatistics();
     } else {
       throw new Error(data.message || "Erreur inconnue");
     }
@@ -865,6 +1114,1089 @@ function updateLastRefreshTime() {
   lastRefreshElement.textContent = `Dernière actualisation: ${now.toLocaleTimeString(
     "fr-FR"
   )}`;
+}
+
+// =================== SYSTÈME DE NOTIFICATIONS ===================
+
+// Fonction pour vérifier les nouvelles demandes d'Agent Transit
+function checkForNewAgentTransitRequests(newRequests) {
+  console.log("🔍 Vérification des nouvelles demandes Agent Transit...");
+  console.log("📋 Total des demandes reçues:", newRequests.length);
+
+  // Filtrer les demandes d'agent-transit en attente
+  const agentTransitRequests = newRequests.filter(
+    (req) => req.actor_type === "agent-transit" && req.status === "pending"
+  );
+
+  console.log(
+    "🎯 Demandes agent-transit en attente:",
+    agentTransitRequests.length
+  );
+  console.log("📊 Détails des demandes agent-transit:", agentTransitRequests);
+
+  const currentAgentTransitCount = agentTransitRequests.length;
+
+  console.log("📈 Compteur précédent:", lastAgentTransitCount);
+  console.log("📈 Compteur actuel:", currentAgentTransitCount);
+
+  // Si c'est la première fois qu'on charge les données, on initialise sans notification
+  if (lastAgentTransitCount === 0 && currentAgentTransitCount > 0) {
+    console.log("🆕 Première initialisation - pas de notification");
+    lastAgentTransitCount = currentAgentTransitCount;
+    return;
+  }
+
+  // Si on a de nouvelles demandes
+  if (currentAgentTransitCount > lastAgentTransitCount) {
+    const newRequestsCount = currentAgentTransitCount - lastAgentTransitCount;
+    console.log(`🔔 ${newRequestsCount} nouvelle(s) demande(s) détectée(s)!`);
+
+    // Prendre seulement les vraies nouvelles demandes (les plus récentes par date)
+    const sortedRequests = agentTransitRequests.sort((a, b) => {
+      const dateA = new Date(a.demande_le || a.created_at || a.date || 0);
+      const dateB = new Date(b.demande_le || b.created_at || b.date || 0);
+      return dateB - dateA; // Plus récent en premier
+    });
+
+    const actualNewRequests = sortedRequests.slice(0, newRequestsCount);
+
+    console.log(
+      "📧 Nouvelles demandes avec emails:",
+      actualNewRequests.map((req) => ({
+        nom: req.nom || req.name,
+        email: req.email,
+        date: req.demande_le || req.created_at || req.date,
+      }))
+    );
+
+    showAgentTransitNotification(newRequestsCount, actualNewRequests);
+  } else {
+    console.log("📋 Aucune nouvelle demande détectée");
+  }
+
+  lastAgentTransitCount = currentAgentTransitCount;
+}
+
+// Fonction pour afficher une notification pour les nouvelles demandes d'Agent Transit
+function showAgentTransitNotification(count, newRequests) {
+  console.log(
+    `🔔 Affichage de la notification pour ${count} demande(s) Agent Transit`
+  );
+
+  // DÉBOGAGE : Afficher les données reçues
+  console.log("🔍 Données reçues dans showAgentTransitNotification:");
+  console.log("📊 newRequests:", newRequests);
+  newRequests.forEach((req, index) => {
+    console.log(`📋 Demande ${index + 1}:`, {
+      nom: req.nom || req.name,
+      email: req.email,
+      actor_type: req.actor_type,
+      status: req.status,
+      date: req.demande_le || req.created_at || req.date,
+      fullRequest: req,
+    });
+  });
+
+  // Créer la notification
+  const notification = document.createElement("div");
+  notification.className = `
+    fixed top-4 right-4 bg-blue-600 text-white px-6 py-4 rounded-lg shadow-lg z-50
+    transform translate-x-full transition-transform duration-500 ease-in-out
+    border-l-4 border-blue-400 max-w-md
+  `;
+
+  const requestNames = newRequests
+    .map((req) => req.nom || req.name || "Utilisateur")
+    .join(", ");
+
+  const requestEmails = newRequests
+    .map((req) => req.email || "Email non spécifié")
+    .join(", ");
+
+  console.log("📧 Noms extraits:", requestNames);
+  console.log("📧 Emails extraits:", requestEmails);
+
+  notification.innerHTML = `
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <span class="text-2xl">🚛</span>
+      </div>
+      <div class="ml-3 flex-1">
+        <h4 class="font-bold text-sm">Nouvelle demande - Agent Transit</h4>
+        <p class="text-xs mt-1">
+          ${count} nouvelle(s) demande(s) depuis acconier_auth.html
+        </p>
+        <p class="text-xs text-blue-100 mt-1">
+          ${requestNames}
+        </p>
+        <p class="text-xs text-blue-200 mt-1">
+          📧 ${requestEmails}
+        </p>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" 
+              class="ml-4 text-blue-200 hover:text-white transition-colors">
+        ×
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Animation d'entrée
+  setTimeout(() => {
+    notification.style.transform = "translateX(0)";
+  }, 100);
+
+  // Auto-suppression après 8 secondes
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.style.transform = "translateX(100%)";
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 500);
+    }
+  }, 8000);
+
+  // Son de notification
+  playNotificationSound();
+
+  console.log(
+    `✅ Notification affichée: ${count} nouvelle(s) demande(s) d'Agent Transit`
+  );
+}
+
+// Fonction pour mettre à jour le badge de l'onglet Agent Transit
+function updateAgentTransitBadge() {
+  console.log("🏷️ Mise à jour du badge Agent Transit...");
+
+  const agentTransitTab = document.querySelector(
+    '[data-section="agent-transit"]'
+  );
+
+  if (!agentTransitTab) {
+    console.log("❌ Onglet Agent Transit non trouvé!");
+    return;
+  }
+
+  console.log("✅ Onglet Agent Transit trouvé:", agentTransitTab);
+
+  // Compter les demandes d'agent-transit en attente ET NON VUES (provenant de acconier_auth.html)
+  const pendingAgentTransitRequests = currentRequests.filter((req) => {
+    const isAgentTransit = req.actor_type === "agent-transit";
+    const isPending = req.status === "pending";
+
+    // Vérifier si cette demande a été vue (basé sur son ID unique)
+    const requestId =
+      req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+    const isNotViewed = !viewedRequestIds.has(requestId);
+
+    const isFromAcconierAuth =
+      req.source === "acconier_auth" || req.actor_type === "agent-transit";
+
+    console.log(`📋 Demande analysée:`, {
+      nom: req.nom || req.name,
+      actor_type: req.actor_type,
+      status: req.status,
+      source: req.source,
+      requestId: requestId,
+      isViewed: viewedRequestIds.has(requestId),
+      isAgentTransit,
+      isPending,
+      isNotViewed,
+      isFromAcconierAuth,
+    });
+
+    return isAgentTransit && isPending && isNotViewed; // Ajouter la condition "non vue"
+  });
+
+  const count = pendingAgentTransitRequests.length;
+  console.log(
+    `📊 BADGE AGENT TRANSIT: ${count} demandes en attente depuis acconier_auth.html`
+  );
+  console.log(
+    `📋 Détails des demandes:`,
+    pendingAgentTransitRequests.map((req) => ({
+      nom: req.nom || req.name,
+      email: req.email,
+      actor_type: req.actor_type,
+      source: req.source,
+    }))
+  );
+
+  // Supprimer l'ancien badge s'il existe
+  const existingBadge = agentTransitTab.querySelector(".notification-badge");
+  if (existingBadge) {
+    console.log("🗑️ Suppression de l'ancien badge");
+    existingBadge.remove();
+  }
+
+  // Ajouter le nouveau badge si il y a des demandes en attente
+  if (count > 0) {
+    console.log(
+      `🔴 CRÉATION BADGE AGENT TRANSIT: ${count} demandes depuis acconier_auth.html`
+    );
+    const badge = document.createElement("span");
+    badge.className =
+      "notification-badge bg-blue-500 text-white text-xs rounded-full px-2 py-1 ml-2 animate-pulse";
+    badge.textContent = count;
+
+    // Styles plus visibles et forcés pour Agent Transit (bleu)
+    badge.style.cssText = `
+      font-size: 12px !important;
+      min-width: 22px !important;
+      height: 22px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background-color: #3b82f6 !important;
+      color: #ffffff !important;
+      border-radius: 50% !important;
+      margin-left: 8px !important;
+      font-weight: bold !important;
+      z-index: 1000 !important;
+      position: relative !important;
+    `;
+    badge.title = `${count} nouvelle(s) demande(s) d'Agent Transit depuis acconier_auth.html`;
+
+    agentTransitTab.appendChild(badge);
+    console.log("✅ Badge Agent Transit ajouté avec succès sur l'onglet");
+  } else {
+    console.log("ℹ️ Aucune demande Agent Transit en attente - pas de badge");
+  }
+}
+
+// =================== SYSTÈME DE NOTIFICATIONS RESPONSABLE DE LIVRAISON ===================
+
+// Fonction pour vérifier les nouvelles demandes de Responsable de Livraison
+function checkForNewResponsableLivraisonRequests(newRequests) {
+  console.log(
+    "🔍 Vérification des nouvelles demandes Responsable de Livraison..."
+  );
+  console.log("📋 Total des demandes reçues:", newRequests.length);
+
+  // Filtrer les demandes de responsable-livraison en attente
+  const responsableLivraisonRequests = newRequests.filter(
+    (req) =>
+      (req.actor_type === "responsable-livraison" ||
+        req.actor_type === "responsable_livraison") &&
+      req.status === "pending"
+  );
+
+  console.log(
+    "🎯 Demandes responsable-livraison en attente:",
+    responsableLivraisonRequests.length
+  );
+  console.log(
+    "📊 Détails des demandes responsable-livraison:",
+    responsableLivraisonRequests
+  );
+
+  const currentResponsableLivraisonCount = responsableLivraisonRequests.length;
+
+  console.log("📈 Compteur précédent:", lastResponsableLivraisonCount);
+  console.log("📈 Compteur actuel:", currentResponsableLivraisonCount);
+
+  // Si c'est la première fois qu'on charge les données, on initialise sans notification
+  if (
+    lastResponsableLivraisonCount === 0 &&
+    currentResponsableLivraisonCount > 0
+  ) {
+    console.log("🆕 Première initialisation - pas de notification");
+    lastResponsableLivraisonCount = currentResponsableLivraisonCount;
+    return;
+  }
+
+  // Si on a de nouvelles demandes
+  if (currentResponsableLivraisonCount > lastResponsableLivraisonCount) {
+    const newRequestsCount =
+      currentResponsableLivraisonCount - lastResponsableLivraisonCount;
+    console.log(
+      `🔔 ${newRequestsCount} nouvelle(s) demande(s) Responsable de Livraison détectée(s)!`
+    );
+
+    showResponsableLivraisonNotification(
+      newRequestsCount,
+      responsableLivraisonRequests.slice(-newRequestsCount)
+    );
+  } else {
+    console.log("📋 Aucune nouvelle demande Responsable de Livraison détectée");
+  }
+
+  lastResponsableLivraisonCount = currentResponsableLivraisonCount;
+}
+
+// Fonction pour afficher une notification pour les nouvelles demandes de Responsable de Livraison
+function showResponsableLivraisonNotification(count, newRequests) {
+  console.log(
+    `🔔 Affichage de la notification pour ${count} demande(s) Responsable de Livraison`
+  );
+
+  // Créer la notification
+  const notification = document.createElement("div");
+  notification.className =
+    "fixed top-4 right-4 bg-orange-600 text-white px-6 py-4 rounded-lg shadow-xl z-50 transform transition-all duration-500 border-l-4 border-yellow-400";
+  notification.style.transform = "translateX(100%)";
+  notification.style.minWidth = "320px";
+
+  const requestNames = newRequests.map((req) => req.nom).join(", ");
+
+  notification.innerHTML = `
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <i class="fas fa-truck text-yellow-400 text-xl mr-3 animate-bounce"></i>
+      </div>
+      <div class="flex-1">
+        <div class="font-semibold text-lg">🚛 Nouvelle${
+          count > 1 ? "s" : ""
+        } demande${count > 1 ? "s" : ""} de Responsable de Livraison</div>
+        <div class="text-sm opacity-90 mt-1">${count} nouvelle${
+    count > 1 ? "s" : ""
+  } demande${count > 1 ? "s" : ""}: <strong>${requestNames}</strong></div>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200 text-xl">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Animation d'entrée
+  setTimeout(() => {
+    notification.style.transform = "translateX(0)";
+  }, 100);
+
+  // Auto-suppression après 8 secondes
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.style.transform = "translateX(100%)";
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 500);
+    }
+  }, 8000);
+
+  // Son de notification
+  playNotificationSound();
+
+  console.log(
+    `✅ Notification affichée: ${count} nouvelle(s) demande(s) de Responsable de Livraison`
+  );
+}
+
+// Fonction pour mettre à jour le badge de l'onglet Responsable de Livraison
+function updateResponsableLivraisonBadge() {
+  console.log("🏷️ === DÉBUT MISE À JOUR BADGE RESPONSABLE LIVRAISON ===");
+
+  const responsableLivraisonTab = document.querySelector(
+    '[data-section="responsable-livraison"]'
+  );
+
+  console.log(
+    "🔍 Recherche de l'onglet avec sélecteur:",
+    '[data-section="responsable-livraison"]'
+  );
+  console.log("📍 Élément trouvé:", responsableLivraisonTab);
+
+  if (!responsableLivraisonTab) {
+    console.log("❌ Onglet Responsable de Livraison non trouvé");
+
+    // Recherchons tous les éléments avec data-section pour diagnostic
+    const allDataSections = document.querySelectorAll("[data-section]");
+    console.log(
+      "🔍 Tous les éléments avec data-section trouvés:",
+      allDataSections.length
+    );
+    allDataSections.forEach((el, index) => {
+      console.log(
+        `  ${index + 1}. data-section="${el.getAttribute("data-section")}"`,
+        el
+      );
+    });
+
+    return;
+  }
+
+  console.log(
+    "✅ Onglet Responsable de Livraison trouvé:",
+    responsableLivraisonTab
+  );
+  console.log(
+    "📋 Contenu actuel de l'onglet:",
+    responsableLivraisonTab.innerHTML
+  );
+
+  // Compter les demandes de responsable-livraison en attente (provenant de repoLivAuth.html)
+  console.log(
+    "📊 Analyse des demandes - Total currentRequests:",
+    currentRequests.length
+  );
+  console.log("📊 Contenu de currentRequests:", currentRequests);
+
+  const pendingResponsableLivraisonRequests = currentRequests.filter((req) => {
+    const isResponsableLivraison =
+      req.actor_type === "responsable-livraison" ||
+      req.actor_type === "responsable_livraison";
+    const isPending = req.status === "pending";
+
+    // Vérifier si cette demande a été vue (basé sur son ID unique)
+    const requestId =
+      req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+    const isNotViewed = !viewedRequestIds.has(requestId);
+
+    const isFromRepoLivAuth =
+      req.source === "repoLivAuth" ||
+      req.role === "responsable_livraison" ||
+      isResponsableLivraison;
+
+    console.log(`📋 Demande Responsable Livraison analysée:`, {
+      nom: req.nom || req.name,
+      actor_type: req.actor_type,
+      role: req.role,
+      status: req.status,
+      source: req.source,
+      requestId: requestId,
+      isViewed: viewedRequestIds.has(requestId),
+      isResponsableLivraison,
+      isPending,
+      isNotViewed,
+      isFromRepoLivAuth,
+      RÉSULTAT: isResponsableLivraison && isPending && isNotViewed,
+    });
+
+    return isResponsableLivraison && isPending && isNotViewed; // Ajouter la condition "non vue"
+  });
+
+  const count = pendingResponsableLivraisonRequests.length;
+  console.log(
+    `📊 BADGE RESPONSABLE LIVRAISON: ${count} demandes en attente depuis repoLivAuth.html`
+  );
+  console.log(
+    `📋 Détails des demandes filtrées:`,
+    pendingResponsableLivraisonRequests.map((req) => ({
+      nom: req.nom || req.name,
+      email: req.email,
+      actor_type: req.actor_type,
+      role: req.role,
+      source: req.source,
+    }))
+  );
+
+  // Supprimer l'ancien badge s'il existe
+  const existingBadge = responsableLivraisonTab.querySelector(
+    ".notification-badge"
+  );
+  if (existingBadge) {
+    console.log("🗑️ Suppression de l'ancien badge:", existingBadge);
+    existingBadge.remove();
+  } else {
+    console.log("ℹ️ Aucun badge existant trouvé");
+  }
+
+  // Ajouter le nouveau badge si il y a des demandes en attente
+  if (count > 0) {
+    console.log(
+      `🟠 === CRÉATION BADGE RESPONSABLE LIVRAISON: ${count} demandes ===`
+    );
+    const badge = document.createElement("span");
+    badge.className =
+      "notification-badge bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-2 animate-pulse";
+    badge.textContent = count;
+
+    // Styles plus visibles et forcés avec couleur orange vif pour meilleure visibilité
+    badge.style.cssText = `
+      font-size: 12px !important;
+      min-width: 22px !important;
+      height: 22px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background-color: #ff6600 !important;
+      color: #ffffff !important;
+      border-radius: 50% !important;
+      margin-left: 8px !important;
+      font-weight: bold !important;
+      z-index: 1000 !important;
+      position: relative !important;
+      border: 2px solid #ffffff !important;
+      box-shadow: 0 0 6px rgba(255, 102, 0, 0.6) !important;
+    `;
+    badge.title = `${count} nouvelle(s) demande(s) de Responsable de Livraison depuis repoLivAuth.html`;
+
+    console.log("🏷️ Badge créé:", badge);
+    console.log("🏷️ Style du badge:", badge.style.cssText);
+
+    responsableLivraisonTab.appendChild(badge);
+    console.log(
+      "✅ Badge Responsable de Livraison ajouté avec succès sur l'onglet"
+    );
+    console.log(
+      "📍 Contenu de l'onglet après ajout:",
+      responsableLivraisonTab.innerHTML
+    );
+  } else {
+    console.log(
+      "ℹ️ Aucune demande Responsable de Livraison en attente - pas de badge"
+    );
+  }
+
+  console.log("🏷️ === FIN MISE À JOUR BADGE RESPONSABLE LIVRAISON ===");
+}
+
+// =================== SYSTÈME DE NOTIFICATIONS RESPONSABLE ACCONIER ===================
+
+// Fonction pour vérifier les nouvelles demandes de Responsable Acconier
+function checkForNewResponsableAcconierRequests(newRequests) {
+  console.log("🔍 Vérification des nouvelles demandes Responsable Acconier...");
+  console.log("📋 Total des demandes reçues:", newRequests.length);
+
+  // Filtrer les demandes de responsable-acconier en attente
+  const responsableAcconierRequests = newRequests.filter(
+    (req) =>
+      (req.actor_type === "responsable-acconier" ||
+        req.request_type === "responsable-acconier" ||
+        req.actorType === "responsable-acconier") &&
+      req.status === "pending"
+  );
+
+  console.log(
+    "🎯 Demandes responsable-acconier en attente:",
+    responsableAcconierRequests.length
+  );
+  console.log(
+    "📊 Détails des demandes responsable-acconier:",
+    responsableAcconierRequests
+  );
+
+  // Trier par date de création pour identifier les vraies nouvelles demandes
+  responsableAcconierRequests.sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at)
+  );
+  console.log(
+    "📅 Demandes triées par date:",
+    responsableAcconierRequests.map((req) => ({
+      id: req.id,
+      email: req.email,
+      created_at: req.created_at,
+    }))
+  );
+
+  const currentResponsableAcconierCount = responsableAcconierRequests.length;
+
+  console.log("📈 Compteur précédent:", lastResponsableAcconierCount);
+  console.log("📈 Compteur actuel:", currentResponsableAcconierCount);
+
+  // Si c'est la première fois qu'on charge les données, on initialise sans notification
+  if (
+    lastResponsableAcconierCount === 0 &&
+    currentResponsableAcconierCount > 0
+  ) {
+    console.log("🆕 Première initialisation - pas de notification");
+    lastResponsableAcconierCount = currentResponsableAcconierCount;
+    return;
+  }
+
+  // Si on a de nouvelles demandes
+  if (currentResponsableAcconierCount > lastResponsableAcconierCount) {
+    const newRequestsCount =
+      currentResponsableAcconierCount - lastResponsableAcconierCount;
+    console.log(
+      `🔔 ${newRequestsCount} nouvelle(s) demande(s) Responsable Acconier détectée(s)!`
+    );
+
+    // Prendre les vraies nouvelles demandes (les plus récentes)
+    const actualNewRequests = responsableAcconierRequests.slice(
+      -newRequestsCount
+    );
+    console.log(
+      "🆕 Vraies nouvelles demandes Responsable Acconier:",
+      actualNewRequests.map((req) => ({
+        id: req.id,
+        email: req.email,
+        nom: req.nom,
+      }))
+    );
+
+    showResponsableAcconierNotification(newRequestsCount, actualNewRequests);
+  } else {
+    console.log("📋 Aucune nouvelle demande Responsable Acconier détectée");
+  }
+
+  lastResponsableAcconierCount = currentResponsableAcconierCount;
+}
+
+// Fonction pour afficher une notification pour les nouvelles demandes de Responsable Acconier
+function showResponsableAcconierNotification(count, newRequests) {
+  console.log(
+    `🔔 Affichage de la notification pour ${count} demande(s) Responsable Acconier`
+  );
+  console.log(
+    "📧 Détails des nouvelles demandes Responsable Acconier:",
+    newRequests.map((req) => ({
+      id: req.id,
+      email: req.email,
+      nom: req.nom || req.name,
+      created_at: req.created_at,
+    }))
+  );
+
+  // Créer la notification
+  const notification = document.createElement("div");
+  notification.className = `
+    fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50
+    transform translate-x-full transition-transform duration-500 ease-in-out
+    border-l-4 border-green-400 max-w-md
+  `;
+
+  const requestInfo = newRequests
+    .map((req) => {
+      const email = req.email || "Email non disponible";
+      const nom = req.nom || req.name || "Utilisateur";
+      console.log(`📧 Email pour la notification Responsable Acconier:`, email);
+      return `${nom} (${email})`;
+    })
+    .join(", ");
+
+  notification.innerHTML = `
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <span class="text-2xl">⚓</span>
+      </div>
+      <div class="ml-3 flex-1">
+        <h4 class="font-bold text-sm">Nouvelle demande - Responsable Acconier</h4>
+        <p class="text-xs mt-1">
+          ${count} nouvelle(s) demande(s) depuis auth.html
+        </p>
+        <p class="text-xs text-green-100 mt-1">
+          ${requestInfo}
+        </p>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" 
+              class="ml-4 text-green-200 hover:text-white transition-colors">
+        ×
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Animation d'entrée
+  setTimeout(() => {
+    notification.style.transform = "translateX(0)";
+  }, 100);
+
+  // Auto-suppression après 8 secondes
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.style.transform = "translateX(100%)";
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 500);
+    }
+  }, 8000);
+
+  // Son de notification
+  playNotificationSound();
+
+  console.log(
+    `✅ Notification affichée: ${count} nouvelle(s) demande(s) de Responsable Acconier`
+  );
+}
+
+// Fonction pour mettre à jour le badge de l'onglet Responsable Acconier
+function updateResponsableAcconierBadge() {
+  console.log("🏷️ === DÉBUT MISE À JOUR BADGE RESPONSABLE ACCONIER ===");
+
+  const responsableAcconierTab = document.querySelector(
+    '[data-section="responsable-acconier"]'
+  );
+
+  console.log(
+    "🔍 Recherche de l'onglet avec sélecteur:",
+    '[data-section="responsable-acconier"]'
+  );
+  console.log("📍 Élément trouvé:", responsableAcconierTab);
+
+  if (!responsableAcconierTab) {
+    console.log("❌ Onglet Responsable Acconier non trouvé");
+
+    // Recherchons tous les éléments avec data-section pour diagnostic
+    const allDataSections = document.querySelectorAll("[data-section]");
+    console.log(
+      "🔍 Tous les éléments avec data-section trouvés:",
+      allDataSections.length
+    );
+    allDataSections.forEach((el, index) => {
+      console.log(
+        `  ${index + 1}. data-section="${el.getAttribute("data-section")}"`,
+        el
+      );
+    });
+
+    return;
+  }
+
+  console.log("✅ Onglet Responsable Acconier trouvé:", responsableAcconierTab);
+  console.log(
+    "📋 Contenu actuel de l'onglet:",
+    responsableAcconierTab.innerHTML
+  );
+
+  // Compter les demandes de responsable-acconier en attente (provenant de auth.html)
+  console.log(
+    "📊 Analyse des demandes - Total currentRequests:",
+    currentRequests.length
+  );
+  console.log("📊 Contenu de currentRequests:", currentRequests);
+
+  const pendingResponsableAcconierRequests = currentRequests.filter((req) => {
+    const isResponsableAcconier =
+      req.actor_type === "responsable-acconier" ||
+      req.request_type === "responsable-acconier" ||
+      req.actorType === "responsable-acconier";
+    const isPending = req.status === "pending";
+
+    // Vérifier si cette demande a été vue (basé sur son ID unique)
+    const requestId =
+      req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+    const isNotViewed = !viewedRequestIds.has(requestId);
+
+    const isFromAuth =
+      req.source === "auth" ||
+      req.role === "responsable_acconier" ||
+      isResponsableAcconier;
+
+    console.log(`📋 Demande Responsable Acconier analysée:`, {
+      nom: req.nom || req.name,
+      actor_type: req.actor_type,
+      request_type: req.request_type,
+      actorType: req.actorType,
+      role: req.role,
+      status: req.status,
+      source: req.source,
+      requestId: requestId,
+      isViewed: viewedRequestIds.has(requestId),
+      isResponsableAcconier,
+      isPending,
+      isNotViewed,
+      isFromAuth,
+      RÉSULTAT: isResponsableAcconier && isPending && isNotViewed,
+    });
+
+    return isResponsableAcconier && isPending && isNotViewed; // Ajouter la condition "non vue"
+  });
+
+  const count = pendingResponsableAcconierRequests.length;
+  console.log(
+    `📊 BADGE RESPONSABLE ACCONIER: ${count} demandes en attente depuis auth.html`
+  );
+  console.log(
+    `📋 Détails des demandes filtrées:`,
+    pendingResponsableAcconierRequests.map((req) => ({
+      nom: req.nom || req.name,
+      email: req.email,
+      actor_type: req.actor_type,
+      request_type: req.request_type,
+      actorType: req.actorType,
+      role: req.role,
+      source: req.source,
+    }))
+  );
+
+  // Supprimer l'ancien badge s'il existe
+  const existingBadge = responsableAcconierTab.querySelector(
+    ".notification-badge"
+  );
+  if (existingBadge) {
+    console.log("🗑️ Suppression de l'ancien badge:", existingBadge);
+    existingBadge.remove();
+  } else {
+    console.log("ℹ️ Aucun badge existant trouvé");
+  }
+
+  // Ajouter le nouveau badge si il y a des demandes en attente
+  if (count > 0) {
+    console.log(
+      `🟢 === CRÉATION BADGE RESPONSABLE ACCONIER: ${count} demandes ===`
+    );
+    const badge = document.createElement("span");
+    badge.className =
+      "notification-badge bg-green-500 text-white text-xs rounded-full px-2 py-1 ml-2 animate-pulse";
+    badge.textContent = count;
+
+    // Styles plus visibles et forcés avec couleur verte pour Responsable Acconier
+    badge.style.cssText = `
+      font-size: 12px !important;
+      min-width: 22px !important;
+      height: 22px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background-color: #22c55e !important;
+      color: #ffffff !important;
+      border-radius: 50% !important;
+      margin-left: 8px !important;
+      font-weight: bold !important;
+      z-index: 1000 !important;
+      position: relative !important;
+      border: 2px solid #ffffff !important;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.6) !important;
+    `;
+    badge.title = `${count} nouvelle(s) demande(s) de Responsable Acconier depuis auth.html`;
+
+    console.log("🏷️ Badge créé:", badge);
+    console.log("🏷️ Style du badge:", badge.style.cssText);
+
+    responsableAcconierTab.appendChild(badge);
+    console.log(
+      "✅ Badge Responsable Acconier ajouté avec succès sur l'onglet"
+    );
+    console.log(
+      "📍 Contenu de l'onglet après ajout:",
+      responsableAcconierTab.innerHTML
+    );
+  } else {
+    console.log(
+      "ℹ️ Aucune demande Responsable Acconier en attente - pas de badge"
+    );
+  }
+
+  console.log("🏷️ === FIN MISE À JOUR BADGE RESPONSABLE ACCONIER ===");
+}
+
+// =================== SYSTÈME DE NOTIFICATIONS VUE GLOBALE ===================
+
+// Fonction pour vérifier les nouvelles demandes de Vue Globale
+function checkForNewVueGlobaleRequests(newRequests) {
+  console.log("🔍 Vérification des nouvelles demandes Vue Globale...");
+  console.log("📋 Total des demandes reçues:", newRequests.length);
+
+  // Filtrer les demandes Vue Globale en attente (celles venant de index.html)
+  const vueGlobaleRequests = newRequests.filter((req) => {
+    return (
+      req.status === "pending" &&
+      (req.actor_type === "vue-globale" ||
+        req.request_type === "vue-globale" ||
+        req.source === "index.html" ||
+        req.source === "index")
+    );
+  });
+
+  console.log("🎯 Demandes Vue Globale en attente:", vueGlobaleRequests.length);
+  console.log("📊 Détails des demandes Vue Globale:", vueGlobaleRequests);
+
+  // Trier par date de création pour identifier les vraies nouvelles demandes
+  vueGlobaleRequests.sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at)
+  );
+  console.log(
+    "📅 Demandes Vue Globale triées par date:",
+    vueGlobaleRequests.map((req) => ({
+      id: req.id,
+      email: req.email,
+      created_at: req.created_at,
+    }))
+  );
+
+  const currentVueGlobaleCount = vueGlobaleRequests.length;
+
+  console.log("📈 Compteur précédent:", lastVueGlobaleCount);
+  console.log("📈 Compteur actuel:", currentVueGlobaleCount);
+
+  // Si c'est la première fois qu'on charge les données, on initialise sans notification
+  if (lastVueGlobaleCount === 0 && currentVueGlobaleCount > 0) {
+    console.log("🆕 Première initialisation - pas de notification");
+    lastVueGlobaleCount = currentVueGlobaleCount;
+    return;
+  }
+
+  // Si on a de nouvelles demandes
+  if (currentVueGlobaleCount > lastVueGlobaleCount) {
+    const newRequestsCount = currentVueGlobaleCount - lastVueGlobaleCount;
+    console.log(
+      `🔔 ${newRequestsCount} nouvelle(s) demande(s) Vue Globale détectée(s)!`
+    );
+
+    // Prendre les vraies nouvelles demandes (les plus récentes)
+    const actualNewRequests = vueGlobaleRequests.slice(-newRequestsCount);
+    console.log(
+      "🆕 Vraies nouvelles demandes Vue Globale:",
+      actualNewRequests.map((req) => ({
+        id: req.id,
+        email: req.email,
+        nom: req.nom,
+      }))
+    );
+
+    showVueGlobaleNotification(newRequestsCount, actualNewRequests);
+  } else {
+    console.log("📋 Aucune nouvelle demande Vue Globale détectée");
+  }
+
+  lastVueGlobaleCount = currentVueGlobaleCount;
+}
+
+// Fonction pour afficher une notification pour les nouvelles demandes de Vue Globale
+function showVueGlobaleNotification(count, newRequests) {
+  console.log(
+    `🔔 Affichage de la notification pour ${count} demande(s) Vue Globale`
+  );
+  console.log(
+    "📧 Détails des nouvelles demandes Vue Globale:",
+    newRequests.map((req) => ({
+      id: req.id,
+      email: req.email,
+      nom: req.nom || req.name,
+      created_at: req.created_at,
+    }))
+  );
+
+  // Créer la notification
+  const notification = document.createElement("div");
+  notification.className = `
+    fixed top-4 right-4 bg-blue-600 text-white px-6 py-4 rounded-lg shadow-lg z-50
+    transform translate-x-full transition-transform duration-500 ease-in-out
+    border-l-4 border-blue-400 max-w-md
+  `;
+
+  const requestInfo = newRequests
+    .map((req) => {
+      const email = req.email || "Email non disponible";
+      const nom = req.nom || req.name || "Utilisateur";
+      console.log(`📧 Email pour la notification Vue Globale:`, email);
+      return `${nom} (${email})`;
+    })
+    .join(", ");
+
+  notification.innerHTML = `
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <span class="text-2xl">🌍</span>
+      </div>
+      <div class="ml-3 flex-1">
+        <h4 class="font-bold text-sm">Nouvelle demande - Vue Globale</h4>
+        <p class="text-xs mt-1">
+          ${count} nouvelle(s) demande(s) depuis index.html
+        </p>
+        <p class="text-xs text-blue-100 mt-1">
+          ${requestInfo}
+        </p>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" 
+              class="ml-4 text-blue-200 hover:text-white transition-colors">
+        ×
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Animation d'entrée
+  setTimeout(() => {
+    notification.style.transform = "translateX(0)";
+  }, 100);
+
+  // Auto-suppression après 8 secondes
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.style.transform = "translateX(100%)";
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 500);
+    }
+  }, 8000);
+
+  // Son de notification
+  playNotificationSound();
+
+  console.log(
+    `✅ Notification affichée: ${count} nouvelle(s) demande(s) de Vue Globale`
+  );
+}
+
+// Fonction pour jouer un son de notification
+function playNotificationSound() {
+  try {
+    // Créer un son de notification simple avec l'API Web Audio
+    const audioContext = new (window.AudioContext ||
+      window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Son plus agréable : double bip
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContext.currentTime + 0.3
+    );
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.3);
+
+    console.log("🔊 Son de notification joué");
+  } catch (error) {
+    console.log("🔇 Son de notification non disponible:", error);
+
+    // Fallback : essayer de jouer un beep simple
+    try {
+      const audio = new Audio(
+        "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt559NEAxQp+PwtmMcBjiR1/LHdSEFLYPP8tiJOQcYaLvt"
+      );
+      audio.volume = 0.3;
+      audio.play();
+    } catch (fallbackError) {
+      console.log("🔇 Aucun son disponible:", fallbackError);
+    }
+  }
+}
+
+// Fonction pour initialiser le système de notifications
+function initializeNotificationSystem() {
+  console.log("🔔 Initialisation du système de notifications...");
+
+  // Demander la permission pour les notifications (optionnel)
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+
+  // Initialiser les compteurs des demandes
+  lastAgentTransitCount = 0;
+  lastResponsableLivraisonCount = 0;
+  lastResponsableAcconierCount = 0;
+  lastVueGlobaleCount = 0;
+
+  console.log("✅ Système de notifications initialisé");
+
+  // Ajouter un bouton de test (pour debug) - DÉSACTIVÉ
+  // addTestButton();
+}
+
+// Fonction pour ajouter un bouton de test
+function addTestButton() {
+  const testButton = document.createElement("button");
+  testButton.innerHTML = "🔄 Test Refresh";
+  testButton.className =
+    "fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 hover:bg-green-600";
+  testButton.onclick = () => {
+    console.log("🧪 Test de rafraîchissement forcé...");
+    loadAccessRequests();
+  };
+  document.body.appendChild(testButton);
 }
 
 // =================== SYSTÈME DE THÈME ===================
@@ -4322,202 +5654,6 @@ function showNotification(message, type = "success") {
   }, displayTime);
 }
 
-/**
- * Détecte et affiche une notification pour les nouvelles demandes
- */
-function detectAndNotifyNewRequests(newRequests) {
-  // Si c'est le premier chargement, ne pas afficher de notifications
-  if (lastKnownRequestCount === 0) {
-    lastKnownRequestCount = newRequests.length;
-    return;
-  }
-
-  // Vérifier s'il y a de nouvelles demandes
-  if (newRequests.length > lastKnownRequestCount) {
-    const newRequestsCount = newRequests.length - lastKnownRequestCount;
-
-    // Trouver les nouvelles demandes (les plus récentes)
-    const sortedRequests = newRequests.sort(
-      (a, b) =>
-        new Date(b.created_at || b.request_date) -
-        new Date(a.created_at || a.request_date)
-    );
-
-    // Prendre les nouvelles demandes
-    const newestRequests = sortedRequests.slice(0, newRequestsCount);
-
-    // Créer une notification pour chaque nouvelle demande
-    newestRequests.forEach((request, index) => {
-      setTimeout(() => {
-        const source = getRequestSource(request);
-        const sourceName = getSourceDisplayName(source);
-        const actorType = getActorTypeDisplay(request);
-
-        const message = `🔔 Nouvelle demande d'accès ${actorType} depuis ${sourceName}`;
-        showNotification(message, "info");
-
-        console.log(`📢 Nouvelle demande détectée:`, {
-          nom: request.name,
-          email: request.email,
-          source: sourceName,
-          actorType: actorType,
-          timestamp: request.created_at || request.request_date,
-        });
-      }, index * 1500); // Délai entre les notifications pour éviter la surcharge
-    });
-
-    lastKnownRequestCount = newRequests.length;
-  }
-}
-
-/**
- * Détermine la source de la demande basée sur les données
- */
-function getRequestSource(request) {
-  // Analyser l'actor_type et d'autres indices pour déterminer la source
-  if (request.actor_type === "acconier" || request.actorType === "acconier") {
-    return "acconier_auth"; // Image 4
-  }
-
-  if (
-    request.actor_type === "responsable-livraison" ||
-    request.role === "Responsable de Livraison" ||
-    request.request_type === "responsable-livraison"
-  ) {
-    return "repoLivAuth"; // Image 3
-  }
-
-  if (
-    request.actor_type === "responsable-acconier" ||
-    request.role === "Responsable Acconier" ||
-    request.request_type === "responsable-acconier"
-  ) {
-    return "auth"; // Image 2
-  }
-
-  // Si aucun type spécifique, probablement de la page principale
-  return "index"; // Image 1
-}
-
-/**
- * Retourne le nom d'affichage de la source
- */
-function getSourceDisplayName(source) {
-  const sourceNames = {
-    index: "Page Principale (index.html)",
-    auth: "Authentification Générale (auth.html)",
-    repoLivAuth: "Responsable Livraison (repoLivAuth.html)",
-    acconier_auth: "Agent Transit (acconier_auth.html)",
-  };
-
-  return sourceNames[source] || "Source Inconnue";
-}
-
-/**
- * Retourne le type d'acteur pour l'affichage
- */
-function getActorTypeDisplay(request) {
-  if (request.actor_type === "acconier" || request.actorType === "acconier") {
-    return "Agent Transit";
-  }
-
-  if (
-    request.actor_type === "responsable-livraison" ||
-    request.role === "Responsable de Livraison"
-  ) {
-    return "Responsable Livraison";
-  }
-
-  if (
-    request.actor_type === "responsable-acconier" ||
-    request.role === "Responsable Acconier"
-  ) {
-    return "Responsable Acconier";
-  }
-
-  return "Utilisateur";
-}
-
-/**
- * ===== GESTION DES INDICATEURS D'ONGLETS =====
- */
-
-/**
- * Mapping entre les sources et les onglets correspondants
- */
-function getTabIdFromSource(source) {
-  const sourceToTabMapping = {
-    acconier_auth: "tab-agent-transit", // Image 1 → Agent Transit (Acconier)
-    repoLivAuth: "tab-responsable-livraison", // Image 3 → Responsable de Livraison
-    index: "tab-global", // Image 4 → Vue Globale
-    auth: "tab-responsable-acconier", // Image 5 → Responsable Acconier
-  };
-
-  return sourceToTabMapping[source] || "tab-global";
-}
-
-/**
- * Ajouter un indicateur de notification sur un onglet
- */
-function addTabNotificationIndicator(source) {
-  const tabId = getTabIdFromSource(source);
-  const tabElement = document.getElementById(tabId);
-
-  if (tabElement) {
-    // Vérifier si l'indicateur existe déjà
-    let indicator = tabElement.querySelector(".notification-indicator");
-
-    if (!indicator) {
-      // Créer l'indicateur
-      indicator = document.createElement("div");
-      indicator.className = "notification-indicator";
-      indicator.title = "Nouvelle demande non vue";
-
-      // Ajouter l'indicateur à l'onglet
-      tabElement.appendChild(indicator);
-
-      // Ajouter la classe de notification à l'onglet
-      tabElement.classList.add("has-notification");
-
-      console.log(`🔴 Indicateur ajouté sur l'onglet: ${tabId}`);
-    }
-  }
-}
-
-/**
- * Supprimer l'indicateur de notification d'un onglet
- */
-function removeTabNotificationIndicator(tabId) {
-  const tabElement = document.getElementById(tabId);
-
-  if (tabElement) {
-    // Supprimer l'indicateur
-    const indicator = tabElement.querySelector(".notification-indicator");
-    if (indicator) {
-      indicator.remove();
-    }
-
-    // Supprimer la classe de notification
-    tabElement.classList.remove("has-notification");
-
-    console.log(`🔴 Indicateur supprimé de l'onglet: ${tabId}`);
-  }
-}
-
-/**
- * Supprimer tous les indicateurs de notification
- */
-function clearAllTabNotificationIndicators() {
-  const tabs = [
-    "tab-global",
-    "tab-responsable-acconier",
-    "tab-responsable-livraison",
-    "tab-agent-transit",
-  ];
-  tabs.forEach((tabId) => removeTabNotificationIndicator(tabId));
-  console.log("🔴 Tous les indicateurs supprimés");
-}
-
 function logout() {
   if (confirm("Êtes-vous sûr de vouloir vous déconnecter ?")) {
     window.location.href = "/html/admin-login.html";
@@ -4578,60 +5714,6 @@ function toggleAutoRefresh() {
     clearInterval(autoRefreshInterval);
     showNotification("Actualisation automatique désactivée", "warning");
   }
-}
-
-/**
- * Vérification rapide des nouvelles demandes (toutes les 10 secondes)
- * pour une notification plus immédiate
- */
-function startFastNotificationCheck() {
-  // Vérification FORCÉE toutes les 5 secondes pour les notifications
-  setInterval(async () => {
-    try {
-      const response = await fetch("/api/admin/access-requests", {
-        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          const newRequests = data.requests || [];
-
-          // FORCER la détection même si le hash n'a pas changé
-          if (newRequests.length !== lastKnownRequestCount) {
-            console.log(
-              `🚨 NOUVELLE DEMANDE DÉTECTÉE! Avant: ${lastKnownRequestCount}, Maintenant: ${newRequests.length}`
-            );
-
-            // Si nouvelle demande
-            if (newRequests.length > lastKnownRequestCount) {
-              const latestRequest = newRequests[newRequests.length - 1];
-
-              // Afficher immédiatement la notification
-              const source = getRequestSource(latestRequest);
-              const sourceName = getSourceDisplayName(source);
-              const actorType = getActorTypeDisplay(latestRequest);
-
-              const message = `🔔 NOUVELLE DEMANDE: ${actorType} depuis ${sourceName}`;
-
-              // Forcer l'affichage de la notification + indicateur onglet
-              showNotification(message, "info");
-              console.log("🚨 NOTIFICATION AFFICHÉE:", message);
-
-              // Ajouter l'indicateur sur l'onglet correspondant
-              addTabNotificationIndicator(source);
-
-              lastKnownRequestCount = newRequests.length;
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.log("⚠️ Erreur lors de la vérification rapide:", error.message);
-    }
-  }, 5000); // Toutes les 5 secondes maintenant
-
-  console.log("⚡ Vérification rapide des notifications activée (10 sec)");
 }
 
 // === NOUVELLES FONCTIONS POUR L'ENVOI DE CODE D'ACCÈS ===
@@ -5111,6 +6193,302 @@ window.testThemeModal = function () {
   }
 };
 
+// =================== FONCTIONS DE TEST ET DEBUG ===================
+
+// Fonction de test pour forcer l'affichage d'un badge Responsable de Livraison
+window.testResponsableLivraisonBadge = function () {
+  console.log("🧪 === TEST MANUEL BADGE RESPONSABLE LIVRAISON ===");
+
+  // Simuler une demande de Responsable de Livraison en attente
+  const testRequest = {
+    nom: "Test Responsable",
+    email: "test@responsable.com",
+    actor_type: "responsable_livraison",
+    status: "pending",
+    role: "responsable_livraison",
+    source: "repoLivAuth",
+  };
+
+  // Ajouter temporairement à currentRequests
+  const originalRequests = [...currentRequests];
+  currentRequests.push(testRequest);
+
+  console.log("🧪 Demande de test ajoutée:", testRequest);
+  console.log("🧪 CurrentRequests avec test:", currentRequests.length);
+
+  // Forcer la mise à jour du badge
+  updateResponsableLivraisonBadge();
+
+  // Restaurer les demandes originales après 5 secondes
+  setTimeout(() => {
+    currentRequests.length = 0;
+    currentRequests.push(...originalRequests);
+    updateResponsableLivraisonBadge();
+    console.log("🧪 Test terminé - données restaurées");
+  }, 5000);
+};
+
+// Fonction de test pour forcer l'affichage d'un badge Agent Transit
+window.testAgentTransitBadge = function () {
+  console.log("🧪 === TEST MANUEL BADGE AGENT TRANSIT ===");
+
+  // Simuler une demande d'Agent Transit en attente
+  const testRequest = {
+    nom: "Test Agent",
+    email: "test@agent.com",
+    actor_type: "agent-transit",
+    status: "pending",
+    source: "acconier_auth",
+  };
+
+  // Ajouter temporairement à currentRequests
+  const originalRequests = [...currentRequests];
+  currentRequests.push(testRequest);
+
+  console.log("🧪 Demande de test ajoutée:", testRequest);
+  console.log("🧪 CurrentRequests avec test:", currentRequests.length);
+
+  // Forcer la mise à jour du badge
+  updateAgentTransitBadge();
+
+  // Restaurer les demandes originales après 5 secondes
+  setTimeout(() => {
+    currentRequests.length = 0;
+    currentRequests.push(...originalRequests);
+    updateAgentTransitBadge();
+    console.log("🧪 Test terminé - données restaurées");
+  }, 5000);
+};
+
+// Fonction pour afficher des infos de debug
+window.debugBadgeSystem = function () {
+  console.log("🔍 === DEBUG SYSTÈME DE BADGES ===");
+  console.log("📊 CurrentRequests:", currentRequests);
+  console.log("🏷️ Onglets trouvés:");
+
+  const agentTab = document.querySelector('[data-section="agent-transit"]');
+  const responsableTab = document.querySelector(
+    '[data-section="responsable-livraison"]'
+  );
+
+  console.log("  - Agent Transit:", agentTab);
+  console.log("  - Responsable Livraison:", responsableTab);
+
+  if (agentTab) {
+    const agentBadge = agentTab.querySelector(".notification-badge");
+    console.log("  - Badge Agent Transit:", agentBadge);
+  }
+
+  if (responsableTab) {
+    const responsableBadge = responsableTab.querySelector(
+      ".notification-badge"
+    );
+    console.log("  - Badge Responsable Livraison:", responsableBadge);
+  }
+
+  console.log("🔄 Forçage de la mise à jour des badges...");
+  updateAgentTransitBadge();
+  updateResponsableLivraisonBadge();
+};
+
+// Fonction pour forcer l'affichage d'un badge visible pour test
+window.forceVisibleBadge = function () {
+  console.log("🧪 === FORCE BADGE VISIBLE TEST ===");
+
+  const responsableTab = document.querySelector(
+    '[data-section="responsable-livraison"]'
+  );
+  const agentTab = document.querySelector('[data-section="agent-transit"]');
+  const acconiersTab = document.querySelector(
+    '[data-section="responsable-acconier"]'
+  );
+
+  if (responsableTab) {
+    // Supprimer badge existant
+    const existingBadge = responsableTab.querySelector(".notification-badge");
+    if (existingBadge) existingBadge.remove();
+
+    // Créer badge de test très visible
+    const testBadge = document.createElement("span");
+    testBadge.textContent = "99";
+    testBadge.style.cssText = `
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-width: 24px !important;
+      height: 24px !important;
+      background-color: #ff0000 !important;
+      color: #ffffff !important;
+      border-radius: 50% !important;
+      font-size: 14px !important;
+      font-weight: bold !important;
+      margin-left: 10px !important;
+      z-index: 9999 !important;
+      position: relative !important;
+      animation: pulse 1s infinite !important;
+      border: 2px solid #ffffff !important;
+      box-shadow: 0 0 10px rgba(255,0,0,0.5) !important;
+    `;
+    testBadge.className = "notification-badge test-badge";
+    testBadge.title = "Badge de test - Responsable Livraison";
+
+    responsableTab.appendChild(testBadge);
+    console.log("🔴 Badge test ROUGE ajouté sur Responsable Livraison");
+  }
+
+  if (agentTab) {
+    // Supprimer badge existant
+    const existingBadge = agentTab.querySelector(".notification-badge");
+    if (existingBadge) existingBadge.remove();
+
+    // Créer badge de test très visible
+    const testBadge = document.createElement("span");
+    testBadge.textContent = "88";
+    testBadge.style.cssText = `
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-width: 24px !important;
+      height: 24px !important;
+      background-color: #0066ff !important;
+      color: #ffffff !important;
+      border-radius: 50% !important;
+      font-size: 14px !important;
+      font-weight: bold !important;
+      margin-left: 10px !important;
+      z-index: 9999 !important;
+      position: relative !important;
+      animation: pulse 1s infinite !important;
+      border: 2px solid #ffffff !important;
+      box-shadow: 0 0 10px rgba(0,102,255,0.5) !important;
+    `;
+    testBadge.className = "notification-badge test-badge";
+    testBadge.title = "Badge de test - Agent Transit";
+
+    agentTab.appendChild(testBadge);
+    console.log("🔵 Badge test BLEU ajouté sur Agent Transit");
+  }
+
+  if (acconiersTab) {
+    // Supprimer badge existant
+    const existingBadge = acconiersTab.querySelector(".notification-badge");
+    if (existingBadge) existingBadge.remove();
+
+    // Créer badge de test très visible
+    const testBadge = document.createElement("span");
+    testBadge.textContent = "77";
+    testBadge.style.cssText = `
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-width: 24px !important;
+      height: 24px !important;
+      background-color: #22c55e !important;
+      color: #ffffff !important;
+      border-radius: 50% !important;
+      font-size: 14px !important;
+      font-weight: bold !important;
+      margin-left: 10px !important;
+      z-index: 9999 !important;
+      position: relative !important;
+      animation: pulse 1s infinite !important;
+      border: 2px solid #ffffff !important;
+      box-shadow: 0 0 10px rgba(34,197,94,0.5) !important;
+    `;
+    testBadge.className = "notification-badge test-badge";
+    testBadge.title = "Badge de test - Responsable Acconier";
+
+    acconiersTab.appendChild(testBadge);
+    console.log("🟢 Badge test VERT ajouté sur Responsable Acconier");
+  }
+
+  console.log("✅ Badges de test ajoutés - vous devriez les voir maintenant !");
+
+  // Supprimer les badges de test après 10 secondes
+  setTimeout(() => {
+    document.querySelectorAll(".test-badge").forEach((badge) => badge.remove());
+    console.log("🧪 Badges de test supprimés");
+    // Restaurer les vrais badges
+    updateAgentTransitBadge();
+    updateResponsableLivraisonBadge();
+    updateResponsableAcconierBadge();
+  }, 10000);
+};
+
+// Fonction pour tester la suppression de badge au clic
+window.testBadgeClickRemoval = function () {
+  console.log("🧪 === TEST SUPPRESSION BADGE AU CLIC ===");
+
+  // Forcer l'affichage des badges d'abord
+  forceVisibleBadge();
+
+  setTimeout(() => {
+    console.log(
+      "🧪 Maintenant, cliquez sur les onglets pour voir les badges disparaître !"
+    );
+    console.log(
+      "🧪 - Cliquez sur 'Agent Transit (Acconier)' pour supprimer le badge bleu"
+    );
+    console.log(
+      "🧪 - Cliquez sur 'Responsable de Livraison' pour supprimer le badge rouge"
+    );
+    console.log(
+      "🧪 - Cliquez sur 'Responsable Acconier' pour supprimer le badge vert"
+    );
+    console.log(
+      "🧪 Les badges ne devraient pas réapparaître tant qu'il n'y a pas de nouvelles demandes"
+    );
+  }, 2000);
+};
+
+// Fonction pour tester la persistance après rafraîchissement
+window.testBadgePersistence = function () {
+  console.log("🧪 === TEST PERSISTANCE BADGE ===");
+
+  console.log("📊 Demandes vues actuellement:", Array.from(viewedRequestIds));
+  console.log("📊 Demandes totales:", currentRequests.length);
+
+  // Marquer quelques demandes comme vues manuellement
+  if (currentRequests.length > 0) {
+    const testRequest = currentRequests[0];
+    const requestId =
+      testRequest.id ||
+      `${testRequest.actor_type}-${testRequest.nom || testRequest.name}-${
+        testRequest.email
+      }`;
+    viewedRequestIds.add(requestId);
+    saveViewedRequestIds();
+
+    console.log("✅ Demande marquée comme vue:", requestId);
+    console.log(
+      "🧪 Maintenant, rafraîchissez la page (F5) et vérifiez que le badge ne réapparaît pas !"
+    );
+    console.log("🧪 Puis exécutez: debugBadgeSystem() pour voir l'état");
+  } else {
+    console.log("❌ Aucune demande trouvée pour le test");
+  }
+};
+
+// Fonction pour réinitialiser l'état "vu" (pour test)
+window.resetViewedState = function () {
+  console.log("🧪 === RÉINITIALISATION ÉTAT VU ===");
+
+  viewedRequestIds.clear();
+  localStorage.removeItem("viewedRequestIds");
+
+  // Réinitialiser tous les compteurs
+  lastAgentTransitCount = 0;
+  lastResponsableLivraisonCount = 0;
+  lastResponsableAcconierCount = 0;
+  lastVueGlobaleCount = 0;
+
+  console.log("✅ État 'vu' réinitialisé");
+  console.log("✅ Compteurs réinitialisés");
+  console.log(
+    "🧪 Maintenant, rafraîchissez la page pour voir tous les badges réapparaître"
+  );
+};
+
 // Test de toutes les fonctions de thème
 window.testAllThemeFunctions = function () {
   console.log("🧪 Test de toutes les fonctions de thème...");
@@ -5137,94 +6515,267 @@ window.testAllThemeFunctions = function () {
   }
 };
 
-// =================== FONCTION DE RAFRAÎCHISSEMENT FORCÉ ===================
+// Fonction de test spécifique pour badge Responsable Acconier
+window.testResponsableAcconierBadge = function () {
+  console.log("🧪 === TEST BADGE RESPONSABLE ACCONIER ===");
 
-/**
- * Force le rafraîchissement des demandes d'accès
- */
-async function forceRefreshRequests() {
-  console.log("🔄 Rafraîchissement forcé des demandes...");
+  const acconiersTab = document.querySelector(
+    '[data-section="responsable-acconier"]'
+  );
 
-  // Réinitialiser le hash pour forcer le rechargement
-  lastDataHash = null;
-
-  // Afficher un indicateur de chargement
-  showLoadingIndicator(true);
-
-  try {
-    // Recharger les demandes
-    await loadAccessRequests();
-
-    // Force la mise à jour de toutes les statistiques d'acteurs
-    updateAllActorStatistics();
-
-    // Afficher une notification de succès
-    showNotification("✅ Demandes actualisées avec succès!", "success");
-
-    console.log("✅ Rafraîchissement forcé terminé");
-  } catch (error) {
-    console.error("❌ Erreur lors du rafraîchissement forcé:", error);
-    showNotification("❌ Erreur lors de l'actualisation", "error");
-  } finally {
-    showLoadingIndicator(false);
+  if (!acconiersTab) {
+    console.error("❌ Onglet Responsable Acconier non trouvé !");
+    return;
   }
-}
+
+  // Supprimer badge existant
+  const existingBadge = acconiersTab.querySelector(".notification-badge");
+  if (existingBadge) existingBadge.remove();
+
+  // Créer badge de test super visible
+  const testBadge = document.createElement("span");
+  testBadge.textContent = "TEST";
+  testBadge.style.cssText = `
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 30px !important;
+    height: 30px !important;
+    background-color: #22c55e !important;
+    color: #ffffff !important;
+    border-radius: 50% !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    margin-left: 10px !important;
+    z-index: 9999 !important;
+    position: relative !important;
+    animation: pulse 1s infinite !important;
+    border: 3px solid #ffffff !important;
+    box-shadow: 0 0 15px rgba(34,197,94,0.8) !important;
+  `;
+  testBadge.className = "notification-badge test-badge";
+  testBadge.title = "Badge de test - Responsable Acconier depuis auth.html";
+
+  acconiersTab.appendChild(testBadge);
+  console.log("🟢 Badge test VERT ajouté sur Responsable Acconier");
+  console.log("🧪 Le badge devrait être très visible maintenant !");
+
+  // Supprimer après 15 secondes
+  setTimeout(() => {
+    if (testBadge.parentElement) {
+      testBadge.remove();
+      console.log("🧪 Badge de test supprimé");
+      // Restaurer le vrai badge
+      updateResponsableAcconierBadge();
+    }
+  }, 15000);
+};
+
+// Fonction de test pour notification Vue Globale
+window.testVueGlobaleNotification = function () {
+  console.log("🧪 === TEST NOTIFICATION VUE GLOBALE ===");
+
+  // Simuler une demande de Vue Globale
+  const mockRequest = {
+    nom: "Test User",
+    email: "test@example.com",
+    source: "index",
+    status: "pending",
+  };
+
+  showVueGlobaleNotification(1, [mockRequest]);
+  console.log("🌍 Notification Vue Globale de test affichée !");
+};
+
+// =================== SYSTÈME DE SUPPRESSION DES DEMANDES ===================
 
 /**
- * Met à jour toutes les statistiques des acteurs
+ * Toggle sélection de toutes les demandes pour un acteur
  */
-function updateAllActorStatistics() {
-  console.log("📊 Mise à jour de toutes les statistiques d'acteurs...");
+function toggleSelectAll(actorType) {
+  const selectAllCheckbox = document.getElementById(`selectAll_${actorType}`);
+  const checkboxes = document.querySelectorAll(
+    `input.request-checkbox[data-actor-type="${actorType}"]`
+  );
 
-  // Liste des types d'acteurs
-  const actorTypes = [
-    "responsable-acconier",
-    "responsable-livraison",
-    "agent-transit",
-  ];
-
-  // Mettre à jour les statistiques pour chaque type d'acteur
-  actorTypes.forEach((actorType) => {
-    updateActorStatistics(actorType);
+  checkboxes.forEach((checkbox) => {
+    checkbox.checked = selectAllCheckbox.checked;
   });
 
-  console.log("✅ Toutes les statistiques d'acteurs mises à jour");
+  updateSelectionCount(actorType);
 }
 
 /**
- * Affiche une notification temporaire
+ * Mettre à jour le compteur de sélection et l'état du bouton supprimer
  */
-function showNotification(message, type = "info") {
-  // Créer l'élément de notification
-  const notification = document.createElement("div");
-  notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+function updateSelectionCount(actorType) {
+  const checkboxes = document.querySelectorAll(
+    `input.request-checkbox[data-actor-type="${actorType}"]:checked`
+  );
+  const selectedCount = checkboxes.length;
+  const totalCheckboxes = document.querySelectorAll(
+    `input.request-checkbox[data-actor-type="${actorType}"]`
+  ).length;
 
-  // Styles selon le type
-  if (type === "success") {
-    notification.classList.add("bg-green-500", "text-white");
-  } else if (type === "error") {
-    notification.classList.add("bg-red-500", "text-white");
-  } else {
-    notification.classList.add("bg-blue-500", "text-white");
+  // Mettre à jour le compteur
+  const countElement = document.getElementById(`selectedCount_${actorType}`);
+  if (countElement) {
+    countElement.textContent = `(${selectedCount} sélectionné${
+      selectedCount > 1 ? "s" : ""
+    })`;
   }
 
-  notification.textContent = message;
+  // Mettre à jour l'état du bouton supprimer
+  const deleteButton = document.getElementById(`deleteSelected_${actorType}`);
+  if (deleteButton) {
+    deleteButton.disabled = selectedCount === 0;
+  }
 
-  // Ajouter au DOM
+  // Mettre à jour l'état de la checkbox "Tout sélectionner"
+  const selectAllCheckbox = document.getElementById(`selectAll_${actorType}`);
+  if (selectAllCheckbox) {
+    selectAllCheckbox.checked =
+      selectedCount === totalCheckboxes && totalCheckboxes > 0;
+    selectAllCheckbox.indeterminate =
+      selectedCount > 0 && selectedCount < totalCheckboxes;
+  }
+}
+
+/**
+ * Supprimer les demandes sélectionnées
+ */
+async function deleteSelectedRequests(actorType) {
+  const checkboxes = document.querySelectorAll(
+    `input.request-checkbox[data-actor-type="${actorType}"]:checked`
+  );
+  const selectedIds = Array.from(checkboxes).map((cb) =>
+    cb.getAttribute("data-request-id")
+  );
+
+  if (selectedIds.length === 0) {
+    alert("Aucune demande sélectionnée.");
+    return;
+  }
+
+  const confirmation = confirm(
+    `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} demande(s) sélectionnée(s) ?\n\nCette action est irréversible.`
+  );
+
+  if (!confirmation) {
+    return;
+  }
+
+  try {
+    console.log(
+      `🗑️ Suppression de ${selectedIds.length} demandes ${actorType}:`,
+      selectedIds
+    );
+
+    // Afficher un indicateur de chargement
+    const deleteButton = document.getElementById(`deleteSelected_${actorType}`);
+    const originalText = deleteButton.innerHTML;
+    deleteButton.innerHTML =
+      '<i class="fas fa-spinner fa-spin mr-2"></i>Suppression...';
+    deleteButton.disabled = true;
+
+    const response = await fetch("/api/admin/delete-requests", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requestIds: selectedIds,
+        actorType: actorType,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log(
+        `✅ Suppression réussie: ${result.deletedCount} demandes supprimées`
+      );
+
+      // Afficher un message de succès
+      showNotificationMessage(
+        `${result.deletedCount} demande(s) supprimée(s) avec succès.`,
+        "success"
+      );
+
+      // Recharger les données pour mettre à jour l'affichage
+      await loadAccessRequests();
+    } else {
+      console.error("❌ Erreur lors de la suppression:", result.message);
+      alert(`Erreur lors de la suppression: ${result.message}`);
+    }
+  } catch (error) {
+    console.error("❌ Erreur réseau lors de la suppression:", error);
+    alert("Erreur réseau lors de la suppression. Veuillez réessayer.");
+  } finally {
+    // Restaurer le bouton
+    const deleteButton = document.getElementById(`deleteSelected_${actorType}`);
+    if (deleteButton) {
+      deleteButton.innerHTML = originalText;
+      deleteButton.disabled = false;
+    }
+  }
+}
+
+/**
+ * Afficher un message de notification temporaire
+ */
+function showNotificationMessage(message, type = "info") {
+  const notification = document.createElement("div");
+  notification.className = `
+    fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg z-50
+    transform translate-x-full transition-transform duration-500 ease-in-out
+    max-w-md text-white font-medium
+    ${
+      type === "success"
+        ? "bg-green-600"
+        : type === "error"
+        ? "bg-red-600"
+        : "bg-blue-600"
+    }
+  `;
+
+  notification.innerHTML = `
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <i class="fas ${
+          type === "success"
+            ? "fa-check-circle"
+            : type === "error"
+            ? "fa-exclamation-circle"
+            : "fa-info-circle"
+        } text-xl"></i>
+      </div>
+      <div class="ml-3 flex-1">
+        <p class="text-sm">${message}</p>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" 
+              class="ml-4 text-white hover:text-gray-200 transition-colors">
+        ×
+      </button>
+    </div>
+  `;
+
   document.body.appendChild(notification);
 
   // Animation d'entrée
   setTimeout(() => {
-    notification.classList.remove("translate-x-full");
+    notification.style.transform = "translateX(0)";
   }, 100);
 
-  // Animation de sortie et suppression
+  // Auto-suppression après 5 secondes
   setTimeout(() => {
-    notification.classList.add("translate-x-full");
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 300);
-  }, 3000);
+    if (notification.parentElement) {
+      notification.style.transform = "translateX(100%)";
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.remove();
+        }
+      }, 500);
+    }
+  }, 5000);
 }

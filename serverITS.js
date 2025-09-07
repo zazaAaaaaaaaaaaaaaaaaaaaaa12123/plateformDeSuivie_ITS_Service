@@ -1363,108 +1363,6 @@ app.get("/api/demande-code-entreprise", async (req, res) => {
     return res.status(500).json({ success: false, demandes: [] });
   }
 });
-// ROUTE : Demande de réinitialisation du mot de passe acconier
-// ===============================
-app.post("/acconier/forgot-password", async (req, res) => {
-  const { email } = req.body || {};
-  if (!email) {
-    return res.status(400).json({ success: false, message: "Email requis." });
-  }
-  try {
-    const userRes = await pool.query(
-      "SELECT * FROM acconier WHERE email = $1",
-      [email]
-    );
-    if (userRes.rows.length === 0) {
-      // Toujours répondre OK pour ne pas révéler si l'email existe
-      return res.json({
-        success: true,
-        message: "Si cet email existe, un lien a été envoyé.",
-      });
-    }
-    const token = crypto.randomBytes(32).toString("hex");
-    const expires = new Date(Date.now() + 1000 * 60 * 30); // 30 min
-    await pool.query(
-      "UPDATE acconier SET reset_token = $1, reset_token_expires = $2 WHERE email = $3",
-      [token, expires, email]
-    );
-    al;
-    const resetLink = `${req.protocol}://${req.get(
-      "host"
-    )}/acconier/reset-password/${token}`;
-    await sendMail({
-      to: email,
-      subject: "Réinitialisation de votre mot de passe Acconier",
-      text: `Cliquez sur ce lien pour réinitialiser votre mot de passe : ${resetLink}`,
-      html: `<p>Pour réinitialiser votre mot de passe, cliquez ici : <a href=\"${resetLink}\">Réinitialiser</a></p><p>Ce lien expire dans 30 minutes.</p>`,
-    });
-    return res.json({
-      success: true,
-      message: "Si cet email existe, un lien a été envoyé.",
-    });
-  } catch (err) {
-    console.error("[ACCONIER][FORGOT PASSWORD] Erreur:", err);
-    return res.status(500).json({ success: false, message: "Erreur serveur." });
-  }
-});
-
-// ===============================
-// ROUTE : Affichage et soumission du nouveau mot de passe (reset)
-// ===============================
-app.get("/acconier/reset-password/:token", async (req, res) => {
-  const { token } = req.params;
-  if (!token) return res.status(400).send("Lien invalide.");
-  try {
-    const userRes = await pool.query(
-      "SELECT * FROM acconier WHERE reset_token = $1 AND reset_token_expires > NOW()",
-      [token]
-    );
-    if (userRes.rows.length === 0) {
-      return res.status(400).send("Lien expiré ou invalide.");
-    }
-    // Affiche un mini-formulaire HTML (simple)
-    return res.send(`
-      <html><head><title>Réinitialisation du mot de passe</title></head><body style='font-family:sans-serif;max-width:400px;margin:40px auto;'>
-        <h2>Réinitialisation du mot de passe</h2>
-        <form method='POST'>
-          <input type='password' name='password' placeholder='Nouveau mot de passe' required style='width:100%;padding:8px;margin-bottom:10px;'/><br/>
-          <button type='submit' style='padding:8px 16px;'>Réinitialiser</button>
-        </form>
-      </body></html>
-    `);
-  } catch (err) {
-    return res.status(500).send("Erreur serveur.");
-  }
-});
-
-app.post(
-  "/acconier/reset-password/:token",
-  express.urlencoded({ extended: true }),
-  async (req, res) => {
-    const { token } = req.params;
-    const { password } = req.body;
-    if (!token || !password) return res.status(400).send("Requête invalide.");
-    try {
-      const userRes = await pool.query(
-        "SELECT * FROM acconier WHERE reset_token = $1 AND reset_token_expires > NOW()",
-        [token]
-      );
-      if (userRes.rows.length === 0) {
-        return res.status(400).send("Lien expiré ou invalide.");
-      }
-      const hashedPw = await bcrypt.hash(password, 10);
-      await pool.query(
-        "UPDATE acconier SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE reset_token = $2",
-        [hashedPw, token]
-      );
-      return res.send(
-        "<p>Mot de passe réinitialisé avec succès. Vous pouvez fermer cette page et vous reconnecter.</p>"
-      );
-    } catch (err) {
-      return res.status(500).send("Erreur serveur.");
-    }
-  }
-);
 
 // ===============================
 // CONFIGURATION NODEMAILER (GMAIL)
@@ -1590,26 +1488,10 @@ pool
     );
   });
 // ===============================
-// ROUTES AUTHENTIFICATION ACCONIER (SUPPRIMÉES - REMPLACÉES PAR LE SYSTÈME DE CODES D'ACCÈS)
+// ROUTES AUTHENTIFICATION ACCONIER
 // ===============================
 
-// Inscription acconier (route supprimée)
-app.post("/acconier/register", async (req, res) => {
-  return res.status(410).json({
-    success: false,
-    message:
-      "L'inscription directe n'est plus supportée. Utilisez la demande d'accès via la nouvelle interface.",
-  });
-});
-
-// Connexion acconier (ancienne route - remplacée)
-app.post("/acconier/login", async (req, res) => {
-  return res.status(410).json({
-    success: false,
-    message:
-      "Cette méthode de connexion n'est plus supportée. Utilisez la nouvelle interface avec code d'accès.",
-  });
-});
+// Connexion acconier
 
 // ===============================
 // ROUTES AUTHENTIFICATION RESPONSABLE ACCONIER (séparées)
@@ -4628,13 +4510,20 @@ app.post("/api/forgot-access-code", async (req, res) => {
   }
 });
 
-// Route pour la connexion des Responsables Acconier
-app.post("/api/acconier-login", async (req, res) => {
-  const { email, code } = req.body;
+// ===============================
+// NOUVELLE ROUTE POUR LES DEMANDES D'ACCÈS ACCONIER
+// ===============================
 
-  console.log("[ACCONIER-LOGIN][API] Tentative de connexion:", {
+// Route pour traiter les demandes d'accès et codes oubliés
+app.post("/api/acconier/request-access", async (req, res) => {
+  const { nom, email, type, actor_type, source } = req.body;
+
+  console.log("[ACCONIER-REQUEST][API] Nouvelle demande:", {
+    nom,
     email,
-    hasCode: !!code,
+    type,
+    actor_type,
+    source,
   });
 
   if (!email) {
@@ -4644,7 +4533,137 @@ app.post("/api/acconier-login", async (req, res) => {
     });
   }
 
-  if (!code) {
+  if (!type || !["access_request", "forgot_code"].includes(type)) {
+    return res.status(400).json({
+      success: false,
+      message: "Type de demande invalide.",
+    });
+  }
+
+  if (type === "access_request" && !nom) {
+    return res.status(400).json({
+      success: false,
+      message: "Nom requis pour une demande d'accès.",
+    });
+  }
+
+  try {
+    // Vérifier si une demande existe déjà pour cet email
+    const existingRequest = await pool.query(
+      "SELECT * FROM access_requests WHERE email = $1 AND actor_type = $2 ORDER BY created_at DESC LIMIT 1",
+      [email, actor_type || "acconier"]
+    );
+
+    if (type === "access_request") {
+      // Pour une nouvelle demande d'accès
+      if (existingRequest.rows.length > 0) {
+        const existing = existingRequest.rows[0];
+        if (existing.status === "pending") {
+          return res.status(409).json({
+            success: false,
+            message: "Une demande d'accès est déjà en cours pour cet email.",
+          });
+        } else if (existing.status === "approved") {
+          return res.status(409).json({
+            success: false,
+            message:
+              "Vous avez déjà un accès approuvé. Utilisez 'Code d'accès oublié' si nécessaire.",
+          });
+        }
+      }
+
+      // Créer une nouvelle demande d'accès
+      const currentDate = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
+      const actorTypeToUse = actor_type || "acconier"; // Utiliser actor_type du client ou 'acconier' par défaut
+      const result = await pool.query(
+        `INSERT INTO access_requests (name, email, actor_type, status, request_type, request_date, created_at, source) 
+         VALUES ($1, $2, $3, 'pending', 'access_request', $4, CURRENT_TIMESTAMP, $5) 
+         RETURNING id`,
+        [nom, email, actorTypeToUse, currentDate, source || "acconier_auth"]
+      );
+
+      console.log("[ACCONIER-REQUEST][API] Demande d'accès créée:", {
+        id: result.rows[0].id,
+        nom,
+        email,
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Votre demande d'accès a été enregistrée. Vous recevrez votre code par email une fois approuvée.",
+      });
+    } else if (type === "forgot_code") {
+      // Pour un code oublié
+      if (
+        existingRequest.rows.length === 0 ||
+        existingRequest.rows[0].status !== "approved"
+      ) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Aucun compte approuvé trouvé pour cet email. Veuillez d'abord faire une demande d'accès.",
+        });
+      }
+
+      // Créer une demande de nouveau code
+      const currentDate = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
+      const actorTypeToUse = actor_type || "acconier"; // Utiliser actor_type du client ou 'acconier' par défaut
+      const result = await pool.query(
+        `INSERT INTO access_requests (name, email, actor_type, status, request_type, request_date, created_at, source) 
+         VALUES ($1, $2, $3, 'pending', 'forgot_code', $4, CURRENT_TIMESTAMP, $5) 
+         RETURNING id`,
+        [
+          existingRequest.rows[0].name,
+          email,
+          actorTypeToUse,
+          currentDate,
+          source || "acconier_auth",
+        ]
+      );
+
+      console.log("[ACCONIER-REQUEST][API] Demande de nouveau code créée:", {
+        id: result.rows[0].id,
+        email,
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Demande de nouveau code envoyée. Vous recevrez votre nouveau code par email une fois approuvée.",
+      });
+    }
+  } catch (err) {
+    console.error("[ACCONIER-REQUEST][API] Erreur:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'enregistrement de la demande.",
+    });
+  }
+});
+
+// Route pour la connexion des Responsables Acconier
+app.post("/api/acconier-login", async (req, res) => {
+  const { email, code, accessCode, actorType } = req.body;
+
+  // Accepter 'code' ou 'accessCode' pour la compatibilité
+  const userCode = code || accessCode;
+
+  console.log("[ACCONIER-LOGIN][API] Tentative de connexion:", {
+    email,
+    actorType: actorType || "acconier",
+    hasCode: !!userCode,
+    codeValue: userCode,
+  });
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email requis.",
+    });
+  }
+
+  if (!userCode) {
     return res.status(400).json({
       success: false,
       message: "Code d'accès requis pour la connexion.",
@@ -4652,25 +4671,27 @@ app.post("/api/acconier-login", async (req, res) => {
   }
 
   try {
-    // Rechercher l'utilisateur avec le code d'accès - privilégier les comptes approuvés avec access_code
+    // Rechercher l'utilisateur avec ce type d'acteur - privilégier les comptes approuvés avec access_code
     const userResult = await pool.query(
       `SELECT ar.*, u.name, u.email 
        FROM access_requests ar 
        LEFT JOIN users u ON ar.email = u.email 
-       WHERE ar.email = $1 AND ar.actor_type = 'acconier' AND ar.status = 'approved' AND ar.access_code IS NOT NULL
+       WHERE ar.email = $1 AND ar.actor_type = $2 AND ar.status = 'approved' AND ar.access_code IS NOT NULL
        ORDER BY ar.created_at DESC
        LIMIT 1`,
-      [email]
+      [email, actorType || "acconier"]
     );
 
     console.log("[ACCONIER-LOGIN][API] Résultat de recherche:", {
       email,
+      actorType: actorType || "acconier",
       foundUsers: userResult.rows.length,
       users: userResult.rows.map((user) => ({
         id: user.id,
         email: user.email,
         status: user.status,
         hasAccessCode: !!user.access_code,
+        accessCode: user.access_code,
       })),
     });
 
@@ -4710,9 +4731,9 @@ app.post("/api/acconier-login", async (req, res) => {
       });
     }
 
-    if (code !== user.access_code) {
+    if (userCode !== user.access_code) {
       console.log("[ACCONIER-LOGIN][API] Code incorrect:", {
-        fourni: code,
+        fourni: userCode,
         attendu: user.access_code,
         email,
       });
@@ -4731,142 +4752,26 @@ app.post("/api/acconier-login", async (req, res) => {
 
     console.log("[ACCONIER-LOGIN][API] Connexion réussie:", {
       email,
+      actorType,
       userId: user.id,
     });
 
     res.json({
       success: true,
       message: "Connexion réussie !",
-      nom: user.name || user.email.split("@")[0],
-      email: user.email,
+      user: {
+        id: user.id,
+        name: user.name || user.email.split("@")[0],
+        email: user.email,
+        actorType: user.actor_type,
+        role: user.role,
+      },
     });
   } catch (err) {
     console.error("[ACCONIER-LOGIN][API] Erreur:", err);
     res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la connexion.",
-    });
-  }
-});
-
-// ===============================
-// NOUVELLE ROUTE POUR LES DEMANDES D'ACCÈS ACCONIER
-// ===============================
-
-// Route pour traiter les demandes d'accès et codes oubliés
-app.post("/api/acconier/request-access", async (req, res) => {
-  const { nom, email, type } = req.body;
-
-  console.log("[ACCONIER-REQUEST][API] Nouvelle demande:", {
-    nom,
-    email,
-    type,
-  });
-
-  if (!email) {
-    return res.status(400).json({
-      success: false,
-      message: "Email requis.",
-    });
-  }
-
-  if (!type || !["access_request", "forgot_code"].includes(type)) {
-    return res.status(400).json({
-      success: false,
-      message: "Type de demande invalide.",
-    });
-  }
-
-  if (type === "access_request" && !nom) {
-    return res.status(400).json({
-      success: false,
-      message: "Nom requis pour une demande d'accès.",
-    });
-  }
-
-  try {
-    // Vérifier si une demande existe déjà pour cet email
-    const existingRequest = await pool.query(
-      "SELECT * FROM access_requests WHERE email = $1 AND actor_type = 'acconier' ORDER BY created_at DESC LIMIT 1",
-      [email]
-    );
-
-    if (type === "access_request") {
-      // Pour une nouvelle demande d'accès
-      if (existingRequest.rows.length > 0) {
-        const existing = existingRequest.rows[0];
-        if (existing.status === "pending") {
-          return res.status(409).json({
-            success: false,
-            message: "Une demande d'accès est déjà en cours pour cet email.",
-          });
-        } else if (existing.status === "approved") {
-          return res.status(409).json({
-            success: false,
-            message:
-              "Vous avez déjà un accès approuvé. Utilisez 'Code d'accès oublié' si nécessaire.",
-          });
-        }
-      }
-
-      // Créer une nouvelle demande d'accès
-      const currentDate = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
-      const result = await pool.query(
-        `INSERT INTO access_requests (name, email, actor_type, status, request_type, request_date, created_at) 
-         VALUES ($1, $2, 'acconier', 'pending', 'access_request', $3, CURRENT_TIMESTAMP) 
-         RETURNING id`,
-        [nom, email, currentDate]
-      );
-
-      console.log("[ACCONIER-REQUEST][API] Demande d'accès créée:", {
-        id: result.rows[0].id,
-        nom,
-        email,
-      });
-
-      return res.json({
-        success: true,
-        message:
-          "Votre demande d'accès a été enregistrée. Vous recevrez votre code par email une fois approuvée.",
-      });
-    } else if (type === "forgot_code") {
-      // Pour un code oublié
-      if (
-        existingRequest.rows.length === 0 ||
-        existingRequest.rows[0].status !== "approved"
-      ) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Aucun compte approuvé trouvé pour cet email. Veuillez d'abord faire une demande d'accès.",
-        });
-      }
-
-      // Créer une demande de nouveau code
-      const currentDate = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
-      const result = await pool.query(
-        `INSERT INTO access_requests (name, email, actor_type, status, request_type, request_date, created_at) 
-         VALUES ($1, $2, 'acconier', 'pending', 'forgot_code', $3, CURRENT_TIMESTAMP) 
-         RETURNING id`,
-        [existingRequest.rows[0].name, email, currentDate]
-      );
-
-      console.log("[ACCONIER-REQUEST][API] Demande de nouveau code créée:", {
-        id: result.rows[0].id,
-        email,
-      });
-
-      return res.json({
-        success: true,
-        message:
-          "Votre demande de nouveau code a été enregistrée. Vous recevrez votre nouveau code par email une fois approuvée.",
-      });
-    }
-  } catch (err) {
-    console.error("[ACCONIER-REQUEST][API] Erreur:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur lors du traitement de la demande.",
     });
   }
 });

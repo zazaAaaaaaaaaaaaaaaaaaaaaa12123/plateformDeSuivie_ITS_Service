@@ -1712,30 +1712,64 @@
     <script>
       // Injection du nom et email dans l'avatar et le dropdown profil après connexion
       document.addEventListener("DOMContentLoaded", function () {
+        console.log("🔍 Chargement des données utilisateur...");
+
         // Récupération des données utilisateur depuis localStorage
         let userName = localStorage.getItem("userName");
         let userEmail = localStorage.getItem("userEmail");
 
+        console.log("📋 Données localStorage directes:", {
+          userName,
+          userEmail,
+        });
+
         // Si pas trouvé, essayer de récupérer depuis connectedUser (responsable acconier)
         if (!userName || !userEmail) {
+          console.log("🔄 Tentative de récupération depuis connectedUser...");
           const connectedUser = localStorage.getItem("connectedUser");
+          console.log("📋 connectedUser brut:", connectedUser);
+
           if (connectedUser) {
             try {
               const user = JSON.parse(connectedUser);
-              userName = user.name || user.nom || userName;
-              userEmail = user.email || userEmail;
+              console.log("📋 Données utilisateur parsées:", user);
+
+              userName =
+                user.name || user.nom || userName || "Responsable Acconier";
+              userEmail = user.email || userEmail || "email@non-defini.com";
+
+              // Sauvegarder dans les bonnes clés pour la prochaine fois
+              localStorage.setItem("userName", userName);
+              localStorage.setItem("userEmail", userEmail);
+
+              console.log("✅ Données récupérées et sauvegardées:", {
+                userName,
+                userEmail,
+              });
             } catch (e) {
-              console.log("Erreur parsing connectedUser:", e);
+              console.error("❌ Erreur parsing connectedUser:", e);
             }
+          } else {
+            console.log("❌ Aucune donnée connectedUser trouvée");
           }
         }
+
+        console.log("📧 Données finales à afficher:", { userName, userEmail });
 
         if (userName && userEmail) {
           // Affiche le nom et l'email dans le dropdown profil
           const nameEl = document.getElementById("profileName");
           const emailEl = document.getElementById("profileEmail");
-          if (nameEl) nameEl.textContent = userName;
-          if (emailEl) emailEl.textContent = userEmail;
+
+          if (nameEl) {
+            nameEl.textContent = userName;
+            console.log("✅ Nom affiché:", userName);
+          }
+
+          if (emailEl) {
+            emailEl.textContent = userEmail;
+            console.log("✅ Email affiché:", userEmail);
+          }
           // Avatar avec initiales (overlay sur l'icône FontAwesome)
           const avatarEl = document.getElementById("profileAvatar");
           if (avatarEl) {

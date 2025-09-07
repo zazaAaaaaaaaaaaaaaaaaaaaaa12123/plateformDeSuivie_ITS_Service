@@ -80,11 +80,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Fonction pour ajouter une nouvelle demande d'accès (appelée depuis l'index)
 function submitAccessRequest(requestData) {
+  // Ajouter les champs requis pour les demandes depuis index.html (Vue Globale)
+  const completeRequestData = {
+    ...requestData,
+    actorType: "vue-globale", // Type spécifique pour les demandes depuis index.html
+    role: "Client",
+    source: "index.html", // Marquer la source pour les notifications
+  };
+
+  console.log("📤 Envoi de demande depuis index.html:", completeRequestData);
+
   // Envoyer au serveur
   fetch("/api/access-request", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestData),
+    body: JSON.stringify(completeRequestData),
   })
     .then((response) => response.json())
     .then((data) => {
