@@ -8123,18 +8123,36 @@ function showLateDeliveriesModal() {
       return formatDate(originalValue).toUpperCase();
     }
 
-    const row = document.createElement("tr");
-    row.style.cssText =
-      "border-bottom: 1px solid #f1f5f9; transition: background 0.2s ease;";
+    // Calculer le nombre de jours de retard
+    const dateCreation = new Date(
+      delivery.date || delivery.created_at || delivery.date_creation
+    );
+    const aujourd_hui = new Date();
+    const joursRetard = Math.floor(
+      (aujourd_hui - dateCreation) / (1000 * 60 * 60 * 24)
+    );
 
+    const row = document.createElement("tr");
+    row.style.cssText = `
+      border-bottom: 1px solid #f1f5f9; 
+      transition: all 0.3s ease;
+      position: relative;
+    `;
+
+    // Animation au survol plus sophistiquée
     row.onmouseover = function () {
-      this.style.background = "#f8fafc";
+      this.style.background =
+        "linear-gradient(90deg, #fef2f2 0%, #fef7f7 100%)";
+      this.style.transform = "translateY(-1px)";
+      this.style.boxShadow = "0 4px 8px rgba(220, 38, 38, 0.1)";
     };
     row.onmouseout = function () {
       this.style.background = "white";
+      this.style.transform = "translateY(0)";
+      this.style.boxShadow = "none";
     };
 
-    // Créer le contenu HTML de la ligne avec des informations complètes
+    // Créer le contenu HTML de la ligne avec des informations complètes et améliorations visuelles
     const dateValue = getFormattedDate(delivery, [
       "date",
       "created_at",
@@ -8181,22 +8199,6 @@ function showLateDeliveriesModal() {
       "produit",
       "product",
     ]);
-    const modeTransportValue = getValue(delivery, [
-      "transporter_mode",
-      "mode_transport",
-      "transport_mode",
-      "transport_type",
-      "mode",
-      "modeTransport",
-      "typeTransport",
-      "mode_de_transport",
-      "transport",
-      "modalite_transport",
-      "moyen_transport",
-      "category",
-      "type_operation",
-      "operation_type",
-    ]);
 
     // Dates formatées
     const dateDOValue = getFormattedDate(delivery, [
@@ -8215,115 +8217,165 @@ function showLateDeliveriesModal() {
       "delivered_at",
     ]);
 
+    // Fonction pour créer une cellule avec style amélioré
+    function createCell(content, isImportant = false, isDate = false) {
+      const cellStyle = `
+        padding: 12px 8px; 
+        white-space: nowrap; 
+        font-size: 0.85em;
+        ${isImportant ? "font-weight: 600; color: #374151;" : "color: #6b7280;"}
+        ${isDate ? "font-family: monospace;" : ""}
+        border-right: 1px solid #f1f5f9;
+      `;
+      return `<td style="${cellStyle}">${content}</td>`;
+    }
+
+    // Fonction pour créer le statut de retard avec couleur dynamique
+    function createRetardStatus(jours) {
+      let bgColor, textColor, icon, text;
+
+      if (jours <= 3) {
+        bgColor = "#fef2f2";
+        textColor = "#dc2626";
+        icon = "⚠️";
+        text = `${jours}J RETARD`;
+      } else if (jours <= 7) {
+        bgColor = "#fef3c7";
+        textColor = "#d97706";
+        icon = "🚨";
+        text = `${jours}J RETARD`;
+      } else {
+        bgColor = "#fecaca";
+        textColor = "#991b1b";
+        icon = "🔥";
+        text = `${jours}J CRITIQUE`;
+      }
+
+      return `
+        <span style="
+          background: ${bgColor}; 
+          color: ${textColor}; 
+          padding: 6px 12px; 
+          border-radius: 6px; 
+          font-size: 0.75em; 
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          border: 1px solid ${textColor}20;
+        ">
+          ${icon} ${text}
+        </span>
+      `;
+    }
+
     row.innerHTML =
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      (index + 1) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      dateValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      agentValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      clientValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      clientNumberValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      lieuValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      typeConteneurValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      contenuValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, [
-        "numero_declaration",
-        "declaration_number",
-        "decl_number",
-      ]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["numero_bl", "bl_number", "bill_of_lading"]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, [
-        "numero_dossier",
-        "dossier_number",
-        "folder_number",
-        "id",
-      ]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, [
-        "number_of_containers",
-        "nombre_conteneurs",
-        "container_count",
-        "nb_containers",
-      ]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, [
-        "compagnie_maritime",
-        "shipping_company",
-        "company",
-      ]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["poids", "weight", "gross_weight"]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["nom_navire", "vessel_name", "ship_name"]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["circuit", "flow", "direction"]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      modeTransportValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      dateDOValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      dateBADTValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, [
-        "nom_agent_visiteur",
-        "agent_visiteur",
-        "visitor_agent",
-        "employee_name",
-      ]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["transporteur", "transporter", "carrier"]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["inspecteur", "inspector", "controller"]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["agent_douanes", "customs_agent", "douane_agent"]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["chauffeur", "driver", "driver_name"]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["tel_chauffeur", "driver_phone", "phone_driver"]) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      dateLivraisonValue +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      createTCDropdown(tcNumbers) +
-      "</td>" +
-      '<td style="padding: 8px; white-space: nowrap;"><span style="background: #fef2f2; color: #dc2626; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 500;">EN RETARD</span></td>' +
-      '<td style="padding: 8px; white-space: nowrap;">' +
-      getValue(delivery, ["observations", "comments", "notes", "remarks"]) +
-      "</td>";
+      createCell(`<span style="
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 50%;
+        font-weight: 600;
+        font-size: 0.8em;
+        min-width: 24px;
+        text-align: center;
+        display: inline-block;
+      ">${index + 1}</span>`) +
+      createCell(dateValue, false, true) +
+      createCell(agentValue, true) +
+      createCell(clientValue, true) +
+      createCell(clientNumberValue) +
+      createCell(lieuValue) +
+      createCell(typeConteneurValue) +
+      createCell(contenuValue, true) +
+      createCell(
+        getValue(delivery, [
+          "numero_declaration",
+          "declaration_number",
+          "decl_number",
+        ])
+      ) +
+      createCell(
+        getValue(delivery, ["numero_bl", "bl_number", "bill_of_lading"])
+      ) +
+      createCell(
+        getValue(delivery, [
+          "numero_dossier",
+          "dossier_number",
+          "folder_number",
+          "id",
+        ]),
+        true
+      ) +
+      createCell(
+        getValue(delivery, [
+          "number_of_containers",
+          "nombre_conteneurs",
+          "container_count",
+          "nb_containers",
+        ])
+      ) +
+      createCell(
+        getValue(delivery, [
+          "compagnie_maritime",
+          "shipping_company",
+          "company",
+        ])
+      ) +
+      createCell(getValue(delivery, ["poids", "weight", "gross_weight"])) +
+      createCell(
+        getValue(delivery, ["nom_navire", "vessel_name", "ship_name"])
+      ) +
+      createCell(getValue(delivery, ["circuit", "flow", "direction"])) +
+      createCell(
+        getValue(delivery, [
+          "transporter_mode",
+          "mode_transport",
+          "transport_mode",
+          "transport_type",
+          "mode",
+          "modeTransport",
+          "typeTransport",
+          "mode_de_transport",
+          "transport",
+          "modalite_transport",
+          "moyen_transport",
+          "category",
+          "type_operation",
+          "operation_type",
+        ])
+      ) +
+      createCell(dateDOValue, false, true) +
+      createCell(dateBADTValue, false, true) +
+      createCell(
+        getValue(delivery, [
+          "nom_agent_visiteur",
+          "agent_visiteur",
+          "visitor_agent",
+          "employee_name",
+        ])
+      ) +
+      createCell(
+        getValue(delivery, ["transporteur", "transporter", "carrier"])
+      ) +
+      createCell(
+        getValue(delivery, ["inspecteur", "inspector", "controller"])
+      ) +
+      createCell(
+        getValue(delivery, ["agent_douanes", "customs_agent", "douane_agent"])
+      ) +
+      createCell(getValue(delivery, ["chauffeur", "driver", "driver_name"])) +
+      createCell(
+        getValue(delivery, ["tel_chauffeur", "driver_phone", "phone_driver"])
+      ) +
+      createCell(dateLivraisonValue, false, true) +
+      createCell(createTCDropdown(tcNumbers)) +
+      `<td style="padding: 12px 8px; white-space: nowrap; text-align: center; border-right: 1px solid #f1f5f9;">
+        ${createRetardStatus(joursRetard)}
+      </td>` +
+      createCell(
+        getValue(delivery, ["observations", "comments", "notes", "remarks"])
+      );
 
     tableBody.appendChild(row);
   });
