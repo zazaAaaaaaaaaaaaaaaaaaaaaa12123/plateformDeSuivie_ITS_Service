@@ -389,6 +389,26 @@
                 <i class="fas fa-sign-in-alt mr-2"></i>
                 Se Connecter
               </button>
+
+              <!-- Lien mot de passe oublié -->
+              <div class="text-center mt-4 space-y-2">
+                <button
+                  type="button"
+                  onclick="showForgotPasswordModal()"
+                  class="text-blue-600 hover:text-blue-800 text-sm font-medium transition duration-300 block w-full"
+                >
+                  <i class="fas fa-question-circle mr-1"></i>Mot de passe oublié
+                  ?
+                </button>
+                <button
+                  type="button"
+                  onclick="showResetPasswordModal()"
+                  class="text-green-600 hover:text-green-800 text-sm font-medium transition duration-300 block w-full"
+                >
+                  <i class="fas fa-key mr-1"></i>J'ai reçu un code de
+                  réinitialisation
+                </button>
+              </div>
             </form>
           </div>
 
@@ -474,7 +494,7 @@
                   <div class="relative">
                     <input
                       type="password"
-                      id="confirmPassword"
+                      id="registerConfirmPassword"
                       name="confirmPassword"
                       class="input-field w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                       placeholder="••••••••"
@@ -482,7 +502,7 @@
                     />
                     <button
                       type="button"
-                      onclick="togglePassword('confirmPassword')"
+                      onclick="togglePassword('registerConfirmPassword')"
                       class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     >
                       <i class="fas fa-eye"></i>
@@ -569,6 +589,250 @@
       </div>
     </div>
 
+    <!-- Modale pour mot de passe oublié -->
+    <div
+      id="forgotPasswordModal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all"
+      >
+        <div
+          class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-xl"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-key text-2xl mr-3"></i>
+              <h3 class="text-xl font-bold">Récupération de mot de passe</h3>
+            </div>
+            <button
+              onclick="closeForgotPasswordModal()"
+              class="text-white hover:text-gray-200 transition-colors"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          <p class="text-blue-100 text-sm mt-2">
+            Entrez votre email pour recevoir un lien de réinitialisation
+          </p>
+        </div>
+
+        <div class="p-6">
+          <form id="forgotPasswordForm" class="space-y-4">
+            <div>
+              <label
+                for="forgotEmail"
+                class="block text-sm font-medium text-gray-700 mb-2"
+              >
+                <i class="fas fa-envelope mr-2 text-blue-600"></i>Adresse email
+              </label>
+              <input
+                type="email"
+                id="forgotEmail"
+                name="email"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                placeholder="votre.email@exemple.com"
+                required
+              />
+            </div>
+
+            <!-- Message d'erreur -->
+            <div
+              id="forgotErrorMessage"
+              class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
+            >
+              <i class="fas fa-exclamation-triangle mr-2"></i>
+              <span id="forgotErrorText"></span>
+            </div>
+
+            <!-- Message de succès -->
+            <div
+              id="forgotSuccessMessage"
+              class="hidden bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm"
+            >
+              <i class="fas fa-check-circle mr-2"></i>
+              <span id="forgotSuccessText"></span>
+            </div>
+
+            <!-- Message de chargement -->
+            <div
+              id="forgotLoadingMessage"
+              class="hidden bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm"
+            >
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+              Envoi de l'email en cours...
+            </div>
+
+            <div class="flex space-x-3">
+              <button
+                type="button"
+                onclick="closeForgotPasswordModal()"
+                class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition duration-300"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                id="forgotPasswordButton"
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300"
+              >
+                <i class="fas fa-paper-plane mr-2"></i>
+                Envoyer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modale pour réinitialisation avec token -->
+    <div
+      id="resetPasswordModal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all"
+      >
+        <div
+          class="bg-gradient-to-r from-green-600 to-green-700 text-white p-6 rounded-t-xl"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fas fa-shield-alt text-2xl mr-3"></i>
+              <h3 class="text-xl font-bold">Réinitialiser le mot de passe</h3>
+            </div>
+            <button
+              onclick="closeResetPasswordModal()"
+              class="text-white hover:text-gray-200 transition-colors"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          <p class="text-green-100 text-sm mt-2">
+            Entrez votre code de réinitialisation et votre nouveau mot de passe
+          </p>
+        </div>
+
+        <div class="p-6">
+          <form id="resetPasswordForm" class="space-y-4">
+            <div>
+              <label
+                for="resetToken"
+                class="block text-sm font-medium text-gray-700 mb-2"
+              >
+                <i class="fas fa-key mr-2 text-green-600"></i>Code de
+                réinitialisation
+              </label>
+              <input
+                type="text"
+                id="resetToken"
+                name="token"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors font-mono"
+                placeholder="Entrez le code reçu par email"
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                for="newPassword"
+                class="block text-sm font-medium text-gray-700 mb-2"
+              >
+                <i class="fas fa-lock mr-2 text-green-600"></i>Nouveau mot de
+                passe
+              </label>
+              <input
+                type="password"
+                id="newPassword"
+                name="newPassword"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
+                placeholder="Au moins 6 caractères"
+                required
+                minlength="6"
+                oninput="checkPasswordMatch()"
+              />
+            </div>
+
+            <div>
+              <label
+                for="confirmPassword"
+                class="block text-sm font-medium text-gray-700 mb-2"
+              >
+                <i class="fas fa-lock mr-2 text-green-600"></i>Confirmer le mot
+                de passe
+              </label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors"
+                placeholder="Confirmez votre nouveau mot de passe"
+                required
+                minlength="6"
+                oninput="checkPasswordMatch()"
+              />
+              <!-- Indicateur de correspondance des mots de passe -->
+              <div id="passwordMatchIndicator" class="mt-2 text-sm hidden">
+                <div id="passwordMatch" class="text-green-600 hidden">
+                  <i class="fas fa-check-circle mr-1"></i>Les mots de passe
+                  correspondent
+                </div>
+                <div id="passwordMismatch" class="text-red-600 hidden">
+                  <i class="fas fa-times-circle mr-1"></i>Les mots de passe ne
+                  correspondent pas
+                </div>
+              </div>
+            </div>
+
+            <!-- Message d'erreur -->
+            <div
+              id="resetErrorMessage"
+              class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
+            >
+              <i class="fas fa-exclamation-triangle mr-2"></i>
+              <span id="resetErrorText"></span>
+            </div>
+
+            <!-- Message de succès -->
+            <div
+              id="resetSuccessMessage"
+              class="hidden bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm"
+            >
+              <i class="fas fa-check-circle mr-2"></i>
+              <span id="resetSuccessText"></span>
+            </div>
+
+            <!-- Message de chargement -->
+            <div
+              id="resetLoadingMessage"
+              class="hidden bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm"
+            >
+              <i class="fas fa-spinner fa-spin mr-2"></i>
+              Réinitialisation en cours...
+            </div>
+
+            <div class="flex space-x-3">
+              <button
+                type="button"
+                onclick="closeResetPasswordModal()"
+                class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition duration-300"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                id="resetPasswordButton"
+                class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300"
+              >
+                <i class="fas fa-save mr-2"></i>
+                Réinitialiser
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <script>
       // Gestion du formulaire de connexion
       document
@@ -642,8 +906,9 @@
 
           // Vérifier que les mots de passe correspondent
           const password = document.getElementById("registerPassword").value;
-          const confirmPassword =
-            document.getElementById("confirmPassword").value;
+          const confirmPassword = document.getElementById(
+            "registerConfirmPassword"
+          ).value;
 
           if (password !== confirmPassword) {
             showRegisterError("Les mots de passe ne correspondent pas");
@@ -802,11 +1067,306 @@
         }
       }
 
+      // Fonctions pour la récupération de mot de passe
+      function showForgotPasswordModal() {
+        const modal = document.getElementById("forgotPasswordModal");
+        modal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+
+        // Reset du formulaire
+        document.getElementById("forgotPasswordForm").reset();
+        document.getElementById("forgotErrorMessage").classList.add("hidden");
+        document.getElementById("forgotSuccessMessage").classList.add("hidden");
+        document.getElementById("forgotLoadingMessage").classList.add("hidden");
+      }
+
+      function closeForgotPasswordModal() {
+        const modal = document.getElementById("forgotPasswordModal");
+        modal.classList.add("hidden");
+        document.body.style.overflow = "auto";
+      }
+
+      function showForgotError(message) {
+        const errorDiv = document.getElementById("forgotErrorMessage");
+        const errorText = document.getElementById("forgotErrorText");
+
+        errorText.textContent = message;
+        errorDiv.classList.remove("hidden");
+
+        setTimeout(() => {
+          errorDiv.classList.add("hidden");
+        }, 5000);
+      }
+
+      function showForgotSuccess(message) {
+        const successDiv = document.getElementById("forgotSuccessMessage");
+        const successText = document.getElementById("forgotSuccessText");
+
+        successText.textContent = message;
+        successDiv.classList.remove("hidden");
+
+        setTimeout(() => {
+          successDiv.classList.add("hidden");
+        }, 8000);
+      }
+
+      // Gestion du formulaire de récupération de mot de passe
+      document
+        .getElementById("forgotPasswordForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const email = document.getElementById("forgotEmail").value.trim();
+          const errorDiv = document.getElementById("forgotErrorMessage");
+          const successDiv = document.getElementById("forgotSuccessMessage");
+          const loadingDiv = document.getElementById("forgotLoadingMessage");
+          const submitButton = document.getElementById("forgotPasswordButton");
+
+          // Cacher les messages précédents
+          errorDiv.classList.add("hidden");
+          successDiv.classList.add("hidden");
+          loadingDiv.classList.remove("hidden");
+          submitButton.disabled = true;
+
+          try {
+            console.log("🔄 Envoi de la demande de récupération pour:", email);
+
+            const response = await fetch("/api/admin-forgot-password", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ email }),
+            });
+
+            const data = await response.json();
+            console.log("📧 Réponse serveur:", data);
+
+            if (response.ok) {
+              showForgotSuccess(
+                "Un email de récupération a été envoyé à votre adresse. Vérifiez votre boîte de réception et vos spams."
+              );
+
+              // Fermer la modale après 3 secondes
+              setTimeout(() => {
+                closeForgotPasswordModal();
+              }, 3000);
+            } else {
+              showForgotError(
+                data.message ||
+                  "Erreur lors de l'envoi de l'email de récupération"
+              );
+            }
+          } catch (error) {
+            console.error("❌ Erreur:", error);
+            showForgotError("Erreur de connexion. Veuillez réessayer.");
+          } finally {
+            loadingDiv.classList.add("hidden");
+            submitButton.disabled = false;
+          }
+        });
+
+      // Fonction pour vérifier la correspondance des mots de passe en temps réel
+      function checkPasswordMatch() {
+        const newPassword = document.getElementById("newPassword").value;
+        const confirmPassword =
+          document.getElementById("confirmPassword").value;
+        const indicator = document.getElementById("passwordMatchIndicator");
+        const matchDiv = document.getElementById("passwordMatch");
+        const mismatchDiv = document.getElementById("passwordMismatch");
+
+        // Si les deux champs sont vides, cacher l'indicateur
+        if (!newPassword && !confirmPassword) {
+          indicator.classList.add("hidden");
+          return;
+        }
+
+        // Si un seul champ est rempli, ne pas montrer d'indicateur
+        if (!newPassword || !confirmPassword) {
+          indicator.classList.add("hidden");
+          return;
+        }
+
+        // Montrer l'indicateur
+        indicator.classList.remove("hidden");
+
+        // Vérifier si les mots de passe correspondent
+        if (newPassword === confirmPassword) {
+          matchDiv.classList.remove("hidden");
+          mismatchDiv.classList.add("hidden");
+        } else {
+          matchDiv.classList.add("hidden");
+          mismatchDiv.classList.remove("hidden");
+        }
+      }
+
+      // Fermer la modale en cliquant à l'extérieur
+      document
+        .getElementById("forgotPasswordModal")
+        .addEventListener("click", function (e) {
+          if (e.target === this) {
+            closeForgotPasswordModal();
+          }
+        });
+
+      // Fonctions pour la modal de réinitialisation de mot de passe
+      function showResetPasswordModal() {
+        const modal = document.getElementById("resetPasswordModal");
+        modal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+
+        // Reset du formulaire
+        document.getElementById("resetPasswordForm").reset();
+        document.getElementById("resetErrorMessage").classList.add("hidden");
+        document.getElementById("resetSuccessMessage").classList.add("hidden");
+        document.getElementById("resetLoadingMessage").classList.add("hidden");
+
+        // Focus sur le champ token
+        setTimeout(() => {
+          document.getElementById("resetToken").focus();
+        }, 100);
+      }
+
+      function closeResetPasswordModal() {
+        const modal = document.getElementById("resetPasswordModal");
+        modal.classList.add("hidden");
+        document.body.style.overflow = "auto";
+      }
+
+      function showResetError(message) {
+        const errorDiv = document.getElementById("resetErrorMessage");
+        const errorText = document.getElementById("resetErrorText");
+
+        errorText.textContent = message;
+        errorDiv.classList.remove("hidden");
+
+        setTimeout(() => {
+          errorDiv.classList.add("hidden");
+        }, 5000);
+      }
+
+      function showResetSuccess(message) {
+        const successDiv = document.getElementById("resetSuccessMessage");
+        const successText = document.getElementById("resetSuccessText");
+
+        successText.textContent = message;
+        successDiv.classList.remove("hidden");
+
+        setTimeout(() => {
+          successDiv.classList.add("hidden");
+        }, 8000);
+      }
+
+      // Gestion du formulaire de réinitialisation de mot de passe
+      document
+        .getElementById("resetPasswordForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const token = document.getElementById("resetToken").value.trim();
+          const newPassword = document.getElementById("newPassword").value;
+          const confirmPassword =
+            document.getElementById("confirmPassword").value;
+
+          // Validation des mots de passe
+          if (newPassword !== confirmPassword) {
+            showResetError("Les mots de passe ne correspondent pas");
+            return;
+          }
+
+          if (newPassword.length < 6) {
+            showResetError(
+              "Le mot de passe doit contenir au moins 6 caractères"
+            );
+            return;
+          }
+
+          const errorDiv = document.getElementById("resetErrorMessage");
+          const successDiv = document.getElementById("resetSuccessMessage");
+          const loadingDiv = document.getElementById("resetLoadingMessage");
+          const submitButton = document.getElementById("resetPasswordButton");
+
+          // Cacher les messages précédents
+          errorDiv.classList.add("hidden");
+          successDiv.classList.add("hidden");
+          loadingDiv.classList.remove("hidden");
+          submitButton.disabled = true;
+
+          try {
+            console.log("🔄 Envoi de la demande de réinitialisation");
+
+            const response = await fetch("/api/admin-reset-password", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                token: token,
+                newPassword: newPassword,
+              }),
+            });
+
+            const data = await response.json();
+            console.log("🔐 Réponse serveur:", data);
+
+            if (response.ok) {
+              showResetSuccess(
+                "Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter."
+              );
+
+              // Fermer la modale après 3 secondes et revenir à la connexion
+              setTimeout(() => {
+                closeResetPasswordModal();
+                // Optionnel : focus sur le formulaire de connexion
+                const loginEmailField = document.getElementById("loginEmail");
+                if (loginEmailField) {
+                  loginEmailField.focus();
+                }
+              }, 3000);
+            } else {
+              showResetError(
+                data.message ||
+                  "Erreur lors de la réinitialisation du mot de passe"
+              );
+            }
+          } catch (error) {
+            console.error("❌ Erreur:", error);
+            showResetError("Erreur de connexion. Veuillez réessayer.");
+          } finally {
+            loadingDiv.classList.add("hidden");
+            submitButton.disabled = false;
+          }
+        });
+
+      // Fermer la modale de réinitialisation en cliquant à l'extérieur
+      document
+        .getElementById("resetPasswordModal")
+        .addEventListener("click", function (e) {
+          if (e.target === this) {
+            closeResetPasswordModal();
+          }
+        });
+
       // Vérifier si l'utilisateur est déjà connecté
       document.addEventListener("DOMContentLoaded", function () {
         const isAdminLoggedIn = localStorage.getItem("isAdminLoggedIn");
         if (isAdminLoggedIn === "true") {
           window.location.href = "/html/access-management.html";
+          return;
+        }
+
+        // Vérifier si l'URL contient un token de réinitialisation
+        const urlParams = new URLSearchParams(window.location.search);
+        const resetToken = urlParams.get("reset");
+
+        if (resetToken) {
+          // Ouvrir automatiquement la modal de réinitialisation et pré-remplir le token
+          setTimeout(() => {
+            showResetPasswordModal();
+            document.getElementById("resetToken").value = resetToken;
+            // Focus sur le champ nouveau mot de passe
+            document.getElementById("newPassword").focus();
+          }, 500);
         }
       });
     </script>

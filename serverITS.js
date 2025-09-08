@@ -275,6 +275,157 @@ app.post("/api/admin-login", async (req, res) => {
   }
 });
 
+// API pour récupération de mot de passe admin
+app.post("/api/admin-forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "L'email est requis pour la récupération de mot de passe",
+      });
+    }
+
+    // Vérifier si l'email existe dans les admins
+    const adminResult = await pool.query(
+      "SELECT * FROM users WHERE email = $1 AND role = 'admin'",
+      [email]
+    );
+
+    if (adminResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucun compte administrateur trouvé avec cet email",
+      });
+    }
+
+    const admin = adminResult.rows[0];
+
+    // Générer un token temporaire (combinaison de timestamp et email hashé)
+    const resetToken = Buffer.from(`${email}_${Date.now()}_${Math.random()}`)
+      .toString("base64")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .substring(0, 32);
+    const resetExpires = new Date(Date.now() + 3600000); // 1 heure
+
+    // Sauvegarder le token temporairement (on peut utiliser une table ou temporairement en mémoire)
+    // Pour simplifier, on va stocker dans un champ temporaire de la table users
+    await pool.query(
+      "UPDATE users SET reset_token = $1, reset_expires = $2 WHERE email = $3 AND role = 'admin'",
+      [resetToken, resetExpires, email]
+    );
+
+    // Configuration du transporteur email (réutilise la config existante)
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    // URL de réinitialisation (pour l'instant on envoie juste le token)
+    const resetUrl = `https://dossiv.ci/html/admin-login.html?reset=${resetToken}`;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: email,
+      subject:
+        "Réinitialisation de votre mot de passe administrateur - ITS Service",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #1f2937; text-align: center;">Réinitialisation de mot de passe</h2>
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p>Bonjour <strong>${admin.name}</strong>,</p>
+            <p>Vous avez demandé la réinitialisation de votre mot de passe administrateur.</p>
+            <p>Votre code de réinitialisation temporaire est :</p>
+            <div style="background: white; padding: 15px; border-radius: 4px; text-align: center; margin: 15px 0;">
+              <strong style="font-size: 18px; color: #dc2626; letter-spacing: 2px;">${resetToken}</strong>
+            </div>
+            <p style="color: #dc2626; font-weight: bold;">⚠️ Ce code expire dans 1 heure.</p>
+            <p>Si vous n'avez pas demandé cette réinitialisation, ignorez ce message.</p>
+          </div>
+          <p style="color: #6b7280; font-size: 12px; text-align: center;">
+            ITS Service - Plateforme de Suivi
+          </p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({
+      success: true,
+      message: "Un code de réinitialisation a été envoyé à votre adresse email",
+    });
+  } catch (error) {
+    console.error("❌ Erreur récupération mot de passe admin:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de l'envoi du code de récupération",
+    });
+  }
+});
+
+// API pour confirmer la réinitialisation avec le token
+app.post("/api/admin-reset-password", async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Le token et le nouveau mot de passe sont requis",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Le mot de passe doit contenir au moins 6 caractères",
+      });
+    }
+
+    // Vérifier le token et sa validité
+    const adminResult = await pool.query(
+      "SELECT * FROM users WHERE reset_token = $1 AND role = 'admin' AND reset_expires > NOW()",
+      [token]
+    );
+
+    if (adminResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Token invalide ou expiré",
+      });
+    }
+
+    const admin = adminResult.rows[0];
+
+    // Hasher le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Mettre à jour le mot de passe et supprimer le token
+    await pool.query(
+      "UPDATE users SET password = $1, reset_token = NULL, reset_expires = NULL WHERE id = $2",
+      [hashedPassword, admin.id]
+    );
+
+    res.json({
+      success: true,
+      message: "Mot de passe réinitialisé avec succès",
+    });
+  } catch (error) {
+    console.error("❌ Erreur réinitialisation mot de passe admin:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la réinitialisation",
+    });
+  }
+});
+
 // === AUTO-CRÉATION DES COLONNES JSON AU DÉMARRAGE ===
 async function initializeJsonColumns() {
   try {
@@ -1962,6 +2113,24 @@ async function ensureUsersTable() {
     } catch (err) {
       console.log(
         "La colonne 'role' existe déjà ou erreur mineure:",
+        err.message
+      );
+    }
+
+    // Ajouter les colonnes pour la récupération de mot de passe
+    try {
+      await pool.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255)`
+      );
+      await pool.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMP WITH TIME ZONE`
+      );
+      console.log(
+        "Colonnes de récupération de mot de passe ajoutées à la table users."
+      );
+    } catch (err) {
+      console.log(
+        "Les colonnes de récupération existent déjà ou erreur mineure:",
         err.message
       );
     }
