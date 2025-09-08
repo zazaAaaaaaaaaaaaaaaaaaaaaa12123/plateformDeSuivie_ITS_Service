@@ -16,6 +16,10 @@ let notificationSound = null;
 // Variables pour gérer l'état "vu" des demandes (persiste après rafraîchissement)
 let viewedRequestIds = new Set();
 
+// Variables pour la persistance des notifications
+let notifiedRequestIds = new Set();
+let lastNotificationCheck = null;
+
 // Charger les IDs des demandes vues depuis localStorage
 function loadViewedRequestIds() {
   try {
@@ -46,6 +50,54 @@ function saveViewedRequestIds() {
     );
   } catch (error) {
     console.error("❌ Erreur lors de la sauvegarde des demandes vues:", error);
+  }
+}
+
+// Charger l'état des notifications depuis localStorage
+function loadNotificationState() {
+  try {
+    const savedNotifiedIds = localStorage.getItem("notifiedRequestIds");
+    const savedLastCheck = localStorage.getItem("lastNotificationCheck");
+
+    if (savedNotifiedIds) {
+      notifiedRequestIds = new Set(JSON.parse(savedNotifiedIds));
+      console.log(
+        "🔔 IDs des demandes notifiées chargés:",
+        Array.from(notifiedRequestIds)
+      );
+    }
+
+    if (savedLastCheck) {
+      lastNotificationCheck = new Date(savedLastCheck);
+      console.log(
+        "⏰ Dernière vérification de notification chargée:",
+        lastNotificationCheck
+      );
+    }
+  } catch (error) {
+    console.error(
+      "❌ Erreur lors du chargement de l'état des notifications:",
+      error
+    );
+    notifiedRequestIds = new Set();
+    lastNotificationCheck = null;
+  }
+}
+
+// Sauvegarder l'état des notifications dans localStorage
+function saveNotificationState() {
+  try {
+    localStorage.setItem(
+      "notifiedRequestIds",
+      JSON.stringify(Array.from(notifiedRequestIds))
+    );
+    localStorage.setItem("lastNotificationCheck", new Date().toISOString());
+    console.log("💾 État des notifications sauvegardé");
+  } catch (error) {
+    console.error(
+      "❌ Erreur lors de la sauvegarde de l'état des notifications:",
+      error
+    );
   }
 }
 
@@ -626,6 +678,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // Charger l'état des demandes vues depuis localStorage
   loadViewedRequestIds();
 
+  // Charger l'état des notifications depuis localStorage
+  loadNotificationState();
+
   // Vérifier si l'utilisateur est connecté
   const isLoggedIn = localStorage.getItem("isAdminLoggedIn");
   if (isLoggedIn !== "true") {
@@ -1132,49 +1187,48 @@ function checkForNewAgentTransitRequests(newRequests) {
     "🎯 Demandes agent-transit en attente:",
     agentTransitRequests.length
   );
-  console.log("📊 Détails des demandes agent-transit:", agentTransitRequests);
 
-  const currentAgentTransitCount = agentTransitRequests.length;
+  // Identifier les vraiment nouvelles demandes (jamais notifiées)
+  const newNotifications = agentTransitRequests.filter((req) => {
+    const requestId =
+      req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+    return !notifiedRequestIds.has(requestId);
+  });
 
-  console.log("📈 Compteur précédent:", lastAgentTransitCount);
-  console.log("📈 Compteur actuel:", currentAgentTransitCount);
+  console.log("🆕 Nouvelles demandes à notifier:", newNotifications.length);
 
-  // Si c'est la première fois qu'on charge les données, on initialise sans notification
-  if (lastAgentTransitCount === 0 && currentAgentTransitCount > 0) {
-    console.log("🆕 Première initialisation - pas de notification");
-    lastAgentTransitCount = currentAgentTransitCount;
-    return;
-  }
+  // Si on a de nouvelles demandes à notifier
+  if (newNotifications.length > 0) {
+    console.log(
+      `🔔 ${newNotifications.length} nouvelle(s) demande(s) détectée(s)!`
+    );
 
-  // Si on a de nouvelles demandes
-  if (currentAgentTransitCount > lastAgentTransitCount) {
-    const newRequestsCount = currentAgentTransitCount - lastAgentTransitCount;
-    console.log(`🔔 ${newRequestsCount} nouvelle(s) demande(s) détectée(s)!`);
-
-    // Prendre seulement les vraies nouvelles demandes (les plus récentes par date)
-    const sortedRequests = agentTransitRequests.sort((a, b) => {
-      const dateA = new Date(a.demande_le || a.created_at || a.date || 0);
-      const dateB = new Date(b.demande_le || b.created_at || b.date || 0);
-      return dateB - dateA; // Plus récent en premier
+    // Marquer ces demandes comme notifiées
+    newNotifications.forEach((req) => {
+      const requestId =
+        req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+      notifiedRequestIds.add(requestId);
     });
 
-    const actualNewRequests = sortedRequests.slice(0, newRequestsCount);
+    // Sauvegarder l'état
+    saveNotificationState();
 
     console.log(
       "📧 Nouvelles demandes avec emails:",
-      actualNewRequests.map((req) => ({
+      newNotifications.map((req) => ({
         nom: req.nom || req.name,
         email: req.email,
         date: req.demande_le || req.created_at || req.date,
       }))
     );
 
-    showAgentTransitNotification(newRequestsCount, actualNewRequests);
+    showAgentTransitNotification(newNotifications.length, newNotifications);
   } else {
-    console.log("📋 Aucune nouvelle demande détectée");
+    console.log("📋 Aucune nouvelle demande à notifier");
   }
 
-  lastAgentTransitCount = currentAgentTransitCount;
+  // Toujours mettre à jour le compteur pour les badges
+  lastAgentTransitCount = agentTransitRequests.length;
 }
 
 // Fonction pour afficher une notification pour les nouvelles demandes d'Agent Transit
@@ -1388,43 +1442,47 @@ function checkForNewResponsableLivraisonRequests(newRequests) {
     "🎯 Demandes responsable-livraison en attente:",
     responsableLivraisonRequests.length
   );
+
+  // Identifier les vraiment nouvelles demandes (jamais notifiées)
+  const newNotifications = responsableLivraisonRequests.filter((req) => {
+    const requestId =
+      req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+    return !notifiedRequestIds.has(requestId);
+  });
+
   console.log(
-    "📊 Détails des demandes responsable-livraison:",
-    responsableLivraisonRequests
+    "🆕 Nouvelles demandes Responsable de Livraison à notifier:",
+    newNotifications.length
   );
 
-  const currentResponsableLivraisonCount = responsableLivraisonRequests.length;
-
-  console.log("📈 Compteur précédent:", lastResponsableLivraisonCount);
-  console.log("📈 Compteur actuel:", currentResponsableLivraisonCount);
-
-  // Si c'est la première fois qu'on charge les données, on initialise sans notification
-  if (
-    lastResponsableLivraisonCount === 0 &&
-    currentResponsableLivraisonCount > 0
-  ) {
-    console.log("🆕 Première initialisation - pas de notification");
-    lastResponsableLivraisonCount = currentResponsableLivraisonCount;
-    return;
-  }
-
-  // Si on a de nouvelles demandes
-  if (currentResponsableLivraisonCount > lastResponsableLivraisonCount) {
-    const newRequestsCount =
-      currentResponsableLivraisonCount - lastResponsableLivraisonCount;
+  // Si on a de nouvelles demandes à notifier
+  if (newNotifications.length > 0) {
     console.log(
-      `🔔 ${newRequestsCount} nouvelle(s) demande(s) Responsable de Livraison détectée(s)!`
+      `🔔 ${newNotifications.length} nouvelle(s) demande(s) Responsable de Livraison détectée(s)!`
     );
+
+    // Marquer ces demandes comme notifiées
+    newNotifications.forEach((req) => {
+      const requestId =
+        req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+      notifiedRequestIds.add(requestId);
+    });
+
+    // Sauvegarder l'état
+    saveNotificationState();
 
     showResponsableLivraisonNotification(
-      newRequestsCount,
-      responsableLivraisonRequests.slice(-newRequestsCount)
+      newNotifications.length,
+      newNotifications
     );
   } else {
-    console.log("📋 Aucune nouvelle demande Responsable de Livraison détectée");
+    console.log(
+      "📋 Aucune nouvelle demande Responsable de Livraison à notifier"
+    );
   }
 
-  lastResponsableLivraisonCount = currentResponsableLivraisonCount;
+  // Toujours mettre à jour le compteur pour les badges
+  lastResponsableLivraisonCount = responsableLivraisonRequests.length;
 }
 
 // Fonction pour afficher une notification pour les nouvelles demandes de Responsable de Livraison
@@ -1667,66 +1725,54 @@ function checkForNewResponsableAcconierRequests(newRequests) {
     "🎯 Demandes responsable-acconier en attente:",
     responsableAcconierRequests.length
   );
+
+  // Identifier les vraiment nouvelles demandes (jamais notifiées)
+  const newNotifications = responsableAcconierRequests.filter((req) => {
+    const requestId =
+      req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+    return !notifiedRequestIds.has(requestId);
+  });
+
   console.log(
-    "📊 Détails des demandes responsable-acconier:",
-    responsableAcconierRequests
+    "🆕 Nouvelles demandes Responsable Acconier à notifier:",
+    newNotifications.length
   );
 
-  // Trier par date de création pour identifier les vraies nouvelles demandes
-  responsableAcconierRequests.sort(
-    (a, b) => new Date(a.created_at) - new Date(b.created_at)
-  );
-  console.log(
-    "📅 Demandes triées par date:",
-    responsableAcconierRequests.map((req) => ({
-      id: req.id,
-      email: req.email,
-      created_at: req.created_at,
-    }))
-  );
-
-  const currentResponsableAcconierCount = responsableAcconierRequests.length;
-
-  console.log("📈 Compteur précédent:", lastResponsableAcconierCount);
-  console.log("📈 Compteur actuel:", currentResponsableAcconierCount);
-
-  // Si c'est la première fois qu'on charge les données, on initialise sans notification
-  if (
-    lastResponsableAcconierCount === 0 &&
-    currentResponsableAcconierCount > 0
-  ) {
-    console.log("🆕 Première initialisation - pas de notification");
-    lastResponsableAcconierCount = currentResponsableAcconierCount;
-    return;
-  }
-
-  // Si on a de nouvelles demandes
-  if (currentResponsableAcconierCount > lastResponsableAcconierCount) {
-    const newRequestsCount =
-      currentResponsableAcconierCount - lastResponsableAcconierCount;
+  // Si on a de nouvelles demandes à notifier
+  if (newNotifications.length > 0) {
     console.log(
-      `🔔 ${newRequestsCount} nouvelle(s) demande(s) Responsable Acconier détectée(s)!`
+      `🔔 ${newNotifications.length} nouvelle(s) demande(s) Responsable Acconier détectée(s)!`
     );
 
-    // Prendre les vraies nouvelles demandes (les plus récentes)
-    const actualNewRequests = responsableAcconierRequests.slice(
-      -newRequestsCount
-    );
+    // Marquer ces demandes comme notifiées
+    newNotifications.forEach((req) => {
+      const requestId =
+        req.id || `${req.actor_type}-${req.nom || req.name}-${req.email}`;
+      notifiedRequestIds.add(requestId);
+    });
+
+    // Sauvegarder l'état
+    saveNotificationState();
+
     console.log(
       "🆕 Vraies nouvelles demandes Responsable Acconier:",
-      actualNewRequests.map((req) => ({
+      newNotifications.map((req) => ({
         id: req.id,
         email: req.email,
         nom: req.nom,
       }))
     );
 
-    showResponsableAcconierNotification(newRequestsCount, actualNewRequests);
+    showResponsableAcconierNotification(
+      newNotifications.length,
+      newNotifications
+    );
   } else {
-    console.log("📋 Aucune nouvelle demande Responsable Acconier détectée");
+    console.log("📋 Aucune nouvelle demande Responsable Acconier à notifier");
   }
 
-  lastResponsableAcconierCount = currentResponsableAcconierCount;
+  // Toujours mettre à jour le compteur pour les badges
+  lastResponsableAcconierCount = responsableAcconierRequests.length;
 }
 
 // Fonction pour afficher une notification pour les nouvelles demandes de Responsable Acconier
