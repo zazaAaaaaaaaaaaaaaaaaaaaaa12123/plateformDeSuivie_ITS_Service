@@ -1,3 +1,4 @@
+/**JESUS MON DIEU  */
 // Variables globales
 let currentRequests = [];
 let currentRequestId = null;
@@ -6825,3 +6826,4 @@ function showNotificationMessage(message, type = "info") {
     }
   }, 5000);
 }
+/**JESUS MON DIEU */
