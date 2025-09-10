@@ -4,6 +4,134 @@
   -webkit-backdrop-filter: blur(25px) !important;
 }
 
+/* Style de base pour la date d'échange BL */
+[data-field-name="date_echange_bl"] {
+  font-weight: bold !important;
+}
+
+/* Style pour la date d'échange BL en mode sombre */
+.dark-mode [data-field-name="date_echange_bl"] {
+  color: #4aff4a !important; /* Vert clair */
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.7); /* Effet cyan plus prononcé */
+  font-weight: bold;
+}
+
+/* Styles de base (mode clair) */
+[data-field-name="shipping_company"] {
+  font-weight: bold !important;
+}
+
+/* Style de base pour circuit (mode clair) */
+[data-field-name="circuit"] {
+  font-weight: bold !important;
+}
+
+/* Réinitialisation des styles en mode clair */
+[data-field-name="container_number"],
+.container-number-dropdown option,
+.dropdown-toggle {
+  color: inherit;
+  text-shadow: none;
+  font-weight: normal;
+}
+
+/* Style pour les numéros TC en mode sombre */
+.dark-mode [data-field-name="container_number"],
+.dark-mode .container-number-dropdown option,
+.dark-mode .dropdown-toggle {
+  color: #40a9ff !important; /* Bleu */
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.6); /* Effet cyan */
+  font-weight: bold;
+}
+
+/* Styles de base pour tous les éléments du menu déroulant */
+.dropdown-menu .container-number,
+.container-number-dropdown option,
+.dropdown-toggle[data-field-name="container_number"],
+.dropdown-menu li,
+.dropdown-menu a {
+  font-weight: bold !important;
+}
+
+/* Style pour les numéros dans le menu déroulant en mode sombre */
+.dark-mode .dropdown-menu .container-number,
+.dark-mode .dropdown-menu li,
+.dark-mode .dropdown-menu a {
+  color: #40a9ff !important;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.6);
+  font-weight: bold !important;
+}
+
+/* Styles pour les différents types de circuits en mode sombre */
+.dark-mode [data-field-name="circuit"] {
+  font-weight: bold !important;
+}
+
+.dark-mode [data-field-name="circuit"]:contains("VAD") {
+  color: #00ff00 !important; /* Vert */
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.dark-mode [data-field-name="circuit"]:contains("VAQ") {
+  color: #000080 !important; /* Bleu foncé */
+  text-shadow: 0 0 5px rgba(0, 0, 128, 0.5);
+}
+
+.dark-mode [data-field-name="circuit"]:contains("SCANNER") {
+  color: #800080 !important; /* Violet */
+  text-shadow: 0 0 5px rgba(128, 0, 128, 0.5);
+}
+
+.dark-mode [data-field-name="circuit"]:contains("BAE") {
+  color: #808080 !important; /* Gris */
+  text-shadow: 0 0 5px rgba(128, 128, 128, 0.5);
+}
+
+/* Style pour la colonne Compagnie en mode sombre */
+.dark-mode [data-field-name="shipping_company"] {
+  color: #ff66ff !important;
+  text-shadow: 0 0 5px rgba(255, 102, 255, 0.5);
+  font-weight: bold !important;
+}
+
+/* Style pour la colonne N° BL en mode sombre */
+.dark-mode [data-field-name="bl_number"] {
+  color: #fff200 !important;
+  text-shadow: 0 0 5px rgba(255, 242, 0, 0.5);
+}
+
+/* Style pour la colonne N° Dossier en mode sombre */
+.dark-mode [data-field-name="dossier_number"] {
+  color: #ff6666 !important;
+  text-shadow: 0 0 5px rgba(255, 102, 102, 0.5);
+}
+
+/* Style pour la colonne N° Declaration en mode sombre */
+.dark-mode [data-field-name="declaration_number"] {
+  color: #40e0ff !important;
+  text-shadow: 0 0 5px rgba(64, 224, 255, 0.5);
+}
+
+/* Style pour la colonne Nom du Navire en mode sombre */
+.dark-mode [data-field-name="ship_name"] {
+  color: #ff8c00 !important;
+}
+
+/* Style pour les colonnes de dates et colonnes numériques en mode sombre */
+.dark-mode [data-field-name="date_do"],
+.dark-mode [data-field-name="date_badt"],
+.dark-mode [data-field-name="paiement_acconage"],
+.dark-mode [data-field-name="position"],
+.dark-mode [data-field-name="total_containers"],
+.dark-mode [data-field-name="reference_number"] {
+  color: #00ffff !important;
+}
+
+.dark-mode [data-field-name="weight"] {
+  color: #ffffff !important;
+  text-shadow: none;
+}
+
 /* === MASQUER ÉLÉMENT DÉCORATIF BLANC === */
 /* Cache spécifiquement l'élément blanc décoratif dans le coin supérieur droit */
 body::before,
@@ -23,6 +151,12 @@ div[style*="position:absolute"][style*="top:"][style*="right:"][style*="backgrou
 
 .enterprise-modal-container {
   box-shadow: none !important;
+}
+
+/* Style pour le N°BL en mode sombre */
+[data-theme="dark"] th:first-child,
+[data-theme="dark"] td:first-child {
+  color: yellow !important;
 }
 
 .enterprise-modal-header {
@@ -340,6 +474,19 @@ body {
   overflow: visible;
 }
 
+/* Mode sombre pour card-section */
+.dark-mode .card-section {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #374151 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* S'assurer que tous les éléments enfants héritent de la couleur en mode sombre */
+.dark-mode .card-section * {
+  color: inherit;
+}
+
 /* Titres */
 .section-title {
   font-size: 1.15rem;
@@ -348,10 +495,20 @@ body {
   color: #004d99;
 }
 
+/* Mode sombre pour les titres */
+.dark-mode .section-title {
+  color: #60a5fa !important;
+}
+
 .section-subtitle {
   font-size: 0.8rem;
   color: #6b7280;
   margin-bottom: 0.8rem;
+}
+
+/* Mode sombre pour les sous-titres */
+.dark-mode .section-subtitle {
+  color: #94a3b8 !important;
 }
 
 /* Conteneur pour le titre et le sous-titre */
@@ -571,6 +728,23 @@ tbody td:first-child {
   box-shadow: 0 0 5px rgba(79, 70, 229, 0.4);
 }
 
+/* Styles en mode sombre pour searchInput */
+.dark-mode #searchInput {
+  background-color: #374151 !important;
+  color: #e2e8f0 !important;
+  border: 1.5px solid #4b5563 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark-mode #searchInput::placeholder {
+  color: #9ca3af !important;
+}
+
+.dark-mode #searchInput:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 5px rgba(99, 102, 241, 0.4) !important;
+}
+
 /* Bouton PDF déplacé à droite (maintenu ici pour le positionnement général si nécessaire) */
 .d-flex.justify-content-between {
   display: flex !important;
@@ -695,15 +869,33 @@ tbody td:first-child {
   font-size: 0.8rem;
 }
 
+/* Mode sombre pour les boutons */
+.dark-mode .icon-btn-company-color {
+  background-color: #4f46e5 !important;
+  border-color: #6366f1 !important;
+  color: white !important;
+}
+
 .icon-btn-company-color:hover {
   background-color: #003366;
   box-shadow: 0 3px 10px rgba(0, 77, 153, 0.4);
   color: white;
 }
 
+/* Mode sombre pour les boutons au survol */
+.dark-mode .icon-btn-company-color:hover {
+  background-color: #3730a3 !important;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.4) !important;
+}
+
 .icon-btn-company-color:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(0, 77, 153, 0.5);
+}
+
+/* Mode sombre pour les boutons au focus */
+.dark-mode .icon-btn-company-color:focus {
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.5) !important;
 }
 
 /* --- Styles pour le conteneur du bouton et de la popup --- */
@@ -3278,10 +3470,239 @@ tbody td:first-child {
   min-width: 150px;
 }
 
+/* Mode sombre pour les champs de date */
+.dark-mode .date-picker-input,
+.dark-mode input[type="date"] {
+  background-color: #374151 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #4b5563 !important;
+}
+
 .date-picker-input:focus {
   border-color: #667eea;
   outline: none;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Mode sombre pour focus des champs de date */
+.dark-mode .date-picker-input:focus,
+.dark-mode input[type="date"]:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* Styles généraux pour tous les inputs en mode sombre */
+.dark-mode input {
+  background-color: #374151 !important;
+  color: #e2e8f0 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-mode input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Styles pour les boutons en mode sombre */
+.dark-mode .btn {
+  background-color: #4f46e5 !important;
+  color: white !important;
+  border-color: #6366f1 !important;
+}
+
+.dark-mode .btn-danger {
+  background-color: #dc2626 !important;
+  border-color: #ef4444 !important;
+}
+
+/* === STYLES TABLEAU EN MODE SOMBRE === */
+/* Mode sombre pour le tableau principal */
+.dark-mode table {
+  background-color: #1e293b !important;
+  border-color: #374151 !important;
+}
+
+.dark-mode table,
+.dark-mode th,
+.dark-mode td {
+  border: 1px solid #374151 !important;
+}
+
+/* En-tête du tableau en mode sombre */
+.dark-mode thead {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode thead th {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-bottom: 2px solid #374151 !important;
+}
+
+/* Cellules du tableau en mode sombre */
+.dark-mode td {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* Lignes alternées en mode sombre */
+.dark-mode tbody tr:nth-child(even) td {
+  background-color: #334155 !important;
+}
+
+.dark-mode tbody tr:hover td {
+  background-color: #475569 !important;
+}
+
+/* Container du tableau en mode sombre */
+.dark-mode .overflow-x-auto {
+  background-color: #1e293b !important;
+}
+
+.dark-mode #tableScrollContainer {
+  background-color: #1e293b !important;
+}
+
+/* En-têtes spéciaux colorés en mode sombre */
+.dark-mode .header-agent-acconier {
+  background-color: rgba(245, 158, 11, 0.3) !important;
+  color: #fbbf24 !important;
+}
+
+.dark-mode .header-resp-acconier {
+  background-color: rgba(16, 185, 129, 0.3) !important;
+  color: #34d399 !important;
+}
+
+.dark-mode .header-resp-livraison {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+  color: #60a5fa !important;
+}
+
+/* Numéros TC en mode sombre */
+.dark-mode .numero-tc {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+  color: #a5b4fc !important;
+}
+
+/* ===== COLORATION INTELLIGENTE DES COLONNES EN MODE SOMBRE ===== */
+/* Colonne N° Déclaration - Rouge */
+.dark-mode td[data-column="declaration"] {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+  border-left: 3px solid #ef4444 !important;
+}
+
+/* Colonne N° BL - Jaune */
+.dark-mode td[data-column="bl"] {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  color: #fde047 !important;
+  border-left: 3px solid #eab308 !important;
+}
+
+/* Colonne N° Dossier - Orange fluo */
+.dark-mode td[data-column="dossier"] {
+  background-color: rgba(255, 165, 0, 0.2) !important;
+  color: #ffb347 !important;
+  border-left: 3px solid #ff8c00 !important;
+}
+
+/* Colonnes de dates - Orange rouge */
+.dark-mode td[data-column="date-do"],
+.dark-mode td[data-column="date-badt"],
+.dark-mode td[data-column="date-paiement"] {
+  background-color: rgba(255, 69, 0, 0.15) !important;
+  color: #ff8c69 !important;
+  border-left: 3px solid #ff4500 !important;
+}
+
+/* Colonne CIRCUIT - Couleurs conditionnelles */
+.dark-mode td[data-column="circuit"] {
+  border-left: 3px solid #6b7280 !important;
+}
+
+/* Circuit VAD - Vert */
+.dark-mode .circuit-vad {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+  border-left: 3px solid #22c55e !important;
+}
+
+/* Circuit VAQ - Bleu */
+.dark-mode .circuit-vaq {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: #93c5fd !important;
+  border-left: 3px solid #3b82f6 !important;
+}
+
+/* Circuit Scanner - Violet */
+.dark-mode .circuit-scanner {
+  background-color: rgba(147, 51, 234, 0.15) !important;
+  color: #c4b5fd !important;
+  border-left: 3px solid #9333ea !important;
+}
+
+/* Circuit BAE - Gris */
+.dark-mode .circuit-bae {
+  background-color: rgba(107, 114, 128, 0.15) !important;
+  color: #d1d5db !important;
+  border-left: 3px solid #6b7280 !important;
+}
+
+/* Colonnes figées (sticky) en mode sombre */
+.dark-mode .sticky-col {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* === STYLES POUR LES NUMÉROS TC EN MODE SOMBRE === */
+/* TC Tags en mode sombre */
+.dark-mode .tc-tag {
+  background: #1e293b !important;
+  color: #60a5fa !important;
+  border: 1px solid #374151 !important;
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.1) !important;
+}
+
+.dark-mode .tc-tag-more {
+  background: #334155 !important;
+  color: #a5b4fc !important;
+}
+
+.dark-mode .tc-tags-btn {
+  background: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .tc-tags-btn:hover {
+  background: #475569 !important;
+  border-color: #6366f1 !important;
+}
+
+.dark-mode .tc-chevron {
+  color: #a5b4fc !important;
+}
+
+.dark-mode .tc-popup {
+  background: #1e293b !important;
+  border: 1px solid #374151 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark-mode .tc-popup-item {
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .tc-popup-item:hover {
+  background: #374151 !important;
+  color: #60a5fa !important;
+}
+
+/* Cellules multi TC en mode sombre */
+.dark-mode .tc-multi-cell {
+  background-color: inherit !important;
+  color: inherit !important;
 }
 
 .view-date-btn {
@@ -4476,4 +4897,1302 @@ tbody td:first-child {
     height: 40px;
     font-size: 1.3rem;
   }
+}
+
+/* ===================================================================
+   CORRECTIONS MODE SOMBRE POUR MODALS SPÉCIFIQUES
+=================================================================== */
+
+/* 1. S'assurer que les modals ENTERPRISE (Vue Dossiers Clients) restent TOUJOURS en mode clair */
+.dark-mode .enterprise-modal-overlay {
+  background: linear-gradient(
+    145deg,
+    rgba(15, 23, 42, 0.95) 0%,
+    rgba(30, 41, 59, 0.9) 100%
+  ) !important;
+}
+
+.dark-mode .enterprise-modal-container {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(248, 250, 252, 0.95) 100%
+  ) !important;
+  color: #000000 !important;
+}
+
+.dark-mode .enterprise-modal-header {
+  background: linear-gradient(
+    135deg,
+    #1e3a8a 0%,
+    #1e40af 25%,
+    #3b82f6 50%,
+    #06b6d4 75%,
+    #0891b2 100%
+  ) !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .enterprise-modal-body {
+  background: rgba(255, 255, 255, 0.98) !important;
+  color: #000000 !important;
+}
+
+.dark-mode .enterprise-modal-container * {
+  color: #000000 !important;
+}
+
+.dark-mode .enterprise-modal-container h1,
+.dark-mode .enterprise-modal-container h2,
+.dark-mode .enterprise-modal-container h3,
+.dark-mode .enterprise-modal-container h4,
+.dark-mode .enterprise-modal-container h5,
+.dark-mode .enterprise-modal-container h6 {
+  color: #000000 !important;
+}
+
+.dark-mode .enterprise-modal-container .btn {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #ced4da !important;
+}
+
+.dark-mode .enterprise-modal-container .btn-primary {
+  background: #0d6efd !important;
+  color: #ffffff !important;
+  border-color: #0d6efd !important;
+}
+
+.dark-mode .enterprise-modal-container .form-control {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ced4da !important;
+}
+
+.dark-mode .enterprise-modal-container table {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.dark-mode .enterprise-modal-container table th {
+  background: #f8f9fa !important;
+  color: #000000 !important;
+  border-color: #dee2e6 !important;
+}
+
+.dark-mode .enterprise-modal-container table td {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #dee2e6 !important;
+}
+
+/* 1. S'assurer que les modals "Vue Dossiers Clients" et "Suivi Spécifique Agent" restent en mode clair */
+.dark-mode .modal.show .modal-dialog .modal-content {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.dark-mode .modal.show .modal-header {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-bottom: 1px solid #dee2e6 !important;
+}
+
+.dark-mode .modal.show .modal-body {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.dark-mode .modal.show .modal-footer {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-top: 1px solid #dee2e6 !important;
+}
+
+.dark-mode .modal.show .btn-close {
+  filter: none !important;
+  background: transparent
+    url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='m.235 1.027 1.027-.235 6.738 6.738 6.738-6.738 1.027.235L9.025 8 15.765 14.74l-1.027.235L8 8.237l-6.738 6.738-1.027-.235L6.975 8 .235 1.26z'/%3e%3c/svg%3e")
+    center/1em auto no-repeat !important;
+}
+
+.dark-mode .modal.show .modal-title {
+  color: #000000 !important;
+}
+
+.dark-mode .modal.show .form-control {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ced4da !important;
+}
+
+.dark-mode .modal.show .form-label {
+  color: #000000 !important;
+}
+
+.dark-mode .modal.show .btn-primary {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .modal.show .btn-secondary {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: #ffffff !important;
+}
+
+/* 2. Modal de sélection d'agent adaptée au mode sombre */
+.dark-mode .modern-agent-modal-overlay {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark-mode .modern-agent-modal {
+  background: var(--bg-primary, #1a1a2e) !important;
+  color: var(--text-primary, #e2e8f0) !important;
+}
+
+.dark-mode .modern-modal-header {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
+  color: var(--text-primary, #e2e8f0) !important;
+}
+
+.dark-mode .modern-modal-body {
+  background: var(--bg-primary, #1a1a2e) !important;
+  color: var(--text-primary, #e2e8f0) !important;
+}
+
+.dark-mode .tab-navigation {
+  background: #1e293b !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.dark-mode .tab-btn {
+  color: #94a3b8 !important;
+  border-bottom: 3px solid transparent !important;
+}
+
+.dark-mode .tab-btn:hover {
+  color: #e2e8f0 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.dark-mode .tab-btn.active {
+  color: #60a5fa !important;
+  border-bottom-color: #60a5fa !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+
+.dark-mode .tab-panel {
+  background: var(--bg-primary, #1a1a2e) !important;
+  color: var(--text-primary, #e2e8f0) !important;
+}
+
+/* Styles pour les éléments de recherche d'agent */
+.dark-mode .form-control {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .form-control:focus {
+  background: #374151 !important;
+  border-color: #60a5fa !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.25) !important;
+}
+
+.dark-mode .form-control::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Liste des agents */
+.dark-mode .list-group-item {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .list-group-item:hover {
+  background: #475569 !important;
+  color: #f1f5f9 !important;
+}
+
+.dark-mode .list-group-item.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* Boutons dans la modal agent */
+.dark-mode .modern-btn {
+  border-color: #4b5563 !important;
+}
+
+.dark-mode .danger-btn {
+  background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .secondary-btn {
+  background: rgba(55, 65, 81, 0.8) !important;
+  color: #e2e8f0 !important;
+  border-color: #6b7280 !important;
+}
+
+.dark-mode .secondary-btn:hover {
+  background: rgba(75, 85, 99, 0.9) !important;
+}
+
+/* Summary cards en mode sombre */
+.dark-mode .summary-card {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #4b5563 !important;
+}
+
+.dark-mode .summary-card:hover {
+  background: linear-gradient(135deg, #475569 0%, #374151 100%) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Headers et titres dans les modals agent */
+.dark-mode .operations-header h3 {
+  color: #f1f5f9 !important;
+}
+
+.dark-mode .agent-modal-title {
+  color: #f1f5f9 !important;
+}
+
+.dark-mode .agent-modal-subtitle {
+  color: #d1d5db !important;
+}
+
+/* Date navigation en mode sombre */
+.dark-mode .date-nav-btn {
+  background: rgba(55, 65, 81, 0.6) !important;
+  border: 1px solid #6b7280 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .date-nav-btn:hover {
+  background: rgba(75, 85, 99, 0.8) !important;
+}
+
+/* Stats badges en mode sombre */
+.dark-mode .stat-badge {
+  background: rgba(55, 65, 81, 0.6) !important;
+  border: 1px solid #6b7280 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Quick stats en mode sombre */
+.dark-mode .quick-stats {
+  color: #e2e8f0 !important;
+}
+
+/* Agent avatar circle en mode sombre */
+.dark-mode .agent-avatar-circle {
+  background: rgba(55, 65, 81, 0.8) !important;
+  border: 3px solid rgba(156, 163, 175, 0.5) !important;
+  color: #e2e8f0 !important;
+}
+
+/* Tables dans les modals agent en mode sombre */
+.dark-mode .modern-modal-body table {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .modern-modal-body table th {
+  background: #374151 !important;
+  color: #f1f5f9 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-mode .modern-modal-body table td {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-mode .modern-modal-body table tbody tr:hover {
+  background: #374151 !important;
+}
+
+/* Scrollbar pour les modals agent en mode sombre */
+.dark-mode .modern-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark-mode .modern-modal-body::-webkit-scrollbar-track {
+  background: #1e293b !important;
+}
+
+.dark-mode .modern-modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%) !important;
+  border-radius: 10px;
+}
+
+.dark-mode .modern-modal-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%) !important;
+}
+
+/* ===================================================================
+   CORRECTIONS FINALES POUR LES MODALS EN MODE SOMBRE
+=================================================================== */
+
+/* Force TOUS les élèles de modal Bootstrap standard à rester en mode clair */
+.dark-mode .modal {
+  color: #000000 !important;
+}
+
+.dark-mode .modal .modal-content {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #dee2e6 !important;
+}
+
+.dark-mode .modal .modal-header {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-bottom: 1px solid #dee2e6 !important;
+}
+
+.dark-mode .modal .modal-body {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.dark-mode .modal .modal-footer {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-top: 1px solid #dee2e6 !important;
+}
+
+.dark-mode .modal .modal-title {
+  color: #000000 !important;
+}
+
+.dark-mode .modal .btn-close {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.dark-mode .modal .form-control {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #ced4da !important;
+}
+
+.dark-mode .modal .form-label {
+  color: #000000 !important;
+}
+
+.dark-mode .modal .btn {
+  color: #000000 !important;
+}
+
+.dark-mode .modal .btn-primary {
+  background: #0d6efd !important;
+  border-color: #0d6efd !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .modal .btn-secondary {
+  background: #6c757d !important;
+  border-color: #6c757d !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .modal table {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.dark-mode .modal table th {
+  background: #f8f9fa !important;
+  color: #000000 !important;
+  border-color: #dee2e6 !important;
+}
+
+.dark-mode .modal table td {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #dee2e6 !important;
+}
+
+/* Garde les modals enterprise en clair mais avec leur style spécifique */
+.dark-mode
+  .enterprise-modal-overlay
+  .enterprise-modal-container
+  .form-control::placeholder {
+  color: #6c757d !important;
+}
+
+/* Assure-toi que SEULES les modals modernes d'agent utilisent le mode sombre */
+.dark-mode .modern-agent-modal-overlay .list-group-item {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .modern-agent-modal-overlay .list-group-item:hover {
+  background: #475569 !important;
+  color: #f1f5f9 !important;
+}
+
+.dark-mode .modern-agent-modal-overlay .list-group-item.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .modern-agent-modal-overlay .form-control {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .modern-agent-modal-overlay .form-control:focus {
+  background: #374151 !important;
+  border-color: #60a5fa !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.25) !important;
+}
+
+.dark-mode .modern-agent-modal-overlay .form-control::placeholder {
+  color: #9ca3af !important;
+}
+
+/* ===================================================================
+   STYLES POUR POPUP CLIENT DETAILS EN MODE SOMBRE
+=================================================================== */
+
+.dark-mode .popup-client-folder-details {
+  background: #1a1a2e !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #374151 !important;
+}
+
+.dark-mode .popup-client-folder-details .operation-card {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
+  border: 1px solid #4b5563 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .popup-client-folder-details .operation-card:hover {
+  background: linear-gradient(135deg, #475569 0%, #374151 100%) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark-mode .popup-client-folder-details table {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-mode .popup-client-folder-details table th {
+  background: #374151 !important;
+  color: #f1f5f9 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-mode .popup-client-folder-details table td {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark-mode .popup-client-folder-details table tbody tr:hover {
+  background: #374151 !important;
+}
+
+/* --- Styles Mode Sombre pour le Modal de Sélection d'Agent --- */
+.dark-mode .employee-popup {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark-mode .popup-header {
+  border-bottom-color: #475569 !important;
+}
+
+.dark-mode .popup-title {
+  color: #f1f5f9 !important;
+}
+
+.dark-mode .close-popup-btn {
+  color: #9ca3af !important;
+}
+
+.dark-mode .close-popup-btn:hover {
+  color: #f3f4f6 !important;
+}
+
+.dark-mode .popup-search-icon {
+  color: #9ca3af !important;
+}
+
+.dark-mode .popup-search-input {
+  background-color: #374151 !important;
+  border-color: #6b7280 !important;
+  color: #f9fafb !important;
+}
+
+.dark-mode .popup-search-input::placeholder {
+  color: #9ca3af !important;
+}
+
+.dark-mode .popup-search-input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3) !important;
+}
+
+.dark-mode .employee-list li {
+  border-bottom-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+.dark-mode .employee-list li:hover {
+  background-color: #374151 !important;
+  box-shadow: inset 3px 0 0 #3b82f6, 0 1px 5px rgba(59, 130, 246, 0.15) !important;
+}
+
+.dark-mode .employee-list li.no-employees-message {
+  color: #9ca3af !important;
+}
+
+.dark-mode .employee-item-content .name {
+  color: #f1f5f9 !important;
+}
+
+.dark-mode #employeeCountDisplay {
+  color: #9ca3af !important;
+}
+
+/* === STYLES SPÉCIFIQUES POUR LE MODAL D'AGENTS EN MODE SOMBRE === */
+.dark-mode #employeePopup {
+  background-color: #111827 !important;
+  border: 1px solid #374151 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark-mode #employeePopup .popup-header {
+  background-color: #1f2937 !important;
+  border-bottom: 1px solid #374151 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode #employeePopup .popup-title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.dark-mode #employeePopup .close-popup-btn {
+  color: #ffffff !important;
+  font-size: 18px !important;
+}
+
+.dark-mode #employeePopup .popup-search-icon {
+  color: #9ca3af !important;
+}
+
+.dark-mode #employeePopup .popup-body {
+  background-color: #111827 !important;
+}
+
+.dark-mode #employeePopup .popup-search-wrapper {
+  background-color: transparent !important;
+}
+
+/* === STYLES RENFORCÉS POUR LE CHAMP DE RECHERCHE EN MODE SOMBRE === */
+.dark-mode #employeePopup .popup-search-input,
+.dark-mode #employeePopup input[type="text"],
+.dark-mode #employeePopup input {
+  background-color: #374151 !important;
+  border: 1px solid #6b7280 !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+}
+
+.dark-mode #employeePopup .popup-search-input::placeholder,
+.dark-mode #employeePopup input::placeholder {
+  color: #9ca3af !important;
+  opacity: 0.8 !important;
+}
+
+.dark-mode #employeePopup .popup-search-input:focus,
+.dark-mode #employeePopup input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+  color: #ffffff !important;
+  outline: none !important;
+}
+
+.dark-mode #employeePopup #employeeList,
+.dark-mode #employeePopup .employee-list {
+  background-color: #111827 !important;
+}
+
+/* === CORRECTION AGGRESSIVE POUR TOUS LES ÉLÉMENTS BLANCS === */
+.dark-mode #employeePopup * {
+  background-color: inherit !important;
+}
+
+.dark-mode #employeePopup,
+.dark-mode #employeePopup .popup-header,
+.dark-mode #employeePopup .popup-body {
+  background-color: #111827 !important;
+}
+
+.dark-mode #employeePopup .popup-header {
+  background-color: #1f2937 !important;
+}
+
+/* Forcer TOUS les éléments d'en-tête */
+.dark-mode #employeePopup .popup-header,
+.dark-mode #employeePopup .popup-header *,
+.dark-mode #employeePopup .popup-title,
+.dark-mode #employeePopup .close-popup-btn {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+/* Zone du compteur d'agents - FORCER SOMBRE */
+.dark-mode #employeePopup #employeeCountDisplay,
+.dark-mode #employeePopup .employee-count,
+.dark-mode #employeePopup .popup-header > * {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+/* Éliminer TOUT fond blanc dans le modal */
+.dark-mode #employeePopup div,
+.dark-mode #employeePopup span,
+.dark-mode #employeePopup p {
+  background-color: transparent !important;
+}
+
+.dark-mode #employeePopup .popup-header div,
+.dark-mode #employeePopup .popup-header span {
+  background-color: #1f2937 !important;
+}
+
+/* === STYLES POUR L'ICÔNE DE SUPPRESSION EN MODE SOMBRE === */
+.dark-mode #employeePopup .delete-agent-list-item-btn,
+.dark-mode .delete-agent-list-item-btn {
+  color: #ef4444 !important;
+  font-size: 16px !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-block !important;
+  cursor: pointer !important;
+}
+
+.dark-mode #employeePopup .delete-agent-list-item-btn:hover,
+.dark-mode .delete-agent-list-item-btn:hover {
+  color: #dc2626 !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  transform: scale(1.1) !important;
+}
+
+.dark-mode #employeePopup .delete-agent-list-item-btn i,
+.dark-mode .delete-agent-list-item-btn i {
+  color: inherit !important;
+  font-size: inherit !important;
+}
+
+/* === FORCER LES NOMS D'AGENTS EN BLANC === */
+.dark-mode #employeePopup .employee-list li span,
+.dark-mode #employeePopup #employeeList li span,
+.dark-mode #employeePopup li span {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  background-color: transparent !important;
+}
+
+/* === STYLES POUR LA MODAL D'ACTIVITÉ AGENT EN MODE SOMBRE === */
+.dark-mode .modern-agent-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark-mode .modern-agent-modal {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  border: 1px solid #374151 !important;
+}
+
+.dark-mode .modern-modal-header {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .modern-modal-body {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .tab-navigation {
+  background-color: #374151 !important;
+  border-bottom: 1px solid #4b5563 !important;
+}
+
+.dark-mode .tab-btn {
+  background-color: transparent !important;
+  color: #d1d5db !important;
+  border-bottom: 2px solid transparent !important;
+}
+
+.dark-mode .tab-btn.active {
+  background-color: #4b5563 !important;
+  color: #ffffff !important;
+  border-bottom-color: #3b82f6 !important;
+}
+
+.dark-mode .tab-btn:hover {
+  background-color: #4b5563 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .tab-content {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .modern-operations-table {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .modern-operations-table th {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  border: 1px solid #4b5563 !important;
+}
+
+.dark-mode .modern-operations-table td {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  border: 1px solid #4b5563 !important;
+}
+
+.dark-mode .modern-operations-table tbody tr:hover {
+  background-color: #374151 !important;
+}
+
+.dark-mode .modern-btn.secondary-btn {
+  background-color: #4b5563 !important;
+  color: #ffffff !important;
+  border: 1px solid #6b7280 !important;
+}
+
+.dark-mode .modern-btn.secondary-btn:hover {
+  background-color: #6b7280 !important;
+}
+
+.dark-mode .agent-title-section h1 {
+  color: #ffffff !important;
+}
+
+.dark-mode .date-navigation button {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  border: 1px solid #4b5563 !important;
+}
+
+.dark-mode .date-navigation button:hover {
+  background-color: #4b5563 !important;
+}
+
+.dark-mode .stats-grid .stat-card {
+  background-color: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .stat-number {
+  color: #ffffff !important;
+}
+
+.dark-mode .stat-label {
+  color: #d1d5db !important;
+}
+
+.dark-mode .empty-state {
+  background-color: #374151 !important;
+  color: #d1d5db !important;
+  border: 1px solid #4b5563 !important;
+}
+
+.dark-mode .empty-state h4 {
+  color: #ffffff !important;
+}
+
+.dark-mode .empty-state p {
+  color: #d1d5db !important;
+}
+
+/* === FORCER TOUS LES ÉLÉMENTS BLANCS DANS LES MODALES === */
+.dark-mode #agentActivityBox {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  border: 1px solid #374151 !important;
+}
+
+.dark-mode #agentActivityBox * {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
+
+.dark-mode #agentActivityBox .tab-navigation,
+.dark-mode #agentActivityBox .tab-btn,
+.dark-mode #agentActivityBox .tab-content,
+.dark-mode #agentActivityBox .modern-modal-header,
+.dark-mode #agentActivityBox .modern-modal-body {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode #agentActivityBox .tab-btn.active {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode #agentActivityBox table,
+.dark-mode #agentActivityBox th,
+.dark-mode #agentActivityBox td {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  border-color: #374151 !important;
+}
+
+.dark-mode #agentActivityBox .empty-state,
+.dark-mode #agentActivityBox .empty-state h4,
+.dark-mode #agentActivityBox .empty-state p {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
+/* Forcer les boutons à être sombres */
+.dark-mode #agentActivityBox button,
+.dark-mode #agentActivityBox .btn,
+.dark-mode #agentActivityBox .modern-btn {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  border: 1px solid #4b5563 !important;
+}
+
+/* Forcer les icônes à être visibles */
+.dark-mode #agentActivityBox .fa,
+.dark-mode #agentActivityBox i {
+  color: #ffffff !important;
+}
+
+/* Forcer la section de titre */
+.dark-mode #agentActivityBox .agent-title-section,
+.dark-mode #agentActivityBox .agent-title-section h1,
+.dark-mode #agentActivityBox .agent-title-section * {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+/* Forcer les statistiques */
+.dark-mode #agentActivityBox .stats-grid,
+.dark-mode #agentActivityBox .stat-card,
+.dark-mode #agentActivityBox .stat-number,
+.dark-mode #agentActivityBox .stat-label {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
+/* Forcer TOUS les conteneurs blancs */
+.dark-mode .modern-agent-modal *,
+.dark-mode #agentActivityBox * {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+.dark-mode .modern-agent-modal,
+.dark-mode .modern-agent-modal .modal-content,
+.dark-mode .modern-agent-modal .modal-body,
+.dark-mode .modern-agent-modal .modal-header {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  border-color: #374151 !important;
+}
+
+/* Style ultra-agressif pour éliminer TOUT blanc */
+.dark-mode .modern-agent-modal-overlay * {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .modern-agent-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark-mode .modern-agent-modal-overlay > .modern-agent-modal {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+/* === FORCER SPÉCIFIQUEMENT LES LIGNES DE TABLEAU === */
+.dark-mode .modern-operations-table tr,
+.dark-mode .modern-operations-table tbody tr,
+.dark-mode .modern-operations-table thead tr {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .modern-operations-table tr:nth-child(even) {
+  background-color: #374151 !important;
+}
+
+.dark-mode .modern-operations-table tr:nth-child(odd) {
+  background-color: #1f2937 !important;
+}
+
+.dark-mode .modern-operations-table tr:hover {
+  background-color: #4b5563 !important;
+}
+
+/* === FORCER TOUS LES ÉLÉMENTS DE CELLULES === */
+.dark-mode .modern-operations-table td *,
+.dark-mode .modern-operations-table th * {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+/* === COULEURS SPÉCIALES POUR CERTAINS TEXTES === */
+.dark-mode .modern-operations-table .status-badge {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+}
+
+.dark-mode .modern-operations-table .client-name {
+  color: #60a5fa !important;
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table .container-number {
+  color: #fbbf24 !important;
+  font-weight: 500 !important;
+}
+
+.dark-mode .modern-operations-table .location-text {
+  color: #34d399 !important;
+  font-weight: 500 !important;
+}
+
+.dark-mode .modern-operations-table .content-type {
+  color: #a78bfa !important;
+  font-weight: 500 !important;
+}
+
+.dark-mode .modern-operations-table .dossier-number {
+  color: #fb7185 !important;
+  font-weight: 500 !important;
+}
+
+/* === COULEURS SPÉCIFIQUES POUR LES COLONNES === */
+/* Colonne CLIENT - Bleu */
+.dark-mode .modern-operations-table td:nth-child(2) {
+  color: #60a5fa !important;
+  font-weight: 600 !important;
+}
+
+/* Colonne CONTENEURS - Jaune/Orange */
+.dark-mode .modern-operations-table td:nth-child(3) {
+  color: #fbbf24 !important;
+  font-weight: 500 !important;
+}
+
+/* Colonne LIEU - Vert */
+.dark-mode .modern-operations-table td:nth-child(4) {
+  color: #34d399 !important;
+  font-weight: 600 !important;
+}
+
+/* Colonne CONTENU - Violet */
+.dark-mode .modern-operations-table td:nth-child(5) {
+  color: #a78bfa !important;
+  font-weight: 500 !important;
+}
+
+/* Colonne N° DOSSIER - Rose */
+.dark-mode .modern-operations-table td:nth-child(6) {
+  color: #fb7185 !important;
+  font-weight: 500 !important;
+}
+
+/* Colonne STATUT - Vert avec badge */
+.dark-mode .modern-operations-table td:nth-child(7) {
+  color: #10b981 !important;
+  font-weight: 600 !important;
+}
+
+/* === COULEURS POUR LES STATISTIQUES === */
+.dark-mode .stat-card .stat-number {
+  color: #60a5fa !important;
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+}
+
+.dark-mode .stat-card .stat-label {
+  color: #d1d5db !important;
+  font-weight: 500 !important;
+}
+
+/* Couleurs différentes pour chaque carte de statistique */
+.dark-mode .stat-card:nth-child(1) .stat-number {
+  color: #fbbf24 !important; /* Jaune pour Opérations */
+}
+
+.dark-mode .stat-card:nth-child(2) .stat-number {
+  color: #34d399 !important; /* Vert pour Conteneurs */
+}
+
+.dark-mode .stat-card:nth-child(3) .stat-number {
+  color: #fb7185 !important; /* Rose pour Dossiers */
+}
+
+/* === COULEURS POUR L'EN-TÊTE DE LA MODAL === */
+.dark-mode .agent-modal-title {
+  color: #60a5fa !important;
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.3) !important;
+  font-weight: 700 !important;
+}
+
+.dark-mode .agent-modal-subtitle {
+  color: #d1d5db !important;
+  font-weight: 500 !important;
+}
+
+/* === FORCER LE NOM DE L'AGENT EN COULEUR === */
+.dark-mode .modern-agent-modal h1,
+.dark-mode .modern-agent-modal .agent-modal-title,
+.dark-mode .modern-agent-modal .agent-title-section h1 {
+  color: #60a5fa !important;
+  text-shadow: 0 0 15px rgba(96, 165, 250, 0.5) !important;
+  font-weight: 700 !important;
+  background-color: transparent !important;
+}
+
+/* === FORCER SPÉCIFIQUEMENT DANS L'EN-TÊTE === */
+.dark-mode .modern-modal-header h1,
+.dark-mode .modern-modal-header .agent-modal-title,
+.dark-mode .agent-header-info h1,
+.dark-mode .agent-title-section h1 {
+  color: #60a5fa !important;
+  text-shadow: 0 0 15px rgba(96, 165, 250, 0.5) !important;
+  font-weight: 700 !important;
+  background: none !important;
+  background-color: transparent !important;
+}
+
+/* === ÉLIMINER TOUT STYLE BLANC SUR LES TITRES === */
+.dark-mode .modern-agent-modal * h1 {
+  color: #60a5fa !important;
+  background: none !important;
+}
+
+.dark-mode .modern-agent-modal *[class*="title"] {
+  color: #60a5fa !important;
+  background: transparent !important;
+}
+
+/* === COULEURS SPÉCIFIQUES POUR LES EN-TÊTES ET VALEURS DES COLONNES === */
+
+/* En-têtes avec couleurs spécifiques */
+.dark-mode .modern-operations-table th[data-column="declaration"] {
+  color: #ef4444 !important; /* Rouge pour N° Déclaration */
+  font-weight: 700 !important;
+}
+
+.dark-mode .modern-operations-table th[data-column="bl"] {
+  color: #fbbf24 !important; /* Jaune pour N° BL */
+  font-weight: 700 !important;
+}
+
+.dark-mode .modern-operations-table th[data-column="dossier"] {
+  color: #ff6600 !important; /* Orange fluo pour N° Dossier */
+  font-weight: 700 !important;
+}
+
+.dark-mode .modern-operations-table th[data-column="date-do"],
+.dark-mode .modern-operations-table th[data-column="date-badt"],
+.dark-mode .modern-operations-table th[data-column="date-paiement"] {
+  color: #ff4500 !important; /* Orange red pour les dates */
+  font-weight: 700 !important;
+}
+
+.dark-mode .modern-operations-table th[data-column="circuit"] {
+  color: #8b5cf6 !important; /* Violet pour CIRCUIT */
+  font-weight: 700 !important;
+}
+
+/* Valeurs des colonnes avec couleurs héritées des en-têtes */
+.dark-mode .modern-operations-table td[data-column="declaration"] {
+  color: #ef4444 !important; /* Rouge pour valeurs N° Déclaration */
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table td[data-column="bl"] {
+  color: #fbbf24 !important; /* Jaune pour valeurs N° BL */
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table td[data-column="dossier"] {
+  color: #ff6600 !important; /* Orange fluo pour valeurs N° Dossier */
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table td[data-column="date-do"],
+.dark-mode .modern-operations-table td[data-column="date-badt"],
+.dark-mode .modern-operations-table td[data-column="date-paiement"] {
+  color: #ff4500 !important; /* Orange red pour valeurs des dates */
+  font-weight: 500 !important;
+}
+
+/* Couleurs spécifiques pour les valeurs de CIRCUIT */
+.dark-mode .modern-operations-table td[data-column="circuit"].circuit-vad {
+  color: #10b981 !important; /* Vert pour VAD */
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table td[data-column="circuit"].circuit-vaq {
+  color: #38bdf8 !important; /* Bleu clair pour VAQ */
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table td[data-column="circuit"].circuit-scanner {
+  color: #8b5cf6 !important; /* Violet pour Scanner */
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table td[data-column="circuit"].circuit-vad {
+  color: #10b981 !important; /* Vert pour VAD */
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table td[data-column="circuit"].circuit-vaq {
+  color: #38bdf8 !important; /* Bleu clair pour VAQ */
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table td[data-column="circuit"].circuit-scanner {
+  color: #8b5cf6 !important; /* Violet pour Scanner */
+  font-weight: 600 !important;
+}
+
+.dark-mode .modern-operations-table td[data-column="circuit"].circuit-bae {
+  color: #9ca3af !important; /* Gris pour BAE */
+  font-weight: 600 !important;
+}
+
+/* === COULEURS POUR LA NAVIGATION DES DATES === */
+.dark-mode .date-nav-btn {
+  background-color: #4b5563 !important;
+  color: #60a5fa !important;
+  border: 1px solid #60a5fa !important;
+}
+
+.dark-mode .date-nav-btn:hover {
+  background-color: #60a5fa !important;
+  color: #ffffff !important;
+}
+
+/* === COULEURS POUR LES ONGLETS === */
+.dark-mode .tab-btn {
+  color: #d1d5db !important;
+  border-bottom: 2px solid transparent !important;
+}
+
+.dark-mode .tab-btn:hover {
+  color: #60a5fa !important;
+  border-bottom-color: #60a5fa !important;
+}
+
+.dark-mode .tab-btn.active {
+  color: #ffffff !important;
+  border-bottom-color: #60a5fa !important;
+  background-color: #4b5563 !important;
+}
+
+/* === COULEURS POUR LES ICÔNES === */
+.dark-mode .modern-operations-table .fa,
+.dark-mode .modern-operations-table i {
+  color: #60a5fa !important;
+}
+
+.dark-mode .agent-avatar-circle {
+  background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%) !important;
+  color: #ffffff !important;
+}
+
+/* === EFFET HOVER COLORÉ === */
+.dark-mode .modern-operations-table tbody tr:hover {
+  background-color: #4b5563 !important;
+  box-shadow: 0 0 15px rgba(96, 165, 250, 0.2) !important;
+}
+
+/* === COULEURS POUR LES BOUTONS === */
+.dark-mode .modern-btn.secondary-btn {
+  background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #60a5fa !important;
+}
+
+.dark-mode .modern-btn.secondary-btn:hover {
+  background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3) !important;
+}
+
+/* === FORCER LES EN-TÊTES DE TABLEAU === */
+.dark-mode .modern-operations-table thead th {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-bottom: 2px solid #4b5563 !important;
+}
+
+/* === ÉLIMINER TOUT FOND BLANC RÉSIDUEL === */
+.dark-mode .modern-agent-modal * {
+  background: none !important;
+}
+
+.dark-mode .modern-agent-modal,
+.dark-mode .modern-agent-modal .modal-content,
+.dark-mode .modern-agent-modal .modal-body,
+.dark-mode .modern-agent-modal .modal-header,
+.dark-mode .modern-agent-modal .modern-modal-body,
+.dark-mode .modern-agent-modal .modern-modal-header {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+/* === FORCER LE CONTENU DES ONGLETS === */
+.dark-mode .modern-agent-modal .tab-content,
+.dark-mode .modern-agent-modal .tab-pane {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+/* === NUMÉROTATION DES LIGNES === */
+.dark-mode .modern-operations-table td:first-child {
+  background-color: #374151 !important;
+  color: #fbbf24 !important;
+  font-weight: 700 !important;
+  text-align: center !important;
 }

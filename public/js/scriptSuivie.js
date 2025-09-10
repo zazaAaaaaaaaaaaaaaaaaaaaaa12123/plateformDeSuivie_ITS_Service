@@ -1,3 +1,379 @@
+// === SYSTÈME DE MODE SOMBRE SYNCHRONISÉ ===
+(function initDarkModeSync() {
+  // === FONCTION POUR APPLIQUER LES COULEURS CONDITIONNELLES EN MODE SOMBRE ===
+  window.applyDarkModeConditionalColors = function () {
+    // Vérifier si le mode sombre est activé
+    const isDarkMode = document.body.classList.contains("dark-mode");
+    console.log("🎨 [COLORS] Vérification mode sombre:", isDarkMode);
+    console.log("🎨 [COLORS] Classes du body:", document.body.className);
+
+    // Appliquer aux deux tableaux : principal et agent
+    const tables = [
+      document.getElementById("deliveriesTable"),
+      document.getElementById("agentDailyDeliveriesTable"),
+    ];
+
+    tables.forEach((table) => {
+      if (!table) return;
+      console.log("🎨 [COLORS] Traitement du tableau:", table.id);
+
+      const rows = table.querySelectorAll("tbody tr");
+      console.log("🎨 [COLORS] Nombre de lignes trouvées:", rows.length);
+
+      rows.forEach((row, rowIndex) => {
+        const cells = row.querySelectorAll("td");
+
+        cells.forEach((cell, index) => {
+          const fieldName = cell.dataset.fieldName;
+          const cellText = cell.textContent ? cell.textContent.trim() : "";
+
+          if (isDarkMode) {
+            // APPLIQUER les couleurs en mode sombre
+            // Méthode 1: Utiliser les data-field-name si disponibles
+            if (fieldName) {
+              applyColorByFieldName(cell, fieldName);
+            }
+            // Méthode 2: Utiliser les positions des colonnes (pour les tableaux sans data-field-name)
+            else {
+              applyColorByColumnIndex(cell, index, table);
+            }
+          } else {
+            // SUPPRIMER les couleurs en mode clair
+            cell.style.color = "";
+          }
+        });
+      });
+    });
+  };
+
+  // Fonction pour appliquer les couleurs par nom de champ
+  function applyColorByFieldName(cell, fieldName) {
+    const cellText = cell.textContent ? cell.textContent.trim() : "";
+    console.log(
+      `🎨 [FIELD] Traitement champ: ${fieldName}, valeur: "${cellText}"`
+    );
+
+    switch (fieldName) {
+      // N° Déclaration: Bleu vif
+      case "declaration_number":
+        if (
+          cellText &&
+          cellText !== "-" &&
+          !cell.tagName.toLowerCase().includes("th")
+        ) {
+          cell.style.color = "#00bfff";
+          console.log(
+            `� [FIELD] Bleu vif appliqué à N° Déclaration: ${cellText}`
+          );
+        }
+        break;
+
+      // N° BL: Jaune vif (seulement les valeurs, pas l'en-tête)
+      case "bl_number":
+        if (
+          cellText &&
+          cellText !== "-" &&
+          !cell.tagName.toLowerCase().includes("th")
+        ) {
+          cell.style.color = "#ffff00";
+          console.log(`🟡 [FIELD] Jaune vif appliqué à N° BL: ${cellText}`);
+        }
+        break;
+
+      // N° Dossier: Rouge vif
+      case "dossier_number":
+        if (
+          cellText &&
+          cellText !== "-" &&
+          !cell.tagName.toLowerCase().includes("th")
+        ) {
+          cell.style.color = "#ff0000";
+          console.log(`� [FIELD] Rouge vif appliqué à N° Dossier: ${cellText}`);
+        }
+        break;
+
+      // Date DO, Date BADT, Date de paiement Acconage: Cyan brillant
+      case "date_do":
+      case "date_badt":
+      case "paiement_acconage":
+        if (
+          cellText &&
+          cellText !== "-" &&
+          !cell.tagName.toLowerCase().includes("th")
+        ) {
+          cell.style.color = "#00ffff";
+          cell.style.textShadow = "0 0 5px rgba(0, 255, 255, 0.5)";
+          console.log(
+            `💫 [FIELD] Cyan brillant appliqué à ${fieldName}: ${cellText}`
+          );
+        }
+        break;
+
+      // Colonnes numériques en cyan brillant
+      case "position":
+      case "total_containers":
+      case "weight":
+      case "reference_number":
+        if (
+          cellText &&
+          cellText !== "-" &&
+          !cell.tagName.toLowerCase().includes("th")
+        ) {
+          cell.style.color = "#00ffff";
+          cell.style.textShadow = "0 0 5px rgba(0, 255, 255, 0.5)";
+          console.log(
+            `💫 [FIELD] Cyan brillant appliqué à ${fieldName}: ${cellText}`
+          );
+        }
+        break;
+
+      // Nom du Navire: Orange fluo
+      case "ship_name":
+        if (
+          cellText &&
+          cellText !== "-" &&
+          !cell.tagName.toLowerCase().includes("th")
+        ) {
+          cell.style.color = "#ff8c00";
+          console.log(
+            `🟠 [FIELD] Orange fluo appliqué au nom du navire: ${cellText}`
+          );
+        }
+        break;
+
+      // Circuit: Couleurs selon la valeur
+      case "circuit":
+        applyCircuitColors(cell);
+        break;
+    }
+  }
+
+  // Fonction pour appliquer les couleurs par index de colonne
+  function applyColorByColumnIndex(cell, index, table) {
+    const text = cell.textContent ? cell.textContent.trim() : "";
+    if (!text || text === "-") return;
+
+    console.log(
+      `🎨 [INDEX] Colonne ${index}, valeur: "${text}", tableau: ${
+        table ? table.id : "inconnu"
+      }`
+    );
+
+    // Pour le tableau principal (deliveriesTable)
+    if (table && table.id === "deliveriesTable") {
+      switch (index) {
+        case 9: // N° Déclaration (position dans le tableau principal)
+          cell.style.color = "#ff4444"; // Rouge
+          console.log(
+            `🔴 [INDEX] Rouge appliqué colonne 9 (N° Déclaration): ${text}`
+          );
+          break;
+        case 10: // N° BL
+          cell.style.color = "#ffeb3b"; // Jaune
+          console.log(`🟡 [INDEX] Jaune appliqué colonne 10 (N° BL): ${text}`);
+          break;
+        case 11: // N° Dossier
+          cell.style.color = "#ff6600"; // Orange fluo
+          console.log(
+            `🟠 [INDEX] Orange appliqué colonne 11 (N° Dossier): ${text}`
+          );
+          break;
+        case 20: // Date Paiement Acconage
+        case 21: // Date DO
+        case 22: // Date BADT
+          cell.style.color = "#ff4500"; // Orange red
+          console.log(
+            `🟧 [INDEX] Orange red appliqué colonne ${index}: ${text}`
+          );
+          break;
+        case 16: // Circuit
+          applyCircuitColors(cell);
+          break;
+      }
+    }
+    // Pour le tableau agent (agentDailyDeliveriesTable)
+    else if (table && table.id === "agentDailyDeliveriesTable") {
+      switch (index) {
+        case 7: // N° Déclaration
+          cell.style.color = "#ff4444"; // Rouge
+          console.log(
+            `🔴 [INDEX] Rouge appliqué colonne 7 (N° Déclaration): ${text}`
+          );
+          break;
+        case 8: // N° BL
+          cell.style.color = "#ffeb3b"; // Jaune
+          console.log(`🟡 [INDEX] Jaune appliqué colonne 8 (N° BL): ${text}`);
+          break;
+        case 9: // N° Dossier
+          cell.style.color = "#ff6600"; // Orange fluo
+          console.log(
+            `🟠 [INDEX] Orange appliqué colonne 9 (N° Dossier): ${text}`
+          );
+          break;
+        case 14: // Circuit
+          applyCircuitColors(cell);
+          break;
+      }
+    }
+  }
+
+  // Fonction pour appliquer les couleurs du circuit
+  function applyCircuitColors(cell) {
+    const circuitValue = cell.textContent
+      ? cell.textContent.trim().toUpperCase()
+      : "";
+    if (circuitValue && circuitValue !== "-") {
+      switch (circuitValue) {
+        case "VAD":
+          cell.style.color = "#00FF00"; // Vert
+          cell.style.textShadow = "0 0 5px rgba(0, 255, 0, 0.5)";
+          break;
+        case "VAQ":
+          cell.style.color = "#000080"; // Bleu foncé
+          cell.style.textShadow = "0 0 5px rgba(0, 0, 128, 0.5)";
+          break;
+        case "SCANNER":
+          cell.style.color = "#800080"; // Violet
+          cell.style.textShadow = "0 0 5px rgba(128, 0, 128, 0.5)";
+          break;
+        case "BAE":
+          cell.style.color = "#808080"; // Gris
+          cell.style.textShadow = "0 0 5px rgba(128, 128, 128, 0.5)";
+          break;
+      }
+    }
+  }
+
+  // Fonction pour appliquer le mode sombre
+  function applyDarkMode() {
+    const savedMode = localStorage.getItem("darkMode");
+    if (savedMode === "enabled") {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+
+    // Synchroniser le modal d'agents si visible
+    synchronizeAgentModalStyles();
+
+    // Appliquer ou supprimer les couleurs conditionnelles selon le mode
+    setTimeout(() => {
+      if (typeof window.applyDarkModeConditionalColors === "function") {
+        window.applyDarkModeConditionalColors();
+      }
+    }, 100);
+
+    // Appliquer aussi après un délai plus long pour s'assurer que les tableaux sont rendus
+    setTimeout(() => {
+      if (typeof window.applyDarkModeConditionalColors === "function") {
+        window.applyDarkModeConditionalColors();
+      }
+    }, 1000);
+  }
+
+  // Fonction pour synchroniser les styles du modal d'agents
+  function synchronizeAgentModalStyles() {
+    const employeePopup = document.getElementById("employeePopup");
+    if (employeePopup && employeePopup.classList.contains("is-visible")) {
+      // Relancer les styles du modal si il est ouvert
+      const event = new CustomEvent("darkModeChanged");
+      window.dispatchEvent(event);
+    }
+  }
+
+  // Appliquer le mode sombre au chargement de la page
+  document.addEventListener("DOMContentLoaded", applyDarkMode);
+
+  // Écouter les changements de mode sombre depuis d'autres pages
+  window.addEventListener("storage", function (event) {
+    if (event.key === "darkMode") {
+      applyDarkMode();
+      // Appliquer ou supprimer les couleurs conditionnelles selon le nouveau mode
+      setTimeout(() => {
+        if (typeof window.applyDarkModeConditionalColors === "function") {
+          window.applyDarkModeConditionalColors();
+        }
+      }, 100);
+
+      // Appliquer aussi après un délai plus long pour s'assurer que les tableaux sont rendus
+      setTimeout(() => {
+        if (typeof window.applyDarkModeConditionalColors === "function") {
+          window.applyDarkModeConditionalColors();
+        }
+      }, 1000);
+    }
+  });
+
+  // Si la page est déjà chargée, appliquer immédiatement
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyDarkMode);
+  } else {
+    applyDarkMode();
+  }
+
+  // APPEL FORCÉ POUR TEST - RÉESSAYER PLUSIEURS FOIS
+  setTimeout(() => {
+    console.log("🎨 [TEST] Premier appel forcé après 2s");
+    if (typeof window.applyDarkModeConditionalColors === "function") {
+      window.applyDarkModeConditionalColors();
+    }
+  }, 2000);
+
+  setTimeout(() => {
+    console.log("🎨 [TEST] Deuxième appel forcé après 5s");
+    if (typeof window.applyDarkModeConditionalColors === "function") {
+      window.applyDarkModeConditionalColors();
+    }
+  }, 5000);
+
+  setTimeout(() => {
+    console.log("🎨 [TEST] Troisième appel forcé après 10s");
+    if (typeof window.applyDarkModeConditionalColors === "function") {
+      window.applyDarkModeConditionalColors();
+    }
+  }, 10000);
+
+  // Surveiller les changements de DOM pour appliquer les couleurs automatiquement
+  const observer = new MutationObserver((mutations) => {
+    let shouldApplyColors = false;
+    mutations.forEach((mutation) => {
+      if (mutation.type === "childList") {
+        // Vérifier s'il y a eu des ajouts de lignes de tableau
+        mutation.addedNodes.forEach((node) => {
+          if (
+            node.nodeType === 1 &&
+            (node.tagName === "TR" ||
+              (node.querySelector && node.querySelector("tr")))
+          ) {
+            shouldApplyColors = true;
+          }
+        });
+      }
+    });
+
+    if (shouldApplyColors) {
+      setTimeout(() => {
+        // Toujours appeler la fonction qui va vérifier le mode et appliquer/supprimer les couleurs
+        if (typeof window.applyDarkModeConditionalColors === "function") {
+          window.applyDarkModeConditionalColors();
+        }
+      }, 50);
+    }
+  });
+
+  // Observer les tableaux pour les changements
+  setTimeout(() => {
+    const tables = document.querySelectorAll(
+      "table, #deliveriesTable, #agentDailyDeliveriesTable"
+    );
+    tables.forEach((table) => {
+      if (table) {
+        observer.observe(table, { childList: true, subtree: true });
+      }
+    });
+  }, 500);
+})();
+
 // === Génération dynamique du tableau principal des dossiers en retard ===
 // === INJECTION DU STYLE RESPONSIVE POUR LES BOUTONS DU TABLEAU DE SUIVI ===
 
@@ -4356,13 +4732,23 @@ function mapStatus(status) {
             content.style.background = "#f8fafc";
             content.style.flex = "1 1 auto";
             content.style.overflowY = "auto";
-            // Numéro du conteneur
+
+            // Détection du mode sombre pour ce contenu
+            const isDarkMode = document.body.classList.contains("dark-mode");
+
+            // Numéro du conteneur avec style conditionnel
             const tcNum = document.createElement("div");
             tcNum.style.fontSize = "1.25em";
             tcNum.style.fontWeight = "bold";
             tcNum.style.marginBottom = "18px";
             tcNum.style.textAlign = "center";
-            tcNum.innerHTML = `Numéro du conteneur : <span style='color:#2563eb;'>${containerNumber}</span>`;
+
+            // Couleur conditionnelle selon le mode - CORRECTION VISIBILITÉ
+            const textColor = isDarkMode ? "#1f2937" : "#000"; // Gris très foncé en mode sombre
+            const numberColor = isDarkMode ? "#1e40af" : "#2563eb"; // Bleu foncé en mode sombre
+
+            tcNum.style.color = textColor;
+            tcNum.innerHTML = `Numéro du conteneur : <span style='color:${numberColor};'>${containerNumber}</span>`;
             content.appendChild(tcNum);
 
             box.appendChild(content);
@@ -5220,6 +5606,9 @@ function mapStatus(status) {
     }
   }
 
+  // === APPLICATION DES COULEURS CONDITIONNELLES EN MODE SOMBRE ===
+  window.applyDarkModeConditionalColors();
+
   // === DÉCLENCHEMENT DE L'ÉVÉNEMENT APRÈS RENDU DU TABLEAU ===
   // Déclencher l'événement personnalisé pour indiquer que le tableau a été rendu
   window.dispatchEvent(new Event("deliveriesTableRendered"));
@@ -5851,6 +6240,158 @@ function mapStatus(status) {
   function showEmployeePopup() {
     if (employeePopup) {
       employeePopup.classList.add("is-visible");
+
+      // DÉTECTION DU MODE ET APPLICATION CONDITIONNELLE
+      const isDarkMode = document.body.classList.contains("dark-mode");
+
+      if (isDarkMode) {
+        // MODE SOMBRE - Forcer TOUS les éléments à être sombres
+        setTimeout(() => {
+          // Modal principal
+          employeePopup.style.cssText = `
+            background-color: #111827 !important;
+            border: 1px solid #374151 !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+          `;
+
+          // FORCER L'EN-TÊTE - SOMBRE
+          const header = employeePopup.querySelector(".popup-header");
+          if (header) {
+            header.style.cssText = `
+              background-color: #1f2937 !important;
+              background: #1f2937 !important;
+              border-bottom: 1px solid #374151 !important;
+              color: #ffffff !important;
+            `;
+
+            // Forcer TOUS les enfants de l'en-tête
+            const headerChildren = header.querySelectorAll("*");
+            headerChildren.forEach((child) => {
+              child.style.setProperty(
+                "background-color",
+                "#1f2937",
+                "important"
+              );
+              child.style.setProperty("background", "#1f2937", "important");
+              child.style.setProperty("color", "#ffffff", "important");
+            });
+          }
+
+          // FORCER LE TITRE
+          const title = employeePopup.querySelector(".popup-title");
+          if (title) {
+            title.style.cssText = `
+              color: #ffffff !important;
+              background-color: #1f2937 !important;
+              background: #1f2937 !important;
+            `;
+          }
+
+          // FORCER LE COMPTEUR D'AGENTS
+          const countDisplay = employeePopup.querySelector(
+            "#employeeCountDisplay"
+          );
+          if (countDisplay) {
+            countDisplay.style.cssText = `
+              color: #ffffff !important;
+              background-color: #1f2937 !important;
+              background: #1f2937 !important;
+            `;
+          }
+
+          // FORCER TOUS LES DIVS ET SPANS À ÊTRE TRANSPARENTS (sauf header)
+          const allDivs = employeePopup.querySelectorAll(
+            "div:not(.popup-header)"
+          );
+          allDivs.forEach((div) => {
+            div.style.setProperty(
+              "background-color",
+              "transparent",
+              "important"
+            );
+            div.style.setProperty("background", "transparent", "important");
+          });
+
+          // FORCER SPÉCIFIQUEMENT LA ZONE DU HEADER
+          const headerElements = employeePopup.querySelectorAll(
+            ".popup-header, .popup-header *"
+          );
+          headerElements.forEach((el) => {
+            el.style.setProperty("background-color", "#1f2937", "important");
+            el.style.setProperty("background", "#1f2937", "important");
+            el.style.setProperty("color", "#ffffff", "important");
+          });
+
+          // FORCER LE CHAMP DE RECHERCHE À ÊTRE SOMBRE AVEC TEXTE BLANC
+          const searchInput = employeePopup.querySelector(
+            ".popup-search-input"
+          );
+          if (searchInput) {
+            searchInput.style.cssText = `
+              background-color: #374151 !important;
+              border: 1px solid #6b7280 !important;
+              color: #ffffff !important;
+              font-size: 14px !important;
+              padding: 8px 12px !important;
+              border-radius: 6px !important;
+            `;
+
+            // Forcer aussi le placeholder
+            searchInput.setAttribute(
+              "style",
+              searchInput.getAttribute("style") +
+                " ::placeholder { color: #9ca3af !important; opacity: 0.8 !important; }"
+            );
+          }
+
+          // Forcer TOUS les inputs dans le modal
+          const allInputs = employeePopup.querySelectorAll("input");
+          allInputs.forEach((input) => {
+            input.style.cssText = `
+              background-color: #374151 !important;
+              border: 1px solid #6b7280 !important;
+              color: #ffffff !important;
+              font-size: 14px !important;
+              padding: 8px 12px !important;
+              border-radius: 6px !important;
+            `;
+          });
+        }, 10);
+      } else {
+        // MODE CLAIR - Nettoyer TOUS les styles forcés
+        setTimeout(() => {
+          // Supprimer tous les styles inline forcés
+          employeePopup.removeAttribute("style");
+
+          // Nettoyer tous les éléments avec des styles forcés
+          const allElements = employeePopup.querySelectorAll("*");
+          allElements.forEach((el) => {
+            const style = el.getAttribute("style");
+            if (style && style.includes("!important")) {
+              el.removeAttribute("style");
+            }
+          });
+
+          // Réappliquer les classes CSS originales pour le mode clair
+          const header = employeePopup.querySelector(".popup-header");
+          if (header) {
+            header.removeAttribute("style");
+          }
+
+          const title = employeePopup.querySelector(".popup-title");
+          if (title) {
+            title.removeAttribute("style");
+          }
+
+          const countDisplay = employeePopup.querySelector(
+            "#employeeCountDisplay"
+          );
+          if (countDisplay) {
+            countDisplay.removeAttribute("style");
+          }
+        }, 10);
+      }
+
       if (employeeSearchInput) {
         employeeSearchInput.value = "";
       }
@@ -5888,38 +6429,124 @@ function mapStatus(status) {
 
   function populateEmployeeList(employeesToDisplay) {
     employeeList.innerHTML = "";
+    const isDarkMode = document.body.classList.contains("dark-mode");
 
     if (employeesToDisplay.length === 0) {
-      employeeList.innerHTML =
-        '<li class="no-employees-message"><span>Aucun employé trouvé.</span></li>';
+      const noEmployeesLi = document.createElement("li");
+      noEmployeesLi.className = "no-employees-message";
+      noEmployeesLi.innerHTML = "<span>Aucun employé trouvé.</span>";
+
+      // Style SEULEMENT en mode sombre
+      if (isDarkMode) {
+        noEmployeesLi.setAttribute(
+          "style",
+          `
+          color: #d1d5db !important;
+          background-color: #1f2937 !important;
+          padding: 16px !important;
+          text-align: center !important;
+          border-radius: 6px !important;
+        `
+        );
+      }
+
+      employeeList.appendChild(noEmployeesLi);
       return;
     }
+
     employeesToDisplay.forEach((employeeName) => {
       const li = document.createElement("li");
       li.className =
-        "flex items-center justify-between p-2 hover:bg-gray-100 rounded-md cursor-pointer"; // Added flex for layout
+        "flex items-center justify-between p-2 hover:bg-gray-100 rounded-md cursor-pointer";
 
       const spanName = document.createElement("span");
       spanName.textContent = employeeName;
-      li.appendChild(spanName);
 
-      // Add delete button for each agent
+      // Bouton de suppression
       const deleteButton = document.createElement("button");
       deleteButton.className = "delete-agent-list-item-btn";
       deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
       deleteButton.title = `Supprimer l'agent ${employeeName} et toutes ses livraisons`;
+
+      // APPLICATION CONDITIONNELLE DES STYLES
+      if (isDarkMode) {
+        // MODE SOMBRE - Styles forcés
+        li.style.cssText = `
+          background-color: #1f2937 !important;
+          border-bottom: 1px solid #374151 !important;
+          color: #ffffff !important;
+          margin-bottom: 4px !important;
+          border-radius: 6px !important;
+        `;
+
+        spanName.style.cssText = `
+          color: #ffffff !important;
+          font-weight: 500 !important;
+          background-color: transparent !important;
+        `;
+
+        deleteButton.setAttribute(
+          "style",
+          `color: #ef4444 !important; 
+           font-size: 16px !important; 
+           background-color: transparent !important;
+           border: none !important;
+           padding: 4px !important;
+           border-radius: 4px !important;
+           opacity: 1 !important;
+           visibility: visible !important;
+           display: inline-block !important;`
+        );
+
+        // Gestion du survol en mode sombre
+        li.addEventListener("mouseenter", () => {
+          li.setAttribute(
+            "style",
+            `
+            background-color: #374151 !important;
+            border-bottom: 1px solid #4b5563 !important;
+            color: #ffffff !important;
+            margin-bottom: 4px !important;
+            border-radius: 6px !important;
+            box-shadow: inset 3px 0 0 #3b82f6, 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+            transform: translateX(2px) !important;
+            `
+          );
+        });
+
+        li.addEventListener("mouseleave", () => {
+          li.setAttribute(
+            "style",
+            `
+            background-color: #1f2937 !important;
+            border-bottom: 1px solid #374151 !important;
+            color: #ffffff !important;
+            margin-bottom: 4px !important;
+            border-radius: 6px !important;
+            transform: translateX(0) !important;
+            `
+          );
+        });
+      } else {
+        // MODE CLAIR - Pas de styles forcés, utiliser les classes CSS normales
+        // Le CSS par défaut s'appliquera automatiquement
+      }
+
       deleteButton.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent the li's click event from firing
+        e.stopPropagation();
         handleDeleteAgent(employeeName);
       });
-      li.appendChild(deleteButton);
 
+      // Gestion du clic sur l'élément
       li.addEventListener("click", () => {
-        selectedAgentName = employeeName; // Use global selectedAgentName
-        currentAgentActivityDate = new Date(); // Use global currentAgentActivityDate
+        selectedAgentName = employeeName;
+        currentAgentActivityDate = new Date();
         showAgentActivity(selectedAgentName, currentAgentActivityDate);
         hideEmployeePopup();
       });
+
+      li.appendChild(spanName);
+      li.appendChild(deleteButton);
       employeeList.appendChild(li);
     });
   }
@@ -5928,6 +6555,560 @@ function mapStatus(status) {
   function showAgentActivityBox() {
     if (agentActivityBox) {
       agentActivityBox.classList.add("active");
+
+      // ADAPTER LA MODAL D'ACTIVITÉ AU MODE ACTUEL (SOMBRE OU CLAIR)
+      setTimeout(() => {
+        forceAgentActivityBoxAdaptiveMode();
+      }, 10);
+    }
+  }
+
+  // Fonction pour adapter la modal d'activité au mode actuel
+  function forceAgentActivityBoxAdaptiveMode() {
+    if (agentActivityBox) {
+      const isDarkMode = document.body.classList.contains("dark-mode");
+
+      if (isDarkMode) {
+        // MODE SOMBRE - Forcer tous les éléments à être sombres
+        agentActivityBox.style.cssText = `
+          background-color: #1f2937 !important;
+          color: #ffffff !important;
+          border: 1px solid #374151 !important;
+        `;
+
+        // Forcer tous les éléments enfants à être sombres
+        const allElements = agentActivityBox.querySelectorAll("*");
+        allElements.forEach((el) => {
+          el.style.cssText += `
+            background-color: transparent !important;
+            color: #ffffff !important;
+            border-color: #374151 !important;
+          `;
+        });
+
+        // Forcer spécifiquement les conteneurs principaux
+        const containers = agentActivityBox.querySelectorAll(
+          ".modal-content, .modal-body, .modal-header, .tab-navigation, .tab-content"
+        );
+        containers.forEach((container) => {
+          container.style.cssText = `
+            background-color: #1f2937 !important;
+            color: #ffffff !important;
+            border-color: #374151 !important;
+          `;
+        });
+
+        // Forcer les boutons d'onglets
+        const tabBtns = agentActivityBox.querySelectorAll(".tab-btn");
+        tabBtns.forEach((btn) => {
+          btn.style.cssText = `
+            background-color: #374151 !important;
+            color: #ffffff !important;
+            border-color: #4b5563 !important;
+          `;
+
+          if (btn.classList.contains("active")) {
+            btn.style.cssText = `
+              background-color: #4b5563 !important;
+              color: #ffffff !important;
+              border-bottom-color: #3b82f6 !important;
+            `;
+          }
+        });
+
+        // Forcer les tableaux
+        const tables = agentActivityBox.querySelectorAll("table, th, td");
+        tables.forEach((table) => {
+          table.style.cssText = `
+            background-color: #1f2937 !important;
+            color: #ffffff !important;
+            border-color: #374151 !important;
+          `;
+        });
+
+        // Forcer les états vides
+        const emptyStates = agentActivityBox.querySelectorAll(
+          ".empty-state, .empty-state h4, .empty-state p"
+        );
+        emptyStates.forEach((empty) => {
+          empty.style.cssText = `
+            background-color: #374151 !important;
+            color: #ffffff !important;
+          `;
+        });
+
+        // Forcer les boutons
+        const buttons = agentActivityBox.querySelectorAll(
+          "button, .btn, .modern-btn"
+        );
+        buttons.forEach((btn) => {
+          btn.style.cssText = `
+            background-color: #374151 !important;
+            color: #ffffff !important;
+            border: 1px solid #4b5563 !important;
+          `;
+        });
+      } else {
+        // MODE CLAIR - Styles par défaut
+        agentActivityBox.style.cssText = `
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        `;
+
+        // Nettoyer les styles forcés en mode sombre
+        const allElements = agentActivityBox.querySelectorAll("*");
+        allElements.forEach((el) => {
+          const style = el.getAttribute("style");
+          if (
+            style &&
+            (style.includes("#1f2937") ||
+              style.includes("#374151") ||
+              style.includes("#111827"))
+          ) {
+            el.removeAttribute("style");
+          }
+        });
+      }
+    }
+  }
+
+  // Fonction pour forcer la modal d'activité à rester en mode clair (ANCIENNE VERSION - GARDÉE POUR COMPATIBILITÉ)
+  function forceAgentActivityBoxLightMode() {
+    if (agentActivityBox) {
+      // Nettoyer tous les styles de mode sombre
+      agentActivityBox.style.cssText = `
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      `;
+
+      // Forcer tous les éléments enfants à rester clairs
+      const allElements = agentActivityBox.querySelectorAll("*");
+      allElements.forEach((el) => {
+        // Supprimer les styles de mode sombre
+        const style = el.getAttribute("style");
+        if (
+          style &&
+          (style.includes("#1f2937") ||
+            style.includes("#374151") ||
+            style.includes("#111827"))
+        ) {
+          el.removeAttribute("style");
+        }
+      });
+
+      // Forcer spécifiquement les éléments importants
+      const modalContent = agentActivityBox.querySelector(".modal-content");
+      if (modalContent) {
+        modalContent.style.cssText = `
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        `;
+      }
+
+      const modalBody = agentActivityBox.querySelector(".modal-body");
+      if (modalBody) {
+        modalBody.style.cssText = `
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        `;
+      }
+
+      const tables = agentActivityBox.querySelectorAll("table, th, td");
+      tables.forEach((table) => {
+        table.style.cssText = `
+          background-color: #ffffff !important;
+          color: #000000 !important;
+          border-color: #e5e7eb !important;
+        `;
+      });
+
+      const inputs = agentActivityBox.querySelectorAll("input, .form-control");
+      inputs.forEach((input) => {
+        input.style.cssText = `
+          background-color: #ffffff !important;
+          color: #000000 !important;
+          border-color: #d1d5db !important;
+        `;
+      });
+    }
+  }
+
+  // Fonction pour forcer la modal moderne d'activité à rester en mode clair
+  // Fonction pour adapter la modal d'activité au mode actuel
+  function forceModalActivityAdaptiveMode(modalElement) {
+    if (!modalElement) return;
+
+    const isDarkMode = document.body.classList.contains("dark-mode");
+
+    if (isDarkMode) {
+      // MODE SOMBRE - Forcer tous les éléments à être sombres
+      const modal = modalElement.querySelector(".modern-agent-modal");
+      if (modal) {
+        modal.style.cssText = `
+          background-color: #1f2937 !important;
+          color: #ffffff !important;
+          border: 1px solid #374151 !important;
+        `;
+      }
+
+      // Forcer tous les éléments enfants
+      const allElements = modalElement.querySelectorAll("*");
+      allElements.forEach((el) => {
+        if (!el.classList.contains("modern-agent-modal-overlay")) {
+          el.style.cssText += `
+            background-color: transparent !important;
+            color: #ffffff !important;
+            border-color: #374151 !important;
+          `;
+        }
+      });
+
+      // Forcer l'overlay
+      modalElement.style.cssText = `
+        background-color: rgba(0, 0, 0, 0.8) !important;
+      `;
+
+      // Forcer les conteneurs principaux
+      const containers = modalElement.querySelectorAll(
+        ".modern-modal-header, .modern-modal-body, .tab-navigation, .tab-content"
+      );
+      containers.forEach((container) => {
+        container.style.cssText = `
+          background-color: #1f2937 !important;
+          color: #ffffff !important;
+          border-color: #374151 !important;
+        `;
+      });
+
+      // Forcer les boutons d'onglets
+      const tabBtns = modalElement.querySelectorAll(".tab-btn");
+      tabBtns.forEach((btn) => {
+        btn.style.cssText = `
+          background-color: #374151 !important;
+          color: #ffffff !important;
+          border-color: #4b5563 !important;
+        `;
+
+        if (btn.classList.contains("active")) {
+          btn.style.cssText = `
+            background-color: #4b5563 !important;
+            color: #ffffff !important;
+            border-bottom-color: #3b82f6 !important;
+          `;
+        }
+      });
+
+      // Trouver tous les tableaux et appliquer le système de couleurs intelligent
+      const tables = modalElement.querySelectorAll(".modern-operations-table");
+      tables.forEach((table) => {
+        // Forcer les styles de base du tableau
+        table.style.cssText = `
+          background-color: #1f2937 !important;
+          color: #ffffff !important;
+          border-color: #374151 !important;
+        `;
+
+        // Identifier les en-têtes et leurs types de colonnes
+        const headers = table.querySelectorAll("th");
+        const columnTypes = [];
+
+        headers.forEach((header, index) => {
+          const headerText = header.textContent.trim().toLowerCase();
+          let columnType = "default";
+
+          // DEBUG - Afficher le texte de l'en-tête pour diagnostic
+          console.log(
+            `🔍 ANALYSE COLONNE ${index}: "${header.textContent.trim()}" (normalized: "${headerText}")`
+          );
+
+          // Identifier le type de colonne selon le texte de l'en-tête avec plus de précision
+          if (
+            headerText.includes("déclaration") ||
+            headerText.includes("declaration") ||
+            headerText.includes("n° déclaration") ||
+            headerText.includes("n°déclaration") ||
+            headerText.includes("numero declaration") ||
+            headerText.match(/n\s*°?\s*d[eé]claration/i)
+          ) {
+            columnType = "declaration";
+            console.log(`✅ DÉTECTÉ: Colonne DÉCLARATION`);
+          } else if (
+            (headerText.includes("bl") || headerText.includes("b.l")) &&
+            !headerText.includes("dossier") &&
+            (headerText.includes("n°") ||
+              headerText.includes("numero") ||
+              headerText.match(/n\s*°?\s*bl/i))
+          ) {
+            columnType = "bl";
+            console.log(`✅ DÉTECTÉ: Colonne BL`);
+          } else if (
+            headerText.includes("dossier") ||
+            headerText.includes("n° dossier") ||
+            headerText.includes("n°dossier") ||
+            headerText.includes("numero dossier") ||
+            headerText.match(/n\s*°?\s*dossier/i)
+          ) {
+            columnType = "dossier";
+            console.log(`✅ DÉTECTÉ: Colonne DOSSIER`);
+          } else if (headerText.includes("date") && headerText.includes("do")) {
+            columnType = "date_do";
+            console.log(`✅ DÉTECTÉ: Colonne DATE DO`);
+          } else if (
+            headerText.includes("date") &&
+            headerText.includes("badt")
+          ) {
+            columnType = "date_badt";
+            console.log(`✅ DÉTECTÉ: Colonne DATE BADT`);
+          } else if (
+            headerText.includes("date") &&
+            (headerText.includes("paiement") || headerText.includes("acconage"))
+          ) {
+            columnType = "date_paiement";
+            console.log(`✅ DÉTECTÉ: Colonne DATE PAIEMENT`);
+          } else if (headerText.includes("circuit")) {
+            columnType = "circuit";
+            console.log(`✅ DÉTECTÉ: Colonne CIRCUIT`);
+          } else {
+            console.log(`⚠️ COLONNE NON RECONNUE: "${headerText}" -> default`);
+          }
+
+          columnTypes[index] = columnType;
+          header.setAttribute("data-column", columnType);
+
+          // DEBUG - Confirmer l'attribution du type
+          console.log(`🎯 COLONNE ${index} -> TYPE: ${columnType}`);
+        });
+
+        // Appliquer les styles aux en-têtes
+        headers.forEach((header) => {
+          header.style.cssText = `
+            background-color: #374151 !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #4b5563 !important;
+            text-align: center !important;
+            padding: 12px 8px !important;
+            border-color: #374151 !important;
+          `;
+        });
+
+        // Appliquer les couleurs aux cellules de données
+        const dataRows = table.querySelectorAll("tbody tr");
+        dataRows.forEach((row, rowIndex) => {
+          // Alternance des couleurs de fond des lignes
+          row.style.cssText = `
+            background-color: ${
+              rowIndex % 2 === 0 ? "#1f2937" : "#374151"
+            } !important;
+            color: #ffffff !important;
+          `;
+
+          const dataCells = row.querySelectorAll("td");
+          dataCells.forEach((cell, cellIndex) => {
+            const columnType = columnTypes[cellIndex] || "default";
+            const cellContent = cell.textContent.trim();
+
+            // Styles de base pour toutes les cellules
+            cell.style.cssText = `
+              background-color: transparent !important;
+              border-color: #374151 !important;
+              padding: 8px !important;
+            `;
+
+            // Couleurs spécifiques selon le type de colonne
+            switch (columnType) {
+              case "declaration":
+                cell.style.color = "#ef4444 !important"; // Rouge
+                cell.style.fontWeight = "600 !important";
+                break;
+              case "bl":
+                cell.style.color = "#fbbf24 !important"; // Jaune
+                cell.style.fontWeight = "600 !important";
+                break;
+              case "dossier":
+                cell.style.color = "#ff6600 !important"; // Orange fluo
+                cell.style.fontWeight = "600 !important";
+                break;
+              case "date":
+                cell.style.color = "#ff4500 !important"; // Orange red
+                cell.style.fontWeight = "500 !important";
+                break;
+              case "circuit":
+                // Couleurs conditionnelles selon la valeur du circuit
+                const circuitValue = cellContent.toUpperCase();
+                if (circuitValue.includes("VAD")) {
+                  cell.style.color = "#10b981 !important"; // Vert
+                } else if (circuitValue.includes("VAQ")) {
+                  cell.style.color = "#38bdf8 !important"; // Bleu clair
+                } else if (circuitValue.includes("SCANNER")) {
+                  cell.style.color = "#8b5cf6 !important"; // Violet
+                } else if (circuitValue.includes("BAE")) {
+                  cell.style.color = "#9ca3af !important"; // Gris
+                } else {
+                  cell.style.color = "#d1d5db !important"; // Gris clair par défaut
+                }
+                cell.style.fontWeight = "600 !important";
+                break;
+              default:
+                cell.style.color = "#ffffff !important";
+                break;
+            }
+
+            // Forcer tous les éléments enfants des cellules
+            const cellChildren = cell.querySelectorAll("*");
+            cellChildren.forEach((child) => {
+              child.style.cssText = `
+                background-color: transparent !important;
+                color: inherit !important;
+              `;
+            });
+          });
+        });
+      });
+
+      // Forcer les états vides avec style amélioré
+      const emptyStates = modalElement.querySelectorAll(
+        ".empty-state, .empty-state h4, .empty-state p"
+      );
+      emptyStates.forEach((empty) => {
+        empty.style.cssText = `
+          background-color: #374151 !important;
+          color: #d1d5db !important;
+          border: 1px dashed #60a5fa !important;
+          border-radius: 8px !important;
+          padding: 20px !important;
+          text-align: center !important;
+        `;
+      });
+
+      // Forcer les boutons de fermeture
+      const closeButtons = modalElement.querySelectorAll(
+        ".modern-modal-close, .btn-close, .close-btn"
+      );
+      closeButtons.forEach((btn) => {
+        btn.style.cssText = `
+          background-color: #374151 !important;
+          color: #ffffff !important;
+          border-radius: 50% !important;
+          width: 60px !important;
+          height: 60px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          box-shadow: 0 0 20px rgba(96, 165, 250, 0.3) !important;
+        `;
+      });
+
+      // Ajouter un observateur pour surveiller les changements dans le contenu du tableau
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === "childList" || mutation.type === "subtree") {
+            // Re-appliquer les styles quand le contenu change
+            setTimeout(() => {
+              forceModalActivityAdaptiveMode(modalElement);
+            }, 10);
+          }
+        });
+      });
+
+      // Observer les changements dans la modal
+      observer.observe(modalElement, {
+        childList: true,
+        subtree: true,
+        attributes: false,
+      });
+
+      // Stocker l'observateur pour pouvoir l'arrêter plus tard
+      modalElement._darkModeObserver = observer;
+    } else {
+      // MODE CLAIR - Utiliser la fonction existante
+      forceModalActivityLightMode(modalElement);
+    }
+  }
+
+  function forceModalActivityLightMode(modalElement) {
+    if (modalElement) {
+      // Forcer la modal principale à rester claire
+      modalElement.style.cssText = `
+        background-color: rgba(0, 0, 0, 0.5) !important;
+      `;
+
+      const modal = modalElement.querySelector(".modern-agent-modal");
+      if (modal) {
+        modal.style.cssText = `
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        `;
+      }
+
+      // Forcer tous les éléments à rester clairs
+      const allElements = modalElement.querySelectorAll("*");
+      allElements.forEach((el) => {
+        // Supprimer les styles de mode sombre
+        const style = el.getAttribute("style");
+        if (
+          style &&
+          (style.includes("#1f2937") ||
+            style.includes("#374151") ||
+            style.includes("#111827"))
+        ) {
+          el.removeAttribute("style");
+        }
+      });
+
+      // Forcer spécifiquement certains éléments
+      const headers = modalElement.querySelectorAll(".modern-modal-header");
+      headers.forEach((header) => {
+        header.style.cssText = `
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+          color: #ffffff !important;
+        `;
+      });
+
+      const bodies = modalElement.querySelectorAll(
+        ".modern-modal-body, .tab-content"
+      );
+      bodies.forEach((body) => {
+        body.style.cssText = `
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        `;
+      });
+
+      const tables = modalElement.querySelectorAll(
+        "table, th, td, .modern-operations-table"
+      );
+      tables.forEach((table) => {
+        table.style.cssText = `
+          background-color: #ffffff !important;
+          color: #000000 !important;
+          border-color: #e5e7eb !important;
+        `;
+      });
+
+      const buttons = modalElement.querySelectorAll(".btn, button");
+      buttons.forEach((btn) => {
+        // Ne pas modifier les boutons qui ont déjà des couleurs spécifiques
+        if (
+          !btn.classList.contains("btn-primary") &&
+          !btn.classList.contains("btn-danger")
+        ) {
+          btn.style.backgroundColor = "#ffffff";
+          btn.style.color = "#000000";
+          btn.style.borderColor = "#d1d5db";
+        }
+      });
+
+      const inputs = modalElement.querySelectorAll(
+        "input, .form-control, select"
+      );
+      inputs.forEach((input) => {
+        input.style.cssText = `
+          background-color: #ffffff !important;
+          color: #000000 !important;
+          border-color: #d1d5db !important;
+        `;
+      });
     }
   }
 
@@ -6260,6 +7441,11 @@ function mapStatus(status) {
 
     document.body.appendChild(modalOverlay);
 
+    // ADAPTER LA MODAL D'ACTIVITÉ AU MODE ACTUEL (SOMBRE OU CLAIR)
+    setTimeout(() => {
+      forceModalActivityAdaptiveMode(modalOverlay);
+    }, 10);
+
     // Ajouter les event listeners
     setupModalEventListeners(
       modalOverlay,
@@ -6554,12 +7740,20 @@ function mapStatus(status) {
     const overlay = modalOverlay; // L'overlay est l'élément racine
 
     closeBtn.addEventListener("click", () => {
+      // Nettoyer l'observateur avant de supprimer la modal
+      if (modalOverlay._darkModeObserver) {
+        modalOverlay._darkModeObserver.disconnect();
+      }
       modalOverlay.remove();
       hideAgentActivityBox();
     });
 
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) {
+        // Nettoyer l'observateur avant de supprimer la modal
+        if (modalOverlay._darkModeObserver) {
+          modalOverlay._darkModeObserver.disconnect();
+        }
         modalOverlay.remove();
         hideAgentActivityBox();
       }
@@ -9364,10 +10558,14 @@ function mapStatus(status) {
           clientBlock.onclick = (e) => {
             // Empêche le clic sur le bouton d'export de déclencher le popup
             if (e.target === exportBtn) return;
-            // Création du popup professionnel
-            let modal = document.getElementById("clientFolderDetailModal");
-            if (modal) modal.remove();
-            modal = document.createElement("div");
+            // Création du popup professionnel avec support mode sombre
+            // Suppression forcée de toutes les modales existantes
+            const existingModals = document.querySelectorAll(
+              "#clientFolderDetailModal, .popup-client-folder-details"
+            );
+            existingModals.forEach((modal) => modal.remove());
+
+            let modal = document.createElement("div");
             modal.id = "clientFolderDetailModal";
             modal.style.position = "fixed";
             modal.style.top = 0;
@@ -9385,12 +10583,25 @@ function mapStatus(status) {
               modal.style.opacity = 1;
             }, 10);
 
-            // Boîte centrale
+            // Détection du mode sombre normale
+            const isDarkMode = document.body.classList.contains("dark-mode");
+            const finalDarkMode = isDarkMode;
+
+            // Boîte centrale avec style conditionnel
             const box = document.createElement("div");
             box.className = "popup-client-folder-details";
-            box.style.background = "#fff";
+            if (finalDarkMode) {
+              box.style.background = "#1a1a2e";
+              box.style.color = "#e2e8f0";
+              box.style.border = "1px solid #374151";
+            } else {
+              box.style.background = "#fff";
+              box.style.color = "#000";
+            }
             box.style.borderRadius = "18px";
-            box.style.boxShadow = "0 16px 48px rgba(30,41,59,0.22)";
+            box.style.boxShadow = finalDarkMode
+              ? "0 16px 48px rgba(0,0,0,0.5)"
+              : "0 16px 48px rgba(30,41,59,0.22)";
             box.style.maxWidth = "900px";
             box.style.minWidth = "600px";
             box.style.width = "96vw";
@@ -9401,10 +10612,14 @@ function mapStatus(status) {
             box.style.flexDirection = "column";
             box.style.animation = "popupFadeIn 0.25s";
 
-            // Header ultra-moderne
+            // Header ultra-moderne avec adaptation au mode sombre
             const header = document.createElement("div");
+            const headerBackground = finalDarkMode
+              ? "linear-gradient(135deg, #111827 0%, #1f2937 50%, #374151 100%)"
+              : "linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)";
+
             header.style.cssText = `
-              background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+              background: ${headerBackground};
               color: #fff;
               padding: 24px 40px;
               font-weight: 800;
@@ -9418,15 +10633,19 @@ function mapStatus(status) {
               overflow: hidden;
             `;
 
-            // Effet de brillance dans le header
+            // Effet de brillance dans le header adapté au mode
             const headerShine = document.createElement("div");
+            const shineColor = finalDarkMode
+              ? "rgba(255,255,255,0.1)"
+              : "rgba(255,255,255,0.3)";
+
             headerShine.style.cssText = `
               position: absolute;
               top: 0;
               left: -100%;
               width: 100%;
               height: 100%;
-              background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+              background: linear-gradient(90deg, transparent, ${shineColor}, transparent);
               animation: shine 3s infinite;
             `;
             header.appendChild(headerShine);
@@ -9439,14 +10658,20 @@ function mapStatus(status) {
               position: relative;
               z-index: 2;
             `;
+
+            const iconBackground = finalDarkMode
+              ? "linear-gradient(135deg, #d97706 0%, #ea580c 100%)"
+              : "linear-gradient(135deg, #facc15 0%, #fbbf24 100%)";
+            const iconColor = finalDarkMode ? "#fbbf24" : "#78350f";
+
             headerContent.innerHTML = `
               <div style="
-                background: linear-gradient(135deg, #facc15 0%, #fbbf24 100%);
+                background: ${iconBackground};
                 padding: 12px;
                 border-radius: 12px;
                 box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
               ">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#78350f" stroke-width="2.5">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2.5">
                   <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                   <path d="M8 11h8M8 15h6"/>
                 </svg>
@@ -9492,40 +10717,49 @@ function mapStatus(status) {
             header.appendChild(closeBtn);
             box.appendChild(header);
 
-            // Bandeau infos dossier
+            // Bandeau infos dossier avec style conditionnel
             const infoBar = document.createElement("div");
-            infoBar.style.background = "#f3f4f6";
+            if (isDarkMode) {
+              infoBar.style.background = "#374151";
+              infoBar.style.borderBottom = "1.5px solid #4b5563";
+            } else {
+              infoBar.style.background = "#f3f4f6";
+              infoBar.style.borderBottom = "1.5px solid #e5e7eb";
+            }
             infoBar.style.padding = "18px 40px 12px 40px";
             infoBar.style.display = "flex";
             infoBar.style.flexWrap = "wrap";
             infoBar.style.gap = "32px 48px";
             infoBar.style.alignItems = "center";
-            infoBar.style.borderBottom = "1.5px solid #e5e7eb";
             // Recherche des infos principales du dossier (première opération)
             const op0 = allOps[0] || {};
             infoBar.innerHTML = `
               <div style="font-size:1.13em;font-weight:700;color:#78350f;background:linear-gradient(90deg,#fde047 60%,#facc15 100%);padding:2px 16px;border-radius:7px;border:2px solid #eab308;box-shadow:0 0 0 2px #fde047;">N° Dossier : ${
                 op0.dossier_number || op0.dossier || "-"
               }</div>
-              <div style="font-size:1.08em;color:#1e293b;"><b>Client :</b> ${
-                op0.client_name || "-"
-              }</div>
-              <div style="font-size:1.08em;color:#1e293b;"><b>Téléphone :</b> ${
-                op0.client_phone || "-"
-              }</div>
-              <div style="font-size:1.08em;color:#1e293b;"><b>Agent :</b> ${
-                op0.agent_name || "-"
-              }</div>
-              <div style="font-size:1.08em;color:#1e293b;"><b>Nombre d'opérations :</b> ${
-                allOps.length
-              }</div>
+              <div style="font-size:1.08em;color:${
+                isDarkMode ? "#e2e8f0" : "#1e293b"
+              };"><b>Client :</b> ${op0.client_name || "-"}</div>
+              <div style="font-size:1.08em;color:${
+                isDarkMode ? "#e2e8f0" : "#1e293b"
+              };"><b>Téléphone :</b> ${op0.client_phone || "-"}</div>
+              <div style="font-size:1.08em;color:${
+                isDarkMode ? "#e2e8f0" : "#1e293b"
+              };"><b>Agent :</b> ${op0.agent_name || "-"}</div>
+              <div style="font-size:1.08em;color:${
+                isDarkMode ? "#e2e8f0" : "#1e293b"
+              };"><b>Nombre d'opérations :</b> ${allOps.length}</div>
             `;
             box.appendChild(infoBar);
 
             // Contenu scrollable avec tableau des opérations
             const detailContent = document.createElement("div");
             detailContent.style.padding = "24px 32px 28px 32px";
-            detailContent.style.background = "#f8fafc";
+            if (isDarkMode) {
+              detailContent.style.background = "#1e293b";
+            } else {
+              detailContent.style.background = "#f8fafc";
+            }
             detailContent.style.flex = "1 1 auto";
             detailContent.style.overflowY = "auto";
             detailContent.style.maxHeight = "calc(95vh - 120px)";
@@ -9542,24 +10776,35 @@ function mapStatus(status) {
               });
               opsHtml += `<ol style='display:flex;flex-direction:column;gap:22px;counter-reset:opnum;margin:0;padding:0;list-style:none;'>`;
               allOps.forEach((op, idx) => {
+                // Styles conditionnels pour mode sombre
+                const cardBackground = isDarkMode
+                  ? "linear-gradient(135deg, #374151 0%, #1f2937 100%)"
+                  : "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)";
+                const cardBorder = isDarkMode
+                  ? "1px solid #4b5563"
+                  : "1px solid rgba(59, 130, 246, 0.1)";
+                const cardShadow = isDarkMode
+                  ? "0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)"
+                  : "0 8px 32px rgba(37, 99, 235, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)";
+                const cardHoverShadow = isDarkMode
+                  ? "0 16px 48px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2)"
+                  : "0 16px 48px rgba(37, 99, 235, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)";
+
                 opsHtml += `
       <li style="
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        background: ${cardBackground};
         border-radius: 16px;
-        box-shadow: 
-          0 8px 32px rgba(37, 99, 235, 0.08),
-          0 2px 8px rgba(0, 0, 0, 0.04),
-          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        box-shadow: ${cardShadow};
         padding: 24px 32px;
         border-left: 6px solid #3b82f6;
         position: relative;
         counter-increment: opnum;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(59, 130, 246, 0.1);
+        border: ${cardBorder};
       " 
-      onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 16px 48px rgba(37, 99, 235, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)'; this.style.borderLeftColor='#1d4ed8';"
-      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 32px rgba(37, 99, 235, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)'; this.style.borderLeftColor='#3b82f6';">
+      onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='${cardHoverShadow}'; this.style.borderLeftColor='#1d4ed8';"
+      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='${cardShadow}'; this.style.borderLeftColor='#3b82f6';">
         
         <!-- Badge numéro d'opération -->
         <div style='
@@ -9577,7 +10822,7 @@ function mapStatus(status) {
           font-size: 0.9rem;
           font-weight: 700;
           box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-          border: 3px solid white;
+          border: 3px solid ${isDarkMode ? "#1f2937" : "white"};
         '>#${idx + 1}</div>
 
         <!-- Header avec date et conteneur -->
@@ -9586,31 +10831,43 @@ function mapStatus(status) {
             display: flex;
             align-items: center;
             gap: 8px;
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            background: ${
+              isDarkMode
+                ? "linear-gradient(135deg, #374151 0%, #4b5563 100%)"
+                : "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)"
+            };
             padding: 8px 16px;
             border-radius: 12px;
-            border: 1px solid #93c5fd;
+            border: 1px solid ${isDarkMode ? "#6b7280" : "#93c5fd"};
           ">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${
+              isDarkMode ? "#60a5fa" : "#3b82f6"
+            }" stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
               <line x1="16" y1="2" x2="16" y2="6"/>
               <line x1="8" y1="2" x2="8" y2="6"/>
               <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            <span style="font-size:1.1rem;font-weight:700;color:#1e40af;">${
-              op.created_at
-                ? new Date(op.created_at).toLocaleDateString("fr-FR")
-                : "-"
-            }</span>
+            <span style="font-size:1.1rem;font-weight:700;color:${
+              isDarkMode ? "#e5e7eb" : "#1e40af"
+            };">${
+                  op.created_at
+                    ? new Date(op.created_at).toLocaleDateString("fr-FR")
+                    : "-"
+                }</span>
           </div>
           
           <div style="
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #92400e;
+            background: ${
+              isDarkMode
+                ? "linear-gradient(135deg, #78350f 0%, #92400e 100%)"
+                : "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)"
+            };
+            color: ${isDarkMode ? "#fbbf24" : "#92400e"};
             padding: 8px 16px;
             border-radius: 12px;
             font-weight: 700;
-            border: 2px solid #f59e0b;
+            border: 2px solid ${isDarkMode ? "#d97706" : "#f59e0b"};
             box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
             display: flex;
             align-items: center;
@@ -9636,14 +10893,20 @@ function mapStatus(status) {
                     flex-direction: column;
                     gap: 3px;
                     padding: 10px;
-                    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                    background: ${
+                      isDarkMode
+                        ? "linear-gradient(135deg, #374151 0%, #4b5563 100%)"
+                        : "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)"
+                    };
                     border-radius: 8px;
                     border-left: 3px solid #64748b;
                   '>
                     <span style='font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Observation</span>
-                    <span style='color: #334155; font-weight: 500; word-break: break-word; font-size: 0.9rem;'>${
-                      op.observation_acconier || op.delivery_notes || "-"
-                    }</span>
+                    <span style='color: ${
+                      isDarkMode ? "#e5e7eb" : "#334155"
+                    }; font-weight: 500; word-break: break-word; font-size: 0.9rem;'>${
+                  op.observation_acconier || op.delivery_notes || "-"
+                }</span>
                   </div>
                   
                   <div style='
@@ -9651,14 +10914,20 @@ function mapStatus(status) {
                     flex-direction: column;
                     gap: 4px;
                     padding: 12px;
-                    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+                    background: ${
+                      isDarkMode
+                        ? "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)"
+                        : "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)"
+                    };
                     border-radius: 10px;
                     border-left: 3px solid #3b82f6;
                   '>
-                    <span style='font-size: 0.75rem; color: #1e40af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>N° BL</span>
-                    <span style='color: #1e293b; font-weight: 600;'>${
-                      op.bl_number || "-"
-                    }</span>
+                    <span style='font-size: 0.75rem; color: ${
+                      isDarkMode ? "#93c5fd" : "#1e40af"
+                    }; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>N° BL</span>
+                    <span style='color: ${
+                      isDarkMode ? "#f3f4f6" : "#1e293b"
+                    }; font-weight: 600;'>${op.bl_number || "-"}</span>
                   </div>
                   
                   <div style='
@@ -9666,14 +10935,20 @@ function mapStatus(status) {
                     flex-direction: column;
                     gap: 4px;
                     padding: 12px;
-                    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+                    background: ${
+                      isDarkMode
+                        ? "linear-gradient(135deg, #065f46 0%, #059669 100%)"
+                        : "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)"
+                    };
                     border-radius: 10px;
                     border-left: 3px solid #10b981;
                   '>
-                    <span style='font-size: 0.75rem; color: #047857; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>N° Déclaration</span>
-                    <span style='color: #1e293b; font-weight: 500;'>${
-                      op.declaration_number || "-"
-                    }</span>
+                    <span style='font-size: 0.75rem; color: ${
+                      isDarkMode ? "#6ee7b7" : "#047857"
+                    }; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>N° Déclaration</span>
+                    <span style='color: ${
+                      isDarkMode ? "#f3f4f6" : "#1e293b"
+                    }; font-weight: 500;'>${op.declaration_number || "-"}</span>
                   </div>
                   
                   <div style='
@@ -9681,14 +10956,20 @@ function mapStatus(status) {
                     flex-direction: column;
                     gap: 4px;
                     padding: 12px;
-                    background: linear-gradient(135deg, #fef7cd 0%, #fde68a 100%);
+                    background: ${
+                      isDarkMode
+                        ? "linear-gradient(135deg, #78350f 0%, #d97706 100%)"
+                        : "linear-gradient(135deg, #fef7cd 0%, #fde68a 100%)"
+                    };
                     border-radius: 10px;
                     border-left: 3px solid #f59e0b;
                   '>
-                    <span style='font-size: 0.75rem; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Lieu</span>
-                    <span style='color: #1e293b; font-weight: 500;'>${
-                      op.lieu || "-"
-                    }</span>
+                    <span style='font-size: 0.75rem; color: ${
+                      isDarkMode ? "#fcd34d" : "#92400e"
+                    }; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Lieu</span>
+                    <span style='color: ${
+                      isDarkMode ? "#f3f4f6" : "#1e293b"
+                    }; font-weight: 500;'>${op.lieu || "-"}</span>
                   </div>
                   
                   <div style='
@@ -9696,14 +10977,20 @@ function mapStatus(status) {
                     flex-direction: column;
                     gap: 4px;
                     padding: 12px;
-                    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+                    background: ${
+                      isDarkMode
+                        ? "linear-gradient(135deg, #831843 0%, #be185d 100%)"
+                        : "linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)"
+                    };
                     border-radius: 10px;
                     border-left: 3px solid #ec4899;
                   '>
-                    <span style='font-size: 0.75rem; color: #be185d; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Compagnie</span>
-                    <span style='color: #1e293b; font-weight: 500;'>${
-                      op.shipping_company || "-"
-                    }</span>
+                    <span style='font-size: 0.75rem; color: ${
+                      isDarkMode ? "#f9a8d4" : "#be185d"
+                    }; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Compagnie</span>
+                    <span style='color: ${
+                      isDarkMode ? "#f3f4f6" : "#1e293b"
+                    }; font-weight: 500;'>${op.shipping_company || "-"}</span>
                   </div>
                   
                   <div style='
@@ -9711,14 +10998,20 @@ function mapStatus(status) {
                     flex-direction: column;
                     gap: 4px;
                     padding: 12px;
-                    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+                    background: ${
+                      isDarkMode
+                        ? "linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%)"
+                        : "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)"
+                    };
                     border-radius: 10px;
                     border-left: 3px solid #0284c7;
                   '>
-                    <span style='font-size: 0.75rem; color: #0369a1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Navire</span>
-                    <span style='color: #1e293b; font-weight: 500;'>${
-                      op.ship_name || "-"
-                    }</span>
+                    <span style='font-size: 0.75rem; color: ${
+                      isDarkMode ? "#7dd3fc" : "#0369a1"
+                    }; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Navire</span>
+                    <span style='color: ${
+                      isDarkMode ? "#f3f4f6" : "#1e293b"
+                    }; font-weight: 500;'>${op.ship_name || "-"}</span>
                   </div>
                   
                   <div style='
@@ -9726,14 +11019,22 @@ function mapStatus(status) {
                     flex-direction: column;
                     gap: 4px;
                     padding: 12px;
-                    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+                    background: ${
+                      isDarkMode
+                        ? "linear-gradient(135deg, #581c87 0%, #7c3aed 100%)"
+                        : "linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)"
+                    };
                     border-radius: 10px;
                     border-left: 3px solid #8b5cf6;
                   '>
-                    <span style='font-size: 0.75rem; color: #7c3aed; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Contenu</span>
-                    <span style='color: #1e293b; font-weight: 500;'>${
-                      op.container_type_and_content || "-"
-                    }</span>
+                    <span style='font-size: 0.75rem; color: ${
+                      isDarkMode ? "#c4b5fd" : "#7c3aed"
+                    }; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Contenu</span>
+                    <span style='color: ${
+                      isDarkMode ? "#f3f4f6" : "#1e293b"
+                    }; font-weight: 500;'>${
+                  op.container_type_and_content || "-"
+                }</span>
                   </div>
                   
                   <div style='
@@ -9741,14 +11042,20 @@ function mapStatus(status) {
                     flex-direction: column;
                     gap: 4px;
                     padding: 12px;
-                    background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+                    background: ${
+                      isDarkMode
+                        ? "linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%)"
+                        : "linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)"
+                    };
                     border-radius: 10px;
-                    border-left: 3px solid #ef4444;
+                    border-left: 3px solid #ef4444;  
                   '>
-                    <span style='font-size: 0.75rem; color: #dc2626; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Transport</span>
-                    <span style='color: #1e293b; font-weight: 500;'>${
-                      op.transporter_mode || "-"
-                    }</span>
+                    <span style='font-size: 0.75rem; color: ${
+                      isDarkMode ? "#fca5a5" : "#dc2626"
+                    }; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Transport</span>
+                    <span style='color: ${
+                      isDarkMode ? "#f3f4f6" : "#1e293b"
+                    }; font-weight: 500;'>${op.transporter_mode || "-"}</span>
                   </div>
                 </div>
       </li>
@@ -11094,7 +12401,6 @@ function mapStatus(status) {
       console.log(`[FORCE RECONSTRUCTION] Aucune donnée tronquée détectée`);
     }
   };
-
   console.log("[SYNC] Synchronisation des statuts de conteneurs initialisée");
   console.log(
     "[SYNC] Fonctions de test disponibles: testContainerStatusSync(), debugContainerSync(), forceReconstruction(deliveryId)"

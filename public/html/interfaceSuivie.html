@@ -373,6 +373,261 @@
           0.2
         ) !important; /* Vert avec opacité légère */
       }
+
+      /* === SYSTÈME DE MODE SOMBRE POUR L'INTERFACE DE SUIVI === */
+      .dark-mode {
+        --bg-primary: #1a1a2e;
+        --bg-secondary: #16213e;
+        --bg-tertiary: #0f172a;
+        --text-primary: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --border-color: #374151;
+        --card-bg: #1e293b;
+        --input-bg: #374151;
+        --table-bg: #1e293b;
+        --table-border: #374151;
+      }
+
+      /* Mode sombre pour le body */
+      body.dark-mode {
+        background: var(--bg-primary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Forcer Bootstrap bg-light à être sombre en mode sombre */
+      body.dark-mode.bg-light {
+        background: var(--bg-primary) !important;
+      }
+
+      /* Mode sombre pour le container */
+      .dark-mode .container {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Mode sombre pour la section card-section */
+      .dark-mode .card-section {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        padding: 20px !important;
+        margin-bottom: 20px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      /* Forcer le style de la carte en mode sombre même avec Bootstrap */
+      body.dark-mode .card-section,
+      body.dark-mode section.card-section,
+      .dark-mode .container .card-section {
+        background-color: var(--card-bg) !important;
+        background: var(--card-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Style encore plus spécifique pour contrer Bootstrap */
+      body.bg-light.dark-mode .container.my-4 section.card-section {
+        background: #1e293b !important;
+        background-color: #1e293b !important;
+        color: #e2e8f0 !important;
+        border: 1px solid #374151 !important;
+        border-radius: 8px !important;
+        padding: 20px !important;
+        margin-bottom: 20px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      /* Approche alternative avec sélecteurs multiples très spécifiques */
+      body.dark-mode section[class*="card"],
+      body.dark-mode .card-section,
+      body.dark-mode section.card-section,
+      .dark-mode .container section.card-section,
+      html body.dark-mode .container section.card-section,
+      html body.bg-light.dark-mode .container.my-4 section.card-section {
+        background: #1e293b !important;
+        background-color: #1e293b !important;
+        color: #e2e8f0 !important;
+        border: 1px solid #374151 !important;
+      }
+
+      /* Force absolue pour la carte */
+      [class*="dark-mode"] section.card-section {
+        background: #1e293b !important;
+        color: #e2e8f0 !important;
+      }
+
+      /* Dernière tentative avec spécificité maximale */
+      html body.dark-mode.bg-light div.container.my-4 section.card-section,
+      body.dark-mode section.card-section {
+        background: #1e293b !important;
+        background-color: #1e293b !important;
+        color: #e2e8f0 !important;
+        border: 1px solid #374151 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      /* Mode sombre pour les titres */
+      .dark-mode .section-title {
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode .section-subtitle {
+        color: var(--text-secondary) !important;
+      }
+
+      /* Mode sombre pour les inputs et boutons */
+      .dark-mode input[type="date"],
+      .dark-mode input[type="search"],
+      .dark-mode input[type="text"] {
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+
+      .dark-mode input::placeholder {
+        color: var(--text-secondary) !important;
+      }
+
+      /* Mode sombre pour les boutons */
+      .dark-mode .icon-btn-company-color,
+      .dark-mode .btn {
+        background: #4f46e5 !important;
+        color: white !important;
+        border: 1px solid #6366f1 !important;
+      }
+
+      .dark-mode .btn-danger {
+        background: #dc2626 !important;
+        border: 1px solid #ef4444 !important;
+      }
+
+      /* Mode sombre pour le tableau */
+      .dark-mode .table {
+        background: var(--table-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--table-border) !important;
+      }
+
+      .dark-mode .table th {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--table-border) !important;
+      }
+
+      .dark-mode .table td {
+        background: var(--table-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--table-border) !important;
+      }
+
+      .dark-mode .table tbody tr:hover {
+        background: rgba(99, 102, 241, 0.1) !important;
+      }
+
+      /* Mode sombre pour les headers spéciaux du tableau */
+      .dark-mode .header-agent-acconier {
+        background: rgba(245, 158, 11, 0.2) !important;
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode .header-resp-acconier {
+        background: rgba(16, 185, 129, 0.2) !important;
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode .header-resp-livraison {
+        background: rgba(59, 130, 246, 0.2) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Mode sombre pour les numéros TC */
+      .dark-mode .table .numero-tc {
+        background: rgba(99, 102, 241, 0.2) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+
+      /* Mode sombre pour les colonnes figées (sticky) */
+      .dark-mode .sticky-col {
+        background: var(--table-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Mode sombre pour les popups et modales */
+      .dark-mode .employee-popup,
+      .dark-mode .popup-content {
+        background: var(--card-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+
+      /* EXCEPTION: Garder les modales spécifiques en mode clair selon les exigences */
+      .dark-mode #employeePopup,
+      .dark-mode #employeePopup *,
+      .dark-mode [class*="client-modal"],
+      .dark-mode [class*="client-modal"] *,
+      .dark-mode [id*="dossierClient"],
+      .dark-mode [id*="dossierClient"] * {
+        background: white !important;
+        color: #333 !important;
+        border-color: #ddd !important;
+      }
+
+      /* Forcer les styles clairs pour la popup employé (suivi spécifique agent) */
+      .dark-mode .employee-popup .popup-header,
+      .dark-mode .employee-popup .popup-title,
+      .dark-mode .employee-popup .popup-search-input,
+      .dark-mode .employee-popup .employee-list,
+      .dark-mode .employee-popup .employee-list li,
+      .dark-mode .employee-popup .close-popup-btn {
+        background: white !important;
+        color: #333 !important;
+        border-color: #ddd !important;
+      }
+
+      .dark-mode .popup-header {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+      }
+
+      .dark-mode .popup-search-input {
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+
+      /* Mode sombre pour la pagination */
+      .dark-mode .pagination .page-link {
+        background: var(--card-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+
+      .dark-mode .pagination .page-item.active .page-link {
+        background: #4f46e5 !important;
+        border-color: #6366f1 !important;
+      }
+
+      /* Mode sombre pour les messages */
+      .dark-mode .text-muted {
+        color: var(--text-secondary) !important;
+      }
+
+      /* Mode sombre pour la barre de recherche */
+      .dark-mode .search-wrapper {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+
+      .dark-mode .search-input {
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode .search-icon {
+        color: var(--text-secondary) !important;
+      }
     </style>
   </head>
 
@@ -727,5 +982,91 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/scriptSuivie.js"></script>
+
+    <!-- Script pour synchroniser le mode sombre -->
+    <script>
+      // Synchronisation du mode sombre
+      (function () {
+        function applyDarkMode() {
+          const savedMode = localStorage.getItem("darkMode");
+          if (savedMode === "enabled") {
+            document.body.classList.add("dark-mode");
+            // Force l'application des styles à la carte
+            forceDarkModeOnCard();
+          } else {
+            document.body.classList.remove("dark-mode");
+            // Restaurer les styles par défaut
+            restoreDefaultCardStyles();
+          }
+        }
+
+        function forceDarkModeOnCard() {
+          const cardSection = document.querySelector(".card-section");
+          if (cardSection) {
+            cardSection.style.backgroundColor = "#1e293b";
+            cardSection.style.color = "#e2e8f0";
+            cardSection.style.border = "1px solid #374151";
+            cardSection.style.borderRadius = "8px";
+            cardSection.style.padding = "20px";
+            cardSection.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
+          }
+        }
+
+        function restoreDefaultCardStyles() {
+          const cardSection = document.querySelector(".card-section");
+          if (cardSection) {
+            cardSection.style.backgroundColor = "";
+            cardSection.style.color = "";
+            cardSection.style.border = "";
+            cardSection.style.borderRadius = "";
+            cardSection.style.padding = "";
+            cardSection.style.boxShadow = "";
+          }
+        }
+
+        // Appliquer immédiatement le mode sombre si nécessaire
+        applyDarkMode();
+
+        // Écouter les changements de mode sombre depuis d'autres pages
+        window.addEventListener("storage", function (event) {
+          if (event.key === "darkMode") {
+            applyDarkMode();
+          }
+        });
+
+        // Observer les changements de classe sur le body
+        const observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            if (
+              mutation.type === "attributes" &&
+              mutation.attributeName === "class"
+            ) {
+              if (document.body.classList.contains("dark-mode")) {
+                forceDarkModeOnCard();
+              } else {
+                restoreDefaultCardStyles();
+              }
+            }
+          });
+        });
+
+        observer.observe(document.body, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+
+        // S'assurer que la carte est stylée au chargement complet
+        window.addEventListener("load", function () {
+          setTimeout(applyDarkMode, 100);
+        });
+
+        // Forcer l'application après un délai
+        setTimeout(function () {
+          if (document.body.classList.contains("dark-mode")) {
+            forceDarkModeOnCard();
+          }
+        }, 500);
+      })();
+    </script>
   </body>
 </html>

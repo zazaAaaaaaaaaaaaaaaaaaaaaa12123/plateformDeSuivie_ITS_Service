@@ -2161,6 +2161,186 @@
       /* === FIN ANIMATION D'ENTREPRISE === */
 
       /* === FIN ANIMATIONS DE LIAISON === */
+
+      /* === SYSTÈME DE MODE SOMBRE === */
+      .dark-mode {
+        --bg-primary: #1a1a2e;
+        --bg-secondary: #16213e;
+        --bg-tertiary: #0f172a;
+        --text-primary: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --border-color: #374151;
+        --card-bg: #1e293b;
+        --input-bg: #374151;
+        --sidebar-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      }
+
+      /* Mode sombre pour le body et layout */
+      body.dark-mode {
+        background: var(--bg-primary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode .layout {
+        background: var(--bg-secondary) !important;
+      }
+
+      /* Mode sombre pour la sidebar */
+      .dark-mode .sidebar {
+        background: var(--sidebar-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode .sidebar h2 {
+        color: #a3daff !important;
+      }
+
+      .dark-mode .sidebar ul li a {
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode .sidebar ul li a:hover {
+        background-color: #475569 !important;
+        color: #a3daff !important;
+      }
+
+      /* Mode sombre pour welcomeSection */
+      .dark-mode #welcomeSection {
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 25%,
+          #0f172a 50%,
+          #1e293b 75%,
+          #1a1a2e 100%
+        ) !important;
+        --bg-color-1: #1a1a2e;
+        --bg-color-2: #16213e;
+        --bg-color-3: #0f172a;
+        --bg-color-4: #1e293b;
+      }
+
+      /* Mode sombre pour les cartes */
+      .dark-mode .etat-card {
+        background: linear-gradient(
+          135deg,
+          rgba(30, 41, 59, 0.9) 0%,
+          rgba(15, 23, 42, 0.8) 100%
+        ) !important;
+        border: 1px solid #374151 !important;
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode .etat-card .etat-description,
+      .dark-mode .etat-card .etat-number {
+        color: var(--text-primary) !important;
+      }
+
+      /* Mode sombre pour les profils utilisateur */
+      .dark-mode #sidebarUserProfile {
+        background: rgba(30, 41, 59, 0.5) !important;
+        border: 1px solid #374151 !important;
+      }
+
+      .dark-mode #userNameSidebar {
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode #userEmailSidebar {
+        color: var(--text-secondary) !important;
+      }
+
+      .dark-mode #userProfilSidebar {
+        background: rgba(37, 99, 235, 0.3) !important;
+        color: #a3daff !important;
+      }
+
+      /* Mode sombre pour les sections utilisateurs connectés */
+      .dark-mode #detailedUsersSection {
+        background: rgba(30, 41, 59, 0.5) !important;
+        border: 1px solid #374151 !important;
+      }
+
+      .dark-mode #detailedUsersSection h4 {
+        color: #a3daff !important;
+      }
+
+      .dark-mode #totalUsersCount {
+        background: #374151 !important;
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode #usersDetailsList {
+        color: var(--text-secondary) !important;
+      }
+
+      /* Mode sombre pour les contenus principaux */
+      .dark-mode .main-content {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      /* Mode sombre spécifique pour les modales et popups */
+      .dark-mode .modal-content,
+      .dark-mode .popup-content {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+
+      /* EXCEPTION: Garder les modales de vue dossier client et suivi spécifique agent en mode clair */
+      .dark-mode .employee-popup,
+      .dark-mode .employee-popup *,
+      .dark-mode [id*="dossierClient"],
+      .dark-mode [id*="dossierClient"] *,
+      .dark-mode [class*="client-modal"],
+      .dark-mode [class*="client-modal"] *,
+      .dark-mode [class*="agent-modal"],
+      .dark-mode [class*="agent-modal"] * {
+        background: white !important;
+        color: #333 !important;
+        border-color: #ddd !important;
+      }
+
+      /* Forcer les couleurs claires pour les éléments spécifiques dans les modales exemptées */
+      .dark-mode .employee-popup .popup-header,
+      .dark-mode .employee-popup .popup-title,
+      .dark-mode .employee-popup .popup-search-input,
+      .dark-mode .employee-popup .employee-list li {
+        background: white !important;
+        color: #333 !important;
+        border-color: #ddd !important;
+      }
+
+      /* Mode sombre pour les inputs */
+      .dark-mode input,
+      .dark-mode select,
+      .dark-mode textarea {
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+
+      .dark-mode input::placeholder,
+      .dark-mode textarea::placeholder {
+        color: var(--text-secondary) !important;
+      }
+
+      /* Styles pour le bouton de mode sombre en sidebar collapsed */
+      body.sidebar-collapsed #darkModeToggle {
+        padding: 8px !important;
+        font-size: 0.7em !important;
+        gap: 3px !important;
+        margin-bottom: 8px !important;
+      }
+
+      body.sidebar-collapsed #darkModeToggle .link-text {
+        display: none !important;
+      }
+
+      body.sidebar-collapsed #darkModeToggle #darkModeIcon {
+        font-size: 1.2em !important;
+      }
     </style>
 
     <!-- Script ultra-rapide pour éviter l'affichage de l'intro -->
@@ -2651,6 +2831,34 @@
             </div>
           </div>
 
+          <!-- Bouton de mode sombre -->
+          <button
+            id="darkModeToggle"
+            style="
+              width: 100%;
+              background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%);
+              color: #fff;
+              border: none;
+              border-radius: 8px;
+              padding: 8px 16px;
+              font-size: 0.8em;
+              font-weight: 600;
+              box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3);
+              cursor: pointer;
+              transition: all 0.3s ease;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 6px;
+              margin-bottom: 8px;
+            "
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(79, 70, 229, 0.4)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(79, 70, 229, 0.3)'"
+          >
+            <i class="fas fa-moon" id="darkModeIcon"></i>
+            <span class="link-text" id="darkModeText">Mode Sombre</span>
+          </button>
+
           <!-- Bouton de déconnexion en bas de la carte -->
           <button
             id="logoutSidebarBtn"
@@ -2898,8 +3106,10 @@
               title="💡 Synchronisation: Dossiers visibles dans resp_acconier.html. Décrément automatique quand un dossier passe en 'mise en livraison'."
             >
               <div class="etat-icon"><i class="fas fa-hourglass-half"></i></div>
-              <div class="etat-title">Dossier soumis</div>
-              <div class="etat-desc">
+              <div class="etat-title" style="color: #f59e0b">
+                Dossier soumis
+              </div>
+              <div class="etat-desc" style="color: #f59e0b">
                 Dossiers en attente de règlement avant traitement.
               </div>
               <div class="animated-info-container">
@@ -2932,8 +3142,10 @@
               title="💡 Synchronisation: Dossiers visibles dans resp_liv.html. Incrément quand un dossier quitte resp_acconier, décrément quand tous conteneurs sont livrés. ✨ Cliquez pour voir uniquement les dossiers en cours de livraison."
             >
               <div class="etat-icon"><i class="fas fa-truck-loading"></i></div>
-              <div class="etat-title">Dossiers mis en livraison</div>
-              <div class="etat-desc">
+              <div class="etat-title" style="color: #3b82f6">
+                Dossiers mis en livraison
+              </div>
+              <div class="etat-desc" style="color: #3b82f6">
                 Dossiers prêts pour la livraison et en cours de traitement.
               </div>
               <div class="animated-info-container">
@@ -3069,8 +3281,8 @@
               title="💡 Synchronisation: Incrément automatique quand tous les conteneurs d'un dossier sont marqués 'livré' dans resp_liv.html. ✨ Cliquez pour voir uniquement les dossiers livrés."
             >
               <div class="etat-icon"><i class="fas fa-check-circle"></i></div>
-              <div class="etat-title">Dossier livré</div>
-              <div class="etat-desc">
+              <div class="etat-title" style="color: #10b981">Dossier livré</div>
+              <div class="etat-desc" style="color: #10b981">
                 Dossiers livrés avec succès au client.
               </div>
               <div class="animated-info-container">
@@ -3102,8 +3314,10 @@
               <div class="etat-icon">
                 <i class="fas fa-exclamation-triangle"></i>
               </div>
-              <div class="etat-title">Dossier en retard</div>
-              <div class="etat-desc">
+              <div class="etat-title" style="color: #ef4444">
+                Dossier en retard
+              </div>
+              <div class="etat-desc" style="color: #ef4444">
                 Dossiers dont la livraison a dépassé le délai prévu.
               </div>
             </div>
@@ -3796,7 +4010,7 @@
               carteMiseLivraison.addEventListener("click", function () {
                 // Redirection avec filtre pour dossiers en cours de livraison (non livrés) - URL dynamique
                 const baseUrl = window.location.origin;
-                window.location.href = `${baseUrl}/html/resp_liv.html?filter=mise_en_livraison&autoFilter=true&fromDashboard=true`;
+                window.location.href = `${baseUrl}/html/resp_liv.html?filter=mise_en_livraison&autoFilter=true`;
               });
             }
             // --- Ajout gestion carte dossier en retard ---
@@ -3948,10 +4162,10 @@
                         const redirectUrl = isLivraisonType
                           ? `${baseUrl}/html/resp_liv.html?dossier=${encodeURIComponent(
                               dossierId
-                            )}&flash=true&fromDashboard=true`
+                            )}&flash=true`
                           : `${baseUrl}/html/resp_acconier.html?dossier=${encodeURIComponent(
                               dossierId
-                            )}&flash=true&fromDashboard=true`;
+                            )}&flash=true`;
 
                         // Couleurs et icônes selon le type
                         const typeColor = isLivraisonType
@@ -4161,7 +4375,7 @@
               carteLivre.addEventListener("click", function () {
                 // Redirection avec filtre pour dossiers livrés uniquement - URL dynamique
                 const baseUrl = window.location.origin;
-                window.location.href = `${baseUrl}/html/resp_liv.html?filter=livre&autoFilter=true&fromDashboard=true`;
+                window.location.href = `${baseUrl}/html/resp_liv.html?filter=livre&autoFilter=true`;
               });
             }
 
@@ -4335,7 +4549,7 @@
               document.body.appendChild(acconierFrame);
 
               const livFrame = document.createElement("iframe");
-              livFrame.src = `${baseUrl}/html/resp_liv.html?fromDashboard=true`;
+              livFrame.src = `${baseUrl}/html/resp_liv.html`;
               livFrame.style.display = "none";
               livFrame.setAttribute("aria-hidden", "true");
               document.body.appendChild(livFrame);
@@ -4412,7 +4626,7 @@
               } else if (pageType === "livraison") {
                 // Redirection normale vers la page livraison
                 const baseUrl = window.location.origin;
-                targetUrl = `${baseUrl}/html/resp_liv.html?from=sidebar&fromDashboard=true`;
+                targetUrl = `${baseUrl}/html/resp_liv.html?from=sidebar`;
                 // Marquer que l'utilisateur vient du tableau de bord principal
                 sessionStorage.setItem("fromMainDashboard", "true");
                 localStorage.setItem("userAccessLevel", "main_dashboard");
@@ -6627,7 +6841,7 @@
                 const targetPageUrl =
                   pageName === "resp_acconier.html"
                     ? "/html/resp_acconier.html"
-                    : "/html/resp_liv.html?fromDashboard=true";
+                    : "/html/resp_liv.html";
 
                 // Ne pas ajouter de paramètres ici, on les ajoutera dans redirectToUserPage
                 const fullUrl = targetPageUrl;
@@ -6902,10 +7116,10 @@
           const redirectUrl = isLivraisonType
             ? `${baseUrl}/html/resp_liv.html?dossier=${encodeURIComponent(
                 dossierId
-              )}&flash=true&fromDashboard=true`
+              )}&flash=true`
             : `${baseUrl}/html/resp_acconier.html?dossier=${encodeURIComponent(
                 dossierId
-              )}&flash=true&fromDashboard=true`;
+              )}&flash=true`;
 
           const typeColor = isLivraisonType ? "#2563eb" : "#dc3545";
           const typeIcon = isLivraisonType
@@ -7008,6 +7222,46 @@
         html += "</div></div>";
         contenu.innerHTML = html;
       }
+    </script>
+
+    <!-- Script pour le mode sombre -->
+    <script>
+      // Initialisation du mode sombre
+      document.addEventListener("DOMContentLoaded", function () {
+        const darkModeToggle = document.getElementById("darkModeToggle");
+        const darkModeIcon = document.getElementById("darkModeIcon");
+        const darkModeText = document.getElementById("darkModeText");
+        const body = document.body;
+
+        // Vérifier le mode sauvegardé dans localStorage
+        const savedMode = localStorage.getItem("darkMode");
+        if (savedMode === "enabled") {
+          enableDarkMode();
+        }
+
+        // Événement de clic sur le bouton
+        darkModeToggle.addEventListener("click", function () {
+          if (body.classList.contains("dark-mode")) {
+            disableDarkMode();
+          } else {
+            enableDarkMode();
+          }
+        });
+
+        function enableDarkMode() {
+          body.classList.add("dark-mode");
+          darkModeIcon.className = "fas fa-sun";
+          darkModeText.textContent = "Mode Clair";
+          localStorage.setItem("darkMode", "enabled");
+        }
+
+        function disableDarkMode() {
+          body.classList.remove("dark-mode");
+          darkModeIcon.className = "fas fa-moon";
+          darkModeText.textContent = "Mode Sombre";
+          localStorage.setItem("darkMode", "disabled");
+        }
+      });
     </script>
   </body>
 </html>
