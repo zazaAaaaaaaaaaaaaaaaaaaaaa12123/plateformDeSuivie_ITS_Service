@@ -44,6 +44,22 @@
         }
       }
 
+      /* Animation pulse pour les indicateurs de statut */
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.7;
+          transform: scale(1.1);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
       /* Styles généraux pour le corps */
       html,
       body {
@@ -938,42 +954,22 @@
       }
 
       .etat-card:hover::before {
-        opacity: 1;
+        opacity: 0; /* Désactivé pour effet simple */
       }
 
       .etat-card::after {
-        content: "";
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: linear-gradient(
-          45deg,
-          transparent 30%,
-          rgba(99, 102, 241, 0.1) 40%,
-          rgba(255, 255, 255, 0.3) 50%,
-          rgba(59, 130, 246, 0.1) 60%,
-          transparent 70%
-        );
-        background-size: 400% 400%;
-        border-radius: inherit;
-        opacity: 0;
-        animation: premiumShimmer 3s ease-in-out infinite;
-        z-index: -1;
-        pointer-events: none;
+        display: none; /* Supprime l'effet shimmer */
       }
 
       .etat-card:hover {
-        transform: translateY(-12px) scale(1.02) rotateX(2deg);
-        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15),
-          0 12px 40px rgba(99, 102, 241, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06),
-          inset 0 1px 0 rgba(255, 255, 255, 0.95);
-        border-color: rgba(99, 102, 241, 0.2);
+        transform: translateY(-4px); /* Effet simple de montée */
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Ombre simple */
+        border-color: rgba(99, 102, 241, 0.3);
+        transition: all 0.3s ease;
       }
 
       .etat-card:hover::after {
-        opacity: 1;
+        opacity: 0; /* Désactive l'effet shimmer */
       }
 
       /* Styles pour les icônes des cartes */
@@ -1348,51 +1344,36 @@
         }
       }
 
-      /* Effet de particules flottantes sur hover */
+      /* Effet de survol simple */
       .etat-card:hover {
         position: relative;
         overflow: visible;
       }
 
       .etat-card:hover::before {
-        content: "";
-        position: absolute;
-        top: -5px;
-        left: -5px;
-        right: -5px;
-        bottom: -5px;
-        background: radial-gradient(
-          circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-          rgba(99, 102, 241, 0.1) 0%,
-          transparent 50%
-        );
-        border-radius: inherit;
-        opacity: 0.7;
-        pointer-events: none;
-        z-index: -1;
-        filter: blur(20px);
+        display: none; /* Supprime l'effet de particules */
       }
 
-      /* Micro-interactions pour les titres */
+      /* Micro-interactions simples pour les titres */
       .etat-title {
         position: relative;
         transition: all 0.3s ease;
       }
 
       .etat-card:hover .etat-title {
-        transform: translateY(-2px);
-        text-shadow: 0 2px 8px rgba(30, 41, 59, 0.1);
+        transform: none; /* Supprime le mouvement complexe */
+        text-shadow: none; /* Supprime l'ombre du texte */
       }
 
-      /* Effet de survol subtil pour les descriptions */
+      /* Effet de survol simple pour les descriptions */
       .etat-desc {
         transition: all 0.3s ease;
       }
 
       .etat-card:hover .etat-desc {
-        transform: translateY(-1px);
-        color: #475569;
-        text-shadow: 0 1px 4px rgba(71, 85, 105, 0.1);
+        transform: none; /* Supprime le mouvement */
+        color: inherit; /* Garde la couleur originale */
+        text-shadow: none; /* Supprime l'ombre */
       }
 
       /* Animations retardées pour un effet cascade */
@@ -1912,19 +1893,18 @@
         }
       }
 
-      /* Amélioration hover avec glassmorphism et couleurs fluides */
+      /* Effet de hover simple et élégant */
       .etat-card:hover {
-        backdrop-filter: blur(16px) saturate(250%);
-        background: linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.92) 0%,
-          rgba(255, 255, 255, 0.88) 100%
-        ) !important;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
-          0 8px 30px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8),
-          0 0 40px var(--card-glow-color) !important;
-        transform: translateY(-12px) scale(1.04) rotate(-1.5deg);
-        filter: brightness(1.08) saturate(1.2);
+        backdrop-filter: none; /* Supprime l'effet blur */
+        background: rgba(
+          255,
+          255,
+          255,
+          0.98
+        ) !important; /* Arrière-plan simple */
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important; /* Ombre simple */
+        transform: translateY(-4px); /* Montée simple */
+        filter: none; /* Supprime les filtres complexes */
       }
 
       /* === FIN ANIMATIONS DE LIAISON === */
@@ -2162,73 +2142,103 @@
 
       /* === FIN ANIMATIONS DE LIAISON === */
 
-      /* === SYSTÈME DE MODE SOMBRE === */
+      /* === SYSTÈME DE MODE SOMBRE AMÉLIORE === */
       .dark-mode {
-        --bg-primary: #1a1a2e;
-        --bg-secondary: #16213e;
-        --bg-tertiary: #0f172a;
-        --text-primary: #e2e8f0;
-        --text-secondary: #94a3b8;
-        --border-color: #374151;
-        --card-bg: #1e293b;
-        --input-bg: #374151;
-        --sidebar-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        --bg-primary: #0a0a0a;
+        --bg-secondary: #111111;
+        --bg-tertiary: #1a1a1a;
+        --text-primary: #ffffff;
+        --text-secondary: #b3b3b3;
+        --border-color: #333333;
+        --card-bg: #1e1e1e;
+        --input-bg: #2a2a2a;
+        --sidebar-bg: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+        --accent-color: #4a9eff;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
+        --card-hover: #252525;
       }
 
       /* Mode sombre pour le body et layout */
       body.dark-mode {
         background: var(--bg-primary) !important;
         color: var(--text-primary) !important;
+        transition: all 0.3s ease !important;
       }
 
       .dark-mode .layout {
         background: var(--bg-secondary) !important;
       }
 
-      /* Mode sombre pour la sidebar */
+      /* Mode sombre pour la sidebar avec effet de brillance */
       .dark-mode .sidebar {
         background: var(--sidebar-bg) !important;
         color: var(--text-primary) !important;
+        border-right: 1px solid var(--border-color) !important;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5) !important;
       }
 
       .dark-mode .sidebar h2 {
-        color: #a3daff !important;
+        color: var(--accent-color) !important;
+        text-shadow: 0 0 10px rgba(74, 158, 255, 0.3) !important;
       }
 
       .dark-mode .sidebar ul li a {
         color: var(--text-primary) !important;
+        transition: all 0.3s ease !important;
+        border-radius: 8px !important;
+        margin: 2px 8px !important;
       }
 
       .dark-mode .sidebar ul li a:hover {
-        background-color: #475569 !important;
-        color: #a3daff !important;
+        background: linear-gradient(
+          135deg,
+          var(--accent-color) 0%,
+          #3b82f6 100%
+        ) !important;
+        color: white !important;
+        transform: translateX(5px) !important;
+        box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3) !important;
       }
 
-      /* Mode sombre pour welcomeSection */
+      /* Mode sombre pour welcomeSection avec effet premium */
       .dark-mode #welcomeSection {
         background: linear-gradient(
           135deg,
-          #1a1a2e 0%,
-          #16213e 25%,
-          #0f172a 50%,
-          #1e293b 75%,
-          #1a1a2e 100%
+          #0a0a0a 0%,
+          #1a1a1a 25%,
+          #111111 50%,
+          #1e1e1e 75%,
+          #0a0a0a 100%
         ) !important;
-        --bg-color-1: #1a1a2e;
-        --bg-color-2: #16213e;
-        --bg-color-3: #0f172a;
-        --bg-color-4: #1e293b;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7) !important;
+        --bg-color-1: #0a0a0a;
+        --bg-color-2: #1a1a1a;
+        --bg-color-3: #111111;
+        --bg-color-4: #1e1e1e;
       }
 
-      /* Mode sombre pour les cartes */
+      /* Mode sombre pour les cartes avec effet de hover élégant */
       .dark-mode .etat-card {
         background: linear-gradient(
           135deg,
-          rgba(30, 41, 59, 0.9) 0%,
-          rgba(15, 23, 42, 0.8) 100%
+          rgba(30, 30, 30, 0.95) 0%,
+          rgba(26, 26, 26, 0.9) 100%
         ) !important;
-        border: 1px solid #374151 !important;
+        border: 1px solid var(--border-color) !important;
         color: var(--text-primary) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+        transition: all 0.3s ease !important;
+        backdrop-filter: blur(10px) !important;
+      }
+
+      .dark-mode .etat-card:hover {
+        background: rgba(37, 37, 37, 0.98) !important; /* Arrière-plan simple */
+        transform: translateY(-4px) !important; /* Montée simple */
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important; /* Ombre simple */
+        border-color: var(--accent-color) !important;
       }
 
       .dark-mode .etat-card .etat-description,
@@ -2236,14 +2246,25 @@
         color: var(--text-primary) !important;
       }
 
-      /* Mode sombre pour les profils utilisateur */
+      .dark-mode .etat-card .etat-number {
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.3) !important;
+      }
+
+      /* Mode sombre pour les profils utilisateur avec style premium */
       .dark-mode #sidebarUserProfile {
-        background: rgba(30, 41, 59, 0.5) !important;
-        border: 1px solid #374151 !important;
+        background: linear-gradient(
+          135deg,
+          rgba(30, 30, 30, 0.8) 0%,
+          rgba(26, 26, 26, 0.9) 100%
+        ) !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+        backdrop-filter: blur(10px) !important;
       }
 
       .dark-mode #userNameSidebar {
         color: var(--text-primary) !important;
+        font-weight: 600 !important;
       }
 
       .dark-mode #userEmailSidebar {
@@ -2251,41 +2272,431 @@
       }
 
       .dark-mode #userProfilSidebar {
-        background: rgba(37, 99, 235, 0.3) !important;
-        color: #a3daff !important;
+        background: linear-gradient(
+          135deg,
+          var(--accent-color) 0%,
+          #3b82f6 100%
+        ) !important;
+        color: white !important;
+        box-shadow: 0 2px 10px rgba(74, 158, 255, 0.3) !important;
       }
 
       /* Mode sombre pour les sections utilisateurs connectés */
       .dark-mode #detailedUsersSection {
-        background: rgba(30, 41, 59, 0.5) !important;
-        border: 1px solid #374151 !important;
+        background: linear-gradient(
+          135deg,
+          rgba(30, 30, 30, 0.8) 0%,
+          rgba(26, 26, 26, 0.9) 100%
+        ) !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+        backdrop-filter: blur(10px) !important;
       }
 
       .dark-mode #detailedUsersSection h4 {
-        color: #a3daff !important;
+        color: var(--accent-color) !important;
+        text-shadow: 0 0 5px rgba(74, 158, 255, 0.3) !important;
       }
 
       .dark-mode #totalUsersCount {
-        background: #374151 !important;
+        background: linear-gradient(
+          135deg,
+          var(--card-bg) 0%,
+          #2a2a2a 100%
+        ) !important;
         color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
       }
 
       .dark-mode #usersDetailsList {
         color: var(--text-secondary) !important;
       }
 
-      /* Mode sombre pour les contenus principaux */
+      /* Mode sombre pour les contenus principaux avec effet premium */
       .dark-mode .main-content {
         background: var(--bg-secondary) !important;
         color: var(--text-primary) !important;
       }
 
-      /* Mode sombre spécifique pour les modales et popups */
+      /* Mode sombre spécifique pour les modales et popups avec design élégant */
       .dark-mode .modal-content,
       .dark-mode .popup-content {
-        background: var(--bg-secondary) !important;
+        background: linear-gradient(
+          135deg,
+          var(--bg-secondary) 0%,
+          var(--bg-tertiary) 100%
+        ) !important;
         color: var(--text-primary) !important;
         border: 1px solid var(--border-color) !important;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8) !important;
+        backdrop-filter: blur(20px) !important;
+      }
+
+      /* Amélioration des boutons en mode sombre */
+      .dark-mode button,
+      .dark-mode .btn {
+        background: linear-gradient(
+          135deg,
+          var(--accent-color) 0%,
+          #3b82f6 100%
+        ) !important;
+        color: white !important;
+        border: none !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3) !important;
+      }
+
+      .dark-mode button:hover,
+      .dark-mode .btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4) !important;
+      }
+
+      /* Amélioration des inputs en mode sombre */
+      .dark-mode input,
+      .dark-mode textarea,
+      .dark-mode select {
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .dark-mode input:focus,
+      .dark-mode textarea:focus,
+      .dark-mode select:focus {
+        border-color: var(--accent-color) !important;
+        box-shadow: 0 0 10px rgba(74, 158, 255, 0.3) !important;
+      }
+
+      /* Styles pour les tableaux en mode sombre */
+      .dark-mode table {
+        background: var(--card-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      .dark-mode th {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-primary) !important;
+        border-bottom: 2px solid var(--accent-color) !important;
+      }
+
+      .dark-mode td {
+        border-bottom: 1px solid var(--border-color) !important;
+      }
+
+      .dark-mode tr:hover {
+        background: var(--card-hover) !important;
+      }
+
+      /* === EFFETS VISUELS AVANCÉS POUR LE MODE SOMBRE === */
+
+      /* Barre de défilement personnalisée en mode sombre */
+      .dark-mode ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .dark-mode ::-webkit-scrollbar-track {
+        background: var(--bg-primary);
+      }
+
+      .dark-mode ::-webkit-scrollbar-thumb {
+        background: linear-gradient(
+          135deg,
+          var(--accent-color) 0%,
+          #3b82f6 100%
+        );
+        border-radius: 4px;
+      }
+
+      .dark-mode ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(
+          135deg,
+          #3b82f6 0%,
+          var(--accent-color) 100%
+        );
+      }
+
+      /* Effet de lueur pour les éléments interactifs */
+      .dark-mode .etat-card,
+      .dark-mode #sidebarUserProfile,
+      .dark-mode #detailedUsersSection {
+        position: relative;
+      }
+
+      .dark-mode .etat-card::before,
+      .dark-mode #sidebarUserProfile::before,
+      .dark-mode #detailedUsersSection::before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        right: -1px;
+        bottom: -1px;
+        background: linear-gradient(
+          45deg,
+          var(--accent-color),
+          #3b82f6,
+          var(--accent-color)
+        );
+        border-radius: inherit;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .dark-mode .etat-card:hover::before,
+      .dark-mode #sidebarUserProfile:hover::before,
+      .dark-mode #detailedUsersSection:hover::before {
+        opacity: 0; /* Désactive l'effet de lueur */
+        animation: none; /* Supprime l'animation */
+      }
+
+      @keyframes borderGlow {
+        /* Animation désactivée */
+        0% {
+          filter: none;
+        }
+        100% {
+          filter: none;
+        }
+      }
+
+      /* Amélioration du bouton toggle mode sombre */
+      .dark-mode #darkModeToggle {
+        background: linear-gradient(
+          135deg,
+          var(--card-bg) 0%,
+          var(--bg-tertiary) 100%
+        ) !important;
+        border: 1px solid var(--border-color) !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .dark-mode #darkModeToggle:hover {
+        background: linear-gradient(
+          135deg,
+          var(--accent-color) 0%,
+          #3b82f6 100%
+        ) !important;
+        transform: scale(1.05) !important;
+        box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3) !important;
+      }
+
+      /* Effet de particules subtiles pour le background */
+      .dark-mode body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(
+            circle at 25% 25%,
+            rgba(74, 158, 255, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 75% 75%,
+            rgba(59, 130, 246, 0.05) 0%,
+            transparent 50%
+          );
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      /* Amélioration des badges et alertes */
+      .dark-mode .badge,
+      .dark-mode .alert {
+        background: var(--card-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+
+      .dark-mode .badge-success {
+        background: linear-gradient(
+          135deg,
+          var(--success-color) 0%,
+          #059669 100%
+        ) !important;
+        color: white !important;
+      }
+
+      .dark-mode .badge-warning {
+        background: linear-gradient(
+          135deg,
+          var(--warning-color) 0%,
+          #d97706 100%
+        ) !important;
+        color: white !important;
+      }
+
+      .dark-mode .badge-danger {
+        background: linear-gradient(
+          135deg,
+          var(--error-color) 0%,
+          #dc2626 100%
+        ) !important;
+        color: white !important;
+      }
+
+      /* === MODE SOMBRE POUR L'ÉCRAN DE CHARGEMENT "SUIVI DE DOSSIER" === */
+      .dark-mode .enterprise-intro,
+      html.dark-mode .enterprise-intro {
+        background: linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #111111 15%,
+          #1a1a1a 30%,
+          #1e1e1e 45%,
+          #2a2a2a 60%,
+          #1e1e1e 75%,
+          #111111 90%,
+          #0a0a0a 100%
+        ) !important;
+        background-size: 400% 400% !important;
+        animation: enterpriseBgShiftDark 8s ease-in-out infinite !important;
+      }
+
+      @keyframes enterpriseBgShiftDark {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      .dark-mode .logo-symbol {
+        background: linear-gradient(
+          135deg,
+          var(--accent-color),
+          #3b82f6,
+          #6366f1
+        ) !important;
+        box-shadow: 0 10px 30px rgba(74, 158, 255, 0.4),
+          0 0 20px rgba(99, 102, 241, 0.3) !important;
+        animation: logoGlowDark 2s ease-in-out !important;
+      }
+
+      html.dark-mode .logo-symbol {
+        background: linear-gradient(
+          135deg,
+          #4a9eff,
+          #3b82f6,
+          #6366f1
+        ) !important;
+        box-shadow: 0 10px 30px rgba(74, 158, 255, 0.4),
+          0 0 20px rgba(99, 102, 241, 0.3) !important;
+        animation: logoGlowDark 2s ease-in-out !important;
+      }
+
+      @keyframes logoGlowDark {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
+          box-shadow: 0 10px 30px rgba(74, 158, 255, 0),
+            0 0 20px rgba(99, 102, 241, 0);
+        }
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 15px 40px rgba(74, 158, 255, 0.6),
+            0 0 25px rgba(99, 102, 241, 0.5);
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+          box-shadow: 0 10px 30px rgba(74, 158, 255, 0.4),
+            0 0 20px rgba(99, 102, 241, 0.3);
+        }
+      }
+
+      .dark-mode .logo-symbol::before {
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.6),
+          transparent
+        ) !important;
+      }
+
+      html.dark-mode .logo-symbol::before {
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.6),
+          transparent
+        ) !important;
+      }
+
+      .dark-mode .loading-bar,
+      html.dark-mode .loading-bar {
+        background: #333333 !important;
+      }
+
+      .dark-mode .loading-progress,
+      html.dark-mode .loading-progress {
+        background: linear-gradient(
+          90deg,
+          #4a9eff,
+          #3b82f6,
+          #6366f1
+        ) !important;
+      }
+
+      .dark-mode .enterprise-title,
+      html.dark-mode .enterprise-title {
+        color: #ffffff !important;
+        text-shadow: 0 0 20px rgba(74, 158, 255, 0.3) !important;
+      }
+
+      .dark-mode .enterprise-subtitle,
+      html.dark-mode .enterprise-subtitle {
+        color: #b3b3b3 !important;
+      }
+
+      .dark-mode .enterprise-dots span,
+      html.dark-mode .enterprise-dots span {
+        background: #b3b3b3 !important;
+      }
+
+      .dark-mode .enterprise-dots span:nth-child(1),
+      html.dark-mode .enterprise-dots span:nth-child(1) {
+        background: #4a9eff !important;
+        box-shadow: 0 0 10px rgba(74, 158, 255, 0.5) !important;
+      }
+
+      .dark-mode .enterprise-dots span:nth-child(2),
+      html.dark-mode .enterprise-dots span:nth-child(2) {
+        background: #3b82f6 !important;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5) !important;
+      }
+
+      .dark-mode .enterprise-dots span:nth-child(3),
+      html.dark-mode .enterprise-dots span:nth-child(3) {
+        background: #6366f1 !important;
+        box-shadow: 0 0 10px rgba(99, 102, 241, 0.5) !important;
+      }
+
+      @keyframes dotsBlinkingDark {
+        0%,
+        100% {
+          background: #b3b3b3;
+          transform: scale(1);
+          box-shadow: none;
+        }
+        50% {
+          background: #4a9eff;
+          transform: scale(1.3);
+          box-shadow: 0 0 15px rgba(74, 158, 255, 0.7);
+        }
+      }
+
+      .dark-mode .enterprise-dots span,
+      html.dark-mode .enterprise-dots span {
+        animation: dotsBlinkingDark 1.5s ease-in-out infinite !important;
       }
 
       /* EXCEPTION: Garder les modales de vue dossier client et suivi spécifique agent en mode clair */
@@ -2476,6 +2887,18 @@
           document.body.style.visibility = "visible";
         }, 0);
       }
+    </script>
+
+    <!-- Script immédiat pour appliquer le mode sombre à l'écran de chargement -->
+    <script>
+      // Vérifier immédiatement le mode sombre pour l'écran de chargement
+      (function () {
+        const savedMode = localStorage.getItem("darkMode");
+        if (savedMode === "enabled") {
+          document.documentElement.classList.add("dark-mode");
+          document.body.classList.add("dark-mode");
+        }
+      })();
     </script>
 
     <!-- Animation d'introduction professionnelle -->
@@ -3770,6 +4193,69 @@
           // === SOLUTION DÉFINITIVE POUR LES UTILISATEURS CONNECTÉS ===
           window.API_BASE_URL = window.location.origin;
 
+          // Fonction pour initialiser les boutons comme actifs immédiatement
+          function initializeButtonsAsActive() {
+            const acconiersDiv = document.getElementById("acconiersConnected");
+            if (acconiersDiv) {
+              acconiersDiv.innerHTML = `<i class="fas fa-circle" style="color: #10b981; font-size: 6px; margin-right: 2px;"></i>En cours...`;
+              acconiersDiv.style.pointerEvents = "auto";
+              acconiersDiv.style.opacity = "1";
+            }
+
+            const livraisonsDiv = document.getElementById(
+              "livraisonsConnected"
+            );
+            if (livraisonsDiv) {
+              livraisonsDiv.innerHTML = `<i class="fas fa-circle" style="color: #10b981; font-size: 6px; margin-right: 2px;"></i>En cours...`;
+              livraisonsDiv.style.pointerEvents = "auto";
+              livraisonsDiv.style.opacity = "1";
+            }
+
+            const totalDiv = document.getElementById("totalUsersCount");
+            if (totalDiv) {
+              totalDiv.textContent = "Chargement...";
+            }
+
+            // Initialiser les boutons détaillés comme toujours actifs
+            const listDiv = document.getElementById("usersDetailsList");
+            if (listDiv) {
+              listDiv.innerHTML = `
+                <div style="margin-bottom: 8px;">
+                  <div style="font-weight: 600; color: white; font-size: 0.85em; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                    <span>🛡️ Acconiers</span>
+                    <span style="background: #10b981; color: white; font-size: 0.7em; padding: 1px 4px; border-radius: 6px;">1</span>
+                  </div>
+                  <div onclick="window.open('/html/resp_acconier.html?direct=true', '_blank')" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius: 6px; margin-bottom: 3px; border-left: 3px solid #10b981; font-size: 0.8em; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite;"></div>
+                      <span>Interface Acconiers</span>
+                    </div>
+                    <button style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7em; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="event.stopPropagation(); window.open('/html/resp_acconier.html?direct=true', '_blank')">
+                      <i class="fas fa-external-link-alt"></i>
+                      OUVRIR
+                    </button>
+                  </div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                  <div style="font-weight: 600; color: white; font-size: 0.85em; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                    <span>📦 Livraisons</span>
+                    <span style="background: #10b981; color: white; font-size: 0.7em; padding: 1px 4px; border-radius: 6px;">1</span>
+                  </div>
+                  <div onclick="window.open('/html/resp_liv.html?direct=true', '_blank')" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius: 6px; margin-bottom: 3px; border-left: 3px solid #10b981; font-size: 0.8em; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite;"></div>
+                      <span>Interface Livraisons</span>
+                    </div>
+                    <button style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7em; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="event.stopPropagation(); window.open('/html/resp_liv.html?direct=true', '_blank')">
+                      <i class="fas fa-external-link-alt"></i>
+                      OUVRIR
+                    </button>
+                  </div>
+                </div>
+              `;
+            }
+          }
+
           function updateConnectedUsersNow() {
             fetch(`${window.API_BASE_URL}/api/active-users/stats`)
               .then((response) => response.json())
@@ -3807,31 +4293,66 @@
                   } total`;
                 }
 
-                // Liste détaillée
+                // Liste détaillée - TOUJOURS AFFICHER LES BOUTONS ACTIFS
                 const listDiv = document.getElementById("usersDetailsList");
                 if (listDiv) {
-                  if (data.totalConnectedUsers === 0) {
-                    listDiv.innerHTML = `<div style="text-align: center; color: #6b7280; font-style: italic; padding: 8px 0; font-size: 0.8em;">Aucun utilisateur connecté</div>`;
-                  } else {
-                    let html = "";
-                    Object.keys(data.pageStats || {}).forEach((pageName) => {
-                      const pageData = data.pageStats[pageName];
-                      if (pageData.count > 0) {
-                        const title =
-                          pageName === "resp_acconier.html"
-                            ? "🛡️ Acconiers"
-                            : "📦 Livraisons";
-                        html += `<div style="margin-bottom: 8px;"><div style="font-weight: 600; color: white; font-size: 0.85em; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;"><span>${title}</span><span style="background: #10b981; color: white; font-size: 0.7em; padding: 1px 4px; border-radius: 6px;">${pageData.count}</span></div>`;
-                        pageData.users.forEach((user) => {
-                          html += `<div style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; background: #f9fafb; border-radius: 4px; margin-bottom: 2px; border-left: 2px solid #10b981; font-size: 0.8em;"><div>${
-                            user.nom || user.username || "Utilisateur"
-                          }</div></div>`;
-                        });
-                        html += "</div>";
-                      }
-                    });
-                    listDiv.innerHTML = html;
-                  }
+                  // Récupérer les données des utilisateurs connectés ou utiliser des valeurs par défaut
+                  const acconiersCount =
+                    data.pageStats && data.pageStats["resp_acconier.html"]
+                      ? data.pageStats["resp_acconier.html"].count
+                      : 0;
+                  const livraisonsCount =
+                    data.pageStats && data.pageStats["resp_liv.html"]
+                      ? data.pageStats["resp_liv.html"].count
+                      : 0;
+
+                  // Toujours afficher les boutons actifs, même si 0 utilisateur connecté
+                  listDiv.innerHTML = `
+                    <div style="margin-bottom: 8px;">
+                      <div style="font-weight: 600; color: white; font-size: 0.85em; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                        <span>🛡️ Acconiers</span>
+                        <span style="background: ${
+                          acconiersCount > 0 ? "#10b981" : "#6b7280"
+                        }; color: white; font-size: 0.7em; padding: 1px 4px; border-radius: 6px;">${acconiersCount}</span>
+                      </div>
+                      <div onclick="window.open('/html/resp_acconier.html?direct=true', '_blank')" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius: 6px; margin-bottom: 3px; border-left: 3px solid #10b981; font-size: 0.8em; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <div style="width: 8px; height: 8px; background: ${
+                            acconiersCount > 0 ? "#10b981" : "#6b7280"
+                          }; border-radius: 50%; animation: ${
+                    acconiersCount > 0 ? "pulse 2s infinite" : "none"
+                  };"></div>
+                          <span>Interface Acconiers</span>
+                        </div>
+                        <button style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7em; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="event.stopPropagation(); window.open('/html/resp_acconier.html?direct=true', '_blank')">
+                          <i class="fas fa-external-link-alt"></i>
+                          OUVRIR
+                        </button>
+                      </div>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                      <div style="font-weight: 600; color: white; font-size: 0.85em; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                        <span>📦 Livraisons</span>
+                        <span style="background: ${
+                          livraisonsCount > 0 ? "#10b981" : "#6b7280"
+                        }; color: white; font-size: 0.7em; padding: 1px 4px; border-radius: 6px;">${livraisonsCount}</span>
+                      </div>
+                      <div onclick="window.open('/html/resp_liv.html?direct=true', '_blank')" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius: 6px; margin-bottom: 3px; border-left: 3px solid #10b981; font-size: 0.8em; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <div style="width: 8px; height: 8px; background: ${
+                            livraisonsCount > 0 ? "#10b981" : "#6b7280"
+                          }; border-radius: 50%; animation: ${
+                    livraisonsCount > 0 ? "pulse 2s infinite" : "none"
+                  };"></div>
+                          <span>Interface Livraisons</span>
+                        </div>
+                        <button style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7em; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;" onclick="event.stopPropagation(); window.open('/html/resp_liv.html?direct=true', '_blank')">
+                          <i class="fas fa-external-link-alt"></i>
+                          OUVRIR
+                        </button>
+                      </div>
+                    </div>
+                  `;
                 }
               })
               .catch(() => {
@@ -3845,9 +4366,11 @@
               });
           }
 
-          // Démarrer dès que possible
-          setTimeout(updateConnectedUsersNow, 1000);
-          setInterval(updateConnectedUsersNow, 10000);
+          // Démarrer immédiatement et de façon répétée
+          initializeButtonsAsActive(); // Initialiser les boutons comme actifs immédiatement
+          updateConnectedUsersNow(); // Appel immédiat
+          setTimeout(updateConnectedUsersNow, 100); // Backup au cas où
+          setInterval(updateConnectedUsersNow, 10000); // Mise à jour toutes les 10 secondes
 
           // Fonction pour forcer la mise à jour
           window.updateUsers = updateConnectedUsersNow;
@@ -3926,6 +4449,17 @@
                 );
               }
             }
+
+            // === ACTIVATION IMMÉDIATE DES BOUTONS UTILISATEURS ===
+            // S'assurer que les boutons utilisateurs sont activés immédiatement
+            if (typeof initializeButtonsAsActive === "function") {
+              initializeButtonsAsActive();
+            }
+            setTimeout(() => {
+              if (typeof updateConnectedUsersNow === "function") {
+                updateConnectedUsersNow();
+              }
+            }, 0);
 
             // --- WebSocket notification temps réel dossier mis en livraison ---
             try {
@@ -7258,11 +7792,17 @@
         const savedMode = localStorage.getItem("darkMode");
         if (savedMode === "enabled") {
           enableDarkMode();
+        } else {
+          // S'assurer que le mode clair est bien appliqué
+          disableDarkMode();
         }
 
         // Événement de clic sur le bouton
         darkModeToggle.addEventListener("click", function () {
-          if (body.classList.contains("dark-mode")) {
+          if (
+            body.classList.contains("dark-mode") ||
+            document.documentElement.classList.contains("dark-mode")
+          ) {
             disableDarkMode();
           } else {
             enableDarkMode();
@@ -7271,6 +7811,7 @@
 
         function enableDarkMode() {
           body.classList.add("dark-mode");
+          document.documentElement.classList.add("dark-mode");
           darkModeIcon.className = "fas fa-sun";
           darkModeText.textContent = "Mode Clair";
           localStorage.setItem("darkMode", "enabled");
@@ -7278,6 +7819,7 @@
 
         function disableDarkMode() {
           body.classList.remove("dark-mode");
+          document.documentElement.classList.remove("dark-mode");
           darkModeIcon.className = "fas fa-moon";
           darkModeText.textContent = "Mode Sombre";
           localStorage.setItem("darkMode", "disabled");

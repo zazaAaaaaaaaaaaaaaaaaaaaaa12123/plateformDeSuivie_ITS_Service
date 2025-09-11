@@ -1,49 +1,107 @@
 // === SYSTÈME DE MODE SOMBRE SYNCHRONISÉ ===
 (function initDarkModeSync() {
+  // === FONCTION DE NETTOYAGE GLOBAL DES COULEURS ===
+  window.forceCleanAllColors = function () {
+    console.log("🧹 [CLEAN] Nettoyage forcé de toutes les couleurs");
+    const allCells = document.querySelectorAll("td, th");
+    allCells.forEach((cell) => {
+      cell.style.removeProperty("color");
+      cell.style.removeProperty("text-shadow");
+      cell.classList.remove("dark-mode-color", "light-mode-force");
+    });
+
+    // Réappliquer le mode actuel après nettoyage
+    setTimeout(() => {
+      if (typeof window.applyDarkModeConditionalColors === "function") {
+        window.applyDarkModeConditionalColors();
+      }
+    }, 100);
+  };
+
   // === FONCTION POUR APPLIQUER LES COULEURS CONDITIONNELLES EN MODE SOMBRE ===
+  let colorApplicationTimeout = null;
+
   window.applyDarkModeConditionalColors = function () {
-    // Vérifier si le mode sombre est activé
-    const isDarkMode = document.body.classList.contains("dark-mode");
-    console.log("🎨 [COLORS] Vérification mode sombre:", isDarkMode);
-    console.log("🎨 [COLORS] Classes du body:", document.body.className);
+    // Annuler l'application précédente si elle est en cours
+    if (colorApplicationTimeout) {
+      clearTimeout(colorApplicationTimeout);
+    }
 
-    // Appliquer aux deux tableaux : principal et agent
-    const tables = [
-      document.getElementById("deliveriesTable"),
-      document.getElementById("agentDailyDeliveriesTable"),
-    ];
+    colorApplicationTimeout = setTimeout(() => {
+      // Vérifier si le mode sombre est activé
+      const isDarkMode = document.body.classList.contains("dark-mode");
+      console.log("🎨 [COLORS] Vérification mode sombre:", isDarkMode);
+      console.log("🎨 [COLORS] Classes du body:", document.body.className);
 
-    tables.forEach((table) => {
-      if (!table) return;
-      console.log("🎨 [COLORS] Traitement du tableau:", table.id);
+      // Appliquer aux deux tableaux : principal et agent
+      const tables = [
+        document.getElementById("deliveriesTable"),
+        document.getElementById("agentDailyDeliveriesTable"),
+      ];
 
-      const rows = table.querySelectorAll("tbody tr");
-      console.log("🎨 [COLORS] Nombre de lignes trouvées:", rows.length);
+      tables.forEach((table) => {
+        if (!table) return;
+        console.log("🎨 [COLORS] Traitement du tableau:", table.id);
 
-      rows.forEach((row, rowIndex) => {
-        const cells = row.querySelectorAll("td");
+        const rows = table.querySelectorAll("tbody tr");
+        console.log("🎨 [COLORS] Nombre de lignes trouvées:", rows.length);
 
-        cells.forEach((cell, index) => {
-          const fieldName = cell.dataset.fieldName;
-          const cellText = cell.textContent ? cell.textContent.trim() : "";
+        rows.forEach((row, rowIndex) => {
+          const cells = row.querySelectorAll("td");
 
-          if (isDarkMode) {
-            // APPLIQUER les couleurs en mode sombre
-            // Méthode 1: Utiliser les data-field-name si disponibles
-            if (fieldName) {
-              applyColorByFieldName(cell, fieldName);
+          cells.forEach((cell, index) => {
+            const fieldName = cell.dataset.fieldName;
+            const cellText = cell.textContent ? cell.textContent.trim() : "";
+
+            if (isDarkMode) {
+              // APPLIQUER les couleurs en mode sombre
+              // Méthode 1: Utiliser les data-field-name si disponibles
+              if (fieldName) {
+                applyColorByFieldName(cell, fieldName);
+              }
+              // Méthode 2: Utiliser les positions des colonnes (pour les tableaux sans data-field-name)
+              else {
+                applyColorByColumnIndex(cell, index, table);
+              }
+            } else {
+              // SUPPRIMER les couleurs en mode clair AVEC FORCE
+              // Supprimer les styles inline
+              cell.style.color = "";
+              cell.style.textShadow = "";
+
+              // Forcer la suppression en mode clair avec !important via CSS classe
+              cell.classList.remove("dark-mode-color");
+              cell.classList.add("light-mode-force");
+
+              // Double vérification pour forcer le style par défaut
+              setTimeout(() => {
+                if (!document.body.classList.contains("dark-mode")) {
+                  cell.style.setProperty("color", "", "important");
+                  cell.style.setProperty("text-shadow", "", "important");
+                }
+              }, 50);
             }
-            // Méthode 2: Utiliser les positions des colonnes (pour les tableaux sans data-field-name)
-            else {
-              applyColorByColumnIndex(cell, index, table);
-            }
-          } else {
-            // SUPPRIMER les couleurs en mode clair
-            cell.style.color = "";
-          }
+          });
         });
       });
-    });
+
+      // Nettoyage global des classes forcées en mode clair
+      if (!isDarkMode) {
+        const allCells = document.querySelectorAll("td.dark-mode-color");
+        allCells.forEach((cell) => {
+          cell.classList.remove("dark-mode-color");
+          cell.classList.add("light-mode-force");
+        });
+
+        // Supprimer les classes temporaires après un délai
+        setTimeout(() => {
+          const forcedCells = document.querySelectorAll("td.light-mode-force");
+          forcedCells.forEach((cell) => {
+            cell.classList.remove("light-mode-force");
+          });
+        }, 200);
+      }
+    }, 50); // Délai pour éviter les appels multiples rapides
   };
 
   // Fonction pour appliquer les couleurs par nom de champ
@@ -52,6 +110,10 @@
     console.log(
       `🎨 [FIELD] Traitement champ: ${fieldName}, valeur: "${cellText}"`
     );
+
+    // Marquer la cellule comme ayant des couleurs en mode sombre
+    cell.classList.remove("light-mode-force");
+    cell.classList.add("dark-mode-color");
 
     switch (fieldName) {
       // N° Déclaration: Bleu vif
@@ -63,7 +125,7 @@
         ) {
           cell.style.color = "#00bfff";
           console.log(
-            `� [FIELD] Bleu vif appliqué à N° Déclaration: ${cellText}`
+            `  [FIELD] Bleu vif appliqué à N° Déclaration: ${cellText}`
           );
         }
         break;
@@ -88,7 +150,7 @@
           !cell.tagName.toLowerCase().includes("th")
         ) {
           cell.style.color = "#ff0000";
-          console.log(`� [FIELD] Rouge vif appliqué à N° Dossier: ${cellText}`);
+          console.log(`  [FIELD] Rouge vif appliqué à N° Dossier: ${cellText}`);
         }
         break;
 
@@ -159,6 +221,10 @@
       }`
     );
 
+    // Marquer la cellule comme ayant des couleurs en mode sombre
+    cell.classList.remove("light-mode-force");
+    cell.classList.add("dark-mode-color");
+
     // Pour le tableau principal (deliveriesTable)
     if (table && table.id === "deliveriesTable") {
       switch (index) {
@@ -223,6 +289,10 @@
       ? cell.textContent.trim().toUpperCase()
       : "";
     if (circuitValue && circuitValue !== "-") {
+      // Marquer la cellule comme ayant des couleurs en mode sombre
+      cell.classList.remove("light-mode-force");
+      cell.classList.add("dark-mode-color");
+
       switch (circuitValue) {
         case "VAD":
           cell.style.color = "#00FF00"; // Vert
@@ -244,93 +314,57 @@
     }
   }
 
-  // Fonction pour forcer le nettoyage complet des couleurs
-  function forceCleanColors() {
-    const elements = document.querySelectorAll("table td, table th");
-    elements.forEach((el) => {
-      el.style.removeProperty("color");
-      el.style.removeProperty("text-shadow");
-      el.style.removeProperty("background-color");
-      el.style.removeProperty("border-color");
-      if (el.tagName.toLowerCase() === "td") {
-        el.style.color = "#000000";
-      }
-    });
-  }
-
-  // Gestionnaire des intervalles de nettoyage
-  const cleaningManager = {
-    interval: null,
-    start: function () {
-      if (this.interval) this.stop();
-      this.interval = setInterval(() => {
-        if (localStorage.getItem("darkMode") !== "enabled") {
-          forceCleanColors();
-        }
-      }, 1000);
-    },
-    stop: function () {
-      if (this.interval) {
-        clearInterval(this.interval);
-        this.interval = null;
-      }
-    },
-  };
-
-  // Fonction pour appliquer le mode sombre ou clair avec persistance renforcée
+  // Fonction pour appliquer le mode sombre
   function applyDarkMode() {
     const savedMode = localStorage.getItem("darkMode");
     const isDarkMode = savedMode === "enabled";
 
-    // Sauvegarder le timestamp de la dernière mise à jour
-    localStorage.setItem("lastModeUpdate", Date.now().toString());
-
-    // Appliquer la classe appropriée
-    document.body.classList.toggle("dark-mode", isDarkMode);
-
-    if (!isDarkMode) {
-      // Mode clair : Forcer le nettoyage des couleurs
-      forceCleanColors();
-      localStorage.setItem("colorsEnabled", "false");
-
-      // Démarrer le nettoyage périodique
-      cleaningManager.start();
+    if (isDarkMode) {
+      document.body.classList.add("dark-mode");
     } else {
-      // Mode sombre : arrêter le nettoyage périodique1
-      cleaningManager.stop();
+      document.body.classList.remove("dark-mode");
 
-      // Activer les couleurs
-      localStorage.setItem("colorsEnabled", "true");
+      // NETTOYAGE FORCÉ EN MODE CLAIR
+      // Supprimer toutes les couleurs forcées des tableaux
+      setTimeout(() => {
+        const allColoredCells = document.querySelectorAll(
+          "td[style*='color'], td.dark-mode-color"
+        );
+        allColoredCells.forEach((cell) => {
+          if (!document.body.classList.contains("dark-mode")) {
+            cell.style.setProperty("color", "", "important");
+            cell.style.setProperty("text-shadow", "", "important");
+            cell.classList.remove("dark-mode-color");
+            cell.classList.add("light-mode-force");
+          }
+        });
 
-      // En-têtes en blanc en mode sombre
-      const headers = document.querySelectorAll("table th");
-      headers.forEach((header) => {
-        header.style.color = "#FFFFFF";
-        header.style.backgroundColor = "#1f2937";
-        header.style.borderColor = "#374151";
-      });
+        // Nettoyer les classes temporaires
+        setTimeout(() => {
+          const forcedCells = document.querySelectorAll("td.light-mode-force");
+          forcedCells.forEach((cell) => {
+            cell.classList.remove("light-mode-force");
+          });
+        }, 300);
+      }, 50);
     }
 
     // Synchroniser le modal d'agents si visible
     synchronizeAgentModalStyles();
 
-    // Fonction pour appliquer les couleurs conditionnelles
-    const applyColors = () => {
-      // Vérifier à nouveau le mode actuel
-      const currentMode = localStorage.getItem("darkMode");
-      if (
-        currentMode === "enabled" &&
-        typeof window.applyDarkModeConditionalColors === "function"
-      ) {
+    // Appliquer ou supprimer les couleurs conditionnelles selon le mode
+    setTimeout(() => {
+      if (typeof window.applyDarkModeConditionalColors === "function") {
         window.applyDarkModeConditionalColors();
       }
-    };
+    }, 100);
 
-    // En mode sombre, appliquer les couleurs avec vérification
-    if (isDarkMode) {
-      setTimeout(applyColors, 100);
-      setTimeout(applyColors, 1000);
-    }
+    // Appliquer aussi après un délai plus long pour s'assurer que les tableaux sont rendus
+    setTimeout(() => {
+      if (typeof window.applyDarkModeConditionalColors === "function") {
+        window.applyDarkModeConditionalColors();
+      }
+    }, 1000);
   }
 
   // Fonction pour synchroniser les styles du modal d'agents
@@ -343,56 +377,33 @@
     }
   }
 
-  // Système de surveillance global pour la cohérence du mode
-  const modeWatcher = {
-    checkInterval: null,
-    start: function () {
-      if (this.checkInterval) this.stop();
-      this.checkInterval = setInterval(() => {
-        const savedMode = localStorage.getItem("darkMode");
-        const lastUpdate = parseInt(
-          localStorage.getItem("lastModeUpdate") || "0"
-        );
-        const timeSinceUpdate = Date.now() - lastUpdate;
-
-        // Réappliquer le mode si nécessaire
-        if (timeSinceUpdate > 5000) {
-          console.log("🔄 Vérification de cohérence du mode...");
-          applyDarkMode();
-        }
-      }, 5000);
-    },
-    stop: function () {
-      if (this.checkInterval) {
-        clearInterval(this.checkInterval);
-        this.checkInterval = null;
-      }
-    },
-  };
-
-  // Initialisation au chargement de la page
-  function initializeThemeSystem() {
-    applyDarkMode();
-    modeWatcher.start();
-  }
-
-  // Démarrer la surveillance au chargement
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializeThemeSystem);
-  } else {
-    initializeThemeSystem();
-  }
+  // Appliquer le mode sombre au chargement de la page
+  document.addEventListener("DOMContentLoaded", applyDarkMode);
 
   // Écouter les changements de mode sombre depuis d'autres pages
   window.addEventListener("storage", function (event) {
     if (event.key === "darkMode") {
-      applyDarkMode();
+      // Forcer un nettoyage complet avant de changer de mode
+      const allCells = document.querySelectorAll(
+        "td[style*='color'], td.dark-mode-color, td.light-mode-force"
+      );
+      allCells.forEach((cell) => {
+        cell.style.color = "";
+        cell.style.textShadow = "";
+        cell.classList.remove("dark-mode-color", "light-mode-force");
+      });
+
+      // Appliquer le nouveau mode après nettoyage
+      setTimeout(() => {
+        applyDarkMode();
+      }, 50);
+
       // Appliquer ou supprimer les couleurs conditionnelles selon le nouveau mode
       setTimeout(() => {
         if (typeof window.applyDarkModeConditionalColors === "function") {
           window.applyDarkModeConditionalColors();
         }
-      }, 100);
+      }, 150);
 
       // Appliquer aussi après un délai plus long pour s'assurer que les tableaux sont rendus
       setTimeout(() => {

@@ -484,6 +484,14 @@
         border: 1px solid var(--border-color) !important;
       }
 
+      /* Mode sombre pour les labels "Du:" et "Au:" */
+      body.dark-mode .date-label,
+      .dark-mode .date-label,
+      body.dark-mode span[style*="color: #374151"],
+      .dark-mode span[style*="color: #374151"] {
+        color: #ffffff !important;
+      }
+
       .dark-mode input::placeholder {
         color: var(--text-secondary) !important;
       }
@@ -681,6 +689,7 @@
           <!-- Champs de date -->
           <div class="d-flex align-items-center gap-2 me-3 flex-wrap">
             <span
+              class="date-label"
               style="
                 font-weight: 500;
                 color: #374151;
@@ -704,6 +713,7 @@
               "
             />
             <span
+              class="date-label"
               style="
                 font-weight: 500;
                 color: #374151;
@@ -865,7 +875,7 @@
               <tr>
                 <td colspan="36" class="text-center text-muted">
                   <i class="fas fa-spinner fa-spin me-2"></i> Chargement des
-                  livraisons...
+                  Dossiers...
                 </td>
               </tr>
             </tbody>
@@ -998,6 +1008,22 @@
             // Restaurer les styles par défaut
             restoreDefaultCardStyles();
           }
+
+          // Forcer la mise à jour des labels de date
+          updateDateLabelsColors();
+        }
+
+        function updateDateLabelsColors() {
+          const dateLabels = document.querySelectorAll(".date-label");
+          if (document.body.classList.contains("dark-mode")) {
+            dateLabels.forEach((label) => {
+              label.style.setProperty("color", "#ffffff", "important");
+            });
+          } else {
+            dateLabels.forEach((label) => {
+              label.style.removeProperty("color");
+            });
+          }
         }
 
         function forceDarkModeOnCard() {
@@ -1010,6 +1036,13 @@
             cardSection.style.padding = "20px";
             cardSection.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
           }
+
+          // Forcer la couleur des labels "Du:" et "Au:" en mode sombre
+          const dateLabels = document.querySelectorAll(".date-label");
+          dateLabels.forEach((label) => {
+            label.style.color = "#ffffff !important";
+            label.style.setProperty("color", "#ffffff", "important");
+          });
         }
 
         function restoreDefaultCardStyles() {
@@ -1022,6 +1055,12 @@
             cardSection.style.padding = "";
             cardSection.style.boxShadow = "";
           }
+
+          // Restaurer la couleur par défaut des labels "Du:" et "Au:"
+          const dateLabels = document.querySelectorAll(".date-label");
+          dateLabels.forEach((label) => {
+            label.style.removeProperty("color");
+          });
         }
 
         // Appliquer immédiatement le mode sombre si nécessaire
@@ -1043,8 +1082,10 @@
             ) {
               if (document.body.classList.contains("dark-mode")) {
                 forceDarkModeOnCard();
+                updateDateLabelsColors();
               } else {
                 restoreDefaultCardStyles();
+                updateDateLabelsColors();
               }
             }
           });
@@ -1057,13 +1098,17 @@
 
         // S'assurer que la carte est stylée au chargement complet
         window.addEventListener("load", function () {
-          setTimeout(applyDarkMode, 100);
+          setTimeout(() => {
+            applyDarkMode();
+            updateDateLabelsColors();
+          }, 100);
         });
 
         // Forcer l'application après un délai
         setTimeout(function () {
           if (document.body.classList.contains("dark-mode")) {
             forceDarkModeOnCard();
+            updateDateLabelsColors();
           }
         }, 500);
       })();

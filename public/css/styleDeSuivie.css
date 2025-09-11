@@ -4,6 +4,32 @@
   -webkit-backdrop-filter: blur(25px) !important;
 }
 
+/* === FORCER LE MODE CLAIR - RÉINITIALISATION DES COULEURS === */
+.light-mode-force {
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
+/* Réinitialisation spécifique pour chaque type de champ en mode clair */
+:not(.dark-mode) [data-field-name="date_echange_bl"],
+:not(.dark-mode) [data-field-name="container_number"],
+:not(.dark-mode) [data-field-name="shipping_company"],
+:not(.dark-mode) [data-field-name="circuit"],
+:not(.dark-mode) [data-field-name="bl_number"],
+:not(.dark-mode) [data-field-name="dossier_number"],
+:not(.dark-mode) [data-field-name="declaration_number"],
+:not(.dark-mode) [data-field-name="ship_name"],
+:not(.dark-mode) [data-field-name="date_do"],
+:not(.dark-mode) [data-field-name="date_badt"],
+:not(.dark-mode) [data-field-name="paiement_acconage"],
+:not(.dark-mode) [data-field-name="position"],
+:not(.dark-mode) [data-field-name="total_containers"],
+:not(.dark-mode) [data-field-name="reference_number"],
+:not(.dark-mode) [data-field-name="weight"] {
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
 /* Style de base pour la date d'échange BL */
 [data-field-name="date_echange_bl"] {
   font-weight: bold !important;
@@ -96,20 +122,20 @@
 
 /* Style pour la colonne N° BL en mode sombre */
 .dark-mode [data-field-name="bl_number"] {
-  color: #fff200 !important;
-  text-shadow: 0 0 5px rgba(255, 242, 0, 0.5);
+  color: #ffd500 !important; /* Rouge vif */
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
 }
 
 /* Style pour la colonne N° Dossier en mode sombre */
 .dark-mode [data-field-name="dossier_number"] {
-  color: #ff6666 !important;
-  text-shadow: 0 0 5px rgba(255, 102, 102, 0.5);
+  color: #63d4e8 !important; /* Rouge vif */
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
 }
 
 /* Style pour la colonne N° Declaration en mode sombre */
 .dark-mode [data-field-name="declaration_number"] {
-  color: #40e0ff !important;
-  text-shadow: 0 0 5px rgba(64, 224, 255, 0.5);
+  color: #ff0000 !important; /* Rouge vif */
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
 }
 
 /* Style pour la colonne Nom du Navire en mode sombre */
@@ -153,10 +179,10 @@ div[style*="position:absolute"][style*="top:"][style*="right:"][style*="backgrou
   box-shadow: none !important;
 }
 
-/* Style pour le N°BL en mode sombre */
+/* Style pour le N°BL en mode sombre - CORRIGÉ POUR ROUGE */
 [data-theme="dark"] th:first-child,
 [data-theme="dark"] td:first-child {
-  color: yellow !important;
+  color: #ff0000 !important; /* Rouge au lieu de jaune */
 }
 
 .enterprise-modal-header {
@@ -613,6 +639,132 @@ tbody td:first-child {
   color: #6b7280;
   padding: 0.8rem;
   text-align: center;
+}
+
+/* Message "chargement" en mode sombre - Blanc */
+.dark-mode #deliveriesTableBody td[colspan="6"],
+.dark-mode #noDeliveriesMessage {
+  color: #ffffff !important;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+/* Texte "Chargement des livraisons..." dans le tableau - Blanc en mode sombre */
+.dark-mode .text-muted,
+.dark-mode td.text-muted {
+  color: #ffffff !important;
+}
+
+/* Texte de l'overlay de chargement - Blanc en mode sombre */
+.dark-mode .loading-overlay-text {
+  color: #ffffff !important;
+}
+
+/* === AMÉLIORATIONS TABLEAU DE BORD MODE SOMBRE === */
+
+/* Amélioration pour le titre principal "Suivi de Dossier" en mode sombre */
+.dark-mode h1,
+.dark-mode .main-title,
+.dark-mode .dashboard-title {
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Amélioration pour les sous-titres en mode sombre */
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode .subtitle,
+.dark-mode .section-title {
+  color: #e2e8f0 !important;
+}
+
+/* Amélioration pour les icônes du tableau de bord en mode sombre */
+.dark-mode .etat-icon,
+.dark-mode .dashboard-icon {
+  filter: brightness(1.2) contrast(1.1);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+/* Amélioration pour les cartes principales du tableau de bord */
+.dark-mode .welcome-section,
+.dark-mode .dashboard-section {
+  background: linear-gradient(
+    135deg,
+    #1a1a2e 0%,
+    #16213e 50%,
+    #0f172a 100%
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Amélioration pour les textes de description en mode sombre */
+.dark-mode .description,
+.dark-mode .info-text,
+.dark-mode p {
+  color: #cbd5e1 !important;
+}
+
+/* Amélioration pour les liens en mode sombre */
+.dark-mode a {
+  color: #60a5fa !important;
+}
+
+.dark-mode a:hover {
+  color: #93c5fd !important;
+  text-decoration: underline;
+}
+
+/* Amélioration pour les boutons en mode sombre */
+.dark-mode .btn,
+.dark-mode button {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+  border: 1px solid #6b7280 !important;
+  color: #ffffff !important;
+}
+
+.dark-mode .btn:hover,
+.dark-mode button:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Amélioration pour les éléments de navigation en mode sombre */
+.dark-mode .nav-item,
+.dark-mode .menu-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Amélioration pour les badges et indicateurs en mode sombre */
+.dark-mode .badge,
+.dark-mode .indicator,
+.dark-mode .count {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+/* Amélioration pour les bordures et séparateurs en mode sombre */
+.dark-mode hr,
+.dark-mode .divider,
+.dark-mode .separator {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Amélioration pour les containers et contenus principaux en mode sombre */
+.dark-mode .container,
+.dark-mode .content-wrapper,
+.dark-mode .main-wrapper {
+  background: rgba(26, 26, 46, 0.8) !important;
+  backdrop-filter: blur(20px);
+}
+
+/* Amélioration pour l'effet de survol général en mode sombre */
+.dark-mode .hover-effect:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
 }
 
 /* Ajustement mobile/tablette */
@@ -3589,22 +3741,22 @@ tbody td:first-child {
 /* Colonne N° Déclaration - Rouge */
 .dark-mode td[data-column="declaration"] {
   background-color: rgba(239, 68, 68, 0.15) !important;
-  color: #fca5a5 !important;
+  color: #ff0000 !important; /* Rouge vif */
   border-left: 3px solid #ef4444 !important;
 }
 
-/* Colonne N° BL - Jaune */
+/* Colonne N° BL - Rouge (modifié depuis jaune) */
 .dark-mode td[data-column="bl"] {
-  background-color: rgba(245, 158, 11, 0.15) !important;
-  color: #fde047 !important;
-  border-left: 3px solid #eab308 !important;
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #ff0000 !important; /* Rouge vif au lieu de jaune */
+  border-left: 3px solid #ef4444 !important;
 }
 
-/* Colonne N° Dossier - Orange fluo */
+/* Colonne N° Dossier - Rouge (modifié depuis orange) */
 .dark-mode td[data-column="dossier"] {
-  background-color: rgba(255, 165, 0, 0.2) !important;
-  color: #ffb347 !important;
-  border-left: 3px solid #ff8c00 !important;
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #ff0000 !important; /* Rouge vif au lieu d'orange */
+  border-left: 3px solid #ef4444 !important;
 }
 
 /* Colonnes de dates - Orange rouge */
