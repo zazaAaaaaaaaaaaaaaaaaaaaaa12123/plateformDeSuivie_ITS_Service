@@ -296,7 +296,7 @@
       // Démarrer le nettoyage périodique
       cleaningManager.start();
     } else {
-      // Mode sombre : arrêter le nettoyage périodique
+      // Mode sombre : arrêter le nettoyage périodique1
       cleaningManager.stop();
 
       // Activer les couleurs
