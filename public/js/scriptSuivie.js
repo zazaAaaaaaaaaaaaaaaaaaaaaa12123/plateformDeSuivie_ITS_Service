@@ -244,31 +244,93 @@
     }
   }
 
-  // Fonction pour appliquer le mode sombre
+  // Fonction pour forcer le nettoyage complet des couleurs
+  function forceCleanColors() {
+    const elements = document.querySelectorAll("table td, table th");
+    elements.forEach((el) => {
+      el.style.removeProperty("color");
+      el.style.removeProperty("text-shadow");
+      el.style.removeProperty("background-color");
+      el.style.removeProperty("border-color");
+      if (el.tagName.toLowerCase() === "td") {
+        el.style.color = "#000000";
+      }
+    });
+  }
+
+  // Gestionnaire des intervalles de nettoyage
+  const cleaningManager = {
+    interval: null,
+    start: function () {
+      if (this.interval) this.stop();
+      this.interval = setInterval(() => {
+        if (localStorage.getItem("darkMode") !== "enabled") {
+          forceCleanColors();
+        }
+      }, 1000);
+    },
+    stop: function () {
+      if (this.interval) {
+        clearInterval(this.interval);
+        this.interval = null;
+      }
+    },
+  };
+
+  // Fonction pour appliquer le mode sombre ou clair avec persistance renforcée
   function applyDarkMode() {
     const savedMode = localStorage.getItem("darkMode");
-    if (savedMode === "enabled") {
-      document.body.classList.add("dark-mode");
+    const isDarkMode = savedMode === "enabled";
+
+    // Sauvegarder le timestamp de la dernière mise à jour
+    localStorage.setItem("lastModeUpdate", Date.now().toString());
+
+    // Appliquer la classe appropriée
+    document.body.classList.toggle("dark-mode", isDarkMode);
+
+    if (!isDarkMode) {
+      // Mode clair : Forcer le nettoyage des couleurs
+      forceCleanColors();
+      localStorage.setItem("colorsEnabled", "false");
+
+      // Démarrer le nettoyage périodique
+      cleaningManager.start();
     } else {
-      document.body.classList.remove("dark-mode");
+      // Mode sombre : arrêter le nettoyage périodique
+      cleaningManager.stop();
+
+      // Activer les couleurs
+      localStorage.setItem("colorsEnabled", "true");
+
+      // En-têtes en blanc en mode sombre
+      const headers = document.querySelectorAll("table th");
+      headers.forEach((header) => {
+        header.style.color = "#FFFFFF";
+        header.style.backgroundColor = "#1f2937";
+        header.style.borderColor = "#374151";
+      });
     }
 
     // Synchroniser le modal d'agents si visible
     synchronizeAgentModalStyles();
 
-    // Appliquer ou supprimer les couleurs conditionnelles selon le mode
-    setTimeout(() => {
-      if (typeof window.applyDarkModeConditionalColors === "function") {
+    // Fonction pour appliquer les couleurs conditionnelles
+    const applyColors = () => {
+      // Vérifier à nouveau le mode actuel
+      const currentMode = localStorage.getItem("darkMode");
+      if (
+        currentMode === "enabled" &&
+        typeof window.applyDarkModeConditionalColors === "function"
+      ) {
         window.applyDarkModeConditionalColors();
       }
-    }, 100);
+    };
 
-    // Appliquer aussi après un délai plus long pour s'assurer que les tableaux sont rendus
-    setTimeout(() => {
-      if (typeof window.applyDarkModeConditionalColors === "function") {
-        window.applyDarkModeConditionalColors();
-      }
-    }, 1000);
+    // En mode sombre, appliquer les couleurs avec vérification
+    if (isDarkMode) {
+      setTimeout(applyColors, 100);
+      setTimeout(applyColors, 1000);
+    }
   }
 
   // Fonction pour synchroniser les styles du modal d'agents
@@ -281,8 +343,45 @@
     }
   }
 
-  // Appliquer le mode sombre au chargement de la page
-  document.addEventListener("DOMContentLoaded", applyDarkMode);
+  // Système de surveillance global pour la cohérence du mode
+  const modeWatcher = {
+    checkInterval: null,
+    start: function () {
+      if (this.checkInterval) this.stop();
+      this.checkInterval = setInterval(() => {
+        const savedMode = localStorage.getItem("darkMode");
+        const lastUpdate = parseInt(
+          localStorage.getItem("lastModeUpdate") || "0"
+        );
+        const timeSinceUpdate = Date.now() - lastUpdate;
+
+        // Réappliquer le mode si nécessaire
+        if (timeSinceUpdate > 5000) {
+          console.log("🔄 Vérification de cohérence du mode...");
+          applyDarkMode();
+        }
+      }, 5000);
+    },
+    stop: function () {
+      if (this.checkInterval) {
+        clearInterval(this.checkInterval);
+        this.checkInterval = null;
+      }
+    },
+  };
+
+  // Initialisation au chargement de la page
+  function initializeThemeSystem() {
+    applyDarkMode();
+    modeWatcher.start();
+  }
+
+  // Démarrer la surveillance au chargement
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeThemeSystem);
+  } else {
+    initializeThemeSystem();
+  }
 
   // Écouter les changements de mode sombre depuis d'autres pages
   window.addEventListener("storage", function (event) {
