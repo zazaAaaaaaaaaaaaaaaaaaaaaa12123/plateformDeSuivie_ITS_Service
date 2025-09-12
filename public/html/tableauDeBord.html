@@ -7943,12 +7943,105 @@
         const lienAccueil = document.getElementById("lienAccueil");
         if (lienAccueil && isMobileDevice()) {
           lienAccueil.addEventListener("click", function (e) {
-            // Pour mobile, on va forcer un refresh complet de la page
-            setTimeout(function () {
-              window.location.reload();
+            e.preventDefault(); // Empêcher la navigation par défaut
+
+            // Navigation directe vers le contenu principal sans rechargement
+            if (typeof window.showDashboardSections === "function") {
+              // Utiliser la fonction existante du script principal
+              window.showDashboardSections();
+            } else {
+              // Fallback vers notre fonction personnalisée
+              showMainDashboard();
+            }
+
+            // S'assurer que l'affichage est correct sur mobile
+            setTimeout(() => {
+              forceMainContentDisplay();
             }, 50);
           });
         }
+
+        // Fonction pour afficher directement le dashboard principal
+        function showMainDashboard() {
+          // Cacher tous les containers dynamiques
+          const dynamicContainers = document.querySelectorAll(
+            ".dynamic-content-area"
+          );
+          dynamicContainers.forEach((container) => {
+            container.style.display = "none";
+          });
+
+          // Réafficher les éléments principaux de l'accueil
+          const welcome = document.getElementById("welcomeSection");
+          const buttons = document.getElementById("bottomButtons");
+          if (welcome) welcome.style.display = "flex";
+          if (buttons) buttons.style.display = "flex";
+
+          // Afficher le contenu principal du dashboard
+          const mainDashboard = document.querySelector(
+            ".main-content > div:first-child"
+          );
+          if (mainDashboard) {
+            mainDashboard.style.display = "flex";
+            mainDashboard.style.visibility = "visible";
+            mainDashboard.style.opacity = "1";
+          }
+
+          // S'assurer que le main-content est visible
+          forceMainContentDisplay();
+
+          // Forcer l'affichage des cartes de statistiques
+          const cartes = document.querySelectorAll(".etat-card");
+          cartes.forEach((carte) => {
+            carte.style.display = "flex";
+            carte.style.visibility = "visible";
+            carte.style.opacity = "1";
+          });
+
+          // Afficher le message de bienvenue
+          const welcomeMsg = document.getElementById("welcomeTypewriter");
+          if (welcomeMsg) {
+            welcomeMsg.style.display = "block";
+            welcomeMsg.style.visibility = "visible";
+          }
+
+          // Afficher la section des cartes
+          const cardsRow = document.querySelector(".etat-cards-row");
+          if (cardsRow) {
+            cardsRow.style.display = "flex";
+            cardsRow.style.visibility = "visible";
+          }
+
+          // Retrouver l'état du contenu principal original
+          const mainContentFirstChild = document.querySelector(
+            ".main-content > div:first-child"
+          );
+          if (mainContentFirstChild) {
+            mainContentFirstChild.style.display = "flex";
+            mainContentFirstChild.style.flexDirection = "column";
+            mainContentFirstChild.style.alignItems = "center";
+            mainContentFirstChild.style.justifyContent = "flex-start";
+            mainContentFirstChild.style.minHeight = "320px";
+            mainContentFirstChild.style.paddingTop = "18px";
+          }
+        }
+
+        // Rendre la fonction globale pour pouvoir l'utiliser depuis d'autres scripts
+        window.showMainDashboardMobile = showMainDashboard;
+
+        // Créer aussi une fonction globale qui combine showDashboardSections et notre fix mobile
+        window.retourAccueilMobile = function () {
+          if (typeof window.showDashboardSections === "function") {
+            window.showDashboardSections();
+          } else {
+            showMainDashboard();
+          }
+          if (isMobileDevice()) {
+            setTimeout(() => {
+              forceMainContentDisplay();
+            }, 50);
+          }
+        };
       });
     </script>
   </body>
