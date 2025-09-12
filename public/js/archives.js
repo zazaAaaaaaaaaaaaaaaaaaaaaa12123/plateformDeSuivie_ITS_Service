@@ -25,9 +25,16 @@ class ArchivesManager {
     this.isLoading = false; // 🛡️ PROTECTION: Flag anti-boucle
     this.loadingBlocked = false; // 🛡️ PROTECTION: Bloquer les appels multiples
 
-    // 🚀 NOUVEAU: Cache pour les N° TC pour améliorer les performances
+    // 🚀 OPTIMISATION: Cache pour améliorer les performances des onglets
+    this.tabCache = new Map(); // Cache pour chaque onglet
     this.containerCache = new Map();
-    this.cacheExpiryTime = 3 * 60 * 1000; // 3 minutes
+    this.cacheExpiryTime = 2 * 60 * 1000; // 2 minutes
+    this.lastTabSwitch = 0; // Pour éviter les clics trop rapides
+    this.switchCooldown = 100; // 100ms minimum entre changements
+
+    // 🚀 NOUVEAU: Pré-chargement intelligent
+    this.preloadedTabs = new Set(); // Onglets déjà pré-chargés
+    this.isPreloading = false; // Flag pour éviter le pré-chargement multiple
 
     this.init();
 
@@ -230,11 +237,115 @@ class ArchivesManager {
       });
     }
 
-    // Onglets
+    // 🚀 INITIALISATION AUTOMATIQUE de l'onglet "Toutes les Archives" au démarrage
+    setTimeout(() => {
+      const allTab = document.getElementById("all-tab");
+      const allTabPane = document.getElementById("all");
+
+      // Vérifier si l'onglet "all" est déjà actif au chargement de la page
+      if (allTab && allTab.classList.contains("active")) {
+        console.log(
+          "[ARCHIVES] 🎯 Onglet 'Toutes les Archives' détecté comme actif - Chargement automatique..."
+        );
+
+        // Forcer le chargement de l'onglet "all" sans spinner
+        this.selectedTab = "all";
+        this.currentPage = 1;
+
+        // Déclencher automatiquement le chargement sans attendre de clic
+        this.loadAllTabInstantly();
+      }
+    }, 100); // Court délai pour s'assurer que le DOM est prêt
+
+    // Onglets avec chargement INSTANTANÉ
     document.querySelectorAll('[data-bs-toggle="tab"]').forEach((tab) => {
       tab.addEventListener("shown.bs.tab", async (e) => {
+        // 🚀 OPTIMISATION: Anti-rebond pour éviter les clics trop rapides
+        const now = Date.now();
+        if (now - this.lastTabSwitch < this.switchCooldown) {
+          console.log("[ARCHIVES] ⏱️ Changement d'onglet trop rapide, ignoré");
+          return;
+        }
+        this.lastTabSwitch = now;
+
         this.selectedTab = e.target.id.replace("-tab", "");
         this.currentPage = 1;
+
+        console.log(
+          `[ARCHIVES] 🚀 CHANGEMENT INSTANTANÉ vers onglet: ${this.selectedTab}`
+        );
+
+        // 🚀 ÉLIMINATION TOTALE du spinner pour l'onglet "Toutes les Archives"
+        const isAllTab =
+          this.selectedTab === "all" || e.target.id === "all-tab";
+
+        if (isAllTab) {
+          console.log(
+            "[ARCHIVES] ⚡ Onglet 'Toutes les Archives' détecté - AUCUN SPINNER"
+          );
+        }
+
+        // 🎯 AFFICHAGE INSTANTANÉ: Vérifier d'abord le cache
+        const cacheKey = `${this.selectedTab}_${JSON.stringify(
+          this.currentFilters
+        )}`;
+        const cachedData = this.tabCache.get(cacheKey);
+
+        if (cachedData && now - cachedData.timestamp < this.cacheExpiryTime) {
+          console.log(
+            `[ARCHIVES] ⚡ AFFICHAGE INSTANTANÉ depuis le cache pour ${this.selectedTab}`
+          );
+
+          // Affichage immédiat depuis le cache
+          this.allArchives = cachedData.archives || [];
+          this.filteredArchives = cachedData.archives || [];
+          this.pagination = cachedData.pagination || {
+            currentPage: 1,
+            totalPages: 1,
+          };
+
+          // Rendu immédiat
+          this.renderCurrentView();
+          this.renderPagination();
+
+          // Mise à jour des badges en arrière-plan (sans attendre)
+          setTimeout(() => this.updateCountsQuietly(), 50);
+
+          return; // Sortir immédiatement - AUCUN délai !
+        }
+
+        // Si pas de cache, afficher l'indicateur de chargement rapide (JAMAIS pour "all")
+        const tabDisplayNames = {
+          shipping: "Mis en Livraison",
+          delivered: "Dossiers Livrés",
+          deleted: "Dossiers Supprimés",
+          orders: "Ordres de Livraison",
+          all: "Toutes les Archives",
+        };
+
+        // 🚀 AUCUN SPINNER pour l'onglet "Toutes les Archives" - Double vérification
+        if (!isAllTab && this.selectedTab !== "all") {
+          this.showFastLoadingIndicator(
+            tabDisplayNames[this.selectedTab] || this.selectedTab
+          );
+          console.log(
+            `[ARCHIVES] 📊 Affichage du spinner pour: ${this.selectedTab}`
+          );
+        } else {
+          console.log(
+            "[ARCHIVES] ⚡ AUCUN SPINNER - Onglet 'Toutes les Archives'"
+          );
+        }
+
+        // Si pas de cache, procéder avec optimisation
+        try {
+          await this.handleTabSwitchOptimized();
+        } finally {
+          // Masquer l'indicateur une fois terminé (SEULEMENT si on l'avait affiché)
+          if (!isAllTab && this.selectedTab !== "all") {
+            this.hideFastLoadingIndicator();
+          }
+        }
 
         // Si on change d'onglet, adapter les filtres en conséquence
         const actionFilter = document.getElementById("actionFilter");
@@ -331,6 +442,532 @@ class ArchivesManager {
         this.resetFilters();
       }
     });
+
+    // 🚀 DÉMARRER LE PRÉ-CHARGEMENT INTELLIGENT après un court délai
+    setTimeout(() => {
+      console.log("[ARCHIVES] 🚀 Démarrage du pré-chargement intelligent...");
+      this.preloadPopularTabs().catch((error) => {
+        console.warn("[ARCHIVES] ⚠️ Erreur pré-chargement:", error);
+      });
+    }, 1000); // Délai de 1 seconde pour laisser la page se charger
+  }
+
+  // 🚀 CHARGEMENT INSTANTANÉ de l'onglet "Toutes les Archives" sans spinner
+  async loadAllTabInstantly() {
+    try {
+      console.log(
+        "[ARCHIVES] ⚡ Chargement INSTANTANÉ de l'onglet 'Toutes les Archives'..."
+      );
+
+      // Réinitialiser les filtres pour "all"
+      this.currentFilters.action_type = "";
+      const actionFilter = document.getElementById("actionFilter");
+      if (actionFilter) {
+        actionFilter.value = "";
+      }
+
+      // 🔥 Appel DIRECT de la méthode silencieuse combinée - AUCUN SPINNER
+      await this.loadAllCombinedSilent();
+
+      console.log(
+        "[ARCHIVES] ✅ Onglet 'Toutes les Archives' chargé instantanément!"
+      );
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur chargement instantané:", error);
+      this.showEmptyState(
+        "Erreur de chargement - Cliquez sur 'Niveau de stockage' pour réessayer"
+      );
+    }
+  }
+
+  // 🚀 Méthode SILENCIEUSE pour charger toutes les archives combinées (SANS SPINNER)
+  async loadAllCombinedSilent() {
+    try {
+      console.log(
+        "[ARCHIVES] 🤫 Chargement silencieux des archives combinées..."
+      );
+
+      // 🔥 RÉCUPÉRER TOUTES LES ARCHIVES D'UN COUP
+      const cacheBuster = Date.now();
+      const response = await fetch(
+        `/api/archives?limit=99999&cb=${cacheBuster}`
+      );
+      const data = await response.json();
+
+      if (!data.success || !data.archives) {
+        throw new Error("Impossible de récupérer les archives");
+      }
+
+      console.log(
+        `[ARCHIVES] 📊 ${data.archives.length} archives récupérées silencieusement`
+      );
+
+      // 🏷️ CLASSIFICATION en utilisant la logique existante
+      const classified = {
+        mise_en_livraison: [],
+        livraison: [],
+        ordre_livraison_etabli: [],
+        suppression: [],
+        autres: [],
+      };
+
+      data.archives.forEach((archive) => {
+        const type = this.determineActionType(archive);
+        if (classified[type]) {
+          classified[type].push(archive);
+        } else {
+          classified.autres.push(archive);
+        }
+      });
+
+      // 🎯 MÉLANGE ÉQUILIBRÉ - Distribution ronde
+      const allTypes = Object.keys(classified).filter(
+        (key) => classified[key].length > 0
+      );
+      let allCombinedArchives = [];
+      let maxIterations = Math.max(
+        ...allTypes.map((type) => classified[type].length)
+      );
+
+      for (let i = 0; i < maxIterations; i++) {
+        allTypes.forEach((type) => {
+          if (i < classified[type].length) {
+            allCombinedArchives.push(classified[type][i]);
+          }
+        });
+      }
+
+      console.log(
+        `[ARCHIVES] 🎯 ${allCombinedArchives.length} archives mélangées équitablement`
+      );
+
+      // 💾 STOCKER ET PAGINER
+      this.allCombinedArchives = allCombinedArchives;
+
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      this.filteredArchives = allCombinedArchives.slice(startIndex, endIndex);
+
+      this.pagination = {
+        currentPage: this.currentPage,
+        totalPages: Math.ceil(allCombinedArchives.length / this.itemsPerPage),
+        totalItems: allCombinedArchives.length,
+        itemsPerPage: this.itemsPerPage,
+      };
+
+      // 🎯 METTRE À JOUR LE BADGE avec le nombre réel
+      const allTabBadge = document.querySelector("#allCount");
+      if (allTabBadge) {
+        allTabBadge.textContent = allCombinedArchives.length;
+        allTabBadge.title = `${allCombinedArchives.length} archives au total`;
+      }
+
+      // 🖼️ AFFICHER IMMÉDIATEMENT (SANS ATTENDRE)
+      this.renderCurrentView();
+      this.renderPagination();
+
+      console.log(
+        `[ARCHIVES] ✅ SUCCÈS SILENCIEUX! ${this.filteredArchives.length} archives affichées sur ${allCombinedArchives.length} total`
+      );
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur chargement silencieux:", error);
+      this.showEmptyState(
+        "Erreur de chargement - Cliquez sur 'Niveau de stockage' pour réessayer"
+      );
+    }
+  }
+
+  // 🚀 MÉTHODES OPTIMISÉES POUR LA PERFORMANCE DES ONGLETS
+
+  // Gestion optimisée du changement d'onglets
+  async handleTabSwitchOptimized() {
+    try {
+      // Si on change d'onglet, adapter les filtres en conséquence
+      const actionFilter = document.getElementById("actionFilter");
+      if (actionFilter && this.selectedTab !== "all") {
+        // 🎯 CORRECTION: Distinguer entre onglets d'archives et onglets de livraisons actives
+        const archiveTabsMap = {
+          deleted: "suppression",
+        };
+
+        const activeDeliveryTabs = ["delivered", "shipping", "orders"];
+
+        if (archiveTabsMap[this.selectedTab]) {
+          // Pour les vrais onglets d'archives (seulement "deleted")
+          this.currentFilters.action_type = archiveTabsMap[this.selectedTab];
+          actionFilter.value = archiveTabsMap[this.selectedTab];
+          console.log(
+            `[ARCHIVES] Onglet archive ${
+              this.selectedTab
+            } sélectionné, filtrage par: ${archiveTabsMap[this.selectedTab]}`
+          );
+          await this.performSearchOptimized();
+        } else if (activeDeliveryTabs.includes(this.selectedTab)) {
+          // Pour les onglets de livraisons actives
+          console.log(
+            `[ARCHIVES] 🚀 Chargement optimisé pour l'onglet: ${this.selectedTab}`
+          );
+
+          // ✅ APPLIQUER LE BON FILTRE selon l'onglet sélectionné
+          let targetActionType = "";
+          switch (this.selectedTab) {
+            case "delivered":
+              targetActionType = "livraison";
+              break;
+            case "shipping":
+              targetActionType = "mise_en_livraison";
+              break;
+            case "orders":
+              targetActionType = "ordre_livraison_etabli";
+              break;
+          }
+
+          // Appliquer le filtre spécifique
+          this.currentFilters.action_type = targetActionType;
+          actionFilter.value = targetActionType;
+
+          console.log(
+            `[ARCHIVES] 🎯 Filtre appliqué pour ${this.selectedTab}: ${targetActionType}`
+          );
+
+          // ✅ CHARGEMENT AUTOMATIQUE OPTIMISÉ avec le bon filtre
+          await this.loadArchivesOptimized();
+        } else {
+          console.log(`[ARCHIVES] Onglet ${this.selectedTab} non reconnu`);
+          this.showEmptyState(
+            "Cliquez sur 'Niveau de stockage' pour charger les archives"
+          );
+        }
+      } else if (actionFilter && this.selectedTab === "all") {
+        // 🎯 AFFICHAGE INSTANTANÉ: Pour "Toutes les Archives", chargement SILENCIEUX
+        console.log(
+          "[ARCHIVES] ⚡ Onglet 'Toutes les Archives' - Chargement INSTANTANÉ et SILENCIEUX"
+        );
+        this.currentFilters.action_type = ""; // Garder vide pour l'affichage
+        actionFilter.value = "";
+
+        // 🚀 VÉRIFIER D'ABORD LE CACHE pour affichage instantané
+        const cacheKey = `all_combined_archives`;
+        const now = Date.now();
+        const cachedData = this.tabCache.get(cacheKey);
+
+        if (cachedData && now - cachedData.timestamp < this.cacheExpiryTime) {
+          console.log("[ARCHIVES] ⚡ Affichage INSTANTANÉ depuis le cache");
+
+          // Restaurer les données depuis le cache
+          this.allCombinedArchives = cachedData.allCombinedArchives || [];
+          this.filteredArchives = cachedData.filteredArchives || [];
+          this.pagination = cachedData.pagination || {
+            currentPage: 1,
+            totalPages: 1,
+          };
+
+          // Affichage immédiat
+          this.renderCurrentView();
+          this.renderPagination();
+
+          // Mettre à jour le badge
+          const allTabBadge = document.querySelector("#allCount");
+          if (allTabBadge && cachedData.totalCount) {
+            allTabBadge.textContent = cachedData.totalCount;
+          }
+
+          return; // Sortir immédiatement
+        }
+
+        // Si pas de cache, utiliser la méthode SILENCIEUSE
+        try {
+          await this.loadAllCombinedSilent();
+
+          // Mettre en cache le résultat pour les prochaines fois
+          this.tabCache.set(cacheKey, {
+            allCombinedArchives: [...this.allCombinedArchives],
+            filteredArchives: [...this.filteredArchives],
+            pagination: { ...this.pagination },
+            totalCount: this.allCombinedArchives.length,
+            timestamp: now,
+          });
+
+          console.log(
+            "[ARCHIVES] ✅ Onglet 'Toutes les Archives' chargé SILENCIEUSEMENT et mis en cache"
+          );
+        } catch (error) {
+          console.error("[ARCHIVES] ❌ Erreur chargement silencieux:", error);
+          this.showEmptyState(
+            "Erreur lors du chargement - Cliquez sur 'Niveau de stockage' pour réessayer"
+          );
+        }
+      } else {
+        this.renderCurrentView();
+      }
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur changement d'onglet:", error);
+    }
+  }
+
+  // Version optimisée de performSearch avec cache
+  async performSearchOptimized() {
+    const cacheKey = `search_${JSON.stringify(this.currentFilters)}_${
+      this.currentPage
+    }`;
+    const now = Date.now();
+    const cachedData = this.tabCache.get(cacheKey);
+
+    if (cachedData && now - cachedData.timestamp < this.cacheExpiryTime) {
+      console.log("[ARCHIVES] ⚡ Recherche depuis le cache");
+      this.allArchives = cachedData.archives;
+      this.filteredArchives = cachedData.archives;
+      this.pagination = cachedData.pagination;
+      this.renderCurrentView();
+      this.renderPagination();
+      return;
+    }
+
+    // Si pas de cache, effectuer la recherche normale
+    await this.performSearch();
+
+    // Mettre en cache le résultat
+    this.tabCache.set(cacheKey, {
+      archives: [...this.allArchives],
+      pagination: { ...this.pagination },
+      timestamp: now,
+    });
+  }
+
+  // Version optimisée de loadArchivesQuietly avec cache
+  async loadArchivesOptimized() {
+    const cacheKey = `archives_${JSON.stringify(this.currentFilters)}_${
+      this.currentPage
+    }`;
+    const now = Date.now();
+    const cachedData = this.tabCache.get(cacheKey);
+
+    if (cachedData && now - cachedData.timestamp < this.cacheExpiryTime) {
+      console.log("[ARCHIVES] ⚡ Archives depuis le cache");
+      this.allArchives = cachedData.archives;
+      this.filteredArchives = cachedData.archives;
+      this.pagination = cachedData.pagination;
+      this.renderCurrentView();
+      this.renderPagination();
+
+      // Mise à jour discrète des compteurs en arrière-plan
+      setTimeout(() => this.updateCountsQuietly(), 100);
+      return;
+    }
+
+    // Si pas de cache, charger normalement
+    await this.loadArchivesQuietly();
+
+    // Mettre en cache le résultat
+    this.tabCache.set(cacheKey, {
+      archives: [...this.allArchives],
+      pagination: { ...this.pagination },
+      timestamp: now,
+    });
+  }
+
+  // Version optimisée de loadAllCombinedArchivesByAddition
+  async loadAllCombinedArchivesByAdditionOptimized() {
+    const cacheKey = `combined_all`;
+    const now = Date.now();
+    const cachedData = this.tabCache.get(cacheKey);
+
+    if (cachedData && now - cachedData.timestamp < this.cacheExpiryTime) {
+      console.log("[ARCHIVES] ⚡ Total combiné depuis le cache");
+      // Juste afficher le résultat mis en cache
+      const allTabBadge = document.querySelector("#allCount");
+      if (allTabBadge && cachedData.totalSum) {
+        allTabBadge.textContent = cachedData.totalSum;
+      }
+      return;
+    }
+
+    // Si pas de cache, calculer normalement
+    await this.loadAllCombinedArchivesByAddition();
+
+    // Mettre en cache le résultat
+    const allTabBadge = document.querySelector("#allCount");
+    if (allTabBadge) {
+      this.tabCache.set(cacheKey, {
+        totalSum: allTabBadge.textContent,
+        timestamp: now,
+      });
+    }
+  }
+
+  // Version discrète de updateCounts (sans blocage)
+  async updateCountsQuietly() {
+    try {
+      // Version allégée qui ne fait que les calculs essentiels
+      console.log("[ARCHIVES] 🔇 Mise à jour discrète des compteurs...");
+
+      // Lire directement depuis les cartes DOM si possible
+      const carteMiseLivraison = document.getElementById("carteMiseLivraison");
+      const carteLivre = document.getElementById("carteLivre");
+
+      if (carteMiseLivraison && carteLivre) {
+        const miseEnLivraisonElement =
+          carteMiseLivraison.querySelector(".card-counter");
+        const livreElement = carteLivre.querySelector(".card-counter");
+
+        if (miseEnLivraisonElement && livreElement) {
+          const miseEnLivraisonText =
+            miseEnLivraisonElement.textContent || "0/0";
+          const livreText = livreElement.textContent || "0/0";
+
+          const miseEnLivraisonValue =
+            parseInt(miseEnLivraisonText.split("/")[0]) || 0;
+          const livreValue = parseInt(livreText.split("/")[0]) || 0;
+
+          // Mettre à jour uniquement ces badges
+          const elements = {
+            deliveredCount: document.getElementById("deliveredCount"),
+            shippingCount: document.getElementById("shippingCount"),
+          };
+
+          if (elements.deliveredCount)
+            elements.deliveredCount.textContent = livreValue;
+          if (elements.shippingCount)
+            elements.shippingCount.textContent = miseEnLivraisonValue;
+
+          console.log("[ARCHIVES] ✅ Compteurs mis à jour discrètement");
+          return;
+        }
+      }
+
+      // Fallback sur l'ancienne méthode si nécessaire
+      await this.updateCounts();
+    } catch (error) {
+      console.warn("[ARCHIVES] ⚠️ Erreur mise à jour discrète:", error);
+    }
+  }
+
+  // Méthode pour vider le cache si nécessaire
+  clearTabCache() {
+    this.tabCache.clear();
+    console.log("[ARCHIVES] 🗑️ Cache des onglets vidé");
+  }
+
+  // 🚀 NOUVEAU: Pré-chargement intelligent des onglets populaires
+  async preloadPopularTabs() {
+    if (this.isPreloading) {
+      console.log("[ARCHIVES] ⏳ Pré-chargement déjà en cours...");
+      return;
+    }
+
+    this.isPreloading = true;
+    console.log("[ARCHIVES] 🚀 Début du pré-chargement intelligent...");
+
+    try {
+      // Liste des onglets à pré-charger (dans l'ordre de priorité)
+      const tabsToPreload = [
+        { tab: "shipping", actionType: "mise_en_livraison" },
+        { tab: "delivered", actionType: "livraison" },
+        { tab: "orders", actionType: "ordre_livraison_etabli" },
+        { tab: "deleted", actionType: "suppression" },
+      ];
+
+      // Pré-charger chaque onglet avec un délai pour éviter la surcharge
+      for (let i = 0; i < tabsToPreload.length; i++) {
+        const { tab, actionType } = tabsToPreload[i];
+
+        if (this.preloadedTabs.has(tab)) {
+          console.log(`[ARCHIVES] ⚡ Onglet ${tab} déjà pré-chargé`);
+          continue;
+        }
+
+        console.log(`[ARCHIVES] 📦 Pré-chargement de l'onglet: ${tab}`);
+
+        try {
+          // Simuler la configuration de l'onglet
+          const oldSelectedTab = this.selectedTab;
+          const oldFilters = { ...this.currentFilters };
+
+          // Configurer temporairement pour cet onglet
+          this.selectedTab = tab;
+          this.currentFilters.action_type = actionType;
+          this.currentPage = 1;
+
+          // Pré-charger les données
+          await this.loadArchivesQuietly();
+
+          // Marquer comme pré-chargé
+          this.preloadedTabs.add(tab);
+          console.log(`[ARCHIVES] ✅ Onglet ${tab} pré-chargé avec succès`);
+
+          // Restaurer la configuration originale
+          this.selectedTab = oldSelectedTab;
+          this.currentFilters = oldFilters;
+        } catch (error) {
+          console.warn(`[ARCHIVES] ⚠️ Erreur pré-chargement ${tab}:`, error);
+        }
+
+        // Délai entre les pré-chargements pour éviter la surcharge
+        if (i < tabsToPreload.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+
+      console.log("[ARCHIVES] 🎉 Pré-chargement intelligent terminé !");
+    } catch (error) {
+      console.error("[ARCHIVES] ❌ Erreur pré-chargement général:", error);
+    } finally {
+      this.isPreloading = false;
+    }
+  }
+
+  // 🚀 NOUVEAU: Affichage avec indicateur de chargement rapide
+  showFastLoadingIndicator(tabName) {
+    // Créer un indicateur de chargement léger
+    const indicator = document.createElement("div");
+    indicator.id = "fast-loading-indicator";
+    indicator.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(33, 150, 243, 0.9);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        backdrop-filter: blur(10px);
+        animation: fadeInScale 0.3s ease-out;
+      ">
+        ⚡ Chargement ${tabName}...
+      </div>
+      <style>
+        @keyframes fadeInScale {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+          100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+      </style>
+    `;
+
+    document.body.appendChild(indicator);
+
+    // Auto-suppression après maximum 2 secondes
+    setTimeout(() => {
+      const existingIndicator = document.getElementById(
+        "fast-loading-indicator"
+      );
+      if (existingIndicator) {
+        existingIndicator.remove();
+      }
+    }, 2000);
+  }
+
+  // 🚀 NOUVEAU: Masquer l'indicateur de chargement
+  hideFastLoadingIndicator() {
+    const indicator = document.getElementById("fast-loading-indicator");
+    if (indicator) {
+      indicator.style.animation = "fadeOutScale 0.3s ease-out forwards";
+      setTimeout(() => indicator.remove(), 300);
+    }
   }
 
   // *** SYSTÈME DE NOTIFICATIONS EN TEMPS RÉEL ***
@@ -2171,10 +2808,17 @@ class ArchivesManager {
       // Compter selon les catégories
       if (isLivre) {
         counts.livres++;
-      } else if (
-        delivery.delivery_status_acconier === "mise_en_livraison_acconier"
-      ) {
+      }
+
+      // 🎯 CORRECTION: Un dossier "mis en livraison" est compté indépendamment de son statut de livraison
+      // TOUS les dossiers avec delivery_status_acconier === "mise_en_livraison_acconier" sont inclus
+      // Cette logique DOIT correspondre exactement au tableau de bord (247 au lieu de 120)
+      if (delivery.delivery_status_acconier === "mise_en_livraison_acconier") {
         counts.mise_en_livraison++;
+        console.log(
+          "[DEBUG] ✅ Dossier mis en livraison (TOUS inclus, même livrés):",
+          delivery.dossier_number
+        );
       }
 
       // Compter les dossiers en retard

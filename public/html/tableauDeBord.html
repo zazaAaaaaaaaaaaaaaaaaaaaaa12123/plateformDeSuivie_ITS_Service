@@ -5874,36 +5874,22 @@
                 if (isLivre) {
                   counts.livres++;
                 } else {
-                  // Un dossier est "mis en livraison" selon la MÊME logique que resp_liv.html avec filtre mise_en_livraison
-                  // 1. Doit avoir le statut delivery_status_acconier === "mise_en_livraison_acconier"
-                  // 2. ET ne doit PAS avoir de conteneurs livrés
+                  // Un dossier est "mis en livraison" selon la logique de resp_liv.html avec filtre mise_en_livraison
+                  // CORRECTION: TOUS les dossiers avec delivery_status_acconier === "mise_en_livraison_acconier"
+                  // sont comptés, même ceux avec des conteneurs livrés (comme demandé par l'utilisateur)
 
                   let isMiseEnLivraison = false;
 
-                  // Vérification du statut acconier (condition obligatoire)
+                  // Vérification du statut acconier (condition UNIQUE)
                   if (
                     delivery.delivery_status_acconier ===
                     "mise_en_livraison_acconier"
                   ) {
-                    // Vérifier qu'aucun conteneur n'est livré
-                    let hasDeliveredContainers = false;
-
-                    if (
-                      delivery.container_statuses &&
-                      typeof delivery.container_statuses === "object"
-                    ) {
-                      const containerStatuses = Object.values(
-                        delivery.container_statuses
-                      );
-                      hasDeliveredContainers = containerStatuses.some(
-                        (status) => status === "livre" || status === "livré"
-                      );
-                    }
-
-                    // Si aucun conteneur n'est livré, alors c'est un dossier "mis en livraison"
-                    if (!hasDeliveredContainers) {
-                      isMiseEnLivraison = true;
-                    }
+                    isMiseEnLivraison = true;
+                    console.log(
+                      "[DEBUG] ✅ Dossier mis en livraison (tous inclus):",
+                      delivery.dossier_number
+                    );
                   }
 
                   if (isMiseEnLivraison) {
