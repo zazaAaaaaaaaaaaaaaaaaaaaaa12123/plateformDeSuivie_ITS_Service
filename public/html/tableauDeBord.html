@@ -2929,6 +2929,35 @@
         .main-content {
           background-color: #f7f9fc !important;
         }
+
+        /* RÈGLES SPÉCIFIQUES POUR MOBILE AVEC direct=true */
+        .direct-access .main-content,
+        body.direct-access .main-content,
+        html.direct-access .main-content {
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          background-color: #f7f9fc !important;
+          min-height: 100vh !important;
+        }
+
+        .direct-access .etat-cards-row,
+        body.direct-access .etat-cards-row,
+        html.direct-access .etat-cards-row {
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+        }
+
+        .direct-access .etat-card,
+        body.direct-access .etat-card,
+        html.direct-access .etat-card {
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          animation: none !important;
+          transform: none !important;
+        }
       }
     </style>
   </head>
@@ -7943,7 +7972,15 @@
         const lienAccueil = document.getElementById("lienAccueil");
         if (lienAccueil && isMobileDevice()) {
           lienAccueil.addEventListener("click", function (e) {
-            e.preventDefault(); // Empêcher la navigation par défaut
+            // Vérifier si le lien contient déjà ?direct=true
+            const href = lienAccueil.getAttribute("href");
+            if (href && href.includes("?direct=true")) {
+              // Laisser la navigation normale se faire avec ?direct=true
+              return true;
+            }
+
+            // Sinon, empêcher la navigation par défaut et utiliser notre méthode
+            e.preventDefault();
 
             // Navigation directe vers le contenu principal sans rechargement
             if (typeof window.showDashboardSections === "function") {
