@@ -1292,6 +1292,31 @@
         .etat-icon i {
           font-size: 24px;
         }
+
+        /* FIX POUR ÉCRAN NOIR SUR MOBILE - FORCE L'AFFICHAGE DU CONTENU PRINCIPAL */
+        .main-content {
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          background-color: #f7f9fc !important;
+          min-height: 100vh !important;
+          width: 100% !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+        }
+
+        /* S'assurer que le contenu principal n'est jamais caché */
+        .layout .main-content {
+          display: flex !important;
+          flex-direction: column !important;
+        }
+
+        /* Force l'affichage du conteneur principal sur mobile */
+        .main-content > div:first-child {
+          display: flex !important;
+          flex-direction: column !important;
+          min-height: 100vh !important;
+        }
       }
 
       /* === EFFETS SPÉCIAUX PREMIUM SUPPLÉMENTAIRES === */
@@ -2868,6 +2893,42 @@
         animation-delay: 0s !important;
         opacity: 1 !important;
         transform: none !important;
+      }
+
+      /* FIX GLOBAL POUR MOBILE - EMPÊCHER L'ÉCRAN NOIR */
+      @media (max-width: 768px) {
+        html,
+        body {
+          background-color: #f7f9fc !important;
+          min-height: 100vh !important;
+          overflow-x: hidden !important;
+        }
+
+        .layout {
+          min-height: 100vh !important;
+          background-color: #f7f9fc !important;
+        }
+
+        /* Forcer la visibilité du contenu principal */
+        body .main-content {
+          background-color: #f7f9fc !important;
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          min-height: 100vh !important;
+        }
+
+        /* Empêcher tout écran noir */
+        * {
+          background-color: transparent;
+        }
+
+        html,
+        body,
+        .layout,
+        .main-content {
+          background-color: #f7f9fc !important;
+        }
       }
     </style>
   </head>
@@ -7806,6 +7867,87 @@
           darkModeIcon.className = "fas fa-moon";
           darkModeText.textContent = "Mode Sombre";
           localStorage.setItem("darkMode", "disabled");
+        }
+      });
+    </script>
+
+    <!-- SCRIPT FIX NAVIGATION MOBILE ACCUEIL -->
+    <script>
+      // Fix pour le problème d'écran noir sur mobile lors du clic sur Accueil
+      document.addEventListener("DOMContentLoaded", function () {
+        // Fonction pour forcer l'affichage correct du contenu principal
+        function forceMainContentDisplay() {
+          const mainContent = document.querySelector(".main-content");
+          const layout = document.querySelector(".layout");
+
+          if (mainContent) {
+            mainContent.style.display = "flex";
+            mainContent.style.visibility = "visible";
+            mainContent.style.opacity = "1";
+            mainContent.style.minHeight = "100vh";
+            mainContent.style.backgroundColor = "#f7f9fc";
+          }
+
+          if (layout) {
+            layout.style.display = "flex";
+          }
+
+          // S'assurer que les containers dynamiques sont aussi visibles
+          const containers = document.querySelectorAll(".dynamic-content-area");
+          containers.forEach((container) => {
+            if (
+              container.id === "suiviContainer" ||
+              container.id === "historiqueAgentsContainer"
+            ) {
+              // Ces containers peuvent rester cachés car ils sont gérés par la navigation
+              return;
+            }
+            container.style.display = "flex";
+            container.style.visibility = "visible";
+          });
+        }
+
+        // Détecter si on est sur mobile/tablette
+        function isMobileDevice() {
+          return (
+            window.innerWidth <= 768 ||
+            /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+              navigator.userAgent
+            )
+          );
+        }
+
+        // Appliquer le fix sur mobile
+        if (isMobileDevice()) {
+          // Force l'affichage au chargement initial
+          forceMainContentDisplay();
+
+          // Force l'affichage lors du redimensionnement
+          window.addEventListener("resize", function () {
+            if (isMobileDevice()) {
+              forceMainContentDisplay();
+            }
+          });
+
+          // Force l'affichage après un court délai pour être sûr
+          setTimeout(forceMainContentDisplay, 100);
+          setTimeout(forceMainContentDisplay, 500);
+
+          // Observer les changements d'orientation sur mobile
+          window.addEventListener("orientationchange", function () {
+            setTimeout(forceMainContentDisplay, 200);
+          });
+        }
+
+        // Intercepter le clic sur le lien Accueil pour mobile
+        const lienAccueil = document.getElementById("lienAccueil");
+        if (lienAccueil && isMobileDevice()) {
+          lienAccueil.addEventListener("click", function (e) {
+            // Pour mobile, on va forcer un refresh complet de la page
+            setTimeout(function () {
+              window.location.reload();
+            }, 50);
+          });
         }
       });
     </script>
