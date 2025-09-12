@@ -3055,17 +3055,31 @@ app.get("/api/exchange/data", async (req, res) => {
         // TOUS LES DOSSIERS (pas de filtre)
         dossiers_soumis: normalizedDossiers,
 
-        // FILTRÉ : Seulement mise en livraison
+        // FILTRÉ : Tous les dossiers avec statut mise_en_livraison_acconier
         dossiers_mise_en_livraison: normalizedDossiers.filter(
-          (d) =>
-            d.status === "mise_en_livraison" || d.status === "Mise en livraison"
+          (d) => d.delivery_status_acconier === "mise_en_livraison_acconier"
         ),
 
-        // FILTRÉ : Seulement livrés
-        dossiers_livres: normalizedDossiers.filter(
-          (d) =>
-            d.status === "livre" || d.status === "Livré" || d.status === "livré"
-        ),
+        // FILTRÉ : Parmi les dossiers mis en livraison, ceux entièrement livrés
+        dossiers_livres: normalizedDossiers.filter((d) => {
+          // Doit d'abord être mis en livraison
+          if (d.delivery_status_acconier !== "mise_en_livraison_acconier") {
+            return false;
+          }
+          // Vérifie si tous les conteneurs sont livrés
+          if (
+            d.container_statuses &&
+            typeof d.container_statuses === "object"
+          ) {
+            const containerStatuses = Object.values(d.container_statuses);
+            if (containerStatuses.length > 0) {
+              return containerStatuses.every(
+                (status) => status === "livre" || status === "livré"
+              );
+            }
+          }
+          return false;
+        }),
       };
 
       res.json({
@@ -6400,8 +6414,9 @@ app.get("/statistiques/acteurs", async (req, res) => {
           // On ignore les statuts vides ou inconnus dans les stats
           return;
         }
-        if (s.includes("livr")) statuts.livree++;
-        else if (s.includes("paiement effectué")) statuts.paiement++;
+        if (s.includes("livr")) {
+          statuts.livree++;
+        } else if (s.includes("paiement effectué")) statuts.paiement++;
         else if (s.includes("mise en livraison")) statuts.mise_en_livraison++;
         else if (s.includes("attente") || s.includes("pending"))
           statuts.attente++;
@@ -8068,8 +8083,12 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
       `[PATCH][DEBUG] Après modification : container_statuses=`,
       container_statuses
     );
-    // Met à jour la base
-    // Vérifie si tous les conteneurs sont livrés
+    // 🔧 CORRECTION : Ne pas modifier delivery_status_acconier automatiquement
+    // Le statut des conteneurs et le statut du dossier acconier sont indépendants
+    // delivery_status_acconier = statut du processus acconier (reste "mise_en_livraison_acconier")
+    // container_statuses = statuts individuels des conteneurs (peuvent être "livré")
+
+    // Vérifie si tous les conteneurs sont livrés (pour les logs seulement)
     let tcListCheck = [];
     if (result.rows[0].container_number) {
       if (Array.isArray(result.rows[0].container_number)) {
@@ -8086,17 +8105,17 @@ app.patch("/deliveries/:id/container-status", async (req, res) => {
         const s = container_statuses[tc];
         return s === "livre" || s === "livré";
       });
-    let updateQuery = "UPDATE livraison_conteneur SET container_statuses = $1";
-    let updateValues = [JSON.stringify(container_statuses)];
-    if (allDelivered) {
-      updateQuery += ", delivery_status_acconier = $2";
-      updateValues.push("mise_en_livraison_acconier");
-      updateQuery += " WHERE id = $3 RETURNING *;";
-      updateValues.push(id);
-    } else {
-      updateQuery += " WHERE id = $2 RETURNING *;";
-      updateValues.push(id);
-    }
+
+    // ✅ CORRECTION : Mettre à jour SEULEMENT les statuts des conteneurs
+    // Ne pas toucher à delivery_status_acconier
+    let updateQuery =
+      "UPDATE livraison_conteneur SET container_statuses = $1 WHERE id = $2 RETURNING *;";
+    let updateValues = [JSON.stringify(container_statuses), id];
+
+    console.log(
+      `[CONTAINER-STATUS] Conteneur ${containerNumber} → ${status}, Tous livrés: ${allDelivered}, Statut dossier: INCHANGÉ`
+    );
+
     const updateRes = await pool.query(updateQuery, updateValues);
     if (updateRes.rows.length === 0) {
       return res
@@ -9531,6 +9550,100 @@ app.get("/api/dossier/:dossierNumber/real-containers", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Erreur lors de la récupération des N° TC",
+      error: error.message,
+    });
+  }
+});
+
+// ===============================
+// ROUTE DE CORRECTION DES STATUTS CORROMPUS (TEMPORAIRE)
+// ===============================
+app.post("/admin/fix-delivery-status", async (req, res) => {
+  try {
+    console.log("[ADMIN FIX] Début de la correction des statuts corrompus...");
+
+    // Récupérer tous les dossiers avec delivery_status_acconier = 'livre'
+    const result = await pool.query(`
+      SELECT id, dossier_number, delivery_status_acconier, container_statuses, container_number
+      FROM livraison_conteneur 
+      WHERE delivery_status_acconier = 'livre'
+      ORDER BY id
+    `);
+
+    let corrected = 0;
+    let total = result.rows.length;
+
+    console.log(`[ADMIN FIX] Trouvé ${total} dossiers avec statut 'livre'`);
+
+    for (const delivery of result.rows) {
+      // Analyser les conteneurs et leurs statuts
+      let container_statuses_parsed = {};
+      let tcList = [];
+
+      // Parser container_statuses
+      try {
+        if (delivery.container_statuses) {
+          container_statuses_parsed =
+            typeof delivery.container_statuses === "string"
+              ? JSON.parse(delivery.container_statuses)
+              : delivery.container_statuses;
+        }
+      } catch (e) {
+        console.warn(
+          `[ADMIN FIX] Erreur parsing container_statuses pour ID ${delivery.id}`
+        );
+        container_statuses_parsed = {};
+      }
+
+      // Parser container_number pour avoir la liste des TCs
+      if (delivery.container_number) {
+        if (Array.isArray(delivery.container_number)) {
+          tcList = delivery.container_number.filter(Boolean);
+        } else if (typeof delivery.container_number === "string") {
+          tcList = delivery.container_number.split(/[,;\s]+/).filter(Boolean);
+        }
+      }
+
+      if (tcList.length === 0) {
+        console.warn(
+          `[ADMIN FIX] Aucun conteneur trouvé pour ID ${delivery.id}`
+        );
+        continue;
+      }
+
+      // Compter les conteneurs livrés
+      const deliveredContainers = tcList.filter((tc) => {
+        const status = container_statuses_parsed[tc];
+        return status === "livre" || status === "livré";
+      });
+
+      // NOUVELLE LOGIQUE : TOUS les dossiers doivent être "mise_en_livraison_acconier"
+      // Même si tous les conteneurs sont livrés, le statut dossier reste "mise en livraison"
+      console.log(
+        `[ADMIN FIX] Correction ID ${delivery.id} (${delivery.dossier_number}): ${deliveredContainers.length}/${tcList.length} conteneurs livrés - FORÇAGE vers mise_en_livraison_acconier`
+      );
+
+      await pool.query(
+        "UPDATE livraison_conteneur SET delivery_status_acconier = $1 WHERE id = $2",
+        ["mise_en_livraison_acconier", delivery.id]
+      );
+
+      corrected++;
+    }
+
+    console.log(
+      `[ADMIN FIX] Terminé: ${corrected} dossiers corrigés sur ${total}`
+    );
+
+    res.json({
+      success: true,
+      message: `Correction terminée: ${corrected} dossiers corrigés sur ${total} analysés`,
+    });
+  } catch (error) {
+    console.error("[ADMIN FIX] Erreur:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la correction",
       error: error.message,
     });
   }

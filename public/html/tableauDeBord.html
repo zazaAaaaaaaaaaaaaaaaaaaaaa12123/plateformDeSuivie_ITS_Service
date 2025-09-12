@@ -5736,7 +5736,7 @@
             window.updateCardCounters = function () {
               console.log("[DASHBOARD] 📊 Début mise à jour des compteurs...");
 
-              // Utiliser la même API que le tableau de suivi pour assurer la cohérence
+              // SOLUTION FINALE : Utiliser exactement la même logique que resp_liv.html
               fetch("/deliveries/status")
                 .then((response) => response.json())
                 .then((data) => {
@@ -5746,104 +5746,70 @@
                       data.deliveries.length
                     );
 
-                    // 🔔 NOUVEAU: Déclencher l'événement suiviDataUpdated
-                    window.dispatchEvent(
-                      new CustomEvent("suiviDataUpdated", {
-                        detail: {
-                          source: "dashboard-deliveries",
-                          deliveries: data.deliveries,
-                          timestamp: Date.now(),
-                        },
-                      })
-                    );
+                    // Compter EXACTEMENT comme resp_liv.html avec filter=mise_en_livraison
+                    let miseEnLivraisonCount = 0;
+                    let totalCount = data.deliveries.length;
+                    let livresCount = 0;
 
-                    // Calculer les compteurs à partir des mêmes données que le tableau de suivi
-                    const counts = calculateCountsFromDeliveries(
-                      data.deliveries
-                    );
-
-                    console.log("[DASHBOARD] 📊 Compteurs calculés:", counts);
-
-                    // Mise à jour de la carte "Dossier soumis"
-                    const oldAttente = window.updateCardCounter(
-                      "carteAttentePaiement",
-                      counts.en_attente_paiement || 0
-                    );
-                    console.log(
-                      `[DASHBOARD] 📋 Dossier soumis: ${
-                        counts.en_attente_paiement || 0
-                      }`
-                    );
-
-                    // Mise à jour de la carte "Dossiers mis en livraison" avec format "mis en livraison / total"
-                    const miseEnLivraisonText = `${
-                      counts.mise_en_livraison || 0
-                    } / ${counts.en_attente_paiement || 0}`;
-                    const oldMiseEnLivraison = window.updateCardCounter(
-                      "carteMiseLivraison",
-                      miseEnLivraisonText
-                    );
-                    console.log(
-                      `[DASHBOARD] 🚛 Dossiers mis en livraison: ${miseEnLivraisonText} (${counts.mise_en_livraison} sur ${counts.en_attente_paiement} total)`
-                    );
-
-                    // Mise à jour de la carte "Dossiers livrés" avec format "livrés / mis en livraison"
-                    const livresText = `${counts.livres || 0} / ${
-                      counts.mise_en_livraison || 0
-                    }`;
-                    const oldLivres = window.updateCardCounter(
-                      "carteLivre",
-                      livresText
-                    );
-                    console.log(
-                      `[DASHBOARD] ✅ Dossiers livrés: ${livresText} (${counts.livres} dossiers livrés sur ${counts.mise_en_livraison} en livraison)`
-                    );
-
-                    console.log(
-                      "[DASHBOARD] 🔄 Mise à jour terminée - Totaux:",
-                      {
-                        "En attente": counts.en_attente_paiement || 0,
-                        "Mis en livraison": counts.mise_en_livraison || 0,
-                        Livrés: counts.livres || 0,
-                        "En retard": counts.en_retard || 0,
+                    data.deliveries.forEach((delivery) => {
+                      // Compter TOUS les dossiers avec statut mise_en_livraison_acconier
+                      // (peu importe si conteneurs livrés ou non - comme dans resp_liv.html)
+                      if (
+                        delivery.delivery_status_acconier ===
+                        "mise_en_livraison_acconier"
+                      ) {
+                        miseEnLivraisonCount++;
                       }
-                    );
 
-                    // 🔔 NOUVEAU: Déclencher un événement pour synchroniser les archives
-                    window.dispatchEvent(
-                      new CustomEvent("dashboardCardUpdated", {
-                        detail: {
-                          source: "dashboard-cards",
-                          counts: counts,
-                          timestamp: Date.now(),
-                        },
-                      })
-                    );
+                      // Compter les entièrement livrés
+                      if (
+                        delivery.container_statuses &&
+                        typeof delivery.container_statuses === "object"
+                      ) {
+                        const containerStatuses = Object.values(
+                          delivery.container_statuses
+                        );
+                        if (
+                          containerStatuses.length > 0 &&
+                          containerStatuses.every(
+                            (status) => status === "livre" || status === "livré"
+                          )
+                        ) {
+                          livresCount++;
+                        }
+                      }
+                    });
 
-                    // 🔔 NOUVEAU: Stocker dans localStorage pour les autres onglets
-                    localStorage.setItem(
-                      "dashboardCountersUpdated",
-                      JSON.stringify({
-                        counts: counts,
-                        timestamp: Date.now(),
-                      })
+                    console.log(`[DASHBOARD] 🎯 RÉSULTATS EXACTS:`);
+                    console.log(`  - Total dossiers: ${totalCount}`);
+                    console.log(
+                      `  - Mise en livraison (TOUS): ${miseEnLivraisonCount}`
+                    );
+                    console.log(`  - Entièrement livrés: ${livresCount}`);
+
+                    // Mise à jour des cartes avec les vrais chiffres
+                    window.updateCardCounter(
+                      "carteAttentePaiement",
+                      totalCount
+                    );
+                    window.updateCardCounter(
+                      "carteMiseLivraison",
+                      `${miseEnLivraisonCount} / ${totalCount}`
+                    );
+                    window.updateCardCounter(
+                      "carteLivre",
+                      `${livresCount} / ${miseEnLivraisonCount}`
                     );
 
                     console.log(
-                      "[DASHBOARD] 📡 Événements de synchronisation déclenchés pour les archives"
+                      "[DASHBOARD] ✅ Cartes mises à jour avec logique EXACTE de resp_liv.html"
                     );
                   } else {
-                    console.error(
-                      "[DASHBOARD] ❌ Erreur dans la réponse du serveur:",
-                      data
-                    );
+                    console.error("[DASHBOARD] ❌ Erreur données:", data);
                   }
                 })
                 .catch((error) => {
-                  console.error(
-                    "[DASHBOARD] ❌ Erreur lors de la récupération des données:",
-                    error
-                  );
+                  console.error("[DASHBOARD] ❌ Erreur réseau:", error);
                 });
             };
 
@@ -5907,11 +5873,42 @@
                 // Compter selon les catégories
                 if (isLivre) {
                   counts.livres++;
-                } else if (
-                  delivery.delivery_status_acconier ===
-                  "mise_en_livraison_acconier"
-                ) {
-                  counts.mise_en_livraison++;
+                } else {
+                  // Un dossier est "mis en livraison" selon la MÊME logique que resp_liv.html avec filtre mise_en_livraison
+                  // 1. Doit avoir le statut delivery_status_acconier === "mise_en_livraison_acconier"
+                  // 2. ET ne doit PAS avoir de conteneurs livrés
+
+                  let isMiseEnLivraison = false;
+
+                  // Vérification du statut acconier (condition obligatoire)
+                  if (
+                    delivery.delivery_status_acconier ===
+                    "mise_en_livraison_acconier"
+                  ) {
+                    // Vérifier qu'aucun conteneur n'est livré
+                    let hasDeliveredContainers = false;
+
+                    if (
+                      delivery.container_statuses &&
+                      typeof delivery.container_statuses === "object"
+                    ) {
+                      const containerStatuses = Object.values(
+                        delivery.container_statuses
+                      );
+                      hasDeliveredContainers = containerStatuses.some(
+                        (status) => status === "livre" || status === "livré"
+                      );
+                    }
+
+                    // Si aucun conteneur n'est livré, alors c'est un dossier "mis en livraison"
+                    if (!hasDeliveredContainers) {
+                      isMiseEnLivraison = true;
+                    }
+                  }
+
+                  if (isMiseEnLivraison) {
+                    counts.mise_en_livraison++;
+                  }
                 }
 
                 // Compter les dossiers en retard

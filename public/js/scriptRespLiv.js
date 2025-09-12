@@ -1946,28 +1946,12 @@ document.addEventListener("DOMContentLoaded", function () {
             // 🆕 FILTRAGE SELON LE PARAMÈTRE URL (PRIORITAIRE)
             switch (filterParam) {
               case "mise_en_livraison":
-                // Dossiers en mise_en_livraison_acconier SANS conteneurs livrés
-                if (
-                  delivery.delivery_status_acconier !==
+                // TOUS les dossiers mis en livraison (en cours ET livrés)
+                // Inclut les dossiers qui ont été mis en livraison à un moment donné
+                return (
+                  delivery.delivery_status_acconier ===
                   "mise_en_livraison_acconier"
-                ) {
-                  return false;
-                }
-                if (
-                  delivery.container_statuses &&
-                  typeof delivery.container_statuses === "object"
-                ) {
-                  const containerStatuses = Object.values(
-                    delivery.container_statuses
-                  );
-                  const hasDeliveredContainers = containerStatuses.some(
-                    (status) => status === "livre" || status === "livré"
-                  );
-                  if (hasDeliveredContainers) {
-                    return false;
-                  }
-                }
-                return true;
+                );
 
               case "livre":
               case "livré":

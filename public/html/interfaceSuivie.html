@@ -478,10 +478,16 @@
       /* Mode sombre pour les inputs et boutons */
       .dark-mode input[type="date"],
       .dark-mode input[type="search"],
-      .dark-mode input[type="text"] {
+      .dark-mode input[type="text"],
+      .dark-mode select {
         background: var(--input-bg) !important;
         color: var(--text-primary) !important;
         border: 1px solid var(--border-color) !important;
+      }
+
+      .dark-mode select option {
+        background: var(--card-bg) !important;
+        color: var(--text-primary) !important;
       }
 
       /* Mode sombre pour les labels "Du:" et "Au:" */
@@ -736,6 +742,40 @@
                 transition: border-color 0.2s ease, box-shadow 0.2s ease;
               "
             />
+          </div>
+
+          <!-- Menu déroulant pour filtrer par statut dossier -->
+          <div class="d-flex align-items-center gap-2 me-3">
+            <span
+              class="date-label"
+              style="
+                font-weight: 500;
+                color: #374151;
+                font-size: 0.9em;
+                white-space: nowrap;
+              "
+              >Statut Resp.Acconier :</span
+            >
+            <select
+              id="statusDossierFilter"
+              style="
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid #d1d5db;
+                font-size: 0.9em;
+                background: #ffffff;
+                color: #374151;
+                min-width: 160px;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+                cursor: pointer;
+              "
+            >
+              <option value="">Tous les statuts</option>
+              <option value="mise en livraison">Mise en livraison</option>
+              <option value="en attente de paiement">
+                En attente de paiement
+              </option>
+            </select>
           </div>
 
           <div class="d-flex align-items-center flex-wrap" style="gap: 20px">

@@ -3010,14 +3010,6 @@ function mapStatus(status) {
       tailwindColorClass: "text-yellow-500",
       hexColor: "#f59e0b",
     },
-    // Ajout mapping texte direct pour compatibilité (évite warning si jamais le texte est utilisé comme clé)
-
-    mise_en_livraison_acconier: {
-      text: "Mise en livraison",
-      icon: "fa-hourglass-half",
-      tailwindColorClass: "text-yellow-500",
-      hexColor: "#f59e0b",
-    },
     in_progress_payment_acconier: {
       text: "En cours de paiement",
       icon: "fa-credit-card",
@@ -4095,26 +4087,53 @@ function mapStatus(status) {
    * @param {Array<string>} deliveryIds - An array of IDs of deliveries to delete.
    */
   async function deleteDeliveries(deliveryIds) {
-    if (loadingOverlay) loadingOverlay.style.display = "flex";
-    try {
-      const deletePromises = deliveryIds.map((id) =>
-        fetch(`/deliveries/${id}`, {
-          method: "DELETE",
-        }).then((response) => {
-          if (!response.ok) {
-            return response.json().then((errorData) => {
-              throw new Error(
-                `Échec de la suppression de la livraison ${id}: ${
-                  errorData.message || response.statusText
-                }`
-              );
-            });
-          }
-          return response.json();
-        })
-      );
+    console.log("🗑️ Début de la suppression des livraisons:", deliveryIds);
 
-      await Promise.all(deletePromises);
+    if (loadingOverlay) {
+      loadingOverlay.style.display = "flex";
+      console.log("Loading overlay affiché");
+    }
+
+    try {
+      console.log("🔄 Création des requêtes de suppression...");
+
+      const deletePromises = deliveryIds.map(async (id) => {
+        console.log(`⏳ Suppression de la livraison ${id}...`);
+
+        const response = await fetch(`/deliveries/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        console.log(
+          `📡 Réponse pour ${id}:`,
+          response.status,
+          response.statusText
+        );
+
+        if (!response.ok) {
+          let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (e) {
+            console.warn(`Impossible de parser l'erreur JSON pour ${id}:`, e);
+          }
+          throw new Error(
+            `Échec de la suppression de la livraison ${id}: ${errorMessage}`
+          );
+        }
+
+        const result = await response.json();
+        console.log(`✅ Livraison ${id} supprimée avec succès:`, result);
+        return result;
+      });
+
+      console.log("⏳ Attente de toutes les suppressions...");
+      const results = await Promise.all(deletePromises);
+      console.log("✅ Toutes les suppressions terminées:", results);
 
       showCustomAlert(
         `${deliveryIds.length} livraisons supprimées avec succès.`,
@@ -4167,15 +4186,17 @@ function mapStatus(status) {
         }
       }
     } catch (error) {
+      console.error("❌ Erreur lors de la suppression:", error);
       showCustomAlert(
         `Erreur lors de la suppression de plusieurs livraisons: ${error.message}`,
         "error",
         7000
       );
-      console.error("Error deleting multiple deliveries:", error);
     } finally {
+      console.log("🔄 Nettoyage final...");
       if (loadingOverlay) {
         loadingOverlay.style.display = "none";
+        console.log("Loading overlay masqué");
       }
     }
   }
@@ -6253,6 +6274,53 @@ function mapStatus(status) {
       );
     } else {
       console.log("No main filter date selected.");
+    }
+
+    // Filtrage par statut de dossier
+    const statusDossierFilter = document.getElementById("statusDossierFilter");
+    if (statusDossierFilter && statusDossierFilter.value !== "") {
+      const selectedStatus = statusDossierFilter.value.toLowerCase();
+      filteredData = filteredData.filter((delivery) => {
+        let deliveryStatus = "";
+
+        // Récupérer le statut du dossier selon la logique métier
+        if (delivery.delivery_status_acconier) {
+          deliveryStatus = delivery.delivery_status_acconier.toLowerCase();
+        } else if (delivery.status) {
+          deliveryStatus = delivery.status.toLowerCase();
+        }
+
+        // Normaliser les statuts pour correspondre aux options du select
+        let normalizedStatus = "";
+
+        if (
+          deliveryStatus === "livre" ||
+          deliveryStatus === "livré" ||
+          deliveryStatus === "delivered"
+        ) {
+          normalizedStatus = "livré";
+        } else if (
+          deliveryStatus === "mise_en_livraison_acconier" ||
+          deliveryStatus.includes("mise en livraison")
+        ) {
+          normalizedStatus = "mise en livraison";
+        } else if (
+          deliveryStatus === "pending_acconier" ||
+          deliveryStatus === "awaiting_payment_acconier" ||
+          deliveryStatus === "" ||
+          !deliveryStatus ||
+          (deliveryStatus.includes("attente") &&
+            deliveryStatus.includes("paiement"))
+        ) {
+          normalizedStatus = "en attente de paiement";
+        }
+
+        return normalizedStatus === selectedStatus;
+      });
+
+      console.log(
+        `Filtrage par statut: ${statusDossierFilter.value} (${filteredData.length} résultats)`
+      );
     }
 
     // === TRI PAR ORDRE CHRONOLOGIQUE : RÉCENTS EN HAUT, ANCIENS EN BAS ===
@@ -11769,6 +11837,21 @@ function mapStatus(status) {
       updateTableForDateRange(mainTableDateStartFilter.value, e.target.value);
     });
 
+    // Événement pour le filtre de statut dossier
+    const statusDossierFilter = document.getElementById("statusDossierFilter");
+    if (statusDossierFilter) {
+      statusDossierFilter.addEventListener("change", (e) => {
+        localStorage.setItem("statusDossierFilter", e.target.value);
+        applyCombinedFilters();
+      });
+
+      // Restaurer la valeur sauvegardée
+      const storedStatus = localStorage.getItem("statusDossierFilter");
+      if (storedStatus) {
+        statusDossierFilter.value = storedStatus;
+      }
+    }
+
     // Initialiser les dates par défaut après le chargement des données
     setTimeout(() => {
       initializeDefaultDates();
@@ -12038,7 +12121,17 @@ function mapStatus(status) {
   }
 
   if (deleteSelectedDeliveriesBtn) {
+    let isDeleting = false; // Protection contre les clics multiples
+
     deleteSelectedDeliveriesBtn.addEventListener("click", async () => {
+      console.log("🔘 Clic sur le bouton de suppression");
+
+      // Protection contre les clics multiples
+      if (isDeleting) {
+        console.log("⚠️ Suppression déjà en cours, ignoré");
+        return;
+      }
+
       const checkedBoxes = deliveriesTableBody.querySelectorAll(
         ".delivery-select-checkbox:checked"
       );
@@ -12047,82 +12140,155 @@ function mapStatus(status) {
         return;
       }
 
+      console.log(
+        `📋 ${checkedBoxes.length} livraisons sélectionnées pour suppression`
+      );
+
+      // Créer la popup de confirmation
       const confirmOverlay = document.createElement("div");
       confirmOverlay.className = "confirm-overlay";
-      confirmOverlay.style.position = "fixed";
-      confirmOverlay.style.top = "0";
-      confirmOverlay.style.left = "0";
-      confirmOverlay.style.width = "100%";
-      confirmOverlay.style.height = "100%";
-      confirmOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-      confirmOverlay.style.display = "flex";
-      confirmOverlay.style.justifyContent = "center";
-      confirmOverlay.style.alignItems = "center";
-      confirmOverlay.style.zIndex = "9999"; // Ensure it's on top of other elements, including dropdowns
+      confirmOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      `;
+
       confirmOverlay.innerHTML = `
-                                <div class="confirm-box">
-                                  <p>Êtes-vous sûr de vouloir supprimer ${
-                                    checkedBoxes.length > 1
-                                      ? `les ${checkedBoxes.length} livraisons sélectionnées`
-                                      : `la livraison sélectionnée`
-                                  } ?</p>
-                                  <div class="confirm-buttons">
-                                    <button id="confirmYes" class="btn btn-danger">Oui</button>
-                                    <button id="confirmNo" class="btn btn-secondary">Non</button>
-                                  </div>
-                                </div>
-                            `;
+        <div class="confirm-box" style="background: white; padding: 20px; border-radius: 8px; text-align: center; max-width: 400px;">
+          <p style="margin-bottom: 20px; color: #333;">Êtes-vous sûr de vouloir supprimer ${
+            checkedBoxes.length > 1
+              ? `les ${checkedBoxes.length} livraisons sélectionnées`
+              : `la livraison sélectionnée`
+          } ?</p>
+          <div class="confirm-buttons" style="display: flex; gap: 10px; justify-content: center;">
+            <button id="confirmYes" class="btn btn-danger" style="padding: 8px 16px;">Oui</button>
+            <button id="confirmNo" class="btn btn-secondary" style="padding: 8px 16px;">Non</button>
+          </div>
+        </div>
+      `;
+
       document.body.appendChild(confirmOverlay);
       document.body.style.overflow = "hidden";
 
-      const confirmDelete = await new Promise((resolve) => {
+      console.log("✅ Popup de confirmation affichée");
+
+      // Gérer la confirmation avec une Promise plus simple
+      const userConfirmed = await new Promise((resolve) => {
+        let resolved = false;
+
+        const cleanup = () => {
+          if (!resolved) {
+            resolved = true;
+            confirmOverlay.remove();
+            document.body.style.overflow = "";
+          }
+        };
+
+        const confirmYes = document.getElementById("confirmYes");
+        const confirmNo = document.getElementById("confirmNo");
+
+        confirmYes.onclick = () => {
+          cleanup();
+          resolve(true);
+        };
+
+        confirmNo.onclick = () => {
+          cleanup();
+          resolve(false);
+        };
+
+        // Fermer avec Escape
         const handleKeyDown = (e) => {
-          if (e.key === "Enter") {
+          if (e.key === "Escape") {
             document.removeEventListener("keydown", handleKeyDown);
-            confirmOverlay.remove();
-            document.body.style.overflow = "";
-            resolve(true);
-          } else if (e.key === "Escape") {
-            document.removeEventListener("keydown", handleKeyDown);
-            confirmOverlay.remove();
-            document.body.style.overflow = "";
+            cleanup();
             resolve(false);
           }
         };
-        document.addEventListener("keydown", handleKeyDown);
 
-        document.getElementById("confirmYes").onclick = () => {
-          document.removeEventListener("keydown", handleKeyDown);
-          confirmOverlay.remove();
-          document.body.style.overflow = "";
-          resolve(true);
-        };
-        document.getElementById("confirmNo").onclick = () => {
-          document.removeEventListener("keydown", handleKeyDown);
-          confirmOverlay.remove();
-          document.body.style.overflow = "";
-          resolve(false);
-        };
+        document.addEventListener("keydown", handleKeyDown);
       });
 
-      if (!confirmDelete) {
+      console.log(
+        `🎯 Confirmation utilisateur: ${userConfirmed ? "OUI" : "NON"}`
+      );
+
+      if (!userConfirmed) {
+        console.log("❌ Suppression annulée par l'utilisateur");
         return;
       }
 
-      const idsToDelete = Array.from(checkedBoxes).map(
-        (cb) => cb.dataset.deliveryId
-      );
-      await deleteDeliveries(idsToDelete);
-      // Mise à jour immédiate de l'alerte dossier en retard
-      if (typeof checkLateContainers === "function") checkLateContainers();
-      deleteSelectedDeliveriesBtn.style.display = "none";
-      selectionMode = false;
-      thNumero.textContent = "N°";
-      const masterCheckbox = document.getElementById("masterSelectAll");
-      if (masterCheckbox) {
-        masterCheckbox.remove();
+      // Marquer le début de la suppression
+      isDeleting = true;
+
+      console.log("🗑️ Début du processus de suppression...");
+
+      try {
+        const idsToDelete = Array.from(checkedBoxes).map(
+          (cb) => cb.dataset.deliveryId
+        );
+
+        console.log("📝 IDs à supprimer:", idsToDelete);
+
+        // Masquer le bouton pendant la suppression
+        deleteSelectedDeliveriesBtn.style.display = "none";
+        deleteSelectedDeliveriesBtn.disabled = true;
+
+        // Appeler la fonction de suppression
+        await deleteDeliveries(idsToDelete);
+
+        console.log("✅ Suppression terminée avec succès");
+
+        // Nettoyage de l'interface de sélection
+        selectionMode = false;
+        thNumero.textContent = "N°";
+
+        const masterCheckbox = document.getElementById("masterSelectAll");
+        if (masterCheckbox) {
+          masterCheckbox.remove();
+        }
+
+        // Rechargement des données
+        console.log("🔄 Rechargement des données...");
+        await loadDeliveries();
+
+        // Mise à jour de l'alerte dossier en retard
+        if (typeof checkLateContainers === "function") {
+          checkLateContainers();
+        }
+
+        console.log("🎯 Processus de suppression terminé avec succès");
+      } catch (error) {
+        console.error("❌ Erreur lors de la suppression:", error);
+
+        showCustomAlert(
+          `Erreur lors de la suppression: ${error.message}`,
+          "error",
+          5000
+        );
+
+        // En cas d'erreur, réafficher le bouton et relancer l'interface
+        deleteSelectedDeliveriesBtn.style.display = "inline-block";
+        deleteSelectedDeliveriesBtn.disabled = false;
+
+        try {
+          applyCombinedFilters();
+        } catch (filterError) {
+          console.error("❌ Erreur lors du filtrage de secours:", filterError);
+        }
+      } finally {
+        // Toujours remettre le flag à false
+        isDeleting = false;
+        deleteSelectedDeliveriesBtn.disabled = false;
+        console.log("🔓 Protection contre les clics multiples désactivée");
       }
-      applyCombinedFilters();
     });
   }
 
