@@ -2314,25 +2314,9 @@ function init() {
           return;
         }
 
-        // --- VALIDATION NUMÉRO BL UNIQUE ---
-        const currentBLNumber = blNumberInput ? blNumberInput.value.trim() : "";
-        if (currentBLNumber && isBLNumberUsed(currentBLNumber)) {
-          // Retirer les bordures rouges des autres champs
-          requiredInputs.forEach((input) => {
-            input.classList.remove("border-red-500", "border-2");
-          });
-          // Ajouter bordure rouge au champ BL
-          if (blNumberInput) {
-            blNumberInput.classList.add("border-red-500", "border-2");
-            blNumberInput.focus();
-          }
-          displayMessage(
-            formErrorDisplay,
-            `❌ Le numéro BL "${currentBLNumber}" a déjà été utilisé. Veuillez saisir un numéro BL différent.`,
-            "error"
-          );
-          return;
-        }
+        // --- VALIDATION NUMÉRO BL UNIQUE SUPPRIMÉE ---
+        // La contrainte de duplication des N° BL a été supprimée
+        // Les N° BL peuvent maintenant être utilisés plusieurs fois
 
         // Le numéro de téléphone client est totalement facultatif : aucune validation, aucune contrainte, aucune bordure rouge. precis
         if (clientPhoneInput) {
@@ -2404,17 +2388,10 @@ function init() {
       clearMessages(formErrorDisplay);
     });
 
-    // Validation quand l'utilisateur quitte le champ (onblur)
+    // Validation quand l'utilisateur quitte le champ (onblur) - CONTRAINTE SUPPRIMÉE
     blNumberInput.addEventListener("blur", function () {
-      const blValue = blNumberInput.value.trim();
-      if (blValue && isBLNumberUsed(blValue)) {
-        blNumberInput.classList.add("border-red-500", "border-2");
-        displayMessage(
-          formErrorDisplay,
-          `❌ Le numéro BL "${blValue}" a déjà été utilisé. Veuillez saisir un numéro BL différent.`,
-          "error"
-        );
-      }
+      // La vérification de duplication des N° BL a été supprimée
+      // Les N° BL peuvent maintenant être utilisés plusieurs fois
     });
   }
 
