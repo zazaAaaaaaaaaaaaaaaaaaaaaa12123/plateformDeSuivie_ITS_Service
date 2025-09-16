@@ -799,9 +799,9 @@ tbody td:first-child {
   border-radius: 0.4rem;
 }
 
-/* Hauteur max et scroll vertical */
+/* Hauteur max et scroll vertical - Augmentée pour afficher plus de lignes */
 #tableScrollContainer {
-  max-height: 450px;
+  max-height: 600px; /* Augmenté de 450px à 600px */
   overflow-y: auto;
   display: block;
   scrollbar-width: thin;

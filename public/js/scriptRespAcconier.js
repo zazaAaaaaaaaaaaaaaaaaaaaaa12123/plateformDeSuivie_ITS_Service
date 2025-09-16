@@ -2595,51 +2595,95 @@ document.addEventListener("DOMContentLoaded", function () {
               e.stopPropagation();
               overlay.remove(); // ferme la popup
 
-              // Cherche la ligne du tableau avec le bon N° Dossier
-              const tableBody = document.getElementById("deliveriesTableBody");
-              if (tableBody) {
-                const rows = tableBody.querySelectorAll("tr");
-                let foundRow = null;
-                rows.forEach((row) => {
-                  const cells = row.querySelectorAll("td");
-                  for (let i = 0; i < cells.length; i++) {
-                    if (
-                      cells[i].textContent &&
-                      String(cells[i].textContent).trim() ===
-                        String(d.dossier_number).trim()
-                    ) {
-                      foundRow = row;
+              // AMÉLIORATION : Si le dossier n'est pas trouvé, ajuster les filtres de date
+              const navigateToDossier = () => {
+                const tableBody = document.getElementById(
+                  "deliveriesTableBody"
+                );
+                if (tableBody) {
+                  const rows = tableBody.querySelectorAll("tr");
+                  let foundRow = null;
+                  rows.forEach((row) => {
+                    const cells = row.querySelectorAll("td");
+                    for (let i = 0; i < cells.length; i++) {
+                      if (
+                        cells[i].textContent &&
+                        String(cells[i].textContent).trim() ===
+                          String(d.dossier_number).trim()
+                      ) {
+                        foundRow = row;
+                      }
+                    }
+                  });
+
+                  if (foundRow) {
+                    foundRow.scrollIntoView({
+                      behavior: "smooth",
+                      block: "center",
+                    });
+                    // Clignotement 3 fois sur 3 secondes
+                    const tds = foundRow.querySelectorAll("td");
+                    let flashCount = 0;
+                    const maxFlashes = 3;
+                    function doFlash() {
+                      tds.forEach((td) => {
+                        td.classList.remove("flash-red-cell");
+                        void td.offsetWidth;
+                        td.classList.add("flash-red-cell");
+                      });
+                      setTimeout(() => {
+                        tds.forEach((td) =>
+                          td.classList.remove("flash-red-cell")
+                        );
+                        flashCount++;
+                        if (flashCount < maxFlashes) {
+                          setTimeout(doFlash, 1000);
+                        }
+                      }, 1000);
+                    }
+                    doFlash();
+                  } else {
+                    // Dossier non trouvé : ajuster les filtres de date pour inclure ce dossier
+                    console.log(
+                      "Dossier en retard non trouvé dans le tableau, ajustement des filtres..."
+                    );
+                    const dossierDate = new Date(
+                      d.delivery_date || d.created_at
+                    );
+                    if (!isNaN(dossierDate.getTime())) {
+                      const dossierDateStr = dossierDate
+                        .toISOString()
+                        .split("T")[0];
+                      const today = new Date().toISOString().split("T")[0];
+
+                      // Mettre à jour les filtres de date
+                      const dateStartInput = document.getElementById(
+                        "mainTableDateStartFilter"
+                      );
+                      const dateEndInput = document.getElementById(
+                        "mainTableDateEndFilter"
+                      );
+
+                      if (dateStartInput && dateEndInput) {
+                        dateStartInput.value = dossierDateStr;
+                        dateEndInput.value = today;
+
+                        // Recharger le tableau avec les nouvelles dates
+                        if (typeof updateTableForDateRange === "function") {
+                          updateTableForDateRange(dossierDateStr, today);
+
+                          // Réessayer la navigation après le rechargement
+                          setTimeout(() => {
+                            navigateToDossier();
+                          }, 500);
+                        }
+                      }
                     }
                   }
-                });
-                if (foundRow) {
-                  foundRow.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                  // Clignotement 3 fois sur 3 secondes
-                  const tds = foundRow.querySelectorAll("td");
-                  let flashCount = 0;
-                  const maxFlashes = 3;
-                  function doFlash() {
-                    tds.forEach((td) => {
-                      td.classList.remove("flash-red-cell");
-                      void td.offsetWidth;
-                      td.classList.add("flash-red-cell");
-                    });
-                    setTimeout(() => {
-                      tds.forEach((td) =>
-                        td.classList.remove("flash-red-cell")
-                      );
-                      flashCount++;
-                      if (flashCount < maxFlashes) {
-                        setTimeout(doFlash, 1000);
-                      }
-                    }, 1000);
-                  }
-                  doFlash();
                 }
-              }
+              };
+
+              navigateToDossier();
             };
 
             tbody.appendChild(tr);
@@ -3914,13 +3958,12 @@ document.addEventListener("DOMContentLoaded", function () {
     // Toujours utiliser window.allDeliveries comme source unique
     const deliveriesSource = window.allDeliveries || [];
     console.log(
-      "[DEBUG] filterDeliveriesByDateRange source:",
-      deliveriesSource
+      `🗓️ [DATE FILTER DEBUG] Filtrage par date: ${dateStartStr} à ${dateEndStr} sur ${deliveriesSource.length} livraisons`
     );
     if (!dateStartStr && !dateEndStr) {
       console.log(
         "[DEBUG] Pas de filtre date, retourne toutes les livraisons:",
-        deliveriesSource
+        deliveriesSource.length
       );
       return deliveriesSource;
     }
@@ -3929,7 +3972,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let end = dateEndStr ? new Date(dateEndStr) : null;
     if (start) start.setHours(0, 0, 0, 0);
     if (end) end.setHours(23, 59, 59, 999);
-    return deliveriesSource.filter((delivery) => {
+    const filtered = deliveriesSource.filter((delivery) => {
       let dDate =
         delivery["delivery_date"] ||
         delivery["created_at"] ||
@@ -3959,13 +4002,41 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         normalized = String(dDate);
       }
-      // Comparaison dans la plage
+
+      // CORRECTION : Toujours inclure les dossiers en retard (>2 jours) même s'ils sont hors plage de dates
       let dateObj = new Date(normalized);
+      if (!isNaN(dateObj)) {
+        const now = new Date();
+        const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+
+        // Si le dossier est en retard (>2 jours) ET en attente, l'inclure toujours
+        if (diffDays > 2) {
+          const isEnAttente =
+            delivery.delivery_status_acconier !==
+              "mise_en_livraison_acconier" &&
+            delivery.delivery_status_acconier !== "livre" &&
+            delivery.delivery_status_acconier !== "livré";
+
+          if (isEnAttente) {
+            console.log(
+              `📅 [FILTRE] Dossier en retard inclus hors plage: ${delivery.dossier_number} (${diffDays} jours)`
+            );
+            return true; // Toujours inclure les dossiers en retard
+          }
+        }
+      }
+
+      // Comparaison normale dans la plage pour les autres dossiers
       if (isNaN(dateObj)) return false;
       if (start && dateObj < start) return false;
       if (end && dateObj > end) return false;
       return true;
     });
+
+    console.log(
+      `🗓️ [DATE FILTER RESULT] ${filtered.length} dossiers conservés après filtrage de date sur ${deliveriesSource.length}`
+    );
+    return filtered;
   }
 
   // Affiche les livraisons filtrées dans le tableau
@@ -4179,12 +4250,13 @@ document.addEventListener("DOMContentLoaded", function () {
     renderAgentTableFull(filtered, tableBody);
   }
 
-  // Initialisation : charge toutes les livraisons puis affiche la plage de dates (par défaut : 7 jours avant aujourd'hui jusqu'à aujourd'hui)
+  // Initialisation : charge toutes les livraisons puis affiche la plage de dates (par défaut : 30 jours avant aujourd'hui jusqu'à aujourd'hui)
+  // CORRECTION : Augmentation de 7 à 30 jours pour inclure tous les dossiers en retard
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(today.getDate() - 7);
-  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
   if (dateStartInput && dateEndInput) {
     // On charge toutes les livraisons puis on détermine la date la plus ancienne
     loadAllDeliveries().then(() => {
@@ -4302,11 +4374,17 @@ document.addEventListener("DOMContentLoaded", function () {
           const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
           if (diffDays <= 2) return false;
           // Même logique que renderAgentTableFull :
-          // Affiche TOUS les dossiers dont le statut shjacconier est 'en attente de paiement'
-          if (d.delivery_status_acconier === "en attente de paiement") {
-            return true;
+          // CORRECTION : Afficher TOUS les dossiers en attente (pas seulement "en attente de paiement")
+          // Exclure seulement ceux qui sont déjà en livraison
+          if (
+            d.delivery_status_acconier === "mise_en_livraison_acconier" ||
+            d.delivery_status_acconier === "livre" ||
+            d.delivery_status_acconier === "livré"
+          ) {
+            return false;
           }
-          // Sinon, on garde l'ancien filtrage BL
+
+          // Vérifier aussi le statut des BL
           let blList = [];
           if (Array.isArray(d.bl_number)) {
             blList = d.bl_number.filter(Boolean);
@@ -4321,10 +4399,6 @@ document.addEventListener("DOMContentLoaded", function () {
             blStatuses.length > 0 &&
             blStatuses.every((s) => s === "mise_en_livraison")
           ) {
-            return false;
-          }
-          // Exclure aussi si statut acconier est 'mise_en_livraison_acconier'
-          if (d.delivery_status_acconier === "mise_en_livraison_acconier") {
             return false;
           }
           return true;
@@ -4761,6 +4835,9 @@ function createEditInput(columnId, currentValue) {
 
 // Fonction pour générer les lignes du tableau Agent Acconier
 function renderAgentTableRows(deliveries, tableBodyElement) {
+  console.log(
+    `🎯 [ROWS DEBUG] renderAgentTableRows appelé avec ${deliveries.length} dossiers`
+  );
   // Tri des livraisons par date (ancienne en haut, récente en bas)
   deliveries.sort((a, b) => {
     let dateA = a.delivery_date || a.created_at;
@@ -4778,6 +4855,11 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
   });
   tableBodyElement.innerHTML = "";
   deliveries.forEach((delivery, i) => {
+    console.log(
+      `🔢 [ROW DEBUG] Rendu de la ligne ${i + 1}: ${
+        delivery.dossier_number
+      } - ${delivery.delivery_status_acconier}`
+    );
     const tr = document.createElement("tr");
     // Détermination de la couleur de l'avatar selon l'ancienneté
     let dDate = delivery.delivery_date || delivery.created_at;
@@ -7275,6 +7357,20 @@ function renderAgentTableRows(deliveries, tableBodyElement) {
     });
     tableBodyElement.appendChild(tr);
   });
+
+  // Debug final : vérifier le nombre de lignes dans le DOM
+  console.log(
+    `🔍 [DOM DEBUG] Nombre de lignes TR dans le tbody: ${tableBodyElement.children.length}`
+  );
+  console.log(
+    `📋 [DOM DEBUG] Détail des lignes dans le DOM:`,
+    Array.from(tableBodyElement.children).map((tr, i) => {
+      const cells = tr.children;
+      return `Ligne ${i + 1}: ${
+        cells.length
+      } cellules, contenu première cellule: "${cells[0]?.textContent?.trim()}"`;
+    })
+  );
 }
 
 // Fonction pour générer les en-têtes du tableau Agent Acconier
@@ -7293,15 +7389,48 @@ function renderAgentTableHeaders(tableElement, deliveries) {
 
 // Fonction pour générersgv le tableau Agent Acconier complet
 function renderAgentTableFull(deliveries, tableBodyElement) {
+  console.log(
+    `🔍 [RENDER DEBUG] renderAgentTableFull appelé avec ${deliveries.length} livraisons`
+  );
+
   const table = tableBodyElement.closest("table");
   // Filtrer les livraisons à afficher dans le tableau principal :
   // On ne montre que les livraisons où au moins un BL n'est pas en 'mise_en_livraison'
   const deliveriesToShow = deliveries.filter((delivery) => {
-    // Affiche TOUS les dossiers dont le statut acconier est 'en attente de paiement'
-    if (delivery.delivery_status_acconier === "en attente de paiement") {
-      return true;
+    // CORRECTION : Afficher TOUS les dossiers en attente (pas seulement "en attente de paiement")
+    // Exclure seulement ceux qui sont déjà en livraison
+
+    // Log pour TOUS les dossiers en attente de paiement
+    if (delivery.delivery_status_acconier === "awaiting_payment_acconier") {
+      console.log(
+        `💰 [ATTENTE PAIEMENT DEBUG] Dossier: ${
+          delivery.dossier_number
+        }, client: ${delivery.client_name}, agent: ${
+          delivery.employee_name
+        }, date: ${delivery.delivery_date || delivery.created_at}`
+      );
     }
-    // Sinon, on garde l'ancien filtrage BL
+
+    if (
+      delivery.delivery_status_acconier === "mise_en_livraison_acconier" ||
+      delivery.delivery_status_acconier === "livre" ||
+      delivery.delivery_status_acconier === "livré"
+    ) {
+      console.log(
+        `❌ [RENDER FILTER] EXCLU (déjà livré): ${delivery.dossier_number} - statut: ${delivery.delivery_status_acconier}`
+      );
+      return false;
+    }
+
+    // ⭐ RÈGLE ABSOLUE : TOUS les dossiers "awaiting_payment_acconier" DOIVENT être inclus sans exception
+    if (delivery.delivery_status_acconier === "awaiting_payment_acconier") {
+      console.log(
+        `✅ [INCLUSION FORCÉE] Dossier ${delivery.dossier_number} - TOUJOURS inclus car statut awaiting_payment_acconier`
+      );
+      return true; // INCLUSION FORCÉE - pas de vérification des BL
+    }
+
+    // Vérifier aussi le statut des BL SEULEMENT pour les autres statuts
     let blList = [];
     if (Array.isArray(delivery.bl_number)) {
       blList = delivery.bl_number.filter(Boolean);
@@ -7313,11 +7442,45 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         ? delivery.bl_statuses[bl]
         : "aucun"
     );
-    // Si tous les BL sont en 'mise_en_livraison'
-    const tousEnLivraison = blStatuses.every((s) => s === "mise_en_livraison");
+    // Si tous les BL sont en 'mise_en_livraison' ET qu'il y a effectivement des BL avec statuts
+    const tousEnLivraison =
+      blStatuses.length > 0 &&
+      blStatuses.every((s) => s === "mise_en_livraison");
+
+    // Correction : Si aucun BL ou BL statuts vides, ne pas exclure automatiquement
+    const aucunBlOuVide =
+      blStatuses.length === 0 ||
+      blStatuses.every((s) => s === "aucun" || s === "");
+
+    // Log spécial pour le dossier WASSA problématique
+    if (delivery.dossier_number?.includes("00198")) {
+      console.log(
+        `🔍 [WASSA FIX] Dossier ${
+          delivery.dossier_number
+        }: BL list: [${blList.join(", ")}], BL statuts: [${blStatuses.join(
+          ", "
+        )}], tousEnLivraison: ${tousEnLivraison}, aucunBlOuVide: ${aucunBlOuVide}`
+      );
+    }
 
     // Si le dossier disparaît du tableau (tous les BL en livraison), on l'ajoute à la liste des mises en livraison
-    if (tousEnLivraison) {
+    // MAIS on ne l'exclut que si ce ne sont pas des statuts vides/aucun
+    if (tousEnLivraison && !aucunBlOuVide) {
+      if (
+        delivery.client_name?.includes("WASSA") ||
+        delivery.dossier_number?.includes("15938")
+      ) {
+        console.log(
+          `🚫 [WASSA DEBUG] EXCLU car tous BL en livraison. BL statuts: ${blStatuses.join(
+            ", "
+          )}`
+        );
+      }
+      console.log(
+        `❌ [RENDER FILTER] EXCLU (tous BL en livraison): ${
+          delivery.dossier_number
+        } - BL statuts: ${blStatuses.join(", ")}`
+      );
       const dossierToSave = {
         ...delivery,
         container_number: delivery.container_number || "",
@@ -7331,11 +7494,24 @@ function renderAgentTableFull(deliveries, tableBodyElement) {
         date_echange_bl: delivery.date_echange_bl || null,
       };
       ajouterDossierMiseEnLiv(dossierToSave);
+    } else {
+      console.log(
+        `✅ [RENDER FILTER] INCLUS: ${
+          delivery.dossier_number
+        } - statut acconier: ${
+          delivery.delivery_status_acconier
+        } - BL statuts: ${blStatuses.join(", ")}`
+      );
     }
 
-    // Ne pas afficher dans le tableau principal si tous les BL sont en livraison
-    return !tousEnLivraison;
+    // Ne pas afficher dans le tableau principal si tous les BL sont vraiment en livraison (pas vides)
+    return !(tousEnLivraison && !aucunBlOuVide);
   });
+
+  console.log(
+    `📊 [RENDER DEBUG] Après filtrage: ${deliveriesToShow.length} dossiers à afficher sur ${deliveries.length} reçus`
+  );
+
   // Rafraîchissement du tableau :
   if (deliveriesToShow.length === 0) {
     if (table) table.style.display = "none";
