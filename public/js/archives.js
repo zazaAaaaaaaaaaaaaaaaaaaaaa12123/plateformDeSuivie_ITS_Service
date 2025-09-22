@@ -7131,38 +7131,51 @@ class StorageManager {
 
     const archivesCountEl = document.getElementById("archivesCount");
     if (archivesCountEl) {
-      // 🎯 CORRECTION: Utiliser la SOMME des badges au lieu de l'API pour la modal
-      const suppressionBadge = document.querySelector(
-        '.tab-badge[data-tab="deleted"]'
-      );
-      const livraisonBadge = document.querySelector(
-        '.tab-badge[data-tab="delivered"]'
-      );
-      const miseEnLivraisonBadge = document.querySelector(
-        '.tab-badge[data-tab="shipping"]'
-      );
-      const ordreBadge = document.querySelector(
-        '.tab-badge[data-tab="orders"]'
-      );
+      // 🎯 CORRECTION: Utiliser directement le badge "Toutes les Archives" (#allCount)
+      const allTabBadge = document.querySelector("#allCount");
 
-      const suppressionCount = suppressionBadge
-        ? parseInt(suppressionBadge.textContent) || 0
-        : 0;
-      const livraisonCount = livraisonBadge
-        ? parseInt(livraisonBadge.textContent) || 0
-        : 0;
-      const miseEnLivraisonCount = miseEnLivraisonBadge
-        ? parseInt(miseEnLivraisonBadge.textContent) || 0
-        : 0;
-      const ordreCount = ordreBadge ? parseInt(ordreBadge.textContent) || 0 : 0;
+      if (allTabBadge) {
+        const totalArchivesCount = parseInt(allTabBadge.textContent) || 0;
+        archivesCountEl.textContent = totalArchivesCount.toLocaleString();
+        console.log(
+          `📊 [MODAL] Archives Totales depuis badge #allCount: ${totalArchivesCount}`
+        );
+      } else {
+        // Fallback: recalculer depuis les badges individuels si #allCount n'existe pas
+        const suppressionBadge = document.querySelector(
+          '.tab-badge[data-tab="deleted"]'
+        );
+        const livraisonBadge = document.querySelector(
+          '.tab-badge[data-tab="delivered"]'
+        );
+        const miseEnLivraisonBadge = document.querySelector(
+          '.tab-badge[data-tab="shipping"]'
+        );
+        const ordreBadge = document.querySelector(
+          '.tab-badge[data-tab="orders"]'
+        );
 
-      const totalBadgeSum =
-        suppressionCount + livraisonCount + miseEnLivraisonCount + ordreCount;
+        const suppressionCount = suppressionBadge
+          ? parseInt(suppressionBadge.textContent) || 0
+          : 0;
+        const livraisonCount = livraisonBadge
+          ? parseInt(livraisonBadge.textContent) || 0
+          : 0;
+        const miseEnLivraisonCount = miseEnLivraisonBadge
+          ? parseInt(miseEnLivraisonBadge.textContent) || 0
+          : 0;
+        const ordreCount = ordreBadge
+          ? parseInt(ordreBadge.textContent) || 0
+          : 0;
 
-      archivesCountEl.textContent = totalBadgeSum.toLocaleString();
-      console.log(
-        `📊 [MODAL] Archives Totales depuis SOMME badges: ${suppressionCount} + ${livraisonCount} + ${miseEnLivraisonCount} + ${ordreCount} = ${totalBadgeSum}`
-      );
+        const totalBadgeSum =
+          suppressionCount + livraisonCount + miseEnLivraisonCount + ordreCount;
+
+        archivesCountEl.textContent = totalBadgeSum.toLocaleString();
+        console.log(
+          `📊 [MODAL] Archives Totales depuis SOMME badges (fallback): ${suppressionCount} + ${livraisonCount} + ${miseEnLivraisonCount} + ${ordreCount} = ${totalBadgeSum}`
+        );
+      }
     }
 
     const uploadsSizeEl = document.getElementById("uploadsSize");
