@@ -2276,6 +2276,7 @@ function init() {
           lieuInput,
           containerNumberInput,
           // containerFootTypeSelect, // SUPPRIMÉ : ce champ n'existe plus, remplacé par la zone dynamique
+          blNumberInput, // Ajout du champ N° BL comme obligatoire
           declarationNumberInput,
           numberOfContainersInput,
           dossierNumberInput, // Ajout du champ N° dossier comme obligatoire
