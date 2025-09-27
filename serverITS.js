@@ -73,27 +73,34 @@ const PORT = process.env.PORT || 3000;
 let server;
 try {
   // Vérification de l'existence des certificats SSL
-  const privateKey = fs.readFileSync('privkey.pem', 'utf8');
-  const certificate = fs.readFileSync('fullchain.pem', 'utf8');
-  
+  const privateKey = fs.readFileSync("privkey.pem", "utf8");
+  const certificate = fs.readFileSync("fullchain.pem", "utf8");
+
   const credentials = {
     key: privateKey,
-    cert: certificate
+    cert: certificate,
   };
-  
+
   // Création du serveur HTTPS avec SSL
   server = https.createServer(credentials, app);
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`🔒 Serveur HTTPS SSL sécurisé démarré sur le port ${PORT}`);
-    console.log(`🌐 API disponible en HTTPS : https://dossiv.ci/api/exchange/data`);
+    console.log(
+      `🌐 API disponible en HTTPS : https://dossiv.ci/api/exchange/data`
+    );
   });
 } catch (sslError) {
-  console.warn("⚠️  Certificats SSL non trouvés, démarrage en HTTP simple:", sslError.message);
-  
+  console.warn(
+    "⚠️  Certificats SSL non trouvés, démarrage en HTTP simple:",
+    sslError.message
+  );
+
   // Fallback en HTTP si les certificats ne sont pas disponibles
   server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`⚠️  Serveur HTTP démarré sur le port ${PORT} (NON SÉCURISÉ)`);
-    console.log(`🌐 API disponible en HTTP : http://localhost:${PORT}/api/exchange/data`);
+    console.log(
+      `🌐 API disponible en HTTP : http://localhost:${PORT}/api/exchange/data`
+    );
   });
 }
 
