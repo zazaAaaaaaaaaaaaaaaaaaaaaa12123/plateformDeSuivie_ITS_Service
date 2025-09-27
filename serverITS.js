@@ -1,5 +1,4 @@
 const fs = require("fs");
-const https = require("https");
 const express = require("express");
 const multer = require("multer");
 const { Pool } = require("pg");
@@ -65,44 +64,12 @@ app.patch("/deliveries/:id/date", async (req, res) => {
 // Sert tous les fichiers statiques du dossier public (y compris /html, /css, /js...)
 app.use(express.static(path.join(__dirname, "public")));
 
-// === DÉMARRAGE DU SERVEUR HTTPS AVEC SSL ===
-// ============================================
+// === DÉMARRAGE DU SERVEUR HTTP POUR RENDER ET LOCAL ===
+// ======================================================
 const PORT = process.env.PORT || 3000;
-
-// Configuration SSL
-let server;
-try {
-  // Vérification de l'existence des certificats SSL
-  const privateKey = fs.readFileSync("privkey.pem", "utf8");
-  const certificate = fs.readFileSync("fullchain.pem", "utf8");
-
-  const credentials = {
-    key: privateKey,
-    cert: certificate,
-  };
-
-  // Création du serveur HTTPS avec SSL
-  server = https.createServer(credentials, app);
-  server.listen(PORT, "0.0.0.0", () => {
-    console.log(`🔒 Serveur HTTPS SSL sécurisé démarré sur le port ${PORT}`);
-    console.log(
-      `🌐 API disponible en HTTPS : https://dossiv.ci/api/exchange/data`
-    );
-  });
-} catch (sslError) {
-  console.warn(
-    "⚠️  Certificats SSL non trouvés, démarrage en HTTP simple:",
-    sslError.message
-  );
-
-  // Fallback en HTTP si les certificats ne sont pas disponibles
-  server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`⚠️  Serveur HTTP démarré sur le port ${PORT} (NON SÉCURISÉ)`);
-    console.log(
-      `🌐 API disponible en HTTP : http://localhost:${PORT}/api/exchange/data`
-    );
-  });
-}
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Serveur HTTP Express démarré sur le port ${PORT} (0.0.0.0)`);
+});
 
 require("dotenv").config();
 const nodemailer = require("nodemailer");
@@ -3075,45 +3042,13 @@ app.get("/api/exchange/data", async (req, res) => {
       };
 
       const normalizedDossiers = result.rows.map((delivery) => ({
-        id: delivery.id,
-        "nom agent": delivery.employee_name,
-        "date livraison": normalizeDate(delivery.delivery_date),
-        "heure livraison": delivery.delivery_time,
-        "nom client": delivery.client_name,
-        "telephone client": delivery.client_phone,
-        "type contenu conteneur": delivery.container_type_and_content,
-        lieu: delivery.lieu,
-        "numero conteneur": delivery.container_number,
-        "type pied conteneur": delivery.container_foot_type,
-        "numero declaration": delivery.declaration_number,
-        "nombre conteneurs": delivery.number_of_containers,
-        "numero bl": delivery.bl_number,
-        "numero dossier": delivery.dossier_number,
-        "compagnie maritime": delivery.shipping_company,
-        transporteur: delivery.transporter,
-        poids: delivery.weight,
-        "nom navire": delivery.ship_name,
-        circuit: delivery.circuit,
-        "nombre colis": delivery.number_of_packages,
-        "mode transporteur": delivery.transporter_mode,
-        "nom agent visiteur": delivery.nom_agent_visiteur,
-        inspecteur: delivery.inspecteur,
-        "agent en douanes": delivery.agent_en_douanes,
-        "nom chauffeur": delivery.driver_name,
-        "telephone chauffeur": delivery.driver_phone,
-        "immatriculation camion": delivery.truck_registration,
-        "notes livraison": delivery.delivery_notes,
-        statut: delivery.status,
-        "eir recu": delivery.is_eir_received,
-        "statut livraison acconier": delivery.delivery_status_acconier,
-        "observation acconier": delivery.observation_acconier,
-        "date creation": delivery.created_at,
-        "statuts conteneurs": delivery.container_statuses,
-        "statuts bl": delivery.bl_statuses,
-        "paiement acconage": delivery.paiement_acconage,
-        "date echange bl": normalizeDate(delivery.date_echange_bl),
-        "date do": normalizeDate(delivery.date_do),
-        "date badt": normalizeDate(delivery.date_badt),
+        ...delivery,
+        // Normaliser toutes les dates importantes
+        delivery_date: normalizeDate(delivery.delivery_date),
+        date_do: normalizeDate(delivery.date_do),
+        date_badt: normalizeDate(delivery.date_badt),
+        date_echange_bl: normalizeDate(delivery.date_echange_bl),
+        created_at: delivery.created_at, // Garder created_at au format complet pour l'ordre
       }));
 
       const groupedData = {
@@ -3174,45 +3109,13 @@ app.get("/api/exchange/data", async (req, res) => {
       };
 
       const normalizedData = result.rows.map((delivery) => ({
-        id: delivery.id,
-        "nom agent": delivery.employee_name,
-        "date livraison": normalizeDate(delivery.delivery_date),
-        "heure livraison": delivery.delivery_time,
-        "nom client": delivery.client_name,
-        "telephone client": delivery.client_phone,
-        "type contenu conteneur": delivery.container_type_and_content,
-        lieu: delivery.lieu,
-        "numero conteneur": delivery.container_number,
-        "type pied conteneur": delivery.container_foot_type,
-        "numero declaration": delivery.declaration_number,
-        "nombre conteneurs": delivery.number_of_containers,
-        "numero bl": delivery.bl_number,
-        "numero dossier": delivery.dossier_number,
-        "compagnie maritime": delivery.shipping_company,
-        transporteur: delivery.transporter,
-        poids: delivery.weight,
-        "nom navire": delivery.ship_name,
-        circuit: delivery.circuit,
-        "nombre colis": delivery.number_of_packages,
-        "mode transporteur": delivery.transporter_mode,
-        "nom agent visiteur": delivery.nom_agent_visiteur,
-        inspecteur: delivery.inspecteur,
-        "agent en douanes": delivery.agent_en_douanes,
-        "nom chauffeur": delivery.driver_name,
-        "telephone chauffeur": delivery.driver_phone,
-        "immatriculation camion": delivery.truck_registration,
-        "notes livraison": delivery.delivery_notes,
-        statut: delivery.status,
-        "eir recu": delivery.is_eir_received,
-        "statut livraison acconier": delivery.delivery_status_acconier,
-        "observation acconier": delivery.observation_acconier,
-        "date creation": delivery.created_at,
-        "statuts conteneurs": delivery.container_statuses,
-        "statuts bl": delivery.bl_statuses,
-        "paiement acconage": delivery.paiement_acconage,
-        "date echange bl": normalizeDate(delivery.date_echange_bl),
-        "date do": normalizeDate(delivery.date_do),
-        "date badt": normalizeDate(delivery.date_badt),
+        ...delivery,
+        // Normaliser toutes les dates importantes
+        delivery_date: normalizeDate(delivery.delivery_date),
+        date_do: normalizeDate(delivery.date_do),
+        date_badt: normalizeDate(delivery.date_badt),
+        date_echange_bl: normalizeDate(delivery.date_echange_bl),
+        created_at: delivery.created_at, // Garder created_at au format complet pour l'ordre
       }));
 
       res.json({
