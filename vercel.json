@@ -4,7 +4,7 @@
   "builds": [
     {
       "src": "serverITS.js",
-      "use": "@vercel/node",
+      "use": "@vercel/node@3.0.7",
       "config": {
         "maxLambdaSize": "50MB"
       }
