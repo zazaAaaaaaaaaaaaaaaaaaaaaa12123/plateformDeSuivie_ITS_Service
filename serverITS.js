@@ -4,22 +4,9 @@ const express = require("express");
 const multer = require("multer");
 const { Pool } = require("pg");
 const app = express();
-// Redirection automatique vers le domaine principal (désactivée pour flexibilité)
+// Middleware pour redirection vers domaine personnalisé (si configuré)
 app.use((req, res, next) => {
-  // Redirection désactivée - peut être réactivée selon le domaine utilisé
-  /* 
-  if (
-    req.hostname &&
-    req.hostname.includes("plateformdesuivie-its-service.onrender.com") &&
-    !req.hostname.includes("plateformdesuivie-its-service-1cjx.onrender.com")
-  ) {
-    return res.redirect(
-      301,
-      "https://plateformdesuivie-its-service-1cjx.onrender.com" +
-        req.originalUrl
-    );
-  }
-  */
+  // Cette redirection sera configurée une fois votre domaine pointé vers Heroku
   next();
 });
 
@@ -67,44 +54,49 @@ app.patch("/deliveries/:id/date", async (req, res) => {
 // Sert tous les fichiers statiques du dossier public (y compris /html, /css, /js...)
 app.use(express.static(path.join(__dirname, "public")));
 
-// === DÉMARRAGE DU SERVEUR HTTPS AVEC SSL ===
-// ============================================
+// === DÉMARRAGE DU SERVEUR (HEROKU COMPATIBLE) ===
+// =================================================
 const PORT = process.env.PORT || 3000;
 
-// Configuration SSL
+// Sur Heroku, HTTPS est géré automatiquement par le load balancer
+// Pas besoin de certificats SSL personnalisés
 let server;
-try {
-  // Vérification de l'existence des certificats SSL
-  const privateKey = fs.readFileSync("privkey.pem", "utf8");
-  const certificate = fs.readFileSync("fullchain.pem", "utf8");
 
-  const credentials = {
-    key: privateKey,
-    cert: certificate,
-  };
-
-  // Création du serveur HTTPS avec SSL
-  server = https.createServer(credentials, app);
-  server.listen(PORT, "0.0.0.0", () => {
-    console.log(`🔒 Serveur HTTPS SSL sécurisé démarré sur le port ${PORT}`);
+if (process.env.VERCEL) {
+  // Sur Vercel, pas besoin de démarrer le serveur manuellement
+  console.log(`🚀 Application prête pour Vercel (serverless)`);
+} else if (process.env.NODE_ENV === "production") {
+  // Démarrage en HTTP simple (plateforme cloud gère HTTPS automatiquement)
+  server = app.listen(PORT, () => {
     console.log(
-      `🌐 API disponible en HTTPS : https://dossiv.ci/api/exchange/data`
+      `🚀 Serveur démarré sur le port ${PORT} (Production - HTTPS automatique)`
     );
-    console.log(`🌐 Domaine local : https://localhost:${PORT}`);
+    console.log(`🌐 Application disponible`);
   });
-} catch (sslError) {
-  console.warn(
-    "⚠️  Certificats SSL non trouvés, démarrage en HTTP simple:",
-    sslError.message
-  );
+} else {
+  // En développement local, essayer HTTPS si certificats disponibles
+  try {
+    const privateKey = fs.readFileSync("privkey.pem", "utf8");
+    const certificate = fs.readFileSync("fullchain.pem", "utf8");
+    const credentials = { key: privateKey, cert: certificate };
 
-  // Fallback en HTTP si les certificats ne sont pas disponibles
-  server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`⚠️  Serveur HTTP démarré sur le port ${PORT} (NON SÉCURISÉ)`);
-    console.log(
-      `🌐 API disponible en HTTP : http://localhost:${PORT}/api/exchange/data`
+    server = https.createServer(credentials, app);
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(
+        `🔒 Serveur HTTPS SSL démarré sur le port ${PORT} (Développement)`
+      );
+    });
+  } catch (sslError) {
+    console.warn(
+      "⚠️  Certificats SSL non trouvés, démarrage en HTTP:",
+      sslError.message
     );
-  });
+    server = app.listen(PORT, "0.0.0.0", () => {
+      console.log(
+        `⚠️  Serveur HTTP démarré sur le port ${PORT} (Développement)`
+      );
+    });
+  }
 }
 
 require("dotenv").config();
@@ -9761,11 +9753,14 @@ app.post("/admin/fix-delivery-status", async (req, res) => {
 });
 
 // ===============================
-// ROUTE CATCH-ALL POUR SERVIR LE RESRFRONTEND (index.html)
-// ==================12354=============
+// ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
+// ===============================
 // Cette route doit être TOUT EN BAS, après toutes les routes API !
-// (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
-/**hjgD11234567891000 */
+
+// ===============================
+// EXPORT POUR VERCEL
+// ===============================
+module.exports = app;

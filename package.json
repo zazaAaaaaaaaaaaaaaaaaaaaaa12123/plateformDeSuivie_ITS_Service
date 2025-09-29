@@ -1,7 +1,11 @@
 {
   "name": "plateformdesuivie_its_service",
   "version": "1.0.0",
-  "main": "script.js",
+  "main": "serverITS.js",
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node serverITS.js",
@@ -10,7 +14,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Plateforme de suivi ITS Service",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
