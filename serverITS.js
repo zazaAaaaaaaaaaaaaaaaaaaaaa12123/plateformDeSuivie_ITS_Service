@@ -3151,6 +3151,14 @@ app.get("/api/exchange/data", async (req, res) => {
         success: true,
         data: groupedData,
         count: result.rows.length,
+        // NOUVEAUX COMPTEURS DEMANDÉS PAR M. SEKA
+        totaux: {
+          total_dossiers_soumis: groupedData.dossiers_soumis.length,
+          total_dossiers_mise_en_livraison: groupedData.dossiers_mise_en_livraison.length,
+          total_dossiers_livres: groupedData.dossiers_livres.length,
+          // Compteur spécifique pour les paiements acconage (dossiers avec date de paiement)
+          total_paiements_acconage: groupedData.dossiers_soumis.filter(d => d["paiement acconage"] && d["paiement acconage"] !== null).length
+        },
         timestamp: new Date().toISOString(),
       });
     } else {
