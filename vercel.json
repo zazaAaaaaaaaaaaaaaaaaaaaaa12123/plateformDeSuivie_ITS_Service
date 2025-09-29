@@ -6,7 +6,8 @@
       "src": "serverITS.js",
       "use": "@vercel/node",
       "config": {
-        "maxLambdaSize": "50MB"
+        "maxLambdaSize": "50MB",
+        "runtime": "nodejs22.x"
       }
     }
   ],
@@ -31,7 +32,6 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "nodeVersion": "22.x",
   "functions": {
     "serverITS.js": {
       "maxDuration": 30
