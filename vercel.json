@@ -1,10 +1,13 @@
 {
   "version": 2,
-  "name": "plateformdesuivie-its-service",
+  "name": "plateforme-suivi-its",
   "builds": [
     {
       "src": "serverITS.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "50MB"
+      }
     }
   ],
   "routes": [
@@ -17,7 +20,7 @@
       "dest": "/serverITS.js"
     },
     {
-      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|ico|svg))",
+      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|ico|svg|html))",
       "dest": "/public/$1"
     },
     {
@@ -27,5 +30,10 @@
   ],
   "env": {
     "NODE_ENV": "production"
+  },
+  "functions": {
+    "serverITS.js": {
+      "maxDuration": 30
+    }
   }
 }
