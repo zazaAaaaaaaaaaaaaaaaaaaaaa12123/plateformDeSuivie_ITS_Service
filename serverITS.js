@@ -62,10 +62,7 @@ const PORT = process.env.PORT || 3000;
 // Pas besoin de certificats SSL personnalisés
 let server;
 
-if (process.env.VERCEL) {
-  // Sur Vercel, pas besoin de démarrer le serveur manuellement
-  console.log(`🚀 Application prête pour Vercel (serverless)`);
-} else if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production") {
   // Démarrage en HTTP simple (plateforme cloud gère HTTPS automatiquement)
   server = app.listen(PORT, () => {
     console.log(
@@ -9743,6 +9740,5 @@ app.get("/", (req, res) => {
 });
 
 // ===============================
-// EXPORT POUR VERCEL
+// APPLICATION PRÊTE POUR RENDER
 // ===============================
-module.exports = app;
