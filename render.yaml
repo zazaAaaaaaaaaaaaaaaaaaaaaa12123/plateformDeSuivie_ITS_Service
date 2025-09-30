@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: dossiv-ci-app
+    env: node
+    buildCommand: npm install
+    startCommand: node serverITS.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: EMAIL_USER
+        value: batienemohamed330@gmail.com
+      - key: EMAIL_PASS
+        value: jlyngxfqyfbmqjji
+      - key: GMAIL_USER
+        value: batienemohamed330@gmail.com
+      - key: GMAIL_PASS
+        value: jlyngxfqyfbmqjji
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 465
+      - key: SMTP_USER
+        value: batienemohamed330@gmail.com
+      - key: SMTP_PASS
+        value: jlyngxfqyfbmqjji
+      - key: SMTP_FROM
+        value: batienemohamed330@gmail.com
+      - key: PGUSER
+        value: its_service_ayru_user
+      - key: PGHOST
+        value: dpg-d1v43gbe5dus739f0n7g-a.oregon-postgres.render.com
+      - key: PGDATABASE
+        value: its_service_ayru
+      - key: PGPASSWORD
+        value: vCjBNNtO24Bn2IkoE8pcv36qBOJHPqVA
+      - key: PGPORT
+        value: 5432
