@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "main": "serverITS.js",
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": "20.x",
+    "npm": ">=10.0.0"
   },
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node serverITS.js",
-    "dev": "nodemon serverITS.js",
-    "build": "echo 'No build step required'",
-    "railway-deploy": "node serverITS.js"
+    "dev": "nodemon serverITS.js"
   },
   "keywords": [],
   "author": "",

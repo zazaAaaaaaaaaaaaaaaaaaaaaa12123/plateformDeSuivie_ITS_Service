@@ -4,9 +4,20 @@ const express = require("express");
 const multer = require("multer");
 const { Pool } = require("pg");
 const app = express();
-// Middleware pour redirection vers domaine personnalisé (si configuré)
+// Redirection automatique vers le domaine -1cjx si on accède au domaine principal
 app.use((req, res, next) => {
-  // Cette redirection sera configurée une fois votre domaine pointé vers Heroku
+  if (
+    req.hostname &&
+    req.hostname.includes("plateformdesuivie-its-service.onrender.com") &&
+    !req.hostname.includes("plateformdesuivie-its-service-1cjx.onrender.com")
+  ) {
+    // Redirige vers le domaine -1cjx, en gardant le chemin et la query
+    return res.redirect(
+      301,
+      "https://plateformdesuivie-its-service-1cjx.onrender.com" +
+        req.originalUrl
+    );
+  }
   next();
 });
 
@@ -54,27 +65,42 @@ app.patch("/deliveries/:id/date", async (req, res) => {
 // Sert tous les fichiers statiques du dossier public (y compris /html, /css, /js...)
 app.use(express.static(path.join(__dirname, "public")));
 
-// === DÉMARRAGE DU SERVEUR (RAILWAY COMPATIBLE) ===
-// =================================================
+// === DÉMARRAGE DU SERVEUR HTTPS AVEC SSL ===
+// ============================================
 const PORT = process.env.PORT || 3000;
 
-// Sur Railway, HTTPS est géré automatiquement par le load balancer
-// Pas besoin de certificats SSL personnalisés
+// Configuration SSL
 let server;
+try {
+  // Vérification de l'existence des certificats SSL
+  const privateKey = fs.readFileSync("privkey.pem", "utf8");
+  const certificate = fs.readFileSync("fullchain.pem", "utf8");
 
-if (process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) {
-  // Démarrage en HTTP simple (plateforme cloud gère HTTPS automatiquement)
-  server = app.listen(PORT, () => {
+  const credentials = {
+    key: privateKey,
+    cert: certificate,
+  };
+
+  // Création du serveur HTTPS avec SSL
+  server = https.createServer(credentials, app);
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log(`🔒 Serveur HTTPS SSL sécurisé démarré sur le port ${PORT}`);
     console.log(
-      `🚀 Serveur démarré sur le port ${PORT} (Production Railway - HTTPS automatique)`
+      `🌐 API disponible en HTTPS : https://dossiv.ci/api/exchange/data`
     );
-    console.log(`🌐 Application disponible`);
   });
-} else {
-  // En développement local, démarrage en HTTP simple
+} catch (sslError) {
+  console.warn(
+    "⚠️  Certificats SSL non trouvés, démarrage en HTTP simple:",
+    sslError.message
+  );
+
+  // Fallback en HTTP si les certificats ne sont pas disponibles
   server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`� Serveur HTTP démarré sur le port ${PORT} (Développement)`);
-    console.log(`🌐 Accédez à votre application : http://localhost:${PORT}`);
+    console.log(`⚠️  Serveur HTTP démarré sur le port ${PORT} (NON SÉCURISÉ)`);
+    console.log(
+      `🌐 API disponible en HTTP : http://localhost:${PORT}/api/exchange/data`
+    );
   });
 }
 
@@ -9732,13 +9758,11 @@ app.post("/admin/fix-delivery-status", async (req, res) => {
 });
 
 // ===============================
-// ROUTE CATCH-ALL POUR SERVIR LE FRONTEND (index.html)
-// ===============================
+// ROUTE CATCH-ALL POUR SERVIR LE RESRFRONTEND (index.html)
+// ==================12354=============
 // Cette route doit être TOUT EN BAS, après toutes les routes API !
+// (Le static public est déjà défini plus haut, mais on s'assure que la route / est bien la dernière)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "html", "index.html"));
 });
-
-// ===============================
-// APPLICATION PRÊTE POUR RAILWAY
-// ===============================
+/**hjgD11234567891000 */
