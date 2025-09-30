@@ -1,6 +1,11 @@
 {
   "version": 2,
   "name": "plateforme-suivi-its",
+  "functions": {
+    "serverITS.js": {
+      "runtime": "nodejs22.x"
+    }
+  },
   "builds": [
     {
       "src": "serverITS.js",

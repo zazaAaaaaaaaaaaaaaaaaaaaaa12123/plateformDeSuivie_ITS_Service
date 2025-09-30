@@ -74,29 +74,11 @@ if (process.env.VERCEL) {
     console.log(`🌐 Application disponible`);
   });
 } else {
-  // En développement local, essayer HTTPS si certificats disponibles
-  try {
-    const privateKey = fs.readFileSync("privkey.pem", "utf8");
-    const certificate = fs.readFileSync("fullchain.pem", "utf8");
-    const credentials = { key: privateKey, cert: certificate };
-
-    server = https.createServer(credentials, app);
-    server.listen(PORT, "0.0.0.0", () => {
-      console.log(
-        `🔒 Serveur HTTPS SSL démarré sur le port ${PORT} (Développement)`
-      );
-    });
-  } catch (sslError) {
-    console.warn(
-      "⚠️  Certificats SSL non trouvés, démarrage en HTTP:",
-      sslError.message
-    );
-    server = app.listen(PORT, "0.0.0.0", () => {
-      console.log(
-        `⚠️  Serveur HTTP démarré sur le port ${PORT} (Développement)`
-      );
-    });
-  }
+  // En développement local, démarrage en HTTP simple
+  server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`� Serveur HTTP démarré sur le port ${PORT} (Développement)`);
+    console.log(`🌐 Accédez à votre application : http://localhost:${PORT}`);
+  });
 }
 
 require("dotenv").config();
