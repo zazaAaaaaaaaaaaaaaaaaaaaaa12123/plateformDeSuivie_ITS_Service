@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "name": "plateforme-suivi-its",
+  "functions": {
+    "serverITS.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "builds": [
+    {
+      "src": "serverITS.js",
+      "use": "@vercel/node@3.0.21",
+      "config": {
+        "maxLambdaSize": "50MB"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/serverITS.js"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "/serverITS.js"
+    },
+    {
+      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|ico|svg|html))",
+      "dest": "/public/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/serverITS.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "NODE_VERSION": "22.x"
+  }
+}

@@ -54,19 +54,19 @@ app.patch("/deliveries/:id/date", async (req, res) => {
 // Sert tous les fichiers statiques du dossier public (y compris /html, /css, /js...)
 app.use(express.static(path.join(__dirname, "public")));
 
-// === DÉMARRAGE DU SERVEUR (HEROKU COMPATIBLE) ===
+// === DÉMARRAGE DU SERVEUR (RAILWAY COMPATIBLE) ===
 // =================================================
 const PORT = process.env.PORT || 3000;
 
-// Sur Heroku, HTTPS est géré automatiquement par le load balancer
+// Sur Railway, HTTPS est géré automatiquement par le load balancer
 // Pas besoin de certificats SSL personnalisés
 let server;
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) {
   // Démarrage en HTTP simple (plateforme cloud gère HTTPS automatiquement)
   server = app.listen(PORT, () => {
     console.log(
-      `🚀 Serveur démarré sur le port ${PORT} (Production - HTTPS automatique)`
+      `🚀 Serveur démarré sur le port ${PORT} (Production Railway - HTTPS automatique)`
     );
     console.log(`🌐 Application disponible`);
   });
@@ -9740,5 +9740,5 @@ app.get("/", (req, res) => {
 });
 
 // ===============================
-// APPLICATION PRÊTE POUR RENDER
+// APPLICATION PRÊTE POUR RAILWAY
 // ===============================
