@@ -65,56 +65,74 @@ app.patch("/deliveries/:id/date", async (req, res) => {
 // Sert tous les fichiers statiques du dossier public (y compris /html, /css, /js...)
 app.use(express.static(path.join(__dirname, "public")));
 
-// === DÉMARRAGE DU SERVEUR HTTPS AVEC SSL ===
-// ============================================
+// === DÉMARRAGE DU SERVEUR ===
+// ============================
 const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Configuration SSL
 let server;
-try {
-  // Vérification de l'existence des certificats SSL
-  const privateKey = fs.readFileSync("privkey.pem", "utf8");
-  const certificate = fs.readFileSync("fullchain.pem", "utf8");
 
-  const credentials = {
-    key: privateKey,
-    cert: certificate,
-  };
-
-  // Création du serveur HTTPS avec SSL
-  server = https.createServer(credentials, app);
-  server.listen(PORT, "0.0.0.0", () => {
-    console.log(`🔒 Serveur HTTPS SSL sécurisé démarré sur le port ${PORT}`);
-    console.log(
-      `🌐 API disponible en HTTPS : https://dossiv.ci/api/exchange/data`
-    );
-  });
-} catch (sslError) {
-  console.warn(
-    "⚠️  Certificats SSL non trouvés, démarrage en HTTP simple:",
-    sslError.message
-  );
-
-  // Fallback en HTTP si les certificats ne sont pas disponibles
+// En production (Render), utiliser HTTP car Render gère automatiquement HTTPS
+if (NODE_ENV === 'production') {
   server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`⚠️  Serveur HTTP démarré sur le port ${PORT} (NON SÉCURISÉ)`);
-    console.log(
-      `🌐 API disponible en HTTP : http://localhost:${PORT}/api/exchange/data`
-    );
+    console.log(`🚀 Serveur démarré en production sur le port ${PORT}`);
+    console.log(`🌐 Application disponible via Render (HTTPS automatique)`);
   });
+} else {
+  // En développement local, essayer HTTPS puis fallback HTTP
+  try {
+    // Vérification de l'existence des certificats SSL
+    const privateKey = fs.readFileSync("privkey.pem", "utf8");
+    const certificate = fs.readFileSync("fullchain.pem", "utf8");
+
+    const credentials = {
+      key: privateKey,
+      cert: certificate,
+    };
+
+    // Création du serveur HTTPS avec SSL
+    server = https.createServer(credentials, app);
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`🔒 Serveur HTTPS SSL sécurisé démarré sur le port ${PORT}`);
+      console.log(
+        `🌐 API disponible en HTTPS : https://dossiv.ci/api/exchange/data`
+      );
+    });
+  } catch (sslError) {
+    console.warn(
+      "⚠️  Certificats SSL non trouvés, démarrage en HTTP simple:",
+      sslError.message
+    );
+
+    // Fallback en HTTP si les certificats ne sont pas disponibles
+    server = app.listen(PORT, "0.0.0.0", () => {
+      console.log(`⚠️  Serveur HTTP démarré sur le port ${PORT} (NON SÉCURISÉ)`);
+      console.log(
+        `🌐 API disponible en HTTP : http://localhost:${PORT}/api/exchange/data`
+      );
+    });
+  }
 }
 
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs"); // Import unique ici
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
-  ssl: { rejectUnauthorized: false }, // Ajout pour Render (connexion sécurisée)
-});
+// Configuration de la base de données - Support pour Render et local
+const pool = new Pool(
+  process.env.DATABASE_URL 
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }, // Requis pour Render
+      }
+    : {
+        user: process.env.PGUSER,
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASE,
+        password: process.env.PGPASSWORD,
+        port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
+        ssl: { rejectUnauthorized: false },
+      }
+);
 
 // ===============================
 // API ADMIN REGISTER & LOGIN - PRIORITÉ HAUTE
