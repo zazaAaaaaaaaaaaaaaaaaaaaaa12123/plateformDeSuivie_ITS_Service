@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "serverITS.js",
   "engines": {
-    "node": ">=22.0.0",
+    "node": "20.x",
     "npm": ">=10.0.0"
   },
   "scripts": {
